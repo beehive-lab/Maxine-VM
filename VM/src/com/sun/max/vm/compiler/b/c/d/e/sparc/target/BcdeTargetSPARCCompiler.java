@@ -55,11 +55,11 @@ import com.sun.max.vm.thread.*;
  */
 public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements TargetGeneratorScheme {
 
-    private final SPARCEirToTargetTranslator _eirToTargetTranslator;
+    private final SPARCEirToTargetTranslator eirToTargetTranslator;
     /**
      * Shortcut to the jit frame pointer. Used for walking adapter frames.
      */
-    private final GPR _jitFramePointer;
+    private final GPR jitFramePointer;
 
     protected SPARCEirToTargetTranslator createTargetTranslator() {
         return new SPARCEirToTargetTranslator(this);
@@ -67,17 +67,17 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
 
     public BcdeTargetSPARCCompiler(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        _jitFramePointer = (GPR) vmConfiguration.targetABIsScheme().jitABI().framePointer();
-        _eirToTargetTranslator = new SPARCEirToTargetTranslator(this);
+        jitFramePointer = (GPR) vmConfiguration.targetABIsScheme().jitABI().framePointer();
+        eirToTargetTranslator = new SPARCEirToTargetTranslator(this);
     }
 
     public TargetGenerator targetGenerator() {
-        return _eirToTargetTranslator;
+        return eirToTargetTranslator;
     }
 
     @Override
     public IrGenerator irGenerator() {
-        return _eirToTargetTranslator;
+        return eirToTargetTranslator;
     }
 
     @Override
@@ -111,7 +111,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                         VMRegister.getCpuStackPointer(),
                         VMRegister.getCpuFramePointer(),
                         context);
-        final Pointer callSite = context.instructionPointer();
+        final Pointer callSite = context.instructionPointer;
         // Get the target method that calls the static trampoline
         final TargetMethod caller = Code.codePointerToTargetMethod(callSite);
         // We can now search the caller for the ClassMethodActor corresponding to the direct call.
@@ -140,7 +140,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
         final Pointer callSite = targetMethod.codeStart().plus(callOffset).asPointer();
         final Label label = new Label();
         SPARCAssembler assembler;
-        if (vmConfiguration().platform().processorKind().dataModel().wordWidth().equals(WordWidth.BITS_64)) {
+        if (vmConfiguration().platform().processorKind.dataModel.wordWidth.equals(WordWidth.BITS_64)) {
             final SPARC64Assembler asm = new SPARC64Assembler(callSite.toLong());
             asm.fixLabel(label, callEntryPoint.asAddress().toLong());
             assembler = asm;
@@ -222,7 +222,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
         // Thus, when in the entry point, the return address can be found in %o7, and when in the adapter it can be found
         // in SAVED_CALLER_ADDRESS. The caller frame pointer is always in the local register defined by the JIT abi (_jitFramePointer).
         final Pointer optimizedEntryPoint = OPTIMIZED_ENTRY_POINT.in(targetMethod);
-        final Pointer callerFramePointer = SPARCStackFrameLayout.getRegisterInSavedWindow(stackFrameWalker, _jitFramePointer).asPointer();
+        final Pointer callerFramePointer = SPARCStackFrameLayout.getRegisterInSavedWindow(stackFrameWalker, jitFramePointer).asPointer();
         final Pointer callerStackPointer;
         final Pointer callerInstructionPointer;
         if (instructionPointer.greaterThan(optimizedEntryPoint)) {
@@ -313,7 +313,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                 final Address catchAddress = targetMethod.throwAddressToCatchAddress(instructionPointer);
                 if (!catchAddress.isZero()) {
                     final StackUnwindingContext stackUnwindingContext = UnsafeLoophole.cast(context);
-                    final Throwable throwable = stackUnwindingContext._throwable;
+                    final Throwable throwable = stackUnwindingContext.throwable;
                     if (!(throwable instanceof StackOverflowError) || VmThread.current().hasSufficentStackToReprotectGuardPage(stackPointer)) {
                         // Reset the stack walker
                         stackFrameWalker.reset();

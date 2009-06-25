@@ -34,15 +34,14 @@ import com.sun.max.vm.compiler.ir.igv.*;
  */
 public class AMD64GraphEirInstructionVisitor extends AMD64EirInstructionAdapter {
 
-    private GraphWriter.Node _node;
+    private GraphWriter.Node node;
 
     public AMD64GraphEirInstructionVisitor(GraphWriter.Node node) {
-        _node = node;
+        this.node = node;
     }
 
     @Override
     public void visitInstruction(EirInstruction eirInstruction) {
-        final GraphWriter.Node node = _node;
         super.visitInstruction(eirInstruction);
         node.getProperties().setProperty("name", eirInstruction.toString());
         node.getProperties().setProperty("class", eirInstruction.getClass().toString());
@@ -57,7 +56,6 @@ public class AMD64GraphEirInstructionVisitor extends AMD64EirInstructionAdapter 
     @Override
     public void visit(EirAssignment instruction) {
         super.visit(instruction);
-        final GraphWriter.Node node = _node;
         node.getProperties().setProperty("destination", instruction.destinationOperand().toString());
     }
 
@@ -100,25 +98,22 @@ public class AMD64GraphEirInstructionVisitor extends AMD64EirInstructionAdapter 
     @Override
     public void visit(EirCall call) throws InvocationTargetException {
         super.visit(call);
-        final GraphWriter.Node node = _node;
-
-        node.getProperties().setProperty("name", call.function().toString());
-        node.getProperties().setProperty("result", call.result().toString());
-        node.getProperties().setProperty("arguments", Arrays.toString(call.arguments()));
-        node.getProperties().setProperty("callerSavedOperands", Arrays.toString(call.callerSavedOperands()));
-        node.getProperties().setProperty("argumentCount", Integer.toString(call.arguments().length));
+        this.node.getProperties().setProperty("name", call.function().toString());
+        this.node.getProperties().setProperty("result", call.result().toString());
+        this.node.getProperties().setProperty("arguments", Arrays.toString(call.arguments()));
+        this.node.getProperties().setProperty("callerSavedOperands", Arrays.toString(call.callerSavedOperands()));
+        this.node.getProperties().setProperty("argumentCount", Integer.toString(call.arguments().length));
         if (call.result() != null) {
-            node.getProperties().setProperty("result", call.result().toString());
+            this.node.getProperties().setProperty("result", call.result().toString());
         }
     }
 
     @Override
     public void visit(EirSafepoint safepoint) {
         super.visit(safepoint);
-        final GraphWriter.Node node = _node;
-        node.getProperties().setProperty("name", "safepoint");
-        node.getProperties().setProperty("dump_spec", safepoint.toString());
-        node.getProperties().setProperty("bci", Integer.toString(safepoint.javaFrameDescriptor().bytecodePosition()));
+        this.node.getProperties().setProperty("name", "safepoint");
+        this.node.getProperties().setProperty("dump_spec", safepoint.toString());
+        this.node.getProperties().setProperty("bci", Integer.toString(safepoint.javaFrameDescriptor().bytecodePosition()));
 
     }
 }

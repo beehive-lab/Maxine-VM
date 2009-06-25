@@ -63,42 +63,42 @@ public final class Inspection {
 
     private static final String INSPECTOR_NAME = "Maxine Inspector";
 
-    private final MaxVM _maxVM;
+    private final MaxVM maxVM;
 
-    private final String _bootImageFileName;
+    private final String bootImageFileName;
 
-    private final InspectorNameDisplay _nameDisplay;
+    private final InspectorNameDisplay nameDisplay;
 
-    private final InspectionFocus _focus;
+    private final InspectionFocus focus;
 
-    private final InspectionPreferences  _preferences;
+    private final InspectionPreferences  preferences;
 
-    private static final String _SETTINGS_FILE_NAME = "maxine.ins";
-    private final InspectionSettings _settings;
+    private static final String SETTINGS_FILE_NAME = "maxine.ins";
+    private final InspectionSettings settings;
 
-    private final InspectionActions _inspectionActions;
+    private final InspectionActions inspectionActions;
 
-    private InspectorMainFrame _inspectorMainFrame;
+    private InspectorMainFrame inspectorMainFrame;
 
     public Inspection(MaxVM maxVM) {
         Trace.begin(TRACE_VALUE, tracePrefix() + "Initializing");
         final long startTimeMillis = System.currentTimeMillis();
-        _maxVM = maxVM;
-        _bootImageFileName = maxVM().bootImageFile().getAbsolutePath().toString();
-        _nameDisplay = new InspectorNameDisplay(this);
-        _focus = new InspectionFocus(this);
-        _settings = new InspectionSettings(this, new File(maxVM().programFile().getParentFile(), _SETTINGS_FILE_NAME));
-        _preferences = new InspectionPreferences(this, _settings);
-        _inspectionActions = new InspectionActions(this);
+        this.maxVM = maxVM;
+        this.bootImageFileName = maxVM().bootImageFile().getAbsolutePath().toString();
+        this.nameDisplay = new InspectorNameDisplay(this);
+        this.focus = new InspectionFocus(this);
+        this.settings = new InspectionSettings(this, new File(maxVM().programFile().getParentFile(), SETTINGS_FILE_NAME));
+        this.preferences = new InspectionPreferences(this, settings);
+        this.inspectionActions = new InspectionActions(this);
 
         BreakpointPersistenceManager.initialize(this);
-        _inspectionActions.refresh(true);
+        inspectionActions.refresh(true);
 
         maxVM().addVMStateObserver(new VMStateObserver());
         maxVM().addBreakpointObserver(new BreakpointObserver());
         maxVM().addWatchpointObserver(new WatchpointObserver());
 
-        _inspectorMainFrame = new InspectorMainFrame(this, INSPECTOR_NAME, _settings, _inspectionActions);
+        inspectorMainFrame = new InspectorMainFrame(this, INSPECTOR_NAME, settings, inspectionActions);
 
         MethodInspector.Manager.make(this);
         ObjectInspectorFactory.make(this);
@@ -120,14 +120,14 @@ public final class Inspection {
                 MaxThread nonJavaThread = null;
                 for (MaxThread thread : threads) {
                     if (thread.isJava()) {
-                        _focus.setThread(thread);
+                        focus.setThread(thread);
                         nonJavaThread = null;
                         break;
                     }
                     nonJavaThread = thread;
                 }
                 if (nonJavaThread != null) {
-                    _focus.setThread(nonJavaThread);
+                    focus.setThread(nonJavaThread);
                 }
                 // TODO (mlvdv) decide whether to make inspectors visible based on preference and previous session
                 ThreadsInspector.make(this);
@@ -135,7 +135,7 @@ public final class Inspection {
                 ThreadLocalsInspector.make(this);
                 StackInspector.make(this);
                 BreakpointsInspector.make(this);
-                _focus.setCodeLocation(maxVM.createCodeLocation(_focus.thread().instructionPointer()), false);
+                focus.setCodeLocation(maxVM.createCodeLocation(focus.thread().instructionPointer()), false);
             } catch (Throwable throwable) {
                 System.err.println("Error during initialization");
                 throwable.printStackTrace();
@@ -143,8 +143,8 @@ public final class Inspection {
             }
         }
         refreshAll(false);
-        _inspectorMainFrame.refresh(true);
-        _inspectorMainFrame.setVisible(true);
+        inspectorMainFrame.refresh(true);
+        inspectorMainFrame.setVisible(true);
 
         Trace.end(TRACE_VALUE, tracePrefix() + "Initializing", startTimeMillis);
     }
@@ -158,7 +158,7 @@ public final class Inspection {
         sb.append(" (");
         sb.append(maxVMState() == null ? "" : maxVMState().processState());
         sb.append(") ");
-        sb.append(_bootImageFileName);
+        sb.append(bootImageFileName);
         return sb.toString();
     }
 
@@ -166,15 +166,15 @@ public final class Inspection {
      * @return a GUI panel suitable for setting global preferences for the inspection session.
      */
     public JPanel globalPreferencesPanel() {
-        return _preferences.getPanel();
+        return preferences.getPanel();
     }
 
     public InspectionSettings settings() {
-        return _settings;
+        return settings;
     }
 
     public MaxVM maxVM() {
-        return _maxVM;
+        return maxVM;
     }
 
     /**
@@ -182,32 +182,32 @@ public final class Inspection {
      * and synchronously; thread safe.
      */
     private MaxVMState maxVMState() {
-        return _maxVM.maxVMState();
+        return maxVM.maxVMState();
     }
 
     public InspectorGUI gui() {
-        return _inspectorMainFrame;
+        return inspectorMainFrame;
     }
 
     /**
      * @return the global collection of actions, many of which are singletons with state that gets refreshed.
      */
     public InspectionActions actions() {
-        return _inspectionActions;
+        return inspectionActions;
     }
 
     /**
      * The current configuration for visual style.
      */
     public InspectorStyle style() {
-        return _preferences.style();
+        return preferences.style();
     }
 
     /**
      * Default size and layout for windows; overridden by persistent settings from previous sessions.
      */
     public InspectorGeometry geometry() {
-        return _preferences.geometry();
+        return preferences.geometry();
     }
 
     /**
@@ -215,28 +215,28 @@ public final class Inspection {
      *         environment.
      */
     public InspectorNameDisplay nameDisplay() {
-        return _nameDisplay;
+        return nameDisplay;
     }
 
     /**
      * @return Does the Inspector attempt to discover proactively what word values might point to in the VM.
      */
     public boolean investigateWordValues() {
-        return _preferences.investigateWordValues();
+        return preferences.investigateWordValues();
     }
 
     /**
      * Informs this inspection of a new action that can operate on this inspection.
      */
     public void registerAction(InspectorAction inspectorAction) {
-        _preferences.registerAction(inspectorAction);
+        preferences.registerAction(inspectorAction);
     }
 
     /**
      * User oriented focus on particular items in the environment; View state.
      */
     public InspectionFocus focus() {
-        return _focus;
+        return focus;
     }
 
     /**
@@ -265,7 +265,7 @@ public final class Inspection {
         return maxVMState().processState() == STOPPED;
     }
 
-    private MaxVMState _lastVMStateProcessed = null;
+    private MaxVMState lastVMStateProcessed = null;
 
     /**
      * Handles reported changes in the {@linkplain MaxVM#maxVMState()  VM process state}.
@@ -275,12 +275,12 @@ public final class Inspection {
         // Ensure that we're just looking at one state while making decisions, even
         // though display elements may find the VM in a newer state by the time they
         // attempt to update their state.
-        _inspectorMainFrame.refresh(true);
+        inspectorMainFrame.refresh(true);
         final MaxVMState maxVMState = maxVMState();
-        if (!maxVMState.newerThan(_lastVMStateProcessed)) {
+        if (!maxVMState.newerThan(lastVMStateProcessed)) {
             Trace.line(1, tracePrefix() + "ignoring redundant state change=" + maxVMState);
         }
-        _lastVMStateProcessed = maxVMState;
+        lastVMStateProcessed = maxVMState;
         Tracer tracer = null;
         if (Trace.hasLevel(1)) {
             tracer = new Tracer("process " + maxVMState);
@@ -298,19 +298,19 @@ public final class Inspection {
                 // Clear any possibly misleading view state.
                 focus().clearAll();
                 // Give all process-sensitive views a chance to shut down
-                for (InspectionListener listener : _inspectionListeners.clone()) {
+                for (InspectionListener listener : inspectionListeners.clone()) {
                     listener.vmProcessTerminated();
                 }
                 // Clear any possibly misleading view state.
                 focus().clearAll();
                 // Be sure all process-sensitive actions are disabled.
-                _inspectionActions.refresh(false);
+                inspectionActions.refresh(false);
                 break;
             case NO_PROCESS:
                 break;
         }
-        _inspectorMainFrame.refresh(true);
-        _inspectionActions.refresh(true);
+        inspectorMainFrame.refresh(true);
+        inspectionActions.refresh(true);
         Trace.end(1, tracer, startTimeMillis);
     }
 
@@ -357,7 +357,7 @@ public final class Inspection {
         public void update(Observable o, Object arg) {
             if (java.awt.EventQueue.isDispatchThread()) {
                 Trace.line(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
-                for (InspectionListener listener : _inspectionListeners.clone()) {
+                for (InspectionListener listener : inspectionListeners.clone()) {
                     listener.breakpointStateChanged();
                 }
             } else {
@@ -365,7 +365,7 @@ public final class Inspection {
 
                     public void run() {
                         Trace.line(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
-                        for (InspectionListener listener : _inspectionListeners.clone()) {
+                        for (InspectionListener listener : inspectionListeners.clone()) {
                             listener.breakpointStateChanged();
                         }
                     }
@@ -384,7 +384,7 @@ public final class Inspection {
         public void update(Observable o, Object arg) {
             if (java.awt.EventQueue.isDispatchThread()) {
                 Trace.line(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
-                for (InspectionListener listener : _inspectionListeners.clone()) {
+                for (InspectionListener listener : inspectionListeners.clone()) {
                     listener.watchpointSetChanged();
                 }
             } else {
@@ -392,7 +392,7 @@ public final class Inspection {
 
                     public void run() {
                         Trace.line(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
-                        for (InspectionListener listener : _inspectionListeners.clone()) {
+                        for (InspectionListener listener : inspectionListeners.clone()) {
                             listener.watchpointSetChanged();
                         }
                     }
@@ -401,17 +401,17 @@ public final class Inspection {
         }
     }
 
-    private InspectorAction _currentAction = null;
+    private InspectorAction currentAction = null;
 
     /**
      * Holds the action currently being performed; null when finished.
      */
     public InspectorAction currentAction() {
-        return _currentAction;
+        return currentAction;
     }
 
     void setCurrentAction(InspectorAction action) {
-        _currentAction = action;
+        currentAction = action;
     }
 
     /**
@@ -419,17 +419,17 @@ public final class Inspection {
      *         otherwise the generic name of the inspector.
      */
     public String currentActionTitle() {
-        return _currentAction != null ? _currentAction.name() : INSPECTOR_NAME;
+        return currentAction != null ? currentAction.name() : INSPECTOR_NAME;
     }
 
-    private IdentityHashSet<InspectionListener> _inspectionListeners = new IdentityHashSet<InspectionListener>();
+    private IdentityHashSet<InspectionListener> inspectionListeners = new IdentityHashSet<InspectionListener>();
 
     /**
      * Adds a listener for view update when VM state changes.
      */
     public void addInspectionListener(InspectionListener listener) {
         Trace.line(TRACE_VALUE, tracePrefix() + "adding inspection listener: " + listener);
-        _inspectionListeners.add(listener);
+        inspectionListeners.add(listener);
     }
 
     /**
@@ -438,7 +438,7 @@ public final class Inspection {
      */
     public void removeInspectionListener(InspectionListener listener) {
         Trace.line(TRACE_VALUE, tracePrefix() + "removing inspection listener: " + listener);
-        _inspectionListeners.remove(listener);
+        inspectionListeners.remove(listener);
     }
 
     /**
@@ -449,7 +449,7 @@ public final class Inspection {
     public void refreshAll(boolean force) {
         Tracer tracer = null;
         // Additional listeners may come and go during the update cycle, which can be ignored.
-        for (InspectionListener listener : _inspectionListeners.clone()) {
+        for (InspectionListener listener : inspectionListeners.clone()) {
             if (Trace.hasLevel(TRACE_VALUE)) {
                 tracer = new Tracer("refresh: " + listener);
             }
@@ -458,7 +458,7 @@ public final class Inspection {
             listener.vmStateChanged(force);
             Trace.end(TRACE_VALUE, tracer, startTimeMillis);
         }
-        _inspectionActions.refresh(force);
+        inspectionActions.refresh(force);
     }
 
     /**
@@ -466,25 +466,25 @@ public final class Inspection {
      * VM.
      */
     void updateViewConfiguration() {
-        for (InspectionListener listener : _inspectionListeners) {
+        for (InspectionListener listener : inspectionListeners) {
             Trace.line(TRACE_VALUE, tracePrefix() + "updateViewConfiguration: " + listener);
             listener.viewConfigurationChanged();
         }
-        _inspectionActions.redisplay();
-        _inspectorMainFrame.redisplay();
+        inspectionActions.redisplay();
+        inspectorMainFrame.redisplay();
     }
 
-    private final Tracer _threadTracer = new Tracer("refresh thread state");
+    private final Tracer threadTracer = new Tracer("refresh thread state");
 
     /**
      * Determines what happened in VM execution that just concluded. Then updates all view state as needed.
      */
     public void updateAfterVMStopped() {
         gui().showInspectorBusy(true);
-        final IdentityHashSet<InspectionListener> listeners = _inspectionListeners.clone();
+        final IdentityHashSet<InspectionListener> listeners = inspectionListeners.clone();
         // Notify of any changes of the thread set
 
-        Trace.begin(TRACE_VALUE, _threadTracer);
+        Trace.begin(TRACE_VALUE, threadTracer);
         final long startTimeMillis = System.currentTimeMillis();
         if (!maxVMState().threadsStarted().isEmpty() || !maxVMState().threadsDied().isEmpty()) {
             for (MaxThread thread : maxVMState().threads()) {
@@ -499,7 +499,7 @@ public final class Inspection {
                 listener.threadStateChanged(currentThread);
             }
         }
-        Trace.end(TRACE_VALUE, _threadTracer, startTimeMillis);
+        Trace.end(TRACE_VALUE, threadTracer, startTimeMillis);
         try {
             refreshAll(false);
             // Make visible the code at the IP of the thread that triggered the breakpoint.
@@ -550,7 +550,7 @@ public final class Inspection {
      * @return true if a file viewer was opened
      */
     public boolean viewSourceExternally(BytecodeLocation bytecodeLocation) {
-        if (_preferences.externalViewerType() == ExternalViewerType.NONE) {
+        if (preferences.externalViewerType() == ExternalViewerType.NONE) {
             return false;
         }
         final ClassMethodActor classMethodActor = bytecodeLocation.classMethodActor();
@@ -572,7 +572,7 @@ public final class Inspection {
      * @return true if a file viewer was opened
      */
     public boolean viewSourceExternally(ClassActor classActor, int lineNumber) {
-        if (_preferences.externalViewerType() == ExternalViewerType.NONE) {
+        if (preferences.externalViewerType() == ExternalViewerType.NONE) {
             return false;
         }
         final File javaSourceFile = maxVM().findJavaSourceFile(classActor);
@@ -580,9 +580,9 @@ public final class Inspection {
             return false;
         }
 
-        switch (_preferences.externalViewerType()) {
+        switch (preferences.externalViewerType()) {
             case PROCESS: {
-                final String config = _preferences.externalViewerConfig().get(ExternalViewerType.PROCESS);
+                final String config = preferences.externalViewerConfig().get(ExternalViewerType.PROCESS);
                 if (config != null) {
                     final String command = config.replaceAll("\\$file", javaSourceFile.getAbsolutePath()).replaceAll("\\$line", String.valueOf(lineNumber));
                     try {
@@ -597,7 +597,7 @@ public final class Inspection {
             }
             case SOCKET: {
                 final String hostname = null;
-                final String portString = _preferences.externalViewerConfig().get(ExternalViewerType.SOCKET);
+                final String portString = preferences.externalViewerConfig().get(ExternalViewerType.SOCKET);
                 if (portString != null) {
                     try {
                         final int port = Integer.parseInt(portString);
@@ -628,7 +628,7 @@ public final class Inspection {
      */
     private class Tracer {
 
-        private final String _message;
+        private final String message;
 
         /**
          * An object that delays evaluation of a trace message.
@@ -636,12 +636,12 @@ public final class Inspection {
          * @param message identifies what is being traced
          */
         public Tracer(String message) {
-            _message = message;
+            this.message = message;
         }
 
         @Override
         public String toString() {
-            return tracePrefix() + _message;
+            return tracePrefix() + message;
         }
     }
 

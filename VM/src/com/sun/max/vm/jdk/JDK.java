@@ -101,36 +101,36 @@ public class JDK {
 
     public static class ClassRef {
         @CONSTANT_WHEN_NOT_ZERO
-        protected Class _javaClass;
+        protected Class javaClass;
         @CONSTANT_WHEN_NOT_ZERO
-        protected ClassActor _classActor;
+        protected ClassActor classActor;
 
         public ClassRef(Class javaClass) {
-            _javaClass = javaClass;
+            this.javaClass = javaClass;
         }
 
         public ClassRef(Class javaClass, String inner) {
-            _javaClass = Classes.forName(javaClass.getName() + "$" + inner);
+            this.javaClass = Classes.forName(javaClass.getName() + "$" + inner);
         }
 
         public ClassRef(String name) {
-            _javaClass = Classes.forName(name);
+            javaClass = Classes.forName(name);
         }
 
         public Class javaClass() {
-            return _javaClass;
+            return javaClass;
         }
 
         @INLINE
         public final ClassActor classActor() {
-            if (_classActor == null) {
+            if (classActor == null) {
                 getClassActor();
             }
-            return _classActor;
+            return classActor;
         }
 
         public void resolveClassActor() {
-            if (_javaClass != null) {
+            if (javaClass != null) {
                 classActor();
             }
         }
@@ -139,29 +139,29 @@ public class JDK {
             final ClassActor classActor = ClassActor.fromJava(javaClass());
             // check again that the class actor has not already been set. Some ClassRefs will automatically be
             // updated when their classes are added to the VM class registry
-            if (_classActor == null) {
-                _classActor = classActor;
+            if (this.classActor == null) {
+                this.classActor = classActor;
             }
-            assert _classActor == classActor : "wrong class actor registered with this ClassRef";
+            assert this.classActor == classActor : "wrong class actor registered with this ClassRef";
         }
     }
 
     public static class LazyClassRef extends ClassRef {
-        private final String _className;
+        private final String className;
 
         public LazyClassRef(String className) {
             super((Class) null);
-            _className = className;
+            this.className = className;
         }
 
         public LazyClassRef(Class javaClass) {
             super((Class) null);
-            _className = javaClass.getName();
+            className = javaClass.getName();
         }
 
         @Override
         public final Class javaClass() {
-            return Classes.forName(_className);
+            return Classes.forName(className);
         }
     }
 }

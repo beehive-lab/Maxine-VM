@@ -30,28 +30,28 @@ public final class Class_cast01 {
     private Class_cast01() {
     }
 
-    static final String _string = "";
-    static final Object _object = new Object();
-    static final Class_cast01 _thisObject = new Class_cast01();
+    static final String string = "";
+    static final Object object = new Object();
+    static final Class_cast01 thisObject = new Class_cast01();
 
     public static int test(int i) {
         if (i == 0) {
-            if (Object.class.cast(_string) == null) {
+            if (Object.class.cast(string) == null) {
                 return -1;
             }
         }
         if (i == 1) {
-            if (String.class.cast(_object) == null) {
+            if (String.class.cast(object) == null) {
                 return -1;
             }
         }
         if (i == 2) {
-            if (Object.class.cast(_thisObject) == null) {
+            if (Object.class.cast(thisObject) == null) {
                 return -1;
             }
         }
         if (i == 3) {
-            if (Class_cast01.class.cast(_object) == null) {
+            if (Class_cast01.class.cast(object) == null) {
                 return -1;
             }
         }

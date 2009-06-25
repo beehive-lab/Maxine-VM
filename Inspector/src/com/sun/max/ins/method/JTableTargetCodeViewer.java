@@ -76,16 +76,16 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         SOURCE_LINE("Line", "Line number in source code (may be approximate)", true, -1),
         BYTES("Bytes", "Instruction bytes", false, -1);
 
-        private final String _label;
-        private final String _toolTipText;
-        private final boolean _defaultVisibility;
-        private final int _minWidth;
+        private final String label;
+        private final String toolTipText;
+        private final boolean defaultVisibility;
+        private final int minWidth;
 
         private ColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
-            _label = label;
-            _toolTipText = toolTipText;
-            _defaultVisibility = defaultVisibility;
-            _minWidth = minWidth;
+            this.label = label;
+            this.toolTipText = toolTipText;
+            this.defaultVisibility = defaultVisibility;
+            this.minWidth = minWidth;
             assert defaultVisibility || canBeMadeInvisible();
         }
 
@@ -93,14 +93,14 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
          * @return text to appear in the column header
          */
         public String label() {
-            return _label;
+            return label;
         }
 
         /**
          * @return text to appear in the column header's toolTip, null if none specified
          */
         public String toolTipText() {
-            return _toolTipText;
+            return toolTipText;
         }
 
         /**
@@ -114,31 +114,31 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
          * @return whether this column should be visible by default.
          */
         public boolean defaultVisibility() {
-            return _defaultVisibility;
+            return defaultVisibility;
         }
 
         /**
          * @return minimum width allowed for this column when resized by user; -1 if none specified.
          */
         public int minWidth() {
-            return _minWidth;
+            return minWidth;
         }
 
         @Override
         public String toString() {
-            return _label;
+            return label;
         }
 
         public static final IndexedSequence<ColumnKind> VALUES = new ArraySequence<ColumnKind>(values());
     }
 
-    private static TargetCodeViewerPreferences _globalPreferences;
+    private static TargetCodeViewerPreferences globalPreferences;
 
     private static TargetCodeViewerPreferences globalPreferences(Inspection inspection) {
-        if (_globalPreferences == null) {
-            _globalPreferences = new TargetCodeViewerPreferences(inspection);
+        if (globalPreferences == null) {
+            globalPreferences = new TargetCodeViewerPreferences(inspection);
         }
-        return _globalPreferences;
+        return globalPreferences;
     }
 
     /**
@@ -174,23 +174,23 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     }
 
 
-    private final Inspection _inspection;
-    private final TargetCodeTable _table;
-    private final TargetCodeTableModel _model;
-    private final TargetCodeTableColumnModel _columnModel;
-    private final TableColumn[] _columns;
-    private final OperandsRenderer _operandsRenderer;
-    private final SourceLineRenderer _sourceLineRenderer;
+    private final Inspection inspection;
+    private final TargetCodeTable table;
+    private final TargetCodeTableModel model;
+    private final TargetCodeTableColumnModel columnModel;
+    private final TableColumn[] columns;
+    private final OperandsRenderer operandsRenderer;
+    private final SourceLineRenderer sourceLineRenderer;
 
     public JTableTargetCodeViewer(Inspection inspection, MethodInspector parent, TeleTargetRoutine teleTargetRoutine) {
         super(inspection, parent, teleTargetRoutine);
-        _inspection = inspection;
-        _operandsRenderer = new OperandsRenderer();
-        _sourceLineRenderer = new SourceLineRenderer();
-        _model = new TargetCodeTableModel(teleTargetRoutine.getInstructions());
-        _columns = new TableColumn[ColumnKind.VALUES.length()];
-        _columnModel = new TargetCodeTableColumnModel();
-        _table = new TargetCodeTable(inspection, _model, _columnModel);
+        this.inspection = inspection;
+        this.operandsRenderer = new OperandsRenderer();
+        this.sourceLineRenderer = new SourceLineRenderer();
+        this.model = new TargetCodeTableModel(teleTargetRoutine.getInstructions());
+        this.columns = new TableColumn[ColumnKind.VALUES.length()];
+        this.columnModel = new TargetCodeTableColumnModel();
+        this.table = new TargetCodeTable(inspection, model, columnModel);
         createView();
     }
 
@@ -199,43 +199,43 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         super.createView();
 
         // Set up toolbar
-        JButton button = new InspectorButton(_inspection, _inspection.actions().toggleTargetCodeBreakpoint());
+        JButton button = new InspectorButton(inspection, inspection.actions().toggleTargetCodeBreakpoint());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugToggleBreakpointbuttonIcon());
         toolBar().add(button);
 
-        button = new InspectorButton(_inspection, _inspection.actions().debugStepOver());
+        button = new InspectorButton(inspection, inspection.actions().debugStepOver());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugStepOverButtonIcon());
         toolBar().add(button);
 
-        button = new InspectorButton(_inspection, _inspection.actions().debugSingleStep());
+        button = new InspectorButton(inspection, inspection.actions().debugSingleStep());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugStepInButtonIcon());
         toolBar().add(button);
 
-        button = new InspectorButton(_inspection, _inspection.actions().debugReturnFromFrame());
+        button = new InspectorButton(inspection, inspection.actions().debugReturnFromFrame());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugStepOutButtonIcon());
         toolBar().add(button);
 
-        button = new InspectorButton(_inspection, _inspection.actions().debugRunToSelectedInstruction());
+        button = new InspectorButton(inspection, inspection.actions().debugRunToSelectedInstruction());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugRunToCursorButtonIcon());
         toolBar().add(button);
 
-        button = new InspectorButton(_inspection, _inspection.actions().debugResume());
+        button = new InspectorButton(inspection, inspection.actions().debugResume());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugContinueButtonIcon());
         toolBar().add(button);
 
-        button = new InspectorButton(_inspection, _inspection.actions().debugPause());
+        button = new InspectorButton(inspection, inspection.actions().debugPause());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugPauseButtonIcon());
@@ -253,7 +253,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
         final JButton viewOptionsButton = new InspectorButton(inspection(), new AbstractAction("View...") {
             public void actionPerformed(ActionEvent actionEvent) {
-                new TableColumnVisibilityPreferences.Dialog<ColumnKind>(inspection(), "TargetCode View Options", _columnModel.preferences(), globalPreferences(inspection()));
+                new TableColumnVisibilityPreferences.Dialog<ColumnKind>(inspection(), "TargetCode View Options", columnModel.preferences(), globalPreferences(inspection()));
             }
         });
         viewOptionsButton.setToolTipText("Target code view options");
@@ -262,31 +262,31 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         toolBar().add(Box.createHorizontalGlue());
         addCodeViewCloseButton();
 
-        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), _table);
+        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), table);
         add(scrollPane, BorderLayout.CENTER);
 
         refresh(true);
-        JTableColumnResizer.adjustColumnPreferredWidths(_table);
+        JTableColumnResizer.adjustColumnPreferredWidths(table);
     }
 
     @Override
     protected int getRowCount() {
-        return _table.getRowCount();
+        return table.getRowCount();
     }
 
     @Override
     protected int getSelectedRow() {
-        return _table.getSelectedRow();
+        return table.getSelectedRow();
     }
 
     @Override
     protected void setFocusAtRow(int row) {
-        _inspection.focus().setCodeLocation(maxVM().createCodeLocation(_model.getTargetCodeInstruction(row).address()), false);
+        inspection.focus().setCodeLocation(maxVM().createCodeLocation(model.getTargetCodeInstruction(row).address()), false);
     }
 
     @Override
     protected RowTextSearcher getRowTextSearcher() {
-        return new TableRowTextSearcher(_inspection, _table);
+        return new TableRowTextSearcher(inspection, table);
     }
 
     /**
@@ -296,7 +296,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
      */
     @Override
     public boolean updateCodeFocus(TeleCodeLocation teleCodeLocation) {
-        return _table.updateCodeFocus(teleCodeLocation);
+        return table.updateCodeFocus(teleCodeLocation);
     }
 
     /**
@@ -304,10 +304,10 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
      */
     private final class TargetCodeTableModel extends AbstractTableModel {
 
-        private final IndexedSequence<TargetCodeInstruction> _instructions;
+        private final IndexedSequence<TargetCodeInstruction> instructions;
 
         public TargetCodeTableModel(IndexedSequence<TargetCodeInstruction> instructions) {
-            _instructions = instructions;
+            this.instructions = instructions;
         }
 
         public int getColumnCount() {
@@ -315,7 +315,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         public int getRowCount() {
-            return _instructions.length();
+            return instructions.length();
         }
 
         public Object getValueAt(int row, int col) {
@@ -369,7 +369,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         public TargetCodeInstruction getTargetCodeInstruction(int row) {
-            return _instructions.get(row);
+            return instructions.get(row);
         }
 
         /**
@@ -378,7 +378,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
          */
         public int getRowAtAddress(Address address) {
             int row = 0;
-            for (TargetCodeInstruction targetCodeInstruction : _instructions) {
+            for (TargetCodeInstruction targetCodeInstruction : instructions) {
                 if (targetCodeInstruction.address().equals(address)) {
                     return row;
                 }
@@ -483,49 +483,49 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
     private final class TargetCodeTableColumnModel extends DefaultTableColumnModel {
 
-        private final TargetCodeViewerPreferences _preferences;
+        private final TargetCodeViewerPreferences preferences;
 
         private TargetCodeTableColumnModel() {
-            _preferences = new TargetCodeViewerPreferences(JTableTargetCodeViewer.globalPreferences(inspection())) {
+            preferences = new TargetCodeViewerPreferences(JTableTargetCodeViewer.globalPreferences(inspection())) {
                 @Override
                 public void setIsVisible(ColumnKind columnKind, boolean visible) {
                     super.setIsVisible(columnKind, visible);
                     final int col = columnKind.ordinal();
                     if (visible) {
-                        addColumn(_columns[col]);
+                        addColumn(columns[col]);
                     } else {
-                        removeColumn(_columns[col]);
+                        removeColumn(columns[col]);
                     }
-                    JTableColumnResizer.adjustColumnPreferredWidths(_table);
+                    JTableColumnResizer.adjustColumnPreferredWidths(table);
                     refresh(true);
                 }
             };
 
-            final Address startAddress = _model.getTargetCodeInstruction(0).address();
+            final Address startAddress = model.getTargetCodeInstruction(0).address();
             createColumn(ColumnKind.TAG, new TagRenderer());
             createColumn(ColumnKind.NUMBER, new NumberRenderer());
             createColumn(ColumnKind.ADDRESS, new AddressRenderer(startAddress));
             createColumn(ColumnKind.POSITION, new PositionRenderer(startAddress));
             createColumn(ColumnKind.LABEL, new LabelRenderer(startAddress));
-            createColumn(ColumnKind.INSTRUCTION, new InstructionRenderer(_inspection));
-            createColumn(ColumnKind.OPERANDS, _operandsRenderer);
-            createColumn(ColumnKind.SOURCE_LINE, _sourceLineRenderer);
-            createColumn(ColumnKind.BYTES, new BytesRenderer(_inspection));
+            createColumn(ColumnKind.INSTRUCTION, new InstructionRenderer(inspection));
+            createColumn(ColumnKind.OPERANDS, operandsRenderer);
+            createColumn(ColumnKind.SOURCE_LINE, sourceLineRenderer);
+            createColumn(ColumnKind.BYTES, new BytesRenderer(inspection));
         }
 
         private TargetCodeViewerPreferences preferences() {
-            return _preferences;
+            return preferences;
         }
 
         private void createColumn(ColumnKind columnKind, TableCellRenderer renderer) {
             final int col = columnKind.ordinal();
-            _columns[col] = new TableColumn(col, 0, renderer, null);
-            _columns[col].setHeaderValue(columnKind.label());
-            _columns[col].setMinWidth(columnKind.minWidth());
-            if (_preferences.isVisible(columnKind)) {
-                addColumn(_columns[col]);
+            columns[col] = new TableColumn(col, 0, renderer, null);
+            columns[col].setHeaderValue(columnKind.label());
+            columns[col].setMinWidth(columnKind.minWidth());
+            if (preferences.isVisible(columnKind)) {
+                addColumn(columns[col]);
             }
-            _columns[col].setIdentifier(columnKind);
+            columns[col].setIdentifier(columnKind);
         }
     }
 
@@ -550,9 +550,9 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                 toolTipText.append("Stack ");
                 toolTipText.append(stackFrameInfo.position());
                 toolTipText.append(":  0x");
-                toolTipText.append(stackFrameInfo.frame().instructionPointer().toHexString());
+                toolTipText.append(stackFrameInfo.frame().instructionPointer.toHexString());
                 toolTipText.append("  thread=");
-                toolTipText.append(_inspection.nameDisplay().longName(stackFrameInfo.thread()));
+                toolTipText.append(inspection.nameDisplay().longName(stackFrameInfo.thread()));
                 toolTipText.append("; ");
                 if (stackFrameInfo.frame().isTopFrame()) {
                     setIcon(style().debugIPTagIcon());
@@ -595,7 +595,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     private final class NumberRenderer extends PlainLabel implements TableCellRenderer {
 
         public NumberRenderer() {
-            super(_inspection, "");
+            super(inspection, "");
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
@@ -609,16 +609,16 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
     private final class AddressRenderer extends LocationLabel.AsAddressWithPosition implements TableCellRenderer {
 
-        private final Address _entryAddress;
+        private final Address entryAddress;
 
         AddressRenderer(Address entryAddress) {
-            super(_inspection, 0, entryAddress);
-            _entryAddress = entryAddress;
+            super(inspection, 0, entryAddress);
+            this.entryAddress = entryAddress;
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final Address address = (Address) value;
-            setValue(address.minus(_entryAddress).toInt());
+            setValue(address.minus(entryAddress).toInt());
             setColumns(getText().length() + 1);
             setBackground(rowToBackgroundColor(row));
             setForeground(getRowTextColor(row));
@@ -627,17 +627,17 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     }
 
     private final class PositionRenderer extends LocationLabel.AsPosition implements TableCellRenderer {
-        private int _position;
+        private int position;
 
         public PositionRenderer(Address entryAddress) {
-            super(_inspection, 0, entryAddress);
-            _position = 0;
+            super(inspection, 0, entryAddress);
+            this.position = 0;
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final Integer position = (Integer) value;
-            if (_position != position) {
-                _position = position;
+            if (this.position != position) {
+                this.position = position;
                 setValue(position);
             }
             setBackground(rowToBackgroundColor(row));
@@ -650,11 +650,11 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     private final class LabelRenderer extends LocationLabel.AsTextLabel implements TableCellRenderer {
 
         public LabelRenderer(Address entryAddress) {
-            super(_inspection, entryAddress);
+            super(inspection, entryAddress);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final Integer position = (Integer) _model.getValueAt(row, ColumnKind.POSITION.ordinal());
+            final Integer position = (Integer) model.getValueAt(row, ColumnKind.POSITION.ordinal());
             setLocation(value.toString(), position);
             setFont(style().defaultTextFont());
             setBackground(rowToBackgroundColor(row));
@@ -705,8 +705,8 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     };
 
     LiteralRenderer getLiteralRenderer(Inspection inspection) {
-        final ProcessorKind processorKind = maxVM().vmConfiguration().platform().processorKind();
-        switch (processorKind.instructionSet()) {
+        final ProcessorKind processorKind = maxVM().vmConfiguration().platform().processorKind;
+        switch (processorKind.instructionSet) {
             case AMD64:
                 return AMD64_LITERAL_RENDERER;
             case SPARC:
@@ -723,13 +723,13 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
     private final class SourceLineRenderer extends PlainLabel implements TableCellRenderer {
 
-        private BytecodeLocation _lastBytecodeLocation;
+        private BytecodeLocation lastBytecodeLocation;
         SourceLineRenderer() {
             super(JTableTargetCodeViewer.this.inspection(), null);
             addMouseListener(new InspectorMouseClickAdapter(inspection()) {
                 @Override
                 public void procedure(final MouseEvent mouseEvent) {
-                    final BytecodeLocation bytecodeLocation = _lastBytecodeLocation;
+                    final BytecodeLocation bytecodeLocation = lastBytecodeLocation;
                     if (bytecodeLocation != null) {
                         final JPopupMenu menu = new JPopupMenu();
                         for (BytecodeLocation location = bytecodeLocation; location != null; location = location.parent()) {
@@ -779,18 +779,18 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                 }
                 setToolTipText(stackTrace.append("</table>").toString());
             }
-            _lastBytecodeLocation = bytecodeLocation;
+            lastBytecodeLocation = bytecodeLocation;
             return this;
         }
     }
 
     private final class OperandsRenderer implements TableCellRenderer, Prober {
-        private InspectorLabel[] _wordValueLabels = new InspectorLabel[instructions().length()];
-        private TargetCodeLabel _targetCodeLabel = new TargetCodeLabel(_inspection, "");
-        private LiteralRenderer _literalRenderer = getLiteralRenderer(_inspection);
+        private InspectorLabel[] wordValueLabels = new InspectorLabel[instructions().length()];
+        private TargetCodeLabel targetCodeLabel = new TargetCodeLabel(inspection, "");
+        private LiteralRenderer literalRenderer = getLiteralRenderer(inspection);
 
         public void refresh(boolean force) {
-            for (InspectorLabel wordValueLabel : _wordValueLabels) {
+            for (InspectorLabel wordValueLabel : wordValueLabels) {
                 if (wordValueLabel != null) {
                     wordValueLabel.refresh(force);
                 }
@@ -798,33 +798,33 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         public void redisplay() {
-            for (InspectorLabel wordValueLabel : _wordValueLabels) {
+            for (InspectorLabel wordValueLabel : wordValueLabels) {
                 if (wordValueLabel != null) {
                     wordValueLabel.redisplay();
                 }
             }
-            _targetCodeLabel.redisplay();
+            targetCodeLabel.redisplay();
         }
 
         public Component getTableCellRendererComponent(JTable table, Object ignore, boolean isSelected, boolean hasFocus, int row, int col) {
-            InspectorLabel inspectorLabel = _wordValueLabels[row];
+            InspectorLabel inspectorLabel = wordValueLabels[row];
             if (inspectorLabel == null) {
-                final TargetCodeInstruction targetCodeInstruction = _model.getTargetCodeInstruction(row);
+                final TargetCodeInstruction targetCodeInstruction = model.getTargetCodeInstruction(row);
                 final String text = targetCodeInstruction.operands();
-                if (targetCodeInstruction._targetAddress != null && !teleTargetRoutine().targetCodeRegion().contains(targetCodeInstruction._targetAddress)) {
-                    inspectorLabel = new WordValueLabel(_inspection, WordValueLabel.ValueMode.CALL_ENTRY_POINT, targetCodeInstruction._targetAddress, _table);
-                    _wordValueLabels[row] = inspectorLabel;
-                } else if (targetCodeInstruction._literalSourceAddress != null) {
-                    final Word word = _inspection.maxVM().readWord(targetCodeInstruction._literalSourceAddress);
-                    inspectorLabel = _literalRenderer.render(_inspection, text, word);
-                    _wordValueLabels[row] = inspectorLabel;
+                if (targetCodeInstruction.targetAddress != null && !teleTargetRoutine().targetCodeRegion().contains(targetCodeInstruction.targetAddress)) {
+                    inspectorLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.CALL_ENTRY_POINT, targetCodeInstruction.targetAddress, table);
+                    wordValueLabels[row] = inspectorLabel;
+                } else if (targetCodeInstruction.literalSourceAddress != null) {
+                    final Word word = inspection.maxVM().readWord(targetCodeInstruction.literalSourceAddress);
+                    inspectorLabel = literalRenderer.render(inspection, text, word);
+                    wordValueLabels[row] = inspectorLabel;
                 } else if (rowToCalleeIndex(row) >= 0) {
-                    final PoolConstantLabel poolConstantLabel = PoolConstantLabel.make(_inspection, rowToCalleeIndex(row), localConstantPool(), teleConstantPool(), PoolConstantLabel.Mode.TERSE);
+                    final PoolConstantLabel poolConstantLabel = PoolConstantLabel.make(inspection, rowToCalleeIndex(row), localConstantPool(), teleConstantPool(), PoolConstantLabel.Mode.TERSE);
                     poolConstantLabel.setToolTipPrefix(text);
                     inspectorLabel = poolConstantLabel;
                     inspectorLabel.setForeground(getRowTextColor(row));
                 } else {
-                    inspectorLabel = _targetCodeLabel;
+                    inspectorLabel = targetCodeLabel;
                     inspectorLabel.setText(text);
                     inspectorLabel.setToolTipText(null);
                     inspectorLabel.setForeground(getRowTextColor(row));
@@ -851,7 +851,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
     @Override
     protected void updateView(boolean force) {
-        for (TableColumn column : _columns) {
+        for (TableColumn column : columns) {
             final Prober prober = (Prober) column.getCellRenderer();
             prober.refresh(force);
         }
@@ -859,12 +859,12 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
     @Override
     public void redisplay() {
-        for (TableColumn column : _columns) {
+        for (TableColumn column : columns) {
             final Prober prober = (Prober) column.getCellRenderer();
             prober.redisplay();
         }
         // TODO (mlvdv)  code view hack for style changes
-        _table.setRowHeight(style().codeTableRowHeight());
+        table.setRowHeight(style().codeTableRowHeight());
         invalidate();
         repaint();
     }
@@ -874,7 +874,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         final MessageFormat header = new MessageFormat(name);
         final MessageFormat footer = new MessageFormat("Maxine: " + codeViewerKindName() + "  Printed: " + new Date() + " -- Page: {0, number, integer}");
         try {
-            _table.print(JTable.PrintMode.FIT_WIDTH, header, footer);
+            table.print(JTable.PrintMode.FIT_WIDTH, header, footer);
         } catch (PrinterException printerException) {
             gui().errorMessage("Print failed: " + printerException.getMessage());
         }

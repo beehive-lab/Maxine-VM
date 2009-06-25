@@ -46,16 +46,16 @@ public class IrTargetMethod extends TargetMethod {
         return new IrTargetMethod(irMethod);
     }
 
-    final IrMethod _irMethod;
+    final IrMethod irMethod;
 
     IrTargetMethod(IrMethod irMethod) {
         super(irMethod.classMethodActor());
-        _irMethod = irMethod;
+        this.irMethod = irMethod;
     }
 
     @Override
     public Word getEntryPoint(CallEntryPoint callEntryPoint) {
-        return _irMethod.getEntryPoint(callEntryPoint);
+        return irMethod.getEntryPoint(callEntryPoint);
     }
 
     @Override

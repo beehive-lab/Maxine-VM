@@ -32,12 +32,12 @@ import com.sun.c1x.ci.CiType;
  */
 public class Local extends Instruction {
 
-    private final int _javaIndex;
-    private CiType _declaredType;
+    private final int javaIndex;
+    private CiType declaredType;
 
     public Local(ValueType type, int javaIndex) {
         super(type);
-        _javaIndex = javaIndex;
+        this.javaIndex = javaIndex;
     }
 
     /**
@@ -45,7 +45,7 @@ public class Local extends Instruction {
      * @return the index
      */
     public int javaIndex() {
-        return _javaIndex;
+        return javaIndex;
     }
 
     /**
@@ -53,7 +53,7 @@ public class Local extends Instruction {
      * @param declaredType the declared type of the local variable
      */
     public void setDeclaredType(CiType declaredType) {
-        _declaredType = declaredType;
+        this.declaredType = declaredType;
     }
 
     /**
@@ -62,7 +62,7 @@ public class Local extends Instruction {
      */
     @Override
     public CiType declaredType() {
-        return _declaredType;
+        return declaredType;
     }
 
     /**

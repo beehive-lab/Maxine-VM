@@ -61,54 +61,54 @@ public final class VirtualMachineCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public String _description;
+            public String description;
 
-            public int _jdwpMajor;
+            public int jdwpMajor;
 
-            public int _jdwpMinor;
+            public int jdwpMinor;
 
-            public String _vmVersion;
+            public String vmVersion;
 
-            public String _vmName;
+            public String vmName;
             public Reply(String description,
                 int jdwpMajor,
                 int jdwpMinor,
                 String vmVersion,
                 String vmName) {
-                this._description = description;
-                this._jdwpMajor = jdwpMajor;
-                this._jdwpMinor = jdwpMinor;
-                this._vmVersion = vmVersion;
-                this._vmName = vmName;
+                this.description = description;
+                this.jdwpMajor = jdwpMajor;
+                this.jdwpMinor = jdwpMinor;
+                this.vmVersion = vmVersion;
+                this.vmName = vmName;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _description = ps.readString();
-                _jdwpMajor = ps.readInt();
-                _jdwpMinor = ps.readInt();
-                _vmVersion = ps.readString();
-                _vmName = ps.readString();
+                description = ps.readString();
+                jdwpMajor = ps.readInt();
+                jdwpMinor = ps.readInt();
+                vmVersion = ps.readString();
+                vmName = ps.readString();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_description);
-                ps.write(_jdwpMajor);
-                ps.write(_jdwpMinor);
-                ps.write(_vmVersion);
-                ps.write(_vmName);
+                ps.write(description);
+                ps.write(jdwpMajor);
+                ps.write(jdwpMinor);
+                ps.write(vmVersion);
+                ps.write(vmName);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_description=" + _description);
+                stringBuilder.append("description=" + description);
                 stringBuilder.append(", ");
-                stringBuilder.append("_jdwpMajor=" + _jdwpMajor);
+                stringBuilder.append("jdwpMajor=" + jdwpMajor);
                 stringBuilder.append(", ");
-                stringBuilder.append("_jdwpMinor=" + _jdwpMinor);
+                stringBuilder.append("jdwpMinor=" + jdwpMinor);
                 stringBuilder.append(", ");
-                stringBuilder.append("_vmVersion=" + _vmVersion);
+                stringBuilder.append("vmVersion=" + vmVersion);
                 stringBuilder.append(", ");
-                stringBuilder.append("_vmName=" + _vmName);
+                stringBuilder.append("vmName=" + vmName);
                 return stringBuilder.toString();
             }
         }
@@ -126,60 +126,60 @@ public final class VirtualMachineCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public String _signature;
+            public String signature;
             public IncomingRequest(String signature) {
-                this._signature = signature;
+                this.signature = signature;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _signature = ps.readString();
+                signature = ps.readString();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_signature);
+                ps.write(signature);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_signature=" + _signature);
+                stringBuilder.append("signature=" + signature);
                 return stringBuilder.toString();
             }
         }
 
         public static class ClassInfo {
 
-            public byte _refTypeTag;
+            public byte refTypeTag;
 
-            public ID.ReferenceTypeID _typeID;
+            public ID.ReferenceTypeID typeID;
 
-            public int _status;
+            public int status;
             public ClassInfo(byte refTypeTag,
                 ID.ReferenceTypeID typeID,
                 int status) {
-                this._refTypeTag = refTypeTag;
-                this._typeID = typeID;
-                this._status = status;
+                this.refTypeTag = refTypeTag;
+                this.typeID = typeID;
+                this.status = status;
             }
             public ClassInfo() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _refTypeTag = ps.readByte();
-                _typeID = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
-                _status = ps.readInt();
+                refTypeTag = ps.readByte();
+                typeID = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
+                status = ps.readInt();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_refTypeTag);
-                _typeID.write(ps.getOutputStream());
-                ps.write(_status);
+                ps.write(refTypeTag);
+                typeID.write(ps.getOutputStream());
+                ps.write(status);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_refTypeTag=" + _refTypeTag);
+                stringBuilder.append("refTypeTag=" + refTypeTag);
                 stringBuilder.append(", ");
-                stringBuilder.append("_typeID=" + _typeID);
+                stringBuilder.append("typeID=" + typeID);
                 stringBuilder.append(", ");
-                stringBuilder.append("_status=" + _status);
+                stringBuilder.append("status=" + status);
                 return stringBuilder.toString();
             }
         }
@@ -188,33 +188,33 @@ public final class VirtualMachineCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public ClassInfo[] _classes;
+            public ClassInfo[] classes;
             public Reply(ClassInfo[] classes) {
-                this._classes = classes;
+                this.classes = classes;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
                 final int classesCount = ps.readInt();
-                _classes = new ClassInfo[classesCount];
+                classes = new ClassInfo[classesCount];
                 for (int i = 0; i < classesCount; i++) {
-                    _classes[i] = new ClassInfo();
-                    _classes[i].read(ps);
+                    classes[i] = new ClassInfo();
+                    classes[i].read(ps);
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_classes.length);
-                for (int i = 0; i < _classes.length; i++) {
-                    _classes[i].write(ps);
+                ps.write(classes.length);
+                for (int i = 0; i < classes.length; i++) {
+                    classes[i].write(ps);
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_classes=[" + _classes.length + "]{");
-                for (int i = 0; i < _classes.length; i++) {
+                stringBuilder.append("classes=[" + classes.length + "]{");
+                for (int i = 0; i < classes.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_classes[i]=" + _classes[i]);
+                    stringBuilder.append("classes[i]=" + classes[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();
@@ -248,46 +248,46 @@ public final class VirtualMachineCommands {
 
         public static class ClassInfo {
 
-            public byte _refTypeTag;
+            public byte refTypeTag;
 
-            public ID.ReferenceTypeID _typeID;
+            public ID.ReferenceTypeID typeID;
 
-            public String _signature;
+            public String signature;
 
-            public int _status;
+            public int status;
             public ClassInfo(byte refTypeTag,
                 ID.ReferenceTypeID typeID,
                 String signature,
                 int status) {
-                this._refTypeTag = refTypeTag;
-                this._typeID = typeID;
-                this._signature = signature;
-                this._status = status;
+                this.refTypeTag = refTypeTag;
+                this.typeID = typeID;
+                this.signature = signature;
+                this.status = status;
             }
             public ClassInfo() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _refTypeTag = ps.readByte();
-                _typeID = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
-                _signature = ps.readString();
-                _status = ps.readInt();
+                refTypeTag = ps.readByte();
+                typeID = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
+                signature = ps.readString();
+                status = ps.readInt();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_refTypeTag);
-                _typeID.write(ps.getOutputStream());
-                ps.write(_signature);
-                ps.write(_status);
+                ps.write(refTypeTag);
+                typeID.write(ps.getOutputStream());
+                ps.write(signature);
+                ps.write(status);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_refTypeTag=" + _refTypeTag);
+                stringBuilder.append("refTypeTag=" + refTypeTag);
                 stringBuilder.append(", ");
-                stringBuilder.append("_typeID=" + _typeID);
+                stringBuilder.append("typeID=" + typeID);
                 stringBuilder.append(", ");
-                stringBuilder.append("_signature=" + _signature);
+                stringBuilder.append("signature=" + signature);
                 stringBuilder.append(", ");
-                stringBuilder.append("_status=" + _status);
+                stringBuilder.append("status=" + status);
                 return stringBuilder.toString();
             }
         }
@@ -296,33 +296,33 @@ public final class VirtualMachineCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public ClassInfo[] _classes;
+            public ClassInfo[] classes;
             public Reply(ClassInfo[] classes) {
-                this._classes = classes;
+                this.classes = classes;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
                 final int classesCount = ps.readInt();
-                _classes = new ClassInfo[classesCount];
+                classes = new ClassInfo[classesCount];
                 for (int i = 0; i < classesCount; i++) {
-                    _classes[i] = new ClassInfo();
-                    _classes[i].read(ps);
+                    classes[i] = new ClassInfo();
+                    classes[i].read(ps);
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_classes.length);
-                for (int i = 0; i < _classes.length; i++) {
-                    _classes[i].write(ps);
+                ps.write(classes.length);
+                for (int i = 0; i < classes.length; i++) {
+                    classes[i].write(ps);
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_classes=[" + _classes.length + "]{");
-                for (int i = 0; i < _classes.length; i++) {
+                stringBuilder.append("classes=[" + classes.length + "]{");
+                for (int i = 0; i < classes.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_classes[i]=" + _classes[i]);
+                    stringBuilder.append("classes[i]=" + classes[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();
@@ -358,32 +358,32 @@ public final class VirtualMachineCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public ID.ThreadID[] _threads;
+            public ID.ThreadID[] threads;
             public Reply(ID.ThreadID[] threads) {
-                this._threads = threads;
+                this.threads = threads;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
                 final int threadsCount = ps.readInt();
-                _threads = new ID.ThreadID[threadsCount];
+                threads = new ID.ThreadID[threadsCount];
                 for (int i = 0; i < threadsCount; i++) {
-                    _threads[i] = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                    threads[i] = ID.read(ps.getInputStream(), ID.ThreadID.class);
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_threads.length);
-                for (int i = 0; i < _threads.length; i++) {
-                    _threads[i].write(ps.getOutputStream());
+                ps.write(threads.length);
+                for (int i = 0; i < threads.length; i++) {
+                    threads[i].write(ps.getOutputStream());
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_threads=[" + _threads.length + "]{");
-                for (int i = 0; i < _threads.length; i++) {
+                stringBuilder.append("threads=[" + threads.length + "]{");
+                for (int i = 0; i < threads.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_threads[i]=" + _threads[i]);
+                    stringBuilder.append("threads[i]=" + threads[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();
@@ -419,32 +419,32 @@ public final class VirtualMachineCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public ID.ThreadGroupID[] _groups;
+            public ID.ThreadGroupID[] groups;
             public Reply(ID.ThreadGroupID[] groups) {
-                this._groups = groups;
+                this.groups = groups;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
                 final int groupsCount = ps.readInt();
-                _groups = new ID.ThreadGroupID[groupsCount];
+                groups = new ID.ThreadGroupID[groupsCount];
                 for (int i = 0; i < groupsCount; i++) {
-                    _groups[i] = ID.read(ps.getInputStream(), ID.ThreadGroupID.class);
+                    groups[i] = ID.read(ps.getInputStream(), ID.ThreadGroupID.class);
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_groups.length);
-                for (int i = 0; i < _groups.length; i++) {
-                    _groups[i].write(ps.getOutputStream());
+                ps.write(groups.length);
+                for (int i = 0; i < groups.length; i++) {
+                    groups[i].write(ps.getOutputStream());
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_groups=[" + _groups.length + "]{");
-                for (int i = 0; i < _groups.length; i++) {
+                stringBuilder.append("groups=[" + groups.length + "]{");
+                for (int i = 0; i < groups.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_groups[i]=" + _groups[i]);
+                    stringBuilder.append("groups[i]=" + groups[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();
@@ -521,54 +521,54 @@ public final class VirtualMachineCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public int _fieldIDSize;
+            public int fieldIDSize;
 
-            public int _methodIDSize;
+            public int methodIDSize;
 
-            public int _objectIDSize;
+            public int objectIDSize;
 
-            public int _referenceTypeIDSize;
+            public int referenceTypeIDSize;
 
-            public int _frameIDSize;
+            public int frameIDSize;
             public Reply(int fieldIDSize,
                 int methodIDSize,
                 int objectIDSize,
                 int referenceTypeIDSize,
                 int frameIDSize) {
-                this._fieldIDSize = fieldIDSize;
-                this._methodIDSize = methodIDSize;
-                this._objectIDSize = objectIDSize;
-                this._referenceTypeIDSize = referenceTypeIDSize;
-                this._frameIDSize = frameIDSize;
+                this.fieldIDSize = fieldIDSize;
+                this.methodIDSize = methodIDSize;
+                this.objectIDSize = objectIDSize;
+                this.referenceTypeIDSize = referenceTypeIDSize;
+                this.frameIDSize = frameIDSize;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _fieldIDSize = ps.readInt();
-                _methodIDSize = ps.readInt();
-                _objectIDSize = ps.readInt();
-                _referenceTypeIDSize = ps.readInt();
-                _frameIDSize = ps.readInt();
+                fieldIDSize = ps.readInt();
+                methodIDSize = ps.readInt();
+                objectIDSize = ps.readInt();
+                referenceTypeIDSize = ps.readInt();
+                frameIDSize = ps.readInt();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_fieldIDSize);
-                ps.write(_methodIDSize);
-                ps.write(_objectIDSize);
-                ps.write(_referenceTypeIDSize);
-                ps.write(_frameIDSize);
+                ps.write(fieldIDSize);
+                ps.write(methodIDSize);
+                ps.write(objectIDSize);
+                ps.write(referenceTypeIDSize);
+                ps.write(frameIDSize);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_fieldIDSize=" + _fieldIDSize);
+                stringBuilder.append("fieldIDSize=" + fieldIDSize);
                 stringBuilder.append(", ");
-                stringBuilder.append("_methodIDSize=" + _methodIDSize);
+                stringBuilder.append("methodIDSize=" + methodIDSize);
                 stringBuilder.append(", ");
-                stringBuilder.append("_objectIDSize=" + _objectIDSize);
+                stringBuilder.append("objectIDSize=" + objectIDSize);
                 stringBuilder.append(", ");
-                stringBuilder.append("_referenceTypeIDSize=" + _referenceTypeIDSize);
+                stringBuilder.append("referenceTypeIDSize=" + referenceTypeIDSize);
                 stringBuilder.append(", ");
-                stringBuilder.append("_frameIDSize=" + _frameIDSize);
+                stringBuilder.append("frameIDSize=" + frameIDSize);
                 return stringBuilder.toString();
             }
         }
@@ -668,22 +668,22 @@ public final class VirtualMachineCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public int _exitCode;
+            public int exitCode;
             public IncomingRequest(int exitCode) {
-                this._exitCode = exitCode;
+                this.exitCode = exitCode;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _exitCode = ps.readInt();
+                exitCode = ps.readInt();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_exitCode);
+                ps.write(exitCode);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_exitCode=" + _exitCode);
+                stringBuilder.append("exitCode=" + exitCode);
                 return stringBuilder.toString();
             }
         }
@@ -717,22 +717,22 @@ public final class VirtualMachineCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public String _utf;
+            public String utf;
             public IncomingRequest(String utf) {
-                this._utf = utf;
+                this.utf = utf;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _utf = ps.readString();
+                utf = ps.readString();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_utf);
+                ps.write(utf);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_utf=" + _utf);
+                stringBuilder.append("utf=" + utf);
                 return stringBuilder.toString();
             }
         }
@@ -741,22 +741,22 @@ public final class VirtualMachineCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public ID.StringID _stringObject;
+            public ID.StringID stringObject;
             public Reply(ID.StringID stringObject) {
-                this._stringObject = stringObject;
+                this.stringObject = stringObject;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _stringObject = ID.read(ps.getInputStream(), ID.StringID.class);
+                stringObject = ID.read(ps.getInputStream(), ID.StringID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _stringObject.write(ps.getOutputStream());
+                stringObject.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_stringObject=" + _stringObject);
+                stringBuilder.append("stringObject=" + stringObject);
                 return stringBuilder.toString();
             }
         }
@@ -790,19 +790,19 @@ public final class VirtualMachineCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public boolean _canWatchFieldModification;
+            public boolean canWatchFieldModification;
 
-            public boolean _canWatchFieldAccess;
+            public boolean canWatchFieldAccess;
 
-            public boolean _canGetBytecodes;
+            public boolean canGetBytecodes;
 
-            public boolean _canGetSyntheticAttribute;
+            public boolean canGetSyntheticAttribute;
 
-            public boolean _canGetOwnedMonitorInfo;
+            public boolean canGetOwnedMonitorInfo;
 
-            public boolean _canGetCurrentContendedMonitor;
+            public boolean canGetCurrentContendedMonitor;
 
-            public boolean _canGetMonitorInfo;
+            public boolean canGetMonitorInfo;
             public Reply(boolean canWatchFieldModification,
                 boolean canWatchFieldAccess,
                 boolean canGetBytecodes,
@@ -810,50 +810,50 @@ public final class VirtualMachineCommands {
                 boolean canGetOwnedMonitorInfo,
                 boolean canGetCurrentContendedMonitor,
                 boolean canGetMonitorInfo) {
-                this._canWatchFieldModification = canWatchFieldModification;
-                this._canWatchFieldAccess = canWatchFieldAccess;
-                this._canGetBytecodes = canGetBytecodes;
-                this._canGetSyntheticAttribute = canGetSyntheticAttribute;
-                this._canGetOwnedMonitorInfo = canGetOwnedMonitorInfo;
-                this._canGetCurrentContendedMonitor = canGetCurrentContendedMonitor;
-                this._canGetMonitorInfo = canGetMonitorInfo;
+                this.canWatchFieldModification = canWatchFieldModification;
+                this.canWatchFieldAccess = canWatchFieldAccess;
+                this.canGetBytecodes = canGetBytecodes;
+                this.canGetSyntheticAttribute = canGetSyntheticAttribute;
+                this.canGetOwnedMonitorInfo = canGetOwnedMonitorInfo;
+                this.canGetCurrentContendedMonitor = canGetCurrentContendedMonitor;
+                this.canGetMonitorInfo = canGetMonitorInfo;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _canWatchFieldModification = ps.readBoolean();
-                _canWatchFieldAccess = ps.readBoolean();
-                _canGetBytecodes = ps.readBoolean();
-                _canGetSyntheticAttribute = ps.readBoolean();
-                _canGetOwnedMonitorInfo = ps.readBoolean();
-                _canGetCurrentContendedMonitor = ps.readBoolean();
-                _canGetMonitorInfo = ps.readBoolean();
+                canWatchFieldModification = ps.readBoolean();
+                canWatchFieldAccess = ps.readBoolean();
+                canGetBytecodes = ps.readBoolean();
+                canGetSyntheticAttribute = ps.readBoolean();
+                canGetOwnedMonitorInfo = ps.readBoolean();
+                canGetCurrentContendedMonitor = ps.readBoolean();
+                canGetMonitorInfo = ps.readBoolean();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_canWatchFieldModification);
-                ps.write(_canWatchFieldAccess);
-                ps.write(_canGetBytecodes);
-                ps.write(_canGetSyntheticAttribute);
-                ps.write(_canGetOwnedMonitorInfo);
-                ps.write(_canGetCurrentContendedMonitor);
-                ps.write(_canGetMonitorInfo);
+                ps.write(canWatchFieldModification);
+                ps.write(canWatchFieldAccess);
+                ps.write(canGetBytecodes);
+                ps.write(canGetSyntheticAttribute);
+                ps.write(canGetOwnedMonitorInfo);
+                ps.write(canGetCurrentContendedMonitor);
+                ps.write(canGetMonitorInfo);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_canWatchFieldModification=" + _canWatchFieldModification);
+                stringBuilder.append("canWatchFieldModification=" + canWatchFieldModification);
                 stringBuilder.append(", ");
-                stringBuilder.append("_canWatchFieldAccess=" + _canWatchFieldAccess);
+                stringBuilder.append("canWatchFieldAccess=" + canWatchFieldAccess);
                 stringBuilder.append(", ");
-                stringBuilder.append("_canGetBytecodes=" + _canGetBytecodes);
+                stringBuilder.append("canGetBytecodes=" + canGetBytecodes);
                 stringBuilder.append(", ");
-                stringBuilder.append("_canGetSyntheticAttribute=" + _canGetSyntheticAttribute);
+                stringBuilder.append("canGetSyntheticAttribute=" + canGetSyntheticAttribute);
                 stringBuilder.append(", ");
-                stringBuilder.append("_canGetOwnedMonitorInfo=" + _canGetOwnedMonitorInfo);
+                stringBuilder.append("canGetOwnedMonitorInfo=" + canGetOwnedMonitorInfo);
                 stringBuilder.append(", ");
-                stringBuilder.append("_canGetCurrentContendedMonitor=" + _canGetCurrentContendedMonitor);
+                stringBuilder.append("canGetCurrentContendedMonitor=" + canGetCurrentContendedMonitor);
                 stringBuilder.append(", ");
-                stringBuilder.append("_canGetMonitorInfo=" + _canGetMonitorInfo);
+                stringBuilder.append("canGetMonitorInfo=" + canGetMonitorInfo);
                 return stringBuilder.toString();
             }
         }
@@ -887,60 +887,60 @@ public final class VirtualMachineCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public String _baseDir;
+            public String baseDir;
 
-            public String[] _classpaths;
+            public String[] classpaths;
 
-            public String[] _bootclasspaths;
+            public String[] bootclasspaths;
             public Reply(String baseDir,
                 String[] classpaths,
                 String[] bootclasspaths) {
-                this._baseDir = baseDir;
-                this._classpaths = classpaths;
-                this._bootclasspaths = bootclasspaths;
+                this.baseDir = baseDir;
+                this.classpaths = classpaths;
+                this.bootclasspaths = bootclasspaths;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _baseDir = ps.readString();
+                baseDir = ps.readString();
                 final int classpathsCount = ps.readInt();
-                _classpaths = new String[classpathsCount];
+                classpaths = new String[classpathsCount];
                 for (int i = 0; i < classpathsCount; i++) {
-                    _classpaths[i] = ps.readString();
+                    classpaths[i] = ps.readString();
                 }
                 final int bootclasspathsCount = ps.readInt();
-                _bootclasspaths = new String[bootclasspathsCount];
+                bootclasspaths = new String[bootclasspathsCount];
                 for (int i = 0; i < bootclasspathsCount; i++) {
-                    _bootclasspaths[i] = ps.readString();
+                    bootclasspaths[i] = ps.readString();
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_baseDir);
-                ps.write(_classpaths.length);
-                for (int i = 0; i < _classpaths.length; i++) {
-                    ps.write(_classpaths[i]);
+                ps.write(baseDir);
+                ps.write(classpaths.length);
+                for (int i = 0; i < classpaths.length; i++) {
+                    ps.write(classpaths[i]);
                 }
-                ps.write(_bootclasspaths.length);
-                for (int i = 0; i < _bootclasspaths.length; i++) {
-                    ps.write(_bootclasspaths[i]);
+                ps.write(bootclasspaths.length);
+                for (int i = 0; i < bootclasspaths.length; i++) {
+                    ps.write(bootclasspaths[i]);
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_baseDir=" + _baseDir);
+                stringBuilder.append("baseDir=" + baseDir);
                 stringBuilder.append(", ");
-                stringBuilder.append("_classpaths=[" + _classpaths.length + "]{");
-                for (int i = 0; i < _classpaths.length; i++) {
+                stringBuilder.append("classpaths=[" + classpaths.length + "]{");
+                for (int i = 0; i < classpaths.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_classpaths[i]=" + _classpaths[i]);
+                    stringBuilder.append("classpaths[i]=" + classpaths[i]);
                 }
                 stringBuilder.append("}");
                 stringBuilder.append(", ");
-                stringBuilder.append("_bootclasspaths=[" + _bootclasspaths.length + "]{");
-                for (int i = 0; i < _bootclasspaths.length; i++) {
+                stringBuilder.append("bootclasspaths=[" + bootclasspaths.length + "]{");
+                for (int i = 0; i < bootclasspaths.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_bootclasspaths[i]=" + _bootclasspaths[i]);
+                    stringBuilder.append("bootclasspaths[i]=" + bootclasspaths[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();
@@ -961,62 +961,62 @@ public final class VirtualMachineCommands {
 
         public static class Request {
 
-            public ID.ObjectID _object;
+            public ID.ObjectID object;
 
-            public int _refCnt;
+            public int refCnt;
             public Request(ID.ObjectID object,
                 int refCnt) {
-                this._object = object;
-                this._refCnt = refCnt;
+                this.object = object;
+                this.refCnt = refCnt;
             }
             public Request() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _object = ID.read(ps.getInputStream(), ID.ObjectID.class);
-                _refCnt = ps.readInt();
+                object = ID.read(ps.getInputStream(), ID.ObjectID.class);
+                refCnt = ps.readInt();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _object.write(ps.getOutputStream());
-                ps.write(_refCnt);
+                object.write(ps.getOutputStream());
+                ps.write(refCnt);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_object=" + _object);
+                stringBuilder.append("object=" + object);
                 stringBuilder.append(", ");
-                stringBuilder.append("_refCnt=" + _refCnt);
+                stringBuilder.append("refCnt=" + refCnt);
                 return stringBuilder.toString();
             }
         }
 
         public static class IncomingRequest implements IncomingData {
-            public Request[] _requests;
+            public Request[] requests;
             public IncomingRequest(Request[] requests) {
-                this._requests = requests;
+                this.requests = requests;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
                 final int requestsCount = ps.readInt();
-                _requests = new Request[requestsCount];
+                requests = new Request[requestsCount];
                 for (int i = 0; i < requestsCount; i++) {
-                    _requests[i] = new Request();
-                    _requests[i].read(ps);
+                    requests[i] = new Request();
+                    requests[i].read(ps);
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_requests.length);
-                for (int i = 0; i < _requests.length; i++) {
-                    _requests[i].write(ps);
+                ps.write(requests.length);
+                for (int i = 0; i < requests.length; i++) {
+                    requests[i].write(ps);
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_requests=[" + _requests.length + "]{");
-                for (int i = 0; i < _requests.length; i++) {
+                stringBuilder.append("requests=[" + requests.length + "]{");
+                for (int i = 0; i < requests.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_requests[i]=" + _requests[i]);
+                    stringBuilder.append("requests[i]=" + requests[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();
@@ -1150,69 +1150,69 @@ public final class VirtualMachineCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public boolean _canWatchFieldModification;
+            public boolean canWatchFieldModification;
 
-            public boolean _canWatchFieldAccess;
+            public boolean canWatchFieldAccess;
 
-            public boolean _canGetBytecodes;
+            public boolean canGetBytecodes;
 
-            public boolean _canGetSyntheticAttribute;
+            public boolean canGetSyntheticAttribute;
 
-            public boolean _canGetOwnedMonitorInfo;
+            public boolean canGetOwnedMonitorInfo;
 
-            public boolean _canGetCurrentContendedMonitor;
+            public boolean canGetCurrentContendedMonitor;
 
-            public boolean _canGetMonitorInfo;
+            public boolean canGetMonitorInfo;
 
-            public boolean _canRedefineClasses;
+            public boolean canRedefineClasses;
 
-            public boolean _canAddMethod;
+            public boolean canAddMethod;
 
-            public boolean _canUnrestrictedlyRedefineClasses;
+            public boolean canUnrestrictedlyRedefineClasses;
 
-            public boolean _canPopFrames;
+            public boolean canPopFrames;
 
-            public boolean _canUseInstanceFilters;
+            public boolean canUseInstanceFilters;
 
-            public boolean _canGetSourceDebugExtension;
+            public boolean canGetSourceDebugExtension;
 
-            public boolean _canRequestVMDeathEvent;
+            public boolean canRequestVMDeathEvent;
 
-            public boolean _canSetDefaultStratum;
+            public boolean canSetDefaultStratum;
 
-            public boolean _canGetInstanceInfo;
+            public boolean canGetInstanceInfo;
 
-            public boolean _canRequestMonitorEvents;
+            public boolean canRequestMonitorEvents;
 
-            public boolean _canGetMonitorFrameInfo;
+            public boolean canGetMonitorFrameInfo;
 
-            public boolean _canUseSourceNameFilters;
+            public boolean canUseSourceNameFilters;
 
-            public boolean _canGetConstantPool;
+            public boolean canGetConstantPool;
 
-            public boolean _canForceEarlyReturn;
+            public boolean canForceEarlyReturn;
 
-            public boolean _reserved22;
+            public boolean reserved22;
 
-            public boolean _reserved23;
+            public boolean reserved23;
 
-            public boolean _reserved24;
+            public boolean reserved24;
 
-            public boolean _reserved25;
+            public boolean reserved25;
 
-            public boolean _reserved26;
+            public boolean reserved26;
 
-            public boolean _reserved27;
+            public boolean reserved27;
 
-            public boolean _reserved28;
+            public boolean reserved28;
 
-            public boolean _reserved29;
+            public boolean reserved29;
 
-            public boolean _reserved30;
+            public boolean reserved30;
 
-            public boolean _reserved31;
+            public boolean reserved31;
 
-            public boolean _reserved32;
+            public boolean reserved32;
             public Reply(boolean canWatchFieldModification,
                 boolean canWatchFieldAccess,
                 boolean canGetBytecodes,
@@ -1245,175 +1245,175 @@ public final class VirtualMachineCommands {
                 boolean reserved30,
                 boolean reserved31,
                 boolean reserved32) {
-                this._canWatchFieldModification = canWatchFieldModification;
-                this._canWatchFieldAccess = canWatchFieldAccess;
-                this._canGetBytecodes = canGetBytecodes;
-                this._canGetSyntheticAttribute = canGetSyntheticAttribute;
-                this._canGetOwnedMonitorInfo = canGetOwnedMonitorInfo;
-                this._canGetCurrentContendedMonitor = canGetCurrentContendedMonitor;
-                this._canGetMonitorInfo = canGetMonitorInfo;
-                this._canRedefineClasses = canRedefineClasses;
-                this._canAddMethod = canAddMethod;
-                this._canUnrestrictedlyRedefineClasses = canUnrestrictedlyRedefineClasses;
-                this._canPopFrames = canPopFrames;
-                this._canUseInstanceFilters = canUseInstanceFilters;
-                this._canGetSourceDebugExtension = canGetSourceDebugExtension;
-                this._canRequestVMDeathEvent = canRequestVMDeathEvent;
-                this._canSetDefaultStratum = canSetDefaultStratum;
-                this._canGetInstanceInfo = canGetInstanceInfo;
-                this._canRequestMonitorEvents = canRequestMonitorEvents;
-                this._canGetMonitorFrameInfo = canGetMonitorFrameInfo;
-                this._canUseSourceNameFilters = canUseSourceNameFilters;
-                this._canGetConstantPool = canGetConstantPool;
-                this._canForceEarlyReturn = canForceEarlyReturn;
-                this._reserved22 = reserved22;
-                this._reserved23 = reserved23;
-                this._reserved24 = reserved24;
-                this._reserved25 = reserved25;
-                this._reserved26 = reserved26;
-                this._reserved27 = reserved27;
-                this._reserved28 = reserved28;
-                this._reserved29 = reserved29;
-                this._reserved30 = reserved30;
-                this._reserved31 = reserved31;
-                this._reserved32 = reserved32;
+                this.canWatchFieldModification = canWatchFieldModification;
+                this.canWatchFieldAccess = canWatchFieldAccess;
+                this.canGetBytecodes = canGetBytecodes;
+                this.canGetSyntheticAttribute = canGetSyntheticAttribute;
+                this.canGetOwnedMonitorInfo = canGetOwnedMonitorInfo;
+                this.canGetCurrentContendedMonitor = canGetCurrentContendedMonitor;
+                this.canGetMonitorInfo = canGetMonitorInfo;
+                this.canRedefineClasses = canRedefineClasses;
+                this.canAddMethod = canAddMethod;
+                this.canUnrestrictedlyRedefineClasses = canUnrestrictedlyRedefineClasses;
+                this.canPopFrames = canPopFrames;
+                this.canUseInstanceFilters = canUseInstanceFilters;
+                this.canGetSourceDebugExtension = canGetSourceDebugExtension;
+                this.canRequestVMDeathEvent = canRequestVMDeathEvent;
+                this.canSetDefaultStratum = canSetDefaultStratum;
+                this.canGetInstanceInfo = canGetInstanceInfo;
+                this.canRequestMonitorEvents = canRequestMonitorEvents;
+                this.canGetMonitorFrameInfo = canGetMonitorFrameInfo;
+                this.canUseSourceNameFilters = canUseSourceNameFilters;
+                this.canGetConstantPool = canGetConstantPool;
+                this.canForceEarlyReturn = canForceEarlyReturn;
+                this.reserved22 = reserved22;
+                this.reserved23 = reserved23;
+                this.reserved24 = reserved24;
+                this.reserved25 = reserved25;
+                this.reserved26 = reserved26;
+                this.reserved27 = reserved27;
+                this.reserved28 = reserved28;
+                this.reserved29 = reserved29;
+                this.reserved30 = reserved30;
+                this.reserved31 = reserved31;
+                this.reserved32 = reserved32;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _canWatchFieldModification = ps.readBoolean();
-                _canWatchFieldAccess = ps.readBoolean();
-                _canGetBytecodes = ps.readBoolean();
-                _canGetSyntheticAttribute = ps.readBoolean();
-                _canGetOwnedMonitorInfo = ps.readBoolean();
-                _canGetCurrentContendedMonitor = ps.readBoolean();
-                _canGetMonitorInfo = ps.readBoolean();
-                _canRedefineClasses = ps.readBoolean();
-                _canAddMethod = ps.readBoolean();
-                _canUnrestrictedlyRedefineClasses = ps.readBoolean();
-                _canPopFrames = ps.readBoolean();
-                _canUseInstanceFilters = ps.readBoolean();
-                _canGetSourceDebugExtension = ps.readBoolean();
-                _canRequestVMDeathEvent = ps.readBoolean();
-                _canSetDefaultStratum = ps.readBoolean();
-                _canGetInstanceInfo = ps.readBoolean();
-                _canRequestMonitorEvents = ps.readBoolean();
-                _canGetMonitorFrameInfo = ps.readBoolean();
-                _canUseSourceNameFilters = ps.readBoolean();
-                _canGetConstantPool = ps.readBoolean();
-                _canForceEarlyReturn = ps.readBoolean();
-                _reserved22 = ps.readBoolean();
-                _reserved23 = ps.readBoolean();
-                _reserved24 = ps.readBoolean();
-                _reserved25 = ps.readBoolean();
-                _reserved26 = ps.readBoolean();
-                _reserved27 = ps.readBoolean();
-                _reserved28 = ps.readBoolean();
-                _reserved29 = ps.readBoolean();
-                _reserved30 = ps.readBoolean();
-                _reserved31 = ps.readBoolean();
-                _reserved32 = ps.readBoolean();
+                canWatchFieldModification = ps.readBoolean();
+                canWatchFieldAccess = ps.readBoolean();
+                canGetBytecodes = ps.readBoolean();
+                canGetSyntheticAttribute = ps.readBoolean();
+                canGetOwnedMonitorInfo = ps.readBoolean();
+                canGetCurrentContendedMonitor = ps.readBoolean();
+                canGetMonitorInfo = ps.readBoolean();
+                canRedefineClasses = ps.readBoolean();
+                canAddMethod = ps.readBoolean();
+                canUnrestrictedlyRedefineClasses = ps.readBoolean();
+                canPopFrames = ps.readBoolean();
+                canUseInstanceFilters = ps.readBoolean();
+                canGetSourceDebugExtension = ps.readBoolean();
+                canRequestVMDeathEvent = ps.readBoolean();
+                canSetDefaultStratum = ps.readBoolean();
+                canGetInstanceInfo = ps.readBoolean();
+                canRequestMonitorEvents = ps.readBoolean();
+                canGetMonitorFrameInfo = ps.readBoolean();
+                canUseSourceNameFilters = ps.readBoolean();
+                canGetConstantPool = ps.readBoolean();
+                canForceEarlyReturn = ps.readBoolean();
+                reserved22 = ps.readBoolean();
+                reserved23 = ps.readBoolean();
+                reserved24 = ps.readBoolean();
+                reserved25 = ps.readBoolean();
+                reserved26 = ps.readBoolean();
+                reserved27 = ps.readBoolean();
+                reserved28 = ps.readBoolean();
+                reserved29 = ps.readBoolean();
+                reserved30 = ps.readBoolean();
+                reserved31 = ps.readBoolean();
+                reserved32 = ps.readBoolean();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_canWatchFieldModification);
-                ps.write(_canWatchFieldAccess);
-                ps.write(_canGetBytecodes);
-                ps.write(_canGetSyntheticAttribute);
-                ps.write(_canGetOwnedMonitorInfo);
-                ps.write(_canGetCurrentContendedMonitor);
-                ps.write(_canGetMonitorInfo);
-                ps.write(_canRedefineClasses);
-                ps.write(_canAddMethod);
-                ps.write(_canUnrestrictedlyRedefineClasses);
-                ps.write(_canPopFrames);
-                ps.write(_canUseInstanceFilters);
-                ps.write(_canGetSourceDebugExtension);
-                ps.write(_canRequestVMDeathEvent);
-                ps.write(_canSetDefaultStratum);
-                ps.write(_canGetInstanceInfo);
-                ps.write(_canRequestMonitorEvents);
-                ps.write(_canGetMonitorFrameInfo);
-                ps.write(_canUseSourceNameFilters);
-                ps.write(_canGetConstantPool);
-                ps.write(_canForceEarlyReturn);
-                ps.write(_reserved22);
-                ps.write(_reserved23);
-                ps.write(_reserved24);
-                ps.write(_reserved25);
-                ps.write(_reserved26);
-                ps.write(_reserved27);
-                ps.write(_reserved28);
-                ps.write(_reserved29);
-                ps.write(_reserved30);
-                ps.write(_reserved31);
-                ps.write(_reserved32);
+                ps.write(canWatchFieldModification);
+                ps.write(canWatchFieldAccess);
+                ps.write(canGetBytecodes);
+                ps.write(canGetSyntheticAttribute);
+                ps.write(canGetOwnedMonitorInfo);
+                ps.write(canGetCurrentContendedMonitor);
+                ps.write(canGetMonitorInfo);
+                ps.write(canRedefineClasses);
+                ps.write(canAddMethod);
+                ps.write(canUnrestrictedlyRedefineClasses);
+                ps.write(canPopFrames);
+                ps.write(canUseInstanceFilters);
+                ps.write(canGetSourceDebugExtension);
+                ps.write(canRequestVMDeathEvent);
+                ps.write(canSetDefaultStratum);
+                ps.write(canGetInstanceInfo);
+                ps.write(canRequestMonitorEvents);
+                ps.write(canGetMonitorFrameInfo);
+                ps.write(canUseSourceNameFilters);
+                ps.write(canGetConstantPool);
+                ps.write(canForceEarlyReturn);
+                ps.write(reserved22);
+                ps.write(reserved23);
+                ps.write(reserved24);
+                ps.write(reserved25);
+                ps.write(reserved26);
+                ps.write(reserved27);
+                ps.write(reserved28);
+                ps.write(reserved29);
+                ps.write(reserved30);
+                ps.write(reserved31);
+                ps.write(reserved32);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_canWatchFieldModification=" + _canWatchFieldModification);
+                stringBuilder.append("canWatchFieldModification=" + canWatchFieldModification);
                 stringBuilder.append(", ");
-                stringBuilder.append("_canWatchFieldAccess=" + _canWatchFieldAccess);
+                stringBuilder.append("canWatchFieldAccess=" + canWatchFieldAccess);
                 stringBuilder.append(", ");
-                stringBuilder.append("_canGetBytecodes=" + _canGetBytecodes);
+                stringBuilder.append("canGetBytecodes=" + canGetBytecodes);
                 stringBuilder.append(", ");
-                stringBuilder.append("_canGetSyntheticAttribute=" + _canGetSyntheticAttribute);
+                stringBuilder.append("canGetSyntheticAttribute=" + canGetSyntheticAttribute);
                 stringBuilder.append(", ");
-                stringBuilder.append("_canGetOwnedMonitorInfo=" + _canGetOwnedMonitorInfo);
+                stringBuilder.append("canGetOwnedMonitorInfo=" + canGetOwnedMonitorInfo);
                 stringBuilder.append(", ");
-                stringBuilder.append("_canGetCurrentContendedMonitor=" + _canGetCurrentContendedMonitor);
+                stringBuilder.append("canGetCurrentContendedMonitor=" + canGetCurrentContendedMonitor);
                 stringBuilder.append(", ");
-                stringBuilder.append("_canGetMonitorInfo=" + _canGetMonitorInfo);
+                stringBuilder.append("canGetMonitorInfo=" + canGetMonitorInfo);
                 stringBuilder.append(", ");
-                stringBuilder.append("_canRedefineClasses=" + _canRedefineClasses);
+                stringBuilder.append("canRedefineClasses=" + canRedefineClasses);
                 stringBuilder.append(", ");
-                stringBuilder.append("_canAddMethod=" + _canAddMethod);
+                stringBuilder.append("canAddMethod=" + canAddMethod);
                 stringBuilder.append(", ");
-                stringBuilder.append("_canUnrestrictedlyRedefineClasses=" + _canUnrestrictedlyRedefineClasses);
+                stringBuilder.append("canUnrestrictedlyRedefineClasses=" + canUnrestrictedlyRedefineClasses);
                 stringBuilder.append(", ");
-                stringBuilder.append("_canPopFrames=" + _canPopFrames);
+                stringBuilder.append("canPopFrames=" + canPopFrames);
                 stringBuilder.append(", ");
-                stringBuilder.append("_canUseInstanceFilters=" + _canUseInstanceFilters);
+                stringBuilder.append("canUseInstanceFilters=" + canUseInstanceFilters);
                 stringBuilder.append(", ");
-                stringBuilder.append("_canGetSourceDebugExtension=" + _canGetSourceDebugExtension);
+                stringBuilder.append("canGetSourceDebugExtension=" + canGetSourceDebugExtension);
                 stringBuilder.append(", ");
-                stringBuilder.append("_canRequestVMDeathEvent=" + _canRequestVMDeathEvent);
+                stringBuilder.append("canRequestVMDeathEvent=" + canRequestVMDeathEvent);
                 stringBuilder.append(", ");
-                stringBuilder.append("_canSetDefaultStratum=" + _canSetDefaultStratum);
+                stringBuilder.append("canSetDefaultStratum=" + canSetDefaultStratum);
                 stringBuilder.append(", ");
-                stringBuilder.append("_canGetInstanceInfo=" + _canGetInstanceInfo);
+                stringBuilder.append("canGetInstanceInfo=" + canGetInstanceInfo);
                 stringBuilder.append(", ");
-                stringBuilder.append("_canRequestMonitorEvents=" + _canRequestMonitorEvents);
+                stringBuilder.append("canRequestMonitorEvents=" + canRequestMonitorEvents);
                 stringBuilder.append(", ");
-                stringBuilder.append("_canGetMonitorFrameInfo=" + _canGetMonitorFrameInfo);
+                stringBuilder.append("canGetMonitorFrameInfo=" + canGetMonitorFrameInfo);
                 stringBuilder.append(", ");
-                stringBuilder.append("_canUseSourceNameFilters=" + _canUseSourceNameFilters);
+                stringBuilder.append("canUseSourceNameFilters=" + canUseSourceNameFilters);
                 stringBuilder.append(", ");
-                stringBuilder.append("_canGetConstantPool=" + _canGetConstantPool);
+                stringBuilder.append("canGetConstantPool=" + canGetConstantPool);
                 stringBuilder.append(", ");
-                stringBuilder.append("_canForceEarlyReturn=" + _canForceEarlyReturn);
+                stringBuilder.append("canForceEarlyReturn=" + canForceEarlyReturn);
                 stringBuilder.append(", ");
-                stringBuilder.append("_reserved22=" + _reserved22);
+                stringBuilder.append("reserved22=" + reserved22);
                 stringBuilder.append(", ");
-                stringBuilder.append("_reserved23=" + _reserved23);
+                stringBuilder.append("reserved23=" + reserved23);
                 stringBuilder.append(", ");
-                stringBuilder.append("_reserved24=" + _reserved24);
+                stringBuilder.append("reserved24=" + reserved24);
                 stringBuilder.append(", ");
-                stringBuilder.append("_reserved25=" + _reserved25);
+                stringBuilder.append("reserved25=" + reserved25);
                 stringBuilder.append(", ");
-                stringBuilder.append("_reserved26=" + _reserved26);
+                stringBuilder.append("reserved26=" + reserved26);
                 stringBuilder.append(", ");
-                stringBuilder.append("_reserved27=" + _reserved27);
+                stringBuilder.append("reserved27=" + reserved27);
                 stringBuilder.append(", ");
-                stringBuilder.append("_reserved28=" + _reserved28);
+                stringBuilder.append("reserved28=" + reserved28);
                 stringBuilder.append(", ");
-                stringBuilder.append("_reserved29=" + _reserved29);
+                stringBuilder.append("reserved29=" + reserved29);
                 stringBuilder.append(", ");
-                stringBuilder.append("_reserved30=" + _reserved30);
+                stringBuilder.append("reserved30=" + reserved30);
                 stringBuilder.append(", ");
-                stringBuilder.append("_reserved31=" + _reserved31);
+                stringBuilder.append("reserved31=" + reserved31);
                 stringBuilder.append(", ");
-                stringBuilder.append("_reserved32=" + _reserved32);
+                stringBuilder.append("reserved32=" + reserved32);
                 return stringBuilder.toString();
             }
         }
@@ -1432,40 +1432,40 @@ public final class VirtualMachineCommands {
 
         public static class ClassDef {
 
-            public ID.ReferenceTypeID _refType;
+            public ID.ReferenceTypeID refType;
 
-            public byte[] _classfile;
+            public byte[] classfile;
             public ClassDef(ID.ReferenceTypeID refType,
                 byte[] classfile) {
-                this._refType = refType;
-                this._classfile = classfile;
+                this.refType = refType;
+                this.classfile = classfile;
             }
             public ClassDef() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _refType = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
+                refType = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
                 final int classfileCount = ps.readInt();
-                _classfile = new byte[classfileCount];
+                classfile = new byte[classfileCount];
                 for (int i = 0; i < classfileCount; i++) {
-                    _classfile[i] = ps.readByte();
+                    classfile[i] = ps.readByte();
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _refType.write(ps.getOutputStream());
-                ps.write(_classfile.length);
-                for (int i = 0; i < _classfile.length; i++) {
-                    ps.write(_classfile[i]);
+                refType.write(ps.getOutputStream());
+                ps.write(classfile.length);
+                for (int i = 0; i < classfile.length; i++) {
+                    ps.write(classfile[i]);
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_refType=" + _refType);
+                stringBuilder.append("refType=" + refType);
                 stringBuilder.append(", ");
-                stringBuilder.append("_classfile=[" + _classfile.length + "]{");
-                for (int i = 0; i < _classfile.length; i++) {
+                stringBuilder.append("classfile=[" + classfile.length + "]{");
+                for (int i = 0; i < classfile.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_classfile[i]=" + _classfile[i]);
+                    stringBuilder.append("classfile[i]=" + classfile[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();
@@ -1473,33 +1473,33 @@ public final class VirtualMachineCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ClassDef[] _classes;
+            public ClassDef[] classes;
             public IncomingRequest(ClassDef[] classes) {
-                this._classes = classes;
+                this.classes = classes;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
                 final int classesCount = ps.readInt();
-                _classes = new ClassDef[classesCount];
+                classes = new ClassDef[classesCount];
                 for (int i = 0; i < classesCount; i++) {
-                    _classes[i] = new ClassDef();
-                    _classes[i].read(ps);
+                    classes[i] = new ClassDef();
+                    classes[i].read(ps);
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_classes.length);
-                for (int i = 0; i < _classes.length; i++) {
-                    _classes[i].write(ps);
+                ps.write(classes.length);
+                for (int i = 0; i < classes.length; i++) {
+                    classes[i].write(ps);
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_classes=[" + _classes.length + "]{");
-                for (int i = 0; i < _classes.length; i++) {
+                stringBuilder.append("classes=[" + classes.length + "]{");
+                for (int i = 0; i < classes.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_classes[i]=" + _classes[i]);
+                    stringBuilder.append("classes[i]=" + classes[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();
@@ -1535,22 +1535,22 @@ public final class VirtualMachineCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public String _stratumID;
+            public String stratumID;
             public IncomingRequest(String stratumID) {
-                this._stratumID = stratumID;
+                this.stratumID = stratumID;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _stratumID = ps.readString();
+                stratumID = ps.readString();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_stratumID);
+                ps.write(stratumID);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_stratumID=" + _stratumID);
+                stringBuilder.append("stratumID=" + stratumID);
                 return stringBuilder.toString();
             }
         }
@@ -1598,54 +1598,54 @@ public final class VirtualMachineCommands {
 
         public static class ClassInfo {
 
-            public byte _refTypeTag;
+            public byte refTypeTag;
 
-            public ID.ReferenceTypeID _typeID;
+            public ID.ReferenceTypeID typeID;
 
-            public String _signature;
+            public String signature;
 
-            public String _genericSignature;
+            public String genericSignature;
 
-            public int _status;
+            public int status;
             public ClassInfo(byte refTypeTag,
                 ID.ReferenceTypeID typeID,
                 String signature,
                 String genericSignature,
                 int status) {
-                this._refTypeTag = refTypeTag;
-                this._typeID = typeID;
-                this._signature = signature;
-                this._genericSignature = genericSignature;
-                this._status = status;
+                this.refTypeTag = refTypeTag;
+                this.typeID = typeID;
+                this.signature = signature;
+                this.genericSignature = genericSignature;
+                this.status = status;
             }
             public ClassInfo() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _refTypeTag = ps.readByte();
-                _typeID = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
-                _signature = ps.readString();
-                _genericSignature = ps.readString();
-                _status = ps.readInt();
+                refTypeTag = ps.readByte();
+                typeID = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
+                signature = ps.readString();
+                genericSignature = ps.readString();
+                status = ps.readInt();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_refTypeTag);
-                _typeID.write(ps.getOutputStream());
-                ps.write(_signature);
-                ps.write(_genericSignature);
-                ps.write(_status);
+                ps.write(refTypeTag);
+                typeID.write(ps.getOutputStream());
+                ps.write(signature);
+                ps.write(genericSignature);
+                ps.write(status);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_refTypeTag=" + _refTypeTag);
+                stringBuilder.append("refTypeTag=" + refTypeTag);
                 stringBuilder.append(", ");
-                stringBuilder.append("_typeID=" + _typeID);
+                stringBuilder.append("typeID=" + typeID);
                 stringBuilder.append(", ");
-                stringBuilder.append("_signature=" + _signature);
+                stringBuilder.append("signature=" + signature);
                 stringBuilder.append(", ");
-                stringBuilder.append("_genericSignature=" + _genericSignature);
+                stringBuilder.append("genericSignature=" + genericSignature);
                 stringBuilder.append(", ");
-                stringBuilder.append("_status=" + _status);
+                stringBuilder.append("status=" + status);
                 return stringBuilder.toString();
             }
         }
@@ -1654,33 +1654,33 @@ public final class VirtualMachineCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public ClassInfo[] _classes;
+            public ClassInfo[] classes;
             public Reply(ClassInfo[] classes) {
-                this._classes = classes;
+                this.classes = classes;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
                 final int classesCount = ps.readInt();
-                _classes = new ClassInfo[classesCount];
+                classes = new ClassInfo[classesCount];
                 for (int i = 0; i < classesCount; i++) {
-                    _classes[i] = new ClassInfo();
-                    _classes[i].read(ps);
+                    classes[i] = new ClassInfo();
+                    classes[i].read(ps);
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_classes.length);
-                for (int i = 0; i < _classes.length; i++) {
-                    _classes[i].write(ps);
+                ps.write(classes.length);
+                for (int i = 0; i < classes.length; i++) {
+                    classes[i].write(ps);
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_classes=[" + _classes.length + "]{");
-                for (int i = 0; i < _classes.length; i++) {
+                stringBuilder.append("classes=[" + classes.length + "]{");
+                for (int i = 0; i < classes.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_classes[i]=" + _classes[i]);
+                    stringBuilder.append("classes[i]=" + classes[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();
@@ -1700,32 +1700,32 @@ public final class VirtualMachineCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ReferenceTypeID[] _refTypesCount;
+            public ID.ReferenceTypeID[] refTypesCount;
             public IncomingRequest(ID.ReferenceTypeID[] refTypesCount) {
-                this._refTypesCount = refTypesCount;
+                this.refTypesCount = refTypesCount;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
                 final int refTypesCountCount = ps.readInt();
-                _refTypesCount = new ID.ReferenceTypeID[refTypesCountCount];
+                refTypesCount = new ID.ReferenceTypeID[refTypesCountCount];
                 for (int i = 0; i < refTypesCountCount; i++) {
-                    _refTypesCount[i] = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
+                    refTypesCount[i] = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_refTypesCount.length);
-                for (int i = 0; i < _refTypesCount.length; i++) {
-                    _refTypesCount[i].write(ps.getOutputStream());
+                ps.write(refTypesCount.length);
+                for (int i = 0; i < refTypesCount.length; i++) {
+                    refTypesCount[i].write(ps.getOutputStream());
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_refTypesCount=[" + _refTypesCount.length + "]{");
-                for (int i = 0; i < _refTypesCount.length; i++) {
+                stringBuilder.append("refTypesCount=[" + refTypesCount.length + "]{");
+                for (int i = 0; i < refTypesCount.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_refTypesCount[i]=" + _refTypesCount[i]);
+                    stringBuilder.append("refTypesCount[i]=" + refTypesCount[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();
@@ -1736,32 +1736,32 @@ public final class VirtualMachineCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public long[] _counts;
+            public long[] counts;
             public Reply(long[] counts) {
-                this._counts = counts;
+                this.counts = counts;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
                 final int countsCount = ps.readInt();
-                _counts = new long[countsCount];
+                counts = new long[countsCount];
                 for (int i = 0; i < countsCount; i++) {
-                    _counts[i] = ps.readLong();
+                    counts[i] = ps.readLong();
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_counts.length);
-                for (int i = 0; i < _counts.length; i++) {
-                    ps.write(_counts[i]);
+                ps.write(counts.length);
+                for (int i = 0; i < counts.length; i++) {
+                    ps.write(counts[i]);
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_counts=[" + _counts.length + "]{");
-                for (int i = 0; i < _counts.length; i++) {
+                stringBuilder.append("counts=[" + counts.length + "]{");
+                for (int i = 0; i < counts.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_counts[i]=" + _counts[i]);
+                    stringBuilder.append("counts[i]=" + counts[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();

@@ -26,34 +26,34 @@ import com.sun.max.vm.compiler.eir.*;
  * A frame encapsulates the interpreter context of a single method.
  */
 public class EirFrame {
-    private final EirFrame _caller;
-    private final EirMethod _method;
+    private final EirFrame caller;
+    private final EirMethod method;
 
     public EirFrame(EirFrame caller, EirMethod method) {
-        _caller = caller;
-        _method = method;
+        this.caller = caller;
+        this.method = method;
     }
 
     public EirFrame caller() {
-        return _caller;
+        return caller;
     }
 
     public EirMethod method() {
-        return _method;
+        return method;
     }
 
     public EirABI abi() {
-        return _method.abi();
+        return method.abi();
     }
 
-    private EirBlock _catchBlock;
+    private EirBlock catchBlock;
 
     public EirBlock catchBlock() {
-        return _catchBlock;
+        return catchBlock;
     }
 
     public void setCatchBlock(EirBlock catchBlock) {
-        _catchBlock = catchBlock;
+        this.catchBlock = catchBlock;
     }
 
 }

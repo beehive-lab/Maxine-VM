@@ -34,20 +34,20 @@ import com.sun.max.vm.type.*;
  */
 public class JITTest_unresolvedGetField extends CompilerTestCase<TargetMethod> {
 
-    private int _intField;
+    private int intField;
 
     static class UnresolvedAtCompileTime {
-        int _intUnresolvedField;
+        int intUnresolvedField;
     }
 
     public int perform_visitor(UnresolvedAtCompileTime b) {
-        final int i = b._intUnresolvedField;
+        final int i = b.intUnresolvedField;
         return i;
     }
 
     public void perform_visitor2(UnresolvedAtCompileTime b) {
         @SuppressWarnings("unused")
-        final int i = b._intUnresolvedField;
+        final int i = b.intUnresolvedField;
     }
 
     public void test_visitor() {

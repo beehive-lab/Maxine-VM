@@ -84,7 +84,7 @@ public class StackMapTable {
 
     public static final StackMapFrame[] NO_STACK_MAP_FRAMES = {};
 
-    private final byte[] _attributeData;
+    private final byte[] attributeData;
 
     /**
      * Gets the stack map frames defined by this attribute.
@@ -97,7 +97,7 @@ public class StackMapTable {
      *                {@link VerificationType#REFERENCE} is used in the returned frames
      */
     public final StackMapFrame[] getFrames(VerificationRegistry registry) {
-        return readFrames(registry, _attributeData);
+        return readFrames(registry, attributeData);
     }
 
     private static StackMapFrame[] readFrames(VerificationRegistry registry, byte[] attributeData) {
@@ -161,11 +161,11 @@ public class StackMapTable {
             // This will never occur
             ProgramError.unexpected(e);
         }
-        _attributeData = byteArrayOutputStream.toByteArray();
+        attributeData = byteArrayOutputStream.toByteArray();
     }
 
     public StackMapTable(ClassfileStream classfileStream, final ConstantPool constantPool, Size attributeSize) {
-        _attributeData = classfileStream.readByteArray(attributeSize);
+        attributeData = classfileStream.readByteArray(attributeSize);
     }
 
     /**
@@ -177,6 +177,6 @@ public class StackMapTable {
      * @param constantPoolEditor
      */
     public void writeAttributeInfo(DataOutputStream stream, ConstantPoolEditor constantPoolEditor) throws IOException {
-        stream.write(_attributeData);
+        stream.write(attributeData);
     }
 }

@@ -32,14 +32,14 @@ import com.sun.max.vm.*;
  */
 public final class Platform {
 
-    private final ProcessorKind _processorKind;
-    private final OperatingSystem _operatingSystem;
-    private final int _pageSize;
+    public final ProcessorKind processorKind;
+    public final OperatingSystem operatingSystem;
+    public final int pageSize;
 
     public Platform(ProcessorKind processorKind, OperatingSystem operatingSystem, int pageSize) {
-        _processorKind = processorKind;
-        _operatingSystem = operatingSystem;
-        _pageSize = pageSize;
+        this.processorKind = processorKind;
+        this.operatingSystem = operatingSystem;
+        this.pageSize = pageSize;
     }
 
     public static Platform host() {
@@ -57,42 +57,27 @@ public final class Platform {
         return MaxineVM.hostOrTarget().configuration().platform();
     }
 
-    @INLINE
-    public ProcessorKind processorKind() {
-        return _processorKind;
-    }
-
-    @INLINE
-    public OperatingSystem operatingSystem() {
-        return _operatingSystem;
-    }
-
-    @INLINE
-    public int pageSize() {
-        return _pageSize;
-    }
-
     public Platform constrainedByInstructionSet(InstructionSet instructionSet) {
-        ProcessorKind processorKind = processorKind();
-        if (processorKind.instructionSet() != instructionSet) {
-            processorKind = ProcessorKind.defaultForInstructionSet(instructionSet);
+        ProcessorKind processor = processorKind;
+        if (processor.instructionSet != instructionSet) {
+            processor = ProcessorKind.defaultForInstructionSet(instructionSet);
         }
-        return new Platform(processorKind, operatingSystem(), pageSize());
+        return new Platform(processor, operatingSystem, pageSize);
     }
 
     @Override
     public String toString() {
-        return _operatingSystem.toString().toLowerCase() + "-" + _processorKind + ", page size=" + _pageSize;
+        return operatingSystem.toString().toLowerCase() + "-" + processorKind + ", page size=" + pageSize;
     }
 
     public void inspect(PlatformInspector inspector) {
-        inspector.inspectAlignment(_processorKind.dataModel().alignment());
-        inspector.inspectEndianness(_processorKind.dataModel().endianness());
-        inspector.inspectWordWidth(_processorKind.dataModel().wordWidth());
-        inspector.inspectInstructionSet(_processorKind.instructionSet());
-        inspector.inspectOperatingSystem(_operatingSystem);
-        inspector.inspectPageSize(_pageSize);
-        inspector.inspectProcessorModel(_processorKind.processorModel());
+        inspector.inspectAlignment(processorKind.dataModel.alignment);
+        inspector.inspectEndianness(processorKind.dataModel.endianness);
+        inspector.inspectWordWidth(processorKind.dataModel.wordWidth);
+        inspector.inspectInstructionSet(processorKind.instructionSet);
+        inspector.inspectOperatingSystem(operatingSystem);
+        inspector.inspectPageSize(pageSize);
+        inspector.inspectProcessorModel(processorKind.processorModel);
     }
 
     /**

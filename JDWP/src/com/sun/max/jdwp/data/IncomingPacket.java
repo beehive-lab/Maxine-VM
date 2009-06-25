@@ -28,22 +28,22 @@ package com.sun.max.jdwp.data;
  */
 public final class IncomingPacket<IncomingData_Type extends IncomingData, OutgoingData_Type extends OutgoingData> {
 
-    private int _length;
-    private int _id;
-    private byte _commandSetId;
-    private byte _commandId;
-    private byte _flags;
-    private IncomingData_Type _data;
-    private CommandHandler<IncomingData_Type, OutgoingData_Type> _handler;
+    private int length;
+    private int id;
+    private byte commandSetId;
+    private byte commandId;
+    private byte flags;
+    private IncomingData_Type data;
+    private CommandHandler<IncomingData_Type, OutgoingData_Type> handler;
 
     public IncomingPacket(int length, int id, byte flags, byte commandSetId, byte commandId, IncomingData_Type data, CommandHandler<IncomingData_Type, OutgoingData_Type> handler) {
-        _length = length;
-        _id = id;
-        _commandSetId = commandSetId;
-        _commandId = commandId;
-        _flags = flags;
-        _data = data;
-        _handler = handler;
+        this.length = length;
+        this.id = id;
+        this.commandSetId = commandSetId;
+        this.commandId = commandId;
+        this.flags = flags;
+        this.data = data;
+        this.handler = handler;
 
         assert handler == null || handler.getCommandId() == commandId;
         assert handler == null || handler.getCommandSetId() == commandSetId;
@@ -54,7 +54,7 @@ public final class IncomingPacket<IncomingData_Type extends IncomingData, Outgoi
      * @return the length of the packet
      */
     public int getLength() {
-        return _length;
+        return length;
     }
 
     /**
@@ -62,7 +62,7 @@ public final class IncomingPacket<IncomingData_Type extends IncomingData, Outgoi
      * @return the unique id
      */
     public int getId() {
-        return _id;
+        return id;
     }
 
     /**
@@ -70,7 +70,7 @@ public final class IncomingPacket<IncomingData_Type extends IncomingData, Outgoi
      * @return the id of the command set
      */
     public byte getCommandSetId() {
-        return _commandSetId;
+        return commandSetId;
     }
 
     /**
@@ -78,7 +78,7 @@ public final class IncomingPacket<IncomingData_Type extends IncomingData, Outgoi
      * @return the id of the command
      */
     public byte getCommandId() {
-        return _commandId;
+        return commandId;
     }
 
     /**
@@ -86,7 +86,7 @@ public final class IncomingPacket<IncomingData_Type extends IncomingData, Outgoi
      * @return the flags of the packet
      */
     public byte getFlags() {
-        return _flags;
+        return flags;
     }
 
     /**
@@ -94,7 +94,7 @@ public final class IncomingPacket<IncomingData_Type extends IncomingData, Outgoi
      * @return the handler registered for the command
      */
     public CommandHandler<IncomingData_Type, OutgoingData_Type> getHandler() {
-        return _handler;
+        return handler;
     }
 
     /**
@@ -104,11 +104,11 @@ public final class IncomingPacket<IncomingData_Type extends IncomingData, Outgoi
      * @throws JDWPException this exception is thrown, when there is an error during processing the packet
      */
     public ReplyPacket<IncomingData_Type, OutgoingData_Type> handle(JDWPSender replyChannel) throws JDWPException {
-        if (_handler == null) {
+        if (handler == null) {
             // No handler is responsible for this package!
             return null;
         }
-        return new ReplyPacket<IncomingData_Type, OutgoingData_Type>(this, _handler.handle(getData(), replyChannel));
+        return new ReplyPacket<IncomingData_Type, OutgoingData_Type>(this, handler.handle(getData(), replyChannel));
     }
 
     /**
@@ -116,7 +116,7 @@ public final class IncomingPacket<IncomingData_Type extends IncomingData, Outgoi
      * @return the incoming data
      */
     public IncomingData_Type getData() {
-        return _data;
+        return data;
     }
 
     /**

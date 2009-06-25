@@ -24,17 +24,17 @@ package test.output;
 
 public class Recursion {
 
-    private int _recursionLevel;
+    private int recursionLevel;
 
     public static void main(String[] args) {
         new Recursion().recurse();
     }
 
     private void recurse() {
-        if (_recursionLevel++ > 10) {
+        if (recursionLevel++ > 10) {
             return;
         }
-        System.out.println("recursion: " + _recursionLevel);
+        System.out.println("recursion: " + recursionLevel);
         recurse();
     }
 

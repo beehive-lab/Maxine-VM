@@ -45,38 +45,38 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
         super(teleVM, classActorReference);
     }
 
-    private ClassActor _classActor;
+    private ClassActor classActor;
 
     /**
      * @return Local {@link ClassActor} corresponding the {@link ClassActor} in the {@link TeleVM}.
      */
     public ClassActor classActor() {
-        if (_classActor == null) {
+        if (classActor == null) {
             // Requires loading the class; delay until needed.
-            _classActor = teleVM().makeClassActor(reference());
+            classActor = teleVM().makeClassActor(reference());
         }
-        return _classActor;
+        return classActor;
     }
 
-    private boolean _initialized = false;
+    private boolean initialized = false;
 
     // Fields are final; cache them.
-    private TeleClassLoader _teleClassLoader;
-    private int _id;
-    private TeleTypeDescriptor _teleTypeDescriptor;
+    private TeleClassLoader teleClassLoader;
+    private int id;
+    private TeleTypeDescriptor teleTypeDescriptor;
 
     private void initialize() {
-        if (!_initialized) {
+        if (!initialized) {
 
             final Reference classLoaderReference = teleVM().fields().ClassActor_classLoader.readReference(reference());
-            _teleClassLoader = (TeleClassLoader) teleVM().makeTeleObject(classLoaderReference);
+            teleClassLoader = (TeleClassLoader) teleVM().makeTeleObject(classLoaderReference);
 
-            _id = teleVM().fields().ClassActor_id.readInt(reference());
+            id = teleVM().fields().ClassActor_id.readInt(reference());
 
             final Reference typeDescriptorReference = teleVM().fields().ClassActor_typeDescriptor.readReference(reference());
-            _teleTypeDescriptor = (TeleTypeDescriptor) teleVM().makeTeleObject(typeDescriptorReference);
+            teleTypeDescriptor = (TeleTypeDescriptor) teleVM().makeTeleObject(typeDescriptorReference);
 
-            _initialized = true;
+            initialized = true;
         }
     }
 
@@ -87,7 +87,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
      */
     public TeleClassLoader getTeleClassLoader() {
         initialize();
-        return _teleClassLoader;
+        return teleClassLoader;
     }
 
     /**
@@ -95,7 +95,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
      */
     public int getId() {
         initialize();
-        return _id;
+        return id;
     }
 
     /**
@@ -103,7 +103,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
      */
     public TeleTypeDescriptor getTeleTypeDescriptor() {
         initialize();
-        return _teleTypeDescriptor;
+        return teleTypeDescriptor;
     }
 
     @Override
@@ -293,14 +293,14 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
 
         private static final String PREFIX = "X_";
 
-        private final String _name;
-        private final VMValue.Type _type;
-        private final String _signature;
+        private final String name;
+        private final VMValue.Type type;
+        private final String signature;
 
         public FakeFieldProvider(String name, VMValue.Type type, String signature) {
-            _name = PREFIX + name;
-            _type = type;
-            _signature = signature;
+            this.name = PREFIX + name;
+            this.type = type;
+            this.signature = signature;
         }
 
         public ReferenceTypeProvider getReferenceTypeHolder() {
@@ -330,31 +330,31 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
 
         public String getName() {
             // TODO Auto-generated method stub
-            return _name;
+            return name;
         }
 
         public String getSignature() {
-            return _signature;
+            return signature;
         }
 
         public Type getType() {
-            return _type;
+            return type;
         }
     }
 
-    private final FieldProvider _fakeAddressField = new FakeFieldProvider("address", VMValue.Type.LONG, JavaTypeDescriptor.LONG.toString()) {
+    private final FieldProvider fakeAddressField = new FakeFieldProvider("address", VMValue.Type.LONG, JavaTypeDescriptor.LONG.toString()) {
         public VMValue getValue(ObjectProvider object) {
             return teleVM().vmAccess().createLongValue(((TeleObject) object).getReference().toOrigin().asAddress().toLong());
         }
     };
 
-    private final FieldProvider _fakeHubField = new FakeFieldProvider("hub", VMValue.Type.PROVIDER, "Lcom/sun/max/vm/actor/holder/Hub;") {
+    private final FieldProvider fakeHubField = new FakeFieldProvider("hub", VMValue.Type.PROVIDER, "Lcom/sun/max/vm/actor/holder/Hub;") {
         public VMValue getValue(ObjectProvider object) {
             return teleVM().maxineValueToJDWPValue(TeleReferenceValue.from(teleVM(), ((TeleObject) object).getTeleHub().getReference()));
         }
     };
 
-    private final FieldProvider _fakeMiscField = new FakeFieldProvider("misc", VMValue.Type.LONG, JavaTypeDescriptor.LONG.toString()) {
+    private final FieldProvider fakeMiscField = new FakeFieldProvider("misc", VMValue.Type.LONG, JavaTypeDescriptor.LONG.toString()) {
         public VMValue getValue(ObjectProvider object) {
             return teleVM().vmAccess().createLongValue(((TeleObject) object).getMiscWord().asAddress().toLong());
         }
@@ -364,10 +364,10 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
         final List<TeleFieldActor> list = Sequence.Static.toList(this.getTeleFieldActors());
         final List<FieldProvider> result = new ArrayList<FieldProvider>();
         result.addAll(list);
-        if (this.classActor().superClassActor() == null) {
-            result.add(0, _fakeAddressField);
-            result.add(0, _fakeMiscField);
-            result.add(0, _fakeHubField);
+        if (this.classActor().superClassActor == null) {
+            result.add(0, fakeAddressField);
+            result.add(0, fakeMiscField);
+            result.add(0, fakeHubField);
         }
         final FieldProvider[] resultArray = new FieldProvider[list.size()];
         return result.toArray(resultArray);
@@ -377,7 +377,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
         final IdentityHashSet<InterfaceActor> interfaces = classActor().getAllInterfaceActors();
         final AppendableSequence<InterfaceProvider> result = new LinkSequence<InterfaceProvider>();
         for (InterfaceActor interfaceActor : interfaces) {
-            final InterfaceProvider interfaceProvider = (TeleInterfaceActor) teleVM().findTeleClassActor(interfaceActor.typeDescriptor());
+            final InterfaceProvider interfaceProvider = (TeleInterfaceActor) teleVM().findTeleClassActor(interfaceActor.typeDescriptor);
             if (interfaceProvider != this) {
                 result.append(interfaceProvider);
             }
@@ -393,7 +393,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
         final ClassActor[] actors = classActor().innerClassActors();
         final ReferenceTypeProvider[] result = new ReferenceTypeProvider[actors.length];
         for (int i = 0; i < actors.length; i++) {
-            result[i] = teleVM().findTeleClassActor(actors[i].typeDescriptor());
+            result[i] = teleVM().findTeleClassActor(actors[i].typeDescriptor);
         }
         return result;
     }
@@ -404,11 +404,11 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     }
 
     public String getName() {
-        return classActor().name().toString();
+        return classActor().name.toString();
     }
 
     public String getSignature() {
-        return classActor().typeDescriptor().toString();
+        return classActor().typeDescriptor.toString();
     }
 
     public String getSignatureWithGeneric() {
@@ -437,7 +437,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     }
 
     public String getSourceFileName() {
-        return classActor().sourceFileName();
+        return classActor().sourceFileName;
     }
 
     public int getFlags() {
@@ -445,14 +445,14 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     }
 
     public Type getType() {
-        return TeleVM.maxineKindToJDWPType(classActor().kind());
+        return TeleVM.maxineKindToJDWPType(classActor().kind);
     }
 
     public int majorVersion() {
-        return classActor().majorVersion();
+        return classActor().majorVersion;
     }
 
     public int minorVersion() {
-        return classActor().minorVersion();
+        return classActor().minorVersion;
     }
 }

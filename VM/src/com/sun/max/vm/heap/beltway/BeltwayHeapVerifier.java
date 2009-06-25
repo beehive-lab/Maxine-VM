@@ -35,37 +35,37 @@ import com.sun.max.vm.runtime.*;
  */
 public class BeltwayHeapVerifier {
 
-    private static Belt _belt;
+    private static Belt belt;
 
-    private static BeltwaySequentialHeapRootsScanner _heapRootsVerifier = new BeltwaySequentialHeapRootsScanner();
-    private static Verify _cellVerifier = new VerifyActionImpl();
+    private static BeltwaySequentialHeapRootsScanner heapRootsVerifier = new BeltwaySequentialHeapRootsScanner();
+    private static Verify cellVerifier = new VerifyActionImpl();
 
     public BeltwayHeapVerifier() {
 
     }
 
     public void initialize(BeltwayHeapScheme heapScheme) {
-        _heapRootsVerifier.setHeapScheme(heapScheme);
-        _heapRootsVerifier.setBeltwayPointerIndexVisitor(((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).pointerIndexGripVerifier());
+        heapRootsVerifier.setHeapScheme(heapScheme);
+        heapRootsVerifier.setBeltwayPointerIndexVisitor(((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).pointerIndexGripVerifier());
     }
 
     public BeltwaySequentialHeapRootsScanner getRootsVerifier() {
-        return _heapRootsVerifier;
+        return heapRootsVerifier;
     }
 
     public Verify getCellVerificator() {
-        return _cellVerifier;
+        return cellVerifier;
     }
 
-    private final PointerOffsetVisitor _pointerOffsetVisitor = new PointerOffsetVisitor() {
+    private final PointerOffsetVisitor pointerOffsetVisitor = new PointerOffsetVisitor() {
         public void visitPointerOffset(Pointer pointer, int offset) {
-            ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).pointerOffsetGripVerifier().visitPointerOffset(pointer, offset, _belt, _belt);
+            ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).pointerOffsetGripVerifier().visitPointerOffset(pointer, offset, belt, belt);
         }
     };
 
     public void verifyHeap(Address regionStartAddress, Address allocationMark, Belt belt) {
-        _belt = belt;
-        _heapRootsVerifier.run();
+        BeltwayHeapVerifier.belt = belt;
+        heapRootsVerifier.run();
         if (Heap.verbose()) {
             Log.println("Finished Roots Verification");
         }
@@ -73,25 +73,25 @@ public class BeltwayHeapVerifier {
         while (cell.lessThan(allocationMark)) {
             if (VMConfiguration.hostOrTarget().debugging()) {
                 cell = cell.plusWords(1);
-                _cellVerifier.checkCellTag(cell);
+                cellVerifier.checkCellTag(cell);
             }
             final Pointer origin = Layout.cellToOrigin(cell);
             final Grip hubGrip = Layout.readHubGrip(origin);
             FatalError.check(!hubGrip.isZero(), "null hub");
-            _cellVerifier.verifyGrip(belt, hubGrip);
+            cellVerifier.verifyGrip(belt, hubGrip);
             final Hub hub = UnsafeLoophole.cast(hubGrip.toJava());
-            _cellVerifier.checkHub(hub);
+            cellVerifier.checkHub(hub);
             final SpecificLayout specificLayout = hub.specificLayout();
             if (specificLayout.isTupleLayout()) {
-                TupleReferenceMap.visitOriginOffsets(hub, origin, _pointerOffsetVisitor);
+                TupleReferenceMap.visitOriginOffsets(hub, origin, pointerOffsetVisitor);
                 cell = cell.plus(hub.tupleSize());
             } else {
                 if (specificLayout.isHybridLayout()) {
-                    TupleReferenceMap.visitOriginOffsets(hub, origin, _pointerOffsetVisitor);
+                    TupleReferenceMap.visitOriginOffsets(hub, origin, pointerOffsetVisitor);
                 } else if (specificLayout.isReferenceArrayLayout()) {
                     final int length = Layout.readArrayLength(origin);
                     for (int index = 0; index < length; index++) {
-                        _cellVerifier.verifyGrip(belt, Layout.getGrip(origin, index));
+                        cellVerifier.verifyGrip(belt, Layout.getGrip(origin, index));
                     }
                 }
                 cell = cell.plus(Layout.size(origin));

@@ -65,27 +65,27 @@ import com.sun.max.vm.value.*;
  * @author Aziz Ghuloum
  */
 public final class HCirOperatorLowering extends HCirOperatorVisitor {
-    private final JavaOperator _operator;
-    private final CirCall _call;
-    private final BirToCirMethodTranslation _methodTranslation;
-    private final CirValue _originalCC;
-    private final CirValue _originalCE;
-    private final CirVariable _ce;
+    private final JavaOperator operator;
+    private final CirCall call;
+    private final BirToCirMethodTranslation methodTranslation;
+    private final CirValue originalCC;
+    private final CirValue originalCE;
+    private final CirVariable ce;
 
-    private final CirValue[] _arguments;
+    private final CirValue[] arguments;
 
     HCirOperatorLowering(JavaOperator operator, CirCall call, BirToCirMethodTranslation methodTranslation) {
-        _operator = operator;
-        _call = call;
-        _methodTranslation = methodTranslation;
-        _arguments = call.arguments();
-        _originalCC = _arguments[_arguments.length - 2];
-        _originalCE = _arguments[_arguments.length - 1];
-        final CirValue ce = _originalCE;
+        this.operator = operator;
+        this.call = call;
+        this.methodTranslation = methodTranslation;
+        this.arguments = call.arguments();
+        this.originalCC = arguments[arguments.length - 2];
+        this.originalCE = arguments[arguments.length - 1];
+        final CirValue ce = originalCE;
         if (ce instanceof CirVariable) {
-            _ce = (CirVariable) ce;
+            this.ce = (CirVariable) ce;
         } else {
-            _ce = variableFactory().createFreshExceptionContinuationParameter();
+            this.ce = variableFactory().createFreshExceptionContinuationParameter();
         }
     }
 
@@ -156,10 +156,10 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
         if (procedure instanceof Stoppable) {
             final Stoppable stoppable = (Stoppable) procedure;
             if (canStop(stoppable)) {
-                call.setJavaFrameDescriptor(_call.javaFrameDescriptor().copy());
+                call.setJavaFrameDescriptor(this.call.javaFrameDescriptor().copy());
             }
         } else {
-            call.setJavaFrameDescriptor(_call.javaFrameDescriptor().copy());
+            call.setJavaFrameDescriptor(this.call.javaFrameDescriptor().copy());
         }
         return call;
     }
@@ -171,7 +171,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
      * @param cc where execution continues if the check succeeds
      */
     CirCall nullCheck(CirValue object, CirCall cc) {
-        if (!checksNullPointer(_operator)) {
+        if (!checksNullPointer(operator)) {
             return cc;
         }
         if (object.kind() == Kind.REFERENCE) {
@@ -195,7 +195,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
      * @return
      */
     CirCall indexCheck(CirValue array, CirValue index, CirCall cc) {
-        if (!checksArrayIndexAgainstBounds(_operator)) {
+        if (!checksArrayIndexAgainstBounds(operator)) {
             return cc;
         }
         final CirSnippet checkArrayIndex = CirSnippet.get(CheckArrayIndex.SNIPPET);
@@ -209,20 +209,20 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
 
     void set(CirCall result) {
         CirCall call = result;
-        if (ce() != _originalCE) {
-            if (_arguments[_arguments.length - 1] == _originalCE) {
-                _arguments[_arguments.length - 1] = ce();
+        if (ce() != originalCE) {
+            if (arguments[arguments.length - 1] == originalCE) {
+                arguments[arguments.length - 1] = ce();
             }
-            call = new CirCall(closure(call, ce()), _originalCE);
+            call = new CirCall(closure(call, ce()), originalCE);
         }
-        _call.assign(call);
+        this.call.assign(call);
     }
 
     abstract class Resolvable {
-        final ResolutionSnippet _snippet;
+        final ResolutionSnippet snippet;
 
         public Resolvable(ResolutionSnippet resolutionSnippet) {
-            _snippet = resolutionSnippet;
+            snippet = resolutionSnippet;
         }
 
         abstract CirCall makeCall(CirValue resolvedAndInitialized);
@@ -248,7 +248,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
             return resolvable.makeCall(actor);
         }
 
-        final CirVariable actor = variableFactory().createTemporary(resolvable._snippet.resultKind());
+        final CirVariable actor = variableFactory().createTemporary(resolvable.snippet.resultKind());
 
         final CirCall innerCall;
         if (operator.requiresClassInitialization() && !operator.isClassInitialized()) {
@@ -263,8 +263,8 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
             innerCall = resolvable.makeCall(actor);
         }
 
-        final CirConstant guard = CirConstant.fromObject(operator.constantPool().makeResolutionGuard(operator.index(), resolvable._snippet));
-        final CirSnippet resolve = CirSnippet.get(resolvable._snippet);
+        final CirConstant guard = CirConstant.fromObject(operator.constantPool().makeResolutionGuard(operator.index(), resolvable.snippet));
+        final CirSnippet resolve = CirSnippet.get(resolvable.snippet);
         return call(
             resolve,
             guard,
@@ -279,7 +279,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
         final Resolvable resolvable = new Resolvable(ResolveInstanceFieldForReading.SNIPPET) {
             @Override
             CirCall makeCall(CirValue fieldActor) {
-                final CirValue reference = _arguments[_arguments.length - 3];
+                final CirValue reference = arguments[arguments.length - 3];
                 final CirSnippet fieldRead = CirSnippet.get(FieldReadSnippet.selectSnippet(operator.fieldKind()));
                 return nullCheck(
                     reference,
@@ -326,7 +326,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
             CirCall makeCall(CirValue fieldActor) {
                 final CirVariable staticTuple = variableFactory().createTemporary(Kind.REFERENCE);
                 final CirSnippet fieldWrite = CirSnippet.get(FieldWriteSnippet.selectSnippetByKind(operator.fieldKind()));
-                final CirValue value = _arguments[0];
+                final CirValue value = arguments[0];
                 final CirSnippet getStaticTuple = CirSnippet.get(BuiltinsSnippet.GetStaticTuple.SNIPPET);
                 return call(
                     getStaticTuple,
@@ -349,7 +349,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
 
     @Override
     public void visit(final InvokeVirtual operator) {
-        final CirValue receiver = _arguments[0];
+        final CirValue receiver = arguments[0];
 
         final Resolvable resolvable = new Resolvable(ResolveVirtualMethod.SNIPPET) {
             @Override
@@ -365,26 +365,26 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
                             callEntryPoint,
                             call(
                                 callEntryPoint,
-                                _arguments)),
+                                arguments)),
                         ce());
-                final MethodInstrumentation instrumentation = VMConfiguration.target().compilationScheme().getMethodInstrumentation(_call.javaFrameDescriptor().classMethodActor());
+                final MethodInstrumentation instrumentation = VMConfiguration.target().compilationScheme().getMethodInstrumentation(HCirOperatorLowering.this.call.javaFrameDescriptor().classMethodActor());
                 final Hub mostFrequentHub = (instrumentation == null)
                                     ? null
-                                    : instrumentation.getMostFrequentlyUsedHub(_call.javaFrameDescriptor().bytecodePosition());
+                                    : instrumentation.getMostFrequentlyUsedHub(HCirOperatorLowering.this.call.javaFrameDescriptor().bytecodePosition());
 
                 if (mostFrequentHub != null) {
-                    final CirValue cont = _arguments[_arguments.length - 2];
+                    final CirValue cont = arguments[arguments.length - 2];
                     final CirContinuationVariable cc = variableFactory().createFreshNormalContinuationParameter();
                     final CirContinuationVariable ce = variableFactory().createFreshExceptionContinuationParameter();
-                    _arguments[_arguments.length - 2] = cc;
-                    _arguments[_arguments.length - 1] = ce;
+                    arguments[arguments.length - 2] = cc;
+                    arguments[arguments.length - 1] = ce;
 
                     final ClassMethodRefConstant classMethodRef = operator.constantPool().classMethodAt(operator.index());
                     final VirtualMethodActor declaredMethod = classMethodRef.resolveVirtual(operator.constantPool(), operator.index());
                     final Address entryPoint = mostFrequentHub.getWord(declaredMethod.vTableIndex()).asAddress();
                     final TargetMethod targetMethod = Code.codePointerToTargetMethod(entryPoint);
                     final ClassMethodActor targetMethodActor = targetMethod.classMethodActor();
-                    final CirMethod targetCirMethod = _methodTranslation.cirGenerator().createIrMethod(targetMethodActor);
+                    final CirMethod targetCirMethod = methodTranslation.cirGenerator().createIrMethod(targetMethodActor);
                     final CirValue cachedHub = new CirConstant(ReferenceValue.from(mostFrequentHub));
                     final CirVariable hub = variableFactory().createTemporary(Kind.REFERENCE);
                     final CirSnippet readHub = CirSnippet.get(MethodSelectionSnippet.ReadHub.SNIPPET);
@@ -402,7 +402,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
                                                cont(
                                                    call(
                                                        targetCirMethod,
-                                                       _arguments.clone())),
+                                                       arguments.clone())),
                                                cont(
                                                    call))),
                                        ce()),
@@ -427,7 +427,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
             @Override
             CirCall makeCall(CirValue interfaceMethodActor) {
                 final CirSnippet selectMethod = CirSnippet.get(MethodSelectionSnippet.SelectInterfaceMethod.SNIPPET);
-                final CirValue receiver = _arguments[0];
+                final CirValue receiver = arguments[0];
                 final CirVariable callEntryPoint = variableFactory().createTemporary(Kind.WORD);
                 return call(
                     selectMethod,
@@ -437,7 +437,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
                         callEntryPoint,
                         call(
                             callEntryPoint,
-                            _arguments)),
+                            arguments)),
                     ce());
             }
         };
@@ -458,7 +458,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
                         callEntryPoint,
                         call(
                             callEntryPoint,
-                            _arguments)),
+                            arguments)),
                     ce());
             }
         };
@@ -479,7 +479,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
                         callEntryPoint,
                         call(
                             callEntryPoint,
-                            _arguments)),
+                            arguments)),
                     ce());
             }
         };
@@ -496,7 +496,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
         final Resolvable resolvable = new Resolvable(ResolveClass.SNIPPET) {
             @Override
             CirCall makeCall(CirValue classActor) {
-                final CirValue object = _arguments[0];
+                final CirValue object = arguments[0];
                 final CirSnippet checkCast = CirSnippet.get(Snippet.CheckCast.SNIPPET);
                 return call(
                                 checkCast,
@@ -511,7 +511,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
 
     @Override
     public void visit(InstanceOf operator) {
-        final CirValue objref = _arguments[0];
+        final CirValue objref = arguments[0];
         final Resolvable resolvable = new Resolvable(ResolveClass.SNIPPET) {
             @Override
             CirCall makeCall(CirValue resolved) {
@@ -530,24 +530,24 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
      * Gets the original normal continuation for the HCIR call being lowered.
      */
     CirValue cc() {
-        return _originalCC;
+        return originalCC;
     }
 
     /**
      * Gets the exception continuation for the current translation scope.
      */
     CirVariable ce() {
-        return _ce;
+        return ce;
     }
 
     CirVariableFactory variableFactory() {
-        return _methodTranslation.variableFactory();
+        return methodTranslation.variableFactory();
     }
 
     @Override
     public void visit(ArrayLoad operator) {
-        final CirValue array = _arguments[0];
-        final CirValue index = _arguments[1];
+        final CirValue array = arguments[0];
+        final CirValue index = arguments[1];
 
         final CirSnippet arrayLoad = CirSnippet.get(ArrayGetSnippet.getSnippet(operator.resultKind()));
 
@@ -582,9 +582,9 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
 
     @Override
     public void visit(ArrayStore operator) {
-        final CirValue array = _arguments[0];
-        final CirValue index = _arguments[1];
-        final CirValue value = _arguments[2];
+        final CirValue array = arguments[0];
+        final CirValue index = arguments[1];
+        final CirValue value = arguments[2];
 
         final CirSnippet arrayStore = CirSnippet.get(ArraySetSnippet.selectSnippetByKind(operator.elementKind()));
 
@@ -630,8 +630,8 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
         final Resolvable resolvable = new Resolvable(ResolveInstanceFieldForWriting.SNIPPET) {
             @Override
             CirCall makeCall(CirValue fieldActor) {
-                final CirValue object = _arguments[0];
-                final CirValue value = _arguments[1];
+                final CirValue object = arguments[0];
+                final CirValue value = arguments[1];
                 final CirSnippet fieldWrite = CirSnippet.get(FieldWriteSnippet.selectSnippetByKind(operator.fieldKind()));
                 return nullCheck(
                            object,
@@ -649,7 +649,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
 
     @Override
     public void visit(NewArray operator) {
-        final CirValue count = _arguments[0];
+        final CirValue count = arguments[0];
         if (operator.primitiveElementKind() != null) {
             final CirValue kind = CirConstant.fromObject(operator.primitiveElementKind());
             final CirSnippet createPrimitiveArray = CirSnippet.get(NonFoldableSnippet.CreatePrimitiveArray.SNIPPET);
@@ -702,13 +702,13 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
 
         for (int i = 0; i < nDimensions; i++) {
             call = call(
-                       checkArrayDimension, _arguments[i],
+                       checkArrayDimension, arguments[i],
                        cont(
                            call(
                                setDimensionInArray,
                                dimensionArray,
                                CirConstant.fromInt(i),
-                               _arguments[i],
+                               arguments[i],
                                cont(
                                    call),
                                ce())),
@@ -728,7 +728,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
 
     @Override
     public void visit(ArrayLength operator) {
-        final CirValue array = _arguments[0];
+        final CirValue array = arguments[0];
         final CirSnippet readLength = CirSnippet.get(ArrayGetSnippet.ReadLength.SNIPPET);
         set(nullCheck(
             array,
@@ -742,7 +742,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
 
     @Override
     public void visit(MonitorEnter operator) {
-        final CirValue object = _arguments[0];
+        final CirValue object = arguments[0];
         final CirSnippet monitorEnter = CirSnippet.get(MonitorSnippet.MonitorEnter.SNIPPET);
         set(nullCheck(
                 object,
@@ -755,7 +755,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
 
     @Override
     public void visit(MonitorExit operator) {
-        final CirValue object = _arguments[0];
+        final CirValue object = arguments[0];
         final CirSnippet monitorExit = CirSnippet.get(MonitorSnippet.MonitorExit.SNIPPET);
         set(nullCheck(
                 object,
@@ -828,7 +828,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
         }
 
         cc.setBody(call);
-        call = call(callEntryPoint, _arguments);
+        call = call(callEntryPoint, arguments);
 
         if (!isCFunction) {
             call = call(nativeCallPrologue, cont(localSpace, call), ce());
@@ -857,7 +857,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
     public void visit(JavaOperator operator) {
         if (operator instanceof Lowerable) {
             final Lowerable lowerableOp = (Lowerable) operator;
-            lowerableOp.toLCir(lowerableOp, _call, _methodTranslation.cirGenerator().compilerScheme());
+            lowerableOp.toLCir(lowerableOp, this.call, methodTranslation.cirGenerator().compilerScheme());
         }
     }
 }

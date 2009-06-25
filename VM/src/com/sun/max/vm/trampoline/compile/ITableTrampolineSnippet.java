@@ -40,9 +40,9 @@ public final class ITableTrampolineSnippet extends NonFoldableSnippet {
     private ITableTrampolineSnippet() {
     }
 
-    private static final ITableTrampolineSnippet _snippet = new ITableTrampolineSnippet();
+    private static final ITableTrampolineSnippet snippet = new ITableTrampolineSnippet();
 
-    private static final TrampolineGenerator _trampolineGenerator = new RecompileTrampolineGenerator.VtableTrampolineGenerator(_snippet.classMethodActor());
+    private static final TrampolineGenerator trampolineGenerator = new RecompileTrampolineGenerator.VtableTrampolineGenerator(snippet.classMethodActor());
 
     @SNIPPET
     @TRAMPOLINE(invocation = TRAMPOLINE.Invocation.INTERFACE)
@@ -52,11 +52,11 @@ public final class ITableTrampolineSnippet extends NonFoldableSnippet {
     }
 
     public static synchronized Address makeCallEntryPoint(int vTableIndex) {
-        return _trampolineGenerator.makeCallEntryPoint(vTableIndex);
+        return trampolineGenerator.makeCallEntryPoint(vTableIndex);
     }
 
     public static synchronized boolean isITableTrampoline(MethodActor classMethodActor) {
-        return classMethodActor == _snippet.classMethodActor();
+        return classMethodActor == snippet.classMethodActor();
     }
 
     public static synchronized boolean isITableTrampolineInstructionPointer(Address instructionPointer) {
@@ -64,6 +64,6 @@ public final class ITableTrampolineSnippet extends NonFoldableSnippet {
         if (targetMethod == null) {
             return false;
         }
-        return targetMethod.classMethodActor() == _snippet.classMethodActor();
+        return targetMethod.classMethodActor() == snippet.classMethodActor();
     }
 }

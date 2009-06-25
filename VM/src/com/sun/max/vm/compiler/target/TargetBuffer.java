@@ -40,40 +40,40 @@ public class TargetBuffer {
     private static final int INITIAL_CODEBUF_SIZE = Ints.K;
     private static final int INITIAL_OFFSET_SIZE = 16;
 
-    private Pointer _codeStart;
-    private int _codeSize;
+    private Pointer codeStart;
+    private int codeSize;
 
-    private byte[] _codeBuffer;
-    private int[] _safepointOffsets;
-    private int _safepointCursor;
-    private int[] _directCallOffsets;
-    private int _directCallCursor;
-    private int[] _dynamicCallOffsets;
-    private int _dynamicCallCursor;
+    private byte[] codeBuffer;
+    private int[] safepointOffsets;
+    private int safepointCursor;
+    private int[] directCallOffsets;
+    private int directCallCursor;
+    private int[] dynamicCallOffsets;
+    private int dynamicCallCursor;
 
     public TargetBuffer() {
-        _codeBuffer = new byte[INITIAL_CODEBUF_SIZE];
-        _safepointOffsets = new int[INITIAL_OFFSET_SIZE];
-        _directCallOffsets = new int[INITIAL_OFFSET_SIZE];
-        _dynamicCallOffsets = new int[INITIAL_OFFSET_SIZE];
+        codeBuffer = new byte[INITIAL_CODEBUF_SIZE];
+        safepointOffsets = new int[INITIAL_OFFSET_SIZE];
+        directCallOffsets = new int[INITIAL_OFFSET_SIZE];
+        dynamicCallOffsets = new int[INITIAL_OFFSET_SIZE];
     }
 
     public void addSafePoint(int offset) {
-        final int cursor = _safepointCursor++;
-        _safepointOffsets = grow(_safepointOffsets, _safepointCursor);
-        _safepointOffsets[cursor] = offset;
+        final int cursor = safepointCursor++;
+        safepointOffsets = grow(safepointOffsets, safepointCursor);
+        safepointOffsets[cursor] = offset;
     }
 
     public void addDirectCall(int offset) {
-        final int cursor = _directCallCursor++;
-        _directCallOffsets = grow(_directCallOffsets, _directCallCursor);
-        _directCallOffsets[cursor] = offset;
+        final int cursor = directCallCursor++;
+        directCallOffsets = grow(directCallOffsets, directCallCursor);
+        directCallOffsets[cursor] = offset;
     }
 
     public void addDynamicCall(int offset) {
-        final int cursor = _dynamicCallCursor++;
-        _dynamicCallOffsets = grow(_dynamicCallOffsets, _dynamicCallCursor);
-        _dynamicCallOffsets[cursor] = offset;
+        final int cursor = dynamicCallCursor++;
+        dynamicCallOffsets = grow(dynamicCallOffsets, dynamicCallCursor);
+        dynamicCallOffsets[cursor] = offset;
     }
 
     private int[] grow(int[] array, int size) {
@@ -86,17 +86,17 @@ public class TargetBuffer {
     }
 
     public void write(CodeRegion region) {
-        if (_codeStart != Pointer.zero()) {
+        if (codeStart != Pointer.zero()) {
             // TODO: implement write to code buffer
         }
     }
 
     public Pointer getCodeStart() {
-        assert _codeStart != Pointer.zero();
-        return _codeStart;
+        assert codeStart != Pointer.zero();
+        return codeStart;
     }
 
     public int getCodeSize() {
-        return _codeSize;
+        return codeSize;
     }
 }

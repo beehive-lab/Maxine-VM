@@ -43,11 +43,11 @@ public abstract class CompilerTest_reflection<Method_Type extends IrMethod> exte
     }
 
     public static class Instance {
-        Word _word;
-        int _i;
-        String _string;
-        byte _b;
-        Object[] _array;
+        Word word;
+        int i;
+        String string;
+        byte b;
+        Object[] array;
 
         public Instance() {
             this(Address.fromInt(1), 1, "1", (byte) 1, new Object[1]);
@@ -58,23 +58,23 @@ public abstract class CompilerTest_reflection<Method_Type extends IrMethod> exte
         }
 
         public Instance(Word w, int i, String s, byte b, Object[] array) {
-            _word = w;
-            _i = i;
-            _string = s;
-            _b = b;
-            _array = array;
+            this.word = w;
+            this.i = i;
+            this.string = s;
+            this.b = b;
+            this.array = array;
         }
 
         @Override
         public String toString() {
-            return "_word=" + _word + ", _int=" + _i + ", _string=" + _string + ", _byte=" + _b + ", _array=[" + Arrays.toString(_array, ",") + "]";
+            return "_word=" + word + ", _int=" + i + ", _string=" + string + ", _byte=" + b + ", _array=[" + Arrays.toString(array, ",") + "]";
         }
 
         @Override
         public boolean equals(Object o) {
             if (o instanceof Instance) {
                 final Instance instance = (Instance) o;
-                return instance._b == _b && instance._word.equals(_word) && instance._string.equals(_string) && Arrays.equals(instance._array, _array);
+                return instance.b == b && instance.word.equals(word) && instance.string.equals(string) && Arrays.equals(instance.array, array);
             }
             return false;
         }

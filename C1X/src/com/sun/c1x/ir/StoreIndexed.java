@@ -30,7 +30,7 @@ import com.sun.c1x.value.*;
  */
 public class StoreIndexed extends AccessIndexed {
 
-    Instruction _value;
+    Instruction value;
 
     /**
      * Creates a new StoreIndexed instruction.
@@ -43,7 +43,7 @@ public class StoreIndexed extends AccessIndexed {
      */
     public StoreIndexed(Instruction array, Instruction index, Instruction length, BasicType elementType, Instruction value, ValueStack lockStack) {
         super(array, index, length, elementType, lockStack);
-        _value = value;
+        this.value = value;
         if (ValueType.fromBasicType(elementType).isObject()) {
             setFlag(Flag.NeedsWriteBarrier);
             setFlag(Flag.NeedsStoreCheck);
@@ -55,7 +55,7 @@ public class StoreIndexed extends AccessIndexed {
      * @return the value to write into the array
      */
     public Instruction value() {
-        return _value;
+        return value;
     }
 
     /**
@@ -63,7 +63,7 @@ public class StoreIndexed extends AccessIndexed {
      * @return the IR scope associated with this instruction
      */
     public IRScope scope() {
-        return _lockStack.scope();
+        return lockStack.scope();
     }
 
     /**
@@ -89,7 +89,7 @@ public class StoreIndexed extends AccessIndexed {
     @Override
     public void inputValuesDo(InstructionClosure closure) {
         super.inputValuesDo(closure);
-        _value = closure.apply(_value);
+        value = closure.apply(value);
     }
 
     /**

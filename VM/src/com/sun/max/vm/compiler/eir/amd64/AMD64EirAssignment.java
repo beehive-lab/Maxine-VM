@@ -38,23 +38,23 @@ import com.sun.max.vm.value.*;
  */
 public class AMD64EirAssignment extends AMD64EirBinaryOperation.Move implements EirAssignment {
 
-    private final Kind _kind;
-    private Type _type = Type.NORMAL;
+    private final Kind kind;
+    private Type type = Type.NORMAL;
 
     public Type type() {
-        return _type;
+        return type;
     }
 
     public void setType(Type type) {
-        _type = type;
+        this.type = type;
     }
 
     public Kind kind() {
-        return _kind;
+        return kind;
     }
 
     public static PoolSet<EirLocationCategory> destinationLocationCategories(Kind kind) {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case INT:
             case LONG:
             case WORD:
@@ -70,7 +70,7 @@ public class AMD64EirAssignment extends AMD64EirBinaryOperation.Move implements 
     }
 
     private static PoolSet<EirLocationCategory> sourceLocationCategories(Kind kind) {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case INT:
                 return G_I32_L_S;
             case LONG:
@@ -89,8 +89,8 @@ public class AMD64EirAssignment extends AMD64EirBinaryOperation.Move implements 
 
     public AMD64EirAssignment(EirBlock block, Kind kind, EirValue destination, EirValue source) {
         super(block, destination, destinationLocationCategories(kind), source, sourceLocationCategories(kind));
-        _kind = kind;
-        switch (kind.asEnum()) {
+        this.kind = kind;
+        switch (kind.asEnum) {
             case INT:
             case LONG:
             case WORD:
@@ -503,7 +503,7 @@ public class AMD64EirAssignment extends AMD64EirBinaryOperation.Move implements 
     }
 
     public static void emit(AMD64EirTargetEmitter emitter, Kind kind, EirLocation destination, EirLocation source) {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case BYTE:
             case BOOLEAN:
             case SHORT:
@@ -545,7 +545,7 @@ public class AMD64EirAssignment extends AMD64EirBinaryOperation.Move implements 
 
     @Override
     public String toString() {
-        String result = "assign-" + _kind + " " + destinationOperand() + " := " + sourceOperand();
+        String result = "assign-" + kind + " " + destinationOperand() + " := " + sourceOperand();
 
         if (type() != Type.NORMAL) {
             result += " (" + type().toString() + ")";

@@ -56,22 +56,22 @@ public class BlockBegin extends StateSplit {
         }
     }
 
-    private static final int _entryFlags = BlockFlag.StandardEntry.mask() | BlockFlag.OsrEntry.mask() | BlockFlag.ExceptionEntry.mask();
+    private static final int entryFlags = BlockFlag.StandardEntry.mask() | BlockFlag.OsrEntry.mask() | BlockFlag.ExceptionEntry.mask();
 
 
-    private int _blockFlags;
-    private final List<BlockBegin> _predecessors;
-    private BlockEnd _end;
+    private int blockFlags;
+    private final List<BlockBegin> predecessors;
+    private BlockEnd end;
 
-    private int _blockID;
-    private int _depthFirstNumber;
-    private int _linearScanNumber;
-    private int _loopDepth;
-    private int _loopIndex;
+    private int blockID;
+    private int depthFirstNumber;
+    private int linearScanNumber;
+    private int loopDepth;
+    private int loopIndex;
 
-    private BlockBegin _dominator;
-    private List<BlockBegin> _exceptionHandlerBlocks;
-    private List<ValueStack> _exceptionHandlerStates;
+    private BlockBegin dominator;
+    private List<BlockBegin> exceptionHandlerBlocks;
+    private List<ValueStack> exceptionHandlerStates;
 
     /**
      * Constructs a new BlockBegin at the specified bytecode index.
@@ -79,12 +79,12 @@ public class BlockBegin extends StateSplit {
      */
     public BlockBegin(int bci) {
         super(ValueType.ILLEGAL_TYPE);
-        _depthFirstNumber = -1;
-        _linearScanNumber = -1;
-        _predecessors = new ArrayList<BlockBegin>(2);
-        _loopIndex = -1;
-        _exceptionHandlerBlocks = new ArrayList<BlockBegin>(0);
-        _exceptionHandlerStates = new ArrayList<ValueStack>(0);
+        depthFirstNumber = -1;
+        linearScanNumber = -1;
+        predecessors = new ArrayList<BlockBegin>(2);
+        loopIndex = -1;
+        exceptionHandlerBlocks = new ArrayList<BlockBegin>(0);
+        exceptionHandlerStates = new ArrayList<ValueStack>(0);
         setBCI(bci);
     }
 
@@ -93,11 +93,11 @@ public class BlockBegin extends StateSplit {
      * @return the id number
      */
     public int blockID() {
-        return _blockID;
+        return blockID;
     }
 
     public void setBlockID(int i) {
-        _blockID = i;
+        blockID = i;
     }
 
 
@@ -106,7 +106,7 @@ public class BlockBegin extends StateSplit {
      * @return the predecessor list
      */
     public List<BlockBegin> predecessors() {
-        return _predecessors;
+        return predecessors;
     }
 
     /**
@@ -114,7 +114,7 @@ public class BlockBegin extends StateSplit {
      * @return the dominator block
      */
     public BlockBegin dominator() {
-        return _dominator;
+        return dominator;
     }
 
     /**
@@ -122,7 +122,7 @@ public class BlockBegin extends StateSplit {
      * @param dominator the dominator for this block
      */
     public void setDominator(BlockBegin dominator) {
-        _dominator = dominator;
+        this.dominator = dominator;
     }
 
     /**
@@ -130,7 +130,7 @@ public class BlockBegin extends StateSplit {
      * @return the depth first number
      */
     public int depthFirstNumber() {
-        return _depthFirstNumber;
+        return depthFirstNumber;
     }
 
     /**
@@ -138,7 +138,7 @@ public class BlockBegin extends StateSplit {
      * @return the linear scan number
      */
     public int linearScanNumber() {
-        return _linearScanNumber;
+        return linearScanNumber;
     }
 
     /**
@@ -146,7 +146,7 @@ public class BlockBegin extends StateSplit {
      * @return the loop depth
      */
     public int loopDepth() {
-        return _loopDepth;
+        return loopDepth;
     }
 
     /**
@@ -154,7 +154,7 @@ public class BlockBegin extends StateSplit {
      * @return the loop index
      */
     public int loopIndex() {
-        return _loopIndex;
+        return loopIndex;
     }
 
     /**
@@ -162,7 +162,7 @@ public class BlockBegin extends StateSplit {
      * @return the block end
      */
     public BlockEnd end() {
-        return _end;
+        return end;
     }
 
     /**
@@ -170,27 +170,27 @@ public class BlockBegin extends StateSplit {
      * @return the exception handlers
      */
     public List<BlockBegin> exceptionHandlerBlocks() {
-        return _exceptionHandlerBlocks;
+        return exceptionHandlerBlocks;
     }
 
     public List<ValueStack> exceptionHandlerStates() {
-        return _exceptionHandlerStates;
+        return exceptionHandlerStates;
     }
 
     public void setDepthFirstNumber(int depthFirstNumber) {
-        this._depthFirstNumber = depthFirstNumber;
+        this.depthFirstNumber = depthFirstNumber;
     }
 
     public void setLinearScanNumber(int linearScanNumber) {
-        this._linearScanNumber = linearScanNumber;
+        this.linearScanNumber = linearScanNumber;
     }
 
     public void setLoopDepth(int loopDepth) {
-        this._loopDepth = loopDepth;
+        this.loopDepth = loopDepth;
     }
 
     public void setLoopIndex(int loopIndex) {
-        this._loopIndex = loopIndex;
+        this.loopIndex = loopIndex;
     }
 
     /**
@@ -201,7 +201,7 @@ public class BlockBegin extends StateSplit {
      */
     public void setEnd(BlockEnd end) {
         assert end != null;
-        BlockEnd old = _end;
+        BlockEnd old = this.end;
         if (old != end) {
             if (old != null) {
                 // disconnect this block from the old end
@@ -211,7 +211,7 @@ public class BlockBegin extends StateSplit {
                     s.predecessors().remove(this);
                 }
             }
-            this._end = end;
+            this.end = end;
             for (BlockBegin s : end.successors()) {
                 s.addPredecessor(this);
             }
@@ -219,11 +219,11 @@ public class BlockBegin extends StateSplit {
     }
 
     public void setExceptionHandlerBlocks(List<BlockBegin> exceptionHandlers) {
-        this._exceptionHandlerBlocks = exceptionHandlers;
+        this.exceptionHandlerBlocks = exceptionHandlers;
     }
 
     public void setExceptionHandlerStates(List<ValueStack> exceptionHandlerStates) {
-        this._exceptionHandlerStates = exceptionHandlerStates;
+        this.exceptionHandlerStates = exceptionHandlerStates;
     }
 
     /**
@@ -232,7 +232,7 @@ public class BlockBegin extends StateSplit {
      * @return <code>true</code> if this block is an entrypoint
      */
     public boolean isEntryBlock() {
-        return (_blockFlags & _entryFlags) != 0;
+        return (blockFlags & entryFlags) != 0;
     }
 
     /**
@@ -240,7 +240,7 @@ public class BlockBegin extends StateSplit {
      * @param flag the flag to set
      */
     public void setBlockFlag(BlockFlag flag) {
-        _blockFlags |= flag.mask();
+        blockFlags |= flag.mask();
     }
 
     /**
@@ -248,7 +248,7 @@ public class BlockBegin extends StateSplit {
      * @param flag the flag to clear
      */
     public void clearBlockFlag(BlockFlag flag) {
-        _blockFlags &= ~flag.mask();
+        blockFlags &= ~flag.mask();
     }
 
     public void copyBlockFlag(BlockBegin other, BlockFlag flag) {
@@ -261,7 +261,7 @@ public class BlockBegin extends StateSplit {
      * @return <code>true</code> if this block has the flag
      */
     public final boolean checkBlockFlag(BlockFlag flag) {
-        return (_blockFlags & flag.mask()) != 0;
+        return (blockFlags & flag.mask()) != 0;
     }
 
     /**
@@ -289,7 +289,8 @@ public class BlockBegin extends StateSplit {
                 closure.apply(this);
             }
             BlockEnd e = end();
-            iterateReverse(mark, closure, _exceptionHandlerBlocks, pre);
+            iterateReverse(mark, closure, exceptionHandlerBlocks, pre);
+            assert e != null : "block must have block end";
             iterateReverse(mark, closure, e.successors(), pre);
             if (!pre) {
                 closure.apply(this);
@@ -305,18 +306,18 @@ public class BlockBegin extends StateSplit {
 
     public void addExceptionHandler(BlockBegin b) {
         assert b != null && b.checkBlockFlag(BlockBegin.BlockFlag.ExceptionEntry);
-        if (!_exceptionHandlerBlocks.contains(b)) {
-            _exceptionHandlerBlocks.add(b);
+        if (!exceptionHandlerBlocks.contains(b)) {
+            exceptionHandlerBlocks.add(b);
         }
     }
 
     public int addExceptionState(ValueStack state) {
         assert checkBlockFlag(BlockBegin.BlockFlag.ExceptionEntry);
-        if (_exceptionHandlerStates == null) {
-            _exceptionHandlerStates = new ArrayList<ValueStack>(1);
+        if (exceptionHandlerStates == null) {
+            exceptionHandlerStates = new ArrayList<ValueStack>(1);
         }
-        _exceptionHandlerStates.add(state);
-        return _exceptionHandlerStates.size() - 1;
+        exceptionHandlerStates.add(state);
+        return exceptionHandlerStates.size() - 1;
     }
 
     /**
@@ -324,7 +325,7 @@ public class BlockBegin extends StateSplit {
      * @param pred the predecessor to add
      */
     public void addPredecessor(BlockBegin pred) {
-        _predecessors.add(pred);
+        predecessors.add(pred);
     }
 
     /**
@@ -332,7 +333,7 @@ public class BlockBegin extends StateSplit {
      * @param pred the predecessor to remove
      */
     public void removePredecessor(BlockBegin pred) {
-        while (_predecessors.remove(pred)) {
+        while (predecessors.remove(pred)) {
             // the block may appear multiple times in the list
         }
     }
@@ -553,7 +554,7 @@ public class BlockBegin extends StateSplit {
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("block #");
-        builder.append(_blockID);
+        builder.append(blockID);
         builder.append(" [");
         boolean hasFlag = false;
         for (BlockFlag f : BlockFlag.values()) {
@@ -566,15 +567,15 @@ public class BlockBegin extends StateSplit {
             }
         }
         builder.append("]");
-        if (_end != null) {
+        if (end != null) {
             builder.append(" -> ");
             boolean hasSucc = false;
-            for (BlockBegin s : _end.successors()) {
+            for (BlockBegin s : end.successors()) {
                 if (hasSucc) {
                     builder.append(", ");
                 }
                 builder.append("#");
-                builder.append(s._blockID);
+                builder.append(s.blockID);
                 hasSucc = true;
             }
         }

@@ -44,20 +44,20 @@ import com.sun.max.vm.prototype.*;
  */
 public class BootImageTable extends InspectorTable {
 
-    private final BootImageTableModel _model;
-    private BootImageColumnModel _columnModel;
-    private final TableColumn[] _columns;
+    private final BootImageTableModel model;
+    private BootImageColumnModel columnModel;
+    private final TableColumn[] columns;
 
-    private MaxVMState _lastRefreshedState = null;
+    private MaxVMState lastRefreshedState = null;
 
     public BootImageTable(Inspection inspection, TableColumnVisibilityPreferences<BootImageColumnKind> viewPreferences) {
         super(inspection);
-        _model = new BootImageTableModel(inspection);
-        _columns = new TableColumn[BootImageColumnKind.VALUES.length()];
-        _columnModel = new BootImageColumnModel(viewPreferences);
+        model = new BootImageTableModel(inspection);
+        columns = new TableColumn[BootImageColumnKind.VALUES.length()];
+        this.columnModel = new BootImageColumnModel(viewPreferences);
 
-        setModel(_model);
-        setColumnModel(_columnModel);
+        setModel(model);
+        setColumnModel(columnModel);
         setShowHorizontalLines(style().memoryTableShowHorizontalLines());
         setShowVerticalLines(style().memoryTableShowVerticalLines());
         setIntercellSpacing(style().memoryTableIntercellSpacing());
@@ -70,14 +70,14 @@ public class BootImageTable extends InspectorTable {
     }
 
     public void refresh(boolean force) {
-        if (maxVMState().newerThan(_lastRefreshedState) || force) {
-            _lastRefreshedState = maxVMState();
-            _model.refresh(force);
+        if (maxVMState().newerThan(lastRefreshedState) || force) {
+            lastRefreshedState = maxVMState();
+            model.refresh(force);
         }
     }
 
     public void redisplay() {
-        for (TableColumn column : _columns) {
+        for (TableColumn column : columns) {
             final Prober prober = (Prober) column.getCellRenderer();
             prober.redisplay();
         }
@@ -88,12 +88,12 @@ public class BootImageTable extends InspectorTable {
     @Override
     protected JTableHeader createDefaultTableHeader() {
         // Custom table header with tooltips that describe the column data.
-        return new JTableHeader(_columnModel) {
+        return new JTableHeader(columnModel) {
             @Override
             public String getToolTipText(MouseEvent mouseEvent) {
                 final Point p = mouseEvent.getPoint();
-                final int index = _columnModel.getColumnIndexAtX(p.x);
-                final int modelIndex = _columnModel.getColumn(index).getModelIndex();
+                final int index = columnModel.getColumnIndexAtX(p.x);
+                final int modelIndex = columnModel.getColumn(index).getModelIndex();
                 return BootImageColumnKind.VALUES.get(modelIndex).toolTipText();
             }
         };
@@ -101,10 +101,10 @@ public class BootImageTable extends InspectorTable {
 
     private final class BootImageColumnModel extends DefaultTableColumnModel {
 
-        private final TableColumnVisibilityPreferences<BootImageColumnKind> _viewPreferences;
+        private final TableColumnVisibilityPreferences<BootImageColumnKind> viewPreferences;
 
         private BootImageColumnModel(TableColumnVisibilityPreferences<BootImageColumnKind> viewPreferences) {
-            _viewPreferences = viewPreferences;
+            this.viewPreferences = viewPreferences;
             createColumn(BootImageColumnKind.NAME, new NameCellRenderer(inspection()), null);
             createColumn(BootImageColumnKind.VALUE, new ValueCellRenderer(), null);
             createColumn(BootImageColumnKind.REGION, new RegionCellRenderer(), null);
@@ -112,30 +112,30 @@ public class BootImageTable extends InspectorTable {
 
         private void createColumn(BootImageColumnKind columnKind, TableCellRenderer renderer, TableCellEditor editor) {
             final int col = columnKind.ordinal();
-            _columns[col] = new TableColumn(col, 0, renderer, editor);
-            _columns[col].setHeaderValue(columnKind.label());
-            _columns[col].setMinWidth(columnKind.minWidth());
-            if (_viewPreferences.isVisible(columnKind)) {
-                addColumn(_columns[col]);
+            columns[col] = new TableColumn(col, 0, renderer, editor);
+            columns[col].setHeaderValue(columnKind.label());
+            columns[col].setMinWidth(columnKind.minWidth());
+            if (viewPreferences.isVisible(columnKind)) {
+                addColumn(columns[col]);
             }
-            _columns[col].setIdentifier(columnKind);
+            columns[col].setIdentifier(columnKind);
         }
     }
 
     private final class BootImageTableModel extends AbstractTableModel {
 
-        private final AppendableIndexedSequence<String> _names = new ArrayListSequence<String>(50);
-        private final AppendableIndexedSequence<InspectorLabel> _valueLabels = new ArrayListSequence<InspectorLabel>(50);
-        private final AppendableIndexedSequence<InspectorLabel> _regionLabels = new ArrayListSequence<InspectorLabel>(50);
-        private final InspectorLabel _dummyLabel;
+        private final AppendableIndexedSequence<String> names = new ArrayListSequence<String>(50);
+        private final AppendableIndexedSequence<InspectorLabel> valueLabels = new ArrayListSequence<InspectorLabel>(50);
+        private final AppendableIndexedSequence<InspectorLabel> regionLabels = new ArrayListSequence<InspectorLabel>(50);
+        private final InspectorLabel dummyLabel;
 
         /**
          * Adds a row to the table.
          */
         private void addRow(String name, InspectorLabel valueLabel, InspectorLabel regionLabel) {
-            _names.append(name);
-            _valueLabels.append(valueLabel);
-            _regionLabels.append(regionLabel != null ? regionLabel : _dummyLabel);
+            names.append(name);
+            valueLabels.append(valueLabel);
+            regionLabels.append(regionLabel != null ? regionLabel : dummyLabel);
         }
 
         BootImageTableModel(Inspection inspection) {
@@ -143,25 +143,25 @@ public class BootImageTable extends InspectorTable {
             final BootImage.Header header = bootImage.header();
             final VMConfiguration vmConfiguration = bootImage.vmConfiguration();
             final Platform platform = vmConfiguration.platform();
-            final ProcessorKind processorKind = platform.processorKind();
-            final DataModel processorDataModel = processorKind.dataModel();
-            _dummyLabel = new PlainLabel(inspection, "");
+            final ProcessorKind processorKind = platform.processorKind;
+            final DataModel processorDataModel = processorKind.dataModel;
+            dummyLabel = new PlainLabel(inspection, "");
 
-            addRow("identification:", new DataLabel.IntAsHex(inspection(), header._identification), null);
-            addRow("version:", new DataLabel.IntAsDecimal(inspection(),  header._version), null);
-            addRow("random ID:", new DataLabel.IntAsHex(inspection(), header._randomID), null);
+            addRow("identification:", new DataLabel.IntAsHex(inspection(), header.identification), null);
+            addRow("version:", new DataLabel.IntAsDecimal(inspection(),  header.version), null);
+            addRow("random ID:", new DataLabel.IntAsHex(inspection(), header.randomID), null);
 
             addRow("build level:", new DataLabel.EnumAsText(inspection(), vmConfiguration.buildLevel()), null);
 
-            addRow("processor model:", new DataLabel.EnumAsText(inspection(), processorKind.processorModel()), null);
-            addRow("instruction set:", new DataLabel.EnumAsText(inspection(), processorKind.instructionSet()), null);
+            addRow("processor model:", new DataLabel.EnumAsText(inspection(), processorKind.processorModel), null);
+            addRow("instruction set:", new DataLabel.EnumAsText(inspection(), processorKind.instructionSet), null);
 
-            addRow("bits/word:", new DataLabel.IntAsDecimal(inspection(), processorDataModel.wordWidth().numberOfBits()), null);
-            addRow("endianness:", new DataLabel.EnumAsText(inspection(), processorDataModel.endianness()), null);
-            addRow("alignment:", new DataLabel.IntAsDecimal(inspection(), processorDataModel.alignment().numberOfBytes()), null);
+            addRow("bits/word:", new DataLabel.IntAsDecimal(inspection(), processorDataModel.wordWidth.numberOfBits), null);
+            addRow("endianness:", new DataLabel.EnumAsText(inspection(), processorDataModel.endianness), null);
+            addRow("alignment:", new DataLabel.IntAsDecimal(inspection(), processorDataModel.alignment.numberOfBytes()), null);
 
-            addRow("operating system:", new DataLabel.EnumAsText(inspection(), platform.operatingSystem()), null);
-            addRow("page size:", new DataLabel.IntAsDecimal(inspection(), platform.pageSize()), null);
+            addRow("operating system:", new DataLabel.EnumAsText(inspection(), platform.operatingSystem), null);
+            addRow("page size:", new DataLabel.IntAsDecimal(inspection(), platform.pageSize), null);
 
             addRow("grip scheme:", new JavaNameLabel(inspection(), vmConfiguration.gripScheme().name(), vmConfiguration.gripScheme().getClass().getName()), null);
             addRow("reference scheme:", new JavaNameLabel(inspection(), vmConfiguration.referenceScheme().name(), vmConfiguration.referenceScheme().getClass().getName()), null);
@@ -176,56 +176,56 @@ public class BootImageTable extends InspectorTable {
             addRow("target ABIs scheme:", new JavaNameLabel(inspection(), vmConfiguration.targetABIsScheme().name(), vmConfiguration.targetABIsScheme().getClass().getName()), null);
             addRow("run scheme:", new JavaNameLabel(inspection(), vmConfiguration.runScheme().name(), vmConfiguration.runScheme().getClass().getName()), null);
 
-            addRow("relocation scheme:", new DataLabel.IntAsHex(inspection(), header._relocationScheme), null);
-            addRow("relocation data size:", new DataLabel.IntAsHex(inspection(), header._relocationDataSize), null);
-            addRow("string data size:", new DataLabel.IntAsHex(inspection(), header._stringInfoSize), null);
+            addRow("relocation scheme:", new DataLabel.IntAsHex(inspection(), header.relocationScheme), null);
+            addRow("relocation data size:", new DataLabel.IntAsHex(inspection(), header.relocationDataSize), null);
+            addRow("string data size:", new DataLabel.IntAsHex(inspection(), header.stringInfoSize), null);
 
             final Pointer bootImageStart = maxVM().bootImageStart();
 
             final Pointer bootHeapStart = bootImageStart;
-            final Pointer bootHeapEnd = bootHeapStart.plus(header._bootHeapSize);
+            final Pointer bootHeapEnd = bootHeapStart.plus(header.bootHeapSize);
 
             addRow("boot heap start:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootHeapStart, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootHeapStart));
-            addRow("boot heap size:", new DataLabel.IntAsHex(inspection(), header._bootHeapSize), null);
+            addRow("boot heap size:", new DataLabel.IntAsHex(inspection(), header.bootHeapSize), null);
             addRow("boot heap end:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootHeapEnd, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootHeapEnd));
 
             final Pointer bootCodeStart = bootHeapEnd;
-            final Pointer bootCodeEnd = bootCodeStart.plus(header._bootCodeSize);
+            final Pointer bootCodeEnd = bootCodeStart.plus(header.bootCodeSize);
 
             addRow("boot code start:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodeStart, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootCodeStart));
-            addRow("boot code size:", new DataLabel.IntAsHex(inspection(), header._bootCodeSize), null);
+            addRow("boot code size:", new DataLabel.IntAsHex(inspection(), header.bootCodeSize), null);
             addRow("boot code end:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodeEnd, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootCodeEnd));
 
-            addRow("code cache size:", new DataLabel.IntAsHex(inspection(), header._codeCacheSize), null);
-            addRow("thread local space size:", new DataLabel.IntAsHex(inspection(), header._vmThreadLocalsSize), null);
+            addRow("code cache size:", new DataLabel.IntAsHex(inspection(), header.codeCacheSize), null);
+            addRow("thread local space size:", new DataLabel.IntAsHex(inspection(), header.vmThreadLocalsSize), null);
 
-            final Pointer runMethodPointer = bootImageStart.plus(header._vmRunMethodOffset);
+            final Pointer runMethodPointer = bootImageStart.plus(header.vmRunMethodOffset);
             addRow("vmStartupMethod:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT,  runMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), runMethodPointer));
-            final Pointer threadRunMethodPointer = bootImageStart.plus(header._vmThreadRunMethodOffset);
+            final Pointer threadRunMethodPointer = bootImageStart.plus(header.vmThreadRunMethodOffset);
             addRow("vmThreadRunMethod:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, threadRunMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), threadRunMethodPointer));
-            final Pointer runSchemeRunMethodPointer = bootImageStart.plus(header._runSchemeRunMethodOffset);
+            final Pointer runSchemeRunMethodPointer = bootImageStart.plus(header.runSchemeRunMethodOffset);
             addRow("runSchemeRunMethod:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, runSchemeRunMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), runSchemeRunMethodPointer));
 
-            final Pointer classRegistryPointer = bootHeapStart.plus(header._classRegistryOffset);
+            final Pointer classRegistryPointer = bootHeapStart.plus(header.classRegistryOffset);
             addRow("class registry:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, classRegistryPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), classRegistryPointer));
-            final Pointer bootHeapPointer = bootHeapStart.plus(header._heapRegionsPointerOffset);
+            final Pointer bootHeapPointer = bootHeapStart.plus(header.heapRegionsPointerOffset);
             addRow("heap regions pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootHeapPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootHeapPointer));
-            final Pointer bootCodePointer = bootCodeStart.plus(header._codeRegionsPointerOffset);
+            final Pointer bootCodePointer = bootCodeStart.plus(header.codeRegionsPointerOffset);
             addRow("code regions pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodePointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootCodePointer));
 
-            final Pointer messengerInfoPointer = bootImageStart.plus(header._messengerInfoOffset);
+            final Pointer messengerInfoPointer = bootImageStart.plus(header.messengerInfoOffset);
             addRow("messenger info pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, messengerInfoPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), messengerInfoPointer));
-            final Pointer threadSpecificsListPointer = bootImageStart.plus(header._threadSpecificsListOffset);
+            final Pointer threadSpecificsListPointer = bootImageStart.plus(header.threadSpecificsListOffset);
             addRow("thread specifics list pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, threadSpecificsListPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), threadSpecificsListPointer));
 
 
         }
 
         public void refresh(boolean force) {
-            for (InspectorLabel label : _valueLabels) {
+            for (InspectorLabel label : valueLabels) {
                 label.refresh(force);
             }
-            for (InspectorLabel label : _regionLabels) {
+            for (InspectorLabel label : regionLabels) {
                 label.refresh(force);
             }
         }
@@ -235,17 +235,17 @@ public class BootImageTable extends InspectorTable {
         }
 
         public int getRowCount() {
-            return _names.length();
+            return names.length();
         }
 
         public Object getValueAt(int row, int col) {
             switch (BootImageColumnKind.VALUES.get(col)) {
                 case NAME:
-                    return _names.get(row);
+                    return names.get(row);
                 case VALUE:
-                    return _valueLabels.get(row);
+                    return valueLabels.get(row);
                 case REGION:
-                    return _regionLabels.get(row);
+                    return regionLabels.get(row);
             }
             return null;
         }

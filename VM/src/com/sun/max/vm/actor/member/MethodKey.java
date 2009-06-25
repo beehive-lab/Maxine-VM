@@ -88,50 +88,50 @@ public interface MethodKey  {
     }
 
     public static class DefaultMethodKey extends AbstractMethodKey {
-        protected final TypeDescriptor _holder;
-        protected final Utf8Constant _name;
-        protected final SignatureDescriptor _signature;
+        protected final TypeDescriptor holder;
+        protected final Utf8Constant name;
+        protected final SignatureDescriptor signature;
 
         public DefaultMethodKey(MethodActor methodActor) {
-            this(methodActor.holder().typeDescriptor(), methodActor.name(), methodActor.descriptor());
+            this(methodActor.holder().typeDescriptor, methodActor.name, methodActor.descriptor());
         }
 
         public DefaultMethodKey(TypeDescriptor holder, Utf8Constant name, SignatureDescriptor signature) {
-            _holder = holder;
-            _name = name;
-            _signature = signature;
+            this.holder = holder;
+            this.name = name;
+            this.signature = signature;
         }
 
         public TypeDescriptor holder() {
-            return _holder;
+            return holder;
         }
 
         public Utf8Constant name() {
-            return _name;
+            return name;
         }
 
         public SignatureDescriptor signature() {
-            return _signature;
+            return signature;
         }
     }
 
     public static class MethodActorKey extends AbstractMethodKey {
-        protected final MethodActor _methodActor;
+        protected final MethodActor methodActor;
 
         public MethodActorKey(MethodActor methodActor) {
-            _methodActor = methodActor;
+            this.methodActor = methodActor;
         }
 
         public TypeDescriptor holder() {
-            return _methodActor.holder().typeDescriptor();
+            return methodActor.holder().typeDescriptor;
         }
 
         public Utf8Constant name() {
-            return _methodActor.name();
+            return methodActor.name;
         }
 
         public SignatureDescriptor signature() {
-            return _methodActor.descriptor();
+            return methodActor.descriptor();
         }
     }
 }

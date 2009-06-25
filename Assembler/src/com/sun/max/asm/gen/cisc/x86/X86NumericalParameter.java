@@ -48,7 +48,7 @@ public abstract class X86NumericalParameter extends X86Parameter implements Appe
     }
 
     public Class type() {
-        return width().canonicalPrimitiveType();
+        return width().canonicalPrimitiveType;
     }
 
     public Iterable< ? extends ImmediateArgument> getLegalTestArguments() {

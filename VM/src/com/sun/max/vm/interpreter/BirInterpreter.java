@@ -45,17 +45,17 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 public class BirInterpreter extends IrInterpreter<BirMethod> {
-    public static OptionSet _optionSet = new OptionSet();
-    public static Option<Boolean> _printState = _optionSet.newBooleanOption("PS", false, "(P)rints the Interpreter's Execution (S)tate.");
+    public static OptionSet optionSet = new OptionSet();
+    public static Option<Boolean> printState = optionSet.newBooleanOption("PS", false, "(P)rints the Interpreter's Execution (S)tate.");
 
     public static class BirMethodCache {
-        private static GrowableMapping<ClassMethodActor, BirMethod> _methods = new IdentityHashMapping<ClassMethodActor, BirMethod>();
+        private static GrowableMapping<ClassMethodActor, BirMethod> methods = new IdentityHashMapping<ClassMethodActor, BirMethod>();
 
         public static BirMethod lookup(ClassMethodActor classMethodActor) {
-            BirMethod method = _methods.get(classMethodActor);
+            BirMethod method = methods.get(classMethodActor);
             if (method == null) {
                 method = generateBirMethod(classMethodActor);
-                _methods.put(classMethodActor, method);
+                methods.put(classMethodActor, method);
             }
             return method;
         }
@@ -73,30 +73,30 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
         void trace(BytecodeLocation location, BirState state);
     }
 
-    static final Value _filler = Value.fromBoxedJavaValue("%");
-    static final Value _undefined = Value.fromBoxedJavaValue("_");
+    static final Value filler = Value.fromBoxedJavaValue("%");
+    static final Value undefined = Value.fromBoxedJavaValue("_");
 
-    private final BirState _state = new BirState();
-    private final Profiler _profiler;
+    private final BirState state = new BirState();
+    private final Profiler profiler;
 
     public BirInterpreter(Profiler profiler) {
-        _profiler = profiler;
+        this.profiler = profiler;
     }
 
-    private int _jumpPosition = -1;
+    private int jumpPosition = -1;
 
     protected void jumpTo(int position) {
-        _jumpPosition = position;
+        jumpPosition = position;
     }
 
     protected int resetJump() {
-        final int position = _jumpPosition;
-        _jumpPosition = -1;
+        final int position = jumpPosition;
+        jumpPosition = -1;
         return position;
     }
 
     protected boolean needsToJump() {
-        return _jumpPosition >= 0;
+        return jumpPosition >= 0;
     }
 
     private Value toStackValue(Value value) {
@@ -116,46 +116,46 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
         final BytecodeScanner scanner = new BytecodeScanner(evaluator);
 
         for (Value argument : arguments) {
-            _state.push(toStackValue(argument));
+            state.push(toStackValue(argument));
         }
 
-        _state.enter(method.classMethodActor(), 0);
+        state.enter(method.classMethodActor(), 0);
 
-        while (_state.hasFrames()) {
-            profileTrace(_state.last().method(), _state.position());
-            final int follow = scanner.scanInstruction(_state.code(), _state.position());
+        while (state.hasFrames()) {
+            profileTrace(state.last().method(), state.position());
+            final int follow = scanner.scanInstruction(state.code(), state.position());
             if (needsToJump()) {
-                final int fromPosition = _state.position();
-                _state.setPosition(resetJump());
-                profileJump(_state.last().method(), fromPosition, _state.position());
+                final int fromPosition = state.position();
+                state.setPosition(resetJump());
+                profileJump(state.last().method(), fromPosition, state.position());
             } else {
-                _state.setPosition(follow);
+                state.setPosition(follow);
             }
         }
 
         final Kind resultKind = method.classMethodActor().resultKind();
 
         if (resultKind != Kind.VOID) {
-            return _state.pop(resultKind);
+            return state.pop(resultKind);
         }
         return Kind.VOID.zeroValue();
     }
 
     private void profileTrace(ClassMethodActor method, int position) {
-        if (_profiler != null) {
-            _profiler.trace(new BytecodeLocation(method, position), _state);
+        if (profiler != null) {
+            profiler.trace(new BytecodeLocation(method, position), state);
         }
     }
 
     private void profileJump(ClassMethodActor method, int fromPosition, int toPosition) {
-        if (_profiler != null) {
-            _profiler.jump(new BytecodeLocation(method, fromPosition), new BytecodeLocation(method, toPosition), _state);
+        if (profiler != null) {
+            profiler.jump(new BytecodeLocation(method, fromPosition), new BytecodeLocation(method, toPosition), state);
         }
     }
 
     private void profileInvoke(ClassMethodActor target) {
-        if (_profiler != null) {
-            _profiler.invoke(target, _state);
+        if (profiler != null) {
+            profiler.invoke(target, state);
         }
     }
 
@@ -163,17 +163,17 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
 
         @Override
         protected void constant(Value value) {
-            _state.push(toStackValue(value));
+            state.push(toStackValue(value));
         }
 
         @Override
         protected void store(Kind kind, int slot) {
-            _state.store(kind, slot);
+            state.store(kind, slot);
         }
 
         @Override
         protected void load(Kind kind, int slot) {
-            _state.load(kind, slot);
+            state.load(kind, slot);
         }
 
         @Override
@@ -209,10 +209,10 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
         private void execute(final MethodActor methodActor) {
 
             try {
-                final Value[] arguments =  _state.popMany(methodActor.getParameterKinds());
+                final Value[] arguments =  state.popMany(methodActor.getParameterKinds());
                 final Value result = methodActor.invoke(arguments);
                 if (methodActor.resultKind() != Kind.VOID) {
-                    _state.push(toStackValue(result));
+                    state.push(toStackValue(result));
                 }
             } catch (IllegalAccessException e) {
                 ProgramError.unexpected(e);
@@ -236,12 +236,12 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
                 ProgramError.unexpected();
                 return;
             }
-            _state.push(ReferenceValue.from(reference));
+            state.push(ReferenceValue.from(reference));
         }
 
         @Override
         protected void allocateArray(Kind kind) {
-            final Value length = _state.pop(Kind.INT);
+            final Value length = state.pop(Kind.INT);
             Object array;
             try {
                 array = NonFoldableSnippet.CreatePrimitiveArray.createPrimitiveArray(kind, length.asInt());
@@ -249,14 +249,14 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
                 catchException(e);
                 return;
             }
-            _state.push(ReferenceValue.from(array));
+            state.push(ReferenceValue.from(array));
         }
 
         @Override
         protected void allocateArray(ClassConstant classConstant, int index) {
             final ClassActor componentClassActor = classConstant.resolve(constantPool(), index);
             final ArrayClassActor arrayClassActor = ArrayClassActor.forComponentClassActor(componentClassActor);
-            final Value length = _state.pop(Kind.INT);
+            final Value length = state.pop(Kind.INT);
             Object array;
             try {
                 array = NonFoldableSnippet.CreateReferenceArray.createReferenceArray(arrayClassActor, length.asInt());
@@ -264,7 +264,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
                 catchException(e);
                 return;
             }
-            _state.push(ReferenceValue.from(array));
+            state.push(ReferenceValue.from(array));
         }
 
         @Override
@@ -272,7 +272,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
             final ArrayClassActor arrayClassActor = (ArrayClassActor) classConstant.resolve(constantPool(), index);
             final int[] lengths = new int[dimensions];
             for (int i = dimensions - 1; i >= 0; i--) {
-                lengths[i] = _state.pop(Kind.INT).asInt();
+                lengths[i] = state.pop(Kind.INT).asInt();
             }
             Object array;
             try {
@@ -281,7 +281,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
                 catchException(e);
                 return;
             }
-            _state.push(ReferenceValue.from(array));
+            state.push(ReferenceValue.from(array));
         }
 
         @Override
@@ -291,23 +291,23 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
             if (fieldActor.isStatic()) {
                 reference = ReferenceValue.from(fieldActor.holder().staticTuple());
             } else {
-                reference = _state.pop(Kind.REFERENCE);
+                reference = state.pop(Kind.REFERENCE);
             }
-            _state.push(toStackValue(fieldActor.readValue(reference.asReference())));
+            state.push(toStackValue(fieldActor.readValue(reference.asReference())));
         }
 
         @Override
         protected void putField(FieldRefConstant resolvedField, int index) {
             final FieldActor fieldActor = resolvedField.resolve(constantPool(), index);
-            final Value value = fieldActor.kind().convert(_state.pop(fieldActor.kind()));
+            final Value value = fieldActor.kind.convert(state.pop(fieldActor.kind));
             final Value reference;
             if (fieldActor.isStatic()) {
                 reference = ReferenceValue.from(fieldActor.holder().staticTuple());
             } else {
-                reference = _state.pop(Kind.REFERENCE);
+                reference = state.pop(Kind.REFERENCE);
             }
 
-            fieldActor.kind().writeErasedValue(reference.asObject(), fieldActor.offset(), value);
+            fieldActor.kind.writeErasedValue(reference.asObject(), fieldActor.offset(), value);
         }
 
         @Override
@@ -319,7 +319,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
                 execute(staticMethodActor);
                 return;
             }
-            _state.enter(staticMethodActor, currentBytePosition());
+            state.enter(staticMethodActor, currentBytePosition());
             jumpTo(0);
         }
 
@@ -327,7 +327,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
         protected void invokeVirtualMethod(MethodActor method) {
             final VirtualMethodActor declaredMethod = (VirtualMethodActor) method;
             MakeHolderInitialized.makeHolderInitialized(declaredMethod);
-            final Object receiver = _state.peek(Kind.REFERENCE, declaredMethod.numberOfParameterSlots() - 1).asObject();
+            final Object receiver = state.peek(Kind.REFERENCE, declaredMethod.numberOfParameterSlots() - 1).asObject();
             if (receiver == null) {
                 catchException(new NullPointerException());
                 return;
@@ -339,7 +339,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
                 execute(virtualMethodActor);
                 return;
             }
-            _state.enter(virtualMethodActor, currentBytePosition());
+            state.enter(virtualMethodActor, currentBytePosition());
             jumpTo(0);
         }
 
@@ -347,7 +347,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
         protected void invokeInterfaceMethod(MethodActor method) {
             final InterfaceMethodActor declaredMethod = (InterfaceMethodActor) method;
             MakeHolderInitialized.makeHolderInitialized(declaredMethod);
-            final Object receiver = _state.peek(Kind.REFERENCE, declaredMethod.descriptor().computeNumberOfSlots()).asObject();
+            final Object receiver = state.peek(Kind.REFERENCE, declaredMethod.descriptor().computeNumberOfSlots()).asObject();
             if (receiver == null) {
                 catchException(new NullPointerException());
                 return;
@@ -359,7 +359,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
                 execute(virtualMethodActor);
                 return;
             }
-            _state.enter(virtualMethodActor, currentBytePosition());
+            state.enter(virtualMethodActor, currentBytePosition());
             jumpTo(0);
         }
 
@@ -371,13 +371,13 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
                 execute(virtualMethodActor);
                 return;
             }
-            _state.enter(virtualMethodActor, currentBytePosition());
+            state.enter(virtualMethodActor, currentBytePosition());
             jumpTo(0);
         }
 
         @Override
         protected void tableSwitch(int defaultOffset, int lowMatch, int highMatch, int[] caseOffsets) {
-            final int index = _state.pop(Kind.INT).asInt();
+            final int index = state.pop(Kind.INT).asInt();
             if (index < lowMatch || index > highMatch) {
                 jumpTo(currentOpcodePosition() + defaultOffset);
             } else {
@@ -387,7 +387,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
 
         @Override
         protected void lookupSwitch(int defaultOffset, int[] switchCases, int[] switchOffsets) {
-            final int index = _state.pop(Kind.INT).asInt();
+            final int index = state.pop(Kind.INT).asInt();
             for (int i = 0; i < switchCases.length; i++) {
                 if (switchCases[i] == index) {
                     jumpTo(currentOpcodePosition() + switchOffsets[i]);
@@ -399,19 +399,19 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
 
         @Override
         protected void throwException() {
-            final Value exception = _state.pop(Kind.REFERENCE);
+            final Value exception = state.pop(Kind.REFERENCE);
             final Throwable exceptionObject = exception.asObject() == null ? new NullPointerException() : (Throwable) exception.asObject();
             catchException(exceptionObject);
         }
 
         private void catchException(final Throwable exceptionObject) throws ProgramError {
-            _state.last().empty();
-            _state.push(ReferenceValue.from(exceptionObject));
+            state.last().empty();
+            state.push(ReferenceValue.from(exceptionObject));
 
-            while (_state.hasFrames()) {
+            while (state.hasFrames()) {
 
                 // Try to catch exception using the current method's exception handler table.
-                for (ExceptionHandlerEntry handler : _state.last().method().codeAttribute().exceptionHandlerTable()) {
+                for (ExceptionHandlerEntry handler : state.last().method().codeAttribute().exceptionHandlerTable()) {
                     if (currentOpcodePosition() >= handler.startPosition() && currentOpcodePosition() < handler.endPosition()) {
                         /*
                         final int index = handler.catchTypeIndex();
@@ -425,9 +425,9 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
                     }
                 }
 
-                _state.leaveWithoutReturn();
-                if (_state.hasFrames()) {
-                    jumpTo(_state.position());
+                state.leaveWithoutReturn();
+                if (state.hasFrames()) {
+                    jumpTo(state.position());
                 }
             }
 
@@ -436,8 +436,8 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
 
         @Override
         protected void methodReturn(Kind kind) {
-            _state.leave();
-            jumpTo(_state.position());
+            state.leave();
+            jumpTo(state.position());
         }
 
         @Override
@@ -447,11 +447,11 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
 
         @Override
         protected void increment(int slot, int addend) {
-            final Value value = _state.getSlot(slot);
+            final Value value = state.getSlot(slot);
             if (value instanceof IntValue) {
-                _state.store(slot, IntValue.from(value.asInt() + addend));
+                state.store(slot, IntValue.from(value.asInt() + addend));
             } else if (value instanceof LongValue) {
-                _state.store(slot, LongValue.from(value.asLong() + addend));
+                state.store(slot, LongValue.from(value.asLong() + addend));
             } else {
                 assert false;
             }
@@ -459,8 +459,8 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
 
         @Override
         protected void acmpBranch(BranchCondition condition, int offset) {
-            final ReferenceValue b = (ReferenceValue) _state.pop(Kind.REFERENCE);
-            final ReferenceValue a = (ReferenceValue) _state.pop(Kind.REFERENCE);
+            final ReferenceValue b = (ReferenceValue) state.pop(Kind.REFERENCE);
+            final ReferenceValue a = (ReferenceValue) state.pop(Kind.REFERENCE);
             if (condition.evaluate(a, b)) {
                 jumpTo(currentOpcodePosition() + offset);
             }
@@ -468,8 +468,8 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
 
         @Override
         protected void icmpBranch(BranchCondition condition, int offset) {
-            final Value b = _state.pop(Kind.INT);
-            final Value a = _state.pop(Kind.INT);
+            final Value b = state.pop(Kind.INT);
+            final Value a = state.pop(Kind.INT);
             if (condition.evaluate(a, b)) {
                 jumpTo(currentOpcodePosition() + offset);
             }
@@ -477,7 +477,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
 
         @Override
         protected void nullBranch(BranchCondition condition, int offset) {
-            final ReferenceValue a = (ReferenceValue) _state.pop(Kind.REFERENCE);
+            final ReferenceValue a = (ReferenceValue) state.pop(Kind.REFERENCE);
             final ReferenceValue b = ReferenceValue.NULL;
             if (condition.evaluate(a, b)) {
                 jumpTo(currentOpcodePosition() + offset);
@@ -486,7 +486,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
 
         @Override
         protected void branch(BranchCondition condition, int offset) {
-            final Value a = _state.pop(Kind.INT);
+            final Value a = state.pop(Kind.INT);
             if (condition.evaluate(a, IntValue.ZERO)) {
                 jumpTo(currentOpcodePosition() + offset);
             }
@@ -494,15 +494,15 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
 
         @Override
         protected void instanceOf(ClassConstant classConstant, int index) {
-            final Value reference = _state.pop(Kind.REFERENCE);
+            final Value reference = state.pop(Kind.REFERENCE);
             final ClassActor classActor = classConstant.resolve(constantPool(), index);
             final boolean result = Snippet.InstanceOf.instanceOf(classActor, reference.asObject());
-            _state.push(toStackValue(BooleanValue.from(result)));
+            state.push(toStackValue(BooleanValue.from(result)));
         }
 
         @Override
         protected void checkCast(ClassConstant classConstant, int index) {
-            final Value reference = _state.peek(Kind.REFERENCE, 0);
+            final Value reference = state.peek(Kind.REFERENCE, 0);
             final ClassActor classActor = classConstant.resolve(constantPool(), index);
             Snippet.CheckCast.checkCast(classActor, reference.asObject());
             // TODO: Deal with exceptions here.
@@ -510,37 +510,37 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
 
         @Override
         protected void enterMonitor() {
-            final Value reference = _state.pop(Kind.REFERENCE);
+            final Value reference = state.pop(Kind.REFERENCE);
             Monitor.enter(reference.asObject());
         }
 
         @Override
         protected void exitMonitor() {
-            final Value reference = _state.pop(Kind.REFERENCE);
+            final Value reference = state.pop(Kind.REFERENCE);
             Monitor.exit(reference.asObject());
         }
 
         @Override
         protected void execute(Bytecode bytecode) {
-            _state.execute(bytecode);
+            state.execute(bytecode);
         }
 
         @Override
         protected void opcodeDecoded() {
             AsynchronousProfiler.event(CounterMetric.INTERPRETED_BYTECODES);
-            if (_printState.getValue()) {
-                _state.println();
-                Console.println(Color.LIGHTMAGENTA, "opcode: method: " + _state.last().method() + " pc: " + currentOpcodePosition() + ", op: " + currentOpcode());
+            if (printState.getValue()) {
+                state.println();
+                Console.println(Color.LIGHTMAGENTA, "opcode: method: " + state.last().method() + " pc: " + currentOpcodePosition() + ", op: " + currentOpcode());
             }
         }
 
         @Override
         protected ConstantPool constantPool() {
-            return _state.last().method().compilee().codeAttribute().constantPool();
+            return state.last().method().compilee().codeAttribute().constantPool();
         }
 
         protected ClassActor classActor() {
-            return _state.last().method().compilee().holder();
+            return state.last().method().compilee().holder();
         }
     }
 }

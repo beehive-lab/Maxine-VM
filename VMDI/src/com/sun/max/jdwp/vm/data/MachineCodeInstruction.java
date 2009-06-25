@@ -28,49 +28,49 @@ package com.sun.max.jdwp.vm.data;
  */
 public class MachineCodeInstruction extends AbstractSerializableObject {
 
-    private String _mnemonic;
-    private int _position;
-    private long _address;
-    private String _label;
-    private byte[] _bytes;
-    private String _operands;
-    private long _targetAddress;
+    private final String mnemonic;
+    private final int position;
+    private final long address;
+    private final String label;
+    private final byte[] bytes;
+    private final String operands;
+    private final long targetAddress;
 
     public MachineCodeInstruction(String mnemonic, int position, long address, String label, byte[] bytes, String operands, long targetAddress) {
-        _mnemonic = mnemonic;
-        _position = position;
-        _address = address;
-        _label = label;
-        _bytes = bytes;
-        _operands = operands;
-        _targetAddress = targetAddress;
+        this.mnemonic = mnemonic;
+        this.position = position;
+        this.address = address;
+        this.label = label;
+        this.bytes = bytes;
+        this.operands = operands;
+        this.targetAddress = targetAddress;
     }
 
     public String getMnemonic() {
-        return _mnemonic;
+        return mnemonic;
     }
 
     public int getPosition() {
-        return _position;
+        return position;
     }
 
     public long getAddress() {
-        return _address;
+        return address;
     }
 
     public String getLabel() {
-        return _label;
+        return label;
     }
 
     public byte[] getBytes() {
-        return _bytes;
+        return bytes;
     }
 
     public String getOperands() {
-        return _operands;
+        return operands;
     }
 
     public long getTargetAddress() {
-        return _targetAddress;
+        return targetAddress;
     }
 }

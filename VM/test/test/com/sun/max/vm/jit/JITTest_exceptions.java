@@ -36,7 +36,7 @@ import com.sun.max.vm.type.*;
  */
 public class JITTest_exceptions  extends JitCompilerTestCase {
 
-    private int _intField;
+    private int intField;
 
     /**
      * Method with single try-catch block and exception handler.
@@ -58,7 +58,7 @@ public class JITTest_exceptions  extends JitCompilerTestCase {
         @SuppressWarnings("unused")
         Throwable caughtException = null;
         try {
-            if (_intField == 0) {
+            if (intField == 0) {
                 throw new NullPointerException();
             }
             throw new Exception();

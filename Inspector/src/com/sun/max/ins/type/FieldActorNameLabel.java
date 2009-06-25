@@ -32,11 +32,11 @@ import com.sun.max.vm.actor.member.*;
 
 public class FieldActorNameLabel extends InspectorLabel {
 
-    private FieldActor _fieldActor;
+    private FieldActor fieldActor;
 
     public FieldActorNameLabel(Inspection inspection, FieldActor fieldActor) {
         super(inspection);
-        _fieldActor = fieldActor;
+        this.fieldActor = fieldActor;
         redisplay();
     }
 
@@ -45,7 +45,7 @@ public class FieldActorNameLabel extends InspectorLabel {
     }
 
     public void setValue(FieldActor fieldActor) {
-        _fieldActor = fieldActor;
+        this.fieldActor = fieldActor;
         updateText();
     }
 
@@ -62,12 +62,12 @@ public class FieldActorNameLabel extends InspectorLabel {
     }
 
     private void updateText() {
-        if (_fieldActor == null) {
+        if (fieldActor == null) {
             setText("");
             setToolTipText("");
         } else {
-            setText(_fieldActor.name().toString());
-            setToolTipText("Type: " + _fieldActor.descriptor().toJavaString(true) + " in " + _fieldActor.holder().qualifiedName());
+            setText(fieldActor.name.toString());
+            setToolTipText("Type: " + fieldActor.descriptor().toJavaString(true) + " in " + fieldActor.holder().qualifiedName());
         }
     }
 

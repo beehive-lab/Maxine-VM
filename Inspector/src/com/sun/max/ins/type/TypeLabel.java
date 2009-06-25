@@ -38,8 +38,8 @@ import com.sun.max.vm.type.*;
  */
 public class TypeLabel extends InspectorLabel {
 
-    private TypeDescriptor _typeDescriptor;
-    private TeleClassActor _teleClassActor;
+    private TypeDescriptor typeDescriptor;
+    private TeleClassActor teleClassActor;
 
     private final class MyMouseClickAdapter extends InspectorMouseClickAdapter {
 
@@ -51,28 +51,28 @@ public class TypeLabel extends InspectorLabel {
         public void procedure(MouseEvent mouseEvent) {
             switch (MaxineInspector.mouseButtonWithModifiers(mouseEvent)) {
                 case MouseEvent.BUTTON1: {
-                    if (_teleClassActor != null) {
+                    if (teleClassActor != null) {
                         if (mouseEvent.isControlDown()) {
-                            MemoryInspector.create(inspection(), _teleClassActor).highlight();
+                            MemoryInspector.create(inspection(), teleClassActor).highlight();
                         } else {
-                            inspection().focus().setHeapObject(_teleClassActor);
+                            inspection().focus().setHeapObject(teleClassActor);
                         }
                         break;
                     }
                 }
                 case MouseEvent.BUTTON3: {
                     final InspectorMenu menu = new InspectorMenu();
-                    final boolean enabled = _teleClassActor != null;
+                    final boolean enabled = teleClassActor != null;
 
-                    final InspectorAction inspectActorAction = inspection().actions().inspectObject(_teleClassActor, "Inspect ClassActor (Left-Button)");
+                    final InspectorAction inspectActorAction = inspection().actions().inspectObject(teleClassActor, "Inspect ClassActor (Left-Button)");
                     inspectActorAction.setEnabled(enabled);
                     menu.add(inspectActorAction);
 
-                    final InspectorAction inspectMemoryAction = inspection().actions().inspectMemory(_teleClassActor, "Inspect ClassActor memory");
+                    final InspectorAction inspectMemoryAction = inspection().actions().inspectMemory(teleClassActor, "Inspect ClassActor memory");
                     inspectMemoryAction.setEnabled(enabled);
                     menu.add(inspectMemoryAction);
 
-                    final InspectorAction inspectMemoryWordsAction = inspection().actions().inspectMemoryWords(_teleClassActor, "Inspect ClassActor memory words");
+                    final InspectorAction inspectMemoryWordsAction = inspection().actions().inspectMemoryWords(teleClassActor, "Inspect ClassActor memory words");
                     inspectMemoryWordsAction.setEnabled(enabled);
                     menu.add(inspectMemoryWordsAction);
 
@@ -93,7 +93,7 @@ public class TypeLabel extends InspectorLabel {
 
     public TypeLabel(final Inspection inspection, TypeDescriptor typeDescriptor) {
         super(inspection);
-        _typeDescriptor = typeDescriptor;
+        this.typeDescriptor = typeDescriptor;
         updateClassActor();
         addMouseListener(new MyMouseClickAdapter(inspection));
         redisplay();
@@ -103,17 +103,17 @@ public class TypeLabel extends InspectorLabel {
      * Changes the value to be displayed by the label.
      */
     public void setValue(TypeDescriptor typeDescriptor) {
-        _typeDescriptor = typeDescriptor;
+        this.typeDescriptor = typeDescriptor;
         updateClassActor();
         updateText();
     }
 
     private void updateClassActor() {
-        if (_typeDescriptor == null) {
-            _teleClassActor = null;
+        if (typeDescriptor == null) {
+            teleClassActor = null;
         } else {
             // Might be null if class not yet known in VM
-            _teleClassActor = maxVM().findTeleClassActor(_typeDescriptor);
+            teleClassActor = maxVM().findTeleClassActor(typeDescriptor);
         }
     }
 
@@ -124,28 +124,28 @@ public class TypeLabel extends InspectorLabel {
     }
 
     private void updateText() {
-        if (_typeDescriptor == null) {
+        if (typeDescriptor == null) {
             setText("");
             setToolTipText("");
             setForeground(style().javaNameColor());
         } else {
-            final Class javaType = _typeDescriptor.resolveType(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER);
+            final Class javaType = typeDescriptor.resolveType(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER);
             setText(javaType.getSimpleName());
-            if (_teleClassActor == null) {
+            if (teleClassActor == null) {
                 setForeground(style().javaUnresolvedNameColor());
                 setToolTipText("<unloaded>" +  javaType.getName());
             } else {
                 setForeground(style().javaNameColor());
-                setToolTipText(inspection().nameDisplay().referenceToolTipText(_teleClassActor));
+                setToolTipText(inspection().nameDisplay().referenceToolTipText(teleClassActor));
             }
         }
     }
 
-    private MaxVMState _lastRefreshedState = null;
+    private MaxVMState lastRefreshedState = null;
 
     public void refresh(boolean force) {
-        if (maxVMState().newerThan(_lastRefreshedState) || force) {
-            _lastRefreshedState = maxVMState();
+        if (maxVMState().newerThan(lastRefreshedState) || force) {
+            lastRefreshedState = maxVMState();
             updateClassActor();
         }
     }

@@ -267,7 +267,7 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
     private static Size getArraySize(TargetLocation[] array) {
         Size size = getSize(array);
         for (TargetLocation element : array) {
-            if (element != TargetLocation._undefined) {
+            if (element != TargetLocation.undefined) {
                 size = size.plus(getSize(element));
                 // TODO: add Immediate._value, except if it's WordValue.zero()
             }
@@ -275,17 +275,17 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
         return size;
     }
 
-    private static final Memoizer.Function<TargetMethod, IndexedSequence<TargetJavaFrameDescriptor>> _inflate = new Memoizer.Function<TargetMethod, IndexedSequence<TargetJavaFrameDescriptor>>() {
+    private static final Memoizer.Function<TargetMethod, IndexedSequence<TargetJavaFrameDescriptor>> inflate = new Memoizer.Function<TargetMethod, IndexedSequence<TargetJavaFrameDescriptor>>() {
 
         public Memoizer.Function.Result<IndexedSequence<TargetJavaFrameDescriptor>> create(TargetMethod targetMethod) {
             return inflateForMemoizer(targetMethod.compressedJavaFrameDescriptors());
         }
     };
 
-    private static final Mapping<TargetMethod, IndexedSequence<TargetJavaFrameDescriptor>> _methodToJavaFrameDescriptors = Memoizer.create(_inflate);
+    private static final Mapping<TargetMethod, IndexedSequence<TargetJavaFrameDescriptor>> methodToJavaFrameDescriptors = Memoizer.create(inflate);
 
     static final TargetJavaFrameDescriptor get(TargetMethod targetMethod, int index) {
-        final IndexedSequence<TargetJavaFrameDescriptor> indexedSequence = _methodToJavaFrameDescriptors.get(targetMethod);
+        final IndexedSequence<TargetJavaFrameDescriptor> indexedSequence = methodToJavaFrameDescriptors.get(targetMethod);
         if (indexedSequence != null) {
             return indexedSequence.get(index);
         }
@@ -297,22 +297,22 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
      */
     static class Writer {
 
-        final DataOutput _stream;
-        final Mapping<JavaFrameDescriptor, Integer> _descriptorToSerial;
-        final Mapping<ClassMethodActor, Integer> _methodToSerial;
+        final DataOutput stream;
+        final Mapping<JavaFrameDescriptor, Integer> descriptorToSerial;
+        final Mapping<ClassMethodActor, Integer> methodToSerial;
 
         Writer(DataOutput output, Mapping<JavaFrameDescriptor, Integer> descriptorToSerial, Mapping<ClassMethodActor, Integer> methodToSerial) {
-            _stream = output;
-            _descriptorToSerial = descriptorToSerial;
-            _methodToSerial = methodToSerial;
+            this.stream = output;
+            this.descriptorToSerial = descriptorToSerial;
+            this.methodToSerial = methodToSerial;
         }
 
         protected void writeSerial(int serial) throws IOException {
-            _stream.writeInt(serial);
+            stream.writeInt(serial);
         }
 
         protected void writeCount(int count) throws IOException {
-            _stream.writeInt(count);
+            stream.writeInt(count);
         }
 
         protected final void writeDescriptor(TargetJavaFrameDescriptor descriptor) throws IOException {
@@ -323,20 +323,20 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
             if (descriptor.parent() == null) {
                 writeSerial(NO_PARENT);
             } else {
-                writeSerial(_descriptorToSerial.get(descriptor.parent()));
+                writeSerial(descriptorToSerial.get(descriptor.parent()));
             }
 
-            final int methodSerial = _methodToSerial.get(descriptor.classMethodActor());
+            final int methodSerial = methodToSerial.get(descriptor.classMethodActor());
             writeSerial(methodSerial);
-            _stream.writeShort(descriptor.bytecodePosition());
-            writeTargetLocations(_stream, descriptor.locals());
-            writeTargetLocations(_stream, descriptor.stackSlots());
+            stream.writeShort(descriptor.bytecodePosition());
+            writeTargetLocations(stream, descriptor.locals);
+            writeTargetLocations(stream, descriptor.stackSlots);
         }
 
-        protected final void writeTargetLocations(DataOutput stream, TargetLocation[] targetLocations) throws IOException {
+        protected final void writeTargetLocations(DataOutput dos, TargetLocation[] targetLocations) throws IOException {
             writeCount(targetLocations.length);
             for (TargetLocation targetLocation : targetLocations) {
-                targetLocation.write(stream);
+                targetLocation.write(dos);
             }
         }
 
@@ -350,7 +350,7 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
         public final void writeMethods(Sequence<ClassMethodActor> methods) throws IOException {
             writeCount(methods.length());
             for (ClassMethodActor method : methods) {
-                method.write(_stream);
+                method.write(stream);
             }
         }
     }
@@ -380,37 +380,37 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
         @Override
         protected void writeCount(int count) throws IOException {
             assert count >= 0 && count <= 0xff;
-            _stream.writeByte(count);
+            stream.writeByte(count);
         }
 
         @Override
         protected void writeSerial(int serial) throws IOException {
             assert serial >= 0 && serial <= 0xff;
-            _stream.writeByte(serial);
+            stream.writeByte(serial);
         }
     }
 
     static class Reader {
 
-        final DataInput _stream;
+        final DataInput stream;
 
         Reader(DataInput stream) {
-            _stream = stream;
+            this.stream = stream;
         }
 
         protected int readSerial() throws IOException {
-            return _stream.readInt();
+            return stream.readInt();
         }
 
         protected int readCount() throws IOException {
-            return _stream.readInt();
+            return stream.readInt();
         }
 
         public TargetLocation[] readTargetLocations() throws IOException {
             final int length = readCount();
             final TargetLocation[] result = new TargetLocation[length];
             for (int i = 0; i < length; i++) {
-                result[i] = TargetLocation.read(_stream);
+                result[i] = TargetLocation.read(stream);
             }
             return result;
         }
@@ -424,12 +424,12 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
 
         @Override
         protected int readCount() throws IOException {
-            return _stream.readUnsignedByte();
+            return stream.readUnsignedByte();
         }
 
         @Override
         protected int readSerial() throws IOException {
-            return _stream.readUnsignedByte();
+            return stream.readUnsignedByte();
         }
 
     }

@@ -60,11 +60,11 @@ public class CirBytecodeWriter extends CirVisitor {
 
     private static final int TRACE_LEVEL = 6;
 
-    private final ByteArrayOutputStream _stream;
-    private final GrowableMapping<Object, Integer> _constantPoolMap;
-    private final BlockIdMap _blocks = new BlockIdMap();
-    private final Map<CirVariable, Integer> _variables = new HashMap<CirVariable, Integer>();
-    private int _maxReferencedVariableSerial;
+    private final ByteArrayOutputStream stream;
+    private final GrowableMapping<Object, Integer> constantPoolMap;
+    private final BlockIdMap blocks = new BlockIdMap();
+    private final Map<CirVariable, Integer> variables = new HashMap<CirVariable, Integer>();
+    private int maxReferencedVariableSerial;
 
     /**
      * Very slow operation to ensure that the translation from CIR to CIR bytecode was correct.
@@ -87,15 +87,15 @@ public class CirBytecodeWriter extends CirVisitor {
         return true;
     }
 
-    private CirDepthFirstTraversal _depthFirstTraversal;
+    private CirDepthFirstTraversal depthFirstTraversal;
 
     public CirBytecodeWriter(CirNode node, Object context) {
-        _stream = new ByteArrayOutputStream();
-        _constantPoolMap = new HashEntryChainedHashMapping<Object, Integer>();
+        stream = new ByteArrayOutputStream();
+        constantPoolMap = new HashEntryChainedHashMapping<Object, Integer>();
 
-        _depthFirstTraversal = new CirDepthFirstTraversal(_blocks);
-        _depthFirstTraversal.run(node, this);
-        _depthFirstTraversal = null;
+        depthFirstTraversal = new CirDepthFirstTraversal(blocks);
+        depthFirstTraversal.run(node, this);
+        depthFirstTraversal = null;
 
         // This is a somewhat slow assertion as it reconstructs the CIR from bytecode and then traces
         // the CIR twice. This was primarily used to debug the CirBytecodeReader and CirBytecodeWriter
@@ -104,16 +104,16 @@ public class CirBytecodeWriter extends CirVisitor {
     }
 
     public CirBytecode bytecode() {
-        final byte[] code = _stream.toByteArray();
-        final Object[] constantPool = new Object[_constantPoolMap.length() + 1];
-        final Iterator<Object> keys = _constantPoolMap.keys().iterator();
-        final Iterator<Integer> values = _constantPoolMap.values().iterator();
+        final byte[] code = stream.toByteArray();
+        final Object[] constantPool = new Object[constantPoolMap.length() + 1];
+        final Iterator<Object> keys = constantPoolMap.keys().iterator();
+        final Iterator<Integer> values = constantPoolMap.values().iterator();
         while (keys.hasNext()) {
             final int index = values.next();
             assert index != 0;
             constantPool[index] = keys.next();
         }
-        return new CirBytecode(code, constantPool, _blocks.length(), _maxReferencedVariableSerial);
+        return new CirBytecode(code, constantPool, blocks.length(), maxReferencedVariableSerial);
     }
 
     /**
@@ -129,9 +129,9 @@ public class CirBytecodeWriter extends CirVisitor {
 
         protected void writeSerial(CirVariable variable) {
             final int serial = variable.serial();
-            assert !_variables.containsKey(variable);
-            assert !_variables.containsValue(serial) : "variables have the same serial number: " + variable + " and " + Maps.key(_variables, serial);
-            _variables.put(variable, serial);
+            assert !variables.containsKey(variable);
+            assert !variables.containsValue(serial) : "variables have the same serial number: " + variable + " and " + Maps.key(variables, serial);
+            variables.put(variable, serial);
             writeUnsignedInt(serial);
         }
 
@@ -143,11 +143,11 @@ public class CirBytecodeWriter extends CirVisitor {
          */
         VariableWriter(Variable_Type variable) {
             final int serial = variable.serial();
-            if (_variables.containsKey(variable)) {
+            if (variables.containsKey(variable)) {
                 writeOpcode(VARIABLE_REFERENCE);
                 writeUnsignedInt(serial);
-                if (_maxReferencedVariableSerial < serial) {
-                    _maxReferencedVariableSerial = serial;
+                if (maxReferencedVariableSerial < serial) {
+                    maxReferencedVariableSerial = serial;
                 }
             } else {
                 write(variable);
@@ -174,30 +174,30 @@ public class CirBytecodeWriter extends CirVisitor {
         assert value >= 0 && value < 0x0FFFFFFF;
         if (value < 128) {
             /* 0xxxxxxx */
-            _stream.write(value);
+            stream.write(value);
         } else if (value < 16384) {
             /* 1xxxxxxx 0xxxxxxx */
-            _stream.write(((value >> 0) & 0x7F) | 0x80);
-            _stream.write(value >> 7);
+            stream.write(((value >> 0) & 0x7F) | 0x80);
+            stream.write(value >> 7);
         } else if (value < 2097152) {
             /* 1xxxxxxx 1xxxxxxx 0xxxxxxx */
-            _stream.write(((value >> 0) & 0x7F) | 0x80);
-            _stream.write(((value >> 7) & 0x7F) | 0x80);
-            _stream.write(value >> 14);
+            stream.write(((value >> 0) & 0x7F) | 0x80);
+            stream.write(((value >> 7) & 0x7F) | 0x80);
+            stream.write(value >> 14);
         } else {
             /* 1xxxxxxx 1xxxxxxx 1xxxxxxx 0xxxxxxx */
-            _stream.write(((value >> 0) & 0x7F) | 0x80);
-            _stream.write(((value >> 7) & 0x7F) | 0x80);
-            _stream.write(((value >> 14) & 0x7F) | 0x80);
-            _stream.write(value >> 21);
+            stream.write(((value >> 0) & 0x7F) | 0x80);
+            stream.write(((value >> 7) & 0x7F) | 0x80);
+            stream.write(((value >> 14) & 0x7F) | 0x80);
+            stream.write(value >> 21);
         }
         if (Trace.hasLevel(TRACE_LEVEL)) {
-            _traceLines.push(_traceLines.pop() + " " + value);
+            traceLines.push(traceLines.pop() + " " + value);
         }
     }
 
     private void writeKind(Kind kind) {
-        writeUnsignedInt(kind.character());
+        writeUnsignedInt(kind.character);
     }
 
     private void writeEnum(Enum value) {
@@ -208,10 +208,10 @@ public class CirBytecodeWriter extends CirVisitor {
         if (object == null) {
             writeUnsignedInt(0);
         } else {
-            Integer index = _constantPoolMap.get(object);
+            Integer index = constantPoolMap.get(object);
             if (index == null) {
-                index = _constantPoolMap.length() + 1;
-                _constantPoolMap.put(object, index);
+                index = constantPoolMap.length() + 1;
+                constantPoolMap.put(object, index);
             }
             writeUnsignedInt(index);
         }
@@ -226,29 +226,29 @@ public class CirBytecodeWriter extends CirVisitor {
             do {
                 writeConstant(jfd.classMethodActor());
                 writeUnsignedInt(jfd.bytecodePosition());
-                writeUnsignedInt(jfd.locals().length);
-                writeUnsignedInt(jfd.stackSlots().length);
+                writeUnsignedInt(jfd.locals.length);
+                writeUnsignedInt(jfd.stackSlots.length);
                 jfd = jfd.parent();
             } while (jfd != null);
         }
     }
 
-    private final Stack<String> _traceLines = new Stack<String>();
+    private final Stack<String> traceLines = new Stack<String>();
 
     private void finish(CirNode node) {
         if (Trace.hasLevel(TRACE_LEVEL)) {
-            Trace.line(0, _traceLines.pop() + "   // " + node);
+            Trace.line(0, traceLines.pop() + "   // " + node);
         }
     }
 
     private void writeOpcode(Opcode opcode) {
         if (Trace.hasLevel(TRACE_LEVEL)) {
-            final int nodeLevel = _depthFirstTraversal.currentNode().depth();
-            _traceLines.push(Strings.padLengthWithSpaces(_stream.size() + "[" + nodeLevel + "] ", 8 + (2 * nodeLevel)) + opcode);
+            final int nodeLevel = depthFirstTraversal.currentNode().depth();
+            traceLines.push(Strings.padLengthWithSpaces(stream.size() + "[" + nodeLevel + "] ", 8 + (2 * nodeLevel)) + opcode);
         }
         final int b = opcode.ordinal();
         assert (b & 0xff) == b;
-        _stream.write(b);
+        stream.write(b);
     }
 
     @Override
@@ -286,8 +286,8 @@ public class CirBytecodeWriter extends CirVisitor {
 
     @Override
     public void visitBlock(CirBlock block) {
-        final int blockId = _blocks.get(block);
-        final boolean isReference = !_depthFirstTraversal.currentNode().isFirstTraversal();
+        final int blockId = blocks.get(block);
+        final boolean isReference = !depthFirstTraversal.currentNode().isFirstTraversal();
         switch (block.role()) {
             case NORMAL: {
                 writeOpcode(isReference ? NORMAL_BLOCK_REFERENCE : NORMAL_BLOCK);

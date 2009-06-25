@@ -37,16 +37,16 @@ import com.sun.max.vm.type.*;
  */
 public class CirContinuationKindScout extends CirTraversal {
 
-    private final Kind _outerResultKind;
+    private final Kind outerResultKind;
 
-    private final Bag<CirVariable, CirVariable, Sequence<CirVariable>> _bindings = new SequenceBag<CirVariable, CirVariable>(SequenceBag.MapType.IDENTITY);
-    private final GrowableMapping<CirVariable, Kind> _cirContinuationParameterToKind = HashMapping.createIdentityMapping();
+    private final Bag<CirVariable, CirVariable, Sequence<CirVariable>> bindings = new SequenceBag<CirVariable, CirVariable>(SequenceBag.MapType.IDENTITY);
+    private final GrowableMapping<CirVariable, Kind> cirContinuationParameterToKind = HashMapping.createIdentityMapping();
 
     CirContinuationKindScout(Kind outerResultKind, CirClosure closure) {
         super(closure);
-        _outerResultKind = outerResultKind;
+        this.outerResultKind = outerResultKind;
         final CirVariable normalContinuationParameter = closure.parameters()[closure.parameters().length - 2];
-        _cirContinuationParameterToKind.put(normalContinuationParameter, outerResultKind);
+        this.cirContinuationParameterToKind.put(normalContinuationParameter, outerResultKind);
     }
 
     private void registerNormalContinuationParameters(CirClosure closure, CirValue[] arguments) {
@@ -57,13 +57,13 @@ public class CirContinuationKindScout extends CirTraversal {
                 if (argument instanceof CirClosure) {
                     final CirClosure continuation = (CirClosure) argument;
                     if (continuation.parameters().length == 0) {
-                        _cirContinuationParameterToKind.put(parameter, Kind.VOID);
+                        cirContinuationParameterToKind.put(parameter, Kind.VOID);
                     } else {
                         assert continuation.parameters().length == 1;
-                        _cirContinuationParameterToKind.put(parameter, continuation.parameters()[0].kind());
+                        cirContinuationParameterToKind.put(parameter, continuation.parameters()[0].kind());
                     }
                 } else {
-                    _bindings.add(closure.parameters()[i], (CirVariable) argument);
+                    bindings.add(closure.parameters()[i], (CirVariable) argument);
                 }
             }
         }
@@ -80,10 +80,10 @@ public class CirContinuationKindScout extends CirTraversal {
         super.visitCall(call);
     }
 
-    private boolean _initialized;
+    private boolean initialized;
 
     public Kind getKind(CirNormalContinuationParameter continuationParameter) {
-        if (!_initialized) {
+        if (!initialized) {
             run();
         }
         final IdentityHashSet<CirVariable> done = new IdentityHashSet<CirVariable>();
@@ -93,23 +93,23 @@ public class CirContinuationKindScout extends CirTraversal {
         while (!todo.isEmpty()) {
             final CirVariable variable = todo.remove();
             if (!done.contains(variable)) {
-                final Kind kind = _cirContinuationParameterToKind.get(variable);
+                final Kind kind = cirContinuationParameterToKind.get(variable);
                 if (kind != null) {
                     if (variable != continuationParameter) {
                         // Remember the result, in case the same query comes up again:
-                        _cirContinuationParameterToKind.put(continuationParameter, kind);
+                        cirContinuationParameterToKind.put(continuationParameter, kind);
                     }
                     return kind;
                 }
                 done.add(variable);
-                final Sequence<CirVariable> arguments = _bindings.get(variable);
+                final Sequence<CirVariable> arguments = bindings.get(variable);
                 for (CirVariable argument : arguments) {
                     todo.add(argument);
                 }
             }
         }
         // The variable was never used, use an arbitrary kind for it:
-        _cirContinuationParameterToKind.put(continuationParameter, Kind.VOID);
+        cirContinuationParameterToKind.put(continuationParameter, Kind.VOID);
         return Kind.VOID;
     }
 }

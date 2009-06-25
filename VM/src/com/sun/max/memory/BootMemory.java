@@ -38,7 +38,7 @@ public final class BootMemory {
     private BootMemory() {
     }
 
-    private static final int _SIZE = Ints.K;
+    private static final int SIZE = Ints.K;
 
     /**
      * Since this object lands in the boot image, it will have a fixed address.
@@ -46,32 +46,32 @@ public final class BootMemory {
      * ATTENTION: To prevent the code in method 'buffer()' below from folding,
      * we must NOT declare this variable 'final':
      */
-    private static byte[] _bufferBytes = new byte[_SIZE];
+    private static byte[] bufferBytes = new byte[SIZE];
 
     /**
      * The offset of the byte array data from the byte array object's origin.
      */
-    private static final Offset _dataOffset = VMConfiguration.target().layoutScheme().byteArrayLayout().getElementOffsetFromOrigin(0);
+    private static final Offset dataOffset = VMConfiguration.target().layoutScheme().byteArrayLayout.getElementOffsetFromOrigin(0);
 
     /**
      * A single byte buffer with a fixed address.
      */
     @CONSTANT_WHEN_NOT_ZERO
-    private static Pointer _buffer = Pointer.zero();
+    private static Pointer buffer = Pointer.zero();
 
     public static Pointer buffer() {
-        if (_buffer.isZero()) {
+        if (buffer.isZero()) {
             if (MaxineVM.isPrototyping()) {
-                _buffer = Memory.mustAllocate(_SIZE);
+                buffer = Memory.mustAllocate(SIZE);
             } else {
-                _buffer = Reference.fromJava(_bufferBytes).toOrigin().plus(_dataOffset);
-                _bufferBytes = null; // This prevents optimizations from discovering that 'bytes' is de facto 'final'
+                buffer = Reference.fromJava(bufferBytes).toOrigin().plus(dataOffset);
+                bufferBytes = null; // This prevents optimizations from discovering that 'bytes' is de facto 'final'
             }
         }
-        return _buffer;
+        return buffer;
     }
     public static int bufferSize() {
-        return _SIZE;
+        return SIZE;
     }
 
 }

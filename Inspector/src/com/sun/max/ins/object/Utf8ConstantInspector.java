@@ -36,19 +36,19 @@ import com.sun.max.vm.classfile.constant.*;
  */
 class Utf8ConstantInspector extends ObjectInspector {
 
-    private JTabbedPane _tabbedPane;
-    private ObjectPane _fieldsPane;
-    private StringPane _stringPane;
+    private JTabbedPane tabbedPane;
+    private ObjectPane fieldsPane;
+    private StringPane stringPane;
 
     // Should the alternate visualization be displayed?
     // Follows user's tab selection, but should persist when view reconstructed.
-    private boolean _alternateDisplay;
+    private boolean alternateDisplay;
 
     Utf8ConstantInspector(Inspection inspection, ObjectInspectorFactory factory, TeleObject teleObject) {
         super(inspection, factory, teleObject);
         // This is the default for a newly created inspector.
         // TODO (mlvdv) make this a global view option?
-        _alternateDisplay = true;
+        alternateDisplay = true;
         createFrame(null);
     }
 
@@ -58,35 +58,35 @@ class Utf8ConstantInspector extends ObjectInspector {
         final TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) teleObject();
         final String name = teleUtf8Constant.classActorForType().javaSignature(false);
 
-        _tabbedPane = new JTabbedPane();
+        tabbedPane = new JTabbedPane();
 
-        _fieldsPane = ObjectPane.createFieldsPane(this, teleUtf8Constant);
-        _tabbedPane.add(name, _fieldsPane);
+        fieldsPane = ObjectPane.createFieldsPane(this, teleUtf8Constant);
+        tabbedPane.add(name, fieldsPane);
 
-        _stringPane = StringPane.createStringPane(this, new StringSource() {
+        stringPane = StringPane.createStringPane(this, new StringSource() {
             public String fetchString() {
                 return teleUtf8Constant.getString();
             }
         });
-        _tabbedPane.add("string value", _stringPane);
+        tabbedPane.add("string value", stringPane);
 
-        _tabbedPane.setSelectedComponent(_alternateDisplay ? _stringPane : _fieldsPane);
-        _tabbedPane.addChangeListener(new ChangeListener() {
+        tabbedPane.setSelectedComponent(alternateDisplay ? stringPane : fieldsPane);
+        tabbedPane.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent event) {
-                final Prober prober = (Prober) _tabbedPane.getSelectedComponent();
+                final Prober prober = (Prober) tabbedPane.getSelectedComponent();
                 // Remember which display is now selected
-                _alternateDisplay = prober == _stringPane;
+                alternateDisplay = prober == stringPane;
                 // Refresh the display that is now visible.
                 prober.refresh(true);
             }
         });
-        frame().getContentPane().add(_tabbedPane);
+        frame().getContentPane().add(tabbedPane);
     }
 
     @Override
     protected void refreshView(boolean force) {
         // Only refresh the visible view.
-        final Prober pane = (Prober) _tabbedPane.getSelectedComponent();
+        final Prober pane = (Prober) tabbedPane.getSelectedComponent();
         pane.refresh(force);
         super.refreshView(force);
     }

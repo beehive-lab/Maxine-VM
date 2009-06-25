@@ -102,16 +102,16 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     private static final String MAINCLASS_PROPERTY_NAME = "max.vm.run.extendimage.mainclass";
     private static final String SPECFILE_PROPERTY_NAME = "max.vm.run.extendimage.specfile";
     private static final String TESTER_PROPERTY_NAME = "max.vm.run.extendimage.testrun";
-    private static String _mainClassName;
-    private static AppendableSequence<StaticMethodActor> _callMethods = new LinkSequence<StaticMethodActor>();
-    private static AppendableSequence<ClassActor> _reinitClasses = new LinkSequence<ClassActor>();
-    private static AppendableSequence<FieldActor> _reinitFields = new LinkSequence<FieldActor>();
-    private static Properties _properties = new Properties();
-    private static Map<String, byte[]> _imageFS = new HashMap<String, byte[]>();
-    private static String _imageFSPrefix = "";
-    private static Set<File> _includeSet = new HashSet<File>();
-    private static JavaRunScheme _tester;
-    private static boolean _resetLauncher;
+    private static String mainClassName;
+    private static AppendableSequence<StaticMethodActor> callMethods = new LinkSequence<StaticMethodActor>();
+    private static AppendableSequence<ClassActor> reinitClasses = new LinkSequence<ClassActor>();
+    private static AppendableSequence<FieldActor> reinitFields = new LinkSequence<FieldActor>();
+    private static Properties properties = new Properties();
+    private static Map<String, byte[]> imageFS = new HashMap<String, byte[]>();
+    private static String imageFSPrefix = "";
+    private static Set<File> includeSet = new HashSet<File>();
+    private static JavaRunScheme tester;
+    private static boolean resetLauncher;
 
     public ExtendImageRunScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -127,15 +127,15 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         super.initialize(phase);
 
         if (phase == MaxineVM.Phase.RUNNING) {
-            final Enumeration<?> propEnum = _properties.propertyNames();
+            final Enumeration<?> propEnum = properties.propertyNames();
             while (propEnum.hasMoreElements()) {
                 final String propertyName = (String) propEnum.nextElement();
-                System.setProperty(propertyName, _properties.getProperty(propertyName));
+                System.setProperty(propertyName, properties.getProperty(propertyName));
             }
-            for (ClassActor classActor : _reinitClasses) {
+            for (ClassActor classActor : reinitClasses) {
                 classActor.callInitializer();
             }
-            for (StaticMethodActor methodActor : _callMethods) {
+            for (StaticMethodActor methodActor : callMethods) {
                 try {
                     methodActor.invoke();
                 } catch (Exception ex) {
@@ -151,17 +151,17 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         // The JavaTesterRunScheme no longer overrides run.
         // Instead it checks whether  to run tests in the STARTING
         // phase of the initialize method.
-        if (_tester == null) {
+        if (tester == null) {
             super.run();
         } else {
             initializeBasicFeatures();
-            _tester.initialize(MaxineVM.Phase.STARTING);
+            tester.initialize(MaxineVM.Phase.STARTING);
         }
     }
 
     @Override
     protected void resetLauncher(ClassActor launcherClassActor) {
-        if (_resetLauncher) {
+        if (resetLauncher) {
             final ReferenceFieldActor rfa = (ReferenceFieldActor) ClassActor.fromJava(sun.misc.Launcher.class).findLocalStaticFieldActor("bootstrapClassPath");
             if (rfa != null) {
                 rfa.writeStatic(null);
@@ -187,11 +187,11 @@ public class ExtendImageRunScheme extends JavaRunScheme {
             try {
                 final Class<?> klass = Class.forName(testerRunSchemeClassname);
                 final Constructor<?> cons = klass.getConstructor(new Class<?>[] {VMConfiguration.class});
-                _tester = (JavaRunScheme) cons.newInstance(new Object[] {vmConfiguration()});
+                tester = (JavaRunScheme) cons.newInstance(new Object[] {vmConfiguration()});
                 Trace.line(1, "extending image with " + testerRunSchemeClassname);
                 forceCompileMethod(testerRunSchemeClassname + ".run");
                 forceClass(testRunPackageName + ".JavaTesterTests", false);
-                _tester.initialize(MaxineVM.Phase.PROTOTYPING);
+                tester.initialize(MaxineVM.Phase.PROTOTYPING);
             } catch (Exception ex) {
                 ProgramError.unexpected(ex.getMessage());
             }
@@ -272,10 +272,10 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     @PROTOTYPE_ONLY
     private void doInclude(File parent, String fileName) {
         final File f = new File(parent, fileName);
-        if (_includeSet.contains(f)) {
+        if (includeSet.contains(f)) {
             return;
         }
-        _includeSet.add(f);
+        includeSet.add(f);
         processSpecFile(f);
     }
 
@@ -288,7 +288,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
             ProgramWarning.message("class " + className + " not found");
         }
         if (isMain) {
-            _mainClassName = className;
+            mainClassName = className;
             try {
                 final ClassActor mainClassActor = ClassActor.fromJava(Class.forName(className, false, PrototypeClassLoader.PROTOTYPE_CLASS_LOADER));
                 final StaticMethodActor mainMethodActor = mainClassActor.findLocalStaticMethodActor("main");
@@ -330,7 +330,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
             final ClassActor classActor = ClassActor.fromJava(Class.forName(className, false, PrototypeClassLoader.PROTOTYPE_CLASS_LOADER));
             classActor.forAllClassMethodActors(new Procedure<ClassMethodActor>() {
                 public void run(ClassMethodActor classMethodActor) {
-                    if (methodName.equals("*") || methodName.equals(classMethodActor.name().string())) {
+                    if (methodName.equals("*") || methodName.equals(classMethodActor.name.string)) {
                         Trace.line(1, "forcing compilation of method " + classMethodActor.qualifiedName());
                         CompiledPrototype.registerImageMethod(classMethodActor);
                     }
@@ -369,7 +369,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
             final ClassActor classActor = ClassActor.fromJava(Class.forName(className, false, PrototypeClassLoader.PROTOTYPE_CLASS_LOADER));
             classActor.forAllClassMethodActors(new Procedure<ClassMethodActor>() {
                 public void run(ClassMethodActor classMethodActor) {
-                    if (methodName.equals("*") || methodName.equals(classMethodActor.name().string())) {
+                    if (methodName.equals("*") || methodName.equals(classMethodActor.name.string)) {
                         Trace.line(1, "creating invocation stub for " +  classMethodActor.qualifiedName());
                         CompiledPrototype.registerImageInvocationStub(classMethodActor);
                     }
@@ -393,7 +393,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
             final ClassActor classActor = ClassActor.fromJava(Class.forName(className, false, PrototypeClassLoader.PROTOTYPE_CLASS_LOADER));
             final StaticMethodActor methodActor = classActor.findLocalStaticMethodActor(methodName);
             Trace.line(1, "arranging to call " +  methodActor.qualifiedName() + " prior to main");
-            _callMethods.append(methodActor);
+            callMethods.append(methodActor);
             forceInvocationStub(argument);
         }  catch (Exception ex) {
             ProgramError.unexpected("failed to find: " + argument);
@@ -411,7 +411,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
             propertyName = argument.substring(0, ix);
             propertyValue = argument.substring(ix + 1);
         }
-        _properties.put(propertyName, propertyValue);
+        properties.put(propertyName, propertyValue);
     }
 
     @PROTOTYPE_ONLY
@@ -420,7 +420,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         try {
             final ClassActor classActor = ClassActor.fromJava(Class.forName(className, false, PrototypeClassLoader.PROTOTYPE_CLASS_LOADER));
             Trace.line(1, "arranging to reinitialize " +  className + " prior to main");
-            _reinitClasses.append(classActor);
+            reinitClasses.append(classActor);
             forceCompileMethod(argument + ".<clinit>");
         }  catch (Exception ex) {
             ProgramError.unexpected("failed to find: " + argument);
@@ -429,7 +429,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
 
     @PROTOTYPE_ONLY
     protected void doResetLauncher() {
-        _resetLauncher = true;
+        resetLauncher = true;
         Trace.line(1, "arranging to reset sun.misc.Launcher prior to main");
         forceCompileMethod("sun.misc.Launcher.<clinit>");
     }
@@ -482,12 +482,12 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     protected void putImageFile(File file, File asFile) {
         try {
             String path = asFile.getPath();
-            if (asFile.isAbsolute() || _imageFSPrefix.equals("")) {
-                path = _imageFSPrefix + path;
+            if (asFile.isAbsolute() || imageFSPrefix.equals("")) {
+                path = imageFSPrefix + path;
             } else {
-                path = _imageFSPrefix + File.separator + path;
+                path = imageFSPrefix + File.separator + path;
             }
-            _imageFS.put(path, Files.toBytes(file));
+            imageFS.put(path, Files.toBytes(file));
             Trace.line(1, "added file " + file.getPath() + " to image file system as path " + path);
         } catch (IOException ioException) {
             ProgramError.unexpected("Error reading from " + file + ": " + ioException);
@@ -511,18 +511,18 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     protected void doImagefsPrefix(String argument) {
         final int last = argument.length() - 1;
         if (argument.charAt(last) == File.separatorChar) {
-            _imageFSPrefix = argument.substring(0, last);
+            imageFSPrefix = argument.substring(0, last);
         } else {
-            _imageFSPrefix = argument;
+            imageFSPrefix = argument;
         }
-        Trace.line(1, "set imagefs prefix to " + _imageFSPrefix);
+        Trace.line(1, "set imagefs prefix to " + imageFSPrefix);
     }
 
     public static Map<String, byte[]> getImageFS() {
-        return _imageFS;
+        return imageFS;
     }
 
     public static String getImageFSPrefix() {
-        return _imageFSPrefix;
+        return imageFSPrefix;
     }
 }

@@ -25,7 +25,7 @@ import com.sun.max.vm.value.*;
 
 /**
  * #4.4.5.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
@@ -36,36 +36,36 @@ public final class DoubleConstant extends AbstractPoolConstant<DoubleConstant> i
         return Tag.DOUBLE;
     }
 
-    private final double _value;
+    private final double value;
 
     DoubleConstant(double value) {
-        _value = value;
+        this.value = value;
     }
 
     public double value() {
-        return _value;
+        return value;
     }
 
     public String valueString(ConstantPool pool) {
-        return String.valueOf(_value);
+        return String.valueOf(value);
     }
 
     @Override
     public boolean equals(Object other) {
         if (other instanceof DoubleConstant) {
             final DoubleConstant key = (DoubleConstant) other;
-            return _value == key._value;
+            return value == key.value;
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return (int) _value;
+        return (int) value;
     }
 
     public Value value(ConstantPool pool, int index) {
-        return DoubleValue.from(_value);
+        return DoubleValue.from(value);
     }
 
     @Override

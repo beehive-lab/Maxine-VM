@@ -39,31 +39,31 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
 
 
     // Set to null when inspector closed.
-    private static RegistersInspector _registersInspector;
+    private static RegistersInspector registersInspector;
 
     /**
      * Displays the (singleton) registers  inspector, creating it if needed.
      */
     public static RegistersInspector make(Inspection inspection) {
-        if (_registersInspector == null) {
-            _registersInspector = new RegistersInspector(inspection);
+        if (registersInspector == null) {
+            registersInspector = new RegistersInspector(inspection);
         }
-        return _registersInspector;
+        return registersInspector;
     }
 
-    private final SaveSettingsListener _saveSettingsListener = createGeometrySettingsClient(this, "registersInspector");
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "registersInspector");
 
     // This is a singleton viewer, so only use a single level of view preferences.
-    private final RegistersViewPreferences _viewPreferences;
+    private final RegistersViewPreferences viewPreferences;
 
-    private MaxThread _thread;
-    private RegistersTable _table;
+    private MaxThread thread;
+    private RegistersTable table;
 
     private RegistersInspector(Inspection inspection) {
         super(inspection);
         Trace.begin(1,  tracePrefix() + " initializing");
-        _viewPreferences = RegistersViewPreferences.globalPreferences(inspection());
-        _viewPreferences.addListener(this);
+        viewPreferences = RegistersViewPreferences.globalPreferences(inspection());
+        viewPreferences.addListener(this);
         createFrame(null);
         refreshView(true);
         Trace.end(1,  tracePrefix() + " initializing");
@@ -76,31 +76,31 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
 
     @Override
     protected void createView() {
-        _thread = inspection().focus().thread();
-        if (_thread == null) {
-            _table = null;
+        thread = inspection().focus().thread();
+        if (thread == null) {
+            table = null;
         } else {
-            _table = new RegistersTable(inspection(), _thread, _viewPreferences);
+            table = new RegistersTable(inspection(), thread, viewPreferences);
         }
-        frame().setContentPane(new InspectorScrollPane(inspection(), _table));
+        frame().setContentPane(new InspectorScrollPane(inspection(), table));
         updateFrameTitle();
     }
 
     @Override
     protected SaveSettingsListener saveSettingsListener() {
-        return _saveSettingsListener;
+        return saveSettingsListener;
     }
 
     @Override
     protected InspectorTable getTable() {
-        return _table;
+        return table;
     }
 
     @Override
     public String getTextForTitle() {
         String title = "Registers: ";
-        if (_thread != null) {
-            title += inspection().nameDisplay().longNameWithState(_thread);
+        if (thread != null) {
+            title += inspection().nameDisplay().longNameWithState(thread);
         }
         return title;
     }
@@ -110,7 +110,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         return new InspectorAction(inspection(), "View Options") {
             @Override
             public void procedure() {
-                new TableColumnVisibilityPreferences.Dialog<RegistersColumnKind>(inspection(), "Registers View Options", _viewPreferences);
+                new TableColumnVisibilityPreferences.Dialog<RegistersColumnKind>(inspection(), "Registers View Options", viewPreferences);
             }
         };
     }
@@ -122,7 +122,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
 
     @Override
     protected void refreshView(boolean force) {
-        _table.refresh(force);
+        table.refresh(force);
         super.refreshView(force);
         // The title displays thread state, so must be updated.
         updateFrameTitle();
@@ -144,8 +144,8 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
     @Override
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing");
-        _registersInspector = null;
-        _viewPreferences.removeListener(this);
+        registersInspector = null;
+        viewPreferences.removeListener(this);
         super.inspectorClosing();
     }
 

@@ -48,13 +48,13 @@ public class JDK_sun_reflect_ReflectionFactory {
      * This field stores a map from method actor to method stubs, which is needed because
      * some method stubs are required to bootstrap the compiler at runtime.
      */
-    private static Map<MethodActor, MethodAccessor> _prePopulatedMethodStubs = new HashMap<MethodActor, MethodAccessor>();
+    private static Map<MethodActor, MethodAccessor> prePopulatedMethodStubs = new HashMap<MethodActor, MethodAccessor>();
 
     /**
      * This field stores a map from constructor to method stubs, which is needed because
      * some method stubs are required to bootstrap the compiler at runtime.
      */
-    private static Map<MethodActor, ConstructorAccessor> _prePopulatedConstructorStubs = new HashMap<MethodActor, ConstructorAccessor>();
+    private static Map<MethodActor, ConstructorAccessor> prePopulatedConstructorStubs = new HashMap<MethodActor, ConstructorAccessor>();
 
     /**
      * Creates a method stub needed to invoke the specified method and adds it to the
@@ -64,10 +64,10 @@ public class JDK_sun_reflect_ReflectionFactory {
      */
     @PROTOTYPE_ONLY
     public static ClassActor createPrePopulatedMethodStub(MethodActor methodActor) {
-        MethodAccessor stub = _prePopulatedMethodStubs.get(methodActor);
+        MethodAccessor stub = prePopulatedMethodStubs.get(methodActor);
         if (stub == null) {
             stub = newMethodStub(methodActor.toJava(), Boxing.JAVA);
-            _prePopulatedMethodStubs.put(methodActor, stub);
+            prePopulatedMethodStubs.put(methodActor, stub);
         }
         return ClassActor.fromJava(stub.getClass());
     }
@@ -80,10 +80,10 @@ public class JDK_sun_reflect_ReflectionFactory {
      */
     public static ClassActor createPrePopulatedConstructorStub(MethodActor methodActor) {
         if (MaxineVM.isPrototyping()) {
-            ConstructorAccessor stub = _prePopulatedConstructorStubs.get(methodActor);
+            ConstructorAccessor stub = prePopulatedConstructorStubs.get(methodActor);
             if (stub == null) {
                 stub = newConstructorStub(methodActor.toJavaConstructor(), false, Boxing.JAVA);
-                _prePopulatedConstructorStubs.put(methodActor, stub);
+                prePopulatedConstructorStubs.put(methodActor, stub);
             }
             return ClassActor.fromJava(stub.getClass());
         }
@@ -107,7 +107,7 @@ public class JDK_sun_reflect_ReflectionFactory {
      */
     @SUBSTITUTE
     public MethodAccessor newMethodAccessor(Method method) {
-        MethodAccessor result = _prePopulatedMethodStubs.get(MethodActor.fromJava(method));
+        MethodAccessor result = prePopulatedMethodStubs.get(MethodActor.fromJava(method));
         if (result == null) {
             result = newMethodStub(method, Boxing.JAVA);
         }
@@ -122,7 +122,7 @@ public class JDK_sun_reflect_ReflectionFactory {
      */
     @SUBSTITUTE
     public ConstructorAccessor newConstructorAccessor(Constructor constructor) {
-        ConstructorAccessor result = _prePopulatedConstructorStubs.get(MethodActor.fromJavaConstructor(constructor));
+        ConstructorAccessor result = prePopulatedConstructorStubs.get(MethodActor.fromJavaConstructor(constructor));
         if (result == null) {
             final Class declaringClass = constructor.getDeclaringClass();
             if (Modifier.isAbstract(declaringClass.getModifiers())) {

@@ -37,61 +37,61 @@ final class VMValueImpl implements VMValue {
 
     public static final VMValue VOID_VALUE = new VMValueImpl();
 
-    private static GrowableMapping<Object, ObjectProvider> _objectProviderCache = new IdentityHashMapping<Object, ObjectProvider>();
+    private static GrowableMapping<Object, ObjectProvider> objectProviderCache = new IdentityHashMapping<Object, ObjectProvider>();
 
-    private Type _type;
-    private Object _value;
+    private Type type;
+    private Object value;
 
     private VMValueImpl() {
-        _type = Type.VOID;
-        _value = null;
+        type = Type.VOID;
+        value = null;
     }
 
     public boolean isVoid() {
-        return _type == null;
+        return type == null;
     }
 
     public Byte asByte() {
-        return _type == Type.BYTE ? (Byte) _value : null;
+        return type == Type.BYTE ? (Byte) value : null;
     }
 
     public Character asChar() {
-        return _type == Type.CHAR ? (Character) _value : null;
+        return type == Type.CHAR ? (Character) value : null;
     }
 
     public Short asShort() {
-        return _type == Type.SHORT ? (Short) _value : null;
+        return type == Type.SHORT ? (Short) value : null;
     }
 
     public Integer asInt() {
-        return _type == Type.INT ? (Integer) _value : null;
+        return type == Type.INT ? (Integer) value : null;
     }
 
     public Float asFloat() {
-        return _type == Type.FLOAT ? (Float) _value : null;
+        return type == Type.FLOAT ? (Float) value : null;
     }
 
     public Double asDouble() {
-        return _type == Type.DOUBLE ? (Double) _value : null;
+        return type == Type.DOUBLE ? (Double) value : null;
     }
 
     public Long asLong() {
-        return _type == Type.LONG ? (Long) _value : null;
+        return type == Type.LONG ? (Long) value : null;
     }
 
     public Boolean asBoolean() {
-        return _type == Type.BOOLEAN ? (Boolean) _value : null;
+        return type == Type.BOOLEAN ? (Boolean) value : null;
     }
 
     public Provider asProvider() {
-        return _type == Type.PROVIDER ? (Provider) _value : null;
+        return type == Type.PROVIDER ? (Provider) value : null;
     }
 
     public Object asJavaObject() {
-        if (_value instanceof FakeObjectProvider) {
-            return ((FakeObjectProvider) _value).innerObject();
+        if (value instanceof FakeObjectProvider) {
+            return ((FakeObjectProvider) value).innerObject();
         }
-        return _value;
+        return value;
     }
 
     /**
@@ -103,33 +103,33 @@ final class VMValueImpl implements VMValue {
      */
     public static VMValue fromJavaObject(Object object, VMAccess vm, Class expectedClass) {
         final VMValueImpl value = new VMValueImpl();
-        value._value = object;
+        value.value = object;
 
         if (object == null) {
-            value._type = Type.PROVIDER;
+            value.type = Type.PROVIDER;
         } else if (expectedClass == Byte.TYPE) {
-            value._type = Type.BYTE;
+            value.type = Type.BYTE;
         } else if (expectedClass == Character.TYPE) {
-            value._type = Type.CHAR;
+            value.type = Type.CHAR;
         } else if (expectedClass == Short.TYPE) {
-            value._type = Type.SHORT;
+            value.type = Type.SHORT;
         } else if (expectedClass == Integer.TYPE) {
-            value._type = Type.INT;
+            value.type = Type.INT;
         } else if (expectedClass == Float.TYPE) {
-            value._type = Type.FLOAT;
+            value.type = Type.FLOAT;
         } else if (expectedClass == Double.TYPE) {
-            value._type = Type.DOUBLE;
+            value.type = Type.DOUBLE;
         } else if (expectedClass == Long.TYPE) {
-            value._type = Type.LONG;
+            value.type = Type.LONG;
         } else if (expectedClass == Boolean.TYPE) {
-            value._type = Type.BOOLEAN;
+            value.type = Type.BOOLEAN;
         } else if (object instanceof ObjectProvider) {
-            value._type = Type.PROVIDER;
+            value.type = Type.PROVIDER;
         } else {
 
             // No matching type found => get fake object provider
-            value._type = Type.PROVIDER;
-            value._value = findFakeObjectProvider(object, vm);
+            value.type = Type.PROVIDER;
+            value.value = findFakeObjectProvider(object, vm);
         }
 
         return value;
@@ -145,11 +145,11 @@ final class VMValueImpl implements VMValue {
 
         assert object != null;
 
-        if (!_objectProviderCache.containsKey(object)) {
-            _objectProviderCache.put(object, createFakeObjectProvider(object, vm));
+        if (!objectProviderCache.containsKey(object)) {
+            objectProviderCache.put(object, createFakeObjectProvider(object, vm));
         }
 
-        return _objectProviderCache.get(object);
+        return objectProviderCache.get(object);
     }
 
     /**
@@ -179,57 +179,57 @@ final class VMValueImpl implements VMValue {
 
     @Override
     public String toString() {
-        return "VMValue(" + _type + "): " + _value;
+        return "VMValue(" + type + "): " + value;
     }
 
     private static class FakeStringProvider extends FakeObjectProvider implements StringProvider {
 
-        private String _stringValue;
+        private String stringValue;
 
         public FakeStringProvider(String stringValue, ReferenceTypeProvider type) {
             super(stringValue, type);
-            _stringValue = stringValue;
+            this.stringValue = stringValue;
         }
 
         public String stringValue() {
-            return _stringValue;
+            return stringValue;
         }
     }
 
     private static class FakeObjectProvider implements ObjectProvider {
 
-        private Object _innerObject;
-        private ReferenceTypeProvider _type;
+        private Object innerObject;
+        private ReferenceTypeProvider type;
 
         public FakeObjectProvider(Object innerObject, ReferenceTypeProvider type) {
             assert innerObject != null : "The inner object must not be null, otherwise the object is a valid value for an object provider anyway!";
-            _innerObject = innerObject;
-            _type = type;
+            this.innerObject = innerObject;
+            this.type = type;
         }
 
         public ReferenceTypeProvider getReferenceType() {
-            return _type;
+            return type;
         }
 
         Object innerObject() {
-            return _innerObject;
+            return innerObject;
         }
     }
 
     private static class FakeArrayProvider extends FakeObjectProvider implements ArrayProvider {
 
-        private ArrayTypeProvider _arrayType;
-        private VMAccess _vm;
+        private ArrayTypeProvider arrayType;
+        private VMAccess vm;
 
 
         public FakeArrayProvider(Object innerObject, ArrayTypeProvider arrayType, VMAccess vm) {
             super(innerObject, arrayType);
-            _arrayType = arrayType;
-            _vm = vm;
+            this.arrayType = arrayType;
+            this.vm = vm;
         }
 
         public ArrayTypeProvider getArrayType() {
-            return _arrayType;
+            return arrayType;
         }
 
         public VMValue getValue(int i) {
@@ -237,7 +237,7 @@ final class VMValueImpl implements VMValue {
             assert klass != null;
 
             // Create values for array elements lazily.
-            return _vm.createJavaObjectValue(Array.get(innerObject(), i), klass);
+            return vm.createJavaObjectValue(Array.get(innerObject(), i), klass);
         }
 
         public int length() {

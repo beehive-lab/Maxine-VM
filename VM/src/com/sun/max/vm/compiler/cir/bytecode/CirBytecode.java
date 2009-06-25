@@ -512,24 +512,24 @@ public class CirBytecode {
         }
     }
 
-    private final byte[] _code;
-    private final Object[] _constantPool;
-    private final int _numberOfBlocks;
-    private final int _maxReferencedVariableSerial;
+    private final byte[] code;
+    private final Object[] constantPool;
+    private final int numberOfBlocks;
+    private final int maxReferencedVariableSerial;
 
     public CirBytecode(byte[] code, Object[] constantPool, int numberOfBlocks, int maxReferencedVariableSerial) {
-        _code = code;
-        _constantPool = constantPool;
-        _numberOfBlocks = numberOfBlocks;
-        _maxReferencedVariableSerial = maxReferencedVariableSerial;
+        this.code = code;
+        this.constantPool = constantPool;
+        this.numberOfBlocks = numberOfBlocks;
+        this.maxReferencedVariableSerial = maxReferencedVariableSerial;
     }
 
     public byte[] code() {
-        return _code;
+        return code;
     }
 
     public Object[] constantPool() {
-        return _constantPool;
+        return constantPool;
     }
 
     /**
@@ -537,7 +537,7 @@ public class CirBytecode {
      * instruction stream includes a block ID operand whose value will be in the range {@code [0 .. numberOfBlocks())}.
      */
     public int numberOfBlocks() {
-        return _numberOfBlocks;
+        return numberOfBlocks;
     }
 
     /**
@@ -548,6 +548,6 @@ public class CirBytecode {
      * A returned value of -1 indicates that there are no variable references in the stream.
      */
     public int maxReferencedVariableSerial() {
-        return _maxReferencedVariableSerial;
+        return maxReferencedVariableSerial;
     }
 }

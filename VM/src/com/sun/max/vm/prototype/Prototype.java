@@ -74,7 +74,7 @@ public abstract class Prototype {
      */
     public static final String PAGE_SIZE_PROPERTY = "max.host.page";
 
-    private final VMConfiguration _vmConfiguration;
+    private final VMConfiguration vmConfiguration;
 
     /**
      * Get the VM configuration for the host.
@@ -82,7 +82,7 @@ public abstract class Prototype {
      * @return the VM configuration corresponding to the host virtual machine
      */
     public VMConfiguration vmConfiguration() {
-        return _vmConfiguration;
+        return vmConfiguration;
     }
 
     /**
@@ -91,7 +91,7 @@ public abstract class Prototype {
      * @param vmConfiguration the VM configuration for the prototype
      */
     protected Prototype(VMConfiguration vmConfiguration) {
-        _vmConfiguration = vmConfiguration;
+        this.vmConfiguration = vmConfiguration;
     }
 
     /**
@@ -107,7 +107,7 @@ public abstract class Prototype {
     /**
      * A status variable indicating whether modifications to the underlying "java.library.path" have been made.
      */
-    private static boolean _isPathHacked;
+    private static boolean isPathHacked;
 
     /**
      * Loads a native library in the prototype with the specified name. This method automatically finds the correct path
@@ -118,13 +118,13 @@ public abstract class Prototype {
      *            "*.dll", etc
      */
     public static synchronized void loadLibrary(String name) {
-        if (!_isPathHacked) {
+        if (!isPathHacked) {
             final File projectPath = JavaProject.findVcsProjectDirectory();
             final File workspacePath = projectPath.getParentFile();
             final String[] usrPaths = (String[]) WithoutAccessCheck.getStaticField(ClassLoader.class, "usr_paths");
             final String libraryPath = new File(workspacePath, LIBRARY_BUILD_PATH).getPath() + File.pathSeparator + Arrays.toString(usrPaths, File.pathSeparator);
             JDKInterceptor.setLibraryPath(libraryPath);
-            _isPathHacked = true;
+            isPathHacked = true;
         }
         System.loadLibrary(name);
     }
@@ -196,7 +196,7 @@ public abstract class Prototype {
             processorModel = ProcessorModel.valueOf(processorModelName);
             assert processorModel.instructionSet() == instructionSet;
         }
-        final Alignment alignment = processorModel.defaultDataModel().alignment();
+        final Alignment alignment = processorModel.defaultDataModel().alignment;
         final DataModel dataModel = new DataModel(wordWidth, endianness, alignment);
         final ProcessorKind processorKind = new ProcessorKind(processorModel, instructionSet, dataModel);
 

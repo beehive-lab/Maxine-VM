@@ -23,17 +23,17 @@ package test.output;
 
 public class StaticInitializers {
 
-    private static String _staticString1 = "string 1";
-    private static String _staticString2;
+    private static String staticString1 = "string 1";
+    private static String staticString2;
 
     static {
-        _staticString2 = "string 2";
+        staticString2 = "string 2";
     }
 
     public static void main(String[] args) {
         System.out.println("StaticInitializersTest");
-        System.out.println(_staticString1);
-        System.out.println(_staticString2);
+        System.out.println(staticString1);
+        System.out.println(staticString2);
         System.out.println(new StaticA());
     }
 

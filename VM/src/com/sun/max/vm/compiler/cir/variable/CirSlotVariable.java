@@ -32,15 +32,15 @@ import com.sun.max.vm.type.*;
  */
 public abstract class CirSlotVariable extends CirVariable {
 
-    private final int _slotIndex;
+    private final int slotIndex;
 
     public CirSlotVariable(int serial, Kind kind, int slotIndex) {
         super(serial, kind);
-        _slotIndex = slotIndex;
+        this.slotIndex = slotIndex;
     }
 
     public int slotIndex() {
-        return _slotIndex;
+        return slotIndex;
     }
 
     @Override

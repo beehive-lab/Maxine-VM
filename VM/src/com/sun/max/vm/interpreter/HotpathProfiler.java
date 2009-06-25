@@ -33,12 +33,12 @@ import com.sun.max.vm.value.*;
 
 public class HotpathProfiler implements Profiler {
 
-    public static OptionSet _optionSet = new OptionSet();
-    public static Option<Boolean> _printState = _optionSet.newBooleanOption("PP", false, "(P)rints the Profiler's Execution (S)tate.");
+    public static OptionSet optionSet = new OptionSet();
+    public static Option<Boolean> printState = optionSet.newBooleanOption("PP", false, "(P)rints the Profiler's Execution (S)tate.");
 
-    private GrowableMapping<BytecodeLocation, TreeAnchor> _anchors = new OpenAddressingHashMapping<BytecodeLocation, TreeAnchor>();
+    private GrowableMapping<BytecodeLocation, TreeAnchor> anchors = new OpenAddressingHashMapping<BytecodeLocation, TreeAnchor>();
 
-    private boolean _isTracing = false;
+    private boolean isTracing = false;
 
     public void jump(BytecodeLocation fromlocation, BytecodeLocation toLocation, BirState state) {
         assert fromlocation.classMethodActor() == toLocation.classMethodActor();
@@ -48,17 +48,17 @@ public class HotpathProfiler implements Profiler {
     }
 
     public void trace(BytecodeLocation location, BirState state) {
-        if (_isTracing) {
-            _isTracing = BirTracer.current().visitBytecode(location, state);
-            if (_printState.getValue()) {
+        if (isTracing) {
+            isTracing = BirTracer.current().visitBytecode(location, state);
+            if (printState.getValue()) {
                 Console.println(Color.LIGHTRED, "tracing loc: " + location.toString());
             }
         }
     }
 
     public void invoke(ClassMethodActor target, BirState state) {
-        if (_isTracing) {
-            _isTracing = BirTracer.current().visitInvoke(target, state);
+        if (isTracing) {
+            isTracing = BirTracer.current().visitInvoke(target, state);
         }
     }
 
@@ -72,14 +72,14 @@ public class HotpathProfiler implements Profiler {
         final TreeAnchor hotpathAnchor = lookupAnchor(toLocation);
         final boolean isTracing = BirTracer.current().visitAnchor(hotpathAnchor, state);
         if (isTracing) {
-            _isTracing = true;
-            if (_printState.getValue()) {
+            this.isTracing = true;
+            if (printState.getValue()) {
                 Console.println(Color.RED, "tracing starting at: " + hotpathAnchor);
             }
         } else {
-            if (_isTracing == true) {
-                _isTracing = false;
-                if (_printState.getValue()) {
+            if (this.isTracing == true) {
+                this.isTracing = false;
+                if (printState.getValue()) {
                     Console.println(Color.RED, "tracing stopping at: " + hotpathAnchor);
                 }
             }
@@ -87,10 +87,10 @@ public class HotpathProfiler implements Profiler {
     }
 
     private TreeAnchor lookupAnchor(BytecodeLocation location) {
-        TreeAnchor hotpathAnchor = _anchors.get(location);
+        TreeAnchor hotpathAnchor = anchors.get(location);
         if (hotpathAnchor == null) {
             hotpathAnchor = new TreeAnchor(location, 5);
-            _anchors.put(location, hotpathAnchor);
+            anchors.put(location, hotpathAnchor);
         }
         return hotpathAnchor;
     }

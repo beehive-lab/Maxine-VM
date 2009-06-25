@@ -27,17 +27,17 @@ package com.sun.max.vm.classfile.create;
  */
 class MillField {
 
-    final int _modifiers;
-    final int _nameIndex;
-    final int _descriptorIndex;
-    final MillField _next;
+    final int modifiers;
+    final int nameIndex;
+    final int descriptorIndex;
+    final MillField next;
 
     MillField(MillClass millClass, int modifiers, String name, String descriptor) {
-        this._modifiers = modifiers;
-        this._nameIndex = millClass.makeUtf8Constant(name)._index;
-        this._descriptorIndex = millClass.makeUtf8Constant(descriptor)._index;
-        this._next = millClass._fieldList;
-        millClass._fieldList = this;
+        this.modifiers = modifiers;
+        this.nameIndex = millClass.makeUtf8Constant(name).index;
+        this.descriptorIndex = millClass.makeUtf8Constant(descriptor).index;
+        this.next = millClass.fieldList;
+        millClass.fieldList = this;
     }
 
 }

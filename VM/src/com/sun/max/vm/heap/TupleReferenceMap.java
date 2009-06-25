@@ -34,7 +34,7 @@ import com.sun.max.vm.type.*;
  */
 public class TupleReferenceMap {
 
-    private AppendableSequence<Integer> _offsets = new LinkSequence<Integer>();
+    private AppendableSequence<Integer> offsets = new LinkSequence<Integer>();
 
     /**
      * Builds a reference map for a given set of static fields. This is the reference map that
@@ -43,8 +43,8 @@ public class TupleReferenceMap {
      */
     public TupleReferenceMap(FieldActor[] staticFieldActors) {
         for (FieldActor staticFieldActor : staticFieldActors) {
-            if (staticFieldActor.kind() == Kind.REFERENCE) {
-                _offsets.append(staticFieldActor.offset());
+            if (staticFieldActor.kind == Kind.REFERENCE) {
+                offsets.append(staticFieldActor.offset());
             }
         }
     }
@@ -58,23 +58,23 @@ public class TupleReferenceMap {
         ClassActor c = classActor;
         do {
             for (FieldActor instanceFieldActor : c.localInstanceFieldActors()) {
-                if (instanceFieldActor.kind() == Kind.REFERENCE && !instanceFieldActor.isSpecialReference()) {
-                    _offsets.append(instanceFieldActor.offset());
+                if (instanceFieldActor.kind == Kind.REFERENCE && !instanceFieldActor.isSpecialReference()) {
+                    offsets.append(instanceFieldActor.offset());
                 }
             }
-            c = c.superClassActor();
+            c = c.superClassActor;
         } while (c != null);
     }
 
     public static final TupleReferenceMap EMPTY = new TupleReferenceMap(new FieldActor[0]);
 
     public int numberOfOffsets() {
-        return _offsets.length();
+        return offsets.length();
     }
 
     public void copyIntoHub(Hub hub) {
         int index = hub.referenceMapStartIndex();
-        for (Integer offset : _offsets) {
+        for (Integer offset : offsets) {
             hub.setInt(index, offset);
             index++;
         }

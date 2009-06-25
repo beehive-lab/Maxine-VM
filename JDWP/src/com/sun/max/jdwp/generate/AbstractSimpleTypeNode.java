@@ -31,10 +31,10 @@ public abstract class AbstractSimpleTypeNode extends AbstractTypeNode {
 
     @Override
     void constrain(Context ctx) {
-        _context = ctx;
+        context = ctx;
         nameNode().constrain(ctx);
-        if (_components.size() != 0) {
-            error("Extraneous content: " + _components.get(0));
+        if (components.size() != 0) {
+            error("Extraneous content: " + components.get(0));
         }
     }
 

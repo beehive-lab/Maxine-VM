@@ -158,14 +158,14 @@ public abstract class Actor {
 
     @INSPECTED
     @CONSTANT
-    private int _flags;
+    private int flags;
 
     @INSPECTED
-    private final Utf8Constant _name;
+    public final Utf8Constant name;
 
     protected Actor(Utf8Constant name, int flags) {
-        _flags = flags;
-        _name = name;
+        this.flags = flags;
+        this.name = name;
     }
 
     @Override
@@ -181,7 +181,7 @@ public abstract class Actor {
 
     @INLINE
     public final int flags() {
-        return _flags;
+        return flags;
     }
 
     @INLINE
@@ -414,7 +414,7 @@ public abstract class Actor {
 
     @INLINE
     public final void beUnsafe() {
-        _flags |= UNSAFE;
+        flags |= UNSAFE;
     }
 
     @INLINE
@@ -457,22 +457,17 @@ public abstract class Actor {
         return (flags & INTERPRET_ONLY) != 0;
     }
 
-    public static Predicate<Actor> _staticPredicate = new Predicate<Actor>() {
+    public static Predicate<Actor> staticPredicate = new Predicate<Actor>() {
         public boolean evaluate(Actor actor) {
             return actor.isStatic();
         }
     };
 
-    public static Predicate<Actor> _dynamicPredicate = new Predicate<Actor>() {
+    public static Predicate<Actor> dynamicPredicate = new Predicate<Actor>() {
         public boolean evaluate(Actor actor) {
             return !actor.isStatic();
         }
     };
-
-    @INLINE
-    public final Utf8Constant name() {
-        return _name;
-    }
 
     /**
      * Gets the name of this actor qualified by it's declaring class (if known).
@@ -507,7 +502,7 @@ public abstract class Actor {
     }
 
     public String flagsString() {
-        return flagsString(_flags);
+        return flagsString(flags);
     }
 
     public static String flagsString(int flags) {
@@ -755,7 +750,7 @@ public abstract class Actor {
                     case 'h': {
                         if (this instanceof MemberActor) {
                             final MemberActor memberActor = (MemberActor) this;
-                            sb.append(memberActor.holder().typeDescriptor().toJavaString(qualified));
+                            sb.append(memberActor.holder().typeDescriptor.toJavaString(qualified));
                         } else {
                             if (strict) {
                                 throw new IllegalFormatConversionException(specifier, getClass());
@@ -764,7 +759,7 @@ public abstract class Actor {
                         break;
                     }
                     case 'n': {
-                        sb.append(name());
+                        sb.append(name);
                         break;
                     }
                     case 'P':
@@ -826,7 +821,7 @@ public abstract class Actor {
 
     public final void checkAccessBy(ClassActor accessor) {
         if (!isAccessibleBy(accessor)) {
-            throw new IllegalAccessError(accessor.name() + " cannot access " + this);
+            throw new IllegalAccessError(accessor.name + " cannot access " + this);
         }
     }
 }

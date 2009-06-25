@@ -35,39 +35,39 @@ import com.sun.max.vm.compiler.eir.allocate.linearscan.*;
 public class ComputeLiveSets extends AlgorithmPart {
 
     // Timers
-    private final Timer _localTimer = createTimer("Local live sets");
-    private final Timer _globalTimer = createTimer("Global live sets");
-    private final Timer _successorsTimer = createTimer("visit successors");
-    private final Timer _instructionLiveSets = createTimer("Assign instruction live sets");
+    private final Timer localTimer = createTimer("Local live sets");
+    private final Timer globalTimer = createTimer("Global live sets");
+    private final Timer successorsTimer = createTimer("visit successors");
+    private final Timer instructionLiveSets = createTimer("Assign instruction live sets");
 
     // Counters
-    private final Counter _variablesCounter1 = createCounter("Number of variables1");
-    private final Counter _variablesCounter2 = createCounter("Number of variables2");
-    private final Counter _differentLocationsCounter = createCounter("Different locations");
+    private final Counter variablesCounter1 = createCounter("Number of variables1");
+    private final Counter variablesCounter2 = createCounter("Number of variables2");
+    private final Counter differentLocationsCounter = createCounter("Different locations");
 
-    private boolean _calculateInstructionLiveSets;
+    private boolean calculateInstructionLiveSets;
 
     public ComputeLiveSets(boolean calculateInstructionLiveSets) {
         super(calculateInstructionLiveSets ? 5 : 11);
-        _calculateInstructionLiveSets = calculateInstructionLiveSets;
+        this.calculateInstructionLiveSets = calculateInstructionLiveSets;
     }
 
     @Override
     protected void doit() {
 
         if (LinearScanRegisterAllocator.DETAILED_COUNTING) {
-            if (_calculateInstructionLiveSets) {
+            if (calculateInstructionLiveSets) {
                 // Second time
-                _variablesCounter2.accumulate(generation().variables().length());
-                _differentLocationsCounter.accumulate(32 + generation().getLocalStackSlotCount());
+                variablesCounter2.accumulate(generation().variables().length());
+                differentLocationsCounter.accumulate(32 + generation().getLocalStackSlotCount());
             } else {
                 // First time
-                _variablesCounter1.accumulate(generation().variables().length());
+                variablesCounter1.accumulate(generation().variables().length());
             }
         }
 
         if (LinearScanRegisterAllocator.DETAILED_TIMING) {
-            _localTimer.start();
+            localTimer.start();
         }
 
         for (EirBlock block : generation().eirBlocks()) {
@@ -75,23 +75,23 @@ public class ComputeLiveSets extends AlgorithmPart {
         }
 
         if (LinearScanRegisterAllocator.DETAILED_TIMING) {
-            _localTimer.stop();
+            localTimer.stop();
         }
 
         if (LinearScanRegisterAllocator.DETAILED_TIMING) {
-            _globalTimer.start();
+            globalTimer.start();
         }
         computeGlobalLiveSets(generation().variablePool(), generation().eirBlockPool(), generation().eirBlocks());
 
         if (LinearScanRegisterAllocator.DETAILED_TIMING) {
-            _globalTimer.stop();
+            globalTimer.stop();
         }
 
         if (LinearScanRegisterAllocator.DETAILED_TIMING) {
-            _instructionLiveSets.start();
+            instructionLiveSets.start();
         }
 
-        if (_calculateInstructionLiveSets) {
+        if (calculateInstructionLiveSets) {
             assignInstructionLiveSets();
         } else {
 
@@ -100,7 +100,7 @@ public class ComputeLiveSets extends AlgorithmPart {
         }
 
         if (LinearScanRegisterAllocator.DETAILED_TIMING) {
-            _instructionLiveSets.stop();
+            instructionLiveSets.stop();
         }
     }
 

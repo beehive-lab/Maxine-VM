@@ -22,27 +22,27 @@ package com.sun.max.vm.stack;
 
 /**
  * Describes the layout of an adapter frame.
- * 
+ *
  * @author Doug Simon
  */
 public class AdapterStackFrameLayout extends JavaStackFrameLayout {
 
-    private final int _frameSize;
-    private final boolean _isReturnAddressPushedByCall;
+    private final int frameSize;
+    private final boolean isReturnAddressPushedByCall;
 
     public AdapterStackFrameLayout(int frameSize, boolean isReturnAddressPushedByCall) {
-        _frameSize = frameSize;
-        _isReturnAddressPushedByCall = isReturnAddressPushedByCall;
+        this.frameSize = frameSize;
+        this.isReturnAddressPushedByCall = isReturnAddressPushedByCall;
     }
 
     @Override
     public int frameSize() {
-        return _frameSize;
+        return frameSize;
     }
 
     @Override
     public boolean isReturnAddressPushedByCall() {
-        return _isReturnAddressPushedByCall;
+        return isReturnAddressPushedByCall;
     }
 
     @Override

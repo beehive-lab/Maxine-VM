@@ -42,23 +42,23 @@ public class ResolveDataFlow extends AlgorithmPart {
     private static final boolean SPILL_ALL_EXCEPTION_EDGES = false;
 
     // Timers
-    private final Timer _splitsTimer = createTimer("Resolve splits");
-    private final Timer _exceptionsTimer = createTimer("Resolve exception edges");
-    private final Timer _dataFlowTimer = createTimer("Resolve normal data flow");
-    private final Timer _mergeTimer = createTimer("Merge");
-    private final Timer _substituteVariablesTimer = createTimer("Substitute variables");
-    private final Timer _spillSlotOptimizationTimer = createTimer("Spill slot optimization");
+    private final Timer splitsTimer = createTimer("Resolve splits");
+    private final Timer exceptionsTimer = createTimer("Resolve exception edges");
+    private final Timer dataFlowTimer = createTimer("Resolve normal data flow");
+    private final Timer mergeTimer = createTimer("Merge");
+    private final Timer substituteVariablesTimer = createTimer("Substitute variables");
+    private final Timer spillSlotOptimizationTimer = createTimer("Spill slot optimization");
 
     // Counters
-    private final Metrics.Counter _removedExceptionAdapterEdgesCounter = createCounter("Removed exception edges");
-    private final Metrics.Counter _catchBlockCounter = createCounter("Catch blocks");
-    private final Metrics.Counter _createdExceptionEdgesCounter = createCounter("Created exception edges");
-    private final Metrics.Counter _splitsCounter = createCounter("Number of split positions");
-    private final Metrics.Counter _assignmentCounter = createCounter("Number of inserted assignments");
-    private final Metrics.Counter _splitSlotDefinitionCounter = createCounter("Inserted spills after variable definition");
-    private final Metrics.Counter _savedSpillSlotStoresCounter = createCounter("Saved spill slot stores");
+    private final Metrics.Counter removedExceptionAdapterEdgesCounter = createCounter("Removed exception edges");
+    private final Metrics.Counter catchBlockCounter = createCounter("Catch blocks");
+    private final Metrics.Counter createdExceptionEdgesCounter = createCounter("Created exception edges");
+    private final Metrics.Counter splitsCounter = createCounter("Number of split positions");
+    private final Metrics.Counter assignmentCounter = createCounter("Number of inserted assignments");
+    private final Metrics.Counter splitSlotDefinitionCounter = createCounter("Inserted spills after variable definition");
+    private final Metrics.Counter savedSpillSlotStoresCounter = createCounter("Saved spill slot stores");
 
-    private AppendableSequence<BlockEdge> _blockEdges;
+    private AppendableSequence<BlockEdge> blockEdges;
 
     public ResolveDataFlow() {
         super(10);
@@ -66,12 +66,12 @@ public class ResolveDataFlow extends AlgorithmPart {
 
     private class ExceptionAdapterEdge extends Edge {
 
-        private EirBlock _catchBlock;
-        private EirBlock _block;
+        private EirBlock catchBlock;
+        private EirBlock block;
 
         public ExceptionAdapterEdge(EirBlock catchBlock) {
             assert catchBlock.role() == Role.EXCEPTION_DISPATCHER;
-            _catchBlock = catchBlock;
+            this.catchBlock = catchBlock;
         }
 
         @Override
@@ -84,7 +84,7 @@ public class ResolveDataFlow extends AlgorithmPart {
             if (o instanceof ExceptionAdapterEdge) {
 
                 final ExceptionAdapterEdge other = (ExceptionAdapterEdge) o;
-                if (other._catchBlock != _catchBlock) {
+                if (other.catchBlock != catchBlock) {
                     return false;
                 }
 
@@ -96,7 +96,7 @@ public class ResolveDataFlow extends AlgorithmPart {
 
         @Override
         public int hashCode() {
-            return super.hashCode() * 31 + _catchBlock.hashCode();
+            return super.hashCode() * 31 + catchBlock.hashCode();
         }
 
         @Override
@@ -107,24 +107,24 @@ public class ResolveDataFlow extends AlgorithmPart {
         }
 
         public EirBlock block() {
-            if (_block == null) {
-                _block = createAdapterBlock(_catchBlock);
+            if (block == null) {
+                block = createAdapterBlock(catchBlock);
             }
 
-            return _block;
+            return block;
         }
 
         public EirBlock catchBlock() {
-            return _catchBlock;
+            return catchBlock;
         }
     }
 
     private class PositionEdge extends Edge {
 
-        private int _position;
+        private int position;
 
         public PositionEdge(int position) {
-            _position = position;
+            this.position = position;
         }
 
         @Override
@@ -135,11 +135,11 @@ public class ResolveDataFlow extends AlgorithmPart {
         @Override
         protected EirInstruction determineInsertPosition() {
 
-            final EirBlock eirBlock = findBlock(_position);
-            final EirInstruction eirInstruction = findInstruction(_position);
+            final EirBlock eirBlock = findBlock(position);
+            final EirInstruction eirInstruction = findInstruction(position);
 
             EirInstruction result = null;
-            if (eirInstruction.number() < _position) {
+            if (eirInstruction.number() < position) {
                 result = eirBlock.instructions().get(eirInstruction.index() + 1);
             } else {
                 assert eirInstruction.block().instructions().first() == eirInstruction;
@@ -158,8 +158,8 @@ public class ResolveDataFlow extends AlgorithmPart {
 
     private class BlockEdge extends Edge {
 
-        private EirBlock _from;
-        private EirBlock _to;
+        private EirBlock from;
+        private EirBlock to;
 
         @Override
         protected Type assignmentType() {
@@ -167,9 +167,9 @@ public class ResolveDataFlow extends AlgorithmPart {
         }
 
         public BlockEdge(EirBlock from, EirBlock to) {
-            _from = from;
-            _to = to;
-            assert _to.predecessors().contains(_from);
+            this.from = from;
+            this.to = to;
+            assert to.predecessors().contains(from);
         }
 
         @Override
@@ -177,39 +177,39 @@ public class ResolveDataFlow extends AlgorithmPart {
 
             EirInstruction beforeInstruction = null;
 
-            if (_to.predecessors().length() == 1) {
+            if (to.predecessors().length() == 1) {
 
                 // Insert position is clear => at the beginning of to, before first instruction
-                beforeInstruction = _to.instructions().first();
+                beforeInstruction = to.instructions().first();
 
-            } else if (_from.instructions().last() instanceof EirJump && (((EirJump) _from.instructions().last()).target() == _to)) {
+            } else if (from.instructions().last() instanceof EirJump && (((EirJump) from.instructions().last()).target() == to)) {
 
                 // Insert position is clear => before the jump at the end of _from
-                beforeInstruction = _from.instructions().last();
+                beforeInstruction = from.instructions().last();
 
             } else {
 
                 // Unclear position => introduce intermediate block
 
-                final EirBlock newBlock = generation().createEirBlock(_to.role());
+                final EirBlock newBlock = generation().createEirBlock(to.role());
                 newBlock.setMoveResolverBlock(true);
-                generation().addJump(newBlock, _to);
-                newBlock.addPredecessor(_from);
+                generation().addJump(newBlock, to);
+                newBlock.addPredecessor(from);
 
                 // Substitute blocks
                 final VariableMapping<EirBlock, EirBlock> mapping = new ChainedHashMapping<EirBlock, EirBlock>();
-                mapping.put(_to, newBlock);
-                for (EirInstruction<?, ?> instruction : _from.instructions()) {
+                mapping.put(to, newBlock);
+                for (EirInstruction<?, ?> instruction : from.instructions()) {
                     instruction.substituteSuccessorBlocks(mapping);
                 }
 
                 // Subsitute predecessors
-                _to.substitutePredecessorBlocks(mapping);
+                to.substitutePredecessorBlocks(mapping);
 
-                assert newBlock.predecessors().length() == 1 && newBlock.predecessors().first() == _from;
-                assert Sequence.Static.containsIdentical(_from.allUniqueSuccessors(), newBlock);
-                assert _to.predecessors().contains(newBlock);
-                assert newBlock.allUniqueSuccessors().length() == 1 && newBlock.allUniqueSuccessors().first() == _to;
+                assert newBlock.predecessors().length() == 1 && newBlock.predecessors().first() == from;
+                assert Sequence.Static.containsIdentical(from.allUniqueSuccessors(), newBlock);
+                assert to.predecessors().contains(newBlock);
+                assert newBlock.allUniqueSuccessors().length() == 1 && newBlock.allUniqueSuccessors().first() == to;
                 assert newBlock.instructions().length() == 1;
 
                 // Insert position is clear => before the jump at the end of the new block
@@ -222,48 +222,48 @@ public class ResolveDataFlow extends AlgorithmPart {
 
     private abstract class Edge {
 
-        private VariableSequence<Pair<Interval, Interval>> _pairs;
-        private VariableSequence<Pair<Interval, Interval>> _spilledPairs;
+        private VariableSequence<Pair<Interval, Interval>> pairs;
+        private VariableSequence<Pair<Interval, Interval>> spilledPairs;
 
         protected abstract EirInstruction determineInsertPosition();
 
         protected abstract EirAssignment.Type assignmentType();
 
         public Edge() {
-            _pairs = new ArrayListSequence<Pair<Interval, Interval>>(8);
-            _spilledPairs = new ArrayListSequence<Pair<Interval, Interval>>(4);
+            pairs = new ArrayListSequence<Pair<Interval, Interval>>(8);
+            spilledPairs = new ArrayListSequence<Pair<Interval, Interval>>(4);
         }
 
         @Override
         public int hashCode() {
-            return _pairs.hashCode() + 31 * _spilledPairs.hashCode();
+            return pairs.hashCode() + 31 * spilledPairs.hashCode();
         }
 
         @Override
         public boolean equals(Object o) {
             if (o instanceof Edge) {
                 final Edge other = (Edge) o;
-                return other._pairs.equals(_pairs) && other._spilledPairs.equals(_spilledPairs);
+                return other.pairs.equals(pairs) && other.spilledPairs.equals(spilledPairs);
             }
             return false;
         }
 
         public void resolve() {
 
-            if (_spilledPairs.length() == 0 && _pairs.length() == 0) {
+            if (spilledPairs.length() == 0 && pairs.length() == 0) {
                 // Nothing to do!
                 return;
             }
 
             final EirInstruction beforeInstruction = determineInsertPosition();
 
-            final EirVariable[] spillVariables = new EirVariable[_spilledPairs.length()];
+            final EirVariable[] spillVariables = new EirVariable[spilledPairs.length()];
 
             int insertedAssignmentsCount = 0;
 
             // Spill variables to stack
             int z = 0;
-            for (Pair<Interval, Interval> spilledPair : _spilledPairs) {
+            for (Pair<Interval, Interval> spilledPair : spilledPairs) {
                 final Interval first = spilledPair.first();
 
                 assert spilledPair.first().parent() == spilledPair.second().parent();
@@ -282,7 +282,7 @@ public class ResolveDataFlow extends AlgorithmPart {
             }
 
             // Insert moves in correct order vor non-spilled variables
-            for (Pair<Interval, Interval> pair : _pairs) {
+            for (Pair<Interval, Interval> pair : pairs) {
                 final Interval first = pair.first();
                 final Interval second = pair.second();
 
@@ -299,7 +299,7 @@ public class ResolveDataFlow extends AlgorithmPart {
 
             // Load spilled variables from stack
             z = 0;
-            for (Pair<Interval, Interval> spilledPair : _spilledPairs) {
+            for (Pair<Interval, Interval> spilledPair : spilledPairs) {
                 final Interval second = spilledPair.second();
                 final EirVariable spillVariable = spillVariables[z];
                 assert second.variable().kind() == spillVariable.kind();
@@ -315,11 +315,11 @@ public class ResolveDataFlow extends AlgorithmPart {
             }
 
             if (LinearScanRegisterAllocator.DETAILED_COUNTING) {
-                _assignmentCounter.accumulate(insertedAssignmentsCount);
+                assignmentCounter.accumulate(insertedAssignmentsCount);
             }
 
-            _spilledPairs.clear();
-            _pairs.clear();
+            spilledPairs.clear();
+            pairs.clear();
         }
 
         public void processIntervalPair(Interval from, Interval to) {
@@ -330,16 +330,16 @@ public class ResolveDataFlow extends AlgorithmPart {
 
             if (to.parent() == from.parent() && to.parent().hasSlotVariable() && to.parent().spillSlotDefined() && to.variable().location().asStackSlot() != null) {
                 if (LinearScanRegisterAllocator.DETAILED_COUNTING) {
-                    _savedSpillSlotStoresCounter.increment();
+                    savedSpillSlotStoresCounter.increment();
                 }
                 return;
             }
 
             int minInsertPosition = 0;
-            int maxInsertPosition = _pairs.length();
+            int maxInsertPosition = pairs.length();
 
             int z = 0;
-            for (Pair<Interval, Interval> pair : _pairs) {
+            for (Pair<Interval, Interval> pair : pairs) {
                 if (pair.second().variable().location().equals(newPair.first().variable().location())) {
                     maxInsertPosition = Math.min(maxInsertPosition, z);
                 }
@@ -353,7 +353,7 @@ public class ResolveDataFlow extends AlgorithmPart {
 
             if (minInsertPosition > maxInsertPosition) {
                 // A cycle was detected => we must spill!
-                _spilledPairs.append(newPair);
+                spilledPairs.append(newPair);
             } else {
                 assert minInsertPosition <= maxInsertPosition : "dependency cycle detected!";
                 // _pairs.insert(minInsertPosition, newPair);
@@ -363,8 +363,8 @@ public class ResolveDataFlow extends AlgorithmPart {
                 for (int i = minInsertPosition; i <= maxInsertPosition; i++) {
 
                     int compareLocations = -1;
-                    if (i < _pairs.length() && i < maxInsertPosition) {
-                        final Pair<Interval, Interval> otherPair = _pairs.get(i);
+                    if (i < pairs.length() && i < maxInsertPosition) {
+                        final Pair<Interval, Interval> otherPair = pairs.get(i);
 
                         compareLocations = otherPair.first().compareLocation(from);
                         if (compareLocations == 0) {
@@ -373,7 +373,7 @@ public class ResolveDataFlow extends AlgorithmPart {
                     }
 
                     if (compareLocations < 0) {
-                        _pairs.insert(i, newPair);
+                        pairs.insert(i, newPair);
                         break;
                     }
                 }
@@ -384,10 +384,10 @@ public class ResolveDataFlow extends AlgorithmPart {
     @Override
     protected void doit() {
 
-        _blockEdges = new ArrayListSequence<BlockEdge>(data().generation().eirBlocks().length());
+        blockEdges = new ArrayListSequence<BlockEdge>(data().generation().eirBlocks().length());
 
         if (LinearScanRegisterAllocator.DETAILED_TIMING) {
-            _spillSlotOptimizationTimer.start();
+            spillSlotOptimizationTimer.start();
         }
 
         // Optimization if variable has only 1 definition and is spilled somewhere
@@ -416,23 +416,23 @@ public class ResolveDataFlow extends AlgorithmPart {
                     definitions.append(modificationOperand);
 
                     if (LinearScanRegisterAllocator.DETAILED_COUNTING) {
-                        _splitSlotDefinitionCounter.increment();
+                        splitSlotDefinitionCounter.increment();
                     }
                 }
             }
         }
 
         if (LinearScanRegisterAllocator.DETAILED_TIMING) {
-            _spillSlotOptimizationTimer.stop();
-            _splitsTimer.start();
+            spillSlotOptimizationTimer.stop();
+            splitsTimer.start();
         }
 
         if (LinearScanRegisterAllocator.DETAILED_COUNTING) {
-            _catchBlockCounter.accumulate(data().splitMoves().keys().length());
+            catchBlockCounter.accumulate(data().splitMoves().keys().length());
         }
 
         if (LinearScanRegisterAllocator.DETAILED_COUNTING) {
-            _splitsCounter.accumulate(data().splitMoves().keys().length());
+            splitsCounter.accumulate(data().splitMoves().keys().length());
         }
 
         for (Integer i : data().splitMoves().keys()) {
@@ -440,8 +440,8 @@ public class ResolveDataFlow extends AlgorithmPart {
         }
 
         if (LinearScanRegisterAllocator.DETAILED_TIMING) {
-            _splitsTimer.stop();
-            _dataFlowTimer.start();
+            splitsTimer.stop();
+            dataFlowTimer.start();
         }
 
         for (final EirBlock block : data().linearScanOrder()) {
@@ -452,8 +452,8 @@ public class ResolveDataFlow extends AlgorithmPart {
         }
 
         if (LinearScanRegisterAllocator.DETAILED_TIMING) {
-            _dataFlowTimer.stop();
-            _exceptionsTimer.start();
+            dataFlowTimer.stop();
+            exceptionsTimer.start();
         }
 
         for (final EirBlock block : data().linearScanOrder()) {
@@ -467,8 +467,8 @@ public class ResolveDataFlow extends AlgorithmPart {
         }
 
         if (LinearScanRegisterAllocator.DETAILED_TIMING) {
-            _exceptionsTimer.stop();
-            _spillSlotOptimizationTimer.start();
+            exceptionsTimer.stop();
+            spillSlotOptimizationTimer.start();
         }
 
         for (EirOperand modificationOperand : definitions) {
@@ -476,26 +476,26 @@ public class ResolveDataFlow extends AlgorithmPart {
             final EirInstruction afterInstruction = modificationOperand.instruction();
             final EirVariable variable = modificationOperand.eirValue().asVariable();
             assert variable != null;
-            assert variable.interval().parent().hasSlotVariable();
+            assert variable.interval.parent().hasSlotVariable();
             assert modificationOperand.eirValue() == variable;
 
-            final EirInstruction newInstruction = generation().createAssignment(afterInstruction.block(), variable.kind(), variable.interval().parent().slotVariable(generation()), variable);
+            final EirInstruction newInstruction = generation().createAssignment(afterInstruction.block(), variable.kind(), variable.interval.parent().slotVariable(generation()), variable);
             assert newInstruction instanceof EirAssignment;
             ((EirAssignment) newInstruction).setType(EirAssignment.Type.SPILL_SLOT_DEFINITION);
-            variable.interval().parent().setSpillSlotDefined(true);
+            variable.interval.parent().setSpillSlotDefined(true);
             generation().introduceInstructionAfter(afterInstruction, newInstruction);
         }
 
         if (LinearScanRegisterAllocator.DETAILED_TIMING) {
-            _spillSlotOptimizationTimer.stop();
-            _mergeTimer.start();
+            spillSlotOptimizationTimer.stop();
+            mergeTimer.start();
         }
 
         // Merge variables such that there is only one variable for one location
         merge();
 
         if (LinearScanRegisterAllocator.DETAILED_TIMING) {
-            _mergeTimer.stop();
+            mergeTimer.stop();
         }
     }
 
@@ -515,7 +515,7 @@ public class ResolveDataFlow extends AlgorithmPart {
         }
 
         if (LinearScanRegisterAllocator.DETAILED_TIMING) {
-            _substituteVariablesTimer.start();
+            substituteVariablesTimer.start();
         }
 
         for (EirVariable variable : generation().variables()) {
@@ -527,7 +527,7 @@ public class ResolveDataFlow extends AlgorithmPart {
         }
 
         if (LinearScanRegisterAllocator.DETAILED_TIMING) {
-            _substituteVariablesTimer.stop();
+            substituteVariablesTimer.stop();
         }
 
         generation().clearVariablePool();
@@ -609,7 +609,7 @@ public class ResolveDataFlow extends AlgorithmPart {
         }
 
         if (LinearScanRegisterAllocator.DETAILED_COUNTING) {
-            _catchBlockCounter.increment();
+            catchBlockCounter.increment();
         }
 
         final AppendableSequence<EirTry> tries = new ArrayListSequence<EirTry>();
@@ -630,8 +630,8 @@ public class ResolveDataFlow extends AlgorithmPart {
         final VariableMapping<EirTry, ExceptionAdapterEdge> adapterBlockMapping = new ChainedHashMapping<EirTry, ExceptionAdapterEdge>();
 
         for (EirVariable variable : block.liveIn()) {
-            final Interval interval = variable.interval().parent().getChildAt(block.beginNumber());
-            assert interval != null || traceIntervalParent(variable.interval().parent());
+            final Interval interval = variable.interval.parent().getChildAt(block.beginNumber());
+            assert interval != null || traceIntervalParent(variable.interval.parent());
             final EirVariable variableAtExceptionBlock = interval.variable();
 
             for (EirTry curTry : tries) {
@@ -662,7 +662,7 @@ public class ResolveDataFlow extends AlgorithmPart {
         }
 
         if (LinearScanRegisterAllocator.DETAILED_COUNTING) {
-            _catchBlockCounter.accumulate(adapterBlockMapping.keys().length());
+            catchBlockCounter.accumulate(adapterBlockMapping.keys().length());
         }
 
         if (adapterBlockMapping.keys().length() > 0) {
@@ -689,7 +689,7 @@ public class ResolveDataFlow extends AlgorithmPart {
                 final AppendableSequence<EirTry> trySequence = uniqueEdges.get(edge);
                 if (trySequence != null) {
                     if (LinearScanRegisterAllocator.DETAILED_COUNTING) {
-                        _removedExceptionAdapterEdgesCounter.increment();
+                        removedExceptionAdapterEdgesCounter.increment();
                     }
                     trySequence.append(curTry);
                 } else {
@@ -728,11 +728,11 @@ public class ResolveDataFlow extends AlgorithmPart {
         // before an exception can happen.
         final VariableMapping<EirVariable, EirVariable> variableToRescue = new ChainedHashMapping<EirVariable, EirVariable>();
         for (EirVariable variable : block.liveIn()) {
-            final Interval interval = variable.interval().parent().getChildAt(block.beginNumber());
-            assert interval != null || traceIntervalParent(variable.interval().parent());
+            final Interval interval = variable.interval.parent().getChildAt(block.beginNumber());
+            assert interval != null || traceIntervalParent(variable.interval.parent());
             final EirVariable realVariable = interval.variable();
             if (realVariable.location().asRegister() != null) {
-                final EirVariable stackVariable = realVariable.interval().parent().slotVariable(generation());
+                final EirVariable stackVariable = realVariable.interval.parent().slotVariable(generation());
                 variableToRescue.put(realVariable, stackVariable);
             } else {
                 assert realVariable.location().asStackSlot() != null;
@@ -760,7 +760,7 @@ public class ResolveDataFlow extends AlgorithmPart {
                         for (EirVariable variable : variableToRescue.keys()) {
                             if (variablesUpdated.contains(variable)) {
                                 final EirVariable stackVariable = variableToRescue.get(variable);
-                                final Interval interval = variable.interval().parent().getChildAt(instruction.number());
+                                final Interval interval = variable.interval.parent().getChildAt(instruction.number());
                                 final EirVariable currentVariable = interval.variable();
                                 if (currentVariable.location() != stackVariable.location()) {
                                     final EirInstruction newInstruction = generation().createAssignment(pred, variable.kind(), stackVariable, currentVariable);
@@ -806,15 +806,15 @@ public class ResolveDataFlow extends AlgorithmPart {
 
         final BlockEdge edge = new BlockEdge(block, succ);
         assert assertUniqueBlockEdges(edge);
-        _blockEdges.append(edge);
+        blockEdges.append(edge);
 
         final VariableMapping<ParentInterval, Interval> mapping = new ChainedHashMapping<ParentInterval, Interval>();
         for (EirVariable variable : block.liveOut()) {
-            mapping.put(variable.interval().parent(), variable.interval());
+            mapping.put(variable.interval.parent(), variable.interval);
         }
 
         for (EirVariable variable : succ.liveIn()) {
-            final ParentInterval parentInterval = variable.interval().parent();
+            final ParentInterval parentInterval = variable.interval.parent();
 
             // TODO (tw): Check why -2 is necessary; problem can occur when split is exactly at block.endNumber() - 1
             final Interval fromInterval = parentInterval.getChildAt(block.endNumber() - 2);
@@ -835,7 +835,7 @@ public class ResolveDataFlow extends AlgorithmPart {
 
     private boolean assertUniqueBlockEdges(BlockEdge newEdge) {
 
-        for (BlockEdge e : _blockEdges) {
+        for (BlockEdge e : blockEdges) {
             assert e != newEdge;
         }
 

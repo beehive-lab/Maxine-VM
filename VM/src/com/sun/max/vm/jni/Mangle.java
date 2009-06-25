@@ -29,9 +29,9 @@ import com.sun.max.vm.type.*;
 /**
  * A utility for mangling Java method name and signatures into C function names. Support is also provided for
  * demangling.
- * 
+ *
  * @author Doug Simon
- * 
+ *
  * @see "http://java.sun.com/j2se/1.5.0/docs/guide/jni/spec/design.html#wp615"
  */
 public final class Mangle {
@@ -70,7 +70,7 @@ public final class Mangle {
     /**
      * Mangles a Java method to a unique C function name in compliance with the JNI specification for resolving native
      * method names. The method signature is not included.
-     * 
+     *
      * @param holder
      *                the class declaring the method
      * @param method
@@ -84,7 +84,7 @@ public final class Mangle {
     /**
      * Mangles a Java method to a unique C function name in compliance with the JNI specification for resolving native
      * method names.
-     * 
+     *
      * @param method
      *                a Java method
      * @param withSignature
@@ -98,7 +98,7 @@ public final class Mangle {
     /**
      * Mangles a Java method to a unique C function name in compliance with the JNI specification for resolving native
      * method names.
-     * 
+     *
      * @param declaringClass
      *                a fully qualified class descriptor
      * @param name
@@ -177,7 +177,7 @@ public final class Mangle {
 
     /**
      * Demangles a name that was mangled in an manner equivalent to {@link #mangleMethod(Method, boolean) mangle}.
-     * 
+     *
      * @param mangled
      *                a mangled C function name
      * @return an object containing the demangled components of a Java method from which {@code mangled} may have been
@@ -221,20 +221,20 @@ public final class Mangle {
      */
     public static final class DemangledMethod {
 
-        private final TypeDescriptor _declaringClass;
-        private final String _name;
-        private final String _parametersSignature;
+        private final TypeDescriptor declaringClass;
+        private final String name;
+        private final String parametersSignature;
 
         public TypeDescriptor declaringClass() {
-            return _declaringClass;
+            return declaringClass;
         }
 
         public String name() {
-            return _name;
+            return name;
         }
 
         public String parametersSignature() {
-            return _parametersSignature;
+            return parametersSignature;
         }
 
         private static SignatureDescriptor createDummySignature(String parametersSignature) {
@@ -254,33 +254,33 @@ public final class Mangle {
         }
 
         private DemangledMethod(TypeDescriptor declaringClass, String name, String parametersSignature) {
-            _declaringClass = declaringClass;
-            _name = name;
-            _parametersSignature = parametersSignature;
+            this.declaringClass = declaringClass;
+            this.name = name;
+            this.parametersSignature = parametersSignature;
         }
 
         /**
          * This may return null if this object was created from a mangled name of a method in a non top-level class.
          * This is because the JNI specification is not precise when it comes to the mangling of native methods in non
          * top-level classes.
-         * 
+         *
          * @param classLoader
          * @return null if the demangled method does not correspond to a method locatable by {@code classLoader}
          */
         public Method toJava(ClassLoader classLoader) {
-            final Class declaringClass = _declaringClass.resolveType(classLoader);
+            final Class declaringClass = this.declaringClass.resolveType(classLoader);
             for (Method method : declaringClass.getDeclaredMethods()) {
                 if (Modifier.isNative(method.getModifiers())) {
-                    if (_name.equals(method.getName())) {
-                        if (_parametersSignature == null) {
+                    if (name.equals(method.getName())) {
+                        if (parametersSignature == null) {
                             return method;
                         }
                         final String signature = SignatureDescriptor.fromJava(method).toString();
                         final String parametersSignature = signature.substring(1, signature.lastIndexOf(')'));
-                        if (_parametersSignature.equals(parametersSignature)) {
+                        if (this.parametersSignature.equals(parametersSignature)) {
                             return method;
                         }
-                        if (parametersSignature.replace('$', '/').equals(_parametersSignature)) {
+                        if (parametersSignature.replace('$', '/').equals(this.parametersSignature)) {
                             return method;
                         }
                     }
@@ -301,15 +301,15 @@ public final class Mangle {
 
         @Override
         public String toString() {
-            final String result = _declaringClass.toString() + ' ' + _name;
-            if (_parametersSignature == null) {
+            final String result = declaringClass.toString() + ' ' + name;
+            if (parametersSignature == null) {
                 return result;
             }
-            return result + _parametersSignature;
+            return result + parametersSignature;
         }
 
         public String mangle() {
-            return Mangle.mangleMethod(_declaringClass, _name, createDummySignature(_parametersSignature));
+            return Mangle.mangleMethod(declaringClass, name, createDummySignature(parametersSignature));
         }
     }
 }

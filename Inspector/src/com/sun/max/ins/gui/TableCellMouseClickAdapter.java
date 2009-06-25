@@ -36,7 +36,7 @@ import com.sun.max.ins.*;
  */
 public class TableCellMouseClickAdapter extends InspectorMouseClickAdapter {
 
-    private final JTable _table;
+    private final JTable table;
 
     /**
      * A listener that forwards mouse events over a table to
@@ -44,7 +44,7 @@ public class TableCellMouseClickAdapter extends InspectorMouseClickAdapter {
      */
     public TableCellMouseClickAdapter(Inspection inspection, JTable table) {
         super(inspection);
-        _table = table;
+        this.table = table;
     }
 
     /**
@@ -54,12 +54,12 @@ public class TableCellMouseClickAdapter extends InspectorMouseClickAdapter {
     public void procedure(final MouseEvent mouseEvent) {
         // Locate the renderer under the event location and pass along the event.
         final Point p = mouseEvent.getPoint();
-        final int hitColumnIndex = _table.columnAtPoint(p);
-        final int hitRowIndex = _table.rowAtPoint(p);
+        final int hitColumnIndex = table.columnAtPoint(p);
+        final int hitRowIndex = table.rowAtPoint(p);
         if ((hitColumnIndex != -1) && (hitRowIndex != -1)) {
-            final TableCellRenderer tableCellRenderer = _table.getCellRenderer(hitRowIndex, hitColumnIndex);
-            final Object cellValue = _table.getValueAt(hitRowIndex, hitColumnIndex);
-            final Component component = tableCellRenderer.getTableCellRendererComponent(_table, cellValue, false, true, hitRowIndex, hitColumnIndex);
+            final TableCellRenderer tableCellRenderer = table.getCellRenderer(hitRowIndex, hitColumnIndex);
+            final Object cellValue = table.getValueAt(hitRowIndex, hitColumnIndex);
+            final Component component = tableCellRenderer.getTableCellRendererComponent(table, cellValue, false, true, hitRowIndex, hitColumnIndex);
             if (component != null) {
                 component.dispatchEvent(mouseEvent);
             }

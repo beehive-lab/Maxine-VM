@@ -56,11 +56,11 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
         super(gripScheme);
     }
 
-    private final int _headerSize = 2 * Word.size();
+    private final int headerSize = 2 * Word.size();
 
     @INLINE
     public int headerSize() {
-        return _headerSize;
+        return headerSize;
     }
 
     @INLINE
@@ -96,7 +96,7 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
                 if (scale > nBytesToFill) {
                     break;
                 }
-                if (fieldActor.offset() == INVALID_OFFSET && fieldActor.kind().size() == scale) {
+                if (fieldActor.offset() == INVALID_OFFSET && fieldActor.kind.width.numberOfBytes == scale) {
                     fieldActor.setOffset(currentOffset);
                     currentOffset += scale;
                     assert nBytesToFill >= 0;
@@ -114,14 +114,14 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
 
     Size layoutFields(ClassActor superClassActor, FieldActor[] fieldActors, int headerSize) {
         setInvalidOffsets(fieldActors);
-        final int nAlignmentBytes = Platform.target().processorKind().dataModel().alignment().numberOfBytes();
-        int offset = (superClassActor == null || superClassActor.typeDescriptor() == JavaTypeDescriptor.HYBRID) ? headerSize : superClassActor.dynamicTupleSize().toInt();
+        final int nAlignmentBytes = Platform.target().processorKind.dataModel.alignment.numberOfBytes();
+        int offset = (superClassActor == null || superClassActor.typeDescriptor == JavaTypeDescriptor.HYBRID) ? headerSize : superClassActor.dynamicTupleSize().toInt();
         if (Size.fromInt(offset).dividedBy(nAlignmentBytes).toInt() != 0) {
             offset = fillAlignmentGap(fieldActors, offset, nAlignmentBytes);
         }
         for (int scale = 8; scale >= 1; scale >>= 1) {
             for (FieldActor fieldActor : fieldActors) {
-                if (fieldActor.offset() == INVALID_OFFSET && fieldActor.kind().size() == scale) {
+                if (fieldActor.offset() == INVALID_OFFSET && fieldActor.kind.width.numberOfBytes == scale) {
                     fieldActor.setOffset(offset);
                     offset += scale;
                 }
@@ -140,7 +140,7 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
     private void visitFields(ObjectCellVisitor visitor, Object tuple, FieldActor[] fieldActors) {
         for (FieldActor fieldActor : fieldActors) {
             final Value value = HostTupleAccess.readValue(tuple, fieldActor);
-            visitor.visitField(getFieldOffsetInCell(fieldActor), fieldActor.name(), fieldActor.descriptor(), value);
+            visitor.visitField(getFieldOffsetInCell(fieldActor), fieldActor.name, fieldActor.descriptor(), value);
         }
     }
 
@@ -153,7 +153,7 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
         } else {
             do {
                 visitFields(visitor, tuple, classActor.localInstanceFieldActors());
-                classActor = classActor.superClassActor();
+                classActor = classActor.superClassActor;
             } while (classActor != null);
         }
     }

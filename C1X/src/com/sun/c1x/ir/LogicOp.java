@@ -45,7 +45,7 @@ public class LogicOp extends Op2 {
      * @return <code>true</code> if this operation is commutative
      */
     public boolean isCommutative() {
-        return Bytecodes.isCommutative(_opcode);
+        return Bytecodes.isCommutative(opcode);
     }
 
     /**

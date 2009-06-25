@@ -34,18 +34,18 @@ import com.sun.max.vm.runtime.VMRegister.*;
  */
 public class SPARCEirCFunctionABI extends SPARCEirJavaABI {
 
-    private final PoolSet<SPARCEirRegister> _calleeSavedRegisters;
+    private final PoolSet<SPARCEirRegister> calleeSavedRegisters;
 
     @Override
     public PoolSet<SPARCEirRegister> calleeSavedRegisters() {
-        return _calleeSavedRegisters;
+        return calleeSavedRegisters;
     }
 
-    private final PoolSet<SPARCEirRegister> _callerSavedRegisters;
+    private final PoolSet<SPARCEirRegister> callerSavedRegisters;
 
     @Override
     public PoolSet<SPARCEirRegister> callerSavedRegisters() {
-        return _callerSavedRegisters;
+        return callerSavedRegisters;
     }
 
     /**
@@ -54,11 +54,11 @@ public class SPARCEirCFunctionABI extends SPARCEirJavaABI {
      */
     public SPARCEirCFunctionABI(VMConfiguration vmConfiguration, boolean onlyCalledFromC) {
         super(vmConfiguration);
-        _calleeSavedRegisters = PoolSet.of(SPARCEirRegister.GeneralPurpose.pool(), SPARCEirRegister.GeneralPurpose.from(targetABI().registerRoleAssignment().integerRegisterActingAs(Role.SAFEPOINT_LATCH)));
-        _callerSavedRegisters =  super.callerSavedRegisters();
+        calleeSavedRegisters = PoolSet.of(SPARCEirRegister.GeneralPurpose.pool(), SPARCEirRegister.GeneralPurpose.from(targetABI().registerRoleAssignment().integerRegisterActingAs(Role.SAFEPOINT_LATCH)));
+        callerSavedRegisters =  super.callerSavedRegisters();
         if (!onlyCalledFromC) {
             // Have to save the SAFEPOINT latch global register.
-            _callerSavedRegisters.add(SPARCEirRegister.GeneralPurpose.from(targetABI().registerRoleAssignment().integerRegisterActingAs(Role.SAFEPOINT_LATCH)));
+            callerSavedRegisters.add(SPARCEirRegister.GeneralPurpose.from(targetABI().registerRoleAssignment().integerRegisterActingAs(Role.SAFEPOINT_LATCH)));
         }
         // Native target ABI uses different entry point.
         final TargetABI<GPR, FPR> originalTargetABI = targetABI();

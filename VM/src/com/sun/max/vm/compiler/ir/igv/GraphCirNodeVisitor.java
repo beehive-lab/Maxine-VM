@@ -31,25 +31,25 @@ import com.sun.max.vm.compiler.cir.variable.*;
  */
 class GraphCirNodeVisitor extends CirTraversal {
 
-    private GraphWriter.Graph _graph;
+    private GraphWriter.Graph graph;
 
     GraphCirNodeVisitor(GraphWriter.Graph graph, CirNode node) {
         super(node);
-        _graph = graph;
+        this.graph = graph;
     }
 
     @Override
     public void visitNode(CirNode n) {
-        if (_graph.getNode(n.id()) == null) {
-            final GraphWriter.Node inputNode = _graph.createNode(n.id());
+        if (graph.getNode(n.id()) == null) {
+            final GraphWriter.Node inputNode = graph.createNode(n.id());
             inputNode.getProperties().setProperty("name", n.toString());
             inputNode.getProperties().setProperty("class", n.getClass().getName());
             inputNode.getProperties().setProperty("dump_spec", n.toString());
             inputNode.getProperties().setProperty("short_name", n.toString());
         }
 
-        assert _graph.getNode(n.id()) != null;
-        _graph.getNode(n.id()).getProperties().setProperty("type", "Node");
+        assert graph.getNode(n.id()) != null;
+        graph.getNode(n.id()).getProperties().setProperty("type", "Node");
     }
 
     @Override
@@ -57,22 +57,22 @@ class GraphCirNodeVisitor extends CirTraversal {
         super.visitBlock(block);
         visitNode(block);
         final CirClosure closure = block.closure();
-        _graph.createEdge(block.id(), closure.id());
-        _graph.getNode(block.id()).getProperties().setProperty("type", "Block");
+        graph.createEdge(block.id(), closure.id());
+        graph.getNode(block.id()).getProperties().setProperty("type", "Block");
     }
 
     @Override
     public void visitCall(CirCall call) {
         super.visitCall(call);
         visitNode(call);
-        _graph.createEdge(call.id(), call.procedure().id());
+        graph.createEdge(call.id(), call.procedure().id());
         int z = 1;
         for (CirValue v : call.arguments()) {
-            _graph.createEdge(call.id(), z, v.id(), 0);
+            graph.createEdge(call.id(), z, v.id(), 0);
             z++;
         }
-        _graph.getNode(call.id()).getProperties().setProperty("name", "call");
-        _graph.getNode(call.id()).getProperties().setProperty("type", "Call");
+        graph.getNode(call.id()).getProperties().setProperty("name", "call");
+        graph.getNode(call.id()).getProperties().setProperty("type", "Call");
     }
 
     @Override
@@ -82,37 +82,37 @@ class GraphCirNodeVisitor extends CirTraversal {
 
         int z = 0;
         for (CirVariable v : closure.parameters()) {
-            _graph.createEdge(closure.id(), z, v.id(), 0);
+            graph.createEdge(closure.id(), z, v.id(), 0);
             z++;
         }
 
-        _graph.createEdge(closure.id(), z, closure.body().id(), 0);
-        _graph.getNode(closure.id()).getProperties().setProperty("name", "proc");
-        _graph.getNode(closure.id()).getProperties().setProperty("type", "Closure");
+        graph.createEdge(closure.id(), z, closure.body().id(), 0);
+        graph.getNode(closure.id()).getProperties().setProperty("name", "proc");
+        graph.getNode(closure.id()).getProperties().setProperty("type", "Closure");
     }
 
     @Override
     public void visitContinuation(CirContinuation continuation) {
         super.visitContinuation(continuation);
-        _graph.getNode(continuation.id()).getProperties().setProperty("name", "cont");
-        _graph.getNode(continuation.id()).getProperties().setProperty("type", "Continuation");
+        graph.getNode(continuation.id()).getProperties().setProperty("name", "cont");
+        graph.getNode(continuation.id()).getProperties().setProperty("type", "Continuation");
     }
 
     @Override
     public void visitLocalVariable(CirLocalVariable variable) {
         super.visitLocalVariable(variable);
-        _graph.getNode(variable.id()).getProperties().setProperty("type", "LocalVariable");
+        graph.getNode(variable.id()).getProperties().setProperty("type", "LocalVariable");
     }
 
     @Override
     public void visitMethod(CirMethod method) {
         super.visitMethod(method);
-        _graph.getNode(method.id()).getProperties().setProperty("type", "Method");
+        graph.getNode(method.id()).getProperties().setProperty("type", "Method");
     }
 
     @Override
     public void visitMethodParameter(CirMethodParameter parameter) {
         super.visitMethodParameter(parameter);
-        _graph.getNode(parameter.id()).getProperties().setProperty("type", "Parameter");
+        graph.getNode(parameter.id()).getProperties().setProperty("type", "Parameter");
     }
 }

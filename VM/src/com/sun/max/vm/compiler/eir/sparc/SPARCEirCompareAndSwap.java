@@ -32,43 +32,43 @@ import com.sun.max.vm.type.*;
  * @author Laurent Daynes
  */
 public class SPARCEirCompareAndSwap extends SPARCEirUnaryOperation {
-    private Kind _kind;
+    private Kind kind;
 
     public Kind kind() {
-        return _kind;
+        return kind;
     }
-    private final EirOperand _comparedOperand;
+    private final EirOperand comparedOperand;
 
     public EirOperand comparedOperand() {
-        return _addressOperand;
+        return addressOperand;
     }
     public EirLocation comparedLocation() {
-        return _comparedOperand.location();
+        return comparedOperand.location();
     }
-    private final EirOperand _addressOperand;
+    private final EirOperand addressOperand;
 
     public EirOperand addressOperand() {
-        return _addressOperand;
+        return addressOperand;
     }
 
     public EirLocation addressLocation() {
-        return _addressOperand.location();
+        return addressOperand.location();
     }
 
     public SPARCEirCompareAndSwap(EirBlock block, Kind kind, EirValue newValue, EirValue pointer, EirValue comparedValue) {
         super(block, newValue, EirOperand.Effect.UPDATE, G);
-        _kind = kind;
-        _addressOperand = new EirOperand(this, EirOperand.Effect.USE, G);
-        _addressOperand.setEirValue(pointer);
-        _comparedOperand = new EirOperand(this, EirOperand.Effect.USE, G);
-        _comparedOperand.setEirValue(comparedValue);
+        this.kind = kind;
+        this.addressOperand = new EirOperand(this, EirOperand.Effect.USE, G);
+        this.addressOperand.setEirValue(pointer);
+        this.comparedOperand = new EirOperand(this, EirOperand.Effect.USE, G);
+        this.comparedOperand.setEirValue(comparedValue);
     }
 
     @Override
     public void visitOperands(EirOperand.Procedure visitor) {
         super.visitOperands(visitor);
-        visitor.run(_comparedOperand);
-        visitor.run(_addressOperand);
+        visitor.run(comparedOperand);
+        visitor.run(addressOperand);
     }
 
     public SPARCEirRegister.GeneralPurpose newValueRegister() {
@@ -85,7 +85,7 @@ public class SPARCEirCompareAndSwap extends SPARCEirUnaryOperation {
 
     @Override
     public void emit(SPARCEirTargetEmitter emitter) {
-        switch (kind().asEnum()) {
+        switch (kind().asEnum) {
             case LONG:
             case WORD:
             case REFERENCE:

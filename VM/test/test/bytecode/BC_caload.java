@@ -26,9 +26,9 @@ package test.bytecode;
  */
 public class BC_caload {
 
-    static char[] _array = {'\000', 'a', ' ', 10000};
+    static char[] array = {'\000', 'a', ' ', 10000};
 
     public static char test(int arg) {
-        return _array[arg];
+        return array[arg];
     }
 }

@@ -53,85 +53,85 @@ public final class EventCommands {
                 public abstract byte eventKind();
             }
 
-            public byte _eventKind;
-            public EventsCommon _aEventsCommon;
+            public byte eventKind;
+            public EventsCommon aEventsCommon;
 
             public Events(byte eventKind, EventsCommon aEventsCommon) {
-                this._eventKind = eventKind;
-                this._aEventsCommon = aEventsCommon;
+                this.eventKind = eventKind;
+                this.aEventsCommon = aEventsCommon;
             }
 
             public Events() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _eventKind = ps.readByte();
-                switch (_eventKind) {
+                eventKind = ps.readByte();
+                switch (eventKind) {
                     case EventKind.VM_START:
-                        _aEventsCommon = new VMStart();
+                        aEventsCommon = new VMStart();
                         break;
                     case EventKind.SINGLE_STEP:
-                        _aEventsCommon = new SingleStep();
+                        aEventsCommon = new SingleStep();
                         break;
                     case EventKind.BREAKPOINT:
-                        _aEventsCommon = new Breakpoint();
+                        aEventsCommon = new Breakpoint();
                         break;
                     case EventKind.METHOD_ENTRY:
-                        _aEventsCommon = new MethodEntry();
+                        aEventsCommon = new MethodEntry();
                         break;
                     case EventKind.METHOD_EXIT:
-                        _aEventsCommon = new MethodExit();
+                        aEventsCommon = new MethodExit();
                         break;
                     case EventKind.METHOD_EXIT_WITH_RETURN_VALUE:
-                        _aEventsCommon = new MethodExitWithReturnValue();
+                        aEventsCommon = new MethodExitWithReturnValue();
                         break;
                     case EventKind.MONITOR_CONTENDED_ENTER:
-                        _aEventsCommon = new MonitorContendedEnter();
+                        aEventsCommon = new MonitorContendedEnter();
                         break;
                     case EventKind.MONITOR_CONTENDED_ENTERED:
-                        _aEventsCommon = new MonitorContendedEntered();
+                        aEventsCommon = new MonitorContendedEntered();
                         break;
                     case EventKind.MONITOR_WAIT:
-                        _aEventsCommon = new MonitorWait();
+                        aEventsCommon = new MonitorWait();
                         break;
                     case EventKind.MONITOR_WAITED:
-                        _aEventsCommon = new MonitorWaited();
+                        aEventsCommon = new MonitorWaited();
                         break;
                     case EventKind.EXCEPTION:
-                        _aEventsCommon = new Exception();
+                        aEventsCommon = new Exception();
                         break;
                     case EventKind.THREAD_START:
-                        _aEventsCommon = new ThreadStart();
+                        aEventsCommon = new ThreadStart();
                         break;
                     case EventKind.THREAD_DEATH:
-                        _aEventsCommon = new ThreadDeath();
+                        aEventsCommon = new ThreadDeath();
                         break;
                     case EventKind.CLASS_PREPARE:
-                        _aEventsCommon = new ClassPrepare();
+                        aEventsCommon = new ClassPrepare();
                         break;
                     case EventKind.CLASS_UNLOAD:
-                        _aEventsCommon = new ClassUnload();
+                        aEventsCommon = new ClassUnload();
                         break;
                     case EventKind.FIELD_ACCESS:
-                        _aEventsCommon = new FieldAccess();
+                        aEventsCommon = new FieldAccess();
                         break;
                     case EventKind.FIELD_MODIFICATION:
-                        _aEventsCommon = new FieldModification();
+                        aEventsCommon = new FieldModification();
                         break;
                     case EventKind.VM_DEATH:
-                        _aEventsCommon = new VMDeath();
+                        aEventsCommon = new VMDeath();
                         break;
                 }
-                _aEventsCommon.read(ps);
+                aEventsCommon.read(ps);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_eventKind);
-                _aEventsCommon.write(ps);
+                ps.write(eventKind);
+                aEventsCommon.write(ps);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_eventKind=" + _eventKind);
-                stringBuilder.append(_aEventsCommon);
+                stringBuilder.append("eventKind=" + eventKind);
+                stringBuilder.append(aEventsCommon);
                 return stringBuilder.toString();
             }
 
@@ -142,32 +142,32 @@ public final class EventCommands {
                     return ALT_ID;
                 }
 
-                public int _requestID;
+                public int requestID;
 
-                public ID.ThreadID _thread;
+                public ID.ThreadID thread;
                 public VMStart(int requestID,
                     ID.ThreadID thread) {
-                    this._requestID = requestID;
-                    this._thread = thread;
+                    this.requestID = requestID;
+                    this.thread = thread;
                 }
                 public VMStart() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _requestID = ps.readInt();
-                    _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                    requestID = ps.readInt();
+                    thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    ps.write(_requestID);
-                    _thread.write(ps.getOutputStream());
+                    ps.write(requestID);
+                    thread.write(ps.getOutputStream());
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_requestID=" + _requestID);
+                    stringBuilder.append("requestID=" + requestID);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_thread=" + _thread);
+                    stringBuilder.append("thread=" + thread);
                     return stringBuilder.toString();
                 }
             }
@@ -179,40 +179,40 @@ public final class EventCommands {
                     return ALT_ID;
                 }
 
-                public int _requestID;
+                public int requestID;
 
-                public ID.ThreadID _thread;
+                public ID.ThreadID thread;
 
-                public JDWPLocation _location;
+                public JDWPLocation location;
                 public SingleStep(int requestID,
                     ID.ThreadID thread,
                     JDWPLocation location) {
-                    this._requestID = requestID;
-                    this._thread = thread;
-                    this._location = location;
+                    this.requestID = requestID;
+                    this.thread = thread;
+                    this.location = location;
                 }
                 public SingleStep() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _requestID = ps.readInt();
-                    _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
-                    _location = ps.readLocation();
+                    requestID = ps.readInt();
+                    thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                    location = ps.readLocation();
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    ps.write(_requestID);
-                    _thread.write(ps.getOutputStream());
-                    ps.write(_location);
+                    ps.write(requestID);
+                    thread.write(ps.getOutputStream());
+                    ps.write(location);
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_requestID=" + _requestID);
+                    stringBuilder.append("requestID=" + requestID);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_thread=" + _thread);
+                    stringBuilder.append("thread=" + thread);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_location=" + _location);
+                    stringBuilder.append("location=" + location);
                     return stringBuilder.toString();
                 }
             }
@@ -224,40 +224,40 @@ public final class EventCommands {
                     return ALT_ID;
                 }
 
-                public int _requestID;
+                public int requestID;
 
-                public ID.ThreadID _thread;
+                public ID.ThreadID thread;
 
-                public JDWPLocation _location;
+                public JDWPLocation location;
                 public Breakpoint(int requestID,
                     ID.ThreadID thread,
                     JDWPLocation location) {
-                    this._requestID = requestID;
-                    this._thread = thread;
-                    this._location = location;
+                    this.requestID = requestID;
+                    this.thread = thread;
+                    this.location = location;
                 }
                 public Breakpoint() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _requestID = ps.readInt();
-                    _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
-                    _location = ps.readLocation();
+                    requestID = ps.readInt();
+                    thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                    location = ps.readLocation();
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    ps.write(_requestID);
-                    _thread.write(ps.getOutputStream());
-                    ps.write(_location);
+                    ps.write(requestID);
+                    thread.write(ps.getOutputStream());
+                    ps.write(location);
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_requestID=" + _requestID);
+                    stringBuilder.append("requestID=" + requestID);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_thread=" + _thread);
+                    stringBuilder.append("thread=" + thread);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_location=" + _location);
+                    stringBuilder.append("location=" + location);
                     return stringBuilder.toString();
                 }
             }
@@ -269,40 +269,40 @@ public final class EventCommands {
                     return ALT_ID;
                 }
 
-                public int _requestID;
+                public int requestID;
 
-                public ID.ThreadID _thread;
+                public ID.ThreadID thread;
 
-                public JDWPLocation _location;
+                public JDWPLocation location;
                 public MethodEntry(int requestID,
                     ID.ThreadID thread,
                     JDWPLocation location) {
-                    this._requestID = requestID;
-                    this._thread = thread;
-                    this._location = location;
+                    this.requestID = requestID;
+                    this.thread = thread;
+                    this.location = location;
                 }
                 public MethodEntry() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _requestID = ps.readInt();
-                    _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
-                    _location = ps.readLocation();
+                    requestID = ps.readInt();
+                    thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                    location = ps.readLocation();
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    ps.write(_requestID);
-                    _thread.write(ps.getOutputStream());
-                    ps.write(_location);
+                    ps.write(requestID);
+                    thread.write(ps.getOutputStream());
+                    ps.write(location);
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_requestID=" + _requestID);
+                    stringBuilder.append("requestID=" + requestID);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_thread=" + _thread);
+                    stringBuilder.append("thread=" + thread);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_location=" + _location);
+                    stringBuilder.append("location=" + location);
                     return stringBuilder.toString();
                 }
             }
@@ -314,40 +314,40 @@ public final class EventCommands {
                     return ALT_ID;
                 }
 
-                public int _requestID;
+                public int requestID;
 
-                public ID.ThreadID _thread;
+                public ID.ThreadID thread;
 
-                public JDWPLocation _location;
+                public JDWPLocation location;
                 public MethodExit(int requestID,
                     ID.ThreadID thread,
                     JDWPLocation location) {
-                    this._requestID = requestID;
-                    this._thread = thread;
-                    this._location = location;
+                    this.requestID = requestID;
+                    this.thread = thread;
+                    this.location = location;
                 }
                 public MethodExit() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _requestID = ps.readInt();
-                    _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
-                    _location = ps.readLocation();
+                    requestID = ps.readInt();
+                    thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                    location = ps.readLocation();
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    ps.write(_requestID);
-                    _thread.write(ps.getOutputStream());
-                    ps.write(_location);
+                    ps.write(requestID);
+                    thread.write(ps.getOutputStream());
+                    ps.write(location);
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_requestID=" + _requestID);
+                    stringBuilder.append("requestID=" + requestID);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_thread=" + _thread);
+                    stringBuilder.append("thread=" + thread);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_location=" + _location);
+                    stringBuilder.append("location=" + location);
                     return stringBuilder.toString();
                 }
             }
@@ -359,48 +359,48 @@ public final class EventCommands {
                     return ALT_ID;
                 }
 
-                public int _requestID;
+                public int requestID;
 
-                public ID.ThreadID _thread;
+                public ID.ThreadID thread;
 
-                public JDWPLocation _location;
+                public JDWPLocation location;
 
-                public JDWPValue _value;
+                public JDWPValue value;
                 public MethodExitWithReturnValue(int requestID,
                     ID.ThreadID thread,
                     JDWPLocation location,
                     JDWPValue value) {
-                    this._requestID = requestID;
-                    this._thread = thread;
-                    this._location = location;
-                    this._value = value;
+                    this.requestID = requestID;
+                    this.thread = thread;
+                    this.location = location;
+                    this.value = value;
                 }
                 public MethodExitWithReturnValue() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _requestID = ps.readInt();
-                    _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
-                    _location = ps.readLocation();
-                    _value = ps.readValue();
+                    requestID = ps.readInt();
+                    thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                    location = ps.readLocation();
+                    value = ps.readValue();
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    ps.write(_requestID);
-                    _thread.write(ps.getOutputStream());
-                    ps.write(_location);
-                    ps.write(_value);
+                    ps.write(requestID);
+                    thread.write(ps.getOutputStream());
+                    ps.write(location);
+                    ps.write(value);
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_requestID=" + _requestID);
+                    stringBuilder.append("requestID=" + requestID);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_thread=" + _thread);
+                    stringBuilder.append("thread=" + thread);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_location=" + _location);
+                    stringBuilder.append("location=" + location);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_value=" + _value);
+                    stringBuilder.append("value=" + value);
                     return stringBuilder.toString();
                 }
             }
@@ -412,48 +412,48 @@ public final class EventCommands {
                     return ALT_ID;
                 }
 
-                public int _requestID;
+                public int requestID;
 
-                public ID.ThreadID _thread;
+                public ID.ThreadID thread;
 
-                public JDWPValue _object;
+                public JDWPValue object;
 
-                public JDWPLocation _location;
+                public JDWPLocation location;
                 public MonitorContendedEnter(int requestID,
                     ID.ThreadID thread,
                     JDWPValue object,
                     JDWPLocation location) {
-                    this._requestID = requestID;
-                    this._thread = thread;
-                    this._object = object;
-                    this._location = location;
+                    this.requestID = requestID;
+                    this.thread = thread;
+                    this.object = object;
+                    this.location = location;
                 }
                 public MonitorContendedEnter() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _requestID = ps.readInt();
-                    _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
-                    _object = ps.readValue();
-                    _location = ps.readLocation();
+                    requestID = ps.readInt();
+                    thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                    object = ps.readValue();
+                    location = ps.readLocation();
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    ps.write(_requestID);
-                    _thread.write(ps.getOutputStream());
-                    ps.write(_object);
-                    ps.write(_location);
+                    ps.write(requestID);
+                    thread.write(ps.getOutputStream());
+                    ps.write(object);
+                    ps.write(location);
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_requestID=" + _requestID);
+                    stringBuilder.append("requestID=" + requestID);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_thread=" + _thread);
+                    stringBuilder.append("thread=" + thread);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_object=" + _object);
+                    stringBuilder.append("object=" + object);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_location=" + _location);
+                    stringBuilder.append("location=" + location);
                     return stringBuilder.toString();
                 }
             }
@@ -465,48 +465,48 @@ public final class EventCommands {
                     return ALT_ID;
                 }
 
-                public int _requestID;
+                public int requestID;
 
-                public ID.ThreadID _thread;
+                public ID.ThreadID thread;
 
-                public JDWPValue _object;
+                public JDWPValue object;
 
-                public JDWPLocation _location;
+                public JDWPLocation location;
                 public MonitorContendedEntered(int requestID,
                     ID.ThreadID thread,
                     JDWPValue object,
                     JDWPLocation location) {
-                    this._requestID = requestID;
-                    this._thread = thread;
-                    this._object = object;
-                    this._location = location;
+                    this.requestID = requestID;
+                    this.thread = thread;
+                    this.object = object;
+                    this.location = location;
                 }
                 public MonitorContendedEntered() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _requestID = ps.readInt();
-                    _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
-                    _object = ps.readValue();
-                    _location = ps.readLocation();
+                    requestID = ps.readInt();
+                    thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                    object = ps.readValue();
+                    location = ps.readLocation();
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    ps.write(_requestID);
-                    _thread.write(ps.getOutputStream());
-                    ps.write(_object);
-                    ps.write(_location);
+                    ps.write(requestID);
+                    thread.write(ps.getOutputStream());
+                    ps.write(object);
+                    ps.write(location);
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_requestID=" + _requestID);
+                    stringBuilder.append("requestID=" + requestID);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_thread=" + _thread);
+                    stringBuilder.append("thread=" + thread);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_object=" + _object);
+                    stringBuilder.append("object=" + object);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_location=" + _location);
+                    stringBuilder.append("location=" + location);
                     return stringBuilder.toString();
                 }
             }
@@ -518,56 +518,56 @@ public final class EventCommands {
                     return ALT_ID;
                 }
 
-                public int _requestID;
+                public int requestID;
 
-                public ID.ThreadID _thread;
+                public ID.ThreadID thread;
 
-                public JDWPValue _object;
+                public JDWPValue object;
 
-                public JDWPLocation _location;
+                public JDWPLocation location;
 
-                public long _timeout;
+                public long timeout;
                 public MonitorWait(int requestID,
                     ID.ThreadID thread,
                     JDWPValue object,
                     JDWPLocation location,
                     long timeout) {
-                    this._requestID = requestID;
-                    this._thread = thread;
-                    this._object = object;
-                    this._location = location;
-                    this._timeout = timeout;
+                    this.requestID = requestID;
+                    this.thread = thread;
+                    this.object = object;
+                    this.location = location;
+                    this.timeout = timeout;
                 }
                 public MonitorWait() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _requestID = ps.readInt();
-                    _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
-                    _object = ps.readValue();
-                    _location = ps.readLocation();
-                    _timeout = ps.readLong();
+                    requestID = ps.readInt();
+                    thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                    object = ps.readValue();
+                    location = ps.readLocation();
+                    timeout = ps.readLong();
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    ps.write(_requestID);
-                    _thread.write(ps.getOutputStream());
-                    ps.write(_object);
-                    ps.write(_location);
-                    ps.write(_timeout);
+                    ps.write(requestID);
+                    thread.write(ps.getOutputStream());
+                    ps.write(object);
+                    ps.write(location);
+                    ps.write(timeout);
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_requestID=" + _requestID);
+                    stringBuilder.append("requestID=" + requestID);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_thread=" + _thread);
+                    stringBuilder.append("thread=" + thread);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_object=" + _object);
+                    stringBuilder.append("object=" + object);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_location=" + _location);
+                    stringBuilder.append("location=" + location);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_timeout=" + _timeout);
+                    stringBuilder.append("timeout=" + timeout);
                     return stringBuilder.toString();
                 }
             }
@@ -579,56 +579,56 @@ public final class EventCommands {
                     return ALT_ID;
                 }
 
-                public int _requestID;
+                public int requestID;
 
-                public ID.ThreadID _thread;
+                public ID.ThreadID thread;
 
-                public JDWPValue _object;
+                public JDWPValue object;
 
-                public JDWPLocation _location;
+                public JDWPLocation location;
 
-                public boolean _timed_out;
+                public boolean timed_out;
                 public MonitorWaited(int requestID,
                     ID.ThreadID thread,
                     JDWPValue object,
                     JDWPLocation location,
                     boolean timed_out) {
-                    this._requestID = requestID;
-                    this._thread = thread;
-                    this._object = object;
-                    this._location = location;
-                    this._timed_out = timed_out;
+                    this.requestID = requestID;
+                    this.thread = thread;
+                    this.object = object;
+                    this.location = location;
+                    this.timed_out = timed_out;
                 }
                 public MonitorWaited() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _requestID = ps.readInt();
-                    _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
-                    _object = ps.readValue();
-                    _location = ps.readLocation();
-                    _timed_out = ps.readBoolean();
+                    requestID = ps.readInt();
+                    thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                    object = ps.readValue();
+                    location = ps.readLocation();
+                    timed_out = ps.readBoolean();
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    ps.write(_requestID);
-                    _thread.write(ps.getOutputStream());
-                    ps.write(_object);
-                    ps.write(_location);
-                    ps.write(_timed_out);
+                    ps.write(requestID);
+                    thread.write(ps.getOutputStream());
+                    ps.write(object);
+                    ps.write(location);
+                    ps.write(timed_out);
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_requestID=" + _requestID);
+                    stringBuilder.append("requestID=" + requestID);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_thread=" + _thread);
+                    stringBuilder.append("thread=" + thread);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_object=" + _object);
+                    stringBuilder.append("object=" + object);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_location=" + _location);
+                    stringBuilder.append("location=" + location);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_timed_out=" + _timed_out);
+                    stringBuilder.append("timed_out=" + timed_out);
                     return stringBuilder.toString();
                 }
             }
@@ -640,56 +640,56 @@ public final class EventCommands {
                     return ALT_ID;
                 }
 
-                public int _requestID;
+                public int requestID;
 
-                public ID.ThreadID _thread;
+                public ID.ThreadID thread;
 
-                public JDWPLocation _location;
+                public JDWPLocation location;
 
-                public JDWPValue _exception;
+                public JDWPValue exception;
 
-                public JDWPLocation _catchLocation;
+                public JDWPLocation catchLocation;
                 public Exception(int requestID,
                     ID.ThreadID thread,
                     JDWPLocation location,
                     JDWPValue exception,
                     JDWPLocation catchLocation) {
-                    this._requestID = requestID;
-                    this._thread = thread;
-                    this._location = location;
-                    this._exception = exception;
-                    this._catchLocation = catchLocation;
+                    this.requestID = requestID;
+                    this.thread = thread;
+                    this.location = location;
+                    this.exception = exception;
+                    this.catchLocation = catchLocation;
                 }
                 public Exception() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _requestID = ps.readInt();
-                    _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
-                    _location = ps.readLocation();
-                    _exception = ps.readValue();
-                    _catchLocation = ps.readLocation();
+                    requestID = ps.readInt();
+                    thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                    location = ps.readLocation();
+                    exception = ps.readValue();
+                    catchLocation = ps.readLocation();
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    ps.write(_requestID);
-                    _thread.write(ps.getOutputStream());
-                    ps.write(_location);
-                    ps.write(_exception);
-                    ps.write(_catchLocation);
+                    ps.write(requestID);
+                    thread.write(ps.getOutputStream());
+                    ps.write(location);
+                    ps.write(exception);
+                    ps.write(catchLocation);
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_requestID=" + _requestID);
+                    stringBuilder.append("requestID=" + requestID);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_thread=" + _thread);
+                    stringBuilder.append("thread=" + thread);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_location=" + _location);
+                    stringBuilder.append("location=" + location);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_exception=" + _exception);
+                    stringBuilder.append("exception=" + exception);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_catchLocation=" + _catchLocation);
+                    stringBuilder.append("catchLocation=" + catchLocation);
                     return stringBuilder.toString();
                 }
             }
@@ -701,32 +701,32 @@ public final class EventCommands {
                     return ALT_ID;
                 }
 
-                public int _requestID;
+                public int requestID;
 
-                public ID.ThreadID _thread;
+                public ID.ThreadID thread;
                 public ThreadStart(int requestID,
                     ID.ThreadID thread) {
-                    this._requestID = requestID;
-                    this._thread = thread;
+                    this.requestID = requestID;
+                    this.thread = thread;
                 }
                 public ThreadStart() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _requestID = ps.readInt();
-                    _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                    requestID = ps.readInt();
+                    thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    ps.write(_requestID);
-                    _thread.write(ps.getOutputStream());
+                    ps.write(requestID);
+                    thread.write(ps.getOutputStream());
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_requestID=" + _requestID);
+                    stringBuilder.append("requestID=" + requestID);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_thread=" + _thread);
+                    stringBuilder.append("thread=" + thread);
                     return stringBuilder.toString();
                 }
             }
@@ -738,32 +738,32 @@ public final class EventCommands {
                     return ALT_ID;
                 }
 
-                public int _requestID;
+                public int requestID;
 
-                public ID.ThreadID _thread;
+                public ID.ThreadID thread;
                 public ThreadDeath(int requestID,
                     ID.ThreadID thread) {
-                    this._requestID = requestID;
-                    this._thread = thread;
+                    this.requestID = requestID;
+                    this.thread = thread;
                 }
                 public ThreadDeath() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _requestID = ps.readInt();
-                    _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                    requestID = ps.readInt();
+                    thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    ps.write(_requestID);
-                    _thread.write(ps.getOutputStream());
+                    ps.write(requestID);
+                    thread.write(ps.getOutputStream());
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_requestID=" + _requestID);
+                    stringBuilder.append("requestID=" + requestID);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_thread=" + _thread);
+                    stringBuilder.append("thread=" + thread);
                     return stringBuilder.toString();
                 }
             }
@@ -775,64 +775,64 @@ public final class EventCommands {
                     return ALT_ID;
                 }
 
-                public int _requestID;
+                public int requestID;
 
-                public ID.ThreadID _thread;
+                public ID.ThreadID thread;
 
-                public byte _refTypeTag;
+                public byte refTypeTag;
 
-                public ID.ReferenceTypeID _typeID;
+                public ID.ReferenceTypeID typeID;
 
-                public String _signature;
+                public String signature;
 
-                public int _status;
+                public int status;
                 public ClassPrepare(int requestID,
                     ID.ThreadID thread,
                     byte refTypeTag,
                     ID.ReferenceTypeID typeID,
                     String signature,
                     int status) {
-                    this._requestID = requestID;
-                    this._thread = thread;
-                    this._refTypeTag = refTypeTag;
-                    this._typeID = typeID;
-                    this._signature = signature;
-                    this._status = status;
+                    this.requestID = requestID;
+                    this.thread = thread;
+                    this.refTypeTag = refTypeTag;
+                    this.typeID = typeID;
+                    this.signature = signature;
+                    this.status = status;
                 }
                 public ClassPrepare() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _requestID = ps.readInt();
-                    _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
-                    _refTypeTag = ps.readByte();
-                    _typeID = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
-                    _signature = ps.readString();
-                    _status = ps.readInt();
+                    requestID = ps.readInt();
+                    thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                    refTypeTag = ps.readByte();
+                    typeID = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
+                    signature = ps.readString();
+                    status = ps.readInt();
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    ps.write(_requestID);
-                    _thread.write(ps.getOutputStream());
-                    ps.write(_refTypeTag);
-                    _typeID.write(ps.getOutputStream());
-                    ps.write(_signature);
-                    ps.write(_status);
+                    ps.write(requestID);
+                    thread.write(ps.getOutputStream());
+                    ps.write(refTypeTag);
+                    typeID.write(ps.getOutputStream());
+                    ps.write(signature);
+                    ps.write(status);
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_requestID=" + _requestID);
+                    stringBuilder.append("requestID=" + requestID);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_thread=" + _thread);
+                    stringBuilder.append("thread=" + thread);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_refTypeTag=" + _refTypeTag);
+                    stringBuilder.append("refTypeTag=" + refTypeTag);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_typeID=" + _typeID);
+                    stringBuilder.append("typeID=" + typeID);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_signature=" + _signature);
+                    stringBuilder.append("signature=" + signature);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_status=" + _status);
+                    stringBuilder.append("status=" + status);
                     return stringBuilder.toString();
                 }
             }
@@ -844,32 +844,32 @@ public final class EventCommands {
                     return ALT_ID;
                 }
 
-                public int _requestID;
+                public int requestID;
 
-                public String _signature;
+                public String signature;
                 public ClassUnload(int requestID,
                     String signature) {
-                    this._requestID = requestID;
-                    this._signature = signature;
+                    this.requestID = requestID;
+                    this.signature = signature;
                 }
                 public ClassUnload() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _requestID = ps.readInt();
-                    _signature = ps.readString();
+                    requestID = ps.readInt();
+                    signature = ps.readString();
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    ps.write(_requestID);
-                    ps.write(_signature);
+                    ps.write(requestID);
+                    ps.write(signature);
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_requestID=" + _requestID);
+                    stringBuilder.append("requestID=" + requestID);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_signature=" + _signature);
+                    stringBuilder.append("signature=" + signature);
                     return stringBuilder.toString();
                 }
             }
@@ -881,19 +881,19 @@ public final class EventCommands {
                     return ALT_ID;
                 }
 
-                public int _requestID;
+                public int requestID;
 
-                public ID.ThreadID _thread;
+                public ID.ThreadID thread;
 
-                public JDWPLocation _location;
+                public JDWPLocation location;
 
-                public byte _refTypeTag;
+                public byte refTypeTag;
 
-                public ID.ReferenceTypeID _typeID;
+                public ID.ReferenceTypeID typeID;
 
-                public ID.FieldID _fieldID;
+                public ID.FieldID fieldID;
 
-                public JDWPValue _object;
+                public JDWPValue object;
                 public FieldAccess(int requestID,
                     ID.ThreadID thread,
                     JDWPLocation location,
@@ -901,52 +901,52 @@ public final class EventCommands {
                     ID.ReferenceTypeID typeID,
                     ID.FieldID fieldID,
                     JDWPValue object) {
-                    this._requestID = requestID;
-                    this._thread = thread;
-                    this._location = location;
-                    this._refTypeTag = refTypeTag;
-                    this._typeID = typeID;
-                    this._fieldID = fieldID;
-                    this._object = object;
+                    this.requestID = requestID;
+                    this.thread = thread;
+                    this.location = location;
+                    this.refTypeTag = refTypeTag;
+                    this.typeID = typeID;
+                    this.fieldID = fieldID;
+                    this.object = object;
                 }
                 public FieldAccess() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _requestID = ps.readInt();
-                    _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
-                    _location = ps.readLocation();
-                    _refTypeTag = ps.readByte();
-                    _typeID = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
-                    _fieldID = ID.read(ps.getInputStream(), ID.FieldID.class);
-                    _object = ps.readValue();
+                    requestID = ps.readInt();
+                    thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                    location = ps.readLocation();
+                    refTypeTag = ps.readByte();
+                    typeID = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
+                    fieldID = ID.read(ps.getInputStream(), ID.FieldID.class);
+                    object = ps.readValue();
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    ps.write(_requestID);
-                    _thread.write(ps.getOutputStream());
-                    ps.write(_location);
-                    ps.write(_refTypeTag);
-                    _typeID.write(ps.getOutputStream());
-                    _fieldID.write(ps.getOutputStream());
-                    ps.write(_object);
+                    ps.write(requestID);
+                    thread.write(ps.getOutputStream());
+                    ps.write(location);
+                    ps.write(refTypeTag);
+                    typeID.write(ps.getOutputStream());
+                    fieldID.write(ps.getOutputStream());
+                    ps.write(object);
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_requestID=" + _requestID);
+                    stringBuilder.append("requestID=" + requestID);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_thread=" + _thread);
+                    stringBuilder.append("thread=" + thread);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_location=" + _location);
+                    stringBuilder.append("location=" + location);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_refTypeTag=" + _refTypeTag);
+                    stringBuilder.append("refTypeTag=" + refTypeTag);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_typeID=" + _typeID);
+                    stringBuilder.append("typeID=" + typeID);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_fieldID=" + _fieldID);
+                    stringBuilder.append("fieldID=" + fieldID);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_object=" + _object);
+                    stringBuilder.append("object=" + object);
                     return stringBuilder.toString();
                 }
             }
@@ -958,21 +958,21 @@ public final class EventCommands {
                     return ALT_ID;
                 }
 
-                public int _requestID;
+                public int requestID;
 
-                public ID.ThreadID _thread;
+                public ID.ThreadID thread;
 
-                public JDWPLocation _location;
+                public JDWPLocation location;
 
-                public byte _refTypeTag;
+                public byte refTypeTag;
 
-                public ID.ReferenceTypeID _typeID;
+                public ID.ReferenceTypeID typeID;
 
-                public ID.FieldID _fieldID;
+                public ID.FieldID fieldID;
 
-                public JDWPValue _object;
+                public JDWPValue object;
 
-                public JDWPValue _valueToBe;
+                public JDWPValue valueToBe;
                 public FieldModification(int requestID,
                     ID.ThreadID thread,
                     JDWPLocation location,
@@ -981,57 +981,57 @@ public final class EventCommands {
                     ID.FieldID fieldID,
                     JDWPValue object,
                     JDWPValue valueToBe) {
-                    this._requestID = requestID;
-                    this._thread = thread;
-                    this._location = location;
-                    this._refTypeTag = refTypeTag;
-                    this._typeID = typeID;
-                    this._fieldID = fieldID;
-                    this._object = object;
-                    this._valueToBe = valueToBe;
+                    this.requestID = requestID;
+                    this.thread = thread;
+                    this.location = location;
+                    this.refTypeTag = refTypeTag;
+                    this.typeID = typeID;
+                    this.fieldID = fieldID;
+                    this.object = object;
+                    this.valueToBe = valueToBe;
                 }
                 public FieldModification() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _requestID = ps.readInt();
-                    _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
-                    _location = ps.readLocation();
-                    _refTypeTag = ps.readByte();
-                    _typeID = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
-                    _fieldID = ID.read(ps.getInputStream(), ID.FieldID.class);
-                    _object = ps.readValue();
-                    _valueToBe = ps.readValue();
+                    requestID = ps.readInt();
+                    thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                    location = ps.readLocation();
+                    refTypeTag = ps.readByte();
+                    typeID = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
+                    fieldID = ID.read(ps.getInputStream(), ID.FieldID.class);
+                    object = ps.readValue();
+                    valueToBe = ps.readValue();
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    ps.write(_requestID);
-                    _thread.write(ps.getOutputStream());
-                    ps.write(_location);
-                    ps.write(_refTypeTag);
-                    _typeID.write(ps.getOutputStream());
-                    _fieldID.write(ps.getOutputStream());
-                    ps.write(_object);
-                    ps.write(_valueToBe);
+                    ps.write(requestID);
+                    thread.write(ps.getOutputStream());
+                    ps.write(location);
+                    ps.write(refTypeTag);
+                    typeID.write(ps.getOutputStream());
+                    fieldID.write(ps.getOutputStream());
+                    ps.write(object);
+                    ps.write(valueToBe);
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_requestID=" + _requestID);
+                    stringBuilder.append("requestID=" + requestID);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_thread=" + _thread);
+                    stringBuilder.append("thread=" + thread);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_location=" + _location);
+                    stringBuilder.append("location=" + location);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_refTypeTag=" + _refTypeTag);
+                    stringBuilder.append("refTypeTag=" + refTypeTag);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_typeID=" + _typeID);
+                    stringBuilder.append("typeID=" + typeID);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_fieldID=" + _fieldID);
+                    stringBuilder.append("fieldID=" + fieldID);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_object=" + _object);
+                    stringBuilder.append("object=" + object);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_valueToBe=" + _valueToBe);
+                    stringBuilder.append("valueToBe=" + valueToBe);
                     return stringBuilder.toString();
                 }
             }
@@ -1043,24 +1043,24 @@ public final class EventCommands {
                     return ALT_ID;
                 }
 
-                public int _requestID;
+                public int requestID;
                 public VMDeath(int requestID) {
-                    this._requestID = requestID;
+                    this.requestID = requestID;
                 }
                 public VMDeath() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _requestID = ps.readInt();
+                    requestID = ps.readInt();
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    ps.write(_requestID);
+                    ps.write(requestID);
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_requestID=" + _requestID);
+                    stringBuilder.append("requestID=" + requestID);
                     return stringBuilder.toString();
                 }
             }
@@ -1070,41 +1070,41 @@ public final class EventCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public byte _suspendPolicy;
+            public byte suspendPolicy;
 
-            public Events[] _events;
+            public Events[] events;
             public Reply(byte suspendPolicy,
                 Events[] events) {
-                this._suspendPolicy = suspendPolicy;
-                this._events = events;
+                this.suspendPolicy = suspendPolicy;
+                this.events = events;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _suspendPolicy = ps.readByte();
+                suspendPolicy = ps.readByte();
                 final int eventsCount = ps.readInt();
-                _events = new Events[eventsCount];
+                events = new Events[eventsCount];
                 for (int i = 0; i < eventsCount; i++) {
-                    _events[i] = new Events();
-                    _events[i].read(ps);
+                    events[i] = new Events();
+                    events[i].read(ps);
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_suspendPolicy);
-                ps.write(_events.length);
-                for (int i = 0; i < _events.length; i++) {
-                    _events[i].write(ps);
+                ps.write(suspendPolicy);
+                ps.write(events.length);
+                for (int i = 0; i < events.length; i++) {
+                    events[i].write(ps);
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_suspendPolicy=" + _suspendPolicy);
+                stringBuilder.append("suspendPolicy=" + suspendPolicy);
                 stringBuilder.append(", ");
-                stringBuilder.append("_events=[" + _events.length + "]{");
-                for (int i = 0; i < _events.length; i++) {
+                stringBuilder.append("events=[" + events.length + "]{");
+                for (int i = 0; i < events.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_events[i]=" + _events[i]);
+                    stringBuilder.append("events[i]=" + events[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();

@@ -25,7 +25,7 @@
 package test.except;
 
 public class BC_athrow3 {
-    static Throwable _throwable = new Throwable();
+    static Throwable throwable = new Throwable();
 
     public static int test(int arg) throws Throwable {
         if (arg == 2) {
@@ -37,7 +37,7 @@ public class BC_athrow3 {
     }
 
     private static void throw2() throws Throwable {
-        throw _throwable;
+        throw throwable;
     }
 
     private static void throw1() throws Throwable {

@@ -44,10 +44,10 @@ public class UnixAMD64EirJavaABI extends UnixAMD64EirABI {
     /**
      * No callee saved registers.
      */
-    private final PoolSet<AMD64EirRegister> _calleeSavedRegisters = PoolSet.noneOf(AMD64EirRegister.General.pool());
+    private final PoolSet<AMD64EirRegister> calleeSavedRegisters = PoolSet.noneOf(AMD64EirRegister.General.pool());
 
     @Override
     public PoolSet<AMD64EirRegister> calleeSavedRegisters() {
-        return _calleeSavedRegisters;
+        return calleeSavedRegisters;
     }
 }

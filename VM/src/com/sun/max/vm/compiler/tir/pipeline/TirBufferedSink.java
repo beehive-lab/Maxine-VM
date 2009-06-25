@@ -26,12 +26,12 @@ import com.sun.max.vm.compiler.tir.TirMessage.*;
 
 
 public class TirBufferedSink extends TirInstructionAdapter implements TirMessageSink  {
-    private VariableSequence<TirMessage> _prolog = new ArrayListSequence<TirMessage>();
-    private VariableSequence<TirMessage> _messages = new ArrayListSequence<TirMessage>();
+    private VariableSequence<TirMessage> prolog = new ArrayListSequence<TirMessage>();
+    private VariableSequence<TirMessage> messages = new ArrayListSequence<TirMessage>();
 
-    private TirTreeBegin _treeBegin;
-    private TirTreeEnd _treeEnd;
-    private boolean _inTrace;
+    private TirTreeBegin treeBegin;
+    private TirTreeEnd treeEnd;
+    private boolean inTrace;
 
     public void receive(TirMessage message) {
         message.accept(this);
@@ -39,51 +39,51 @@ public class TirBufferedSink extends TirInstructionAdapter implements TirMessage
 
     @Override
     public void visit(TirTreeBegin message) {
-        _treeBegin = message;
+        treeBegin = message;
     }
 
     @Override
     public void visit(TirTreeEnd message) {
-        _treeEnd = message;
+        treeEnd = message;
     }
 
     @Override
     public void visit(TirTraceBegin message) {
-        _inTrace = true;
+        inTrace = true;
         super.visit(message);
     }
 
     @Override
     public void visit(TirTraceEnd message) {
         super.visit(message);
-        _inTrace = false;
+        inTrace = false;
     }
 
     @Override
     public void visit(TirMessage message) {
-        if (_inTrace) {
-            _messages.append(message);
+        if (inTrace) {
+            messages.append(message);
         } else {
-            _prolog.append(message);
+            prolog.append(message);
         }
     }
 
     public final void replay(TirMessageSink receiver) {
-        forward(receiver, _treeBegin);
-        if (_treeBegin.order() == TirPipelineOrder.FORWARD) {
-            for (TirMessage message : _prolog) {
+        forward(receiver, treeBegin);
+        if (treeBegin.order() == TirPipelineOrder.FORWARD) {
+            for (TirMessage message : prolog) {
                 forward(receiver, message);
             }
         }
-        for (TirMessage message : _messages) {
+        for (TirMessage message : messages) {
             forward(receiver, message);
         }
-        if (_treeBegin.order() == TirPipelineOrder.REVERSE) {
-            for (TirMessage message : _prolog) {
+        if (treeBegin.order() == TirPipelineOrder.REVERSE) {
+            for (TirMessage message : prolog) {
                 forward(receiver, message);
             }
         }
-        forward(receiver, _treeEnd);
+        forward(receiver, treeEnd);
     }
 
     private void forward(TirMessageSink receiver, TirMessage message) {

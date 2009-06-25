@@ -27,10 +27,10 @@ package test.except;
 
 public class BC_aaload {
 
-    static Object[] _array = {null, null, ""};
+    static Object[] array = {null, null, ""};
 
     public static Object test(int arg) {
-        final Object[] obj = arg == -2 ? null : _array;
+        final Object[] obj = arg == -2 ? null : array;
         return obj[arg];
     }
 }

@@ -55,15 +55,15 @@ public class BuildIntervals extends AlgorithmPart {
 
             // Update intervals for variables live at the end of this block
             for (EirVariable liveOutVariable : block.liveOut()) {
-                liveOutVariable.interval().prependRange(block.beginNumber(), block.endNumber());
+                liveOutVariable.interval.prependRange(block.beginNumber(), block.endNumber());
 
                 // TODO: Add use positions at end-of-loop blocks
             }
 
             for (int j = block.instructions().length() - 1; j >= 0; j--) {
                 final EirInstruction instruction = block.instructions().get(j);
-                instruction.visitOperands(_definitionOperandVisitor);
-                instruction.visitOperands(_useOperandVisitor);
+                instruction.visitOperands(definitionOperandVisitor);
+                instruction.visitOperands(useOperandVisitor);
                 assert assertInstructionCovered(instruction);
             }
 
@@ -80,14 +80,14 @@ public class BuildIntervals extends AlgorithmPart {
 
         if (LinearScanRegisterAllocator.DETAILED_ASSERTIONS) {
             for (EirVariable variable : instruction.liveVariables()) {
-                assert variable.interval().coversEndInclusive(instruction.number());
+                assert variable.interval.coversEndInclusive(instruction.number());
             }
         }
 
         if (LinearScanRegisterAllocator.DETAILED_ASSERTIONS) {
             for (EirVariable variable : instruction.liveVariables().pool()) {
                 if (!variables.contains(variable)) {
-                    assert !variable.interval().covers(instruction.number()) || !variable.interval().covers(instruction.number() - 1);
+                    assert !variable.interval.covers(instruction.number()) || !variable.interval.covers(instruction.number() - 1);
                 }
             }
         }
@@ -95,7 +95,7 @@ public class BuildIntervals extends AlgorithmPart {
         return true;
     }
 
-    private final EirOperand.Procedure _useOperandVisitor = new EirOperand.Procedure() {
+    private final EirOperand.Procedure useOperandVisitor = new EirOperand.Procedure() {
         public void run(EirOperand operand) {
             if (operand.eirValue().asVariable() != null) {
                 if (operand.effect() == EirOperand.Effect.UPDATE) {
@@ -118,7 +118,7 @@ public class BuildIntervals extends AlgorithmPart {
         }
     };
 
-    private final EirOperand.Procedure _definitionOperandVisitor = new EirOperand.Procedure() {
+    private final EirOperand.Procedure definitionOperandVisitor = new EirOperand.Procedure() {
         public void run(EirOperand operand) {
             if (operand.eirValue().asVariable() != null) {
                 if (operand.effect() == EirOperand.Effect.DEFINITION) {
@@ -143,11 +143,11 @@ public class BuildIntervals extends AlgorithmPart {
     protected boolean assertPostconditions() {
         for (EirBlock block : data().linearScanOrder()) {
             for (EirVariable variable : block.liveIn()) {
-                assert variable.interval().covers(block.beginNumber());
+                assert variable.interval.covers(block.beginNumber());
             }
 
             for (EirVariable variable : block.liveOut()) {
-                assert variable.interval().coversEndInclusive(block.endNumber());
+                assert variable.interval.coversEndInclusive(block.endNumber());
             }
 
             for (EirInstruction instruction : block.instructions()) {
@@ -156,7 +156,7 @@ public class BuildIntervals extends AlgorithmPart {
         }
 
         for (EirVariable variable : generation().variables()) {
-            assert !variable.interval().isEmpty() || variable.operands().length() == 0;
+            assert !variable.interval.isEmpty() || variable.operands().length() == 0;
         }
 
         assert data().parentIntervals() != null;
@@ -167,7 +167,7 @@ public class BuildIntervals extends AlgorithmPart {
         assert operand.effect() == EirOperand.Effect.DEFINITION;
         assert operand.eirValue() == variable;
 
-        final Interval interval = variable.interval();
+        final Interval interval = variable.interval;
         final int pos = operand.instruction().number();
 
         if (!interval.isEmpty() && interval.getFirstRangeStart() <= pos) {
@@ -199,7 +199,7 @@ public class BuildIntervals extends AlgorithmPart {
         assert operand.effect() == EirOperand.Effect.UPDATE;
         assert operand.eirValue() == variable;
 
-        final Interval interval = variable.interval();
+        final Interval interval = variable.interval;
         final int pos = operand.instruction().number();
         interval.prependRange(operand.instruction().block().beginNumber(), pos);
         addUsePosition(interval, pos, operand);
@@ -209,7 +209,7 @@ public class BuildIntervals extends AlgorithmPart {
         assert operand.effect() == EirOperand.Effect.USE;
         assert operand.eirValue() == variable;
 
-        final Interval interval = variable.interval();
+        final Interval interval = variable.interval;
         final int pos = operand.instruction().number();
 
         interval.prependRange(operand.instruction().block().beginNumber(), pos);

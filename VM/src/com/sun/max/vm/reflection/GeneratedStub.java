@@ -30,9 +30,9 @@ import com.sun.max.vm.classfile.constant.*;
  * This class serves two purposes. Firstly, it is a marker for classes whose bytecodes should not be verified (a la
  * {@link sun.reflect.MagicAccessorImpl}). Secondly, it provides static methods for generating stubs that are used to
  * implement {@link Method#invoke(Object, Object...)} and {@link Constructor#newInstance(Object...)}.
- * 
+ *
  * The bytecode generation is derived from the JDK 1.4+ mechanism for the same purpose.
- * 
+ *
  * @author Doug Simon
  * @see sun.reflect.MethodAccessorGenerator
  */
@@ -52,7 +52,7 @@ public abstract class GeneratedStub {
 
     /**
      * Determines if this stub can access all the given types.
-     * 
+     *
      * @see #canAccess(Class)
      */
     public boolean canAccess(Class... types) {
@@ -67,21 +67,21 @@ public abstract class GeneratedStub {
     /**
      * A reference to the constructor or method for which this stub was generated.
      */
-    private MethodActor _target;
+    private MethodActor target;
 
     final void setTarget(AccessibleObject target) {
-        assert _target == null;
+        assert this.target == null;
         if (target instanceof Constructor) {
-            _target = MethodActor.fromJavaConstructor((Constructor) target);
+            this.target = MethodActor.fromJavaConstructor((Constructor) target);
         } else {
             assert target instanceof Method;
-            _target = MethodActor.fromJava((Method) target);
+            this.target = MethodActor.fromJava((Method) target);
         }
     }
 
     @Override
     public final String toString() {
-        return getClass().getSimpleName() + "[" + _target + "]";
+        return getClass().getSimpleName() + "[" + target + "]";
     }
 
     /**
@@ -92,7 +92,7 @@ public abstract class GeneratedStub {
         final GeneratedMethodStub stub = new InvocationStubGenerator<GeneratedMethodStub>(
                         method,
                         GeneratedMethodStub.class,
-                        MethodActor.fromJava(method).name(),
+                        MethodActor.fromJava(method).name,
                         method.getDeclaringClass(),
                         method.getReturnType(),
                         method.getParameterTypes(),

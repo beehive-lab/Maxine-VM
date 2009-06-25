@@ -50,40 +50,40 @@ class GraphDirInstructionVisitor extends DirAdapter {
     // Used to create unique identifiers for DirValue objects.
     private static final int DIRVALUE_OFFSET = 100000000;
 
-    private final GraphWriter.Graph _graph;
-    private final GrowableMapping<DirValue, Integer> _mapping = new IdentityHashMapping<DirValue, Integer>();
-    private GraphWriter.Block _valueBlock;
+    private final GraphWriter.Graph graph;
+    private final GrowableMapping<DirValue, Integer> mapping = new IdentityHashMapping<DirValue, Integer>();
+    private GraphWriter.Block valueBlock;
 
     GraphDirInstructionVisitor(GraphWriter.Graph graph) {
-        _graph = graph;
+        this.graph = graph;
     }
 
     private int visitValue(DirValue value) {
-        if (!_mapping.containsKey(value)) {
-            final int id = DIRVALUE_OFFSET + _mapping.keys().length();
-            _mapping.put(value, id);
-            final GraphWriter.Node node = _graph.createNode(id);
+        if (!mapping.containsKey(value)) {
+            final int id = DIRVALUE_OFFSET + mapping.keys().length();
+            mapping.put(value, id);
+            final GraphWriter.Node node = graph.createNode(id);
             node.getProperties().setProperty("name", value.toString());
             node.getProperties().setProperty("short_name", value.toString());
             node.getProperties().setProperty("class", value.getClass().toString());
-            if (_valueBlock == null) {
-                _valueBlock = _graph.createBlock("Values");
-                for (GraphWriter.Block block : _graph.getBlocks()) {
+            if (valueBlock == null) {
+                valueBlock = graph.createBlock("Values");
+                for (GraphWriter.Block block : graph.getBlocks()) {
                     if (block.getPredecessors().length() == 0) {
-                        _valueBlock.addSuccessor(block);
+                        valueBlock.addSuccessor(block);
                     }
                 }
 
             }
-            _valueBlock.addNode(node);
+            valueBlock.addNode(node);
         }
-        return _mapping.get(value);
+        return mapping.get(value);
     }
 
     @Override
     public void visitInstruction(DirInstruction dirInstruction) {
         super.visitInstruction(dirInstruction);
-        final GraphWriter.Node node = _graph.createNode(dirInstruction.serial());
+        final GraphWriter.Node node = graph.createNode(dirInstruction.serial());
         node.getProperties().setProperty("name", dirInstruction.toString());
         node.getProperties().setProperty("class", dirInstruction.getClass().toString());
     }
@@ -91,13 +91,13 @@ class GraphDirInstructionVisitor extends DirAdapter {
     @Override
     public void visitAssign(DirAssign dirMove) {
         super.visitAssign(dirMove);
-        final GraphWriter.Node node = _graph.createNode(dirMove.serial());
+        final GraphWriter.Node node = graph.createNode(dirMove.serial());
 
         final int destinationId = visitValue(dirMove.destination());
-        _graph.createEdge(1, 0, node.getId(), destinationId);
+        graph.createEdge(1, 0, node.getId(), destinationId);
 
         final int sourceId = visitValue(dirMove.source());
-        _graph.createEdge(0, 1, sourceId, node.getId());
+        graph.createEdge(0, 1, sourceId, node.getId());
     }
 
     @Override
@@ -107,18 +107,18 @@ class GraphDirInstructionVisitor extends DirAdapter {
         int z = 1;
         for (DirValue value : dirSwitch.matches()) {
             final int valueId = visitValue(value);
-            _graph.createEdge(0, z, valueId, dirSwitch.serial());
+            graph.createEdge(0, z, valueId, dirSwitch.serial());
             z++;
         }
 
         z = 0;
         if (dirSwitch.defaultTargetBlock() != null) {
-            _graph.createEdge(z, 0, dirSwitch.serial(), dirSwitch.defaultTargetBlock().instructions().first().serial());
+            graph.createEdge(z, 0, dirSwitch.serial(), dirSwitch.defaultTargetBlock().instructions().first().serial());
             z++;
         }
 
         for (int i = 0; i < dirSwitch.targetBlocks().length; i++) {
-            _graph.createEdge(z, 0, dirSwitch.serial(), dirSwitch.targetBlocks()[i].instructions().first().serial());
+            graph.createEdge(z, 0, dirSwitch.serial(), dirSwitch.targetBlocks()[i].instructions().first().serial());
             z++;
         }
     }
@@ -126,7 +126,7 @@ class GraphDirInstructionVisitor extends DirAdapter {
     @Override
     public void visitGoto(DirGoto dirGoto) {
         super.visitGoto(dirGoto);
-        _graph.createEdge(0, 0, dirGoto.serial(), dirGoto.targetBlock().instructions().first().serial());
+        graph.createEdge(0, 0, dirGoto.serial(), dirGoto.targetBlock().instructions().first().serial());
     }
 
     @Override
@@ -134,33 +134,33 @@ class GraphDirInstructionVisitor extends DirAdapter {
         super.visitReturn(dirReturn);
         final DirValue value = dirReturn.returnValue();
         final int valueId = visitValue(value);
-        _graph.createEdge(0, 1, valueId, dirReturn.serial());
+        graph.createEdge(0, 1, valueId, dirReturn.serial());
     }
 
     @Override
     public void visitBuiltinCall(DirBuiltinCall dirBuiltinCall) {
         super.visitBuiltinCall(dirBuiltinCall);
-        final GraphWriter.Node node = _graph.getNode(dirBuiltinCall.serial());
+        final GraphWriter.Node node = graph.getNode(dirBuiltinCall.serial());
         node.getProperties().setProperty("name", dirBuiltinCall.builtin().name());
     }
 
     @Override
     public void visitMethodCall(DirMethodCall dirMethodCall) {
         super.visitMethodCall(dirMethodCall);
-        final GraphWriter.Node node = _graph.getNode(dirMethodCall.serial());
+        final GraphWriter.Node node = graph.getNode(dirMethodCall.serial());
         node.getProperties().setProperty("name", dirMethodCall.method().toString());
     }
 
     @Override
     public void visitCall(DirCall dirCall) {
         super.visitCall(dirCall);
-        final GraphWriter.Node node = _graph.getNode(dirCall.serial());
+        final GraphWriter.Node node = graph.getNode(dirCall.serial());
         node.getProperties().setProperty("argumentCount", Integer.toString(dirCall.arguments().length));
 
         int z = 1;
         for (DirValue dirValue : dirCall.arguments()) {
             final int valueId = visitValue(dirValue);
-            _graph.createEdge(0, z, valueId, node.getId());
+            graph.createEdge(0, z, valueId, node.getId());
             z++;
         }
 
@@ -170,7 +170,7 @@ class GraphDirInstructionVisitor extends DirAdapter {
 
         if (dirCall.result() != null) {
             final int resultId = visitValue(dirCall.result());
-            _graph.createEdge(1, 0, node.getId(), resultId);
+            graph.createEdge(1, 0, node.getId(), resultId);
             node.getProperties().setProperty("result", dirCall.result().toString());
         }
     }
@@ -178,10 +178,10 @@ class GraphDirInstructionVisitor extends DirAdapter {
     @Override
     public void visitThrow(DirThrow dirThrow) {
         super.visitThrow(dirThrow);
-        final GraphWriter.Node node = _graph.getNode(dirThrow.serial());
+        final GraphWriter.Node node = graph.getNode(dirThrow.serial());
         if (dirThrow.catchBlock() != null) {
             node.getProperties().setProperty("catchBlock", Integer.toString(dirThrow.catchBlock().id()));
-            _graph.createEdge(1, 0, dirThrow.serial(), dirThrow.catchBlock().instructions().first().serial());
+            graph.createEdge(1, 0, dirThrow.serial(), dirThrow.catchBlock().instructions().first().serial());
         }
         node.getProperties().setProperty("throwable", dirThrow.throwable().toString());
     }
@@ -193,7 +193,7 @@ class GraphDirInstructionVisitor extends DirAdapter {
     @Override
     public void visitSafepoint(DirSafepoint dirSafepoint) {
         super.visitSafepoint(dirSafepoint);
-        final GraphWriter.Node node = _graph.getNode(dirSafepoint.serial());
+        final GraphWriter.Node node = graph.getNode(dirSafepoint.serial());
         node.getProperties().setProperty("name", "safepoint");
         node.getProperties().setProperty("dump_spec", dirSafepoint.toString());
         node.getProperties().setProperty("bci", Integer.toString(dirSafepoint.javaFrameDescriptor().bytecodePosition()));

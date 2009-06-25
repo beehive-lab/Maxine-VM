@@ -28,8 +28,8 @@ import com.sun.max.program.*;
 
 public class Thread_prodcon01 {
 
-    public static final boolean _debug = true;
-    private static boolean _ok = true;
+    public static final boolean debug = true;
+    private static boolean ok = true;
 
     public static boolean test(int i) throws InterruptedException {
         final Drop drop = new Drop();
@@ -38,19 +38,19 @@ public class Thread_prodcon01 {
         producer.start();
         consumer.start();
         consumer.join();
-        return _ok;
+        return ok;
     }
 
     static class Drop {
         //Message sent from producer to consumer.
-        private String _message;
+        private String message;
         //True if consumer should wait for producer to send message, false
         //if producer should wait for consumer to retrieve message.
-        private boolean _empty = true;
+        private boolean empty = true;
 
         public synchronized String take() {
             //Wait until message is available.
-            while (_empty) {
+            while (empty) {
                 try {
                     wait();
                 } catch (InterruptedException e) {
@@ -58,23 +58,23 @@ public class Thread_prodcon01 {
                 }
             }
             //Toggle status.
-            _empty = true;
+            empty = true;
             //Notify producer that status has changed.
             notifyAll();
-            return _message;
+            return message;
             }
 
         public synchronized void put(String message) {
            //Wait until message has been retrieved.
-            while (!_empty) {
+            while (!empty) {
                 try {
                     wait();
                 } catch (InterruptedException e) {}
             }
             //Toggle status.
-            _empty = false;
+            empty = false;
             //Store message.
-            this._message = message;
+            this.message = message;
             //Notify consumer that status has changed.
             notifyAll();
         }
@@ -111,20 +111,20 @@ public class Thread_prodcon01 {
     }
 
     static class Consumer implements Runnable {
-        private Drop _drop;
+        private Drop drop;
 
         public Consumer(Drop drop) {
-            _drop = drop;
+            this.drop = drop;
         }
 
         public void run() {
             //Random random = new Random();
             int i = 0;
-            for (String message = _drop.take(); ! message.equals("DONE");
-                    message = _drop.take()) {
+            for (String message = drop.take(); ! message.equals("DONE");
+                    message = drop.take()) {
                 debug("MESSAGE RECEIVED: "+ message);
                 if (!message.equals(Producer.importantInfo[i])) {
-                    _ok = false;
+                    ok = false;
                 }
                 i++;
                 /**
@@ -137,7 +137,7 @@ public class Thread_prodcon01 {
     }
 
     private static void debug(String s) {
-        if (_debug) {
+        if (debug) {
             Trace.stream().println(s);
         }
     }

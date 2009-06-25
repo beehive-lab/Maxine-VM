@@ -46,78 +46,78 @@ public final class StackFrameCommands {
 
         public static class SlotInfo {
 
-            public int _slot;
+            public int slot;
 
-            public byte _sigbyte;
+            public byte sigbyte;
             public SlotInfo(int slot,
                 byte sigbyte) {
-                this._slot = slot;
-                this._sigbyte = sigbyte;
+                this.slot = slot;
+                this.sigbyte = sigbyte;
             }
             public SlotInfo() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _slot = ps.readInt();
-                _sigbyte = ps.readByte();
+                slot = ps.readInt();
+                sigbyte = ps.readByte();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_slot);
-                ps.write(_sigbyte);
+                ps.write(slot);
+                ps.write(sigbyte);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_slot=" + _slot);
+                stringBuilder.append("slot=" + slot);
                 stringBuilder.append(", ");
-                stringBuilder.append("_sigbyte=" + _sigbyte);
+                stringBuilder.append("sigbyte=" + sigbyte);
                 return stringBuilder.toString();
             }
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ThreadID _thread;
+            public ID.ThreadID thread;
 
-            public ID.FrameID _frame;
+            public ID.FrameID frame;
 
-            public SlotInfo[] _slots;
+            public SlotInfo[] slots;
             public IncomingRequest(ID.ThreadID thread,
                 ID.FrameID frame,
                 SlotInfo[] slots) {
-                this._thread = thread;
-                this._frame = frame;
-                this._slots = slots;
+                this.thread = thread;
+                this.frame = frame;
+                this.slots = slots;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
-                _frame = ID.read(ps.getInputStream(), ID.FrameID.class);
+                thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                frame = ID.read(ps.getInputStream(), ID.FrameID.class);
                 final int slotsCount = ps.readInt();
-                _slots = new SlotInfo[slotsCount];
+                slots = new SlotInfo[slotsCount];
                 for (int i = 0; i < slotsCount; i++) {
-                    _slots[i] = new SlotInfo();
-                    _slots[i].read(ps);
+                    slots[i] = new SlotInfo();
+                    slots[i].read(ps);
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _thread.write(ps.getOutputStream());
-                _frame.write(ps.getOutputStream());
-                ps.write(_slots.length);
-                for (int i = 0; i < _slots.length; i++) {
-                    _slots[i].write(ps);
+                thread.write(ps.getOutputStream());
+                frame.write(ps.getOutputStream());
+                ps.write(slots.length);
+                for (int i = 0; i < slots.length; i++) {
+                    slots[i].write(ps);
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_thread=" + _thread);
+                stringBuilder.append("thread=" + thread);
                 stringBuilder.append(", ");
-                stringBuilder.append("_frame=" + _frame);
+                stringBuilder.append("frame=" + frame);
                 stringBuilder.append(", ");
-                stringBuilder.append("_slots=[" + _slots.length + "]{");
-                for (int i = 0; i < _slots.length; i++) {
+                stringBuilder.append("slots=[" + slots.length + "]{");
+                for (int i = 0; i < slots.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_slots[i]=" + _slots[i]);
+                    stringBuilder.append("slots[i]=" + slots[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();
@@ -128,32 +128,32 @@ public final class StackFrameCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public JDWPValue[] _values;
+            public JDWPValue[] values;
             public Reply(JDWPValue[] values) {
-                this._values = values;
+                this.values = values;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
                 final int valuesCount = ps.readInt();
-                _values = new JDWPValue[valuesCount];
+                values = new JDWPValue[valuesCount];
                 for (int i = 0; i < valuesCount; i++) {
-                    _values[i] = ps.readValue();
+                    values[i] = ps.readValue();
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_values.length);
-                for (int i = 0; i < _values.length; i++) {
-                    ps.write(_values[i]);
+                ps.write(values.length);
+                for (int i = 0; i < values.length; i++) {
+                    ps.write(values[i]);
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_values=[" + _values.length + "]{");
-                for (int i = 0; i < _values.length; i++) {
+                stringBuilder.append("values=[" + values.length + "]{");
+                for (int i = 0; i < values.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_values[i]=" + _values[i]);
+                    stringBuilder.append("values[i]=" + values[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();
@@ -174,78 +174,78 @@ public final class StackFrameCommands {
 
         public static class SlotInfo {
 
-            public int _slot;
+            public int slot;
 
-            public JDWPValue _slotValue;
+            public JDWPValue slotValue;
             public SlotInfo(int slot,
                 JDWPValue slotValue) {
-                this._slot = slot;
-                this._slotValue = slotValue;
+                this.slot = slot;
+                this.slotValue = slotValue;
             }
             public SlotInfo() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _slot = ps.readInt();
-                _slotValue = ps.readValue();
+                slot = ps.readInt();
+                slotValue = ps.readValue();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_slot);
-                ps.write(_slotValue);
+                ps.write(slot);
+                ps.write(slotValue);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_slot=" + _slot);
+                stringBuilder.append("slot=" + slot);
                 stringBuilder.append(", ");
-                stringBuilder.append("_slotValue=" + _slotValue);
+                stringBuilder.append("slotValue=" + slotValue);
                 return stringBuilder.toString();
             }
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ThreadID _thread;
+            public ID.ThreadID thread;
 
-            public ID.FrameID _frame;
+            public ID.FrameID frame;
 
-            public SlotInfo[] _slotValues;
+            public SlotInfo[] slotValues;
             public IncomingRequest(ID.ThreadID thread,
                 ID.FrameID frame,
                 SlotInfo[] slotValues) {
-                this._thread = thread;
-                this._frame = frame;
-                this._slotValues = slotValues;
+                this.thread = thread;
+                this.frame = frame;
+                this.slotValues = slotValues;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
-                _frame = ID.read(ps.getInputStream(), ID.FrameID.class);
+                thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                frame = ID.read(ps.getInputStream(), ID.FrameID.class);
                 final int slotValuesCount = ps.readInt();
-                _slotValues = new SlotInfo[slotValuesCount];
+                slotValues = new SlotInfo[slotValuesCount];
                 for (int i = 0; i < slotValuesCount; i++) {
-                    _slotValues[i] = new SlotInfo();
-                    _slotValues[i].read(ps);
+                    slotValues[i] = new SlotInfo();
+                    slotValues[i].read(ps);
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _thread.write(ps.getOutputStream());
-                _frame.write(ps.getOutputStream());
-                ps.write(_slotValues.length);
-                for (int i = 0; i < _slotValues.length; i++) {
-                    _slotValues[i].write(ps);
+                thread.write(ps.getOutputStream());
+                frame.write(ps.getOutputStream());
+                ps.write(slotValues.length);
+                for (int i = 0; i < slotValues.length; i++) {
+                    slotValues[i].write(ps);
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_thread=" + _thread);
+                stringBuilder.append("thread=" + thread);
                 stringBuilder.append(", ");
-                stringBuilder.append("_frame=" + _frame);
+                stringBuilder.append("frame=" + frame);
                 stringBuilder.append(", ");
-                stringBuilder.append("_slotValues=[" + _slotValues.length + "]{");
-                for (int i = 0; i < _slotValues.length; i++) {
+                stringBuilder.append("slotValues=[" + slotValues.length + "]{");
+                for (int i = 0; i < slotValues.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_slotValues[i]=" + _slotValues[i]);
+                    stringBuilder.append("slotValues[i]=" + slotValues[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();
@@ -281,30 +281,30 @@ public final class StackFrameCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ThreadID _thread;
+            public ID.ThreadID thread;
 
-            public ID.FrameID _frame;
+            public ID.FrameID frame;
             public IncomingRequest(ID.ThreadID thread,
                 ID.FrameID frame) {
-                this._thread = thread;
-                this._frame = frame;
+                this.thread = thread;
+                this.frame = frame;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
-                _frame = ID.read(ps.getInputStream(), ID.FrameID.class);
+                thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                frame = ID.read(ps.getInputStream(), ID.FrameID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _thread.write(ps.getOutputStream());
-                _frame.write(ps.getOutputStream());
+                thread.write(ps.getOutputStream());
+                frame.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_thread=" + _thread);
+                stringBuilder.append("thread=" + thread);
                 stringBuilder.append(", ");
-                stringBuilder.append("_frame=" + _frame);
+                stringBuilder.append("frame=" + frame);
                 return stringBuilder.toString();
             }
         }
@@ -313,22 +313,22 @@ public final class StackFrameCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public JDWPValue _objectThis;
+            public JDWPValue objectThis;
             public Reply(JDWPValue objectThis) {
-                this._objectThis = objectThis;
+                this.objectThis = objectThis;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _objectThis = ps.readValue();
+                objectThis = ps.readValue();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_objectThis);
+                ps.write(objectThis);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_objectThis=" + _objectThis);
+                stringBuilder.append("objectThis=" + objectThis);
                 return stringBuilder.toString();
             }
         }
@@ -346,30 +346,30 @@ public final class StackFrameCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ThreadID _thread;
+            public ID.ThreadID thread;
 
-            public ID.FrameID _frame;
+            public ID.FrameID frame;
             public IncomingRequest(ID.ThreadID thread,
                 ID.FrameID frame) {
-                this._thread = thread;
-                this._frame = frame;
+                this.thread = thread;
+                this.frame = frame;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
-                _frame = ID.read(ps.getInputStream(), ID.FrameID.class);
+                thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                frame = ID.read(ps.getInputStream(), ID.FrameID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _thread.write(ps.getOutputStream());
-                _frame.write(ps.getOutputStream());
+                thread.write(ps.getOutputStream());
+                frame.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_thread=" + _thread);
+                stringBuilder.append("thread=" + thread);
                 stringBuilder.append(", ");
-                stringBuilder.append("_frame=" + _frame);
+                stringBuilder.append("frame=" + frame);
                 return stringBuilder.toString();
             }
         }

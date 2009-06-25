@@ -51,26 +51,26 @@ public final class JniFunctionWrapper {
 
     @INLINE
     public static StackVariable savedLastJavaCallerStackPointer() {
-        return _savedLastJavaCallerStackPointer;
+        return savedLastJavaCallerStackPointer;
     }
 
     @INLINE
     public static StackVariable savedLastJavaCallerFramePointer() {
-        return _savedLastJavaCallerFramePointer;
+        return savedLastJavaCallerFramePointer;
     }
 
     @INLINE
     public static StackVariable savedLastJavaCallerInstructionPointer() {
-        return _savedLastJavaCallerInstructionPointer;
+        return savedLastJavaCallerInstructionPointer;
     }
 
     // These fields cannot be final as they are updated by the inspector via reflection
     @CONSTANT_WHEN_NOT_ZERO
-    private static StackVariable _savedLastJavaCallerStackPointer = StackVariable.create("LastJavaCallerStackPointer");
+    private static StackVariable savedLastJavaCallerStackPointer = StackVariable.create("LastJavaCallerStackPointer");
     @CONSTANT_WHEN_NOT_ZERO
-    private static StackVariable _savedLastJavaCallerFramePointer = StackVariable.create("LastJavaCallerFramePointer");
+    private static StackVariable savedLastJavaCallerFramePointer = StackVariable.create("LastJavaCallerFramePointer");
     @CONSTANT_WHEN_NOT_ZERO
-    private static StackVariable _savedLastJavaCallerInstructionPointer = StackVariable.create("LastJavaCallerInstructionPointer");
+    private static StackVariable savedLastJavaCallerInstructionPointer = StackVariable.create("LastJavaCallerInstructionPointer");
 
     private JniFunctionWrapper() {
     }
@@ -170,7 +170,7 @@ public final class JniFunctionWrapper {
     private static void printUpCall(final TargetMethod jniTargetMethod) {
         boolean lockDisabledSafepoints = false;
         lockDisabledSafepoints = Log.lock();
-        Log.print(jniTargetMethod.classMethodActor().name().string());
+        Log.print(jniTargetMethod.classMethodActor().name.string);
         Log.unlock(lockDisabledSafepoints);
     }
 
@@ -198,9 +198,9 @@ public final class JniFunctionWrapper {
         final Word sp = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals);
         final Word fp = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals);
         final Word ip = LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals);
-        makeStackVariable(sp, _savedLastJavaCallerStackPointer);
-        makeStackVariable(fp, _savedLastJavaCallerFramePointer);
-        makeStackVariable(ip, _savedLastJavaCallerInstructionPointer);
+        makeStackVariable(sp, savedLastJavaCallerStackPointer);
+        makeStackVariable(fp, savedLastJavaCallerFramePointer);
+        makeStackVariable(ip, savedLastJavaCallerInstructionPointer);
         reenterJavaFromNative(vmThreadLocals);
         // end-prologue
 
@@ -221,9 +221,9 @@ public final class JniFunctionWrapper {
         final Word sp = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals);
         final Word fp = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals);
         final Word ip = LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals);
-        makeStackVariable(sp, _savedLastJavaCallerStackPointer);
-        makeStackVariable(fp, _savedLastJavaCallerFramePointer);
-        makeStackVariable(ip, _savedLastJavaCallerInstructionPointer);
+        makeStackVariable(sp, savedLastJavaCallerStackPointer);
+        makeStackVariable(fp, savedLastJavaCallerFramePointer);
+        makeStackVariable(ip, savedLastJavaCallerInstructionPointer);
         reenterJavaFromNative(vmThreadLocals);
         // end-prologue
 
@@ -248,9 +248,9 @@ public final class JniFunctionWrapper {
         final Word sp = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals);
         final Word fp = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals);
         final Word ip = LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals);
-        makeStackVariable(sp, _savedLastJavaCallerStackPointer);
-        makeStackVariable(fp, _savedLastJavaCallerFramePointer);
-        makeStackVariable(ip, _savedLastJavaCallerInstructionPointer);
+        makeStackVariable(sp, savedLastJavaCallerStackPointer);
+        makeStackVariable(fp, savedLastJavaCallerFramePointer);
+        makeStackVariable(ip, savedLastJavaCallerInstructionPointer);
         reenterJavaFromNative(vmThreadLocals);
         // end-prologue
 
@@ -275,9 +275,9 @@ public final class JniFunctionWrapper {
         final Word sp = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals);
         final Word fp = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals);
         final Word ip = LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals);
-        makeStackVariable(sp, _savedLastJavaCallerStackPointer);
-        makeStackVariable(fp, _savedLastJavaCallerFramePointer);
-        makeStackVariable(ip, _savedLastJavaCallerInstructionPointer);
+        makeStackVariable(sp, savedLastJavaCallerStackPointer);
+        makeStackVariable(fp, savedLastJavaCallerFramePointer);
+        makeStackVariable(ip, savedLastJavaCallerInstructionPointer);
         reenterJavaFromNative(vmThreadLocals);
         // end-prologue
 
@@ -302,9 +302,9 @@ public final class JniFunctionWrapper {
         final Word sp = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals);
         final Word fp = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals);
         final Word ip = LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals);
-        makeStackVariable(sp, _savedLastJavaCallerStackPointer);
-        makeStackVariable(fp, _savedLastJavaCallerFramePointer);
-        makeStackVariable(ip, _savedLastJavaCallerInstructionPointer);
+        makeStackVariable(sp, savedLastJavaCallerStackPointer);
+        makeStackVariable(fp, savedLastJavaCallerFramePointer);
+        makeStackVariable(ip, savedLastJavaCallerInstructionPointer);
         reenterJavaFromNative(vmThreadLocals);
         // end-prologue
 
@@ -330,9 +330,9 @@ public final class JniFunctionWrapper {
         final Word sp = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals);
         final Word fp = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals);
         final Word ip = LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals);
-        makeStackVariable(sp, _savedLastJavaCallerStackPointer);
-        makeStackVariable(fp, _savedLastJavaCallerFramePointer);
-        makeStackVariable(ip, _savedLastJavaCallerInstructionPointer);
+        makeStackVariable(sp, savedLastJavaCallerStackPointer);
+        makeStackVariable(fp, savedLastJavaCallerFramePointer);
+        makeStackVariable(ip, savedLastJavaCallerInstructionPointer);
         reenterJavaFromNative(vmThreadLocals);
         // end-prologue
 

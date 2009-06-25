@@ -35,24 +35,24 @@ import com.sun.max.vm.value.*;
  */
 public abstract class AMD64EirPointerOperation extends AMD64EirBinaryOperation {
 
-    private final Kind _kind;
+    private final Kind kind;
 
     public Kind kind() {
-        return _kind;
+        return kind;
     }
 
-    private final Kind _offsetKind;
+    private final Kind offsetKind;
 
-    private final EirOperand _offsetOperand;
+    private final EirOperand offsetOperand;
 
     public EirOperand offsetOperand() {
-        return _offsetOperand;
+        return offsetOperand;
     }
 
-    private final EirOperand _indexOperand;
+    private final EirOperand indexOperand;
 
     public EirOperand indexOperand() {
-        return _indexOperand;
+        return indexOperand;
     }
 
     public AMD64EirRegister.General indexGeneralRegister() {
@@ -60,7 +60,7 @@ public abstract class AMD64EirPointerOperation extends AMD64EirBinaryOperation {
     }
 
     private static PoolSet<EirLocationCategory> offsetLocationCategories(Kind kind) {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case INT:
                 return G_I8_I32;
             case LONG:
@@ -81,10 +81,10 @@ public abstract class AMD64EirPointerOperation extends AMD64EirBinaryOperation {
 
         super(block, destination, destinationEffect, destinationLocationCategories,
                      pointer, EirOperand.Effect.USE, G);
-        _kind = kind;
-        _offsetKind = null;
-        _offsetOperand = null;
-        _indexOperand = null;
+        this.kind = kind;
+        this.offsetKind = null;
+        this.offsetOperand = null;
+        this.indexOperand = null;
     }
 
     protected AMD64EirPointerOperation(
@@ -99,11 +99,11 @@ public abstract class AMD64EirPointerOperation extends AMD64EirBinaryOperation {
 
         super(block, destination, destinationEffect, destinationLocationCategories,
                      pointer, EirOperand.Effect.USE, G);
-        _kind = kind;
-        _offsetKind = offsetKind;
-        _offsetOperand = new EirOperand(this, EirOperand.Effect.USE, offsetLocationCategories(offsetKind));
-        _offsetOperand.setEirValue(offset);
-        _indexOperand = null;
+        this.kind = kind;
+        this.offsetKind = offsetKind;
+        this.offsetOperand = new EirOperand(this, EirOperand.Effect.USE, offsetLocationCategories(offsetKind));
+        this.offsetOperand.setEirValue(offset);
+        this.indexOperand = null;
     }
 
     protected AMD64EirPointerOperation(
@@ -117,11 +117,11 @@ public abstract class AMD64EirPointerOperation extends AMD64EirBinaryOperation {
 
         super(block, destination, destinationEffect, destinationLocationCategories,
                      pointer, EirOperand.Effect.USE, G);
-        _kind = kind;
-        _offsetKind = null;
-        _offsetOperand = null;
-        _indexOperand = new EirOperand(this, EirOperand.Effect.USE, G);
-        _indexOperand.setEirValue(index);
+        this.kind = kind;
+        this.offsetKind = null;
+        this.offsetOperand = null;
+        this.indexOperand = new EirOperand(this, EirOperand.Effect.USE, G);
+        this.indexOperand.setEirValue(index);
     }
 
     protected AMD64EirPointerOperation(
@@ -136,12 +136,12 @@ public abstract class AMD64EirPointerOperation extends AMD64EirBinaryOperation {
 
         super(block, destination, destinationEffect, destinationLocationCategories,
                      pointer, EirOperand.Effect.USE, G);
-        _kind = kind;
-        _offsetKind = Kind.INT;
-        _offsetOperand = new EirOperand(this, EirOperand.Effect.USE, I8_I32);
-        _offsetOperand.setEirValue(displacement);
-        _indexOperand = new EirOperand(this, EirOperand.Effect.USE, G);
-        _indexOperand.setEirValue(index);
+        this.kind = kind;
+        this.offsetKind = Kind.INT;
+        this.offsetOperand = new EirOperand(this, EirOperand.Effect.USE, I8_I32);
+        this.offsetOperand.setEirValue(displacement);
+        this.indexOperand = new EirOperand(this, EirOperand.Effect.USE, G);
+        this.indexOperand.setEirValue(index);
     }
 
     public EirOperand pointerOperand() {
@@ -159,11 +159,11 @@ public abstract class AMD64EirPointerOperation extends AMD64EirBinaryOperation {
     @Override
     public void visitOperands(EirOperand.Procedure visitor) {
         super.visitOperands(visitor);
-        if (_offsetOperand != null) {
-            visitor.run(_offsetOperand);
+        if (offsetOperand != null) {
+            visitor.run(offsetOperand);
         }
-        if (_indexOperand != null) {
-            visitor.run(_indexOperand);
+        if (indexOperand != null) {
+            visitor.run(indexOperand);
         }
     }
 
@@ -175,9 +175,9 @@ public abstract class AMD64EirPointerOperation extends AMD64EirBinaryOperation {
             return "[" + pointerOperand() + " + " + offsetOperand() + "]";
         }
         if (offsetOperand() == null) {
-            return pointerOperand() + "[" + indexOperand() + " * " + kind().size() + "]";
+            return pointerOperand() + "[" + indexOperand() + " * " + kind().width.numberOfBytes + "]";
         }
-        return pointerOperand() + "[" + indexOperand() + " * " + kind().size() + " + " + offsetOperand() + "]";
+        return pointerOperand() + "[" + indexOperand() + " * " + kind().width.numberOfBytes + " + " + offsetOperand() + "]";
     }
 
     protected abstract void translateWithoutOffsetWithoutIndex(AMD64EirTargetEmitter emitter, AMD64GeneralRegister64 pointerRegister);
@@ -194,7 +194,7 @@ public abstract class AMD64EirPointerOperation extends AMD64EirBinaryOperation {
     public void emit(AMD64EirTargetEmitter emitter) {
         final AMD64GeneralRegister64 pointerRegister = pointerGeneralRegister().as64();
         if (offsetOperand() == null) {
-            if (_indexOperand == null) {
+            if (indexOperand == null) {
                 translateWithoutOffsetWithoutIndex(emitter, pointerRegister);
             } else {
                 final AMD64GeneralRegister64 indexRegister = indexGeneralRegister().as64();
@@ -205,7 +205,7 @@ public abstract class AMD64EirPointerOperation extends AMD64EirBinaryOperation {
         switch (offsetOperand().location().category()) {
             case INTEGER_REGISTER: {
                 final AMD64GeneralRegister64 offsetRegister = offsetGeneralRegister().as64();
-                if (_indexOperand == null) {
+                if (indexOperand == null) {
                     translateWithRegisterOffsetWithoutIndex(emitter, pointerRegister, offsetRegister);
                 } else {
                     final AMD64GeneralRegister64 indexRegister = indexGeneralRegister().as64();
@@ -220,7 +220,7 @@ public abstract class AMD64EirPointerOperation extends AMD64EirBinaryOperation {
                 switch (offsetWidth) {
                     case BITS_8: {
                         final byte offset8 = immediateOffsetValue.toByte();
-                        if (_indexOperand == null) {
+                        if (indexOperand == null) {
                             translateWithImmediateOffset8WithoutIndex(emitter, pointerRegister, offset8);
                         } else {
                             final AMD64GeneralRegister64 indexRegister = indexGeneralRegister().as64();
@@ -231,7 +231,7 @@ public abstract class AMD64EirPointerOperation extends AMD64EirBinaryOperation {
                     case BITS_16:
                     case BITS_32: {
                         final int offset32 = immediateOffsetValue.toInt();
-                        if (_indexOperand == null) {
+                        if (indexOperand == null) {
                             translateWithImmediateOffset32WithoutIndex(emitter, pointerRegister, offset32);
                         } else {
                             final AMD64GeneralRegister64 indexRegister = indexGeneralRegister().as64();

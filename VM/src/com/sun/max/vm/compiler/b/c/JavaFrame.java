@@ -32,18 +32,18 @@ final class JavaFrame extends JavaSlots {
 
     JavaFrame(LocalVariableFactory variableFactory) {
         super(variableFactory);
-        variableFactory.copyParametersInto(_slots);
+        variableFactory.copyParametersInto(slots);
     }
 
     public CirVariable makeVariable(Kind kind, int localIndex) {
-        final CirVariable var = _variableFactory.makeVariable(kind, localIndex);
+        final CirVariable var = variableFactory.makeVariable(kind, localIndex);
         final VariableJavaStackSlot slot = new VariableJavaStackSlot(var);
-        _slots[localIndex] = slot;
+        slots[localIndex] = slot;
         return var;
     }
 
     public CirVariable getReferenceOrWordVariable(int localIndex) {
-        final JavaStackSlot slot = _slots[localIndex];
+        final JavaStackSlot slot = slots[localIndex];
         assert slot instanceof VariableJavaStackSlot;
         final CirVariable result = ((VariableJavaStackSlot) slot).cirVariable();
         assert result.kind() == Kind.REFERENCE || result.kind() == Kind.WORD;
@@ -57,12 +57,12 @@ final class JavaFrame extends JavaSlots {
 
     @Override
     protected int effectiveLength() {
-        for (int i = 0; i < _slots.length; i++) {
-            if (_slots[i] == null) {
+        for (int i = 0; i < slots.length; i++) {
+            if (slots[i] == null) {
                 return i;
             }
         }
-        return _slots.length;
+        return slots.length;
     }
 
 }

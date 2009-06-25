@@ -32,14 +32,14 @@ import com.sun.max.vm.value.*;
  */
 public abstract class CirValue extends CirNode implements IrValue {
 
-    private final Kind _kind;
+    private final Kind kind;
 
     public Kind kind() {
-        return _kind;
+        return kind;
     }
 
     protected CirValue(Kind kind) {
-        _kind = kind;
+        this.kind = kind;
     }
 
     public boolean isCategory1() {

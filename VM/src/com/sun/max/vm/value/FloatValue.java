@@ -31,7 +31,7 @@ import com.sun.max.vm.type.*;
  */
 public final class FloatValue extends PrimitiveValue<FloatValue> {
 
-    private final float _value;
+    private final float value;
 
     public static FloatValue from(float value) {
         return new FloatValue(value);
@@ -46,7 +46,7 @@ public final class FloatValue extends PrimitiveValue<FloatValue> {
     }
 
     private FloatValue(float value) {
-        _value = value;
+        this.value = value;
     }
 
     public static final FloatValue ZERO = FloatValue.from((float) 0.0);
@@ -60,87 +60,87 @@ public final class FloatValue extends PrimitiveValue<FloatValue> {
 
     @Override
     public boolean isZero() {
-        return _value == (float) 0.0;
+        return value == (float) 0.0;
     }
 
     @Override
     public boolean isAllOnes() {
-        return UnsafeLoophole.floatToInt(_value) == -1;
+        return UnsafeLoophole.floatToInt(value) == -1;
     }
 
     @Override
     public boolean equals(Object other) {
-        return other == this || ((other instanceof FloatValue) && (Float.floatToIntBits(((FloatValue) other)._value) == Float.floatToIntBits(_value)));
+        return other == this || ((other instanceof FloatValue) && (Float.floatToIntBits(((FloatValue) other).value) == Float.floatToIntBits(value)));
     }
 
     @Override
     protected int compareSameKind(FloatValue other) {
-        return _value < other._value ? -1 : (_value == other._value ? 0 : 1);
+        return value < other.value ? -1 : (value == other.value ? 0 : 1);
     }
 
     @Override
     public String toString() {
-        return Float.toString(_value);
+        return Float.toString(value);
     }
 
     @Override
     public Float asBoxedJavaValue() {
-        return new Float(_value);
+        return new Float(value);
     }
 
     @Override
     public byte toByte() {
-        return (byte) _value;
+        return (byte) value;
     }
 
     @Override
     public boolean toBoolean() {
-        return (_value != (float) 0.0) ? true : false;
+        return (value != (float) 0.0) ? true : false;
     }
 
     @Override
     public short toShort() {
-        return (short) _value;
+        return (short) value;
     }
 
     @Override
     public char toChar() {
-        return (char) _value;
+        return (char) value;
     }
 
     @Override
     public int toInt() {
-        return (int) _value;
+        return (int) value;
     }
 
     @Override
     public float asFloat() {
-        return _value;
+        return value;
     }
 
     @Override
     public float unboxFloat() {
-        return _value;
+        return value;
     }
 
     @Override
     public float toFloat() {
-        return _value;
+        return value;
     }
 
     @Override
     public long toLong() {
-        return (long) _value;
+        return (long) value;
     }
 
     @Override
     public double toDouble() {
-        return _value;
+        return value;
     }
 
     @Override
     public Word toWord() {
-        return Offset.fromLong((long) _value);
+        return Offset.fromLong((long) value);
     }
 
     @Override
@@ -155,11 +155,11 @@ public final class FloatValue extends PrimitiveValue<FloatValue> {
 
     @Override
     public byte[] toBytes(DataModel dataModel) {
-        return dataModel.toBytes(_value);
+        return dataModel.toBytes(value);
     }
 
     @Override
     public void write(DataOutput stream) throws IOException {
-        stream.writeFloat(_value);
+        stream.writeFloat(value);
     }
 }

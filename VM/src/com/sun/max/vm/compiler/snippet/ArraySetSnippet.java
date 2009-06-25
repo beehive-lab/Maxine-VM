@@ -153,7 +153,7 @@ public abstract class ArraySetSnippet extends BuiltinsSnippet {
     }
 
     public static ArraySetSnippet selectSnippetByKind(Kind kind) {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case BYTE:
                 return ArraySetSnippet.SetByte.SNIPPET;
             case SHORT:

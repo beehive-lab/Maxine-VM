@@ -29,17 +29,17 @@ public final class Monitorenter02 {
     private Monitorenter02() {
     }
 
-    static final Object _object = new Object();
+    static final Object object = new Object();
 
     public static boolean test(int i) {
         // test nested locking.
-        synchronized (_object) {
+        synchronized (object) {
             return test2();
         }
     }
 
     private static boolean test2() {
-        synchronized (_object) {
+        synchronized (object) {
             return true;
         }
     }

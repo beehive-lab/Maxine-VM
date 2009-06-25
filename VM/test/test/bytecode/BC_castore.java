@@ -26,10 +26,10 @@ package test.bytecode;
  */
 public class BC_castore {
 
-    static char[] _array = {0, 0, 0, 0};
+    static char[] array = {0, 0, 0, 0};
 
     public static char test(int arg, char val) {
-        _array[arg] = val;
-        return _array[arg];
+        array[arg] = val;
+        return array[arg];
     }
 }

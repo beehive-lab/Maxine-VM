@@ -31,7 +31,7 @@ import com.sun.max.vm.MaxineVM.*;
  * @author Ben L. Titzer
  */
 public class VMSizeOption extends VMOption {
-    protected Size _value;
+    protected Size value;
 
     /**
      * Creates a new size option with the specified values and adds this option to the command line
@@ -47,7 +47,7 @@ public class VMSizeOption extends VMOption {
     @PROTOTYPE_ONLY
     public VMSizeOption(String prefix, Size defaultValue, String help) {
         super(prefix, help);
-        _value = defaultValue;
+        value = defaultValue;
     }
 
     /**
@@ -60,8 +60,8 @@ public class VMSizeOption extends VMOption {
      */
     @Override
     public boolean parseValue(Pointer optionValue) {
-        _value = Size.fromLong(VMOptions.parseScaledValue(optionValue, CString.length(optionValue), 0));
-        if (_value.lessThan(0)) {
+        value = Size.fromLong(VMOptions.parseScaledValue(optionValue, CString.length(optionValue), 0));
+        if (value.lessThan(0)) {
             return false;
         }
         return true;
@@ -72,7 +72,7 @@ public class VMSizeOption extends VMOption {
      */
     @Override
     public void printHelp() {
-        VMOptions.printHelpForOption(_prefix, "<size>", _help);
+        VMOptions.printHelpForOption(prefix, "<size>", help);
     }
 
     /**
@@ -80,6 +80,6 @@ public class VMSizeOption extends VMOption {
      * @return the size of this option
      */
     public Size getValue() {
-        return _value;
+        return value;
     }
 }

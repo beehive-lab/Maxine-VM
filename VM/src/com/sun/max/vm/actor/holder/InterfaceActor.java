@@ -27,7 +27,7 @@ import com.sun.max.vm.type.*;
 
 /**
  * Internal representations of Java interfaces.
- * 
+ *
  * @author Bernd Mathiske
  */
 public final class InterfaceActor extends ClassActor {
@@ -36,11 +36,11 @@ public final class InterfaceActor extends ClassActor {
         return (flags() & ACC_ANNOTATION) != 0;
     }
 
-    private final ConstantPool _constantPool;
+    private final ConstantPool constantPool;
 
     @Override
     public ConstantPool constantPool() {
-        return _constantPool;
+        return constantPool;
     }
 
     InterfaceActor(ConstantPool constantPool,
@@ -77,7 +77,7 @@ public final class InterfaceActor extends ClassActor {
               innerClasses,
               outerClass,
               enclosingMethodInfo);
-        _constantPool = constantPool;
+        this.constantPool = constantPool;
         constantPool.setHolder(this);
         for (int i = 0; i < localInterfaceMethodActors().length; i++) {
             localInterfaceMethodActors()[i].setIIndexInInterface(i + 1);

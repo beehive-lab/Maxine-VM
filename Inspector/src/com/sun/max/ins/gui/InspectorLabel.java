@@ -38,11 +38,11 @@ import com.sun.max.tele.*;
  */
 public abstract class InspectorLabel extends JTextField implements InspectionHolder, TextSearchable, Prober {
 
-    private final Inspection _inspection;
+    private final Inspection inspection;
 
     public InspectorLabel(Inspection inspection, String text) {
         super(text);
-        _inspection = inspection;
+        this.inspection = inspection;
         setEditable(false);
     }
 
@@ -51,31 +51,31 @@ public abstract class InspectorLabel extends JTextField implements InspectionHol
     }
 
     public final Inspection inspection() {
-        return _inspection;
+        return inspection;
     }
 
     public final MaxVM maxVM() {
-        return _inspection.maxVM();
+        return inspection.maxVM();
     }
 
     public final MaxVMState maxVMState() {
-        return _inspection.maxVM().maxVMState();
+        return inspection.maxVM().maxVMState();
     }
 
     public InspectorGUI gui() {
-        return _inspection.gui();
+        return inspection.gui();
     }
 
     public final InspectorStyle style() {
-        return _inspection.style();
+        return inspection.style();
     }
 
     public final InspectionFocus focus() {
-        return _inspection.focus();
+        return inspection.focus();
     }
 
     public final InspectionActions actions() {
-        return _inspection.actions();
+        return inspection.actions();
     }
 
     public String getSearchableText() {

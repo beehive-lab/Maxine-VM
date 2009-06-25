@@ -79,7 +79,7 @@ public final class ErrorContext {
     private ErrorContext() {
     }
 
-    private static final ThreadLocal<VariableSequence<Object>> _contexts = new ThreadLocal<VariableSequence<Object>>() {
+    private static final ThreadLocal<VariableSequence<Object>> contexts = new ThreadLocal<VariableSequence<Object>>() {
 
         @Override
         protected VariableSequence<Object> initialValue() {
@@ -88,23 +88,23 @@ public final class ErrorContext {
     };
 
     public static Sequence<Object> contexts() {
-        return _contexts.get();
+        return contexts.get();
     }
 
     public static void enterContext(Object context) {
-        _contexts.get().append(context);
+        contexts.get().append(context);
     }
 
     public static void exitContext() {
         try {
-            _contexts.get().removeLast();
+            contexts.get().removeLast();
         } catch (IndexOutOfBoundsException e) {
             ProgramWarning.message("Unstructured use of error contexts");
         }
     }
 
     public static void perform(Object context, Runnable runnable) {
-        final VariableSequence<Object> contextStack = _contexts.get();
+        final VariableSequence<Object> contextStack = contexts.get();
         contextStack.append(context);
         try {
             runnable.run();

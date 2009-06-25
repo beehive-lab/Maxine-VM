@@ -34,13 +34,13 @@ import com.sun.max.vm.type.*;
  */
 public final class CompiledBytecodeTemplate implements BytecodeInfo {
 
-    private final Bytecode _bytecode;
-    private final TargetMethod _targetMethod;
-    private final TemplateChooser.Initialized _initialized;
-    private final TemplateChooser.Resolved _resolved;
-    private final TemplateChooser.Instrumented _instrumented;
-    private final TemplateChooser.Traced _traced;
-    private final Kind _kind;
+    public final Bytecode bytecode;
+    public final TargetMethod targetMethod;
+    public final TemplateChooser.Initialized initialized;
+    public final TemplateChooser.Resolved resolved;
+    public final TemplateChooser.Instrumented instrumented;
+    public final TemplateChooser.Traced traced;
+    public final Kind kind;
 
     public CompiledBytecodeTemplate(TargetMethod targetMethod) {
         assert targetMethod.classMethodActor().isTemplate();
@@ -50,71 +50,42 @@ public final class CompiledBytecodeTemplate implements BytecodeInfo {
 
         final TEMPLATE templateAnnotation = javaMethod.getDeclaringClass().getAnnotation(TEMPLATE.class);
         assert templateAnnotation != null : "bytecode template not within a template class";
-        _targetMethod = targetMethod;
+        this.targetMethod = targetMethod;
 
         if (bytecodeAnnotation == null) {
-            _bytecode = Bytecode.valueOf(javaMethod.getName().toUpperCase());
-            _kind = Kind.VOID;
-            _initialized = templateAnnotation.initialized();
-            _resolved = templateAnnotation.resolved();
-            _instrumented = templateAnnotation.instrumented();
-            _traced = templateAnnotation.traced();
+            this.bytecode = Bytecode.valueOf(javaMethod.getName().toUpperCase());
+            this.kind = Kind.VOID;
+            this.initialized = templateAnnotation.initialized();
+            this.resolved = templateAnnotation.resolved();
+            this.instrumented = templateAnnotation.instrumented();
+            this.traced = templateAnnotation.traced();
         } else {
-            _bytecode = bytecodeAnnotation.bytecode();
-            _kind = bytecodeAnnotation.kind().asKind();
-            _instrumented = bytecodeAnnotation.instrumented() == TemplateChooser.Instrumented.DEFAULT
+            this.bytecode = bytecodeAnnotation.bytecode();
+            this.kind = bytecodeAnnotation.kind().asKind();
+            this.instrumented = bytecodeAnnotation.instrumented() == TemplateChooser.Instrumented.DEFAULT
                           ? templateAnnotation.instrumented()
                           : bytecodeAnnotation.instrumented();
-            _resolved = bytecodeAnnotation.resolved() == TemplateChooser.Resolved.DEFAULT
+            this.resolved = bytecodeAnnotation.resolved() == TemplateChooser.Resolved.DEFAULT
                       ? templateAnnotation.resolved()
                       : bytecodeAnnotation.resolved();
-            _initialized = bytecodeAnnotation.initialized() == TemplateChooser.Initialized.DEFAULT
+            this.initialized = bytecodeAnnotation.initialized() == TemplateChooser.Initialized.DEFAULT
                          ? templateAnnotation.initialized()
                          : bytecodeAnnotation.initialized();
-            _traced = bytecodeAnnotation.traced() == TemplateChooser.Traced.DEFAULT
+            this.traced = bytecodeAnnotation.traced() == TemplateChooser.Traced.DEFAULT
                     ? templateAnnotation.traced()
                     : bytecodeAnnotation.traced();
         }
-    }
-
-    public TargetMethod targetMethod() {
-        return _targetMethod;
-    }
-
-    public TemplateChooser.Instrumented instrumented() {
-        return _instrumented;
-    }
-
-    public TemplateChooser.Initialized initialized() {
-        return _initialized;
-    }
-
-    public TemplateChooser.Resolved resolved() {
-        return _resolved;
-    }
-
-    public TemplateChooser.Traced traced() {
-        return _traced;
     }
 
     /**
      * Gets the bytecode this template provides an implementation of.
      */
     public Bytecode bytecode() {
-        return _bytecode;
-    }
-
-    /**
-     * Return the {@linkplain Kind kind} (if any) for which this template is specialized.
-     * Only field access bytecode are specialized to kind.
-     * @return kind for which this template is specialized, {@code null} otherwise
-     */
-    public Kind kind() {
-        return _kind;
+        return bytecode;
     }
 
     @Override
     public String toString() {
-        return "template " + bytecode() + " (initialized=" + initialized() + ", resolved=" + resolved() + ", instrumented=" + instrumented() + ")";
+        return "template " + bytecode + " (initialized=" + initialized + ", resolved=" + resolved + ", instrumented=" + instrumented + ")";
     }
 }

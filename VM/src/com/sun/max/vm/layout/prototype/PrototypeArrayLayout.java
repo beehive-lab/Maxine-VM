@@ -32,15 +32,15 @@ import com.sun.max.vm.value.*;
  */
 public abstract class PrototypeArrayLayout<Value_Type extends Value<Value_Type>> extends PrototypeArrayHeaderLayout implements ArrayLayout<Value_Type> {
 
-    protected final Kind<Value_Type> _elementKind;
+    protected final Kind<Value_Type> elementKind;
 
     public PrototypeArrayLayout(GripScheme gripScheme, Kind<Value_Type> elementKind) {
         super(gripScheme);
-        _elementKind = elementKind;
+        this.elementKind = elementKind;
     }
 
     public Kind<Value_Type> elementKind() {
-        return _elementKind;
+        return elementKind;
     }
 
     public Layout.Category category() {
@@ -49,7 +49,7 @@ public abstract class PrototypeArrayLayout<Value_Type extends Value<Value_Type>>
 
     @Override
     public final boolean isReferenceArrayLayout() {
-        final Kind rawKind = _elementKind;
+        final Kind rawKind = elementKind;
         return rawKind == Kind.REFERENCE;
     }
 
@@ -62,7 +62,7 @@ public abstract class PrototypeArrayLayout<Value_Type extends Value<Value_Type>>
     }
 
     public int getElementSize() {
-        return elementKind().size();
+        return elementKind().width.numberOfBytes;
     }
 
     public Size getHeaderSize() {

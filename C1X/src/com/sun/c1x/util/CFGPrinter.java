@@ -39,7 +39,7 @@ import com.sun.c1x.value.*;
  */
 public class CFGPrinter {
 
-    private static OutputStream _cfgFileStream;
+    private static OutputStream cfgFileStream;
 
     /**
      * Gets the output stream  on the file "output.cfg" in the current working directory.
@@ -48,18 +48,18 @@ public class CFGPrinter {
      * @return the output stream to "output.cfg" or {@code null} if there was an error opening this file for writing
      */
     public static synchronized OutputStream cfgFileStream() {
-        if (_cfgFileStream == null) {
+        if (cfgFileStream == null) {
             File cfgFile = new File("output.cfg");
             try {
-                _cfgFileStream = new FileOutputStream(cfgFile);
+                cfgFileStream = new FileOutputStream(cfgFile);
             } catch (FileNotFoundException e) {
                 TTY.println("WARNING: Cound not open " + cfgFile.getAbsolutePath());
             }
         }
-        return _cfgFileStream;
+        return cfgFileStream;
     }
 
-    private final LogStream _out;
+    private final LogStream out;
 
     /**
      * Creates a control flow graph printer.
@@ -67,17 +67,17 @@ public class CFGPrinter {
      * @param os where the output generated via this printer shown be written
      */
     public CFGPrinter(OutputStream os) {
-        _out = new LogStream(os);
+        out = new LogStream(os);
     }
 
     private void begin(String string) {
-        _out.println("begin_" + string);
-        _out.adjustIndentation(2);
+        out.println("begin_" + string);
+        out.adjustIndentation(2);
     }
 
     private void end(String string) {
-        _out.adjustIndentation(-2);
-        _out.println("end_" + string);
+        out.adjustIndentation(-2);
+        out.println("end_" + string);
     }
 
     /**
@@ -87,9 +87,9 @@ public class CFGPrinter {
      */
     public void printCompilation(CiMethod method) {
         begin("compilation");
-        _out.print("name \" ").print(Util.format("%H::%n", method, true)).println('"');
-        _out.print("method \"").print(Util.format("%f %r %H.%n(%p)", method, true)).println('"');
-        _out.print("date ").println(System.currentTimeMillis());
+        out.print("name \" ").print(Util.format("%H::%n", method, true)).println('"');
+        out.print("method \"").print(Util.format("%f %r %H.%n(%p)", method, true)).println('"');
+        out.print("date ").println(System.currentTimeMillis());
         end("compilation");
     }
 
@@ -105,64 +105,64 @@ public class CFGPrinter {
     void printBlock(BlockBegin block, List<BlockBegin> successors, Iterable<BlockBegin> handlers, boolean printHIR, boolean printLIR) {
         begin("block");
 
-        _out.print("name \"B").print(block.blockID()).println('"');
-        _out.print("from_bci ").println(block.bci());
-        _out.print("to_bci ").println(block.end() == null ? -1 : block.end().bci());
+        out.print("name \"B").print(block.blockID()).println('"');
+        out.print("from_bci ").println(block.bci());
+        out.print("to_bci ").println(block.end() == null ? -1 : block.end().bci());
 
-        _out.print("predecessors ");
+        out.print("predecessors ");
         for (BlockBegin pred : block.predecessors()) {
-          _out.print("\"B").print(pred.blockID()).print("\" ");
+          out.print("\"B").print(pred.blockID()).print("\" ");
         }
-        _out.println();
+        out.println();
 
-        _out.print("successors ");
+        out.print("successors ");
         for (BlockBegin succ : successors) {
-            _out.print("\"B").print(succ.blockID()).print("\" ");
+            out.print("\"B").print(succ.blockID()).print("\" ");
         }
-        _out.println();
+        out.println();
 
-        _out.print("xhandlers");
+        out.print("xhandlers");
         for (BlockBegin handler : handlers) {
-            _out.print("\"B").print(handler.blockID()).print("\" ");
+            out.print("\"B").print(handler.blockID()).print("\" ");
         }
-        _out.println();
+        out.println();
 
-        _out.print("flags ");
+        out.print("flags ");
         if (block.isStandardEntry()) {
-            _out.print("\"std\" ");
+            out.print("\"std\" ");
         }
         if (block.isOsrEntry()) {
-            _out.print("\"osr\" ");
+            out.print("\"osr\" ");
         }
         if (block.isExceptionEntry()) {
-            _out.print("\"ex\" ");
+            out.print("\"ex\" ");
         }
         if (block.isSubroutineEntry()) {
-            _out.print("\"sr\" ");
+            out.print("\"sr\" ");
         }
         if (block.isBackwardBranchTarget()) {
-            _out.print("\"bb\" ");
+            out.print("\"bb\" ");
         }
         if (block.isParserLoopHeader()) {
-            _out.print("\"plh\" ");
+            out.print("\"plh\" ");
         }
         if (block.isCriticalEdgeSplit()) {
-            _out.print("\"ces\" ");
+            out.print("\"ces\" ");
         }
         if (block.isLinearScanLoopHeader()) {
-            _out.print("\"llh\" ");
+            out.print("\"llh\" ");
         }
         if (block.isLinearScanLoopEnd()) {
-            _out.print("\"lle\" ");
+            out.print("\"lle\" ");
         }
-        _out.println();
+        out.println();
 
         if (block.dominator() != null) {
-            _out.print("dominator \"B").print(block.dominator().blockID()).println('"');
+            out.print("dominator \"B").print(block.dominator().blockID()).println('"');
         }
         if (block.loopIndex() != -1) {
-            _out.print("loop_index ").println(block.loopIndex());
-            _out.print("loop_depth ").println(block.loopDepth());
+            out.print("loop_index ").println(block.loopIndex());
+            out.print("loop_depth ").println(block.loopDepth());
         }
 
         /* TODO: Uncomment (and fix) once LIR is implemented
@@ -197,16 +197,16 @@ public class CFGPrinter {
 
         if (state.stackSize() > 0) {
           begin("stack");
-          _out.print("size ").println(state.stackSize());
+          out.print("size ").println(state.stackSize());
 
           int i = 0;
           while (i < state.stackSize()) {
               Instruction value = state.stackAt(i);
-              _out.disableIndentation();
-              _out.print(stateString(i, value, block));
+              out.disableIndentation();
+              out.print(stateString(i, value, block));
               printLirOperand(value);
-              _out.println();
-              _out.enableIndentation();
+              out.println();
+              out.enableIndentation();
               i += value.type().size();
           }
           end("stack");
@@ -214,32 +214,32 @@ public class CFGPrinter {
 
         if (state.locksSize() > 0) {
             begin("locks");
-            _out.print("size ").println(state.locksSize());
+            out.print("size ").println(state.locksSize());
 
             for (int i = 0; i < state.locksSize(); ++i) {
                 Instruction value = state.lockAt(i);
-                _out.disableIndentation();
-                _out.print(stateString(i, value, block));
+                out.disableIndentation();
+                out.print(stateString(i, value, block));
                 printLirOperand(value);
-                _out.println();
-                _out.enableIndentation();
+                out.println();
+                out.enableIndentation();
             }
             end("locks");
         }
 
         do {
             begin("locals");
-            _out.print("size ").println(state.localsSize());
-            _out.print("method \"").print(Util.format("%f %r %H.%n(%p)", state.scope().method, true)).println('"');
+            out.print("size ").println(state.localsSize());
+            out.print("method \"").print(Util.format("%f %r %H.%n(%p)", state.scope().method, true)).println('"');
             int i = 0;
             while (i < state.localsSize()) {
                 Instruction value = state.localAt(i);
                 if (value != null) {
-                    _out.disableIndentation();
-                    _out.print(stateString(i, value, block));
+                    out.disableIndentation();
+                    out.print(stateString(i, value, block));
                     printLirOperand(value);
-                    _out.println();
-                    _out.enableIndentation();
+                    out.println();
+                    out.enableIndentation();
                     // also ignore illegal HiWords
                     i += value.type().isIllegal() ? 1 : value.type().size();
                 } else {
@@ -260,12 +260,12 @@ public class CFGPrinter {
      */
     private void printHIR(BlockBegin block) {
         begin("HIR");
-        _out.disableIndentation();
+        out.disableIndentation();
         for (Instruction i = block.next(); i != null; i = i.next()) {
             assert i.next() == null || !Instruction.valueString(i).equals(valueString(i.next()));
             printInstructionHIR(i);
         }
-        _out.enableIndentation();
+        out.enableIndentation();
         end("HIR");
     }
 
@@ -295,15 +295,15 @@ public class CFGPrinter {
      */
     private void printInstructionHIR(Instruction i) {
         if (i.isPinned()) {
-            _out.print('.');
+            out.print('.');
         }
         int useCount = 0;
-        _out.print(i.bci()).print(' ').print(useCount).print(' ');
+        out.print(i.bci()).print(' ').print(useCount).print(' ');
         printLirOperand(i);
-        _out.print(i).print(' ');
-        new InstructionPrinter(_out, true).printInstruction(i);
+        out.print(i).print(' ');
+        new InstructionPrinter(out, true).printInstruction(i);
 
-        _out.println(" <|@");
+        out.println(" <|@");
     }
 
     /**
@@ -317,7 +317,7 @@ public class CFGPrinter {
      */
     public void printCFG(BlockMap blockMap, int codeSize, String label, boolean printHIR, boolean printLIR) {
         begin("cfg");
-        _out.print("name \"").print(label).println('"');
+        out.print("name \"").print(label).println('"');
         for (int bci = 0; bci < codeSize; ++bci) {
             BlockBegin block = blockMap.get(bci);
             if (block != null) {
@@ -337,7 +337,7 @@ public class CFGPrinter {
      */
     public void printCFG(BlockBegin startBlock, String label, final boolean printHIR, final boolean printLIR) {
         begin("cfg");
-        _out.print("name \"").print(label).println('"');
+        out.print("name \"").print(label).println('"');
         startBlock.iteratePreOrder(new BlockClosure() {
             public void apply(BlockBegin block) {
                 printBlock(block, block.end().successors(), block.exceptionHandlerBlocks(), printHIR, printLIR);

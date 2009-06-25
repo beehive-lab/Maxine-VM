@@ -34,30 +34,30 @@ import com.sun.max.vm.thread.*;
 
 public class BeltwayCollectorThread extends Thread {
 
-    public volatile boolean _scavenge = false;
-    private BeltwayHeapScheme _beltwayHeapScheme;
+    public volatile boolean scavenge = false;
+    private BeltwayHeapScheme beltwayHeapScheme;
 
     // The current working TLAB
-    private RuntimeMemoryRegion _from;
-    private RuntimeMemoryRegion _to;
-    private static volatile int _runningGCThreads = 0;
-    private int _id;
-    private static volatile boolean _start = false;
-    public static final Object _callerToken = new Object();
-    public static Object[] _tokens = new Object[BeltwayConfiguration._numberOfGCThreads];
-    private TLAB _currentTLAB;
+    private RuntimeMemoryRegion from;
+    private RuntimeMemoryRegion to;
+    private static volatile int runningGCThreads = 0;
+    private int id;
+    private static volatile boolean start = false;
+    public static final Object callerToken = new Object();
+    public static Object[] tokens = new Object[BeltwayConfiguration.numberOfGCThreads];
+    private TLAB currentTLAB;
     static {
-        for (int i = 0; i < BeltwayConfiguration._numberOfGCThreads; i++) {
-            _tokens[i] = new Object();
+        for (int i = 0; i < BeltwayConfiguration.numberOfGCThreads; i++) {
+            tokens[i] = new Object();
         }
     }
 
     public BeltwayCollectorThread(int id) {
-        synchronized (_tokens[id]) {
-            _id = id;
+        synchronized (tokens[id]) {
+            this.id = id;
             try {
                 start();
-                _tokens[_id].wait();
+                tokens[id].wait();
             } catch (InterruptedException interruptedException) {
                 ProgramError.unexpected();
             }
@@ -68,19 +68,19 @@ public class BeltwayCollectorThread extends Thread {
     @Override
     public void run() {
         while (true) {
-            synchronized (_tokens[_id]) {
-                _tokens[_id].notify();
+            synchronized (tokens[id]) {
+                tokens[id].notify();
                 try {
-                    _tokens[_id].wait();
+                    tokens[id].wait();
                 } catch (InterruptedException interruptedException) {
                     ProgramError.unexpected();
                 }
 
                 while (true) {
-                    if (_start) {
-                        if (_scavenge) {
-                            scavenge(_from, _to);
-                            _scavenge = false;
+                    if (start) {
+                        if (scavenge) {
+                            scavenge(from, to);
+                            scavenge = false;
                             break;
                         }
                     }
@@ -92,39 +92,39 @@ public class BeltwayCollectorThread extends Thread {
     }
 
     private void exit() {
-        synchronized (_callerToken) {
-            if (_currentTLAB.isSet()) {
-                _currentTLAB.fillTLAB();
+        synchronized (callerToken) {
+            if (currentTLAB.isSet()) {
+                currentTLAB.fillTLAB();
             }
-            _runningGCThreads--;
+            runningGCThreads--;
             VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
-            if (_runningGCThreads == 0) {
+            if (runningGCThreads == 0) {
                 if (Heap.verbose()) {
                     Log.println("Resuming Stop the World Daemon");
                 }
-                _start = false;
-                _callerToken.notify();
+                start = false;
+                callerToken.notify();
             }
         }
     }
 
     public void trigger() {
-        synchronized (_tokens[_id]) {
-            _tokens[_id].notify();
+        synchronized (tokens[id]) {
+            tokens[id].notify();
         }
         enter();
     }
 
     private void enter() {
-        synchronized (_callerToken) {
-            _runningGCThreads++;
-            if (_runningGCThreads == BeltwayConfiguration._numberOfGCThreads) {
+        synchronized (callerToken) {
+            runningGCThreads++;
+            if (runningGCThreads == BeltwayConfiguration.numberOfGCThreads) {
                 try {
                     if (Heap.verbose()) {
                         Log.println("Pausing Stop The World Daemon");
                     }
-                    _start = true;
-                    _callerToken.wait();
+                    start = true;
+                    callerToken.wait();
                 } catch (InterruptedException interruptedException) {
                     FatalError.unexpected("Error with exception");
 
@@ -135,9 +135,9 @@ public class BeltwayCollectorThread extends Thread {
     }
 
     public void initialize(BeltwayHeapScheme beltwayHeapScheme, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        _beltwayHeapScheme = beltwayHeapScheme;
-        _from = from;
-        _to = to;
+        this.beltwayHeapScheme = beltwayHeapScheme;
+        this.from = from;
+        this.to = to;
         setScavenging(true);
     }
 
@@ -145,9 +145,9 @@ public class BeltwayCollectorThread extends Thread {
         final Pointer searchAddress = ((Belt) to).getPrevAllocationMark().asPointer();
         final int searchIndex = SideTable.getChunkIndexFromHeapAddress(searchAddress);
         final int stopSearchIndex = SideTable.getChunkIndexFromHeapAddress(to.end());
-        Pointer startScavengingAddress = _beltwayHeapScheme.getNextAvailableGCTask(searchIndex, stopSearchIndex);
+        Pointer startScavengingAddress = beltwayHeapScheme.getNextAvailableGCTask(searchIndex, stopSearchIndex);
         while (!startScavengingAddress.isZero()) {
-            final Pointer endScavengingAddress = _beltwayHeapScheme.getGCTLABEndFromStart(startScavengingAddress);
+            final Pointer endScavengingAddress = beltwayHeapScheme.getGCTLABEndFromStart(startScavengingAddress);
 
             //BeltwayHeapScheme._retrievedTLABS++;
             //Debug.lock();
@@ -161,12 +161,12 @@ public class BeltwayCollectorThread extends Thread {
 
             BeltwayCellVisitorImpl.linearVisitAllCellsTLAB(((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).beltwayCellVisitor(), ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).getAction(), startScavengingAddress,
                             endScavengingAddress, from, to);
-            startScavengingAddress = _beltwayHeapScheme.getNextAvailableGCTask(searchIndex, stopSearchIndex);
+            startScavengingAddress = beltwayHeapScheme.getNextAvailableGCTask(searchIndex, stopSearchIndex);
         }
 
-        _currentTLAB = VmThread.current().getTLAB();
-        while (!SideTable.isScavenged(SideTable.getChunkIndexFromHeapAddress(_currentTLAB.start()))) {
-            SideTable.markScavengeSideTable(_currentTLAB.start());
+        currentTLAB = VmThread.current().getTLAB();
+        while (!SideTable.isScavenged(SideTable.getChunkIndexFromHeapAddress(currentTLAB.start()))) {
+            SideTable.markScavengeSideTable(currentTLAB.start());
             //final Pointer endScavengingAddress = _currentTLAB.end().asPointer();
             //BeltwayHeapScheme._retrievedTLABS++;
             //Debug.lock();
@@ -178,24 +178,24 @@ public class BeltwayCollectorThread extends Thread {
             //Debug.println(endScavengingAddress);
             //Debug.unlock();
 
-            BeltwayCellVisitorImpl.linearVisitTLAB(_currentTLAB, ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).beltwayCellVisitor(), ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).getAction(), from, to);
+            BeltwayCellVisitorImpl.linearVisitTLAB(currentTLAB, ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).beltwayCellVisitor(), ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).getAction(), from, to);
             final TLAB newTLAB = VmThread.current().getTLAB();
-            if (!newTLAB.start().equals(_currentTLAB.start())) {
-                _currentTLAB = newTLAB;
+            if (!newTLAB.start().equals(currentTLAB.start())) {
+                currentTLAB = newTLAB;
             }
         }
 
     }
 
     public boolean isScavenging() {
-        return _scavenge;
+        return scavenge;
     }
 
     public void setScavenging(boolean scavenge) {
-        _scavenge = scavenge;
+        this.scavenge = scavenge;
     }
 
     public TLAB getScavengeTLAB() {
-        return _currentTLAB;
+        return currentTLAB;
     }
 }

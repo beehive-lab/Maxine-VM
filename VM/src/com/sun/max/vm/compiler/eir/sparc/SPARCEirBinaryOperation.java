@@ -38,19 +38,19 @@ import com.sun.max.vm.type.*;
  * an immediate value. SPARC support different width of immediate value, depending on the operation (e.g., arithmetic typically supports 13 bits, condition move on condition code supports
  * 11 bits, condition move on register value supports 10 bits, etc...).
  * Any immediate value with a width larger than the supported limit is loaded first in the scratch register specified in the target ABI.
- * 
+ *
  * Binary operation sub-class based on the effect on their operand and the number of operands they use. They are categorized as follow:
  * Arithmetic: One destination operand (always a register), two source operands, a register, and a register or immediate. The effect on the destination is Define.
- * 
+ *
  * By convention, if a binary operation specifies a single operand, the first source operand is implicitly the destination operand.
  * With this convention, an EIR binary operations may only have one of the following formats:
  * binop regSrc2, regSrc_or_imm, regDest
  * binop regSrc_or_imm, regDest
  * binop regSrc, regDest
- * 
+ *
  * By convention, the reg_or_imm operand is always the right operand of the binary operation. The second operand (register only) is always the left operand.
  * When no second operand is specified, the destination operand is the left operand.
- * 
+ *
  * @author Laurent Daynes
  */
 public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
@@ -78,29 +78,29 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
     /**
      * The right operand of the binary operation. May be a register or an immediate.
      */
-    private final EirOperand _registerOrImmediateOperand;
+    private final EirOperand registerOrImmediateOperand;
 
     public EirOperand registerOrImmediateOperand() {
-        return _registerOrImmediateOperand;
+        return registerOrImmediateOperand;
     }
 
     public EirOperand sourceOperand() {
-        return _registerOrImmediateOperand;
+        return registerOrImmediateOperand;
     }
     public EirValue sourceValue() {
-        return _registerOrImmediateOperand.eirValue();
+        return registerOrImmediateOperand.eirValue();
     }
 
     public EirLocation sourceLocation() {
-        return _registerOrImmediateOperand.location();
+        return registerOrImmediateOperand.location();
     }
 
     public EirOperand rightOperand() {
-        return _registerOrImmediateOperand;
+        return registerOrImmediateOperand;
     }
 
     public EirLocation rightLocation() {
-        return _registerOrImmediateOperand.location();
+        return registerOrImmediateOperand.location();
     }
 
     public SPARCEirRegister.GeneralPurpose rightGeneralRegister() {
@@ -121,22 +121,22 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
     /**
      * The left operand of the binary operation. Always a register. Same as the destination operand if not specified.
      */
-    private final EirOperand _registerOperand;
+    private final EirOperand registerOperand;
 
     public EirOperand registerOperand() {
-        return _registerOperand;
+        return registerOperand;
     }
 
     public EirOperand leftOperand() {
-        return _registerOperand;
+        return registerOperand;
     }
 
     public EirValue leftValue() {
-        return _registerOperand.eirValue();
+        return registerOperand.eirValue();
     }
 
     public EirLocation leftLocation() {
-        return _registerOperand.location();
+        return registerOperand.location();
     }
 
     public SPARCEirRegister.GeneralPurpose leftGeneralRegister() {
@@ -150,11 +150,11 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
     @Override
     public void visitOperands(EirOperand.Procedure visitor) {
         super.visitOperands(visitor);
-        if (_registerOperand != null && !_registerOperand.equals(destinationOperand())) {
-            visitor.run(_registerOperand);
+        if (registerOperand != null && !registerOperand.equals(destinationOperand())) {
+            visitor.run(registerOperand);
         }
-        if (_registerOrImmediateOperand != null) {
-            visitor.run(_registerOrImmediateOperand);
+        if (registerOrImmediateOperand != null) {
+            visitor.run(registerOrImmediateOperand);
         }
     }
 
@@ -164,9 +164,9 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
     public SPARCEirBinaryOperation(EirBlock block, EirValue destinationOperand, Effect destinationEffect,  PoolSet<EirLocationCategory> destinationCategory,
                     EirValue rightOperandValue, EirOperand.Effect rightOperandEffect, PoolSet<EirLocationCategory> rightLocationCategories) {
         super(block, destinationOperand, destinationEffect, destinationCategory);
-        _registerOperand =  destinationOperand();
-        _registerOrImmediateOperand =  new EirOperand(this, rightOperandEffect, rightLocationCategories);
-        _registerOrImmediateOperand.setEirValue(rightOperandValue);
+        registerOperand =  destinationOperand();
+        registerOrImmediateOperand =  new EirOperand(this, rightOperandEffect, rightLocationCategories);
+        registerOrImmediateOperand.setEirValue(rightOperandValue);
     }
 
 
@@ -174,18 +174,18 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
                     EirValue leftOperandValue, EirOperand.Effect leftOperandEffect, PoolSet<EirLocationCategory> leftOperandLocationCategories,
                     EirValue rightOperandValue, EirOperand.Effect rightOperandEffect, PoolSet<EirLocationCategory> rightLocationCategories) {
         super(block, destinationOperand, destinationEffect, destinationCategory);
-        _registerOperand = new EirOperand(this, leftOperandEffect, leftOperandLocationCategories);
-        _registerOperand.setEirValue(leftOperandValue);
-        _registerOrImmediateOperand =  new EirOperand(this, rightOperandEffect, rightLocationCategories);
-        _registerOrImmediateOperand.setEirValue(rightOperandValue);
+        registerOperand = new EirOperand(this, leftOperandEffect, leftOperandLocationCategories);
+        registerOperand.setEirValue(leftOperandValue);
+        registerOrImmediateOperand =  new EirOperand(this, rightOperandEffect, rightLocationCategories);
+        registerOrImmediateOperand.setEirValue(rightOperandValue);
     }
 
     public SPARCEirBinaryOperation(EirBlock block, EirValue destinationOperand, Effect destinationEffect,  PoolSet<EirLocationCategory> destinationCategory,
                     EirValue leftOperandValue, EirOperand.Effect leftOperandEffect, PoolSet<EirLocationCategory> leftOperandLocationCategories, EirOperand rightOperand) {
         super(block, destinationOperand, destinationEffect, destinationCategory);
-        _registerOperand = new EirOperand(this, leftOperandEffect, leftOperandLocationCategories);
-        _registerOperand.setEirValue(leftOperandValue);
-        _registerOrImmediateOperand =  rightOperand;
+        registerOperand = new EirOperand(this, leftOperandEffect, leftOperandLocationCategories);
+        registerOperand.setEirValue(leftOperandValue);
+        registerOrImmediateOperand =  rightOperand;
     }
 
     /**
@@ -195,10 +195,10 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
                     EirValue leftOperandValue, EirOperand.Effect leftOperandEffect, PoolSet<EirLocationCategory> leftOperandLocationCategories,
                     EirValue rightOperandValue, EirOperand.Effect rightOperandEffect, PoolSet<EirLocationCategory> rightLocationCategories) {
         super(block, destinationOperand);
-        _registerOperand = new EirOperand(this, leftOperandEffect, leftOperandLocationCategories);
-        _registerOperand.setEirValue(leftOperandValue);
-        _registerOrImmediateOperand =  new EirOperand(this, rightOperandEffect, rightLocationCategories);
-        _registerOrImmediateOperand.setEirValue(rightOperandValue);
+        registerOperand = new EirOperand(this, leftOperandEffect, leftOperandLocationCategories);
+        registerOperand.setEirValue(leftOperandValue);
+        registerOrImmediateOperand =  new EirOperand(this, rightOperandEffect, rightLocationCategories);
+        registerOrImmediateOperand.setEirValue(rightOperandValue);
     }
 
 
@@ -257,7 +257,7 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
             case IMMEDIATE_64:
                 try {
                     final long value = sourceLocation().asImmediate().value().toLong();
-                    if (Longs.numberOfEffectiveSignedBits(value) < Kind.INT.width().numberOfBits()) {
+                    if (Longs.numberOfEffectiveSignedBits(value) < Kind.INT.width.numberOfBits) {
                         emit_G_I32(emitter, generalBinOpEmitter, destinationRegister, (int) value);
                     } else {
                         final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
@@ -289,16 +289,16 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
      * Arithmetic binary operations always have a register as destination location, and a register or immediate as a source.
      * They may have a third source register, distinct from the destination, used to designate an alternate "first" operand for the operation.
      * That is, a binary operation is either of the form:
-     * 
+     *
      *  d = d op s1
-     * 
+     *
      *  d = s2 op s1
-     * 
+     *
      *  The right operand is always s1 and can be an register or an immediate. The left operand must always be a register.
-     * 
+     *
      * When using only two operands, the destination's effect is always UPDATE, and the source's is USE.
      * When using three operands, the destination effect is DEFINE, and the sources' are USE..
-     * 
+     *
      * @author Laurent Daynes
      */
     public abstract static class Arithmetic extends SPARCEirBinaryOperation {
@@ -320,7 +320,7 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
         }
 
         /**
-         * 
+         *
          * @param block
          * @param destination
          * @param destinationEffect
@@ -423,7 +423,7 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
         }
 
         public abstract static class FloatingPoint extends Compare {
-            private FCCOperand _selectedConditionCode;
+            private FCCOperand selectedConditionCode;
 
             /**
              * Returns the condition code this floating-point comparison instruction is setting.
@@ -431,17 +431,17 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
              * @return
              */
             public FCCOperand selectedConditionCode() {
-                return _selectedConditionCode;
+                return selectedConditionCode;
             }
 
             protected FloatingPoint(EirBlock block, EirValue leftValue, EirValue rightValue, FCCOperand fcc) {
                 super(block, leftValue, F, rightValue, F);
-                _selectedConditionCode = fcc;
+                selectedConditionCode = fcc;
             }
 
             protected FloatingPoint(EirBlock block, EirValue leftValue, EirValue rightValue) {
                 super(block, leftValue, F, rightValue, F);
-                _selectedConditionCode = FCCOperand.FCC0;
+                selectedConditionCode = FCCOperand.FCC0;
             }
 
             protected abstract void emit_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.FloatingPoint operand1Register, SPARCEirRegister.FloatingPoint operand2Register);
@@ -484,7 +484,7 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
                         case IMMEDIATE_64:
                             try {
                                 final long value = sourceLocation().asImmediate().value().toLong();
-                                if (Longs.numberOfEffectiveSignedBits(value) >= Kind.INT.width().numberOfBits()) {
+                                if (Longs.numberOfEffectiveSignedBits(value) >= Kind.INT.width.numberOfBits) {
                                     final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
                                     // O7 is a secondary scratch register we can use if NOT in a leaf function.
                                     emitter.assembler().setx(value, GPR.O7, scratchRegister.as());
@@ -573,10 +573,10 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
                 /**
                  * Condition code to be tested: integer (icc) or long (xcc), or floating (fcc0, fcc1, fcc2, fcc3).
                  */
-                protected ConditionCodeRegister _conditionCode;
+                protected ConditionCodeRegister conditionCode;
                 protected OnCondition(EirBlock block, ConditionCodeRegister conditionCode, EirValue destination, EirValue source) {
                     super(block, destination, Effect.UPDATE, source);
-                    _conditionCode = conditionCode;
+                    this.conditionCode = conditionCode;
                 }
                 @Override
                 public boolean canUseImmediate(int simm) {
@@ -584,7 +584,7 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
                 }
 
                 public ConditionCodeRegister testedConditionCode() {
-                    return _conditionCode;
+                    return conditionCode;
                 }
             }
         }

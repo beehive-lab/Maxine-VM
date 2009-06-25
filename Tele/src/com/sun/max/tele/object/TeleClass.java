@@ -32,7 +32,7 @@ import com.sun.max.vm.reference.*;
  */
 public final class TeleClass extends TeleTupleObject implements ClassObjectProvider {
 
-    private Class _clazz;
+    private Class clazz;
 
     protected TeleClass(TeleVM teleVM, Reference classReference) {
         super(teleVM, classReference);
@@ -51,11 +51,11 @@ public final class TeleClass extends TeleTupleObject implements ClassObjectProvi
      * @return the local instance of {@link Class} equivalent to this {@link Class} in the tele VM.
      */
     public Class toJava() {
-        if (_clazz == null) {
+        if (clazz == null) {
             final TeleClassActor teleClassActor = getTeleClassActor();
-            _clazz = teleClassActor.classActor().toJava();
+            clazz = teleClassActor.classActor().toJava();
         }
-        return _clazz;
+        return clazz;
     }
 
     @Override

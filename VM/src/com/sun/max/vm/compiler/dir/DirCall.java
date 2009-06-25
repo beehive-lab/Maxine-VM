@@ -31,10 +31,10 @@ import com.sun.max.vm.compiler.dir.transform.*;
  */
 public abstract class DirCall<Procedure_Type> extends DirInstruction {
 
-    private final DirVariable _result;
-    private final DirValue[] _arguments;
-    private DirCatchBlock _catchBlock;
-    private final DirJavaFrameDescriptor _javaFrameDescriptor;
+    private final DirVariable result;
+    private final DirValue[] arguments;
+    private DirCatchBlock catchBlock;
+    private final DirJavaFrameDescriptor javaFrameDescriptor;
 
     /**
      * @param result the variable which will hold the result of the callee execution
@@ -42,39 +42,39 @@ public abstract class DirCall<Procedure_Type> extends DirInstruction {
      * @param catchBlock the block where execution continues in case of an exception thrown by the callee
      */
     public DirCall(DirVariable result, DirValue[] arguments, DirCatchBlock catchBlock, DirJavaFrameDescriptor javaFrameDescriptor) {
-        _result = result;
-        _arguments = arguments;
-        _catchBlock = catchBlock;
-        _javaFrameDescriptor = javaFrameDescriptor;
+        this.result = result;
+        this.arguments = arguments;
+        this.catchBlock = catchBlock;
+        this.javaFrameDescriptor = javaFrameDescriptor;
     }
 
     public DirVariable result() {
-        return _result;
+        return result;
     }
 
     public DirValue[] arguments() {
-        return _arguments;
+        return arguments;
     }
 
     public void setArgument(int index, DirValue value) {
         assert value != null;
-        _arguments[index] = value;
+        arguments[index] = value;
     }
 
     @Override
     public DirCatchBlock catchBlock() {
-        return _catchBlock;
+        return catchBlock;
     }
 
     public DirJavaFrameDescriptor javaFrameDescriptor() {
-        return _javaFrameDescriptor;
+        return javaFrameDescriptor;
     }
 
     @Override
     public void substituteBlocks(Map<DirBlock, DirBlock> blockMap) {
-        final DirBlock block = blockMap.get(_catchBlock);
-        if (block != null && block != _catchBlock) {
-            _catchBlock = (DirCatchBlock) block;
+        final DirBlock block = blockMap.get(catchBlock);
+        if (block != null && block != catchBlock) {
+            catchBlock = (DirCatchBlock) block;
         }
     }
 
@@ -105,15 +105,15 @@ public abstract class DirCall<Procedure_Type> extends DirInstruction {
                     return false;
                 }
             }
-            if (_javaFrameDescriptor == null) {
-                if (dirCall._javaFrameDescriptor != null) {
+            if (javaFrameDescriptor == null) {
+                if (dirCall.javaFrameDescriptor != null) {
                     return false;
                 }
             } else {
-                if (dirCall._javaFrameDescriptor == null) {
+                if (dirCall.javaFrameDescriptor == null) {
                     return false;
                 }
-                if (!_javaFrameDescriptor.equals(dirCall._javaFrameDescriptor)) {
+                if (!javaFrameDescriptor.equals(dirCall.javaFrameDescriptor)) {
                     return false;
                 }
             }
@@ -124,21 +124,21 @@ public abstract class DirCall<Procedure_Type> extends DirInstruction {
 
     @Override
     public final String toString() {
-        String arguments = "";
+        String argumentsString = "";
         String separator = "";
         for (int i = 0; i < arguments().length; i++) {
-            arguments += separator + arguments()[i];
+            argumentsString += separator + arguments()[i];
             separator = " ";
         }
-        String s = procedure().toString() + "(" + arguments + ")";
+        String s = procedure().toString() + "(" + argumentsString + ")";
         if (result() != null) {
             s = result().toString() + " := " +  s;
         }
         if (catchBlock() != null) {
             s += " -> #" + catchBlock().serial();
         }
-        if (_javaFrameDescriptor != null) {
-            s += " " + _javaFrameDescriptor.toString();
+        if (javaFrameDescriptor != null) {
+            s += " " + javaFrameDescriptor.toString();
         }
         return s;
     }

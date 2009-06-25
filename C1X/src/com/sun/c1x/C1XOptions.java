@@ -28,8 +28,10 @@ package com.sun.c1x;
  */
 public class C1XOptions {
 
+    // Checkstyle: stop
     private static final boolean ____ = false;
     private static final boolean TRUE = true;
+    // Checkstyle: resume
 
     // inlining settings
     public static boolean InlineMethods                      = ____;
@@ -45,7 +47,7 @@ public class C1XOptions {
     public static int     MaximumDesiredSize                 = 8000;
 
     // floating point settings
-    public static int SSEVersion                             = 2;
+    public static int     SSEVersion                         = 2;
     public static boolean RoundFPResults                     = ____;
 
     // debugging settings
@@ -68,10 +70,11 @@ public class C1XOptions {
     public static boolean CanonicalizeMultipliesToShifts     = TRUE;
     public static boolean CanonicalizeObjectCheckCast        = TRUE;
     public static boolean CanonicalizeObjectInstanceOf       = TRUE;
+    public static boolean CanonicalizeFoldableMethods        = ____;
 
     // local value numbering / load elimination settings
     public static boolean UseLocalValueNumbering             = ____;
-    public static boolean EliminateFieldAccess               = TRUE;
+    public static boolean EliminateFieldAccess               = ____;
     public static boolean AlwaysCSEArrayLength               = ____;
 
     // profiling settings
@@ -84,12 +87,14 @@ public class C1XOptions {
     public static boolean UseCHA                             = ____;
     public static boolean UseDeopt                           = ____;
     public static boolean UseCHALeafMethods                  = ____;
+    public static boolean AggressivelyResolveCPEs            = TRUE;
 
     // state merging settings
     public static boolean MergeEquivalentConstants           = ____;
     public static boolean ComputeStoresInLoops               = TRUE;
     public static boolean AssumeVerifiedBytecode             = ____;
     public static boolean ExtraPhiChecking                   = TRUE;
+    public static boolean SimplifyPhis                       = TRUE;
 
     // miscellaneous settings
     public static boolean SupportObjectConstants             = TRUE;

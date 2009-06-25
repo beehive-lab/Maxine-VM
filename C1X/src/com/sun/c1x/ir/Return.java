@@ -31,7 +31,7 @@ import com.sun.c1x.value.ValueType;
  */
 public class Return extends BlockEnd {
 
-    Instruction _result;
+    Instruction result;
 
     /**
      * Constructs a new Return instruction.
@@ -40,7 +40,7 @@ public class Return extends BlockEnd {
      */
     public Return(Instruction result) {
         super(result == null ? ValueType.VOID_TYPE : result.type(), null, true);
-        _result = result;
+        this.result = result;
     }
 
     /**
@@ -48,7 +48,7 @@ public class Return extends BlockEnd {
      * @return the instruction producing the result
      */
     public Instruction result() {
-        return _result;
+        return result;
     }
 
     /**
@@ -56,7 +56,7 @@ public class Return extends BlockEnd {
      * @return <code>true</code> if this instruction returns a result
      */
     public boolean hasResult() {
-        return _result != null;
+        return result != null;
     }
 
     /**
@@ -65,7 +65,7 @@ public class Return extends BlockEnd {
      */
     @Override
     public void inputValuesDo(InstructionClosure closure) {
-        _result = closure.apply(_result);
+        result = closure.apply(result);
     }
 
     /**

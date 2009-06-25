@@ -54,14 +54,14 @@ public abstract class SignatureDescriptor extends Descriptor {
             return toString();
         }
 
-        private Entry<String, SignatureDescriptorEntry> _next;
+        private Entry<String, SignatureDescriptorEntry> next;
 
         public Entry<String, SignatureDescriptorEntry> next() {
-            return _next;
+            return next;
         }
 
         public void setNext(Entry<String, SignatureDescriptorEntry> next) {
-            _next = next;
+            this.next = next;
         }
 
         public void setValue(SignatureDescriptorEntry value) {
@@ -77,21 +77,21 @@ public abstract class SignatureDescriptor extends Descriptor {
      * Searching and adding entries to this map is only performed by
      * {@linkplain #createSignatureDescriptor(String, TypeDescriptor[]) one method} which is synchronized.
      */
-    private static final GrowableMapping<String, SignatureDescriptorEntry> _canonicalSignatureDescriptors = new ChainingValueChainedHashMapping<String, SignatureDescriptorEntry>();
+    private static final GrowableMapping<String, SignatureDescriptorEntry> canonicalSignatureDescriptors = new ChainingValueChainedHashMapping<String, SignatureDescriptorEntry>();
 
     SignatureDescriptor(String value, TypeDescriptor[] typeDescriptors) {
         super(value);
         assert getClass() == SignatureDescriptorEntry.class;
-        _typeDescriptors = typeDescriptors;
+        this.typeDescriptors = typeDescriptors;
     }
 
     /**
      * The return and parameter types of this signature. The return type is at index 0 followed by the parameter types starting at index 1.
      */
-    private final TypeDescriptor[] _typeDescriptors;
+    private final TypeDescriptor[] typeDescriptors;
 
     private static synchronized SignatureDescriptor createSignatureDescriptor(String value, TypeDescriptor[] typeDescriptors) {
-        SignatureDescriptorEntry signatureDescriptorEntry = _canonicalSignatureDescriptors.get(value);
+        SignatureDescriptorEntry signatureDescriptorEntry = canonicalSignatureDescriptors.get(value);
         if (signatureDescriptorEntry == null) {
             final TypeDescriptor[] verifiedTypes;
             if (typeDescriptors == null) {
@@ -102,14 +102,14 @@ public abstract class SignatureDescriptor extends Descriptor {
             assert verifiedTypes.length >= 1;
 
             signatureDescriptorEntry = new SignatureDescriptorEntry(value, verifiedTypes);
-            _canonicalSignatureDescriptors.put(value, signatureDescriptorEntry);
+            canonicalSignatureDescriptors.put(value, signatureDescriptorEntry);
         }
         return signatureDescriptorEntry;
     }
 
     @PROTOTYPE_ONLY
     public static int totalNumberOfDescriptors() {
-        return _canonicalSignatureDescriptors.length();
+        return canonicalSignatureDescriptors.length();
     }
 
     public static TypeDescriptor[] parse(String string, int startIndex) throws ClassFormatError {
@@ -139,7 +139,7 @@ public abstract class SignatureDescriptor extends Descriptor {
     }
 
     public static synchronized SignatureDescriptor lookup(String string) throws ClassFormatError {
-        return _canonicalSignatureDescriptors.get(string);
+        return canonicalSignatureDescriptors.get(string);
     }
 
     public static SignatureDescriptor create(String string) throws ClassFormatError {
@@ -181,7 +181,7 @@ public abstract class SignatureDescriptor extends Descriptor {
      * Gets the type descriptor of the return type in this signature object.
      */
     public TypeDescriptor resultDescriptor() {
-        return _typeDescriptors[0];
+        return typeDescriptors[0];
     }
 
     /**
@@ -190,8 +190,8 @@ public abstract class SignatureDescriptor extends Descriptor {
      */
     public int computeNumberOfSlots() {
         int n = 0;
-        for (int i = 1; i != _typeDescriptors.length; ++i) {
-            n += _typeDescriptors[i].toKind().isCategory1() ? 1 : 2;
+        for (int i = 1; i != typeDescriptors.length; ++i) {
+            n += typeDescriptors[i].toKind().isCategory1() ? 1 : 2;
         }
         return n;
     }
@@ -205,10 +205,10 @@ public abstract class SignatureDescriptor extends Descriptor {
      * @return the array into which the parameter kinds were copied
      */
     public Kind[] copyParameterKinds(Kind[] dst, int dstOffset) {
-        final Kind[] result = dst == null ? new Kind[dstOffset + _typeDescriptors.length - 1] : dst;
+        final Kind[] result = dst == null ? new Kind[dstOffset + typeDescriptors.length - 1] : dst;
         int dstIndex = dstOffset;
-        for (int i = 1; i != _typeDescriptors.length; ++i) {
-            result[dstIndex++] = _typeDescriptors[i].toKind();
+        for (int i = 1; i != typeDescriptors.length; ++i) {
+            result[dstIndex++] = typeDescriptors[i].toKind();
         }
         return result;
     }
@@ -222,9 +222,9 @@ public abstract class SignatureDescriptor extends Descriptor {
      * @return the resolved array of classes
      */
     public Class[] resolveParameterTypes(ClassLoader classLoader) {
-        final Class[] parameterTypes = new Class[_typeDescriptors.length - 1];
+        final Class[] parameterTypes = new Class[typeDescriptors.length - 1];
         for (int i = 0; i != parameterTypes.length; ++i) {
-            parameterTypes[i] = _typeDescriptors[i + 1].resolveType(classLoader);
+            parameterTypes[i] = typeDescriptors[i + 1].resolveType(classLoader);
         }
         return parameterTypes;
     }
@@ -236,13 +236,13 @@ public abstract class SignatureDescriptor extends Descriptor {
      * @return the resolved return type as a class
      */
     public Class resolveReturnType(ClassLoader classLoader) {
-        return _typeDescriptors[0].resolveType(classLoader);
+        return typeDescriptors[0].resolveType(classLoader);
     }
 
     public boolean parametersEqual(SignatureDescriptor other) {
-        if (_typeDescriptors.length == other._typeDescriptors.length) {
-            for (int i = 1; i != _typeDescriptors.length; ++i) {
-                if (_typeDescriptors[i] != other._typeDescriptors[i]) {
+        if (typeDescriptors.length == other.typeDescriptors.length) {
+            for (int i = 1; i != typeDescriptors.length; ++i) {
+                if (typeDescriptors[i] != other.typeDescriptors[i]) {
                     return false;
                 }
             }
@@ -265,7 +265,7 @@ public abstract class SignatureDescriptor extends Descriptor {
      */
     @INLINE
     public final int numberOfParameters() {
-        return _typeDescriptors.length - 1;
+        return typeDescriptors.length - 1;
     }
 
     /**
@@ -277,7 +277,7 @@ public abstract class SignatureDescriptor extends Descriptor {
      */
     @INLINE
     public final TypeDescriptor parameterDescriptorAt(int index) {
-        return _typeDescriptors[index + 1];
+        return typeDescriptors[index + 1];
     }
 
     public static SignatureDescriptor fromJava(Method method) {

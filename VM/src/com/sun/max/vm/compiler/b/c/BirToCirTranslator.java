@@ -44,13 +44,13 @@ public class BirToCirTranslator extends CirGenerator {
         super(cirGeneratorScheme);
     }
 
-    private static final TimerMetric _timer = GlobalMetrics.newTimer("Translate-BirToCir", Clock.SYSTEM_MILLISECONDS);
+    private static final TimerMetric timer = GlobalMetrics.newTimer("Translate-BirToCir", Clock.SYSTEM_MILLISECONDS);
 
     CirClosure translateMethod(BirMethod birMethod, CirMethod cirMethod, CirVariableFactory variableFactory) {
         final BirToCirMethodTranslation methodTranslation = new BirToCirMethodTranslation(birMethod, variableFactory, this);
         final ClassMethodActor classMethodActor = birMethod.classMethodActor();
 
-        _timer.start();
+        timer.start();
 
         BlockTranslator.run(methodTranslation);
         CirClosure cirClosure = methodTranslation.cirClosure();
@@ -117,7 +117,7 @@ public class BirToCirTranslator extends CirGenerator {
         freeVariableCapturing.pruneJavaLocals();
         notifyAfterTransformation(cirMethod, cirClosure, JAVA_LOCALS_PRUNING);
 
-        _timer.stop();
+        timer.stop();
 
         return cirClosure;
     }
@@ -173,7 +173,7 @@ public class BirToCirTranslator extends CirGenerator {
     protected void generateIrMethod(CirMethod cirMethod, CompilationDirective compilationDirective) {
         final ClassMethodActor compilee = cirMethod.classMethodActor().compilee();
         if (!compilee.isHiddenToReflection()) {
-            if (compilee.isStatic() && MaxineVM.isMaxineClass(compilee.holder().typeDescriptor()) && compilee.isDeclaredFoldable() && compilee.descriptor().numberOfParameters() == 0) {
+            if (compilee.isStatic() && MaxineVM.isMaxineClass(compilee.holder().typeDescriptor) && compilee.isDeclaredFoldable() && compilee.descriptor().numberOfParameters() == 0) {
                 foldAndMemoize(cirMethod);
                 return;
             }

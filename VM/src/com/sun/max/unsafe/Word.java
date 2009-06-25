@@ -110,22 +110,22 @@ public abstract class Word {
 
     @FOLD
     public static Endianness endianness() {
-        return Platform.hostOrTarget().processorKind().dataModel().endianness();
+        return Platform.hostOrTarget().processorKind.dataModel.endianness;
     }
 
     @FOLD
     public static WordWidth width() {
-        return Platform.hostOrTarget().processorKind().dataModel().wordWidth();
+        return Platform.hostOrTarget().processorKind.dataModel.wordWidth;
     }
 
     @FOLD
     public static int numberOfBits() {
-        return width().numberOfBits();
+        return width().numberOfBits;
     }
 
     @FOLD
     public static int size() {
-        return width().numberOfBytes();
+        return width().numberOfBytes;
     }
 
     @UNSAFE_CAST

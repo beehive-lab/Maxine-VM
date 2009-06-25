@@ -36,24 +36,24 @@ import com.sun.max.vm.compiler.cir.variable.*;
 public class CirBlockScopedTraversal extends CirBlockScopedVisitor {
 
     private static final class Item {
-        private CirNode _node;
-        private CirBlock _scope;
+        private CirNode node;
+        private CirBlock scope;
 
         Item(CirNode node, CirBlock scope) {
-            _node = node;
-            _scope = scope;
+            this.node = node;
+            this.scope = scope;
         }
     }
 
-    protected final LinkedList<Item> _toDo = new LinkedList<Item>();
+    protected final LinkedList<Item> toDo = new LinkedList<Item>();
 
     private void add(CirNode node, CirBlock scope) {
-        _toDo.add(new Item(node, scope));
+        toDo.add(new Item(node, scope));
     }
 
     protected CirBlockScopedTraversal(CirNode graph) {
         super();
-        _toDo.add(new Item(graph, null));
+        toDo.add(new Item(graph, null));
     }
 
     private void addValues(CirValue[] values, CirBlock scope) {
@@ -70,8 +70,8 @@ public class CirBlockScopedTraversal extends CirBlockScopedVisitor {
         addValues(call.arguments(), scope);
         CirJavaFrameDescriptor javaFrameDescriptor = call.javaFrameDescriptor();
         while (javaFrameDescriptor != null) {
-            addValues(javaFrameDescriptor.locals(), scope);
-            addValues(javaFrameDescriptor.stackSlots(), scope);
+            addValues(javaFrameDescriptor.locals, scope);
+            addValues(javaFrameDescriptor.stackSlots, scope);
             javaFrameDescriptor = javaFrameDescriptor.parent();
         }
     }
@@ -84,20 +84,20 @@ public class CirBlockScopedTraversal extends CirBlockScopedVisitor {
         add(closure.body(), scope);
     }
 
-    protected final IdentityHashSet<CirBlock> _visitedBlocks = new IdentityHashSet<CirBlock>();
+    protected final IdentityHashSet<CirBlock> visitedBlocks = new IdentityHashSet<CirBlock>();
 
     @Override
     public void visitBlock(CirBlock block, CirBlock scope) {
-        if (!_visitedBlocks.contains(block)) {
-            _visitedBlocks.add(block);
+        if (!visitedBlocks.contains(block)) {
+            visitedBlocks.add(block);
             add(block.closure(), block);
         }
     }
 
     public void run() {
-        while (!_toDo.isEmpty()) {
-            final Item item = _toDo.removeFirst();
-            item._node.acceptBlockScopedVisitor(this, item._scope);
+        while (!toDo.isEmpty()) {
+            final Item item = toDo.removeFirst();
+            item.node.acceptBlockScopedVisitor(this, item.scope);
         }
     }
 

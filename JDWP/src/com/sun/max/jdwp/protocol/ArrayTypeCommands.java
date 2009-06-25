@@ -45,30 +45,30 @@ public final class ArrayTypeCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ArrayTypeID _arrType;
+            public ID.ArrayTypeID arrType;
 
-            public int _length;
+            public int length;
             public IncomingRequest(ID.ArrayTypeID arrType,
                 int length) {
-                this._arrType = arrType;
-                this._length = length;
+                this.arrType = arrType;
+                this.length = length;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _arrType = ID.read(ps.getInputStream(), ID.ArrayTypeID.class);
-                _length = ps.readInt();
+                arrType = ID.read(ps.getInputStream(), ID.ArrayTypeID.class);
+                length = ps.readInt();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _arrType.write(ps.getOutputStream());
-                ps.write(_length);
+                arrType.write(ps.getOutputStream());
+                ps.write(length);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_arrType=" + _arrType);
+                stringBuilder.append("arrType=" + arrType);
                 stringBuilder.append(", ");
-                stringBuilder.append("_length=" + _length);
+                stringBuilder.append("length=" + length);
                 return stringBuilder.toString();
             }
         }
@@ -77,22 +77,22 @@ public final class ArrayTypeCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public JDWPValue _newArray;
+            public JDWPValue newArray;
             public Reply(JDWPValue newArray) {
-                this._newArray = newArray;
+                this.newArray = newArray;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _newArray = ps.readValue();
+                newArray = ps.readValue();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_newArray);
+                ps.write(newArray);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_newArray=" + _newArray);
+                stringBuilder.append("newArray=" + newArray);
                 return stringBuilder.toString();
             }
         }

@@ -25,8 +25,8 @@ package test.bytecode;
  * @Runs: 0 = 11; 1 = 11; 2 = 11; 3 = 11; -4 = 11
  */
 public class BC_getstatic_i {
-    private static int _field = 11;
+    private static int field = 11;
     public static int test(int a) {
-        return _field;
+        return field;
     }
 }

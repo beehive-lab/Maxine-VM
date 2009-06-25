@@ -40,18 +40,18 @@ import com.sun.max.vm.compiler.target.*;
  */
 public class UnixAMD64EirCFunctionABI extends UnixAMD64EirJavaABI {
 
-    private final PoolSet<AMD64EirRegister> _callerSavedRegisters = PoolSet.of(AMD64EirRegister.General.pool(), RAX, RCX, RDX, RSI, RDI, R8, R9, R10);
+    private final PoolSet<AMD64EirRegister> callerSavedRegisters = PoolSet.of(AMD64EirRegister.General.pool(), RAX, RCX, RDX, RSI, RDI, R8, R9, R10);
 
     @Override
     public PoolSet<AMD64EirRegister> callerSavedRegisters() {
-        return _callerSavedRegisters;
+        return callerSavedRegisters;
     }
 
-    private final PoolSet<AMD64EirRegister> _calleeSavedRegisters = PoolSet.of(AMD64EirRegister.General.pool(), RBX, RBP, R12, R13, R14, R15);
+    private final PoolSet<AMD64EirRegister> calleeSavedRegisters = PoolSet.of(AMD64EirRegister.General.pool(), RBX, RBP, R12, R13, R14, R15);
 
     @Override
     public PoolSet<AMD64EirRegister> calleeSavedRegisters() {
-        return _calleeSavedRegisters;
+        return calleeSavedRegisters;
     }
 
     /**

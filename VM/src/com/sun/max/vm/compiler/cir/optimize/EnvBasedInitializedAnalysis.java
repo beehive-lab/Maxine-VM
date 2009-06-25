@@ -96,15 +96,15 @@ public class EnvBasedInitializedAnalysis extends EnvBasedDFA<InitializedDomain.S
     public static class InitializedResult {
 
         private static class TreeVisitor extends CirVisitor {
-            final IdentityHashMapping<CirCall, InitializedDomain.Set[]> _results;
+            final IdentityHashMapping<CirCall, InitializedDomain.Set[]> results;
             TreeVisitor(IdentityHashMapping<CirCall, InitializedDomain.Set[]> results) {
-                _results = results;
+                this.results = results;
             }
             @Override
             public void visitCall(CirCall call) {
                 final CirValue op = call.procedure();
                 if (op instanceof JavaOperator) {
-                    final InitializedDomain.Set[] set = _results.get(call);
+                    final InitializedDomain.Set[] set = results.get(call);
                     if (set != null) {
                         if (set.length != 0 && set[0].isInitialized()) {
                             final JavaOperator javaOperator = (JavaOperator) op;

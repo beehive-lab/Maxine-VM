@@ -69,21 +69,21 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     }
 
     @INSPECTED
-    private final ClassMethodActor _classMethodActor;
+    private final ClassMethodActor classMethodActor;
 
     public final ClassMethodActor classMethodActor() {
-        return _classMethodActor;
+        return classMethodActor;
     }
 
     public abstract InstructionSet instructionSet();
 
     public TargetMethod(ClassMethodActor classMethodActor) {
-        _classMethodActor = classMethodActor;
+        this.classMethodActor = classMethodActor;
         setDescription("Target-" + name());
     }
 
     public final String name() {
-        return _classMethodActor.name().toString();
+        return classMethodActor.name.toString();
     }
 
     public final boolean isNative() {
@@ -97,7 +97,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * @see #catchRangePositions()
      */
     @INSPECTED
-    private int[] _catchRangePositions;
+    private int[] catchRangePositions;
 
     /**
      * Gets the array of positions denoting which ranges of code are covered by an
@@ -131,27 +131,27 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      *         {@linkplain #catchBlockPositions() catch block positions}
      */
     public final int[] catchRangePositions() {
-        return _catchRangePositions;
+        return catchRangePositions;
     }
 
     /**
      * @see #catchRangePositions()
      */
     public final int numberOfCatchRanges() {
-        return (_catchRangePositions == null) ? 0 : _catchRangePositions.length;
+        return (catchRangePositions == null) ? 0 : catchRangePositions.length;
     }
 
     /**
      * @see #catchRangePositions()
      */
     @INSPECTED
-    private int[] _catchBlockPositions;
+    private int[] catchBlockPositions;
 
     /**
      * @see #catchRangePositions()
      */
     public final int[] catchBlockPositions() {
-        return _catchBlockPositions;
+        return catchBlockPositions;
     }
 
     /**
@@ -161,13 +161,13 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * @see #stopPosition()
      */
     @INSPECTED
-    private int[] _stopPositions;
+    private int[] stopPositions;
 
     /**
      * Gets the array recording the positions of the {@link StopType stops} in this target method.
      * <p>
      * This array is composed of four contiguous segments. The first segment contains the positions of the direct call
-     * stops and the indexes in this segment match the entries of the {@link #_directCallees} array). The second segment
+     * stops and the indexes in this segment match the entries of the {@link #directCallees} array). The second segment
      * and third segments contain the positions of the register indirect call and safepoint stops. The fourth contains
      * the positions of guardpoint stops.
      * <p>
@@ -187,21 +187,21 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * @see StopType
      */
     public final int[] stopPositions() {
-        return _stopPositions;
+        return stopPositions;
     }
 
     public final int numberOfStopPositions() {
-        return _stopPositions == null ? 0 : _stopPositions.length;
+        return stopPositions == null ? 0 : stopPositions.length;
     }
 
     public final int stopPosition(int stopIndex) {
-        return _stopPositions[stopIndex] & ~REFERENCE_RETURN_FLAG;
+        return stopPositions[stopIndex] & ~REFERENCE_RETURN_FLAG;
     }
 
     public static final int REFERENCE_RETURN_FLAG = 0x80000000;
 
     public final boolean isReferenceCall(int stopIndex) {
-        return (_stopPositions[stopIndex] & REFERENCE_RETURN_FLAG) != 0;
+        return (stopPositions[stopIndex] & REFERENCE_RETURN_FLAG) != 0;
     }
 
     /**
@@ -220,7 +220,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         if (stopIndex < 0 || stopIndex >= numberOfStopPositions()) {
             throw new IllegalArgumentException();
         }
-        return new ByteArrayBitMap(_referenceMaps, stopIndex * _frameReferenceMapSize, _frameReferenceMapSize);
+        return new ByteArrayBitMap(referenceMaps, stopIndex * frameReferenceMapSize, frameReferenceMapSize);
     }
 
     /**
@@ -246,7 +246,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * The remainder of the bytes in {@link #referenceMaps()} encodes the register reference maps for the safepoints.
      */
     public int frameReferenceMapsSize() {
-        return _frameReferenceMapSize * numberOfStopPositions();
+        return frameReferenceMapSize * numberOfStopPositions();
     }
 
     /**
@@ -263,17 +263,17 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         final int registerReferenceMapSize = registerReferenceMapSize();
         // The register reference maps come after all the frame reference maps in _referenceMaps.
         final int start = frameReferenceMapsSize() + (registerReferenceMapSize * safepointIndex);
-        return new ByteArrayBitMap(_referenceMaps, start, registerReferenceMapSize);
+        return new ByteArrayBitMap(referenceMaps, start, registerReferenceMapSize);
     }
 
     @INSPECTED
-    private byte[] _compressedJavaFrameDescriptors;
+    private byte[] compressedJavaFrameDescriptors;
 
     /**
      * If non-null, this array encodes a serialized array of {@link InlineDataDescriptor} objects.
      */
     @INSPECTED
-    private byte[] _encodedInlineDataDescriptors;
+    private byte[] encodedInlineDataDescriptors;
 
     /**
      * Gets the {@linkplain InlineDataDescriptor inline data descriptors} associated with this target method's code
@@ -282,14 +282,14 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * @return null if there are no inline data descriptors associated with this target method's code
      */
     public byte[] encodedInlineDataDescriptors() {
-        return _encodedInlineDataDescriptors;
+        return encodedInlineDataDescriptors;
     }
 
     /**
      * @see TargetJavaFrameDescriptor#compress(com.sun.max.collect.Sequence)
      */
     public final byte[] compressedJavaFrameDescriptors() {
-        return _compressedJavaFrameDescriptors;
+        return compressedJavaFrameDescriptors;
     }
 
     /**
@@ -344,12 +344,12 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      *         descriptor can be determined for {@code instructionPointer}
      */
     public TargetJavaFrameDescriptor getJavaFrameDescriptorFor(Pointer instructionPointer) {
-        if (_stopPositions == null || _compressedJavaFrameDescriptors == null) {
+        if (stopPositions == null || compressedJavaFrameDescriptors == null) {
             return null;
         }
         int resultIndex = -1;
         int minDistance = Integer.MAX_VALUE;
-        final int position = instructionPointer.minus(_codeStart).toInt();
+        final int position = instructionPointer.minus(codeStart).toInt();
         for (int i = 0; i < numberOfStopPositions(); i++) {
             final int stopPosition = stopPosition(i);
             if (stopPosition <= position) {
@@ -367,17 +367,17 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     }
 
     public final int numberOfDirectCalls() {
-        return (_directCallees == null) ? 0 : _directCallees.length;
+        return (directCallees == null) ? 0 : directCallees.length;
     }
 
     @INSPECTED
-    private ClassMethodActor[] _directCallees;
+    private ClassMethodActor[] directCallees;
 
     /**
      * @return class method actors referenced by direct call instructions, matched to the stop positions array above by array index
      */
     public final ClassMethodActor[] directCallees() {
-        return _directCallees;
+        return directCallees;
     }
 
     /**
@@ -392,29 +392,29 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     }
 
     @INSPECTED
-    private int _numberOfIndirectCalls;
+    private int numberOfIndirectCalls;
 
     public final int numberOfIndirectCalls() {
-        return _numberOfIndirectCalls;
+        return numberOfIndirectCalls;
     }
 
     @INSPECTED
-    private int _numberOfSafepoints;
+    private int numberOfSafepoints;
 
     public final int numberOfSafepoints() {
-        return _numberOfSafepoints;
+        return numberOfSafepoints;
     }
 
-    private int _numberOfGuardpoints;
+    private int numberOfGuardpoints;
 
     public int numberOfGuardpoints() {
-        return _numberOfGuardpoints;
+        return numberOfGuardpoints;
     }
 
     /**
      * @see #referenceMaps()
      */
-    private byte[] _referenceMaps;
+    private byte[] referenceMaps;
 
     /**
      * Gets the frame and register reference maps for this target method.
@@ -443,7 +443,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * </pre>
      */
     public final byte[] referenceMaps() {
-        return _referenceMaps;
+        return referenceMaps;
     }
 
     /**
@@ -459,45 +459,45 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     public abstract void finalizeReferenceMaps();
 
     @INSPECTED
-    private byte[] _scalarLiteralBytes;
+    private byte[] scalarLiteralBytes;
 
     /**
      * @return non-object data referenced by the machine code
      */
     public final byte[] scalarLiteralBytes() {
-        return _scalarLiteralBytes;
+        return scalarLiteralBytes;
     }
 
     public final int numberOfScalarLiteralBytes() {
-        return (_scalarLiteralBytes == null) ? 0 : _scalarLiteralBytes.length;
+        return (scalarLiteralBytes == null) ? 0 : scalarLiteralBytes.length;
     }
 
     @INSPECTED
-    private Object[] _referenceLiterals;
+    private Object[] referenceLiterals;
 
     /**
      * @return object references referenced by the machine code
      */
     public final Object[] referenceLiterals() {
-        return _referenceLiterals;
+        return referenceLiterals;
     }
 
     public final int numberOfReferenceLiterals() {
-        return (_referenceLiterals == null) ? 0 : _referenceLiterals.length;
+        return (referenceLiterals == null) ? 0 : referenceLiterals.length;
     }
 
     @INSPECTED
-    private byte[] _code;
+    private byte[] code;
 
     /**
      * Gets the byte array containing the target-specific machine code of this target method.
      */
     public final byte[] code() {
-        return _code;
+        return code;
     }
 
     public final int codeLength() {
-        return (_code == null) ? 0 : _code.length;
+        return (code == null) ? 0 : code.length;
     }
 
     /**
@@ -506,18 +506,18 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * Needs {@linkplain DataPrototype#assignRelocationFlags() relocation}.
      */
     @INSPECTED
-    private Pointer _codeStart = Pointer.zero();
+    private Pointer codeStart = Pointer.zero();
 
     public final Pointer codeStart() {
-        return _codeStart;
+        return codeStart;
     }
 
     @PROTOTYPE_ONLY
     public final void setCodeStart(Pointer codeStart) {
-        _codeStart = codeStart;
+        this.codeStart = codeStart;
     }
 
-    private int _frameSize;
+    private int frameSize;
 
     /**
      * Gets the size (in bytes) of the stack frame used for the local variables in
@@ -526,17 +526,17 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * by this amount when exiting a method.
      */
     public final int frameSize() {
-        return _frameSize;
+        return frameSize;
     }
 
     @INSPECTED
-    private int _frameReferenceMapSize;
+    private int frameReferenceMapSize;
 
     /**
      * Gets the size of a single frame reference map encoded in this method's {@linkplain #referenceMaps() reference maps}.
      */
     public final int frameReferenceMapSize() {
-        return _frameReferenceMapSize;
+        return frameReferenceMapSize;
     }
 
     /**
@@ -565,7 +565,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
                 String referenceRegisters = "";
                 buf.append("  register map:");
                 for (int i = 0; i < registerReferenceMapSize(); i++) {
-                    final byte refMapByte = _referenceMaps[byteIndex];
+                    final byte refMapByte = referenceMaps[byteIndex];
                     buf.append(String.format(" 0x%x", refMapByte & 0xff));
                     if (refMapByte != 0) {
                         for (int bitIndex = 0; bitIndex < Bytes.WIDTH; bitIndex++) {
@@ -593,16 +593,16 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     public abstract JavaStackFrameLayout stackFrameLayout();
 
     @INSPECTED
-    private TargetABI _abi;
+    private TargetABI abi;
 
     public final TargetABI abi() {
-        return _abi;
+        return abi;
     }
 
-    private int _markerPosition = -1;
+    private int markerPosition = -1;
 
     public int markerPosition() {
-        return _markerPosition;
+        return markerPosition;
     }
 
     /**
@@ -652,39 +652,39 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
                             int frameReferenceMapSize,
                             TargetABI abi,
                             int markerPosition) {
-        _codeStart = targetBundle.firstElementPointer(ArrayField.code);
-        _frameSize = frameSize;
-        _frameReferenceMapSize = frameReferenceMapSize;
-        _numberOfIndirectCalls = numberOfIndirectCalls;
-        _numberOfSafepoints = numberOfSafepoints;
-        _numberOfGuardpoints = numberOfGuardpoints;
-        _abi = abi;
-        _compressedJavaFrameDescriptors = compressedJavaFrameDescriptors;
-        _encodedInlineDataDescriptors = encodedInlineDataDescriptors;
-        _markerPosition = markerPosition;
+        this.codeStart = targetBundle.firstElementPointer(ArrayField.code);
+        this.frameSize = frameSize;
+        this.frameReferenceMapSize = frameReferenceMapSize;
+        this.numberOfIndirectCalls = numberOfIndirectCalls;
+        this.numberOfSafepoints = numberOfSafepoints;
+        this.numberOfGuardpoints = numberOfGuardpoints;
+        this.abi = abi;
+        this.compressedJavaFrameDescriptors = compressedJavaFrameDescriptors;
+        this.encodedInlineDataDescriptors = encodedInlineDataDescriptors;
+        this.markerPosition = markerPosition;
 
         assert checkReferenceMapSize(stopPositions, numberOfSafepoints, referenceMaps, frameReferenceMapSize);
 
         // copy the arrays into the target bundle
-        _catchRangePositions = copyObjectIntoArrayCell(catchRangePositions, targetBundle, ArrayField.catchRangePositions);
-        _catchBlockPositions = copyObjectIntoArrayCell(catchBlockPositions, targetBundle, ArrayField.catchBlockPositions);
-        _stopPositions = copyObjectIntoArrayCell(stopPositions, targetBundle, ArrayField.stopPositions);
-        _directCallees = copyObjectIntoArrayCell(directCallees, targetBundle, ArrayField.directCallees);
-        _referenceMaps = copyObjectIntoArrayCell(referenceMaps, targetBundle, ArrayField.referenceMaps);
-        _scalarLiteralBytes = copyObjectIntoArrayCell(scalarLiteralBytes, targetBundle, ArrayField.scalarLiteralBytes);
-        _referenceLiterals = copyObjectIntoArrayCell(referenceLiterals, targetBundle, ArrayField.referenceLiterals);
+        this.catchRangePositions = copyObjectIntoArrayCell(catchRangePositions, targetBundle, ArrayField.catchRangePositions);
+        this.catchBlockPositions = copyObjectIntoArrayCell(catchBlockPositions, targetBundle, ArrayField.catchBlockPositions);
+        this.stopPositions = copyObjectIntoArrayCell(stopPositions, targetBundle, ArrayField.stopPositions);
+        this.directCallees = copyObjectIntoArrayCell(directCallees, targetBundle, ArrayField.directCallees);
+        this.referenceMaps = copyObjectIntoArrayCell(referenceMaps, targetBundle, ArrayField.referenceMaps);
+        this.scalarLiteralBytes = copyObjectIntoArrayCell(scalarLiteralBytes, targetBundle, ArrayField.scalarLiteralBytes);
+        this.referenceLiterals = copyObjectIntoArrayCell(referenceLiterals, targetBundle, ArrayField.referenceLiterals);
 
         // now copy the code (or a code buffer) into the cell for the byte[]
         if (codeOrCodeBuffer instanceof byte[]) {
-            _code = copyObjectIntoArrayCell((byte[]) codeOrCodeBuffer, targetBundle, ArrayField.code);
+            this.code = copyObjectIntoArrayCell((byte[]) codeOrCodeBuffer, targetBundle, ArrayField.code);
         } else if (codeOrCodeBuffer instanceof CodeBuffer) {
             final CodeBuffer codeBuffer = (CodeBuffer) codeOrCodeBuffer;
             if (MaxineVM.isPrototyping()) {
-                _code = new byte[codeBuffer.currentPosition()];
+                this.code = new byte[codeBuffer.currentPosition()];
             } else {
-                _code = UnsafeLoophole.cast(Cell.plantArray(targetBundle.cell(ArrayField.code), PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub(), codeBuffer.currentPosition()));
+                this.code = UnsafeLoophole.cast(Cell.plantArray(targetBundle.cell(ArrayField.code), PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub(), codeBuffer.currentPosition()));
             }
-            codeBuffer.copyTo(_code);
+            codeBuffer.copyTo(code);
         } else {
             throw ProgramError.unexpected("byte[] or CodeBuffer required in TargetMethod.setGenerated()");
         }
@@ -694,8 +694,8 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
             for (ArrayField field : ArrayField.VALUES) {
                 Metrics.accumulate("TargetMethod." + field, targetBundle.layout().cellSize(field).toInt());
             }
-            if (_compressedJavaFrameDescriptors != null) {
-                Metrics.accumulate("TargetMethod.compressedFrameDescriptors", HostObjectAccess.getSize(_compressedJavaFrameDescriptors).toInt());
+            if (compressedJavaFrameDescriptors != null) {
+                Metrics.accumulate("TargetMethod.compressedFrameDescriptors", HostObjectAccess.getSize(compressedJavaFrameDescriptors).toInt());
             }
         }
     }
@@ -713,29 +713,29 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     }
 
     public final boolean isGenerated() {
-        return _code != null;
+        return code != null;
     }
 
     public final ClassMethodActor callSiteToCallee(Address callSite) {
-        final int callOffset = callSite.minus(_codeStart).toInt();
+        final int callOffset = callSite.minus(codeStart).toInt();
         for (int i = 0; i < numberOfStopPositions(); i++) {
             if (stopPosition(i) == callOffset) {
-                return _directCallees[i];
+                return directCallees[i];
             }
         }
         throw FatalError.unexpected("could not find callee for call site: " + callSite.toHexString());
     }
 
     public final Address throwAddressToCatchAddress(Address throwAddress) {
-        if (_catchRangePositions != null) {
-            final int throwOffset = throwAddress.minus(_codeStart).toInt();
-            for (int i = _catchRangePositions.length - 1; i >= 0; i--) {
-                if (throwOffset >= _catchRangePositions[i]) {
-                    final int catchBlockPosition = _catchBlockPositions[i];
+        if (catchRangePositions != null) {
+            final int throwOffset = throwAddress.minus(codeStart).toInt();
+            for (int i = catchRangePositions.length - 1; i >= 0; i--) {
+                if (throwOffset >= catchRangePositions[i]) {
+                    final int catchBlockPosition = catchBlockPositions[i];
                     if (catchBlockPosition <= 0) {
                         return Address.zero();
                     }
-                    return _codeStart.plus(catchBlockPosition);
+                    return codeStart.plus(catchBlockPosition);
                 }
             }
         }
@@ -770,15 +770,15 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * @param writer where the trace is written
      */
     public final void traceExceptionHandlers(IndentWriter writer) {
-        if (_catchRangePositions != null) {
-            assert _catchBlockPositions != null;
+        if (catchRangePositions != null) {
+            assert catchBlockPositions != null;
             writer.println("Catches:");
             writer.indent();
-            for (int i = 0; i < _catchRangePositions.length; i++) {
-                if (_catchBlockPositions[i] != 0) {
-                    final int catchRangeEnd = (i == _catchRangePositions.length - 1) ? _code.length : _catchRangePositions[i + 1];
-                    final int catchRangeStart = _catchRangePositions[i];
-                    writer.println("[" + catchRangeStart + " .. " + catchRangeEnd + ") -> " + _catchBlockPositions[i]);
+            for (int i = 0; i < catchRangePositions.length; i++) {
+                if (catchBlockPositions[i] != 0) {
+                    final int catchRangeEnd = (i == catchRangePositions.length - 1) ? code.length : catchRangePositions[i + 1];
+                    final int catchRangeStart = catchRangePositions[i];
+                    writer.println("[" + catchRangeStart + " .. " + catchRangeEnd + ") -> " + catchBlockPositions[i]);
                 }
             }
             writer.outdent();
@@ -791,12 +791,12 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * @param writer where the trace is written
      */
     public final void traceDirectCallees(IndentWriter writer) {
-        if (_directCallees != null) {
-            assert _stopPositions != null && _directCallees.length <= numberOfStopPositions();
+        if (directCallees != null) {
+            assert stopPositions != null && directCallees.length <= numberOfStopPositions();
             writer.println("Direct Calls: ");
             writer.indent();
-            for (int i = 0; i < _directCallees.length; i++) {
-                writer.println(stopPosition(i) + " -> " + _directCallees[i]);
+            for (int i = 0; i < directCallees.length; i++) {
+                writer.println(stopPosition(i) + " -> " + directCallees[i]);
             }
             writer.outdent();
         }
@@ -808,12 +808,12 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * @param writer where the trace is written
      */
     public final void traceScalarBytes(IndentWriter writer, final TargetBundle targetBundle) {
-        if (_scalarLiteralBytes != null) {
+        if (scalarLiteralBytes != null) {
             writer.println("Scalars:");
             writer.indent();
-            for (int i = 0; i < _scalarLiteralBytes.length; i++) {
+            for (int i = 0; i < scalarLiteralBytes.length; i++) {
                 final Pointer pointer = targetBundle.cell(ArrayField.scalarLiteralBytes).plus(ArrayField.scalarLiteralBytes.layout().getElementOffsetInCell(i));
-                writer.println("[" + pointer.toString() + "] 0x" + Integer.toHexString(_scalarLiteralBytes[i] & 0xFF) + "  " + _scalarLiteralBytes[i]);
+                writer.println("[" + pointer.toString() + "] 0x" + Integer.toHexString(scalarLiteralBytes[i] & 0xFF) + "  " + scalarLiteralBytes[i]);
             }
             writer.outdent();
         }
@@ -825,12 +825,12 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * @param writer where the trace is written
      */
     public final void traceReferenceLiterals(IndentWriter writer, final TargetBundle targetBundle) {
-        if (_referenceLiterals != null) {
+        if (referenceLiterals != null) {
             writer.println("References: ");
             writer.indent();
-            for (int i = 0; i < _referenceLiterals.length; i++) {
+            for (int i = 0; i < referenceLiterals.length; i++) {
                 final Pointer pointer = targetBundle.cell(ArrayField.referenceLiterals).plus(ArrayField.referenceLiterals.layout().getElementOffsetInCell(i));
-                writer.println("[" + pointer.toString() + "] " + _referenceLiterals[i]);
+                writer.println("[" + pointer.toString() + "] " + referenceLiterals[i]);
             }
             writer.outdent();
         }
@@ -842,10 +842,10 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * @param writer where the trace is written
      */
     public final void traceFrameDescriptors(IndentWriter writer) {
-        if (_compressedJavaFrameDescriptors != null) {
+        if (compressedJavaFrameDescriptors != null) {
             writer.println("Frame Descriptors:");
             writer.indent();
-            final IndexedSequence<TargetJavaFrameDescriptor> frameDescriptors = TargetJavaFrameDescriptor.inflate(_compressedJavaFrameDescriptors);
+            final IndexedSequence<TargetJavaFrameDescriptor> frameDescriptors = TargetJavaFrameDescriptor.inflate(compressedJavaFrameDescriptors);
             for (int stopIndex = 0; stopIndex < frameDescriptors.length(); ++stopIndex) {
                 final TargetJavaFrameDescriptor frameDescriptor = frameDescriptors.get(stopIndex);
                 final int stopPosition = stopPosition(stopIndex);
@@ -870,7 +870,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
 
     @Override
     public final String toString() {
-        return _classMethodActor.format("%H.%n(%p)");
+        return classMethodActor.format("%H.%n(%p)");
     }
 
     public final void trace(int level) {
@@ -968,8 +968,8 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
             duplicate.setGenerated(targetBundle,
                         catchRangePositions() == null ? null : catchRangePositions().clone(),
                         catchBlockPositions() == null ? null : catchBlockPositions().clone(),
-                        _stopPositions == null ? null : _stopPositions.clone(),
-                        _compressedJavaFrameDescriptors,
+                        stopPositions == null ? null : stopPositions.clone(),
+                        compressedJavaFrameDescriptors,
                         duplicatedDirectCallees,
                         numberOfIndirectCalls(),
                         numberOfSafepoints(),
@@ -978,17 +978,17 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
                         scalarLiteralBytes() == null ? null : scalarLiteralBytes().clone(),
                         duplicatedReferenceLiterals,
                         code().clone(),
-                        _encodedInlineDataDescriptors,
+                        encodedInlineDataDescriptors,
                         frameSize(),
                         frameReferenceMapSize(),
                         abi(),
-                        _markerPosition);
+                        markerPosition);
         } else {
             duplicate.setGenerated(targetBundle,
                             catchRangePositions(),
                             catchBlockPositions(),
-                            _stopPositions,
-                            _compressedJavaFrameDescriptors,
+                            stopPositions,
+                            compressedJavaFrameDescriptors,
                             directCallees(),
                             numberOfIndirectCalls(),
                             numberOfSafepoints(),
@@ -997,11 +997,11 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
                             scalarLiteralBytes(),
                             referenceLiterals(),
                             code(),
-                            _encodedInlineDataDescriptors,
+                            encodedInlineDataDescriptors,
                             frameSize(),
                             frameReferenceMapSize(),
                             abi(),
-                            _markerPosition);
+                            markerPosition);
         }
         return duplicate;
     }
@@ -1098,8 +1098,8 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      *         be the case when {@code instructionPointer} is in the adapter frame stub code, prologue or epilogue.
      */
     public int targetCodePositionFor(Pointer instructionPointer) {
-        final int targetCodePosition = instructionPointer.minus(_codeStart).toInt();
-        if (targetCodePosition >= 0 && targetCodePosition < _code.length) {
+        final int targetCodePosition = instructionPointer.minus(codeStart).toInt();
+        if (targetCodePosition >= 0 && targetCodePosition < code.length) {
             return targetCodePosition;
         }
         return -1;
@@ -1111,7 +1111,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * @return {@link Pointer#zero()} if no call exists in this target method after {@code instructionPointer}
      */
     public int findNextCall(int targetCodePosition) {
-        if (_stopPositions == null || targetCodePosition < 0 || targetCodePosition > _code.length) {
+        if (stopPositions == null || targetCodePosition < 0 || targetCodePosition > code.length) {
             return -1;
         }
 
@@ -1142,7 +1142,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      */
     public int findClosestStopIndex(Pointer instructionPointer) {
         final int targetCodePosition = targetCodePositionFor(instructionPointer);
-        if (_stopPositions == null || targetCodePosition < 0 || targetCodePosition > _code.length) {
+        if (stopPositions == null || targetCodePosition < 0 || targetCodePosition > code.length) {
             return -1;
         }
 

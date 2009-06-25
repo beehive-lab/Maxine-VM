@@ -135,7 +135,7 @@ public abstract class CompilerTest_regressions<Method_Type extends IrMethod> ext
         final ClassActor stubClassActor = ClassActor.fromJava(method.makeInvocationStub().getClass());
         for (ClassMethodActor invoke : stubClassActor.localVirtualMethodActors()) {
             if (!invoke.isInitializer()) {
-                assert invoke.name().equals("invoke");
+                assert invoke.name.equals("invoke");
                 compileMethod(invoke);
             }
 
@@ -185,7 +185,7 @@ public abstract class CompilerTest_regressions<Method_Type extends IrMethod> ext
         compileMethod(CompilerTest_regressions.class, "sync");
     }
 
-    private static Throwable _terminationCause;
+    private static Throwable terminationCause;
 
     public void test_SubroutineInliner_rewriteOneSubroutine() {
         compileMethod(SubroutineInliner.class, "rewriteOneSubroutine");
@@ -200,8 +200,8 @@ public abstract class CompilerTest_regressions<Method_Type extends IrMethod> ext
             try {
                 //
             } finally {
-                if (_terminationCause != null) {
-                    throw _terminationCause;
+                if (terminationCause != null) {
+                    throw terminationCause;
                 }
             }
         } catch (Throwable throwable) {

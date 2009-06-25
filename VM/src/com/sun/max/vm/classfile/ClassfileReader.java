@@ -52,7 +52,7 @@ import com.sun.max.vm.value.*;
  * @author Doug Simon
  * @author David Liu
  */
-public class ClassfileReader {
+public final class ClassfileReader {
 
     public static final char JAVA_MIN_SUPPORTED_VERSION = 45;
     public static final char JAVA_1_5_VERSION = 49;
@@ -60,20 +60,20 @@ public class ClassfileReader {
     public static final char JAVA_MAX_SUPPORTED_VERSION = 50;
     public static final char JAVA_MAX_SUPPORTED_MINOR_VERSION = 0;
 
-    protected final ClassfileStream _classfileStream;
-    protected final ClassLoader _classLoader;
-    protected final ClassRegistry _classRegistry;
-    protected ConstantPool _constantPool;
-    protected int _majorVersion;
-    protected TypeDescriptor _outerClass;
-    protected TypeDescriptor[] _innerClasses;
-    protected TypeDescriptor _classDescriptor;
-    protected int _flags;
+    protected final ClassfileStream classfileStream;
+    protected final ClassLoader classLoader;
+    protected final ClassRegistry classRegistry;
+    protected ConstantPool constantPool;
+    protected int majorVersion;
+    protected TypeDescriptor classOuterClass;
+    protected TypeDescriptor[] classInnerClasses;
+    protected TypeDescriptor classDescriptor;
+    protected int classFlags;
 
     public ClassfileReader(ClassfileStream classfileStream, ClassLoader classLoader) {
-        _classfileStream = classfileStream;
-        _classLoader = classLoader;
-        _classRegistry = ClassRegistry.makeRegistry(classLoader);
+        this.classfileStream = classfileStream;
+        this.classLoader = classLoader;
+        this.classRegistry = ClassRegistry.makeRegistry(classLoader);
     }
 
     /**
@@ -86,11 +86,11 @@ public class ClassfileReader {
         }
         @Override
         public boolean equivalent(MemberActor memberActor1, MemberActor memberActor2) {
-            return memberActor1.matchesNameAndType(memberActor2.name(), memberActor2.descriptor());
+            return memberActor1.matchesNameAndType(memberActor2.name, memberActor2.descriptor);
         }
         @Override
         public int hashCode(MemberActor memberActor) {
-            return memberActor.name().hashCode() ^ memberActor.descriptor().hashCode();
+            return memberActor.name.hashCode() ^ memberActor.descriptor.hashCode();
         }
 
         /**
@@ -153,7 +153,7 @@ public class ClassfileReader {
     }
 
     public static boolean isValidFieldName(Utf8Constant name) {
-        return parseIdentifier(name.string(), 0) == name.string().length();
+        return parseIdentifier(name.string, 0) == name.string.length();
     }
 
     public static boolean isValidMethodName(Utf8Constant name, boolean allowClinit) {
@@ -163,7 +163,7 @@ public class ClassfileReader {
         if (allowClinit && name.equals(SymbolTable.CLINIT)) {
             return true;
         }
-        return parseIdentifier(name.string(), 0) == name.string().length();
+        return parseIdentifier(name.string, 0) == name.string.length();
     }
 
     /**
@@ -318,35 +318,35 @@ public class ClassfileReader {
     }
 
     protected void readMagic() {
-        final int magic = _classfileStream.readInt();
+        final int magic = classfileStream.readInt();
         if (magic != 0xcafebabe) {
             throw classFormatError("Invalid magic number 0x" + Integer.toHexString(magic));
         }
     }
 
     protected InterfaceActor resolveInterface(int index) {
-        final ClassConstant classConstant = _constantPool.classAt(index, "interface name");
+        final ClassConstant classConstant = constantPool.classAt(index, "interface name");
         try {
-            return (InterfaceActor) classConstant.resolve(_constantPool, index);
+            return (InterfaceActor) classConstant.resolve(constantPool, index);
         } catch (ClassCastException classCastException) {
             throw incompatibleClassChangeError(classConstant.typeDescriptor().toJavaString() + " is not an interface");
         }
     }
 
     protected InterfaceActor[] readInterfaces() {
-        final int nInterfaces = _classfileStream.readUnsigned2();
+        final int nInterfaces = classfileStream.readUnsigned2();
         if (nInterfaces == 0) {
             return ClassActor.NO_INTERFACES;
         }
         final InterfaceActor[] interfaceActors = new InterfaceActor[nInterfaces];
         for (int i = 0; i < nInterfaces; i++) {
-            interfaceActors[i] = resolveInterface(_classfileStream.readUnsigned2());
+            interfaceActors[i] = resolveInterface(classfileStream.readUnsigned2());
         }
         return interfaceActors;
     }
 
     protected FieldActor[] readFields(boolean isInterface)  {
-        final int nFields = _classfileStream.readUnsigned2();
+        final int nFields = classfileStream.readUnsigned2();
         if (nFields == 0) {
             // save time and space for classes that have no fields
             return ClassActor.NO_FIELDS;
@@ -358,9 +358,9 @@ public class ClassfileReader {
 
     nextField:
         for (int i = 0; i < nFields; i++) {
-            int flags = _classfileStream.readUnsigned2();
-            final int nameIndex = _classfileStream.readUnsigned2();
-            final Utf8Constant name = _constantPool.utf8ConstantAt(nameIndex, "field name");
+            int flags = classfileStream.readUnsigned2();
+            final int nameIndex = classfileStream.readUnsigned2();
+            final Utf8Constant name = constantPool.utf8ConstantAt(nameIndex, "field name");
             verifyFieldName(name);
 
             final boolean isStatic = isStatic(flags);
@@ -372,25 +372,25 @@ public class ClassfileReader {
                         return "parsing field \"" + name + "\"";
                     }
                 });
-                final int descriptorIndex = _classfileStream.readUnsigned2();
-                final TypeDescriptor descriptor = parseTypeDescriptor(_constantPool.utf8At(descriptorIndex, "field descriptor").toString());
+                final int descriptorIndex = classfileStream.readUnsigned2();
+                final TypeDescriptor descriptor = parseTypeDescriptor(constantPool.utf8At(descriptorIndex, "field descriptor").toString());
                 verifyFieldFlags(name.toString(), flags, isInterface);
 
                 char constantValueIndex = 0;
                 byte[] runtimeVisibleAnnotationsBytes = NO_RUNTIME_VISIBLE_ANNOTATION_BYTES;
                 Utf8Constant genericSignature = NO_GENERIC_SIGNATURE;
 
-                int nAttributes = _classfileStream.readUnsigned2();
+                int nAttributes = classfileStream.readUnsigned2();
                 while (nAttributes-- != 0) {
-                    final int attributeNameIndex = _classfileStream.readUnsigned2();
-                    final String attributeName = _constantPool.utf8At(attributeNameIndex, "attribute name").toString();
-                    final Size attributeSize = _classfileStream.readSize4();
-                    final Address startPosition = _classfileStream.getPosition();
+                    final int attributeNameIndex = classfileStream.readUnsigned2();
+                    final String attributeName = constantPool.utf8At(attributeNameIndex, "attribute name").toString();
+                    final Size attributeSize = classfileStream.readSize4();
+                    final Address startPosition = classfileStream.getPosition();
                     if (isStatic && attributeName.equals("ConstantValue")) {
                         if (constantValueIndex != 0) {
                             throw classFormatError("Duplicate ConstantValue attribute");
                         }
-                        constantValueIndex = (char) _classfileStream.readUnsigned2();
+                        constantValueIndex = (char) classfileStream.readUnsigned2();
                         if (constantValueIndex == 0) {
                             throw classFormatError("Invalid ConstantValue index");
                         }
@@ -398,19 +398,19 @@ public class ClassfileReader {
                         flags += Actor.DEPRECATED;
                     } else if (attributeName.equals("Synthetic")) {
                         flags += Actor.ACC_SYNTHETIC;
-                    } else if (_majorVersion >= JAVA_1_5_VERSION) {
+                    } else if (majorVersion >= JAVA_1_5_VERSION) {
                         if (attributeName.equals("Signature")) {
-                            genericSignature = _constantPool.utf8At(_classfileStream.readUnsigned2(), "signature index");
+                            genericSignature = constantPool.utf8At(classfileStream.readUnsigned2(), "signature index");
                         } else if (attributeName.equals("RuntimeVisibleAnnotations")) {
-                            runtimeVisibleAnnotationsBytes = _classfileStream.readByteArray(attributeSize);
+                            runtimeVisibleAnnotationsBytes = classfileStream.readByteArray(attributeSize);
                         } else {
-                            _classfileStream.skip(attributeSize);
+                            classfileStream.skip(attributeSize);
                         }
                     } else {
-                        _classfileStream.skip(attributeSize);
+                        classfileStream.skip(attributeSize);
                     }
 
-                    if (!attributeSize.equals(_classfileStream.getPosition().minus(startPosition))) {
+                    if (!attributeSize.equals(classfileStream.getPosition().minus(startPosition))) {
                         throw classFormatError("Invalid attribute_length for " + attributeName + " attribute");
                     }
                 }
@@ -418,13 +418,13 @@ public class ClassfileReader {
                 if (MaxineVM.isPrototyping()) {
                     if (runtimeVisibleAnnotationsBytes != null) {
                         final ClassfileStream annotations = new ClassfileStream(runtimeVisibleAnnotationsBytes);
-                        for (AnnotationInfo info : AnnotationInfo.parse(annotations, _constantPool)) {
+                        for (AnnotationInfo info : AnnotationInfo.parse(annotations, constantPool)) {
                             final TypeDescriptor annotationTypeDescriptor = info.annotationTypeDescriptor();
                             if (annotationTypeDescriptor.equals(forJavaClass(PROTOTYPE_ONLY.class))) {
                                 continue nextField;
                             } else if (info.annotationTypeDescriptor().equals(forJavaClass(RESET.class))) {
                                 assert !Actor.isFinal(flags) :
-                                    "A final field cannot have the RESET annotation: " + _classDescriptor.toJavaString() + "." + name;
+                                    "A final field cannot have the RESET annotation: " + classDescriptor.toJavaString() + "." + name;
                                 flags |= RESET;
                             } else if (info.annotationTypeDescriptor().equals(forJavaClass(CONSTANT.class))) {
                                 flags |= CONSTANT;
@@ -439,44 +439,44 @@ public class ClassfileReader {
                 final FieldActor<?> fieldActor = kind.createFieldActor(name, descriptor, flags);
 
                 if (constantValueIndex != 0) {
-                    switch (fieldActor.kind().asEnum()) {
+                    switch (fieldActor.kind.asEnum) {
                         case BYTE: {
-                            _classRegistry.set(CONSTANT_VALUE, fieldActor, ByteValue.from((byte) _constantPool.intAt(constantValueIndex)));
+                            classRegistry.set(CONSTANT_VALUE, fieldActor, ByteValue.from((byte) constantPool.intAt(constantValueIndex)));
                             break;
                         }
                         case BOOLEAN: {
-                            _classRegistry.set(CONSTANT_VALUE, fieldActor, BooleanValue.from(_constantPool.intAt(constantValueIndex) != 0));
+                            classRegistry.set(CONSTANT_VALUE, fieldActor, BooleanValue.from(constantPool.intAt(constantValueIndex) != 0));
                             break;
                         }
                         case CHAR: {
-                            _classRegistry.set(CONSTANT_VALUE, fieldActor, CharValue.from((char) _constantPool.intAt(constantValueIndex)));
+                            classRegistry.set(CONSTANT_VALUE, fieldActor, CharValue.from((char) constantPool.intAt(constantValueIndex)));
                             break;
                         }
                         case SHORT: {
-                            _classRegistry.set(CONSTANT_VALUE, fieldActor, ShortValue.from((short) _constantPool.intAt(constantValueIndex)));
+                            classRegistry.set(CONSTANT_VALUE, fieldActor, ShortValue.from((short) constantPool.intAt(constantValueIndex)));
                             break;
                         }
                         case INT: {
-                            _classRegistry.set(CONSTANT_VALUE, fieldActor, IntValue.from(_constantPool.intAt(constantValueIndex)));
+                            classRegistry.set(CONSTANT_VALUE, fieldActor, IntValue.from(constantPool.intAt(constantValueIndex)));
                             break;
                         }
                         case FLOAT: {
-                            _classRegistry.set(CONSTANT_VALUE, fieldActor, FloatValue.from(_constantPool.floatAt(constantValueIndex)));
+                            classRegistry.set(CONSTANT_VALUE, fieldActor, FloatValue.from(constantPool.floatAt(constantValueIndex)));
                             break;
                         }
                         case LONG: {
-                            _classRegistry.set(CONSTANT_VALUE, fieldActor, LongValue.from(_constantPool.longAt(constantValueIndex)));
+                            classRegistry.set(CONSTANT_VALUE, fieldActor, LongValue.from(constantPool.longAt(constantValueIndex)));
                             break;
                         }
                         case DOUBLE: {
-                            _classRegistry.set(CONSTANT_VALUE, fieldActor, DoubleValue.from(_constantPool.doubleAt(constantValueIndex)));
+                            classRegistry.set(CONSTANT_VALUE, fieldActor, DoubleValue.from(constantPool.doubleAt(constantValueIndex)));
                             break;
                         }
                         case REFERENCE: {
                             if (!descriptor.equals(STRING)) {
                                 throw classFormatError("Invalid ConstantValue attribute");
                             }
-                            _classRegistry.set(CONSTANT_VALUE, fieldActor, ReferenceValue.from(_constantPool.stringAt(constantValueIndex)));
+                            classRegistry.set(CONSTANT_VALUE, fieldActor, ReferenceValue.from(constantPool.stringAt(constantValueIndex)));
                             break;
                         }
                         default: {
@@ -485,8 +485,8 @@ public class ClassfileReader {
                     }
                 }
 
-                _classRegistry.set(GENERIC_SIGNATURE, fieldActor, genericSignature);
-                _classRegistry.set(RUNTIME_VISIBLE_ANNOTATION_BYTES, fieldActor, runtimeVisibleAnnotationsBytes);
+                classRegistry.set(GENERIC_SIGNATURE, fieldActor, genericSignature);
+                classRegistry.set(RUNTIME_VISIBLE_ANNOTATION_BYTES, fieldActor, runtimeVisibleAnnotationsBytes);
 
                 // Check for duplicates
                 if (fieldActorSet.add(fieldActor) != null) {
@@ -506,20 +506,20 @@ public class ClassfileReader {
     }
 
     protected TypeDescriptor[] readCheckedExceptionsAttribute() {
-        final int nExceptionClasses = _classfileStream.readUnsigned2();
+        final int nExceptionClasses = classfileStream.readUnsigned2();
         final TypeDescriptor[] checkedExceptions = new TypeDescriptor[nExceptionClasses];
         for (int i = 0; i < nExceptionClasses; i++) {
-            final int checkedExceptionIndex = _classfileStream.readUnsigned2();
-            checkedExceptions[i] = _constantPool.classAt(checkedExceptionIndex).typeDescriptor();
+            final int checkedExceptionIndex = classfileStream.readUnsigned2();
+            checkedExceptions[i] = constantPool.classAt(checkedExceptionIndex).typeDescriptor();
         }
         return checkedExceptions;
     }
 
     protected ExceptionHandlerEntry readExceptionHandlerEntry(int codeLength) {
-        final int startAddress = _classfileStream.readUnsigned2();
-        final int endAddress = _classfileStream.readUnsigned2();
-        final int handlerAddress = _classfileStream.readUnsigned2();
-        final int catchClassIndex = _classfileStream.readUnsigned2();
+        final int startAddress = classfileStream.readUnsigned2();
+        final int endAddress = classfileStream.readUnsigned2();
+        final int handlerAddress = classfileStream.readUnsigned2();
+        final int catchClassIndex = classfileStream.readUnsigned2();
 
         if (startAddress >= codeLength || endAddress > codeLength || startAddress >= endAddress || handlerAddress >= codeLength) {
             throw classFormatError("Invalid exception handler code range");
@@ -529,7 +529,7 @@ public class ClassfileReader {
     }
 
     protected Sequence<ExceptionHandlerEntry> readExceptionHandlerTable(int codeLength) {
-        final int nEntries = _classfileStream.readUnsigned2();
+        final int nEntries = classfileStream.readUnsigned2();
         if (nEntries != 0) {
             final ExceptionHandlerEntry[] entries = new ExceptionHandlerEntry[nEntries];
             for (int i = 0; i < nEntries; i++) {
@@ -542,7 +542,7 @@ public class ClassfileReader {
 
     // CheckStyle: stop parameter assignment check
     protected Map<LocalVariableTable.Entry, LocalVariableTable.Entry> readLocalVariableTable(int maxLocals, Size codeLength, Map<LocalVariableTable.Entry, LocalVariableTable.Entry> localVariableTableEntries, boolean forLVTT) {
-        final int count = _classfileStream.readUnsigned2();
+        final int count = classfileStream.readUnsigned2();
         if (count == 0) {
             return localVariableTableEntries;
         }
@@ -550,8 +550,8 @@ public class ClassfileReader {
             localVariableTableEntries = new HashMap<LocalVariableTable.Entry, LocalVariableTable.Entry>(count);
         }
         for (int i = 0; i != count; ++i) {
-            final LocalVariableTable.Entry entry = new LocalVariableTable.Entry(_classfileStream, forLVTT);
-            entry.verify(_constantPool, codeLength.toInt(), maxLocals, forLVTT);
+            final LocalVariableTable.Entry entry = new LocalVariableTable.Entry(classfileStream, forLVTT);
+            entry.verify(constantPool, codeLength.toInt(), maxLocals, forLVTT);
             if (localVariableTableEntries.put(entry, entry) != null) {
                 throw classFormatError("Duplicated " + (forLVTT ? "LocalVariableTypeTable" : "LocalVariableTable") + " entry at index " + i);
             }
@@ -561,16 +561,16 @@ public class ClassfileReader {
     // CheckStyle: resume parameter assignment check
 
     protected CodeAttribute readCodeAttribute(int methodAccessFlags) {
-        final char maxStack = (char) _classfileStream.readUnsigned2();
-        final char maxLocals = (char) _classfileStream.readUnsigned2();
-        final Size codeLength = _classfileStream.readSize4();
+        final char maxStack = (char) classfileStream.readUnsigned2();
+        final char maxLocals = (char) classfileStream.readUnsigned2();
+        final Size codeLength = classfileStream.readSize4();
         if (codeLength.lessEqual(0)) {
             throw classFormatError("The value of code_length must be greater than 0");
         } else if (codeLength.greaterEqual(0xFFFF)) {
             throw classFormatError("Method code longer than 64 KB");
         }
 
-        final byte[] code = _classfileStream.readByteArray(codeLength);
+        final byte[] code = classfileStream.readByteArray(codeLength);
         final Sequence<ExceptionHandlerEntry> exceptionHandlerTable = readExceptionHandlerTable(code.length);
 
         LineNumberTable lineNumberTable = LineNumberTable.EMPTY;
@@ -579,32 +579,32 @@ public class ClassfileReader {
         Map<LocalVariableTable.Entry, LocalVariableTable.Entry> localVariableTypeTableEntries = null;
         StackMapTable stackMapTable = null;
 
-        int nAttributes = _classfileStream.readUnsigned2();
+        int nAttributes = classfileStream.readUnsigned2();
         while (nAttributes-- != 0) {
-            final int attributeNameIndex = _classfileStream.readUnsigned2();
-            final String attributeName = _constantPool.utf8At(attributeNameIndex, "attribute name").toString();
-            final Size attributeSize = _classfileStream.readSize4();
-            final Address startPosition = _classfileStream.getPosition();
+            final int attributeNameIndex = classfileStream.readUnsigned2();
+            final String attributeName = constantPool.utf8At(attributeNameIndex, "attribute name").toString();
+            final Size attributeSize = classfileStream.readSize4();
+            final Address startPosition = classfileStream.getPosition();
             if (attributeName.equals("LineNumberTable")) {
-                lineNumberTable = new LineNumberTable(lineNumberTable, _classfileStream, codeLength.toInt());
+                lineNumberTable = new LineNumberTable(lineNumberTable, classfileStream, codeLength.toInt());
             } else if (attributeName.equals("StackMapTable")) {
                 if (stackMapTable != null) {
                     throw classFormatError("Duplicate stack map attribute");
                 }
-                stackMapTable = new StackMapTable(_classfileStream, _constantPool, attributeSize);
+                stackMapTable = new StackMapTable(classfileStream, constantPool, attributeSize);
             } else if (attributeName.equals("LocalVariableTable")) {
                 localVariableTableEntries = readLocalVariableTable(maxLocals, codeLength, localVariableTableEntries, false);
-            } else if (_majorVersion >= JAVA_1_5_VERSION) {
+            } else if (majorVersion >= JAVA_1_5_VERSION) {
                 if (attributeName.equals("LocalVariableTypeTable")) {
                     localVariableTypeTableEntries = readLocalVariableTable(maxLocals, codeLength, localVariableTypeTableEntries, true);
                 } else {
-                    _classfileStream.skip(attributeSize);
+                    classfileStream.skip(attributeSize);
                 }
             } else {
-                _classfileStream.skip(attributeSize);
+                classfileStream.skip(attributeSize);
             }
 
-            if (!attributeSize.equals(_classfileStream.getPosition().minus(startPosition))) {
+            if (!attributeSize.equals(classfileStream.getPosition().minus(startPosition))) {
                 throw classFormatError("Invalid attribute length for " + attributeName + " attribute");
             }
         }
@@ -627,7 +627,7 @@ public class ClassfileReader {
         }
 
         return new CodeAttribute(
-                        _constantPool,
+                        constantPool,
                         code,
                         maxStack,
                         maxLocals,
@@ -652,7 +652,7 @@ public class ClassfileReader {
     }
 
     protected MethodActor[] readMethods(boolean isInterface) {
-        final int numberOfMethods = _classfileStream.readUnsigned2();
+        final int numberOfMethods = classfileStream.readUnsigned2();
         if (numberOfMethods == 0) {
             return ClassActor.NO_METHODS;
         }
@@ -664,9 +664,9 @@ public class ClassfileReader {
 
     nextMethod:
         for (int i = 0; i < numberOfMethods; ++i) {
-            int flags = _classfileStream.readUnsigned2();
-            final int nameIndex = _classfileStream.readUnsigned2();
-            Utf8Constant name = _constantPool.utf8ConstantAt(nameIndex, "method name");
+            int flags = classfileStream.readUnsigned2();
+            final int nameIndex = classfileStream.readUnsigned2();
+            Utf8Constant name = constantPool.utf8ConstantAt(nameIndex, "method name");
             verifyMethodName(name, true);
 
             int extraFlags = flags;
@@ -690,15 +690,15 @@ public class ClassfileReader {
                 enterContext(new Object() {
                     @Override
                     public String toString() {
-                        return "parsing method \"" + _constantPool.utf8ConstantAt(nameIndex, "method name") + "\"";
+                        return "parsing method \"" + constantPool.utf8ConstantAt(nameIndex, "method name") + "\"";
                     }
                 });
 
-                verifyMethodFlags(name.toString(), flags, isInterface, isInit, isClinit, _majorVersion);
+                verifyMethodFlags(name.toString(), flags, isInterface, isInit, isClinit, majorVersion);
                 flags = extraFlags;
 
-                final int descriptorIndex = _classfileStream.readUnsigned2();
-                final SignatureDescriptor descriptor = SignatureDescriptor.create(_constantPool.utf8At(descriptorIndex, "method descriptor"));
+                final int descriptorIndex = classfileStream.readUnsigned2();
+                final SignatureDescriptor descriptor = SignatureDescriptor.create(constantPool.utf8At(descriptorIndex, "method descriptor"));
 
                 if (descriptor.computeNumberOfSlots() + (isStatic ? 0 : 1) > 255) {
                     throw classFormatError("Too many arguments in method signature: " + descriptor);
@@ -707,7 +707,7 @@ public class ClassfileReader {
                 if (name.equals(SymbolTable.FINALIZE) && descriptor.equals(SignatureDescriptor.VOID) && (flags & ACC_STATIC) == 0) {
                     // this class has a finalizer method implementation
                     // (this bit will be cleared for java.lang.Object later)
-                    _flags |= FINALIZER;
+                    classFlags |= FINALIZER;
                 }
 
                 CodeAttribute codeAttribute = null;
@@ -717,12 +717,12 @@ public class ClassfileReader {
                 byte[] annotationDefaultBytes = NO_ANNOTATION_DEFAULT_BYTES;
                 Utf8Constant genericSignature = NO_GENERIC_SIGNATURE;
 
-                int nAttributes = _classfileStream.readUnsigned2();
+                int nAttributes = classfileStream.readUnsigned2();
                 while (nAttributes-- != 0) {
-                    final int attributeNameIndex = _classfileStream.readUnsigned2();
-                    final String attributeName = _constantPool.utf8At(attributeNameIndex, "attribute name").toString();
-                    final Size attributeSize = _classfileStream.readSize4();
-                    final Address startPosition = _classfileStream.getPosition();
+                    final int attributeNameIndex = classfileStream.readUnsigned2();
+                    final String attributeName = constantPool.utf8At(attributeNameIndex, "attribute name").toString();
+                    final Size attributeSize = classfileStream.readSize4();
+                    final Address startPosition = classfileStream.getPosition();
                     if (attributeName.equals("Code")) {
                         if (codeAttribute != null) {
                             throw classFormatError("Duplicate Code attribute");
@@ -737,23 +737,23 @@ public class ClassfileReader {
                         flags |= Actor.DEPRECATED;
                     } else if (attributeName.equals("Synthetic")) {
                         flags |= Actor.ACC_SYNTHETIC;
-                    } else if (_majorVersion >= JAVA_1_5_VERSION) {
+                    } else if (majorVersion >= JAVA_1_5_VERSION) {
                         if (attributeName.equals("Signature")) {
-                            genericSignature = _constantPool.utf8At(_classfileStream.readUnsigned2(), "signature index");
+                            genericSignature = constantPool.utf8At(classfileStream.readUnsigned2(), "signature index");
                         } else if (attributeName.equals("RuntimeVisibleAnnotations")) {
-                            runtimeVisibleAnnotationsBytes = _classfileStream.readByteArray(attributeSize);
+                            runtimeVisibleAnnotationsBytes = classfileStream.readByteArray(attributeSize);
                         } else if (attributeName.equals("RuntimeVisibleParameterAnnotations")) {
-                            runtimeVisibleParameterAnnotationsBytes = _classfileStream.readByteArray(attributeSize);
+                            runtimeVisibleParameterAnnotationsBytes = classfileStream.readByteArray(attributeSize);
                         } else if (attributeName.equals("AnnotationDefault")) {
-                            annotationDefaultBytes = _classfileStream.readByteArray(attributeSize);
+                            annotationDefaultBytes = classfileStream.readByteArray(attributeSize);
                         } else {
-                            _classfileStream.skip(attributeSize);
+                            classfileStream.skip(attributeSize);
                         }
                     } else {
-                        _classfileStream.skip(attributeSize);
+                        classfileStream.skip(attributeSize);
                     }
 
-                    final Address distance = _classfileStream.getPosition().minus(startPosition);
+                    final Address distance = classfileStream.getPosition().minus(startPosition);
                     if (!attributeSize.equals(distance)) {
                         final int size = attributeSize.toInt();
                         final int dist = distance.toInt();
@@ -778,14 +778,14 @@ public class ClassfileReader {
                     if (isClinit) {
                         // Class initializer's for all Maxine class are run while prototyping and do not need to be in the boot image.
                         // The "max.loader.preserveClinitMethods" system property can be used to override this default behaviour.
-                        if (MaxineVM.isMaxineClass(_classDescriptor) && System.getProperty("max.loader.preserveClinitMethods") == null) {
+                        if (MaxineVM.isMaxineClass(classDescriptor) && System.getProperty("max.loader.preserveClinitMethods") == null) {
                             continue nextMethod;
                         }
                     }
 
                     if (runtimeVisibleAnnotationsBytes != null) {
                         final ClassfileStream annotations = new ClassfileStream(runtimeVisibleAnnotationsBytes);
-                        for (AnnotationInfo info : AnnotationInfo.parse(annotations, _constantPool)) {
+                        for (AnnotationInfo info : AnnotationInfo.parse(annotations, constantPool)) {
                             final TypeDescriptor annotationTypeDescriptor = info.annotationTypeDescriptor();
                             if (annotationTypeDescriptor.equals(forJavaClass(PROTOTYPE_ONLY.class))) {
                                 continue nextMethod;
@@ -844,10 +844,10 @@ public class ClassfileReader {
                                 if (substituteeName != null) {
                                     for (int j = nextMethodIndex - 1; j >= 0; --j) {
                                         final MethodActor substituteeActor = methodActors[j];
-                                        if (substituteeActor.name().equals(substituteeName) && substituteeActor.descriptor().equals(descriptor)) {
+                                        if (substituteeActor.name.equals(substituteeName) && substituteeActor.descriptor().equals(descriptor)) {
                                             ProgramError.check(isStatic == substituteeActor.isStatic());
-                                            Trace.line(1, "Substituted " + _classDescriptor.toJavaString() + "." + substituteeName + descriptor);
-                                            Trace.line(1, "       with " + _classDescriptor.toJavaString() + "." + name + descriptor);
+                                            Trace.line(1, "Substituted " + classDescriptor.toJavaString() + "." + substituteeName + descriptor);
+                                            Trace.line(1, "       with " + classDescriptor.toJavaString() + "." + name + descriptor);
                                             substituteeIndex = j;
                                             name = substituteeName;
 
@@ -879,7 +879,7 @@ public class ClassfileReader {
                 // Maxine annotations present in classfiles loaded at runtime
                 if (runtimeVisibleAnnotationsBytes != null) {
                     final ClassfileStream annotations = new ClassfileStream(runtimeVisibleAnnotationsBytes);
-                    for (AnnotationInfo info : AnnotationInfo.parse(annotations, _constantPool)) {
+                    for (AnnotationInfo info : AnnotationInfo.parse(annotations, constantPool)) {
                         final TypeDescriptor annotationTypeDescriptor = info.annotationTypeDescriptor();
                         if (annotationTypeDescriptor.equals(forJavaClass(INTERPRET_ONLY.class))) {
                             flags |= INTERPRET_ONLY;
@@ -913,11 +913,11 @@ public class ClassfileReader {
                     methodActor = new VirtualMethodActor(name, descriptor, flags, codeAttribute);
                 }
 
-                _classRegistry.set(GENERIC_SIGNATURE, methodActor, genericSignature);
-                _classRegistry.set(CHECKED_EXCEPTIONS, methodActor, checkedExceptions);
-                _classRegistry.set(RUNTIME_VISIBLE_ANNOTATION_BYTES, methodActor, runtimeVisibleAnnotationsBytes);
-                _classRegistry.set(RUNTIME_VISIBLE_PARAMETER_ANNOTATION_BYTES, methodActor, runtimeVisibleParameterAnnotationsBytes);
-                _classRegistry.set(ANNOTATION_DEFAULT_BYTES, methodActor, annotationDefaultBytes);
+                classRegistry.set(GENERIC_SIGNATURE, methodActor, genericSignature);
+                classRegistry.set(CHECKED_EXCEPTIONS, methodActor, checkedExceptions);
+                classRegistry.set(RUNTIME_VISIBLE_ANNOTATION_BYTES, methodActor, runtimeVisibleAnnotationsBytes);
+                classRegistry.set(RUNTIME_VISIBLE_PARAMETER_ANNOTATION_BYTES, methodActor, runtimeVisibleParameterAnnotationsBytes);
+                classRegistry.set(ANNOTATION_DEFAULT_BYTES, methodActor, annotationDefaultBytes);
 
                 if (MaxineVM.isPrototyping() && substituteeIndex != -1) {
                     methodActors[substituteeIndex] = methodActor;
@@ -939,17 +939,17 @@ public class ClassfileReader {
     }
 
     protected void readInnerClassesAttribute() {
-        if (_innerClasses != null) {
+        if (classInnerClasses != null) {
             throw classFormatError("Duplicate InnerClass attribute");
         }
 
-        final int nInnerClasses = _classfileStream.readUnsigned2();
+        final int nInnerClasses = classfileStream.readUnsigned2();
         final InnerClassInfo[] innerClassInfos = new InnerClassInfo[nInnerClasses];
         final TypeDescriptor[] innerClasses = new TypeDescriptor[innerClassInfos.length];
         int nextInnerClass = 0;
 
         for (int i = 0; i < nInnerClasses; ++i) {
-            final InnerClassInfo innerClassInfo = new InnerClassInfo(_classfileStream, _constantPool);
+            final InnerClassInfo innerClassInfo = new InnerClassInfo(classfileStream, constantPool);
             final int innerClassIndex = innerClassInfo.innerClassIndex();
             final int outerClassIndex = innerClassInfo.outerClassIndex();
 
@@ -967,20 +967,20 @@ public class ClassfileReader {
 
             // If this entry refers to the current class, then the current class must be an inner class:
             // it's enclosing class is recorded and it's flags are updated.
-            final TypeDescriptor innerClassDescriptor = _constantPool.classAt(innerClassIndex, "inner class descriptor").typeDescriptor();
-            if (innerClassDescriptor.equals(_classDescriptor)) {
-                if (_outerClass != null) {
+            final TypeDescriptor innerClassDescriptor = constantPool.classAt(innerClassIndex, "inner class descriptor").typeDescriptor();
+            if (innerClassDescriptor.equals(classDescriptor)) {
+                if (classOuterClass != null) {
                     throw classFormatError("duplicate outer class");
                 }
-                _flags |= INNER_CLASS;
-                _outerClass = _constantPool.classAt(outerClassIndex).typeDescriptor();
-                _flags |= innerClassInfo.flags();
+                classFlags |= INNER_CLASS;
+                classOuterClass = constantPool.classAt(outerClassIndex).typeDescriptor();
+                classFlags |= innerClassInfo.flags();
             }
 
-            final TypeDescriptor outerClassDescriptor = _constantPool.classAt(outerClassIndex, "outer class descriptor").typeDescriptor();
-            if (outerClassDescriptor.equals(_classDescriptor)) {
+            final TypeDescriptor outerClassDescriptor = constantPool.classAt(outerClassIndex, "outer class descriptor").typeDescriptor();
+            if (outerClassDescriptor.equals(classDescriptor)) {
                 // The inner class is enclosed by the current class
-                innerClasses[nextInnerClass++] = _constantPool.classAt(innerClassIndex).typeDescriptor();
+                innerClasses[nextInnerClass++] = constantPool.classAt(innerClassIndex).typeDescriptor();
             } else {
                 // The inner class is enclosed by some class other than current class: ignore it
             }
@@ -998,23 +998,23 @@ public class ClassfileReader {
 
         if (nextInnerClass != 0) {
             if (nextInnerClass == innerClasses.length) {
-                _innerClasses = innerClasses;
+                classInnerClasses = innerClasses;
             } else {
-                _innerClasses = new TypeDescriptor[nextInnerClass];
-                System.arraycopy(innerClasses, 0, _innerClasses, 0, nextInnerClass);
+                classInnerClasses = new TypeDescriptor[nextInnerClass];
+                System.arraycopy(innerClasses, 0, classInnerClasses, 0, nextInnerClass);
             }
         }
     }
 
     protected EnclosingMethodInfo readEnclosingMethodAttribute() {
-        final int classIndex = _classfileStream.readUnsigned2();
-        final int nameAndTypeIndex = _classfileStream.readUnsigned2();
+        final int classIndex = classfileStream.readUnsigned2();
+        final int nameAndTypeIndex = classfileStream.readUnsigned2();
 
-        final ClassConstant holder = _constantPool.classAt(classIndex);
+        final ClassConstant holder = constantPool.classAt(classIndex);
         final String name;
         final String descriptor;
         if (nameAndTypeIndex != 0) {
-            final NameAndTypeConstant nameAndType = _constantPool.nameAndTypeAt(nameAndTypeIndex);
+            final NameAndTypeConstant nameAndType = constantPool.nameAndTypeAt(nameAndTypeIndex);
             name = nameAndType.name().toString();
             descriptor = nameAndType.descriptorString();
         } else {
@@ -1028,9 +1028,9 @@ public class ClassfileReader {
     protected ClassActor resolveSuperClass(int superClassIndex, boolean isInterface) {
         final ClassActor superClassActor;
         if (superClassIndex != 0) {
-            final TypeDescriptor superClassDescriptor = _constantPool.classAt(superClassIndex, "super class descriptor").typeDescriptor();
+            final TypeDescriptor superClassDescriptor = constantPool.classAt(superClassIndex, "super class descriptor").typeDescriptor();
 
-            if (superClassDescriptor.equals(_classDescriptor)) {
+            if (superClassDescriptor.equals(classDescriptor)) {
                 throw classFormatError("Class cannot be its own super class");
             }
 
@@ -1045,7 +1045,7 @@ public class ClassfileReader {
             /*
              * Now ensure the super class is resolved
              */
-            superClassActor = _constantPool.classAt(superClassIndex).resolve(_constantPool, superClassIndex);
+            superClassActor = constantPool.classAt(superClassIndex).resolve(constantPool, superClassIndex);
 
             /*
              * Cannot inherit from an array class.
@@ -1070,10 +1070,10 @@ public class ClassfileReader {
              * The superclass cannot be final.
              */
             if (superClassActor.isFinal()) {
-                throw verifyError("Cannot extend a final class " + superClassActor.name());
+                throw verifyError("Cannot extend a final class " + superClassActor.name);
             }
         } else {
-            if (!_classDescriptor.equals(OBJECT)) {
+            if (!classDescriptor.equals(OBJECT)) {
                 throw classFormatError("missing required super class");
             }
             superClassActor = null;
@@ -1083,21 +1083,21 @@ public class ClassfileReader {
 
     protected ClassActor loadClass0(Utf8Constant name) {
         readMagic();
-        final char minorVersion = (char) _classfileStream.readUnsigned2();
-        final char majorVersion = (char) _classfileStream.readUnsigned2();
+        final char minorVersionChar = (char) classfileStream.readUnsigned2();
+        final char majorVersionChar = (char) classfileStream.readUnsigned2();
 
-        verifyVersion(majorVersion, minorVersion);
-        _constantPool = new ConstantPool(_classLoader, _classfileStream);
-        _majorVersion = majorVersion;
+        verifyVersion(majorVersionChar, minorVersionChar);
+        constantPool = new ConstantPool(classLoader, classfileStream);
+        majorVersion = majorVersionChar;
 
-        _flags = _classfileStream.readUnsigned2();
+        classFlags = classfileStream.readUnsigned2();
 
-        verifyClassFlags(_flags, majorVersion);
-        final boolean isInterface = isInterface(_flags);
+        verifyClassFlags(classFlags, majorVersionChar);
+        final boolean isInterface = isInterface(classFlags);
 
-        final int thisClassIndex = _classfileStream.readUnsigned2();
-        _classDescriptor = _constantPool.classAt(thisClassIndex, "this class descriptor").typeDescriptor();
-        if (!_classDescriptor.equals(getDescriptorForJavaString(name.toString()))) {
+        final int thisClassIndex = classfileStream.readUnsigned2();
+        classDescriptor = constantPool.classAt(thisClassIndex, "this class descriptor").typeDescriptor();
+        if (!classDescriptor.equals(getDescriptorForJavaString(name.toString()))) {
             /*
              * VMSpec 5.3.5:
              *
@@ -1109,7 +1109,7 @@ public class ClassfileReader {
             throw noClassDefFoundError("'this_class' indicates wrong type");
         }
 
-        final int superClassIndex = _classfileStream.readUnsigned2();
+        final int superClassIndex = classfileStream.readUnsigned2();
         final ClassActor superClassActor = resolveSuperClass(superClassIndex, isInterface);
 
         final InterfaceActor[] interfaceActors = readInterfaces();
@@ -1121,42 +1121,42 @@ public class ClassfileReader {
         Utf8Constant genericSignature = null;
         EnclosingMethodInfo enclosingMethodInfo = null;
 
-        int nAttributes = _classfileStream.readUnsigned2();
+        int nAttributes = classfileStream.readUnsigned2();
         while (nAttributes-- != 0) {
-            final int attributeNameIndex = _classfileStream.readUnsigned2();
-            final String attributeName = _constantPool.utf8At(attributeNameIndex, "attribute name").toString();
-            final Size attributeSize = _classfileStream.readSize4();
-            final Address startPosition = _classfileStream.getPosition();
+            final int attributeNameIndex = classfileStream.readUnsigned2();
+            final String attributeName = constantPool.utf8At(attributeNameIndex, "attribute name").toString();
+            final Size attributeSize = classfileStream.readSize4();
+            final Address startPosition = classfileStream.getPosition();
             if (attributeName.equals("SourceFile")) {
                 if (sourceFileName != null) {
                     throw classFormatError("Duplicate SourceFile attribute");
                 }
-                final int sourceFileNameIndex = _classfileStream.readUnsigned2();
-                sourceFileName = _constantPool.utf8At(sourceFileNameIndex, "source file name").toString();
+                final int sourceFileNameIndex = classfileStream.readUnsigned2();
+                sourceFileName = constantPool.utf8At(sourceFileNameIndex, "source file name").toString();
             } else if (attributeName.equals("Deprecated")) {
-                _flags += Actor.DEPRECATED;
+                classFlags += Actor.DEPRECATED;
             } else if (attributeName.equals("Synthetic")) {
-                _flags += Actor.ACC_SYNTHETIC;
+                classFlags += Actor.ACC_SYNTHETIC;
             } else if (attributeName.equals("InnerClasses")) {
                 readInnerClassesAttribute();
-            } else if (_majorVersion >= JAVA_1_5_VERSION) {
+            } else if (majorVersion >= JAVA_1_5_VERSION) {
                 if (attributeName.equals("Signature")) {
-                    genericSignature = _constantPool.utf8At(_classfileStream.readUnsigned2(), "signature index");
+                    genericSignature = constantPool.utf8At(classfileStream.readUnsigned2(), "signature index");
                 } else if (attributeName.equals("RuntimeVisibleAnnotations")) {
-                    runtimeVisibleAnnotationsBytes = _classfileStream.readByteArray(attributeSize);
+                    runtimeVisibleAnnotationsBytes = classfileStream.readByteArray(attributeSize);
                 } else if (attributeName.equals("EnclosingMethod")) {
                     if (enclosingMethodInfo != null) {
                         throw classFormatError("Duplicate EnclosingMethod attribute");
                     }
                     enclosingMethodInfo = readEnclosingMethodAttribute();
                 } else {
-                    _classfileStream.skip(attributeSize);
+                    classfileStream.skip(attributeSize);
                 }
             } else {
-                _classfileStream.skip(attributeSize);
+                classfileStream.skip(attributeSize);
             }
 
-            if (!attributeSize.equals(_classfileStream.getPosition().minus(startPosition))) {
+            if (!attributeSize.equals(classfileStream.getPosition().minus(startPosition))) {
                 throw classFormatError("Invalid attribute length for " + name + " attribute");
             }
         }
@@ -1164,38 +1164,38 @@ public class ClassfileReader {
         // inherit the REFERENCE and FINALIZER bits from the superClassActor
         if (superClassActor != null) {
             if (superClassActor.isSpecialReference()) {
-                _flags |= Actor.SPECIAL_REFERENCE;
+                classFlags |= Actor.SPECIAL_REFERENCE;
             }
             if (superClassActor.hasFinalizer()) {
-                _flags |= Actor.FINALIZER;
+                classFlags |= Actor.FINALIZER;
             }
         } else {
             // clear the finalizer bit for the java.lang.Object class; otherwise all classes would have it!
-            _flags &= ~Actor.FINALIZER;
+            classFlags &= ~Actor.FINALIZER;
         }
 
         // is this a Java Reference object class?
         if (name.equals("java.lang.ref.Reference")) {
-            _flags |= Actor.SPECIAL_REFERENCE;
+            classFlags |= Actor.SPECIAL_REFERENCE;
             // find the "referent" field and mark it as a special reference too.
             for (int i = 0; i < fieldActors.length; i++) {
                 final FieldActor fieldActor = fieldActors[i];
-                if (fieldActor instanceof ReferenceFieldActor && fieldActor.name().equals("referent")) {
+                if (fieldActor instanceof ReferenceFieldActor && fieldActor.name.equals("referent")) {
                     // replace the field actor with a new one that has the flag set
-                    fieldActors[i] = new ReferenceFieldActor(fieldActor.name(), fieldActor.descriptor(), fieldActor.flags() | Actor.SPECIAL_REFERENCE);
+                    fieldActors[i] = new ReferenceFieldActor(fieldActor.name, fieldActor.descriptor(), fieldActor.flags() | Actor.SPECIAL_REFERENCE);
                     break;
                 }
             }
         }
 
         // Ensure there are no trailing bytes
-        _classfileStream.checkEndOfFile();
+        classfileStream.checkEndOfFile();
 
         if (MaxineVM.isPrototyping() && runtimeVisibleAnnotationsBytes != null) {
             final ClassfileStream annotations = new ClassfileStream(runtimeVisibleAnnotationsBytes);
-            for (AnnotationInfo annotationInfo : AnnotationInfo.parse(annotations, _constantPool)) {
+            for (AnnotationInfo annotationInfo : AnnotationInfo.parse(annotations, constantPool)) {
                 if (annotationInfo.annotationTypeDescriptor().equals(forJavaClass(TEMPLATE.class))) {
-                    _flags |= TEMPLATE;
+                    classFlags |= TEMPLATE;
                 } else if (annotationInfo.annotationTypeDescriptor().equals(forJavaClass(PROTOTYPE_ONLY.class))) {
                     ProgramError.unexpected("Trying to load a prototype only class " + name);
                 }
@@ -1205,29 +1205,29 @@ public class ClassfileReader {
         final ClassActor classActor;
         if (isInterface) {
             classActor = createInterfaceActor(
-                            _constantPool,
-                            _classLoader,
+                            constantPool,
+                            classLoader,
                             name,
-                            majorVersion,
-                            minorVersion,
-                            _flags,
+                            majorVersionChar,
+                            minorVersionChar,
+                            classFlags,
                             interfaceActors,
                             fieldActors,
                             methodActors,
                             genericSignature,
                             runtimeVisibleAnnotationsBytes,
                             sourceFileName,
-                            _innerClasses,
-                            _outerClass,
+                            classInnerClasses,
+                            classOuterClass,
                             enclosingMethodInfo);
         } else {
             classActor = createTupleOrHybridClassActor(
-                            _constantPool,
-                            _classLoader,
+                            constantPool,
+                            classLoader,
                             name,
-                            majorVersion,
-                            minorVersion,
-                            _flags,
+                            majorVersionChar,
+                            minorVersionChar,
+                            classFlags,
                             superClassActor,
                             interfaceActors,
                             fieldActors,
@@ -1235,8 +1235,8 @@ public class ClassfileReader {
                             genericSignature,
                             runtimeVisibleAnnotationsBytes,
                             sourceFileName,
-                            _innerClasses,
-                            _outerClass,
+                            classInnerClasses,
+                            classOuterClass,
                             enclosingMethodInfo);
         }
         if (superClassActor != null) {
@@ -1245,7 +1245,7 @@ public class ClassfileReader {
 
         if (MaxineVM.isPrototyping() && runtimeVisibleAnnotationsBytes != null) {
             final ClassfileStream annotations = new ClassfileStream(runtimeVisibleAnnotationsBytes);
-            for (AnnotationInfo annotationInfo : AnnotationInfo.parse(annotations, _constantPool)) {
+            for (AnnotationInfo annotationInfo : AnnotationInfo.parse(annotations, constantPool)) {
                 if (annotationInfo.annotationTypeDescriptor().equals(forJavaClass(METHOD_SUBSTITUTIONS.class))) {
                     METHOD_SUBSTITUTIONS.Static.processAnnotationInfo(annotationInfo, classActor);
                 }
@@ -1255,17 +1255,17 @@ public class ClassfileReader {
         return classActor;
     }
 
-    private static final VMOption _verboseOption = register(new VMOption("-verbose:class",
+    private static final VMOption verboseOption = register(new VMOption("-verbose:class",
         "Display information about each class loaded."), MaxineVM.Phase.PRISTINE);
 
     private ClassActor loadClass(final Utf8Constant name, Object source) {
         try {
             String optSource = null;
-            if (_verboseOption.isPresent()) {
+            if (verboseOption.isPresent()) {
                 if (source != null) {
                     Log.println("[Loading " + name + " from " + source + "]");
                 } else {
-                    optSource = _classLoader == null ? "generated data" : _classLoader.getClass().getName();
+                    optSource = classLoader == null ? "generated data" : classLoader.getClass().getName();
                     Log.println("[Loading " + name + " from " + optSource + "]");
                 }
             }
@@ -1277,7 +1277,7 @@ public class ClassfileReader {
             });
             final ClassActor classActor = loadClass0(name);
 
-            if (_verboseOption.isPresent()) {
+            if (verboseOption.isPresent()) {
                 if (source != null) {
                     Log.println("[Loaded " + name + " from " + source + "]");
                 } else {

@@ -69,7 +69,7 @@ public class PrototypeTupleLayout extends PrototypeGeneralLayout implements Tupl
         int offset = (superClassActor == null) ? 0 : superClassActor.dynamicTupleSize().toInt();
         for (FieldActor fieldActor : fieldActors) {
             fieldActor.setOffset(offset);
-            offset += fieldActor.kind().size();
+            offset += fieldActor.kind.width.numberOfBytes;
         }
         return Size.fromInt(offset);
     }

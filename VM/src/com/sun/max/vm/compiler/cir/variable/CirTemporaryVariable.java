@@ -37,7 +37,7 @@ public class CirTemporaryVariable extends CirVariable {
 
     @Override
     public String toString() {
-        String s = "t" + kind().character() + "-" + serial();
+        String s = "t" + kind().character + "-" + serial();
         if (CirNode.printingIds()) {
             s += "_" + id();
         }
@@ -50,7 +50,7 @@ public class CirTemporaryVariable extends CirVariable {
             return false;
         }
         final CirTemporaryVariable otherTemporaryVariable = (CirTemporaryVariable) other;
-        return kind().character() == otherTemporaryVariable.kind().character()
+        return kind().character == otherTemporaryVariable.kind().character
             && serial() == otherTemporaryVariable.serial();
     }
 

@@ -29,7 +29,7 @@ import com.sun.max.unsafe.*;
  */
 public final class BoxedOffset extends Offset implements UnsafeBox {
 
-    private long _nativeWord;
+    private long nativeWord;
 
     public static final BoxedOffset ZERO = new BoxedOffset(0);
 
@@ -40,11 +40,11 @@ public final class BoxedOffset extends Offset implements UnsafeBox {
         static final int LOWEST_VALUE = -100;
         static final int HIGHEST_VALUE = 1000;
 
-        static final BoxedOffset[] _cache = new BoxedOffset[(HIGHEST_VALUE - LOWEST_VALUE) + 1];
+        static final BoxedOffset[] cache = new BoxedOffset[(HIGHEST_VALUE - LOWEST_VALUE) + 1];
 
         static {
-            for (int i = 0; i < _cache.length; i++) {
-                _cache[i] = new BoxedOffset(i + LOWEST_VALUE);
+            for (int i = 0; i < cache.length; i++) {
+                cache[i] = new BoxedOffset(i + LOWEST_VALUE);
             }
         }
     }
@@ -54,16 +54,16 @@ public final class BoxedOffset extends Offset implements UnsafeBox {
             return ZERO;
         }
         if (value >= Cache.LOWEST_VALUE && value <= Cache.HIGHEST_VALUE) {
-            return Cache._cache[(int) value - Cache.LOWEST_VALUE];
+            return Cache.cache[(int) value - Cache.LOWEST_VALUE];
         }
         return new BoxedOffset(value);
     }
 
     private BoxedOffset(long value) {
-        _nativeWord = value;
+        nativeWord = value;
     }
 
     public long nativeWord() {
-        return _nativeWord;
+        return nativeWord;
     }
 }

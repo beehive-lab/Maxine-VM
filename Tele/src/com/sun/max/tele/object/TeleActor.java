@@ -45,7 +45,7 @@ public abstract class TeleActor extends TeleTupleObject {
     }
 
     /**
-     * @return contents of the {@link #_flags} field, read from this
+     * @return contents of the {@link #flags} field, read from this
      *         {@link Actor} in the {@link TeleVM}.
      */
     public int readFlags() {

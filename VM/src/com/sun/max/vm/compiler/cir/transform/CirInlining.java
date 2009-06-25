@@ -35,15 +35,15 @@ import com.sun.max.vm.compiler.cir.optimize.*;
  */
 public final class CirInlining {
 
-    private final CirOptimizer _optimizer;
-    private final CirNode _node;
+    private final CirOptimizer optimizer;
+    private final CirNode node;
 
     private CirInlining(CirOptimizer optimizer, CirNode node) {
-        _optimizer = optimizer;
-        _node = node;
+        this.optimizer = optimizer;
+        this.node = node;
     }
 
-    private boolean _inlinedAny;
+    private boolean inlinedAny;
 
     public void updateCall(CirCall call) {
         while (true) {
@@ -51,30 +51,30 @@ public final class CirInlining {
             final CirValue[] arguments = call.arguments();
             if (procedure instanceof CirBlock) {
                 final CirBlock block = (CirBlock) procedure;
-                if (_optimizer.inliningPolicy().isInlineable(_optimizer, block, arguments)) {
-                    _optimizer.notifyBeforeTransformation(block, TransformationType.BLOCK_INLINING);
-                    call.assign(block.inline(_optimizer, arguments, call.javaFrameDescriptor()));
-                    CirBlockUpdating.apply(_node);
-                    _optimizer.notifyAfterTransformation(block, TransformationType.BLOCK_INLINING);
-                    _inlinedAny = true;
+                if (optimizer.inliningPolicy().isInlineable(optimizer, block, arguments)) {
+                    optimizer.notifyBeforeTransformation(block, TransformationType.BLOCK_INLINING);
+                    call.assign(block.inline(optimizer, arguments, call.javaFrameDescriptor()));
+                    CirBlockUpdating.apply(node);
+                    optimizer.notifyAfterTransformation(block, TransformationType.BLOCK_INLINING);
+                    inlinedAny = true;
                     continue;
                 }
             }
             if (procedure instanceof CirMethod) {
                 final CirMethod method = (CirMethod) procedure;
-                if (_optimizer.inliningPolicy().isInlineable(_optimizer, method, arguments)) {
+                if (optimizer.inliningPolicy().isInlineable(optimizer, method, arguments)) {
                     final Transformation transform = new Transformation(TransformationType.METHOD_INLINING, method.name());
-                    _optimizer.notifyBeforeTransformation(method, transform);
+                    optimizer.notifyBeforeTransformation(method, transform);
                     try {
-                        call.assign(method.inline(_optimizer, arguments, call.javaFrameDescriptor()));
+                        call.assign(method.inline(optimizer, arguments, call.javaFrameDescriptor()));
                     } catch (Error error) {
                         Trace.stream().flush();
                         System.err.println("while inlining " + method.classMethodActor());
                         throw error;
                     }
-                    CirBlockUpdating.apply(_node);
-                    _optimizer.notifyAfterTransformation(method, transform);
-                    _inlinedAny = true;
+                    CirBlockUpdating.apply(node);
+                    optimizer.notifyAfterTransformation(method, transform);
+                    inlinedAny = true;
                     continue;
                 }
             }
@@ -85,7 +85,7 @@ public final class CirInlining {
     private void inlineCalls() {
         final LinkedList<CirNode> inspectionList = new LinkedList<CirNode>();
         final IdentityHashSet<CirBlock> visitedBlocks = new IdentityHashSet<CirBlock>();
-        CirNode currentNode = _node;
+        CirNode currentNode = node;
         while (true) {
             if (currentNode instanceof CirCall) {
                 final CirCall call = (CirCall) currentNode;
@@ -119,7 +119,7 @@ public final class CirInlining {
         final CirInlining inlining = new CirInlining(optimizer, node);
         inlining.inlineCalls();
         optimizer.notifyAfterTransformation(node, TransformationType.INLINING);
-        return inlining._inlinedAny;
+        return inlining.inlinedAny;
     }
 
 }

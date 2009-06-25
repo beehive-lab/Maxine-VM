@@ -30,7 +30,7 @@ import java.util.*;
  */
 class AltNode extends AbstractGroupNode implements TypeNode {
 
-    SelectNode _select;
+    SelectNode select;
 
     @Override
     void constrain(Context ctx) {
@@ -39,8 +39,8 @@ class AltNode extends AbstractGroupNode implements TypeNode {
         if (!(nameNode() instanceof NameValueNode)) {
             error("Alt name must have value: " + nameNode());
         }
-        if (_parent instanceof SelectNode) {
-            _select = (SelectNode) _parent;
+        if (parent instanceof SelectNode) {
+            select = (SelectNode) parent;
         } else {
             error("Alt must be in Select");
         }
@@ -53,21 +53,21 @@ class AltNode extends AbstractGroupNode implements TypeNode {
 
     @Override
     String javaClassImplements() {
-        return " extends " + _select.commonBaseClass();
+        return " extends " + select.commonBaseClass();
     }
 
     @Override
     void genJavaClassSpecifics(PrintWriter writer, int depth) {
         indent(writer, depth);
-        writer.print("public static final " + _select.typeNode().javaType());
+        writer.print("public static final " + select.typeNode().javaType());
         writer.println(" ALT_ID = " + nameNode().value() + ";");
-        if (_context.isWritingCommand()) {
+        if (context.isWritingCommand()) {
             genJavaCreateMethod(writer, depth);
         } else {
             indent(writer, depth);
             writer.println("@Override");
             indent(writer, depth);
-            writer.println("public " + _select.typeNode().javaParam() + "() {");
+            writer.println("public " + select.typeNode().javaParam() + "() {");
             indent(writer, depth + 1);
             writer.println("return ALT_ID;");
             indent(writer, depth);
@@ -93,13 +93,13 @@ class AltNode extends AbstractGroupNode implements TypeNode {
     void genJavaCreateMethod(PrintWriter writer, int depth) {
 
         indent(writer, depth);
-        writer.print("public static " + _select.name() + " create(");
+        writer.print("public static " + select.name() + " create(");
         writer.print(javaParams());
         writer.println(") {");
         indent(writer, depth + 1);
-        writer.print("return new " + _select.name() + "(");
+        writer.print("return new " + select.name() + "(");
         writer.print("ALT_ID, new " + javaClassName() + "(");
-        for (final Iterator it = _components.iterator(); it.hasNext();) {
+        for (final Iterator it = components.iterator(); it.hasNext();) {
             final TypeNode tn = (TypeNode) it.next();
             writer.print(tn.name());
             if (it.hasNext()) {

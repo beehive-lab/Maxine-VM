@@ -33,63 +33,62 @@ import com.sun.max.vm.value.*;
  */
 public class DirSwitch extends DirInstruction {
 
-    private final Kind _comparisonKind;
-    private final ValueComparator _valueComparator;
-    private final DirValue _tag;
-    private final DirValue[] _matches;
-    private final DirBlock[] _targetBlocks;
-    private DirBlock _defaultTargetBlock;
+    private final Kind comparisonKind;
+    private final ValueComparator valueComparator;
+    private final DirValue tag;
+    private final DirValue[] matches;
+    private final DirBlock[] targetBlocks;
+    private DirBlock defaultTargetBlock;
 
     public DirSwitch(Kind comparisonKind, ValueComparator valueComparator, DirValue tag, DirValue[] matches, DirBlock[] targetBlocks, DirBlock defaultTargetBlock) {
-        super();
-        _comparisonKind = comparisonKind;
-        _valueComparator = valueComparator;
-        _tag = tag;
-        _matches = matches;
-        _targetBlocks = targetBlocks;
-        _defaultTargetBlock = defaultTargetBlock;
+        this.comparisonKind = comparisonKind;
+        this.valueComparator = valueComparator;
+        this.tag = tag;
+        this.matches = matches;
+        this.targetBlocks = targetBlocks;
+        this.defaultTargetBlock = defaultTargetBlock;
     }
 
     public ValueComparator valueComparator() {
-        return _valueComparator;
+        return valueComparator;
     }
 
     public Kind comparisonKind() {
-        return _comparisonKind;
+        return comparisonKind;
     }
 
     public DirValue tag() {
-        return _tag;
+        return tag;
     }
 
     public DirValue[] matches() {
-        return _matches;
+        return matches;
     }
 
     public DirBlock[] targetBlocks() {
-        return _targetBlocks;
+        return targetBlocks;
     }
 
     public DirBlock defaultTargetBlock() {
-        return _defaultTargetBlock;
+        return defaultTargetBlock;
     }
 
     public void setDefaultTargetBlock(DirBlock block) {
-        _defaultTargetBlock = block;
+        defaultTargetBlock = block;
     }
 
     @Override
     public void substituteBlocks(Map<DirBlock, DirBlock> blockMap) {
-        for (int i = 0; i < _targetBlocks.length; i++) {
-            final DirBlock targetBlock = _targetBlocks[i];
+        for (int i = 0; i < targetBlocks.length; i++) {
+            final DirBlock targetBlock = targetBlocks[i];
             final DirBlock block = blockMap.get(targetBlock);
             if (block != null && block != targetBlock) {
-                _targetBlocks[i] = block;
+                targetBlocks[i] = block;
             }
         }
-        final DirBlock block = blockMap.get(_defaultTargetBlock);
-        if (block != null && block != _defaultTargetBlock) {
-            _defaultTargetBlock = block;
+        final DirBlock block = blockMap.get(defaultTargetBlock);
+        if (block != null && block != defaultTargetBlock) {
+            defaultTargetBlock = block;
         }
     }
 
@@ -97,45 +96,45 @@ public class DirSwitch extends DirInstruction {
     public boolean isEquivalentTo(DirInstruction other, DirBlockEquivalence dirBlockEquivalence) {
         if (other instanceof DirSwitch) {
             final DirSwitch dirSwitch = (DirSwitch) other;
-            if (!(_comparisonKind == dirSwitch._comparisonKind && _valueComparator == dirSwitch._valueComparator &&
-                  _matches.length == dirSwitch._matches.length && _tag.equals(dirSwitch._tag))) {
+            if (!(comparisonKind == dirSwitch.comparisonKind && valueComparator == dirSwitch.valueComparator &&
+                  matches.length == dirSwitch.matches.length && tag.equals(dirSwitch.tag))) {
                 return false;
             }
-            for (int i = 0; i < _matches.length; i++) {
-                if (!_matches[i].equals(dirSwitch._matches[i])) {
+            for (int i = 0; i < matches.length; i++) {
+                if (!matches[i].equals(dirSwitch.matches[i])) {
                     return false;
                 }
             }
-            for (int i = 0; i < _matches.length; i++) {
-                if (!_targetBlocks[i].isEquivalentTo(dirSwitch._targetBlocks[i], dirBlockEquivalence)) {
+            for (int i = 0; i < matches.length; i++) {
+                if (!targetBlocks[i].isEquivalentTo(dirSwitch.targetBlocks[i], dirBlockEquivalence)) {
                     return false;
                 }
             }
-            return _defaultTargetBlock.isEquivalentTo(dirSwitch._defaultTargetBlock, dirBlockEquivalence);
+            return defaultTargetBlock.isEquivalentTo(dirSwitch.defaultTargetBlock, dirBlockEquivalence);
         }
         return false;
     }
 
     @Override
     public int hashCodeForBlock() {
-        return super.hashCodeForBlock() ^ _tag.hashCodeForBlock();
+        return super.hashCodeForBlock() ^ tag.hashCodeForBlock();
     }
 
     @Override
     public String toString() {
         String blocks = "";
         String separator = "";
-        for (DirBlock block : _targetBlocks) {
+        for (DirBlock block : targetBlocks) {
             blocks += separator + block.serial();
             separator = " ";
         }
-        String matches = "";
+        String matchesString = "";
         separator = "";
-        for (DirValue match : _matches) {
-            matches += separator + match.toString();
+        for (DirValue match : this.matches) {
+            matchesString += separator + match.toString();
             separator = " ";
         }
-        return _comparisonKind + "-" + _valueComparator + "(" + _tag + ") [" + matches + "] -> [" + blocks + "] | " + _defaultTargetBlock.serial();
+        return comparisonKind + "-" + valueComparator + "(" + tag + ") [" + matchesString + "] -> [" + blocks + "] | " + defaultTargetBlock.serial();
     }
 
     @Override

@@ -24,15 +24,15 @@ import com.sun.max.unsafe.*;
 
 /**
  * Raw bits may change due to tele GC.
- * 
+ *
  * @author Bernd Mathiske
  */
 public final class MutableTeleGrip extends RemoteTeleGrip {
 
-    private final int _index;
+    private final int index;
 
     int index() {
-        return _index;
+        return index;
     }
 
     @Override
@@ -42,31 +42,31 @@ public final class MutableTeleGrip extends RemoteTeleGrip {
 
     MutableTeleGrip(TeleGripScheme teleGripScheme, int index) {
         super(teleGripScheme);
-        _index = index;
+        this.index = index;
     }
 
     @Override
     public boolean equals(Object other) {
         if (other instanceof MutableTeleGrip) {
             final MutableTeleGrip mutableTeleGrip = (MutableTeleGrip) other;
-            return _index == mutableTeleGrip._index;
+            return index == mutableTeleGrip.index;
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return _index;
+        return index;
     }
 
     @Override
     public void finalize() throws Throwable {
-        teleGripScheme().finalizeMutableTeleGrip(_index);
+        teleGripScheme().finalizeMutableTeleGrip(index);
         super.finalize();
     }
 
     @Override
     public String toString() {
-        return "<" + _index + ">";
+        return "<" + index + ">";
     }
 }

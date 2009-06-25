@@ -45,17 +45,17 @@ import test.bench.util.*;
  */
 public class Thread_counter01  extends RunBench {
 
-    private static int _threadCount;
+    private static int threadCount;
 
     protected Thread_counter01(LoopRunnable bench) {
         super(bench);
     }
 
     public static boolean test(int i, int t) throws InterruptedException {
-        _threadCount = t;
+        threadCount = t;
         final String threadCountProp = System.getProperty("test.bench.threads.threadcount");
         if (threadCountProp != null) {
-            _threadCount = Integer.parseInt(threadCountProp);
+            threadCount = Integer.parseInt(threadCountProp);
         }
         final Bench bench = new Bench();
         new Thread_counter01(bench).runBench(false);
@@ -65,36 +65,36 @@ public class Thread_counter01  extends RunBench {
 
     static class Bench implements LoopRunnable, Runnable {
 
-        private static /*RunBench.*/Timer _benchTimer;
-        private long _count;
-        private static long _totalCount;
+        private static /*RunBench.*/Timer benchTimer;
+        private long count;
+        private static long totalCount;
 
         public void run(long loopCount) throws InterruptedException {
-            _totalCount = 0;
-            final Thread[] threads = new Thread[_threadCount];
-            final Bench[] benches = new Bench[_threadCount];
-            for (int i = 0; i < _threadCount; i++) {
+            totalCount = 0;
+            final Thread[] threads = new Thread[threadCount];
+            final Bench[] benches = new Bench[threadCount];
+            for (int i = 0; i < threadCount; i++) {
                 benches[i] = new Bench();
                 threads[i] = new Thread(benches[i]);
             }
-            _benchTimer = new /*RunBench.*/Timer(loopCount);
-            new Thread(_benchTimer).start();
-            for (int i = 0; i < _threadCount; i++) {
+            benchTimer = new /*RunBench.*/Timer(loopCount);
+            new Thread(benchTimer).start();
+            for (int i = 0; i < threadCount; i++) {
                 threads[i].start();
             }
-            for (int i = 0; i < _threadCount; i++) {
+            for (int i = 0; i < threadCount; i++) {
                 threads[i].join();
-                _totalCount += benches[i]._count;
+                totalCount += benches[i].count;
             }
         }
 
         long totalCount() {
-            return _totalCount;
+            return totalCount;
         }
 
         public void run() {
-            while (_benchTimer.running()) {
-                _count++;
+            while (benchTimer.running()) {
+                count++;
             }
         }
 
@@ -103,24 +103,24 @@ public class Thread_counter01  extends RunBench {
     }
 
     public static class Timer implements Runnable {
-        private long _runtime;
-        private boolean _done = false;
+        private long runtime;
+        private boolean done = false;
         public Timer(long runtime) {
-            _runtime = runtime;
+            this.runtime = runtime;
         }
 
         @INLINE
         public boolean running() {
-            return !_done;
+            return !done;
         }
 
         public void run() {
             try {
-                Thread.sleep(_runtime);
+                Thread.sleep(runtime);
             } catch (InterruptedException ex) {
 
             }
-            _done = true;
+            done = true;
         }
     }
 

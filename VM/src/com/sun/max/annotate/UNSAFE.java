@@ -97,7 +97,7 @@ public @interface UNSAFE {
         }
 
         private static boolean hasUnsafeSignature(MethodActor methodActor, ClassActor classActor, ClassLoader classLoader) {
-            if (methodActor instanceof VirtualMethodActor && isUnsafeType(methodActor.holder().typeDescriptor(), classActor, classLoader)) {
+            if (methodActor instanceof VirtualMethodActor && isUnsafeType(methodActor.holder().typeDescriptor, classActor, classLoader)) {
                 return true;
             }
             return isUnsafeSignature(methodActor.descriptor(), classActor, classLoader);
@@ -121,7 +121,7 @@ public @interface UNSAFE {
                 return false;
             }
             final ClassActor classActor = classMethodActor.holder();
-            final ClassLoader classLoader = classActor.classLoader();
+            final ClassLoader classLoader = classActor.classLoader;
             if (hasUnsafeSignature(classMethodActor, classActor, classLoader)) {
                 return true;
             }
@@ -165,7 +165,7 @@ public @interface UNSAFE {
                     if (hasReceiver && isUnsafeType(methodRefConstant.holder(pool), classActor, classLoader)) {
                         isUnsafe.setValue(true);
                     }
-                    if (methodRefConstant.holder(pool).toJavaString().startsWith(_vmPackageName) && methodRefConstant.isResolvableWithoutClassLoading(pool)) {
+                    if (methodRefConstant.holder(pool).toJavaString().startsWith(vmPackageName) && methodRefConstant.isResolvableWithoutClassLoading(pool)) {
                         try {
                             final MethodActor methodActor = methodRefConstant.resolve(pool, index);
                             if (methodActor.isUnsafe()) {
@@ -203,20 +203,20 @@ public @interface UNSAFE {
             return isUnsafe.value();
         }
 
-        private static final AppendableSequence<ClassMethodActor> _list = new ArrayListSequence<ClassMethodActor>();
+        private static final AppendableSequence<ClassMethodActor> list = new ArrayListSequence<ClassMethodActor>();
 
         public static Sequence<ClassMethodActor> methods() {
-            return _list;
+            return list;
         }
 
         private static void determine(ClassMethodActor classMethodActor) {
             if (isUnsafe(classMethodActor)) {
-                _list.append(classMethodActor);
+                list.append(classMethodActor);
             }
         }
 
-        private static final String _vmPackageName = new com.sun.max.vm.Package().name();
-        private static final String _asmPackageName = new com.sun.max.vm.asm.Package().name();
+        private static final String vmPackageName = new com.sun.max.vm.Package().name();
+        private static final String asmPackageName = new com.sun.max.vm.asm.Package().name();
 
         /**
          * Find all unsafe methods and mark them with the UNSAFE flag.
@@ -225,7 +225,7 @@ public @interface UNSAFE {
         public static void determineMethods() {
             Trace.begin(1, "determining unsafe methods");
             for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
-                if (classActor.packageName().startsWith(_vmPackageName) && !classActor.packageName().startsWith(_asmPackageName)) {
+                if (classActor.packageName().startsWith(vmPackageName) && !classActor.packageName().startsWith(asmPackageName)) {
                     for (ClassMethodActor classMethodActor : classActor.localStaticMethodActors()) {
                         determine(classMethodActor);
                     }
@@ -235,7 +235,7 @@ public @interface UNSAFE {
                 }
             }
             // Only now set the flag, because it is NOT transitive that a method that calls another unsafe one is also unsafe:
-            for (ClassMethodActor classMethodActor : _list) {
+            for (ClassMethodActor classMethodActor : list) {
                 classMethodActor.beUnsafe();
             }
             Trace.end(1, "determining unsafe methods");

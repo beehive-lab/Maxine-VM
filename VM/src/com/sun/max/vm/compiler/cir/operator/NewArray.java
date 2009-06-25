@@ -31,17 +31,17 @@ import com.sun.max.vm.type.*;
 
 public class NewArray extends JavaResolvableOperator<ArrayClassActor> {
 
-    private final Kind _primitiveElementKind;
+    private final Kind primitiveElementKind;
 
     public NewArray(int atype) {
         super(CALL | NEGATIVE_ARRAY_SIZE_CHECK, null, 0, Kind.REFERENCE);
-        _primitiveElementKind = Kind.fromNewArrayTag(atype);
-        _actor = _primitiveElementKind.arrayClassActor();
+        primitiveElementKind = Kind.fromNewArrayTag(atype);
+        actor = primitiveElementKind.arrayClassActor();
     }
 
     public NewArray(ConstantPool constantPool, int index) {
         super(CALL | NEGATIVE_ARRAY_SIZE_CHECK, constantPool, index, Kind.REFERENCE);
-        _primitiveElementKind = null;
+        primitiveElementKind = null;
     }
 
     /**
@@ -49,7 +49,7 @@ public class NewArray extends JavaResolvableOperator<ArrayClassActor> {
      * operator. If this operator creates a reference array, then {@code null} is returned.
      */
     public Kind primitiveElementKind() {
-        return _primitiveElementKind;
+        return primitiveElementKind;
     }
 
     @Override
@@ -64,8 +64,8 @@ public class NewArray extends JavaResolvableOperator<ArrayClassActor> {
 
     @Override
     public String toString() {
-        if (_primitiveElementKind != null) {
-            return "New" + Strings.capitalizeFirst(_primitiveElementKind.name().string(), true) + "Array";
+        if (primitiveElementKind != null) {
+            return "New" + Strings.capitalizeFirst(primitiveElementKind.name.string, true) + "Array";
         }
         return super.toString();
     }
@@ -76,16 +76,16 @@ public class NewArray extends JavaResolvableOperator<ArrayClassActor> {
      */
     @Override
     public void resolve() {
-        if (_primitiveElementKind == null) {
+        if (primitiveElementKind == null) {
             super.resolve();
-            _actor = ArrayClassActor.forComponentClassActor(_actor);
+            actor = ArrayClassActor.forComponentClassActor(actor);
         }
     }
 
-    private static final Kind[] _parameterKinds = {Kind.INT};
+    private static final Kind[] parameterKinds = {Kind.INT};
 
     @Override
     public Kind[] parameterKinds() {
-        return _parameterKinds;
+        return parameterKinds;
     }
 }

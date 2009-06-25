@@ -25,20 +25,20 @@ package test.except;
  * @Runs: 0 = 0; 2 = !java.lang.ClassCastException; 3 = !java.lang.ClassCastException; 4 = 4
  */
 public class BC_checkcast1 {
-    static Object _object2 = new Object();
-    static Object _object3 = "";
-    static Object _object4 = new BC_checkcast1();
+    static Object object2 = new Object();
+    static Object object3 = "";
+    static Object object4 = new BC_checkcast1();
 
     public static int test(int arg) {
         Object obj = null;
         if (arg == 2) {
-            obj = _object2;
+            obj = object2;
         }
         if (arg == 3) {
-            obj = _object3;
+            obj = object3;
         }
         if (arg == 4) {
-            obj = _object4;
+            obj = object4;
         }
         final BC_checkcast1 bc = (BC_checkcast1) obj;
         if (bc == null) {

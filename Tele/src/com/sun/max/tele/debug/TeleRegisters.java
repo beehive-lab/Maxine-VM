@@ -41,31 +41,31 @@ import com.sun.max.vm.*;
  */
 public abstract class TeleRegisters {
 
-    protected final VMConfiguration _vmConfiguration;
-    private final Symbolizer<? extends Symbol> _symbolizer;
+    protected final VMConfiguration vmConfiguration;
+    private final Symbolizer<? extends Symbol> symbolizer;
 
     public final Symbolizer<? extends Symbol> symbolizer() {
-        return _symbolizer;
+        return symbolizer;
     }
 
-    private final Address[] _registerValues;
-    private final byte[] _registerData;
-    private final ByteArrayInputStream _registerDataInputStream;
+    private final Address[] registerValues;
+    private final byte[] registerData;
+    private final ByteArrayInputStream registerDataInputStream;
 
     protected TeleRegisters(Symbolizer<? extends Symbol> symbolizer, VMConfiguration vmConfiguration) {
-        _symbolizer = symbolizer;
-        _vmConfiguration = vmConfiguration;
-        _registerValues = new Address[symbolizer.numberOfValues()];
-        _registerData = new byte[symbolizer.numberOfValues() * Address.size()];
-        _registerDataInputStream = new ByteArrayInputStream(_registerData);
-        Arrays.fill(_registerValues, Address.zero());
+        this.symbolizer = symbolizer;
+        this.vmConfiguration = vmConfiguration;
+        this.registerValues = new Address[symbolizer.numberOfValues()];
+        this.registerData = new byte[symbolizer.numberOfValues() * Address.size()];
+        this.registerDataInputStream = new ByteArrayInputStream(registerData);
+        Arrays.fill(this.registerValues, Address.zero());
     }
 
     /**
      * Gets the raw buffer into which the registers' values are read from the remote process.
      */
     final byte[] registerData() {
-        return _registerData;
+        return registerData;
     }
 
     /**
@@ -73,11 +73,11 @@ public abstract class TeleRegisters {
      * This method should be called whenever the raw buffer is updated.
      */
     public final void refresh() {
-        _registerDataInputStream.reset();
-        final Endianness endianness = _vmConfiguration.platform().processorKind().dataModel().endianness();
-        for (int i = 0; i != _registerValues.length; i++) {
+        registerDataInputStream.reset();
+        final Endianness endianness = vmConfiguration.platform().processorKind.dataModel.endianness;
+        for (int i = 0; i != registerValues.length; i++) {
             try {
-                _registerValues[i] = Word.read(_registerDataInputStream, endianness).asAddress();
+                registerValues[i] = Word.read(registerDataInputStream, endianness).asAddress();
             } catch (IOException ioException) {
                 ProgramError.unexpected(ioException);
             }
@@ -91,10 +91,10 @@ public abstract class TeleRegisters {
     public Sequence<Symbol> find(Address startAddress, Address endAddress) {
         final AppendableSequence<Symbol> symbols = new ArrayListSequence<Symbol>(4);
         if (!startAddress.isZero()) {
-            for (int index = 0; index < _registerValues.length; index++) {
-                final Address value = _registerValues[index];
+            for (int index = 0; index < registerValues.length; index++) {
+                final Address value = registerValues[index];
                 if (startAddress.lessEqual(value)  && value.lessThan(endAddress)) {
-                    symbols.append(_symbolizer.fromValue(index));
+                    symbols.append(symbolizer.fromValue(index));
                 }
             }
         }
@@ -118,7 +118,7 @@ public abstract class TeleRegisters {
 
 
     public Address get(int index) {
-        return _registerValues[index];
+        return registerValues[index];
     }
 
     /**
@@ -128,7 +128,7 @@ public abstract class TeleRegisters {
      * @return the value of {@code register}
      */
     public final Address get(Symbol register) {
-        return _registerValues[register.value()];
+        return registerValues[register.value()];
     }
 
     /**
@@ -141,7 +141,7 @@ public abstract class TeleRegisters {
      * @param value the new value of {@code register}
      */
     public final void set(Symbol register, Address value) {
-        _registerValues[register.value()] = value;
+        registerValues[register.value()] = value;
     }
 
     public Registers getRegisters(String name) {

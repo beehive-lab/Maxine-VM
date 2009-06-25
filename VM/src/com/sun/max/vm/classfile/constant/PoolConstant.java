@@ -115,13 +115,13 @@ abstract class AbstractPoolConstant<PoolConstant_Type extends PoolConstant<PoolC
  */
 abstract class UnresolvedRefIndices<PoolConstant_Type extends PoolConstant<PoolConstant_Type>> extends AbstractPoolConstant<PoolConstant_Type> implements MemberRefConstant<PoolConstant_Type> {
 
-    final int _classIndex;
+    final int classIndex;
 
-    final int _nameAndTypeIndex;
+    final int nameAndTypeIndex;
 
     UnresolvedRefIndices(int classIndex, int nameAndTypeIndex, Tag[] tags) {
-        _classIndex       = classIndex;
-        _nameAndTypeIndex = nameAndTypeIndex;
+        this.classIndex       = classIndex;
+        this.nameAndTypeIndex = nameAndTypeIndex;
         if (tags[classIndex] != CLASS) {
             throw ConstantPool.unexpectedEntry(classIndex, tags[classIndex], "defining class of field/method", CLASS);
         }
@@ -131,7 +131,7 @@ abstract class UnresolvedRefIndices<PoolConstant_Type extends PoolConstant<PoolC
     }
 
     public final TypeDescriptor holder(ConstantPool pool) {
-        final ClassConstant classRef = pool.classAt(_classIndex);
+        final ClassConstant classRef = pool.classAt(classIndex);
         return classRef.typeDescriptor();
     }
 
@@ -156,7 +156,7 @@ abstract class UnresolvedRefIndices<PoolConstant_Type extends PoolConstant<PoolC
     }
 
     public final boolean isResolvableWithoutClassLoading(ConstantPool pool) {
-        final ClassConstant classConstant = pool.classAt(_classIndex);
+        final ClassConstant classConstant = pool.classAt(classIndex);
         if (!classConstant.isResolvableWithoutClassLoading(pool)) {
             return false;
         }
@@ -164,14 +164,14 @@ abstract class UnresolvedRefIndices<PoolConstant_Type extends PoolConstant<PoolC
     }
 
     final NameAndTypeConstant nameAndType(ConstantPool pool) {
-        return pool.nameAndTypeAt(_nameAndTypeIndex);
+        return pool.nameAndTypeAt(nameAndTypeIndex);
     }
 
     abstract boolean isFieldConstant();
 
     public final String valueString(ConstantPool pool) {
         if (pool == null) {
-            return "classIndex=" + _classIndex + ",nameAndTypeIndex=" + _nameAndTypeIndex;
+            return "classIndex=" + classIndex + ",nameAndTypeIndex=" + nameAndTypeIndex;
         }
         if (isFieldConstant()) {
             return holder(pool).toJavaString(true) + '.' + name(pool) + ':' + type(pool).toJavaString(false);
@@ -183,20 +183,20 @@ abstract class UnresolvedRefIndices<PoolConstant_Type extends PoolConstant<PoolC
 
 abstract class RefKey {
 
-    final TypeDescriptor _holder;
-    final Utf8Constant _name;
+    final TypeDescriptor holder;
+    final Utf8Constant name;
 
     RefKey(ConstantPool pool, UnresolvedRefIndices unresolvedRef) {
-        _holder = unresolvedRef.holder(pool);
-        _name = unresolvedRef.name(pool);
+        holder = unresolvedRef.holder(pool);
+        name = unresolvedRef.name(pool);
     }
 
     public final TypeDescriptor holder() {
-        return _holder;
+        return holder;
     }
 
     public final Utf8Constant name() {
-        return _name;
+        return name;
     }
 
     @Override
@@ -215,14 +215,14 @@ abstract class RefKey {
  */
 abstract class UnresolvedRef<PoolConstant_Type extends PoolConstant<PoolConstant_Type>> extends AbstractPoolConstant<PoolConstant_Type> implements MemberRefConstant<PoolConstant_Type> {
 
-    final ClassActor _holder;
-    final Utf8Constant _name;
-    final Descriptor _descriptor;
+    final ClassActor holder;
+    final Utf8Constant name;
+    final Descriptor descriptor;
 
     public UnresolvedRef(ClassActor holder, Utf8Constant name, Descriptor descriptor) {
-        _holder = holder;
-        _name = name;
-        _descriptor = descriptor;
+        this.holder = holder;
+        this.name = name;
+        this.descriptor = descriptor;
     }
 
     public final TypeDescriptor holder(ConstantPool pool) {
@@ -234,15 +234,15 @@ abstract class UnresolvedRef<PoolConstant_Type extends PoolConstant<PoolConstant
     }
 
     public final Descriptor descriptor(ConstantPool pool) {
-        return _descriptor;
+        return descriptor;
     }
 
     public TypeDescriptor holder() {
-        return _holder.typeDescriptor();
+        return holder.typeDescriptor;
     }
 
     public Utf8Constant name() {
-        return _name;
+        return name;
     }
 
     public final boolean isResolvableWithoutClassLoading(ConstantPool pool) {
@@ -259,9 +259,9 @@ abstract class UnresolvedRef<PoolConstant_Type extends PoolConstant<PoolConstant
 
     public final SignatureDescriptor signature() {
         try {
-            return (SignatureDescriptor) _descriptor;
+            return (SignatureDescriptor) descriptor;
         } catch (ClassCastException e) {
-            throw classFormatError(_descriptor + " is not a valid method signature descriptor");
+            throw classFormatError(descriptor + " is not a valid method signature descriptor");
         }
     }
 
@@ -271,9 +271,9 @@ abstract class UnresolvedRef<PoolConstant_Type extends PoolConstant<PoolConstant
 
     public final TypeDescriptor type() {
         try {
-            return (TypeDescriptor) _descriptor;
+            return (TypeDescriptor) descriptor;
         } catch (ClassCastException e) {
-            throw classFormatError(_descriptor + " is not a valid field type descriptor");
+            throw classFormatError(descriptor + " is not a valid field type descriptor");
         }
     }
 

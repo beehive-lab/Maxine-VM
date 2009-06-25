@@ -65,7 +65,7 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
     private static final Option<Boolean> VMCLASSES = options.newBooleanOption("vmclasses", false,
             "This option determines whether the verifier will attempt to verify all classes in the VM class registry.");
 
-    private static int _failedTestThreshold;
+    private static int failedTestThreshold;
 
 
     public static void main(String[] args) {
@@ -84,15 +84,15 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
     }
 
     private static synchronized void parseProgramArguments() {
-        if (_initialized) {
+        if (initialized) {
             return;
         }
-        _initialized = true;
+        initialized = true;
         Trace.addTo(options);
 
         options.parseArguments(getProgramArguments());
         setProgramArguments(options.getArgumentsAndUnrecognizedOptions().asArguments());
-        _failedTestThreshold = FAILURES.getValue();
+        failedTestThreshold = FAILURES.getValue();
     }
 
     public VerifierTest(String name) {
@@ -100,7 +100,7 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
         parseProgramArguments();
     }
 
-    private static boolean _initialized;
+    private static boolean initialized;
 
     Sequence<String> readClassNames(File file) throws IOException {
         final AppendableSequence<String> lines = new ArrayListSequence<String>();
@@ -116,7 +116,7 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
     }
 
     public void test() throws Exception {
-
+        verify("sun.net.www.protocol.jar.URLJarFile", true);
         verify("java.lang.Class", true);
         verify(JdtBadStackMapTable.class.getName(), true);
 
@@ -155,8 +155,8 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
                 while (classActorIndex != classActors.length) {
                     final ClassActor classActor = classActors[classActorIndex++];
                     if (classActor.isTupleClassActor()) {
-                        final String name = classActor.name().toString();
-                        if (!_verifiedClasses.contains(name) && name.startsWith("com.") || name.startsWith("java.")) {
+                        final String name = classActor.name.toString();
+                        if (!verifiedClasses.contains(name) && name.startsWith("com.") || name.startsWith("java.")) {
                             verify(name, true);
                             ++numberOfClassesVerified;
                         }
@@ -174,13 +174,13 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
         try {
             verify0(name, isPositive);
         } catch (RuntimeException runtimeException) {
-            if (--_failedTestThreshold > 0) {
+            if (--failedTestThreshold > 0) {
                 addTestError(runtimeException);
             } else {
                 throw runtimeException;
             }
         } catch (Error error) {
-            if (--_failedTestThreshold > 0) {
+            if (--failedTestThreshold > 0) {
                 addTestError(error);
             } else {
                 throw error;
@@ -190,11 +190,11 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
         }
     }
 
-    private static final Set<String> _verifiedClasses = new HashSet<String>();
+    private static final Set<String> verifiedClasses = new HashSet<String>();
 
     private void verify0(String name, boolean isPositive) {
 
-        _verifiedClasses.add(name);
+        verifiedClasses.add(name);
 
         ClassVerifier classVerifier = null;
         final ClassfileVersion classfileVersion = new ClassfileVersion(name, PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.classpath());
@@ -203,7 +203,7 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
 
             switch (POLICY.getValue()) {
                 case jsr202:
-                    if (classfileVersion._major < 50) {
+                    if (classfileVersion.major < 50) {
                         return;
                     }
                     classVerifier = new TypeCheckingVerifier(loadClassActor(name));
@@ -249,14 +249,14 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
 
     private void repeatVerificationToDiagnoseFailure(ClassVerifier classVerifier, ExtendedVerifyError extendedVerifyError) {
         // Only repeat the very last failure
-        if (_failedTestThreshold == 1) {
+        if (failedTestThreshold == 1) {
             if (classVerifier != null) {
-                classVerifier.setVerbose(true);
+                classVerifier.verbose = true;
                 if (extendedVerifyError != null) {
                     System.out.println(extendedVerifyError.getMessage());
                     extendedVerifyError.printCode(System.out);
                     System.out.flush();
-                    classVerifier.verify(extendedVerifyError.classMethodActor(), extendedVerifyError.codeAttribute());
+                    classVerifier.verify(extendedVerifyError.classMethodActor, extendedVerifyError.codeAttribute);
                 } else {
                     classVerifier.verify();
                 }
@@ -309,7 +309,7 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
             }
         }.classMethodActor(Object.class);
 
-        verify(classMethodActor.holder().name().toString(), true);
+        verify(classMethodActor.holder().name.toString(), true);
 
         assertTrue(classMethodActor.toJava().invoke(null).equals(42));
     }
@@ -345,7 +345,7 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
         };
         try {
             final MethodActor classMethodActor = asm.classMethodActor(Object.class);
-            verify(classMethodActor.holder().name().toString(), false);
+            verify(classMethodActor.holder().name.toString(), false);
         } catch (VerifyError verifyError) {
             // success
         }

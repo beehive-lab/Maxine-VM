@@ -41,19 +41,19 @@ public class BeltwayCardRegion {
 
     public static final int CARD_SHIFT = 9;
     public static final int CARD_SLOT_LENGTH = 1;
-    private static final boolean _debug = false;
-    private static Pointer _adjustedCardTable = Pointer.zero();
-    private static Size _cardSize = Size.fromInt(1 << CARD_SHIFT);
+    private static final boolean debug = false;
+    private static Pointer adjustedCardTable = Pointer.zero();
+    private static Size cardSize = Size.fromInt(1 << CARD_SHIFT);
 
     // Memory region occupied by the CardTable
-    private RuntimeMemoryRegion _region = new RuntimeMemoryRegion(Size.zero(), Size.zero());
-    public Address _cardTableStart; // Card Table start
-    public Address _coveredRegionStart; // Card Region(s) start
-    public long _numberOfCards;
-    public Size _cardTableSize;
+    private RuntimeMemoryRegion region = new RuntimeMemoryRegion(Size.zero(), Size.zero());
+    public Address cardTableStart; // Card Table start
+    public Address coveredRegionStart; // Card Region(s) start
+    public long numberOfCards;
+    public Size cardTableSize;
 
     public final int getCardIndexFromHeapAddress(Address address) {
-        return address.minus(_coveredRegionStart).unsignedShiftedRight(CARD_SHIFT).toInt();
+        return address.minus(coveredRegionStart).unsignedShiftedRight(CARD_SHIFT).toInt();
     }
 
     public static final int getAddressShiftLength() {
@@ -61,28 +61,28 @@ public class BeltwayCardRegion {
     }
 
     public static Pointer getAdjustedCardTable() {
-        return _adjustedCardTable;
+        return adjustedCardTable;
     }
 
     public final Address getCardFromHeapAddress(Address address) {
         final int offset = getCardIndexFromHeapAddress(address);
-        return _cardTableStart.plus(offset * CARD_SLOT_LENGTH);
+        return cardTableStart.plus(offset * CARD_SLOT_LENGTH);
     }
 
     public final Address getHeapAddressFromCardIndex(int cardIndex) {
-        return _coveredRegionStart.plus(cardIndex * cardSize().toInt());
+        return coveredRegionStart.plus(cardIndex * cardSize().toInt());
     }
 
     private byte cardValue(Address address) {
-        return _cardTableStart.plus(getCardIndexFromHeapAddress(address) * CARD_SLOT_LENGTH).asPointer().getByte();
+        return cardTableStart.plus(getCardIndexFromHeapAddress(address) * CARD_SLOT_LENGTH).asPointer().getByte();
     }
 
     private byte cardValue(int index) {
-        return _cardTableStart.plus(index * CARD_SLOT_LENGTH).asPointer().getByte();
+        return cardTableStart.plus(index * CARD_SLOT_LENGTH).asPointer().getByte();
     }
 
     private void cleanCard(int index) {
-        clearCard(_cardTableStart.plus(index * CARD_SLOT_LENGTH));
+        clearCard(cardTableStart.plus(index * CARD_SLOT_LENGTH));
     }
 
     private void clearCard(Address addr) {
@@ -93,50 +93,50 @@ public class BeltwayCardRegion {
     }
 
     public static Size cardSize() {
-        return _cardSize;
+        return cardSize;
     }
 
     public final Address cardTableBase() {
-        return _cardTableStart;
+        return cardTableStart;
     }
 
     public final Address heapStart() {
-        return _coveredRegionStart;
+        return coveredRegionStart;
     }
 
     public void initialize(Address start, Size size, Address cardTableStart) {
-        _coveredRegionStart = start;
-        _region.setStart(start);
-        _region.setSize(size);
+        coveredRegionStart = start;
+        region.setStart(start);
+        region.setSize(size);
 
         // calculate the integral number of cards required
-        _numberOfCards = (size.toLong() % cardSize().toLong() == 0) ? size.toLong() / cardSize().toLong() : size.toLong() / cardSize().toLong() + 1;
-        _cardTableSize = Size.fromLong(_numberOfCards * CARD_SLOT_LENGTH);
+        numberOfCards = (size.toLong() % cardSize().toLong() == 0) ? size.toLong() / cardSize().toLong() : size.toLong() / cardSize().toLong() + 1;
+        cardTableSize = Size.fromLong(numberOfCards * CARD_SLOT_LENGTH);
 
         if (Heap.verbose()) {
             Log.print("\nCardRegion.initialize: covered region start ");
-            Log.println(_region.start());
+            Log.println(region.start());
             Log.print("CardRegion.initialize: covered region size ");
-            Log.println(_region.size());
+            Log.println(region.size());
             Log.print("CardRegion.initialize: cardTable start ");
             Log.println(cardTableStart);
             Log.print("CardRegion.initialize: cardTable card size ");
             Log.println(cardSize());
             Log.print("CardRegion.initialize: card table size ");
-            Log.print(_numberOfCards * CARD_SLOT_LENGTH);
+            Log.print(numberOfCards * CARD_SLOT_LENGTH);
             Log.println();
             Log.print("CardRegion.initialize: cardTable end ");
-            Log.println(cardTableStart.plus(Size.fromLong(_numberOfCards * CARD_SLOT_LENGTH)));
+            Log.println(cardTableStart.plus(Size.fromLong(numberOfCards * CARD_SLOT_LENGTH)));
             Log.print("CardRegion.initialize: number of cards ");
-            Log.println(_numberOfCards);
+            Log.println(numberOfCards);
         }
 
-        if (VirtualMemory.allocatePageAlignedAtFixedAddress(cardTableStart, Size.fromLong(_numberOfCards * CARD_SLOT_LENGTH), VirtualMemory.Type.HEAP) == false) {
+        if (VirtualMemory.allocatePageAlignedAtFixedAddress(cardTableStart, Size.fromLong(numberOfCards * CARD_SLOT_LENGTH), VirtualMemory.Type.HEAP) == false) {
             Log.print("MaxineVM: Could not allocate memory starting @address: ");
             Log.println(cardTableStart);
             MaxineVM.native_exit(MaxineVM.HARD_EXIT_CODE);
         }
-        _cardTableStart = cardTableStart;
+        this.cardTableStart = cardTableStart;
         clearAllCards();
     }
 
@@ -144,7 +144,7 @@ public class BeltwayCardRegion {
         if (Heap.verbose()) {
             Log.println("CardRegion.clearAllCards: clearing the card table before use ");
         }
-        clearCardRegion(_cardTableStart, _cardTableStart.plus(_cardTableSize));
+        clearCardRegion(cardTableStart, cardTableStart.plus(cardTableSize));
     }
 
     // clears all cards from start to end , including end.
@@ -169,8 +169,8 @@ public class BeltwayCardRegion {
     }
 
     public void dumpCardTable() {
-        final Address start = _cardTableStart;
-        final Address end = _cardTableStart.plus(_cardTableSize.minus(CARD_SLOT_LENGTH));
+        final Address start = cardTableStart;
+        final Address end = cardTableStart.plus(cardTableSize.minus(CARD_SLOT_LENGTH));
 
         Log.print("CardRegion.dumpCardTable: begin");
         Log.println(start);
@@ -207,11 +207,11 @@ public class BeltwayCardRegion {
 
     private static class SetLocals implements Procedure<VmThread> {
         public void run(VmThread thread) {
-            ADJUSTED_CARDTABLE_BASE.setConstantWord(thread.vmThreadLocals(), _adjustedCardTable);
+            ADJUSTED_CARDTABLE_BASE.setConstantWord(thread.vmThreadLocals(), adjustedCardTable);
         }
     }
 
-    private static SetLocals _setLocals = new SetLocals();
+    private static SetLocals setLocals = new SetLocals();
     /**
      * Copies cards from auxiliary card table ( used for marking updates before the regular card table is created) to
      * regular card table and sets regular card table's adjusted address in the vm thread locals.
@@ -222,10 +222,10 @@ public class BeltwayCardRegion {
         // copy cards from primordial card table to the newly created cardtable
         final Pointer primordialCardTable = VmThreadLocal.ADJUSTED_CARDTABLE_BASE.getConstantWord(MaxineVM.primordialVmThreadLocals()).asPointer().plus(
                         Heap.bootHeapRegion().start().unsignedShiftedRight(BeltwayCardRegion.CARD_SHIFT));
-        final int primordialCardTableSize = Heap.bootHeapRegion().size().plus(Code.bootCodeRegion().size()).unsignedShiftedRight(CARD_SHIFT).toInt();
+        final int primordialCardTableSize = Heap.bootHeapRegion().size().plus(Code.bootCodeRegion.size()).unsignedShiftedRight(CARD_SHIFT).toInt();
 
 
-        _adjustedCardTable = BeltwayCardRegion.adjustedCardTableBase(regularCardTable);
+        adjustedCardTable = BeltwayCardRegion.adjustedCardTableBase(regularCardTable);
 
         if (Heap.verbose()) {
             Log.print("switchToRegularCardTable: primordialCardTable address ");
@@ -235,17 +235,17 @@ public class BeltwayCardRegion {
             Log.print("switchToRegularCardTable: regular card table address ");
             Log.println(regularCardTable);
             Log.print("switchToRegularCardTable: regular adjusted card table address ");
-            Log.println(_adjustedCardTable);
+            Log.println(adjustedCardTable);
         }
 
         for (int index = 0; index < primordialCardTableSize; index++) {
             // copy the primordial card table to the regular card table
             regularCardTable.writeByte(index, primordialCardTable.readByte(index));
         }
-        VmThreadMap.ACTIVE.forAllVmThreads(null, _setLocals);
+        VmThreadMap.ACTIVE.forAllVmThreads(null, setLocals);
     }
 
     public final Size cardTableSize() {
-        return _cardTableSize;
+        return cardTableSize;
     }
 }

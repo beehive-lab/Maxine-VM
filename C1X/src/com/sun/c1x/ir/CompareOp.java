@@ -32,7 +32,7 @@ import com.sun.c1x.value.ValueType;
  */
 public class CompareOp extends Op2 {
 
-    ValueStack _stateBefore;
+    ValueStack stateBefore;
 
     /**
      * Creates a new compare operation.
@@ -43,7 +43,7 @@ public class CompareOp extends Op2 {
      */
     public CompareOp(int opcode, Instruction x, Instruction y, ValueStack stateBefore) {
         super(ValueType.INT_TYPE, opcode, x, y);
-        _stateBefore = stateBefore;
+        this.stateBefore = stateBefore;
     }
 
     /**
@@ -51,7 +51,7 @@ public class CompareOp extends Op2 {
      * @return the state before the comparison is performed
      */
     public ValueStack stateBefore() {
-        return _stateBefore;
+        return stateBefore;
     }
 
     /**
@@ -60,8 +60,8 @@ public class CompareOp extends Op2 {
      */
     @Override
     public void otherValuesDo(InstructionClosure closure) {
-        if (_stateBefore != null) {
-            _stateBefore.valuesDo(closure);
+        if (stateBefore != null) {
+            stateBefore.valuesDo(closure);
         }
     }
 

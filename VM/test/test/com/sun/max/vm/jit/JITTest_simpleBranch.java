@@ -168,7 +168,7 @@ public class JITTest_simpleBranch extends CompilerTestCase<TargetMethod> {
                 confirmPresence();
             }
         };
-        Trace.line(1, method.classMethodActor().name());
+        Trace.line(1, method.classMethodActor().name);
     }
 
     public void test_unresolved_invokespecial() {
@@ -203,28 +203,28 @@ public class JITTest_simpleBranch extends CompilerTestCase<TargetMethod> {
         do_invoke("resolved_invokeinterface", ResolvedAtCompileTimeInterface.class);
     }
 
-    int _i0;
-    int _i1;
-    int _i2;
-    int _i3;
-    int _i;
+    int i0;
+    int i1;
+    int i2;
+    int i3;
+    int iDefault;
 
     public void perform_tableswitch(int i) {
         switch(i) {
             case 0:
-                _i0 += i;
+                i0 += i;
                 break;
             case 1:
-                _i1 += i;
+                i1 += i;
                 break;
             case 2:
-                _i2 += i;
+                i2 += i;
                 break;
             case 3:
-                _i3 += i;
+                i3 += i;
                 break;
             default:
-                _i += i;
+                iDefault += i;
                 break;
         }
     }

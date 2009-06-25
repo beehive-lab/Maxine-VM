@@ -34,14 +34,14 @@ import com.sun.max.vm.thread.*;
  */
 public class TeleVmThread extends TeleTupleObject implements MaxVMThread {
 
-    private String _name;
+    private String name;
 
     // the most recent state when we checked the name reference
-    private long _lastRefreshedEpoch = 0;
+    private long lastRefreshedEpoch = 0;
 
     // the string representing the name of the thread the last time we checked the {@link TeleVM}.
     // assume that strings are immutable, so only re-read when the reference changes.
-    private Reference _nameReference;
+    private Reference nameReference;
 
     public TeleVmThread(TeleVM teleVM, Reference vmThreadReference) {
         super(teleVM, vmThreadReference);
@@ -51,21 +51,21 @@ public class TeleVmThread extends TeleTupleObject implements MaxVMThread {
      * @see com.sun.max.tele.MaxVMThread#name()
      */
     public String name() {
-        if (teleVM().teleProcess().epoch() > _lastRefreshedEpoch) {
+        if (teleVM().teleProcess().epoch() > lastRefreshedEpoch) {
             final Reference nameReference = teleVM().fields().VmThread_name.readReference(reference());
-            if (_nameReference == null || !nameReference.equals(_nameReference)) {
+            if (this.nameReference == null || !nameReference.equals(this.nameReference)) {
                 if (nameReference.isZero()) {
-                    _name = "*unset*";
+                    name = "*unset*";
                 } else {
                     // Assume strings in the {@link TeleVM} don't change, so we don't need to re-read
                     // if we've already seen the string (depends on canonical references).
-                    _nameReference = nameReference;
-                    _name = teleVM().getString(_nameReference);
+                    this.nameReference = nameReference;
+                    name = teleVM().getString(this.nameReference);
                 }
             }
-            _lastRefreshedEpoch = teleVM().teleProcess().epoch();
+            lastRefreshedEpoch = teleVM().teleProcess().epoch();
         }
-        return _name;
+        return name;
     }
 
     /* (non-Javadoc)

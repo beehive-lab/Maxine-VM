@@ -30,25 +30,25 @@ import com.sun.max.annotate.*;
  */
 public abstract class BytecodeVisitor {
 
-    private BytecodeScanner _bytecodeScanner;
+    private BytecodeScanner bytecodeScanner;
 
     void setBytecodeScanner(BytecodeScanner bytecodeScanner) {
-        _bytecodeScanner = bytecodeScanner;
+        this.bytecodeScanner = bytecodeScanner;
     }
 
     @INLINE
     public final BytecodeScanner bytecodeScanner() {
-        return _bytecodeScanner;
+        return bytecodeScanner;
     }
 
     @INLINE
     public final int currentBytePosition() {
-        return _bytecodeScanner.currentBytePosition();
+        return bytecodeScanner.currentBytePosition();
     }
 
     @INLINE
     public final Bytecode currentOpcode() {
-        return _bytecodeScanner.currentOpcode();
+        return bytecodeScanner.currentOpcode();
     }
 
     /**
@@ -56,17 +56,17 @@ public abstract class BytecodeVisitor {
      */
     @INLINE
     public final boolean isCurrentOpcodeWidened() {
-        return _bytecodeScanner.isCurrentOpcodeWidened();
+        return bytecodeScanner.isCurrentOpcodeWidened();
     }
 
     @INLINE
     public final int currentOpcodePosition() {
-        return _bytecodeScanner.currentOpcodePosition();
+        return bytecodeScanner.currentOpcodePosition();
     }
 
     @INLINE
     protected final byte[] code() {
-        return _bytecodeScanner.bytecodeBlock().code();
+        return bytecodeScanner.bytecodeBlock().code();
     }
 
     /**

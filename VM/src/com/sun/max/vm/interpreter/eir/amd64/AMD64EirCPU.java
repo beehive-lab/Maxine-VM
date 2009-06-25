@@ -45,16 +45,16 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
         public static final IndexedSequence<ConditionFlag> VALUES = new ArraySequence<ConditionFlag>(values());
     }
 
-    private final Value[] _generalRegisterContents;
-    private final Value[] _xmmRegisterContents;
-    private final boolean[] _conditionFlags;
-    private final Pointer _vmThreadLocals;
+    private final Value[] generalRegisterContents;
+    private final Value[] xmmRegisterContents;
+    private final boolean[] conditionFlags;
+    private final Pointer vmThreadLocals;
 
     public AMD64EirCPU(AMD64EirInterpreter interpreter) {
         super(interpreter);
-        _generalRegisterContents = new Value[AMD64EirRegister.General.VALUES.length()];
-        _xmmRegisterContents = new Value[AMD64EirRegister.XMM.VALUES.length()];
-        _conditionFlags = new boolean[ConditionFlag.VALUES.length()];
+        generalRegisterContents = new Value[AMD64EirRegister.General.VALUES.length()];
+        xmmRegisterContents = new Value[AMD64EirRegister.XMM.VALUES.length()];
+        conditionFlags = new boolean[ConditionFlag.VALUES.length()];
 
         final EirStack stack = stack();
         final Address topSP = stack.ceiling().minus(VmThreadLocal.THREAD_LOCAL_STORAGE_SIZE);
@@ -70,24 +70,24 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
         }
 
         // Configure VM thread locals as done in VmThread.run() and thread_runJava in threads.c
-        _vmThreadLocals = topSP.asPointer().roundedUpBy(2 * Word.size());
+        vmThreadLocals = topSP.asPointer().roundedUpBy(2 * Word.size());
 
-        stack.writeWord(_vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINT_LATCH.index()), _vmThreadLocals);
-        stack.writeWord(_vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index()), _vmThreadLocals);
-        stack.writeWord(_vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINTS_DISABLED_THREAD_LOCALS.index()), _vmThreadLocals);
-        stack.writeWord(_vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index()), Pointer.fromInt(-1));
-        stack.write(_vmThreadLocals.plusWords(VmThreadLocal.VM_THREAD.index()), ReferenceValue.from(VmThread.current()));
+        stack.writeWord(vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINT_LATCH.index()), vmThreadLocals);
+        stack.writeWord(vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index()), vmThreadLocals);
+        stack.writeWord(vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINTS_DISABLED_THREAD_LOCALS.index()), vmThreadLocals);
+        stack.writeWord(vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index()), Pointer.fromInt(-1));
+        stack.write(vmThreadLocals.plusWords(VmThreadLocal.VM_THREAD.index()), ReferenceValue.from(VmThread.current()));
 
         // Set up the latch register
-        write(AMD64EirRegister.General.R14, new WordValue(_vmThreadLocals));
+        write(AMD64EirRegister.General.R14, new WordValue(vmThreadLocals));
     }
 
     private AMD64EirCPU(AMD64EirCPU cpu) {
         super(cpu);
-        _generalRegisterContents = cpu._generalRegisterContents.clone();
-        _xmmRegisterContents = cpu._generalRegisterContents.clone();
-        _conditionFlags = cpu._conditionFlags.clone();
-        _vmThreadLocals = cpu._vmThreadLocals;
+        generalRegisterContents = cpu.generalRegisterContents.clone();
+        xmmRegisterContents = cpu.generalRegisterContents.clone();
+        conditionFlags = cpu.conditionFlags.clone();
+        vmThreadLocals = cpu.vmThreadLocals;
     }
 
     @Override
@@ -96,19 +96,19 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
     }
 
     public boolean test(ConditionFlag flag) {
-        return _conditionFlags[flag.ordinal()];
+        return conditionFlags[flag.ordinal()];
     }
 
     public void set(ConditionFlag flag, boolean value) {
-        _conditionFlags[flag.ordinal()] = value;
+        conditionFlags[flag.ordinal()] = value;
     }
 
     private Value read(AMD64EirRegister.General register) {
-        return _generalRegisterContents[register.ordinal()];
+        return generalRegisterContents[register.ordinal()];
     }
 
     private Value read(AMD64EirRegister.XMM register) {
-        return _xmmRegisterContents[register.ordinal()];
+        return xmmRegisterContents[register.ordinal()];
     }
 
     @Override
@@ -125,14 +125,14 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
 
     private void write(AMD64EirRegister.General register, Value value) {
         ProgramError.check(value != null);
-        _generalRegisterContents[register.ordinal()] = value;
+        generalRegisterContents[register.ordinal()] = value;
         if (register == AMD64EirRegister.General.RSP) {
             stack().setSP(value.asWord().asAddress());
         }
     }
 
     private void write(AMD64EirRegister.XMM register, Value value) {
-        _xmmRegisterContents[register.ordinal()] = value;
+        xmmRegisterContents[register.ordinal()] = value;
     }
 
     @Override
@@ -151,7 +151,7 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
     }
 
     private Address getGeneralRegisterContents(EirRegister register) {
-        final Value value = _generalRegisterContents[register.ordinal()];
+        final Value value = generalRegisterContents[register.ordinal()];
         if (value == null || value.isZero()) {
             return Address.zero();
         }
@@ -188,12 +188,12 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
 
     @Override
     protected void writeRegisterFloat(EirRegister register, float f) {
-        _xmmRegisterContents[register.ordinal()] = FloatValue.from(f);
+        xmmRegisterContents[register.ordinal()] = FloatValue.from(f);
     }
 
     @Override
     protected void writeRegisterDouble(EirRegister register, double d) {
-        _xmmRegisterContents[register.ordinal()] = DoubleValue.from(d);
+        xmmRegisterContents[register.ordinal()] = DoubleValue.from(d);
     }
 
     @Override
@@ -210,19 +210,19 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
     public void dump(PrintStream stream) {
         final TextTableColumn generalRegisters = new TextTableColumn("General Registers");
         for (AMD64EirRegister register : AMD64EirRegister.General.VALUES) {
-            final Value value = _generalRegisterContents[register.ordinal()];
+            final Value value = generalRegisterContents[register.ordinal()];
             generalRegisters.add(Strings.padLengthWithSpaces(register.toString(), 5) + ": " + valueToString(value));
         }
 
         final TextTableColumn xmmRegisters = new TextTableColumn("XMM Registers:");
         for (AMD64EirRegister register : AMD64EirRegister.XMM.VALUES) {
-            final Value value = _xmmRegisterContents[register.ordinal()];
+            final Value value = xmmRegisterContents[register.ordinal()];
             xmmRegisters.add(Strings.padLengthWithSpaces(register.toString(), 5) + ": " + valueToString(value));
         }
 
-        final TextTableColumn conditionFlags = new TextTableColumn("Condition flags:");
+        final TextTableColumn conditionFlagsColumn = new TextTableColumn("Condition flags:");
         for (ConditionFlag flag : ConditionFlag.values()) {
-            conditionFlags.add(flag + ": " + _conditionFlags[flag.ordinal()]);
+            conditionFlagsColumn.add(flag + ": " + this.conditionFlags[flag.ordinal()]);
         }
 
         final TextTableColumn stack = new TextTableColumn("Stack");
@@ -232,7 +232,7 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
             stack.add(Strings.padLengthWithSpaces("[SP+" + address.minus(sp).toString() + "]", 7) + address.toString() + ": " + valueToString(value));
         }
 
-        TextTableColumn.printTable(stream, generalRegisters, xmmRegisters, conditionFlags, stack);
+        TextTableColumn.printTable(stream, generalRegisters, xmmRegisters, conditionFlagsColumn, stack);
     }
 
 }

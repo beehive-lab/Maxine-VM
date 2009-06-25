@@ -49,17 +49,17 @@ public final class HomHybridLayout extends HomWordArrayLayout implements HybridL
         return false;
     }
 
-    private final HomTupleLayout _tupleLayout;
-    private final IntArrayLayout _intArrayLayout;
+    private final HomTupleLayout tupleLayout;
+    private final IntArrayLayout intArrayLayout;
 
     public HomHybridLayout(GripScheme gripScheme) {
         super(gripScheme);
-        _tupleLayout = new HomTupleLayout(gripScheme);
-        _intArrayLayout = new HomIntArrayLayout(gripScheme);
+        tupleLayout = new HomTupleLayout(gripScheme);
+        intArrayLayout = new HomIntArrayLayout(gripScheme);
     }
 
     public Size layoutFields(ClassActor superClassActor, FieldActor[] fieldActors) {
-        final Size tupleSize = _tupleLayout.layoutFields(superClassActor, fieldActors);
+        final Size tupleSize = tupleLayout.layoutFields(superClassActor, fieldActors);
         return getArraySize(firstAvailableWordArrayIndex(tupleSize));
     }
 
@@ -69,7 +69,7 @@ public final class HomHybridLayout extends HomWordArrayLayout implements HybridL
 
     @INLINE
     public int getFieldOffsetInCell(FieldActor fieldActor) {
-        return _tupleLayout.getFieldOffsetInCell(fieldActor);
+        return tupleLayout.getFieldOffsetInCell(fieldActor);
     }
 
     @PROTOTYPE_ONLY
@@ -77,14 +77,14 @@ public final class HomHybridLayout extends HomWordArrayLayout implements HybridL
     public void visitObjectCell(Object object, ObjectCellVisitor visitor) {
         final Hybrid hybrid = (Hybrid) object;
         visitHeader(visitor, object);
-        _tupleLayout.visitFields(visitor, object);
+        tupleLayout.visitFields(visitor, object);
 
         for (int wordIndex = hybrid.firstWordIndex(); wordIndex <= hybrid.lastWordIndex(); wordIndex++) {
             visitor.visitElement(getElementOffsetInCell(wordIndex).toInt(), wordIndex, new WordValue(hybrid.getWord(wordIndex)));
         }
 
         for (int intIndex = hybrid.firstIntIndex(); intIndex <= hybrid.lastIntIndex(); intIndex++) {
-            visitor.visitElement(_intArrayLayout.getElementOffsetInCell(intIndex).toInt(), intIndex, IntValue.from(hybrid.getInt(intIndex)));
+            visitor.visitElement(intArrayLayout.getElementOffsetInCell(intIndex).toInt(), intIndex, IntValue.from(hybrid.getInt(intIndex)));
         }
     }
 }

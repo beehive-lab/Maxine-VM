@@ -101,11 +101,11 @@ public abstract class DataLabel extends InspectorLabel {
      */
     public static class ByteArrayAsHex extends DataLabel {
 
-        private byte[] _bytes;
+        private byte[] bytes;
 
         public ByteArrayAsHex(Inspection inspection, byte[] bytes) {
             super(inspection, "");
-            _bytes = bytes;
+            this.bytes = bytes;
             redisplay();
         }
 
@@ -118,15 +118,15 @@ public abstract class DataLabel extends InspectorLabel {
         }
 
         public void setValue(byte[] bytes) {
-            _bytes = bytes;
+            this.bytes = bytes;
             updateText();
         }
 
         private void updateText() {
-            if (_bytes != null) {
+            if (bytes != null) {
                 final StringBuilder result = new StringBuilder(100);
                 String prefix = "[";
-                for (byte b : _bytes) {
+                for (byte b : bytes) {
                     result.append(prefix);
                     result.append(String.format("%02X", b));
                     prefix = " ";
@@ -285,8 +285,8 @@ public abstract class DataLabel extends InspectorLabel {
      * is specified, then a ToolTip displays the offset from the base.
      */
     public static class AddressAsHex extends DataLabel {
-        protected Address _address;
-        private final Address _origin;
+        protected Address address;
+        private final Address origin;
 
         public void changeBiasState() {
         }
@@ -295,21 +295,21 @@ public abstract class DataLabel extends InspectorLabel {
             this(inspection, address, null);
         }
 
-        public AddressAsHex(Inspection inspection, Address address, Address origin) {
-            super(inspection, address.toHexString());
-            _address = address;
-            _origin = origin;
+        public AddressAsHex(Inspection inspection, Address addr, Address origin) {
+            super(inspection, addr.toHexString());
+            this.address = addr;
+            this.origin = origin;
             addMouseListener(new InspectorMouseClickAdapter(inspection()) {
                 @Override
                 public void procedure(final MouseEvent mouseEvent) {
                     switch (MaxineInspector.mouseButtonWithModifiers(mouseEvent)) {
                         case MouseEvent.BUTTON3: {
                             final InspectorMenu menu = new InspectorMenu();
-                            menu.add(inspection().actions().copyWord(_address, "Copy address to clipboard"));
-                            menu.add(inspection().actions().inspectMemory(_address, null));
-                            menu.add(inspection().actions().inspectMemoryWords(_address, null));
+                            menu.add(inspection().actions().copyWord(address, "Copy address to clipboard"));
+                            menu.add(inspection().actions().inspectMemory(address, null));
+                            menu.add(inspection().actions().inspectMemoryWords(address, null));
                             if (maxVM().watchpointsEnabled()) {
-                                menu.add(inspection().actions().setWordWatchpoint(_address, null));
+                                menu.add(inspection().actions().setWordWatchpoint(address, null));
                             }
                             menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                             break;
@@ -327,8 +327,8 @@ public abstract class DataLabel extends InspectorLabel {
 
         protected AddressAsHex(Inspection inspection, Address address, Address origin, InspectorMouseClickAdapter mouseListener) {
             super(inspection, address.toHexString());
-            _address = address;
-            _origin = origin;
+            this.address = address;
+            this.origin = origin;
             addMouseListener(mouseListener);
             redisplay();
         }
@@ -342,54 +342,54 @@ public abstract class DataLabel extends InspectorLabel {
         }
 
         public void setValue(Address address) {
-            _address = address;
+            this.address = address;
             updateText();
         }
 
         protected String toolTipText() {
-            if (_origin == null) {
+            if (origin == null) {
                 return null;
             }
-            final long position = _address.minus(_origin).toLong();
+            final long position = address.minus(origin).toLong();
             return "AsPosition: " + position + ", " +  "0x" + Long.toHexString(position);
         }
 
         private void updateText() {
-            setText(_address.toHexString());
+            setText(address.toHexString());
             setToolTipText(toolTipText());
         }
     }
 
     public static final class BiasedStackAddressAsHex extends AddressAsHex {
-        boolean _biased;
-        final STACK_BIAS _bias;
+        boolean biased;
+        final STACK_BIAS bias;
         public BiasedStackAddressAsHex(Inspection inspection, Address address, STACK_BIAS bias) {
             super(inspection, address, null);
-            _bias = bias;
-            _biased = true;
+            this.bias = bias;
+            biased = true;
         }
 
         private boolean useBias() {
-            return _bias != null && !_bias.equals(STACK_BIAS.NONE);
+            return bias != null && !bias.equals(STACK_BIAS.NONE);
         }
         @Override
         public void changeBiasState() {
             if (!useBias()) {
                 return;
             }
-            if (_biased) {
-                _biased = false;
-                setValue(_bias.unbias(_address.asPointer()));
+            if (biased) {
+                biased = false;
+                setValue(bias.unbias(address.asPointer()));
             } else {
-                _biased = true;
-                setValue(_bias.bias(_address.asPointer()));
+                biased = true;
+                setValue(bias.bias(address.asPointer()));
             }
         }
 
         @Override
         protected String toolTipText() {
             if (useBias()) {
-                return _biased ? "Biased" : "Unbiased";
+                return biased ? "Biased" : "Unbiased";
             }
             return null;
         }
@@ -408,14 +408,14 @@ public abstract class DataLabel extends InspectorLabel {
 
     public static final class Percent extends DataLabel {
 
-        private long _numerator;
-        private long _denominator;
+        private long numerator;
+        private long denominator;
 
         public Percent(Inspection inspection, long numerator, long denominator) {
             super(inspection, null);
             assert denominator != 0;
-            _numerator = numerator;
-            _denominator = denominator;
+            this.numerator = numerator;
+            this.denominator = denominator;
             redisplay();
         }
 
@@ -428,15 +428,15 @@ public abstract class DataLabel extends InspectorLabel {
         }
 
         public void setValue(int numerator, int denominator) {
-            _numerator = numerator;
-            _denominator = denominator;
+            this.numerator = numerator;
+            this.denominator = denominator;
             updateText();
         }
 
         private void updateText() {
-            final long percent = 100 * _numerator / _denominator;
+            final long percent = 100 * numerator / denominator;
             setText(Long.toString(percent) + "%");
-            setToolTipText(Long.toString(_numerator) + " /  " + _denominator);
+            setToolTipText(Long.toString(numerator) + " /  " + denominator);
         }
     }
 

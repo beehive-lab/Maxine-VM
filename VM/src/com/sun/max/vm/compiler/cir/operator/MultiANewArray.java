@@ -31,11 +31,11 @@ import com.sun.max.vm.type.*;
 
 
 public class MultiANewArray extends JavaResolvableOperator<ArrayClassActor> {
-    private final int _ndimension;
+    private final int ndimension;
 
     public MultiANewArray(ConstantPool constantPool, int index, int dimensions) {
         super(CALL | NEGATIVE_ARRAY_SIZE_CHECK, constantPool, index, Kind.REFERENCE);
-        _ndimension = dimensions;
+        ndimension = dimensions;
     }
 
     @Override
@@ -49,12 +49,12 @@ public class MultiANewArray extends JavaResolvableOperator<ArrayClassActor> {
     }
 
     public int ndimension() {
-        return _ndimension;
+        return ndimension;
     }
 
     @Override
     public Kind[] parameterKinds() {
-        final Kind[] kinds = new Kind[_ndimension];
+        final Kind[] kinds = new Kind[ndimension];
         Arrays.fill(kinds, Kind.INT);
         return kinds;
     }

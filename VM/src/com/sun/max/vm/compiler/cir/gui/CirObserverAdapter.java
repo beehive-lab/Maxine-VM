@@ -36,19 +36,19 @@ import com.sun.max.vm.compiler.ir.observer.*;
  */
 public class CirObserverAdapter extends IrObserverAdapter {
 
-    private CirGenerator _cirGenerator;
-    private static CirTraceVisualizer _visualizer;
+    private CirGenerator cirGenerator;
+    private static CirTraceVisualizer visualizer;
 
     @Override
     public boolean attach(IrGenerator generator) {
-        if (_visualizer == null && generator instanceof CirGenerator) {
-            _cirGenerator = (CirGenerator) generator;
-            _visualizer = CirTraceVisualizer.createAndShowGUI();
-            _visualizer.addAncestorListener(new AncestorListener() {
+        if (visualizer == null && generator instanceof CirGenerator) {
+            cirGenerator = (CirGenerator) generator;
+            visualizer = CirTraceVisualizer.createAndShowGUI();
+            visualizer.addAncestorListener(new AncestorListener() {
 
                 public void ancestorRemoved(AncestorEvent event) {
-                    _cirGenerator.removeIrObserver(CirObserverAdapter.this);
-                    _visualizer = null;
+                    cirGenerator.removeIrObserver(CirObserverAdapter.this);
+                    visualizer = null;
                 }
 
                 public void ancestorAdded(AncestorEvent event) {
@@ -87,9 +87,9 @@ public class CirObserverAdapter extends IrObserverAdapter {
     }
 
     public static synchronized void visualize(CirMethod cirMethod, CirNode node, String transform) {
-        if (_visualizer != null && _visualizer.shouldBeTraced(cirMethod.classMethodActor())) {
+        if (visualizer != null && visualizer.shouldBeTraced(cirMethod.classMethodActor())) {
             final CirAnnotatedTraceBuilder builder = new CirAnnotatedTraceBuilder(node);
-            _visualizer.add(new CirAnnotatedTrace(builder.trace(), builder.elements(), cirMethod.classMethodActor(), transform));
+            visualizer.add(new CirAnnotatedTrace(builder.trace(), builder.elements(), cirMethod.classMethodActor(), transform));
         }
     }
 }

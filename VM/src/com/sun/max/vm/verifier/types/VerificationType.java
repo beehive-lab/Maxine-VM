@@ -227,7 +227,7 @@ public abstract class VerificationType {
     }
 
     public static VerificationType getVerificationType(TypeDescriptor typeDescriptor, VerificationRegistry registry) {
-        switch (typeDescriptor.toKind().asEnum()) {
+        switch (typeDescriptor.toKind().asEnum) {
             case VOID:
                 return VerificationType.TOP;
             case BYTE:

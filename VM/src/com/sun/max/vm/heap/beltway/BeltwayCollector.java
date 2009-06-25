@@ -31,30 +31,30 @@ import com.sun.max.vm.heap.*;
 
 public class BeltwayCollector implements Collector {
 
-    protected static Runnable _gcImpl;
-    protected static TLAB _lastAllocatedTLAB;
+    protected static Runnable gcImpl;
+    protected static TLAB lastAllocatedTLAB;
 
     public BeltwayCollector(Runnable gcImpl) {
-        _gcImpl = gcImpl;
+        BeltwayCollector.gcImpl = gcImpl;
     }
 
     public BeltwayCollector() {
     }
 
     public void setLastAllocatedTLAB(TLAB tlab) {
-        _lastAllocatedTLAB = tlab;
+        lastAllocatedTLAB = tlab;
     }
 
     public TLAB getLastAllocatedTLAB() {
-        return _lastAllocatedTLAB;
+        return lastAllocatedTLAB;
     }
 
     public void setRunnable(Runnable gcImpl) {
-        _gcImpl = gcImpl;
+        BeltwayCollector.gcImpl = gcImpl;
     }
 
     public void run() {
-        _gcImpl.run();
+        gcImpl.run();
     }
 
 }

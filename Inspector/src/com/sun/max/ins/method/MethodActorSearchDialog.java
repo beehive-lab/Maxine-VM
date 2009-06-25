@@ -48,37 +48,37 @@ public final class MethodActorSearchDialog extends TeleObjectSearchDialog {
 
     @Override
     protected void rebuildList(String filterText) {
-        final Iterator<TeleMethodActor> teleMethodActors = _localTeleMethodActors.iterator();
+        final Iterator<TeleMethodActor> teleMethodActors = localTeleMethodActors.iterator();
 
         int i = 0;
-        final NamedTeleObject[] methods = new NamedTeleObject[_localTeleMethodActors.length()];
+        final NamedTeleObject[] methods = new NamedTeleObject[localTeleMethodActors.length()];
 
         final String filterLowerCase = filterText.toLowerCase();
         while (teleMethodActors.hasNext()) {
             final TeleMethodActor teleMethodActor = teleMethodActors.next();
             final MethodActor methodActor = teleMethodActor.methodActor();
-            final String methodNameLowerCase = methodActor.name().toString().toLowerCase();
+            final String methodNameLowerCase = methodActor.name.toString().toLowerCase();
             if (filterLowerCase.isEmpty() ||
                 (filterLowerCase.endsWith(" ") && methodNameLowerCase.equals(Strings.chopSuffix(filterLowerCase, 1))) ||
                 methodNameLowerCase.contains(filterLowerCase)) {
-                final String signature = methodActor.name() + methodActor.descriptor().toJavaString(false, true);
+                final String signature = methodActor.name + methodActor.descriptor().toJavaString(false, true);
                 methods[i++] = new NamedTeleObject(signature, teleMethodActor);
             }
         }
 
         Arrays.sort(methods, 0, i);
         for (int j = 0; j < i; ++j) {
-            _listModel.addElement(methods[j]);
+            listModel.addElement(methods[j]);
         }
     }
 
-    private final AppendableSequence<TeleMethodActor> _localTeleMethodActors = new LinkSequence<TeleMethodActor>();
+    private final AppendableSequence<TeleMethodActor> localTeleMethodActors = new LinkSequence<TeleMethodActor>();
 
     private MethodActorSearchDialog(Inspection inspection, TeleClassActor teleClassActor, Predicate<TeleMethodActor> filter, String title, String actionName) {
         super(inspection, title == null ? "Select Method" : title, "Method Name", actionName, false);
         for (TeleMethodActor teleMethodActor : teleClassActor.getTeleMethodActors()) {
             if (filter.evaluate(teleMethodActor)) {
-                _localTeleMethodActors.append(teleMethodActor);
+                localTeleMethodActors.append(teleMethodActor);
             }
         }
         rebuildList();

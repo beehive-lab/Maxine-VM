@@ -38,10 +38,6 @@ import com.sun.c1x.value.*;
  * @author Ben L. Titzer
  */
 public abstract class Instruction {
-    private static final int BCI_NOT_APPENDED = -99;
-    public static final int INVOCATION_ENTRY_BCI = -1;
-    public static final int SYNCHRONIZATION_ENTRY_BCI = -1;
-
     /**
      * An enumeration of flags on instructions.
      */
@@ -64,17 +60,7 @@ public abstract class Instruction {
         UnorderedIsTrue,
         NeedsPatching,
         ThrowIncompatibleClassChangeError,
-        ProfileMDO;
-
-        public final int mask() {
-            return 1 << ordinal();
-        }
-    }
-
-    /**
-     * An enumeration of the reasons that an instruction can be pinned.
-     */
-    public enum PinReason {
+        ProfileMDO,
         PinUnknown,
         PinExplicitNullCheck,
         PinStackForStateSplit,
@@ -86,28 +72,34 @@ public abstract class Instruction {
         }
     }
 
-    private static int _nextID;
+    private static final int BCI_NOT_APPENDED = -99;
+    private static final int PIN_FLAGS = Flag.PinUnknown.mask() | Flag.PinExplicitNullCheck.mask() |
+                                         Flag.PinStackForStateSplit.mask() | Flag.PinStateSplitConstructor.mask() |
+                                         Flag.PinGlobalValueNumbering.mask();
+    public static final int INVOCATION_ENTRY_BCI = -1;
+    public static final int SYNCHRONIZATION_ENTRY_BCI = -1;
 
-    private final int _id;
-    private int _bci;
-    private int _pinState;
-    private int _flags;
-    private ValueType _valueType;
-    private Instruction _next;
-    private Instruction _subst;
+    private static int nextID;
 
-    private List<ExceptionHandler> _exceptionHandlers = ExceptionHandler.ZERO_HANDLERS;
+    private final int id;
+    private int bci;
+    private int flags;
+    private ValueType valueType;
+    private Instruction next;
+    private Instruction subst;
 
-    private LIROperand _lirOperand;
+    private List<ExceptionHandler> exceptionHandlers = ExceptionHandler.ZERO_HANDLERS;
+
+    private LIROperand lirOperand;
 
     /**
      * Constructs a new instruction with the specified value type.
      * @param type the value type for this instruction
      */
     public Instruction(ValueType type) {
-        _id = _nextID++;
-        _bci = BCI_NOT_APPENDED;
-        _valueType = type;
+        id = nextID++;
+        bci = BCI_NOT_APPENDED;
+        valueType = type;
     }
 
     /**
@@ -115,7 +107,7 @@ public abstract class Instruction {
      * @return the id of this instruction
      */
     public final int id() {
-        return _id;
+        return id;
     }
 
     /**
@@ -123,7 +115,7 @@ public abstract class Instruction {
      * @return the bytecode index of this instruction
      */
     public final int bci() {
-        return _bci;
+        return bci;
     }
 
     /**
@@ -133,23 +125,15 @@ public abstract class Instruction {
     public final void setBCI(int bci) {
         // XXX: BCI field may not be needed at all
         assert bci >= 0 || bci == SYNCHRONIZATION_ENTRY_BCI;
-        _bci = bci;
+        this.bci = bci;
     }
 
     /**
      * Checks whether this instruction has already been added to its basic block.
      * @return <code>true</code> if this instruction has been added to the basic block containing it
      */
-    public boolean isAppended() {
-        return _bci != BCI_NOT_APPENDED;
-    }
-
-    /**
-     * Gets the pin state of this instruction.
-     * @return the pin state of this instruction
-     */
-    public final int pinState() {
-        return _pinState;
+    public final boolean isAppended() {
+        return bci != BCI_NOT_APPENDED;
     }
 
     /**
@@ -159,7 +143,7 @@ public abstract class Instruction {
      * @return <code>true</code> if this instruction has been pinned
      */
     public final boolean isPinned() {
-        return C1XOptions.PinAllInstructions || (_pinState != 0);
+        return C1XOptions.PinAllInstructions || (flags & PIN_FLAGS) != 0;
     }
 
     /**
@@ -167,7 +151,7 @@ public abstract class Instruction {
      * @return the value type of this instruction
      */
     public final ValueType type() {
-        return _valueType;
+        return valueType;
     }
 
     /**
@@ -175,9 +159,8 @@ public abstract class Instruction {
      * @param type the new value type for this instruction
      */
     public final void setType(ValueType type) {
-        // XXX: refactor to facade and make field public?
         assert type != null;
-        _valueType = type;
+        valueType = type;
     }
 
     /**
@@ -186,7 +169,7 @@ public abstract class Instruction {
      * @return the next instruction after this one in the basic block
      */
     public final Instruction next() {
-        return _next;
+        return next;
     }
 
     /**
@@ -198,9 +181,8 @@ public abstract class Instruction {
      */
     public final Instruction setNext(Instruction next, int bci) {
         if (next != null) {
-            // XXX: refactor to facade and make field public?
             assert !(this instanceof Phi || this instanceof BlockEnd || this instanceof Local);
-            _next = next;
+            this.next = next;
             next.setBCI(bci);
         }
         return next;
@@ -214,10 +196,10 @@ public abstract class Instruction {
      * @return the substitution for this instruction
      */
     public final Instruction subst() {
-        if (_subst == null) {
+        if (subst == null) {
             return this;
         }
-        return _subst.subst();
+        return subst.subst();
     }
 
     /**
@@ -225,7 +207,7 @@ public abstract class Instruction {
      * @return <code>true</code> if this instruction has a substitution.
      */
     public final boolean hasSubst() {
-        return _subst != null;
+        return subst != null;
     }
 
     /**
@@ -233,7 +215,7 @@ public abstract class Instruction {
      * @param subst the instruction to substitute for this instruction
      */
     public final void setSubst(Instruction subst) {
-        _subst = subst;
+        this.subst = subst;
     }
 
     /**
@@ -257,18 +239,10 @@ public abstract class Instruction {
     }
 
     /**
-     * Pin this instruction.
-     * @param reason the reason this instruction should be pinned.
-     */
-    public final void pin(PinReason reason) {
-        _pinState |= reason.mask();
-    }
-
-    /**
      * Pin this instruction (with an unknown reason).
      */
     public final void pin() {
-        pin(PinReason.PinUnknown);
+        setFlag(Flag.PinUnknown);
     }
 
     /**
@@ -277,10 +251,10 @@ public abstract class Instruction {
      * be unpinned.
      * @param reason the reason this instruction might have been pinned
      */
-    public final void unpin(PinReason reason) {
-        // XXX: is it better to just ignore requests to unpin in the unknown case?
-        assert reason != PinReason.PinUnknown : "cannot unpin unknown pin reason";
-        _pinState &= ~reason.mask();
+    public final void unpin(Flag reason) {
+        if (reason != Flag.PinUnknown) {
+            clearFlag(reason);
+        }
     }
 
     /**
@@ -289,7 +263,7 @@ public abstract class Instruction {
      * @return <code>true</code> if this instruction has the flag
      */
     public final boolean checkFlag(Flag flag) {
-        return (_flags & flag.mask()) != 0;
+        return (flags & flag.mask()) != 0;
     }
 
     /**
@@ -297,7 +271,7 @@ public abstract class Instruction {
      * @param flag the flag to set
      */
     public final void setFlag(Flag flag) {
-        _flags |= flag.mask();
+        flags |= flag.mask();
     }
 
     /**
@@ -305,7 +279,7 @@ public abstract class Instruction {
      * @param flag the flag to set
      */
     public final void clearFlag(Flag flag) {
-        _flags &= ~flag.mask();
+        flags &= ~flag.mask();
     }
 
     /**
@@ -336,7 +310,7 @@ public abstract class Instruction {
      * Checks whether this instruction needs a null check.
      * @return <code>true</code> if this instruction needs a null check
      */
-    public boolean isNonNull() {
+    public final boolean isNonNull() {
         return checkFlag(Flag.NonNull);
     }
 
@@ -345,7 +319,7 @@ public abstract class Instruction {
      * @return the LIR operand for this instruction
      */
     public Object lirOperand() {
-        return _lirOperand;
+        return lirOperand;
     }
 
     /**
@@ -353,15 +327,7 @@ public abstract class Instruction {
      * @param operand the operand to associate with this instruction
      */
     public void setLirOperand(LIROperand operand) {
-        _lirOperand = operand;
-    }
-
-    /**
-     * Clears the LIR operand associated with this instruction by setting it
-     * to an illegal operand.
-     */
-    public void clearLirOperand() {
-        _lirOperand = null;
+        lirOperand = operand;
     }
 
     /**
@@ -369,15 +335,15 @@ public abstract class Instruction {
      * @return the list of exception handlers for this instruction
      */
     public List<ExceptionHandler> exceptionHandlers() {
-        return _exceptionHandlers;
+        return exceptionHandlers;
     }
 
     /**
      * Sets the list of exception handlers for this instruction.
      * @param exceptionHandlers the exception handlers
      */
-    public void setExceptionHandlers(List<ExceptionHandler> exceptionHandlers) {
-        _exceptionHandlers = exceptionHandlers;
+    public final void setExceptionHandlers(List<ExceptionHandler> exceptionHandlers) {
+        this.exceptionHandlers = exceptionHandlers;
     }
 
     //========================== Value numbering support =================================
@@ -479,6 +445,11 @@ public abstract class Instruction {
         otherValuesDo(closure);
     }
 
+    @Override
+    public String toString() {
+        return valueString(this);
+    }
+
     /**
      * Utility method to check that two instructions have the same basic type.
      * @param i the first instruction
@@ -487,11 +458,6 @@ public abstract class Instruction {
      */
     public static boolean sameBasicType(Instruction i, Instruction other) {
         return i.type().basicType() == other.type().basicType();
-    }
-
-    @Override
-    public String toString() {
-        return valueString(this);
     }
 
     /**

@@ -39,32 +39,32 @@ public abstract class AddressInputField extends JTextField {
 
     public abstract void update(Address value);
 
-    private final int _radix;
-    private Address _value;
+    private final int radix;
+    private Address value;
 
     public Address value() {
-        return _value;
+        return value;
     }
 
-    private Address _lowerBound = Address.zero();
-    private Address _upperBound = Address.fromLong(-1L);
+    private Address lowerBound = Address.zero();
+    private Address upperBound = Address.fromLong(-1L);
 
-    private int _numberOfDigits;
+    private int numberOfDigits;
 
     protected void updateView() {
-        _numberOfDigits = _upperBound.toUnsignedString(_radix).length();
-        setPreferredSize(new Dimension(9 * _numberOfDigits, 25));
-        setText(_value.toUnsignedString(_radix));
+        numberOfDigits = upperBound.toUnsignedString(radix).length();
+        setPreferredSize(new Dimension(9 * numberOfDigits, 25));
+        setText(value.toUnsignedString(radix));
     }
 
     private void setRange(Address lowerBound, Address upperBound) {
-        _lowerBound = lowerBound;
-        _upperBound = upperBound;
-        if (_value.greaterThan(upperBound)) {
-            _value = upperBound;
+        this.lowerBound = lowerBound;
+        this.upperBound = upperBound;
+        if (value.greaterThan(upperBound)) {
+            value = upperBound;
             updateView();
-        } else if (_value.lessThan(lowerBound)) {
-            _value = lowerBound;
+        } else if (value.lessThan(lowerBound)) {
+            value = lowerBound;
             updateView();
         }
     }
@@ -75,40 +75,40 @@ public abstract class AddressInputField extends JTextField {
 
     public void attemptUpdate() {
         String text = getText().trim();
-        if (_radix == 16 && text.substring(0, 2).equalsIgnoreCase("0x")) {
+        if (radix == 16 && text.substring(0, 2).equalsIgnoreCase("0x")) {
             text = text.substring(2);
             setText(text);
         }
-        final Address value = Address.parse(text, _radix);
-        if (_lowerBound.lessEqual(value) && value.lessEqual(_upperBound)) {
-            _value = value;
+        final Address value = Address.parse(text, radix);
+        if (lowerBound.lessEqual(value) && value.lessEqual(upperBound)) {
+            this.value = value;
             update(value);
         } else {
-            setText(_value.toUnsignedString(_radix)); // revert
+            setText(this.value.toUnsignedString(radix)); // revert
         }
     }
 
     private void textChanged() {
         String text = getText().trim();
-        if (_radix == 16 && text.length() >= 2 && text.substring(0, 2).equalsIgnoreCase("0x")) {
+        if (radix == 16 && text.length() >= 2 && text.substring(0, 2).equalsIgnoreCase("0x")) {
             text = text.substring(2);
             setText(text);
         }
-        final Address value = Address.parse(text, _radix);
-        if (!value.equals(_value)) {
+        final Address value = Address.parse(text, radix);
+        if (!value.equals(this.value)) {
             attemptUpdate();
         }
     }
 
     protected AddressInputField(Inspection inspection, final int radix, Address initialValue) {
-        _radix = radix;
-        _value = initialValue;
+        this.radix = radix;
+        this.value = initialValue;
         setFont(inspection.style().wordDataFont());
         updateView();
         addKeyListener(new KeyTypedListener() {
             @Override
             public void keyTyped(KeyEvent keyEvent) {
-                if (Character.digit(keyEvent.getKeyChar(), radix) < 0 || getText().length() >= _numberOfDigits) {
+                if (Character.digit(keyEvent.getKeyChar(), radix) < 0 || getText().length() >= numberOfDigits) {
                     keyEvent.consume();
                 }
             }

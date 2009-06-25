@@ -122,7 +122,7 @@ public final class JDK_java_lang_System {
      * @param toComponentClassActor the class actor representing the component type of the destination array
      */
     private static void arrayCopyForward(final Kind kind, Object fromArray, int fromIndex, Object toArray, int toIndex, int length, ClassActor toComponentClassActor) {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case BYTE: {
                 for (int i = 0; i < length; i++) {
                     ArrayAccess.setByte(toArray, toIndex + i, ArrayAccess.getByte(fromArray, fromIndex + i));
@@ -204,7 +204,7 @@ public final class JDK_java_lang_System {
      * @param length the number of elements to copy
      */
     private static void arrayCopyBackward(final Kind kind, Object fromArray, int fromIndex, Object toArray, int toIndex, int length) {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case BYTE: {
                 for (int i = length - 1; i >= 0; i--) {
                     ArrayAccess.setByte(toArray, toIndex + i, ArrayAccess.getByte(fromArray, fromIndex + i));
@@ -291,7 +291,7 @@ public final class JDK_java_lang_System {
         if (!fromArrayClassActor.isArrayClassActor()) {
             throw new ArrayStoreException();
         }
-        final Kind kind = fromArrayClassActor.componentClassActor().kind();
+        final Kind kind = fromArrayClassActor.componentClassActor().kind;
         if (fromArray == toArray) {
             if (fromIndex < toIndex) {
                 if (fromIndex < 0 || length < 0 || toIndex + length > ArrayAccess.readArrayLength(fromArray)) {
@@ -320,7 +320,7 @@ public final class JDK_java_lang_System {
                 throw new ArrayStoreException();
             }
             final ClassActor toComponentClassActor = toArrayClassActor.componentClassActor();
-            if (kind != Kind.REFERENCE || toComponentClassActor.kind() != Kind.REFERENCE) {
+            if (kind != Kind.REFERENCE || toComponentClassActor.kind != Kind.REFERENCE) {
                 throw new ArrayStoreException();
             }
             if (fromIndex < 0 || toIndex < 0 || length < 0 ||
@@ -369,7 +369,7 @@ public final class JDK_java_lang_System {
      * @return a string representing the path of the Java home
      */
     private static String findJavaHome() {
-        switch (VMConfiguration.hostOrTarget().platform().operatingSystem()) {
+        switch (VMConfiguration.hostOrTarget().platform().operatingSystem) {
             case GUESTVM:
             case SOLARIS:
             case LINUX: {
@@ -415,7 +415,7 @@ public final class JDK_java_lang_System {
      * @return a string representing the java library path as determined from the OS environment
      */
     private static String getenvJavaLibraryPath() {
-        switch (VMConfiguration.hostOrTarget().platform().operatingSystem()) {
+        switch (VMConfiguration.hostOrTarget().platform().operatingSystem) {
             case DARWIN:
             case LINUX:
             case SOLARIS: {
@@ -436,7 +436,7 @@ public final class JDK_java_lang_System {
      * @return a string representing the Java class path as determined from the OS environment
      */
     private static String getenvClassPath() {
-        switch (VMConfiguration.hostOrTarget().platform().operatingSystem()) {
+        switch (VMConfiguration.hostOrTarget().platform().operatingSystem) {
             case DARWIN:
             case LINUX:
             case SOLARIS: {
@@ -480,7 +480,7 @@ public final class JDK_java_lang_System {
      * @return the name of this VM's target ISA
      */
     private static String getISA() {
-        switch (Platform.hostOrTarget().processorKind().instructionSet()) {
+        switch (Platform.hostOrTarget().processorKind.instructionSet) {
             case ARM:
                 FatalError.unimplemented();
                 break;
@@ -502,7 +502,7 @@ public final class JDK_java_lang_System {
      * @return a list of this VM's target ISAs
      */
     private static String getISAList() {
-        switch (Platform.hostOrTarget().processorKind().instructionSet()) {
+        switch (Platform.hostOrTarget().processorKind.instructionSet) {
             case ARM:
                 FatalError.unimplemented();
                 break;
@@ -519,9 +519,9 @@ public final class JDK_java_lang_System {
         return null;
     }
 
-    static String _fileSeparator;
+    static String fileSeparator;
 
-    static String _pathSeparator;
+    static String pathSeparator;
 
     /**
      * Joins an array of strings into a single string.
@@ -552,47 +552,47 @@ public final class JDK_java_lang_System {
     }
 
     private static String asFilesystemPath(String... directoryNames) {
-        return join(_fileSeparator, directoryNames);
+        return join(fileSeparator, directoryNames);
     }
 
     private static String asClasspath(String... filesystemPaths) {
-        return join(_pathSeparator, filesystemPaths);
+        return join(pathSeparator, filesystemPaths);
     }
 
     // TODO: report the correct path separator from the target here
     private static final String CLASSPATH_HELP_MESSAGE = "A list of paths to search for Java classes, separated by the : character.";
 
     @CONSTANT_WHEN_NOT_ZERO
-    private static VMStringOption _classpathOption = register(new VMStringOption("-classpath", true, null, CLASSPATH_HELP_MESSAGE), MaxineVM.Phase.PRISTINE);
+    private static VMStringOption classpathOption = register(new VMStringOption("-classpath", true, null, CLASSPATH_HELP_MESSAGE), MaxineVM.Phase.PRISTINE);
 
     @CONSTANT_WHEN_NOT_ZERO
-    private static VMStringOption _cpOption = register(new VMStringOption("-cp", true, null, CLASSPATH_HELP_MESSAGE) {
+    private static VMStringOption cpOption = register(new VMStringOption("-cp", true, null, CLASSPATH_HELP_MESSAGE) {
         @Override
         public boolean parseValue(Pointer optionValue) {
-            return _classpathOption.parseValue(optionValue);
+            return classpathOption.parseValue(optionValue);
         }
         @Override
         public boolean isPresent() {
-            return _classpathOption.isPresent();
+            return classpathOption.isPresent();
         }
         @Override
         public String getValue() {
-            return _classpathOption.getValue();
+            return classpathOption.getValue();
         }
     }, MaxineVM.Phase.PRISTINE);
 
     @CONSTANT_WHEN_NOT_ZERO
-    private static BootClasspathVMOption _bootClasspathOption = BootClasspathVMOption.create(":", "set search path for bootstrap classes and resources.");
+    private static BootClasspathVMOption bootClasspathOption = BootClasspathVMOption.create(":", "set search path for bootstrap classes and resources.");
 
     @CONSTANT_WHEN_NOT_ZERO
-    private static BootClasspathVMOption _aBootClasspathOption = BootClasspathVMOption.create("/a:", "append to end of bootstrap class path");
+    private static BootClasspathVMOption aBootClasspathOption = BootClasspathVMOption.create("/a:", "append to end of bootstrap class path");
 
     @CONSTANT_WHEN_NOT_ZERO
-    private static BootClasspathVMOption _pBootClasspathOption = BootClasspathVMOption.create("/p:", "prepend in front of bootstrap class path");
+    private static BootClasspathVMOption pBootClasspathOption = BootClasspathVMOption.create("/p:", "prepend in front of bootstrap class path");
 
 
     static class BootClasspathVMOption extends VMOption {
-        private String _path;
+        private String path;
 
         @PROTOTYPE_ONLY
         static BootClasspathVMOption create(String suffix, String help) {
@@ -607,7 +607,7 @@ public final class JDK_java_lang_System {
         @Override
         public boolean parseValue(Pointer optionValue) {
             try {
-                _path = CString.utf8ToJava(optionValue);
+                path = CString.utf8ToJava(optionValue);
                 return true;
             } catch (Utf8Exception utf8Exception) {
                 return false;
@@ -615,7 +615,7 @@ public final class JDK_java_lang_System {
         }
 
         String path() {
-            return _path;
+            return path;
         }
     }
 
@@ -623,7 +623,7 @@ public final class JDK_java_lang_System {
      * Determines if information should be displayed about the {@linkplain System#getProperties() system properties} when
      * they initialized during VM startup.
      */
-    private static final VMOption _verbosePropertiesOption = register(new VMOption("-verbose:props", "Report the initial values of the system properties."), MaxineVM.Phase.PRISTINE);
+    private static final VMOption verbosePropertiesOption = register(new VMOption("-verbose:props", "Report the initial values of the system properties."), MaxineVM.Phase.PRISTINE);
 
     /**
      * Initializes system properties from a wide variety of sources.
@@ -641,10 +641,10 @@ public final class JDK_java_lang_System {
         setIfAbsent(properties, "java.vm.version", MaxineVM.version());
         setIfAbsent(properties, "java.vm.info", VMConfiguration.hostOrTarget().compilationScheme().mode().name().toLowerCase() + " mode");
 
-        setIfAbsent(properties, "sun.arch.data.model", Integer.toString(Word.width().numberOfBits()));
+        setIfAbsent(properties, "sun.arch.data.model", Integer.toString(Word.width().numberOfBits));
         setIfAbsent(properties, "sun.cpu.endian", Word.endianness().name().toLowerCase());
 
-        switch (Platform.hostOrTarget().processorKind().dataModel().endianness()) {
+        switch (Platform.hostOrTarget().processorKind.dataModel.endianness) {
             case LITTLE:
                 setIfAbsent(properties, "sun.io.unicode.encoding", "UnicodeLittle");
                 break;
@@ -669,7 +669,7 @@ public final class JDK_java_lang_System {
         ClassActor.fromJava(Classes.forName("java.lang.ProcessEnvironment")).callInitializer();
 
         // 4. perform OS-specific initialization
-        switch (Platform.hostOrTarget().operatingSystem()) {
+        switch (Platform.hostOrTarget().operatingSystem) {
             case DARWIN:
                 setIfAbsent(properties, "os.name", "Mac OS X");
                 initBasicUnixProperties(properties);
@@ -686,10 +686,6 @@ public final class JDK_java_lang_System {
             case SOLARIS:
                 setIfAbsent(properties, "os.name", "SunOS");
                 initBasicUnixProperties(properties);
-                break;
-            case WINDOWS:
-                setIfAbsent(properties, "os.name", "Windows");
-                initBasicWindowsProperties(properties);
                 break;
             default:
                 ProgramError.unknownCase();
@@ -717,9 +713,9 @@ public final class JDK_java_lang_System {
 
         // 7. set up classpath and library path
         final String[] javaAndZipLibraryPaths = new String[2];
-        if (Platform.hostOrTarget().operatingSystem() == OperatingSystem.DARWIN) {
+        if (Platform.hostOrTarget().operatingSystem == OperatingSystem.DARWIN) {
             initDarwinPathProperties(properties, javaHome, javaAndZipLibraryPaths);
-        } else if (Platform.hostOrTarget().operatingSystem() == OperatingSystem.WINDOWS) {
+        } else if (Platform.hostOrTarget().operatingSystem == OperatingSystem.WINDOWS) {
             initWindowsPathProperties(properties, javaHome, javaAndZipLibraryPaths);
         } else {
             initUnixPathProperties(properties, javaHome, isa, javaAndZipLibraryPaths);
@@ -729,7 +725,7 @@ public final class JDK_java_lang_System {
         // 8. set up the class path
         // N.B. -jar overrides any other classpath setting
         if (VMOptions.jarFile() == null) {
-            String javaClassPath = _classpathOption.getValue();
+            String javaClassPath = classpathOption.getValue();
             if (javaClassPath == null) {
                 javaClassPath = getenvClassPath();
             }
@@ -750,7 +746,7 @@ public final class JDK_java_lang_System {
         Charset.isSupported(sunJnuEncodingValue); // We are only interested in the side effect: loading the char set if supported and initializing related JNU variables
         setIfAbsent(properties, "sun.jnu.encoding", sunJnuEncodingValue); // Now that we have loaded the char set, the recursion is broken and we can move on
 
-        if (_verbosePropertiesOption.isPresent()) {
+        if (verbosePropertiesOption.isPresent()) {
             Log.println("Initial system properties:");
             final Map<String, String> sortedProperties = new TreeMap<String, String>();
             for (Map.Entry<Object, Object> entry : properties.entrySet()) {
@@ -783,10 +779,10 @@ public final class JDK_java_lang_System {
         setIfAbsent(properties, "sun.boot.library.path", asClasspath(getenvExecutablePath(), jreLibIsaPath));
 
         String bootClassPath = null;
-        if (_bootClasspathOption.isPresent()) {
-            bootClassPath = _bootClasspathOption.path();
+        if (bootClasspathOption.isPresent()) {
+            bootClassPath = bootClasspathOption.path();
         } else {
-            bootClassPath = join(_pathSeparator,
+            bootClassPath = join(pathSeparator,
                             asFilesystemPath(jreLibPath, "resources.jar"),
                             asFilesystemPath(jreLibPath, "rt.jar"),
                             asFilesystemPath(jreLibPath, "sunrsasign.jar"),
@@ -800,7 +796,7 @@ public final class JDK_java_lang_System {
         javaAndZipLibraryPaths[0] = jreLibIsaPath;
         javaAndZipLibraryPaths[1] = jreLibIsaPath;
 
-        final OperatingSystem os = Platform.hostOrTarget().operatingSystem();
+        final OperatingSystem os = Platform.hostOrTarget().operatingSystem;
         if (os == OperatingSystem.LINUX) {
             setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext"), "/usr/java/packages/lib/ext"));
         } else if (os == OperatingSystem.SOLARIS) {
@@ -814,11 +810,11 @@ public final class JDK_java_lang_System {
 
     static String checkAugmentBootClasspath(final String xBootClassPath) {
         String bootClassPath = xBootClassPath;
-        if (_aBootClasspathOption.isPresent()) {
-            bootClassPath = join(_pathSeparator, bootClassPath, _aBootClasspathOption.path());
+        if (aBootClasspathOption.isPresent()) {
+            bootClassPath = join(pathSeparator, bootClassPath, aBootClasspathOption.path());
         }
-        if (_pBootClasspathOption.isPresent()) {
-            bootClassPath = join(_pathSeparator, _pBootClasspathOption.path(), bootClassPath);
+        if (pBootClasspathOption.isPresent()) {
+            bootClassPath = join(pathSeparator, pBootClasspathOption.path(), bootClassPath);
         }
         return bootClassPath;
     }
@@ -852,10 +848,10 @@ public final class JDK_java_lang_System {
 
         final String classesPath = javaPath + "/Classes";
         String bootClassPath = null;
-        if (_bootClasspathOption.isPresent()) {
-            bootClassPath = _bootClasspathOption.path();
+        if (bootClasspathOption.isPresent()) {
+            bootClassPath = bootClasspathOption.path();
         } else {
-            bootClassPath = join(_pathSeparator,
+            bootClassPath = join(pathSeparator,
                         asFilesystemPath(classesPath, "classes.jar"),
                         asFilesystemPath(classesPath, "ui.jar"),
                         asFilesystemPath(classesPath, "laf.jar"),
@@ -877,26 +873,6 @@ public final class JDK_java_lang_System {
         setIfAbsent(properties, "java.ext.dirs", extDirs);
     }
 
-    private static void initBasicWindowsProperties(Properties properties) {
-        setIfAbsent(properties, "awt.toolkit", "sun.awt.windows.WToolkit");
-        setIfAbsent(properties, "java.io.tmpdir", ""); // TODO
-        setIfAbsent(properties, "java.awt.printerjob", "sun.awt.windows.WPrinterJob");
-        setIfAbsent(properties, "java.awt.graphicsenv", "sun.awt.Win32GraphicsEnvironment");
-        setIfAbsent(properties, "os.name", "windows"); // TODO
-        setIfAbsent(properties, "os.version", ""); // TODO
-        setIfAbsent(properties, "sun.os.patch.level", ""); // TODO
-        setIfAbsent(properties, "sun.desktop", "windows");
-        setIfAbsent(properties, "user.language", "en"); // TODO
-        setIfAbsent(properties, "user.country", "US"); // TODO
-        setIfAbsent(properties, "user.variant", ""); // TODO
-        setIfAbsent(properties, "file.encoding", "Cp1253");
-        _fileSeparator = "\\";
-        _pathSeparator = ";";
-        setIfAbsent(properties, "line.separator", "\r\n");
-        setIfAbsent(properties, "file.separator", _fileSeparator);
-        setIfAbsent(properties, "path.separator", _pathSeparator);
-    }
-
     private static void initBasicUnixProperties(Properties properties) {
         setIfAbsent(properties, "java.io.tmpdir", "/var/tmp");
         setIfAbsent(properties, "java.awt.printerjob", "sun.print.PSPrinterJob");
@@ -913,11 +889,11 @@ public final class JDK_java_lang_System {
         setIfAbsent(properties, "user.country", "US"); // TODO
         setIfAbsent(properties, "user.variant", ""); // TODO
 
-        _fileSeparator = "/";
-        _pathSeparator = ":";
+        fileSeparator = "/";
+        pathSeparator = ":";
         setIfAbsent(properties, "line.separator", "\n");
-        setIfAbsent(properties, "file.separator", _fileSeparator);
-        setIfAbsent(properties, "path.separator", _pathSeparator);
+        setIfAbsent(properties, "file.separator", fileSeparator);
+        setIfAbsent(properties, "path.separator", pathSeparator);
     }
 
     /**
@@ -932,7 +908,7 @@ public final class JDK_java_lang_System {
         if (libraryName == null) {
             throw new NullPointerException();
         }
-        switch (VMConfiguration.hostOrTarget().platform().operatingSystem()) {
+        switch (VMConfiguration.hostOrTarget().platform().operatingSystem) {
             case DARWIN:
                 // System.loadLibrary() first wants to look for a library with the extension ".jnilib",
                 // then if the library was not found, try again with extension ".dylib".

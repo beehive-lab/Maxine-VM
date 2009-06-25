@@ -26,47 +26,47 @@ import com.sun.max.vm.compiler.dir.*;
 
 /**
  * A equivalence relation that can be used to determine whether two DIR blocks have the same computational semantics and therefore can be merged into one.
- * 
+ *
  * @author Bernd Mathiske
  */
 public final class DirBlockEquivalence {
 
     private class Pair {
-        final DirBlock _a;
-        final DirBlock _b;
+        final DirBlock a;
+        final DirBlock b;
 
         Pair(DirBlock a, DirBlock b) {
-            _a = a;
-            _b = b;
+            this.a = a;
+            this.b = b;
         }
 
         @Override
         public int hashCode() {
-            return System.identityHashCode(_a) ^ System.identityHashCode(_b);
+            return System.identityHashCode(a) ^ System.identityHashCode(b);
         }
 
         @Override
         public boolean equals(Object other) {
             final Pair pair = (Pair) other;
-            return _a == pair._a && _b == pair._b;
+            return a == pair.a && b == pair.b;
         }
 
         boolean makeFalse() {
-            _maybe.remove(this);
-            _false.add(this);
+            maybePairs.remove(this);
+            falsePairs.add(this);
             return false;
         }
 
         boolean makeTrue() {
-            _maybe.remove(this);
-            _true.add(this);
+            maybePairs.remove(this);
+            truePairs.add(this);
             return true;
         }
     }
 
-    private final Set<Pair> _maybe = new HashSet<Pair>();
-    private final Set<Pair> _false = new HashSet<Pair>();
-    private final Set<Pair> _true = new HashSet<Pair>();
+    private final Set<Pair> maybePairs = new HashSet<Pair>();
+    private final Set<Pair> falsePairs = new HashSet<Pair>();
+    private final Set<Pair> truePairs = new HashSet<Pair>();
 
     public DirBlockEquivalence() {
     }
@@ -76,13 +76,13 @@ public final class DirBlockEquivalence {
             return true;
         }
         final Pair pair = new Pair(a, b);
-        if (_false.contains(pair)) {
+        if (falsePairs.contains(pair)) {
             return false;
         }
-        if (_true.contains(pair) || _maybe.contains(pair)) {
+        if (truePairs.contains(pair) || maybePairs.contains(pair)) {
             return true;
         }
-        _maybe.add(pair);
+        maybePairs.add(pair);
         if (a.instructions().length() != b.instructions().length()) {
             return pair.makeFalse();
         }

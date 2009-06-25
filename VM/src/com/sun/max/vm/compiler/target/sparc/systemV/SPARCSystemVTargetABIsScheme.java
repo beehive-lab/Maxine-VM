@@ -39,16 +39,16 @@ import com.sun.max.vm.compiler.target.sparc.*;
  */
 public final class SPARCSystemVTargetABIsScheme extends SPARCTargetABIsScheme {
 
-    private static final RegisterRoleAssignment<GPR, FPR> _javaRegisterRoleAssignment =
+    private static final RegisterRoleAssignment<GPR, FPR> javaRegisterRoleAssignment =
         new RegisterRoleAssignment<GPR, FPR>(GPR.class, O6, I6, O6, I6, I0, O0, G1, G2, L7, FPR.class, F0, F30, I7, O7);
 
-    private static final RegisterRoleAssignment<GPR, FPR> _javaJitRegisterRoleAssignment =
+    private static final RegisterRoleAssignment<GPR, FPR> javaJitRegisterRoleAssignment =
         new RegisterRoleAssignment<GPR, FPR>(GPR.class, O6, I6, O6, L6, I0, O0, G1, G2, L7, FPR.class, F0, F30, I7, O7);
 
     public SPARCSystemVTargetABIsScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration,
-                        createSPARC64TargetABI(_javaJitRegisterRoleAssignment, CallEntryPoint.JIT_ENTRY_POINT, _incomingIntegerParameterRegisters, _outgoingIntegerParameterRegisters, _floatingPointParameterRegisters, false, false),
-                        createSPARC64TargetABI(_javaRegisterRoleAssignment, CallEntryPoint.OPTIMIZED_ENTRY_POINT, _incomingIntegerParameterRegisters, _outgoingIntegerParameterRegisters, _floatingPointParameterRegisters, true, false));
+                        createSPARC64TargetABI(javaJitRegisterRoleAssignment, CallEntryPoint.JIT_ENTRY_POINT, incomingIntegerParameterRegisters, outgoingIntegerParameterRegisters, floatingPointParameterRegisters, false, false),
+                        createSPARC64TargetABI(javaRegisterRoleAssignment, CallEntryPoint.OPTIMIZED_ENTRY_POINT, incomingIntegerParameterRegisters, outgoingIntegerParameterRegisters, floatingPointParameterRegisters, true, false));
     }
 
 }

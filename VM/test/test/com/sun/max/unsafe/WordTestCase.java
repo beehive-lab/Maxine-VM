@@ -31,134 +31,134 @@ public abstract class WordTestCase extends MaxTestCase {
         super(name);
     }
 
-    private WordWidth _wordWidth;
+    private WordWidth wordWidth;
 
     public WordWidth wordWidth() {
-        return _wordWidth;
+        return wordWidth;
     }
 
-    protected int _tiny;
-    protected int _low;
-    protected int _medium;
-    protected long _high;
+    protected int tiny;
+    protected int low;
+    protected int medium;
+    protected long high;
 
-    protected Address _address0;
-    protected Address _address1;
-    protected Address _addressTiny;
-    protected Address _addressLow;
-    protected Address _addressMedium;
-    protected Address _addressHigh;
-    protected Address _addressMax;
-    protected Address _addressMax32;
+    protected Address address0;
+    protected Address address1;
+    protected Address addressTiny;
+    protected Address addressLow;
+    protected Address addressMedium;
+    protected Address addressHigh;
+    protected Address addressMax;
+    protected Address addressMax32;
 
-    protected Size _size0;
-    protected Size _size1;
-    protected Size _sizeTiny;
-    protected Size _sizeLow;
-    protected Size _sizeMedium;
-    protected Size _sizeHigh;
-    protected Size _sizeMax;
-    protected Size _sizeMax32;
+    protected Size size0;
+    protected Size size1;
+    protected Size sizeTiny;
+    protected Size sizeLow;
+    protected Size sizeMedium;
+    protected Size sizeHigh;
+    protected Size sizeMax;
+    protected Size sizeMax32;
 
-    protected Pointer _pointer0;
-    protected Pointer _pointer1;
-    protected Pointer _pointerTiny;
-    protected Pointer _pointerLow;
-    protected Pointer _pointerMedium;
-    protected Pointer _pointerHigh;
-    protected Pointer _pointerMax;
-    protected Pointer _pointerMax32;
+    protected Pointer pointer0;
+    protected Pointer pointer1;
+    protected Pointer pointerTiny;
+    protected Pointer pointerLow;
+    protected Pointer pointerMedium;
+    protected Pointer pointerHigh;
+    protected Pointer pointerMax;
+    protected Pointer pointerMax32;
 
 
-    protected Offset _offsetMinus1;
-    protected Offset _offset0;
-    protected Offset _offset1;
-    protected Offset _offset2;
-    protected Offset _offset4;
-    protected Offset _offset8;
-    protected Offset _offset16;
-    protected Offset _offsetTiny;
-    protected Offset _offsetLow;
-    protected Offset _offsetMedium;
-    protected Offset _offsetHigh;
-    protected Offset _offsetMin;
-    protected Offset _offsetMax;
+    protected Offset offsetMinus1;
+    protected Offset offset0;
+    protected Offset offset1;
+    protected Offset offset2;
+    protected Offset offset4;
+    protected Offset offset8;
+    protected Offset offset16;
+    protected Offset offsetTiny;
+    protected Offset offsetLow;
+    protected Offset offsetMedium;
+    protected Offset offsetHigh;
+    protected Offset offsetMin;
+    protected Offset offsetMax;
 
     protected static final long LOW_32_BITS_MASK = 0x00000000ffffffffL;
 
     @Override
     public void setUp() {
-        _wordWidth = Word.width();
+        wordWidth = Word.width();
 
-        _tiny = 1234; // small enough that _tiny^2 < 32 bits;
+        tiny = 1234; // small enough that _tiny^2 < 32 bits;
 
-        _low = 12345678; // always in int range, always positive, always less than _medium
+        low = 12345678; // always in int range, always positive, always less than _medium
 
-        _medium = Integer.MAX_VALUE >> 3; // always in int range, always positive, always less than _high
+        medium = Integer.MAX_VALUE >> 3; // always in int range, always positive, always less than _high
 
-        _high = ((long) Integer.MAX_VALUE << 16) & ~0x87770000L; // sometimes outside int range, always positive
+        high = ((long) Integer.MAX_VALUE << 16) & ~0x87770000L; // sometimes outside int range, always positive
 
-        assert ((int) _high + _low) > 0;
+        assert ((int) high + low) > 0;
 
-        _address0 = Address.zero();
-        _address1 = Address.fromInt(1);
-        _addressTiny = Address.fromInt(_tiny);
-        _addressLow = Address.fromInt(_low);
-        _addressMedium = Address.fromInt(_medium);
-        _addressMax32 = Address.fromLong(LOW_32_BITS_MASK);
+        address0 = Address.zero();
+        address1 = Address.fromInt(1);
+        addressTiny = Address.fromInt(tiny);
+        addressLow = Address.fromInt(low);
+        addressMedium = Address.fromInt(medium);
+        addressMax32 = Address.fromLong(LOW_32_BITS_MASK);
         switch (wordWidth()) {
             case BITS_64:
-                _addressHigh = Address.fromLong(_high);
-                _addressMax = Offset.fromLong(-1L).asAddress();
+                addressHigh = Address.fromLong(high);
+                addressMax = Offset.fromLong(-1L).asAddress();
                 break;
             case BITS_32:
-                _addressHigh = Address.fromLong(((int) _high) & LOW_32_BITS_MASK);
-                _addressMax = Address.fromLong(LOW_32_BITS_MASK);
+                addressHigh = Address.fromLong(((int) high) & LOW_32_BITS_MASK);
+                addressMax = Address.fromLong(LOW_32_BITS_MASK);
                 break;
             default:
                 ProgramError.unknownCase();
                 break;
         }
 
-        _size0 = _address0.asSize();
-        _size1 = _address1.asSize();
-        _sizeTiny = _addressTiny.asSize();
-        _sizeLow = _addressLow.asSize();
-        _sizeMedium = _addressMedium.asSize();
-        _sizeHigh = _addressHigh.asSize();
-        _sizeMax = _addressMax.asSize();
-        _sizeMax32 = _addressMax32.asSize();
+        size0 = address0.asSize();
+        size1 = address1.asSize();
+        sizeTiny = addressTiny.asSize();
+        sizeLow = addressLow.asSize();
+        sizeMedium = addressMedium.asSize();
+        sizeHigh = addressHigh.asSize();
+        sizeMax = addressMax.asSize();
+        sizeMax32 = addressMax32.asSize();
 
-        _pointer0 = _address0.asPointer();
-        _pointer1 = _address1.asPointer();
-        _pointerTiny = _addressTiny.asPointer();
-        _pointerLow = _addressLow.asPointer();
-        _pointerMedium = _addressMedium.asPointer();
-        _pointerHigh = _addressHigh.asPointer();
-        _pointerMax = _addressMax.asPointer();
-        _pointerMax32 = _addressMax32.asPointer();
+        pointer0 = address0.asPointer();
+        pointer1 = address1.asPointer();
+        pointerTiny = addressTiny.asPointer();
+        pointerLow = addressLow.asPointer();
+        pointerMedium = addressMedium.asPointer();
+        pointerHigh = addressHigh.asPointer();
+        pointerMax = addressMax.asPointer();
+        pointerMax32 = addressMax32.asPointer();
 
-        _offsetMinus1 = Offset.fromLong(-1L);
-        _offset0 = Offset.zero();
-        _offset1 = Offset.fromInt(1);
-        _offset2 = Offset.fromInt(2);
-        _offset4 = Offset.fromInt(4);
-        _offset8 = Offset.fromInt(8);
-        _offset16 = Offset.fromInt(16);
-        _offsetTiny = Offset.fromInt(_tiny);
-        _offsetLow = Offset.fromInt(_low);
-        _offsetMedium = Offset.fromInt(_medium);
+        offsetMinus1 = Offset.fromLong(-1L);
+        offset0 = Offset.zero();
+        offset1 = Offset.fromInt(1);
+        offset2 = Offset.fromInt(2);
+        offset4 = Offset.fromInt(4);
+        offset8 = Offset.fromInt(8);
+        offset16 = Offset.fromInt(16);
+        offsetTiny = Offset.fromInt(tiny);
+        offsetLow = Offset.fromInt(low);
+        offsetMedium = Offset.fromInt(medium);
 
         switch (wordWidth()) {
             case BITS_64:
-                _offsetMin = Offset.fromLong(Long.MIN_VALUE);
-                _offsetMax = Offset.fromLong(Long.MAX_VALUE);
-                _offsetHigh = Offset.fromLong(_high);
+                offsetMin = Offset.fromLong(Long.MIN_VALUE);
+                offsetMax = Offset.fromLong(Long.MAX_VALUE);
+                offsetHigh = Offset.fromLong(high);
                 break;
             case BITS_32:
-                _offsetMin = Offset.fromInt(Integer.MIN_VALUE);
-                _offsetMax = Offset.fromInt(Integer.MAX_VALUE);
-                _offsetHigh = Offset.fromLong(((int) _high) & LOW_32_BITS_MASK);
+                offsetMin = Offset.fromInt(Integer.MIN_VALUE);
+                offsetMax = Offset.fromInt(Integer.MAX_VALUE);
+                offsetHigh = Offset.fromLong(((int) high) & LOW_32_BITS_MASK);
                 break;
             default:
                 ProgramError.unknownCase();

@@ -35,20 +35,20 @@ import com.sun.max.vm.compiler.cir.variable.*;
  */
 public final class CirWrapping {
 
-    private final CirMethod _wrapperMethod;
-    private final CirClosure _resultClosure;
-    private final CirClosure _innerClosure;
+    private final CirMethod wrapperMethod;
+    private final CirClosure resultClosure;
+    private final CirClosure innerClosure;
 
-    private final CirValue[] _extraArguments;
+    private final CirValue[] extraArguments;
 
     private CirWrapping(CirMethod wrapperMethod, CirClosure innerClosure) {
-        _wrapperMethod = wrapperMethod;
-        _innerClosure = innerClosure;
-        _resultClosure = wrapperMethod.copyClosure();
+        this.wrapperMethod = wrapperMethod;
+        this.innerClosure = innerClosure;
+        this.resultClosure = wrapperMethod.copyClosure();
 
         final CirVariableFactory variableFactory = new CirVariableFactory();
 
-        final CirVariable[] wrapperParameters = _resultClosure.parameters();
+        final CirVariable[] wrapperParameters = resultClosure.parameters();
         final CirVariable[] innerParameters = innerClosure.parameters();
         if (innerParameters.length != wrapperParameters.length) {
 
@@ -59,24 +59,24 @@ public final class CirWrapping {
             Arrays.copy(wrapperParameters, 0, resultParameters, 0, wrapperNormalContinuationIndex);
             Arrays.copy(wrapperParameters, wrapperNormalContinuationIndex, resultParameters, resultNormalContinuationIndex, 2);
 
-            _extraArguments = CirCall.newArguments(innerParameters.length - wrapperParameters.length);
-            for (int i = 0; i != _extraArguments.length; i++) {
+            extraArguments = CirCall.newArguments(innerParameters.length - wrapperParameters.length);
+            for (int i = 0; i != extraArguments.length; i++) {
                 final int resultParameterIndex = wrapperNormalContinuationIndex + i;
                 final CirVariable extraParameter = variableFactory.createFresh(innerParameters[resultParameterIndex]);
                 resultParameters[resultParameterIndex] = extraParameter;
-                _extraArguments[i] = extraParameter;
+                extraArguments[i] = extraParameter;
             }
 
-            _resultClosure.setParameters(resultParameters);
+            resultClosure.setParameters(resultParameters);
         } else {
-            _extraArguments = null;
+            extraArguments = null;
         }
     }
 
     public static CirClosure apply(CirMethod wrapperMethod, CirClosure wrapped) {
         final CirWrapping wrapping = new CirWrapping(wrapperMethod, wrapped);
-        wrapping.run(wrapping._resultClosure);
-        return wrapping._resultClosure;
+        wrapping.run(wrapping.resultClosure);
+        return wrapping.resultClosure;
     }
 
     private void run(CirNode node) {
@@ -86,7 +86,7 @@ public final class CirWrapping {
         while (true) {
             if (currentNode instanceof CirCall) {
                 final CirCall call = (CirCall) currentNode;
-                final boolean procedureIsWrapperMethod = call.procedure() == _wrapperMethod;
+                final boolean procedureIsWrapperMethod = call.procedure() == wrapperMethod;
                 if (procedureIsWrapperMethod) {
                     replaceWithCallToWrappedMethod(call);
                 }
@@ -125,20 +125,20 @@ public final class CirWrapping {
     }
 
     private void replaceWithCallToWrappedMethod(final CirCall call) {
-        if (_extraArguments != null) {
+        if (extraArguments != null) {
             final CirValue[] oldArguments = call.arguments();
-            final CirValue[] newArguments = CirCall.newArguments(_innerClosure.parameters().length);
+            final CirValue[] newArguments = CirCall.newArguments(innerClosure.parameters().length);
 
             final int oldNormalContinuationIndex = oldArguments.length - 2;
             final int newNormalContinuationIndex = newArguments.length - 2;
 
             Arrays.copy(oldArguments, 0, newArguments, 0, oldNormalContinuationIndex);
-            Arrays.copy(_extraArguments, 0, newArguments, oldNormalContinuationIndex, _extraArguments.length);
+            Arrays.copy(extraArguments, 0, newArguments, oldNormalContinuationIndex, extraArguments.length);
             Arrays.copy(oldArguments, oldNormalContinuationIndex, newArguments, newNormalContinuationIndex, 2);
 
             call.setArguments(newArguments);
         }
-        call.setProcedure(_innerClosure);
+        call.setProcedure(innerClosure);
     }
 
 }

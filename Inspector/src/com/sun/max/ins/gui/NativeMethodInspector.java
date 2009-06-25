@@ -39,48 +39,48 @@ import com.sun.max.vm.runtime.*;
  */
 public final class NativeMethodInspector extends MethodInspector {
 
-    private final TeleTargetRoutine _teleTargetRoutine;
-    private TargetCodeViewer _targetCodeViewer = null;
-    private final String _shortName;
-    private final String _longName;
+    private final TeleTargetRoutine teleTargetRoutine;
+    private TargetCodeViewer targetCodeViewer = null;
+    private final String shortName;
+    private final String longName;
 
     public NativeMethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleTargetRoutine teleTargetRoutine) {
         super(inspection, parent, null, teleTargetRoutine.teleRoutine());
-        _teleTargetRoutine = teleTargetRoutine;
-        if (_teleTargetRoutine instanceof TeleRuntimeStub) {
-            final TeleRuntimeStub teleRuntimeStub = (TeleRuntimeStub) _teleTargetRoutine;
-            _shortName = Strings.capitalizeFirst(teleRuntimeStub.getName(), false);
-            _longName = _shortName;
-        } else if (_teleTargetRoutine instanceof TeleNativeTargetRoutine) {
-            final TeleNativeTargetRoutine teleNativeTargetRoutine  = (TeleNativeTargetRoutine) _teleTargetRoutine;
-            _shortName = inspection().nameDisplay().shortName(teleNativeTargetRoutine);
-            _longName = inspection().nameDisplay().longName(teleNativeTargetRoutine);
+        this.teleTargetRoutine = teleTargetRoutine;
+        if (teleTargetRoutine instanceof TeleRuntimeStub) {
+            final TeleRuntimeStub teleRuntimeStub = (TeleRuntimeStub) teleTargetRoutine;
+            shortName = Strings.capitalizeFirst(teleRuntimeStub.getName(), false);
+            longName = shortName;
+        } else if (teleTargetRoutine instanceof TeleNativeTargetRoutine) {
+            final TeleNativeTargetRoutine teleNativeTargetRoutine  = (TeleNativeTargetRoutine) teleTargetRoutine;
+            shortName = inspection().nameDisplay().shortName(teleNativeTargetRoutine);
+            longName = inspection().nameDisplay().longName(teleNativeTargetRoutine);
         } else {
-            _shortName = _teleTargetRoutine.getName();
-            _longName = _shortName;
+            shortName = teleTargetRoutine.getName();
+            longName = shortName;
         }
         createFrame(null);
     }
 
     @Override
     public TeleTargetRoutine teleTargetRoutine() {
-        return _teleTargetRoutine;
+        return teleTargetRoutine;
     }
 
     @Override
     public String getTextForTitle() {
-        return _shortName;
+        return shortName;
     }
 
     @Override
     public String getToolTip() {
-        return _longName;
+        return longName;
     }
 
     @Override
     public void createView() {
-        _targetCodeViewer =  new JTableTargetCodeViewer(inspection(), this, _teleTargetRoutine);
-        frame().getContentPane().add(_targetCodeViewer);
+        targetCodeViewer =  new JTableTargetCodeViewer(inspection(), this, teleTargetRoutine);
+        frame().getContentPane().add(targetCodeViewer);
         frame().pack();
         frame().invalidate();
         frame().repaint();
@@ -89,17 +89,17 @@ public final class NativeMethodInspector extends MethodInspector {
     @Override
     protected void refreshView(boolean force) {
         if (isShowing() || force) {
-            _targetCodeViewer.refresh(force);
+            targetCodeViewer.refresh(force);
         }
     }
 
     public void viewConfigurationChanged() {
-        _targetCodeViewer.redisplay();
+        targetCodeViewer.redisplay();
     }
 
     @Override
     public void print() {
-        _targetCodeViewer.print(getTextForTitle());
+        targetCodeViewer.print(getTextForTitle());
     }
 
     /**
@@ -107,7 +107,7 @@ public final class NativeMethodInspector extends MethodInspector {
      */
     @Override
     public void closeCodeViewer(CodeViewer codeViewer) {
-        assert codeViewer == _targetCodeViewer;
+        assert codeViewer == targetCodeViewer;
         close();
     }
 
@@ -116,7 +116,7 @@ public final class NativeMethodInspector extends MethodInspector {
      */
     @Override
     public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
-        if (_targetCodeViewer.updateCodeFocus(codeLocation) && !isSelected()) {
+        if (targetCodeViewer.updateCodeFocus(codeLocation) && !isSelected()) {
             highlight();
         }
     }

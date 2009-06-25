@@ -24,10 +24,10 @@ import com.sun.max.vm.compiler.dir.*;
 import com.sun.max.vm.compiler.tir.pipeline.*;
 
 public class TirDirCall extends TirCall {
-    private DirMethod _dirMethod;
+    private DirMethod dirMethod;
     public TirDirCall(DirMethod dirMethod, TirInstruction... arguments) {
         super(dirMethod.classMethodActor(), arguments);
-        _dirMethod = dirMethod;
+        this.dirMethod = dirMethod;
     }
 
     @Override
@@ -36,11 +36,11 @@ public class TirDirCall extends TirCall {
     }
 
     public DirMethod dirMethod() {
-        return _dirMethod;
+        return dirMethod;
     }
 
     @Override
     public String toString() {
-        return "DIR " + method().name().toString();
+        return "DIR " + method().name.toString();
     }
 }

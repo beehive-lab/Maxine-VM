@@ -28,8 +28,8 @@ package test.bytecode;
  * @Runs: 0 = 11f; 1 = 11f
  */
 public class BC_getstatic_f {
-    private static float _field = 11;
+    private static float field = 11;
     public static float test(int a) {
-        return _field;
+        return field;
     }
 }

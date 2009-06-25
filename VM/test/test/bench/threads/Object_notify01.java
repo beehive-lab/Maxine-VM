@@ -27,7 +27,7 @@ package test.bench.threads;
 import test.bench.util.*;
 
 public class Object_notify01 extends RunBench {
-    static volatile int _count;
+    static volatile int count;
 
     protected Object_notify01(LoopRunnable bench) {
         super(bench);
@@ -42,7 +42,7 @@ public class Object_notify01 extends RunBench {
         public void run(long loopCount) {
             for (long i = 0; i < loopCount; i++) {
                 synchronized (this) {
-                    _count++;
+                    count++;
                     notify();
                 }
             }
@@ -51,7 +51,7 @@ public class Object_notify01 extends RunBench {
         public void runBareLoop(long loopCount) {
             for (long i = 0; i < loopCount; i++) {
                 synchronized (this) {
-                    _count++;
+                    count++;
 
                 }
             }

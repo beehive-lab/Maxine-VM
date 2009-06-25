@@ -66,17 +66,17 @@ public final class CirFreeVariableSearch {
      */
     static final class Binding {
 
-        private final Binding _parent;
-        private final CirVariable _boundVariable;
+        private final Binding parent;
+        private final CirVariable boundVariable;
 
         private Binding(Binding parent, CirVariable boundVariable) {
-            _parent = parent;
-            _boundVariable = boundVariable;
+            this.parent = parent;
+            this.boundVariable = boundVariable;
         }
 
         @Override
         public int hashCode() {
-            return _boundVariable.hashCode();
+            return boundVariable.hashCode();
         }
 
         /**
@@ -107,22 +107,22 @@ public final class CirFreeVariableSearch {
         private static boolean isUnbound(CirVariable variable, Binding scope) {
             Binding binding = scope;
             while (binding != null) {
-                if (variable == binding._boundVariable) {
+                if (variable == binding.boundVariable) {
                     return false;
                 }
-                binding = binding._parent;
+                binding = binding.parent;
             }
             return true;
         }
     }
 
     private static final class Inspection {
-        private final CirNode _node;
-        private final Binding _scope;
+        private final CirNode node;
+        private final Binding scope;
 
         private Inspection(CirNode node, Binding scope) {
-            _node = node;
-            _scope = scope;
+            this.node = node;
+            this.scope = scope;
         }
     }
 
@@ -144,8 +144,8 @@ public final class CirFreeVariableSearch {
                 addValues(call.arguments(), inspectionQueue, scope);
                 CirJavaFrameDescriptor javaFrameDescriptor = call.javaFrameDescriptor();
                 while (javaFrameDescriptor != null) {
-                    addValues(javaFrameDescriptor.locals(), inspectionQueue, scope);
-                    addValues(javaFrameDescriptor.stackSlots(), inspectionQueue, scope);
+                    addValues(javaFrameDescriptor.locals, inspectionQueue, scope);
+                    addValues(javaFrameDescriptor.stackSlots, inspectionQueue, scope);
                     javaFrameDescriptor = javaFrameDescriptor.parent();
                 }
                 currentNode = call.procedure();
@@ -165,8 +165,8 @@ public final class CirFreeVariableSearch {
                 return;
             }
             final Inspection inspection = inspectionQueue.remove();
-            currentNode = inspection._node;
-            scope = inspection._scope;
+            currentNode = inspection.node;
+            scope = inspection.scope;
         }
     }
 

@@ -30,34 +30,34 @@ public class JavaProviderFactory {
 
     private static final Logger LOGGER = Logger.getLogger(JavaProviderFactory.class.getName());
 
-    private Map<Class, ReferenceTypeProvider> _referenceTypeCache = new HashMap<Class, ReferenceTypeProvider>();
-    private VMAccess _vm;
-    private ClassLoaderProvider _classLoaderProvider;
+    private Map<Class, ReferenceTypeProvider> referenceTypeCache = new HashMap<Class, ReferenceTypeProvider>();
+    private VMAccess vm;
+    private ClassLoaderProvider classLoaderProvider;
 
     public JavaProviderFactory(VMAccess vm, ClassLoaderProvider classLoaderProvider) {
-        _vm = vm;
-        _classLoaderProvider = classLoaderProvider;
+        this.vm = vm;
+        this.classLoaderProvider = classLoaderProvider;
 
-        assert _vm != null;
+        assert vm != null;
     }
 
     public ReferenceTypeProvider getReferenceTypeProvider(Class c) {
 
-        if (!_referenceTypeCache.containsKey(c)) {
+        if (!referenceTypeCache.containsKey(c)) {
             final ReferenceTypeProvider referenceTypeProvider = createReferenceTypeProvider(c);
             LOGGER.info("Created reference type provider " + referenceTypeProvider + "for Java class " + c);
-            _referenceTypeCache.put(c, referenceTypeProvider);
+            referenceTypeCache.put(c, referenceTypeProvider);
         }
 
-        return _referenceTypeCache.get(c);
+        return referenceTypeCache.get(c);
     }
 
     private ReferenceTypeProvider createReferenceTypeProvider(Class c) {
         if (c.isInterface()) {
-            return new JavaInterfaceProvider(c, _vm, _classLoaderProvider);
+            return new JavaInterfaceProvider(c, vm, classLoaderProvider);
         } else if (c.isArray()) {
-            return new JavaArrayTypeProvider(c, _vm, _classLoaderProvider);
+            return new JavaArrayTypeProvider(c, vm, classLoaderProvider);
         }
-        return new JavaClassProvider(c, _vm, _classLoaderProvider);
+        return new JavaClassProvider(c, vm, classLoaderProvider);
     }
 }

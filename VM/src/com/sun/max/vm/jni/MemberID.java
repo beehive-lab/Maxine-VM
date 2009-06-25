@@ -43,7 +43,7 @@ public abstract class MemberID extends Word {
     }
 
     public static Word create(MemberActor memberActor) {
-        return create(memberActor.holder().id(), memberActor.memberIndex());
+        return create(memberActor.holder().id, memberActor.memberIndex());
     }
 
     @INLINE

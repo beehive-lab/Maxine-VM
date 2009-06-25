@@ -30,41 +30,41 @@ import java.util.*;
  */
 public abstract class Node {
 
-    String _kind;
-    List<Node> _components;
-    int _lineno;
-    List<String> _commentList = new ArrayList<String>();
-    Node _parent = null;
-    Context _context;
+    String kind;
+    List<Node> components;
+    int lineno;
+    List<String> commentList = new ArrayList<String>();
+    Node parent = null;
+    Context context;
 
     void set(String kind, List<Node> components, int lineno) {
-        this._kind = kind;
-        this._components = components;
-        this._lineno = lineno;
+        this.kind = kind;
+        this.components = components;
+        this.lineno = lineno;
     }
 
     void parentAndExtractComments() {
-        for (final Iterator it = _components.iterator(); it.hasNext();) {
+        for (final Iterator it = components.iterator(); it.hasNext();) {
             final Node node = (Node) it.next();
             if (node instanceof CommentNode) {
                 it.remove();
-                _commentList.add(((CommentNode) node).text());
+                commentList.add(((CommentNode) node).text());
             } else {
-                node._parent = this;
+                node.parent = this;
                 node.parentAndExtractComments();
             }
         }
     }
 
     void prune() {
-        for (Node node : _components) {
+        for (Node node : components) {
             node.prune();
         }
     }
 
     void constrain(Context ctx) {
-        _context = ctx;
-        for (Node node : _components) {
+        context = ctx;
+        for (Node node : components) {
             constrainComponent(ctx, node);
         }
     }
@@ -84,7 +84,7 @@ public abstract class Node {
 
     String comment() {
         final StringBuffer comment = new StringBuffer();
-        for (String st : _commentList) {
+        for (String st : commentList) {
             comment.append(st);
         }
         return comment.toString();
@@ -95,7 +95,7 @@ public abstract class Node {
     }
 
     void genJava(PrintWriter writer, int depth) {
-        for (Node node : _components) {
+        for (Node node : components) {
             node.genJava(writer, depth);
         }
     }
@@ -105,14 +105,14 @@ public abstract class Node {
     }
 
     public void genJavaPreDef(PrintWriter writer, int depth) {
-        for (Node node : _components) {
+        for (Node node : components) {
             node.genJavaPreDef(writer, depth);
         }
     }
 
     void error(String errmsg) {
         System.err.println();
-        System.err.println("Error:" + _lineno + ": " + _kind + " - " + errmsg);
+        System.err.println("Error:" + lineno + ": " + kind + " - " + errmsg);
         System.err.println();
         System.exit(1);
     }

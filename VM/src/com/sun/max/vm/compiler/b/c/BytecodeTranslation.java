@@ -79,48 +79,48 @@ import com.sun.max.vm.value.*;
  */
 public final class BytecodeTranslation extends BytecodeVisitor {
 
-    protected final BlockState _blockState;
-    protected final JavaFrame _frame;
-    protected final JavaStack _stack;
-    protected final BirToCirMethodTranslation _methodTranslation;
-    protected final ConstantPool _constantPool;
-    protected CirCall _currentCall;
+    protected final BlockState blockState;
+    protected final JavaFrame frame;
+    protected final JavaStack stack;
+    protected final BirToCirMethodTranslation methodTranslation;
+    protected final ConstantPool constantPool;
+    protected CirCall currentCall;
 
     public BytecodeTranslation(BlockState blockState, BirToCirMethodTranslation methodTranslation) {
-        _blockState = blockState;
-        _frame = blockState.frame();
-        _stack = blockState.stack();
-        _methodTranslation = methodTranslation;
-        _constantPool = methodTranslation.classMethodActor().codeAttribute().constantPool();
+        this.blockState = blockState;
+        this.frame = blockState.frame();
+        this.stack = blockState.stack();
+        this.methodTranslation = methodTranslation;
+        this.constantPool = methodTranslation.classMethodActor().codeAttribute().constantPool();
         final CirCall body = blockState.cirBlock().closure().body();
-        _currentCall = body;
+        this.currentCall = body;
     }
 
     public String classMethodName() {
-        return _methodTranslation.classMethodActor().name().toString();
+        return methodTranslation.classMethodActor().name.toString();
     }
 
     private CirContinuation makeExceptionContinuation(BlockState dispatcherState) {
-        final CirCall call = _methodTranslation.newCirCall(dispatcherState.cirBlock());
-        final CirVariable throwable = _methodTranslation.stackVariableFactory().makeVariable(Kind.REFERENCE, 0);
+        final CirCall call = methodTranslation.newCirCall(dispatcherState.cirBlock());
+        final CirVariable throwable = methodTranslation.stackVariableFactory().makeVariable(Kind.REFERENCE, 0);
         final CirContinuation continuation = new CirContinuation(throwable);
         continuation.setBody(call);
         return continuation;
     }
 
     protected CirValue getCurrentExceptionContinuation() {
-        final BlockState dispatcherState = _methodTranslation.getExceptionDispatcherState(currentOpcodePosition());
+        final BlockState dispatcherState = methodTranslation.getExceptionDispatcherState(currentOpcodePosition());
         if (dispatcherState == null) {
-            return _methodTranslation.variableFactory().exceptionContinuationParameter();
+            return methodTranslation.variableFactory().exceptionContinuationParameter();
         }
         if (dispatcherState.frame() == null) {
-            dispatcherState.setFrame(_frame.copy());
+            dispatcherState.setFrame(frame.copy());
         }
         return makeExceptionContinuation(dispatcherState);
     }
 
     private CirContinuation getBlockContinuation(int address) {
-        final CirCall call = _methodTranslation.newCirCall(_methodTranslation.getBlockStateAt(address).cirBlock());
+        final CirCall call = methodTranslation.newCirCall(methodTranslation.getBlockStateAt(address).cirBlock());
         final CirContinuation continuation = new CirContinuation();
         continuation.setBody(call);
         return continuation;
@@ -135,32 +135,32 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     }
 
     public void terminateBlock() {
-        if (_currentCall.procedure() != null) {
+        if (currentCall.procedure() != null) {
             // A control flow byte code (e.g. xreturn, athrow, if...)
             // has occurred at the end of this basic block
-            assert _currentCall.hasArguments();
+            assert currentCall.hasArguments();
             return;
         }
         // No control flow byte code has occurred,
         // so fall through to the adjacent basic block:
-        _currentCall.setProcedure(getAdjacentContinuation());
-        _currentCall.setArguments(CirCall.NO_ARGUMENTS);
+        currentCall.setProcedure(getAdjacentContinuation());
+        currentCall.setArguments(CirCall.NO_ARGUMENTS);
     }
 
     private void assign(CirVariable variable, CirValue value) {
         assert variable.kind().toStackKind() == value.kind().toStackKind() : incompatibleTypesErrorMessage(variable.kind().toStackKind(), value.kind().toStackKind());
         final CirClosure closure = new CirClosure();
-        _currentCall.setProcedure(closure);
-        _currentCall.setArguments(value);
+        currentCall.setProcedure(closure);
+        currentCall.setArguments(value);
 
-        _currentCall = new CirCall();
-        closure.setBody(_currentCall);
+        currentCall = new CirCall();
+        closure.setBody(currentCall);
         closure.setParameters(variable);
     }
 
     protected void push(Kind kind, CirValue argument) {
         assert argument.kind() == kind : incompatibleTypesErrorMessage(argument.kind(), kind);
-        final CirVariable stackVariable = _stack.push(kind);
+        final CirVariable stackVariable = stack.push(kind);
         assign(stackVariable, argument);
     }
 
@@ -177,60 +177,60 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     }
 
     protected CirVariable pop(Kind kind) {
-        final CirVariable stackVariable = _stack.pop();
+        final CirVariable stackVariable = stack.pop();
         assert stackVariable.kind() == kind.toStackKind() : incompatibleTypesErrorMessage(stackVariable.kind(), kind.toStackKind());
         return stackVariable;
     }
 
     protected CirVariable popReferenceOrWord() {
-        final CirVariable stackVariable = _stack.pop();
+        final CirVariable stackVariable = stack.pop();
         assert stackVariable.kind() == Kind.REFERENCE || stackVariable.kind() == Kind.WORD : expectedReferenceOrWordErrorMessage(stackVariable.kind());
         return stackVariable;
     }
 
     protected CirVariable popTemporary() {
-        final CirVariable stackVariable = _stack.pop();
-        final CirVariable temporaryVariable = _methodTranslation.variableFactory().createTemporary(stackVariable.kind());
+        final CirVariable stackVariable = stack.pop();
+        final CirVariable temporaryVariable = methodTranslation.variableFactory().createTemporary(stackVariable.kind());
         assign(temporaryVariable, stackVariable);
         return temporaryVariable;
     }
 
     protected CirVariable getTop(Kind kind) {
-        final CirVariable stackVariable = _stack.getTop();
+        final CirVariable stackVariable = stack.getTop();
         assert stackVariable.kind() == kind.toStackKind() : incompatibleTypesErrorMessage(stackVariable.kind(), kind.toStackKind());
         return stackVariable;
     }
 
     protected CirVariable getReferenceOrWordTop() {
-        final CirVariable stackVariable = _stack.getTop();
+        final CirVariable stackVariable = stack.getTop();
         assert stackVariable.kind() == Kind.REFERENCE || stackVariable.kind() == Kind.WORD : expectedReferenceOrWordErrorMessage(stackVariable.kind());
         return stackVariable;
     }
 
     private void localLoad(Kind kind, int index) {
-        final CirVariable localVariable = _frame.makeVariable(kind, index);
+        final CirVariable localVariable = frame.makeVariable(kind, index);
         push(kind, localVariable);
     }
 
     private void localLoadReferenceOrWord(int index) {
-        final CirVariable localVariable = _frame.getReferenceOrWordVariable(index);
+        final CirVariable localVariable = frame.getReferenceOrWordVariable(index);
         push(localVariable.kind(), localVariable);
     }
 
     private void localStore(Kind kind, int index) {
         final CirVariable stackVariable = pop(kind);
-        final CirVariable localVariable = _frame.makeVariable(kind, index);
+        final CirVariable localVariable = frame.makeVariable(kind, index);
         assign(localVariable, stackVariable);
     }
 
     private void localStoreReferenceOrWord(int index) {
         final CirVariable stackVariable = popReferenceOrWord();
-        final CirVariable localVariable = _frame.makeVariable(stackVariable.kind(), index);
+        final CirVariable localVariable = frame.makeVariable(stackVariable.kind(), index);
         assign(localVariable, stackVariable);
     }
 
     private void createJavaFrameDescriptor() {
-        _currentCall.setJavaFrameDescriptor(new CirJavaFrameDescriptor(_methodTranslation.classMethodActor().compilee(), currentOpcodePosition(), _frame.makeDescriptor(), _stack.makeDescriptor()));
+        currentCall.setJavaFrameDescriptor(new CirJavaFrameDescriptor(methodTranslation.classMethodActor().compilee(), currentOpcodePosition(), frame.makeDescriptor(), stack.makeDescriptor()));
     }
 
     protected void call(CirRoutine cirRoutine, CirValue[] regularArguments, CirValue normalContinuation) {
@@ -239,12 +239,12 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         }
 
         final CirValue exceptionContinuation = Stoppable.Static.canStopWithException(cirRoutine) ? getCurrentExceptionContinuation() : CirValue.UNDEFINED;
-        _currentCall.setArguments(Arrays.append(CirValue.class, regularArguments, normalContinuation, exceptionContinuation));
-        _currentCall.setProcedure((CirProcedure) cirRoutine);
+        currentCall.setArguments(Arrays.append(CirValue.class, regularArguments, normalContinuation, exceptionContinuation));
+        currentCall.setProcedure((CirProcedure) cirRoutine);
         if (normalContinuation != CirValue.UNDEFINED) {
-            _currentCall = new CirCall();
+            currentCall = new CirCall();
             final CirContinuation cc = (CirContinuation) normalContinuation;
-            cc.setBody(_currentCall);
+            cc.setBody(currentCall);
         } else {
             assert cirRoutine instanceof Throw;
         }
@@ -256,7 +256,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
             final CirContinuation continuation = new CirContinuation();
             call(cirRoutine, regularArguments, continuation);
         } else {
-            final CirVariable result = _methodTranslation.variableFactory().createTemporary(resultKind);
+            final CirVariable result = methodTranslation.variableFactory().createTemporary(resultKind);
             final CirContinuation continuation = new CirContinuation(result);
             call(cirRoutine, regularArguments, continuation);
             push(result);
@@ -286,7 +286,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     }
 
     protected boolean isEndOfBlock() {
-        return currentBytePosition() == _methodTranslation.getBlockStateAt(currentOpcodePosition()).birBlock().bytecodeBlock().end() + 1;
+        return currentBytePosition() == methodTranslation.getBlockStateAt(currentOpcodePosition()).birBlock().bytecodeBlock().end() + 1;
     }
 
     private void conditionalBranch(CirValue value1, CirSwitch cirSwitch, CirValue value2, int offset) {
@@ -294,8 +294,8 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         final CirValue success = getBranchContinuation(offset);
         final CirValue failure = getAdjacentContinuation();
         assert failure != null : "expected fall through basic block";
-        _currentCall.setArguments(value1, value2, success, failure);
-        _currentCall.setProcedure(cirSwitch);
+        currentCall.setArguments(value1, value2, success, failure);
+        currentCall.setProcedure(cirSwitch);
     }
 
     private <Value_Type extends Value<Value_Type>> void conditionalBranch(CirSwitch cirSwitch, Value_Type value2, int offset) {
@@ -330,9 +330,9 @@ public final class BytecodeTranslation extends BytecodeVisitor {
 
     private void terminate(Kind kind) {
         assert isEndOfBlock() : expectedEndOfBlockErrorMessage();
-        _currentCall.setProcedure(_methodTranslation.variableFactory().normalContinuationParameter());
+        currentCall.setProcedure(methodTranslation.variableFactory().normalContinuationParameter());
         final CirVariable result = pop(kind);
-        _currentCall.setArguments(result);
+        currentCall.setArguments(result);
     }
 
     protected void completeInvocation(CirValue method, Kind returnKind, CirValue[] arguments) {
@@ -342,16 +342,16 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         if (returnKind == Kind.VOID) {
             continuation = new CirContinuation();
         } else {
-            final CirVariable result = _stack.push(returnKind);
+            final CirVariable result = stack.push(returnKind);
             continuation = new CirContinuation(result);
         }
         arguments[arguments.length - 2] = continuation;
         arguments[arguments.length - 1] = getCurrentExceptionContinuation();
 
-        _currentCall.setArguments(arguments);
-        _currentCall.setProcedure(method);
-        _currentCall = new CirCall();
-        continuation.setBody(_currentCall);
+        currentCall.setArguments(arguments);
+        currentCall.setProcedure(method);
+        currentCall = new CirCall();
+        continuation.setBody(currentCall);
     }
 
     protected boolean areArgumentsMatchingSignatureDescriptor(CirValue[] arguments, SignatureDescriptor signatureDescriptor, TypeDescriptor receiverDescriptor) {
@@ -365,7 +365,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
             argumentIndex++;
         }
         if (receiverDescriptor != null) {
-            if (_methodTranslation.classMethodActor().holder().kind() == Kind.WORD) {
+            if (methodTranslation.classMethodActor().holder().kind == Kind.WORD) {
                 // Don't check code in the Word subclasses as it contains casts between WORD and REFERENCE types that only executes in prototype mode.
             } else {
                 // Must be a non-static invocation - check the receiver
@@ -386,7 +386,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
             // and the parameter in question is of type Accessor (which is implemented by both WORD and REFERENCE types).
             assert argumentKind == Kind.WORD;
             assert parameterDescriptor.equals(JavaTypeDescriptor.ACCESSOR) :
-                "argument " + argumentIndex + " can only be applied to a WORD parameter type or parameter of type " + Accessor.class.getName() + "(in " + _methodTranslation.birMethod() + ")";
+                "argument " + argumentIndex + " can only be applied to a WORD parameter type or parameter of type " + Accessor.class.getName() + "(in " + methodTranslation.birMethod() + ")";
             if (argumentKind != Kind.WORD) {
                 assert parameterKind == Kind.WORD :  "argument " + argumentIndex + " cannot be of kind " + argumentKind + " when parameter is not of kind " + Kind.WORD;
             }
@@ -502,23 +502,23 @@ public final class BytecodeTranslation extends BytecodeVisitor {
 
     @Override
     protected void ldc(int index) {
-        final Tag tag = _constantPool.tagAt(index);
+        final Tag tag = constantPool.tagAt(index);
         switch (tag) {
             case CLASS: {
-                final JavaOperator op = new Mirror(_constantPool, index);
+                final JavaOperator op = new Mirror(constantPool, index);
                 callAndPush(op);
                 break;
             }
             case INTEGER: {
-                push(IntValue.from(_constantPool.intAt(index)));
+                push(IntValue.from(constantPool.intAt(index)));
                 break;
             }
             case FLOAT: {
-                push(FloatValue.from(_constantPool.floatAt(index)));
+                push(FloatValue.from(constantPool.floatAt(index)));
                 break;
             }
             case STRING: {
-                push(ReferenceValue.from(_constantPool.stringAt(index)));
+                push(ReferenceValue.from(constantPool.stringAt(index)));
                 break;
             }
             default: {
@@ -534,14 +534,14 @@ public final class BytecodeTranslation extends BytecodeVisitor {
 
     @Override
     protected void ldc2_w(int index) {
-        final Tag tag = _constantPool.tagAt(index);
+        final Tag tag = constantPool.tagAt(index);
         switch (tag) {
             case LONG: {
-                push(LongValue.from(_constantPool.longAt(index)));
+                push(LongValue.from(constantPool.longAt(index)));
                 break;
             }
             case DOUBLE: {
-                push(DoubleValue.from(_constantPool.doubleAt(index)));
+                push(DoubleValue.from(constantPool.doubleAt(index)));
                 break;
             }
             default: {
@@ -802,13 +802,13 @@ public final class BytecodeTranslation extends BytecodeVisitor {
 
     @Override
     protected void pop() {
-        final CirVariable value = _stack.pop();
+        final CirVariable value = stack.pop();
         assert value.isCategory1() : expectedCategory1ErrorMessage();
     }
 
     @Override
     protected void pop2() {
-        final CirVariable value = _stack.pop();
+        final CirVariable value = stack.pop();
         if (value.isCategory1()) {
             pop();
         }
@@ -816,7 +816,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
 
     @Override
     protected void dup() {
-        final CirVariable value = _stack.getTop();
+        final CirVariable value = stack.getTop();
         assert value.isCategory1() : expectedCategory1ErrorMessage();
         push(value);
     }
@@ -1009,8 +1009,8 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     @Override
     protected void goto_(int offset) {
         assert isEndOfBlock() : expectedEndOfBlockErrorMessage();
-        _currentCall.setProcedure(getBranchContinuation(offset));
-        _currentCall.setArguments(CirCall.NO_ARGUMENTS);
+        currentCall.setProcedure(getBranchContinuation(offset));
+        currentCall.setArguments(CirCall.NO_ARGUMENTS);
     }
 
     @Override
@@ -1035,9 +1035,9 @@ public final class BytecodeTranslation extends BytecodeVisitor {
             arguments[1 + numberOfCases + i] = getBranchContinuation(scanner.readSwitchOffset());
         }
         arguments[1 + (numberOfCases * 2)] = getBranchContinuation(defaultOffset);
-        _currentCall.setArguments(arguments);
+        currentCall.setArguments(arguments);
         final CirSwitch switchBuiltin = new CirSwitch(Kind.INT, ValueComparator.EQUAL, numberOfCases);
-        _currentCall.setProcedure(switchBuiltin);
+        currentCall.setProcedure(switchBuiltin);
         assert isEndOfBlock() : expectedEndOfBlockErrorMessage();
     }
 
@@ -1052,9 +1052,9 @@ public final class BytecodeTranslation extends BytecodeVisitor {
             arguments[1 + numberOfCases + i] = getBranchContinuation(scanner.readSwitchOffset());
         }
         arguments[1 + (numberOfCases * 2)] = getBranchContinuation(defaultOffset);
-        _currentCall.setArguments(arguments);
+        currentCall.setArguments(arguments);
         final CirSwitch switchBuiltin = new CirSwitch(Kind.INT, ValueComparator.EQUAL, numberOfCases);
-        _currentCall.setProcedure(switchBuiltin);
+        currentCall.setProcedure(switchBuiltin);
         assert isEndOfBlock() : expectedEndOfBlockErrorMessage();
     }
 
@@ -1081,15 +1081,15 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     @Override
     protected void areturn() {
         assert isEndOfBlock() : expectedEndOfBlockErrorMessage();
-        _currentCall.setProcedure(_methodTranslation.variableFactory().normalContinuationParameter());
+        currentCall.setProcedure(methodTranslation.variableFactory().normalContinuationParameter());
         final CirVariable result = popReferenceOrWord();
-        _currentCall.setArguments(result);
+        currentCall.setArguments(result);
     }
 
     @Override
     protected void vreturn() {
-        _currentCall.setProcedure(_methodTranslation.variableFactory().normalContinuationParameter());
-        _currentCall.setArguments(CirCall.NO_ARGUMENTS);
+        currentCall.setProcedure(methodTranslation.variableFactory().normalContinuationParameter());
+        currentCall.setArguments(CirCall.NO_ARGUMENTS);
     }
 
     @Override
@@ -1124,14 +1124,14 @@ public final class BytecodeTranslation extends BytecodeVisitor {
 
     @Override
     protected void prologue() {
-        if (_blockState.birBlock().hasSafepoint()) {
+        if (blockState.birBlock().hasSafepoint()) {
             if (MaxineVM.isPrototyping()) {
-                final C_FUNCTION cFunctionAnnotation = _methodTranslation.classMethodActor().getAnnotation(C_FUNCTION.class);
+                final C_FUNCTION cFunctionAnnotation = methodTranslation.classMethodActor().getAnnotation(C_FUNCTION.class);
                 if (cFunctionAnnotation == null || !cFunctionAnnotation.isInterruptHandler()) {
                     callAndPush(JavaOperator.SAFEPOINT_OP);
                 }
             } else {
-                if (_methodTranslation.classMethodActor().isCFunction()) {
+                if (methodTranslation.classMethodActor().isCFunction()) {
                     callAndPush(JavaOperator.SAFEPOINT_OP);
                 }
             }
@@ -1141,33 +1141,33 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     @Override
     protected void getfield(int index) {
         final CirVariable reference = pop(Kind.REFERENCE);
-        final JavaOperator getField = new GetField(_constantPool, index);
+        final JavaOperator getField = new GetField(constantPool, index);
         callAndPush(getField, reference);
     }
 
     @Override
     protected void putfield(int index) {
-        final Kind kind = _constantPool.fieldAt(index).type(_constantPool).toKind();
+        final Kind kind = constantPool.fieldAt(index).type(constantPool).toKind();
         final CirVariable value = pop(kind);
         final CirVariable reference = pop(Kind.REFERENCE);
-        final JavaOperator putfield = new PutField(_constantPool, index);
+        final JavaOperator putfield = new PutField(constantPool, index);
         callAndPush(putfield, reference, value);
     }
 
     @Override
     protected void putstatic(int index) {
-        final Kind kind = _constantPool.fieldAt(index).type(_constantPool).toKind();
+        final Kind kind = constantPool.fieldAt(index).type(constantPool).toKind();
         final CirVariable value = pop(kind);
-        final JavaOperator putstatic = new PutStatic(_constantPool, index);
+        final JavaOperator putstatic = new PutStatic(constantPool, index);
         callAndPush(putstatic, value);
     }
 
     @Override
     protected void getstatic(int index) {
-        final FieldRefConstant fieldRef = _constantPool.fieldAt(index);
-        if (fieldRef.isResolvableWithoutClassLoading(_constantPool)) {
+        final FieldRefConstant fieldRef = constantPool.fieldAt(index);
+        if (fieldRef.isResolvableWithoutClassLoading(constantPool)) {
             try {
-                final FieldActor fieldActor = fieldRef.resolve(_constantPool, index);
+                final FieldActor fieldActor = fieldRef.resolve(constantPool, index);
                 if (fieldActor.isFinal() && JavaTypeDescriptor.isPrimitive(fieldActor.descriptor()) && fieldActor.holder().isInitialized()) {
                     // This can be transformed directly into a constant value if the field holder has been initialized
                     final Value fieldValue;
@@ -1184,75 +1184,75 @@ public final class BytecodeTranslation extends BytecodeVisitor {
                 // do nothing.
             }
         }
-        final JavaOperator getstatic = new GetStatic(_constantPool, index);
+        final JavaOperator getstatic = new GetStatic(constantPool, index);
         callAndPush(getstatic);
     }
 
     @Override
     protected void invokeinterface(int index, int countUnused) {
-        final InterfaceMethodRefConstant interfaceMethodRef = _constantPool.interfaceMethodAt(index);
-        final SignatureDescriptor signatureDescriptor = interfaceMethodRef.signature(_constantPool);
+        final InterfaceMethodRefConstant interfaceMethodRef = constantPool.interfaceMethodAt(index);
+        final SignatureDescriptor signatureDescriptor = interfaceMethodRef.signature(constantPool);
         final int numberOfParameters = signatureDescriptor.numberOfParameters();
         final CirValue[] arguments = CirCall.newArguments(numberOfParameters + 3);
         for (int i = numberOfParameters - 1; i >= 0; i--) {
-            arguments[i + 1] = _stack.pop();
+            arguments[i + 1] = stack.pop();
         }
         final CirVariable receiver = popReferenceOrWord();
         arguments[0] = receiver;
-        assert areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor, interfaceMethodRef.holder(_constantPool));
-        final JavaOperator invokeinterface = new InvokeInterface(_constantPool, index);
+        assert areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor, interfaceMethodRef.holder(constantPool));
+        final JavaOperator invokeinterface = new InvokeInterface(constantPool, index);
         completeInvocation(invokeinterface, signatureDescriptor.resultKind(), arguments);
     }
 
     private void invokeClassMethod(int index, JavaOperator op) {
-        final ClassMethodRefConstant classMethodRef = _constantPool.classMethodAt(index);
-        final SignatureDescriptor signatureDescriptor = classMethodRef.signature(_constantPool);
+        final ClassMethodRefConstant classMethodRef = constantPool.classMethodAt(index);
+        final SignatureDescriptor signatureDescriptor = classMethodRef.signature(constantPool);
         final int numberOfParameters = signatureDescriptor.numberOfParameters();
         final CirValue[] arguments = CirCall.newArguments(numberOfParameters + 3);
         for (int i = numberOfParameters - 1; i >= 0; i--) {
-            arguments[i + 1] = _stack.pop();
+            arguments[i + 1] = stack.pop();
         }
         final CirVariable receiver = popReferenceOrWord();
         arguments[0] = receiver;
-        assert areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor, classMethodRef.holder(_constantPool));
+        assert areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor, classMethodRef.holder(constantPool));
         completeInvocation(op, signatureDescriptor.resultKind(), arguments);
     }
 
     @Override
     protected void invokevirtual(int index) {
-        invokeClassMethod(index, new InvokeVirtual(_constantPool, index));
+        invokeClassMethod(index, new InvokeVirtual(constantPool, index));
     }
 
     @Override
     protected void invokespecial(int index) {
-        invokeClassMethod(index, new InvokeSpecial(_constantPool, index));
+        invokeClassMethod(index, new InvokeSpecial(constantPool, index));
     }
 
     @Override
     protected void invokestatic(int index) {
-        final ClassMethodRefConstant classMethodRef = _constantPool.classMethodAt(index);
-        final SignatureDescriptor signatureDescriptor = classMethodRef.signature(_constantPool);
+        final ClassMethodRefConstant classMethodRef = constantPool.classMethodAt(index);
+        final SignatureDescriptor signatureDescriptor = classMethodRef.signature(constantPool);
         final int numberOfParameters = signatureDescriptor.numberOfParameters();
         final CirValue[] arguments = CirCall.newArguments(numberOfParameters + 2);
         for (int i = numberOfParameters - 1; i >= 0; i--) {
-            arguments[i] = _stack.pop();
+            arguments[i] = stack.pop();
         }
         assert areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor);
-        final JavaOperator op = new InvokeStatic(_constantPool, index);
+        final JavaOperator op = new InvokeStatic(constantPool, index);
         completeInvocation(op, signatureDescriptor.resultKind(), arguments);
     }
 
     @Override
     protected void checkcast(int index) {
         final CirVariable object = getReferenceOrWordTop();
-        final JavaOperator checkcast = new CheckCast(_constantPool, index);
+        final JavaOperator checkcast = new CheckCast(constantPool, index);
         callAndPush(checkcast, object);
     }
 
     @Override
     protected void instanceof_(int index) {
         final CirVariable object = pop(Kind.REFERENCE);
-        final JavaOperator instanceofOp = new InstanceOf(_constantPool, index);
+        final JavaOperator instanceofOp = new InstanceOf(constantPool, index);
         callAndPush(instanceofOp, object);
     }
 
@@ -1305,7 +1305,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
 
     @Override
     protected void new_(int index) {
-        final JavaOperator newOp = new New(_constantPool, index);
+        final JavaOperator newOp = new New(constantPool, index);
         callAndPush(newOp);
     }
 
@@ -1367,13 +1367,13 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     @Override
     protected void anewarray(int index) {
         final CirVariable count = pop(Kind.INT);
-        final JavaOperator newarray = new NewArray(_constantPool, index);
+        final JavaOperator newarray = new NewArray(constantPool, index);
         callAndPush(newarray, count);
     }
 
     @Override
     protected void multianewarray(int index, int nDimensions) {
-        final JavaOperator op = new MultiANewArray(_constantPool, index, nDimensions);
+        final JavaOperator op = new MultiANewArray(constantPool, index, nDimensions);
         final CirVariable[] dimensions = CirClosure.newParameters(nDimensions);
         for (int i = 1; i <= nDimensions; i++) {
             dimensions[nDimensions - i] = pop(Kind.INT);
@@ -1407,12 +1407,12 @@ public final class BytecodeTranslation extends BytecodeVisitor {
      */
     @Override
     protected void callnative(int nativeFunctionDescriptorIndex) {
-        final CallNative op = new CallNative(_constantPool, nativeFunctionDescriptorIndex, _methodTranslation.classMethodActor());
+        final CallNative op = new CallNative(constantPool, nativeFunctionDescriptorIndex, methodTranslation.classMethodActor());
         final SignatureDescriptor signatureDescriptor = op.signatureDescriptor();
         final int numberOfParameters = signatureDescriptor.numberOfParameters();
         final CirValue[] arguments = CirCall.newArguments(numberOfParameters + 2);
         for (int i = numberOfParameters - 1; i >= 0; i--) {
-            arguments[i] = _stack.pop();
+            arguments[i] = stack.pop();
         }
 
         assert areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor);
@@ -1703,14 +1703,14 @@ public final class BytecodeTranslation extends BytecodeVisitor {
 
     @Override
     protected void iinc(int index, int addend) {
-        final CirVariable localVariable = _frame.makeVariable(Kind.INT, index);
+        final CirVariable localVariable = frame.makeVariable(Kind.INT, index);
         final CirContinuation continuation = new CirContinuation(localVariable);
         final JavaOperator op = JavaOperator.INT_PLUS;
         final CirValue exceptionContinuation = canStop(op) ? getCurrentExceptionContinuation() : CirValue.UNDEFINED;
-        _currentCall.setArguments(localVariable, CirConstant.fromInt(addend), continuation, exceptionContinuation);
-        _currentCall.setProcedure(op);
-        _currentCall = new CirCall();
-        continuation.setBody(_currentCall);
+        currentCall.setArguments(localVariable, CirConstant.fromInt(addend), continuation, exceptionContinuation);
+        currentCall.setProcedure(op);
+        currentCall = new CirCall();
+        continuation.setBody(currentCall);
     }
 
     @Override

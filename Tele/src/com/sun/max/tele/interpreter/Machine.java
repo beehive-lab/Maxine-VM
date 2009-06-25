@@ -46,7 +46,7 @@ import com.sun.max.vm.value.*;
  */
 public final class Machine extends AbstractTeleVMHolder{
 
-    private ExecutionThread _currentThread;
+    private ExecutionThread currentThread;
 
 
     Machine(TeleVM teleVM) {
@@ -65,16 +65,16 @@ public final class Machine extends AbstractTeleVMHolder{
     }
 
     public ExecutionFrame pushFrame(ClassMethodActor method) {
-        return _currentThread.pushFrame(method);
+        return currentThread.pushFrame(method);
     }
 
     public ExecutionFrame popFrame() {
-        return _currentThread.popFrame();
+        return currentThread.popFrame();
     }
 
     public void activate(ExecutionThread thread) {
         //active_threads.insertElementAt(this_thread, 0);
-        _currentThread = thread;
+        currentThread = thread;
     }
 
     public ExecutionThread newThread(int prio, ExecutionThread.ThreadType threadType) {
@@ -82,64 +82,64 @@ public final class Machine extends AbstractTeleVMHolder{
     }
 
     public MethodActor currentMethod() {
-        return _currentThread.frame().method();
+        return currentThread.frame().method();
     }
 
     public ExecutionThread currentThread() {
-        return _currentThread;
+        return currentThread;
     }
 
     public void jump(int offset) {
-        _currentThread.frame().jump(offset);
+        currentThread.frame().jump(offset);
     }
 
     public Bytecode readOpcode() {
-        return _currentThread.frame().readOpcode();
+        return currentThread.frame().readOpcode();
     }
 
     public void setLocal(int index, Value value) {
-        _currentThread.frame().setLocal(index, value);
+        currentThread.frame().setLocal(index, value);
     }
 
     public Value getLocal(int index) {
-        return _currentThread.frame().getLocal(index);
+        return currentThread.frame().getLocal(index);
     }
 
     public void push(Value value) {
-        _currentThread.frame().stack().push(value);
+        currentThread.frame().stack().push(value);
     }
 
     public Value pop() {
-        return _currentThread.frame().stack().pop();
+        return currentThread.frame().stack().pop();
     }
 
     public Value peek() {
-        return _currentThread.frame().stack().peek();
+        return currentThread.frame().stack().peek();
     }
 
     public Value peek(int n) {
-        final Stack<Value> operands = _currentThread.frame().stack();
+        final Stack<Value> operands = currentThread.frame().stack();
         return operands.elementAt(operands.size() - n);
     }
 
     public byte readByte() {
-        return _currentThread.frame().readByte();
+        return currentThread.frame().readByte();
     }
 
     public short readShort() {
-        return _currentThread.frame().readShort();
+        return currentThread.frame().readShort();
     }
 
     public int readInt() {
-        return _currentThread.frame().readInt();
+        return currentThread.frame().readInt();
     }
 
     public void skipBytes(int n) {
-        _currentThread.frame().skipBytes(n);
+        currentThread.frame().skipBytes(n);
     }
 
     public void alignInstructionPosition() {
-        _currentThread.frame().alignInstructionPosition();
+        currentThread.frame().alignInstructionPosition();
     }
 
     public Value widenIfNecessary(Value value) {
@@ -151,7 +151,7 @@ public final class Machine extends AbstractTeleVMHolder{
     }
 
     public Value resolveConstantReference(short cpIndex) {
-        Value constant = _currentThread.frame().constantPool().valueAt(cpIndex);
+        Value constant = currentThread.frame().constantPool().valueAt(cpIndex);
 
         if (constant instanceof ObjectReferenceValue) {
             constant = toReferenceValue(Reference.fromJava(constant.unboxObject()));
@@ -196,7 +196,7 @@ public final class Machine extends AbstractTeleVMHolder{
      * @return {@code true} if an appropriate exception handler was found, {@code false} otherwise
      */
     public boolean handleException(ReferenceValue throwableReference) {
-        if (_currentThread.handleException(throwableReference.getClassActor())) {
+        if (currentThread.handleException(throwableReference.getClassActor())) {
             push(throwableReference);
             return true;
         }
@@ -204,25 +204,25 @@ public final class Machine extends AbstractTeleVMHolder{
     }
 
     public int depth() {
-        return _currentThread.frame().stack().size();
+        return currentThread.frame().stack().size();
     }
 
     public Value getStatic(short cpIndex) {
-        final ConstantPool constantPool = _currentThread.frame().constantPool();
+        final ConstantPool constantPool = currentThread.frame().constantPool();
         final FieldRefConstant fieldRef = constantPool.fieldAt(cpIndex);
         if (teleVM() != null) {
             final FieldActor fieldActor = fieldRef.resolve(constantPool, cpIndex);
-            final TeleClassActor teleClassActor = teleVM().findTeleClassActor(fieldActor.holder().typeDescriptor());
+            final TeleClassActor teleClassActor = teleVM().findTeleClassActor(fieldActor.holder().typeDescriptor);
             final TeleStaticTuple teleStaticTuple = teleClassActor.getTeleStaticTuple();
             final Reference staticTupleReference = teleStaticTuple.reference();
 
-            switch (fieldActor.kind().asEnum()) {
+            switch (fieldActor.kind.asEnum) {
                 case BOOLEAN:
                 case BYTE:
                 case CHAR:
                 case SHORT:
                 case INT: {
-                    final int intValue = fieldActor.kind().readValue(staticTupleReference, fieldActor.offset()).toInt();
+                    final int intValue = fieldActor.kind.readValue(staticTupleReference, fieldActor.offset()).toInt();
                     return IntValue.from(intValue);
                 }
                 case FLOAT: {
@@ -253,17 +253,17 @@ public final class Machine extends AbstractTeleVMHolder{
         if (teleVM() != null) {
             ProgramError.unexpected("Cannot run putstatic remotely!");
         } else {
-            final ConstantPool cp = _currentThread.frame().constantPool();
+            final ConstantPool cp = currentThread.frame().constantPool();
             final FieldActor fieldActor = cp.fieldAt(cpIndex).resolve(cp, cpIndex);
-            fieldActor.writeValue(fieldActor.holder().staticTuple(), fieldActor.kind().convert(value));
+            fieldActor.writeValue(fieldActor.holder().staticTuple(), fieldActor.kind.convert(value));
         }
     }
 
     public Value getField(Reference instance, short cpIndex) {
-        final ConstantPool constantPool = _currentThread.frame().constantPool();
+        final ConstantPool constantPool = currentThread.frame().constantPool();
         final FieldRefConstant fieldRef = constantPool.fieldAt(cpIndex);
         final FieldActor fieldActor = fieldRef.resolve(constantPool, cpIndex);
-        final Kind kind = fieldActor.kind();
+        final Kind kind = fieldActor.kind;
 
         if (kind.isExtendedPrimitiveValue()) {
             return widenIfNecessary(fieldActor.readValue(instance));
@@ -281,20 +281,20 @@ public final class Machine extends AbstractTeleVMHolder{
         if (instance instanceof TeleReference && !((TeleReference) instance).isLocal()) {
             ProgramError.unexpected("Cannot run putfield remotely!");
         } else {
-            final ConstantPool cp = _currentThread.frame().constantPool();
+            final ConstantPool cp = currentThread.frame().constantPool();
             final FieldActor fieldActor = cp.fieldAt(cpIndex).resolve(cp, cpIndex);
 
             if (value instanceof TeleReferenceValue) {
                 fieldActor.writeValue(instance, TeleReferenceValue.from(teleVM(), makeLocalReference((TeleReference) value.asReference())));
             } else {
-                final Value val = fieldActor.kind().convert(value);
+                final Value val = fieldActor.kind.convert(value);
                 fieldActor.writeValue(instance, val);
             }
         }
     }
 
     public MethodActor resolveMethod(short cpIndex) {
-        final ConstantPool cp = _currentThread.frame().constantPool();
+        final ConstantPool cp = currentThread.frame().constantPool();
         final MethodRefConstant methodRef = cp.methodAt(cpIndex);
         return methodRef.resolve(cp, cpIndex);
     }
@@ -380,11 +380,11 @@ public final class Machine extends AbstractTeleVMHolder{
 
         final ClassActor remoteReferenceClassActor = teleVM().makeClassActorForTypeOf(remoteReference);
 
-        if (remoteReferenceClassActor.typeDescriptor().equals(JavaTypeDescriptor.STRING)) {
+        if (remoteReferenceClassActor.typeDescriptor.equals(JavaTypeDescriptor.STRING)) {
             return Reference.fromJava(teleVM().getString(remoteReference));
         } else if (remoteReferenceClassActor.isArrayClassActor() && remoteReferenceClassActor.componentClassActor().isPrimitiveClassActor()) {
             final int arrayLength = Layout.readArrayLength(remoteReference);
-            return Reference.fromJava(readRemoteArray(remoteReference, arrayLength, remoteReferenceClassActor.componentClassActor().typeDescriptor()));
+            return Reference.fromJava(readRemoteArray(remoteReference, arrayLength, remoteReferenceClassActor.componentClassActor().typeDescriptor));
         } else {
             //should put some tracing error message here
             return remoteReference;
@@ -406,7 +406,7 @@ public final class Machine extends AbstractTeleVMHolder{
     }
 
     public void invokeMethod(ClassMethodActor method) throws TeleInterpreterException {
-        final ExecutionFrame oldFrame = _currentThread.frame();
+        final ExecutionFrame oldFrame = currentThread.frame();
         final Stack<Value> argumentStack = new Stack<Value>();
         final Stack<Value> oldOperands = oldFrame.stack();
         int numberOfParameters = method.descriptor().numberOfParameters();
@@ -447,7 +447,7 @@ public final class Machine extends AbstractTeleVMHolder{
                 throw new TeleInterpreterException(e, this);
             }
         } else {
-            final ExecutionFrame newFrame = _currentThread.pushFrame(method);
+            final ExecutionFrame newFrame = currentThread.pushFrame(method);
             i = 0;
             while (i < numberOfParameters) {
                 final Value argument = argumentStack.pop();
@@ -463,7 +463,7 @@ public final class Machine extends AbstractTeleVMHolder{
     }
 
     public ClassActor resolveClassReference(short constantPoolIndex) {
-        final ConstantPool constantPool = _currentThread.frame().constantPool();
+        final ConstantPool constantPool = currentThread.frame().constantPool();
         return constantPool.classAt(constantPoolIndex).resolve(constantPool, constantPoolIndex);
     }
 }

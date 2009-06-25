@@ -53,26 +53,26 @@ import com.sun.max.vm.value.*;
  */
 public final class TeleReferenceValue extends ReferenceValue {
 
-    private final TeleVM _teleVM;
-    public final TeleReference _reference;
+    private final TeleVM teleVM;
+    public final TeleReference reference;
 
     public static TeleReferenceValue from(TeleVM teleVM, Reference reference) {
         return new TeleReferenceValue(teleVM, reference);
     }
 
     private TeleReferenceValue(TeleVM teleVM, Reference reference) {
-        _teleVM = teleVM;
-        _reference = (TeleReference) reference;
+        this.teleVM = teleVM;
+        this.reference = (TeleReference) reference;
     }
 
     @Override
     public boolean isZero() {
-        return _reference.isZero();
+        return reference.isZero();
     }
 
     @Override
     public boolean isAllOnes() {
-        return _reference.isAllOnes();
+        return reference.isAllOnes();
     }
 
     @Override
@@ -85,7 +85,7 @@ public final class TeleReferenceValue extends ReferenceValue {
             return false;
         }
         final TeleReferenceValue teleReferenceValue = (TeleReferenceValue) other;
-        return _reference.equals(teleReferenceValue._reference);
+        return reference.equals(teleReferenceValue.reference);
     }
 
     @Override
@@ -97,21 +97,21 @@ public final class TeleReferenceValue extends ReferenceValue {
 
     @Override
     public int hashCode() {
-        return _reference.hashCode();
+        return reference.hashCode();
     }
 
     @Override
     public String toString() {
-        if (_reference.isZero()) {
+        if (reference.isZero()) {
             return "null";
         }
-        return _reference.toString();
+        return reference.toString();
     }
 
     @Override
     public Object asBoxedJavaValue() {
-        if (_reference.isLocal()) {
-            return _reference.toJava();
+        if (reference.isLocal()) {
+            return reference.toJava();
         }
 
         throw new UnsupportedOperationException();
@@ -119,8 +119,8 @@ public final class TeleReferenceValue extends ReferenceValue {
 
     @Override
     public Object unboxObject() {
-        if (_reference.isLocal()) {
-            return _reference.toJava();
+        if (reference.isLocal()) {
+            return reference.toJava();
         }
 
         throw new UnsupportedOperationException();
@@ -128,18 +128,18 @@ public final class TeleReferenceValue extends ReferenceValue {
 
     @Override
     public Grip asGrip() {
-        return _reference.grip();
+        return reference.grip();
     }
 
     @Override
     public Reference asReference() {
-        return _reference;
+        return reference;
     }
 
     @Override
     public Object asObject() {
-        if (_reference.isLocal()) {
-            return _reference.toJava();
+        if (reference.isLocal()) {
+            return reference.toJava();
         }
 
         throw new UnsupportedOperationException();
@@ -147,7 +147,7 @@ public final class TeleReferenceValue extends ReferenceValue {
 
     @Override
     public Word toWord() {
-        return _teleVM.vmConfiguration().gripScheme().toWord(_reference.grip());
+        return teleVM.vmConfiguration().gripScheme().toWord(reference.grip());
     }
 
     @Override
@@ -162,14 +162,14 @@ public final class TeleReferenceValue extends ReferenceValue {
 
     @Override
     public byte[] toBytes(DataModel dataModel) {
-        return dataModel.toBytes(UnsafeLoophole.referenceToWord(_reference));
+        return dataModel.toBytes(UnsafeLoophole.referenceToWord(reference));
     }
 
     @Override
     public ClassActor getClassActor() {
-        if (_reference.isLocal()) {
-            return ClassActor.fromJava(_reference.toJava().getClass());
+        if (reference.isLocal()) {
+            return ClassActor.fromJava(reference.toJava().getClass());
         }
-        return _teleVM.makeClassActorForTypeOf(_reference);
+        return teleVM.makeClassActorForTypeOf(reference);
     }
 }

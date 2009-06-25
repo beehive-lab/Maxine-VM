@@ -33,10 +33,10 @@ public abstract class BytecodeTest_putstatic<Method_Type extends IrMethod> exten
         super(name);
     }
 
-    private static byte _byteField = 0;
+    private static byte byteField = 0;
 
     private static void perform_putstatic_byte() {
-        _byteField = 111;
+        byteField = 111;
 
     }
 
@@ -50,13 +50,13 @@ public abstract class BytecodeTest_putstatic<Method_Type extends IrMethod> exten
         };
         final Value result = execute(method);
         assertTrue(result == VoidValue.VOID);
-        assertTrue(_byteField == 111);
+        assertTrue(byteField == 111);
     }
 
-    private static boolean _booleanField = false;
+    private static boolean booleanField = false;
 
     private static void perform_putstatic_boolean() {
-        _booleanField = true;
+        booleanField = true;
     }
 
     public void test_putstatic_boolean() {
@@ -69,13 +69,13 @@ public abstract class BytecodeTest_putstatic<Method_Type extends IrMethod> exten
         };
         final Value result = execute(method);
         assertTrue(result == VoidValue.VOID);
-        assertTrue(_booleanField);
+        assertTrue(booleanField);
     }
 
-    private static short _shortField = 0;
+    private static short shortField = 0;
 
     private static void perform_putstatic_short() {
-        _shortField = 222;
+        shortField = 222;
     }
 
     public void test_putstatic_short() {
@@ -88,13 +88,13 @@ public abstract class BytecodeTest_putstatic<Method_Type extends IrMethod> exten
         };
         final Value result = execute(method);
         assertTrue(result == VoidValue.VOID);
-        assertTrue(_shortField == 222);
+        assertTrue(shortField == 222);
     }
 
-    private static char _charField = 0;
+    private static char charField = 0;
 
     private static void perform_putstatic_char() {
-        _charField = 333;
+        charField = 333;
     }
 
     public void test_putstatic_char() {
@@ -107,13 +107,13 @@ public abstract class BytecodeTest_putstatic<Method_Type extends IrMethod> exten
         };
         final Value result = execute(method);
         assertTrue(result == VoidValue.VOID);
-        assertTrue(_charField == 333);
+        assertTrue(charField == 333);
     }
 
-    private static int _intField = 0;
+    private static int intField = 0;
 
     private static void perform_putstatic_int() {
-        _intField = 44;
+        intField = 44;
     }
 
     public void test_putstatic_int() {
@@ -126,13 +126,13 @@ public abstract class BytecodeTest_putstatic<Method_Type extends IrMethod> exten
         };
         final Value result = execute(method);
         assertTrue(result == VoidValue.VOID);
-        assertTrue(_intField == 44);
+        assertTrue(intField == 44);
     }
 
-    private static float _floatField = 0;
+    private static float floatField = 0;
 
     private static void perform_putstatic_float() {
-        _floatField = 55;
+        floatField = 55;
     }
 
     public void test_putstatic_float() {
@@ -145,13 +145,13 @@ public abstract class BytecodeTest_putstatic<Method_Type extends IrMethod> exten
         };
         final Value result = execute(method);
         assertTrue(result == VoidValue.VOID);
-        assertTrue(_floatField == 55);
+        assertTrue(floatField == 55);
     }
 
-    private static long _longField = 0;
+    private static long longField = 0;
 
     private static void perform_putstatic_long() {
-        _longField = 66;
+        longField = 66;
     }
 
     public void test_putstatic_long() {
@@ -164,13 +164,13 @@ public abstract class BytecodeTest_putstatic<Method_Type extends IrMethod> exten
         };
         final Value result = execute(method);
         assertTrue(result == VoidValue.VOID);
-        assertTrue(_longField == 66);
+        assertTrue(longField == 66);
     }
 
-    private static double _doubleField = 0;
+    private static double doubleField = 0;
 
     private static void perform_putstatic_double() {
-        _doubleField = 77;
+        doubleField = 77;
     }
 
     public void test_putstatic_double() {
@@ -183,17 +183,17 @@ public abstract class BytecodeTest_putstatic<Method_Type extends IrMethod> exten
         };
         final Value result = execute(method);
         assertTrue(result == VoidValue.VOID);
-        assertTrue(_doubleField == 77);
+        assertTrue(doubleField == 77);
     }
 
-    private static Word _wordField;
+    private static Word wordField;
 
     private static void perform_putstatic_word() {
-        _wordField = Offset.fromInt(88);
+        wordField = Offset.fromInt(88);
     }
 
     public void test_putstatic_word() {
-        _wordField = Offset.zero();
+        wordField = Offset.zero();
         final Method_Type method = compileMethod("perform_putstatic_word", SignatureDescriptor.create(void.class));
         new BytecodeConfirmation(method.classMethodActor()) {
 
@@ -203,13 +203,13 @@ public abstract class BytecodeTest_putstatic<Method_Type extends IrMethod> exten
         };
         final Value result = execute(method);
         assertTrue(result == VoidValue.VOID);
-        assertTrue(_wordField.asOffset().toInt() == 88);
+        assertTrue(wordField.asOffset().toInt() == 88);
     }
 
-    private static Object _referenceField = null;
+    private static Object referenceField = null;
 
     private static void perform_putstatic_reference() {
-        _referenceField = Kind.REFERENCE;
+        referenceField = Kind.REFERENCE;
     }
 
     public void test_putstatic_reference() {
@@ -222,7 +222,7 @@ public abstract class BytecodeTest_putstatic<Method_Type extends IrMethod> exten
         };
         final Value result = execute(method);
         assertTrue(result == VoidValue.VOID);
-        assertTrue(_referenceField == Kind.REFERENCE);
+        assertTrue(referenceField == Kind.REFERENCE);
     }
 
 }

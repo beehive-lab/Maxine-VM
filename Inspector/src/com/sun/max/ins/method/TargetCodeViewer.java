@@ -55,89 +55,89 @@ public abstract class TargetCodeViewer extends CodeViewer {
         return "Target Code";
     }
 
-    private final TeleTargetRoutine _teleTargetRoutine;
+    private final TeleTargetRoutine teleTargetRoutine;
 
     /**
      * @return surrogate for the {@link TargetRoutine} in the VM for the method being viewed.
      */
     protected TeleTargetRoutine teleTargetRoutine() {
-        return _teleTargetRoutine;
+        return teleTargetRoutine;
     }
 
-    private final IndexedSequence<TargetCodeInstruction> _instructions;
+    private final IndexedSequence<TargetCodeInstruction> instructions;
 
     /**
      * @return disassembled target code instructions for the method being viewed.
      */
     public IndexedSequence<TargetCodeInstruction> instructions() {
-        return _instructions;
+        return instructions;
     }
 
-    private final TeleConstantPool _teleConstantPool;
+    private final TeleConstantPool teleConstantPool;
 
     /**
      * @return surrogate for the {@link ConstantPool} in the VM for the method being viewed.
      */
     protected final TeleConstantPool teleConstantPool() {
-        return _teleConstantPool;
+        return teleConstantPool;
     }
 
-    private final ConstantPool _localConstantPool;
+    private final ConstantPool localConstantPool;
 
     /**
      * @return local {@link ConstantPool} for the class containing the method in the VM being viewed.
      */
     protected final ConstantPool localConstantPool() {
-        return _localConstantPool;
+        return localConstantPool;
     }
 
     /**
      * local copy of the method bytecodes in the VM; null if a native method or otherwise unavailable.
      */
-    private final byte[] _bytecodes;
+    private final byte[] bytecodes;
 
     /**
      * Color to use for background of a row during normal display; modulated by safepoints, etc.
      * May be overridden by other states.
      */
-    private final Color[] _rowToBackGroundColor;
+    private final Color[] rowToBackGroundColor;
 
-    private final String[] _rowToTagText;
+    private final String[] rowToTagText;
 
     /**
      * Map:  index into the sequence of target code instructions -> bytecode that compiled into code starting at this instruction, if known; else null.
      * The bytecode location may be in a different method that was inlined.
      */
-    private final BytecodeLocation[] _rowToBytecodeLocation;
+    private final BytecodeLocation[] rowToBytecodeLocation;
 
     /**
      * Map:  index into the sequence of target code instructions -> constant pool index of {@MethodRefConstant} if this is a call instruction; else -1.
      */
-    private final int[] _rowToCalleeIndex;
+    private final int[] rowToCalleeIndex;
 
     protected TargetCodeViewer(Inspection inspection, MethodInspector parent, TeleTargetRoutine teleTargetRoutine) {
         super(inspection, parent);
 
-        _teleTargetRoutine = teleTargetRoutine;
-        _instructions = teleTargetRoutine.getInstructions();
+        this.teleTargetRoutine = teleTargetRoutine;
+        instructions = teleTargetRoutine.getInstructions();
         final TeleClassMethodActor teleClassMethodActor = teleTargetRoutine.getTeleClassMethodActor();
         if (teleClassMethodActor != null) {
             final TeleCodeAttribute teleCodeAttribute = teleClassMethodActor.getTeleCodeAttribute();
-            _bytecodes = teleCodeAttribute.readBytecodes();
-            _teleConstantPool = teleCodeAttribute.getTeleConstantPool();
-            _localConstantPool = teleClassMethodActor.classMethodActor().codeAttribute().constantPool();
+            bytecodes = teleCodeAttribute.readBytecodes();
+            teleConstantPool = teleCodeAttribute.getTeleConstantPool();
+            localConstantPool = teleClassMethodActor.classMethodActor().codeAttribute().constantPool();
         } else {  // native method
-            _bytecodes = null;
-            _teleConstantPool = null;
-            _localConstantPool = null;
+            bytecodes = null;
+            teleConstantPool = null;
+            localConstantPool = null;
         }
-        final int targetInstructionCount = _instructions.length();
-        _rowToStackFrameInfo = new StackFrameInfo[targetInstructionCount];
-        _rowToBackGroundColor = new Color[targetInstructionCount];
-        _rowToTagText = new String[targetInstructionCount];
-        _rowToBytecodeLocation = new BytecodeLocation[targetInstructionCount];
-        _rowToCalleeIndex = new int[targetInstructionCount];
-        Arrays.fill(_rowToCalleeIndex, -1);
+        final int targetInstructionCount = instructions.length();
+        rowToStackFrameInfo = new StackFrameInfo[targetInstructionCount];
+        rowToBackGroundColor = new Color[targetInstructionCount];
+        rowToTagText = new String[targetInstructionCount];
+        rowToBytecodeLocation = new BytecodeLocation[targetInstructionCount];
+        rowToCalleeIndex = new int[targetInstructionCount];
+        Arrays.fill(rowToCalleeIndex, -1);
         final Color backgroundColor = style().targetCodeBackgroundColor();
         final Color alternateBackgroundColor = style().targetCodeAlternateBackgroundColor();
         final Color stopBackgroundColor = style().targetCodeStopBackgroundColor();
@@ -160,51 +160,51 @@ public abstract class TargetCodeViewer extends CodeViewer {
                 final int bytecodePosition = bytecodeIndex;
                 // To check if we're crossing a bytecode boundary in the JITed code, compare the offset of the instruction at the current row with the offset recorded by the JIT
                 // for the start of bytecode template.
-                final int instructionPosition = _instructions.get(row).position();
+                final int instructionPosition = instructions.get(row).position();
                 if (bytecodePosition < bytecodeToTargetCodePositionMap.length && instructionPosition == bytecodeToTargetCodePositionMap[bytecodePosition]) {
                     alternate = !alternate;
                     final BytecodeInfo bytecodeInfo = bytecodeInfos[bytecodePosition];
                     if (bytecodeInfo == null) {
-                        _rowToTagText[row] = ""; // presumably in the prolog
+                        rowToTagText[row] = ""; // presumably in the prolog
                     } else {
-                        _rowToTagText[row] = bytecodePosition + ": " + bytecodeInfo.bytecode().name();
+                        rowToTagText[row] = bytecodePosition + ": " + bytecodeInfo.bytecode().name();
                         final BytecodeLocation bytecodeLocation = new BytecodeLocation(teleClassMethodActor.classMethodActor(), bytecodePosition);
-                        _rowToBytecodeLocation[row] = bytecodeLocation;
+                        rowToBytecodeLocation[row] = bytecodeLocation;
                     }
                     do {
                         ++bytecodeIndex;
                     } while (bytecodeIndex < bytecodeToTargetCodePositionMap.length && bytecodeToTargetCodePositionMap[bytecodeIndex] == 0);
                 }
                 if (alternate) {
-                    _rowToBackGroundColor[row] = alternateBackgroundColor;
+                    rowToBackGroundColor[row] = alternateBackgroundColor;
                 } else {
-                    _rowToBackGroundColor[row] = backgroundColor;
+                    rowToBackGroundColor[row] = backgroundColor;
                 }
                 if (positionToStopIndex[instructionPosition] >= 0) {
                     // the row is at a stop point
-                    _rowToBackGroundColor[row] = _rowToBackGroundColor[row].darker();
+                    rowToBackGroundColor[row] = rowToBackGroundColor[row].darker();
                 }
             }
         } else {
             for (int row = 0; row < targetInstructionCount; row++) {
-                final int stopIndex = positionToStopIndex[_instructions.get(row).position()];
+                final int stopIndex = positionToStopIndex[instructions.get(row).position()];
                 if (stopIndex >= 0) {
                     // the row is at a stop point
-                    _rowToBackGroundColor[row] = stopBackgroundColor;
+                    rowToBackGroundColor[row] = stopBackgroundColor;
                     if (teleTargetRoutine instanceof TeleTargetMethod) {
                         final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) teleTargetRoutine;
                         final TargetJavaFrameDescriptor javaFrameDescriptor = teleTargetMethod.getJavaFrameDescriptor(stopIndex);
                         if (javaFrameDescriptor != null) {
                             final BytecodeLocation bytecodeLocation = javaFrameDescriptor;
-                            _rowToBytecodeLocation[row] = bytecodeLocation;
+                            rowToBytecodeLocation[row] = bytecodeLocation;
                             // TODO (mlvdv) only works for non-inlined calls
                             if (bytecodeLocation.classMethodActor().equals(teleTargetMethod.classMethodActor())) {
-                                _rowToCalleeIndex[row] = findCalleeIndex(_bytecodes, bytecodeLocation.bytecodePosition());
+                                rowToCalleeIndex[row] = findCalleeIndex(bytecodes, bytecodeLocation.bytecodePosition());
                             }
                         }
                     }
                 } else {
-                    _rowToBackGroundColor[row] = backgroundColor;
+                    rowToBackGroundColor[row] = backgroundColor;
                 }
             }
         }
@@ -215,39 +215,39 @@ public abstract class TargetCodeViewer extends CodeViewer {
      * Adapter for bytecode scanning that only knows the constant pool index argument of the last method invocation instruction scanned.
      */
     private static final class MethodRefIndexFinder extends BytecodeAdapter  {
-        int _methodRefIndex = -1;
+        int methodRefIndex = -1;
 
         public MethodRefIndexFinder reset() {
-            _methodRefIndex = -1;
+            methodRefIndex = -1;
             return this;
         }
 
         @Override
         protected void invokestatic(int index) {
-            _methodRefIndex = index;
+            methodRefIndex = index;
         }
 
         @Override
         protected void invokespecial(int index) {
-            _methodRefIndex = index;
+            methodRefIndex = index;
         }
 
         @Override
         protected void invokevirtual(int index) {
-            _methodRefIndex = index;
+            methodRefIndex = index;
         }
 
         @Override
         protected void invokeinterface(int index, int count) {
-            _methodRefIndex = index;
+            methodRefIndex = index;
         }
 
         public int methodRefIndex() {
-            return _methodRefIndex;
+            return methodRefIndex;
         }
     };
 
-    private final MethodRefIndexFinder _methodRefIndexFinder = new MethodRefIndexFinder();
+    private final MethodRefIndexFinder methodRefIndexFinder = new MethodRefIndexFinder();
 
     /**
      * @param bytecodePosition
@@ -257,9 +257,9 @@ public abstract class TargetCodeViewer extends CodeViewer {
         if (bytecodePosition >= bytecodes.length) {
             return -1;
         }
-        final BytecodeScanner bytecodeScanner = new BytecodeScanner(_methodRefIndexFinder.reset());
+        final BytecodeScanner bytecodeScanner = new BytecodeScanner(methodRefIndexFinder.reset());
         bytecodeScanner.scanInstruction(bytecodes, bytecodePosition);
-        return _methodRefIndexFinder.methodRefIndex();
+        return methodRefIndexFinder.methodRefIndex();
     }
 
     /**
@@ -274,7 +274,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
         }
         final Sequence<StackFrame> frames = thread.frames();
 
-        Arrays.fill(_rowToStackFrameInfo, null);
+        Arrays.fill(rowToStackFrameInfo, null);
 
         // For very deep stacks (e.g. when debugging a metacircular related infinite recursion issue),
         // it's faster to loop over the frames and then only loop over the instructions for each
@@ -284,13 +284,13 @@ public abstract class TargetCodeViewer extends CodeViewer {
             final TargetCodeRegion targetCodeRegion = teleTargetRoutine().targetCodeRegion();
             final boolean isFrameForThisCode = frame.isJavaStackFrame() ?
                             targetCodeRegion.overlaps(frame.targetMethod()) :
-                            targetCodeRegion.contains(frame.instructionPointer());
+                            targetCodeRegion.contains(frame.instructionPointer);
             if (isFrameForThisCode) {
                 int row = 0;
-                for (TargetCodeInstruction targetCodeInstruction : _instructions) {
+                for (TargetCodeInstruction targetCodeInstruction : instructions) {
                     final Address address = targetCodeInstruction.address();
-                    if (address.equals(frame.instructionPointer())) {
-                        _rowToStackFrameInfo[row] = new StackFrameInfo(frame, thread, stackPosition);
+                    if (address.equals(frame.instructionPointer)) {
+                        rowToStackFrameInfo[row] = new StackFrameInfo(frame, thread, stackPosition);
                         break;
                     }
                     row++;
@@ -304,7 +304,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
      * Does the instruction address have a target code breakpoint set in the VM.
      */
     protected TeleTargetBreakpoint getTargetBreakpointAtRow(int row) {
-        return maxVM().getTargetBreakpoint(_instructions.get(row).address());
+        return maxVM().getTargetBreakpoint(instructions.get(row).address());
     }
 
     protected final Color rowToBackgroundColor(int row) {
@@ -316,12 +316,12 @@ public abstract class TargetCodeViewer extends CodeViewer {
                 }
             }
         }
-        return _rowToBackGroundColor[row];
+        return rowToBackGroundColor[row];
     }
 
     protected final String rowToTagText(int row) {
-        if (_rowToTagText[row] != null) {
-            return _rowToTagText[row];
+        if (rowToTagText[row] != null) {
+            return rowToTagText[row];
         }
         return "";
     }
@@ -331,7 +331,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
      * @return the location of the bytecode instruction (possibly inlined from a different method) from which the target code starting here was compiled; null if unavailable.
      */
     protected final BytecodeLocation rowToBytecodeLocation(int row) {
-        return _rowToBytecodeLocation[row];
+        return rowToBytecodeLocation[row];
     }
 
     /**
@@ -339,7 +339,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
      * @return if a call instruction, the index into the constant pool of the operand/callee; else -1.
      */
     protected final int rowToCalleeIndex(int row) {
-        return _rowToCalleeIndex[row];
+        return rowToCalleeIndex[row];
     }
 
 }

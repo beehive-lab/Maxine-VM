@@ -38,12 +38,12 @@ public class JavaTesterRunScheme extends AbstractTester {
     @PROTOTYPE_ONLY
     @Override
     public Class<?>[] getClassList() {
-        return _classList;
+        return classList;
     }
 
     @PROTOTYPE_ONLY
 // GENERATED TEST RUNS
-    private static final Class<?>[] _classList = {
+    private static final Class<?>[] classList = {
         test.threads.Monitor_contended01.class,
         test.threads.Monitor_notowner01.class,
         test.threads.Monitorenter01.class,
@@ -73,10 +73,10 @@ public class JavaTesterRunScheme extends AbstractTester {
     };
     @Override
     public void runTests() {
-        _total = _testEnd - _testStart;
-        _testNum = _testStart;
-        while (_testNum < _testEnd) {
-            switch(_testNum) {
+        total = testEnd - testStart;
+        testNum = testStart;
+        while (testNum < testEnd) {
+            switch(testNum) {
                 case 0:
                     JavaTesterTests.test_threads_Monitor_contended01();
                     break;
@@ -156,7 +156,7 @@ public class JavaTesterRunScheme extends AbstractTester {
                     JavaTesterTests.test_threads_Thread_yield01();
             }
         }
-        reportPassed(_passed, _total);
+        reportPassed(passed, total);
     }
 // END GENERATED TEST RUNS
 }

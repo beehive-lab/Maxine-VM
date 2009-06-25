@@ -28,28 +28,28 @@ import com.sun.max.vm.compiler.cir.variable.*;
  * @author Bernd Mathiske
  */
 public final class CirVariableRenaming {
-    private final CirVariableRenaming _parent;
+    private final CirVariableRenaming parent;
 
     public CirVariableRenaming parent() {
-        return _parent;
+        return parent;
     }
 
-    private final CirVariable _from;
+    private final CirVariable from;
 
     public CirVariable from() {
-        return _from;
+        return from;
     }
 
-    private final CirVariable _to;
+    private final CirVariable to;
 
     public CirVariable to() {
-        return _to;
+        return to;
     }
 
     public CirVariableRenaming(CirVariableRenaming parent, CirVariable from, CirVariable to) {
-        _parent = parent;
-        _from = from;
-        _to = to;
+        this.parent = parent;
+        this.from = from;
+        this.to = to;
     }
 
     public CirVariable find(CirVariable from) {
@@ -69,9 +69,9 @@ public final class CirVariableRenaming {
         String separator = "";
         CirVariableRenaming renaming = this;
         do {
-            s += separator + renaming._from + "->" + renaming._to;
+            s += separator + renaming.from + "->" + renaming.to;
             separator = " ";
-            renaming = renaming._parent;
+            renaming = renaming.parent;
         } while (renaming != null);
         return s;
     }

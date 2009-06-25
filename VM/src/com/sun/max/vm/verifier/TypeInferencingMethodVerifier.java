@@ -27,7 +27,7 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.max.collect.*;
-import com.sun.max.program.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
@@ -54,27 +54,27 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
      * A map from each bytecode position to the instruction at that position. A null entry
      * means that an instruction does not start at the corresponding position.
      */
-    private final Instruction[] _instructionMap;
+    private final Instruction[] instructionMap;
 
     /**
      * The work-list of basic blocks/instructions still to be processed by the data-flow analyzer.
      */
-    private final Queue<TypeState> _targetQueue = new LinkedList<TypeState>();
+    private final Queue<TypeState> targetQueue = new LinkedList<TypeState>();
 
     /**
      * The scanner used to decode each instruction as it is {@linkplain Instruction#interpret() interpreted}.
      */
-    private final BytecodeScanner _scanner;
+    private final BytecodeScanner scanner;
 
     /**
      * The set of ASTORE instructions that store the return position of a subroutine.
      */
-    private Set<Instruction> _returnPositionStores;
+    private Set<Instruction> returnPositionStores;
 
     public TypeInferencingMethodVerifier(ClassVerifier classVerifier, ClassMethodActor classMethodActor, CodeAttribute codeAttribute) {
         super(classVerifier, classMethodActor, codeAttribute);
-        _instructionMap = new Instruction[codeAttribute.code().length];
-        _scanner = new BytecodeScanner(_interpreter);
+        instructionMap = new Instruction[codeAttribute.code().length];
+        scanner = new BytecodeScanner(interpreter);
     }
 
     @Override
@@ -90,16 +90,16 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
     }
 
     protected TypeState[] typeStateMap() {
-        return (TypeState[]) _frameMap;
+        return (TypeState[]) frameMap;
     }
 
     @Override
     public int currentOpcodePosition() {
-        return _scanner == null ? -1 : _scanner.currentOpcodePosition();
+        return scanner == null ? -1 : scanner.currentOpcodePosition();
     }
 
     public Instruction instructionAt(int position) {
-        return _instructionMap[position];
+        return instructionMap[position];
     }
 
     public TypeState typeStateAt(int position) {
@@ -107,11 +107,11 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
     }
 
     public boolean isReturnPositionStore(Instruction astore) {
-        return _returnPositionStores == null ? false : _returnPositionStores.contains(astore);
+        return returnPositionStores == null ? false : returnPositionStores.contains(astore);
     }
 
     public boolean hasUnvisitedCode() {
-        for (Instruction instruction = _instructionMap[0]; instruction != null; instruction = instruction.next()) {
+        for (Instruction instruction = instructionMap[0]; instruction != null; instruction = instruction.next()) {
             if (!instruction.visited()) {
                 return true;
             }
@@ -148,12 +148,11 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
     @Override
     public void verify() {
-        if (classVerifier().verbose()) {
-            final PrintStream out = Trace.stream();
-            out.println();
-            out.println("Verifying " + classMethodActor().format("%H.%n(%p)"));
-            out.println();
-            out.println("Interpreting bytecode:");
+        if (verbose) {
+            Log.println();
+            Log.println("Verifying " + classMethodActor().format("%H.%n(%p)"));
+            Log.println();
+            Log.println("Interpreting bytecode:");
         }
 
         final TypeState[] typeStateMap = typeStateMap();
@@ -164,10 +163,10 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         verifyExceptionHandlers();
 
         // Verify targets and bind them to their targeted instructions
-        for (int position = 0; position != _instructionMap.length; ++position) {
+        for (int position = 0; position != instructionMap.length; ++position) {
             final TypeState typeState = typeStateMap[position];
             if (typeState != null) {
-                final Instruction targetedInstruction = _instructionMap[position];
+                final Instruction targetedInstruction = instructionMap[position];
                 if (targetedInstruction == null) {
                     throw verifyError("Invalid branch target or exception handler entry position (" + position + ")");
                 }
@@ -177,15 +176,15 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
         // Run dataflow analyzer.
         enqueChangedTypeState(initialTypeState);
-        while (!_targetQueue.isEmpty()) {
-            final TypeState typeState = _targetQueue.remove();
+        while (!targetQueue.isEmpty()) {
+            final TypeState typeState = targetQueue.remove();
             assert typeState.visited();
             Instruction instruction = typeState.targetedInstruction();
-            _fallsThrough = false;
+            fallsThrough = false;
 
             while (true) {
                 instruction.interpret();
-                if (instruction.opcode().is(FALL_THROUGH_DELIMITER)) {
+                if (instruction.opcode.is(FALL_THROUGH_DELIMITER)) {
                     break;
                 }
                 instruction = instruction.next();
@@ -198,13 +197,13 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
     public void enqueChangedTypeState(final TypeState typeState) {
         assert typeState.targetedInstruction() != null;
-        _targetQueue.add(typeState);
+        targetQueue.add(typeState);
     }
 
     @Override
     protected void verifyIsValidInstructionPosition(int position, String positionDescription) {
         try {
-            if (_instructionMap[position] != null) {
+            if (instructionMap[position] != null) {
                 return;
             }
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
@@ -222,7 +221,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
      * Gets the current interpreter frame type state.
      */
     public TypeState typeState() {
-        return (TypeState) _frame;
+        return (TypeState) frame;
     }
 
     TypeState makeTypeState(int position) {
@@ -246,12 +245,12 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
             final Subroutine subroutine = (Subroutine) typeState().pop(SUBROUTINE);
             typeState().store(subroutine, index);
 
-            final Instruction astore = _instructionMap[currentOpcodePosition()];
-            assert astore.opcode().name().startsWith("ASTORE");
-            if (_returnPositionStores == null) {
-                _returnPositionStores = new HashSet<Instruction>();
+            final Instruction astore = instructionMap[currentOpcodePosition()];
+            assert astore.opcode.name().startsWith("ASTORE");
+            if (returnPositionStores == null) {
+                returnPositionStores = new HashSet<Instruction>();
             }
-            _returnPositionStores.add(astore);
+            returnPositionStores.add(astore);
 
         } else {
             super.performStore(type, index);
@@ -263,7 +262,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         final int subroutineEntryPosition = currentOpcodePosition() + offset;
         final Subroutine subroutine = classVerifier().getSubroutine(subroutineEntryPosition, codeAttribute().maxLocals());
 
-        final int returnPosition = _scanner.currentBytePosition();
+        final int returnPosition = scanner.currentBytePosition();
         final boolean firstVisit = !subroutine.containsRetTarget(returnPosition);
         if (firstVisit) {
             subroutine.addRetTarget(returnPosition);
@@ -313,7 +312,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         // This is required so that the data-flow analyzer can be forced to
         // (re)consider the control flow starting at each RET instruction in
         // a subroutine whenever a JSR to the subroutine is found.
-        final Ret ret = (Ret) _instructionMap[currentOpcodePosition];
+        final Ret ret = (Ret) instructionMap[currentOpcodePosition];
         if (typeStateMap[currentOpcodePosition] == null) {
             typeStateMap[currentOpcodePosition] = new TypeState(typeState);
             typeStateMap[currentOpcodePosition].setTargetedInstruction(ret);
@@ -324,7 +323,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         // this RET instruction.
         for (int retTarget : subroutine.retTargets()) {
 
-            final Instruction targetInstruction = _instructionMap[retTarget];
+            final Instruction targetInstruction = instructionMap[retTarget];
             final Jsr jsr = (Jsr) targetInstruction.previous();
 
             jsr.verifyRet(ret);
@@ -350,13 +349,13 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         // Scan the bytecode stream to find instruction boundaries
         class InstructionParser extends BytecodeAdapter {
 
-            private Instruction _previous;
+            private Instruction previous;
 
             @Override
             public void instructionDecoded() {
                 final int currentOpcodePosition = currentOpcodePosition();
-                if (_instructionMap[currentOpcodePosition] == null) {
-                    _previous = new Instruction(currentOpcode(), currentOpcodePosition, currentBytePosition(), _previous);
+                if (instructionMap[currentOpcodePosition] == null) {
+                    previous = new Instruction(currentOpcode(), currentOpcodePosition, currentBytePosition(), previous);
                 }
             }
 
@@ -365,7 +364,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
             }
 
             private void branch(int offset) {
-                _previous = new Branch(currentOpcode(), currentOpcodePosition(), currentBytePosition(), makeTarget(offset), _previous);
+                previous = new Branch(currentOpcode(), currentOpcodePosition(), currentBytePosition(), makeTarget(offset), previous);
             }
 
             @Override
@@ -460,7 +459,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
             @Override
             protected void jsr(int offset) {
-                _previous = new Jsr(currentOpcode(), currentOpcodePosition(), currentBytePosition(), makeTarget(offset), _previous);
+                previous = new Jsr(currentOpcode(), currentOpcodePosition(), currentBytePosition(), makeTarget(offset), previous);
 
                 // Create a target at the JSR to save the frame state before entering the subroutine. This
                 // is used to restore the frame state upon leaving the subroutine via a RET.
@@ -474,7 +473,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
             @Override
             protected void ret(int index) {
-                _previous = new Ret(currentOpcode(), currentOpcodePosition(), currentBytePosition(), _previous);
+                previous = new Ret(currentOpcode(), currentOpcodePosition(), currentBytePosition(), previous);
             }
 
             @Override
@@ -483,7 +482,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
                 for (int i = 0; i != numberOfCases; ++i) {
                     targets[i] = makeTarget(bytecodeScanner().readSwitchOffset());
                 }
-                _previous = new Tableswitch(currentOpcode(), currentOpcodePosition(), currentBytePosition(), makeTarget(defaultOffset), lowMatch, highMatch, targets, _previous);
+                previous = new Tableswitch(currentOpcode(), currentOpcodePosition(), currentBytePosition(), makeTarget(defaultOffset), lowMatch, highMatch, targets, previous);
             }
 
             @Override
@@ -494,7 +493,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
                     matches[i] = bytecodeScanner().readSwitchCase();
                     targets[i] = makeTarget(bytecodeScanner().readSwitchOffset());
                 }
-                _previous = new Lookupswitch(currentOpcode(), currentOpcodePosition(), currentBytePosition(), makeTarget(defaultOffset), matches, targets, _previous);
+                previous = new Lookupswitch(currentOpcode(), currentOpcodePosition(), currentBytePosition(), makeTarget(defaultOffset), matches, targets, previous);
             }
         }
 
@@ -508,38 +507,38 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
     public class Instruction {
 
-        private final Bytecode _opcode;
-        private final BytecodeBlock _block;
-        private Instruction _next;
-        private boolean _visited;
+        public final Bytecode opcode;
+        private final BytecodeBlock block;
+        private Instruction next;
+        private boolean visited;
 
         public Instruction(Bytecode opcode, int position, int endPosition, Instruction previous) {
             assert opcode != null;
             assert endPosition > position;
-            _opcode = opcode;
-            _block = new BytecodeBlock(codeAttribute().code(), position, endPosition - 1);
-            _instructionMap[position] = this;
+            this.opcode = opcode;
+            this.block = new BytecodeBlock(codeAttribute().code(), position, endPosition - 1);
+            instructionMap[position] = this;
             if (previous != null) {
-                previous._next = this;
+                previous.next = this;
             }
         }
 
         public int position() {
-            return _block.start();
+            return block.start();
         }
 
         public int size() {
-            return _block.size();
+            return block.size();
         }
 
         public Instruction next() {
-            return _next;
+            return next;
         }
 
         public Instruction previous() {
             int position = position();
             while (position > 0) {
-                final Instruction instruction = _instructionMap[--position];
+                final Instruction instruction = instructionMap[--position];
                 if (instruction != null) {
                     return instruction;
                 }
@@ -547,29 +546,25 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
             return null;
         }
 
-        public Bytecode opcode() {
-            return _opcode;
-        }
-
         @Override
         public String toString() {
-            return opcode().toString();
+            return opcode.toString();
         }
 
         public void writeTo(DataOutputStream outputStream) throws IOException {
-            final byte[] code = _block.code();
-            for (int i = _block.start(); i <= _block.end(); ++i) {
+            final byte[] code = block.code();
+            for (int i = block.start(); i <= block.end(); ++i) {
                 outputStream.write(code[i]);
             }
         }
 
         public void interpret() {
-            _visited = true;
-            _scanner.scanInstruction(_block);
+            visited = true;
+            scanner.scanInstruction(block);
         }
 
         public boolean visited() {
-            return _visited;
+            return visited;
         }
     }
 
@@ -578,111 +573,87 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         /**
          * The type state at the target of a branch.
          */
-        private final TypeState _target;
+        final TypeState target;
 
         public Branch(Bytecode opcode, int position, int endPosition, TypeState target, Instruction previous) {
             super(opcode, position, endPosition, previous);
-            _target = target;
-        }
-
-        public TypeState target() {
-            return _target;
+            this.target = target;
         }
     }
 
     public abstract class Select extends Instruction {
 
-        private final TypeState _defaultTarget;
-        private final TypeState[] _caseTargets;
+        final TypeState defaultTarget;
+        final TypeState[] caseTargets;
 
         public Select(Bytecode opcode, int position, int endPosition, TypeState defaultTarget, TypeState[] caseTargets, Instruction previous) {
             super(opcode, position, endPosition, previous);
-            _defaultTarget = defaultTarget;
-            _caseTargets = caseTargets;
-        }
-
-        public TypeState defaultTarget() {
-            return _defaultTarget;
-        }
-
-        public TypeState[] caseTargets() {
-            return _caseTargets;
+            this.defaultTarget = defaultTarget;
+            this.caseTargets = caseTargets;
         }
     }
 
     public class Tableswitch extends Select {
 
-        private final int _low;
-        private final int _high;
+        final int low;
+        final int high;
 
         public Tableswitch(Bytecode opcode, int position, int size, TypeState defaultTarget, int low, int high, TypeState[] caseTargets, Instruction previous) {
             super(opcode, position, size, defaultTarget, caseTargets, previous);
-            _low = low;
-            _high = high;
-        }
-
-        public int high() {
-            return _high;
-        }
-
-        public int low() {
-            return _low;
+            this.low = low;
+            this.high = high;
         }
     }
 
     public class Lookupswitch extends Select {
 
-        private final int[] _matches;
+        final int[] matches;
 
         public Lookupswitch(Bytecode opcode, int position, int size, TypeState defaultTarget, int[] matches, TypeState[] caseTargets, Instruction previous) {
             super(opcode, position, size, defaultTarget, caseTargets, previous);
-            _matches = matches;
-        }
-
-        public int[] matches() {
-            return _matches;
+            this.matches = matches;
         }
     }
 
     public class Jsr extends Branch {
 
-        private Instruction _ret;
+        private Instruction ret;
 
         public Jsr(Bytecode opcode, int position, int size, TypeState branchTarget, Instruction previous) {
             super(opcode, position, size, branchTarget, previous);
         }
 
         public void verifyRet(Instruction ret) {
-            assert ret.opcode() == Bytecode.RET;
-            if (_ret == null) {
-                _ret = ret;
+            assert ret.opcode == Bytecode.RET;
+            if (this.ret == null) {
+                this.ret = ret;
             } else {
-                if (_ret != ret) {
+                if (this.ret != ret) {
                     throw verifyError("Multiple returns to single JSR");
                 }
             }
         }
 
         public Instruction ret() {
-            return _ret;
+            return ret;
         }
     }
 
     public class Ret extends Instruction {
 
-        private int _numberOfFramesPopped = -1;
+        private int numberOfFramesPopped = -1;
 
         public Ret(Bytecode opcode, int position, int endPosition, Instruction previous) {
             super(opcode, position, endPosition, previous);
         }
 
         public int numberOfFramesPopped() {
-            return _numberOfFramesPopped;
+            return numberOfFramesPopped;
         }
 
         public void setNumberOfFramesPopped(int count) {
-            assert _numberOfFramesPopped == -1 || _numberOfFramesPopped == count;
-            _numberOfFramesPopped = count;
+            assert numberOfFramesPopped == -1 || numberOfFramesPopped == count;
+            numberOfFramesPopped = count;
         }
     }
 }

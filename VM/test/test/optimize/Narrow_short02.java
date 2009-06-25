@@ -26,13 +26,13 @@ package test.optimize;
  */
 public class Narrow_short02 {
     static class Short {
-        short _foo;
+        short foo;
     }
 
-    static Short _val = new Short();
+    static Short val = new Short();
 
     public static short test(short b) {
-        _val._foo = b;
-        return _val._foo;
+        val.foo = b;
+        return val.foo;
     }
 }

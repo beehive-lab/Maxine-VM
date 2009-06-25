@@ -27,18 +27,18 @@ import com.sun.max.vm.jni.*;
  */
 public final class BoxedJniHandle extends JniHandle implements UnsafeBox {
 
-    protected long _nativeWord;
+    protected long nativeWord;
 
     public static BoxedJniHandle from(long word) {
         return new BoxedJniHandle(word);
     }
 
     private BoxedJniHandle(long word) {
-        _nativeWord = word;
+        nativeWord = word;
     }
 
     public long nativeWord() {
-        return _nativeWord;
+        return nativeWord;
     }
 
 }

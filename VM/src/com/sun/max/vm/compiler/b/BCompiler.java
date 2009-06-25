@@ -31,23 +31,23 @@ import com.sun.max.vm.compiler.ir.*;
  */
 public class BCompiler extends AbstractCompiler implements BirGeneratorScheme {
 
-    private final ActorToBirTranslator _actorToBirTranslator;
+    private final ActorToBirTranslator actorToBirTranslator;
 
     @Override
     public IrGenerator irGenerator() {
-        return _actorToBirTranslator;
+        return actorToBirTranslator;
     }
 
     public BCompiler(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        _actorToBirTranslator = new ActorToBirTranslator(this);
+        actorToBirTranslator = new ActorToBirTranslator(this);
     }
 
     public BirGenerator birGenerator() {
-        return _actorToBirTranslator;
+        return actorToBirTranslator;
     }
 
     public Sequence<IrGenerator> irGenerators() {
-        return new ArraySequence<IrGenerator>(_actorToBirTranslator);
+        return new ArraySequence<IrGenerator>(actorToBirTranslator);
     }
 }

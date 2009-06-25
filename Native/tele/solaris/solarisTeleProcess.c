@@ -20,9 +20,11 @@
  */
 /*
  * @author Bernd Mathiske
+ * @author Hannes Payer
  */
 
 #include <string.h>
+#include <stdio.h>
 #include "log.h"
 #include "jni.h"
 
@@ -251,12 +253,26 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeGatherThreads(JNIEn
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeActivateWatchpoint(JNIEnv *env, jclass c, jlong processHandle, jlong address, jlong size) {
+Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeActivateWatchpoint(JNIEnv *env, jclass c, jlong processHandle, jlong address, jlong size, jboolean after, jboolean read, jboolean write, jboolean exec) {
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
     prwatch_t w;
     w.pr_vaddr = address;
     w.pr_size = size;
-    w.pr_wflags = WA_WRITE | WA_TRAPAFTER;
+    w.pr_wflags = 0;
+
+    if (read) {
+        w.pr_wflags |= WA_READ;
+    }
+    if (write) {
+        w.pr_wflags |= WA_WRITE;
+    }
+    if (exec) {
+        w.pr_wflags |= WA_EXEC;
+    }
+    if (after) {
+        w.pr_wflags |= WA_TRAPAFTER;
+    }
+
     w.pr_pad = 0;
 
     int error = Psetwapt(ph, &w);
@@ -269,12 +285,11 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeActivateWatchpoint(
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeDeactivateWatchpoint(JNIEnv *env, jclass c, jlong processHandle, jlong address, jlong size) {
+Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeDeactivateWatchpoint(JNIEnv *env, jlong processHandle, jlong address, jlong size) {
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
     prwatch_t w;
     w.pr_vaddr = address;
     w.pr_size = size;
-    w.pr_wflags = WA_WRITE | WA_TRAPAFTER;
     w.pr_pad = 0;
 
     int error = Pdelwapt(ph, &w);
@@ -284,4 +299,26 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeDeactivateWatchpoin
     }
     proc_Psync(ph);
     return true;
+}
+
+JNIEXPORT jlong JNICALL
+Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeReadWatchpointAddress(JNIEnv *env, jclass c, jlong processHandle) {
+    struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
+    pstatus_t *ps;
+    long addr;
+
+    addr = (long)proc_Pstatus(ph)->pr_lwp.pr_info.si_addr;
+
+    return addr;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeReadWatchpointAccessCode(JNIEnv *env, jclass c, jlong processHandle){
+    struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
+    pstatus_t *ps;
+    int code = 0;
+
+    code = proc_Pstatus(ph)->pr_lwp.pr_info.si_code;
+
+    return code;
 }

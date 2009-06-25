@@ -28,16 +28,16 @@ import java.io.*;
  */
 class RepeatNode extends AbstractTypeNode {
 
-    Node _member;
+    Node member;
 
     @Override
     void constrain(Context ctx) {
         super.constrain(ctx);
-        if (_components.size() != 1) {
+        if (components.size() != 1) {
             error("Repeat must have exactly one member, use Group for more");
         }
-        _member = _components.get(0);
-        if (!(_member instanceof TypeNode)) {
+        member = components.get(0);
+        if (!(member instanceof TypeNode)) {
             error("Repeat member must be type specifier");
         }
     }
@@ -48,7 +48,7 @@ class RepeatNode extends AbstractTypeNode {
 
     @Override
     public String javaType() {
-        return _member.javaType() + "[]";
+        return member.javaType() + "[]";
     }
 
     public void genJavaWrite(PrintWriter writer, int depth, String writeLabel) {
@@ -56,7 +56,7 @@ class RepeatNode extends AbstractTypeNode {
         writer.println("ps.write(" + writeLabel + ".length);");
         indent(writer, depth);
         writer.println("for (int i = 0; i < " + writeLabel + ".length; i++) {");
-        ((TypeNode) _member).genJavaWrite(writer, depth + 1, writeLabel + "[i]");
+        ((TypeNode) member).genJavaWrite(writer, depth + 1, writeLabel + "[i]");
         indent(writer, depth);
         writer.println("}");
     }
@@ -68,7 +68,7 @@ class RepeatNode extends AbstractTypeNode {
         writer.println("for (int i = 0; i < " + writeLabel + ".length; i++) {");
         indent(writer, depth + 1);
         writer.println("if (i != 0) { stringBuilder.append(\", \"); }");
-        ((TypeNode) _member).genJavaToString(writer, depth + 1, writeLabel + "[i]");
+        ((TypeNode) member).genJavaToString(writer, depth + 1, writeLabel + "[i]");
 
         indent(writer, depth);
         writer.println("}");
@@ -90,10 +90,10 @@ class RepeatNode extends AbstractTypeNode {
         indent(writer, depth);
         writer.println("final int " + cntLbl + " = ps.readInt();");
         indent(writer, depth);
-        writer.println(readLabel + " = new " + _member.javaType() + "[" + cntLbl + "];");
+        writer.println(readLabel + " = new " + member.javaType() + "[" + cntLbl + "];");
         indent(writer, depth);
         writer.println("for (int i = 0; i < " + cntLbl + "; i++) {");
-        _member.genJavaRead(writer, depth + 1, readLabel + "[i]");
+        member.genJavaRead(writer, depth + 1, readLabel + "[i]");
         indent(writer, depth);
         writer.println("}");
     }

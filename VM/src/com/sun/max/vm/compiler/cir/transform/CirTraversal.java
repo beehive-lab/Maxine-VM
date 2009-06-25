@@ -34,7 +34,7 @@ import com.sun.max.vm.compiler.cir.variable.*;
  */
 public abstract class CirTraversal extends CirVisitor {
 
-    protected final LinkedList<CirNode> _toDo = new LinkedList<CirNode>() {
+    protected final LinkedList<CirNode> toDo = new LinkedList<CirNode>() {
         @Override
         public boolean add(CirNode e) {
             assert e != null;
@@ -43,13 +43,13 @@ public abstract class CirTraversal extends CirVisitor {
     };
 
     protected CirTraversal(CirNode graph) {
-        _toDo.add(graph);
+        toDo.add(graph);
     }
 
     private void addValues(CirValue[] values) {
         for (CirValue value : values) {
             if (value != null) {
-                _toDo.add(value);
+                toDo.add(value);
             }
         }
     }
@@ -57,15 +57,15 @@ public abstract class CirTraversal extends CirVisitor {
     protected void visitJavaFrameDescriptor(CirJavaFrameDescriptor javaFrameDescriptor) {
         CirJavaFrameDescriptor j = javaFrameDescriptor;
         while (j != null) {
-            addValues(j.locals());
-            addValues(j.stackSlots());
+            addValues(j.locals);
+            addValues(j.stackSlots);
             j = j.parent();
         }
     }
 
     @Override
     public void visitCall(CirCall call) {
-        _toDo.add(call.procedure());
+        toDo.add(call.procedure());
         addValues(call.arguments());
         visitJavaFrameDescriptor(call.javaFrameDescriptor());
     }
@@ -73,24 +73,24 @@ public abstract class CirTraversal extends CirVisitor {
     @Override
     public void visitClosure(CirClosure closure) {
         for (CirVariable parameter : closure.parameters()) {
-            _toDo.add(parameter);
+            toDo.add(parameter);
         }
-        _toDo.add(closure.body());
+        toDo.add(closure.body());
     }
 
-    protected final IdentityHashSet<CirBlock> _visitedBlocks = new IdentityHashSet<CirBlock>();
+    protected final IdentityHashSet<CirBlock> visitedBlocks = new IdentityHashSet<CirBlock>();
 
     @Override
     public void visitBlock(CirBlock block) {
-        if (!_visitedBlocks.contains(block)) {
-            _visitedBlocks.add(block);
-            _toDo.add(block.closure());
+        if (!visitedBlocks.contains(block)) {
+            visitedBlocks.add(block);
+            toDo.add(block.closure());
         }
     }
 
     public void run() {
-        while (!_toDo.isEmpty()) {
-            final CirNode node = _toDo.removeFirst();
+        while (!toDo.isEmpty()) {
+            final CirNode node = toDo.removeFirst();
             node.acceptVisitor(this);
         }
     }

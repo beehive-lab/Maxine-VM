@@ -30,7 +30,7 @@ import java.util.*;
  */
 class ReplyNode extends AbstractTypeListNode {
 
-    String _cmdName;
+    String cmdName;
 
     @Override
     void set(String kind, List<Node> components, int lineno) {
@@ -41,8 +41,8 @@ class ReplyNode extends AbstractTypeListNode {
     @Override
     void constrain(Context ctx) {
         super.constrain(ctx.replyReadingSubcontext());
-        final CommandNode cmd = (CommandNode) _parent;
-        _cmdName = cmd.name();
+        final CommandNode cmd = (CommandNode) parent;
+        cmdName = cmd.name();
     }
 
     @Override

@@ -27,13 +27,13 @@ package com.sun.max.jdwp.generate;
  */
 class CommentNode extends AbstractSimpleNode {
 
-    private String _text;
+    private String text;
 
     CommentNode(String text) {
-        this._text = text;
+        this.text = text;
     }
 
     String text() {
-        return _text;
+        return text;
     }
 }

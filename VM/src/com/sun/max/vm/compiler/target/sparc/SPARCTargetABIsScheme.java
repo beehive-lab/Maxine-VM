@@ -35,13 +35,13 @@ import com.sun.max.vm.stack.sparc.*;
  */
 public abstract class SPARCTargetABIsScheme extends TargetABIsScheme<GPR, FPR> {
 
-    private static final RegisterRoleAssignment<GPR, FPR> _nativeRegisterRoleAssignment =
+    private static final RegisterRoleAssignment<GPR, FPR> nativeRegisterRoleAssignment =
         new RegisterRoleAssignment<GPR, FPR>(GPR.class, O6, I6, O6, I6, I0, O0, null, null, null, FPR.class, F0, null, I7, O7);
 
-    protected static final IndexedSequence<GPR> _incomingIntegerParameterRegisters = new ArraySequence<GPR>(I0, I1, I2, I3, I4, I5);
-    protected static final IndexedSequence<GPR> _outgoingIntegerParameterRegisters = new ArraySequence<GPR>(O0, O1, O2, O3, O4, O5);
+    protected static final IndexedSequence<GPR> incomingIntegerParameterRegisters = new ArraySequence<GPR>(I0, I1, I2, I3, I4, I5);
+    protected static final IndexedSequence<GPR> outgoingIntegerParameterRegisters = new ArraySequence<GPR>(O0, O1, O2, O3, O4, O5);
 
-    protected static final IndexedSequence<FPR> _floatingPointParameterRegisters = new ArraySequence<FPR>(
+    protected static final IndexedSequence<FPR> floatingPointParameterRegisters = new ArraySequence<FPR>(
                         F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15,
                         F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, F31);
 
@@ -60,8 +60,8 @@ public abstract class SPARCTargetABIsScheme extends TargetABIsScheme<GPR, FPR> {
         return createSPARC64TargetABI(
                         registerRoleAssignment,
                         callEntryPoint,
-                        _incomingIntegerParameterRegisters,
-                        _outgoingIntegerParameterRegisters,
+                        incomingIntegerParameterRegisters,
+                        outgoingIntegerParameterRegisters,
                         floatingPointParameterRegisters,
                         useRegisterWindows,
                         callPushesReturnAddress);
@@ -73,10 +73,10 @@ public abstract class SPARCTargetABIsScheme extends TargetABIsScheme<GPR, FPR> {
                     TargetABI<GPR, FPR> optimizedJavaABI) {
         super(vmConfiguration,
                         createSPARC64TargetABI(
-                                        _nativeRegisterRoleAssignment,
+                                        nativeRegisterRoleAssignment,
                                         CallEntryPoint.C_ENTRY_POINT,
-                                        _incomingIntegerParameterRegisters,
-                                        _outgoingIntegerParameterRegisters,
+                                        incomingIntegerParameterRegisters,
+                                        outgoingIntegerParameterRegisters,
                                         null, false, false),
                                         jitABI, optimizedJavaABI, null);
     }

@@ -39,21 +39,21 @@ import com.sun.max.vm.actor.holder.*;
  */
 public final class HubLabel extends InspectorLabel {
 
-    private final TeleHub _teleHub;
+    private final TeleHub teleHub;
 
-    private MaxVMState _lastRefreshedState = null;
+    private MaxVMState lastRefreshedState = null;
 
-    public HubLabel(Inspection inspection, TeleHub teleHub) {
+    public HubLabel(Inspection inspection, TeleHub hub) {
         super(inspection);
-        _teleHub = teleHub;
+        this.teleHub = hub;
         addMouseListener(new InspectorMouseClickAdapter(inspection()) {
             @Override
             public void procedure(MouseEvent mouseEvent) {
                 if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1) {
                     if (mouseEvent.isControlDown()) {
-                        MemoryInspector.create(inspection(), _teleHub).highlight();
+                        MemoryInspector.create(inspection(), teleHub).highlight();
                     } else {
-                        inspection().focus().setHeapObject(_teleHub);
+                        inspection().focus().setHeapObject(teleHub);
                     }
                 }
             }
@@ -62,8 +62,8 @@ public final class HubLabel extends InspectorLabel {
     }
 
     public void refresh(boolean force) {
-        if (maxVMState().newerThan(_lastRefreshedState) || force) {
-            _lastRefreshedState = maxVMState();
+        if (maxVMState().newerThan(lastRefreshedState) || force) {
+            lastRefreshedState = maxVMState();
             updateText();
         }
     }
@@ -76,10 +76,10 @@ public final class HubLabel extends InspectorLabel {
     }
 
     private void updateText() {
-        final Class javaType = _teleHub.hub().classActor().toJava();
-        setText(inspection().nameDisplay().referenceLabelText(_teleHub));
+        final Class javaType = teleHub.hub().classActor().toJava();
+        setText(inspection().nameDisplay().referenceLabelText(teleHub));
         if (!(javaType.isPrimitive() || Word.class.isAssignableFrom(javaType))) {
-            setToolTipText(inspection().nameDisplay().referenceToolTipText(_teleHub));
+            setToolTipText(inspection().nameDisplay().referenceToolTipText(teleHub));
         }
     }
 

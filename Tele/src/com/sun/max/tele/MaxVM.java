@@ -50,6 +50,7 @@ import com.sun.max.vm.value.*;
  * This could in the future be merged with the JDWP interface.
  *
  * @author Michael Van De Vanter
+ * @author Hannes Payer
  */
 public interface MaxVM {
 
@@ -646,17 +647,39 @@ public interface MaxVM {
      *
      * @param address start of a memory region in the VM
      * @param size size of the memory region in the VM
+     * @param after trap after accessing memory field
+     * @param read read access
+     * @param write write access
+     * @param exec execution access
      * @return a new memory watchpoint
      * @throws TooManyWatchpointsException
      * @throws DuplicateWatchpointException when the watchpoint overlaps in whole or part with an existing watchpoint
      */
-    MaxWatchpoint setWatchpoint(Address address, Size size)  throws TooManyWatchpointsException, DuplicateWatchpointException;
+    MaxWatchpoint setWatchpoint(Address address, Size size, boolean after, boolean read, boolean write, boolean exec)  throws TooManyWatchpointsException, DuplicateWatchpointException;
 
     /**
      * @param address a memory address in the VM
      * @return the watchpoint whose memory region includes the address, null if none.
      */
     MaxWatchpoint findWatchpoint(Address address);
+
+    /**
+     * Find watchpoint which triggered a signal.
+     * @return watchpoint which triggered a signal
+     */
+    MaxWatchpoint findTriggeredWatchpoint();
+
+    /**
+     * Returns the address which triggered the watchpoint.
+     * @return
+     */
+    Address getTriggeredWatchpointAddress();
+
+    /**
+     * Returns the code of the triggered watchpoint.
+     * @return
+     */
+    int getTriggeredWatchpointCode();
 
     /**
      * All existing memory watchpoints set in the VM.

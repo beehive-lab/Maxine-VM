@@ -44,22 +44,22 @@ import com.sun.max.vm.runtime.*;
  */
 public abstract class Snippet extends IrRoutine {
 
-    private static final AppendableIndexedSequence<Snippet> _snippets = new ArrayListSequence<Snippet>();
+    private static final AppendableIndexedSequence<Snippet> snippets = new ArrayListSequence<Snippet>();
 
     public static IndexedSequence<Snippet> snippets() {
-        return _snippets;
+        return snippets;
     }
 
-    private final int _serial;
+    private final int serial;
 
     public final int serial() {
-        return _serial;
+        return serial;
     }
 
     public Snippet() {
         super(null);
-        _serial = _snippets.length();
-        _snippets.append(this);
+        serial = snippets.length();
+        snippets.append(this);
         foldingMethodActor().beUnsafe();
     }
 
@@ -70,7 +70,7 @@ public abstract class Snippet extends IrRoutine {
 
     @PROTOTYPE_ONLY
     public static void register() {
-        for (Snippet snippet : _snippets) {
+        for (Snippet snippet : snippets) {
             final MethodActor  foldingMethodActor = snippet.foldingMethodActor();
             if (foldingMethodActor != null) {
                 MaxineVM.registerImageInvocationStub(foldingMethodActor);
@@ -173,7 +173,7 @@ public abstract class Snippet extends IrRoutine {
             if (MaxineVM.isPrototyping()) {
                 HostArrayAccess.checkIndex(array, index);
             } else {
-                ArrayAccess.inlineCheckIndex(array, index);
+                ArrayAccess.checkIndex(array, index);
             }
         }
         public static final CheckArrayIndex SNIPPET = new CheckArrayIndex();

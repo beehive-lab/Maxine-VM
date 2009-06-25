@@ -41,15 +41,15 @@ import com.sun.max.program.*;
  */
 public class RowTextSearchToolBar extends InspectorToolBar {
 
-    private final RowSearchListener _owner;
-    private final RowTextSearcher _searcher;
-    private final JTextField _textField;
-    private final Color _textFieldDefaultBackground;
-    private final JLabel _statusLabel;
-    private final JButton _nextButton;
-    private final JButton _previousButton;
+    private final RowSearchListener owner;
+    private final RowTextSearcher searcher;
+    private final JTextField textField;
+    private final Color textFieldDefaultBackground;
+    private final JLabel statusLabel;
+    private final JButton nextButton;
+    private final JButton previousButton;
 
-    private IndexedSequence<Integer> _matchingRows = null;
+    private IndexedSequence<Integer> matchingRows = null;
 
     private class SearchTextListener implements DocumentListener {
         public void changedUpdate(DocumentEvent e) {
@@ -70,60 +70,60 @@ public class RowTextSearchToolBar extends InspectorToolBar {
      * Creates a toolbar with controls for performing regular expression searching over a row-based view.
      *
      * @param inspection
-     * @param owner where to send search outcomes and user requests
+     * @param parent where to send search outcomes and user requests
      * @param rowTextSearcher a regular expression search session wrapped around some row-based data
      */
-    public RowTextSearchToolBar(Inspection inspection, RowSearchListener owner, RowTextSearcher rowTextSearcher) {
+    public RowTextSearchToolBar(Inspection inspection, RowSearchListener parent, RowTextSearcher rowTextSearcher) {
         super(inspection);
-        _owner = owner;
-        _searcher = rowTextSearcher;
+        this.owner = parent;
+        searcher = rowTextSearcher;
         setFloatable(false);
         setRollover(true);
         add(new TextLabel(inspection, "Search: "));
 
-        _textField = new JTextField();
-        _textField.setColumns(10);  // doesn't seem to have an effect
-        _textFieldDefaultBackground = _textField.getBackground();
-        _textField.setToolTipText("Search code for regexp pattern, case-insensitive, Return=Next");
-        _textField.getDocument().addDocumentListener(new SearchTextListener());
-        _textField.addActionListener(new ActionListener() {
+        textField = new JTextField();
+        textField.setColumns(10);  // doesn't seem to have an effect
+        textFieldDefaultBackground = textField.getBackground();
+        textField.setToolTipText("Search code for regexp pattern, case-insensitive, Return=Next");
+        textField.getDocument().addDocumentListener(new SearchTextListener());
+        textField.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
-                if  (_matchingRows.length() > 0) {
-                    _owner.selectNextResult();
+                if  (matchingRows.length() > 0) {
+                    owner.selectNextResult();
                 }
             }
         });
-        _textField.requestFocusInWindow();
-        add(_textField);
+        textField.requestFocusInWindow();
+        add(textField);
 
-        _statusLabel = new JLabel("");
-        add(_statusLabel);
+        statusLabel = new JLabel("");
+        add(statusLabel);
 
-        _nextButton = new JButton(new AbstractAction() {
+        nextButton = new JButton(new AbstractAction() {
             public void actionPerformed(ActionEvent actionEvent) {
-                _owner.selectNextResult();
+                owner.selectNextResult();
             }
         });
-        _nextButton.setIcon(style().searchNextMatchButtonIcon());
-        _nextButton.setToolTipText("Scroll to next matching line");
-        _nextButton.setEnabled(false);
-        add(_nextButton);
+        nextButton.setIcon(style().searchNextMatchButtonIcon());
+        nextButton.setToolTipText("Scroll to next matching line");
+        nextButton.setEnabled(false);
+        add(nextButton);
 
-        _previousButton = new JButton(new AbstractAction() {
+        previousButton = new JButton(new AbstractAction() {
             public void actionPerformed(ActionEvent actionEvent) {
-                _owner.selectPreviousResult();
+                owner.selectPreviousResult();
             }
         });
-        _previousButton.setIcon(style().searchPreviousMatchButtonIcon());
-        _previousButton.setToolTipText("Scroll to previous matching line");
-        _previousButton.setEnabled(false);
-        add(_previousButton);
+        previousButton.setIcon(style().searchPreviousMatchButtonIcon());
+        previousButton.setToolTipText("Scroll to previous matching line");
+        previousButton.setEnabled(false);
+        add(previousButton);
 
         add(Box.createHorizontalGlue());
 
         final JButton closeButton = new JButton(new AbstractAction() {
             public void actionPerformed(ActionEvent actionEvent) {
-                _owner.closeSearch();
+                owner.closeSearch();
             }
         });
         closeButton.setIcon(style().codeViewCloseIcon());
@@ -135,46 +135,46 @@ public class RowTextSearchToolBar extends InspectorToolBar {
      * Causes the keyboard focus to be set to the text field.
      */
     public void getFocus() {
-        _textField.requestFocusInWindow();
+        textField.requestFocusInWindow();
     }
 
     private void processTextInput() {
-        final String text = _textField.getText();
+        final String text = textField.getText();
         if (text.equals("")) {
-            _textField.setBackground(_textFieldDefaultBackground);
-            _statusLabel.setText("");
-            _matchingRows = null;
-            _owner.searchResult(null);
-            _nextButton.setEnabled(false);
-            _previousButton.setEnabled(false);
+            textField.setBackground(textFieldDefaultBackground);
+            statusLabel.setText("");
+            matchingRows = null;
+            owner.searchResult(null);
+            nextButton.setEnabled(false);
+            previousButton.setEnabled(false);
         } else {
             Pattern pattern;
             try {
                 pattern = Pattern.compile(text, Pattern.CASE_INSENSITIVE);
             } catch (PatternSyntaxException patternSyntaxException) {
-                _textField.setBackground(style().searchFailedBackground());
-                _statusLabel.setText("regexp error");
+                textField.setBackground(style().searchFailedBackground());
+                statusLabel.setText("regexp error");
                 return;
             }
-            _matchingRows = _searcher.search(pattern);
-            final int matchCount = _matchingRows.length();
+            matchingRows = searcher.search(pattern);
+            final int matchCount = matchingRows.length();
             if (matchCount == 0) {
-                _statusLabel.setText("no matches");
+                statusLabel.setText("no matches");
             }  else if (matchCount == 1) {
-                _statusLabel.setText("1 row matched");
+                statusLabel.setText("1 row matched");
             } else {
-                _statusLabel.setText(Integer.toString(matchCount) + " rows matched");
+                statusLabel.setText(Integer.toString(matchCount) + " rows matched");
             }
             if (matchCount > 0) {
-                _textField.setBackground(style().searchMatchedBackground());
-                _nextButton.setEnabled(true);
-                _previousButton.setEnabled(true);
+                textField.setBackground(style().searchMatchedBackground());
+                nextButton.setEnabled(true);
+                previousButton.setEnabled(true);
             } else {
-                _textField.setBackground(style().searchFailedBackground());
-                _nextButton.setEnabled(false);
-                _previousButton.setEnabled(false);
+                textField.setBackground(style().searchFailedBackground());
+                nextButton.setEnabled(false);
+                previousButton.setEnabled(false);
             }
-            _owner.searchResult(_matchingRows);
+            owner.searchResult(matchingRows);
         }
     }
 }

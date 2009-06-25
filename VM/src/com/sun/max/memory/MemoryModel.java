@@ -36,17 +36,13 @@ public enum MemoryModel {
     PartialStoreOrder(LOAD_LOAD),
     RelaxedMemoryOrder();
 
-    private final PoolSet<MemoryBarrier> _barriers;
-
-    public PoolSet<MemoryBarrier> barriers() {
-        return _barriers;
-    }
+    public final PoolSet<MemoryBarrier> barriers;
 
     /**
      * @param barriers the barriers that are implied everywhere in the code by this memory model
      */
     private MemoryModel(MemoryBarrier... barriers) {
-        _barriers = PoolSet.of(MemoryBarrier.VALUE_POOL, barriers);
+        this.barriers = PoolSet.of(MemoryBarrier.VALUE_POOL, barriers);
     }
 
 }

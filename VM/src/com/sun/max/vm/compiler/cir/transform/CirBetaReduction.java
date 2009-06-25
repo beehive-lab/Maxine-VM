@@ -45,38 +45,38 @@ public abstract class CirBetaReduction {
     protected abstract CirNode transformVariable(CirVariable variable);
 
     static final class Single extends CirBetaReduction {
-        private final CirVariable _parameter;
-        private final CirValue _argument;
+        private final CirVariable parameter;
+        private final CirValue argument;
 
         Single(CirVariable parameter, CirValue argument) {
-            _parameter = parameter;
-            _argument = argument;
+            this.parameter = parameter;
+            this.argument = argument;
         }
 
         @Override
         protected CirNode transformVariable(CirVariable variable) {
-            if (variable == _parameter) {
-                return _argument;
+            if (variable == parameter) {
+                return argument;
             }
             return variable;
         }
     }
 
     static final class Multiple extends CirBetaReduction {
-        private final CirVariable[] _parameters;
-        private final CirValue[] _arguments;
+        private final CirVariable[] parameters;
+        private final CirValue[] arguments;
 
         Multiple(CirVariable[] parameters, CirValue[] arguments) {
             assert parameters.length == arguments.length || parameters.length == arguments.length + 2 :  parameters.length + "," + arguments.length;
-            _parameters = Arrays.subArray(parameters, 0, arguments.length);
-            _arguments = arguments;
+            this.parameters = Arrays.subArray(parameters, 0, arguments.length);
+            this.arguments = arguments;
         }
 
-        private final Bag<CirContinuation, CirContinuation, Sequence<CirContinuation>> _continuationsBag = new SequenceBag<CirContinuation, CirContinuation>(HASHED);
+        private final Bag<CirContinuation, CirContinuation, Sequence<CirContinuation>> continuationsBag = new SequenceBag<CirContinuation, CirContinuation>(HASHED);
 
         private void updateContinuations() {
-            for (CirContinuation oldContinuation : _continuationsBag.keys()) {
-                final Sequence<CirContinuation> newContinuations = _continuationsBag.get(oldContinuation);
+            for (CirContinuation oldContinuation : continuationsBag.keys()) {
+                final Sequence<CirContinuation> newContinuations = continuationsBag.get(oldContinuation);
                 if (newContinuations.length() > 1) {
                     final CirBlock block = new CirBlock(oldContinuation.body());
                     CirFreeVariableSearch.applyClosureConversion(block.closure());
@@ -94,18 +94,18 @@ public abstract class CirBetaReduction {
             final CirContinuation newContinuation = (CirContinuation) oldContinuation.clone();
             final CirVariable[] parameters = oldContinuation.parameters();
             newContinuation.setParameters(parameters.length > 0 ? parameters.clone() : CirClosure.NO_PARAMETERS);
-            _continuationsBag.add(oldContinuation, newContinuation);
+            continuationsBag.add(oldContinuation, newContinuation);
             return newContinuation;
         }
 
         @Override
         protected CirNode transformVariable(CirVariable variable) {
-            final int index = Arrays.find(_parameters, variable);
+            final int index = Arrays.find(parameters, variable);
             if (index >= 0) {
-                if (_arguments[index] instanceof CirContinuation) {
-                    return gatherContinuation((CirContinuation) _arguments[index]);
+                if (arguments[index] instanceof CirContinuation) {
+                    return gatherContinuation((CirContinuation) arguments[index]);
                 }
-                return _arguments[index];
+                return arguments[index];
             }
             return variable;
         }
@@ -151,8 +151,8 @@ public abstract class CirBetaReduction {
 
                 CirJavaFrameDescriptor javaFrameDescriptor = call.javaFrameDescriptor();
                 while (javaFrameDescriptor != null) {
-                    transformValues(javaFrameDescriptor.locals(), inspectionList);
-                    transformValues(javaFrameDescriptor.stackSlots(), inspectionList);
+                    transformValues(javaFrameDescriptor.locals, inspectionList);
+                    transformValues(javaFrameDescriptor.stackSlots, inspectionList);
                     javaFrameDescriptor = javaFrameDescriptor.parent();
                 }
             } else if (currentNode instanceof CirClosure) {

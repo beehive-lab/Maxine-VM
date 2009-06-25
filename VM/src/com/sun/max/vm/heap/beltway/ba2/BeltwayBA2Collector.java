@@ -36,36 +36,35 @@ import com.sun.max.vm.tele.*;
 public class BeltwayBA2Collector extends BeltwayCollector {
 
     // /Dependency injection of the corresponding heap scheme
-    private static HeapScheme _beltwayHeapScheme;
+    private static HeapScheme beltwayHeapScheme;
 
-    public static long _minorCollections = 0;
-    public static long _majorCollections = 0;
+    public static long minorCollections = 0;
+    public static long majorCollections = 0;
 
     public void setBeltwayHeapScheme(HeapScheme beltwayHeapScheme) {
-        _beltwayHeapScheme = beltwayHeapScheme;
+        BeltwayBA2Collector.beltwayHeapScheme = beltwayHeapScheme;
     }
 
     public HeapScheme getBeltwayHeapScheme() {
-        return _beltwayHeapScheme;
+        return beltwayHeapScheme;
     }
 
     public BeltwayBA2Collector() {
-
     }
 
     @Override
     public void run() {
     }
 
-    private final Runnable _majorGC = new Runnable() {
+    private final Runnable majorGC = new Runnable() {
 
         public void run() {
-            _majorCollections++;
+            majorCollections++;
             if (Heap.verbose()) {
                 Log.print("Major Collection: ");
-                Log.println(_majorCollections);
+                Log.println(majorCollections);
             }
-            final BeltwayHeapSchemeBA2 beltwayHeapSchemeBA2 = (BeltwayHeapSchemeBA2) _beltwayHeapScheme;
+            final BeltwayHeapSchemeBA2 beltwayHeapSchemeBA2 = (BeltwayHeapSchemeBA2) beltwayHeapScheme;
             if (Heap.verbose()) {
                 Log.println("Verify Mature Space: ");
             }
@@ -133,10 +132,10 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                 Log.println("Move Reachable");
             }
 
-            if (BeltwayConfiguration._parallelScavenging) {
+            if (BeltwayConfiguration.parallelScavenging) {
                 beltwayHeapSchemeBA2.fillLastTLAB();
                 beltwayHeapSchemeBA2.markSideTableLastTLAB();
-                BeltwayHeapScheme._inScavenging = true;
+                BeltwayHeapScheme.inScavenging = true;
                 beltwayHeapSchemeBA2.initializeGCThreads(beltwayHeapSchemeBA2, matureSpaceBeforeAllocation, matureSpaceReserve);
                 VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
                 if (Heap.verbose()) {
@@ -144,7 +143,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                 }
 
                 beltwayHeapSchemeBA2.startGCThreads();
-                BeltwayHeapScheme._inScavenging = false;
+                BeltwayHeapScheme.inScavenging = false;
                 if (Heap.verbose()) {
                     Log.println("Join Threads");
                 }
@@ -211,10 +210,10 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                     Log.println("Move Reachable");
                 }
 
-                if (BeltwayConfiguration._parallelScavenging) {
+                if (BeltwayConfiguration.parallelScavenging) {
                     beltwayHeapSchemeBA2.fillLastTLAB();
                     beltwayHeapSchemeBA2.markSideTableLastTLAB();
-                    BeltwayHeapScheme._inScavenging = true;
+                    BeltwayHeapScheme.inScavenging = true;
                     beltwayHeapSchemeBA2.initializeGCThreads(beltwayHeapSchemeBA2, matureSpaceReserve, beltwayHeapSchemeBA2.getMatureSpace());
                     VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
                     if (Heap.verbose()) {
@@ -222,7 +221,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                     }
 
                     beltwayHeapSchemeBA2.startGCThreads();
-                    BeltwayHeapScheme._inScavenging = false;
+                    BeltwayHeapScheme.inScavenging = false;
                     if (Heap.verbose()) {
                         Log.println("Join Threads");
                     }
@@ -231,7 +230,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                     beltwayHeapSchemeBA2.fillLastTLAB();
                 }
 
-                BeltwayHeapSchemeBA2._sideTable.restoreAllChunkSlots();
+                BeltwayHeapSchemeBA2.sideTable.restoreAllChunkSlots();
 
 
                 if (Heap.verbose()) {
@@ -258,28 +257,28 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                 }
 
             } else {
-                BeltwayHeapScheme._outOfMemory = true;
+                BeltwayHeapScheme.outOfMemory = true;
             }
         }
     };
 
     public Runnable getMinorGC() {
-        return _minorGC;
+        return minorGC;
     }
 
     public Runnable getMajorGC() {
-        return _majorGC;
+        return majorGC;
     }
 
-    private final Runnable _minorGC = new Runnable() {
+    private final Runnable minorGC = new Runnable() {
 
         public void run() {
-            _minorCollections++;
+            minorCollections++;
             if (Heap.verbose()) {
                 Log.print("Minor Collection: ");
-                Log.println(_minorCollections);
+                Log.println(minorCollections);
             }
-            final BeltwayHeapSchemeBA2 beltwayHeapSchemeBA2 = (BeltwayHeapSchemeBA2) _beltwayHeapScheme;
+            final BeltwayHeapSchemeBA2 beltwayHeapSchemeBA2 = (BeltwayHeapSchemeBA2) beltwayHeapScheme;
 
             beltwayHeapSchemeBA2.getMatureSpace().setAllocationMarkSnapshot();
 
@@ -331,10 +330,10 @@ public class BeltwayBA2Collector extends BeltwayCollector {
             if (Heap.verbose()) {
                 Log.println("Scavenge");
             }
-            if (BeltwayConfiguration._parallelScavenging) {
+            if (BeltwayConfiguration.parallelScavenging) {
                 beltwayHeapSchemeBA2.fillLastTLAB();
                 beltwayHeapSchemeBA2.markSideTableLastTLAB();
-                BeltwayHeapScheme._inScavenging = true;
+                BeltwayHeapScheme.inScavenging = true;
                 beltwayHeapSchemeBA2.initializeGCThreads(beltwayHeapSchemeBA2, beltwayHeapSchemeBA2.getNurserySpace(), beltwayHeapSchemeBA2.getMatureSpace());
                 VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
                 if (Heap.verbose()) {
@@ -342,7 +341,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                 }
 
                 beltwayHeapSchemeBA2.startGCThreads();
-                BeltwayHeapScheme._inScavenging = false;
+                BeltwayHeapScheme.inScavenging = false;
                 if (Heap.verbose()) {
                     Log.println("Join Threads");
                 }
@@ -351,7 +350,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                 beltwayHeapSchemeBA2.fillLastTLAB();
             }
 
-            BeltwayHeapSchemeBA2._sideTable.restoreAllChunkSlots();
+            BeltwayHeapSchemeBA2.sideTable.restoreAllChunkSlots();
 
             // TODO: Delete
             //Debug.println("Wipe Eden");
@@ -393,7 +392,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
 
             if (Heap.verbose()) {
                 Log.print("End of Minor Collection: ");
-                Log.println(_minorCollections);
+                Log.println(minorCollections);
             }
         }
     };

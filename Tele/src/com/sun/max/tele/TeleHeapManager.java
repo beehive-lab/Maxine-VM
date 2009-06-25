@@ -47,21 +47,21 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
 
     private static final int TRACE_VALUE = 2;
 
-    private static TeleHeapManager _teleHeapManager;
+    private static TeleHeapManager teleHeapManager;
 
     public static TeleHeapManager make(TeleVM teleVM) {
-        if (_teleHeapManager ==  null) {
-            _teleHeapManager = new TeleHeapManager(teleVM);
+        if (teleHeapManager ==  null) {
+            teleHeapManager = new TeleHeapManager(teleVM);
         }
-        return _teleHeapManager;
+        return teleHeapManager;
     }
 
-    private TeleRuntimeMemoryRegion _teleBootHeapRegion = null;
+    private TeleRuntimeMemoryRegion teleBootHeapRegion = null;
 
     /**
      * Surrogates for each of the heap regions created by GC implementations in the {@link TeleVM}.
      */
-    private TeleRuntimeMemoryRegion[] _teleHeapRegions = new TeleRuntimeMemoryRegion[0];
+    private TeleRuntimeMemoryRegion[] teleHeapRegions = new TeleRuntimeMemoryRegion[0];
 
     private TeleHeapManager(TeleVM teleVM) {
         super(teleVM);
@@ -78,7 +78,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
      *
      */
     private boolean isInitialized() {
-        return _teleBootHeapRegion != null;
+        return teleBootHeapRegion != null;
     }
 
     /**
@@ -88,12 +88,12 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
         Trace.begin(1, tracePrefix() + "initializing");
         final long startTimeMillis = System.currentTimeMillis();
         final Reference bootHeapRegionReference = teleVM().fields().Heap_bootHeapRegion.readReference(teleVM());
-        _teleBootHeapRegion = (TeleRuntimeMemoryRegion) teleVM().makeTeleObject(bootHeapRegionReference);
+        teleBootHeapRegion = (TeleRuntimeMemoryRegion) teleVM().makeTeleObject(bootHeapRegionReference);
         refresh(processEpoch);
         Trace.end(1, tracePrefix() + "initializing", startTimeMillis);
     }
 
-    private boolean _updatingHeapMemoryRegions = false;
+    private boolean updatingHeapMemoryRegions = false;
 
     /**
      * Updates local cache of information about dynamically allocated heap regions in the {@link TeleVM}.
@@ -103,19 +103,19 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
         if (isInitialized()) {
             Trace.begin(TRACE_VALUE, tracePrefix() + "refreshing");
             final long startTimeMillis = System.currentTimeMillis();
-            _updatingHeapMemoryRegions = true;
+            updatingHeapMemoryRegions = true;
             final Reference runtimeHeapRegionsArrayReference = teleVM().fields().TeleHeapInfo_memoryRegions.readReference(teleVM());
             if (!runtimeHeapRegionsArrayReference.isZero()) {
                 final TeleArrayObject teleArrayObject = (TeleArrayObject) teleVM().makeTeleObject(runtimeHeapRegionsArrayReference);
                 final Reference[] heapRegionReferences = (Reference[]) teleArrayObject.shallowCopy();
-                if (_teleHeapRegions.length != heapRegionReferences.length) {
-                    _teleHeapRegions = new TeleRuntimeMemoryRegion[heapRegionReferences.length];
+                if (teleHeapRegions.length != heapRegionReferences.length) {
+                    teleHeapRegions = new TeleRuntimeMemoryRegion[heapRegionReferences.length];
                 }
                 for (int i = 0; i < heapRegionReferences.length; i++) {
-                    _teleHeapRegions[i] = (TeleRuntimeMemoryRegion) teleVM().makeTeleObject(heapRegionReferences[i]);
+                    teleHeapRegions[i] = (TeleRuntimeMemoryRegion) teleVM().makeTeleObject(heapRegionReferences[i]);
                 }
             }
-            _updatingHeapMemoryRegions = false;
+            updatingHeapMemoryRegions = false;
             Trace.end(TRACE_VALUE, tracePrefix() + "refreshing", startTimeMillis);
 
         }
@@ -125,7 +125,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
      * @return surrogate for the special heap {@link RuntimeMemoryRegion} in the {@link BootImage} of the {@link TeleVM}.
      */
     public TeleRuntimeMemoryRegion teleBootHeapRegion() {
-        return _teleBootHeapRegion;
+        return teleBootHeapRegion;
     }
 
     /**
@@ -133,7 +133,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
      * Sorted in order of allocation.  Does not include the boot heap region.
      */
     public IndexedSequence<TeleRuntimeMemoryRegion> teleHeapRegions() {
-        return new ArraySequence<TeleRuntimeMemoryRegion>(_teleHeapRegions);
+        return new ArraySequence<TeleRuntimeMemoryRegion>(teleHeapRegions);
     }
 
     /**
@@ -141,10 +141,10 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
      * possibly the boot heap; null if none.
      */
     public TeleRuntimeMemoryRegion regionContaining(Address address) {
-        if (_teleBootHeapRegion.contains(address)) {
-            return _teleBootHeapRegion;
+        if (teleBootHeapRegion.contains(address)) {
+            return teleBootHeapRegion;
         }
-        for (TeleRuntimeMemoryRegion teleHeapRegion : _teleHeapRegions) {
+        for (TeleRuntimeMemoryRegion teleHeapRegion : teleHeapRegions) {
             if (teleHeapRegion.contains(address)) {
                 return teleHeapRegion;
             }
@@ -162,10 +162,10 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
             // using only lower level mechanisms to avoid an initialization loop with {@link TeleClassRegistry}.
             // In particular, avoid any call to {@link TeleObject#make()}, which depends on {@link TeleClassRegistry}.
             final Pointer bootHeapStart = teleVM().bootImageStart();
-            final Address bootHeapEnd = bootHeapStart.plus(teleVM().bootImage().header()._bootHeapSize);
+            final Address bootHeapEnd = bootHeapStart.plus(teleVM().bootImage().header().bootHeapSize);
             return bootHeapStart.lessEqual(address) && address.lessThan(bootHeapEnd);
         }
-        if (_updatingHeapMemoryRegions) {
+        if (updatingHeapMemoryRegions) {
             // The call is nested within a call to {@link #refresh}, assume all is well.
             return true;
         }
@@ -181,12 +181,12 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
             // When not yet initialized with information about the dynamic heap, assume it doesn't exist yet.
             return false;
         }
-        if (_updatingHeapMemoryRegions) {
+        if (updatingHeapMemoryRegions) {
             // The call is nested within a call to {@link #refresh}; exclude
             // the case where it is in the boot region, otherwise assume all is well.
-            return !_teleBootHeapRegion.contains(address);
+            return !teleBootHeapRegion.contains(address);
         }
-        for (TeleRuntimeMemoryRegion teleHeapRegion : _teleHeapRegions) {
+        for (TeleRuntimeMemoryRegion teleHeapRegion : teleHeapRegions) {
             if (teleHeapRegion.contains(address)) {
                 return true;
             }

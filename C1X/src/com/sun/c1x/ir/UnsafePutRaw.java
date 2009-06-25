@@ -31,7 +31,7 @@ import com.sun.c1x.value.BasicType;
  */
 public class UnsafePutRaw extends UnsafeRawOp {
 
-    Instruction _value;
+    Instruction value;
 
     /**
      * Constructs a new UnsafeGetRaw instruction.
@@ -41,7 +41,7 @@ public class UnsafePutRaw extends UnsafeRawOp {
      */
     public UnsafePutRaw(BasicType basicType, Instruction addr, Instruction value) {
         super(basicType, addr, false);
-        _value = value;
+        this.value = value;
     }
 
     /**
@@ -54,7 +54,7 @@ public class UnsafePutRaw extends UnsafeRawOp {
      */
     public UnsafePutRaw(BasicType basicType, Instruction addr, Instruction index, int log2scale, Instruction value) {
         super(basicType, addr, index, log2scale, false);
-        _value = value;
+        this.value = value;
     }
 
     /**
@@ -62,7 +62,7 @@ public class UnsafePutRaw extends UnsafeRawOp {
      * @return the instruction generating the value
      */
     public Instruction value() {
-        return _value;
+        return value;
     }
 
     /**
@@ -72,7 +72,7 @@ public class UnsafePutRaw extends UnsafeRawOp {
     @Override
     public void inputValuesDo(InstructionClosure closure) {
         super.inputValuesDo(closure);
-        _value = closure.apply(_value);
+        value = closure.apply(value);
     }
 
     /**

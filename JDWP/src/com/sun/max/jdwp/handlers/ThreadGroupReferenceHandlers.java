@@ -51,7 +51,7 @@ public class ThreadGroupReferenceHandlers extends Handlers {
 
         @Override
         public Name.Reply handle(Name.IncomingRequest incomingRequest) throws JDWPException {
-            final String name = session().getThreadGroup(incomingRequest._group).getName();
+            final String name = session().getThreadGroup(incomingRequest.group).getName();
             return new Name.Reply(name);
         }
     }
@@ -65,7 +65,7 @@ public class ThreadGroupReferenceHandlers extends Handlers {
 
         @Override
         public Parent.Reply handle(Parent.IncomingRequest incomingRequest) throws JDWPException {
-            final ThreadGroupProvider p = session().getThreadGroup(incomingRequest._group).getParent();
+            final ThreadGroupProvider p = session().getThreadGroup(incomingRequest.group).getParent();
             return new Parent.Reply(session().toID(p));
         }
     }
@@ -79,19 +79,19 @@ public class ThreadGroupReferenceHandlers extends Handlers {
 
         @Override
         public Children.Reply handle(Children.IncomingRequest incomingRequest) throws JDWPException {
-            final ThreadGroupProvider p = session().getThreadGroup(incomingRequest._group);
+            final ThreadGroupProvider p = session().getThreadGroup(incomingRequest.group);
             final Children.Reply reply = new Children.Reply();
             final ThreadProvider[] threads = p.getThreadChildren();
             final ThreadGroupProvider[] threadGroups = p.getThreadGroupChildren();
 
-            reply._childGroups = new ID.ThreadGroupID[threadGroups.length];
+            reply.childGroups = new ID.ThreadGroupID[threadGroups.length];
             for (int i = 0; i < threadGroups.length; i++) {
-                reply._childGroups[i] = session().toID(threadGroups[i]);
+                reply.childGroups[i] = session().toID(threadGroups[i]);
             }
 
-            reply._childThreads = new ID.ThreadID[threads.length];
+            reply.childThreads = new ID.ThreadID[threads.length];
             for (int i = 0; i < threads.length; i++) {
-                reply._childThreads[i] = session().toID(threads[i]);
+                reply.childThreads[i] = session().toID(threads[i]);
                 assert threads[i].getThreadGroup() == p : "Thread group must match!";
             }
             return reply;

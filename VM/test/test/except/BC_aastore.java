@@ -28,18 +28,18 @@ package test.except;
 
 public class BC_aastore {
 
-    static Object[] _param = {new Object(), null, "h"};
-    static Object[] _array1 = {null, null, null};
-    static String[] _array2 = {null, null, null};
+    static Object[] param = {new Object(), null, "h"};
+    static Object[] arr = {null, null, null};
+    static String[] arr2 = {null, null, null};
 
     public static int test(boolean a, int indx) {
-        Object[] array = a ? _array1 : _array2;
+        Object[] array = a ? arr : arr2;
         Object val;
         if (indx == -2) {
             array = null;
             val = null;
         } else {
-            val = _param[indx];
+            val = param[indx];
         }
         array[indx] = val;
         return indx;

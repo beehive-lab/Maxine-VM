@@ -34,60 +34,60 @@ import com.sun.max.vm.type.*;
  * @author Doug Simon
  */
 public class InvokedMethodRecorder extends BytecodeAdapter {
-    protected final AppendableSequence<MethodActor> _directCalls;
-    protected final AppendableSequence<MethodActor> _virtualCalls;
-    protected final AppendableSequence<MethodActor> _interfaceCalls;
-    protected final ClassMethodActor _classMethodActor;
-    protected final ConstantPool _constantPool;
+    protected final AppendableSequence<MethodActor> directCalls;
+    protected final AppendableSequence<MethodActor> virtualCalls;
+    protected final AppendableSequence<MethodActor> interfaceCalls;
+    protected final ClassMethodActor classMethodActor;
+    protected final ConstantPool constantPool;
 
     public InvokedMethodRecorder(ClassMethodActor classMethodActor,
                     AppendableSequence<MethodActor> directCalls,
                     AppendableSequence<MethodActor> virtualCalls,
                     AppendableSequence<MethodActor> interfaceCalls) {
-        _classMethodActor = classMethodActor;
-        _constantPool = classMethodActor.codeAttribute().constantPool();
-        _directCalls = directCalls;
-        _virtualCalls = virtualCalls;
-        _interfaceCalls = interfaceCalls;
+        this.classMethodActor = classMethodActor;
+        this.constantPool = classMethodActor.codeAttribute().constantPool();
+        this.directCalls = directCalls;
+        this.virtualCalls = virtualCalls;
+        this.interfaceCalls = interfaceCalls;
     }
 
-    private static final String _maxPackagePrefix = new com.sun.max.Package().name();
+    private static final String maxPackagePrefix = new com.sun.max.Package().name();
 
     protected void addMethodCall(int index, AppendableSequence<MethodActor> sequence) {
-        final MethodRefConstant methodRefConstant = _constantPool.methodAt(index);
-        if (methodRefConstant.isResolvableWithoutClassLoading(_constantPool)) {
+        final MethodRefConstant methodRefConstant = constantPool.methodAt(index);
+        if (methodRefConstant.isResolvableWithoutClassLoading(constantPool)) {
             try {
-                final MethodActor methodActor = methodRefConstant.resolve(_constantPool, index);
+                final MethodActor methodActor = methodRefConstant.resolve(constantPool, index);
                 sequence.append(methodActor);
             } catch (PrototypeOnlyMethodError prototypeOnlyMethodError) {
-                ProgramError.unexpected(_classMethodActor.format("%H.%n(%p) calls prototype-only method " + methodRefConstant.valueString(_constantPool)));
+                ProgramError.unexpected(classMethodActor.format("%H.%n(%p) calls prototype-only method " + methodRefConstant.valueString(constantPool)));
             }
         } else {
-            final TypeDescriptor holder = methodRefConstant.holder(_constantPool);
+            final TypeDescriptor holder = methodRefConstant.holder(constantPool);
             final String holderName = holder.toJavaString();
-            if (holderName.startsWith(_maxPackagePrefix)) {
-                ProgramError.unexpected(_classMethodActor.format("%H.%n(%p) calls unresolved Maxine method " + methodRefConstant.valueString(_constantPool)));
+            if (holderName.startsWith(maxPackagePrefix)) {
+                ProgramError.unexpected(classMethodActor.format("%H.%n(%p) calls unresolved Maxine method " + methodRefConstant.valueString(constantPool)));
             }
         }
     }
 
     @Override
     protected void invokestatic(int index) {
-        addMethodCall(index, _directCalls);
+        addMethodCall(index, directCalls);
     }
 
     @Override
     protected void invokespecial(int index) {
-        addMethodCall(index, _directCalls);
+        addMethodCall(index, directCalls);
     }
 
     @Override
     protected void invokevirtual(int index) {
-        addMethodCall(index, _virtualCalls);
+        addMethodCall(index, virtualCalls);
     }
 
     @Override
     protected void invokeinterface(int index, int count) {
-        addMethodCall(index, _interfaceCalls);
+        addMethodCall(index, interfaceCalls);
     }
 }

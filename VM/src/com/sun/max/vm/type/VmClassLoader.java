@@ -55,16 +55,16 @@ public final class VmClassLoader extends ClassLoader {
      * without depending on all the I/O machinery working.
      */
     @PROTOTYPE_ONLY
-    private Map<String, byte[]> _generatedClassfiles = new HashMap<String, byte[]>();
+    private Map<String, byte[]> generatedClassfiles = new HashMap<String, byte[]>();
 
     private synchronized void storeRuntimeGeneratedClassFile(String name, byte[] classfile) {
         if (MaxineVM.isPrototyping()) {
-            if (_generatedClassfiles == null) {
-                _generatedClassfiles = new HashMap<String, byte[]>();
-            } else if (_generatedClassfiles.containsKey(name)) {
+            if (generatedClassfiles == null) {
+                generatedClassfiles = new HashMap<String, byte[]>();
+            } else if (generatedClassfiles.containsKey(name)) {
                 ProgramWarning.message("class with same name generated twice: " + name);
             }
-            _generatedClassfiles.put(name, classfile);
+            generatedClassfiles.put(name, classfile);
         }
     }
 
@@ -101,7 +101,7 @@ public final class VmClassLoader extends ClassLoader {
 
     @PROTOTYPE_ONLY
     public ClasspathFile findGeneratedClassfile(String name) {
-        final byte[] classfileBytes = _generatedClassfiles.get(name);
+        final byte[] classfileBytes = generatedClassfiles.get(name);
         if (classfileBytes != null) {
             return new ClasspathFile(classfileBytes, null);
         }
@@ -109,16 +109,16 @@ public final class VmClassLoader extends ClassLoader {
     }
 
     public Map<String, byte[]> generatedClassfiles() {
-        return Collections.unmodifiableMap(_generatedClassfiles);
+        return Collections.unmodifiableMap(generatedClassfiles);
     }
 
-    private Classpath _classpath;
+    private Classpath classpath;
 
     public Classpath classpath() {
-        if (_classpath == null) {
-            _classpath = Classpath.bootClassPath();
+        if (classpath == null) {
+            classpath = Classpath.bootClassPath();
         }
-        return _classpath;
+        return classpath;
     }
 
     protected Class findClass(Classpath classpath, String name) throws ClassNotFoundException {
@@ -143,7 +143,7 @@ public final class VmClassLoader extends ClassLoader {
             try {
                 return super.findClass(name);
             } catch (ClassNotFoundException e) {
-                final byte[] classfileBytes = _generatedClassfiles.get(name);
+                final byte[] classfileBytes = generatedClassfiles.get(name);
                 if (classfileBytes != null) {
                     return defineClass(name, classfileBytes, 0, classfileBytes.length);
                 }
@@ -181,7 +181,7 @@ public final class VmClassLoader extends ClassLoader {
     }
 
     public void loadJavaAndZipNativeLibraries(String javaLibraryPath, String zipLibraryPath) {
-        if (VMConfiguration.hostOrTarget().platform().operatingSystem() == OperatingSystem.GUESTVM) {
+        if (VMConfiguration.hostOrTarget().platform().operatingSystem == OperatingSystem.GUESTVM) {
             // no native libraries in GuestVM
             return;
         }

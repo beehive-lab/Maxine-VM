@@ -20,25 +20,24 @@
  */
 package com.sun.max.vm.layout;
 
-import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 
 public abstract class LayoutScheme extends AbstractVMScheme implements VMScheme {
 
-    private final GeneralLayout _generalLayout;
-    private final TupleLayout _tupleLayout;
-    private final HybridLayout _hybridLayout;
-    private final ArrayHeaderLayout _arrayHeaderLayout;
-    private final ByteArrayLayout _byteArrayLayout;
-    private final BooleanArrayLayout _booleanArrayLayout;
-    private final ShortArrayLayout _shortArrayLayout;
-    private final CharArrayLayout _charArrayLayout;
-    private final IntArrayLayout _intArrayLayout;
-    private final FloatArrayLayout _floatArrayLayout;
-    private final LongArrayLayout _longArrayLayout;
-    private final DoubleArrayLayout _doubleArrayLayout;
-    private final WordArrayLayout _wordArrayLayout;
-    private final ReferenceArrayLayout _referenceArrayLayout;
+    public final GeneralLayout generalLayout;
+    public final TupleLayout tupleLayout;
+    public final HybridLayout hybridLayout;
+    public final ArrayHeaderLayout arrayHeaderLayout;
+    public final ByteArrayLayout byteArrayLayout;
+    public final BooleanArrayLayout booleanArrayLayout;
+    public final ShortArrayLayout shortArrayLayout;
+    public final CharArrayLayout charArrayLayout;
+    public final IntArrayLayout intArrayLayout;
+    public final FloatArrayLayout floatArrayLayout;
+    public final LongArrayLayout longArrayLayout;
+    public final DoubleArrayLayout doubleArrayLayout;
+    public final WordArrayLayout wordArrayLayout;
+    public final ReferenceArrayLayout referenceArrayLayout;
 
     protected LayoutScheme(VMConfiguration vmConfiguration,
                     final GeneralLayout generalLayout,
@@ -56,88 +55,19 @@ public abstract class LayoutScheme extends AbstractVMScheme implements VMScheme 
                     final WordArrayLayout wordArrayLayout,
                     final ReferenceArrayLayout referenceArrayLayout) {
         super(vmConfiguration);
-        _generalLayout = generalLayout;
-        _tupleLayout = tupleLayout;
-        _hybridLayout = hybridLayout;
-        _arrayHeaderLayout = arrayHeaderLayout;
-        _byteArrayLayout = byteArrayLayout;
-        _booleanArrayLayout = booleanArrayLayout;
-        _shortArrayLayout = shortArrayLayout;
-        _charArrayLayout = charArrayLayout;
-        _intArrayLayout = intArrayLayout;
-        _floatArrayLayout = floatArrayLayout;
-        _longArrayLayout = longArrayLayout;
-        _doubleArrayLayout = doubleArrayLayout;
-        _wordArrayLayout = wordArrayLayout;
-        _referenceArrayLayout = referenceArrayLayout;
-    }
-
-    public final GeneralLayout generalLayout() {
-        return _generalLayout;
-    }
-
-    @INLINE
-    public final TupleLayout tupleLayout() {
-        return _tupleLayout;
-    }
-
-    @INLINE
-    public final HybridLayout hybridLayout() {
-        return _hybridLayout;
-    }
-
-    @INLINE
-    public final ArrayHeaderLayout arrayHeaderLayout() {
-        return _arrayHeaderLayout;
-    }
-
-    @INLINE
-    public final ByteArrayLayout byteArrayLayout() {
-        return _byteArrayLayout;
-    }
-
-    @INLINE
-    public final BooleanArrayLayout booleanArrayLayout() {
-        return _booleanArrayLayout;
-    }
-
-    @INLINE
-    public final ShortArrayLayout shortArrayLayout() {
-        return _shortArrayLayout;
-    }
-
-    @INLINE
-    public final CharArrayLayout charArrayLayout() {
-        return _charArrayLayout;
-    }
-
-    @INLINE
-    public final IntArrayLayout intArrayLayout() {
-        return _intArrayLayout;
-    }
-
-    @INLINE
-    public final FloatArrayLayout floatArrayLayout() {
-        return _floatArrayLayout;
-    }
-
-    @INLINE
-    public final LongArrayLayout longArrayLayout() {
-        return _longArrayLayout;
-    }
-
-    @INLINE
-    public final DoubleArrayLayout doubleArrayLayout() {
-        return _doubleArrayLayout;
-    }
-
-    @INLINE
-    public final WordArrayLayout wordArrayLayout() {
-        return _wordArrayLayout;
-    }
-
-    @INLINE
-    public final ReferenceArrayLayout referenceArrayLayout() {
-        return _referenceArrayLayout;
+        this.generalLayout = generalLayout;
+        this.tupleLayout = tupleLayout;
+        this.hybridLayout = hybridLayout;
+        this.arrayHeaderLayout = arrayHeaderLayout;
+        this.byteArrayLayout = byteArrayLayout;
+        this.booleanArrayLayout = booleanArrayLayout;
+        this.shortArrayLayout = shortArrayLayout;
+        this.charArrayLayout = charArrayLayout;
+        this.intArrayLayout = intArrayLayout;
+        this.floatArrayLayout = floatArrayLayout;
+        this.longArrayLayout = longArrayLayout;
+        this.doubleArrayLayout = doubleArrayLayout;
+        this.wordArrayLayout = wordArrayLayout;
+        this.referenceArrayLayout = referenceArrayLayout;
     }
 }

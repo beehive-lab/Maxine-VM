@@ -58,51 +58,51 @@ import com.sun.max.vm.type.*;
  */
 public final class PrototypeGenerator {
 
-    private final OptionSet _options = new OptionSet();
+    private final OptionSet options = new OptionSet();
 
-    private final Option<BuildLevel> _buildLevel = _options.newEnumOption("build", BuildLevel.PRODUCT, BuildLevel.class,
+    private final Option<BuildLevel> buildLevel = options.newEnumOption("build", BuildLevel.PRODUCT, BuildLevel.class,
             "This option selects the build level of the virtual machine.");
-    private final Option<ProcessorModel> _processorModel = _options.newEnumOption("cpu", null, ProcessorModel.class,
+    private final Option<ProcessorModel> processorModel = options.newEnumOption("cpu", null, ProcessorModel.class,
             "Specifies the target instruction set architecture.");
-    private final Option<InstructionSet> _instructionSet = _options.newEnumOption("isa", null, InstructionSet.class,
+    private final Option<InstructionSet> instructionSet = options.newEnumOption("isa", null, InstructionSet.class,
             "Specifies the target instruction set.");
-    private final Option<OperatingSystem> _operatingSystem = _options.newEnumOption("os", null, OperatingSystem.class,
+    private final Option<OperatingSystem> operatingSystem = options.newEnumOption("os", null, OperatingSystem.class,
             "Specifies the target operating system.");
-    private final Option<Integer> _pageSizeOption = _options.newIntegerOption("page", null,
+    private final Option<Integer> pageSizeOption = options.newIntegerOption("page", null,
             "Specifies the target page size in bytes.");
-    private final Option<WordWidth> _wordWidth = _options.newEnumOption("bits", null, WordWidth.class,
+    private final Option<WordWidth> wordWidth = options.newEnumOption("bits", null, WordWidth.class,
             "Specifies the target machine word with in bits.");
-    private final Option<Endianness> _endiannessOption = _options.newEnumOption("endianness", null, Endianness.class,
+    private final Option<Endianness> endiannessOption = options.newEnumOption("endianness", null, Endianness.class,
             "Specifies the endianness of the target.");
-    private final Option<Alignment> _alignmentOption = _options.newEnumOption("align", null, Alignment.class,
+    private final Option<Alignment> alignmentOption = options.newEnumOption("align", null, Alignment.class,
             "Specifies the alignment of the target.");
-    private final Option<MaxPackage> _gripScheme = schemeOption("grip", new com.sun.max.vm.grip.Package(), GripScheme.class,
+    private final Option<MaxPackage> gripScheme = schemeOption("grip", new com.sun.max.vm.grip.Package(), GripScheme.class,
             "Specifies the grip scheme for the target.");
-    private final Option<MaxPackage> _referenceScheme = schemeOption("reference", new com.sun.max.vm.reference.Package(), ReferenceScheme.class,
+    private final Option<MaxPackage> referenceScheme = schemeOption("reference", new com.sun.max.vm.reference.Package(), ReferenceScheme.class,
             "Specifies the reference scheme for the target.");
-    private final Option<MaxPackage> _layoutScheme = schemeOption("layout", new com.sun.max.vm.layout.Package(), LayoutScheme.class,
+    private final Option<MaxPackage> layoutScheme = schemeOption("layout", new com.sun.max.vm.layout.Package(), LayoutScheme.class,
             "Specifies the layout scheme for the target.");
-    private final Option<MaxPackage> _heapScheme = schemeOption("heap", new com.sun.max.vm.heap.Package(), HeapScheme.class,
+    private final Option<MaxPackage> heapScheme = schemeOption("heap", new com.sun.max.vm.heap.Package(), HeapScheme.class,
             "Specifies the heap scheme for the target.");
-    private final Option<MaxPackage> _monitorScheme = schemeOption("monitor", new com.sun.max.vm.monitor.Package(), MonitorScheme.class,
+    private final Option<MaxPackage> monitorScheme = schemeOption("monitor", new com.sun.max.vm.monitor.Package(), MonitorScheme.class,
             "Specifies the monitor scheme for the target.");
-    private final Option<MaxPackage> _compilerScheme = schemeOption("compiler", new com.sun.max.vm.compiler.Package(), CompilerScheme.class,
+    private final Option<MaxPackage> compilerScheme = schemeOption("compiler", new com.sun.max.vm.compiler.Package(), CompilerScheme.class,
             "Specifies the compiler scheme for the target.");
-    private final Option<MaxPackage> _jitScheme = schemeOption("jit", new com.sun.max.vm.jit.Package(), DynamicCompilerScheme.class,
+    private final Option<MaxPackage> jitScheme = schemeOption("jit", new com.sun.max.vm.jit.Package(), DynamicCompilerScheme.class,
             "Specifies the JIT scheme for the target.");
-    private final Option<MaxPackage> _interpreterScheme = schemeOption("interpreter", new com.sun.max.vm.interpret.Package(), InterpreterScheme.class,
+    private final Option<MaxPackage> interpreterScheme = schemeOption("interpreter", new com.sun.max.vm.interpret.Package(), InterpreterScheme.class,
             "Specifies the interpreter scheme for the target.");
-    private final Option<MaxPackage> _trampolineScheme = schemeOption("trampoline", new com.sun.max.vm.trampoline.Package(), DynamicTrampolineScheme.class,
+    private final Option<MaxPackage> trampolineScheme = schemeOption("trampoline", new com.sun.max.vm.trampoline.Package(), DynamicTrampolineScheme.class,
             "Specifies the dynamic trampoline scheme for the target.");
-    private final Option<MaxPackage> _targetABIsScheme = schemeOption("abi", new com.sun.max.vm.compiler.target.Package(), TargetABIsScheme.class,
+    private final Option<MaxPackage> targetABIsScheme = schemeOption("abi", new com.sun.max.vm.compiler.target.Package(), TargetABIsScheme.class,
             "Specifies the ABIs scheme for the target");
-    private final Option<MaxPackage> _runScheme = schemeOption("run", new com.sun.max.vm.run.Package(), RunScheme.class,
+    private final Option<MaxPackage> runScheme = schemeOption("run", new com.sun.max.vm.run.Package(), RunScheme.class,
             "Specifies the run scheme for the target.");
-    private final Option<Integer> _threadsOption = _options.newIntegerOption("threads", ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors(),
+    private final Option<Integer> threadsOption = options.newIntegerOption("threads", ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors(),
             "Specifies the number of threads to be used for parallel compilation.");
 
     private Option<MaxPackage> schemeOption(String name, MaxPackage superPackage, Class cl, String help) {
-        return _options.newOption(name, (MaxPackage) null, new MaxPackageOptionType(superPackage, cl), OptionSet.Syntax.REQUIRES_EQUALS, help);
+        return options.newOption(name, (MaxPackage) null, new MaxPackageOptionType(superPackage, cl), OptionSet.Syntax.REQUIRES_EQUALS, help);
     }
 
     /**
@@ -111,7 +111,7 @@ public final class PrototypeGenerator {
      * @param optionSet the set of options to which the prototype generator specific options will be added
      */
     public PrototypeGenerator(OptionSet optionSet) {
-        optionSet.addOptions(_options);
+        optionSet.addOptions(options);
     }
 
     /**
@@ -124,42 +124,49 @@ public final class PrototypeGenerator {
      */
     VMConfiguration createVMConfiguration(final VMConfiguration defaultConfiguration) {
         // set the defaults manually using the default configuration
-        _processorModel.setDefaultValue(defaultConfiguration.platform().processorKind().processorModel());
-        _instructionSet.setDefaultValue(defaultConfiguration.platform().processorKind().instructionSet());
-        _operatingSystem.setDefaultValue(defaultConfiguration.platform().operatingSystem());
-        _pageSizeOption.setDefaultValue(defaultConfiguration.platform().pageSize());
-        _wordWidth.setDefaultValue(defaultConfiguration.platform().processorKind().dataModel().wordWidth());
-        _endiannessOption.setDefaultValue(defaultConfiguration.platform().processorKind().dataModel().endianness());
-        _alignmentOption.setDefaultValue(defaultConfiguration.platform().processorKind().dataModel().alignment());
-        _gripScheme.setDefaultValue(defaultConfiguration.gripPackage());
-        _referenceScheme.setDefaultValue(defaultConfiguration.referencePackage());
-        _layoutScheme.setDefaultValue(defaultConfiguration.layoutPackage());
-        _heapScheme.setDefaultValue(defaultConfiguration.heapPackage());
-        _monitorScheme.setDefaultValue(defaultConfiguration.monitorPackage());
-        _compilerScheme.setDefaultValue(defaultConfiguration.compilerPackage());
-        _jitScheme.setDefaultValue(defaultConfiguration.jitPackage());
-        _interpreterScheme.setDefaultValue(defaultConfiguration.interpreterPackage());
-        _trampolineScheme.setDefaultValue(defaultConfiguration.trampolinePackage());
-        _targetABIsScheme.setDefaultValue(defaultConfiguration.targetABIsPackage());
-        _runScheme.setDefaultValue(defaultConfiguration.runPackage());
+        processorModel.setDefaultValue(defaultConfiguration.platform().processorKind.processorModel);
+        instructionSet.setDefaultValue(defaultConfiguration.platform().processorKind.instructionSet);
+        operatingSystem.setDefaultValue(defaultConfiguration.platform().operatingSystem);
+        pageSizeOption.setDefaultValue(defaultConfiguration.platform().pageSize);
+        wordWidth.setDefaultValue(defaultConfiguration.platform().processorKind.dataModel.wordWidth);
+        endiannessOption.setDefaultValue(defaultConfiguration.platform().processorKind.dataModel.endianness);
+        alignmentOption.setDefaultValue(defaultConfiguration.platform().processorKind.dataModel.alignment);
+        gripScheme.setDefaultValue(defaultConfiguration.gripPackage());
+        referenceScheme.setDefaultValue(defaultConfiguration.referencePackage());
+        layoutScheme.setDefaultValue(defaultConfiguration.layoutPackage());
+        heapScheme.setDefaultValue(defaultConfiguration.heapPackage());
+        monitorScheme.setDefaultValue(defaultConfiguration.monitorPackage());
+        compilerScheme.setDefaultValue(defaultConfiguration.compilerPackage());
+        jitScheme.setDefaultValue(defaultConfiguration.jitPackage());
+        interpreterScheme.setDefaultValue(defaultConfiguration.interpreterPackage());
+        trampolineScheme.setDefaultValue(defaultConfiguration.trampolinePackage());
+        targetABIsScheme.setDefaultValue(defaultConfiguration.targetABIsPackage());
+        runScheme.setDefaultValue(defaultConfiguration.runPackage());
 
-        if (_threadsOption.getValue() <= 0) {
-            throw new Option.Error("The value specified for " + _threadsOption + " must be greater than 0.");
+        if (threadsOption.getValue() <= 0) {
+            throw new Option.Error("The value specified for " + threadsOption + " must be greater than 0.");
         }
 
-        final DataModel dataModel = new DataModel(_wordWidth.getValue(), _endiannessOption.getValue(), _alignmentOption.getValue());
-        final ProcessorKind processorKind = new ProcessorKind(_processorModel.getValue(), _instructionSet.getValue(), dataModel);
-        final OperatingSystem operatingSystem = _operatingSystem.getValue();
-        int pageSizeValue = _pageSizeOption.getValue();
-        if (!_options.hasOptionSpecified(_pageSizeOption.getName()) && operatingSystem != defaultConfiguration.platform().operatingSystem()) {
+        final DataModel dataModel = new DataModel(wordWidth.getValue(), endiannessOption.getValue(), alignmentOption.getValue());
+        final ProcessorKind processorKind = new ProcessorKind(processorModel.getValue(), instructionSet.getValue(), dataModel);
+        final OperatingSystem operatingSystem = this.operatingSystem.getValue();
+        int pageSizeValue = pageSizeOption.getValue();
+        if (!options.hasOptionSpecified(pageSizeOption.getName()) && operatingSystem != defaultConfiguration.platform().operatingSystem) {
             pageSizeValue = operatingSystem.defaultPageSize();
         }
         final Platform platform = new Platform(processorKind, operatingSystem, pageSizeValue);
-        return new VMConfiguration(_buildLevel.getValue(), platform,
-                                    vm(_gripScheme), vm(_referenceScheme),
-                                    vm(_layoutScheme), vm(_heapScheme),
-                                    vm(_monitorScheme), vm(_compilerScheme), vm(_jitScheme), vm(_interpreterScheme), vm(_trampolineScheme), vm(_targetABIsScheme),
-                                    vm(_runScheme));
+        return new VMConfiguration(buildLevel.getValue(), platform,
+                                    vm(gripScheme),
+                                    vm(referenceScheme),
+                                    vm(layoutScheme),
+                                    vm(heapScheme),
+                                    vm(monitorScheme),
+                                    vm(compilerScheme),
+                                    vm(jitScheme),
+                                    vm(interpreterScheme),
+                                    vm(trampolineScheme),
+                                    vm(targetABIsScheme),
+                                    vm(runScheme));
     }
 
     /**
@@ -243,7 +250,7 @@ public final class PrototypeGenerator {
                 public GraphPrototype call() {
                     GraphPrototype graphPrototype;
                     int numberOfClassActors = 0;
-                    final CompiledPrototype compiledPrototype = new CompiledPrototype(javaPrototype, _threadsOption.getValue());
+                    final CompiledPrototype compiledPrototype = new CompiledPrototype(javaPrototype, threadsOption.getValue());
                     compiledPrototype.addEntrypoints();
                     do {
                         for (MethodActor methodActor : javaPrototype.vmConfiguration().runScheme().gatherNativeInitializationMethods()) {
@@ -268,7 +275,7 @@ public final class PrototypeGenerator {
                     graphPrototype = new GraphPrototype(compiledPrototype, tree);
                     graphTimer.stop();
 
-                    Code.bootCodeRegion().trim();
+                    Code.bootCodeRegion.trim();
 
                     JniNativeInterface.checkInvariants();
 

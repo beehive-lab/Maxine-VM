@@ -32,18 +32,18 @@ class JavaMethodProvider implements MethodProvider {
 
     private static final Logger LOGGER = Logger.getLogger(JavaMethodProvider.class.getName());
 
-    private Method _method;
-    private ReferenceTypeProvider _holder;
-    private VMAccess _vm;
+    private Method method;
+    private ReferenceTypeProvider holder;
+    private VMAccess vm;
 
     JavaMethodProvider(Method method, ReferenceTypeProvider holder, VMAccess vm) {
-        _method = method;
-        _holder = holder;
-        _vm = vm;
+        this.method = method;
+        this.holder = holder;
+        this.vm = vm;
     }
 
     public int getFlags() {
-        return _method.getModifiers();
+        return method.getModifiers();
     }
 
     public LineTableEntry[] getLineTable() {
@@ -52,12 +52,12 @@ class JavaMethodProvider implements MethodProvider {
 
     public String getName() {
         // TODO: Check if this is correct.
-        return _method.getName();
+        return method.getName();
     }
 
     public int getNumberOfArguments() {
-        int count = Modifier.isStatic(_method.getModifiers()) ? 0 : 1;
-        for (Class type : _method.getParameterTypes()) {
+        int count = Modifier.isStatic(method.getModifiers()) ? 0 : 1;
+        for (Class type : method.getParameterTypes()) {
             if (type.equals(double.class) || type.equals(long.class)) {
                 count += 2;
             } else {
@@ -68,11 +68,11 @@ class JavaMethodProvider implements MethodProvider {
     }
 
     public ReferenceTypeProvider getReferenceTypeHolder() {
-        return _holder;
+        return holder;
     }
 
     public String getSignature() {
-        return SignatureDescriptor.fromJava(_method).toString();
+        return SignatureDescriptor.fromJava(method).toString();
     }
 
     public String getSignatureWithGeneric() {
@@ -86,13 +86,13 @@ class JavaMethodProvider implements MethodProvider {
 
     public VMValue invoke(ObjectProvider object, VMValue[] args, ThreadProvider threadProvider, boolean singleThreaded, boolean nonVirtual) {
 
-        LOGGER.info("Method " + _method.getName() + " of class " + _method.getDeclaringClass() + " was invoked with arguments: " + args);
+        LOGGER.info("Method " + method.getName() + " of class " + method.getDeclaringClass() + " was invoked with arguments: " + args);
         final Object[] arguments = new Object[args.length];
         for (int i = 0; i < arguments.length; i++) {
             arguments[i] = args[i].asJavaObject();
         }
 
-        final VMValue objectValue = _vm.createObjectProviderValue(object);
+        final VMValue objectValue = vm.createObjectProviderValue(object);
         Object instanceObject = null;
         if (objectValue != null) {
             instanceObject = objectValue.asJavaObject();
@@ -100,22 +100,22 @@ class JavaMethodProvider implements MethodProvider {
 
         Object result = null;
         try {
-            _method.setAccessible(true);
-            result = _method.invoke(instanceObject, arguments);
+            method.setAccessible(true);
+            result = method.invoke(instanceObject, arguments);
         } catch (IllegalArgumentException e) {
-            LOGGER.log(Level.SEVERE, "Exception while invoking method " + _method.getName(), e);
+            LOGGER.log(Level.SEVERE, "Exception while invoking method " + method.getName(), e);
         } catch (IllegalAccessException e) {
-            LOGGER.log(Level.SEVERE, "Exception while invoking method " + _method.getName(), e);
+            LOGGER.log(Level.SEVERE, "Exception while invoking method " + method.getName(), e);
         } catch (InvocationTargetException e) {
-            LOGGER.log(Level.SEVERE, "Exception while invoking method " + _method.getName(), e);
+            LOGGER.log(Level.SEVERE, "Exception while invoking method " + method.getName(), e);
         }
 
-        if (_method.getReturnType() == Void.TYPE) {
-            return _vm.getVoidValue();
+        if (method.getReturnType() == Void.TYPE) {
+            return vm.getVoidValue();
         }
 
 
-        return _vm.createJavaObjectValue(result, _method.getReturnType());
+        return vm.createJavaObjectValue(result, method.getReturnType());
     }
 
     public VMValue invokeStatic(VMValue[] args, ThreadProvider threadProvider, boolean singleThreaded) {

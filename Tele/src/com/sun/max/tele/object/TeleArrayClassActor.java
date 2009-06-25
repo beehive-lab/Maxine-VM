@@ -42,7 +42,7 @@ public class TeleArrayClassActor extends TeleReferenceClassActor implements Arra
     }
 
     public ReferenceTypeProvider elementType() {
-        return teleVM().findTeleClassActor(this.classActor().componentClassActor().typeDescriptor());
+        return teleVM().findTeleClassActor(this.classActor().componentClassActor().typeDescriptor);
     }
 
     public ArrayProvider newInstance(int length) {

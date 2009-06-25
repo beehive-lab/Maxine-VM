@@ -41,7 +41,7 @@ import com.sun.max.util.*;
  */
 public final class MemoryInspector extends Inspector {
 
-    private static final IdentityHashSet<MemoryInspector> _memoryInspectors = new IdentityHashSet<MemoryInspector>();
+    private static final IdentityHashSet<MemoryInspector> memoryInspectors = new IdentityHashSet<MemoryInspector>();
 
     /**
      * Displays a new inspector for a region of memory.
@@ -68,30 +68,30 @@ public final class MemoryInspector extends Inspector {
 
     private MemoryInspector(Inspection inspection, Address address, int numberOfGroups, int numberOfBytesPerGroup, int numberOfGroupsPerLine) {
         super(inspection);
-        _address = address;
-        _numberOfGroups = numberOfGroups;
-        _numberOfBytesPerGroup = numberOfBytesPerGroup;
-        _numberOfGroupsPerLine = numberOfGroupsPerLine;
+        this.address = address;
+        this.numberOfGroups = numberOfGroups;
+        this.numberOfBytesPerGroup = numberOfBytesPerGroup;
+        this.numberOfGroupsPerLine = numberOfGroupsPerLine;
         createFrame(null);
         inspection.gui().setLocationRelativeToMouse(this);
-        _memoryInspectors.add(this);
+        memoryInspectors.add(this);
         Trace.line(1, tracePrefix() + " creating for " + getTextForTitle());
     }
 
-    private Address _address;
-    private int _numberOfGroups;
-    private int _numberOfBytesPerGroup;
-    private int _numberOfGroupsPerLine;
+    private Address address;
+    private int numberOfGroups;
+    private int numberOfBytesPerGroup;
+    private int numberOfGroupsPerLine;
 
     private JComponent createController() {
         final JPanel controller = new InspectorPanel(inspection(), new SpringLayout());
 
         controller.add(new TextLabel(inspection(), "start:"));
-        final AddressInputField.Hex addressField = new AddressInputField.Hex(inspection(), _address) {
+        final AddressInputField.Hex addressField = new AddressInputField.Hex(inspection(), address) {
             @Override
-            public void update(Address address) {
-                if (!address.equals(_address)) {
-                    _address = address;
+            public void update(Address a) {
+                if (!a.equals(address)) {
+                    address = a;
                     MemoryInspector.this.reconstructView();
                 }
             }
@@ -99,11 +99,11 @@ public final class MemoryInspector extends Inspector {
         controller.add(addressField);
 
         controller.add(new TextLabel(inspection(), "bytes/group:"));
-        final AddressInputField.Decimal numberOfBytesPerGroupField = new AddressInputField.Decimal(inspection(), Address.fromInt(_numberOfBytesPerGroup)) {
+        final AddressInputField.Decimal numberOfBytesPerGroupField = new AddressInputField.Decimal(inspection(), Address.fromInt(numberOfBytesPerGroup)) {
             @Override
-            public void update(Address numberOfBytesPerGroup) {
-                if (!numberOfBytesPerGroup.equals(_numberOfBytesPerGroup)) {
-                    _numberOfBytesPerGroup = numberOfBytesPerGroup.toInt();
+            public void update(Address value) {
+                if (!value.equals(numberOfBytesPerGroup)) {
+                    numberOfBytesPerGroup = value.toInt();
                     MemoryInspector.this.reconstructView();
                 }
             }
@@ -112,11 +112,11 @@ public final class MemoryInspector extends Inspector {
         controller.add(numberOfBytesPerGroupField);
 
         controller.add(new TextLabel(inspection(), "groups:"));
-        final AddressInputField.Decimal numberOfGroupsField = new AddressInputField.Decimal(inspection(), Address.fromInt(_numberOfGroups)) {
+        final AddressInputField.Decimal numberOfGroupsField = new AddressInputField.Decimal(inspection(), Address.fromInt(numberOfGroups)) {
             @Override
-            public void update(Address numberOfGroups) {
-                if (!numberOfGroups.equals(_numberOfGroups)) {
-                    _numberOfGroups = numberOfGroups.toInt();
+            public void update(Address value) {
+                if (!value.equals(numberOfGroups)) {
+                    numberOfGroups = value.toInt();
                     MemoryInspector.this.reconstructView();
                 }
             }
@@ -125,11 +125,11 @@ public final class MemoryInspector extends Inspector {
         controller.add(numberOfGroupsField);
 
         controller.add(new TextLabel(inspection(), "groups/line:"));
-        final AddressInputField.Decimal numberOfGroupsPerLineField = new AddressInputField.Decimal(inspection(), Address.fromInt(_numberOfGroupsPerLine)) {
+        final AddressInputField.Decimal numberOfGroupsPerLineField = new AddressInputField.Decimal(inspection(), Address.fromInt(numberOfGroupsPerLine)) {
             @Override
-            public void update(Address numberOfGroupsPerLine) {
-                if (!numberOfGroupsPerLine.equals(_numberOfGroupsPerLine)) {
-                    _numberOfGroupsPerLine = numberOfGroupsPerLine.toInt();
+            public void update(Address value) {
+                if (!value.equals(numberOfGroupsPerLine)) {
+                    numberOfGroupsPerLine = value.toInt();
                     MemoryInspector.this.reconstructView();
                 }
             }
@@ -141,27 +141,27 @@ public final class MemoryInspector extends Inspector {
         return controller;
     }
 
-    private TextLabel[] _memoryLabels;
+    private TextLabel[] memoryLabels;
     // Char labels displayed as Word data (with fixed width font) so that horizontal alignment works
-    private TextLabel[] _charLabels;
+    private TextLabel[] charLabels;
 
     @Override
     protected void refreshView(boolean force) {
-        final byte[] bytes = new byte[_numberOfBytesPerGroup];
-        for (int i = 0; i < _numberOfGroups; i++) {
-            final Address address = _address.plus(i * _numberOfBytesPerGroup);
+        final byte[] bytes = new byte[numberOfBytesPerGroup];
+        for (int i = 0; i < numberOfGroups; i++) {
+            final Address address = this.address.plus(i * numberOfBytesPerGroup);
             maxVM().readFully(address, bytes);
-            _memoryLabels[i].setText(byteGroupToString(bytes));
-            _memoryLabels[i].setToolTipText(address.toHexString());
-            switch (_numberOfBytesPerGroup) {
+            memoryLabels[i].setText(byteGroupToString(bytes));
+            memoryLabels[i].setToolTipText(address.toHexString());
+            switch (numberOfBytesPerGroup) {
                 case 1: {
                     final char ch = (char) bytes[0];
-                    _charLabels[i].setText(Character.toString(ch));
+                    charLabels[i].setText(Character.toString(ch));
                     break;
                 }
                 case 2: {
                     final char ch = (char) ((bytes[1] * 256) + bytes[0]);
-                    _charLabels[i].setText(Character.toString(ch));
+                    charLabels[i].setText(Character.toString(ch));
                     break;
                 }
                 default: {
@@ -172,15 +172,15 @@ public final class MemoryInspector extends Inspector {
         super.refreshView(force);
     }
 
-    private JPanel _contentPane;
+    private JPanel contentPane;
 
-    private static final Predicate<Inspector> _allMemoryInspectorsPredicate = new Predicate<Inspector>() {
+    private static final Predicate<Inspector> allMemoryInspectorsPredicate = new Predicate<Inspector>() {
         public boolean evaluate(Inspector inspector) {
             return inspector instanceof MemoryInspector;
         }
     };
 
-    private final Predicate<Inspector> _otherMemoryInspectorsPredicate = new Predicate<Inspector>() {
+    private final Predicate<Inspector> otherMemoryInspectorsPredicate = new Predicate<Inspector>() {
         public boolean evaluate(Inspector inspector) {
             return inspector instanceof MemoryInspector && inspector != MemoryInspector.this;
         }
@@ -188,57 +188,57 @@ public final class MemoryInspector extends Inspector {
 
     @Override
     public String getTextForTitle() {
-        return MemoryInspector.class.getSimpleName() + ": " + _address.toHexString();
+        return MemoryInspector.class.getSimpleName() + ": " + address.toHexString();
     }
 
     @Override
     protected void createView() {
         frame().menu().addSeparator();
-        frame().menu().add(actions().closeViews(_otherMemoryInspectorsPredicate, "Close other Memory Inspectors"));
-        frame().menu().add(actions().closeViews(_allMemoryInspectorsPredicate, "Close all Memory Inspectors"));
+        frame().menu().add(actions().closeViews(otherMemoryInspectorsPredicate, "Close other Memory Inspectors"));
+        frame().menu().add(actions().closeViews(allMemoryInspectorsPredicate, "Close all Memory Inspectors"));
 
-        _contentPane = new InspectorPanel(inspection());
-        frame().setContentPane(_contentPane);
-        _contentPane.removeAll();
-        _contentPane.setLayout(new BoxLayout(_contentPane, BoxLayout.Y_AXIS));
-        _contentPane.add(createController());
+        contentPane = new InspectorPanel(inspection());
+        frame().setContentPane(contentPane);
+        contentPane.removeAll();
+        contentPane.setLayout(new BoxLayout(contentPane, BoxLayout.Y_AXIS));
+        contentPane.add(createController());
 
         final JPanel view = new InspectorPanel(inspection(), new SpringLayout());
-        _contentPane.add(view);
+        contentPane.add(view);
 
-        int numberOfLines = _numberOfGroups / _numberOfGroupsPerLine;
-        if (_numberOfGroups % _numberOfGroupsPerLine != 0) {
+        int numberOfLines = numberOfGroups / numberOfGroupsPerLine;
+        if (numberOfGroups % numberOfGroupsPerLine != 0) {
             numberOfLines++;
         }
-        final int numberOfLabels = numberOfLines * _numberOfGroupsPerLine;
+        final int numberOfLabels = numberOfLines * numberOfGroupsPerLine;
 
-        _memoryLabels = new TextLabel[numberOfLabels];
-        _charLabels = new TextLabel[numberOfLabels];
-        final String space = Strings.times(' ', 2 * _numberOfBytesPerGroup);
+        memoryLabels = new TextLabel[numberOfLabels];
+        charLabels = new TextLabel[numberOfLabels];
+        final String space = Strings.times(' ', 2 * numberOfBytesPerGroup);
 
-        Address lineAddress = _address;
-        final int numberOfBytesPerLine = _numberOfGroupsPerLine * _numberOfBytesPerGroup;
+        Address lineAddress = address;
+        final int numberOfBytesPerLine = numberOfGroupsPerLine * numberOfBytesPerGroup;
 
         for (int line = 0; line < numberOfLines; line++) {
             final ValueLabel lineAddressLabel = new WordValueLabel(inspection(), ValueMode.WORD, lineAddress, null);
             view.add(lineAddressLabel);
             lineAddress = lineAddress.plus(numberOfBytesPerLine);
-            for (int group = 0; group < _numberOfGroupsPerLine; group++) {
-                final int index = (line * _numberOfGroupsPerLine) + group;
-                _memoryLabels[index] = new TextLabel(inspection(), space);
-                view.add(_memoryLabels[index]);
+            for (int group = 0; group < numberOfGroupsPerLine; group++) {
+                final int index = (line * numberOfGroupsPerLine) + group;
+                memoryLabels[index] = new TextLabel(inspection(), space);
+                view.add(memoryLabels[index]);
             }
             final Space leftSpace = new Space();
             view.add(leftSpace);
-            for (int group = 0; group < _numberOfGroupsPerLine; group++) {
-                final int index = (line * _numberOfGroupsPerLine) + group;
-                _charLabels[index] = new TextLabel(inspection(), space);
-                view.add(_charLabels[index]);
+            for (int group = 0; group < numberOfGroupsPerLine; group++) {
+                final int index = (line * numberOfGroupsPerLine) + group;
+                charLabels[index] = new TextLabel(inspection(), space);
+                view.add(charLabels[index]);
             }
         }
 
         refreshView(true);
-        SpringUtilities.makeCompactGrid(view, numberOfLines * 2, 1 + _numberOfGroupsPerLine, 0, 0, 5, 5);
+        SpringUtilities.makeCompactGrid(view, numberOfLines * 2, 1 + numberOfGroupsPerLine, 0, 0, 5, 5);
     }
 
     public void viewConfigurationChanged() {

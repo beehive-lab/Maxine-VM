@@ -34,14 +34,14 @@ import com.sun.max.vm.compiler.cir.variable.*;
  */
 public abstract class CirUpdate {
 
-    private final CirOptimizer _cirOptimizer;
+    private final CirOptimizer cirOptimizer;
 
     public CirOptimizer cirOptimizer() {
-        return _cirOptimizer;
+        return cirOptimizer;
     }
 
     protected CirUpdate(CirOptimizer cirOptimizer) {
-        _cirOptimizer = cirOptimizer;
+        this.cirOptimizer = cirOptimizer;
     }
 
     public boolean updateValues(CirValue[] values) {
@@ -73,8 +73,8 @@ public abstract class CirUpdate {
         result |= updateValues(call.arguments());
         CirJavaFrameDescriptor javaFrameDescriptor = call.javaFrameDescriptor();
         while (javaFrameDescriptor != null) {
-            result |= updateValues(javaFrameDescriptor.locals());
-            result |= updateValues(javaFrameDescriptor.stackSlots());
+            result |= updateValues(javaFrameDescriptor.locals);
+            result |= updateValues(javaFrameDescriptor.stackSlots);
             javaFrameDescriptor = javaFrameDescriptor.parent();
         }
         result |= updateNode(call);
@@ -109,13 +109,13 @@ public abstract class CirUpdate {
         return updateProcedure(method);
     }
 
-    protected final IdentityHashSet<CirBlock> _visitedBlocks = new IdentityHashSet<CirBlock>();
+    protected final IdentityHashSet<CirBlock> visitedBlocks = new IdentityHashSet<CirBlock>();
 
     public boolean updateBlock(CirBlock block) {
-        if (_visitedBlocks.contains(block)) {
+        if (visitedBlocks.contains(block)) {
             return false;
         }
-        _visitedBlocks.add(block);
+        visitedBlocks.add(block);
         boolean result = block.closure().acceptUpdate(this);
         result |= updateProcedure(block);
         return result;

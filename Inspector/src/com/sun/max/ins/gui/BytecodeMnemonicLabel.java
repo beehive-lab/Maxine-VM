@@ -31,11 +31,11 @@ import com.sun.max.vm.bytecode.*;
  */
 public class BytecodeMnemonicLabel extends InspectorLabel {
 
-    private Bytecode _opcode;
+    private Bytecode opcode;
 
     public BytecodeMnemonicLabel(Inspection inspection, Bytecode opcode) {
         super(inspection, "");
-        _opcode = opcode;
+        this.opcode = opcode;
         redisplay();
     }
 
@@ -47,17 +47,17 @@ public class BytecodeMnemonicLabel extends InspectorLabel {
     }
 
     public final void setValue(Bytecode opcode) {
-        _opcode = opcode;
+        this.opcode = opcode;
         updateText();
     }
 
     private void updateText() {
-        if (_opcode == null) {
+        if (opcode == null) {
             setText(null);
             setToolTipText(null);
         } else {
-            setText(_opcode.toString().toLowerCase());
-            setToolTipText("Opcode " + _opcode.ordinal() + " (0x" + Integer.toHexString(_opcode.ordinal()) + ")");
+            setText(opcode.toString().toLowerCase());
+            setToolTipText("Opcode " + opcode.ordinal() + " (0x" + Integer.toHexString(opcode.ordinal()) + ")");
         }
 
     }

@@ -31,7 +31,7 @@ import com.sun.max.unsafe.*;
  */
 public final class BoxedSize extends Size implements UnsafeBox {
 
-    private long _nativeWord;
+    private long nativeWord;
 
     public static final BoxedSize ZERO = new BoxedSize(0);
     public static final BoxedSize MAX = new BoxedSize(-1L);
@@ -42,11 +42,11 @@ public final class BoxedSize extends Size implements UnsafeBox {
 
         static final int HIGHEST_VALUE = 1000;
 
-        static final BoxedSize[] _cache = new BoxedSize[HIGHEST_VALUE + 1];
+        static final BoxedSize[] cache = new BoxedSize[HIGHEST_VALUE + 1];
 
         static {
-            for (int i = 0; i < _cache.length; i++) {
-                _cache[i] = new BoxedSize(i);
+            for (int i = 0; i < cache.length; i++) {
+                cache[i] = new BoxedSize(i);
             }
         }
     }
@@ -56,7 +56,7 @@ public final class BoxedSize extends Size implements UnsafeBox {
             return ZERO;
         }
         if (value >= 0 && value <= Cache.HIGHEST_VALUE) {
-            return Cache._cache[(int) value];
+            return Cache.cache[(int) value];
         }
         if (value == -1L) {
             return MAX;
@@ -66,7 +66,7 @@ public final class BoxedSize extends Size implements UnsafeBox {
     }
 
     private BoxedSize(long value) {
-        _nativeWord = value;
+        nativeWord = value;
     }
 
     public static BoxedSize from(int value) {
@@ -74,27 +74,27 @@ public final class BoxedSize extends Size implements UnsafeBox {
     }
 
     public long nativeWord() {
-        return _nativeWord;
+        return nativeWord;
     }
 
     @Override
     protected Size dividedByAddress(Address divisor) {
-        return BoxedAddress.from(_nativeWord).dividedByAddress(divisor).asSize();
+        return BoxedAddress.from(nativeWord).dividedByAddress(divisor).asSize();
     }
 
     @Override
     protected Size dividedByInt(int divisor) {
-        return BoxedAddress.from(_nativeWord).dividedByInt(divisor).asSize();
+        return BoxedAddress.from(nativeWord).dividedByInt(divisor).asSize();
     }
 
     @Override
     protected Size remainderByAddress(Address divisor) {
-        return BoxedAddress.from(_nativeWord).remainderByAddress(divisor).asSize();
+        return BoxedAddress.from(nativeWord).remainderByAddress(divisor).asSize();
     }
 
     @Override
     protected int remainderByInt(int divisor) {
-        return BoxedAddress.from(_nativeWord).remainderByInt(divisor);
+        return BoxedAddress.from(nativeWord).remainderByInt(divisor);
     }
 
 }

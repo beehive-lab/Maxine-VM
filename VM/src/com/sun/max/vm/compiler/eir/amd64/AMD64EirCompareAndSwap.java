@@ -35,12 +35,12 @@ import com.sun.max.vm.type.*;
 public final class AMD64EirCompareAndSwap extends AMD64EirPointerOperation {
 
     @CONSTANT
-    private EirOperand _comparableAndResultOperand;
+    private EirOperand comparableAndResultOperand;
 
     private void initialize(EirValue comparableAndResult) {
-        _comparableAndResultOperand = new EirOperand(this, EirOperand.Effect.UPDATE, G);
-        _comparableAndResultOperand.setRequiredRegister(AMD64EirRegister.General.RAX);
-        _comparableAndResultOperand.setEirValue(comparableAndResult);
+        comparableAndResultOperand = new EirOperand(this, EirOperand.Effect.UPDATE, G);
+        comparableAndResultOperand.setRequiredRegister(AMD64EirRegister.General.RAX);
+        comparableAndResultOperand.setEirValue(comparableAndResult);
     }
 
     public AMD64EirCompareAndSwap(EirBlock block, Kind kind, EirValue newValue, EirValue pointer, EirValue comparableAndResult) {
@@ -66,7 +66,7 @@ public final class AMD64EirCompareAndSwap extends AMD64EirPointerOperation {
     @Override
     public void visitOperands(EirOperand.Procedure visitor) {
         super.visitOperands(visitor);
-        visitor.run(_comparableAndResultOperand);
+        visitor.run(comparableAndResultOperand);
     }
 
     public AMD64GeneralRegister32 newValueRegister32() {
@@ -80,7 +80,7 @@ public final class AMD64EirCompareAndSwap extends AMD64EirPointerOperation {
     @Override
     protected void translateWithoutOffsetWithoutIndex(AMD64EirTargetEmitter emitter, AMD64GeneralRegister64 pointerRegister) {
         emitter.assembler().lock();
-        switch (kind().asEnum()) {
+        switch (kind().asEnum) {
             case INT: {
                 emitter.assembler().cmpxchg(pointerRegister.indirect(), newValueRegister32());
                 break;
@@ -104,7 +104,7 @@ public final class AMD64EirCompareAndSwap extends AMD64EirPointerOperation {
     @Override
     protected void translateWithRegisterOffsetWithoutIndex(AMD64EirTargetEmitter emitter, AMD64GeneralRegister64 pointerRegister, AMD64GeneralRegister64 offsetRegister) {
         emitter.assembler().lock();
-        switch (kind().asEnum()) {
+        switch (kind().asEnum) {
             case INT: {
                 emitter.assembler().cmpxchg(pointerRegister.base(), offsetRegister.index(), SCALE_1, newValueRegister32());
                 break;
@@ -128,7 +128,7 @@ public final class AMD64EirCompareAndSwap extends AMD64EirPointerOperation {
     @Override
     protected void translateWithImmediateOffset8WithoutIndex(AMD64EirTargetEmitter emitter, AMD64GeneralRegister64 pointerRegister, byte offset8) {
         emitter.assembler().lock();
-        switch (kind().asEnum()) {
+        switch (kind().asEnum) {
             case INT: {
                 emitter.assembler().cmpxchg(offset8, pointerRegister.indirect(), newValueRegister32());
                 break;
@@ -152,7 +152,7 @@ public final class AMD64EirCompareAndSwap extends AMD64EirPointerOperation {
     @Override
     protected void translateWithImmediateOffset32WithoutIndex(AMD64EirTargetEmitter emitter, AMD64GeneralRegister64 pointerRegister, int offset32) {
         emitter.assembler().lock();
-        switch (kind().asEnum()) {
+        switch (kind().asEnum) {
             case INT: {
                 emitter.assembler().cmpxchg(offset32, pointerRegister.indirect(), newValueRegister32());
                 break;

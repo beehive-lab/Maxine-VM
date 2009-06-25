@@ -35,37 +35,34 @@ import com.sun.c1x.C1XIntrinsic;
  */
 public class Intrinsic extends StateSplit {
 
-    final C1XIntrinsic _intrinsic;
-    final boolean _hasReceiver;
-    Instruction[] _arguments;
-    ValueStack _lockStack;
+    final C1XIntrinsic intrinsic;
+    final boolean isStatic;
+    Instruction[] arguments;
+    ValueStack lockStack;
 
     /**
      * Creates a new Intrinsic instruction.
      * @param type the result type of the instruction
      * @param intrinsic the actual intrinsic
      * @param arguments the arguments to the call (including the receiver object)
-     * @param hasReceiver <code>true</code> if this method takes a receiver object
+     * @param isStatic <code>true</code> if this method is static
      * @param lockStack the lock stack
      * @param preservesState <code>true</code> if the implementation of this intrinsic preserves register state
      * @param canTrap <code>true</code> if this intrinsic can cause a trap
      */
-    public Intrinsic(ValueType type, C1XIntrinsic intrinsic, Instruction[] arguments, boolean hasReceiver,
+    public Intrinsic(ValueType type, C1XIntrinsic intrinsic, Instruction[] arguments, boolean isStatic,
                      ValueStack lockStack, boolean preservesState, boolean canTrap) {
         super(type);
-        _intrinsic = intrinsic;
-        _arguments = arguments;
-        _lockStack = lockStack;
-        _hasReceiver = hasReceiver;
+        this.intrinsic = intrinsic;
+        this.arguments = arguments;
+        this.lockStack = lockStack;
+        this.isStatic = isStatic;
         // Preserves state means that the intrinsic preserves register state across all cases,
         // including slow cases--even if it causes a trap. If so, it can still be a candidate
         // for load elimination and common subexpression elimination
         initFlag(Flag.PreservesState, preservesState);
         initFlag(Flag.CanTrap, canTrap);
-        if (!canTrap) {
-            // some intrinsics cannot trap, so unpin them
-            unpin(PinReason.PinStateSplitConstructor);
-        }
+        initFlag(Flag.PinStateSplitConstructor, canTrap);
     }
 
     /**
@@ -73,7 +70,7 @@ public class Intrinsic extends StateSplit {
      * @return the intrinsic
      */
     public C1XIntrinsic intrinsic() {
-        return _intrinsic;
+        return intrinsic;
     }
 
     /**
@@ -81,7 +78,7 @@ public class Intrinsic extends StateSplit {
      * @return the list of instructions that produce input
      */
     public Instruction[] arguments() {
-        return _arguments;
+        return arguments;
     }
 
     /**
@@ -89,7 +86,7 @@ public class Intrinsic extends StateSplit {
      * @return the lock stack
      */
     public ValueStack lockStack() {
-        return _lockStack;
+        return lockStack;
     }
 
     /**
@@ -97,7 +94,7 @@ public class Intrinsic extends StateSplit {
      * @return <code>true</code> if this intrinsic has a receiver object
      */
     public boolean hasReceiver() {
-        return _hasReceiver;
+        return !isStatic;
     }
 
     /**
@@ -105,8 +102,8 @@ public class Intrinsic extends StateSplit {
      * @return the instruction producing the receiver object
      */
     public Instruction receiver() {
-        assert _hasReceiver;
-        return _arguments[0];
+        assert !isStatic;
+        return arguments[0];
     }
 
     /**
@@ -132,8 +129,8 @@ public class Intrinsic extends StateSplit {
      */
     @Override
     public void stateValuesDo(InstructionClosure closure) {
-        if (_lockStack != null) {
-            _lockStack.valuesDo(closure);
+        if (lockStack != null) {
+            lockStack.valuesDo(closure);
         }
     }
 
@@ -143,8 +140,8 @@ public class Intrinsic extends StateSplit {
      */
     @Override
     public void inputValuesDo(InstructionClosure closure) {
-        for (int i = 0; i < _arguments.length; i++) {
-            _arguments[i] = closure.apply(_arguments[i]);
+        for (int i = 0; i < arguments.length; i++) {
+            arguments[i] = closure.apply(arguments[i]);
         }
     }
 

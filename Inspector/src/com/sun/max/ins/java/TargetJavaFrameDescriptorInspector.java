@@ -38,8 +38,8 @@ import com.sun.max.vm.value.*;
  */
 public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<TargetJavaFrameDescriptorInspector> {
 
-    private final TargetJavaFrameDescriptor _javaFrameDescriptor;
-    private final String _framePointer;
+    private final TargetJavaFrameDescriptor javaFrameDescriptor;
+    private final String framePointer;
 
     private static final int MAX_BYTE_CODE_BITS = 20;
 
@@ -52,8 +52,8 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
 
     private TargetJavaFrameDescriptorInspector(Inspection inspection, TargetJavaFrameDescriptor javaFrameDescriptor, TargetABI abi) {
         super(inspection, LongValue.from(subject(javaFrameDescriptor)));
-        _javaFrameDescriptor = javaFrameDescriptor;
-        _framePointer = TeleIntegerRegisters.symbolizer(maxVM().vmConfiguration()).fromValue(abi.framePointer().value()).toString();
+        this.javaFrameDescriptor = javaFrameDescriptor;
+        framePointer = TeleIntegerRegisters.symbolizer(maxVM().vmConfiguration()).fromValue(abi.framePointer().value()).toString();
         createFrame(null);
     }
 
@@ -71,7 +71,7 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
     }
 
     private String shortString(BytecodeLocation bytecodeLocation) {
-        return bytecodeLocation.classMethodActor().name().toString() + " @ " + bytecodeLocation.bytecodePosition();
+        return bytecodeLocation.classMethodActor().name.toString() + " @ " + bytecodeLocation.bytecodePosition();
     }
 
     private String targetLocationToString(TargetLocation targetLocation) {
@@ -86,7 +86,7 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
             }
             case LOCAL_STACK_SLOT: {
                 final TargetLocation.LocalStackSlot localStackSlot = (TargetLocation.LocalStackSlot) targetLocation;
-                return _framePointer + "[" + (localStackSlot.index() * maxVM().wordSize()) + "]";
+                return framePointer + "[" + (localStackSlot.index() * maxVM().wordSize()) + "]";
             }
             default: {
                 return targetLocation.toString();
@@ -122,18 +122,18 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
         }
 
         final CodeAttribute codeAttribute = bytecodeLocation.classMethodActor().codeAttribute();
-        for (int i = 0; i < descriptor.locals().length; i++) {
+        for (int i = 0; i < descriptor.locals.length; i++) {
             String local = "local #" + i;
             final LocalVariableTable.Entry entry = codeAttribute.localVariableTable().findLocalVariable(i, bytecodeLocation.bytecodePosition());
             if (entry != null) {
                 local += ": " + entry.name(codeAttribute.constantPool());
             }
-            local += " = " + targetLocationToString(descriptor.locals()[i]);
+            local += " = " + targetLocationToString(descriptor.locals[i]);
             panel.add(new TextLabel(inspection(), local));
         }
-        for (int i = 0; i < descriptor.stackSlots().length; i++) {
+        for (int i = 0; i < descriptor.stackSlots.length; i++) {
             String stackSlot = "stack #" + i;
-            stackSlot += " = " + targetLocationToString(descriptor.stackSlots()[i]);
+            stackSlot += " = " + targetLocationToString(descriptor.stackSlots[i]);
             panel.add(new TextLabel(inspection(), stackSlot));
         }
         panel.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, style().defaultBorderColor()));
@@ -142,18 +142,18 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
 
     @Override
     public String getTextForTitle() {
-        if (_javaFrameDescriptor != null) {
-            return shortString(_javaFrameDescriptor);
+        if (javaFrameDescriptor != null) {
+            return shortString(javaFrameDescriptor);
         }
         return null;
     }
 
     @Override
     protected void createView() {
-        if (_javaFrameDescriptor != null) {
+        if (javaFrameDescriptor != null) {
             final JPanel panel = new InspectorPanel(inspection());
             panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-            TargetJavaFrameDescriptor descriptor = _javaFrameDescriptor;
+            TargetJavaFrameDescriptor descriptor = javaFrameDescriptor;
             do {
                 panel.add(createDescriptorPanel(descriptor), 0);
                 descriptor = descriptor.parent();

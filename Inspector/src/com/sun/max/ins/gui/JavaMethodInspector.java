@@ -46,10 +46,10 @@ import com.sun.max.vm.runtime.*;
  */
 public class JavaMethodInspector extends MethodInspector {
 
-    private final MethodInspectorPreferences _methodInspectorPreferences;
+    private final MethodInspectorPreferences methodInspectorPreferences;
 
-    private final TeleClassMethodActor _teleClassMethodActor;
-    private final MethodCodeKind _requestedCodeKind;
+    private final TeleClassMethodActor teleClassMethodActor;
+    private final MethodCodeKind requestedCodeKind;
 
     /**
      * A particular compilation of the method, to which this Inspector is permanently bound, and which distinguishes
@@ -57,7 +57,7 @@ public class JavaMethodInspector extends MethodInspector {
      * Null when this Inspector is not bound to any compilation, in which case this Inspector is the unique (unbound)
      * inspector for the method.
      */
-    private final TeleTargetMethod _teleTargetMethod;
+    private final TeleTargetMethod teleTargetMethod;
 
     /**
      * An Inspector for a Java Method associated with a specific compilation, and which association does not change
@@ -91,29 +91,29 @@ public class JavaMethodInspector extends MethodInspector {
     private JavaMethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleTargetMethod teleTargetMethod, TeleClassMethodActor teleClassMethodActor, MethodCodeKind requestedCodeKind) {
         super(inspection, parent, teleTargetMethod, teleClassMethodActor);
 
-        _methodInspectorPreferences = MethodInspectorPreferences.globalPreferences(inspection);
-        _teleClassMethodActor = teleClassMethodActor;
-        _teleTargetMethod = teleTargetMethod;
-        _requestedCodeKind = requestedCodeKind;
+        this.methodInspectorPreferences = MethodInspectorPreferences.globalPreferences(inspection);
+        this.teleClassMethodActor = teleClassMethodActor;
+        this.teleTargetMethod = teleTargetMethod;
+        this.requestedCodeKind = requestedCodeKind;
 
         // enable choice if target code is present, even though this Inspector is not bound to a TargetMethod
-        _codeKindEnabled.put(MethodCodeKind.TARGET_CODE, teleTargetMethod != null || teleClassMethodActor.hasTargetMethod());
+        codeKindEnabled.put(MethodCodeKind.TARGET_CODE, teleTargetMethod != null || teleClassMethodActor.hasTargetMethod());
         // enable if bytecodes present
-        _codeKindEnabled.put(MethodCodeKind.BYTECODES, _teleClassMethodActor.hasCodeAttribute());
+        codeKindEnabled.put(MethodCodeKind.BYTECODES, teleClassMethodActor.hasCodeAttribute());
         // not implemented yet
-        _codeKindEnabled.put(MethodCodeKind.JAVA_SOURCE, false);
+        codeKindEnabled.put(MethodCodeKind.JAVA_SOURCE, false);
 
         createFrame(null);
 
         // Assemble menu: override the standard frame menu by starting with an empty one and adding
         // view-specific commands.
-        _classMethodMenuItems = new ClassMethodMenuItems(inspection(), _teleClassMethodActor);
-        frame().menu().add(_classMethodMenuItems);
+        classMethodMenuItems = new ClassMethodMenuItems(inspection(), teleClassMethodActor);
+        frame().menu().add(classMethodMenuItems);
         if (teleTargetMethod != null) {
-            _targetMethodMenuItems = new TargetMethodMenuItems(inspection(), teleTargetMethod);
-            frame().menu().add(_targetMethodMenuItems);
+            targetMethodMenuItems = new TargetMethodMenuItems(inspection(), teleTargetMethod);
+            frame().menu().add(targetMethodMenuItems);
         } else {
-            _targetMethodMenuItems = null;
+            targetMethodMenuItems = null;
         }
 
 
@@ -121,18 +121,18 @@ public class JavaMethodInspector extends MethodInspector {
 
     @Override
     public TeleTargetRoutine teleTargetRoutine() {
-        return _teleTargetMethod;
+        return teleTargetMethod;
     }
 
     @Override
     public String getTextForTitle() {
-        final ClassMethodActor classMethodActor = _teleClassMethodActor.classMethodActor();
+        final ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
         final StringBuilder sb = new StringBuilder(50);
         sb.append(classMethodActor.holder().simpleName());
         sb.append(".");
-        sb.append(classMethodActor.name().toString());
-        sb.append(inspection().nameDisplay().methodCompilationID(_teleTargetMethod));
-        sb.append(inspection().nameDisplay().methodSubstitutionShortAnnotation(_teleClassMethodActor));
+        sb.append(classMethodActor.name.toString());
+        sb.append(inspection().nameDisplay().methodCompilationID(teleTargetMethod));
+        sb.append(inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor));
         return sb.toString();
         //return classMethodActor.holder().simpleName() + "." + classMethodActor.name().toString() + inspection().nameDisplay().methodCompilationID(_teleTargetMethod);
     }
@@ -149,36 +149,36 @@ public class JavaMethodInspector extends MethodInspector {
     @Override
     public String getToolTip() {
         String result;
-        if (_teleTargetMethod != null) {
-            result =  inspection().nameDisplay().shortName(_teleTargetMethod, ReturnTypeSpecification.AS_PREFIX);
+        if (teleTargetMethod != null) {
+            result =  inspection().nameDisplay().shortName(teleTargetMethod, ReturnTypeSpecification.AS_PREFIX);
         } else {
-            result = inspection().nameDisplay().shortName(_teleClassMethodActor, ReturnTypeSpecification.AS_PREFIX);
+            result = inspection().nameDisplay().shortName(teleClassMethodActor, ReturnTypeSpecification.AS_PREFIX);
         }
-        if (_teleClassMethodActor.isSubstituted()) {
-            result = result + inspection().nameDisplay().methodSubstitutionLongAnnotation(_teleClassMethodActor);
+        if (teleClassMethodActor.isSubstituted()) {
+            result = result + inspection().nameDisplay().methodSubstitutionLongAnnotation(teleClassMethodActor);
         }
         return result;
     }
 
     /** Is it possible to display this source kind: code kind exists and the viewer is implemented. */
-    private final Map<MethodCodeKind, Boolean> _codeKindEnabled = new EnumMap<MethodCodeKind, Boolean>(MethodCodeKind.class);
+    private final Map<MethodCodeKind, Boolean> codeKindEnabled = new EnumMap<MethodCodeKind, Boolean>(MethodCodeKind.class);
 
     /** Code viewers being displayed in the inspector. */
-    private final Map<MethodCodeKind, CodeViewer> _codeViewers = new EnumMap<MethodCodeKind, CodeViewer>(MethodCodeKind.class);
+    private final Map<MethodCodeKind, CodeViewer> codeViewers = new EnumMap<MethodCodeKind, CodeViewer>(MethodCodeKind.class);
 
-    private JSplitPane _splitPane;
-    private final ClassMethodMenuItems _classMethodMenuItems;
-    private final TargetMethodMenuItems _targetMethodMenuItems;
+    private JSplitPane splitPane;
+    private final ClassMethodMenuItems classMethodMenuItems;
+    private final TargetMethodMenuItems targetMethodMenuItems;
 
     @Override
     public void createView() {
         // Create code viewers, either by explicit request or by defaults.
-        if (_requestedCodeKind != null && _codeKindEnabled.get(_requestedCodeKind)) {
-            addCodeViewer(_requestedCodeKind);
+        if (requestedCodeKind != null && codeKindEnabled.get(requestedCodeKind)) {
+            addCodeViewer(requestedCodeKind);
         }
         for (MethodCodeKind codeKind : MethodCodeKind.VALUES) {
-            if (_codeKindEnabled.get(codeKind) && _methodInspectorPreferences.isVisible(codeKind)) {
-                if (!_codeViewers.containsKey(codeKind)) {
+            if (codeKindEnabled.get(codeKind) && methodInspectorPreferences.isVisible(codeKind)) {
+                if (!codeViewers.containsKey(codeKind)) {
                     addCodeViewer(codeKind);
                 }
             }
@@ -191,9 +191,9 @@ public class JavaMethodInspector extends MethodInspector {
     private CodeViewer codeViewerFactory(MethodCodeKind codeKind) {
         switch (codeKind) {
             case TARGET_CODE:
-                return new JTableTargetCodeViewer(inspection(), this, _teleTargetMethod);
+                return new JTableTargetCodeViewer(inspection(), this, teleTargetMethod);
             case BYTECODES:
-                return new JTableBytecodeViewer(inspection(), this, _teleClassMethodActor, _teleTargetMethod);
+                return new JTableBytecodeViewer(inspection(), this, teleClassMethodActor, teleTargetMethod);
             case JAVA_SOURCE:
                 FatalError.unimplemented();
                 return null;
@@ -207,17 +207,17 @@ public class JavaMethodInspector extends MethodInspector {
      * Adds a code view to this inspector, if possible.
      */
     public void viewCodeKind(MethodCodeKind kind) {
-        if (!_codeViewers.containsKey(kind) && _codeKindEnabled.get(kind)) {
+        if (!codeViewers.containsKey(kind) && codeKindEnabled.get(kind)) {
             addCodeViewer(kind);
         }
     }
 
     private void addCodeViewer(MethodCodeKind kind) {
-        if (kind != null && !_codeViewers.containsKey(kind)) {
+        if (kind != null && !codeViewers.containsKey(kind)) {
             final CodeViewer newViewer = codeViewerFactory(kind);
             if (newViewer != null) {
                 // this is awkward, doesn't work if add an inspector that we already have
-                assert !_codeViewers.containsKey(kind);
+                assert !codeViewers.containsKey(kind);
                 // final InspectorFrame newInspectorFrame = newInspector;
                 // final Component newComponent = (Component) newInspectorFrame;
                 if (codeViewerCount() == 0) {
@@ -230,19 +230,19 @@ public class JavaMethodInspector extends MethodInspector {
                     // final Component oldComponent = (Component) oldInspector.frame();
                     frame().getContentPane().remove(oldInspector);
                     if (oldInspector.codeKind().ordinal() < newViewer.codeKind().ordinal()) {
-                        _splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, oldInspector, newViewer);
+                        splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, oldInspector, newViewer);
                     } else {
-                        _splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, newViewer, oldInspector);
+                        splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, newViewer, oldInspector);
                     }
-                    _splitPane.setOneTouchExpandable(true);
-                    _splitPane.setResizeWeight(0.5);
-                    _splitPane.setBackground(style().defaultBackgroundColor());
-                    frame().getContentPane().add(_splitPane);
+                    splitPane.setOneTouchExpandable(true);
+                    splitPane.setResizeWeight(0.5);
+                    splitPane.setBackground(style().defaultBackgroundColor());
+                    frame().getContentPane().add(splitPane);
                     frame().pack();
                     frame().invalidate();
                     frame().repaint();
                 }
-                _codeViewers.put(kind, newViewer);
+                codeViewers.put(kind, newViewer);
             }
         }
     }
@@ -255,13 +255,13 @@ public class JavaMethodInspector extends MethodInspector {
             close();
         } else if (codeViewerCount() == 2) {
             final Component deleteComponent = viewer;
-            Component keepComponent = _splitPane.getLeftComponent();
+            Component keepComponent = splitPane.getLeftComponent();
             if (keepComponent == deleteComponent) {
-                keepComponent = _splitPane.getRightComponent();
+                keepComponent = splitPane.getRightComponent();
             }
-            frame().getContentPane().remove(_splitPane);
+            frame().getContentPane().remove(splitPane);
             frame().getContentPane().add(keepComponent);
-            _codeViewers.remove(viewer.codeKind());
+            codeViewers.remove(viewer.codeKind());
             frame().pack();
             frame().repaint();
         }
@@ -270,15 +270,15 @@ public class JavaMethodInspector extends MethodInspector {
     @Override
     protected void refreshView(boolean force) {
         if (isShowing() || force) {
-            _teleClassMethodActor.refreshView();
-            if (_classMethodMenuItems != null) {
-                _classMethodMenuItems.refresh(force);
+            teleClassMethodActor.refreshView();
+            if (classMethodMenuItems != null) {
+                classMethodMenuItems.refresh(force);
             }
-            for (CodeViewer codeViewer : _codeViewers.values()) {
+            for (CodeViewer codeViewer : codeViewers.values()) {
                 codeViewer.refresh(force);
             }
-            if (_targetMethodMenuItems != null) {
-                _targetMethodMenuItems.refresh(force);
+            if (targetMethodMenuItems != null) {
+                targetMethodMenuItems.refresh(force);
             }
             super.refreshView(force);
         }
@@ -286,7 +286,7 @@ public class JavaMethodInspector extends MethodInspector {
 
     public void viewConfigurationChanged() {
         // TODO (mlvdv) fix method display update when view configurations change, patched now
-        for (CodeViewer codeViewer : _codeViewers.values()) {
+        for (CodeViewer codeViewer : codeViewers.values()) {
             codeViewer.redisplay();
         }
         // Reconstruct doesn't work now for code views
@@ -294,11 +294,11 @@ public class JavaMethodInspector extends MethodInspector {
     }
 
     private int codeViewerCount() {
-        return _codeViewers.size();
+        return codeViewers.size();
     }
 
     private CodeViewer firstViewer() {
-        final Iterator<CodeViewer> iterator = _codeViewers.values().iterator();
+        final Iterator<CodeViewer> iterator = codeViewers.values().iterator();
         if (iterator.hasNext()) {
             return iterator.next();
         }
@@ -311,7 +311,7 @@ public class JavaMethodInspector extends MethodInspector {
     @Override
     public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
         boolean haveSelection = false;
-        for (CodeViewer codeViewer : _codeViewers.values()) {
+        for (CodeViewer codeViewer : codeViewers.values()) {
             if (codeViewer.updateCodeFocus(codeLocation)) {
                 haveSelection = true;
             }
@@ -326,7 +326,7 @@ public class JavaMethodInspector extends MethodInspector {
      */
     @Override
     public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
-        for (CodeViewer codeViewer : _codeViewers.values()) {
+        for (CodeViewer codeViewer : codeViewers.values()) {
             codeViewer.updateThreadFocus(thread);
         }
     }
@@ -337,7 +337,7 @@ public class JavaMethodInspector extends MethodInspector {
         if (codeViewerCount() == 1) {
             firstViewer().print(textForTitle);
         } else {
-            for (CodeViewer codeViewer : _codeViewers.values()) {
+            for (CodeViewer codeViewer : codeViewers.values()) {
                 if (gui().yesNoDialog("Print " + codeViewer.codeViewerKindName() + "?")) {
                     codeViewer.print(textForTitle);
                 }
@@ -358,11 +358,11 @@ public class JavaMethodInspector extends MethodInspector {
                         final JCheckBox checkBox = checkBoxes[codeKind.ordinal()];
                         if (source == checkBox) {
                             if (checkBox.isSelected()) {
-                                if (!_codeViewers.containsKey(codeKind)) {
+                                if (!codeViewers.containsKey(codeKind)) {
                                     addCodeViewer(codeKind);
                                 }
-                            } else if (_codeViewers.containsKey(codeKind)) {
-                                closeCodeViewer(_codeViewers.get(codeKind));
+                            } else if (codeViewers.containsKey(codeKind)) {
+                                closeCodeViewer(codeViewers.get(codeKind));
                             }
                             break;
                         }
@@ -373,7 +373,7 @@ public class JavaMethodInspector extends MethodInspector {
             content.add(new TextLabel(inspection(), "View:  "));
             final String toolTipText = "Should new Method inspectors initially display this code, when available?";
             for (MethodCodeKind codeKind : MethodCodeKind.VALUES) {
-                final boolean currentValue = _codeViewers.containsKey(codeKind);
+                final boolean currentValue = codeViewers.containsKey(codeKind);
                 final JCheckBox checkBox =
                     new InspectorCheckBox(inspection(), codeKind.toString(), toolTipText, currentValue);
                 checkBox.addItemListener(itemListener);

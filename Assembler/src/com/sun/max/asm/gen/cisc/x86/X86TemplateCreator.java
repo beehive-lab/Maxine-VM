@@ -192,7 +192,7 @@ public abstract class X86TemplateCreator<Template_Type extends X86Template> {
         } else {
             createTemplatesForOperandSizeAttribute(addressWidth);
             if (X86Assembly.are16BitAddressesSupported() && instructionAssessment.hasAddressSizeVariants()) {
-                createTemplatesForOperandSizeAttribute(WordWidth.fromInt(addressWidth.numberOfBits() / 2));
+                createTemplatesForOperandSizeAttribute(WordWidth.fromInt(addressWidth.numberOfBits / 2));
             }
         }
     }

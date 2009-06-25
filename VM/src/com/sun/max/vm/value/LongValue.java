@@ -32,17 +32,17 @@ import com.sun.max.vm.type.*;
  */
 public final class LongValue extends PrimitiveValue<LongValue> {
 
-    public final long _value;
+    public final long value;
 
     private static final class Cache {
         private Cache() {
         }
 
-        static final LongValue[] _cache = new LongValue[-(-128) + 127 + 1];
+        static final LongValue[] cache = new LongValue[-(-128) + 127 + 1];
 
         static {
-            for (int i = 0; i < _cache.length; i++) {
-                _cache[i] = new LongValue(i - 128);
+            for (int i = 0; i < cache.length; i++) {
+                cache[i] = new LongValue(i - 128);
             }
         }
     }
@@ -50,7 +50,7 @@ public final class LongValue extends PrimitiveValue<LongValue> {
     public static LongValue from(long value) {
         final int offset = 128;
         if (value >= -128 && value <= 127) { // will cache
-            return Cache._cache[(int) value + offset];
+            return Cache.cache[(int) value + offset];
         }
         return new LongValue(value);
     }
@@ -64,7 +64,7 @@ public final class LongValue extends PrimitiveValue<LongValue> {
     }
 
     private LongValue(long value) {
-        _value = value;
+        this.value = value;
     }
 
     public static final LongValue MINUS_ONE = LongValue.from(-1L);
@@ -78,18 +78,18 @@ public final class LongValue extends PrimitiveValue<LongValue> {
 
     @Override
     public boolean isZero() {
-        return _value == 0L;
+        return value == 0L;
     }
 
     @Override
     public boolean isAllOnes() {
-        return _value == -1L;
+        return value == -1L;
     }
 
     @Override
     protected int unsignedCompareSameKind(LongValue other) {
         if (Word.width() == WordWidth.BITS_64) {
-            return Address.fromLong(_value).compareTo(Address.fromLong(other._value));
+            return Address.fromLong(value).compareTo(Address.fromLong(other.value));
         }
         throw FatalError.unimplemented();
     }
@@ -104,72 +104,72 @@ public final class LongValue extends PrimitiveValue<LongValue> {
             return false;
         }
         final LongValue longValue = (LongValue) other;
-        return _value == longValue.asLong();
+        return value == longValue.asLong();
     }
 
     @Override
     public String toString() {
-        return Long.toString(_value);
+        return Long.toString(value);
     }
 
     @Override
     public Long asBoxedJavaValue() {
-        return new Long(_value);
+        return new Long(value);
     }
 
     @Override
     public byte toByte() {
-        return (byte) _value;
+        return (byte) value;
     }
 
     @Override
     public byte unsignedToByte() {
-        return (byte) (_value & 0xffL);
+        return (byte) (value & 0xffL);
     }
 
     @Override
     public boolean toBoolean() {
-        return (_value != 0L) ? true : false;
+        return (value != 0L) ? true : false;
     }
 
     @Override
     public short toShort() {
-        return (short) _value;
+        return (short) value;
     }
 
     @Override
     public short unsignedToShort() {
-        return (short) (_value & 0xffffL);
+        return (short) (value & 0xffffL);
     }
 
     @Override
     public char toChar() {
-        return (char) _value;
+        return (char) value;
     }
 
     @Override
     public int toInt() {
-        return (int) _value;
+        return (int) value;
     }
 
     @Override
     public int unsignedToInt() {
-        return (int) (_value & 0xffffffffL);
+        return (int) (value & 0xffffffffL);
     }
 
     @Override
     public float toFloat() {
-        return _value;
+        return value;
     }
 
     @Override
     public long asLong() {
-        return _value;
+        return value;
     }
 
     @Override
     public long unboxLong() {
-        return _value;
+        return value;
     }
 
     @Override
@@ -182,36 +182,36 @@ public final class LongValue extends PrimitiveValue<LongValue> {
 
     @Override
     public long toLong() {
-        return _value;
+        return value;
     }
 
     @Override
     public double toDouble() {
-        return _value;
+        return value;
     }
 
     @Override
     public Word toWord() {
-        return Offset.fromLong(_value);
+        return Offset.fromLong(value);
     }
 
     @Override
     public WordWidth signedEffectiveWidth() {
-        return WordWidth.signedEffective(_value);
+        return WordWidth.signedEffective(value);
     }
 
     @Override
     public WordWidth unsignedEffectiveWidth() {
-        return WordWidth.unsignedEffective(_value);
+        return WordWidth.unsignedEffective(value);
     }
 
     @Override
     public byte[] toBytes(DataModel dataModel) {
-        return dataModel.toBytes(_value);
+        return dataModel.toBytes(value);
     }
 
     @Override
     public void write(DataOutput stream) throws IOException {
-        stream.writeLong(_value);
+        stream.writeLong(value);
     }
 }

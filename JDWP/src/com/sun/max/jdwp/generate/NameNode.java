@@ -27,14 +27,14 @@ package com.sun.max.jdwp.generate;
  */
 class NameNode extends AbstractSimpleNode {
 
-    private String _name;
+    private String name;
 
     NameNode(String name) {
-        this._name = name;
+        this.name = name;
     }
 
     String text() {
-        return _name;
+        return name;
     }
 
     String value() {
@@ -44,6 +44,6 @@ class NameNode extends AbstractSimpleNode {
 
     @Override
     public String toString() {
-        return _name;
+        return name;
     }
 }

@@ -27,24 +27,24 @@ public class StackOverflower {
 
     private static final int LIMIT = 1000000;
 
-    private int _depth = 0;
+    private int depth = 0;
 
     void recurse() {
-        _depth++;
-        if (_depth > LIMIT) {
-            _depth = -1;
+        depth++;
+        if (depth > LIMIT) {
+            depth = -1;
             return;
         }
         recurse();
     }
 
     public int getNumberOfInvocations() {
-        _depth = 0;
+        depth = 0;
         try {
             recurse();
         } catch (StackOverflowError stackOverflowError) {
         }
-        return _depth;
+        return depth;
     }
 
     public static void run() {

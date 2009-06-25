@@ -33,9 +33,9 @@ import com.sun.max.vm.compiler.eir.*;
  */
 public abstract class AlgorithmPart {
 
-    private Timer _timer;
-    private String _name;
-    private AlgorithmData _data;
+    private Timer timer;
+    private String name;
+    private AlgorithmData data;
 
 
     public AlgorithmPart(int phase) {
@@ -47,24 +47,24 @@ public abstract class AlgorithmPart {
             if (phase < 10) {
                 number = "0" + number;
             }
-            _name = "Phase" + number + "." + getClass().getSimpleName();
+            name = "Phase" + number + "." + getClass().getSimpleName();
         }
 
         if (LinearScanRegisterAllocator.PHASE_TIMING) {
-            _timer = GlobalMetrics.newTimer(LinearScanRegisterAllocator.METRICS_PREFIX + ".TotalTiming." + _name, Clock.SYSTEM_MILLISECONDS);
+            timer = GlobalMetrics.newTimer(LinearScanRegisterAllocator.METRICS_PREFIX + ".TotalTiming." + this.name, Clock.SYSTEM_MILLISECONDS);
         }
     }
 
     protected final Timer createTimer(String name) {
         if (LinearScanRegisterAllocator.DETAILED_TIMING) {
-            return GlobalMetrics.newTimer(LinearScanRegisterAllocator.METRICS_PREFIX + ".DetailedTiming." + _name + "." + name, Clock.SYSTEM_MILLISECONDS);
+            return GlobalMetrics.newTimer(LinearScanRegisterAllocator.METRICS_PREFIX + ".DetailedTiming." + this.name + "." + name, Clock.SYSTEM_MILLISECONDS);
         }
         return null;
     }
 
     protected final Counter createCounter(String name) {
         if (LinearScanRegisterAllocator.DETAILED_COUNTING) {
-            return GlobalMetrics.newCounter(LinearScanRegisterAllocator.METRICS_PREFIX + ".Counting." + _name + "." + name);
+            return GlobalMetrics.newCounter(LinearScanRegisterAllocator.METRICS_PREFIX + ".Counting." + this.name + "." + name);
         }
         return null;
     }
@@ -74,10 +74,10 @@ public abstract class AlgorithmPart {
      * @param data the data object that provides access to the data required for register allocation
      */
     public final void run(AlgorithmData data) {
-        _data = data;
+        this.data = data;
 
         if (LinearScanRegisterAllocator.PHASE_TIMING) {
-            _timer.start();
+            timer.start();
         }
 
         assert assertPreconditions();
@@ -85,7 +85,7 @@ public abstract class AlgorithmPart {
         assert assertPostconditions();
 
         if (LinearScanRegisterAllocator.PHASE_TIMING) {
-            _timer.stop();
+            timer.stop();
         }
     }
 
@@ -94,14 +94,14 @@ public abstract class AlgorithmPart {
      * @return the current data object the algorithm is operating on
      */
     public final AlgorithmData data() {
-        return _data;
+        return data;
     }
 
     /**
      * @return the method generation object of the current method
      */
     public final EirMethodGeneration generation() {
-        return _data.generation();
+        return data.generation();
     }
 
     /**

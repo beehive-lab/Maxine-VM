@@ -33,11 +33,11 @@ class ConstantSetNode extends AbstractNamedNode {
     /**
      * The mapping between a constant and its value.
      */
-    protected static Map<String, String> _constantMap;
+    protected static Map<String, String> constantMap;
 
     ConstantSetNode() {
-        if (_constantMap == null) {
-            _constantMap = new HashMap<String, String>();
+        if (constantMap == null) {
+            constantMap = new HashMap<String, String>();
         }
     }
 
@@ -45,7 +45,7 @@ class ConstantSetNode extends AbstractNamedNode {
     void constrainComponent(Context ctx, Node node) {
         if (node instanceof ConstantNode) {
             node.constrain(ctx);
-            _constantMap.put(name() + "_" + ((ConstantNode) node).getName(), node.comment());
+            constantMap.put(name() + "_" + ((ConstantNode) node).getName(), node.comment());
         } else {
             error("Expected 'Constant', got: " + node);
         }
@@ -66,10 +66,10 @@ class ConstantSetNode extends AbstractNamedNode {
     }
 
     public static String getConstant(String key) {
-        if (_constantMap == null) {
+        if (constantMap == null) {
             return "";
         }
-        final String com = _constantMap.get(key);
+        final String com = constantMap.get(key);
         if (com == null) {
             return "";
         }

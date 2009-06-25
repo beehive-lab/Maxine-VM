@@ -32,7 +32,7 @@ import com.sun.max.vm.reference.*;
  */
 public final class TeleEnum extends TeleTupleObject {
 
-    private Enum _enumCopy;
+    private Enum enumCopy;
 
     protected TeleEnum(TeleVM teleVM, Reference enumReference) {
         super(teleVM, enumReference);
@@ -45,7 +45,7 @@ public final class TeleEnum extends TeleTupleObject {
     }
 
     public Enum toJava() {
-        if (_enumCopy == null) {
+        if (enumCopy == null) {
             final ClassActor classActor = classActorForType();
             Class enumClass = classActor.toJava();
             // find the class for this enum that directly extends Enum (i.e. that has the values).
@@ -55,9 +55,9 @@ public final class TeleEnum extends TeleTupleObject {
                     throw ProgramError.unexpected(classActor + " is not a valid enum class");
                 }
             }
-            _enumCopy = (Enum) enumClass.getEnumConstants()[teleVM().fields().Enum_ordinal.readInt(reference())];
+            enumCopy = (Enum) enumClass.getEnumConstants()[teleVM().fields().Enum_ordinal.readInt(reference())];
         }
-        return _enumCopy;
+        return enumCopy;
     }
 
     @Override

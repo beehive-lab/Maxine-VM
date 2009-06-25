@@ -69,36 +69,36 @@ public class TeleRuntimeStub extends TeleRuntimeMemoryRegion implements TeleTarg
         return teleRuntimeStub;
     }
 
-    private final TeleRoutine _teleRoutine;
+    private final TeleRoutine teleRoutine;
 
     /**
      * @return surrogate that represents the (implied) code body from which the code was compiled.
      */
     public TeleRoutine teleRoutine() {
-        return _teleRoutine;
+        return teleRoutine;
     }
-    private final TargetCodeRegion _targetCodeRegion;
+    private final TargetCodeRegion targetCodeRegion;
 
     public TargetCodeRegion targetCodeRegion() {
-        return _targetCodeRegion;
+        return targetCodeRegion;
     }
 
     /**
      * A deep copy of the stub; assume that it never moves and that addresses never relocated.
      */
-    private final RuntimeStub _runtimeStub;
+    private final RuntimeStub runtimeStub;
 
     public RuntimeStub runtimeStub() {
-        return _runtimeStub;
+        return runtimeStub;
     }
 
     public TeleRuntimeStub(TeleVM teleVM, Reference runtimeStubReference) {
         super(teleVM, runtimeStubReference);
-        _runtimeStub = (RuntimeStub) deepCopy();
-        _targetCodeRegion = new TargetCodeRegion(this, _runtimeStub.start(), _runtimeStub.size());
-        _teleRoutine = new TeleRoutine() {
+        runtimeStub = (RuntimeStub) deepCopy();
+        targetCodeRegion = new TargetCodeRegion(this, runtimeStub.start(), runtimeStub.size());
+        teleRoutine = new TeleRoutine() {
             public String getUniqueName() {
-                return  _runtimeStub.getClass().getSimpleName() + _runtimeStub;
+                return  runtimeStub.getClass().getSimpleName() + runtimeStub;
             }
         };
         // Register so that it be located by address.
@@ -106,7 +106,7 @@ public class TeleRuntimeStub extends TeleRuntimeMemoryRegion implements TeleTarg
     }
 
     public String getName() {
-        return _runtimeStub.name();
+        return runtimeStub.name();
     }
 
     public TeleClassMethodActor getTeleClassMethodActor() {
@@ -130,25 +130,25 @@ public class TeleRuntimeStub extends TeleRuntimeMemoryRegion implements TeleTarg
     }
 
     public Address getCodeStart() {
-        return _runtimeStub.start();
+        return runtimeStub.start();
     }
 
     public Size codeSize() {
-        return _runtimeStub.size();
+        return runtimeStub.size();
     }
 
     public Address callEntryPoint() {
         return getCodeStart();
     }
 
-    private IndexedSequence<TargetCodeInstruction> _instructions;
+    private IndexedSequence<TargetCodeInstruction> instructions;
 
     public IndexedSequence<TargetCodeInstruction> getInstructions() {
-        if (_instructions == null) {
+        if (instructions == null) {
             final byte[] code = teleVM().dataAccess().readFully(getCodeStart(), codeSize().toInt());
-            _instructions = TeleDisassembler.decode(teleVM().vmConfiguration().platform().processorKind(), getCodeStart(), code, null);
+            instructions = TeleDisassembler.decode(teleVM().vmConfiguration().platform().processorKind, getCodeStart(), code, null);
         }
-        return _instructions;
+        return instructions;
     }
 
 

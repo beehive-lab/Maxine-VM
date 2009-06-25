@@ -32,23 +32,23 @@ import com.sun.max.vm.thread.*;
  */
 public final class VmStackFrameWalker extends StackFrameWalker {
 
-    private Pointer _vmThreadLocals;
+    private Pointer vmThreadLocals;
 
-    private boolean _dumpingFatalStackTrace;
+    private boolean dumpingFatalStackTrace;
 
     public VmStackFrameWalker(Pointer vmThreadLocals) {
         super(VMConfiguration.hostOrTarget().compilerScheme());
-        _vmThreadLocals = vmThreadLocals;
+        this.vmThreadLocals = vmThreadLocals;
     }
 
     @Override
     public boolean isThreadInNative() {
-        return !_vmThreadLocals.isZero() && !VmThreadLocal.LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(_vmThreadLocals).isZero();
+        return !vmThreadLocals.isZero() && !VmThreadLocal.LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).isZero();
     }
 
     public void setVmThreadLocals(Pointer vmThreadLocals) {
-        assert _vmThreadLocals.isZero();
-        _vmThreadLocals = vmThreadLocals;
+        assert this.vmThreadLocals.isZero();
+        this.vmThreadLocals = vmThreadLocals;
     }
 
     @Override
@@ -78,15 +78,15 @@ public final class VmStackFrameWalker extends StackFrameWalker {
 
     @Override
     public Word readWord(VmThreadLocal local) {
-        return local.getVariableWord(_vmThreadLocals);
+        return local.getVariableWord(vmThreadLocals);
     }
 
     public boolean isDumpingFatalStackTrace() {
-        return _dumpingFatalStackTrace;
+        return dumpingFatalStackTrace;
     }
 
     public void setIsDumpingFatalStackTrace(boolean flag) {
-        _dumpingFatalStackTrace = flag;
+        dumpingFatalStackTrace = flag;
     }
 
     @Override

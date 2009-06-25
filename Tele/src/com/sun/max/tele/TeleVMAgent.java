@@ -44,13 +44,13 @@ public class TeleVMAgent {
      */
     public static final int VM_CONNECT_TIMEOUT = 5;
 
-    private ServerSocket _serverSocket;
-    private Socket _socket;
-    private IOException _acceptException;
+    private ServerSocket serverSocket;
+    private Socket socket;
+    private IOException acceptException;
 
     public void start() throws BootImageException {
         try {
-            _serverSocket = new ServerSocket(0);
+            serverSocket = new ServerSocket(0);
         } catch (IOException ioException) {
             throw new BootImageException("Error opening agent socket", ioException);
         }
@@ -58,10 +58,10 @@ public class TeleVMAgent {
             @Override
             public void run() {
                 try {
-                    Trace.line(1, "Opening agent socket on port " + _serverSocket.getLocalPort());
-                    _socket = _serverSocket.accept();
+                    Trace.line(1, "Opening agent socket on port " + serverSocket.getLocalPort());
+                    socket = serverSocket.accept();
                 } catch (IOException ioException) {
-                    _acceptException = ioException;
+                    acceptException = ioException;
                 }
             }
         }.start();
@@ -72,7 +72,7 @@ public class TeleVMAgent {
      * Gets the port on which the agent is listening for a connection from the VM.
      */
     public int port() {
-        return _serverSocket.getLocalPort();
+        return serverSocket.getLocalPort();
     }
 
     /**
@@ -86,7 +86,7 @@ public class TeleVMAgent {
         // Give the VM a few seconds to load and relocate the boot image
         final int millisecondsPerAttempt = 200;
         int attempts = (VM_CONNECT_TIMEOUT * 1000) / millisecondsPerAttempt;
-        while (_socket == null && attempts > 0) {
+        while (socket == null && attempts > 0) {
             try {
                 Thread.sleep(millisecondsPerAttempt);
             } catch (InterruptedException e) {
@@ -94,13 +94,13 @@ public class TeleVMAgent {
             }
             --attempts;
         }
-        if (_acceptException != null) {
-            throw new BootImageException("Error while waiting for connection from VM", _acceptException);
+        if (acceptException != null) {
+            throw new BootImageException("Error while waiting for connection from VM", acceptException);
         }
-        if (_socket == null) {
-            throw new BootImageException("Timed out while waiting for connection from VM", _acceptException);
+        if (socket == null) {
+            throw new BootImageException("Timed out while waiting for connection from VM", acceptException);
         }
-        Trace.line(1, "Received connection on agent socket: " + _socket);
-        return _socket;
+        Trace.line(1, "Received connection on agent socket: " + socket);
+        return socket;
     }
 }

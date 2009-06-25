@@ -151,15 +151,6 @@ public interface CiMethod {
     boolean isOverridden();
 
     /**
-     * Checks whether this method reference will link correctly at runtime
-     * for the specified location and operation.
-     * @param where the location where the operation occurs
-     * @param opcode the bytecode operation
-     * @return {@code true} if the method reference will link correctly at runtime
-     */
-    boolean willLink(CiType where, int opcode);
-
-    /**
      * For virtual methods, this method returns the index into the virtual table
      * of the method.
      * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.

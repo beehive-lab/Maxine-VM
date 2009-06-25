@@ -43,15 +43,15 @@ import com.sun.max.vm.value.*;
 public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstructionVisitor {
 
     class SPARCEirFrame extends EirFrame {
-        final SPARCEirCPU.RegisterWindow _registerWindow;
+        final SPARCEirCPU.RegisterWindow registerWindow;
 
         SPARCEirFrame(EirFrame caller, EirMethod method) {
             super(caller, method);
-            _registerWindow = new SPARCEirCPU.RegisterWindow();
+            registerWindow = new SPARCEirCPU.RegisterWindow();
         }
 
         SPARCEirCPU.RegisterWindow registerWindow() {
-            return _registerWindow;
+            return registerWindow;
         }
     }
 
@@ -71,17 +71,17 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         return new SPARCInitialEirFrame();
     }
 
-    private SPARCEirCPU _cpu;
+    private SPARCEirCPU cpu;
 
 
     @Override
     protected SPARCEirCPU cpu() {
-        return _cpu;
+        return cpu;
     }
 
     public SPARCEirInterpreter(EirGenerator eirGenerator) {
         super(eirGenerator);
-        _cpu = new SPARCEirCPU(this);
+        cpu = new SPARCEirCPU(this);
     }
 
     @Override
@@ -160,27 +160,27 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
 
 
     public void visit(EirAssignment assignment) {
-        switch (assignment.kind().asEnum()) {
+        switch (assignment.kind().asEnum) {
             case INT: {
-                final int value = _cpu.readInt(assignment.sourceOperand().location());
-                _cpu.writeInt(assignment.destinationOperand().location(), value);
+                final int value = cpu.readInt(assignment.sourceOperand().location());
+                cpu.writeInt(assignment.destinationOperand().location(), value);
                 break;
             }
             case LONG:
             case WORD:
             case REFERENCE: {
-                final Value value = _cpu.read(assignment.sourceOperand().location());
-                _cpu.write(assignment.destinationOperand().location(), adjustToAssignmentType(value));
+                final Value value = cpu.read(assignment.sourceOperand().location());
+                cpu.write(assignment.destinationOperand().location(), adjustToAssignmentType(value));
                 break;
             }
             case FLOAT: {
-                final float value = _cpu.readFloat(assignment.sourceOperand().location());
-                _cpu.writeFloat(assignment.destinationOperand().location(), value);
+                final float value = cpu.readFloat(assignment.sourceOperand().location());
+                cpu.writeFloat(assignment.destinationOperand().location(), value);
                 break;
             }
             case DOUBLE: {
-                final double value = _cpu.readDouble(assignment.sourceOperand().location());
-                _cpu.writeDouble(assignment.destinationOperand().location(), value);
+                final double value = cpu.readDouble(assignment.sourceOperand().location());
+                cpu.writeDouble(assignment.destinationOperand().location(), value);
                 break;
             }
             default: {
@@ -205,7 +205,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         if (loadKind == value.kind()) {
             return value;
         }
-        switch (loadKind.asEnum()) {
+        switch (loadKind.asEnum) {
             case INT: {
                 if (value.kind() == Kind.FLOAT) {
                     return IntValue.from((int) value.asFloat());
@@ -247,55 +247,55 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
 
     public void visit(SPARCEirLoad load) {
         final Value value;
-        final Value pointer = _cpu.read(load.pointerOperand().location());
+        final Value pointer = cpu.read(load.pointerOperand().location());
         if (pointer.kind() == Kind.WORD) {
             // This must be a load from the stack
             assert load.indexOperand() == null;
-            final int offset = load.offsetOperand() != null ? _cpu.read(load.offsetOperand().location()).asInt() : 0;
-            value = toLoadKind(_cpu.stack().read(pointer.asWord().asAddress().plus(offset)), load.kind());
+            final int offset = load.offsetOperand() != null ? cpu.read(load.offsetOperand().location()).asInt() : 0;
+            value = toLoadKind(cpu.stack().read(pointer.asWord().asAddress().plus(offset)), load.kind);
         } else {
             final Value[] arguments = (load.indexOperand() != null) ? new Value[3] : new Value[2];
             arguments[0] = pointer;
             if (load.offsetOperand() != null) {
-                arguments[1] = IntValue.from(_cpu.readInt(load.offsetOperand().location()));
+                arguments[1] = IntValue.from(cpu.readInt(load.offsetOperand().location()));
             } else {
                 arguments[1] = IntValue.from(0);
             }
             if (load.indexOperand() != null) {
-                arguments[2] = IntValue.from(_cpu.readInt(load.indexOperand().location()));
+                arguments[2] = IntValue.from(cpu.readInt(load.indexOperand().location()));
             }
-            value = pointerLoad(load.kind(), arguments);
+            value = pointerLoad(load.kind, arguments);
         }
-        switch (load.kind().asEnum()) {
+        switch (load.kind.asEnum) {
             case BYTE: {
-                _cpu.writeWord(load.destinationLocation(), Address.fromInt(value.toInt()));
+                cpu.writeWord(load.destinationLocation(), Address.fromInt(value.toInt()));
                 break;
             }
             case SHORT: {
-                _cpu.writeWord(load.destinationLocation(), Address.fromInt(value.unsignedToShort()));
+                cpu.writeWord(load.destinationLocation(), Address.fromInt(value.unsignedToShort()));
                 break;
             }
             case BOOLEAN:
             case CHAR:
             case INT: {
-                _cpu.writeWord(load.destinationLocation(), Address.fromInt(value.unsignedToInt()));
+                cpu.writeWord(load.destinationLocation(), Address.fromInt(value.unsignedToInt()));
                 break;
             }
             case LONG: {
-                _cpu.writeLong(load.destinationLocation(), value.asLong());
+                cpu.writeLong(load.destinationLocation(), value.asLong());
                 break;
             }
             case FLOAT: {
-                _cpu.writeFloat(load.destinationLocation(), value.asFloat());
+                cpu.writeFloat(load.destinationLocation(), value.asFloat());
                 break;
             }
             case DOUBLE: {
-                _cpu.writeDouble(load.destinationLocation(), value.asDouble());
+                cpu.writeDouble(load.destinationLocation(), value.asDouble());
                 break;
             }
             case WORD:
             case REFERENCE: {
-                _cpu.write(load.destinationLocation(), value);
+                cpu.write(load.destinationLocation(), value);
                 break;
             }
             case VOID: {
@@ -306,31 +306,31 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
 
 
     public void visit(SPARCEirStore store) {
-        final Value pointer = _cpu.read(store.pointerOperand().location());
+        final Value pointer = cpu.read(store.pointerOperand().location());
         if (pointer.kind() == Kind.WORD) {
             // This must be a store to the stack: don't type check the load
-            final Value value = store.kind() == Kind.WORD ?
-                            _cpu.read(store.valueOperand().location()) :
-                            _cpu.read(store.kind(), store.valueOperand().location());
+            final Value value = store.kind == Kind.WORD ?
+                            cpu.read(store.valueOperand().location()) :
+                            cpu.read(store.kind, store.valueOperand().location());
             assert store.indexOperand() == null;
-            final int offset = store.offsetOperand() != null ? _cpu.read(store.offsetOperand().location()).asInt() : 0;
-            _cpu.stack().write(pointer.asWord().asAddress().plus(offset), value);
+            final int offset = store.offsetOperand() != null ? cpu.read(store.offsetOperand().location()).asInt() : 0;
+            cpu.stack().write(pointer.asWord().asAddress().plus(offset), value);
         } else {
-            final Value value = _cpu.read(store.kind(), store.valueOperand().location());
+            final Value value = cpu.read(store.kind, store.valueOperand().location());
             final Value[] arguments = (store.indexOperand() != null) ? new Value[4] : new Value[3];
             arguments[0] = pointer;
             if (store.offsetOperand() != null) {
-                arguments[1] = IntValue.from(_cpu.readInt(store.offsetOperand().location()));
+                arguments[1] = IntValue.from(cpu.readInt(store.offsetOperand().location()));
             } else {
                 arguments[1] = IntValue.from(0);
             }
             if (store.indexOperand() != null) {
-                arguments[2] = IntValue.from(_cpu.readInt(store.indexOperand().location()));
+                arguments[2] = IntValue.from(cpu.readInt(store.indexOperand().location()));
                 arguments[3] = value;
             } else {
                 arguments[2] = value;
             }
-            pointerStore(store.kind(), arguments);
+            pointerStore(store.kind, arguments);
         }
     }
 
@@ -341,41 +341,41 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
 
 
     public void visit(ADD_I32 instruction) {
-        final int a = _cpu.readInt(instruction.leftLocation());
-        final int b = _cpu.readInt(instruction.rightLocation());
-        _cpu.writeInt(instruction.destinationLocation(), a + b);
+        final int a = cpu.readInt(instruction.leftLocation());
+        final int b = cpu.readInt(instruction.rightLocation());
+        cpu.writeInt(instruction.destinationLocation(), a + b);
     }
 
 
     public void visit(ADD_I64 instruction) {
-        final long a = _cpu.readLong(instruction.leftLocation());
-        final long b = _cpu.readLong(instruction.rightLocation());
-        _cpu.writeLong(instruction.destinationLocation(), a + b);
+        final long a = cpu.readLong(instruction.leftLocation());
+        final long b = cpu.readLong(instruction.rightLocation());
+        cpu.writeLong(instruction.destinationLocation(), a + b);
     }
 
 
     public void visit(AND_I32 instruction) {
-        final int a = _cpu.readInt(instruction.leftLocation());
-        final int b = _cpu.readInt(instruction.rightLocation());
-        _cpu.writeInt(instruction.destinationLocation(), a & b);
+        final int a = cpu.readInt(instruction.leftLocation());
+        final int b = cpu.readInt(instruction.rightLocation());
+        cpu.writeInt(instruction.destinationLocation(), a & b);
     }
 
 
     public void visit(AND_I64 instruction) {
-        final long a = _cpu.readLong(instruction.leftLocation());
-        final long b = _cpu.readLong(instruction.rightLocation());
-        _cpu.writeLong(instruction.destinationLocation(), a & b);
+        final long a = cpu.readLong(instruction.leftLocation());
+        final long b = cpu.readLong(instruction.rightLocation());
+        cpu.writeLong(instruction.destinationLocation(), a & b);
     }
 
     private boolean testE(ICCOperand cc) {
-        return _cpu.test(Z, cc);
+        return cpu.test(Z, cc);
     }
     private boolean testNE(ICCOperand cc) {
-        return !_cpu.test(Z, cc);
+        return !cpu.test(Z, cc);
     }
 
     private boolean testL(ICCOperand cc) {
-        return  _cpu.test(N, cc) ^ _cpu.test(V, cc);
+        return  cpu.test(N, cc) ^ cpu.test(V, cc);
     }
 
     private boolean testLE(ICCOperand cc) {
@@ -391,15 +391,15 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
     }
 
     private boolean testLU(ICCOperand cc) {
-        return _cpu.test(C, cc);
+        return cpu.test(C, cc);
     }
 
     private boolean testLEU(ICCOperand cc) {
-        return _cpu.test(C, cc) || _cpu.test(Z, cc);
+        return cpu.test(C, cc) || cpu.test(Z, cc);
     }
 
     private boolean testGEU(ICCOperand cc) {
-        return !_cpu.test(C, cc);
+        return !cpu.test(C, cc);
     }
 
     private boolean testGU(ICCOperand cc) {
@@ -407,29 +407,29 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
     }
 
     private boolean testE(FCCOperand fcc) {
-        return _cpu.get(fcc) == FCCValue.E;
+        return cpu.get(fcc) == FCCValue.E;
     }
 
     private boolean testNE(FCCOperand fcc) {
-        final FCCValue value = _cpu.get(fcc);
+        final FCCValue value = cpu.get(fcc);
         return value == FCCValue.L ||  value == FCCValue.G ||  value == FCCValue.U;
     }
 
     private boolean testG(FCCOperand fcc) {
-        return _cpu.get(fcc) == FCCValue.G;
+        return cpu.get(fcc) == FCCValue.G;
     }
 
     private boolean testGE(FCCOperand fcc) {
-        final FCCValue value = _cpu.get(fcc);
+        final FCCValue value = cpu.get(fcc);
         return value == FCCValue.G ||  value == FCCValue.E;
     }
 
     private boolean testL(FCCOperand fcc) {
-        return _cpu.get(fcc) == FCCValue.L;
+        return cpu.get(fcc) == FCCValue.L;
     }
 
     private boolean testLE(FCCOperand fcc) {
-        final FCCValue value = _cpu.get(fcc);
+        final FCCValue value = cpu.get(fcc);
         return value == FCCValue.L ||  value == FCCValue.E;
     }
 
@@ -441,8 +441,8 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
             return;
         }
 
-        final int i = _cpu.readInt(instruction.sourceLocation());
-        _cpu.writeInt(instruction.destinationLocation(), i);
+        final int i = cpu.readInt(instruction.sourceLocation());
+        cpu.writeInt(instruction.destinationLocation(), i);
     }
 
 
@@ -453,8 +453,8 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
             return;
 
         }
-        final int i = _cpu.readInt(instruction.sourceLocation());
-        _cpu.writeInt(instruction.destinationLocation(), i);
+        final int i = cpu.readInt(instruction.sourceLocation());
+        cpu.writeInt(instruction.destinationLocation(), i);
     }
 
 
@@ -465,8 +465,8 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
             return;
         }
 
-        final int i = _cpu.readInt(instruction.sourceLocation());
-        _cpu.writeInt(instruction.destinationLocation(), i);
+        final int i = cpu.readInt(instruction.sourceLocation());
+        cpu.writeInt(instruction.destinationLocation(), i);
     }
 
 
@@ -477,8 +477,8 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
             return;
         }
 
-        final int i = _cpu.readInt(instruction.sourceLocation());
-        _cpu.writeInt(instruction.destinationLocation(), i);
+        final int i = cpu.readInt(instruction.sourceLocation());
+        cpu.writeInt(instruction.destinationLocation(), i);
         // TODO Auto-generated method stub
     }
 
@@ -488,8 +488,8 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         if (!testG((ICCOperand) cc)) {
             return;
         }
-        final int i = _cpu.readInt(instruction.sourceLocation());
-        _cpu.writeInt(instruction.destinationLocation(), i);
+        final int i = cpu.readInt(instruction.sourceLocation());
+        cpu.writeInt(instruction.destinationLocation(), i);
     }
 
 
@@ -499,8 +499,8 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         if (!testGEU((ICCOperand) cc)) {
             return;
         }
-        final int i = _cpu.readInt(instruction.sourceLocation());
-        _cpu.writeInt(instruction.destinationLocation(), i);
+        final int i = cpu.readInt(instruction.sourceLocation());
+        cpu.writeInt(instruction.destinationLocation(), i);
     }
 
 
@@ -510,8 +510,8 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         if (!testGU((ICCOperand) cc)) {
             return;
         }
-        final int i = _cpu.readInt(instruction.sourceLocation());
-        _cpu.writeInt(instruction.destinationLocation(), i);
+        final int i = cpu.readInt(instruction.sourceLocation());
+        cpu.writeInt(instruction.destinationLocation(), i);
 
 
 
@@ -524,8 +524,8 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
             return;
         }
 
-        final int i = _cpu.readInt(instruction.sourceLocation());
-        _cpu.writeInt(instruction.destinationLocation(), i);
+        final int i = cpu.readInt(instruction.sourceLocation());
+        cpu.writeInt(instruction.destinationLocation(), i);
     }
 
 
@@ -536,8 +536,8 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         if (!testG((FCCOperand) cc)) {
             return;
         }
-        final int i = _cpu.readInt(instruction.sourceLocation());
-        _cpu.writeInt(instruction.destinationLocation(), i);
+        final int i = cpu.readInt(instruction.sourceLocation());
+        cpu.writeInt(instruction.destinationLocation(), i);
     }
 
 
@@ -547,8 +547,8 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         if (!testLU((ICCOperand) cc)) {
             return;
         }
-        final int i = _cpu.readInt(instruction.sourceLocation());
-        _cpu.writeInt(instruction.destinationLocation(), i);
+        final int i = cpu.readInt(instruction.sourceLocation());
+        cpu.writeInt(instruction.destinationLocation(), i);
 
     }
 
@@ -558,8 +558,8 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         if (!testLEU((ICCOperand) cc)) {
             return;
         }
-        final int i = _cpu.readInt(instruction.sourceLocation());
-        _cpu.writeInt(instruction.destinationLocation(), i);
+        final int i = cpu.readInt(instruction.sourceLocation());
+        cpu.writeInt(instruction.destinationLocation(), i);
 
     }
 
@@ -572,36 +572,36 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         if (!testL((FCCOperand) cc)) {
             return;
         }
-        final int i = _cpu.readInt(instruction.sourceLocation());
-        _cpu.writeInt(instruction.destinationLocation(), i);
+        final int i = cpu.readInt(instruction.sourceLocation());
+        cpu.writeInt(instruction.destinationLocation(), i);
 
     }
 
 
     public void visit(CMP_I32 instruction) {
 
-        final int a = _cpu.readInt(instruction.leftLocation());
-        final int b = _cpu.readInt(instruction.rightLocation());
+        final int a = cpu.readInt(instruction.leftLocation());
+        final int b = cpu.readInt(instruction.rightLocation());
 
-        _cpu.set(C, ICCOperand.ICC, false);
-        _cpu.set(Z, ICCOperand.ICC, false);
-        _cpu.set(V, ICCOperand.ICC, false);
-        _cpu.set(N, ICCOperand.ICC, false);
+        cpu.set(C, ICCOperand.ICC, false);
+        cpu.set(Z, ICCOperand.ICC, false);
+        cpu.set(V, ICCOperand.ICC, false);
+        cpu.set(N, ICCOperand.ICC, false);
 
         final int result = a - b;
-        _cpu.set(Z, ICCOperand.ICC, a == b);
-        _cpu.set(N, ICCOperand.ICC, result < 0);
-        _cpu.set(C, ICCOperand.ICC, Address.fromInt(a).lessThan(Address.fromInt(b)));
+        cpu.set(Z, ICCOperand.ICC, a == b);
+        cpu.set(N, ICCOperand.ICC, result < 0);
+        cpu.set(C, ICCOperand.ICC, Address.fromInt(a).lessThan(Address.fromInt(b)));
 
         final boolean operandsDifferInSign = (a >= 0 && b < 0) || (a < 0 && b >= 0);
         final boolean firstOperandDiffersInSignFromResult = (a >= 0 && result < 0) || (a < 0 && result > 0);
-        _cpu.set(V, ICCOperand.ICC, operandsDifferInSign && firstOperandDiffersInSignFromResult);
+        cpu.set(V, ICCOperand.ICC, operandsDifferInSign && firstOperandDiffersInSignFromResult);
     }
 
 
     public void visit(CMP_I64 instruction) {
-        Value valueA = _cpu.read(instruction.leftLocation());
-        Value valueB = _cpu.read(instruction.rightLocation());
+        Value valueA = cpu.read(instruction.leftLocation());
+        Value valueB = cpu.read(instruction.rightLocation());
         final long a;
         final long b;
         if (valueA.kind() == Kind.REFERENCE || valueB.kind() == Kind.REFERENCE) {
@@ -625,67 +625,67 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
             a = valueA.toLong();
             b = valueB.toLong();
         }
-        _cpu.set(Z, ICCOperand.XCC, a == b);
-        _cpu.set(V, ICCOperand.XCC, ((a < 0) && (b >= 0) && (a - b >= 0)) || ((a >= 0) && (b < 0) && (a - b < 0)));
-        _cpu.set(C, ICCOperand.XCC, Address.fromLong(a).lessThan(Address.fromLong(b)));
-        _cpu.set(N, ICCOperand.XCC, (a - b) < 0);
+        cpu.set(Z, ICCOperand.XCC, a == b);
+        cpu.set(V, ICCOperand.XCC, ((a < 0) && (b >= 0) && (a - b >= 0)) || ((a >= 0) && (b < 0) && (a - b < 0)));
+        cpu.set(C, ICCOperand.XCC, Address.fromLong(a).lessThan(Address.fromLong(b)));
+        cpu.set(N, ICCOperand.XCC, (a - b) < 0);
     }
 
 
     public void visit(DIV_I32 instruction) {
-        final int a = _cpu.readInt(instruction.leftLocation());
-        final int b = _cpu.readInt(instruction.rightLocation());
-        _cpu.writeInt(instruction.destinationLocation(), a / b);
+        final int a = cpu.readInt(instruction.leftLocation());
+        final int b = cpu.readInt(instruction.rightLocation());
+        cpu.writeInt(instruction.destinationLocation(), a / b);
     }
 
 
     public void visit(DIV_I64 instruction) {
-        final long a = _cpu.readLong(instruction.leftLocation());
-        final long b = _cpu.readLong(instruction.rightLocation());
-        _cpu.writeLong(instruction.destinationLocation(), a / b);
+        final long a = cpu.readLong(instruction.leftLocation());
+        final long b = cpu.readLong(instruction.rightLocation());
+        cpu.writeLong(instruction.destinationLocation(), a / b);
     }
 
 
     public void visit(BA instruction) {
-        _cpu.gotoBlock(instruction.target());
+        cpu.gotoBlock(instruction.target());
     }
 
     private void conditionalBranch(SPARCEirConditionalBranch instruction, boolean condition) {
         if (condition) {
-            _cpu.gotoBlock(instruction.target());
+            cpu.gotoBlock(instruction.target());
         } else {
-            _cpu.gotoBlock(instruction.next());
+            cpu.gotoBlock(instruction.next());
         }
     }
 
 
     public void visit(BRZ instruction) {
-        conditionalBranch(instruction, _cpu.read(instruction.testedOperandLocation()).isZero());
+        conditionalBranch(instruction, cpu.read(instruction.testedOperandLocation()).isZero());
     }
 
 
     public void visit(BRNZ instruction) {
-        conditionalBranch(instruction, !_cpu.read(instruction.testedOperandLocation()).isZero());
+        conditionalBranch(instruction, !cpu.read(instruction.testedOperandLocation()).isZero());
     }
 
 
     public void visit(BRLZ instruction) {
-        conditionalBranch(instruction, _cpu.read(instruction.testedOperandLocation()).asLong() < 0);
+        conditionalBranch(instruction, cpu.read(instruction.testedOperandLocation()).asLong() < 0);
     }
 
 
     public void visit(BRLEZ instruction) {
-        conditionalBranch(instruction, _cpu.read(instruction.testedOperandLocation()).asLong() <= 0);
+        conditionalBranch(instruction, cpu.read(instruction.testedOperandLocation()).asLong() <= 0);
     }
 
 
     public void visit(BRGEZ instruction) {
-        conditionalBranch(instruction, _cpu.read(instruction.testedOperandLocation()).asLong() >= 0);
+        conditionalBranch(instruction, cpu.read(instruction.testedOperandLocation()).asLong() >= 0);
     }
 
 
     public void visit(BRGZ instruction) {
-        conditionalBranch(instruction, _cpu.read(instruction.testedOperandLocation()).asLong() > 0);
+        conditionalBranch(instruction, cpu.read(instruction.testedOperandLocation()).asLong() > 0);
     }
 
 
@@ -746,175 +746,175 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
 
 
     public void visit(FADD_S instruction) {
-        final float a = _cpu.readFloat(instruction.leftLocation());
-        final float b = _cpu.readFloat(instruction.rightLocation());
-        _cpu.writeFloat(instruction.destinationLocation(), a + b);
+        final float a = cpu.readFloat(instruction.leftLocation());
+        final float b = cpu.readFloat(instruction.rightLocation());
+        cpu.writeFloat(instruction.destinationLocation(), a + b);
     }
 
 
     public void visit(FADD_D instruction) {
-        final double a = _cpu.readDouble(instruction.leftLocation());
-        final double b = _cpu.readDouble(instruction.rightLocation());
-        _cpu.writeDouble(instruction.destinationLocation(), a + b);
+        final double a = cpu.readDouble(instruction.leftLocation());
+        final double b = cpu.readDouble(instruction.rightLocation());
+        cpu.writeDouble(instruction.destinationLocation(), a + b);
     }
 
 
     public void visit(FCMP_S instruction) {
-        final float a = _cpu.readFloat(instruction.leftLocation());
-        final float b = _cpu.readFloat(instruction.rightLocation());
+        final float a = cpu.readFloat(instruction.leftLocation());
+        final float b = cpu.readFloat(instruction.rightLocation());
         final FCCOperand fcc = instruction.selectedConditionCode();
         if (a == b) {
-            _cpu.set(fcc, FCCValue.E);
+            cpu.set(fcc, FCCValue.E);
         } else if (a < b) {
-            _cpu.set(fcc, FCCValue.L);
+            cpu.set(fcc, FCCValue.L);
         } else if (a > b) {
-            _cpu.set(fcc, FCCValue.G);
+            cpu.set(fcc, FCCValue.G);
         } else {
             assert Float.isNaN(a) || Float.isNaN(b);
-            _cpu.set(fcc, FCCValue.U);
+            cpu.set(fcc, FCCValue.U);
         }
     }
 
 
     public void visit(FCMP_D instruction) {
-        final double a = _cpu.readDouble(instruction.leftLocation());
-        final double b = _cpu.readDouble(instruction.rightLocation());
+        final double a = cpu.readDouble(instruction.leftLocation());
+        final double b = cpu.readDouble(instruction.rightLocation());
         final FCCOperand fcc = instruction.selectedConditionCode();
         if (a == b) {
-            _cpu.set(fcc, FCCValue.E);
+            cpu.set(fcc, FCCValue.E);
         } else if (a < b) {
-            _cpu.set(fcc, FCCValue.L);
+            cpu.set(fcc, FCCValue.L);
         } else if (a > b) {
-            _cpu.set(fcc, FCCValue.G);
+            cpu.set(fcc, FCCValue.G);
         } else {
             assert Double.isNaN(a) || Double.isNaN(b);
-            _cpu.set(fcc, FCCValue.U);
+            cpu.set(fcc, FCCValue.U);
         }
     }
 
 
     public void visit(FDIV_S instruction) {
-        final float a = _cpu.readFloat(instruction.leftLocation());
-        final float b = _cpu.readFloat(instruction.rightLocation());
-        _cpu.writeFloat(instruction.destinationLocation(), a / b);
+        final float a = cpu.readFloat(instruction.leftLocation());
+        final float b = cpu.readFloat(instruction.rightLocation());
+        cpu.writeFloat(instruction.destinationLocation(), a / b);
     }
 
 
     public void visit(FDIV_D instruction) {
-        final double a = _cpu.readDouble(instruction.leftLocation());
-        final double b = _cpu.readDouble(instruction.rightLocation());
-        _cpu.writeDouble(instruction.destinationLocation(), a / b);
+        final double a = cpu.readDouble(instruction.leftLocation());
+        final double b = cpu.readDouble(instruction.rightLocation());
+        cpu.writeDouble(instruction.destinationLocation(), a / b);
     }
 
 
     public void visit(FMUL_S instruction) {
-        final float a = _cpu.readFloat(instruction.leftLocation());
-        final float b = _cpu.readFloat(instruction.rightLocation());
-        _cpu.writeFloat(instruction.destinationLocation(), a * b);
+        final float a = cpu.readFloat(instruction.leftLocation());
+        final float b = cpu.readFloat(instruction.rightLocation());
+        cpu.writeFloat(instruction.destinationLocation(), a * b);
     }
 
 
     public void visit(FMUL_D instruction) {
-        final double a = _cpu.readDouble(instruction.leftLocation());
-        final double b = _cpu.readDouble(instruction.rightLocation());
-        _cpu.writeDouble(instruction.destinationLocation(), a * b);
+        final double a = cpu.readDouble(instruction.leftLocation());
+        final double b = cpu.readDouble(instruction.rightLocation());
+        cpu.writeDouble(instruction.destinationLocation(), a * b);
     }
 
 
     public void visit(FNEG_S instruction) {
-        final float a = _cpu.readFloat(instruction.operandLocation());
-        _cpu.writeFloat(instruction.operandLocation(), -a);
+        final float a = cpu.readFloat(instruction.operandLocation());
+        cpu.writeFloat(instruction.operandLocation(), -a);
 
     }
 
 
     public void visit(FNEG_D instruction) {
-        final double a = _cpu.readDouble(instruction.operandLocation());
-        _cpu.writeDouble(instruction.operandLocation(), -a);
+        final double a = cpu.readDouble(instruction.operandLocation());
+        cpu.writeDouble(instruction.operandLocation(), -a);
     }
 
 
     public void visit(FSUB_S instruction) {
-        final float a = _cpu.readFloat(instruction.leftLocation());
-        final float b = _cpu.readFloat(instruction.rightLocation());
-        _cpu.writeFloat(instruction.destinationLocation(), a - b);
+        final float a = cpu.readFloat(instruction.leftLocation());
+        final float b = cpu.readFloat(instruction.rightLocation());
+        cpu.writeFloat(instruction.destinationLocation(), a - b);
     }
 
 
     public void visit(FSUB_D instruction) {
-        final double a = _cpu.readDouble(instruction.leftLocation());
-        final double b = _cpu.readDouble(instruction.rightLocation());
-        _cpu.writeDouble(instruction.destinationLocation(), a - b);
+        final double a = cpu.readDouble(instruction.leftLocation());
+        final double b = cpu.readDouble(instruction.rightLocation());
+        cpu.writeDouble(instruction.destinationLocation(), a - b);
     }
 
 
     public void visit(FSTOD instruction) {
-        final float f = _cpu.readFloat(instruction.sourceLocation());
+        final float f = cpu.readFloat(instruction.sourceLocation());
         final double d = f;
-        _cpu.writeDouble(instruction.destinationLocation(), d);
+        cpu.writeDouble(instruction.destinationLocation(), d);
     }
 
 
     public void visit(FDTOS instruction) {
-        final double d = _cpu.readDouble(instruction.sourceLocation());
+        final double d = cpu.readDouble(instruction.sourceLocation());
         final float f = (float) d;
-        _cpu.writeFloat(instruction.destinationLocation(), f);
+        cpu.writeFloat(instruction.destinationLocation(), f);
     }
 
 
     public void visit(FITOS instruction) {
-        final int i = _cpu.readInt(instruction.sourceLocation());
+        final int i = cpu.readInt(instruction.sourceLocation());
         final float f = i;
-        _cpu.writeFloat(instruction.destinationLocation(), f);
+        cpu.writeFloat(instruction.destinationLocation(), f);
     }
 
 
     public void visit(FITOD instruction) {
-        final int i = _cpu.readInt(instruction.sourceLocation());
+        final int i = cpu.readInt(instruction.sourceLocation());
         final double d = i;
-        _cpu.writeDouble(instruction.destinationLocation(), d);
+        cpu.writeDouble(instruction.destinationLocation(), d);
     }
 
 
     public void visit(FXTOS instruction) {
-        final long l = _cpu.readLong(instruction.sourceLocation());
+        final long l = cpu.readLong(instruction.sourceLocation());
         final float f = l;
-        _cpu.writeFloat(instruction.destinationLocation(), f);
+        cpu.writeFloat(instruction.destinationLocation(), f);
     }
 
 
     public void visit(FXTOD instruction) {
-        final long l = _cpu.readLong(instruction.sourceLocation());
+        final long l = cpu.readLong(instruction.sourceLocation());
         final double d = l;
-        _cpu.writeDouble(instruction.destinationLocation(), d);
+        cpu.writeDouble(instruction.destinationLocation(), d);
     }
 
     public void visit(FSTOI instruction) {
         // Float-value is converted into an integer value and stored in a float register.
-        final float f = _cpu.readFloat(instruction.sourceLocation());
+        final float f = cpu.readFloat(instruction.sourceLocation());
         final int i = (int) f;
-        _cpu.writeFloat(instruction.destinationLocation(), i);
+        cpu.writeFloat(instruction.destinationLocation(), i);
     }
 
     public void visit(FDTOI instruction) {
         // Double-value is converted into an integer value and stored in a float register.
-        final double d = _cpu.readDouble(instruction.sourceLocation());
+        final double d = cpu.readDouble(instruction.sourceLocation());
         final int i = (int) d;
-        _cpu.writeFloat(instruction.destinationLocation(), i);
+        cpu.writeFloat(instruction.destinationLocation(), i);
     }
 
     public void visit(FSTOX instruction) {
         // Float-value is converted first into an long value and stored in a double-precision float register.
-        final float f = _cpu.readFloat(instruction.sourceLocation());
+        final float f = cpu.readFloat(instruction.sourceLocation());
         final long l = (long) f;
-        _cpu.writeDouble(instruction.destinationLocation(), l);
+        cpu.writeDouble(instruction.destinationLocation(), l);
     }
 
     public void visit(FDTOX instruction) {
         // Double-value is converted first into an long value and stored in a double-precision float register.
-        final double d = _cpu.readDouble(instruction.sourceLocation());
+        final double d = cpu.readDouble(instruction.sourceLocation());
         final long l = (long) d;
-        _cpu.writeDouble(instruction.destinationLocation(), l);
+        cpu.writeDouble(instruction.destinationLocation(), l);
     }
 
 
@@ -932,77 +932,77 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
 
 
     public void visit(SET_STACK_ADDRESS instruction) {
-        final int sourceOffset = _cpu.offset(instruction.sourceOperand().location().asStackSlot());
-        _cpu.write(instruction.destinationOperand().location(), new WordValue(_cpu.readFramePointer().plus(sourceOffset)));
+        final int sourceOffset = cpu.offset(instruction.sourceOperand().location().asStackSlot());
+        cpu.write(instruction.destinationOperand().location(), new WordValue(cpu.readFramePointer().plus(sourceOffset)));
     }
 
 
     public void visit(MOV_I32 instruction) {
-        final int a = _cpu.readInt(instruction.sourceLocation());
-        _cpu.writeInt(instruction.destinationLocation(), a);
+        final int a = cpu.readInt(instruction.sourceLocation());
+        cpu.writeInt(instruction.destinationLocation(), a);
     }
 
 
     public void visit(MOV_I64 instruction) {
-        final long a = _cpu.readInt(instruction.sourceLocation());
-        _cpu.writeLong(instruction.destinationLocation(), a);
+        final long a = cpu.readInt(instruction.sourceLocation());
+        cpu.writeLong(instruction.destinationLocation(), a);
     }
 
 
     public void visit(MUL_I32 instruction) {
-        final int a = _cpu.readInt(instruction.leftLocation());
-        final int b = _cpu.readInt(instruction.rightLocation());
-        _cpu.writeInt(instruction.destinationLocation(), a * b);
+        final int a = cpu.readInt(instruction.leftLocation());
+        final int b = cpu.readInt(instruction.rightLocation());
+        cpu.writeInt(instruction.destinationLocation(), a * b);
     }
 
 
     public void visit(MUL_I64 instruction) {
-        final long a = _cpu.readLong(instruction.leftLocation());
-        final long b = _cpu.readLong(instruction.rightLocation());
-        _cpu.writeLong(instruction.destinationLocation(), a * b);
+        final long a = cpu.readLong(instruction.leftLocation());
+        final long b = cpu.readLong(instruction.rightLocation());
+        cpu.writeLong(instruction.destinationLocation(), a * b);
     }
 
 
     public void visit(NEG_I32 instruction) {
-        final int a = _cpu.readInt(instruction.operandLocation());
-        _cpu.writeInt(instruction.operandLocation(), -a);
+        final int a = cpu.readInt(instruction.operandLocation());
+        cpu.writeInt(instruction.operandLocation(), -a);
     }
 
 
     public void visit(NEG_I64 instruction) {
-        final long a = _cpu.readLong(instruction.operandLocation());
-        _cpu.writeLong(instruction.operandLocation(), -a);
+        final long a = cpu.readLong(instruction.operandLocation());
+        cpu.writeLong(instruction.operandLocation(), -a);
     }
 
 
     public void visit(NOT_I32 instruction) {
-        final int operand = _cpu.readInt(instruction.operand().location());
-        _cpu.writeInt(instruction.operand().location(), ~operand);
+        final int operand = cpu.readInt(instruction.operand().location());
+        cpu.writeInt(instruction.operand().location(), ~operand);
     }
 
 
     public void visit(NOT_I64 instruction) {
-        final long operand = _cpu.readLong(instruction.operand().location());
-        _cpu.writeLong(instruction.operand().location(), ~operand);
+        final long operand = cpu.readLong(instruction.operand().location());
+        cpu.writeLong(instruction.operand().location(), ~operand);
     }
 
 
     public void visit(OR_I32 instruction) {
-        final int a = _cpu.readInt(instruction.leftLocation());
-        final int b = _cpu.readInt(instruction.rightLocation());
-        _cpu.writeInt(instruction.destinationLocation(), a | b);
+        final int a = cpu.readInt(instruction.leftLocation());
+        final int b = cpu.readInt(instruction.rightLocation());
+        cpu.writeInt(instruction.destinationLocation(), a | b);
     }
 
 
     public void visit(OR_I64 instruction) {
-        final long a = _cpu.readLong(instruction.leftLocation());
-        final long b = _cpu.readLong(instruction.rightLocation());
-        _cpu.writeLong(instruction.destinationLocation(), a | b);
+        final long a = cpu.readLong(instruction.leftLocation());
+        final long b = cpu.readLong(instruction.rightLocation());
+        cpu.writeLong(instruction.destinationLocation(), a | b);
     }
 
 
     public void visit(RDPC instruction) {
-        _cpu.write(instruction.operand().location(), new WordValue(Address.fromLong(_cpu.currentInstructionAddress().index())));
+        cpu.write(instruction.operand().location(), new WordValue(Address.fromLong(cpu.currentInstructionAddress().index())));
     }
 
 
@@ -1021,107 +1021,107 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
     public void visit(SET_I32 instruction) {
         assert instruction.immediateOperand().isConstant();
         final int a = instruction.immediateOperand().value().asInt();
-        _cpu.writeInt(instruction.operandLocation(), a);
+        cpu.writeInt(instruction.operandLocation(), a);
     }
 
 
     public void visit(SLL_I32 instruction) {
-        final int number = _cpu.readInt(instruction.leftLocation());
-        final int shift = _cpu.readByte(instruction.rightLocation());
-        _cpu.writeInt(instruction.destinationLocation(), number << shift);
+        final int number = cpu.readInt(instruction.leftLocation());
+        final int shift = cpu.readByte(instruction.rightLocation());
+        cpu.writeInt(instruction.destinationLocation(), number << shift);
     }
 
 
     public void visit(SLL_I64 instruction) {
-        final long number = _cpu.readInt(instruction.leftLocation());
-        final int shift = _cpu.readByte(instruction.rightLocation());
-        _cpu.writeLong(instruction.destinationLocation(), number << shift);
+        final long number = cpu.readInt(instruction.leftLocation());
+        final int shift = cpu.readByte(instruction.rightLocation());
+        cpu.writeLong(instruction.destinationLocation(), number << shift);
     }
 
 
     public void visit(SRA_I32 instruction) {
-        final int number = _cpu.readInt(instruction.leftLocation());
-        final int shift = _cpu.readByte(instruction.rightLocation());
-        _cpu.writeInt(instruction.destinationLocation(), number >> shift);
+        final int number = cpu.readInt(instruction.leftLocation());
+        final int shift = cpu.readByte(instruction.rightLocation());
+        cpu.writeInt(instruction.destinationLocation(), number >> shift);
     }
 
 
     public void visit(SRA_I64 instruction) {
-        final long number = _cpu.readInt(instruction.leftLocation());
-        final int shift = _cpu.readByte(instruction.rightLocation());
-        _cpu.writeLong(instruction.destinationLocation(), number >> shift);
+        final long number = cpu.readInt(instruction.leftLocation());
+        final int shift = cpu.readByte(instruction.rightLocation());
+        cpu.writeLong(instruction.destinationLocation(), number >> shift);
     }
 
 
     public void visit(SRL_I32 instruction) {
-        final int number = _cpu.readInt(instruction.leftLocation());
-        final int shift = _cpu.readByte(instruction.rightLocation());
-        _cpu.writeInt(instruction.destinationLocation(), number >>> shift);
+        final int number = cpu.readInt(instruction.leftLocation());
+        final int shift = cpu.readByte(instruction.rightLocation());
+        cpu.writeInt(instruction.destinationLocation(), number >>> shift);
     }
 
 
     public void visit(SRL_I64 instruction) {
-        final long number = _cpu.readInt(instruction.leftLocation());
-        final int shift = _cpu.readByte(instruction.rightLocation());
-        _cpu.writeLong(instruction.destinationLocation(), number >>> shift);
+        final long number = cpu.readInt(instruction.leftLocation());
+        final int shift = cpu.readByte(instruction.rightLocation());
+        cpu.writeLong(instruction.destinationLocation(), number >>> shift);
     }
 
 
     public void visit(SUB_I32 instruction) {
-        final int a = _cpu.readInt(instruction.leftLocation());
-        final int b = _cpu.readInt(instruction.rightLocation());
-        _cpu.writeInt(instruction.destinationLocation(), a - b);
+        final int a = cpu.readInt(instruction.leftLocation());
+        final int b = cpu.readInt(instruction.rightLocation());
+        cpu.writeInt(instruction.destinationLocation(), a - b);
     }
 
 
     public void visit(SUB_I64 instruction) {
-        final long a = _cpu.readLong(instruction.leftLocation());
-        final long b = _cpu.readLong(instruction.rightLocation());
-        _cpu.writeLong(instruction.destinationLocation(), a - b);
+        final long a = cpu.readLong(instruction.leftLocation());
+        final long b = cpu.readLong(instruction.rightLocation());
+        cpu.writeLong(instruction.destinationLocation(), a - b);
     }
 
 
     public void visit(SWITCH_I32 instruction) {
-        final int a = _cpu.readInt(instruction.tag().location());
+        final int a = cpu.readInt(instruction.tag().location());
 
         for (int i = 0; i < instruction.matches().length; i++) {
             if (a == instruction.matches() [i].value().asInt()) {
-                _cpu.gotoBlock(instruction.targets()[i]);
+                cpu.gotoBlock(instruction.targets[i]);
                 return;
             }
         }
 
-        _cpu.gotoBlock(instruction.defaultTarget());
+        cpu.gotoBlock(instruction.defaultTarget());
     }
 
 
     public void visit(XOR_I32 instruction) {
-        final int a = _cpu.readInt(instruction.leftLocation());
-        final int b = _cpu.readInt(instruction.rightLocation());
-        _cpu.writeInt(instruction.destinationLocation(), a ^ b);
+        final int a = cpu.readInt(instruction.leftLocation());
+        final int b = cpu.readInt(instruction.rightLocation());
+        cpu.writeInt(instruction.destinationLocation(), a ^ b);
 
     }
 
 
     public void visit(XOR_I64 instruction) {
-        final long a = _cpu.readLong(instruction.leftLocation());
-        final long b = _cpu.readLong(instruction.rightLocation());
-        _cpu.writeLong(instruction.destinationLocation(), a ^ b);
+        final long a = cpu.readLong(instruction.leftLocation());
+        final long b = cpu.readLong(instruction.rightLocation());
+        cpu.writeLong(instruction.destinationLocation(), a ^ b);
     }
 
     public void visit(ZERO instruction) {
-        switch (instruction.kind().asEnum()) {
+        switch (instruction.kind.asEnum) {
             case INT:
             case LONG:
             case WORD:
             case REFERENCE:
-                _cpu.writeLong(instruction.operand().location(), 0L);
+                cpu.writeLong(instruction.operand().location(), 0L);
                 break;
             case FLOAT:
-                _cpu.writeFloat(instruction.operand().location(), 0F);
+                cpu.writeFloat(instruction.operand().location(), 0F);
                 break;
             case DOUBLE:
-                _cpu.writeDouble(instruction.operand().location(), 0D);
+                cpu.writeDouble(instruction.operand().location(), 0D);
                 break;
             default:
                 ProgramError.unknownCase();

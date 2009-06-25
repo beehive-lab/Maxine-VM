@@ -27,17 +27,16 @@ import com.sun.max.vm.type.*;
  */
 public class DirVariable extends DirValue {
 
-    private final Kind _kind;
-    private final int _serial;
+    private final Kind kind;
+    private final int serial;
 
     public DirVariable(Kind kind, int serial) {
-        super();
-        _kind = kind;
-        _serial = serial;
+        this.kind = kind;
+        this.serial = serial;
     }
 
     public Kind kind() {
-        return _kind;
+        return kind;
     }
 
     public boolean isConstant() {
@@ -47,13 +46,13 @@ public class DirVariable extends DirValue {
     @Override
     public int hashCodeForBlock() {
         final int a = super.hashCodeForBlock();
-        final int b = _kind.hashCode();
+        final int b = kind.hashCode();
         return a ^ b;
     }
 
     @Override
     public String toString() {
-        return Character.toString(_kind.character()) + _serial;
+        return Character.toString(kind.character) + serial;
     }
 
 }

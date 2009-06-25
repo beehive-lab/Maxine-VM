@@ -70,51 +70,51 @@ public final class BinaryImageGenerator {
     private static final String OUTPUT_DIRECTORY = "Native" + File.separator + "generated" + File.separator +
         System.getProperty(OPERATING_SYSTEM_PROPERTY, OperatingSystem.current().name()).toLowerCase();
 
-    private final OptionSet _options = new OptionSet();
+    private final OptionSet options = new OptionSet();
 
-    private final Option<Boolean> _help = _options.newBooleanOption("help", false,
+    private final Option<Boolean> help = options.newBooleanOption("help", false,
             "Show help message and exits.");
 
-    private final Option<Boolean> _treeOption = _options.newBooleanOption("tree", false,
+    private final Option<Boolean> treeOption = options.newBooleanOption("tree", false,
             "Create a file showing the connectivity of objects in the image.");
 
-    private final Option<Boolean> _statsOption = _options.newBooleanOption("stats", false,
+    private final Option<Boolean> statsOption = options.newBooleanOption("stats", false,
             "Create a file detailing the number and size of each type of object in the image.");
 
-    private final Option<File> _outputDirectoryOption = _options.newFileOption("output-dir", getDefaultOutputDirectory(),
+    private final Option<File> outputDirectoryOption = options.newFileOption("output-dir", getDefaultOutputDirectory(),
             "Selects the output directory for the binary image generator.");
 
-    private final Option<String> _imageFileOption = _options.newStringOption("image-file", DEFAULT_IMAGE_FILE_NAME,
+    private final Option<String> imageFileOption = options.newStringOption("image-file", DEFAULT_IMAGE_FILE_NAME,
             "Selects the name of the image file to generate.");
 
-    private final Option<String> _jarFileOption = _options.newStringOption("jar-file", DEFAULT_IMAGE_JAR_FILE_NAME,
+    private final Option<String> jarFileOption = options.newStringOption("jar-file", DEFAULT_IMAGE_JAR_FILE_NAME,
             "Selects the name of the jar file to generate, which contains all of the " +
             "classes in a generated image.");
 
-    private final Option<String> _statsFileOption = _options.newStringOption("stats-file", "maxine.stats",
+    private final Option<String> statsFileOption = options.newStringOption("stats-file", "maxine.stats",
             "Specifies the name of the statistics file generated (if any).");
 
-    private final Option<String> _objectTreeFileOption = _options.newStringOption("object-tree-file", DEFAULT_IMAGE_OBJECT_TREE_FILE_NAME,
+    private final Option<String> objectTreeFileOption = options.newStringOption("object-tree-file", DEFAULT_IMAGE_OBJECT_TREE_FILE_NAME,
             "Specifies the name of the object tree file generated (if any).");
 
-    private final Option<String> _methodTreeFileOption = _options.newStringOption("method-tree-file", DEFAULT_IMAGE_METHOD_TREE_FILE_NAME,
+    private final Option<String> methodTreeFileOption = options.newStringOption("method-tree-file", DEFAULT_IMAGE_METHOD_TREE_FILE_NAME,
             "Specifies the name of the method tree file generated (if any).");
 
-    private final Option<Boolean> _testCallerJit = _options.newBooleanOption("test-caller-jit", false,
+    private final Option<Boolean> testCallerJit = options.newBooleanOption("test-caller-jit", false,
             "For the Java tester, this option specifies that each test case's harness should be compiled " +
             "with the JIT compiler (helpful for testing JIT->JIT and JIT->opt calls).");
 
-    private final Option<Boolean> _testCalleeJit = _options.newBooleanOption("test-callee-jit", false,
+    private final Option<Boolean> testCalleeJit = options.newBooleanOption("test-callee-jit", false,
             "For the Java tester, this option specifies that each test case's method should be compiled " +
             "with the JIT compiler (helpful for testing JIT->JIT and opt->JIT calls).");
 
-    private final Option<Boolean> _testUnlinked = _options.newBooleanOption("test-unlinked", false,
+    private final Option<Boolean> testUnlinked = options.newBooleanOption("test-unlinked", false,
             "For the Java tester, this option specifies that each test case method should be unlinked.");
 
-    private final Option<Boolean> _testNative = _options.newBooleanOption("native-tests", false,
+    private final Option<Boolean> testNative = options.newBooleanOption("native-tests", false,
             "For the Java tester, this option specifies that " + System.mapLibraryName("javatest") + " should be dynamically loaded.");
 
-    private final Option<String> _vmArguments = _options.newStringOption("vmargs", null,
+    private final Option<String> vmArguments = options.newStringOption("vmargs", null,
             "A set of one or VM arguments. This is useful for exercising VM functionality or " +
             "enabling VM tracing while prototyping.");
 
@@ -122,22 +122,22 @@ public final class BinaryImageGenerator {
      * Used in the Java tester to indicate whether to test the resolution and linking mechanism for
      * test methods.
      */
-    public static boolean _unlinked = false;
+    public static boolean unlinked = false;
 
     /**
      * Used in the Java tester to indicate whether to compile the testing harness itself with the JIT.
      */
-    public static boolean _callerJit = false;
+    public static boolean callerJit = false;
 
     /**
      * Used by the Java tester to indicate whether to compile the tests themselves with the JIT.
      */
-    public static boolean _calleeJit = false;
+    public static boolean calleeJit = false;
 
     /**
      * Used by the Java tester to indicate that testing requires dynamically loading native libraries.
      */
-    public static boolean _nativeTests = false;
+    public static boolean nativeTests = false;
 
     /**
      * Get the default output directory, derived from the project directory.
@@ -192,29 +192,29 @@ public final class BinaryImageGenerator {
         final long start = System.currentTimeMillis();
         CompilerScheme compilerScheme = null;
         try {
-            final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(_options);
-            Trace.addTo(_options);
-            _options.parseArguments(programArguments);
+            final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
+            Trace.addTo(options);
+            options.parseArguments(programArguments);
 
-            if (_help.getValue()) {
+            if (help.getValue()) {
                 prototypeGenerator.createVMConfiguration(prototypeGenerator.createDefaultVMConfiguration());
-                _options.printHelp(System.out, 80);
+                options.printHelp(System.out, 80);
                 return;
             }
 
-            if (_vmArguments.getValue() != null) {
-                VMOption.setVMArguments(_vmArguments.getValue().split("\\s+"));
+            if (vmArguments.getValue() != null) {
+                VMOption.setVMArguments(vmArguments.getValue().split("\\s+"));
             }
 
-            BinaryImageGenerator._calleeJit = _testCalleeJit.getValue();
-            BinaryImageGenerator._callerJit = _testCallerJit.getValue();
-            BinaryImageGenerator._unlinked = _testUnlinked.getValue();
-            BinaryImageGenerator._nativeTests = _testNative.getValue();
+            BinaryImageGenerator.calleeJit = testCalleeJit.getValue();
+            BinaryImageGenerator.callerJit = testCallerJit.getValue();
+            BinaryImageGenerator.unlinked = testUnlinked.getValue();
+            BinaryImageGenerator.nativeTests = testNative.getValue();
 
-            final File outputDirectory = _outputDirectoryOption.getValue();
+            final File outputDirectory = outputDirectoryOption.getValue();
             outputDirectory.mkdirs();
 
-            final DataPrototype dataPrototype = prototypeGenerator.createDataPrototype(_treeOption.getValue());
+            final DataPrototype dataPrototype = prototypeGenerator.createDataPrototype(treeOption.getValue());
             VMConfiguration.target().finalizeSchemes(MaxineVM.Phase.PROTOTYPING);
 
             final GraphPrototype graphPrototype = dataPrototype.graphPrototype();
@@ -223,22 +223,22 @@ public final class BinaryImageGenerator {
             VMOptions.beforeExit();
 
             // write the statistics
-            if (_statsOption.getValue()) {
-                writeStats(graphPrototype, new File(outputDirectory, _statsFileOption.getValue()));
+            if (statsOption.getValue()) {
+                writeStats(graphPrototype, new File(outputDirectory, statsFileOption.getValue()));
             }
-            writeJar(new File(outputDirectory, _jarFileOption.getValue()));
-            writeImage(dataPrototype, new File(outputDirectory, _imageFileOption.getValue()));
-            if (_treeOption.getValue()) {
+            writeJar(new File(outputDirectory, jarFileOption.getValue()));
+            writeImage(dataPrototype, new File(outputDirectory, imageFileOption.getValue()));
+            if (treeOption.getValue()) {
                 // write the tree file only if specified by the user.
-                writeObjectTree(dataPrototype, graphPrototype, new File(outputDirectory, _objectTreeFileOption.getValue()));
+                writeObjectTree(dataPrototype, graphPrototype, new File(outputDirectory, objectTreeFileOption.getValue()));
             }
-            writeMethodTree(graphPrototype._compiledPrototype, new File(outputDirectory, _methodTreeFileOption.getValue()));
+            writeMethodTree(graphPrototype.compiledPrototype, new File(outputDirectory, methodTreeFileOption.getValue()));
 
         } catch (IOException ioException) {
             ProgramError.unexpected("could not write file ", ioException);
         } finally {
             final long timeInMilliseconds = System.currentTimeMillis() - start;
-            if (_statsOption.getValue()) {
+            if (statsOption.getValue()) {
                 try {
                     writeMiscStatistics(compilerScheme, Trace.stream());
                 } catch (Throwable throwable) {
@@ -367,9 +367,9 @@ public final class BinaryImageGenerator {
         for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
             if (classActor.isInterfaceActor() || classActor.isTupleClassActor() || classActor.isHybridClassActor()) {
                 try {
-                    final ClasspathFile classpathFile = PrototypeClassLoader.readClassFile(classPath, classActor.name().toString());
+                    final ClasspathFile classpathFile = PrototypeClassLoader.readClassFile(classPath, classActor.name.toString());
 
-                    final String classfilePath = classActor.name().toString().replace('.', '/') + ".class";
+                    final String classfilePath = classActor.name.toString().replace('.', '/') + ".class";
                     final JarEntry jarEntry = new JarEntry(classfilePath);
                     jarEntry.setTime(System.currentTimeMillis());
                     jarOutputStream.putNextEntry(jarEntry);
@@ -401,7 +401,7 @@ public final class BinaryImageGenerator {
         int birBytecodeTotal = 0;
         int cirBytecodeTotal = 0;
 
-        final Field bytecodeField = Classes.getDeclaredField(CirMethod.class, "_cirBytecode");
+        final Field bytecodeField = Classes.getDeclaredField(CirMethod.class, "cirBytecode");
         bytecodeField.setAccessible(true);
 
         CirGenerator cirGenerator = null;
@@ -444,7 +444,7 @@ public final class BinaryImageGenerator {
         }
 
         // report potential savings from collecting target method junk into the code region
-        final int headerSize = VMConfiguration.target().layoutScheme().arrayHeaderLayout().headerSize();
+        final int headerSize = VMConfiguration.target().layoutScheme().arrayHeaderLayout.headerSize();
         final ObjectDistribution<Object> distribution = ValueMetrics.newObjectDistribution(null);
         int zeroLiterals = 0;
         int zeroCatchRangePositions = 0;
@@ -453,7 +453,7 @@ public final class BinaryImageGenerator {
         int zeroDirectCallees = 0;
         int zeroReferenceMaps = 0;
         int zeroScalarLiterals = 0;
-        for (TargetMethod targetMethod : Code.bootCodeRegion().targetMethods()) {
+        for (TargetMethod targetMethod : Code.bootCodeRegion.targetMethods()) {
             final Object[] referenceLiterals = targetMethod.referenceLiterals();
             if (referenceLiterals != null) {
                 for (int i = 0; i < referenceLiterals.length; i++) {
@@ -470,7 +470,7 @@ public final class BinaryImageGenerator {
         }
         int redundantReferenceLiterals = 0;
         for (Map.Entry<Object, Integer> entry : distribution.asMap().entrySet()) {
-            redundantReferenceLiterals += (entry.getValue() - 1) * Word.width().numberOfBytes();
+            redundantReferenceLiterals += (entry.getValue() - 1) * Word.width().numberOfBytes;
         }
         out.println("Potential savings from reference literal merging: " + redundantReferenceLiterals + " bytes");
         out.println("Potential savings from compressing reference literal arrays: " + zeroLiterals + " bytes");
@@ -506,7 +506,7 @@ public final class BinaryImageGenerator {
      */
     private static int savingsFrom(int headerSize, Object o) {
         if (o == null) {
-            return Word.width().numberOfBytes() + headerSize;
+            return Word.width().numberOfBytes + headerSize;
         }
         return headerSize;
     }

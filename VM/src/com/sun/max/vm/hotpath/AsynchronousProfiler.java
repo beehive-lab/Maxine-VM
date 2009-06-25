@@ -33,34 +33,34 @@ public class AsynchronousProfiler implements Runnable {
 
     public static enum CounterMetric {
         INTERPRETED_BYTECODES, TRUNKS, BRANCHES;
-        public static long[] _counters = new long[CounterMetric.values().length];
+        public static long[] counters = new long[CounterMetric.values().length];
         public static void increment(CounterMetric metric) {
-            _counters[metric.ordinal()]++;
+            counters[metric.ordinal()]++;
         }
         private static void print() {
             for (CounterMetric metric : CounterMetric.values()) {
-                printKeyValueCount(metric.name(), _counters[metric.ordinal()]);
+                printKeyValueCount(metric.name(), counters[metric.ordinal()]);
             }
         }
     }
 
-    public static OptionSet _optionSet = new OptionSet();
-    public static Option<Boolean> _profile = _optionSet.newBooleanOption("P", false, "(P)rofiles hotpath execution.");
+    public static OptionSet optionSet = new OptionSet();
+    public static Option<Boolean> profile = optionSet.newBooleanOption("P", false, "(P)rofiles hotpath execution.");
 
-    private static Thread _profilerThread = null;
-    private static LinkedBlockingQueue<Event> _eventQueue = new LinkedBlockingQueue<Event>();
+    private static Thread profilerThread = null;
+    private static LinkedBlockingQueue<Event> eventQueue = new LinkedBlockingQueue<Event>();
 
     static {
-        _profilerThread = new Thread(new AsynchronousProfiler());
-        _profilerThread.setPriority(Thread.NORM_PRIORITY);
-        _profilerThread.setDaemon(true);
-        _profilerThread.start();
+        profilerThread = new Thread(new AsynchronousProfiler());
+        profilerThread.setPriority(Thread.NORM_PRIORITY);
+        profilerThread.setDaemon(true);
+        profilerThread.start();
     }
 
     public void run() {
         try {
             while (true) {
-                _eventQueue.take().process();
+                eventQueue.take().process();
             }
         } catch (InterruptedException e) {
             ProgramError.unexpected();
@@ -70,7 +70,7 @@ public class AsynchronousProfiler implements Runnable {
     public static void print() {
         try {
             // Consume all events before printing final results.
-            while (_eventQueue.size() > 0) {
+            while (eventQueue.size() > 0) {
                 Thread.sleep(1000);
             }
         } catch (InterruptedException e) { }
@@ -85,20 +85,20 @@ public class AsynchronousProfiler implements Runnable {
     }
 
     private abstract static class TreeEvent extends Event {
-        private static final GrowableDeterministicSet<TirTree> _trees = new LinkedIdentityHashSet<TirTree>();
-        private final TirTree _tree;
+        private static final GrowableDeterministicSet<TirTree> trees = new LinkedIdentityHashSet<TirTree>();
+        private final TirTree tree;
         public TreeEvent(TirTree tree) {
-            _tree = tree;
-            _trees.add(_tree);
+            this.tree = tree;
+            trees.add(tree);
         }
 
         public static void print() {
             Console.printThinDivider("Trees");
-            for (TirTree tree : _trees) {
+            for (TirTree tree : trees) {
                 printKey("Tree", NameMap.nameOf(tree));
                 printKey("Anchor", tree.anchor().toString());
-                printKey("Iterations", tree.profile()._iterations);
-                printKey("Executions", tree.profile()._executions);
+                printKey("Iterations", tree.profile().iterations);
+                printKey("Executions", tree.profile().executions);
                 Console.printThinDivider();
             }
             Console.printThinDivider();
@@ -141,40 +141,40 @@ public class AsynchronousProfiler implements Runnable {
     }
 
     private static class ExecuteEvent extends TreeEvent {
-        private static final Counter _count = new Counter();
+        private static final Counter count = new Counter();
 
-        private final Bailout _bailout;
+        private final Bailout bailout;
 
         public ExecuteEvent(TirTree tree) {
             super(tree);
-            _bailout = null;
+            bailout = null;
         }
 
         public static void print() {
             Console.printThinDivider("Executions");
-            printKey("execution", _count.getCount());
+            printKey("execution", count.getCount());
             Console.printThinDivider();
         }
 
         public ExecuteEvent(TirTree tree, Bailout bailout) {
             super(tree);
-            _bailout = bailout;
+            this.bailout = bailout;
         }
 
         @Override
         public void process() {
-            if (_bailout == null) {
-                _count.increment();
+            if (bailout == null) {
+                count.increment();
             }
         }
     }
 
     private static boolean isProfiling() {
-        return _profile.getValue();
+        return profile.getValue();
     }
 
     private static void enqueue(Event event) {
-        _eventQueue.add(event);
+        eventQueue.add(event);
     }
 
     public static void eventExecute(TirTree tree) {

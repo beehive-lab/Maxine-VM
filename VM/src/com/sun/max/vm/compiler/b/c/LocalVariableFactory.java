@@ -31,11 +31,11 @@ import com.sun.max.vm.type.*;
  */
 class LocalVariableFactory extends SlotVariableFactory {
 
-    final CirVariable[] _parameters;
+    final CirVariable[] parameters;
 
     LocalVariableFactory(CirVariableFactory variableFactory, int nMaxLocals, CirVariable[] parameters) {
         super(variableFactory, nMaxLocals);
-        _parameters = parameters;
+        this.parameters = parameters;
         int slotIndex = 0;
         for (int i = 0; i < parameters.length - 2; i++) {
             setVariable(slotIndex, parameters[i]);
@@ -48,10 +48,10 @@ class LocalVariableFactory extends SlotVariableFactory {
 
     void copyParametersInto(JavaStackSlot[] slots) {
         int slotIndex = 0;
-        for (int i = 0; i < _parameters.length - 2; i++) {
-            slots[slotIndex] = new VariableJavaStackSlot(_parameters[i]);
+        for (int i = 0; i < parameters.length - 2; i++) {
+            slots[slotIndex] = new VariableJavaStackSlot(parameters[i]);
             slotIndex++;
-            if (_parameters[i].isCategory2()) {
+            if (parameters[i].isCategory2()) {
                 slotIndex++;
             }
         }
@@ -59,6 +59,6 @@ class LocalVariableFactory extends SlotVariableFactory {
 
     @Override
     protected CirVariable createSlotVariable(Kind kind, int slotIndex) {
-        return _cirVariableFactory.createLocalVariable(kind, slotIndex);
+        return cirVariableFactory.createLocalVariable(kind, slotIndex);
     }
 }

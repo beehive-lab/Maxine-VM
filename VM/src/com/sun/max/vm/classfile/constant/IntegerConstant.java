@@ -25,7 +25,7 @@ import com.sun.max.vm.value.*;
 
 /**
  * #4.4.4.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
@@ -36,36 +36,36 @@ public final class IntegerConstant extends AbstractPoolConstant<IntegerConstant>
         return Tag.INTEGER;
     }
 
-    private final int _value;
+    private final int value;
 
     IntegerConstant(int value) {
-        _value = value;
+        this.value = value;
     }
 
     public int value() {
-        return _value;
+        return value;
     }
 
     public String valueString(ConstantPool pool) {
-        return String.valueOf(_value);
+        return String.valueOf(value);
     }
 
     @Override
     public boolean equals(Object other) {
         if (other instanceof IntegerConstant) {
             final IntegerConstant key = (IntegerConstant) other;
-            return _value == key._value;
+            return value == key.value;
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return _value;
+        return value;
     }
 
     public Value value(ConstantPool pool, int index) {
-        return IntValue.from(_value);
+        return IntValue.from(value);
     }
 
     @Override

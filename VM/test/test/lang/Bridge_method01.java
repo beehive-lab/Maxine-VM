@@ -15,8 +15,8 @@ public class Bridge_method01 {
         }
     }
 
-    private static Wrap<Integer> _wrapped = new IWrap();
+    private static Wrap<Integer> wrapped = new IWrap();
     public static int test(int arg) {
-        return _wrapped.get();
+        return wrapped.get();
     }
 }

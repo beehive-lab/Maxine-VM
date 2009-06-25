@@ -33,23 +33,23 @@ import com.sun.max.vm.tele.*;
  */
 public final class VMTeleMessenger extends AbstractTeleVMHolder implements TeleMessenger {
 
-    private final MaxineMessenger _maxineMessenger;
+    private final MaxineMessenger maxineMessenger;
 
     public VMTeleMessenger(TeleVM teleVM) {
         super(teleVM);
-        _maxineMessenger = new MaxineMessenger();
+        maxineMessenger = new MaxineMessenger();
     }
 
-    private Pointer _infoPointer;
+    private Pointer infoPointer;
 
     public void enable() {
-        _infoPointer = teleVM().bootImageStart().plus(teleVM().bootImage().header()._messengerInfoOffset);
-        teleVM().dataAccess().writeWord(_infoPointer, Address.fromInt(1)); // setting to non-zero indicates enabling
+        infoPointer = teleVM().bootImageStart().plus(teleVM().bootImage().header().messengerInfoOffset);
+        teleVM().dataAccess().writeWord(infoPointer, Address.fromInt(1)); // setting to non-zero indicates enabling
     }
 
     public boolean activate() {
-        if (!_maxineMessenger.isActivated()) {
-            final Pointer info = teleVM().dataAccess().readWord(_infoPointer).asPointer();
+        if (!maxineMessenger.isActivated()) {
+            final Pointer info = teleVM().dataAccess().readWord(infoPointer).asPointer();
             final Size dataSize = teleVM().dataAccess().getWord(info, 0, 0).asSize();
 
             // Note that in/out are crossed over.
@@ -63,19 +63,19 @@ public final class VMTeleMessenger extends AbstractTeleVMHolder implements TeleM
             if (outData.isZero()) {
                 return false;
             }
-            _maxineMessenger.activate(teleVM().dataAccess(), inData, outData, dataSize.toInt());
+            maxineMessenger.activate(teleVM().dataAccess(), inData, outData, dataSize.toInt());
         }
         return true;
     }
 
     public void requestBytecodeBreakpoint(MethodKey methodKey, int bytecodePosition) {
         activate();
-        _maxineMessenger.send(new BytecodeBreakpointMessage(BytecodeBreakpointMessage.Action.MAKE, methodKey, bytecodePosition));
+        maxineMessenger.send(new BytecodeBreakpointMessage(BytecodeBreakpointMessage.Action.MAKE, methodKey, bytecodePosition));
     }
 
     public void cancelBytecodeBreakpoint(MethodKey methodKey, int bytecodePosition) {
         activate();
-        _maxineMessenger.send(new BytecodeBreakpointMessage(BytecodeBreakpointMessage.Action.DELETE, methodKey, bytecodePosition));
+        maxineMessenger.send(new BytecodeBreakpointMessage(BytecodeBreakpointMessage.Action.DELETE, methodKey, bytecodePosition));
     }
 
 }

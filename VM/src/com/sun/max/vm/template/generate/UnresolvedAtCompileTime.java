@@ -33,20 +33,20 @@ import com.sun.max.vm.template.*;
  */
 @PROTOTYPE_ONLY
 public class UnresolvedAtCompileTime extends ResolvedAtCompileTime implements UnresolvedAtCompileTimeInterface {
-    public static byte _uninitializedMutableByteVar = 11;
-    public static short _uninitializedMutableShortVar = 22;
-    public static char _uninitializedMutableCharVar = '1';
-    public static int _uninitializedMutableIntVar = 33;
-    public static long _uninitializedMutableLongVar = 44;
-    public static float _uninitializedMutableFloatVar = 55;
-    public static double _uninitializedMutableDoubleVar = 66;
-    public static boolean _uninitializedMutableBooleanVar = true;
-    public static  Object _uninitializedMutableObjectVar = null;
+    public static byte uninitializedMutableByteVar = 11;
+    public static short uninitializedMutableShortVar = 22;
+    public static char uninitializedMutableCharVar = '1';
+    public static int uninitializedMutableIntVar = 33;
+    public static long uninitializedMutableLongVar = 44;
+    public static float uninitializedMutableFloatVar = 55;
+    public static double uninitializedMutableDoubleVar = 66;
+    public static boolean uninitializedMutableBooleanVar = true;
+    public static  Object uninitializedMutableObjectVar = null;
 
     public static void parameterlessUnresolvedStaticMethod() {
         // Do enough stuff here to avoid being inlined.
         for (int i = 0; i < 1000; i++) {
-            _uninitializedMutableIntVar += i;
+            uninitializedMutableIntVar += i;
         }
     }
 
@@ -73,7 +73,7 @@ public class UnresolvedAtCompileTime extends ResolvedAtCompileTime implements Un
     public void parameterlessUnresolvedInterfaceMethod() {
         // Do enough stuff here to avoid being inlined.
         for (int i = 0; i < 1000; i++) {
-            _intField += i;
+            intField += i;
         }
     }
 }

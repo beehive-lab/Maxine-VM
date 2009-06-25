@@ -31,7 +31,7 @@ import com.sun.max.vm.compiler.ir.IrBlock.*;
  * @author Thomas Wuerthinger
  */
 public class RemoveRedundantMoves extends AlgorithmPart {
-    private final Metrics.Counter _movedAssignmentsCounter = createCounter("Moved assignments");
+    private final Metrics.Counter movedAssignmentsCounter = createCounter("Moved assignments");
 
 
     public RemoveRedundantMoves() {
@@ -147,7 +147,7 @@ public class RemoveRedundantMoves extends AlgorithmPart {
         }
 
         if (LinearScanRegisterAllocator.DETAILED_COUNTING) {
-            _movedAssignmentsCounter.accumulate((offset - 2) * block.predecessors().length());
+            movedAssignmentsCounter.accumulate((offset - 2) * block.predecessors().length());
         }
 
         for (int i = 2; i < offset; i++) {

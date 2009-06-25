@@ -90,18 +90,18 @@ public final class JniHandles {
     }
 
     static final class Frame {
-        final int _start;
-        final Frame _previous;
+        final int start;
+        final Frame previous;
         public Frame(int start, Frame previous) {
-            _start = start;
-            _previous = previous;
+            this.start = start;
+            this.previous = previous;
         }
     }
 
     public static final int INITIAL_NUMBER_OF_HANDLES = 32;
 
-    private static final JniHandles _globalHandles = new JniHandles();
-    private static final JniHandles _weakGlobalHandles = new JniHandles();
+    private static final JniHandles globalHandles = new JniHandles();
+    private static final JniHandles weakGlobalHandles = new JniHandles();
 
     /**
      * The objects exposed to native code via handles.
@@ -111,36 +111,36 @@ public final class JniHandles {
      * at the cost of expanding an array (allocation plus copy). It will be replaced
      * with a better representation if this expansion cost proves to be too high.
      */
-    private Object[] _handles = new Object[INITIAL_NUMBER_OF_HANDLES];
+    private Object[] handles = new Object[INITIAL_NUMBER_OF_HANDLES];
 
     /**
      * The frames pushed by {@link JniFunctions#_PushLocalFrame}.
      */
-    private Frame _frames;
+    private Frame frames;
 
     /**
      * Denotes the indexes of handles that have been {@linkplain #freeHandle(int) freed}.
-     * No bit will be set for a handle at an index >= {@link #_top}.
+     * No bit will be set for a handle at an index >= {@link #top}.
      */
-    private final BitSet _freedHandles = new BitSet(INITIAL_NUMBER_OF_HANDLES);
+    private final BitSet freedHandles = new BitSet(INITIAL_NUMBER_OF_HANDLES);
 
     /**
-     * The index at which the next search for a free bit in {@link #_freedHandles} starts.
+     * The index at which the next search for a free bit in {@link #freedHandles} starts.
      * This optimizes allocation where the expected behavior of a native method
      * that deletes local references is such that these references are deleted in the
      * reverse order in which they were created.
      */
-    private int _lastFreedIndex;
+    private int lastFreedIndex;
 
     /**
      * Number of handles allocated from this pool that are (potentially) still in use.
-     * This value also denotes the index of next unused handle in {@link #_handles}.
+     * This value also denotes the index of next unused handle in {@link #handles}.
      * The name of this field also gives some indication of how handles can be allocated
      * and freed in a stack like fashion.
      *
      * Invariant: All elements in _handles at an index greater than or equal to _top are null.
      */
-    private int _top;
+    private int top;
 
     /**
      * Return the "top" (i.e. current size) of this handle pool. This value can be given
@@ -148,25 +148,25 @@ public final class JniHandles {
      * like fashion.
      */
     public int top() {
-        return _top;
+        return top;
     }
 
     /**
      * Resets the "top" (i.e. current size) of this handle pool to a value
      * equal to or less than its current size.
      */
-    public void resetTop(int top) {
-        if (top > _top || top < 0) {
+    public void resetTop(int newTop) {
+        if (newTop > this.top || newTop < 0) {
             FatalError.unexpected("Cannot reset JNI handle stack to higher stack height");
         }
 
-        if (top != _top) {
-            for (int i = top; i != _top; ++i) {
-                _handles[i] = null;
+        if (newTop != this.top) {
+            for (int i = newTop; i != this.top; ++i) {
+                handles[i] = null;
             }
-            _freedHandles.clear(top, _top);
-            _lastFreedIndex = 0;
-            _top = top;
+            freedHandles.clear(newTop, this.top);
+            lastFreedIndex = 0;
+            this.top = newTop;
         }
     }
 
@@ -174,7 +174,7 @@ public final class JniHandles {
      * Gets the handle at a given index.
      */
     private Object get(int index) {
-        return _handles[index];
+        return handles[index];
     }
 
     /**
@@ -183,9 +183,9 @@ public final class JniHandles {
      * @param index the index of the handle to free
      */
     private void freeHandle(int index) {
-        _handles[index] = null;
-        _freedHandles.set(index);
-        _lastFreedIndex = index;
+        handles[index] = null;
+        freedHandles.set(index);
+        lastFreedIndex = index;
     }
 
     private static Object[] expandHandles(Object[] handles, int newLength) {
@@ -202,28 +202,28 @@ public final class JniHandles {
         assert object != null;
 
         // Try to get a handle from the logical end of the array
-        if (_top < _handles.length) {
-            assert _handles[_top] == null;
-            _handles[_top] = object;
-            return indexToJniHandle(_top++, tag);
+        if (top < handles.length) {
+            assert handles[top] == null;
+            handles[top] = object;
+            return indexToJniHandle(top++, tag);
         }
 
         // Now look for a handle in the free set
-        int index = _freedHandles.nextSetBit(_lastFreedIndex);
-        if (index == -1 && _lastFreedIndex != 0) {
+        int index = freedHandles.nextSetBit(lastFreedIndex);
+        if (index == -1 && lastFreedIndex != 0) {
             // Wrap around and search from the beginning of the array
-            index = _freedHandles.nextSetBit(0);
+            index = freedHandles.nextSetBit(0);
         }
         if (index != -1) {
-            assert _handles[index] == null;
-            _handles[index] = object;
-            _freedHandles.clear(index);
+            assert handles[index] == null;
+            handles[index] = object;
+            freedHandles.clear(index);
             return indexToJniHandle(index, tag);
         }
 
         // No space available, the handle array is expanded
         // to be double its current size.
-        _handles = expandHandles(_handles, _handles.length * 2);
+        handles = expandHandles(handles, handles.length * 2);
 
         // Retry - guaranteed to succeed
         return allocateHandle(object, tag);
@@ -243,7 +243,7 @@ public final class JniHandles {
 
     private void pushFrame(int capacity) {
         ensureCapacity(capacity);
-        _frames = new Frame(_top, _frames);
+        frames = new Frame(top, frames);
     }
 
     private JniHandle popFrame(JniHandle result) {
@@ -251,9 +251,9 @@ public final class JniHandles {
 
         // This test means PopLocalFrame will work even if there was
         // not a corresponding call to PushLocalFrame
-        if (_frames != null) {
-            resetTop(_frames._start);
-            _frames = _frames._previous;
+        if (frames != null) {
+            resetTop(frames.start);
+            frames = frames.previous;
         }
         return (object != null) ? allocateHandle(object, Tag.LOCAL) : result;
     }
@@ -262,10 +262,10 @@ public final class JniHandles {
      * Ensures that <i>at least</i> a given number of local references can be created in this pool of handles.
      */
     private void ensureCapacity(int capacity) {
-        final int available = (_handles.length - _top) + _freedHandles.cardinality();
+        final int available = (handles.length - top) + freedHandles.cardinality();
         final int extraNeeded = capacity - available;
         if (extraNeeded > 0) {
-            _handles = expandHandles(_handles, _handles.length + extraNeeded);
+            handles = expandHandles(handles, handles.length + extraNeeded);
         }
     }
 
@@ -284,11 +284,11 @@ public final class JniHandles {
             return VmThread.current().jniHandles().get(jniHandleToIndex(jniHandle));
         }
         if (tag == Tag.GLOBAL) {
-            return _globalHandles.get(jniHandleToIndex(jniHandle));
+            return globalHandles.get(jniHandleToIndex(jniHandle));
         }
         assert tag == Tag.WEAK_GLOBAL;
 
-        final WeakReference weakReference = (WeakReference) _weakGlobalHandles.get(jniHandleToIndex(jniHandle));
+        final WeakReference weakReference = (WeakReference) weakGlobalHandles.get(jniHandleToIndex(jniHandle));
         return weakReference == null ? null : weakReference.get();
     }
 
@@ -348,8 +348,8 @@ public final class JniHandles {
         if (object == null) {
             return JniHandle.zero();
         }
-        synchronized (_globalHandles) {
-            return _globalHandles.allocateHandle(object, Tag.GLOBAL);
+        synchronized (globalHandles) {
+            return globalHandles.allocateHandle(object, Tag.GLOBAL);
         }
     }
 
@@ -357,8 +357,8 @@ public final class JniHandles {
         if (object == null) {
             return JniHandle.zero();
         }
-        synchronized (_weakGlobalHandles) {
-            return _weakGlobalHandles.allocateHandle(new WeakReference<Object>(object), Tag.WEAK_GLOBAL);
+        synchronized (weakGlobalHandles) {
+            return weakGlobalHandles.allocateHandle(new WeakReference<Object>(object), Tag.WEAK_GLOBAL);
         }
     }
 
@@ -378,8 +378,8 @@ public final class JniHandles {
     public static void destroyGlobalHandle(JniHandle jniHandle) {
         if (!jniHandle.isZero()) {
             assert tag(jniHandle) == Tag.GLOBAL;
-            synchronized (_globalHandles) {
-                _globalHandles.freeHandle(jniHandleToIndex(jniHandle));
+            synchronized (globalHandles) {
+                globalHandles.freeHandle(jniHandleToIndex(jniHandle));
             }
         }
     }
@@ -387,8 +387,8 @@ public final class JniHandles {
     public static void destroyWeakGlobalHandle(JniHandle jniHandle) {
         if (!jniHandle.isZero()) {
             assert tag(jniHandle) == Tag.WEAK_GLOBAL;
-            synchronized (_weakGlobalHandles) {
-                _weakGlobalHandles.freeHandle(jniHandleToIndex(jniHandle));
+            synchronized (weakGlobalHandles) {
+                weakGlobalHandles.freeHandle(jniHandleToIndex(jniHandle));
             }
         }
     }

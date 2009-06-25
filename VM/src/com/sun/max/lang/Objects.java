@@ -38,7 +38,7 @@ public final class Objects {
     private Objects() {
     }
 
-    private static final Unsafe _unsafe = (Unsafe) WithoutAccessCheck.getStaticField(Unsafe.class, "theUnsafe");
+    private static final Unsafe unsafe = (Unsafe) WithoutAccessCheck.getStaticField(Unsafe.class, "theUnsafe");
 
     /**
      * Compares two given objects for equality using {@link Object#equals(Object)}.
@@ -89,8 +89,8 @@ public final class Objects {
      *             {@linkplain InstantiationException here}
      */
     public static Object allocateInstance(Class<?> javaClass) throws InstantiationException {
-        _unsafe.ensureClassInitialized(javaClass);
-        return _unsafe.allocateInstance(javaClass);
+        unsafe.ensureClassInitialized(javaClass);
+        return unsafe.allocateInstance(javaClass);
     }
 
     public static <T> T allocateObject(Class<T> javaClass) throws InstantiationException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {

@@ -36,36 +36,36 @@ public class DisplacementModifier extends InstructionModifier {
     /**
      * Width of the displacement.
      */
-    private final WordWidth _displacementWidth;
+    private final WordWidth displacementWidth;
 
     /**
      * Value of the displacement.
      */
-    private final int _displacementValue;
+    private final int displacementValue;
 
     /**
      * Whether and index register is being used. Mostly used to ease validation of the instruction (see AssemblyInstructionEditor).
      * TODO: this information is currently specific to x86, so it needs to be moved to an x86 specific subclass.
      */
-    private final  boolean _useIndexRegister;
+    private final  boolean useIndexRegister;
 
     public DisplacementModifier(int position, int length, WordWidth displacementWidth, int displacementValue, boolean useIndexRegister) {
         super(position, length);
-        _displacementWidth = displacementWidth;
-        _displacementValue = displacementValue;
-        _useIndexRegister = useIndexRegister;
+        this.displacementWidth = displacementWidth;
+        this.displacementValue = displacementValue;
+        this.useIndexRegister = useIndexRegister;
     }
 
     public WordWidth displacementWidth() {
-        return _displacementWidth;
+        return displacementWidth;
     }
 
     public int displacementValue() {
-        return _displacementValue;
+        return displacementValue;
     }
 
     public boolean useIndexRegister() {
-        return _useIndexRegister;
+        return useIndexRegister;
     }
 
     /**
@@ -91,7 +91,7 @@ public class DisplacementModifier extends InstructionModifier {
      */
     public void fix(byte[] code, int position, byte disp8) throws AssemblyException {
         final AssemblyInstructionEditor editor =  createAssemblyInstructionEditor(code, position + startPosition(), size());
-        editor.fixDisplacement(_displacementWidth, _useIndexRegister, disp8);
+        editor.fixDisplacement(displacementWidth, useIndexRegister, disp8);
     }
 
     /**
@@ -101,13 +101,13 @@ public class DisplacementModifier extends InstructionModifier {
      */
     public void fix(byte[] codeRegion, int offsetToCode, int disp32) throws AssemblyException {
         final AssemblyInstructionEditor editor =  createAssemblyInstructionEditor(codeRegion, offsetToCode + startPosition(), size());
-        if (_displacementWidth == WordWidth.BITS_8) {
+        if (displacementWidth == WordWidth.BITS_8) {
             if (disp32 <= Byte.MAX_VALUE && disp32 >= Byte.MIN_VALUE) {
-                editor.fixDisplacement(_displacementWidth, _useIndexRegister,  (byte) disp32);
+                editor.fixDisplacement(displacementWidth, useIndexRegister,  (byte) disp32);
                 return;
             }
         }
-        editor.fixDisplacement(_displacementWidth, _useIndexRegister, disp32);
+        editor.fixDisplacement(displacementWidth, useIndexRegister, disp32);
     }
 
 }

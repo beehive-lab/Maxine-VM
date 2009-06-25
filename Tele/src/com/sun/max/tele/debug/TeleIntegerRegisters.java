@@ -37,17 +37,17 @@ import com.sun.max.vm.runtime.VMRegister.*;
  */
 public final class TeleIntegerRegisters extends TeleRegisters {
 
-    private final Symbol _indirectCallRegister;
+    private final Symbol indirectCallRegister;
 
     public TeleIntegerRegisters(VMConfiguration vmConfiguration) {
         super(symbolizer(vmConfiguration), vmConfiguration);
-        switch (vmConfiguration.platform().processorKind().instructionSet()) {
+        switch (vmConfiguration.platform().processorKind.instructionSet) {
             case AMD64: {
-                _indirectCallRegister = AMD64GeneralRegister64.RAX;
+                indirectCallRegister = AMD64GeneralRegister64.RAX;
                 break;
             }
             case SPARC: {
-                _indirectCallRegister = null;
+                indirectCallRegister = null;
                 break;
             }
             default: {
@@ -61,7 +61,7 @@ public final class TeleIntegerRegisters extends TeleRegisters {
      * configuration.
      */
     public static Symbolizer<? extends Symbol> symbolizer(VMConfiguration vmConfiguration) {
-        switch (vmConfiguration.platform().processorKind().instructionSet()) {
+        switch (vmConfiguration.platform().processorKind.instructionSet) {
             case AMD64:
                 return AMD64GeneralRegister64.ENUMERATOR;
             case SPARC:
@@ -78,10 +78,10 @@ public final class TeleIntegerRegisters extends TeleRegisters {
      * @return null if there is no fixed register used to for indirect calls on the target platform
      */
     public Address getCallRegisterValue() {
-        if (_indirectCallRegister == null) {
+        if (indirectCallRegister == null) {
             return null;
         }
-        return get(_indirectCallRegister);
+        return get(indirectCallRegister);
     }
 
     public Pointer stackPointer() {
@@ -101,7 +101,7 @@ public final class TeleIntegerRegisters extends TeleRegisters {
      * @return the value of the register denoted by {@code role} and {@code targetABI}
      */
     public Pointer get(VMRegister.Role role, TargetABI targetABI) {
-        final TargetABI abi = targetABI == null ? _vmConfiguration.targetABIsScheme().nativeABI() : targetABI;
+        final TargetABI abi = targetABI == null ? vmConfiguration.targetABIsScheme().nativeABI() : targetABI;
         final Symbol register = abi.registerRoleAssignment().integerRegisterActingAs(role);
         return get(register).asPointer();
     }

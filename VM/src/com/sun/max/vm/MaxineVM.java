@@ -45,10 +45,10 @@ import com.sun.max.vm.type.*;
 
 public final class MaxineVM {
 
-    private static final String _VERSION = "0.2";
+    private static final String VERSION = "0.2";
 
     public static String version() {
-        return _VERSION;
+        return VERSION;
     }
 
     public static String name() {
@@ -88,29 +88,29 @@ public final class MaxineVM {
         RUNNING
     }
 
-    private Phase _phase = Phase.PROTOTYPING;
-    private final VMConfiguration _configuration;
+    private Phase phase = Phase.PROTOTYPING;
+    private final VMConfiguration configuration;
 
     public MaxineVM(VMConfiguration vmConfiguration) {
-        _configuration = vmConfiguration;
+        configuration = vmConfiguration;
     }
 
     public static void initialize(VMConfiguration hostVMConfiguration, VMConfiguration targetVMConfiguration) {
-        _host = new MaxineVM(hostVMConfiguration);
-        _target = new MaxineVM(targetVMConfiguration);
+        host = new MaxineVM(hostVMConfiguration);
+        target = new MaxineVM(targetVMConfiguration);
     }
 
     public Phase phase() {
-        return _phase;
+        return phase;
     }
 
     public void setPhase(Phase phase) {
-        _phase = phase;
+        this.phase = phase;
     }
 
     @INLINE
     public VMConfiguration configuration() {
-        return _configuration;
+        return configuration;
     }
 
     public static void writeInitialVMParams() {
@@ -127,34 +127,34 @@ public final class MaxineVM {
      * object as the boot image is being generated.
      */
     @CONSTANT
-    private static MaxineVM _host;
+    private static MaxineVM host;
 
     @PROTOTYPE_ONLY
     public static boolean isHostInitialized() {
-        return _host != null;
+        return host != null;
     }
 
     /**
      * @return the host VM that is currently running on the underlying hardware or simulator
      */
     public static MaxineVM host() {
-        if (_host == null) {
+        if (host == null) {
             Prototype.initializeHost();
         }
-        return _host;
+        return host;
     }
 
     @UNSAFE
     @SURROGATE
     private static MaxineVM host_() {
-        return _host;
+        return host;
     }
 
     /**
      * Assigned only once by the prototype generator.
      */
     @CONSTANT
-    private static MaxineVM _target;
+    private static MaxineVM target;
 
     /**
      * This differs from 'host()' only while running the prototype generator.
@@ -166,24 +166,24 @@ public final class MaxineVM {
      */
     @INLINE
     public static MaxineVM target() {
-        if (_target != null) {
+        if (target != null) {
             Prototype.initializeHost();
         }
-        return _target;
+        return target;
     }
 
     @UNSAFE
     @SURROGATE
     private static MaxineVM target_() {
-        return _target;
+        return target;
     }
 
     @PROTOTYPE_ONLY
-    public static void setTarget(MaxineVM target) {
-        _target = target;
+    public static void setTarget(MaxineVM vm) {
+        target = vm;
     }
 
-    private static ThreadLocal<MaxineVM> _hostOrTarget = new ThreadLocal<MaxineVM>() {
+    private static ThreadLocal<MaxineVM> hostOrTarget = new ThreadLocal<MaxineVM>() {
         @Override
         protected synchronized MaxineVM initialValue() {
             return host();
@@ -195,10 +195,10 @@ public final class MaxineVM {
      * configuration.
      */
     public static void usingTarget(Runnable runnable) {
-        final MaxineVM vm = _hostOrTarget.get();
-        _hostOrTarget.set(target());
+        final MaxineVM vm = hostOrTarget.get();
+        hostOrTarget.set(target());
         runnable.run();
-        _hostOrTarget.set(vm);
+        hostOrTarget.set(vm);
     }
 
     /**
@@ -206,8 +206,8 @@ public final class MaxineVM {
      * configuration.
      */
     public static <Result_Type> Result_Type usingTarget(Function<Result_Type> function) {
-        final MaxineVM vm = _hostOrTarget.get();
-        _hostOrTarget.set(target());
+        final MaxineVM vm = hostOrTarget.get();
+        hostOrTarget.set(target());
         try {
             return function.call();
         } catch (RuntimeException runtimeException) {
@@ -216,7 +216,7 @@ public final class MaxineVM {
         } catch (Exception exception) {
             throw ProgramError.unexpected(exception);
         } finally {
-            _hostOrTarget.set(vm);
+            hostOrTarget.set(vm);
         }
     }
 
@@ -224,32 +224,32 @@ public final class MaxineVM {
      * Runs a given function that may throw a checked exception in the context of the target VM configuration.
      */
     public static <Result_Type> Result_Type usingTargetWithException(Function<Result_Type> function) throws Exception {
-        final MaxineVM vm = _hostOrTarget.get();
-        _hostOrTarget.set(target());
+        final MaxineVM vm = hostOrTarget.get();
+        hostOrTarget.set(target());
         try {
             return function.call();
         } finally {
-            _hostOrTarget.set(vm);
+            hostOrTarget.set(vm);
         }
     }
 
-    private static MaxineVM _globalHostOrTarget = null;
+    private static MaxineVM globalHostOrTarget = null;
 
     /**
      * The MaxineInspector uses this to direct all AWT event threads to use a certain VM without the need to wrap all
      * event listeners in VM.usingTarget().
      */
     public static void setGlobalHostOrTarget(MaxineVM vm) {
-        _globalHostOrTarget = vm;
+        globalHostOrTarget = vm;
     }
 
     @UNSAFE
     @FOLD
     public static MaxineVM hostOrTarget() {
-        if (_globalHostOrTarget != null) {
-            return _globalHostOrTarget;
+        if (globalHostOrTarget != null) {
+            return globalHostOrTarget;
         }
-        return _hostOrTarget.get();
+        return hostOrTarget.get();
     }
 
     // Substituted by isPrototyping_()
@@ -278,7 +278,7 @@ public final class MaxineVM {
     }
 
     @PROTOTYPE_ONLY
-    private static final Map<Class, Boolean> _prototypeClasses = new HashMap<Class, Boolean>();
+    private static final Map<Class, Boolean> prototypeClasses = new HashMap<Class, Boolean>();
 
     /**
      * Determines if a given class exists only for prototyping purposes and should not be part
@@ -292,13 +292,13 @@ public final class MaxineVM {
      */
     @PROTOTYPE_ONLY
     public static boolean isPrototypeOnly(Class<?> javaClass) {
-        final Boolean value = _prototypeClasses.get(javaClass);
+        final Boolean value = prototypeClasses.get(javaClass);
         if (value != null) {
             return value.booleanValue();
         }
 
         if (javaClass.getAnnotation(PROTOTYPE_ONLY.class) != null) {
-            _prototypeClasses.put(javaClass, Boolean.TRUE);
+            prototypeClasses.put(javaClass, Boolean.TRUE);
             return true;
         }
 
@@ -306,7 +306,7 @@ public final class MaxineVM {
         if (maxPackage != null) {
             if (maxPackage.getClass().getSuperclass() == MaxPackage.class) {
                 final boolean isTestPackage = maxPackage.name().startsWith("test.com.sun.max.");
-                _prototypeClasses.put(javaClass, !isTestPackage);
+                prototypeClasses.put(javaClass, !isTestPackage);
                 return !isTestPackage;
             }
         }
@@ -314,27 +314,27 @@ public final class MaxineVM {
         final Class<?> enclosingClass = javaClass.getEnclosingClass();
         if (enclosingClass != null) {
             final boolean result = isPrototypeOnly(enclosingClass);
-            _prototypeClasses.put(javaClass, Boolean.valueOf(result));
+            prototypeClasses.put(javaClass, Boolean.valueOf(result));
             return result;
         }
-        _prototypeClasses.put(javaClass, Boolean.FALSE);
+        prototypeClasses.put(javaClass, Boolean.FALSE);
         return false;
     }
 
     public static boolean isPrimordial() {
-        return host()._phase == Phase.PRIMORDIAL;
+        return host().phase == Phase.PRIMORDIAL;
     }
 
     public static boolean isPristine() {
-        return host()._phase == Phase.PRISTINE;
+        return host().phase == Phase.PRISTINE;
     }
 
     public static boolean isStarting() {
-        return host()._phase == Phase.STARTING;
+        return host().phase == Phase.STARTING;
     }
 
     public static boolean isPrimordialOrPristine() {
-        final Phase phase = host()._phase;
+        final Phase phase = host().phase;
         return phase == Phase.PRIMORDIAL || phase == Phase.PRISTINE;
     }
 
@@ -342,20 +342,20 @@ public final class MaxineVM {
         return host().phase() == Phase.RUNNING;
     }
 
-    private static final List<String> _maxineCodeBaseList = new ArrayList<String>();
+    private static final List<String> maxineCodeBaseList = new ArrayList<String>();
 
     private static final String MAXINE_CLASS_PACKAGE_PREFIX = new com.sun.max.Package().name();
     private static final String MAXINE_TEST_CLASS_PACKAGE_PREFIX = "test." + MAXINE_CLASS_PACKAGE_PREFIX;
     private static final String EXTENDED_CODEBASE_PROPERTY = "max.extended.codebase";
 
     static {
-        _maxineCodeBaseList.add(MAXINE_CLASS_PACKAGE_PREFIX);
-        _maxineCodeBaseList.add(MAXINE_TEST_CLASS_PACKAGE_PREFIX);
+        maxineCodeBaseList.add(MAXINE_CLASS_PACKAGE_PREFIX);
+        maxineCodeBaseList.add(MAXINE_TEST_CLASS_PACKAGE_PREFIX);
         final String p = System.getProperty(EXTENDED_CODEBASE_PROPERTY);
         if (p != null) {
             final String[] parts = p.split(",");
             for (int i = 0; i < parts.length; i++) {
-                _maxineCodeBaseList.add(parts[i]);
+                maxineCodeBaseList.add(parts[i]);
             }
         }
     }
@@ -365,8 +365,8 @@ public final class MaxineVM {
      */
     public static boolean isMaxineClass(TypeDescriptor typeDescriptor) {
         final String className = typeDescriptor.toJavaString();
-        for (int i = 0; i < _maxineCodeBaseList.size(); i++) {
-            final String prefix = _maxineCodeBaseList.get(i);
+        for (int i = 0; i < maxineCodeBaseList.size(); i++) {
+            final String prefix = maxineCodeBaseList.get(i);
             if (className.startsWith(prefix)) {
                 return true;
             }
@@ -378,19 +378,19 @@ public final class MaxineVM {
      * Determines if a given class actor denotes a class that is part of the Maxine code base.
      */
     public static boolean isMaxineClass(ClassActor classActor) {
-        return isMaxineClass(classActor.typeDescriptor());
+        return isMaxineClass(classActor.typeDescriptor);
     }
 
-    private static int _exitCode = 0;
+    private static int exitCode = 0;
 
-    public static void setExitCode(int exitCode) {
-        _exitCode = exitCode;
+    public static void setExitCode(int code) {
+        exitCode = code;
     }
 
-    private static Pointer _primordialVmThreadLocals;
+    private static Pointer primordialVmThreadLocals;
 
     public static Pointer primordialVmThreadLocals() {
-        return _primordialVmThreadLocals;
+        return primordialVmThreadLocals;
     }
 
     /**
@@ -399,7 +399,7 @@ public final class MaxineVM {
     public static final SignatureDescriptor RUN_METHOD_SIGNATURE;
 
     @PROTOTYPE_ONLY
-    private static final Class[] _runMethodParameterTypes;
+    private static final Class[] runMethodParameterTypes;
     static {
         Method runMethod = null;
         for (Method method : MaxineVM.class.getDeclaredMethods()) {
@@ -408,7 +408,7 @@ public final class MaxineVM {
                 runMethod = method;
             }
         }
-        _runMethodParameterTypes = runMethod.getParameterTypes();
+        runMethodParameterTypes = runMethod.getParameterTypes();
         RUN_METHOD_SIGNATURE = SignatureDescriptor.create(runMethod.getReturnType(), runMethod.getParameterTypes());
     }
 
@@ -417,11 +417,11 @@ public final class MaxineVM {
      */
     @PROTOTYPE_ONLY
     public static  Class[] runMethodParameterTypes() {
-        return _runMethodParameterTypes.clone();
+        return runMethodParameterTypes.clone();
     }
 
-    private static final VMOption _helpOption = register(new VMOption("-help", "Prints this help message."), MaxineVM.Phase.PRISTINE);
-    private static final VMOption _eaOption = register(new VMOption("-ea", "Enables assertions in user code. Currently unimplemented."), MaxineVM.Phase.PRISTINE);
+    private static final VMOption helpOption = register(new VMOption("-help", "Prints this help message."), MaxineVM.Phase.PRISTINE);
+    private static final VMOption eaOption = register(new VMOption("-ea", "Enables assertions in user code. Currently unimplemented."), MaxineVM.Phase.PRISTINE);
 
     /**
      * Entry point called by the substrate.
@@ -439,18 +439,18 @@ public final class MaxineVM {
      * @return zero if everything works so far or an exit code if something goes wrong
      */
     @C_FUNCTION
-    private static int run(Pointer primordialVmThreadLocals, Pointer bootHeapRegionStart, Pointer auxiliarySpace, Word nativeOpenDynamicLibrary, Word dlsym, Word dlerror, int argc, Pointer argv) {
+    private static int run(Pointer vmThreadLocals, Pointer bootHeapRegionStart, Pointer auxiliarySpace, Word nativeOpenDynamicLibrary, Word dlsym, Word dlerror, int argc, Pointer argv) {
         // This one field was not marked by the data prototype for relocation
         // to avoid confusion between "offset zero" and "null".
         // Fix it manually:
         Heap.bootHeapRegion().setStart(bootHeapRegionStart);
 
-        Safepoint.initializePrimordial(primordialVmThreadLocals);
+        Safepoint.initializePrimordial(vmThreadLocals);
 
-        Heap.initializeAuxiliarySpace(primordialVmThreadLocals, auxiliarySpace);
+        Heap.initializeAuxiliarySpace(vmThreadLocals, auxiliarySpace);
 
         // As of here we can write values:
-        _primordialVmThreadLocals = primordialVmThreadLocals;
+        MaxineVM.primordialVmThreadLocals = vmThreadLocals;
 
         // This must be called first as subsequent actions depend on it to resolve the native symbols
         DynamicLinker.initialize(nativeOpenDynamicLibrary, dlsym, dlerror);
@@ -470,13 +470,13 @@ public final class MaxineVM {
         hostOrTarget().setPhase(MaxineVM.Phase.PRISTINE);
 
         if (VMOptions.parsePristine(argc, argv)) {
-            if (_helpOption.isPresent()) {
+            if (helpOption.isPresent()) {
                 VMOptions.printUsage();
             } else {
                 VmThread.createAndRunMainThread();
             }
         }
-        return _exitCode;
+        return exitCode;
     }
 
     public static String getExecutablePath() {
@@ -505,7 +505,7 @@ public final class MaxineVM {
 
     @PROTOTYPE_ONLY
     public static void registerCriticalMethod(CriticalMethod criticalEntryPoint) {
-        registerImageMethod(criticalEntryPoint.classMethodActor());
+        registerImageMethod(criticalEntryPoint.classMethodActor);
     }
 
     /*

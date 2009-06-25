@@ -41,9 +41,9 @@ public class Base extends BlockEnd {
         assert osrEntry == null || osrEntry.isOsrEntry();
         assert standardEntry.isStandardEntry();
         if (osrEntry != null) {
-            _successors.add(osrEntry);
+            successors.add(osrEntry);
         }
-        _successors.add(standardEntry);
+        successors.add(standardEntry);
     }
 
     /**
@@ -59,7 +59,7 @@ public class Base extends BlockEnd {
      * @return the OSR entrypoint bock, if it exists; <code>null</code> otherwise
      */
     public BlockBegin osrEntry() {
-        return _successors.size() < 2 ? null : _successors.get(0);
+        return successors.size() < 2 ? null : successors.get(0);
     }
 
     /**

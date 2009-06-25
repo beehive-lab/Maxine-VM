@@ -43,35 +43,35 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
     extends UniqueInspector<TabbedInspector_Type>
     implements InspectorContainer<Inspector_Type> {
 
-    private final JTabbedPane _tabbedPane;
-    private final SaveSettingsListener _saveSettingsListener;
+    private final JTabbedPane tabbedPane;
+    private final SaveSettingsListener saveSettingsListener;
 
     protected void addChangeListener(ChangeListener listener) {
-        _tabbedPane.addChangeListener(listener);
+        tabbedPane.addChangeListener(listener);
     }
 
     protected void removeChangeListener(ChangeListener listener) {
-        _tabbedPane.removeChangeListener(listener);
+        tabbedPane.removeChangeListener(listener);
     }
 
     protected TabbedInspector(Inspection inspection, final String settingsClientName) {
         super(inspection);
-        _tabbedPane = new JTabbedPane();
+        tabbedPane = new JTabbedPane();
         if (settingsClientName != null) {
-            _saveSettingsListener = createGeometrySettingsClient(this, settingsClientName);
+            saveSettingsListener = createGeometrySettingsClient(this, settingsClientName);
         } else {
-            _saveSettingsListener = null;
+            saveSettingsListener = null;
         }
         createFrame(null);
-        addChangeListener(_tabChangeListener);
+        addChangeListener(tabChangeListener);
     }
 
     @Override
     protected final SaveSettingsListener saveSettingsListener() {
-        return _saveSettingsListener;
+        return saveSettingsListener;
     }
 
-    private final ChangeListener _tabChangeListener = new ChangeListener() {
+    private final ChangeListener tabChangeListener = new ChangeListener() {
 
         public void stateChanged(ChangeEvent event) {
             // An Inspector tab has become visible that was not visible before.
@@ -84,7 +84,7 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
     };
 
     public Inspector_Type inspectorAt(int i) {
-        final Component component = _tabbedPane.getComponentAt(i);
+        final Component component = tabbedPane.getComponentAt(i);
         if (component instanceof InspectorFrame) {
             final InspectorFrame inspectorFrame = (InspectorFrame) component;
             final Class<Inspector_Type> type = null;
@@ -94,26 +94,26 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
     }
 
     public int length() {
-        return _tabbedPane.getTabCount();
+        return tabbedPane.getTabCount();
     }
 
     public int getSelectedIndex() {
-        return _tabbedPane.getSelectedIndex();
+        return tabbedPane.getSelectedIndex();
     }
 
     public void setSelected(Inspector_Type inspector) {
         if (inspector.frame() instanceof Component) {
             moveToFront();
-            _tabbedPane.setSelectedComponent((Component) inspector.frame());
+            tabbedPane.setSelectedComponent((Component) inspector.frame());
         }
     }
 
     public boolean isSelected(Inspector_Type inspector) {
-        return inspector.frame() ==  _tabbedPane.getSelectedComponent();
+        return inspector.frame() ==  tabbedPane.getSelectedComponent();
     }
 
     public Inspector_Type getSelected() {
-        final Component component =  _tabbedPane.getSelectedComponent();
+        final Component component =  tabbedPane.getSelectedComponent();
         for (Inspector_Type  inspector : this) {
             if (inspector.frame() == component) {
                 return inspector;
@@ -134,10 +134,10 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
         final InspectorFrame inspectorFrame = inspector.frame();
         if (inspectorFrame instanceof Component) {
             final Component component = (Component) inspectorFrame;
-            _tabbedPane.addTab(tabTitle, component);
+            tabbedPane.addTab(tabTitle, component);
             if (tabToolTipText != null) {
-                final int index = _tabbedPane.indexOfComponent(component);
-                _tabbedPane.setToolTipTextAt(index, tabToolTipText);
+                final int index = tabbedPane.indexOfComponent(component);
+                tabbedPane.setToolTipTextAt(index, tabToolTipText);
             }
         }
     }
@@ -146,9 +146,9 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
         final InspectorFrame inspectorFrame = inspector.frame();
         if (inspectorFrame instanceof Component) {
             final Component component = (Component) inspectorFrame;
-            _tabbedPane.addTab(tabTitle, component);
+            tabbedPane.addTab(tabTitle, component);
             if (tabToolTipText != null) {
-                _tabbedPane.setToolTipTextAt(_tabbedPane.indexOfComponent(component), tabToolTipText);
+                tabbedPane.setToolTipTextAt(tabbedPane.indexOfComponent(component), tabToolTipText);
             }
             if (frameTitle != null) {
                 inspectorFrame.setTitle(frameTitle);
@@ -165,8 +165,8 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
         final InspectorFrame inspectorFrame = inspector.frame();
         if (inspectorFrame instanceof Component) {
             final Component component = (Component) inspectorFrame;
-            final int index = _tabbedPane.indexOfComponent(component);
-            _tabbedPane.setTabComponentAt(index, new ButtonTabComponent(inspection(), this, inspector, _tabbedPane));
+            final int index = tabbedPane.indexOfComponent(component);
+            tabbedPane.setTabComponentAt(index, new ButtonTabComponent(inspection(), this, inspector, tabbedPane));
         }
     }
 
@@ -176,7 +176,7 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
 
     @Override
     public void createView() {
-        frame().setContentPane(_tabbedPane);
+        frame().setContentPane(tabbedPane);
     }
 
     public void viewConfigurationChanged() {
@@ -214,7 +214,7 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
      */
     @Override
     public void inspectorClosing() {
-        removeChangeListener(_tabChangeListener);
+        removeChangeListener(tabChangeListener);
         for (Inspector_Type inspector : this) {
             inspector.dispose();
         }

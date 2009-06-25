@@ -26,13 +26,13 @@ package test.except;
  */
 public class Catch_NPE_04 {
 
-    private int _field = 45;
+    private int field = 45;
 
     public static int test(int a) {
         try {
             if (a >= 0) {
                 final Catch_NPE_04 obj = null;
-                return obj._field;
+                return obj.field;
             }
         } catch (NullPointerException npe) {
             return a;

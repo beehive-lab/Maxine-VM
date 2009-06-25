@@ -38,8 +38,8 @@ import com.sun.max.vm.tele.*;
 
 public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
 
-    private static int[] _percentages = new int[] {50, 50};
-    protected static BeltwaySSCollector _beltCollectorBSS = new BeltwaySSCollector();
+    private static int[] percentages = new int[] {50, 50};
+    protected static BeltwaySSCollector beltCollectorBSS = new BeltwaySSCollector();
 
     public BeltwayHeapSchemeBSS(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -51,43 +51,43 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
         if (phase == MaxineVM.Phase.PRISTINE) {
             final Size heapSize = calculateHeapSize();
             final Address address = allocateMemory(heapSize);
-            _beltwayConfiguration.initializeBeltWayConfiguration(address.roundedUpBy(BeltwayConfiguration.TLAB_SIZE.toInt()), heapSize.roundedUpBy(BeltwayConfiguration.TLAB_SIZE.toInt()).asSize(), 2,
-                            _percentages);
-            _beltManager.initializeBelts();
+            beltwayConfiguration.initializeBeltWayConfiguration(address.roundedUpBy(BeltwayConfiguration.TLAB_SIZE.toInt()), heapSize.roundedUpBy(BeltwayConfiguration.TLAB_SIZE.toInt()).asSize(), 2,
+                            percentages);
+            beltManager.initializeBelts();
             if (Heap.verbose()) {
-                _beltManager.printBeltsInfo();
+                beltManager.printBeltsInfo();
             }
-            final Size coveredRegionSize = _beltManager.getEnd().minus(Heap.bootHeapRegion().start()).asSize();
-            _cardRegion.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize));
-            _sideTable.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize).plus(_cardRegion.cardTableSize()).roundedUpBy(
-                            Platform.target().pageSize()));
-            BeltwayCardRegion.switchToRegularCardTable(_cardRegion.cardTableBase().asPointer());
+            final Size coveredRegionSize = beltManager.getEnd().minus(Heap.bootHeapRegion().start()).asSize();
+            cardRegion.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize));
+            sideTable.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize).plus(cardRegion.cardTableSize()).roundedUpBy(
+                            Platform.target().pageSize));
+            BeltwayCardRegion.switchToRegularCardTable(cardRegion.cardTableBase().asPointer());
             TeleHeapInfo.registerMemoryRegions(getToSpace(), getFromSpace());
         } else if (phase == MaxineVM.Phase.STARTING) {
-            _collectorThread = new BeltwayStopTheWorldDaemon("GC", _beltCollector);
+            collectorThread = new BeltwayStopTheWorldDaemon("GC", beltCollector);
         } else if (phase == MaxineVM.Phase.RUNNING) {
-            _beltCollectorBSS.setBeltwayHeapScheme(this);
-            _beltCollector.setRunnable(_beltCollectorBSS);
-            _heapVerifier.initialize(this);
-            _heapVerifier.getRootsVerifier().setFromSpace(BeltManager.getApplicationHeap());
-            _heapVerifier.getRootsVerifier().setToSpace(getToSpace());
+            beltCollectorBSS.setBeltwayHeapScheme(this);
+            beltCollector.setRunnable(beltCollectorBSS);
+            heapVerifier.initialize(this);
+            heapVerifier.getRootsVerifier().setFromSpace(BeltManager.getApplicationHeap());
+            heapVerifier.getRootsVerifier().setToSpace(getToSpace());
             HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "Scavenge");
         }
     }
 
     public Belt getFromSpace() {
-        return _beltManager.getBelt(0);
+        return beltManager.getBelt(0);
     }
 
     public Belt getToSpace() {
-        return _beltManager.getBelt(1);
+        return beltManager.getBelt(1);
     }
 
     public synchronized boolean collectGarbage(Size requestedFreeSpace) {
-        if (_outOfMemory) {
+        if (outOfMemory) {
             return false;
         }
-        _collectorThread.execute();
+        collectorThread.execute();
         if (immediateFreeSpace().greaterEqual(requestedFreeSpace)) {
             return true;
         }
@@ -100,7 +100,7 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
         if (!MaxineVM.isRunning()) {
             return bumpAllocateSlowPath(getFromSpace(), size);
         }
-        if (BeltwayConfiguration._useTLABS) {
+        if (BeltwayConfiguration.useTLABS) {
             return tlabAllocate(getFromSpace(), size);
         }
         return heapAllocate(getFromSpace(), size);

@@ -51,19 +51,19 @@ public class PrototypeHybridLayout extends PrototypeWordArrayLayout implements H
         return 0;
     }
 
-    private final PrototypeTupleLayout _tupleLayout;
+    private final PrototypeTupleLayout tupleLayout;
 
     public PrototypeHybridLayout(GripScheme gripScheme) {
         super(gripScheme);
-        _tupleLayout = new PrototypeTupleLayout(gripScheme);
+        tupleLayout = new PrototypeTupleLayout(gripScheme);
     }
 
     public Size layoutFields(ClassActor superClassActor, FieldActor[] fieldActors) {
-        return _tupleLayout.layoutFields(superClassActor, fieldActors);
+        return tupleLayout.layoutFields(superClassActor, fieldActors);
     }
 
     @INLINE
     public int getFieldOffsetInCell(FieldActor fieldActor) {
-        return _tupleLayout.getFieldOffsetInCell(fieldActor);
+        return tupleLayout.getFieldOffsetInCell(fieldActor);
     }
 }

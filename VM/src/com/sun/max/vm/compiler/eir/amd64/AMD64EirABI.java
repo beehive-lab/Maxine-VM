@@ -35,7 +35,7 @@ public abstract class AMD64EirABI extends EirABI<AMD64EirRegister> {
 
     protected AMD64EirABI(VMConfiguration vmConfiguration, TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> targetABI) {
         super(vmConfiguration, AMD64EirRegister.class);
-        _targetABI = targetABI;
+        this.targetABI = targetABI;
     }
 
     @Override
@@ -50,7 +50,7 @@ public abstract class AMD64EirABI extends EirABI<AMD64EirRegister> {
 
     @Override
     public final AMD64EirRegister.General integerRegisterActingAs(VMRegister.Role role) {
-        final AMD64GeneralRegister64 r = _targetABI.registerRoleAssignment().integerRegisterActingAs(role);
+        final AMD64GeneralRegister64 r = targetABI.registerRoleAssignment().integerRegisterActingAs(role);
         if (r == null) {
             return null;
         }
@@ -59,21 +59,21 @@ public abstract class AMD64EirABI extends EirABI<AMD64EirRegister> {
 
     @Override
     public final AMD64EirRegister.XMM floatingPointRegisterActingAs(VMRegister.Role role) {
-        final AMD64XMMRegister r = _targetABI.registerRoleAssignment().floatingPointRegisterActingAs(role);
+        final AMD64XMMRegister r = targetABI.registerRoleAssignment().floatingPointRegisterActingAs(role);
         if (r == null) {
             return null;
         }
         return AMD64EirRegister.XMM.from(r);
     }
 
-    private TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> _targetABI;
+    private TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> targetABI;
 
-    protected void initTargetABI(TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> targetABI) {
-        _targetABI = targetABI;
+    protected void initTargetABI(TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> abi) {
+        this.targetABI = abi;
     }
 
     @Override
     public TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> targetABI() {
-        return _targetABI;
+        return targetABI;
     }
 }

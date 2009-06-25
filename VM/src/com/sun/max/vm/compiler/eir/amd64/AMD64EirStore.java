@@ -32,7 +32,7 @@ import com.sun.max.vm.type.*;
 public final class AMD64EirStore extends AMD64EirPointerOperation {
 
     private static PoolSet<EirLocationCategory> valueLocationCategories(Kind kind) {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case FLOAT:
             case DOUBLE:
                 return F;
@@ -75,12 +75,12 @@ public final class AMD64EirStore extends AMD64EirPointerOperation {
 
     @Override
     public String toString() {
-        return "store-" + kind().character() + " " + addressString() + " := " + valueOperand();
+        return "store-" + kind().character + " " + addressString() + " := " + valueOperand();
     }
 
     @Override
     protected void translateWithoutOffsetWithoutIndex(AMD64EirTargetEmitter emitter, AMD64GeneralRegister64 pointerRegister) {
-        switch (kind().asEnum()) {
+        switch (kind().asEnum) {
             case BYTE:
             case BOOLEAN: {
                 switch (valueOperand().location().category()) {
@@ -156,7 +156,7 @@ public final class AMD64EirStore extends AMD64EirPointerOperation {
 
     @Override
     protected void translateWithoutOffsetWithIndex(AMD64EirTargetEmitter emitter, AMD64GeneralRegister64 pointerRegister, AMD64GeneralRegister64 indexRegister) {
-        switch (kind().asEnum()) {
+        switch (kind().asEnum) {
             case BYTE:
             case BOOLEAN: {
                 switch (valueOperand().location().category()) {
@@ -232,7 +232,7 @@ public final class AMD64EirStore extends AMD64EirPointerOperation {
 
     @Override
     protected void translateWithRegisterOffsetWithoutIndex(AMD64EirTargetEmitter emitter, AMD64GeneralRegister64 pointerRegister, AMD64GeneralRegister64 offsetRegister) {
-        switch (kind().asEnum()) {
+        switch (kind().asEnum) {
             case BYTE:
             case BOOLEAN: {
                 switch (valueOperand().location().category()) {
@@ -312,7 +312,7 @@ public final class AMD64EirStore extends AMD64EirPointerOperation {
         final AMD64GeneralRegister64 scratchRegister = eirScratchRegister.as64();
         emitter.assembler().mov(scratchRegister, pointerRegister);
         emitter.assembler().add(scratchRegister, offsetRegister);
-        switch (kind().asEnum()) {
+        switch (kind().asEnum) {
             case BYTE:
             case BOOLEAN: {
                 switch (valueOperand().location().category()) {
@@ -388,7 +388,7 @@ public final class AMD64EirStore extends AMD64EirPointerOperation {
 
     @Override
     protected void translateWithImmediateOffset8WithoutIndex(AMD64EirTargetEmitter emitter, AMD64GeneralRegister64 pointerRegister, byte offset8) {
-        switch (kind().asEnum()) {
+        switch (kind().asEnum) {
             case BYTE:
             case BOOLEAN: {
                 switch (valueOperand().location().category()) {
@@ -464,7 +464,7 @@ public final class AMD64EirStore extends AMD64EirPointerOperation {
 
     @Override
     protected void translateWithImmediateOffset8WithIndex(AMD64EirTargetEmitter emitter, AMD64GeneralRegister64 pointerRegister, byte offset8, AMD64GeneralRegister64 indexRegister) {
-        switch (kind().asEnum()) {
+        switch (kind().asEnum) {
             case BYTE:
             case BOOLEAN: {
                 switch (valueOperand().location().category()) {
@@ -540,7 +540,7 @@ public final class AMD64EirStore extends AMD64EirPointerOperation {
 
     @Override
     protected void translateWithImmediateOffset32WithoutIndex(AMD64EirTargetEmitter emitter, AMD64GeneralRegister64 pointerRegister, int offset32) {
-        switch (kind().asEnum()) {
+        switch (kind().asEnum) {
             case BYTE:
             case BOOLEAN: {
                 switch (valueOperand().location().category()) {
@@ -616,7 +616,7 @@ public final class AMD64EirStore extends AMD64EirPointerOperation {
 
     @Override
     protected void translateWithImmediateOffset32WithIndex(AMD64EirTargetEmitter emitter, AMD64GeneralRegister64 pointerRegister, int offset32, AMD64GeneralRegister64 indexRegister) {
-        switch (kind().asEnum()) {
+        switch (kind().asEnum) {
             case BYTE:
             case BOOLEAN: {
                 switch (valueOperand().location().category()) {

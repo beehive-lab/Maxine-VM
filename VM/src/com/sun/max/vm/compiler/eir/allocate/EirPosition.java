@@ -27,21 +27,21 @@ import com.sun.max.vm.compiler.eir.*;
  */
 public class EirPosition {
 
-    private final EirBlock _block;
+    private final EirBlock block;
 
     public EirBlock block() {
-        return _block;
+        return block;
     }
 
-    private int _index;
-    private int _number = -1;
+    private int index;
+    private int number = -1;
 
     public int index() {
-        return _index;
+        return index;
     }
 
     public int number() {
-        return _number;
+        return number;
     }
 
     /**
@@ -49,34 +49,34 @@ public class EirPosition {
      * @param instructionNumber the new unique number assigned to this instruction
      */
     public void setNumber(int instructionNumber) {
-        _number = instructionNumber;
+        number = instructionNumber;
     }
 
     public void setIndex(int instructionIndex) {
-        _index = instructionIndex;
+        index = instructionIndex;
     }
 
     public EirPosition(EirBlock block) {
-        _block = block;
-        _index = -1;
+        this.block = block;
+        this.index = -1;
     }
 
     public EirPosition(EirBlock block, int index) {
-        _block = block;
-        _index = index;
+        this.block = block;
+        this.index = index;
     }
 
     @Override
     public boolean equals(Object other) {
         if (other instanceof EirPosition) {
             final EirPosition position = (EirPosition) other;
-            return _index == position._index && _block == position._block;
+            return index == position.index && block == position.block;
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return _index ^ _block.hashCode();
+        return index ^ block.hashCode();
     }
 }

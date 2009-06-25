@@ -26,18 +26,18 @@ import com.sun.max.vm.grip.*;
 
 public class PointerOffsetVisitorImpl implements BeltWayPointerOffsetVisitor {
 
-    private Action _actionImpl;
+    private Action actionImpl;
 
     public PointerOffsetVisitorImpl() {
     }
 
     public PointerOffsetVisitorImpl(Action actionImpl) {
-        _actionImpl = actionImpl;
+        this.actionImpl = actionImpl;
     }
 
     public void visitPointerOffset(Pointer pointer, int offset, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         final Grip oldGrip = pointer.readGrip(offset);
-        final Grip newGrip = _actionImpl.doAction(oldGrip, from, to);
+        final Grip newGrip = actionImpl.doAction(oldGrip, from, to);
         if (newGrip != null) {
             if (newGrip != oldGrip) {
                 pointer.writeGrip(offset, newGrip);

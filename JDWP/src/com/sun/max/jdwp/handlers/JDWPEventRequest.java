@@ -35,45 +35,45 @@ import com.sun.max.lang.*;
 public abstract class JDWPEventRequest<EventsCommon_Type extends Composite.Events.EventsCommon> {
 
     private static final Logger LOGGER = Logger.getLogger(JDWPEventRequest.class.getName());
-    private VariableSequence<JDWPEventModifier> _modifiers;
-    private JDWPSession _session;
-    private EventRequestCommands.Set.IncomingRequest _incomingRequest;
-    private int _id;
-    private JDWPSender _sender;
+    private VariableSequence<JDWPEventModifier> modifiers;
+    private JDWPSession session;
+    private EventRequestCommands.Set.IncomingRequest incomingRequest;
+    private int id;
+    private JDWPSender sender;
 
-    private static int _idCounter = 0;
+    private static int idCounter = 0;
 
     private JDWPEventRequest(EventRequestCommands.Set.IncomingRequest incomingRequest, JDWPSender sender, JDWPSession session) throws JDWPException {
-        _incomingRequest = incomingRequest;
-        _session = session;
-        _modifiers = new ArrayListSequence<JDWPEventModifier>(JDWPEventModifier.Static.createSequence(session, incomingRequest._modifiers));
-        _sender = sender;
+        this.incomingRequest = incomingRequest;
+        this.session = session;
+        this.modifiers = new ArrayListSequence<JDWPEventModifier>(JDWPEventModifier.Static.createSequence(session, incomingRequest.modifiers));
+        this.sender = sender;
         assignId();
     }
 
     private void assignId() {
-        _idCounter++;
-        _id = _idCounter;
+        idCounter++;
+        id = idCounter;
     }
 
     public int getId() {
-        return _id;
+        return id;
     }
 
     public byte eventKind() {
-        return _incomingRequest._eventKind;
+        return incomingRequest.eventKind;
     }
 
     public byte suspendPolicy() {
-        return _incomingRequest._suspendPolicy;
+        return incomingRequest.suspendPolicy;
     }
 
     public JDWPSession session() {
-        return _session;
+        return session;
     }
 
     public Sequence<JDWPEventModifier> modifiers() {
-        return _modifiers;
+        return modifiers;
     }
 
     public abstract void install();
@@ -81,13 +81,13 @@ public abstract class JDWPEventRequest<EventsCommon_Type extends Composite.Event
     public abstract void uninstall();
 
     private void removeModifier(JDWPEventModifier modifier) {
-        assert Sequence.Static.indexOfIdentical(_modifiers, modifier) != -1;
-        _modifiers.remove(Sequence.Static.indexOfIdentical(_modifiers, modifier));
+        assert Sequence.Static.indexOfIdentical(modifiers, modifier) != -1;
+        modifiers.remove(Sequence.Static.indexOfIdentical(modifiers, modifier));
     }
 
     private <JDWPEventModifier_Type extends JDWPEventModifier> JDWPEventModifier_Type lookupMandatoryModifier(Class<JDWPEventModifier_Type> klass) throws JDWPException {
 
-        for (JDWPEventModifier m : _modifiers) {
+        for (JDWPEventModifier m : modifiers) {
             if (m.getClass().equals(klass)) {
                 return StaticLoophole.cast(klass, m);
             }
@@ -97,7 +97,7 @@ public abstract class JDWPEventRequest<EventsCommon_Type extends Composite.Event
     }
 
     public void eventOccurred(JDWPEventContext context, byte suspendPolicy, EventsCommon_Type eventData) {
-        for (JDWPEventModifier m : _modifiers) {
+        for (JDWPEventModifier m : modifiers) {
             if (!m.isAccepted(context)) {
                 return;
             }
@@ -105,13 +105,13 @@ public abstract class JDWPEventRequest<EventsCommon_Type extends Composite.Event
 
         LOGGER.info("Event occurred (suspended: " + suspendPolicy + "): " + this);
         final Composite.Reply r = new Composite.Reply();
-        r._suspendPolicy = suspendPolicy;
-        r._events = new Composite.Events[1];
-        r._events[0] = new Composite.Events();
-        r._events[0]._eventKind = this.eventKind();
-        r._events[0]._aEventsCommon = eventData;
+        r.suspendPolicy = suspendPolicy;
+        r.events = new Composite.Events[1];
+        r.events[0] = new Composite.Events();
+        r.events[0].eventKind = this.eventKind();
+        r.events[0].aEventsCommon = eventData;
         try {
-            _sender.sendCommand(r);
+            sender.sendCommand(r);
         } catch (IOException e) {
             LOGGER.severe("Could not send event, because of exception: " + e);
         }
@@ -137,35 +137,32 @@ public abstract class JDWPEventRequest<EventsCommon_Type extends Composite.Event
     }
 
     public static class SingleStep extends JDWPEventRequest<Composite.Events.SingleStep> {
-        private ThreadProvider _thread;
-        private int _depth;
+        private ThreadProvider thread;
+        private int depth;
 
         public SingleStep(EventRequestCommands.Set.IncomingRequest incomingRequest, JDWPSender sender, JDWPSession session) throws JDWPException {
             super(incomingRequest, sender, session);
             final JDWPEventModifier.Step step = super.lookupMandatoryModifier(JDWPEventModifier.Step.class);
-            _thread = step.thread();
-            _depth = step.depth();
+            this.thread = step.thread();
+            this.depth = step.depth();
         }
 
 
-        private final VMListener _listener = new VMAdapter() {
+        private final VMListener listener = new VMAdapter() {
 
             @Override
-            public void singleStepMade(ThreadProvider thread, CodeLocation location) {
-
-                Logger.getLogger(SingleStep.class.getName()).info("SingleStep was made by thread " + thread + " onto location " + location);
-
-
+            public void singleStepMade(ThreadProvider thr, CodeLocation location) {
+                Logger.getLogger(SingleStep.class.getName()).info("SingleStep was made by thread " + thr + " onto location " + location);
                 Logger.getLogger(SingleStep.class.getName()).info("Method name: " + location.method().getName() + ", Signature: " + location.method().getSignature());
 
                 for (LineTableEntry entry : location.method().getLineTable()) {
                     Logger.getLogger(SingleStep.class.getName()).info("Line table entry: " + entry.getCodeIndex() + " line number : " + entry.getLineNumber());
                 }
                 final JDWPLocation locationHit = session().fromCodeLocation(location);
-                if (_thread.equals(thread)) {
-                    final JDWPEventContext context = new JDWPEventContext(_thread, null, locationHit);
+                if (thread.equals(thr)) {
+                    final JDWPEventContext context = new JDWPEventContext(thread, null, locationHit);
                     eventOccurred(context, (byte) SuspendPolicy.ALL,
-                                    new Composite.Events.SingleStep(getId(), session().toID(_thread), locationHit/*session().fromCodeLocation(_thread.getFrames()[0].getLocation())*/));
+                                    new Composite.Events.SingleStep(getId(), session().toID(thread), locationHit/*session().fromCodeLocation(_thread.getFrames()[0].getLocation())*/));
                 }
 
             }
@@ -173,17 +170,17 @@ public abstract class JDWPEventRequest<EventsCommon_Type extends Composite.Event
 
         @Override
         public void install() {
-            session().vm().addListener(_listener);
-            if (this._depth == StepDepth.OUT) {
-                _thread.doStepOut();
+            session().vm().addListener(listener);
+            if (this.depth == StepDepth.OUT) {
+                thread.doStepOut();
             } else {
-                _thread.doSingleStep();
+                thread.doSingleStep();
             }
         }
 
         @Override
         public void uninstall() {
-            session().vm().removeListener(_listener);
+            session().vm().removeListener(listener);
         }
     }
 
@@ -223,7 +220,7 @@ public abstract class JDWPEventRequest<EventsCommon_Type extends Composite.Event
             super(incomingRequest, sender, session);
         }
 
-        private final VMListener _listener = new VMAdapter() {
+        private final VMListener listener = new VMAdapter() {
 
             @Override
             public void threadDied(ThreadProvider thread) {
@@ -234,12 +231,12 @@ public abstract class JDWPEventRequest<EventsCommon_Type extends Composite.Event
 
         @Override
         public void install() {
-            session().vm().addListener(_listener);
+            session().vm().addListener(listener);
         }
 
         @Override
         public void uninstall() {
-            session().vm().removeListener(_listener);
+            session().vm().removeListener(listener);
         }
     }
 
@@ -249,7 +246,7 @@ public abstract class JDWPEventRequest<EventsCommon_Type extends Composite.Event
             super(incomingRequest, sender, session);
         }
 
-        private final VMListener _listener = new VMAdapter() {
+        private final VMListener listener = new VMAdapter() {
 
             @Override
             public void threadStarted(ThreadProvider thread) {
@@ -260,38 +257,38 @@ public abstract class JDWPEventRequest<EventsCommon_Type extends Composite.Event
 
         @Override
         public void install() {
-            session().vm().addListener(_listener);
+            session().vm().addListener(listener);
         }
 
         @Override
         public void uninstall() {
-            session().vm().removeListener(_listener);
+            session().vm().removeListener(listener);
         }
     }
 
     public static class Breakpoint extends JDWPEventRequest<Composite.Events.Breakpoint> {
 
-        private JDWPLocation _location;
-        private CodeLocation _codeLocation;
+        private JDWPLocation location;
+        private CodeLocation codeLocation;
 
         public Breakpoint(EventRequestCommands.Set.IncomingRequest incomingRequest, JDWPSender sender, JDWPSession session) throws JDWPException {
             super(incomingRequest, sender, session);
             final JDWPEventModifier.LocationOnly locationOnly = super.lookupMandatoryModifier(JDWPEventModifier.LocationOnly.class);
-            _location = locationOnly.location();
+            this.location = locationOnly.location();
             super.removeModifier(locationOnly);
-            _codeLocation = session().toCodeLocation(_location);
+            this.codeLocation = session().toCodeLocation(location);
         }
 
-        private final VMListener _listener = new VMAdapter() {
+        private final VMListener listener = new VMAdapter() {
 
             @Override
-            public void breakpointHit(ThreadProvider thread, CodeLocation location) {
+            public void breakpointHit(ThreadProvider thread, CodeLocation loc) {
 
-                Logger.getLogger(Breakpoint.class.getName()).info("Breakpoint was hit by thread " + thread + " on location " + location);
+                Logger.getLogger(Breakpoint.class.getName()).info("Breakpoint was hit by thread " + thread + " on location " + loc);
 
-                final JDWPLocation locationHit = session().fromCodeLocation(location);
-                if (locationHit.equals(_location)) {
-                    final JDWPEventContext context = new JDWPEventContext(thread, session().methodToReferenceType(location.method()), locationHit);
+                final JDWPLocation locationHit = session().fromCodeLocation(loc);
+                if (locationHit.equals(location)) {
+                    final JDWPEventContext context = new JDWPEventContext(thread, session().methodToReferenceType(loc.method()), locationHit);
                     eventOccurred(context, (byte) SuspendPolicy.ALL, new Composite.Events.Breakpoint(getId(), session().toID(thread), locationHit));
                 }
 
@@ -300,13 +297,13 @@ public abstract class JDWPEventRequest<EventsCommon_Type extends Composite.Event
 
         @Override
         public void install() {
-            session().vm().addListener(_listener);
-            session().vm().addBreakpoint(_codeLocation, this.suspendPolicy() == SuspendPolicy.ALL);
+            session().vm().addListener(listener);
+            session().vm().addBreakpoint(codeLocation, this.suspendPolicy() == SuspendPolicy.ALL);
         }
 
         @Override
         public void uninstall() {
-            session().vm().removeListener(_listener);
+            session().vm().removeListener(listener);
         }
     }
 

@@ -46,17 +46,17 @@ public class BlockingQueue {
     }
 
     static class Producer extends Thread {
-        final ArrayBlockingQueue<Integer> _queue;
-        final int _messages;
+        final ArrayBlockingQueue<Integer> queue;
+        final int messages;
         Producer(ArrayBlockingQueue<Integer> queue, int messages) {
             super("Producer");
-            _queue = queue;
-            _messages = messages;
+            this.queue = queue;
+            this.messages = messages;
         }
         @Override
         public void run() {
-            for (int i = 0; i < _messages; i++) {
-                _queue.add(i);
+            for (int i = 0; i < messages; i++) {
+                queue.add(i);
                 try {
                     Thread.sleep(20);
                 } catch (InterruptedException e) {
@@ -67,18 +67,18 @@ public class BlockingQueue {
     }
 
     static class Consumer extends Thread {
-        final ArrayBlockingQueue<Integer> _queue;
-        final int _messages;
+        final ArrayBlockingQueue<Integer> queue;
+        final int messages;
         Consumer(ArrayBlockingQueue<Integer> queue, int messages) {
             super("Consumer");
-            _queue = queue;
-            _messages = messages;
+            this.queue = queue;
+            this.messages = messages;
         }
         @Override
         public void run() {
-            for (int i = 0; i < _messages; i++) {
+            for (int i = 0; i < messages; i++) {
                 try {
-                    System.out.println(_queue.take());
+                    System.out.println(queue.take());
                     Thread.sleep(10);
                 } catch (InterruptedException e) {
                     // do nothing.

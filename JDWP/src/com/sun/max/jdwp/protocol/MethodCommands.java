@@ -45,60 +45,60 @@ public final class MethodCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ReferenceTypeID _refType;
+            public ID.ReferenceTypeID refType;
 
-            public ID.MethodID _methodID;
+            public ID.MethodID methodID;
             public IncomingRequest(ID.ReferenceTypeID refType,
                 ID.MethodID methodID) {
-                this._refType = refType;
-                this._methodID = methodID;
+                this.refType = refType;
+                this.methodID = methodID;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _refType = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
-                _methodID = ID.read(ps.getInputStream(), ID.MethodID.class);
+                refType = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
+                methodID = ID.read(ps.getInputStream(), ID.MethodID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _refType.write(ps.getOutputStream());
-                _methodID.write(ps.getOutputStream());
+                refType.write(ps.getOutputStream());
+                methodID.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_refType=" + _refType);
+                stringBuilder.append("refType=" + refType);
                 stringBuilder.append(", ");
-                stringBuilder.append("_methodID=" + _methodID);
+                stringBuilder.append("methodID=" + methodID);
                 return stringBuilder.toString();
             }
         }
 
         public static class LineInfo {
 
-            public long _lineCodeIndex;
+            public long lineCodeIndex;
 
-            public int _lineNumber;
+            public int lineNumber;
             public LineInfo(long lineCodeIndex,
                 int lineNumber) {
-                this._lineCodeIndex = lineCodeIndex;
-                this._lineNumber = lineNumber;
+                this.lineCodeIndex = lineCodeIndex;
+                this.lineNumber = lineNumber;
             }
             public LineInfo() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _lineCodeIndex = ps.readLong();
-                _lineNumber = ps.readInt();
+                lineCodeIndex = ps.readLong();
+                lineNumber = ps.readInt();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_lineCodeIndex);
-                ps.write(_lineNumber);
+                ps.write(lineCodeIndex);
+                ps.write(lineNumber);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_lineCodeIndex=" + _lineCodeIndex);
+                stringBuilder.append("lineCodeIndex=" + lineCodeIndex);
                 stringBuilder.append(", ");
-                stringBuilder.append("_lineNumber=" + _lineNumber);
+                stringBuilder.append("lineNumber=" + lineNumber);
                 return stringBuilder.toString();
             }
         }
@@ -107,49 +107,49 @@ public final class MethodCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public long _start;
+            public long start;
 
-            public long _end;
+            public long end;
 
-            public LineInfo[] _lines;
+            public LineInfo[] lines;
             public Reply(long start,
                 long end,
                 LineInfo[] lines) {
-                this._start = start;
-                this._end = end;
-                this._lines = lines;
+                this.start = start;
+                this.end = end;
+                this.lines = lines;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _start = ps.readLong();
-                _end = ps.readLong();
+                start = ps.readLong();
+                end = ps.readLong();
                 final int linesCount = ps.readInt();
-                _lines = new LineInfo[linesCount];
+                lines = new LineInfo[linesCount];
                 for (int i = 0; i < linesCount; i++) {
-                    _lines[i] = new LineInfo();
-                    _lines[i].read(ps);
+                    lines[i] = new LineInfo();
+                    lines[i].read(ps);
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_start);
-                ps.write(_end);
-                ps.write(_lines.length);
-                for (int i = 0; i < _lines.length; i++) {
-                    _lines[i].write(ps);
+                ps.write(start);
+                ps.write(end);
+                ps.write(lines.length);
+                for (int i = 0; i < lines.length; i++) {
+                    lines[i].write(ps);
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_start=" + _start);
+                stringBuilder.append("start=" + start);
                 stringBuilder.append(", ");
-                stringBuilder.append("_end=" + _end);
+                stringBuilder.append("end=" + end);
                 stringBuilder.append(", ");
-                stringBuilder.append("_lines=[" + _lines.length + "]{");
-                for (int i = 0; i < _lines.length; i++) {
+                stringBuilder.append("lines=[" + lines.length + "]{");
+                for (int i = 0; i < lines.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_lines[i]=" + _lines[i]);
+                    stringBuilder.append("lines[i]=" + lines[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();
@@ -169,84 +169,84 @@ public final class MethodCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ReferenceTypeID _refType;
+            public ID.ReferenceTypeID refType;
 
-            public ID.MethodID _methodID;
+            public ID.MethodID methodID;
             public IncomingRequest(ID.ReferenceTypeID refType,
                 ID.MethodID methodID) {
-                this._refType = refType;
-                this._methodID = methodID;
+                this.refType = refType;
+                this.methodID = methodID;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _refType = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
-                _methodID = ID.read(ps.getInputStream(), ID.MethodID.class);
+                refType = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
+                methodID = ID.read(ps.getInputStream(), ID.MethodID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _refType.write(ps.getOutputStream());
-                _methodID.write(ps.getOutputStream());
+                refType.write(ps.getOutputStream());
+                methodID.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_refType=" + _refType);
+                stringBuilder.append("refType=" + refType);
                 stringBuilder.append(", ");
-                stringBuilder.append("_methodID=" + _methodID);
+                stringBuilder.append("methodID=" + methodID);
                 return stringBuilder.toString();
             }
         }
 
         public static class SlotInfo {
 
-            public long _codeIndex;
+            public long codeIndex;
 
-            public String _name;
+            public String name;
 
-            public String _signature;
+            public String signature;
 
-            public int _length;
+            public int length;
 
-            public int _slot;
+            public int slot;
             public SlotInfo(long codeIndex,
                 String name,
                 String signature,
                 int length,
                 int slot) {
-                this._codeIndex = codeIndex;
-                this._name = name;
-                this._signature = signature;
-                this._length = length;
-                this._slot = slot;
+                this.codeIndex = codeIndex;
+                this.name = name;
+                this.signature = signature;
+                this.length = length;
+                this.slot = slot;
             }
             public SlotInfo() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _codeIndex = ps.readLong();
-                _name = ps.readString();
-                _signature = ps.readString();
-                _length = ps.readInt();
-                _slot = ps.readInt();
+                codeIndex = ps.readLong();
+                name = ps.readString();
+                signature = ps.readString();
+                length = ps.readInt();
+                slot = ps.readInt();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_codeIndex);
-                ps.write(_name);
-                ps.write(_signature);
-                ps.write(_length);
-                ps.write(_slot);
+                ps.write(codeIndex);
+                ps.write(name);
+                ps.write(signature);
+                ps.write(length);
+                ps.write(slot);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_codeIndex=" + _codeIndex);
+                stringBuilder.append("codeIndex=" + codeIndex);
                 stringBuilder.append(", ");
-                stringBuilder.append("_name=" + _name);
+                stringBuilder.append("name=" + name);
                 stringBuilder.append(", ");
-                stringBuilder.append("_signature=" + _signature);
+                stringBuilder.append("signature=" + signature);
                 stringBuilder.append(", ");
-                stringBuilder.append("_length=" + _length);
+                stringBuilder.append("length=" + length);
                 stringBuilder.append(", ");
-                stringBuilder.append("_slot=" + _slot);
+                stringBuilder.append("slot=" + slot);
                 return stringBuilder.toString();
             }
         }
@@ -255,41 +255,41 @@ public final class MethodCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public int _argCnt;
+            public int argCnt;
 
-            public SlotInfo[] _slots;
+            public SlotInfo[] slots;
             public Reply(int argCnt,
                 SlotInfo[] slots) {
-                this._argCnt = argCnt;
-                this._slots = slots;
+                this.argCnt = argCnt;
+                this.slots = slots;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _argCnt = ps.readInt();
+                argCnt = ps.readInt();
                 final int slotsCount = ps.readInt();
-                _slots = new SlotInfo[slotsCount];
+                slots = new SlotInfo[slotsCount];
                 for (int i = 0; i < slotsCount; i++) {
-                    _slots[i] = new SlotInfo();
-                    _slots[i].read(ps);
+                    slots[i] = new SlotInfo();
+                    slots[i].read(ps);
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_argCnt);
-                ps.write(_slots.length);
-                for (int i = 0; i < _slots.length; i++) {
-                    _slots[i].write(ps);
+                ps.write(argCnt);
+                ps.write(slots.length);
+                for (int i = 0; i < slots.length; i++) {
+                    slots[i].write(ps);
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_argCnt=" + _argCnt);
+                stringBuilder.append("argCnt=" + argCnt);
                 stringBuilder.append(", ");
-                stringBuilder.append("_slots=[" + _slots.length + "]{");
-                for (int i = 0; i < _slots.length; i++) {
+                stringBuilder.append("slots=[" + slots.length + "]{");
+                for (int i = 0; i < slots.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_slots[i]=" + _slots[i]);
+                    stringBuilder.append("slots[i]=" + slots[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();
@@ -309,30 +309,30 @@ public final class MethodCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ReferenceTypeID _refType;
+            public ID.ReferenceTypeID refType;
 
-            public ID.MethodID _methodID;
+            public ID.MethodID methodID;
             public IncomingRequest(ID.ReferenceTypeID refType,
                 ID.MethodID methodID) {
-                this._refType = refType;
-                this._methodID = methodID;
+                this.refType = refType;
+                this.methodID = methodID;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _refType = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
-                _methodID = ID.read(ps.getInputStream(), ID.MethodID.class);
+                refType = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
+                methodID = ID.read(ps.getInputStream(), ID.MethodID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _refType.write(ps.getOutputStream());
-                _methodID.write(ps.getOutputStream());
+                refType.write(ps.getOutputStream());
+                methodID.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_refType=" + _refType);
+                stringBuilder.append("refType=" + refType);
                 stringBuilder.append(", ");
-                stringBuilder.append("_methodID=" + _methodID);
+                stringBuilder.append("methodID=" + methodID);
                 return stringBuilder.toString();
             }
         }
@@ -341,32 +341,32 @@ public final class MethodCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public byte[] _bytes;
+            public byte[] bytes;
             public Reply(byte[] bytes) {
-                this._bytes = bytes;
+                this.bytes = bytes;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
                 final int bytesCount = ps.readInt();
-                _bytes = new byte[bytesCount];
+                bytes = new byte[bytesCount];
                 for (int i = 0; i < bytesCount; i++) {
-                    _bytes[i] = ps.readByte();
+                    bytes[i] = ps.readByte();
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_bytes.length);
-                for (int i = 0; i < _bytes.length; i++) {
-                    ps.write(_bytes[i]);
+                ps.write(bytes.length);
+                for (int i = 0; i < bytes.length; i++) {
+                    ps.write(bytes[i]);
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_bytes=[" + _bytes.length + "]{");
-                for (int i = 0; i < _bytes.length; i++) {
+                stringBuilder.append("bytes=[" + bytes.length + "]{");
+                for (int i = 0; i < bytes.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_bytes[i]=" + _bytes[i]);
+                    stringBuilder.append("bytes[i]=" + bytes[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();
@@ -386,30 +386,30 @@ public final class MethodCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ReferenceTypeID _refType;
+            public ID.ReferenceTypeID refType;
 
-            public ID.MethodID _methodID;
+            public ID.MethodID methodID;
             public IncomingRequest(ID.ReferenceTypeID refType,
                 ID.MethodID methodID) {
-                this._refType = refType;
-                this._methodID = methodID;
+                this.refType = refType;
+                this.methodID = methodID;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _refType = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
-                _methodID = ID.read(ps.getInputStream(), ID.MethodID.class);
+                refType = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
+                methodID = ID.read(ps.getInputStream(), ID.MethodID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _refType.write(ps.getOutputStream());
-                _methodID.write(ps.getOutputStream());
+                refType.write(ps.getOutputStream());
+                methodID.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_refType=" + _refType);
+                stringBuilder.append("refType=" + refType);
                 stringBuilder.append(", ");
-                stringBuilder.append("_methodID=" + _methodID);
+                stringBuilder.append("methodID=" + methodID);
                 return stringBuilder.toString();
             }
         }
@@ -418,22 +418,22 @@ public final class MethodCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public boolean _isObsolete;
+            public boolean isObsolete;
             public Reply(boolean isObsolete) {
-                this._isObsolete = isObsolete;
+                this.isObsolete = isObsolete;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _isObsolete = ps.readBoolean();
+                isObsolete = ps.readBoolean();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_isObsolete);
+                ps.write(isObsolete);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_isObsolete=" + _isObsolete);
+                stringBuilder.append("isObsolete=" + isObsolete);
                 return stringBuilder.toString();
             }
         }
@@ -451,92 +451,92 @@ public final class MethodCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ReferenceTypeID _refType;
+            public ID.ReferenceTypeID refType;
 
-            public ID.MethodID _methodID;
+            public ID.MethodID methodID;
             public IncomingRequest(ID.ReferenceTypeID refType,
                 ID.MethodID methodID) {
-                this._refType = refType;
-                this._methodID = methodID;
+                this.refType = refType;
+                this.methodID = methodID;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _refType = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
-                _methodID = ID.read(ps.getInputStream(), ID.MethodID.class);
+                refType = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
+                methodID = ID.read(ps.getInputStream(), ID.MethodID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _refType.write(ps.getOutputStream());
-                _methodID.write(ps.getOutputStream());
+                refType.write(ps.getOutputStream());
+                methodID.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_refType=" + _refType);
+                stringBuilder.append("refType=" + refType);
                 stringBuilder.append(", ");
-                stringBuilder.append("_methodID=" + _methodID);
+                stringBuilder.append("methodID=" + methodID);
                 return stringBuilder.toString();
             }
         }
 
         public static class SlotInfo {
 
-            public long _codeIndex;
+            public long codeIndex;
 
-            public String _name;
+            public String name;
 
-            public String _signature;
+            public String signature;
 
-            public String _genericSignature;
+            public String genericSignature;
 
-            public int _length;
+            public int length;
 
-            public int _slot;
+            public int slot;
             public SlotInfo(long codeIndex,
                 String name,
                 String signature,
                 String genericSignature,
                 int length,
                 int slot) {
-                this._codeIndex = codeIndex;
-                this._name = name;
-                this._signature = signature;
-                this._genericSignature = genericSignature;
-                this._length = length;
-                this._slot = slot;
+                this.codeIndex = codeIndex;
+                this.name = name;
+                this.signature = signature;
+                this.genericSignature = genericSignature;
+                this.length = length;
+                this.slot = slot;
             }
             public SlotInfo() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _codeIndex = ps.readLong();
-                _name = ps.readString();
-                _signature = ps.readString();
-                _genericSignature = ps.readString();
-                _length = ps.readInt();
-                _slot = ps.readInt();
+                codeIndex = ps.readLong();
+                name = ps.readString();
+                signature = ps.readString();
+                genericSignature = ps.readString();
+                length = ps.readInt();
+                slot = ps.readInt();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_codeIndex);
-                ps.write(_name);
-                ps.write(_signature);
-                ps.write(_genericSignature);
-                ps.write(_length);
-                ps.write(_slot);
+                ps.write(codeIndex);
+                ps.write(name);
+                ps.write(signature);
+                ps.write(genericSignature);
+                ps.write(length);
+                ps.write(slot);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_codeIndex=" + _codeIndex);
+                stringBuilder.append("codeIndex=" + codeIndex);
                 stringBuilder.append(", ");
-                stringBuilder.append("_name=" + _name);
+                stringBuilder.append("name=" + name);
                 stringBuilder.append(", ");
-                stringBuilder.append("_signature=" + _signature);
+                stringBuilder.append("signature=" + signature);
                 stringBuilder.append(", ");
-                stringBuilder.append("_genericSignature=" + _genericSignature);
+                stringBuilder.append("genericSignature=" + genericSignature);
                 stringBuilder.append(", ");
-                stringBuilder.append("_length=" + _length);
+                stringBuilder.append("length=" + length);
                 stringBuilder.append(", ");
-                stringBuilder.append("_slot=" + _slot);
+                stringBuilder.append("slot=" + slot);
                 return stringBuilder.toString();
             }
         }
@@ -545,41 +545,41 @@ public final class MethodCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public int _argCnt;
+            public int argCnt;
 
-            public SlotInfo[] _slots;
+            public SlotInfo[] slots;
             public Reply(int argCnt,
                 SlotInfo[] slots) {
-                this._argCnt = argCnt;
-                this._slots = slots;
+                this.argCnt = argCnt;
+                this.slots = slots;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _argCnt = ps.readInt();
+                argCnt = ps.readInt();
                 final int slotsCount = ps.readInt();
-                _slots = new SlotInfo[slotsCount];
+                slots = new SlotInfo[slotsCount];
                 for (int i = 0; i < slotsCount; i++) {
-                    _slots[i] = new SlotInfo();
-                    _slots[i].read(ps);
+                    slots[i] = new SlotInfo();
+                    slots[i].read(ps);
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_argCnt);
-                ps.write(_slots.length);
-                for (int i = 0; i < _slots.length; i++) {
-                    _slots[i].write(ps);
+                ps.write(argCnt);
+                ps.write(slots.length);
+                for (int i = 0; i < slots.length; i++) {
+                    slots[i].write(ps);
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_argCnt=" + _argCnt);
+                stringBuilder.append("argCnt=" + argCnt);
                 stringBuilder.append(", ");
-                stringBuilder.append("_slots=[" + _slots.length + "]{");
-                for (int i = 0; i < _slots.length; i++) {
+                stringBuilder.append("slots=[" + slots.length + "]{");
+                for (int i = 0; i < slots.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_slots[i]=" + _slots[i]);
+                    stringBuilder.append("slots[i]=" + slots[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();

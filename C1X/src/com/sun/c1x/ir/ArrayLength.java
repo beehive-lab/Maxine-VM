@@ -33,7 +33,7 @@ import com.sun.c1x.bytecode.Bytecodes;
  */
 public class ArrayLength extends AccessArray {
 
-    NullCheck _explicitNullCheck;
+    NullCheck explicitNullCheck;
 
     /**
      * Constructs a new ArrayLength instruction.
@@ -49,7 +49,7 @@ public class ArrayLength extends AccessArray {
      * @return the explicit null check object
      */
     public Object explicitNullCheck() {
-        return _explicitNullCheck;
+        return explicitNullCheck;
     }
 
     /**
@@ -57,7 +57,7 @@ public class ArrayLength extends AccessArray {
      * @param explicitNullCheck the instruction representing an explicit null check
      */
     public void setExplicitNullCheck(NullCheck explicitNullCheck) {
-        _explicitNullCheck = explicitNullCheck;
+        this.explicitNullCheck = explicitNullCheck;
     }
 
     /**
@@ -71,14 +71,14 @@ public class ArrayLength extends AccessArray {
 
     @Override
     public int valueNumber() {
-        return Util.hash1(Bytecodes.ARRAYLENGTH, _array);
+        return Util.hash1(Bytecodes.ARRAYLENGTH, array);
     }
 
     @Override
     public boolean valueEqual(Instruction i) {
         if (i instanceof ArrayLength) {
             ArrayLength o = (ArrayLength) i;
-            return _array == o._array;
+            return array == o.array;
         }
         return false;
     }

@@ -99,7 +99,7 @@ public final class TeleDisassembler {
     // This might be tidier if not all static.
     private static synchronized Disassembler createDisassembler(final ProcessorKind processorKind, Address startAddress, InlineDataDecoder inlineDataDecoder) {
         Disassembler disassembler = null;
-        switch (processorKind.instructionSet()) {
+        switch (processorKind.instructionSet) {
             case ARM:
                 FatalError.unimplemented();
                 break;
@@ -110,14 +110,14 @@ public final class TeleDisassembler {
                 disassembler = new IA32Disassembler(startAddress.toInt(), inlineDataDecoder);
                 break;
             case PPC:
-                if (processorKind.dataModel().wordWidth() == WordWidth.BITS_64) {
+                if (processorKind.dataModel.wordWidth == WordWidth.BITS_64) {
                     disassembler = new PPC64Disassembler(startAddress.toLong(), inlineDataDecoder);
                 } else {
                     disassembler = new PPC32Disassembler(startAddress.toInt(), inlineDataDecoder);
                 }
                 break;
             case SPARC:
-                if (processorKind.dataModel().wordWidth() == WordWidth.BITS_64) {
+                if (processorKind.dataModel.wordWidth == WordWidth.BITS_64) {
                     disassembler = new SPARC64Disassembler(startAddress.toLong(), inlineDataDecoder);
                 } else {
                     disassembler = new SPARC32Disassembler(startAddress.toInt(), inlineDataDecoder);
@@ -130,11 +130,11 @@ public final class TeleDisassembler {
     }
 
     private abstract static class LoadLiteralParser {
-        protected Disassembler _disassembler;
-        protected Address _literalBase;
+        protected Disassembler disassembler;
+        protected Address literalBase;
         LoadLiteralParser(Disassembler disassembler, Address literalBase) {
-            _disassembler = disassembler;
-            _literalBase = literalBase;
+            this.disassembler = disassembler;
+            this.literalBase = literalBase;
         }
 
         /**
@@ -220,10 +220,10 @@ public final class TeleDisassembler {
 
         private static final int DISP19_MASK = 0x7ffff;
 
-        private static final Endianness ENDIANNESS =  VMConfiguration.target().platform().processorKind().dataModel().endianness();
+        private static final Endianness ENDIANNESS =  VMConfiguration.target().platform().processorKind.dataModel.endianness;
         static {
-            final Endianness endianness = VMConfiguration.target().platform().processorKind().dataModel().endianness();
-            final SPARCAssembler asm =  SPARCAssembler.createAssembler(VMConfiguration.target().platform().processorKind().dataModel().wordWidth());
+            final Endianness endianness = VMConfiguration.target().platform().processorKind.dataModel.endianness;
+            final SPARCAssembler asm =  SPARCAssembler.createAssembler(VMConfiguration.target().platform().processorKind.dataModel.wordWidth);
             final GPR literalBaseRegister = (GPR) VMConfiguration.target().targetABIsScheme().optimizedJavaABI().literalBaseRegister();
 
             asm.rd(StateRegister.PC, literalBaseRegister);
@@ -333,13 +333,13 @@ public final class TeleDisassembler {
         @Override
         Address literalAddress(DisassembledInstruction disassembledInstruction) {
             final Immediate32Argument immediateArgument = (Immediate32Argument) disassembledInstruction.arguments().get(1);
-            return _literalBase.plus(immediateArgument.value());
+            return literalBase.plus(immediateArgument.value());
         }
     }
 
     private static LoadLiteralParser createLiteralParser(final ProcessorKind processorKind, Disassembler rawDisassembler, Address codeStart, byte [] code) {
         //final ProcessorKind processorKind = teleVM.vmConfiguration().platform().processorKind();
-        switch (processorKind.instructionSet()) {
+        switch (processorKind.instructionSet) {
             case ARM:
                 FatalError.unimplemented();
                 return null;

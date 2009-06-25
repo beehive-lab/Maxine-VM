@@ -39,28 +39,28 @@ public enum ProcessorModel {
     SPARC(InstructionSet.SPARC, new DataModel(WordWidth.BITS_32, Endianness.BIG, Alignment.BYTES_4), MemoryModel.TotalStoreOrder),
     SPARCV9(InstructionSet.SPARC, new DataModel(WordWidth.BITS_64, Endianness.BIG, Alignment.BYTES_8), MemoryModel.TotalStoreOrder);
 
-    private final InstructionSet _instructionSet;
+    private final InstructionSet instructionSet;
 
     public InstructionSet instructionSet() {
-        return _instructionSet;
+        return instructionSet;
     }
 
-    private final DataModel _defaultDataModel;
+    private final DataModel defaultDataModel;
 
     public DataModel defaultDataModel() {
-        return _defaultDataModel;
+        return defaultDataModel;
     }
 
-    private final MemoryModel _memoryModel;
+    private final MemoryModel memoryModel;
 
     public MemoryModel memoryModel() {
-        return _memoryModel;
+        return memoryModel;
     }
 
     private ProcessorModel(InstructionSet instructionSet, DataModel defaultDataModel, MemoryModel memoryModel) {
-        _instructionSet = instructionSet;
-        _defaultDataModel = defaultDataModel;
-        _memoryModel = memoryModel;
+        this.instructionSet = instructionSet;
+        this.defaultDataModel = defaultDataModel;
+        this.memoryModel = memoryModel;
     }
 
     public static ProcessorModel defaultForInstructionSet(InstructionSet instructionSet) {

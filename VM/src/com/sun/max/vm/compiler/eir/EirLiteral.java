@@ -27,12 +27,12 @@ import com.sun.max.vm.value.*;
 
 public class EirLiteral extends EirLocation.Constant {
 
-    private final int _index;
-    private final Label _label = new Label();
+    private final int index;
+    private final Label label = new Label();
 
     /**
      * Creates an object representing a scalar or reference constant used by a target instruction.
-     * 
+     *
      * @param index
      *                if {@code value} is a scalar, then this is the index of the first byte of the scalar value in a
      *                byte array encoding all the scalar literals allocated from the same {@link EirLiteralPool}. If
@@ -43,11 +43,11 @@ public class EirLiteral extends EirLocation.Constant {
      */
     EirLiteral(int index, Value value) {
         super(value);
-        _index = index;
+        this.index = index;
     }
 
     public int index() {
-        return _index;
+        return index;
     }
 
     @Override
@@ -57,19 +57,19 @@ public class EirLiteral extends EirLocation.Constant {
 
     @Override
     public String toString() {
-        return value().kind().character() + ":" + _index + "(" + value().toString() + ")";
+        return value().kind().character + ":" + index + "(" + value().toString() + ")";
     }
 
     public Label asLabel() {
-        return _label;
+        return label;
     }
 
     @Override
     public TargetLocation toTargetLocation() {
         if (value().kind() == Kind.REFERENCE) {
-            return new TargetLocation.ReferenceLiteral(_index);
+            return new TargetLocation.ReferenceLiteral(index);
         }
-        return new TargetLocation.ScalarLiteral(_index);
+        return new TargetLocation.ScalarLiteral(index);
     }
 
 }

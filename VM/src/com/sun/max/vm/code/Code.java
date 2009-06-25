@@ -45,17 +45,7 @@ public final class Code {
      * The code region that contains the boot code.
      */
     @INSPECTED
-    private static final CodeRegion _bootCodeRegion = new CodeRegion(Address.fromInt(Integer.MAX_VALUE / 2).aligned(), Size.fromInt(Integer.MAX_VALUE / 4), "Code-Boot");
-
-    /**
-     * Accessor for the boot code region.
-     * @return a reference to the code region that contains the boot code, with size that is "trimmed"
-     *  to reflect how much of the allocation has been used.
-     */
-    @INLINE
-    public static CodeRegion bootCodeRegion() {
-        return _bootCodeRegion;
-    }
+    public static final CodeRegion bootCodeRegion = new CodeRegion(Address.fromInt(Integer.MAX_VALUE / 2).aligned(), Size.fromInt(Integer.MAX_VALUE / 4), "Code-Boot");
 
     /**
      * Creates the singleton code manager for this operating system.
@@ -63,7 +53,7 @@ public final class Code {
      */
     @PROTOTYPE_ONLY
     private static CodeManager createCodeManager() {
-        switch (Platform.hostOrTarget().operatingSystem()) {
+        switch (Platform.hostOrTarget().operatingSystem) {
             case LINUX: {
                 return new LowAddressCodeManager();
             }
@@ -84,13 +74,13 @@ public final class Code {
      * The code manager singleton instance.
      */
     @INSPECTED
-    private static final CodeManager _codeManager = createCodeManager();
+    private static final CodeManager codeManager = createCodeManager();
 
     /**
      * Initializes the code manager.
      */
     public static void initialize() {
-        _codeManager.initialize();
+        codeManager.initialize();
     }
 
     /**
@@ -99,7 +89,7 @@ public final class Code {
      * @param targetMethod the target method to install into the code manager
      */
     public static void allocate(TargetMethod targetMethod) {
-        _codeManager.allocate(targetMethod);
+        codeManager.allocate(targetMethod);
     }
 
     /**
@@ -113,7 +103,7 @@ public final class Code {
      * @return true if space was successfully allocated for the runtime stub
      */
     public static boolean allocateRuntimeStub(RuntimeStub stub) {
-        return _codeManager.allocateRuntimeStub(stub);
+        return codeManager.allocateRuntimeStub(stub);
     }
 
     /**
@@ -124,7 +114,7 @@ public final class Code {
      * managed by the code manager; {@code false} otherwise
      */
     public static boolean contains(Address address) {
-        return _codeManager.codePointerToCodeRegion(address) != null;
+        return codeManager.codePointerToCodeRegion(address) != null;
     }
 
     /**
@@ -136,7 +126,7 @@ public final class Code {
      */
     @INSPECTED
     public static TargetMethod codePointerToTargetMethod(Address codePointer) {
-        return _codeManager.codePointerToTargetMethod(codePointer);
+        return codeManager.codePointerToTargetMethod(codePointer);
     }
 
     /**
@@ -148,7 +138,7 @@ public final class Code {
      */
     @INSPECTED
     public static RuntimeStub codePointerToRuntimeStub(Address codePointer) {
-        return _codeManager.codePointerToRuntimeStub(codePointer);
+        return codeManager.codePointerToRuntimeStub(codePointer);
     }
 
 
@@ -181,17 +171,17 @@ public final class Code {
      *            also be visited
      */
     public static void visitCells(CellVisitor cellVisitor, boolean includeBootCode) {
-        _codeManager.visitCells(cellVisitor, includeBootCode);
+        codeManager.visitCells(cellVisitor, includeBootCode);
     }
 
     public static Size getCodeSize() {
-        return _codeManager.getSize();
+        return codeManager.getSize();
     }
 
     /**
      * All code memory regions, needed by the inspector.
      */
-    private static MemoryRegion[] _memoryRegions = new MemoryRegion[]{};
+    private static MemoryRegion[] memoryRegions = new MemoryRegion[]{};
 
     /**
      * Registers a new memory region with the code manager.
@@ -199,8 +189,8 @@ public final class Code {
      * @param codeRegion the code region to add
      */
     public static void registerMemoryRegion(CodeRegion codeRegion) {
-        final int nextIndex = _memoryRegions.length;
-        _memoryRegions = Arrays.append(_memoryRegions, new FixedMemoryRegion(codeRegion, "Code-" + nextIndex));
+        final int nextIndex = memoryRegions.length;
+        memoryRegions = Arrays.append(memoryRegions, new FixedMemoryRegion(codeRegion, "Code-" + nextIndex));
     }
 
     /**
@@ -212,6 +202,6 @@ public final class Code {
      */
     @INSPECTED
     public static TargetMethod[] methodKeyToTargetMethods(MethodKey methodKey) {
-        return _codeManager.methodKeyToTargetMethods(methodKey);
+        return codeManager.methodKeyToTargetMethods(methodKey);
     }
 }

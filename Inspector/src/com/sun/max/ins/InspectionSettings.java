@@ -63,8 +63,8 @@ public class InspectionSettings {
      * event object includes a method for a listener to {@linkplain #save(String, Object) save} its settings.
      */
     public final class SaveSettingsEvent {
-        private final Properties _props;
-        private final SaveSettingsListener _client;
+        private final Properties props;
+        private final SaveSettingsListener client;
 
         /**
          * Creates an object that will populate a given properties object with the settings of a given client.
@@ -73,8 +73,8 @@ public class InspectionSettings {
          * @param properties the properties object into which the settings will be written
          */
         private SaveSettingsEvent(SaveSettingsListener saveSettingsListener, Properties properties) {
-            _props = properties;
-            _client = saveSettingsListener;
+            props = properties;
+            client = saveSettingsListener;
         }
 
         /**
@@ -84,8 +84,8 @@ public class InspectionSettings {
          * @param value the value of the setting. The value saved is the result of calling {@link String#valueOf(Object)} on this value.
          */
         public void save(String key, Object value) {
-            final String clientKey = makeClientKey(_client, key);
-            _props.setProperty(clientKey, String.valueOf(value));
+            final String clientKey = makeClientKey(client, key);
+            props.setProperty(clientKey, String.valueOf(value));
         }
     }
 
@@ -132,14 +132,14 @@ public class InspectionSettings {
      * A convenience class that simplifies implementing the {@link SaveSettingsListener} interface.
      */
     public abstract static class AbstractSaveSettingsListener implements SaveSettingsListener {
-        protected final String _name;
-        protected final Component _component;
-        protected final Rectangle _defaultBounds;
+        protected final String name;
+        protected final Component component;
+        protected final Rectangle defaultBounds;
 
         protected AbstractSaveSettingsListener(String name, Component component, Rectangle defaultBounds) {
-            _name = name;
-            _component = component;
-            _defaultBounds = defaultBounds;
+            this.name = name;
+            this.component = component;
+            this.defaultBounds = defaultBounds;
         }
 
         protected AbstractSaveSettingsListener(String name, Component component) {
@@ -151,15 +151,15 @@ public class InspectionSettings {
         }
 
         public Component component() {
-            return _component;
+            return component;
         }
 
         public String name() {
-            return _name;
+            return name;
         }
 
         public Rectangle defaultBounds() {
-            return _defaultBounds;
+            return defaultBounds;
         }
 
         @Override
@@ -168,44 +168,44 @@ public class InspectionSettings {
         }
     }
 
-    private final SaveSettingsListener _bootimageClient;
-    private final Properties _properties = new SortedProperties();
-    private final File _settingsFile;
-    private final boolean _bootImageChanged;
-    private final Map<String, SaveSettingsListener> _clients;
+    private final SaveSettingsListener bootimageClient;
+    private final Properties properties = new SortedProperties();
+    private final File settingsFile;
+    private final boolean bootImageChanged;
+    private final Map<String, SaveSettingsListener> clients;
 
     public InspectionSettings(Inspection inspection, File settingsFile) {
-        _settingsFile = settingsFile;
-        _clients = new IdentityHashMap<String, SaveSettingsListener>();
+        this.settingsFile = settingsFile;
+        clients = new IdentityHashMap<String, SaveSettingsListener>();
         try {
-            final FileReader fileReader = new FileReader(_settingsFile);
-            Trace.begin(1, tracePrefix() + "loading preferences from: " + _settingsFile.toString());
-            _properties.load(fileReader);
-            Trace.end(1, tracePrefix() + "loading preferences from: " + _settingsFile.toString());
+            final FileReader fileReader = new FileReader(settingsFile);
+            Trace.begin(1, tracePrefix() + "loading preferences from: " + settingsFile.toString());
+            properties.load(fileReader);
+            Trace.end(1, tracePrefix() + "loading preferences from: " + settingsFile.toString());
             fileReader.close();
         } catch (FileNotFoundException ioException) {
         } catch (IOException ioException) {
-            ProgramWarning.message(tracePrefix() + "Error while loading settings from " + _settingsFile + ": " + ioException.getMessage());
+            ProgramWarning.message(tracePrefix() + "Error while loading settings from " + settingsFile + ": " + ioException.getMessage());
         }
 
         final BootImage bootImage = inspection.maxVM().bootImage();
-        _bootimageClient = new AbstractSaveSettingsListener("bootimage") {
+        bootimageClient = new AbstractSaveSettingsListener("bootimage") {
             public void saveSettings(SaveSettingsEvent settings) {
-                settings.save(BOOT_VERSION_KEY, String.valueOf(bootImage.header()._version));
-                settings.save(BOOT_ID_KEY, String.valueOf(bootImage.header()._randomID));
+                settings.save(BOOT_VERSION_KEY, String.valueOf(bootImage.header().version));
+                settings.save(BOOT_ID_KEY, String.valueOf(bootImage.header().randomID));
             }
         };
 
-        addSaveSettingsListener(_bootimageClient);
-        final int version = get(_bootimageClient, BOOT_VERSION_KEY, OptionTypes.INT_TYPE, 0);
-        final int randomID = get(_bootimageClient, BOOT_ID_KEY, OptionTypes.INT_TYPE, 0);
-        _bootImageChanged = version != bootImage.header()._version || randomID != bootImage.header()._randomID;
-        _bootimageClient.saveSettings(new SaveSettingsEvent(_bootimageClient, _properties));
-        _saver = new Saver();
+        addSaveSettingsListener(bootimageClient);
+        final int version = get(bootimageClient, BOOT_VERSION_KEY, OptionTypes.INT_TYPE, 0);
+        final int randomID = get(bootimageClient, BOOT_ID_KEY, OptionTypes.INT_TYPE, 0);
+        bootImageChanged = version != bootImage.header().version || randomID != bootImage.header().randomID;
+        bootimageClient.saveSettings(new SaveSettingsEvent(bootimageClient, properties));
+        saver = new Saver();
     }
 
     public void addSaveSettingsListener(final SaveSettingsListener saveSettingsListener) {
-        final SaveSettingsListener oldClient = _clients.put(saveSettingsListener.name(), saveSettingsListener);
+        final SaveSettingsListener oldClient = clients.put(saveSettingsListener.name(), saveSettingsListener);
         assert oldClient == null || oldClient == saveSettingsListener;
 
         final Component component = saveSettingsListener.component();
@@ -228,7 +228,7 @@ public class InspectionSettings {
     }
 
     public void removeSaveSettingsListener(final SaveSettingsListener saveSettingsListener) {
-        _clients.remove(saveSettingsListener.name());
+        clients.remove(saveSettingsListener.name());
     }
 
     private void refreshComponentClient(SaveSettingsListener saveSettingsListener) {
@@ -254,7 +254,7 @@ public class InspectionSettings {
      * is different from the boot image of the current VM.
      */
     public boolean bootImageChanged() {
-        return _bootImageChanged;
+        return bootImageChanged;
     }
 
     /**
@@ -268,11 +268,11 @@ public class InspectionSettings {
      *             expected type
      */
     public <Value_Type> Value_Type get(SaveSettingsListener saveSettingsListener, String key, Option.Type<Value_Type> type, Value_Type defaultValue) {
-        if (!_clients.containsKey(saveSettingsListener.name())) {
+        if (!clients.containsKey(saveSettingsListener.name())) {
             throw new IllegalArgumentException("Unregistered settings client: " + saveSettingsListener.name());
         }
         final String clientKey = makeClientKey(saveSettingsListener, key);
-        final String value = _properties.getProperty(clientKey);
+        final String value = properties.getProperty(clientKey);
         if (value == null) {
             return defaultValue;
         }
@@ -283,7 +283,7 @@ public class InspectionSettings {
         }
     }
 
-    private boolean _needsSaving;
+    private boolean needsSaving;
 
     /**
      * A helper task that is run in a separate thread for writing the persistent settings to a file.
@@ -292,21 +292,21 @@ public class InspectionSettings {
      */
     private class Saver implements Runnable {
         public void run() {
-            while (!_done) {
+            while (!done) {
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
                 }
-                if (!_done && _needsSaving) {
+                if (!done && needsSaving) {
                     doSave();
-                    _needsSaving = false;
+                    needsSaving = false;
                 }
             }
         }
 
-        boolean _done;
+        boolean done;
         void quit() {
-            _done = true;
+            done = true;
             doSave();
         }
 
@@ -315,18 +315,18 @@ public class InspectionSettings {
         }
     }
 
-    private final Saver _saver;
+    private final Saver saver;
 
     /**
      * Determines if there is a setting in this object named by a given key.
      */
     public boolean containsKey(SaveSettingsListener saveSettingsListener, String key) {
         final String clientKey = makeClientKey(saveSettingsListener, key);
-        return _properties.containsKey(clientKey);
+        return properties.containsKey(clientKey);
     }
 
     public synchronized void quit() {
-        _saver.quit();
+        saver.quit();
     }
 
     /**
@@ -335,7 +335,7 @@ public class InspectionSettings {
      * to the file happens asynchronously.
      */
     public void save() {
-        _needsSaving = true;
+        needsSaving = true;
     }
 
     /**
@@ -343,8 +343,8 @@ public class InspectionSettings {
      */
     private synchronized void doSave() {
         final Properties newProperties = new SortedProperties();
-        Trace.line(TRACE_VALUE, tracePrefix() + "saving settings to: " + _settingsFile.toString());
-        for (SaveSettingsListener saveSettingsListener : _clients.values()) {
+        Trace.line(TRACE_VALUE, tracePrefix() + "saving settings to: " + settingsFile.toString());
+        for (SaveSettingsListener saveSettingsListener : clients.values()) {
             final SaveSettingsEvent saveSettingsEvent = new SaveSettingsEvent(saveSettingsListener, newProperties);
             saveSettingsListener.saveSettings(saveSettingsEvent);
             final Component component = saveSettingsListener.component();
@@ -356,13 +356,13 @@ public class InspectionSettings {
                 saveSettingsEvent.save(COMPONENT_HEIGHT_KEY, bounds.height);
             }
         }
-        _properties.putAll(newProperties);
+        properties.putAll(newProperties);
         try {
-            final FileWriter fileWriter = new FileWriter(_settingsFile);
-            _properties.store(fileWriter, null);
+            final FileWriter fileWriter = new FileWriter(settingsFile);
+            properties.store(fileWriter, null);
             fileWriter.close();
         } catch (IOException ioException) {
-            ProgramWarning.message(tracePrefix() + "Error while saving settings to " + _settingsFile + ": " + ioException.getMessage());
+            ProgramWarning.message(tracePrefix() + "Error while saving settings to " + settingsFile + ": " + ioException.getMessage());
         }
 
     }

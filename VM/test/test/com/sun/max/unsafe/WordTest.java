@@ -41,15 +41,15 @@ public class WordTest extends WordTestCase {
     }
 
     public void test_as() {
-        Word word = _offsetHigh;
+        Word word = offsetHigh;
         assertTrue(word.asAddress().equals(word));
         assertTrue(word.asSize().equals(word));
         assertTrue(word.asPointer().equals(word));
 
-        word = _address0;
+        word = address0;
         assertTrue(word.asOffset().equals(word));
 
-        word = _addressLow;
+        word = addressLow;
         assertTrue(word.asOffset().equals(word));
         assertTrue(word.asSize().equals(word));
         assertTrue(word.asPointer().equals(word));
@@ -57,10 +57,10 @@ public class WordTest extends WordTestCase {
 
     public void test_width() {
         for (int i = 1; i <= 1024; i++) {
-            final Address address = _addressMax.unsignedShiftedRight(i);
-            if (address.equals(0) || address.equals(_addressMax)) {
+            final Address address = addressMax.unsignedShiftedRight(i);
+            if (address.equals(0) || address.equals(addressMax)) {
                 for (WordWidth width : WordWidth.values()) {
-                    if (width.numberOfBits() == i) {
+                    if (width.numberOfBits == i) {
                         assertTrue(Word.width().equals(width));
                         return;
                     }
@@ -72,12 +72,12 @@ public class WordTest extends WordTestCase {
     }
 
     public void test_equals() {
-        assertFalse(_address0.equals(_addressLow));
+        assertFalse(address0.equals(addressLow));
 
-        assertTrue(_addressLow.equals(_offsetLow));
+        assertTrue(addressLow.equals(offsetLow));
 
-        final Word negative = Offset.fromInt(-_low);
-        assertFalse(_offsetLow.equals(negative));
+        final Word negative = Offset.fromInt(-low);
+        assertFalse(offsetLow.equals(negative));
     }
 
 }

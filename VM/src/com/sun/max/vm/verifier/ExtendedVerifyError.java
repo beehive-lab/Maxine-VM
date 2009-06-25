@@ -33,15 +33,15 @@ import com.sun.max.vm.classfile.*;
  */
 public class ExtendedVerifyError extends VerifyError {
 
-    private final ClassMethodActor _classMethodActor;
-    private final CodeAttribute _codeAttribute;
-    private final int _position;
+    public final ClassMethodActor classMethodActor;
+    public final CodeAttribute codeAttribute;
+    public final int position;
 
     public ExtendedVerifyError(String detailMessage, ClassMethodActor classMethodActor, CodeAttribute codeAttribute, int position) {
         super(detailMessage);
-        _classMethodActor = classMethodActor;
-        _codeAttribute = codeAttribute;
-        _position = position;
+        this.classMethodActor = classMethodActor;
+        this.codeAttribute = codeAttribute;
+        this.position = position;
     }
 
     @Override
@@ -50,29 +50,17 @@ public class ExtendedVerifyError extends VerifyError {
         return this;
     }
 
-    public ClassMethodActor classMethodActor() {
-        return _classMethodActor;
-    }
-
-    public CodeAttribute codeAttribute() {
-        return _codeAttribute;
-    }
-
-    public int position() {
-        return _position;
-    }
-
     /**
      * Prefixes the detailed message describing this verification error with the name of the method and
      * the bytecode position at which the error occurred.
      */
     public String getContextualMessage() {
         final StringBuilder sb = new StringBuilder();
-        if (_position != -1) {
-            sb.append(" at offset ").append(_position);
+        if (position != -1) {
+            sb.append(" at offset ").append(position);
         }
-        if (_classMethodActor != null) {
-            sb.append(" in method ").append(classMethodActor().format("%H.%n(%p)"));
+        if (classMethodActor != null) {
+            sb.append(" in method ").append(classMethodActor.format("%H.%n(%p)"));
         }
         if (sb.length() != 0) {
             sb.insert(0, "Verification error").append(": ");
@@ -82,7 +70,7 @@ public class ExtendedVerifyError extends VerifyError {
     }
 
     public void printCode(PrintStream out) {
-        CodeAttributePrinter.print(out, _classMethodActor.rawCodeAttribute());
+        CodeAttributePrinter.print(out, classMethodActor.rawCodeAttribute());
     }
 
     @Override

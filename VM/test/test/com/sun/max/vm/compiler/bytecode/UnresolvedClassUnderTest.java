@@ -37,19 +37,19 @@ import com.sun.max.unsafe.*;
  * @author Laurent Daynes
  */
 public class UnresolvedClassUnderTest {
-    byte _byteField = 111;
-    boolean _booleanField = true;
-    short _shortField = 333;
-    char _charField = 444;
-    int _intField = 55;
-    long _longField = 77L;
-    float _floatField = 6.6F;
-    double _doubleField = 8.8;
-    Word _wordField;
-    Object _referenceField = this;
+    byte byteField = 111;
+    boolean booleanField = true;
+    short shortField = 333;
+    char charField = 444;
+    int intField = 55;
+    long longField = 77L;
+    float floatField = 6.6F;
+    double doubleField = 8.8;
+    Word wordField;
+    Object referenceField = this;
 
     public int getIntField() {
-        return _intField;
+        return intField;
     }
 
     public static void unresolvedStaticMethod() {

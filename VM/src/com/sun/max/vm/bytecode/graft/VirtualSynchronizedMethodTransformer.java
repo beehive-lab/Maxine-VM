@@ -27,26 +27,26 @@ import com.sun.max.vm.type.*;
  */
 class VirtualSynchronizedMethodTransformer extends SynchronizedMethodTransformer {
 
-    private final int _copyOfReceiver;
+    private final int copyOfReceiver;
 
     public VirtualSynchronizedMethodTransformer(BytecodeAssembler assembler, int copyOfReceiver) {
         super(assembler);
-        _copyOfReceiver = copyOfReceiver;
+        this.copyOfReceiver = copyOfReceiver;
     }
 
     @Override
     void acquireMonitor() {
         asm().aload(0);
-        asm().astore(_copyOfReceiver);
+        asm().astore(copyOfReceiver);
         asm().aload(0);
         asm().monitorenter();
     }
 
     @Override
     void releaseMonitorAndReturn(Kind resultKind) {
-        if (_returnBlockLabel != null) {
-            _returnBlockLabel.bind();
-            asm().aload(_copyOfReceiver);
+        if (returnBlockLabel != null) {
+            returnBlockLabel.bind();
+            asm().aload(copyOfReceiver);
             asm().monitorexit();
             asm().return_(resultKind);
         }
@@ -54,7 +54,7 @@ class VirtualSynchronizedMethodTransformer extends SynchronizedMethodTransformer
 
     @Override
     void releaseMonitorAndRethrow() {
-        asm().aload(_copyOfReceiver);
+        asm().aload(copyOfReceiver);
         asm().monitorexit();
         asm().athrow();
     }

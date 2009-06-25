@@ -46,20 +46,20 @@ import com.sun.max.vm.runtime.*;
  */
 public final class BreakpointsTable extends InspectorTable {
 
-    private final BreakpointsTableModel _model;
-    private BreakpointsColumnModel _columnModel;
-    private final TableColumn[] _columns;
+    private final BreakpointsTableModel model;
+    private BreakpointsColumnModel columnModel;
+    private final TableColumn[] columns;
 
-    private MaxVMState _lastStateRefreshed = null;
+    private MaxVMState lastStateRefreshed = null;
 
     public BreakpointsTable(Inspection inspection, BreakpointsViewPreferences viewPreferences) {
         super(inspection);
-        _model = new BreakpointsTableModel();
-        _columns = new TableColumn[BreakpointsColumnKind.VALUES.length()];
-        _columnModel = new BreakpointsColumnModel(viewPreferences);
+        model = new BreakpointsTableModel();
+        columns = new TableColumn[BreakpointsColumnKind.VALUES.length()];
+        columnModel = new BreakpointsColumnModel(viewPreferences);
 
-        setModel(_model);
-        setColumnModel(_columnModel);
+        setModel(model);
+        setColumnModel(columnModel);
         setShowHorizontalLines(style().defaultTableShowHorizontalLines());
         setShowVerticalLines(style().defaultTableShowVerticalLines());
         setIntercellSpacing(style().defaultTableIntercellSpacing());
@@ -79,7 +79,7 @@ public final class BreakpointsTable extends InspectorTable {
     @Override
     public void updateFocusSelection() {
         final TeleBreakpoint teleBreakpoint = inspection().focus().breakpoint();
-        final int row = _model.findRow(teleBreakpoint);
+        final int row = model.findRow(teleBreakpoint);
         if (row < 0) {
             clearSelection();
         } else  if (row != getSelectedRow()) {
@@ -88,10 +88,10 @@ public final class BreakpointsTable extends InspectorTable {
     }
 
     public void refresh(boolean force) {
-        if (maxVMState().newerThan(_lastStateRefreshed) || force) {
-            _lastStateRefreshed = maxVMState();
-            _model.refresh();
-            for (TableColumn column : _columns) {
+        if (maxVMState().newerThan(lastStateRefreshed) || force) {
+            lastStateRefreshed = maxVMState();
+            model.refresh();
+            for (TableColumn column : columns) {
                 final Prober prober = (Prober) column.getCellRenderer();
                 if (prober != null) {
                     prober.refresh(force);
@@ -101,7 +101,7 @@ public final class BreakpointsTable extends InspectorTable {
     }
 
     public void redisplay() {
-        for (TableColumn column : _columns) {
+        for (TableColumn column : columns) {
             final Prober prober = (Prober) column.getCellRenderer();
             prober.redisplay();
         }
@@ -117,7 +117,7 @@ public final class BreakpointsTable extends InspectorTable {
         if (!listSelectionEvent.getValueIsAdjusting()) {
             final int row = getSelectedRow();
             if (row >= 0) {
-                final BreakpointData breakpointData = _model.get(row);
+                final BreakpointData breakpointData = model.get(row);
                 if (breakpointData != null) {
                     final TeleBreakpoint teleBreakpoint = breakpointData.teleBreakpoint();
                     focus().setBreakpoint(teleBreakpoint);
@@ -129,12 +129,12 @@ public final class BreakpointsTable extends InspectorTable {
     @Override
     protected JTableHeader createDefaultTableHeader() {
         // Custom table header with tooltips that describe the column data.
-        return new JTableHeader(_columnModel) {
+        return new JTableHeader(columnModel) {
             @Override
             public String getToolTipText(MouseEvent mouseEvent) {
                 final Point p = mouseEvent.getPoint();
-                final int index = _columnModel.getColumnIndexAtX(p.x);
-                final int modelIndex = _columnModel.getColumn(index).getModelIndex();
+                final int index = columnModel.getColumnIndexAtX(p.x);
+                final int modelIndex = columnModel.getColumn(index).getModelIndex();
                 return BreakpointsColumnKind.VALUES.get(modelIndex).toolTipText();
             }
         };
@@ -142,10 +142,10 @@ public final class BreakpointsTable extends InspectorTable {
 
     private final class BreakpointsColumnModel extends DefaultTableColumnModel {
 
-        private final BreakpointsViewPreferences _viewPreferences;
+        private final BreakpointsViewPreferences viewPreferences;
 
         private BreakpointsColumnModel(BreakpointsViewPreferences viewPreferences) {
-            _viewPreferences = viewPreferences;
+            this.viewPreferences = viewPreferences;
             createColumn(BreakpointsColumnKind.TAG, new TagCellRenderer(inspection()), null);
             createColumn(BreakpointsColumnKind.ENABLED, null, new DefaultCellEditor(new JCheckBox()));
             createColumn(BreakpointsColumnKind.METHOD, new MethodCellRenderer(inspection()), null);
@@ -156,13 +156,13 @@ public final class BreakpointsTable extends InspectorTable {
 
         private void createColumn(BreakpointsColumnKind columnKind, TableCellRenderer renderer, TableCellEditor editor) {
             final int col = columnKind.ordinal();
-            _columns[col] = new TableColumn(col, 0, renderer, editor);
-            _columns[col].setHeaderValue(columnKind.label());
-            _columns[col].setMinWidth(columnKind.minWidth());
-            if (_viewPreferences.isVisible(columnKind)) {
-                addColumn(_columns[col]);
+            columns[col] = new TableColumn(col, 0, renderer, editor);
+            columns[col].setHeaderValue(columnKind.label());
+            columns[col].setMinWidth(columnKind.minWidth());
+            if (viewPreferences.isVisible(columnKind)) {
+                addColumn(columns[col]);
             }
-            _columns[col].setIdentifier(columnKind);
+            columns[col].setIdentifier(columnKind);
         }
     }
 
@@ -174,12 +174,12 @@ public final class BreakpointsTable extends InspectorTable {
     private final class BreakpointsTableModel extends DefaultTableModel {
 
         // Cache of information objects for each known breakpoint
-        private final Set<BreakpointData> _breakpoints = new TreeSet<BreakpointData>();
+        private final Set<BreakpointData> breakpoints = new TreeSet<BreakpointData>();
 
         void refresh() {
             // Check for current and added breakpoints
             // Initially assume all deleted
-            for (BreakpointData breakpointData : _breakpoints) {
+            for (BreakpointData breakpointData : breakpoints) {
                 breakpointData.markDeleted(true);
             }
             // add new and mark previous as not deleted
@@ -187,7 +187,7 @@ public final class BreakpointsTable extends InspectorTable {
                 final BreakpointData breakpointData = findTargetBreakpoint(breakpoint.address());
                 if (breakpointData == null) {
                     // new breakpoint in VM since last refresh
-                    _breakpoints.add(new TargetBreakpointData(breakpoint));
+                    breakpoints.add(new TargetBreakpointData(breakpoint));
                     //fireTableDataChanged();
                 } else {
                     // mark as not deleted
@@ -198,7 +198,7 @@ public final class BreakpointsTable extends InspectorTable {
                 final BreakpointData breakpointData = findBytecodeBreakpoint(breakpoint.key());
                 if (breakpointData == null) {
                     // new breakpoint since last refresh
-                    _breakpoints.add(new BytecodeBreakpointData(breakpoint));
+                    breakpoints.add(new BytecodeBreakpointData(breakpoint));
                     //fireTableDataChanged();
                 } else {
                     // mark as not deleted
@@ -206,7 +206,7 @@ public final class BreakpointsTable extends InspectorTable {
                 }
             }
             // now remove the breakpoints that are still marked as deleted
-            final Iterator iter = _breakpoints.iterator();
+            final Iterator iter = breakpoints.iterator();
             while (iter.hasNext()) {
                 final BreakpointData breakpointData = (BreakpointData) iter.next();
                 if (breakpointData.isDeleted()) {
@@ -227,7 +227,7 @@ public final class BreakpointsTable extends InspectorTable {
             // This gets called during superclass initialiation, before the local
             // data has been initialized, even  if you try to set row size to 0
             // in the constructor.
-            return _breakpoints == null ? 0 : _breakpoints.size();
+            return breakpoints == null ? 0 : breakpoints.size();
         }
 
         @Override
@@ -310,7 +310,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         private BreakpointData get(int row) {
             int count = 0;
-            for (BreakpointData breakpointData : _breakpoints) {
+            for (BreakpointData breakpointData : breakpoints) {
                 if (count == row) {
                     return breakpointData;
                 }
@@ -324,7 +324,7 @@ public final class BreakpointsTable extends InspectorTable {
          */
         private int findRow(TeleBreakpoint breakpoint) {
             int row = 0;
-            for (BreakpointData breakpointData : _breakpoints) {
+            for (BreakpointData breakpointData : breakpoints) {
                 if (breakpointData.teleBreakpoint() == breakpoint) {
                     return row;
                 }
@@ -337,7 +337,7 @@ public final class BreakpointsTable extends InspectorTable {
          * Locates a target code breakpoint already known to the inspector.
          */
         TargetBreakpointData findTargetBreakpoint(Address address) {
-            for (BreakpointData breakpointData : _breakpoints) {
+            for (BreakpointData breakpointData : breakpoints) {
                 if (breakpointData instanceof TargetBreakpointData) {
                     final TargetBreakpointData targetBreakpointData = (TargetBreakpointData) breakpointData;
                     if (targetBreakpointData.address().toLong() == address.toLong()) {
@@ -352,7 +352,7 @@ public final class BreakpointsTable extends InspectorTable {
          * Locates a bytecode breakpoint already known to the inspector.
          */
         BytecodeBreakpointData findBytecodeBreakpoint(TeleBytecodeBreakpoint.Key key) {
-            for (BreakpointData breakpointData : _breakpoints) {
+            for (BreakpointData breakpointData : breakpoints) {
                 if (breakpointData instanceof BytecodeBreakpointData) {
                     final BytecodeBreakpointData bytecodeBreakpointData = (BytecodeBreakpointData) breakpointData;
                     if (bytecodeBreakpointData.key() == key) {
@@ -372,7 +372,7 @@ public final class BreakpointsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final BreakpointData breakpointData = _model.get(row);
+            final BreakpointData breakpointData = model.get(row);
             setText(breakpointData.kindTag());
             setToolTipText(breakpointData.kindName() + ", Enabled=" + (breakpointData.enabled() ? "true" : "false"));
             if (row == getSelectionModel().getMinSelectionIndex()) {
@@ -391,7 +391,7 @@ public final class BreakpointsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final BreakpointData breakpointData = _model.get(row);
+            final BreakpointData breakpointData = model.get(row);
             setValue(breakpointData.shortName(), breakpointData.longName());
             if (row == getSelectionModel().getMinSelectionIndex()) {
                 setBackground(style().defaultCodeAlternateBackgroundColor());
@@ -409,7 +409,7 @@ public final class BreakpointsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final BreakpointData breakpointData = _model.get(row);
+            final BreakpointData breakpointData = model.get(row);
             setText(Integer.toString(breakpointData.location()));
             setToolTipText("Location: " + breakpointData.locationDescription());
             if (row == getSelectionModel().getMinSelectionIndex()) {
@@ -429,7 +429,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            setToolTipText(_model.get(row).conditionStatus());
+            setToolTipText(model.get(row).conditionStatus());
             final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             if (row == getSelectionModel().getMinSelectionIndex()) {
                 component.setBackground(style().defaultCodeAlternateBackgroundColor());
@@ -454,7 +454,7 @@ public final class BreakpointsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final BreakpointData breakpointData = _model.get(row);
+            final BreakpointData breakpointData = model.get(row);
             if (breakpointData.triggerThread() != null) {
                 setText(breakpointData.triggerThreadName());
                 setToolTipText("Thread \"" + breakpointData.triggerThreadName() + "\" stopped at this breakpoint");
@@ -473,26 +473,26 @@ public final class BreakpointsTable extends InspectorTable {
 
     private final class BreakpointMenuItems implements InspectorMenuItems {
 
-        private final Inspection _inspection;
-        private final BreakpointData _breakpointData;
+        private final Inspection inspection;
+        private final BreakpointData breakpointData;
 
         BreakpointMenuItems(Inspection inspection, BreakpointData breakpointData) {
-            _inspection = inspection;
-            _breakpointData = breakpointData;
+            this.inspection = inspection;
+            this.breakpointData = breakpointData;
         }
 
         public void addTo(InspectorMenu menu) {
-            final String shortName = _breakpointData.shortName();
-            menu.add(inspection().actions().removeBreakpoint(_breakpointData.teleBreakpoint(), "Remove: " + shortName));
-            if (_breakpointData.enabled()) {
-                menu.add(inspection().actions().disableBreakpoint(_breakpointData.teleBreakpoint(), "Disable: " + shortName));
+            final String shortName = breakpointData.shortName();
+            menu.add(inspection().actions().removeBreakpoint(breakpointData.teleBreakpoint(), "Remove: " + shortName));
+            if (breakpointData.enabled()) {
+                menu.add(inspection().actions().disableBreakpoint(breakpointData.teleBreakpoint(), "Disable: " + shortName));
             } else {
-                menu.add(inspection().actions().enableBreakpoint(_breakpointData.teleBreakpoint(), "Enable: " + shortName));
+                menu.add(inspection().actions().enableBreakpoint(breakpointData.teleBreakpoint(), "Enable: " + shortName));
             }
         }
 
         public Inspection inspection() {
-            return _inspection;
+            return inspection;
         }
 
         public void refresh(boolean force) {
@@ -535,7 +535,7 @@ public final class BreakpointsTable extends InspectorTable {
             if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
                 final Point p = mouseEvent.getPoint();
                 final int row = rowAtPoint(p);
-                final BreakpointData breakpointData = _model.get(row);
+                final BreakpointData breakpointData = model.get(row);
                 final InspectorMenu menu = getButton3Menu(breakpointData);
                 menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
             }
@@ -643,20 +643,20 @@ public final class BreakpointsTable extends InspectorTable {
             return inspection().nameDisplay().longName(triggerThread());
         }
 
-        private boolean _deleted = false;
+        private boolean deleted = false;
 
         /**
          * @return whether this breakpoint is still marked deleted after the most recent sweep
          */
         boolean isDeleted() {
-            return _deleted;
+            return deleted;
         }
 
         /**
          * sets the "deleted" state, used to update the list of breakpoints in the VM.
          */
         void markDeleted(boolean deleted) {
-            _deleted = deleted;
+            this.deleted = deleted;
         }
 
         @Override
@@ -685,41 +685,41 @@ public final class BreakpointsTable extends InspectorTable {
 
     private final class TargetBreakpointData extends BreakpointData {
 
-        private final TeleTargetBreakpoint _teleTargetBreakpoint;
-        private Address _codeStart;
-        private int _location = 0;
-        private String _shortName;
-        private String _longName;
+        private final TeleTargetBreakpoint teleTargetBreakpoint;
+        private Address codeStart;
+        private int location = 0;
+        private String shortName;
+        private String longName;
 
         TargetBreakpointData(TeleTargetBreakpoint teleTargetBreakpoint) {
-            _teleTargetBreakpoint = teleTargetBreakpoint;
+            this.teleTargetBreakpoint = teleTargetBreakpoint;
             final Address address = teleTargetBreakpoint.address();
             final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(address);
             if (teleTargetMethod != null) {
-                _shortName = inspection().nameDisplay().shortName(teleTargetMethod);
-                _longName = inspection().nameDisplay().longName(teleTargetMethod, address);
-                _codeStart = teleTargetMethod.getCodeStart();
-                _location = address.minus(_codeStart.asAddress()).toInt();
+                shortName = inspection().nameDisplay().shortName(teleTargetMethod);
+                longName = inspection().nameDisplay().longName(teleTargetMethod, address);
+                codeStart = teleTargetMethod.getCodeStart();
+                location = address.minus(codeStart.asAddress()).toInt();
             } else {
                 final TeleRuntimeStub teleRuntimeStub = maxVM().makeTeleRuntimeStub(address);
                 if (teleRuntimeStub != null) {
-                    _codeStart = teleRuntimeStub.runtimeStub().start();
-                    _location = address.minus(_codeStart).toInt();
-                    _shortName = "runtime stub[0x" + _codeStart + "]";
-                    _longName = _shortName;
+                    codeStart = teleRuntimeStub.runtimeStub().start();
+                    location = address.minus(codeStart).toInt();
+                    shortName = "runtime stub[0x" + codeStart + "]";
+                    longName = shortName;
                 } else {
                     final TeleNativeTargetRoutine teleNativeTargetRoutine = maxVM().findTeleTargetRoutine(TeleNativeTargetRoutine.class, address);
                     if (teleNativeTargetRoutine != null) {
-                        _codeStart = teleNativeTargetRoutine.getCodeStart();
-                        _location = address.minus(_codeStart.asAddress()).toInt();
-                        _shortName = inspection().nameDisplay().shortName(teleNativeTargetRoutine);
-                        _longName = inspection().nameDisplay().longName(teleNativeTargetRoutine);
+                        codeStart = teleNativeTargetRoutine.getCodeStart();
+                        location = address.minus(codeStart.asAddress()).toInt();
+                        shortName = inspection().nameDisplay().shortName(teleNativeTargetRoutine);
+                        longName = inspection().nameDisplay().longName(teleNativeTargetRoutine);
                     } else {
                         // Must be an address in an unknown area of native code
-                        _shortName = "0x" + address.toHexString();
-                        _longName = "native code at 0x" + address.toHexString();
-                        _codeStart = address;
-                        _location = 0;
+                        shortName = "0x" + address.toHexString();
+                        longName = "native code at 0x" + address.toHexString();
+                        codeStart = address;
+                        location = 0;
                     }
                 }
             }
@@ -727,7 +727,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         TeleBreakpoint teleBreakpoint() {
-            return _teleTargetBreakpoint;
+            return teleTargetBreakpoint;
         }
 
         @Override
@@ -742,28 +742,28 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         String shortName() {
-            return _shortName;
+            return shortName;
         }
 
         @Override
         String longName() {
-            return _longName;
+            return longName;
         }
 
         @Override
         int location() {
-            return _location;
+            return location;
         }
 
         @Override
         String locationDescription() {
-            return "Offset=" + (_location > 0 ? "+" : "") + _location + ", Address=" + _teleTargetBreakpoint.address().toHexString();
+            return "Offset=" + (location > 0 ? "+" : "") + location + ", Address=" + teleTargetBreakpoint.address().toHexString();
         }
 
         @Override
         void setCondition(String condition) {
             try {
-                _teleTargetBreakpoint.setCondition(condition);
+                teleTargetBreakpoint.setCondition(condition);
                 inspection().settings().save();
             } catch (BreakpointCondition.ExpressionException expressionException) {
                 gui().errorMessage(String.format("Error parsing saved breakpoint condition:%n  expression: %s%n       error: " + condition, expressionException.getMessage()), "Breakpoint Condition Error");
@@ -780,32 +780,32 @@ public final class BreakpointsTable extends InspectorTable {
         }
 
         Address address() {
-            return _teleTargetBreakpoint.address();
+            return teleTargetBreakpoint.address();
         }
     }
 
     private final class BytecodeBreakpointData extends BreakpointData {
 
-        private final TeleBytecodeBreakpoint _teleBytecodeBreakpoint;
-        private final TeleBytecodeBreakpoint.Key _key;
-        String _shortName;
-        String _longName;
+        private final TeleBytecodeBreakpoint teleBytecodeBreakpoint;
+        private final TeleBytecodeBreakpoint.Key key;
+        String shortName;
+        String longName;
 
         BytecodeBreakpointData(TeleBytecodeBreakpoint teleBytecodeBreakpoint) {
-            _teleBytecodeBreakpoint = teleBytecodeBreakpoint;
-            _key = teleBytecodeBreakpoint.key();
-            _shortName = _key.holder().toJavaString(false) + "." + _key.name().toString() + _key.signature().toJavaString(false,  false);
+            this.teleBytecodeBreakpoint = teleBytecodeBreakpoint;
+            key = teleBytecodeBreakpoint.key();
+            shortName = key.holder().toJavaString(false) + "." + key.name().toString() + key.signature().toJavaString(false,  false);
 
-            _longName = _key.signature().resultDescriptor().toJavaString(false) + " " + _key.name().toString() + _key.signature().toJavaString(false,  false);
-            if (_key.position() > 0) {
-                _longName += " + " + _key.position();
+            longName = key.signature().resultDescriptor().toJavaString(false) + " " + key.name().toString() + key.signature().toJavaString(false,  false);
+            if (key.position() > 0) {
+                longName += " + " + key.position();
             }
-            _longName = _longName + " in " + _key.holder().toJavaString();
+            longName = longName + " in " + key.holder().toJavaString();
         }
 
         @Override
         TeleBreakpoint teleBreakpoint() {
-            return _teleBytecodeBreakpoint;
+            return teleBytecodeBreakpoint;
         }
 
         @Override
@@ -820,22 +820,22 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         String shortName() {
-            return _shortName;
+            return shortName;
         }
 
         @Override
         String longName() {
-            return _longName;
+            return longName;
         }
 
         @Override
         int location() {
-            return _key.position();
+            return key.position();
         }
 
         @Override
         String locationDescription() {
-            return "Bytecode position=" + _key.position();
+            return "Bytecode position=" + key.position();
         }
 
         @Override
@@ -849,7 +849,7 @@ public final class BreakpointsTable extends InspectorTable {
         }
 
         TeleBytecodeBreakpoint.Key key() {
-            return _key;
+            return key;
         }
     }
 

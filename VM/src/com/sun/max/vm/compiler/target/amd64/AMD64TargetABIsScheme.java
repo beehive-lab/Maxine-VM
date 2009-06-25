@@ -36,55 +36,55 @@ import com.sun.max.vm.compiler.target.*;
  */
 public final class AMD64TargetABIsScheme extends TargetABIsScheme<AMD64GeneralRegister64, AMD64XMMRegister> {
 
-    private static final RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister> _nativeRegisterRoleAssignment =
+    private static final RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister> nativeRegisterRoleAssignment =
         new RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister>(AMD64GeneralRegister64.class,
                         RSP, RBP,
                         RSP, RBP,
                         RAX, null, null,
                         AMD64XMMRegister.class, XMM0, null);
 
-    private static final RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister> _jitRegisterRoleAssignment =
+    private static final RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister> jitRegisterRoleAssignment =
         new RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister>(AMD64GeneralRegister64.class,
                         RSP, RBP,
                         RSP, RBP,
                         RAX, R11, R14,
                         AMD64XMMRegister.class, XMM0, XMM15);
 
-    private static final RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister> _optimizedJavaRegisterRoleAssignment =
+    private static final RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister> optimizedJavaRegisterRoleAssignment =
         new RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister>(AMD64GeneralRegister64.class,
                         RSP, RBP,
                         RSP, RSP,
                         RAX, R11, R14,
                         AMD64XMMRegister.class, XMM0, XMM15);
 
-    private static final RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister> _interpreterRoleAssignment =
+    private static final RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister> interpreterRoleAssignment =
         new RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister>(AMD64GeneralRegister64.class,
                         RSP, RBP,
                         RSP, RBP,
                         RAX, R11, R14,
                         AMD64XMMRegister.class, XMM0, XMM15);
 
-    private static final IndexedSequence<AMD64GeneralRegister64> _integerParameterRegisters = new ArraySequence<AMD64GeneralRegister64>(RDI, RSI, RDX, RCX, R8, R9);
-    private static final IndexedSequence<AMD64XMMRegister> _floatingPointParameterRegisters = new ArraySequence<AMD64XMMRegister>(XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7);
+    private static final IndexedSequence<AMD64GeneralRegister64> integerParameterRegisters = new ArraySequence<AMD64GeneralRegister64>(RDI, RSI, RDX, RCX, R8, R9);
+    private static final IndexedSequence<AMD64XMMRegister> floatingPointParameterRegisters = new ArraySequence<AMD64XMMRegister>(XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7);
 
     private static final int NULL_STACK_BIAS = 0;
 
     static TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> createAMD64TargetABI(RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister> registerRoleAssignment, CallEntryPoint callEntryPoint, VMConfiguration vmConfiguration) {
         return  new TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>(registerRoleAssignment, callEntryPoint,
-                        _integerParameterRegisters, _integerParameterRegisters, _floatingPointParameterRegisters,
+                        integerParameterRegisters, integerParameterRegisters, floatingPointParameterRegisters,
                         false, true, stackFrameAlignment(vmConfiguration), NULL_STACK_BIAS);
     }
 
     public AMD64TargetABIsScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration,
-                        createAMD64TargetABI(_nativeRegisterRoleAssignment, CallEntryPoint.C_ENTRY_POINT, vmConfiguration),
-                        createAMD64TargetABI(_jitRegisterRoleAssignment, CallEntryPoint.JIT_ENTRY_POINT, vmConfiguration),
-                        createAMD64TargetABI(_optimizedJavaRegisterRoleAssignment, CallEntryPoint.OPTIMIZED_ENTRY_POINT, vmConfiguration),
-                        createAMD64TargetABI(_interpreterRoleAssignment, CallEntryPoint.INTERPRETER_ENTRY_POINT, vmConfiguration));
+                        createAMD64TargetABI(nativeRegisterRoleAssignment, CallEntryPoint.C_ENTRY_POINT, vmConfiguration),
+                        createAMD64TargetABI(jitRegisterRoleAssignment, CallEntryPoint.JIT_ENTRY_POINT, vmConfiguration),
+                        createAMD64TargetABI(optimizedJavaRegisterRoleAssignment, CallEntryPoint.OPTIMIZED_ENTRY_POINT, vmConfiguration),
+                        createAMD64TargetABI(interpreterRoleAssignment, CallEntryPoint.INTERPRETER_ENTRY_POINT, vmConfiguration));
     }
 
     private static int stackFrameAlignment(VMConfiguration vmConfiguration) {
-        if (vmConfiguration.platform().operatingSystem() == OperatingSystem.DARWIN) {
+        if (vmConfiguration.platform().operatingSystem == OperatingSystem.DARWIN) {
             // Darwin requires 16-byte stack frame alignment.
             return 16;
         }

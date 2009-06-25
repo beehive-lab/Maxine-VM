@@ -29,12 +29,12 @@ import com.sun.max.vm.compiler.dir.transform.*;
  */
 public abstract class DirInstruction {
 
-    private static int _instructionCounter = 0;
+    private static int instructionCounter = 0;
 
-    protected final int _serial;
+    protected final int serial;
 
     protected DirInstruction() {
-        _serial = _instructionCounter++;
+        serial = instructionCounter++;
     }
 
     public DirCatchBlock catchBlock() {
@@ -55,7 +55,7 @@ public abstract class DirInstruction {
      * @return a unique ID for human consumption
      */
     public int serial() {
-        return _serial;
+        return serial;
     }
 
     public int hashCodeForBlock() {

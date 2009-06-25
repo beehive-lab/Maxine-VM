@@ -26,9 +26,9 @@ package test.bytecode;
  */
 public class BC_laload {
 
-    static long[] _array = {0L, -1L, 4L, 1000000000000L};
+    static long[] array = {0L, -1L, 4L, 1000000000000L};
 
     public static long test(int arg) {
-        return _array[arg];
+        return array[arg];
     }
 }

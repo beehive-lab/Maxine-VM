@@ -29,16 +29,12 @@ import com.sun.max.vm.verifier.types.*;
  */
 public class SubroutineCall extends SubroutineFrame {
 
-    private final InstructionHandle _caller;
-    private int _nextInstuctionHandleIndex;
+    public final InstructionHandle caller;
+    private int nextInstuctionHandleIndex;
 
     public SubroutineCall(Subroutine subroutine, SubroutineCall parent, InstructionHandle caller) {
         super(subroutine, parent);
-        _caller = caller;
-    }
-
-    public InstructionHandle caller() {
-        return _caller;
+        this.caller = caller;
     }
 
     @Override
@@ -47,24 +43,24 @@ public class SubroutineCall extends SubroutineFrame {
     }
 
     public void setNextInstuctionHandleIndex(int index) {
-        _nextInstuctionHandleIndex = index;
+        nextInstuctionHandleIndex = index;
     }
 
     public int nextInstuctionHandleIndex() {
-        return _nextInstuctionHandleIndex;
+        return nextInstuctionHandleIndex;
     }
 
     public boolean matches(SubroutineFrame subroutineFrame) {
         if (subroutineFrame == this) {
             return true;
         }
-        if (depth() != subroutineFrame.depth()) {
+        if (depth != subroutineFrame.depth) {
             return false;
         }
-        if (subroutine() == subroutineFrame.subroutine() || subroutine() == MERGED_SUBROUTINE || subroutineFrame.subroutine() == MERGED_SUBROUTINE) {
+        if (subroutine == subroutineFrame.subroutine || subroutine == MERGED_SUBROUTINE || subroutineFrame.subroutine == MERGED_SUBROUTINE) {
             if (subroutineFrame instanceof SubroutineCall) {
                 final SubroutineCall subroutineCall = (SubroutineCall) subroutineFrame;
-                if (subroutineCall.caller() != caller()) {
+                if (subroutineCall.caller != caller) {
                     return false;
                 }
             }
@@ -77,11 +73,11 @@ public class SubroutineCall extends SubroutineFrame {
         if (toSubroutineCall == this) {
             return true;
         }
-        if (toSubroutineCall.depth() > depth()) {
+        if (toSubroutineCall.depth > depth) {
             return false;
         }
         SubroutineCall fromSubroutineCall = this;
-        while (fromSubroutineCall.depth() > toSubroutineCall.depth()) {
+        while (fromSubroutineCall.depth > toSubroutineCall.depth) {
             fromSubroutineCall = fromSubroutineCall.parent();
         }
         return fromSubroutineCall.matches(toSubroutineCall);

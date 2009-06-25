@@ -34,25 +34,25 @@ import com.sun.max.util.*;
 
 public class JavaTesterGenerator {
 
-    private static final OptionSet _options = new OptionSet(true);
+    private static final OptionSet options = new OptionSet(true);
 
-    private static final Option<Boolean> _exceptionsOption = _options.newBooleanOption("exceptions", true,
+    private static final Option<Boolean> exceptionsOption = options.newBooleanOption("exceptions", true,
                     "Selects whether runs that are expected to throw exceptions will be tested.");
-    private static final Option<Boolean> _runStringsOption = _options.newBooleanOption("run-strings", true,
+    private static final Option<Boolean> runStringsOption = options.newBooleanOption("run-strings", true,
                     "Selects whether the input values will be reported for a test case that fails.");
-    private static final Option<Boolean> _loadedOption = _options.newBooleanOption("force-loaded", true,
+    private static final Option<Boolean> loadedOption = options.newBooleanOption("force-loaded", true,
                     "Specifies that all test classes will be loaded into the target.");
-    private static final Option<Boolean> _resolvedOption = _options.newBooleanOption("force-resolved", true,
+    private static final Option<Boolean> resolvedOption = options.newBooleanOption("force-resolved", true,
                     "Specifies that all test classes and method will be resolved in the target.");
-    private static final Option<Boolean> _restartOption = _options.newBooleanOption("restart", true,
+    private static final Option<Boolean> restartOption = options.newBooleanOption("restart", true,
                     "Specifies that generated run scheme will allow starting the tests from a particular test number.");
-    private static final Option<Integer> _verboseOption = _options.newIntegerOption("verbose", 3,
+    private static final Option<Integer> verboseOption = options.newIntegerOption("verbose", 3,
                     "Specifies the verbose level of the generated tests.");
-    private static final Option<Boolean> _compileOption = _options.newBooleanOption("compile", true,
+    private static final Option<Boolean> compileOption = options.newBooleanOption("compile", true,
                     "Compiles the generate Java source code automatically using a Java source compiler.");
-    private static final Option<String> _packageOption = _options.newStringOption("package", "some",
+    private static final Option<String> packageOption = options.newStringOption("package", "some",
                     "");
-    private static final Option<Boolean> _sortOption = _options.newBooleanOption("alphabetical", true,
+    private static final Option<Boolean> sortOption = options.newBooleanOption("alphabetical", true,
                     "Generates the test cases in alphabetical order.");
 
     public static class Executor implements JavaExecHarness.Executor {
@@ -64,15 +64,15 @@ public class JavaTesterGenerator {
         }
     }
 
-    final IndentWriter _writer;
+    final IndentWriter writer;
 
-    public static void generate(OptionSet options, String[] args) {
-        _options.loadOptions(options);
+    public static void generate(OptionSet extraOptions, String[] args) {
+        options.loadOptions(extraOptions);
         generate(args);
     }
 
     public static void main(String[] args) {
-        generate(_options.parseArguments(args).getArguments());
+        generate(options.parseArguments(args).getArguments());
     }
 
     private static void generate(final String[] arguments) throws ProgramError {
@@ -80,7 +80,7 @@ public class JavaTesterGenerator {
         final JavaExecHarness javaExecHarness = new JavaExecHarness(new Executor());
         registry.registerObject("java", javaExecHarness);
         final TestEngine engine = new TestEngine(registry);
-        engine.parseTests(arguments, _sortOption.getValue());
+        engine.parseTests(arguments, sortOption.getValue());
         try {
             final String runSchemeFile = fileName("JavaTesterRunScheme");
             final String testRunsFile = fileName("JavaTesterTests");
@@ -91,7 +91,7 @@ public class JavaTesterGenerator {
             generateTestRunsContent(new File(testRunsFile), cases);
 
             System.out.println(runSchemeFile + " updated.");
-            if (_compileOption.getValue()) {
+            if (compileOption.getValue()) {
                 ToolChain.compile(new String[] {className("JavaTesterRunScheme"), className("JavaTesterTests")});
                 System.out.println(runSchemeFile + " recompiled.");
                 System.out.println(testRunsFile + " recompiled.");
@@ -102,7 +102,7 @@ public class JavaTesterGenerator {
     }
 
     private static String className(String className) {
-        return (new Package().name() + "." + _packageOption.getValue() + ".") + className;
+        return (new Package().name() + "." + packageOption.getValue() + ".") + className;
     }
 
     private static String fileName(String className) {
@@ -138,115 +138,115 @@ public class JavaTesterGenerator {
     }
 
     public JavaTesterGenerator(Writer w) {
-        _writer = new IndentWriter(w);
+        writer = new IndentWriter(w);
     }
 
     public void genClassList(LinkedList<JavaExecHarness.JavaTestCase> testCases) {
-        _writer.indent();
-        _writer.println("private static final Class<?>[] _classList = {");
-        _writer.indent();
+        writer.indent();
+        writer.println("private static final Class<?>[] classList = {");
+        writer.indent();
         final Iterator<JavaExecHarness.JavaTestCase> iterator = testCases.iterator();
         while (iterator.hasNext()) {
-            _writer.print(getClassLiteral(iterator.next()));
+            writer.print(getClassLiteral(iterator.next()));
             if (iterator.hasNext()) {
-                _writer.println(",");
+                writer.println(",");
             } else {
-                _writer.println("");
+                writer.println("");
             }
         }
-        _writer.outdent();
-        _writer.println("};");
-        _writer.outdent();
+        writer.outdent();
+        writer.println("};");
+        writer.outdent();
     }
     public void genInitMethod(Iterable<JavaExecHarness.JavaTestCase> testCases) {
-        if (_loadedOption.getValue()) {
-            _writer.indent();
-            _writer.println("@Override");
-            _writer.println("public void initialize(VM.Phase phase) {");
-            _writer.indent();
-            _writer.println("_verbose = " + _verboseOption.getValue() + ";");
-            _writer.println("if (VM.isPrototyping()) {");
-            _writer.indent();
-            _writer.println("for (Class<?> testClass : _classList) {");
-            _writer.indent();
-            _writer.println("addClassToImage(testClass);");
-            _writer.outdent();
-            _writer.println("}");
-            _writer.outdent();
-            _writer.println("}");
-            _writer.outdent();
-            _writer.println("}");
-            _writer.outdent();
+        if (loadedOption.getValue()) {
+            writer.indent();
+            writer.println("@Override");
+            writer.println("public void initialize(VM.Phase phase) {");
+            writer.indent();
+            writer.println("_verbose = " + verboseOption.getValue() + ";");
+            writer.println("if (VM.isPrototyping()) {");
+            writer.indent();
+            writer.println("for (Class<?> testClass : classList) {");
+            writer.indent();
+            writer.println("addClassToImage(testClass);");
+            writer.outdent();
+            writer.println("}");
+            writer.outdent();
+            writer.println("}");
+            writer.outdent();
+            writer.println("}");
+            writer.outdent();
         }
     }
 
     public void genRunMethod(LinkedList<JavaExecHarness.JavaTestCase> testCases) {
-        _writer.indent();
-        _writer.println("@Override");
-        _writer.println("public void runTests() {");
-        _writer.indent();
-        if (_restartOption.getValue()) {
-            _writer.println("_total = _testEnd - _testStart;");
-            _writer.println("_testNum = _testStart;");
-            _writer.println("while (_testNum < _testEnd) {");
-            _writer.indent();
-            _writer.println("switch(_testNum) {");
-            _writer.indent();
+        writer.indent();
+        writer.println("@Override");
+        writer.println("public void runTests() {");
+        writer.indent();
+        if (restartOption.getValue()) {
+            writer.println("total = testEnd - testStart;");
+            writer.println("testNum = testStart;");
+            writer.println("while (testNum < testEnd) {");
+            writer.indent();
+            writer.println("switch(testNum) {");
+            writer.indent();
         } else {
-            _writer.println("_total = " + testCases.size() + ";");
-            _writer.println("_testNum = 0;");
+            writer.println("total = " + testCases.size() + ";");
+            writer.println("testNum = 0;");
         }
         int i = 0;
         for (JavaExecHarness.JavaTestCase testCase : testCases) {
             String spaces = "";
-            if (_restartOption.getValue()) {
+            if (restartOption.getValue()) {
                 spaces = "    ";
                 if (i > 0) {
-                    _writer.println(spaces + "break;");
+                    writer.println(spaces + "break;");
                 }
-                _writer.println("case " + (i++) + ":");
+                writer.println("case " + (i++) + ":");
             }
-            _writer.println(spaces + "JavaTesterTests." + getTestCaseName(testCase) + "();");
+            writer.println(spaces + "JavaTesterTests." + getTestCaseName(testCase) + "();");
         }
-        if (_restartOption.getValue()) {
-            _writer.outdent();
-            _writer.println("}");
-            _writer.outdent();
-            _writer.println("}");
+        if (restartOption.getValue()) {
+            writer.outdent();
+            writer.println("}");
+            writer.outdent();
+            writer.println("}");
         }
-        _writer.println("reportPassed(_passed, _total);");
-        _writer.outdent();
-        _writer.println("}");
-        _writer.outdent();
+        writer.println("reportPassed(passed, total);");
+        writer.outdent();
+        writer.println("}");
+        writer.outdent();
     }
 
     private void genTestRuns(LinkedList<JavaExecHarness.JavaTestCase> testCases) {
-        _writer.indent();
+        writer.indent();
         for (JavaExecHarness.JavaTestCase testCase : testCases) {
-            genTestCase(testCase, _exceptionsOption.getValue());
+            genTestCase(testCase, exceptionsOption.getValue());
         }
-        _writer.outdent();
+        writer.outdent();
     }
 
     public void genTestCase(JavaExecHarness.JavaTestCase testCase, boolean testExceptions) {
-        _writer.print("static void ");
-        _writer.println(getTestCaseName(testCase) + "() {");
-        _writer.indent();
-        if (_verboseOption.getValue() > 2) {
-            _writer.println("JavaTesterRunScheme.begin(\"" + testCase.clazz.getName() + "\");");
+        writer.print("static void ");
+        writer.println(getTestCaseName(testCase) + "() {");
+        writer.indent();
+        if (verboseOption.getValue() > 2) {
+            writer.println("JavaTesterRunScheme.begin(\"" + testCase.clazz.getName() + "\");");
         }
-        _writer.println("String runString = null;");
-        _writer.println("try {");
+        writer.println("String runString = null;");
+        writer.println("try {");
         for (JavaExecHarness.Run run : testCase.runs) {
             genRun(testCase, run, testExceptions);
         }
-        _writer.println("} catch (Throwable t) {");
-        _writer.println("    JavaTesterRunScheme.end(runString, t);");
-        _writer.println("    return;");
-        _writer.println("}");
-        _writer.println("JavaTesterRunScheme.end(null, true);");
-        _writer.outdent();
-        _writer.println("}");
+        writer.println("} catch (Throwable t) {");
+        writer.println("    JavaTesterRunScheme.end(runString, t);");
+        writer.println("    return;");
+        writer.println("}");
+        writer.println("JavaTesterRunScheme.end(null, true);");
+        writer.outdent();
+        writer.println("}");
     }
 
     private String getTestCaseName(JavaExecHarness.JavaTestCase testCase) {
@@ -262,90 +262,90 @@ public class JavaTesterGenerator {
     }
 
     private void genRunComment(JavaExecHarness.JavaTestCase testCase, JavaExecHarness.Run run) {
-        _writer.print("// ");
-        _writer.print(JavaExecHarness.inputToString(testCase.clazz, run, false));
-        _writer.print(" == ");
-        _writer.print(JavaExecHarness.resultToString(run.expectedValue, run.expectedException));
-        _writer.println();
+        writer.print("// ");
+        writer.print(JavaExecHarness.inputToString(testCase.clazz, run, false));
+        writer.print(" == ");
+        writer.print(JavaExecHarness.resultToString(run.expectedValue, run.expectedException));
+        writer.println();
     }
 
     private void genTestRun(JavaExecHarness.JavaTestCase testCase, JavaExecHarness.Run run) {
-        _writer.indent();
+        writer.indent();
         String runString = "null";
-        if (_runStringsOption.getValue()) {
+        if (runStringsOption.getValue()) {
             runString = JavaExecHarness.inputToString(testCase.clazz, run, true);
         }
         if (run.expectedException != null) {
             // an exception is expected, a value is NOT expected
-            _writer.println("try {");
-            _writer.indent();
-            _writer.println("runString = " + runString + ";");
+            writer.println("try {");
+            writer.indent();
+            writer.println("runString = " + runString + ";");
             genTestCall(testCase, run);
-            _writer.println(";");
-            _writer.println("JavaTesterRunScheme.end(runString, false);");
-            _writer.println("return;");
-            _writer.outdent();
-            _writer.println("} catch (Throwable e) {");
-            _writer.indent();
-            _writer.println("if (e.getClass() != " + getExceptionName(run) + ") {");
-            _writer.println("    JavaTesterRunScheme.end(runString, e);");
-            _writer.println("    return;");
-            _writer.println("}");
-            _writer.outdent();
-            _writer.println("}");
+            writer.println(";");
+            writer.println("JavaTesterRunScheme.end(runString, false);");
+            writer.println("return;");
+            writer.outdent();
+            writer.println("} catch (Throwable e) {");
+            writer.indent();
+            writer.println("if (e.getClass() != " + getExceptionName(run) + ") {");
+            writer.println("    JavaTesterRunScheme.end(runString, e);");
+            writer.println("    return;");
+            writer.println("}");
+            writer.outdent();
+            writer.println("}");
         } else {
             // check the return value against the expected return value
             if (useEquals(run.expectedValue)) {
-                _writer.println("runString = " + runString + ";");
-                _writer.print("if (");
+                writer.println("runString = " + runString + ";");
+                writer.print("if (");
                 genValue(run.expectedValue);
-                _writer.print(" != ");
+                writer.print(" != ");
                 genTestCall(testCase, run);
-                _writer.println(") {");
+                writer.println(") {");
             } else {
-                _writer.println("runString = " + runString + ";");
-                _writer.print("if (!");
+                writer.println("runString = " + runString + ";");
+                writer.print("if (!");
                 genValue(run.expectedValue);
-                _writer.print(".equals(");
+                writer.print(".equals(");
                 genTestCall(testCase, run);
-                _writer.println(")) {");
+                writer.println(")) {");
             }
-            _writer.indent();
-            _writer.println("JavaTesterRunScheme.end(runString, false);");
-            _writer.println("return;");
-            _writer.outdent();
-            _writer.println("}");
+            writer.indent();
+            writer.println("JavaTesterRunScheme.end(runString, false);");
+            writer.println("return;");
+            writer.outdent();
+            writer.println("}");
         }
-        _writer.outdent();
+        writer.outdent();
     }
 
     private void genTestCall(JavaExecHarness.JavaTestCase testCase, JavaExecHarness.Run run) {
-        _writer.print(testCase.clazz.getName() + ".test(");
+        writer.print(testCase.clazz.getName() + ".test(");
         for (int i = 0; i < run.input.length; i++) {
             if (i > 0) {
-                _writer.print(", ");
+                writer.print(", ");
             }
             genValue(run.input[i]);
         }
-        _writer.print(")");
+        writer.print(")");
     }
 
     private void genValue(Object v) {
         if (v instanceof Character) {
             final Character chv = (Character) v;
-            _writer.print("(char) " + (int) chv.charValue());
+            writer.print("(char) " + (int) chv.charValue());
         } else if (v instanceof Float) {
-            _writer.print(String.valueOf(v) + "f");
+            writer.print(String.valueOf(v) + "f");
         } else if (v instanceof Long) {
-            _writer.print(String.valueOf(v) + "L");
+            writer.print(String.valueOf(v) + "L");
         } else if (v instanceof Short) {
-            _writer.print("(short) " + String.valueOf(v));
+            writer.print("(short) " + String.valueOf(v));
         } else if (v instanceof Byte) {
-            _writer.print("(byte) " + String.valueOf(v));
+            writer.print("(byte) " + String.valueOf(v));
         } else if (v instanceof String) {
-            _writer.print("\"" + String.valueOf(v) + "\"");
+            writer.print("\"" + String.valueOf(v) + "\"");
         } else {
-            _writer.print(String.valueOf(v));
+            writer.print(String.valueOf(v));
         }
     }
 

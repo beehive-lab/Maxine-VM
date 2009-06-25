@@ -37,15 +37,15 @@ public final class SynchronizedMethodPreprocessor extends BytecodeAssembler {
     public SynchronizedMethodPreprocessor(ConstantPoolEditor constantPoolEditor, MethodActor classMethodActor, CodeAttribute codeAttribute) {
         super(constantPoolEditor, 0, codeAttribute.maxStack(), codeAttribute.maxLocals());
 
-        _codeStream = new SeekableByteArrayOutputStream();
+        codeStream = new SeekableByteArrayOutputStream();
 
         final SynchronizedMethodTransformer synchronizedMethodTransformer = classMethodActor.isStatic() ?
             new StaticSynchronizedMethodTransformer(this, constantPoolEditor.indexOf(PoolConstantFactory.createClassConstant(classMethodActor.holder().toJava()))) :
             new VirtualSynchronizedMethodTransformer(this, allocateLocal(Kind.REFERENCE));
         synchronizedMethodTransformer.acquireMonitor();
-        _trackingStack = false;
+        trackingStack = false;
         final OpcodePositionRelocator relocator = synchronizedMethodTransformer.transform(new BytecodeBlock(codeAttribute.code()));
-        _trackingStack = true;
+        trackingStack = true;
 
         final Kind resultKind = classMethodActor.resultKind();
         setStack(resultKind.stackSlots());
@@ -55,14 +55,14 @@ public final class SynchronizedMethodPreprocessor extends BytecodeAssembler {
         setStack(1);
         synchronizedMethodTransformer.releaseMonitorAndRethrow();
 
-        _trackingStack = false;
+        trackingStack = false;
         final byte[] code = code();
         final Sequence<ExceptionHandlerEntry> exceptionHandlerTable = fixupExceptionHandlerTable(
                         monitorExitHandlerAddress,
                         code,
                         codeAttribute.exceptionHandlerTable(),
                         relocator);
-        _result = new CodeAttribute(
+        result = new CodeAttribute(
                         constantPool(),
                         code,
                         (char) maxStack(),
@@ -74,36 +74,36 @@ public final class SynchronizedMethodPreprocessor extends BytecodeAssembler {
 
     }
 
-    private boolean _trackingStack = true;
+    private boolean trackingStack = true;
 
     @Override
     public void setStack(int depth) {
-        if (_trackingStack) {
+        if (trackingStack) {
             super.setStack(depth);
         }
     }
 
-    private final SeekableByteArrayOutputStream _codeStream;
-    private final CodeAttribute _result;
+    private final SeekableByteArrayOutputStream codeStream;
+    private final CodeAttribute result;
 
     @Override
     protected void setWritePosition(int position) {
-        _codeStream.seek(position);
+        codeStream.seek(position);
     }
 
     @Override
     protected void writeByte(byte b) {
-        _codeStream.write(b);
+        codeStream.write(b);
     }
 
     public CodeAttribute codeAttribute() {
-        return _result;
+        return result;
     }
 
     @Override
     public byte[] code() {
         fixup();
-        return _codeStream.toByteArray();
+        return codeStream.toByteArray();
     }
 
     /**

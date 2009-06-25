@@ -26,24 +26,17 @@ import com.sun.max.vm.classfile.*;
 
 /**
  * An instance of {@code ClassVerifier} is created to verify the methods in a given class.
- * 
+ *
  * @author David Liu
  * @author Doug Simon
  */
 public abstract class ClassVerifier extends Verifier {
 
-    private final ClassActor _classActor;
-
-    /**
-     * Gets the class being verified by this verifier.
-     */
-    public ClassActor classActor() {
-        return _classActor;
-    }
+    public final ClassActor classActor;
 
     protected ClassVerifier(ClassActor classActor) {
         super(classActor.constantPool());
-        _classActor = classActor;
+        this.classActor = classActor;
     }
 
     /**
@@ -51,7 +44,7 @@ public abstract class ClassVerifier extends Verifier {
      * {@link ClassMethodActor#codeAttribute() code attribute}.
      */
     public synchronized void verify() {
-        for (MethodActor methodActor : classActor().getLocalMethodActors()) {
+        for (MethodActor methodActor : classActor.getLocalMethodActors()) {
             if (methodActor instanceof ClassMethodActor) {
                 final ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
                 classMethodActor.verify(this);

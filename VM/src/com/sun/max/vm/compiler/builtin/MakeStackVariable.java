@@ -72,11 +72,11 @@ public class MakeStackVariable extends SpecialBuiltin {
      */
     public static final class StackVariable {
 
-        private final String _name;
+        private final String name;
 
         private StackVariable(String name) {
-            _name = name;
-            _stackVariables.append(this);
+            this.name = name;
+            stackVariables.append(this);
         }
 
         /**
@@ -95,9 +95,9 @@ public class MakeStackVariable extends SpecialBuiltin {
         /*
          * Must not use identity hashing, because the inspector needs to have the same view as the target VM on this:
          */
-        private final Map<ClassMethodActor, Integer> _stackOffsetPerTargetMethod = new HashMap<ClassMethodActor, Integer>();
+        private final Map<ClassMethodActor, Integer> stackOffsetPerTargetMethod = new HashMap<ClassMethodActor, Integer>();
 
-        private static final AppendableSequence<StackVariable> _stackVariables = new ArrayListSequence<StackVariable>();
+        private static final AppendableSequence<StackVariable> stackVariables = new ArrayListSequence<StackVariable>();
 
         @PROTOTYPE_ONLY
         private static class ConflictDetectionMap extends HashMap<ClassMethodActor,  List<StackVariable>> {
@@ -113,7 +113,7 @@ public class MakeStackVariable extends SpecialBuiltin {
                     put(key, existingStackVariables);
                 }
                 for (StackVariable existingStackVariable : existingStackVariables) {
-                    final Integer existingStackVariableOffset = existingStackVariable._stackOffsetPerTargetMethod.get(key);
+                    final Integer existingStackVariableOffset = existingStackVariable.stackOffsetPerTargetMethod.get(key);
                     if (existingStackVariableOffset != null) {
                         if (offset == existingStackVariableOffset) {
                             ProgramWarning.message(existingStackVariable + " and " + stackVariable + " both have the same offset (" + offset + ") in " + key);
@@ -125,15 +125,15 @@ public class MakeStackVariable extends SpecialBuiltin {
         }
 
         @PROTOTYPE_ONLY
-        private static final ConflictDetectionMap _conflictDetectionMap = new ConflictDetectionMap();
+        private static final ConflictDetectionMap conflictDetectionMap = new ConflictDetectionMap();
 
         @PROTOTYPE_ONLY
         public static void dump(PrintStream out) {
             out.println("== Stack variables ==");
-            for (StackVariable stackVariable : _stackVariables) {
+            for (StackVariable stackVariable : stackVariables) {
                 out.println("   Stack variable: " + stackVariable);
-                for (Map.Entry<ClassMethodActor, Integer> entry : stackVariable._stackOffsetPerTargetMethod.entrySet()) {
-                    out.println("     " + entry.getKey().name() + " -> " + entry.getValue());
+                for (Map.Entry<ClassMethodActor, Integer> entry : stackVariable.stackOffsetPerTargetMethod.entrySet()) {
+                    out.println("     " + entry.getKey().name + " -> " + entry.getValue());
                 }
             }
         }
@@ -145,9 +145,9 @@ public class MakeStackVariable extends SpecialBuiltin {
         public synchronized void record(TargetMethod targetMethod, int offset) {
             final ClassMethodActor key = targetMethod.classMethodActor();
             if (MaxineVM.isPrototyping()) {
-                _conflictDetectionMap.check(key, this, offset);
+                conflictDetectionMap.check(key, this, offset);
             }
-            final Integer oldOffset = _stackOffsetPerTargetMethod.put(key, offset);
+            final Integer oldOffset = stackOffsetPerTargetMethod.put(key, offset);
             assert oldOffset == null || oldOffset.intValue() == offset;
         }
 
@@ -158,7 +158,7 @@ public class MakeStackVariable extends SpecialBuiltin {
          *         has not been compiled
          */
         public Integer offset(ClassMethodActor classMethodActor) {
-            return _stackOffsetPerTargetMethod.get(classMethodActor);
+            return stackOffsetPerTargetMethod.get(classMethodActor);
         }
 
         /**
@@ -175,7 +175,7 @@ public class MakeStackVariable extends SpecialBuiltin {
 
         @Override
         public String toString() {
-            return _name;
+            return name;
         }
     }
 

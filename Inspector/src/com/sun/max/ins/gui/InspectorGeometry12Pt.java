@@ -30,18 +30,18 @@ import java.awt.*;
 public class InspectorGeometry12Pt implements InspectorGeometry {
 
     // Main Inspection frame
-    private static final Point _inspectionFrameDefaultLocation = new Point(100, 100);
-    private static final Dimension _inspectionFrameMinSize = new Dimension(100, 100);
-    private static final Dimension _inspectionFramePrefSize = new Dimension(1615, 960);
+    private static final Point inspectionFrameDefaultLocation = new Point(100, 100);
+    private static final Dimension inspectionFrameMinSize = new Dimension(100, 100);
+    private static final Dimension inspectionFramePrefSize = new Dimension(1615, 960);
 
     public Point inspectorFrameDefaultLocation() {
-        return _inspectionFrameDefaultLocation;
+        return inspectionFrameDefaultLocation;
     }
     public Dimension inspectorFrameMinSize() {
-        return _inspectionFrameMinSize;
+        return inspectionFrameMinSize;
     }
     public Dimension inspectorFramePrefSize() {
-        return _inspectionFramePrefSize;
+        return inspectionFramePrefSize;
     }
 
     public Rectangle threadsFrameDefaultBounds() {
@@ -81,28 +81,28 @@ public class InspectorGeometry12Pt implements InspectorGeometry {
     }
 
     // Java Source Inspector frame
-    private static final Point _javaSourceFrameDefaultLocation = new Point(1270, 0);
-    private static final Dimension _javaSourceFramePrefSize = new Dimension(605, 400);
+    private static final Point javaSourceFrameDefaultLocation = new Point(1270, 0);
+    private static final Dimension javaSourceFramePrefSize = new Dimension(605, 400);
 
     public Point javaSourceFrameDefaultLocation() {
-        return _javaSourceFrameDefaultLocation;
+        return javaSourceFrameDefaultLocation;
     }
     public Dimension javaSourceFramePrefSize() {
-        return _javaSourceFramePrefSize;
+        return javaSourceFramePrefSize;
     }
 
     // Offset from mouse location for new frames
-    public static final int _defaultNewFrameXOffset = 50;
-    public static final int _defaultNewFrameYOffset = 50;
-    public static final int _objectInspectorNewFrameDiagonalOffset = 5;
+    public static final int defaultNewFrameXOffset = 50;
+    public static final int defaultNewFrameYOffset = 50;
+    public static final int objectInspectorNewFrameDiagonalOffset = 5;
     public int defaultNewFrameXOffset() {
-        return _defaultNewFrameXOffset;
+        return defaultNewFrameXOffset;
     }
     public int defaultNewFrameYOffset() {
-        return _defaultNewFrameYOffset;
+        return defaultNewFrameYOffset;
     }
     public int objectInspectorNewFrameDiagonalOffset() {
-        return _objectInspectorNewFrameDiagonalOffset;
+        return objectInspectorNewFrameDiagonalOffset;
     }
 
 }

@@ -35,30 +35,30 @@ import com.sun.max.vm.tele.*;
 public class BeltwaySSCollector implements Runnable {
 
     // Dependency injection of the corresponding heap scheme
-    private static BeltwayHeapScheme _beltwayHeapScheme;
-    private static long _collections;
+    private static BeltwayHeapScheme beltwayHeapScheme;
+    private static long collections;
 
     public void setBeltwayHeapScheme(BeltwayHeapScheme beltwayHeapScheme) {
-        _beltwayHeapScheme = beltwayHeapScheme;
+        BeltwaySSCollector.beltwayHeapScheme = beltwayHeapScheme;
     }
 
     public HeapScheme getBeltwayHeapScheme() {
-        return _beltwayHeapScheme;
+        return beltwayHeapScheme;
     }
 
     public BeltwaySSCollector() {
     }
 
     public void run() {
-        _collections++;
+        collections++;
         if (Heap.verbose()) {
             Log.print("Collection: ");
-            Log.println(_collections);
+            Log.println(collections);
         }
-        final BeltwayHeapSchemeBSS beltwayHeapSchemeBSS = (BeltwayHeapSchemeBSS) _beltwayHeapScheme;
+        final BeltwayHeapSchemeBSS beltwayHeapSchemeBSS = (BeltwayHeapSchemeBSS) beltwayHeapScheme;
         if (Heap.verbose()) {
             Log.println("Verify Heap");
-            _beltwayHeapScheme.getVerifier().verifyHeap(beltwayHeapSchemeBSS.getFromSpace().start(), beltwayHeapSchemeBSS.getFromSpace().getAllocationMark(), BeltManager.getApplicationHeap());
+            beltwayHeapScheme.getVerifier().verifyHeap(beltwayHeapSchemeBSS.getFromSpace().start(), beltwayHeapSchemeBSS.getFromSpace().getAllocationMark(), BeltManager.getApplicationHeap());
         }
 
         TeleHeapInfo.beforeGarbageCollection();
@@ -89,7 +89,7 @@ public class BeltwaySSCollector implements Runnable {
             Log.println("Moving recheable...");
         }
 
-        if (BeltwayConfiguration._parallelScavenging) {
+        if (BeltwayConfiguration.parallelScavenging) {
             beltwayHeapSchemeBSS.fillLastTLAB();
             beltwayHeapSchemeBSS.initializeGCThreads(beltwayHeapSchemeBSS, beltwayHeapSchemeBSS.getToSpace(), beltwayHeapSchemeBSS.getFromSpace());
             VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
@@ -118,7 +118,7 @@ public class BeltwaySSCollector implements Runnable {
         beltwayHeapSchemeBSS.getToSpace().resetAllocationMark();
         if (Heap.verbose()) {
             Log.print("Finished Collection: ");
-            Log.println(_collections);
+            Log.println(collections);
         }
     }
 }

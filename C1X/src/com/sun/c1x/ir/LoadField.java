@@ -36,7 +36,6 @@ public class LoadField extends AccessField {
     /**
      * Creates a new LoadField instance.
      * @param object the receiver object
-     * @param offset the offset of the field if known
      * @param field the compiler interface field
      * @param isStatic indicates if the field is static
      * @param lockStack the lock stack
@@ -44,8 +43,8 @@ public class LoadField extends AccessField {
      * @param isLoaded indicates if the class is loaded
      * @param isInitialized indicates if the class is initialized
      */
-    public LoadField(Instruction object, int offset, CiField field, boolean isStatic, ValueStack lockStack, ValueStack stateBefore, boolean isLoaded, boolean isInitialized) {
-        super(object, offset, field, isStatic, lockStack, stateBefore, isLoaded, isInitialized);
+    public LoadField(Instruction object, CiField field, boolean isStatic, ValueStack lockStack, ValueStack stateBefore, boolean isLoaded, boolean isInitialized) {
+        super(object, field, isStatic, lockStack, stateBefore, isLoaded, isInitialized);
     }
 
     /**
@@ -79,17 +78,17 @@ public class LoadField extends AccessField {
 
     @Override
     public int valueNumber() {
-        if (_object != null) {
-            return Util.hash1(_field.hashCode(), _object);
+        if (object != null) {
+            return Util.hash1(field.hashCode(), object);
         }
-        return 0x60000000 | _field.hashCode();
+        return 0x60000000 | field.hashCode();
     }
 
     @Override
     public boolean valueEqual(Instruction i) {
         if (i instanceof LoadField) {
             LoadField o = (LoadField) i;
-            return _field == o._field && _object == o._object;
+            return field == o.field && object == o.object;
         }
         return false;
     }

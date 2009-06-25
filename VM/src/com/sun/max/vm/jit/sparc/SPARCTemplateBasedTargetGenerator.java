@@ -35,11 +35,11 @@ import com.sun.max.vm.template.*;
  * @author Laurent Daynes
  */
 public class SPARCTemplateBasedTargetGenerator extends TemplateBasedTargetGenerator {
-    private final boolean _needsAdapterFrame;
+    private final boolean needsAdapterFrame;
 
     public SPARCTemplateBasedTargetGenerator(JitCompiler jitCompiler) {
         super(jitCompiler, InstructionSet.SPARC);
-        _needsAdapterFrame = compilerScheme().vmConfiguration().compilerScheme() instanceof BcdeTargetSPARCCompiler;
+        needsAdapterFrame = compilerScheme().vmConfiguration().compilerScheme() instanceof BcdeTargetSPARCCompiler;
     }
 
     @Override
@@ -55,7 +55,7 @@ public class SPARCTemplateBasedTargetGenerator extends TemplateBasedTargetGenera
         final  int estimatedSize = classMethodActor.codeAttribute().code().length * NUMBER_OF_BYTES_PER_BYTECODE;
         final CodeBuffer codeBuffer = new ByteArrayCodeBuffer(estimatedSize);
         SPARCEirABI optimizingCompilerAbi = null;
-        if (_needsAdapterFrame) {
+        if (needsAdapterFrame) {
             final EirGenerator eirGenerator = ((BcdeTargetSPARCCompiler) compilerScheme().vmConfiguration().compilerScheme()).eirGenerator();
             optimizingCompilerAbi = (SPARCEirABI) eirGenerator.eirABIsScheme().getABIFor(classMethodActor);
         }

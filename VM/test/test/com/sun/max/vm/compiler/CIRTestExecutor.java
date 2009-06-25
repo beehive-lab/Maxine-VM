@@ -47,9 +47,9 @@ import com.sun.max.vm.value.*;
  */
 public class CIRTestExecutor implements JavaExecHarness.Executor {
 
-    private static CirGenerator _generator;
+    private static CirGenerator generator;
 
-    private static Utf8Constant _testMethod = SymbolTable.makeSymbol("test");
+    private static Utf8Constant testMethod = SymbolTable.makeSymbol("test");
 
     private static void initialize(boolean loadingPackages) {
         final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(new OptionSet());
@@ -58,18 +58,18 @@ public class CIRTestExecutor implements JavaExecHarness.Executor {
         final Prototype jpt = prototypeGenerator.createJavaPrototype(cfg, loadingPackages);
         final CirGeneratorScheme compilerScheme = (CirGeneratorScheme) jpt.vmConfiguration().compilerScheme();
         compilerScheme.compileSnippets();
-        _generator = compilerScheme.cirGenerator();
+        generator = compilerScheme.cirGenerator();
         ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually prototyping/bootstrapping
     }
 
     public void initialize(JavaExecHarness.JavaTestCase c, boolean loadingPackages) {
-        if (_generator == null) {
+        if (generator == null) {
             initialize(loadingPackages);
         }
 
         final ClassActor classActor = ClassActor.fromJava(c.clazz);
         c.slot1 = classActor;
-        c.slot2 = classActor.findLocalStaticMethodActor(_testMethod);
+        c.slot2 = classActor.findLocalStaticMethodActor(testMethod);
     }
 
     public Object execute(JavaExecHarness.JavaTestCase c, Object[] vals) throws InvocationTargetException {
@@ -78,8 +78,8 @@ public class CIRTestExecutor implements JavaExecHarness.Executor {
             args[i] = Value.fromBoxedJavaValue(vals[i]);
         }
         final ClassMethodActor classMethodActor = (ClassMethodActor) c.slot2;
-        final CirMethod method = _generator.makeIrMethod(classMethodActor);
-        final CirInterpreter interpreter = new CirInterpreter(_generator);
+        final CirMethod method = generator.makeIrMethod(classMethodActor);
+        final CirInterpreter interpreter = new CirInterpreter(generator);
         final Value result = interpreter.execute(method, args);
         return result.asBoxedJavaValue();
     }

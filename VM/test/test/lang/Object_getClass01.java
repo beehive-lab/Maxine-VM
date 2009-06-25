@@ -34,22 +34,22 @@ public final class Object_getClass01 {
     private Object_getClass01() {
     }
 
-    static final Object _object = new Object();
-    static final Object _string = new String();
-    static final Object_getClass01 _thisObject = new Object_getClass01();
+    static final Object object = new Object();
+    static final Object string = new String();
+    static final Object_getClass01 thisObject = new Object_getClass01();
 
     public static String test(int i) {
         if (i == 0) {
-            return _object.getClass().toString();
+            return object.getClass().toString();
         }
         if (i == 1) {
-            return _string.getClass().toString();
+            return string.getClass().toString();
         }
         if (i == 2) {
-            return _thisObject.getClass().toString();
+            return thisObject.getClass().toString();
         }
         if (i == 3) {
-            return _thisObject.getClass().getClass().toString();
+            return thisObject.getClass().getClass().toString();
         }
         return null;
     }

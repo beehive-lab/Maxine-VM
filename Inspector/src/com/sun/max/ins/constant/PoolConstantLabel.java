@@ -52,40 +52,40 @@ public abstract class PoolConstantLabel extends InspectorLabel {
         TERSE
     }
 
-    private Mode _mode;
+    private Mode mode;
 
     protected final Mode mode() {
-        return _mode;
+        return mode;
     }
 
-    private final int _index;
+    private final int index;
 
     /**
      * Surrogate for the {@link ConstantPool} in the VM.
      * Might be null, and might be unreachable.
      */
-    private final TeleConstantPool _teleConstantPool;
+    private final TeleConstantPool teleConstantPool;
 
-    private TelePoolConstant _telePoolConstant;
+    private TelePoolConstant telePoolConstant;
 
     protected final TelePoolConstant telePoolConstant() {
-        return _telePoolConstant;
+        return telePoolConstant;
     }
 
-    private final ConstantPool _localConstantPool;
+    private final ConstantPool localConstantPool;
 
     protected final ConstantPool localConstantPool() {
-        return _localConstantPool;
+        return localConstantPool;
     }
 
-    private final PoolConstant _localPoolConstant;
+    private final PoolConstant localPoolConstant;
 
     protected final PoolConstant localPoolConstant() {
-        return _localPoolConstant;
+        return localPoolConstant;
     }
 
     protected final boolean isResolved() {
-        return _telePoolConstant != null && _telePoolConstant.isResolved();
+        return telePoolConstant != null && telePoolConstant.isResolved();
     }
 
     public static PoolConstantLabel make(Inspection inspection, int index, ConstantPool localConstantPool, TeleConstantPool teleConstantPool, Mode mode) {
@@ -118,11 +118,11 @@ public abstract class PoolConstantLabel extends InspectorLabel {
 
     protected PoolConstantLabel(Inspection inspection, int index, ConstantPool localConstantPool, TeleConstantPool teleConstantPool, Mode mode) {
         super(inspection, null);
-        _index = index;
-        _localConstantPool = localConstantPool;
-        _localPoolConstant = _localConstantPool.at(index);
-        _teleConstantPool = teleConstantPool;
-        _mode = mode;
+        this.index = index;
+        this.localConstantPool = localConstantPool;
+        this.localPoolConstant = localConstantPool.at(index);
+        this.teleConstantPool = teleConstantPool;
+        this.mode = mode;
         addMouseListener(new InspectorMouseClickAdapter(inspection) {
             @Override
             public void procedure(final MouseEvent mouseEvent) {
@@ -145,16 +145,16 @@ public abstract class PoolConstantLabel extends InspectorLabel {
 
     protected abstract void updateText();
 
-    private MaxVMState _lastRefreshedState = null;
+    private MaxVMState lastRefreshedState = null;
 
     public void refresh(boolean force) {
-        if (maxVMState().newerThan(_lastRefreshedState) || force) {
-            _lastRefreshedState = maxVMState();
-            if (_teleConstantPool != null) {
+        if (maxVMState().newerThan(lastRefreshedState) || force) {
+            lastRefreshedState = maxVMState();
+            if (teleConstantPool != null) {
                 try {
-                    _telePoolConstant = _teleConstantPool.readTelePoolConstant(_index);
+                    telePoolConstant = teleConstantPool.readTelePoolConstant(index);
                 } catch (DataIOError dataIOError) {
-                    _telePoolConstant = null;
+                    telePoolConstant = null;
                 }
                 updateText();
             }
@@ -165,42 +165,42 @@ public abstract class PoolConstantLabel extends InspectorLabel {
         updateText();
     }
 
-    protected String _prefix = "";
+    protected String prefix = "";
 
     public void setPrefix(String prefix) {
-        _prefix = prefix;
+        this.prefix = prefix;
         updateText();
     }
 
-    private String _toolTipPrefix = "";
+    private String toolTipPrefix = "";
 
     public void setToolTipPrefix(String toolTipPrefix) {
-        _toolTipPrefix = toolTipPrefix;
+        this.toolTipPrefix = toolTipPrefix;
         updateText();
     }
 
     protected final void setJavapText(String kind, String name) {
-        setText(_prefix + "#" + Integer.toString(_index) + "; //" + kind + " " + name);
+        setText(prefix + "#" + Integer.toString(index) + "; //" + kind + " " + name);
     }
 
     protected final void setJavapToolTipText(String kind, String name) {
-        setToolTipText(_toolTipPrefix + "#" + Integer.toString(_index) + "; //" + kind + " " + name);
+        setToolTipText(toolTipPrefix + "#" + Integer.toString(index) + "; //" + kind + " " + name);
     }
 
     protected final void setJavapResolvableToolTipText(String kind, String name) {
-        final String resolution = _telePoolConstant == null ? inspection().nameDisplay().unavailableTeleData() :
+        final String resolution = telePoolConstant == null ? inspection().nameDisplay().unavailableTeleData() :
             (isResolved() ? "Resolved" : "Unresolved");
-        setToolTipText(_toolTipPrefix + "#" + Integer.toString(_index) + "; //" + kind + " " + name + " (" + resolution + ")");
+        setToolTipText(toolTipPrefix + "#" + Integer.toString(index) + "; //" + kind + " " + name + " (" + resolution + ")");
     }
 
     protected void showMenu(MouseEvent mouseEvent) {
         final InspectorMenu menu = new InspectorMenu();
-        if (_telePoolConstant != null) {
-            menu.add(inspection().actions().copyWord(_telePoolConstant.getCurrentOrigin(), "Copy PoolConstant address toclipboard"));
-            menu.add(inspection().actions().inspectMemory(_telePoolConstant, "Inspect PoolConstant memory"));
-            menu.add(inspection().actions().inspectMemoryWords(_telePoolConstant, "Inspect PoolConstant memory words"));
-            menu.add(inspection().actions().inspectObject(_telePoolConstant, "Inspect PoolConstant #" + Integer.toString(_index)));
-            menu.add(inspection().actions().inspectObject(_teleConstantPool, "Inspect ConstantPool"));
+        if (telePoolConstant != null) {
+            menu.add(inspection().actions().copyWord(telePoolConstant.getCurrentOrigin(), "Copy PoolConstant address toclipboard"));
+            menu.add(inspection().actions().inspectMemory(telePoolConstant, "Inspect PoolConstant memory"));
+            menu.add(inspection().actions().inspectMemoryWords(telePoolConstant, "Inspect PoolConstant memory words"));
+            menu.add(inspection().actions().inspectObject(telePoolConstant, "Inspect PoolConstant #" + Integer.toString(index)));
+            menu.add(inspection().actions().inspectObject(teleConstantPool, "Inspect ConstantPool"));
             specializeMenu(menu);
         }
         menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
@@ -234,7 +234,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                     setJavapText("Class", typeDescriptor.toJavaString(false));
                     break;
                 case TERSE:
-                    setText(_prefix + typeDescriptor.toJavaString(false));
+                    setText(prefix + typeDescriptor.toJavaString(false));
                     break;
                 default:
                     FatalError.unimplemented();
@@ -277,7 +277,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                     setJavapText("Field",  fieldName);
                     break;
                 case TERSE:
-                    setText(_prefix + fieldName);
+                    setText(prefix + fieldName);
                     break;
                 default:
                     FatalError.unimplemented();
@@ -307,7 +307,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
         /**
          * Assigned when resolved.
          */
-        private TeleClassMethodActor _teleClassMethodActor;
+        private TeleClassMethodActor teleClassMethodActor;
 
         private ClassMethod(Inspection inspection, int index, ConstantPool localConstantPool, TeleConstantPool teleConstantPool, Mode mode) {
             super(inspection, index, localConstantPool, teleConstantPool, mode);
@@ -315,11 +315,11 @@ public abstract class PoolConstantLabel extends InspectorLabel {
         }
 
         private void checkResolved() {
-            _teleClassMethodActor = null;
+            teleClassMethodActor = null;
             if (isResolved()) {
                 final TeleClassMethodRefConstant.Resolved teleResolvedClassMethodRefConstant = (TeleClassMethodRefConstant.Resolved) telePoolConstant();
                 try {
-                    _teleClassMethodActor = teleResolvedClassMethodRefConstant.getTeleClassMethodActor();
+                    teleClassMethodActor = teleResolvedClassMethodRefConstant.getTeleClassMethodActor();
                 } catch (DataIOError dataIOError) {
                 }
             }
@@ -336,16 +336,16 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                     setJavapText("Method",  methodName + "()");
                     break;
                 case TERSE:
-                    setText(_prefix + methodName + "()");
+                    setText(prefix + methodName + "()");
                     break;
                 default:
                     FatalError.unimplemented();
             }
             setJavapResolvableToolTipText("ClassMethod", holderName + "." + methodName + ":" + methodRefConstant.descriptor(localConstantPool()).toString());
-            if (_teleClassMethodActor == null) {
+            if (teleClassMethodActor == null) {
                 setForeground(style().javaUnresolvedNameColor());
             } else {
-                if (_teleClassMethodActor.hasCodeAttribute()) {
+                if (teleClassMethodActor.hasCodeAttribute()) {
                     setForeground(style().bytecodeMethodEntryColor());
                 } else {
                     setForeground(style().bytecodeColor());
@@ -356,9 +356,9 @@ public abstract class PoolConstantLabel extends InspectorLabel {
         @Override
         protected void specializeMenu(InspectorMenu menu) {
             checkResolved();
-            if (_teleClassMethodActor != null) {
+            if (teleClassMethodActor != null) {
                 menu.addSeparator();
-                final ClassMethodMenuItems classMethodMenuItems = new ClassMethodMenuItems(inspection(), _teleClassMethodActor);
+                final ClassMethodMenuItems classMethodMenuItems = new ClassMethodMenuItems(inspection(), teleClassMethodActor);
                 classMethodMenuItems.addTo(menu);
             }
         }
@@ -366,8 +366,8 @@ public abstract class PoolConstantLabel extends InspectorLabel {
         @Override
         protected void handleLeftButtonEvent() {
             checkResolved();
-            if (_teleClassMethodActor != null && _teleClassMethodActor.hasCodeAttribute()) {
-                final TeleCodeLocation teleCodeLocation = maxVM().createCodeLocation(_teleClassMethodActor, 0);
+            if (teleClassMethodActor != null && teleClassMethodActor.hasCodeAttribute()) {
+                final TeleCodeLocation teleCodeLocation = maxVM().createCodeLocation(teleClassMethodActor, 0);
                 inspection().focus().setCodeLocation(teleCodeLocation, false);
             }
         }
@@ -390,7 +390,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                     setJavapText("Method",  methodName + "()");
                     break;
                 case TERSE:
-                    setText(_prefix + methodName + "()");
+                    setText(prefix + methodName + "()");
                     break;
                 default:
                     FatalError.unimplemented();
@@ -432,7 +432,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                     setJavapText("", shortText);
                     break;
                 case TERSE:
-                    setText(_prefix + shortText);
+                    setText(prefix + shortText);
                     break;
                 default:
                     FatalError.unimplemented();
@@ -458,7 +458,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                     setJavapText("", shortText);
                     break;
                 case TERSE:
-                    setText(_prefix + shortText);
+                    setText(prefix + shortText);
                     break;
                 default:
                     FatalError.unimplemented();
@@ -480,10 +480,10 @@ public abstract class PoolConstantLabel extends InspectorLabel {
             final String text = localPoolConstant().valueString(localConstantPool());
             switch (mode()) {
                 case JAVAP:
-                    setText(_prefix + text);
+                    setText(prefix + text);
                     break;
                 case TERSE:
-                    setText(_prefix + text);
+                    setText(prefix + text);
                     break;
                 default:
                     FatalError.unimplemented();

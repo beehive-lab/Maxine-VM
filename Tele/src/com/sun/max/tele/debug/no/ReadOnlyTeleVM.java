@@ -37,9 +37,9 @@ import com.sun.max.vm.prototype.*;
  */
 public final class ReadOnlyTeleVM extends TeleVM {
 
-    private final boolean _relocate;
+    private final boolean relocate;
 
-    private TeleMessenger _messenger = new NoVMInspectorMessenger();
+    private TeleMessenger messenger = new NoVMInspectorMessenger();
 
     /**
      * Creates a tele VM instance for inspecting a boot image without executing it.
@@ -51,12 +51,12 @@ public final class ReadOnlyTeleVM extends TeleVM {
      */
     public ReadOnlyTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, boolean relocate) throws BootImageException {
         super(bootImageFile, bootImage, sourcepath, TeleProcess.NO_COMMAND_LINE_ARGUMENTS, -1, null);
-        _relocate = relocate;
+        this.relocate = relocate;
     }
 
     @Override
     public TeleMessenger messenger() {
-        return _messenger;
+        return messenger;
     }
 
     @Override
@@ -66,7 +66,7 @@ public final class ReadOnlyTeleVM extends TeleVM {
 
     @Override
     protected Pointer loadBootImage(TeleVMAgent agent) throws BootImageException {
-        if (bootImage().vmConfiguration().platform().operatingSystem() != OperatingSystem.GUESTVM) {
+        if (bootImage().vmConfiguration().platform().operatingSystem != OperatingSystem.GUESTVM) {
             final ReadOnlyTeleProcess teleProcess = (ReadOnlyTeleProcess) teleProcess();
             return teleProcess.heap();
         }
@@ -75,7 +75,7 @@ public final class ReadOnlyTeleVM extends TeleVM {
 
     @Override
     public boolean isBootImageRelocated() {
-        return _relocate;
+        return relocate;
     }
 
     @Override

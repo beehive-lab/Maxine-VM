@@ -45,22 +45,22 @@ public final class StringReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ObjectID _stringObject;
+            public ID.ObjectID stringObject;
             public IncomingRequest(ID.ObjectID stringObject) {
-                this._stringObject = stringObject;
+                this.stringObject = stringObject;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _stringObject = ID.read(ps.getInputStream(), ID.ObjectID.class);
+                stringObject = ID.read(ps.getInputStream(), ID.ObjectID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _stringObject.write(ps.getOutputStream());
+                stringObject.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_stringObject=" + _stringObject);
+                stringBuilder.append("stringObject=" + stringObject);
                 return stringBuilder.toString();
             }
         }
@@ -69,22 +69,22 @@ public final class StringReferenceCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public String _stringValue;
+            public String stringValue;
             public Reply(String stringValue) {
-                this._stringValue = stringValue;
+                this.stringValue = stringValue;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _stringValue = ps.readString();
+                stringValue = ps.readString();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_stringValue);
+                ps.write(stringValue);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_stringValue=" + _stringValue);
+                stringBuilder.append("stringValue=" + stringValue);
                 return stringBuilder.toString();
             }
         }

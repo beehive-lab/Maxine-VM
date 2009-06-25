@@ -38,29 +38,29 @@ import com.sun.max.vm.type.*;
  */
 public class WalkIntervals extends AlgorithmPart {
 
-    private AppendableSequence<Interval> _allIntervals;
+    private AppendableSequence<Interval> allIntervals;
 
-    private VariableSequence<Interval> _unhandled;
-    private VariableSequence<Interval> _active;
-    private VariableSequence<Interval> _inactive;
-    private AppendableSequence<Interval> _handled;
+    private VariableSequence<Interval> unhandled;
+    private VariableSequence<Interval> active;
+    private VariableSequence<Interval> inactive;
+    private AppendableSequence<Interval> handled;
 
     // Timers
-    private final Timer _blockedAllocateTimer = createTimer("Blocked allocate");
-    private final Timer _allocateTimer = createTimer("Allocate");
-    private final Timer _searchFreePosTimer = createTimer("Search free pos");
-    private final Timer _normalSplitTimer = createTimer("Normal split");
+    private final Timer blockedAllocateTimer = createTimer("Blocked allocate");
+    private final Timer allocateTimer = createTimer("Allocate");
+    private final Timer searchFreePosTimer = createTimer("Search free pos");
+    private final Timer normalSplitTimer = createTimer("Normal split");
 
     // Counters
-    private final Metrics.Counter _splitCounter = createCounter("Split count");
-    private final Metrics.Counter _activeIntervalsCounter = createCounter("Active intervals");
-    private final Metrics.Counter _inactiveIntervalsCounter = createCounter("Inactive intervals");
-    private final Metrics.Counter _samePositionCounter = createCounter("Same Position");
-    private final Metrics.Counter _floatingIntervalsCounter = createCounter("Floating intervals");
-    private final Metrics.Counter _integerIntervalsCounter = createCounter("Integer intervals");
-    private final Metrics.Counter _fixedIntervalsCounter = createCounter("Fixed intervals");
-    private final Metrics.Counter _handledIntervalsCounter = createCounter("Handled intervals");
-    private final Metrics.Counter _unhandledIntervalsCounter = createCounter("Unhandled intervals");
+    private final Metrics.Counter splitCounter = createCounter("Split count");
+    private final Metrics.Counter activeIntervalsCounter = createCounter("Active intervals");
+    private final Metrics.Counter inactiveIntervalsCounter = createCounter("Inactive intervals");
+    private final Metrics.Counter samePositionCounter = createCounter("Same Position");
+    private final Metrics.Counter floatingIntervalsCounter = createCounter("Floating intervals");
+    private final Metrics.Counter integerIntervalsCounter = createCounter("Integer intervals");
+    private final Metrics.Counter fixedIntervalsCounter = createCounter("Fixed intervals");
+    private final Metrics.Counter handledIntervalsCounter = createCounter("Handled intervals");
+    private final Metrics.Counter unhandledIntervalsCounter = createCounter("Unhandled intervals");
 
 
     public WalkIntervals() {
@@ -115,42 +115,42 @@ public class WalkIntervals extends AlgorithmPart {
         }
 
         if (LinearScanRegisterAllocator.DETAILED_COUNTING) {
-            _floatingIntervalsCounter.accumulate(floatIntervals.length());
-            _integerIntervalsCounter.accumulate(integerIntervals.length());
+            floatingIntervalsCounter.accumulate(floatIntervals.length());
+            integerIntervalsCounter.accumulate(integerIntervals.length());
         }
 
         doit(floatIntervals, data().floatingPointRegisters());
         doit(integerIntervals, data().integerRegisters());
     }
 
-    private int[] _freePos;
-    private int[] _usePos;
-    private int[] _blockPos;
-    private EirRegister[] _registers;
+    private int[] freePos;
+    private int[] usePos;
+    private int[] blockPos;
+    private EirRegister[] registers;
 
     protected void doit(Sequence<Interval> intervals, EirRegister[] registers) {
 
-        _registers = registers;
+        this.registers = registers;
 
         // Preallocate arrays for performance reasons
 
-        int length = _registers.length;
-        for (EirRegister reg : _registers) {
+        int length = registers.length;
+        for (EirRegister reg : registers) {
             if (reg != null) {
                 length = Math.max(length, reg.ordinal() + 1);
             }
         }
 
-        _freePos = new int[length];
-        _usePos = new int[length];
-        _blockPos = new int[length];
+        freePos = new int[length];
+        usePos = new int[length];
+        blockPos = new int[length];
 
-        _allIntervals = new ArrayListSequence<Interval>(intervals);
+        allIntervals = new ArrayListSequence<Interval>(intervals);
 
-        _unhandled = new ArrayListSequence<Interval>(intervals.length());
-        _active = new ArrayListSequence<Interval>(intervals.length());
-        _inactive = new ArrayListSequence<Interval>(intervals.length());
-        _handled = new ArrayListSequence<Interval>(intervals.length());
+        unhandled = new ArrayListSequence<Interval>(intervals.length());
+        active = new ArrayListSequence<Interval>(intervals.length());
+        inactive = new ArrayListSequence<Interval>(intervals.length());
+        handled = new ArrayListSequence<Interval>(intervals.length());
 
         walk();
     }
@@ -163,15 +163,15 @@ public class WalkIntervals extends AlgorithmPart {
 
         // Assert unhandled + active + inactive + handled == all
         Sequence<Interval> total = new LinkSequence<Interval>();
-        total = Sequence.Static.concatenated(total, _unhandled);
-        total = Sequence.Static.concatenated(total, _active);
-        total = Sequence.Static.concatenated(total, _inactive);
-        total = Sequence.Static.concatenated(total, _handled);
-        assert total.length() + outsideOfLists == _allIntervals.length();
+        total = Sequence.Static.concatenated(total, unhandled);
+        total = Sequence.Static.concatenated(total, active);
+        total = Sequence.Static.concatenated(total, inactive);
+        total = Sequence.Static.concatenated(total, handled);
+        assert total.length() + outsideOfLists == allIntervals.length();
 
         // Assert unhandled is sorted ascending
         Interval prev = null;
-        for (Interval cur : _unhandled) {
+        for (Interval cur : unhandled) {
             if (prev != null) {
                 assert prev.getFirstRangeStart() <= cur.getFirstRangeStart();
             }
@@ -180,15 +180,15 @@ public class WalkIntervals extends AlgorithmPart {
         }
 
         // Assert active and inactive intervals have register assigned
-        for (Interval interval : _active) {
+        for (Interval interval : active) {
             assert interval.register() != null;
         }
-        for (Interval interval : _inactive) {
+        for (Interval interval : inactive) {
             assert interval.register() != null;
         }
 
         // Assert handled intervals have location assigned
-        for (Interval interval : _handled) {
+        for (Interval interval : handled) {
             assert interval.register() != null || interval.stackSlot() != null;
         }
 
@@ -197,91 +197,91 @@ public class WalkIntervals extends AlgorithmPart {
 
     private void walk() {
 
-        assert _unhandled.length() == 0;
+        assert unhandled.length() == 0;
 
-        for (Interval interval : _allIntervals) {
+        for (Interval interval : allIntervals) {
 
             if (interval.isFixed()) {
 
                 final EirRegister fixedReg = interval.variable().location().asRegister();
 
-                if (fixedReg != null && _registers.length > fixedReg.ordinal() && _registers[fixedReg.ordinal()] != null) {
+                if (fixedReg != null && registers.length > fixedReg.ordinal() && registers[fixedReg.ordinal()] != null) {
                     // Fixed interval with register => make it active!
                     assert interval.register() != null;
-                    _active.append(interval);
+                    active.append(interval);
                 } else {
                     // Fixed interval with stack slot or unallocatable register assigned => ignore
-                    _handled.append(interval);
+                    handled.append(interval);
                 }
             } else {
-                _unhandled.append(interval);
+                unhandled.append(interval);
             }
         }
 
         if (LinearScanRegisterAllocator.DETAILED_COUNTING) {
-            _fixedIntervalsCounter.accumulate(_allIntervals.length() - _unhandled.length());
+            fixedIntervalsCounter.accumulate(allIntervals.length() - unhandled.length());
         }
 
         assert assertListsCorrect(0);
 
         int lastPosition = -1;
-        while (_unhandled.length() > 0) {
+        while (unhandled.length() > 0) {
 
-            final Interval current = _unhandled.removeFirst();
+            final Interval current = unhandled.removeFirst();
             final int position = current.getFirstRangeStart();
 
             if (position != lastPosition) {
 
                 if (LinearScanRegisterAllocator.DETAILED_COUNTING) {
-                    _activeIntervalsCounter.accumulate(_active.length());
-                    _inactiveIntervalsCounter.accumulate(_inactive.length());
-                    _handledIntervalsCounter.accumulate(_handled.length());
-                    _unhandledIntervalsCounter.accumulate(_unhandled.length());
+                    activeIntervalsCounter.accumulate(active.length());
+                    inactiveIntervalsCounter.accumulate(inactive.length());
+                    handledIntervalsCounter.accumulate(handled.length());
+                    unhandledIntervalsCounter.accumulate(unhandled.length());
                 }
 
                 lastPosition = position;
 
                 int newIndex = 0;
-                for (int i = 0; i < _active.length(); i++) {
-                    final Interval interval = _active.get(i);
+                for (int i = 0; i < active.length(); i++) {
+                    final Interval interval = active.get(i);
                     if (interval.getLastRangeEnd() < position) {
                         // Remove from active, interval is handled
-                        _handled.append(interval);
+                        handled.append(interval);
                     } else if (!interval.coversIncremental(position)) {
                         // Remove from active, add to inactive
-                        _inactive.append(interval);
+                        inactive.append(interval);
                     } else {
-                        _active.set(newIndex, interval);
+                        active.set(newIndex, interval);
                         newIndex++;
                     }
                 }
 
-                while (_active.length() > newIndex) {
-                    _active.removeLast();
+                while (active.length() > newIndex) {
+                    active.removeLast();
                 }
 
                 newIndex = 0;
-                for (int i = 0; i < _inactive.length(); i++) {
-                    final Interval interval = _inactive.get(i);
+                for (int i = 0; i < inactive.length(); i++) {
+                    final Interval interval = inactive.get(i);
                     if (interval.getLastRangeEnd() < position) {
                         // Remove from inactive, interval is handled
-                        _handled.append(interval);
+                        handled.append(interval);
                     } else if (interval.coversIncremental(position)) {
                         assert interval.register() != null;
-                        _active.append(interval);
+                        active.append(interval);
                     } else {
-                        _inactive.set(newIndex, interval);
+                        inactive.set(newIndex, interval);
                         newIndex++;
                     }
                 }
 
-                while (_inactive.length() > newIndex) {
-                    _inactive.removeLast();
+                while (inactive.length() > newIndex) {
+                    inactive.removeLast();
                 }
 
             } else {
                 if (LinearScanRegisterAllocator.DETAILED_COUNTING) {
-                    _samePositionCounter.increment();
+                    samePositionCounter.increment();
                 }
             }
 
@@ -298,11 +298,11 @@ public class WalkIntervals extends AlgorithmPart {
 
             if (current.stackSlot() != null) {
                 // Interval was completely spilled to stack => it is immediately handled
-                _handled.append(current);
+                handled.append(current);
             } else {
                 // Interval has an register assigned => it is active
                 assert current.register() != null;
-                _active.append(current);
+                active.append(current);
             }
 
             assert !LinearScanRegisterAllocator.DETAILED_ASSERTIONS || assertListsCorrect(0);
@@ -330,7 +330,7 @@ public class WalkIntervals extends AlgorithmPart {
             }
         }
 
-        for (Interval otherIntervals : variable.interval().parent().children()) {
+        for (Interval otherIntervals : variable.interval.parent().children()) {
             if (otherIntervals.variable().location() != null) {
                 return otherIntervals.variable().location();
             }
@@ -364,14 +364,10 @@ public class WalkIntervals extends AlgorithmPart {
     }
 
     private void allocateBlockedRegister(int position, Interval current) {
-
-        final EirRegister[] registers = _registers;
-        final int[] usePos = _usePos;
-        final int[] blockPos = _blockPos;
         Arrays.fill(usePos, Integer.MAX_VALUE);
         Arrays.fill(blockPos, Integer.MAX_VALUE);
 
-        for (Interval interval : _active) {
+        for (Interval interval : active) {
             final EirRegister register = interval.register();
             if (interval.isFixed()) {
                 // Fixed active
@@ -383,7 +379,7 @@ public class WalkIntervals extends AlgorithmPart {
             }
         }
 
-        for (Interval interval : _inactive) {
+        for (Interval interval : inactive) {
             final EirRegister register = interval.register();
             final int nextIntersection = interval.firstIntersectionIncremental(position, current);
 
@@ -428,14 +424,14 @@ public class WalkIntervals extends AlgorithmPart {
                 splitBefore(current, position + 1, blockPos[bestRegister]);
             }
 
-            final Sequence<Interval> active = new ArrayListSequence<Interval>(_active);
+            final Sequence<Interval> active = new ArrayListSequence<Interval>(this.active);
             for (Interval interval : active) {
                 if (interval.register() == registers[bestRegister] && interval.intersectsIncremental(current)) {
                     splitAndSpill(position, interval);
                 }
             }
 
-            final Sequence<Interval> inactive = new ArrayListSequence<Interval>(_inactive);
+            final Sequence<Interval> inactive = new ArrayListSequence<Interval>(this.inactive);
             for (Interval interval : inactive) {
                 if (interval.register() == registers[bestRegister] && interval.intersectsIncremental(current)) {
                     splitAndSpill(position, interval);
@@ -477,15 +473,15 @@ public class WalkIntervals extends AlgorithmPart {
         if (position == interval.getFirstRangeStart() || (position % 2 == 0 && position == interval.getFirstRangeStart() + 1)) {
             assert interval.variable().locationCategories().contains(EirLocationCategory.STACK_SLOT) || traceBlocks();
             assignStackSlot(interval);
-            int index = Sequence.Static.indexOfIdentical(_active, interval);
+            int index = Sequence.Static.indexOfIdentical(active, interval);
             if (index != -1) {
-                _active.remove(index);
-                _handled.append(interval);
+                active.remove(index);
+                handled.append(interval);
             } else {
-                index = Sequence.Static.indexOfIdentical(_active, interval);
+                index = Sequence.Static.indexOfIdentical(active, interval);
                 if (index != -1) {
-                    _inactive.remove(index);
-                    _handled.append(interval);
+                    inactive.remove(index);
+                    handled.append(interval);
                 }
             }
             return;
@@ -516,10 +512,10 @@ public class WalkIntervals extends AlgorithmPart {
     private void allocateRegister(int position, Interval current) {
 
         if (current.needsFloatingPointRegister()) {
-            assert _registers == data().floatingPointRegisters();
+            assert registers == data().floatingPointRegisters();
             allocateRegisterHelper(position, current);
         } else if (current.needsIntegerRegister()) {
-            assert _registers == data().integerRegisters();
+            assert registers == data().integerRegisters();
             allocateRegisterHelper(position, current);
         } else {
             assert current.needsStackSlot();
@@ -538,19 +534,19 @@ public class WalkIntervals extends AlgorithmPart {
     private void allocateRegisterHelper(int position, Interval current) {
 
         if (LinearScanRegisterAllocator.DETAILED_TIMING) {
-            _allocateTimer.start();
+            allocateTimer.start();
         }
         final boolean ok = allocateFreeRegister(position, current);
         if (LinearScanRegisterAllocator.DETAILED_TIMING) {
-            _allocateTimer.stop();
+            allocateTimer.stop();
         }
         if (!ok) {
             if (LinearScanRegisterAllocator.DETAILED_TIMING) {
-                _blockedAllocateTimer.start();
+                blockedAllocateTimer.start();
             }
             allocateBlockedRegister(position, current);
             if (LinearScanRegisterAllocator.DETAILED_TIMING) {
-                _blockedAllocateTimer.stop();
+                blockedAllocateTimer.stop();
             }
         }
     }
@@ -558,21 +554,19 @@ public class WalkIntervals extends AlgorithmPart {
     private boolean allocateFreeRegister(int position, Interval current) {
 
         if (LinearScanRegisterAllocator.DETAILED_TIMING) {
-            _searchFreePosTimer.start();
+            searchFreePosTimer.start();
         }
 
-        final EirRegister[] registers = _registers;
         assert registers.length > 0;
 
-        final int[] freePos = _freePos;
         Arrays.fill(freePos, Integer.MAX_VALUE);
 
-        for (Interval interval : _active) {
+        for (Interval interval : active) {
             assert interval.register() != null;
             freePos[interval.register().ordinal()] = 0;
         }
 
-        for (Interval interval : _inactive) {
+        for (Interval interval : inactive) {
 
             final EirRegister register = interval.register();
             if (register != null) {
@@ -605,7 +599,7 @@ public class WalkIntervals extends AlgorithmPart {
         }
 
         if (LinearScanRegisterAllocator.DETAILED_TIMING) {
-            _searchFreePosTimer.stop();
+            searchFreePosTimer.stop();
         }
 
         if (current.register() != null) {
@@ -623,11 +617,11 @@ public class WalkIntervals extends AlgorithmPart {
             return true;
         } else {
             if (LinearScanRegisterAllocator.DETAILED_TIMING) {
-                _normalSplitTimer.start();
+                normalSplitTimer.start();
             }
             splitBefore(current, position + 1, highestFreePos);
             if (LinearScanRegisterAllocator.DETAILED_TIMING) {
-                _normalSplitTimer.stop();
+                normalSplitTimer.stop();
             }
             assert current.getLastRangeEnd() <= highestFreePos;
             assignRegister(current, registers[bestRegister]);
@@ -650,7 +644,7 @@ public class WalkIntervals extends AlgorithmPart {
     }
 
     private boolean assertAssignRegister(Interval current, EirRegister register) {
-        for (Interval interval : _allIntervals) {
+        for (Interval interval : allIntervals) {
             if (interval != current && interval.register() != null && interval.register() == register) {
                 assert !interval.intersects(current) || traceBlocks();
             }
@@ -710,13 +704,13 @@ public class WalkIntervals extends AlgorithmPart {
     private void addToUnhandled(Interval interval) {
 
         int index = 0;
-        for (; index < _unhandled.length(); index++) {
-            final Interval cur = _unhandled.get(index);
+        for (; index < unhandled.length(); index++) {
+            final Interval cur = unhandled.get(index);
             if (interval.getFirstRangeStart() < cur.getFirstRangeStart()) {
                 break;
             }
         }
-        _unhandled.insert(index, interval);
+        unhandled.insert(index, interval);
         assert assertListsCorrect(0);
     }
 
@@ -768,7 +762,7 @@ public class WalkIntervals extends AlgorithmPart {
         final Interval splitPart = split(interval, pos);
         assert interval.getLastRangeEnd() <= pos;
         addToUnhandled(splitPart);
-        _allIntervals.append(splitPart);
+        allIntervals.append(splitPart);
         if (needsMove) {
             assert splitPart.getFirstRangeStart() % 2 == 1 || traceBlocks();
             splitPart.setInsertMoveWhenActivated(true);

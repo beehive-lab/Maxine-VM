@@ -131,7 +131,7 @@ public abstract class CompilerTest_controlFlow<Method_Type extends IrMethod> ext
         assertTrue(result.asInt() == 12);
     }
 
-    private static boolean _condition = true;
+    private static boolean condition = true;
 
     private static void foo1() {
     }
@@ -143,8 +143,8 @@ public abstract class CompilerTest_controlFlow<Method_Type extends IrMethod> ext
     }
 
     public static int ifThenElse() {
-        if (_condition) {
-            if (_condition) {
+        if (condition) {
+            if (condition) {
                 foo1();
             } else {
                 foo2();
@@ -161,10 +161,10 @@ public abstract class CompilerTest_controlFlow<Method_Type extends IrMethod> ext
 
     @INLINE
     private static void inlinedChain() {
-        if (_condition) {
+        if (condition) {
             foo1();
         }
-        if (_condition) {
+        if (condition) {
             foo2();
         }
         foo3();
@@ -227,19 +227,19 @@ public abstract class CompilerTest_controlFlow<Method_Type extends IrMethod> ext
     }
 
     @CONSTANT
-    private static int _one = 1;
+    private static int one = 1;
 
     public static int propagateConstantBlockArgument() {
         // This constant is supposed to be propagated into all the basic blocks below:
-        final int a = _one;
+        final int a = one;
 
         int b = 2;
-        if (_condition) {
+        if (condition) {
             b += a;
         } else {
             b += a;
         }
-        if (_condition) {
+        if (condition) {
             b += a;
         } else {
             b += a;

@@ -55,28 +55,28 @@ import com.sun.max.vm.type.*;
  */
 public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements HeapScheme, CellVisitor {
 
-    private static final VMBooleanXXOption _virtualAllocOption =
+    private static final VMBooleanXXOption virtualAllocOption =
         register(new VMBooleanXXOption("-XX:-SemiSpaceUseVirtualMemory", "Allocate memory for GC using mmap instead of malloc."), MaxineVM.Phase.PRISTINE);
     private static final int DEFAULT_SAFETY_ZONE_SIZE = 6144;  // empirically determined to be sufficient for simple VM termination after OutOfMemory condition
-    private static final VMIntOption _safetyZoneSizeOption =
+    private static final VMIntOption safetyZoneSizeOption =
         register(new VMIntOption("-XX:SemiSpaceGCSafetyZoneSize", DEFAULT_SAFETY_ZONE_SIZE, "Safety zone size in bytes."), MaxineVM.Phase.PRISTINE);
-    private static final VMStringOption _growPolicyOption =
+    private static final VMStringOption growPolicyOption =
         register(new VMStringOption("-XX:SemiSpaceGCGrowPolicy=", false, "Double", "Grow policy for heap (Linear|Double)."), MaxineVM.Phase.STARTING);
 
-    private final PointerIndexVisitor _pointerIndexGripVerifier = new PointerIndexVisitor() {
+    private final PointerIndexVisitor pointerIndexGripVerifier = new PointerIndexVisitor() {
         @Override
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
-            DebugHeap.verifyGripAtIndex(pointer, wordIndex * Kind.REFERENCE.size(), pointer.getGrip(wordIndex), _toSpace);
+            DebugHeap.verifyGripAtIndex(pointer, wordIndex * Kind.REFERENCE.width.numberOfBytes, pointer.getGrip(wordIndex), toSpace);
         }
     };
 
-    private final PointerOffsetVisitor _pointerOffsetGripVerifier = new PointerOffsetVisitor() {
+    private final PointerOffsetVisitor pointerOffsetGripVerifier = new PointerOffsetVisitor() {
         public void visitPointerOffset(Pointer pointer, int offset) {
-            DebugHeap.verifyGripAtIndex(pointer, offset, pointer.readGrip(offset), _toSpace);
+            DebugHeap.verifyGripAtIndex(pointer, offset, pointer.readGrip(offset), toSpace);
         }
     };
 
-    private final PointerIndexVisitor _pointerIndexGripUpdater = new PointerIndexVisitor() {
+    private final PointerIndexVisitor pointerIndexGripUpdater = new PointerIndexVisitor() {
         @Override
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
             final Grip oldGrip = pointer.getGrip(wordIndex);
@@ -87,7 +87,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         }
     };
 
-    private final PointerOffsetVisitor _pointerOffsetGripUpdater = new PointerOffsetVisitor() {
+    private final PointerOffsetVisitor pointerOffsetGripUpdater = new PointerOffsetVisitor() {
         public void visitPointerOffset(Pointer pointer, int offset) {
             final Grip oldGrip = pointer.readGrip(offset);
             final Grip newGrip = mapGrip(oldGrip);
@@ -97,10 +97,10 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         }
     };
 
-    private final SpecialReferenceManager.GripForwarder _gripForwarder = new SpecialReferenceManager.GripForwarder() {
+    private final SpecialReferenceManager.GripForwarder gripForwarder = new SpecialReferenceManager.GripForwarder() {
         public boolean isReachable(Grip grip) {
             final Pointer origin = grip.toOrigin();
-            if (_fromSpace.contains(origin)) {
+            if (fromSpace.contains(origin)) {
                 final Grip forwardGrip = Layout.readForwardGrip(origin);
                 if (forwardGrip.isZero()) {
                     return false;
@@ -110,7 +110,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         }
         public Grip getForwardGrip(Grip grip) {
             final Pointer origin = grip.toOrigin();
-            if (_fromSpace.contains(origin)) {
+            if (fromSpace.contains(origin)) {
                 return Layout.readForwardGrip(origin);
             }
             return grip;
@@ -120,34 +120,34 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     // The Sequential Heap Root Scanner is actually the "thread crawler" which will identify the
     // roots out of the threads' stacks. Here we create one for the actual scanning (_heapRootsScanner)
     // and one for the verification (_heapRootsVerifier)
-    private final SequentialHeapRootsScanner _heapRootsScanner = new SequentialHeapRootsScanner(this, _pointerIndexGripUpdater);
-    private final SequentialHeapRootsScanner _heapRootsVerifier = new SequentialHeapRootsScanner(this, _pointerIndexGripVerifier);
+    private final SequentialHeapRootsScanner heapRootsScanner = new SequentialHeapRootsScanner(pointerIndexGripUpdater);
+    private final SequentialHeapRootsScanner heapRootsVerifier = new SequentialHeapRootsScanner(pointerIndexGripVerifier);
 
-    private StopTheWorldDaemon _collectorThread;
+    private StopTheWorldDaemon collectorThread;
 
-    private SemiSpaceMemoryRegion _fromSpace = new SemiSpaceMemoryRegion("Heap-From");
-    private SemiSpaceMemoryRegion _toSpace = new SemiSpaceMemoryRegion("Heap-To");
-    private SemiSpaceMemoryRegion _growFromSpace = new SemiSpaceMemoryRegion("Heap-From-Grow");  // used while growing the heap
-    private SemiSpaceMemoryRegion _growToSpace = new SemiSpaceMemoryRegion("Heap-To-Grow");          // used while growing the heap
-    private static int _safetyZoneSize = DEFAULT_SAFETY_ZONE_SIZE;  // space reserved to allow throw OutOfMemory to complete
-    private GrowPolicy _growPolicy;
-    private LinearGrowPolicy _increaseGrowPolicy;
-    private Address _top;                                         // top of allocatable space (less safety zone)
-    private volatile Address _allocationMark;                     // current allocation point
+    private SemiSpaceMemoryRegion fromSpace = new SemiSpaceMemoryRegion("Heap-From");
+    private SemiSpaceMemoryRegion toSpace = new SemiSpaceMemoryRegion("Heap-To");
+    private SemiSpaceMemoryRegion growFromSpace = new SemiSpaceMemoryRegion("Heap-From-Grow");  // used while growing the heap
+    private SemiSpaceMemoryRegion growToSpace = new SemiSpaceMemoryRegion("Heap-To-Grow");          // used while growing the heap
+    private static int safetyZoneSize = DEFAULT_SAFETY_ZONE_SIZE;  // space reserved to allow throw OutOfMemory to complete
+    private GrowPolicy growPolicy;
+    private LinearGrowPolicy increaseGrowPolicy;
+    private Address top;                                         // top of allocatable space (less safety zone)
+    private volatile Address allocationMark;                     // current allocation point
 
     @CONSTANT_WHEN_NOT_ZERO
-    private Pointer _allocationMarkPointer;
+    private Pointer allocationMarkPointer;
 
     // Create timing facilities.
-    private final TimerMetric _clearTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
-    private final TimerMetric _gcTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
-    private final TimerMetric _rootScanTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
-    private final TimerMetric _bootHeapScanTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
-    private final TimerMetric _codeScanTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
-    private final TimerMetric _copyTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
-    private final TimerMetric _weakRefTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+    private final TimerMetric clearTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+    private final TimerMetric gcTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+    private final TimerMetric rootScanTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+    private final TimerMetric bootHeapScanTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+    private final TimerMetric codeScanTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+    private final TimerMetric copyTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+    private final TimerMetric weakRefTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
 
-    private int _numberOfGarbageCollectionInvocations;
+    private int numberOfGarbageCollectionInvocations;
 
     private static void startTimer(Timer timer) {
         if (Heap.traceGCTime()) {
@@ -163,7 +163,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
     // The heart of the collector.
     // Performs the actual Garbage Collection
-    private final Runnable _collect = new Runnable() {
+    private final Runnable collect = new Runnable() {
         public void run() {
             try {
                 if (vmConfiguration().debugging()) {
@@ -171,57 +171,57 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                     verifyHeap("before GC");
                 }
 
-                ++_numberOfGarbageCollectionInvocations;
+                ++numberOfGarbageCollectionInvocations;
                 TeleHeapInfo.beforeGarbageCollection();
 
                 VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
-                startTimer(_gcTimer);
+                startTimer(gcTimer);
 
-                startTimer(_clearTimer);
+                startTimer(clearTimer);
                 swapSemiSpaces(); // Swap semi-spaces. From--> To and To-->From
-                stopTimer(_clearTimer);
+                stopTimer(clearTimer);
 
                 if (Heap.traceGCRootScanning()) {
                     Log.println("Scanning roots...");
                 }
-                startTimer(_rootScanTimer);
-                _heapRootsScanner.run(); // Start scanning the reachable objects from my roots.
-                stopTimer(_rootScanTimer);
+                startTimer(rootScanTimer);
+                heapRootsScanner.run(); // Start scanning the reachable objects from my roots.
+                stopTimer(rootScanTimer);
 
                 if (Heap.traceGC()) {
                     Log.println("Scanning boot heap...");
                 }
-                startTimer(_bootHeapScanTimer);
+                startTimer(bootHeapScanTimer);
                 scanBootHeap();
-                stopTimer(_bootHeapScanTimer);
+                stopTimer(bootHeapScanTimer);
 
                 if (Heap.traceGC()) {
                     Log.println("Scanning code...");
                 }
-                startTimer(_codeScanTimer);
+                startTimer(codeScanTimer);
                 scanCode();
-                stopTimer(_codeScanTimer);
+                stopTimer(codeScanTimer);
 
                 if (Heap.traceGC()) {
                     Log.println("Moving reachable...");
                 }
 
-                startTimer(_copyTimer);
+                startTimer(copyTimer);
                 moveReachableObjects();
-                stopTimer(_copyTimer);
+                stopTimer(copyTimer);
 
                 if (Heap.traceGC()) {
                     Log.println("Processing weak references...");
                 }
 
-                startTimer(_weakRefTimer);
-                SpecialReferenceManager.processDiscoveredSpecialReferences(_gripForwarder);
-                stopTimer(_weakRefTimer);
-                stopTimer(_gcTimer);
+                startTimer(weakRefTimer);
+                SpecialReferenceManager.processDiscoveredSpecialReferences(gripForwarder);
+                stopTimer(weakRefTimer);
+                stopTimer(gcTimer);
 
                 // Bring the inspectable mark up to date, since it is not updated during the move.
-                _toSpace.setAllocationMark(_allocationMark); // for debugging
+                toSpace.setAllocationMark(allocationMark); // for debugging
 
                 VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
 
@@ -236,21 +236,21 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                     Log.print("Timings (");
                     Log.print(TimerUtil.getHzSuffix(HeapScheme.GC_TIMING_CLOCK));
                     Log.print(") for GC ");
-                    Log.print(_numberOfGarbageCollectionInvocations);
+                    Log.print(numberOfGarbageCollectionInvocations);
                     Log.print(": clear & initialize=");
-                    Log.print(_clearTimer.getLastElapsedTime());
+                    Log.print(clearTimer.getLastElapsedTime());
                     Log.print(", root scan=");
-                    Log.print(_rootScanTimer.getLastElapsedTime());
+                    Log.print(rootScanTimer.getLastElapsedTime());
                     Log.print(", boot heap scan=");
-                    Log.print(_bootHeapScanTimer.getLastElapsedTime());
+                    Log.print(bootHeapScanTimer.getLastElapsedTime());
                     Log.print(", code scan=");
-                    Log.print(_codeScanTimer.getLastElapsedTime());
+                    Log.print(codeScanTimer.getLastElapsedTime());
                     Log.print(", copy=");
-                    Log.print(_copyTimer.getLastElapsedTime());
+                    Log.print(copyTimer.getLastElapsedTime());
                     Log.print(", weak refs=");
-                    Log.print(_weakRefTimer.getLastElapsedTime());
+                    Log.print(weakRefTimer.getLastElapsedTime());
                     Log.print(", total=");
-                    Log.println(_gcTimer.getLastElapsedTime());
+                    Log.println(gcTimer.getLastElapsedTime());
                     Log.unlock(lockDisabledSafepoints);
                 }
             } catch (Throwable throwable) {
@@ -265,7 +265,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      * If successful sets region start and size.
      */
     private static Address allocateSpace(SemiSpaceMemoryRegion space, Size size) {
-        final Address base = _virtualAllocOption.isPresent() ? VirtualMemory.allocate(size, VirtualMemory.Type.HEAP) : Memory.allocate(size);
+        final Address base = virtualAllocOption.getValue() ? VirtualMemory.allocate(size, VirtualMemory.Type.HEAP) : Memory.allocate(size);
         if (!base.isZero()) {
             space.setStart(base);
             space.setAllocationMark(base); // debugging
@@ -281,7 +281,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      */
     private static void deallocateSpace(SemiSpaceMemoryRegion space) {
         final Address base = space.start();
-        if (_virtualAllocOption.isPresent()) {
+        if (virtualAllocOption.getValue()) {
             VirtualMemory.deallocate(base, space.size(), VirtualMemory.Type.HEAP);
         } else {
             Memory.deallocate(base);
@@ -306,34 +306,34 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         if (phase == MaxineVM.Phase.PRISTINE) {
             final Size size = Heap.initialSize().dividedBy(2);
 
-            _safetyZoneSize = _safetyZoneSizeOption.getValue();
-            if (allocateSpace(_fromSpace, size).isZero() || allocateSpace(_toSpace, size).isZero()) {
+            safetyZoneSize = safetyZoneSizeOption.getValue();
+            if (allocateSpace(fromSpace, size).isZero() || allocateSpace(toSpace, size).isZero()) {
                 Log.print("Could not allocate object heap of size ");
                 Log.print(size.toLong());
                 Log.println();
                 FatalError.crash("Insufficient memory to initialize SemiSpaceHeapScheme");
             }
 
-            _allocationMark = _toSpace.start();
-            _top = _toSpace.end().minus(_safetyZoneSize);
+            allocationMark = toSpace.start();
+            top = toSpace.end().minus(safetyZoneSize);
 
-            _allocationMarkPointer = ClassActor.fromJava(SemiSpaceHeapScheme.class).findLocalInstanceFieldActor("_allocationMark").pointer(this);
+            allocationMarkPointer = ClassActor.fromJava(SemiSpaceHeapScheme.class).findLocalInstanceFieldActor("allocationMark").pointer(this);
 
             // From now on we can allocate
 
-            TeleHeapInfo.registerMemoryRegions(_toSpace, _fromSpace);
+            TeleHeapInfo.registerMemoryRegions(toSpace, fromSpace);
         } else if (phase == MaxineVM.Phase.STARTING) {
-            final String growPolicy = _growPolicyOption.getValue();
+            final String growPolicy = growPolicyOption.getValue();
             if (growPolicy.equals("Double")) {
-                _growPolicy = new DoubleGrowPolicy();
+                this.growPolicy = new DoubleGrowPolicy();
             } else if (growPolicy.startsWith("Linear")) {
-                _growPolicy = new LinearGrowPolicy(growPolicy);
+                this.growPolicy = new LinearGrowPolicy(growPolicy);
             } else {
                 Log.print("Unknown heap growth policy, using default policy");
-                _growPolicy = new DoubleGrowPolicy();
+                this.growPolicy = new DoubleGrowPolicy();
             }
-            _increaseGrowPolicy = new LinearGrowPolicy();
-            _collectorThread = new StopTheWorldDaemon("GC", _collect);
+            increaseGrowPolicy = new LinearGrowPolicy();
+            collectorThread = new StopTheWorldDaemon("GC", collect);
         }
     }
 
@@ -342,23 +342,23 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     }
 
     private void swapSemiSpaces() {
-        final Address oldFromSpaceStart = _fromSpace.start();
-        final Size oldFromSpaceSize = _fromSpace.size();
+        final Address oldFromSpaceStart = fromSpace.start();
+        final Size oldFromSpaceSize = fromSpace.size();
 
-        _fromSpace.setStart(_toSpace.start());
-        _fromSpace.setSize(_toSpace.size());
-        _fromSpace.setAllocationMark(_toSpace.getAllocationMark()); // for debugging
+        fromSpace.setStart(toSpace.start());
+        fromSpace.setSize(toSpace.size());
+        fromSpace.setAllocationMark(toSpace.getAllocationMark()); // for debugging
 
-        _toSpace.setStart(oldFromSpaceStart);
-        _toSpace.setSize(oldFromSpaceSize);
-        _toSpace.setAllocationMark(_toSpace.start());  // for debugging
+        toSpace.setStart(oldFromSpaceStart);
+        toSpace.setSize(oldFromSpaceSize);
+        toSpace.setAllocationMark(toSpace.start());  // for debugging
 
-        _allocationMark = _toSpace.start();
-        _top = _toSpace.end();
+        allocationMark = toSpace.start();
+        top = toSpace.end();
         // If we are currently using the safety zone, we must not install it in the swapped space
         // as that could cause gcAllocate to fail trying to copying too much live data.
-        if (!_inSafetyZone) {
-            _top = _top.minus(_safetyZoneSize);
+        if (!inSafetyZone) {
+            top = top.minus(safetyZoneSize);
         }
     }
 
@@ -382,13 +382,13 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
 
     private Size immediateFreeSpace() {
-        return _top.minus(_allocationMark).asSize();
+        return top.minus(allocationMark).asSize();
     }
 
     private Grip mapGrip(Grip grip) {
         final Pointer fromOrigin = grip.toOrigin();
         if (VMConfiguration.hostOrTarget().debugging()) {
-            if (!(grip.isZero() || _fromSpace.contains(fromOrigin) || _toSpace.contains(fromOrigin) || Heap.bootHeapRegion().contains(fromOrigin) || Code.contains(fromOrigin))) {
+            if (!(grip.isZero() || fromSpace.contains(fromOrigin) || toSpace.contains(fromOrigin) || Heap.bootHeapRegion().contains(fromOrigin) || Code.contains(fromOrigin))) {
                 Log.print("invalid grip: ");
                 Log.print(grip.toOrigin().asAddress());
                 Log.println();
@@ -396,7 +396,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             }
             DebugHeap.checkGripTag(grip);
         }
-        if (_fromSpace.contains(fromOrigin)) {
+        if (fromSpace.contains(fromOrigin)) {
             final Grip forwardGrip = Layout.readForwardGrip(fromOrigin);
             if (!forwardGrip.isZero()) {
                 return forwardGrip;
@@ -412,7 +412,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 final boolean lockDisabledSafepoints = Log.lock();
                 final Hub hub = UnsafeLoophole.cast(Layout.readHubReference(grip).toJava());
                 Log.print("Forwarding ");
-                Log.print(hub.classActor().name().string());
+                Log.print(hub.classActor().name.string);
                 Log.print(" from ");
                 Log.print(fromCell);
                 Log.print(" to ");
@@ -456,14 +456,14 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         final Hub hub = UnsafeLoophole.cast(newHubGrip.toJava());
         final SpecificLayout specificLayout = hub.specificLayout();
         if (specificLayout.isTupleLayout()) {
-            TupleReferenceMap.visitOriginOffsets(hub, origin, _pointerOffsetGripUpdater);
+            TupleReferenceMap.visitOriginOffsets(hub, origin, pointerOffsetGripUpdater);
             if (hub.isSpecialReference()) {
                 SpecialReferenceManager.discoverSpecialReference(Grip.fromOrigin(origin));
             }
             return cell.plus(hub.tupleSize());
         }
         if (specificLayout.isHybridLayout()) {
-            TupleReferenceMap.visitOriginOffsets(hub, origin, _pointerOffsetGripUpdater);
+            TupleReferenceMap.visitOriginOffsets(hub, origin, pointerOffsetGripUpdater);
         } else if (specificLayout.isReferenceArrayLayout()) {
             scanReferenceArray(origin);
         }
@@ -471,8 +471,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     }
 
     private void moveReachableObjects() {
-        Pointer cell = _toSpace.start().asPointer();
-        while (cell.lessThan(_allocationMark)) {
+        Pointer cell = toSpace.start().asPointer();
+        while (cell.lessThan(allocationMark)) {
             cell = DebugHeap.checkDebugCellTag(cell);
             cell = visitCell(cell);
         }
@@ -481,11 +481,11 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     /**
      * This option exists only to measure the performance effect of using a reference map for the boot heap.
      */
-    private static final VMBooleanXXOption _useBootHeapRefmap = register(new VMBooleanXXOption("-XX:-UseBootHeapRefmap", "Do not use the boot heap reference map when scanning the boot heap."), MaxineVM.Phase.STARTING);
+    private static final VMBooleanXXOption useBootHeapRefmap = register(new VMBooleanXXOption("-XX:-UseBootHeapRefmap", "Do not use the boot heap reference map when scanning the boot heap."), MaxineVM.Phase.STARTING);
 
     private void scanBootHeap() {
-        if (!_useBootHeapRefmap.getValue()) {
-            Heap.bootHeapRegion().visitPointers(_pointerIndexGripUpdater);
+        if (!useBootHeapRefmap.getValue()) {
+            Heap.bootHeapRegion().visitPointers(pointerIndexGripUpdater);
         } else {
             Heap.bootHeapRegion().visitCells(this);
         }
@@ -498,7 +498,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     }
 
     private boolean cannotGrow() {
-        return _fromSpace.size().isZero() || _fromSpace.size().greaterEqual(Heap.maxSize());
+        return fromSpace.size().isZero() || fromSpace.size().greaterEqual(Heap.maxSize());
     }
 
     /**
@@ -520,16 +520,16 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             // It is important to know now that we can allocate both spaces of the new size
             // and, if we cannot, to leave things as they are, so that the VM can continue
             // using the safety zone and perhaps then free enough space to continue.
-            final Size size = Size.min(growPolicy.growth(_fromSpace.size()), Heap.maxSize());
+            final Size size = Size.min(growPolicy.growth(fromSpace.size()), Heap.maxSize());
             if (preGc && Heap.verbose()) {
                 Log.print("...new heap size: ");
                 Log.println(size.toLong());
             }
-            final Address fromBase = allocateSpace(_growFromSpace, size);
-            final Address tempBase = allocateSpace(_growToSpace, size);
+            final Address fromBase = allocateSpace(growFromSpace, size);
+            final Address tempBase = allocateSpace(growToSpace, size);
             if (fromBase.isZero() || tempBase.isZero()) {
                 if (!fromBase.isZero()) {
-                    deallocateSpace(_growFromSpace);
+                    deallocateSpace(growFromSpace);
                 }
                 if (Heap.verbose()) {
                     Log.println("...grow failed, can't allocate spaces");
@@ -537,13 +537,13 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 return false;
             }
             // return memory in _fromSpace
-            deallocateSpace(_fromSpace);
-            copySpaceState(_growFromSpace, _fromSpace);
+            deallocateSpace(fromSpace);
+            copySpaceState(growFromSpace, fromSpace);
         } else {
             // executing the collector thread swapped the spaces
             // so we are again updating _fromSpace but with _growToSpace.
-            deallocateSpace(_fromSpace);
-            copySpaceState(_growToSpace, _fromSpace);
+            deallocateSpace(fromSpace);
+            copySpaceState(growToSpace, fromSpace);
         }
         if (preGc && Heap.verbose()) {
             Log.println("...grow ok");
@@ -554,7 +554,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     @INLINE
     private void executeCollectorThread() {
         if (!Heap.gcDisabled()) {
-            _collectorThread.execute();
+            collectorThread.execute();
         }
     }
 
@@ -579,15 +579,15 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         executeCollectorThread();
         if (immediateFreeSpace().greaterEqual(requestedFreeSpace)) {
             // check to see if we can reset safety zone
-            if (_inSafetyZone) {
-                if (_top.minus(_allocationMark).greaterThan(_safetyZoneSize)) {
-                    _top = _top.minus(_safetyZoneSize);
-                    _inSafetyZone = false;
+            if (inSafetyZone) {
+                if (top.minus(allocationMark).greaterThan(safetyZoneSize)) {
+                    top = top.minus(safetyZoneSize);
+                    inSafetyZone = false;
                 }
             }
             return true;
         }
-        while (grow(_growPolicy)) {
+        while (grow(growPolicy)) {
             if (immediateFreeSpace().greaterEqual(requestedFreeSpace)) {
                 return true;
             }
@@ -604,20 +604,20 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     }
 
     public Size reportUsedSpace() {
-        return _allocationMark.minus(_toSpace.start()).asSize();
+        return allocationMark.minus(toSpace.start()).asSize();
     }
 
     private Pointer gcAllocate(Size size) {
-        Pointer cell = _allocationMark.asPointer();
+        Pointer cell = allocationMark.asPointer();
         if (VMConfiguration.hostOrTarget().debugging()) {
             cell = cell.plusWords(1);
         }
-        _allocationMark = cell.plus(size);
-        FatalError.check(_allocationMark.lessThan(_top), "GC allocation overflow");
+        allocationMark = cell.plus(size);
+        FatalError.check(allocationMark.lessThan(top), "GC allocation overflow");
         return cell;
     }
 
-    private boolean _inSafetyZone; // set after we have thrown OutOfMemoryError and are using the safety zone
+    private boolean inSafetyZone; // set after we have thrown OutOfMemoryError and are using the safety zone
 
     /*
      * The OutOfMemoryError condition happens when we cannot satisfy a request after running a garbage collection and we
@@ -633,38 +633,38 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         Pointer cell;
         Address end;
         do {
-            oldAllocationMark = _allocationMark.asPointer();
+            oldAllocationMark = allocationMark.asPointer();
             cell = allocateWithDebugTag(oldAllocationMark);
             end = cell.plus(size);
-            if (end.greaterThan(_top)) {
+            if (end.greaterThan(top)) {
                 if (!Heap.collectGarbage(size)) {
-                    if (_inSafetyZone) {
+                    if (inSafetyZone) {
                         FatalError.crash("out of memory again after throwing OutOfMemoryError");
                     } else {
                         // Use the safety region to do the throw
-                        _top = _top.plus(_safetyZoneSize);
-                        _inSafetyZone = true;
+                        top = top.plus(safetyZoneSize);
+                        inSafetyZone = true;
                         // This new will now be ok
                         throw new OutOfMemoryError();
                     }
                 }
-                oldAllocationMark = _allocationMark.asPointer();
+                oldAllocationMark = allocationMark.asPointer();
                 cell = allocateWithDebugTag(oldAllocationMark);
                 end = cell.plus(size);
             }
-        } while (_allocationMarkPointer.compareAndSwapWord(oldAllocationMark, end) != oldAllocationMark);
+        } while (allocationMarkPointer.compareAndSwapWord(oldAllocationMark, end) != oldAllocationMark);
         return cell;
     }
 
     @INLINE
     public Pointer allocate(Size size) {
-        final Pointer oldAllocationMark = _allocationMark.asPointer();
+        final Pointer oldAllocationMark = allocationMark.asPointer();
         Pointer cell = allocateWithDebugTag(oldAllocationMark);
         final Pointer end = cell.plus(size);
-        if (end.greaterThan(_top) || _allocationMarkPointer.compareAndSwapWord(oldAllocationMark, end) != oldAllocationMark) {
+        if (end.greaterThan(top) || allocationMarkPointer.compareAndSwapWord(oldAllocationMark, end) != oldAllocationMark) {
             cell = retryAllocate(size);
         }
-        _toSpace.setAllocationMark(_allocationMark);
+        toSpace.setAllocationMark(allocationMark);
         return cell;
     }
 
@@ -679,7 +679,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     @INLINE
     @NO_SAFEPOINTS("initialization must be atomic")
     public Object createArray(DynamicHub dynamicHub, int length) {
-        final Size size = Layout.getArraySize(dynamicHub.classActor().componentClassActor().kind(), length);
+        final Size size = Layout.getArraySize(dynamicHub.classActor().componentClassActor().kind, length);
         final Pointer cell = allocate(size);
         return Cell.plantArray(cell, size, dynamicHub, length);
     }
@@ -713,7 +713,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     }
 
     public boolean contains(Address address) {
-        return _fromSpace.contains(address);
+        return fromSpace.contains(address);
     }
 
     public void runFinalization() {
@@ -738,8 +738,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             Log.print("Verifying heap ");
             Log.println(when);
         }
-        _heapRootsVerifier.run();
-        DebugHeap.verifyRegion(_toSpace.start().asPointer(), _allocationMark, _toSpace, _pointerOffsetGripVerifier);
+        heapRootsVerifier.run();
+        DebugHeap.verifyRegion(toSpace.start().asPointer(), allocationMark, toSpace, pointerOffsetGripVerifier);
         if (Heap.traceGC()) {
             Log.print("Verifying heap");
             Log.print(when);
@@ -749,10 +749,10 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
     private void logSpaces() {
         if (Heap.verbose()) {
-            logSpace(_fromSpace);
-            logSpace(_toSpace);
-            Log.print("top "); Log.print(_top);
-            Log.print(", allocation mark "); Log.println(_allocationMark);
+            logSpace(fromSpace);
+            logSpace(toSpace);
+            Log.print("top "); Log.print(top);
+            Log.print(", allocation mark "); Log.println(allocationMark);
         }
     }
 
@@ -774,11 +774,11 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 logSpaces();
             }
             final int amountAsInt = pageAlignedAmount.toInt();
-            _fromSpace.setSize(_fromSpace.size().minus(amountAsInt));
-            _toSpace.setSize(_toSpace.size().minus(amountAsInt));
-            _top = _top.minus(amountAsInt);
-            VirtualMemory.deallocate(_fromSpace.end(), pageAlignedAmount, VirtualMemory.Type.HEAP);
-            VirtualMemory.deallocate(_toSpace.end(), pageAlignedAmount, VirtualMemory.Type.HEAP);
+            fromSpace.setSize(fromSpace.size().minus(amountAsInt));
+            toSpace.setSize(toSpace.size().minus(amountAsInt));
+            top = top.minus(amountAsInt);
+            VirtualMemory.deallocate(fromSpace.end(), pageAlignedAmount, VirtualMemory.Type.HEAP);
+            VirtualMemory.deallocate(toSpace.end(), pageAlignedAmount, VirtualMemory.Type.HEAP);
             logSpaces();
             return true;
         }
@@ -799,10 +799,10 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
          * It's unfortunate but that's the nature of the semispace scheme.
          */
         final Size pageAlignedAmount = VirtualMemory.pageAlign(amount.asAddress()).asSize().dividedBy(2);
-        if (pageAlignedAmount.greaterThan(_fromSpace.size())) {
+        if (pageAlignedAmount.greaterThan(fromSpace.size())) {
             // grow adds the current space size to the amount in the grow policy
-            _increaseGrowPolicy.setAmount(pageAlignedAmount.minus(_fromSpace.size()));
-            return grow(_increaseGrowPolicy);
+            increaseGrowPolicy.setAmount(pageAlignedAmount.minus(fromSpace.size()));
+            return grow(increaseGrowPolicy);
         }
         return false;
     }
@@ -818,19 +818,19 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 Log.print("Timings (");
                 Log.print(TimerUtil.getHzSuffix(HeapScheme.GC_TIMING_CLOCK));
                 Log.print(") for all GC: clear & initialize=");
-                Log.print(_clearTimer.getElapsedTime());
+                Log.print(clearTimer.getElapsedTime());
                 Log.print(", root scan=");
-                Log.print(_rootScanTimer.getElapsedTime());
+                Log.print(rootScanTimer.getElapsedTime());
                 Log.print(", boot heap scan=");
-                Log.print(_bootHeapScanTimer.getElapsedTime());
+                Log.print(bootHeapScanTimer.getElapsedTime());
                 Log.print(", code scan=");
-                Log.print(_codeScanTimer.getElapsedTime());
+                Log.print(codeScanTimer.getElapsedTime());
                 Log.print(", copy=");
-                Log.print(_copyTimer.getElapsedTime());
+                Log.print(copyTimer.getElapsedTime());
                 Log.print(", weak refs=");
-                Log.print(_weakRefTimer.getElapsedTime());
+                Log.print(weakRefTimer.getElapsedTime());
                 Log.print(", total=");
-                Log.println(_gcTimer.getElapsedTime());
+                Log.println(gcTimer.getElapsedTime());
                 Log.unlock(lockDisabledSafepoints);
             }
         }
@@ -862,10 +862,10 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     }
 
     private class LinearGrowPolicy extends GrowPolicy {
-        int _amount;
+        int amount;
 
         LinearGrowPolicy(String s) {
-            _amount = Heap.initialSize().toInt();
+            amount = Heap.initialSize().toInt();
         }
 
         LinearGrowPolicy() {
@@ -873,15 +873,15 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
         @Override
         Size growth(Size current) {
-            return current.plus(_amount);
+            return current.plus(amount);
         }
 
         void setAmount(int amount) {
-            _amount = amount;
+            this.amount = amount;
         }
 
         void setAmount(Size amount) {
-            _amount = amount.toInt();
+            this.amount = amount.toInt();
         }
     }
 }

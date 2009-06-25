@@ -29,6 +29,6 @@ public class X86ImmediateParameter extends X86NumericalParameter {
 
     public X86ImmediateParameter(X86Operand.Designation designation, WordWidth width) {
         super(designation, width);
-        setVariableName("imm" + width.numberOfBits());
+        setVariableName("imm" + width.numberOfBits);
     }
 }

@@ -35,6 +35,7 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -71,33 +72,40 @@ public class BootImage {
      */
     public static final int VERSION = 1;
 
-    public abstract class Section {
+    public abstract static class Section {
         protected Section() {
         }
 
-        protected Field[] fields() {
-            return Arrays.filter(getClass().getDeclaredFields(), new Predicate<Field>() {
+        static Field[] fields(Class holder, final Class fieldType) {
+            return Arrays.filter(holder.getDeclaredFields(), new Predicate<Field>() {
                 public boolean evaluate(Field field) {
-                    return field.getName().startsWith("_");
+                    final int flags = Actor.ACC_FINAL | Actor.ACC_PUBLIC;
+                    if ((field.getModifiers() & flags) == flags && field.getType().equals(fieldType)) {
+                        return true;
+                    }
+                    return false;
                 }
             }, new Field[0]);
         }
 
-        public abstract void check() throws BootImageException;
+        protected Field[] fields() {
+            return fields(getClass(), fieldType());
+        }
+
+        public abstract Class<?> fieldType();
         public abstract int size();
         public abstract void write(OutputStream outputStream) throws IOException;
     }
 
-    public abstract class IntSection extends Section {
-        private final Endianness _endianness;
+    public abstract static class IntSection extends Section {
+        private final Endianness endianness;
 
         public Endianness endianness() {
-            return _endianness;
+            return endianness;
         }
 
         protected IntSection(Endianness endianness) {
-            super();
-            _endianness = endianness;
+            this.endianness = endianness;
         }
 
         @Override
@@ -114,13 +122,17 @@ public class BootImage {
         public void write(OutputStream outputStream) throws IOException {
             for (Field field : fields()) {
                 try {
-                    _endianness.writeInt(outputStream, field.getInt(this));
+                    endianness.writeInt(outputStream, field.getInt(this));
                 } catch (IllegalAccessException illegalAccessException) {
                     ProgramError.unexpected();
                 }
             }
         }
 
+        @Override
+        public Class<?> fieldType() {
+            return int.class;
+        }
     }
 
     private static final Utf8Constant run = SymbolTable.makeSymbol("run");
@@ -146,99 +158,99 @@ public class BootImage {
      *
      * @author Bernd Mathiske
      */
-    public final class Header extends IntSection {
-        public final int _isBigEndian;
+    public static final class Header extends IntSection {
+        public final int isBigEndian;
 
-        public final int _identification;
-        public final int _version;
-        public final int _randomID;
+        public final int identification;
+        public final int version;
+        public final int randomID;
 
-        public final int _wordSize;
-        public final int _alignmentSize;
-        public final int _relocationScheme;
+        public final int wordSize;
+        public final int alignmentSize;
+        public final int relocationScheme;
 
-        public final int _pageSize;
+        public final int pageSize;
 
-        public final int _vmThreadLocalsSize;
-        public final int _vmThreadLocalsTrapNumberOffset;
+        public final int vmThreadLocalsSize;
+        public final int vmThreadLocalsTrapNumberOffset;
 
-        public final int _vmRunMethodOffset;
-        public final int _vmThreadRunMethodOffset;
-        public final int _runSchemeRunMethodOffset;
+        public final int vmRunMethodOffset;
+        public final int vmThreadRunMethodOffset;
+        public final int runSchemeRunMethodOffset;
 
-        public final int _classRegistryOffset;
+        public final int classRegistryOffset;
 
-        public final int _stringInfoSize;
-        public final int _relocationDataSize;
+        public final int stringInfoSize;
+        public final int relocationDataSize;
 
-        public final int _bootHeapSize;
-        public final int _bootCodeSize;
-        public final int _codeCacheSize;
+        public final int bootHeapSize;
+        public final int bootCodeSize;
+        public final int codeCacheSize;
 
-        public final int _heapRegionsPointerOffset;
-        public final int _codeRegionsPointerOffset;
+        public final int heapRegionsPointerOffset;
+        public final int codeRegionsPointerOffset;
 
-        public final int _auxiliarySpaceSize;
+        public final int auxiliarySpaceSize;
 
         /**
          * @see MaxineMessenger#_info
          */
-        public final int _messengerInfoOffset;
+        public final int messengerInfoOffset;
 
         /**
-         * @see VmThread#_threadSpecificsList
+         * @see VmThread#threadSpecificsList
          */
-        public final int _threadSpecificsListOffset;
+        public final int threadSpecificsListOffset;
 
         public WordWidth wordWidth() {
-            return WordWidth.fromInt(_wordSize * 8);
+            return WordWidth.fromInt(wordSize * 8);
         }
 
         public Alignment alignment() {
-            return Alignment.fromInt(_alignmentSize);
+            return Alignment.fromInt(alignmentSize);
         }
 
         public int relocationScheme() {
-            return _relocationScheme;
+            return relocationScheme;
         }
 
         private Header(DataInputStream dataInputStream) throws IOException {
             super(dataInputStream.readInt() == 0 ? Endianness.LITTLE : Endianness.BIG);
             final Endianness endian = endianness();
-            _isBigEndian = endian.ordinal();
+            isBigEndian = endian.ordinal();
 
-            _identification = endian.readInt(dataInputStream);
-            _version = endian.readInt(dataInputStream);
-            _randomID = endian.readInt(dataInputStream);
+            identification = endian.readInt(dataInputStream);
+            version = endian.readInt(dataInputStream);
+            randomID = endian.readInt(dataInputStream);
 
-            _wordSize = endian.readInt(dataInputStream);
-            _alignmentSize = endian.readInt(dataInputStream);
-            _relocationScheme = endian.readInt(dataInputStream);
+            wordSize = endian.readInt(dataInputStream);
+            alignmentSize = endian.readInt(dataInputStream);
+            relocationScheme = endian.readInt(dataInputStream);
 
-            _pageSize = endian.readInt(dataInputStream);
+            pageSize = endian.readInt(dataInputStream);
 
-            _vmThreadLocalsSize = endian.readInt(dataInputStream);
-            _vmThreadLocalsTrapNumberOffset = endian.readInt(dataInputStream);
+            vmThreadLocalsSize = endian.readInt(dataInputStream);
+            vmThreadLocalsTrapNumberOffset = endian.readInt(dataInputStream);
 
-            _vmRunMethodOffset = endian.readInt(dataInputStream);
-            _vmThreadRunMethodOffset = endian.readInt(dataInputStream);
-            _runSchemeRunMethodOffset = endian.readInt(dataInputStream);
-            _classRegistryOffset = endian.readInt(dataInputStream);
+            vmRunMethodOffset = endian.readInt(dataInputStream);
+            vmThreadRunMethodOffset = endian.readInt(dataInputStream);
+            runSchemeRunMethodOffset = endian.readInt(dataInputStream);
+            classRegistryOffset = endian.readInt(dataInputStream);
 
-            _stringInfoSize = endian.readInt(dataInputStream);
-            _relocationDataSize = endian.readInt(dataInputStream);
+            stringInfoSize = endian.readInt(dataInputStream);
+            relocationDataSize = endian.readInt(dataInputStream);
 
-            _bootHeapSize = endian.readInt(dataInputStream);
-            _bootCodeSize = endian.readInt(dataInputStream);
-            _codeCacheSize = endian.readInt(dataInputStream);
+            bootHeapSize = endian.readInt(dataInputStream);
+            bootCodeSize = endian.readInt(dataInputStream);
+            codeCacheSize = endian.readInt(dataInputStream);
 
-            _heapRegionsPointerOffset = endian.readInt(dataInputStream);
-            _codeRegionsPointerOffset = endian.readInt(dataInputStream);
+            heapRegionsPointerOffset = endian.readInt(dataInputStream);
+            codeRegionsPointerOffset = endian.readInt(dataInputStream);
 
-            _auxiliarySpaceSize = endian.readInt(dataInputStream);
+            auxiliarySpaceSize = endian.readInt(dataInputStream);
 
-            _messengerInfoOffset = endian.readInt(dataInputStream);
-            _threadSpecificsListOffset = endian.readInt(dataInputStream);
+            messengerInfoOffset = endian.readInt(dataInputStream);
+            threadSpecificsListOffset = endian.readInt(dataInputStream);
         }
 
         private int staticFieldPointerOffset(DataPrototype dataPrototype, Class javaClass, String staticFieldName) {
@@ -248,44 +260,43 @@ public class BootImage {
         }
 
         private Header(DataPrototype dataPrototype, StringInfo stringInfo) {
-            super(dataPrototype.vmConfiguration().platform().processorKind().dataModel().endianness());
+            super(dataPrototype.vmConfiguration().platform().processorKind.dataModel.endianness);
             final VMConfiguration vmConfiguration = dataPrototype.vmConfiguration();
-            _isBigEndian = endianness() == Endianness.LITTLE ? 0 : 0xffffffff;
-            _identification = IDENTIFICATION;
-            _version = VERSION;
-            _randomID = UUID.randomUUID().hashCode();
-            _wordSize = vmConfiguration.platform().processorKind().dataModel().wordWidth().numberOfBytes();
-            _alignmentSize = vmConfiguration.platform().processorKind().dataModel().alignment().numberOfBytes();
-            _relocationScheme = RelocationScheme.DEFAULT.ordinal();
-            _pageSize = vmConfiguration.platform().pageSize();
-            _vmThreadLocalsSize = VmThreadLocal.THREAD_LOCAL_STORAGE_SIZE.toInt();
-            _vmThreadLocalsTrapNumberOffset = VmThreadLocal.TRAP_NUMBER.offset();
-            _vmRunMethodOffset = Static.getCriticalEntryPoint(getRunMethodActor(MaxineVM.class), CallEntryPoint.C_ENTRY_POINT).toInt();
-            _vmThreadRunMethodOffset = Static.getCriticalEntryPoint(getRunMethodActor(VmThread.class), CallEntryPoint.C_ENTRY_POINT).toInt();
-            _runSchemeRunMethodOffset = Static.getCriticalEntryPoint(getRunMethodActor(vmConfiguration.runScheme().getClass()), CallEntryPoint.OPTIMIZED_ENTRY_POINT).toInt();
-            _classRegistryOffset = dataPrototype.objectToOrigin(ClassRegistry.vmClassRegistry()).toInt();
-            _stringInfoSize = stringInfo.size();
-            _relocationDataSize = dataPrototype.relocationData().length;
-            _bootHeapSize = dataPrototype.heapData().length;
-            _bootCodeSize = dataPrototype.codeData().length;
-            _codeCacheSize = CodeManager.CODE_CACHE_SIZE;
+            isBigEndian = endianness() == Endianness.LITTLE ? 0 : 0xffffffff;
+            identification = IDENTIFICATION;
+            version = VERSION;
+            randomID = UUID.randomUUID().hashCode();
+            wordSize = vmConfiguration.platform().processorKind.dataModel.wordWidth.numberOfBytes;
+            alignmentSize = vmConfiguration.platform().processorKind.dataModel.alignment.numberOfBytes();
+            relocationScheme = RelocationScheme.DEFAULT.ordinal();
+            pageSize = vmConfiguration.platform().pageSize;
+            vmThreadLocalsSize = VmThreadLocal.THREAD_LOCAL_STORAGE_SIZE.toInt();
+            vmThreadLocalsTrapNumberOffset = VmThreadLocal.TRAP_NUMBER.offset();
+            vmRunMethodOffset = Static.getCriticalEntryPoint(getRunMethodActor(MaxineVM.class), CallEntryPoint.C_ENTRY_POINT).toInt();
+            vmThreadRunMethodOffset = Static.getCriticalEntryPoint(getRunMethodActor(VmThread.class), CallEntryPoint.C_ENTRY_POINT).toInt();
+            runSchemeRunMethodOffset = Static.getCriticalEntryPoint(getRunMethodActor(vmConfiguration.runScheme().getClass()), CallEntryPoint.OPTIMIZED_ENTRY_POINT).toInt();
+            classRegistryOffset = dataPrototype.objectToOrigin(ClassRegistry.vmClassRegistry()).toInt();
+            stringInfoSize = stringInfo.size();
+            relocationDataSize = dataPrototype.relocationData().length;
+            bootHeapSize = dataPrototype.heapData().length;
+            bootCodeSize = dataPrototype.codeData().length;
+            codeCacheSize = CodeManager.CODE_CACHE_SIZE;
 
-            _heapRegionsPointerOffset = staticFieldPointerOffset(dataPrototype, TeleHeapInfo.class, "_memoryRegions");
-            _codeRegionsPointerOffset = staticFieldPointerOffset(dataPrototype, Code.class, "_memoryRegions");
+            heapRegionsPointerOffset = staticFieldPointerOffset(dataPrototype, TeleHeapInfo.class, "memoryRegions");
+            codeRegionsPointerOffset = staticFieldPointerOffset(dataPrototype, Code.class, "memoryRegions");
 
-            _auxiliarySpaceSize = vmConfiguration.heapScheme().auxiliarySpaceSize(_bootHeapSize + _bootCodeSize);
+            auxiliarySpaceSize = vmConfiguration.heapScheme().auxiliarySpaceSize(bootHeapSize + bootCodeSize);
 
-            _messengerInfoOffset = staticFieldPointerOffset(dataPrototype, MaxineMessenger.class, "_info");
-            _threadSpecificsListOffset = staticFieldPointerOffset(dataPrototype, VmThread.class, "_threadSpecificsList");
+            messengerInfoOffset = staticFieldPointerOffset(dataPrototype, MaxineMessenger.class, "info");
+            threadSpecificsListOffset = staticFieldPointerOffset(dataPrototype, VmThread.class, "threadSpecificsList");
         }
 
-        @Override
         public void check() throws BootImageException {
-            BootImageException.check(_identification == IDENTIFICATION, "not a MaxineVM VM boot image file, wrong identification: " + _identification);
-            BootImageException.check(_version == VERSION, "wrong version: " + _version);
-            BootImageException.check(_wordSize == 4 || _wordSize == 8, "illegal word size: " + _wordSize);
-            BootImageException.check(_alignmentSize == 4 || _alignmentSize == 8, "illegal alignment"); // only 4 and 8 are allowed for now
-            BootImageException.check(_pageSize >= Longs.K && _pageSize % Longs.K == 0, "implausible page size: " + _pageSize);
+            BootImageException.check(identification == IDENTIFICATION, "not a MaxineVM VM boot image file, wrong identification: " + identification);
+            BootImageException.check(version == VERSION, "wrong version: " + version);
+            BootImageException.check(wordSize == 4 || wordSize == 8, "illegal word size: " + wordSize);
+            BootImageException.check(alignmentSize == 4 || alignmentSize == 8, "illegal alignment"); // only 4 and 8 are allowed for now
+            BootImageException.check(pageSize >= Longs.K && pageSize % Longs.K == 0, "implausible page size: " + pageSize);
         }
 
         @Override
@@ -310,167 +321,166 @@ public class BootImage {
         }
     }
 
-    private final Header _header;
+    private final Header header;
 
     public Header header() {
-        return _header;
+        return header;
     }
 
     /**
      * See "image.h".
      */
-    public final class StringInfo extends Section {
-        public final String _buildLevelName;
-        public final String _processorModelName;
-        public final String _instructionSetName;
-        public final String _operatingSystemName;
+    public static final class StringInfo extends Section {
+        public final String buildLevelName;
+        public final String processorModelName;
+        public final String instructionSetName;
+        public final String operatingSystemName;
 
-        public final String _gripPackageName;
-        public final String _referencePackageName;
-        public final String _layoutPackageName;
-        public final String _heapPackageName;
-        public final String _monitorPackageName;
-        public final String _compilerPackageName;
-        public final String _jitPackageName;
-        public final String _interpreterPackageName;
-        public final String _trampolinePackageName;
-        public final String _targetABIsPackageName;
-        public final String _runPackageName;
+        public final String gripPackageName;
+        public final String referencePackageName;
+        public final String layoutPackageName;
+        public final String heapPackageName;
+        public final String monitorPackageName;
+        public final String compilerPackageName;
+        public final String jitPackageName;
+        public final String interpreterPackageName;
+        public final String trampolinePackageName;
+        public final String targetABIsPackageName;
+        public final String runPackageName;
 
         public BuildLevel buildLevel() {
-            return Enums.fromString(BuildLevel.class, _buildLevelName);
+            return Enums.fromString(BuildLevel.class, buildLevelName);
         }
 
         public ProcessorModel processorModel() {
-            return Enums.fromString(ProcessorModel.class, _processorModelName);
+            return Enums.fromString(ProcessorModel.class, processorModelName);
         }
 
         public InstructionSet instructionSet() {
-            return Enums.fromString(InstructionSet.class, _instructionSetName);
+            return Enums.fromString(InstructionSet.class, instructionSetName);
         }
 
         public OperatingSystem operatingSystem() {
-            return Enums.fromString(OperatingSystem.class, _operatingSystemName);
+            return Enums.fromString(OperatingSystem.class, operatingSystemName);
         }
 
         public VMPackage gripPackage() {
-            return (VMPackage) MaxPackage.fromName(_gripPackageName);
+            return (VMPackage) MaxPackage.fromName(gripPackageName);
         }
 
         public VMPackage referencePackage() {
-            return (VMPackage) MaxPackage.fromName(_referencePackageName);
+            return (VMPackage) MaxPackage.fromName(referencePackageName);
         }
 
         public VMPackage layoutPackage() {
-            return (VMPackage) MaxPackage.fromName(_layoutPackageName);
+            return (VMPackage) MaxPackage.fromName(layoutPackageName);
         }
 
         public VMPackage heapPackage() {
-            return (VMPackage) MaxPackage.fromName(_heapPackageName);
+            return (VMPackage) MaxPackage.fromName(heapPackageName);
         }
 
         public VMPackage monitorPackage() {
-            return (VMPackage) MaxPackage.fromName(_monitorPackageName);
+            return (VMPackage) MaxPackage.fromName(monitorPackageName);
         }
 
         public VMPackage compilerPackage() {
-            return (VMPackage) MaxPackage.fromName(_compilerPackageName);
+            return (VMPackage) MaxPackage.fromName(compilerPackageName);
         }
 
         public VMPackage jitPackage() {
-            if (_jitPackageName == null) {
+            if (jitPackageName == null) {
                 return null;
             }
-            return (VMPackage) MaxPackage.fromName(_jitPackageName);
+            return (VMPackage) MaxPackage.fromName(jitPackageName);
         }
 
         public VMPackage interpreterPackage() {
-            if (_interpreterPackageName == null) {
+            if (interpreterPackageName == null) {
                 return null;
             }
-            return (VMPackage) MaxPackage.fromName(_interpreterPackageName);
+            return (VMPackage) MaxPackage.fromName(interpreterPackageName);
         }
 
         public VMPackage trampolinePackage() {
-            return (VMPackage) MaxPackage.fromName(_trampolinePackageName);
+            return (VMPackage) MaxPackage.fromName(trampolinePackageName);
         }
 
         public VMPackage targetABIsPackage() {
-            return (VMPackage) MaxPackage.fromName(_targetABIsPackageName);
+            return (VMPackage) MaxPackage.fromName(targetABIsPackageName);
         }
 
         public VMPackage runPackage() {
-            return (VMPackage) MaxPackage.fromName(_runPackageName);
+            return (VMPackage) MaxPackage.fromName(runPackageName);
         }
 
         private StringInfo(InputStream inputStream) throws IOException, Utf8Exception {
             super();
-            _buildLevelName = Utf8.readString(inputStream);
-            _processorModelName = Utf8.readString(inputStream);
-            _instructionSetName = Utf8.readString(inputStream);
-            _operatingSystemName = Utf8.readString(inputStream);
+            buildLevelName = Utf8.readString(inputStream);
+            processorModelName = Utf8.readString(inputStream);
+            instructionSetName = Utf8.readString(inputStream);
+            operatingSystemName = Utf8.readString(inputStream);
 
-            _gripPackageName = Utf8.readString(inputStream);
-            _referencePackageName = Utf8.readString(inputStream);
-            _layoutPackageName = Utf8.readString(inputStream);
-            _heapPackageName = Utf8.readString(inputStream);
-            _monitorPackageName = Utf8.readString(inputStream);
-            _compilerPackageName = Utf8.readString(inputStream);
-            _jitPackageName =  Utf8.readString(inputStream);
-            _interpreterPackageName = Utf8.readString(inputStream);
-            _trampolinePackageName = Utf8.readString(inputStream);
-            _targetABIsPackageName = Utf8.readString(inputStream);
-            _runPackageName = Utf8.readString(inputStream);
+            gripPackageName = Utf8.readString(inputStream);
+            referencePackageName = Utf8.readString(inputStream);
+            layoutPackageName = Utf8.readString(inputStream);
+            heapPackageName = Utf8.readString(inputStream);
+            monitorPackageName = Utf8.readString(inputStream);
+            compilerPackageName = Utf8.readString(inputStream);
+            jitPackageName =  Utf8.readString(inputStream);
+            interpreterPackageName = Utf8.readString(inputStream);
+            trampolinePackageName = Utf8.readString(inputStream);
+            targetABIsPackageName = Utf8.readString(inputStream);
+            runPackageName = Utf8.readString(inputStream);
         }
 
         private StringInfo(VMConfiguration vmConfiguration) {
             super();
-            _buildLevelName = vmConfiguration.buildLevel().name();
-            _processorModelName = vmConfiguration.platform().processorKind().processorModel().name();
-            _instructionSetName = vmConfiguration.platform().processorKind().instructionSet().name();
-            _operatingSystemName = vmConfiguration.platform().operatingSystem().name();
+            buildLevelName = vmConfiguration.buildLevel().name();
+            processorModelName = vmConfiguration.platform().processorKind.processorModel.name();
+            instructionSetName = vmConfiguration.platform().processorKind.instructionSet.name();
+            operatingSystemName = vmConfiguration.platform().operatingSystem.name();
 
-            _gripPackageName = vmConfiguration.gripPackage().name();
-            _referencePackageName = vmConfiguration.referencePackage().name();
-            _layoutPackageName = vmConfiguration.layoutPackage().name();
-            _heapPackageName = vmConfiguration.heapPackage().name();
-            _monitorPackageName = vmConfiguration.monitorPackage().name();
-            _compilerPackageName = vmConfiguration.compilerPackage().name();
+            gripPackageName = vmConfiguration.gripPackage().name();
+            referencePackageName = vmConfiguration.referencePackage().name();
+            layoutPackageName = vmConfiguration.layoutPackage().name();
+            heapPackageName = vmConfiguration.heapPackage().name();
+            monitorPackageName = vmConfiguration.monitorPackage().name();
+            compilerPackageName = vmConfiguration.compilerPackage().name();
             // Jit Package is optional and may be null. In which case, fall back to the default compiler.
             if (vmConfiguration.jitPackage() == null) {
-                _jitPackageName = _compilerPackageName;
+                jitPackageName = compilerPackageName;
             } else {
-                _jitPackageName = vmConfiguration.jitPackage().name();
+                jitPackageName = vmConfiguration.jitPackage().name();
             }
-            _interpreterPackageName = vmConfiguration.interpreterPackage().name();
+            interpreterPackageName = vmConfiguration.interpreterPackage().name();
 
-            _trampolinePackageName = vmConfiguration.trampolinePackage().name();
-            _targetABIsPackageName = vmConfiguration.targetABIsPackage().name();
-            _runPackageName = vmConfiguration.runPackage().name();
+            trampolinePackageName = vmConfiguration.trampolinePackage().name();
+            targetABIsPackageName = vmConfiguration.targetABIsPackage().name();
+            runPackageName = vmConfiguration.runPackage().name();
         }
 
         private void checkPackage(String packageName) throws BootImageException {
             BootImageException.check(MaxPackage.fromName(packageName) instanceof VMPackage, "not a VM package: " + packageName);
         }
 
-        @Override
         public void check() throws BootImageException {
-            BootImageException.check(buildLevel() != null, "unknown build level: " + _buildLevelName);
-            BootImageException.check(processorModel() != null, "unknown processor model: " + _processorModelName);
-            BootImageException.check(instructionSet() != null, "unknown instruction set: " + _instructionSetName);
-            BootImageException.check(operatingSystem() != null, "unknown operating system: " + _operatingSystemName);
+            BootImageException.check(buildLevel() != null, "unknown build level: " + buildLevelName);
+            BootImageException.check(processorModel() != null, "unknown processor model: " + processorModelName);
+            BootImageException.check(instructionSet() != null, "unknown instruction set: " + instructionSetName);
+            BootImageException.check(operatingSystem() != null, "unknown operating system: " + operatingSystemName);
 
-            checkPackage(_gripPackageName);
-            checkPackage(_referencePackageName);
-            checkPackage(_layoutPackageName);
-            checkPackage(_heapPackageName);
-            checkPackage(_monitorPackageName);
-            checkPackage(_compilerPackageName);
-            checkPackage(_jitPackageName);
-            checkPackage(_interpreterPackageName);
-            checkPackage(_trampolinePackageName);
-            checkPackage(_targetABIsPackageName);
-            checkPackage(_runPackageName);
+            checkPackage(gripPackageName);
+            checkPackage(referencePackageName);
+            checkPackage(layoutPackageName);
+            checkPackage(heapPackageName);
+            checkPackage(monitorPackageName);
+            checkPackage(compilerPackageName);
+            checkPackage(jitPackageName);
+            checkPackage(interpreterPackageName);
+            checkPackage(trampolinePackageName);
+            checkPackage(targetABIsPackageName);
+            checkPackage(runPackageName);
         }
 
         @Override
@@ -498,62 +508,66 @@ public class BootImage {
                 }
             }
         }
+        @Override
+        public Class<?> fieldType() {
+            return String.class;
+        }
     }
 
-    private final StringInfo _stringInfo;
+    private final StringInfo stringInfo;
 
     /**
      * See "image.h".
      */
-    public final class Trailer extends IntSection {
-        public final int _randomID;
-        public final int _version;
-        public final int _identification;
+    public static final class Trailer extends IntSection {
+        public final int randomID;
+        public final int version;
+        public final int identification;
+
 
         private Trailer(Header header, InputStream inputStream) throws IOException {
             super(header.endianness());
-            _randomID = endianness().readInt(inputStream);
-            _version = endianness().readInt(inputStream);
-            _identification = endianness().readInt(inputStream);
+            randomID = endianness().readInt(inputStream);
+            version = endianness().readInt(inputStream);
+            identification = endianness().readInt(inputStream);
         }
 
         private Trailer(Header header) {
             super(header.endianness());
-            _randomID = header._randomID;
-            _version = header._version;
-            _identification = header._identification;
+            randomID = header.randomID;
+            version = header.version;
+            identification = header.identification;
         }
 
-        @Override
-        public void check() throws BootImageException {
-            BootImageException.check(_identification == _header._identification, "inconsistent trailer identififcation");
-            BootImageException.check(_version == _header._version, "inconsistent trailer version");
-            BootImageException.check(_randomID == _header._randomID, "inconsistent trailer random ID");
+        public void check(Header header) throws BootImageException {
+            BootImageException.check(identification == header.identification, "inconsistent trailer identififcation");
+            BootImageException.check(version == header.version, "inconsistent trailer version");
+            BootImageException.check(randomID == header.randomID, "inconsistent trailer random ID");
         }
     }
 
-    private final Trailer _trailer;
+    private final Trailer trailer;
 
     public Trailer trailer() {
-        return _trailer;
+        return trailer;
     }
 
-    private final VMConfiguration _vmConfiguration;
+    private final VMConfiguration vmConfiguration;
 
     public VMConfiguration vmConfiguration() {
-        return _vmConfiguration;
+        return vmConfiguration;
     }
 
     private static native void nativeRelocate(long heapPointer, int relocationScheme, byte[] relocationDataPointer, int relocationDataSize, int alignmentSize, int isBigEndian, int wordSize);
 
     private void relocate(Pointer heap, byte[] relocationData) {
-        nativeRelocate(heap.toLong(), _header._relocationScheme, relocationData, relocationData.length, _header._alignmentSize, _header._isBigEndian, _header._wordSize);
+        nativeRelocate(heap.toLong(), header.relocationScheme, relocationData, relocationData.length, header.alignmentSize, header.isBigEndian, header.wordSize);
     }
 
-    private final DataPrototype _dataPrototype;
+    private final DataPrototype dataPrototype;
 
     public int pagePaddingSize(int numberOfBytesSoFar) throws IOException {
-        final int pageSize = vmConfiguration().platform().pageSize();
+        final int pageSize = vmConfiguration().platform().pageSize;
         final int rest = numberOfBytesSoFar % pageSize;
         if (rest == 0) {
             return 0;
@@ -565,38 +579,38 @@ public class BootImage {
      * Creates a BootImage object representing the information in a given boot image file.
      */
     public BootImage(File file) throws BootImageException {
-        _dataPrototype = null;
+        this.dataPrototype = null;
         try {
             final FileInputStream fileInputStream = new FileInputStream(file);
             try {
-                _header = new Header(new DataInputStream(fileInputStream));
-                _header.check();
-                _stringInfo = new StringInfo(fileInputStream);
-                _stringInfo.check();
-                BootImageException.check(_header._stringInfoSize == _stringInfo.size(), "inconsistent string area size");
+                header = new Header(new DataInputStream(fileInputStream));
+                header.check();
+                stringInfo = new StringInfo(fileInputStream);
+                stringInfo.check();
+                BootImageException.check(header.stringInfoSize == stringInfo.size(), "inconsistent string area size");
 
-                final DataModel dataModel = new DataModel(_header.wordWidth(), _header.endianness(), _header.alignment());
-                final ProcessorKind processorKind = new ProcessorKind(_stringInfo.processorModel(), _stringInfo.instructionSet(), dataModel);
-                final Platform platform = new Platform(processorKind, _stringInfo.operatingSystem(), _header._pageSize);
-                _vmConfiguration = new VMConfiguration(_stringInfo.buildLevel(), platform,
-                                _stringInfo.gripPackage(),
-                                _stringInfo.referencePackage(),
-                                _stringInfo.layoutPackage(),
-                                _stringInfo.heapPackage(),
-                                _stringInfo.monitorPackage(),
-                                _stringInfo.compilerPackage(),
-                                _stringInfo.jitPackage(),
-                                _stringInfo.interpreterPackage(),
-                                _stringInfo.trampolinePackage(),
-                                _stringInfo.targetABIsPackage(),
-                                _stringInfo.runPackage());
-                _vmConfiguration.loadAndInstantiateSchemes();
+                final DataModel dataModel = new DataModel(header.wordWidth(), header.endianness(), header.alignment());
+                final ProcessorKind processorKind = new ProcessorKind(stringInfo.processorModel(), stringInfo.instructionSet(), dataModel);
+                final Platform platform = new Platform(processorKind, stringInfo.operatingSystem(), header.pageSize);
+                vmConfiguration = new VMConfiguration(stringInfo.buildLevel(), platform,
+                                stringInfo.gripPackage(),
+                                stringInfo.referencePackage(),
+                                stringInfo.layoutPackage(),
+                                stringInfo.heapPackage(),
+                                stringInfo.monitorPackage(),
+                                stringInfo.compilerPackage(),
+                                stringInfo.jitPackage(),
+                                stringInfo.interpreterPackage(),
+                                stringInfo.trampolinePackage(),
+                                stringInfo.targetABIsPackage(),
+                                stringInfo.runPackage());
+                vmConfiguration.loadAndInstantiateSchemes();
 
-                fileInputStream.skip(_header._relocationDataSize);
-                final int padding = pagePaddingSize(_header.size() + _header._stringInfoSize + _header._relocationDataSize);
-                fileInputStream.skip(padding + _header._bootHeapSize + _header._bootCodeSize);
-                _trailer = new Trailer(_header, fileInputStream);
-                _trailer.check();
+                fileInputStream.skip(header.relocationDataSize);
+                final int padding = pagePaddingSize(header.size() + header.stringInfoSize + header.relocationDataSize);
+                fileInputStream.skip(padding + header.bootHeapSize + header.bootCodeSize);
+                trailer = new Trailer(header, fileInputStream);
+                trailer.check(header);
             } catch (Utf8Exception utf8Exception) {
                 throw new BootImageException(utf8Exception);
             } finally {
@@ -611,24 +625,24 @@ public class BootImage {
      * Used when constructing a boot image to be written to a file.
      */
     public BootImage(DataPrototype dataPrototype) throws BootImageException {
-        _dataPrototype = dataPrototype;
-        _vmConfiguration = dataPrototype.vmConfiguration();
-        _stringInfo = new StringInfo(_vmConfiguration);
-        _stringInfo.check();
-        _header = new Header(dataPrototype, _stringInfo);
-        _header.check();
-        _trailer = new Trailer(_header);
+        this.dataPrototype = dataPrototype;
+        this.vmConfiguration = dataPrototype.vmConfiguration();
+        this.stringInfo = new StringInfo(vmConfiguration);
+        this.stringInfo.check();
+        this.header = new Header(dataPrototype, stringInfo);
+        this.header.check();
+        this.trailer = new Trailer(header);
     }
 
     public void write(OutputStream outputStream) throws IOException {
-        _header.write(outputStream);
-        _stringInfo.write(outputStream);
-        outputStream.write(_dataPrototype.relocationData());
-        final byte[] padding = new byte[pagePaddingSize(_header.size() + _stringInfo.size() /*+ _dataPrototype.cardOffsetTable().length*/ +  _dataPrototype.relocationData().length)];
+        header.write(outputStream);
+        stringInfo.write(outputStream);
+        outputStream.write(dataPrototype.relocationData());
+        final byte[] padding = new byte[pagePaddingSize(header.size() + stringInfo.size() /*+ _dataPrototype.cardOffsetTable().length*/ +  dataPrototype.relocationData().length)];
         outputStream.write(padding);
-        outputStream.write(_dataPrototype.heapData());
-        outputStream.write(_dataPrototype.codeData());
-        _trailer.write(outputStream);
+        outputStream.write(dataPrototype.heapData());
+        outputStream.write(dataPrototype.codeData());
+        trailer.write(outputStream);
     }
 
     @C_FUNCTION

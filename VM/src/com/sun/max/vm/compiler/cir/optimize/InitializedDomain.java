@@ -71,10 +71,10 @@ public final class InitializedDomain extends AbstractValueDomain<InitializedDoma
 
     public static final class Set extends AbstractValue<Set> {
 
-        private final String _name;
+        private final String name;
 
         private Set(String name) {
-            _name = name;
+            this.name = name;
         }
 
         @Override
@@ -113,7 +113,7 @@ public final class InitializedDomain extends AbstractValueDomain<InitializedDoma
 
         @Override
         public String toString() {
-            return _name;
+            return name;
         }
 
         @Override

@@ -41,9 +41,9 @@ public final class AMD64EirTargetEmitter extends EirTargetEmitter<AMD64Assembler
         if (slot.purpose() == EirStackSlot.Purpose.PARAMETER) {
             // The offset is adjusted to account for the frame allocated for local variables as
             // well as the return address that is pushed to the stack by a call instruction.
-            return new StackAddress(slot.offset() + frameSize() + abi().stackSlotSize(), _stackPointer.indirect());
+            return new StackAddress(slot.offset() + frameSize() + abi().stackSlotSize(), stackPointer.indirect());
         }
-        return new StackAddress(slot.offset(),  _framePointer.indirect());
+        return new StackAddress(slot.offset(),  framePointer.indirect());
     }
 
     /**
@@ -51,30 +51,30 @@ public final class AMD64EirTargetEmitter extends EirTargetEmitter<AMD64Assembler
      * an {@linkplain #isOffset8Bit() 8 or 32 bit} {@linkplain #offset32() offset}.
      */
     public static final class StackAddress {
-        private final int _offset;
-        private final AMD64IndirectRegister64 _base;
+        private final int offset;
+        private final AMD64IndirectRegister64 base;
 
         StackAddress(int offset, AMD64IndirectRegister64 base) {
-            _offset = offset;
-            _base = base;
+            this.offset = offset;
+            this.base = base;
         }
 
         public int offset32() {
             assert !isOffset8Bit();
-            return _offset;
+            return offset;
         }
 
         public byte offset8() {
             assert isOffset8Bit();
-            return (byte) _offset;
+            return (byte) offset;
         }
 
         public int offset() {
-            return _offset;
+            return offset;
         }
 
         public AMD64IndirectRegister64 base() {
-            return _base;
+            return base;
         }
 
         public WordWidth offsetWidth() {
@@ -82,34 +82,34 @@ public final class AMD64EirTargetEmitter extends EirTargetEmitter<AMD64Assembler
         }
 
         public boolean isOffset8Bit() {
-            return WordWidth.signedEffective(_offset) == WordWidth.BITS_8;
+            return WordWidth.signedEffective(offset) == WordWidth.BITS_8;
         }
 
         public boolean isOffsetZero() {
-            return _offset == 0;
+            return offset == 0;
         }
     }
 
-    private AMD64GeneralRegister64 _stackPointer;
+    private AMD64GeneralRegister64 stackPointer;
 
     public AMD64GeneralRegister64 stackPointer() {
-        return _stackPointer;
+        return stackPointer;
     }
 
     public AMD64GeneralRegister64 scratchRegister() {
         return ((AMD64EirRegister.General) abi().integerRegisterActingAs(Role.ABI_SCRATCH)).as64();
     }
 
-    private AMD64GeneralRegister64 _framePointer;
+    private AMD64GeneralRegister64 framePointer;
 
     public AMD64GeneralRegister64 framePointer() {
-        return _framePointer;
+        return framePointer;
     }
 
     public AMD64EirTargetEmitter(AMD64EirABI abi, int frameSize, Safepoint safepoint, AdapterFrameGenerator<AMD64Assembler> adapterFrameGenerator) {
         super(new AMD64Assembler(), abi, frameSize, safepoint, WordWidth.BITS_64, adapterFrameGenerator);
-        _stackPointer = abi.targetABI().stackPointer();
-        _framePointer = abi.targetABI().framePointer();
+        stackPointer = abi.targetABI().stackPointer();
+        framePointer = abi.targetABI().framePointer();
     }
 
     @Override

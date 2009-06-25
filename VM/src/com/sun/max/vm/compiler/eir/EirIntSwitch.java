@@ -48,15 +48,15 @@ public abstract class EirIntSwitch<EirInstructionVisitor_Type extends EirInstruc
         }
     }
 
-    INT_SWITCH_SELECTED_IMPLEMENTATION _selectedImplementation;
+    INT_SWITCH_SELECTED_IMPLEMENTATION selectedImplementation;
 
     protected INT_SWITCH_SELECTED_IMPLEMENTATION selectedImplementation() {
-        return _selectedImplementation;
+        return selectedImplementation;
     }
 
     public EirIntSwitch(EirBlock block, EirValue tag, EirValue[] matches, EirBlock[] targets, EirBlock defaultTarget) {
         super(block, tag, matches, targets, defaultTarget);
-        _selectedImplementation = selectImplementation();
+        selectedImplementation = selectImplementation();
     }
 
     protected int minMatchValue() {
@@ -82,7 +82,7 @@ public abstract class EirIntSwitch<EirInstructionVisitor_Type extends EirInstruc
 
     @Override
     public void emit(EirTargetEmitter_Type emitter) {
-        switch(_selectedImplementation) {
+        switch(selectedImplementation) {
             case COMPARE_AND_BRANCH:
                 assembleCompareAndBranch(emitter);
                 break;

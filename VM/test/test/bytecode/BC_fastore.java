@@ -26,10 +26,10 @@ package test.bytecode;
  */
 public class BC_fastore {
 
-    static float[] _array = {0, 0, 0, 0};
+    static float[] array = {0, 0, 0, 0};
 
     public static float test(int arg, float val) {
-        _array[arg] = val;
-        return _array[arg];
+        array[arg] = val;
+        return array[arg];
     }
 }

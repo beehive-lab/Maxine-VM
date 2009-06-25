@@ -31,16 +31,16 @@ import com.sun.max.ins.gui.*;
   */
 public class MemoryWordsViewPreferences extends com.sun.max.ins.gui.TableColumnVisibilityPreferences<MemoryWordsColumnKind> {
 
-    private static MemoryWordsViewPreferences _globalPreferences;
+    private static MemoryWordsViewPreferences globalPreferences;
 
     /**
      * @return the global, persistent set of user preferences for viewing these tables..
      */
     public static MemoryWordsViewPreferences globalPreferences(Inspection inspection) {
-        if (_globalPreferences == null) {
-            _globalPreferences = new MemoryWordsViewPreferences(inspection);
+        if (globalPreferences == null) {
+            globalPreferences = new MemoryWordsViewPreferences(inspection);
         }
-        return _globalPreferences;
+        return globalPreferences;
     }
 
     /**

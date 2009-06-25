@@ -74,7 +74,7 @@ public class DisassemblyPrinter {
     }
 
     protected void printHeading(Disassembler disassembler, PrintStream stream, int nOffsetChars, int nLabelChars)  {
-        String s = Strings.padLengthWithSpaces("Address", (disassembler.addressWidth().numberOfBytes() * 2) + 2) + SPACE;
+        String s = Strings.padLengthWithSpaces("Address", (disassembler.addressWidth().numberOfBytes * 2) + 2) + SPACE;
         s += Strings.padLengthWithSpaces("+", nOffsetChars) + SPACE;
         s += Strings.padLengthWithSpaces(":", nLabelChars + 1) + SPACE;
         s += Strings.padLengthWithSpaces("Instruction", NUMBER_OF_INSTRUCTION_CHARS) + SPACE;
@@ -84,7 +84,7 @@ public class DisassemblyPrinter {
     }
 
     protected String addressString(Disassembler disassembler, DisassembledObject disassembledObject) {
-        final String format = "0x%0" + disassembler.addressWidth().numberOfBytes() + "X";
+        final String format = "0x%0" + disassembler.addressWidth().numberOfBytes + "X";
         return String.format(format, disassembledObject.startAddress().asLong());
     }
 

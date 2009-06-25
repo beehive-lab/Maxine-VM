@@ -38,22 +38,22 @@ import com.sun.max.vm.compiler.ir.*;
  */
 public class IrProcessingObserver extends IrObserverAdapter {
 
-    protected static final IndentWriter _out = IndentWriter.traceStreamWriter();
+    protected static final IndentWriter out = IndentWriter.traceStreamWriter();
 
-    private final int _traceLevel;
+    private final int traceLevel;
 
     public static final String PROPERTY_TRACE_LEVEL = "max.ir.trace.level";
 
     protected static final int DEFAULT_TRACE_LEVEL = 3;
 
     public IrProcessingObserver() {
-        int traceLevel = 3;
+        int traceLvl = 3;
         try {
-            traceLevel = Integer.parseInt(System.getProperty(PROPERTY_TRACE_LEVEL, String.valueOf(traceLevel)));
+            traceLvl = Integer.parseInt(System.getProperty(PROPERTY_TRACE_LEVEL, String.valueOf(traceLvl)));
         } catch (NumberFormatException e) {
             ProgramWarning.message("Value for system property \"" + PROPERTY_TRACE_LEVEL + "\" not a valid integer: " + System.getProperty(PROPERTY_TRACE_LEVEL));
         }
-        _traceLevel = traceLevel;
+        this.traceLevel = traceLvl;
     }
 
     protected String methodName(IrMethod irMethod) {
@@ -65,7 +65,7 @@ public class IrProcessingObserver extends IrObserverAdapter {
     }
 
     protected boolean hasLevel(int requiredLevel) {
-        return _traceLevel >= requiredLevel;
+        return traceLevel >= requiredLevel;
     }
 
     protected int allocationTraceLevel() {
@@ -83,41 +83,41 @@ public class IrProcessingObserver extends IrObserverAdapter {
     @Override
     public void observeAllocation(IrMethod irMethod) {
         if (hasLevel(allocationTraceLevel())) {
-            _out.println("ALLOCATED " + methodName(irMethod));
+            out.println("ALLOCATED " + methodName(irMethod));
         }
     }
 
     @Override
     public void observeBeforeGeneration(IrMethod irMethod, IrGenerator irGenerator) {
         if (hasLevel(afterGenerationTraceLevel())) {
-            _out.println(methodName(irMethod) + " BEGIN generation");
-            _out.indent();
-            _out.flush();
+            out.println(methodName(irMethod) + " BEGIN generation");
+            out.indent();
+            out.flush();
         }
     }
 
     @Override
     public void observeAfterGeneration(IrMethod irMethod, IrGenerator irGenerator) {
         if (hasLevel(afterGenerationTraceLevel())) {
-            _out.outdent();
-            _out.println(methodName(irMethod) + "   END generation");
-            _out.flush();
+            out.outdent();
+            out.println(methodName(irMethod) + "   END generation");
+            out.flush();
         }
     }
 
     @Override
     public void observeBeforeTransformation(IrMethod irMethod, Object context, Object transform) {
         if (hasLevel(transformTraceLevel(transform))) {
-            _out.println(methodName(irMethod) + " BEGIN " + ": " + transform);
-            _out.indent();
+            out.println(methodName(irMethod) + " BEGIN " + ": " + transform);
+            out.indent();
         }
     }
 
     @Override
     public void observeAfterTransformation(IrMethod irMethod, Object context, Object transform) {
         if (hasLevel(transformTraceLevel(transform))) {
-            _out.outdent();
-            _out.println(methodName(irMethod) + "   END " + ": " + transform);
+            out.outdent();
+            out.println(methodName(irMethod) + "   END " + ": " + transform);
         }
     }
 }

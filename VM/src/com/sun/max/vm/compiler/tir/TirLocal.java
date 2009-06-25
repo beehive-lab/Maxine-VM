@@ -27,55 +27,55 @@ import com.sun.max.vm.type.*;
 
 public class TirLocal extends TirInstruction {
     public static final class Flags {
-        private Kind _kind = Kind.VOID;
-        private boolean _isRead;
-        private boolean _isWritten;
-        private boolean _isUndefined;
+        private Kind kind = Kind.VOID;
+        private boolean isRead;
+        private boolean isWritten;
+        private boolean isUndefined;
 
         private Flags() {
 
         }
 
         private Flags(Flags flags) {
-            _kind = flags._kind;
-            _isRead = flags._isRead;
-            _isWritten = flags._isWritten;
-            _isUndefined = flags._isUndefined;
+            this.kind = flags.kind;
+            this.isRead = flags.isRead;
+            this.isWritten = flags.isWritten;
+            this.isUndefined = flags.isUndefined;
         }
 
         public boolean isRead() {
-            return _isRead;
+            return isRead;
         }
 
         public boolean isWritten() {
-            return _isWritten;
+            return isWritten;
         }
 
         public boolean isUndefined() {
-            return _isUndefined;
+            return isUndefined;
         }
 
         @Override
         public String toString() {
-            String flags = "flags: " + _kind;
-            if (_isRead) {
+            String flags = "flags: " + kind;
+            if (isRead) {
                 flags += ", read";
             }
-            if (_isWritten) {
+            if (isWritten) {
                 flags += ", written";
             }
-            if (_isUndefined) {
+            if (isUndefined) {
                 flags += ", undefined";
             }
             return flags;
         }
 
         public void setWritten(boolean written) {
-            _isWritten = written;
+            isWritten = written;
         }
 
         public void setRead(boolean read) {
-            _isRead = read;
+            isRead = read;
         }
     }
 
@@ -86,33 +86,34 @@ public class TirLocal extends TirInstruction {
         }
     };
 
-    private Flags _flags;
-    private Flags _temporaryFlags = new Flags();
+    private Flags flags;
+    private Flags temporaryFlags = new Flags();
 
-    private final int _slot;
+    private final int slot;
 
     public TirLocal(int slot) {
-        _slot = slot;
+        this.slot = slot;
     }
 
     @Override
     public Kind kind() {
-        return flags()._kind;
+        return flags().kind;
     }
 
     // Checkstyle: stop
     @Override
     public void setKind(Kind kind) {
-        flags()._isRead = true;
-        if (flags()._kind == Kind.VOID) {
-            flags()._kind = kind;
+        flags().isRead = true;
+        if (flags().kind == Kind.VOID) {
+            flags().kind = kind;
         } else {
-            if (flags()._kind != kind) {
+            if (flags().kind != kind) {
                 ProgramError.unexpected("I don't remember what to do here!");
-                flags()._isUndefined = true;
+                flags().isUndefined = true;
             }
         }
     }
+    // Checkstyle: resume
 
     @Override
     public void accept(TirInstructionVisitor visitor) {
@@ -121,42 +122,43 @@ public class TirLocal extends TirInstruction {
 
     @Override
     public String toString() {
-        return "LOCAL slot: " + _slot;
+        return "LOCAL slot: " + slot;
     }
 
     public int slot() {
-        return _slot;
+        return slot;
     }
 
     public Flags flags() {
-        if (_temporaryFlags != null) {
-            return _temporaryFlags;
+        if (temporaryFlags != null) {
+            return temporaryFlags;
         }
-        return _flags;
+        return flags;
     }
 
     public void createFlags() {
-        _temporaryFlags = new Flags(_flags);
+        temporaryFlags = new Flags(flags);
     }
 
     public void commitFlags() {
-        _flags = _temporaryFlags;
-        _temporaryFlags = new Flags(_temporaryFlags);
+        flags = temporaryFlags;
+        temporaryFlags = new Flags(temporaryFlags);
     }
 
     public void discardFlags() {
-        _temporaryFlags = null;
+        temporaryFlags = null;
     }
 
     public void complete(TirInstruction tail) {
         if (this != tail) {
-            flags().setWritten(true);
-            if (flags()._isUndefined == false) {
-                if (flags()._kind == Kind.VOID) {
-                    flags()._kind = tail.kind();
+            final Flags flags = flags();
+            flags.setWritten(true);
+            if (flags.isUndefined == false) {
+                if (flags.kind == Kind.VOID) {
+                    flags.kind = tail.kind();
                 } else {
-                    if (flags()._kind != tail.kind()) {
-                        flags()._isUndefined = true;
+                    if (flags.kind != tail.kind()) {
+                        flags.isUndefined = true;
                     }
                 }
             }

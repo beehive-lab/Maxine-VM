@@ -36,47 +36,47 @@ public class BiasedLockRevocationHeuristics {
     private static final int BULK_REVOCATION_THRESHOLD = 40;
     private static final int BULK_REBIAS_DECAY_TIME = 25000;
 
-    private int _revocationCount = 0;
-    private long _lastBulkRebiasTime = 0;
+    private int revocationCount = 0;
+    private long lastBulkRebiasTime = 0;
 
-    private static final FieldActor _revocationCountFieldActor = FieldActor.findInstance(BiasedLockRevocationHeuristics.class, "_revocationCount");
+    private static final FieldActor revocationCountFieldActor = FieldActor.findInstance(BiasedLockRevocationHeuristics.class, "revocationCount");
 
     public RevocationType notifyContentionRevocationRequest() {
 
         // This heuristic re-implements that used in HotSpot (as of 1.7)
 
-        int revocationCount = _revocationCount;
-        final long lastBulkRebiasTime = _lastBulkRebiasTime;
+        int currentRevocationCount = revocationCount;
+        final long bulkRebiasTime = lastBulkRebiasTime;
         final long currentTime = System.currentTimeMillis();
-        if (revocationCount >= BULK_REBIAS_THRESHOLD &&
-            revocationCount < BULK_REVOCATION_THRESHOLD &&
-            _lastBulkRebiasTime != 0 &&
-            currentTime - lastBulkRebiasTime > BULK_REBIAS_DECAY_TIME) {
+        if (currentRevocationCount >= BULK_REBIAS_THRESHOLD &&
+            currentRevocationCount < BULK_REVOCATION_THRESHOLD &&
+            lastBulkRebiasTime != 0 &&
+            currentTime - bulkRebiasTime > BULK_REBIAS_DECAY_TIME) {
+            currentRevocationCount = 0;
             revocationCount = 0;
-            _revocationCount = 0;
         }
 
-        if (revocationCount <= BULK_REVOCATION_THRESHOLD) {
-            revocationCount = revocationCountAtomicInc();
+        if (currentRevocationCount <= BULK_REVOCATION_THRESHOLD) {
+            currentRevocationCount = revocationCountAtomicInc();
         }
 
-        if (revocationCount == BULK_REBIAS_THRESHOLD) {
+        if (currentRevocationCount == BULK_REBIAS_THRESHOLD) {
             return RevocationType.BULK_REBIAS;
-        } else if (revocationCount == BULK_REVOCATION_THRESHOLD) {
+        } else if (currentRevocationCount == BULK_REVOCATION_THRESHOLD) {
             return RevocationType.BULK_REVOCATION;
         }
         return RevocationType.SINGLE_OBJECT_REVOCATION;
     }
 
     public void notifyBulkRebiasComplete() {
-        _lastBulkRebiasTime = System.currentTimeMillis();
+        lastBulkRebiasTime = System.currentTimeMillis();
     }
 
     private int revocationCountAtomicInc() {
         while (true) {
-            final Address revocationCount = Address.fromUnsignedInt(_revocationCount);
-            final Address newRevocationCount = revocationCount.plus(1);
-            if (Reference.fromJava(this).compareAndSwapWord(_revocationCountFieldActor.offset(), revocationCount, newRevocationCount).equals(revocationCount)) {
+            final Address oldRevocationCount = Address.fromUnsignedInt(revocationCount);
+            final Address newRevocationCount = oldRevocationCount.plus(1);
+            if (Reference.fromJava(this).compareAndSwapWord(revocationCountFieldActor.offset(), oldRevocationCount, newRevocationCount).equals(oldRevocationCount)) {
                 return newRevocationCount.toInt();
             }
 

@@ -40,21 +40,21 @@ import com.sun.max.vm.run.java.*;
  */
 public abstract class AbstractTester extends JavaRunScheme {
 
-    protected static Utf8Constant _testMethod = SymbolTable.makeSymbol("test");
-    protected static boolean _nativeTests;
-    protected static boolean _noTests;
-    protected static int _passed;
-    protected static int _finished;
-    protected static int _total;
-    protected static int _testNum;
-    protected static int _testStart;
-    protected static int _testEnd;
-    protected static int _testCount;
-    protected static int _verbose = 2;
+    protected static Utf8Constant testMethod = SymbolTable.makeSymbol("test");
+    protected static boolean nativeTests;
+    protected static boolean noTests;
+    protected static int passed;
+    protected static int finished;
+    protected static int total;
+    protected static int testNum;
+    protected static int testStart;
+    protected static int testEnd;
+    protected static int testCount;
+    protected static int verbose = 2;
 
-    private static VMIntOption _startOption = register(new VMIntOption("-XX:TesterStart=", -1,
+    private static VMIntOption startOption = register(new VMIntOption("-XX:TesterStart=", -1,
                     "The number of the first test to run."), MaxineVM.Phase.STARTING);
-    private static VMIntOption _endOption  = register(new VMIntOption("-XX:TesterEnd=", -1,
+    private static VMIntOption endOption  = register(new VMIntOption("-XX:TesterEnd=", -1,
                     "The number of the last test to run. Specify 0 to run exactly one test."), MaxineVM.Phase.STARTING);
     private static final boolean COMPILE_ALL_TEST_METHODS = true;
 
@@ -68,30 +68,30 @@ public abstract class AbstractTester extends JavaRunScheme {
 
     public static void end(String run, boolean result) {
         if (result) {
-            _passed++;
+            passed++;
         }
-        if (_verbose == 2) {
-            verbose(result, ++_finished, _total);
+        if (verbose == 2) {
+            verbose(result, ++finished, total);
         }
-        if (_verbose == 3) {
+        if (verbose == 3) {
             if (!result) {
                 printRun(run);
                 Log.println(" failed with incorrect result");
             }
         }
-        _testNum++;
+        testNum++;
     }
 
     public static void end(String run, Throwable t) {
-        if (_verbose == 2) {
-            verbose(false, ++_finished, _total);
+        if (verbose == 2) {
+            verbose(false, ++finished, total);
         }
-        if (_verbose == 3) {
+        if (verbose == 3) {
             printRun(run);
             Log.print(" failed with exception !");
             Log.println(t.getClass().getName());
         }
-        _testNum++;
+        testNum++;
     }
 
     private static void printRun(String run) {
@@ -118,25 +118,25 @@ public abstract class AbstractTester extends JavaRunScheme {
     }
 
     public static void begin(String test) {
-        if (_verbose == 3) {
+        if (verbose == 3) {
             printTestNum();
             Log.print(test);
             int i = test.length();
             while (i++ < 50) {
                 Log.print(' ');
             }
-            Log.println("  next: '" + _startOption + (_testNum + 1) + "', end: '" + _endOption + _testCount + "'");
+            Log.println("  next: '" + startOption + (testNum + 1) + "', end: '" + endOption + testCount + "'");
         }
     }
 
     public static void printTestNum() {
         // print out the test number (aligned to the left)
-        Log.print(_testNum);
+        Log.print(testNum);
         Log.print(':');
-        if (_testNum < 100) {
+        if (testNum < 100) {
             Log.print(' ');
         }
-        if (_testNum < 10) {
+        if (testNum < 10) {
             Log.print(' ');
         }
         Log.print(' ');
@@ -152,10 +152,10 @@ public abstract class AbstractTester extends JavaRunScheme {
         if (actor == null) {
             return;
         }
-        if (BinaryImageGenerator._calleeJit) {
+        if (BinaryImageGenerator.calleeJit) {
             CompiledPrototype.registerJitClass(javaClass);
         }
-        if (BinaryImageGenerator._unlinked) {
+        if (BinaryImageGenerator.unlinked) {
             CompiledPrototype.registerClassUnlinked(actor);
         }
         if (COMPILE_ALL_TEST_METHODS) {
@@ -164,7 +164,7 @@ public abstract class AbstractTester extends JavaRunScheme {
             addMethods(actor.localVirtualMethodActors());
         } else {
             // add only the test method to the image
-            final StaticMethodActor method = actor.findLocalStaticMethodActor(_testMethod);
+            final StaticMethodActor method = actor.findLocalStaticMethodActor(testMethod);
             if (method != null) {
                 addMethodToImage(method);
             }
@@ -187,14 +187,14 @@ public abstract class AbstractTester extends JavaRunScheme {
     @PROTOTYPE_ONLY
     private void addMethodToImage(ClassMethodActor method) {
         CompiledPrototype.registerImageMethod(method);
-        if (BinaryImageGenerator._unlinked) {
+        if (BinaryImageGenerator.unlinked) {
             CompiledPrototype.registerMethodUnlinked(method);
         }
     }
 
     @PROTOTYPE_ONLY
     private void registerClasses() {
-        if (BinaryImageGenerator._callerJit) {
+        if (BinaryImageGenerator.callerJit) {
             CompiledPrototype.registerJitClass(JavaTesterTests.class);
         }
         for (Class<?> testClass : getClassList()) {
@@ -204,32 +204,32 @@ public abstract class AbstractTester extends JavaRunScheme {
 
     @Override
     protected boolean parseMain() {
-        return _noTests;
+        return noTests;
     }
 
     protected abstract void runTests();
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        _noTests = VMOptions.parseMain(false);
+        noTests = VMOptions.parseMain(false);
         if (phase == MaxineVM.Phase.STARTING) {
-            if (_nativeTests || _noTests) {
+            if (nativeTests || noTests) {
                 super.initialize(phase);
             }
-            if (!_noTests) {
-                _testStart = _startOption.getValue();
-                if (_testStart < 0) {
-                    _testStart = 0;
+            if (!noTests) {
+                testStart = startOption.getValue();
+                if (testStart < 0) {
+                    testStart = 0;
                 }
-                final int testEnd = _endOption.getValue();
-                if (testEnd == 0) {
-                    _testEnd = _testStart + 1;
-                } else if (testEnd > 0) {
-                    _testEnd = testEnd;
+                final int end = endOption.getValue();
+                if (end == 0) {
+                    testEnd = testStart + 1;
+                } else if (end > 0) {
+                    testEnd = end;
                 } else {
-                    _testEnd = _testCount;
+                    testEnd = testCount;
                 }
-                if (_nativeTests) {
+                if (nativeTests) {
                     System.loadLibrary("javatest");
                 }
                 runTests();
@@ -237,11 +237,11 @@ public abstract class AbstractTester extends JavaRunScheme {
         } else {
             super.initialize(phase);
         }
-        _verbose = 3;
+        verbose = 3;
         if (MaxineVM.isPrototyping()) {
             registerClasses();
-            _nativeTests = BinaryImageGenerator._nativeTests;
-            _testCount = getClassList().length;
+            nativeTests = BinaryImageGenerator.nativeTests;
+            testCount = getClassList().length;
             super.initialize(phase);
         }
     }

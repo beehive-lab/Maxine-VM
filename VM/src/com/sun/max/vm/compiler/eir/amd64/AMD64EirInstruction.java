@@ -472,8 +472,8 @@ public interface AMD64EirInstruction {
      * it must save the frame pointer and then call optimized code, and then restore the frame pointer.
      */
     public static class RUNTIME_CALL extends CALL {
-        protected final AMD64GeneralRegister64 _framePointerRegister;
-        protected final AMD64GeneralRegister64 _stackPointerRegister;
+        protected final AMD64GeneralRegister64 framePointerRegister;
+        protected final AMD64GeneralRegister64 stackPointerRegister;
 
         public RUNTIME_CALL(EirBlock block, EirABI abi, EirValue result, EirLocation resultLocation,
                         EirValue function, EirValue[] arguments, EirLocation[] argumentLocations,
@@ -481,8 +481,8 @@ public interface AMD64EirInstruction {
             super(block, abi, result, resultLocation, function, arguments, argumentLocations, methodGeneration);
             // TODO: get the correct frame pointer and stack pointer registers from ABI
             // the current ABI returns RSP for both framePointer() and stackPointer()
-            _framePointerRegister = AMD64GeneralRegister64.RBP;
-            _stackPointerRegister = AMD64GeneralRegister64.RSP;
+            framePointerRegister = AMD64GeneralRegister64.RBP;
+            stackPointerRegister = AMD64GeneralRegister64.RSP;
         }
 
         @Override
@@ -493,13 +493,13 @@ public interface AMD64EirInstruction {
             final int delta = emitter.abi().targetABI().stackFrameAlignment() - rbpSize;
             final AMD64Assembler asm = emitter.assembler();
             if (delta > 0) {
-                asm.subq(_stackPointerRegister, (byte) delta);
+                asm.subq(stackPointerRegister, (byte) delta);
             }
-            asm.push(_framePointerRegister);
+            asm.push(framePointerRegister);
             super.emit(emitter);
-            asm.pop(_framePointerRegister);
+            asm.pop(framePointerRegister);
             if (delta > 0) {
-                asm.addq(_stackPointerRegister, (byte) delta);
+                asm.addq(stackPointerRegister, (byte) delta);
             }
         }
     }
@@ -903,35 +903,35 @@ public interface AMD64EirInstruction {
 
     public static class CMPSD extends AMD64EirBinaryOperation.Arithmetic.XMM {
 
-        private final AMD64XMMComparison _comparison;
+        private final AMD64XMMComparison comparison;
 
         public AMD64XMMComparison comparison() {
-            return _comparison;
+            return comparison;
         }
 
         public CMPSD(EirBlock block, EirValue destination, EirValue source, AMD64XMMComparison comparison) {
             super(block, destination, EirOperand.Effect.USE, source, EirOperand.Effect.USE);
-            _comparison = comparison;
+            this.comparison = comparison;
         }
 
         @Override
         protected void emit_X_X(AMD64EirTargetEmitter emitter, AMD64XMMRegister destinationRegister, AMD64XMMRegister sourceRegister) {
-            emitter.assembler().cmpsd(destinationRegister, sourceRegister, _comparison);
+            emitter.assembler().cmpsd(destinationRegister, sourceRegister, comparison);
         }
 
         @Override
         protected void emit_X_L(AMD64EirTargetEmitter emitter, AMD64XMMRegister destinationRegister, Label sourceLabel) {
-            emitter.assembler().rip_cmpsd(destinationRegister, sourceLabel, _comparison);
+            emitter.assembler().rip_cmpsd(destinationRegister, sourceLabel, comparison);
         }
 
         @Override
         protected void emit_X_S8(AMD64EirTargetEmitter emitter, AMD64XMMRegister destinationRegister, AMD64IndirectRegister64 sourceBasePointer, byte sourceOffset) {
-            emitter.assembler().cmpsd(destinationRegister, sourceOffset, sourceBasePointer, _comparison);
+            emitter.assembler().cmpsd(destinationRegister, sourceOffset, sourceBasePointer, comparison);
         }
 
         @Override
         protected void emit_X_S32(AMD64EirTargetEmitter emitter, AMD64XMMRegister destinationRegister, AMD64IndirectRegister64 sourceBasePointer, int sourceOffset) {
-            emitter.assembler().cmpsd(destinationRegister, sourceOffset, sourceBasePointer, _comparison);
+            emitter.assembler().cmpsd(destinationRegister, sourceOffset, sourceBasePointer, comparison);
         }
 
         @Override
@@ -942,35 +942,35 @@ public interface AMD64EirInstruction {
 
     public static class CMPSS extends AMD64EirBinaryOperation.Arithmetic.XMM {
 
-        private final AMD64XMMComparison _comparison;
+        private final AMD64XMMComparison comparison;
 
         public AMD64XMMComparison comparison() {
-            return _comparison;
+            return comparison;
         }
 
         public CMPSS(EirBlock block, EirValue destination, EirValue source, AMD64XMMComparison comparison) {
             super(block, destination, EirOperand.Effect.USE, source, EirOperand.Effect.USE);
-            _comparison = comparison;
+            this.comparison = comparison;
         }
 
         @Override
         protected void emit_X_X(AMD64EirTargetEmitter emitter, AMD64XMMRegister destinationRegister, AMD64XMMRegister sourceRegister) {
-            emitter.assembler().cmpss(destinationRegister, sourceRegister, _comparison);
+            emitter.assembler().cmpss(destinationRegister, sourceRegister, comparison);
         }
 
         @Override
         protected void emit_X_L(AMD64EirTargetEmitter emitter, AMD64XMMRegister destinationRegister, Label sourceLabel) {
-            emitter.assembler().rip_cmpss(destinationRegister, sourceLabel, _comparison);
+            emitter.assembler().rip_cmpss(destinationRegister, sourceLabel, comparison);
         }
 
         @Override
         protected void emit_X_S8(AMD64EirTargetEmitter emitter, AMD64XMMRegister destinationRegister, AMD64IndirectRegister64 sourceBasePointer, byte sourceOffset) {
-            emitter.assembler().cmpss(destinationRegister, sourceOffset, sourceBasePointer, _comparison);
+            emitter.assembler().cmpss(destinationRegister, sourceOffset, sourceBasePointer, comparison);
         }
 
         @Override
         protected void emit_X_S32(AMD64EirTargetEmitter emitter, AMD64XMMRegister destinationRegister, AMD64IndirectRegister64 sourceBasePointer, int sourceOffset) {
-            emitter.assembler().cmpss(destinationRegister, sourceOffset, sourceBasePointer, _comparison);
+            emitter.assembler().cmpss(destinationRegister, sourceOffset, sourceBasePointer, comparison);
         }
 
         @Override
@@ -2059,7 +2059,7 @@ public interface AMD64EirInstruction {
      */
     public static class LEA_STACK_ADDRESS extends AMD64EirBinaryOperation {
 
-        private final StackVariable _stackVariableKey;
+        private final StackVariable stackVariableKey;
 
         /**
          * Creates an instruction that assigns the address of a stack slot to the destination register.
@@ -2071,7 +2071,7 @@ public interface AMD64EirInstruction {
          */
         public LEA_STACK_ADDRESS(EirBlock block, EirValue destination, EirValue source, StackVariable stackVariableKey) {
             super(block, destination, EirOperand.Effect.DEFINITION, G, source, EirOperand.Effect.USE, S);
-            _stackVariableKey = stackVariableKey;
+            this.stackVariableKey = stackVariableKey;
         }
 
         @Override
@@ -2086,8 +2086,8 @@ public interface AMD64EirInstruction {
                 emitter.assembler().lea(destination, source.offset32(), source.base());
             }
 
-            if (_stackVariableKey != null) {
-                emitter.recordStackVariableOffset(_stackVariableKey, source.offset());
+            if (stackVariableKey != null) {
+                emitter.recordStackVariableOffset(stackVariableKey, source.offset());
             }
         }
 
@@ -3680,7 +3680,7 @@ public interface AMD64EirInstruction {
             final AMD64GeneralRegister64 tagRegister = tagGeneralRegister().as64();
             for (int i = 0; i < matches().length; i++) {
                 emitter.assembler().cmpq(tagRegister, matches()[i].value().asInt());
-                emitter.assembler().jz(targets()[i].asLabel());
+                emitter.assembler().jz(targets[i].asLabel());
             }
             JMP.emit(emitter, defaultTarget());
         }
@@ -3693,7 +3693,7 @@ public interface AMD64EirInstruction {
             final Label jumpTable = new Label();
 
             for (int i = 0; i < matches.length; i++) {
-                targetLabels[i] = targets()[i].asLabel();
+                targetLabels[i] = targets[i].asLabel();
             }
 
             final AMD64GeneralRegister64 indexRegister = tagGeneralRegister().as64();
@@ -3714,7 +3714,7 @@ public interface AMD64EirInstruction {
             emitter.assembler().add(targetAddressRegister, indexRegister);
             emitter.assembler().jmp(targetAddressRegister);
 
-            directives.align(WordWidth.BITS_32.numberOfBytes());
+            directives.align(WordWidth.BITS_32.numberOfBytes);
             emitter.assembler().bindLabel(jumpTable);
 
             for (int i = 0; i < matches.length; i++) {
@@ -3737,7 +3737,7 @@ public interface AMD64EirInstruction {
             final int middleIndex = (bottomIndex + topIndex) >> 1;
 
             emitter.assembler().cmpl(tagRegister32, matches()[middleIndex].value().asInt());
-            emitter.assembler().jz(targets()[middleIndex].asLabel());
+            emitter.assembler().jz(targets[middleIndex].asLabel());
 
             if (bottomIndex == topIndex) {
                 JMP.emit(emitter, defaultTarget());
@@ -3981,7 +3981,7 @@ public interface AMD64EirInstruction {
     public static final class ZERO extends AMD64EirUnaryOperation {
 
         public static PoolSet<EirLocationCategory> locationCategories(Kind kind) {
-            switch (kind.asEnum()) {
+            switch (kind.asEnum) {
                 case INT:
                 case LONG:
                 case WORD:
@@ -3995,15 +3995,15 @@ public interface AMD64EirInstruction {
             }
         }
 
-        private Kind _kind;
+        private final Kind kind;
 
         public Kind kind() {
-            return _kind;
+            return kind;
         }
 
         public ZERO(EirBlock block, Kind kind, EirValue operand) {
             super(block, operand, EirOperand.Effect.DEFINITION, locationCategories(kind));
-            _kind = kind;
+            this.kind = kind;
         }
 
         @Override
@@ -4015,7 +4015,7 @@ public interface AMD64EirInstruction {
                     break;
                 }
                 case FLOATING_POINT_REGISTER: {
-                    switch (_kind.asEnum()) {
+                    switch (kind.asEnum) {
                         case FLOAT: {
                             final AMD64EirRegister.XMM register = (AMD64EirRegister.XMM) operand().location();
                             emitter.assembler().xorps(register.as(), register.as());

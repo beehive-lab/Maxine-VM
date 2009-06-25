@@ -51,21 +51,21 @@ public final class TargetBundleLayout {
 
         public static final IndexedSequence<ArrayField> VALUES = new ArraySequence<ArrayField>(values());
 
-        final ArrayLayout _arrayLayout;
+        final ArrayLayout arrayLayout;
 
         ArrayField() {
             final LayoutScheme layoutScheme = VMConfiguration.hostOrTarget().layoutScheme();
-            final String fieldName = "_" + name();
+            final String fieldName = name();
             final TypeDescriptor fieldType = JavaTypeDescriptor.forJavaClass(Classes.getDeclaredField(TargetMethod.class, fieldName).getType());
             assert JavaTypeDescriptor.isArray(fieldType);
-            _arrayLayout = fieldType.componentTypeDescriptor().toKind().arrayLayout(layoutScheme);
+            arrayLayout = fieldType.componentTypeDescriptor().toKind().arrayLayout(layoutScheme);
         }
 
         /**
          * Gets the layout describing the array referenced by this field.
          */
         public ArrayLayout layout() {
-            return _arrayLayout;
+            return arrayLayout;
         }
 
         /**
@@ -104,10 +104,10 @@ public final class TargetBundleLayout {
          */
         void update(int length, TargetBundleLayout targetBundleLayout, LinearAllocatorHeapRegion region) {
             final int ordinal = ordinal();
-            targetBundleLayout._lengths[ordinal] = length;
-            final Size cellSize = length == 0 && !allocateEmptyArray() ? Size.zero() : _arrayLayout.getArraySize(length);
-            WordArray.set(targetBundleLayout._cellSizes, ordinal, cellSize);
-            WordArray.set(targetBundleLayout._cellOffsets, ordinal, allocate(region, cellSize));
+            targetBundleLayout.lengths[ordinal] = length;
+            final Size cellSize = length == 0 && !allocateEmptyArray() ? Size.zero() : arrayLayout.getArraySize(length);
+            WordArray.set(targetBundleLayout.cellSizes, ordinal, cellSize);
+            WordArray.set(targetBundleLayout.cellOffsets, ordinal, allocate(region, cellSize));
         }
     }
 
@@ -116,10 +116,10 @@ public final class TargetBundleLayout {
      */
     public static final Offset INVALID_OFFSET = Offset.fromLong(-1);
 
-    final int[] _lengths;
-    final Size[] _cellSizes;
-    final Offset[] _cellOffsets;
-    private Size _bundleSize;
+    final int[] lengths;
+    final Size[] cellSizes;
+    final Offset[] cellOffsets;
+    private Size bundleSize;
 
     public TargetBundleLayout(int numberOfCatchRanges, int numberOfDirectCalls, int numberOfIndirectCalls, int numberOfSafepoints, int numberOfScalarLiteralBytes, int numberOfReferenceLiterals,
                     int numberOfCodeBytes, int frameReferenceMapSize, int registerReferenceMapSize) {
@@ -127,13 +127,13 @@ public final class TargetBundleLayout {
         final LinearAllocatorHeapRegion region = new LinearAllocatorHeapRegion(Address.zero(), Size.fromLong(Long.MAX_VALUE), "TargetBundle");
 
         final int numberOfFields = ArrayField.VALUES.length();
-        _lengths = new int[numberOfFields];
-        _cellSizes = new Size[numberOfFields];
-        _cellOffsets = new Offset[numberOfFields];
-        WordArray.fill(_cellOffsets, INVALID_OFFSET);
+        lengths = new int[numberOfFields];
+        cellSizes = new Size[numberOfFields];
+        cellOffsets = new Offset[numberOfFields];
+        WordArray.fill(cellOffsets, INVALID_OFFSET);
 
         if (MaxineVM.isPrototyping()) {
-            _bundleSize = Size.zero();
+            bundleSize = Size.zero();
         }
 
         if (numberOfCatchRanges != 0) {
@@ -153,8 +153,8 @@ public final class TargetBundleLayout {
         initialize(referenceLiterals, numberOfReferenceLiterals, region);
         initialize(code, numberOfCodeBytes, region);
 
-        _bundleSize = region.getAllocationMark().asSize();
-        assert _bundleSize.isAligned();
+        bundleSize = region.getAllocationMark().asSize();
+        assert bundleSize.isAligned();
     }
 
     /**
@@ -165,7 +165,7 @@ public final class TargetBundleLayout {
      *         {@link Size#zero()})
      */
     public Size cellSize(ArrayField field) {
-        return WordArray.get(_cellSizes, field.ordinal());
+        return WordArray.get(cellSizes, field.ordinal());
     }
 
     /**
@@ -177,7 +177,7 @@ public final class TargetBundleLayout {
      * @throws IllegalArgumentException if no cell has been allocated for {@code field} in this target bundle
      */
     public Offset cellOffset(ArrayField field) throws IllegalArgumentException {
-        final Offset cellOffset = WordArray.get(_cellOffsets, field.ordinal());
+        final Offset cellOffset = WordArray.get(cellOffsets, field.ordinal());
         if (cellOffset.equals(INVALID_OFFSET)) {
             assert cellSize(field).isZero();
             throw new IllegalArgumentException();
@@ -207,21 +207,21 @@ public final class TargetBundleLayout {
      * @throws IllegalArgumentException if no cell has been allocated for {@code field} in this target bundle
      */
     public Offset firstElementOffset(ArrayField field) throws IllegalArgumentException {
-        return cellOffset(field).plus(field._arrayLayout.getElementOffsetInCell(0));
+        return cellOffset(field).plus(field.arrayLayout.getElementOffsetInCell(0));
     }
 
     /**
      * Gets the array length based on which size of the cell reserved for a given field was calculated.
      */
     public int length(ArrayField field) {
-        return _lengths[field.ordinal()];
+        return lengths[field.ordinal()];
     }
 
     /**
      * Gets the total size of this target bundle.
      */
     public Size bundleSize() {
-        return _bundleSize;
+        return bundleSize;
     }
 
     /**
@@ -241,8 +241,8 @@ public final class TargetBundleLayout {
                 }
             }
         }
-        _bundleSize = region.getAllocationMark().asSize();
-        assert _bundleSize.isAligned();
+        bundleSize = region.getAllocationMark().asSize();
+        assert bundleSize.isAligned();
     }
 
     private void initialize(ArrayField field, int length, LinearAllocatorHeapRegion region) {
@@ -257,7 +257,7 @@ public final class TargetBundleLayout {
             if (!cellSize.isZero()) {
                 final Offset cellOffset = cellOffset(field);
                 sb.append(String.format("%-20s [%3d - %-3d) data@%-4d length=%-3d size=%-3d type=%s%n", field.name() + ":", cellOffset.toInt(), cellEndOffset(field).toInt(),
-                                firstElementOffset(field).toInt(), length(field), cellSize.toInt(), field._arrayLayout.elementKind() + "[]"));
+                                firstElementOffset(field).toInt(), length(field), cellSize.toInt(), field.arrayLayout.elementKind() + "[]"));
             }
         }
         sb.append("bundle size=" + bundleSize().toInt());

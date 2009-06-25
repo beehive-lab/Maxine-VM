@@ -42,27 +42,27 @@ import com.sun.max.vm.type.*;
  */
 public class JITTest_compileMethodWithFieldAccess extends JitCompilerTestCase {
     static class IntFieldHolder {
-        int _a;
-        int _b;
+        int a;
+        int b;
         int f() {
-            return 2 * _a + _b;
+            return 2 * a + b;
         }
     }
 
     static class FloatFieldHolder {
-        float _a;
-        float _b;
+        float a;
+        float b;
         float f() {
-            return 2.5F * _a + _b;
+            return 2.5F * a + b;
         }
     }
 
     static class LongFieldHolder {
-        long _a;
-        long _b;
+        long a;
+        long b;
 
         long f() {
-            return 2 * _a + _b;
+            return 2 * a + b;
         }
     }
 
@@ -70,72 +70,72 @@ public class JITTest_compileMethodWithFieldAccess extends JitCompilerTestCase {
 
     @SuppressWarnings("unused")
     void performOneIntFieldAccess(IntFieldHolder holder) {
-        final int a = holder._a;
+        final int a = holder.a;
     }
 
     @SuppressWarnings("unused")
     void performTwoIntFieldAccess(IntFieldHolder holder) {
-        final int a = holder._a;
-        final int b = holder._b;
+        final int a = holder.a;
+        final int b = holder.b;
     }
 
     @SuppressWarnings("unused")
     void performOneIntFieldAccess(UnresolvedAtTestTime holder) {
-        final int a = holder._intField;
+        final int a = holder.intField;
     }
 
     @SuppressWarnings("unused")
     void performTwoIntFieldAccess(UnresolvedAtTestTime holder) {
-        final int a =  holder._intField;
-        final int b =  holder._intField2;
+        final int a =  holder.intField;
+        final int b =  holder.intField2;
     }
 
     ///////////////////////////// FLOAT
 
     @SuppressWarnings("unused")
     void performOneFloatFieldAccess(FloatFieldHolder holder) {
-        final float a = holder._a;
+        final float a = holder.a;
     }
 
     @SuppressWarnings("unused")
     void performTwoFloatFieldAccess(FloatFieldHolder holder) {
-        final float a = holder._a;
-        final float b = holder._b;
+        final float a = holder.a;
+        final float b = holder.b;
     }
 
     @SuppressWarnings("unused")
     void performOneFloatFieldAccess(UnresolvedAtTestTime holder) {
-        final float a = holder._floatField;
+        final float a = holder.floatField;
     }
 
     @SuppressWarnings("unused")
     void performTwoFloatFieldAccess(UnresolvedAtTestTime holder) {
-        final float a =  holder._floatField;
-        final float b =  holder._floatField2;
+        final float a =  holder.floatField;
+        final float b =  holder.floatField2;
     }
 
     ///////////////////////////// LONG
 
     @SuppressWarnings("unused")
     void performOneLongFieldAccess(LongFieldHolder holder) {
-        final long a = holder._a;
+        final long a = holder.a;
     }
 
     @SuppressWarnings("unused")
     void performTwoLongFieldAccess(LongFieldHolder holder) {
-        final long a = holder._a;
-        final long b = holder._b;
+        final long a = holder.a;
+        final long b = holder.b;
     }
 
     @SuppressWarnings("unused")
     void performOneLongFieldAccess(UnresolvedAtTestTime holder) {
-        final long a = holder._longField;
+        final long a = holder.longField;
     }
 
     @SuppressWarnings("unused")
     void performTwoLongFieldAccess(UnresolvedAtTestTime holder) {
-        final long a =  holder._longField;
-        final long b =  holder._longField2;
+        final long a =  holder.longField;
+        final long b =  holder.longField2;
     }
 
     ///////////////////////////////
@@ -154,7 +154,7 @@ public class JITTest_compileMethodWithFieldAccess extends JitCompilerTestCase {
     }
 
     void compileOwnFieldAccess(Class <?> fieldHolderClass, Kind resultKind) {
-        compileMethod(fieldHolderClass, "f",   SignatureDescriptor.create("()" + resultKind.character()));
+        compileMethod(fieldHolderClass, "f",   SignatureDescriptor.create("()" + resultKind.character));
     }
 
     void compileResolvedFieldAccess(String methodName, Class <?> fieldHolderClass) {

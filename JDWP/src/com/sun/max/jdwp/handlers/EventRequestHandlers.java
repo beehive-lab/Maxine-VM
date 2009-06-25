@@ -33,11 +33,11 @@ import com.sun.max.jdwp.protocol.EventRequestCommands.*;
  */
 public class EventRequestHandlers extends Handlers {
 
-    private VariableMapping<Integer, JDWPEventRequest> _eventRequests;
+    private VariableMapping<Integer, JDWPEventRequest> eventRequests;
 
     public EventRequestHandlers(JDWPSession session) {
         super(session);
-        _eventRequests = new ChainedHashMapping<Integer, JDWPEventRequest>();
+        eventRequests = new ChainedHashMapping<Integer, JDWPEventRequest>();
     }
 
     @Override
@@ -56,7 +56,7 @@ public class EventRequestHandlers extends Handlers {
         @Override
         public Set.Reply handle(Set.IncomingRequest incomingRequest, JDWPSender replyChannel) throws JDWPException {
 
-            final byte eventKind = incomingRequest._eventKind;
+            final byte eventKind = incomingRequest.eventKind;
 
             JDWPEventRequest eventRequest = null;
 
@@ -118,7 +118,7 @@ public class EventRequestHandlers extends Handlers {
                     throw new JDWPNotImplementedException();
             }
 
-            _eventRequests.put(eventRequest.getId(), eventRequest);
+            eventRequests.put(eventRequest.getId(), eventRequest);
             eventRequest.install();
 
             return new Set.Reply(eventRequest.getId());
@@ -134,14 +134,14 @@ public class EventRequestHandlers extends Handlers {
         @Override
         public Clear.Reply handle(Clear.IncomingRequest incomingRequest) throws JDWPException {
 
-            final int id = incomingRequest._requestID;
-            if (!_eventRequests.containsKey(id)) {
+            final int id = incomingRequest.requestID;
+            if (!eventRequests.containsKey(id)) {
                 throw new JDWPException((short) Error.INVALID_EVENT_TYPE, "Unknown event request ID");
             }
 
-            final JDWPEventRequest request = _eventRequests.get(id);
+            final JDWPEventRequest request = eventRequests.get(id);
 
-            final byte eventKind = incomingRequest._eventKind;
+            final byte eventKind = incomingRequest.eventKind;
             if (eventKind != request.eventKind()) {
                 throw new JDWPException((short) Error.INVALID_EVENT_TYPE, "Event kind does not match - got " + eventKind + ", expected " + request.eventKind());
             }
@@ -154,7 +154,7 @@ public class EventRequestHandlers extends Handlers {
 
     private void removeRequest(JDWPEventRequest r) {
         r.uninstall();
-        _eventRequests.remove(r.getId());
+        eventRequests.remove(r.getId());
     }
 
     /**
@@ -168,7 +168,7 @@ public class EventRequestHandlers extends Handlers {
         public ClearAllBreakpoints.Reply handle(ClearAllBreakpoints.IncomingRequest incomingRequest) {
 
             final AppendableSequence<JDWPEventRequest> toRemove = new LinkSequence<JDWPEventRequest>();
-            for (JDWPEventRequest r : _eventRequests.values()) {
+            for (JDWPEventRequest r : eventRequests.values()) {
                 if (r.eventKind() == EventKind.BREAKPOINT) {
                     toRemove.append(r);
                 }

@@ -32,10 +32,10 @@ import java.lang.reflect.*;
  */
 public class ID {
 
-    private final long _value;
+    private final long value;
 
     public ID(long value) {
-        _value = value;
+        this.value = value;
     }
 
     /**
@@ -44,7 +44,7 @@ public class ID {
      * @return the long value
      */
     public long value() {
-        return _value;
+        return value;
     }
 
     /**
@@ -54,17 +54,17 @@ public class ID {
      * @throws IOException this exception is thrown, when there was an error while writing the long value
      */
     public void write(OutputStream outputStream) throws IOException {
-        new DataOutputStream(outputStream).writeLong(_value);
+        new DataOutputStream(outputStream).writeLong(value);
     }
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "(" + Long.toString(_value) + ")";
+        return this.getClass().getSimpleName() + "(" + Long.toString(value) + ")";
     }
 
     @Override
     public int hashCode() {
-        return (int) _value;
+        return (int) value;
     }
 
     @Override
@@ -78,7 +78,7 @@ public class ID {
         }
 
         final ID otherID = (ID) obj;
-        if (otherID._value != _value) {
+        if (otherID.value != value) {
             return false;
         }
 

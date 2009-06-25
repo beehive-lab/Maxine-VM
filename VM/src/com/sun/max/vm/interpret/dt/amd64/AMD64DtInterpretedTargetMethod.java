@@ -33,11 +33,11 @@ import com.sun.max.vm.stack.*;
  */
 public class AMD64DtInterpretedTargetMethod extends InterpretedTargetMethod {
 
-    private final AMD64DtInterpreter _interpreter;
+    private final AMD64DtInterpreter interpreter;
 
     public AMD64DtInterpretedTargetMethod(ClassMethodActor classMethodActor, AMD64DtInterpreter interpreter) {
         super(classMethodActor);
-        _interpreter = interpreter;
+        this.interpreter = interpreter;
     }
 
     @Override
@@ -47,7 +47,7 @@ public class AMD64DtInterpretedTargetMethod extends InterpretedTargetMethod {
 
     @Override
     public JavaStackFrameLayout stackFrameLayout() {
-        return new AMD64DtInterpreterStackFrameLayout(classMethodActor(), _interpreter);
+        return new AMD64DtInterpreterStackFrameLayout(classMethodActor(), interpreter);
     }
 
 }

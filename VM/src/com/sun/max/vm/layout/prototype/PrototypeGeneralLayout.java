@@ -51,14 +51,14 @@ public class PrototypeGeneralLayout extends AbstractLayout  implements GeneralLa
         return false;
     }
 
-    private final GripScheme _gripScheme;
+    private final GripScheme gripScheme;
 
     public PrototypeGeneralLayout(GripScheme gripScheme) {
-        _gripScheme = gripScheme;
+        this.gripScheme = gripScheme;
     }
 
     public GripScheme gripScheme() {
-        return _gripScheme;
+        return gripScheme;
     }
 
     public Pointer cellToOrigin(Pointer cell) {

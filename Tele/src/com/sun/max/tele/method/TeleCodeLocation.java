@@ -41,20 +41,20 @@ public class TeleCodeLocation extends AbstractTeleVMHolder {
     // TODO (mlvdv) TeleCodeLocation is a crude place holder; replace with subclasses
     // TODO (mlvdv) TeleCodeLocation: map among location kinds; handle ranges; handle source locations
 
-    private Address _targetCodeInstructionAddress;
+    private Address targetCodeInstructionAddress;
 
-    private TeleBytecodeLocation _teleBytecodeLocation; // Describes position in a loaded method
+    private TeleBytecodeLocation teleBytecodeLocation; // Describes position in a loaded method
 
-    private Key _key;  // Describes a location intentionally, not necessarily loaded
+    private Key key;  // Describes a location intentionally, not necessarily loaded
 
     /**
      * Location expressed only in terms of a target code address.
      */
     public TeleCodeLocation(TeleVM teleVM, Address targetCodeInstructionAddress) {
         super(teleVM);
-        _targetCodeInstructionAddress = targetCodeInstructionAddress;
-        _teleBytecodeLocation = null;
-        _key = null;
+        this.targetCodeInstructionAddress = targetCodeInstructionAddress;
+        this.teleBytecodeLocation = null;
+        this.key = null;
     }
 
     /**
@@ -62,9 +62,9 @@ public class TeleCodeLocation extends AbstractTeleVMHolder {
      */
     public TeleCodeLocation(TeleVM teleVM, TeleClassMethodActor teleClassMethodActor, int position) {
         super(teleVM);
-        _targetCodeInstructionAddress = Address.zero();
-        _teleBytecodeLocation = new TeleBytecodeLocation(teleClassMethodActor, position);
-        _key = new Key(_teleBytecodeLocation.bytecodeLocation());
+        this.targetCodeInstructionAddress = Address.zero();
+        this.teleBytecodeLocation = new TeleBytecodeLocation(teleClassMethodActor, position);
+        this.key = new Key(teleBytecodeLocation.bytecodeLocation());
     }
 
     /**
@@ -72,9 +72,9 @@ public class TeleCodeLocation extends AbstractTeleVMHolder {
      */
     public TeleCodeLocation(TeleVM teleVM, Address targetCodeInstructionAddress, TeleClassMethodActor teleClassMethodActor, int position) {
         super(teleVM);
-        _targetCodeInstructionAddress = targetCodeInstructionAddress;
-        _teleBytecodeLocation = new TeleBytecodeLocation(teleClassMethodActor, position);
-        _key = new Key(_teleBytecodeLocation.bytecodeLocation());
+        this.targetCodeInstructionAddress = targetCodeInstructionAddress;
+        this.teleBytecodeLocation = new TeleBytecodeLocation(teleClassMethodActor, position);
+        this.key = new Key(teleBytecodeLocation.bytecodeLocation());
     }
 
     /**
@@ -82,16 +82,16 @@ public class TeleCodeLocation extends AbstractTeleVMHolder {
      */
     public TeleCodeLocation(TeleVM teleVM, Key key) {
         super(teleVM);
-        _targetCodeInstructionAddress = Address.zero();
-        _teleBytecodeLocation = null;
-        _key = key;
+        this.targetCodeInstructionAddress = Address.zero();
+        this.teleBytecodeLocation = null;
+        this.key = key;
     }
 
    /**
      * Is there a target code representation for the code location in the {@link TeleVM}.
      */
     public boolean hasTargetCodeLocation() {
-        return !_targetCodeInstructionAddress.isZero();
+        return !targetCodeInstructionAddress.isZero();
     }
 
     /**
@@ -99,7 +99,7 @@ public class TeleCodeLocation extends AbstractTeleVMHolder {
      * zero if no target code information about the location available.
      */
     public Address targetCodeInstructionAddresss() {
-        return _targetCodeInstructionAddress;
+        return targetCodeInstructionAddress;
     }
 
     /**
@@ -107,11 +107,11 @@ public class TeleCodeLocation extends AbstractTeleVMHolder {
      */
     public boolean hasBytecodeLocation() {
         resolveBytecodeLocation();
-        return _teleBytecodeLocation != null;
+        return teleBytecodeLocation != null;
     }
 
     public TeleBytecodeLocation teleBytecodeLocation() {
-        return _teleBytecodeLocation;
+        return teleBytecodeLocation;
     }
 
     /**
@@ -120,11 +120,11 @@ public class TeleCodeLocation extends AbstractTeleVMHolder {
      */
     public BytecodeLocation bytecodeLocation() {
         resolveBytecodeLocation();
-        return _teleBytecodeLocation.bytecodeLocation();
+        return teleBytecodeLocation.bytecodeLocation();
     }
 
     private void resolveBytecodeLocation() {
-        if (_teleBytecodeLocation == null && _key != null) {
+        if (teleBytecodeLocation == null && key != null) {
             // Location was specified by description; see if the referred to class has since been loaded
             // so that we can talk about bytecodes.
             // Look first in the class registry
@@ -132,43 +132,43 @@ public class TeleCodeLocation extends AbstractTeleVMHolder {
             final TeleClassActor teleClassActor = teleVM().findTeleClassActor(holderTypeDescriptor);
             if (teleClassActor != null) {
                 // find a matching method
-                final String methodKeyString = _key.signature().toJavaString(true, true);
+                final String methodKeyString = key.signature().toJavaString(true, true);
                 for (TeleMethodActor teleMethodActor : teleClassActor.getTeleMethodActors()) {
                     if (teleMethodActor instanceof TeleClassMethodActor) {
                         if (teleMethodActor.methodActor().descriptor().toJavaString(true, true).equals(methodKeyString)) {
                             final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) teleMethodActor;
-                            _teleBytecodeLocation = new TeleBytecodeLocation(teleClassMethodActor, _key.position());
+                            teleBytecodeLocation = new TeleBytecodeLocation(teleClassMethodActor, key.position());
                         }
                     }
                 }
             }
             // TODO (mlvdv) when the class registry is complete, this should not be necessary
-            if (_teleBytecodeLocation == null) {
+            if (teleBytecodeLocation == null) {
                 // Try to locate TeleClassMethodActor via compiled methods in the tele VM.
-                final Sequence<TeleTargetMethod> teleTargetMethods = TeleTargetMethod.get(teleVM(), _key);
+                final Sequence<TeleTargetMethod> teleTargetMethods = TeleTargetMethod.get(teleVM(), key);
                 if (teleTargetMethods.length() > 0) {
                     final TeleClassMethodActor teleClassMethodActor = teleTargetMethods.first().getTeleClassMethodActor();
-                    _teleBytecodeLocation = new TeleBytecodeLocation(teleClassMethodActor, _key.position());
+                    teleBytecodeLocation = new TeleBytecodeLocation(teleClassMethodActor, key.position());
                 }
             }
         }
     }
 
     public boolean hasKey() {
-        return _key != null;
+        return key != null;
     }
 
     /**
      * @return a key describing the method and bytecode location, independent of the loaded class.
      */
     public Key key() {
-        return _key;
+        return key;
     }
 
     @Override
     public String toString() {
-        return "TeleCodeLocation{" + (hasTargetCodeLocation() ? (" 0x" + _targetCodeInstructionAddress.toHexString()) : "")
-                        + (hasBytecodeLocation() ? (" " + _teleBytecodeLocation) : "") + " }";
+        return "TeleCodeLocation{" + (hasTargetCodeLocation() ? (" 0x" + targetCodeInstructionAddress.toHexString()) : "")
+                        + (hasBytecodeLocation() ? (" " + teleBytecodeLocation) : "") + " }";
     }
 
     // Crude notion of equality for now; revisit when things get more interesting.
@@ -177,14 +177,14 @@ public class TeleCodeLocation extends AbstractTeleVMHolder {
         if (o instanceof TeleCodeLocation) {
             final TeleCodeLocation other = (TeleCodeLocation) o;
             if (hasTargetCodeLocation()) {
-                return _targetCodeInstructionAddress.equals(other._targetCodeInstructionAddress);
+                return targetCodeInstructionAddress.equals(other.targetCodeInstructionAddress);
             } else if (hasBytecodeLocation()) {
-                return _teleBytecodeLocation.equals(other._teleBytecodeLocation);
+                return teleBytecodeLocation.equals(other.teleBytecodeLocation);
             } else if (hasKey()) {
-                return _key.equals(other._key);
+                return key.equals(other.key);
             } else {
                 // Must be a zero target code location
-                return _targetCodeInstructionAddress.equals(other._targetCodeInstructionAddress);
+                return targetCodeInstructionAddress.equals(other.targetCodeInstructionAddress);
             }
         }
         return false;
@@ -193,14 +193,14 @@ public class TeleCodeLocation extends AbstractTeleVMHolder {
     @Override
     public int hashCode() {
         if (hasTargetCodeLocation()) {
-            return _targetCodeInstructionAddress.hashCode();
+            return targetCodeInstructionAddress.hashCode();
         } else if (hasBytecodeLocation()) {
-            return _teleBytecodeLocation.hashCode();
+            return teleBytecodeLocation.hashCode();
         } else if (hasKey()) {
-            return _key.hashCode();
+            return key.hashCode();
         } else {
             // Must be a zero target code location
-            return _targetCodeInstructionAddress.hashCode();
+            return targetCodeInstructionAddress.hashCode();
         }
     }
 

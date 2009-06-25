@@ -28,54 +28,54 @@ public class List_reorder_bug {
 
     static class List {
         List(int id) {
-            _id = id;
+            this.id = id;
         }
-        List _next;
-        int _id;
-        boolean _bool = true;
+        List next;
+        int id;
+        boolean bool = true;
     }
 
-    private static List _list;
+    private static List list;
 
     public static boolean test(int i) {
-        _list = new List(5);
-        _list._next = new List(6);
+        list = new List(5);
+        list.next = new List(6);
         new List_reorder_bug().match(new Object(), 27, 6, 0);
-        return _list._next == null;
+        return list.next == null;
     }
 
     private void match(Object a, int src, int id, int seq) {
         print("match: " + src + ", " + id);
-        List item = _list;
+        List item = list;
         List itemPrev = null;
         while (item != null) {
-            if (item._id == id) {
-                if (item._bool) {
-                    outcall(item._id);
+            if (item.id == id) {
+                if (item.bool) {
+                    outcall(item.id);
                 }
                 if (itemPrev != null) {
-                    itemPrev._next = item._next;
+                    itemPrev.next = item.next;
                 } else {
-                    _list = item._next;
+                    list = item.next;
                 }
 
-                item._next = null;
+                item.next = null;
                 return;
             }
 
             itemPrev = item;
-            item = item._next;
+            item = item.next;
         }
     }
 
-    static int _globalId;
+    static int globalId;
 
     private static void outcall(int id) {
-        _globalId = id;
+        globalId = id;
     }
 
-    String _s;
+    String s;
     private void print(String s) {
-        _s = s;
+        this.s = s;
     }
 }

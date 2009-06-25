@@ -25,13 +25,13 @@ package com.sun.max.vm.classfile.create;
  */
 class MillInterface {
 
-    final int _classIndex;
-    final MillInterface _next;
+    final int classIndex;
+    final MillInterface next;
 
     MillInterface(MillClass millClass, String name) {
-        _classIndex = millClass.makeClassConstant(name)._index;
-        _next = millClass._interfaceList;
-        millClass._interfaceList = this;
+        classIndex = millClass.makeClassConstant(name).index;
+        next = millClass.interfaceList;
+        millClass.interfaceList = this;
     }
 
 }

@@ -39,24 +39,24 @@ import com.sun.max.vm.type.*;
  */
 public abstract class Hub extends Hybrid {
 
-    private final Size _tupleSize;
-    private final Kind _elementKind;
-    private final SpecificLayout _specificLayout;
+    private final Size tupleSize;
+    private final Kind elementKind;
+    private final SpecificLayout specificLayout;
     @INSPECTED
-    private final ClassActor _classActor;
-    private final Layout.Category _layoutCategory;
-    private BiasedLockEpoch _biasedLockEpoch = BiasedLockEpoch.init();
+    private final ClassActor classActor;
+    private final Layout.Category layoutCategory;
+    private BiasedLockEpoch biasedLockEpoch = BiasedLockEpoch.init();
     @CONSTANT_WHEN_NOT_ZERO
-    private static int _firstWordIndex;
-    private final int _iTableStartIndex;
-    private final int _iTableLength;
+    private static int firstWordIndex;
+    private final int iTableStartIndex;
+    private final int iTableLength;
     @INSPECTED
-    private final int _mTableStartIndex;
+    private final int mTableStartIndex;
     @INSPECTED
-    private final int _mTableLength;
+    private final int mTableLength;
     @INSPECTED
-    private final int _referenceMapLength;
-    private final boolean _isSpecialReference;
+    private final int referenceMapLength;
+    private final boolean isSpecialReference;
 
     /**
      * Indicate the "tuple cell size" for objects as follows.
@@ -68,31 +68,31 @@ public abstract class Hub extends Hybrid {
      */
     @INLINE
     public final Size tupleSize() {
-        return _tupleSize;
+        return tupleSize;
     }
 
     @INLINE
     public final Kind elementKind() {
-        return _elementKind;
+        return elementKind;
     }
 
     @INLINE
     public final SpecificLayout specificLayout() {
-        return _specificLayout;
+        return specificLayout;
     }
 
     public WordWidth wordWidth() {
-        return _specificLayout.gripScheme().dataModel().wordWidth();
+        return specificLayout.gripScheme().dataModel().wordWidth;
     }
 
     @INLINE
     public final ClassActor classActor() {
-        return _classActor;
+        return classActor;
     }
 
     @INLINE
     public final Layout.Category layoutCategory() {
-        return _layoutCategory;
+        return layoutCategory;
     }
 
     /**
@@ -122,7 +122,7 @@ public abstract class Hub extends Hybrid {
     }
 
     private static int getFirstWordIndex() {
-        if (_firstWordIndex == 0) {
+        if (firstWordIndex == 0) {
             final ClassActor classActor = ClassActor.fromJava(Hub.class);
 
             // Although the actual super class is 'Object', since it has no fields, we may pass 'null' here instead
@@ -130,9 +130,9 @@ public abstract class Hub extends Hybrid {
             final ClassActor superClassActor = null;
 
             final Size tupleSize = Layout.hybridLayout().layoutFields(superClassActor, classActor.localInstanceFieldActors());
-            _firstWordIndex = Layout.hybridLayout().firstAvailableWordArrayIndex(tupleSize);
+            firstWordIndex = Layout.hybridLayout().firstAvailableWordArrayIndex(tupleSize);
         }
-        return _firstWordIndex;
+        return firstWordIndex;
     }
 
     @Override
@@ -142,17 +142,17 @@ public abstract class Hub extends Hybrid {
 
     @Override
     public final int lastWordIndex() {
-        return _iTableStartIndex + _iTableLength - 1;
+        return iTableStartIndex + iTableLength - 1;
     }
 
     @Override
     public final int firstIntIndex() {
-        return Unsigned.idiv((_iTableStartIndex + _iTableLength) * Word.size(), Ints.SIZE);
+        return Unsigned.idiv((iTableStartIndex + iTableLength) * Word.size(), Ints.SIZE);
     }
 
     @Override
     public final int lastIntIndex() {
-        return _referenceMapStartIndex + _referenceMapLength - 1;
+        return referenceMapStartIndex + referenceMapLength - 1;
     }
 
     @INLINE
@@ -161,69 +161,69 @@ public abstract class Hub extends Hybrid {
     }
 
     public final int vTableLength() {
-        return _iTableStartIndex - vTableStartIndex();
+        return iTableStartIndex - vTableStartIndex();
     }
 
     public final int iTableStartIndex() {
-        return _iTableStartIndex;
+        return iTableStartIndex;
     }
 
     public final int iTableLength() {
-        return _iTableLength;
+        return iTableLength;
     }
 
     @INLINE
     public final int mTableStartIndex() {
-        return _mTableStartIndex;
+        return mTableStartIndex;
     }
 
     @INLINE
     public final int mTableLength() {
-        return _mTableLength;
+        return mTableLength;
     }
 
     @INSPECTED
-    private final int _referenceMapStartIndex;
+    private final int referenceMapStartIndex;
 
     @INLINE
     public final int referenceMapStartIndex() {
-        return _referenceMapStartIndex;
+        return referenceMapStartIndex;
     }
 
     @INLINE
     public final int referenceMapLength() {
-        return _referenceMapLength;
+        return referenceMapLength;
     }
 
     @INLINE
     public final BiasedLockEpoch biasedLockEpoch() {
-        return _biasedLockEpoch;
+        return biasedLockEpoch;
     }
 
     @INLINE
     public final boolean isSpecialReference() {
-        return _isSpecialReference;
+        return isSpecialReference;
     }
 
     public void setBiasedLockEpoch(BiasedLockEpoch biasedLockEpoch) {
-        _biasedLockEpoch = biasedLockEpoch;
+        this.biasedLockEpoch = biasedLockEpoch;
     }
 
     @CONSTANT_WHEN_NOT_ZERO
-    private BiasedLockRevocationHeuristics _biasedLockRevocationHeuristics;
+    private BiasedLockRevocationHeuristics biasedLockRevocationHeuristics;
 
     @INLINE
     public final BiasedLockRevocationHeuristics biasedLockRevocationHeuristics() {
-        return _biasedLockRevocationHeuristics;
+        return biasedLockRevocationHeuristics;
     }
 
     public void setBiasedLockRevocationHeuristics(BiasedLockRevocationHeuristics biasedLockRevocationHeuristics) {
-        _biasedLockRevocationHeuristics = biasedLockRevocationHeuristics;
+        this.biasedLockRevocationHeuristics = biasedLockRevocationHeuristics;
     }
 
     private int getITableLength(BitSet superClassActorSerials, Iterable<InterfaceActor> allInterfaceActors) {
         int result = 1 + superClassActorSerials.cardinality();
-        if (_classActor.isReferenceClassActor()) {
+        if (classActor.isReferenceClassActor()) {
             for (InterfaceActor interfaceActor : allInterfaceActors) {
                 result += interfaceActor.localInterfaceMethodActors().length;
             }
@@ -235,50 +235,50 @@ public abstract class Hub extends Hybrid {
      * Static Hub.
      */
     protected Hub(Size tupleSize, ClassActor classActor, TupleReferenceMap referenceMap) {
-        _tupleSize = tupleSize;
-        _elementKind = Kind.VOID;
-        _specificLayout = Layout.tupleLayout();
-        _layoutCategory = Layout.Category.TUPLE;
-        _classActor = classActor;
-        _iTableStartIndex = firstWordIndex(); // the vTable is unused in static hubs
-        _iTableLength = 1;
-        _mTableStartIndex = firstIntIndex();
-        _mTableLength = 1;
-        _referenceMapStartIndex = _mTableStartIndex + _mTableLength;
-        _referenceMapLength = referenceMap.numberOfOffsets();
-        _isSpecialReference = false;
+        this.tupleSize = tupleSize;
+        this.elementKind = Kind.VOID;
+        this.specificLayout = Layout.tupleLayout();
+        this.layoutCategory = Layout.Category.TUPLE;
+        this.classActor = classActor;
+        this.iTableStartIndex = firstWordIndex(); // the vTable is unused in static hubs
+        this.iTableLength = 1;
+        this.mTableStartIndex = firstIntIndex();
+        this.mTableLength = 1;
+        this.referenceMapStartIndex = mTableStartIndex + mTableLength;
+        this.referenceMapLength = referenceMap.numberOfOffsets();
+        this.isSpecialReference = false;
     }
 
     /**
      * Dynamic Hub.
      */
     protected Hub(Size tupleSize, SpecificLayout specificLayout, ClassActor classActor, BitSet superClassActorSerials, Iterable<InterfaceActor> allInterfaceActors, int vTableLength, TupleReferenceMap referenceMap) {
-        _tupleSize = tupleSize;
-        _specificLayout = specificLayout;
-        _layoutCategory = specificLayout.category();
-        switch (_layoutCategory) {
+        this.tupleSize = tupleSize;
+        this.specificLayout = specificLayout;
+        this.layoutCategory = specificLayout.category();
+        switch (layoutCategory) {
             case ARRAY:
-                _elementKind = classActor.componentClassActor().kind();
+                this.elementKind = classActor.componentClassActor().kind;
                 break;
             case HYBRID:
-                _elementKind = Kind.WORD;
+                this.elementKind = Kind.WORD;
                 break;
             default:
-                _elementKind = Kind.VOID;
+                this.elementKind = Kind.VOID;
                 break;
         }
-        _classActor = classActor;
-        _iTableStartIndex = firstWordIndex() + vTableLength;
-        _iTableLength = getITableLength(superClassActorSerials, allInterfaceActors);
-        _mTableStartIndex = firstIntIndex();
-        _mTableLength = getMinCollisionFreeDivisor(superClassActorSerials);
-        _referenceMapStartIndex = _mTableStartIndex + _mTableLength;
-        _referenceMapLength = referenceMap.numberOfOffsets();
-        _isSpecialReference = classActor.isSpecialReference();
+        this.classActor = classActor;
+        this.iTableStartIndex = firstWordIndex() + vTableLength;
+        this.iTableLength = getITableLength(superClassActorSerials, allInterfaceActors);
+        this.mTableStartIndex = firstIntIndex();
+        this.mTableLength = getMinCollisionFreeDivisor(superClassActorSerials);
+        this.referenceMapStartIndex = mTableStartIndex + mTableLength;
+        this.referenceMapLength = referenceMap.numberOfOffsets();
+        this.isSpecialReference = classActor.isSpecialReference();
     }
 
     protected final Hub expand() {
-        return (Hub) expand(Unsigned.idiv(Ints.roundUp((_referenceMapStartIndex + _referenceMapLength) * Ints.SIZE, Word.size()), Word.size()));
+        return (Hub) expand(Unsigned.idiv(Ints.roundUp((referenceMapStartIndex + referenceMapLength) * Ints.SIZE, Word.size()), Word.size()));
     }
 
     @INLINE
@@ -292,12 +292,12 @@ public abstract class Hub extends Hybrid {
     }
 
     @INLINE
-    public final boolean isSubClassHub(ClassActor classActor) {
-        if (classActor == _classActor) {
+    public final boolean isSubClassHub(ClassActor testClassActor) {
+        if (this.classActor == testClassActor) {
             // the common case of an exact type match
             return true;
         }
-        final int serial = classActor.id();
+        final int serial = testClassActor.id;
         final int iTableIndex = getITableIndex(serial);
         return getWord(iTableIndex).equals(Address.fromInt(serial));
     }

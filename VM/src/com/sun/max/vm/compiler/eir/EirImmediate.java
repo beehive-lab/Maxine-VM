@@ -28,21 +28,21 @@ import com.sun.max.vm.value.*;
  */
 public class EirImmediate extends EirLocation.Constant {
 
-    private EirLocationCategory _category;
+    private EirLocationCategory category;
 
     public EirImmediate(EirLocationCategory category, Value value) {
         super(value);
-        _category = category;
+        this.category = category;
     }
 
     @Override
     public EirLocationCategory category() {
-        return _category;
+        return category;
     }
 
     @Override
     public String toString() {
-        return _category.toString();
+        return category.toString();
     }
 
     @Override

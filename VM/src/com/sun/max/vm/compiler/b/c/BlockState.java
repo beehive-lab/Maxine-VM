@@ -32,24 +32,24 @@ import com.sun.max.vm.compiler.cir.*;
  */
 public class BlockState {
 
-    private final BirBlock _birBlock;
-    private AppendableSequence<CirBlock> _cirBlockList;
-    private JavaFrame _frame = null;
-    private JavaStack _stack = null;
+    private final BirBlock birBlock;
+    private AppendableSequence<CirBlock> cirBlockList;
+    private JavaFrame frame = null;
+    private JavaStack stack = null;
 
     BlockState(BirBlock birBlock) {
-        _birBlock = birBlock;
+        this.birBlock = birBlock;
     }
 
     public BirBlock birBlock() {
-        return _birBlock;
+        return birBlock;
     }
 
     /**
      * Determines if a CIR block has been created for the BIR block.
      */
     public boolean hasCirBlock() {
-        return _cirBlockList != null;
+        return cirBlockList != null;
     }
 
     /**
@@ -62,34 +62,34 @@ public class BlockState {
     }
 
     public AppendableSequence<CirBlock>  cirBlockList() {
-        if (_cirBlockList == null) {
-            _cirBlockList = new LinkSequence<CirBlock>();
-            _cirBlockList.append(new CirBlock(_birBlock.role()));
+        if (cirBlockList == null) {
+            cirBlockList = new LinkSequence<CirBlock>();
+            cirBlockList.append(new CirBlock(birBlock.role()));
         }
-        return _cirBlockList;
+        return cirBlockList;
     }
 
     public void addCirBlock(CirBlock cirBlock) {
-        if (_cirBlockList == null) {
-            Log.println("_cirBlockList is null");
+        if (cirBlockList == null) {
+            Log.println("cirBlockList is null");
             assert false;
         }
-        _cirBlockList.append(cirBlock);
+        cirBlockList.append(cirBlock);
     }
 
     public JavaFrame frame() {
-        return _frame;
+        return frame;
     }
 
     public void setFrame(JavaFrame frame) {
-        _frame = frame;
+        this.frame = frame;
     }
 
     public JavaStack stack() {
-        return _stack;
+        return stack;
     }
 
     public void setStack(JavaStack stack) {
-        _stack = stack;
+        this.stack = stack;
     }
 }

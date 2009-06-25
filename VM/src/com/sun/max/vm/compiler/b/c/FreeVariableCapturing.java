@@ -44,17 +44,17 @@ import com.sun.max.vm.compiler.cir.variable.*;
 final class FreeVariableCapturing {
 
     private final class Binding {
-        private final Binding _parent;
-        private final CirVariable _boundVariable;
+        private final Binding parent;
+        private final CirVariable boundVariable;
 
         private Binding(Binding parent, CirVariable boundVariable) {
-            _parent = parent;
-            _boundVariable = boundVariable;
+            this.parent = parent;
+            this.boundVariable = boundVariable;
         }
 
         @Override
         public int hashCode() {
-            return _boundVariable.hashCode();
+            return boundVariable.hashCode();
         }
     }
 
@@ -69,77 +69,77 @@ final class FreeVariableCapturing {
     private boolean isUnbound(CirVariable variable, Binding binding) {
         Binding b = binding;
         while (b != null) {
-            if (variable == b._boundVariable) {
+            if (variable == b.boundVariable) {
                 return false;
             }
-            b = b._parent;
+            b = b.parent;
         }
         return true;
     }
 
     private final class BlockCallSite {
-        private final BlockInfo _callerInfo;
-        private final Binding _binding;
-        private final CirCall _call;
+        private final BlockInfo callerInfo;
+        private final Binding binding;
+        private final CirCall call;
 
         private BlockCallSite(BlockInfo callerInfo, Binding binding, CirCall call) {
-            _callerInfo = callerInfo;
-            _binding = binding;
-            _call = call;
+            this.callerInfo = callerInfo;
+            this.binding = binding;
+            this.call = call;
         }
 
         @Override
         public int hashCode() {
-            int result = _callerInfo.hashCode();
-            if (_binding != null) {
-                result *= _binding.hashCode();
+            int result = callerInfo.hashCode();
+            if (binding != null) {
+                result *= binding.hashCode();
             }
             return result;
         }
     }
 
     private final class BlockInfo {
-        private final CirBlock _block;
+        private final CirBlock block;
 
         private BlockInfo(CirBlock block) {
-            _block = block;
+            this.block = block;
         }
 
-        private final AppendableSequence<BlockCallSite> _callSites = new LinkSequence<BlockCallSite>();
-        private final GrowableDeterministicSet<CirVariable> _freeVariables = new LinkedIdentityHashSet<CirVariable>();
+        private final AppendableSequence<BlockCallSite> callSites = new LinkSequence<BlockCallSite>();
+        private final GrowableDeterministicSet<CirVariable> freeVariables = new LinkedIdentityHashSet<CirVariable>();
     }
 
-    private final BirToCirMethodTranslation _translation;
-    private final AppendableSequence<BlockInfo> _blockInfos = new LinkSequence<BlockInfo>();
-    private final Map<CirBlock, BlockInfo> _blockInfoMap = new IdentityHashMap<CirBlock, BlockInfo>();
+    private final BirToCirMethodTranslation translation;
+    private final AppendableSequence<BlockInfo> blockInfos = new LinkSequence<BlockInfo>();
+    private final Map<CirBlock, BlockInfo> blockInfoMap = new IdentityHashMap<CirBlock, BlockInfo>();
 
     private BlockInfo blockToInfo(CirBlock block) {
-        return _blockInfoMap.get(block);
+        return blockInfoMap.get(block);
     }
 
     private class CirBlockVisitor extends CirVisitor {
         @Override
         public void visitBlock(CirBlock block) {
-            if (!_blockInfoMap.containsKey(block)) {
+            if (!blockInfoMap.containsKey(block)) {
                 final BlockInfo info = new BlockInfo(block);
-                _blockInfos.append(info);
-                _blockInfoMap.put(block, info);
+                blockInfos.append(info);
+                blockInfoMap.put(block, info);
             }
         }
     }
 
     FreeVariableCapturing(BirToCirMethodTranslation translation) {
-        _translation = translation;
+        this.translation = translation;
         CirVisitingTraversal.apply(translation.cirClosure(), new CirBlockVisitor());
     }
 
     private final class Inspection {
-        private final CirNode _node;
-        private final Binding _binding;
+        private final CirNode node;
+        private final Binding binding;
 
         private Inspection(CirNode node, Binding binding) {
-            _node = node;
-            _binding = binding;
+            this.node = node;
+            this.binding = binding;
         }
     }
 
@@ -153,7 +153,7 @@ final class FreeVariableCapturing {
 
     private void findUnboundVariablesInBlock(BlockInfo info) {
         final LinkedList<Inspection> inspectionList = new LinkedList<Inspection>();
-        CirNode node = info._block.closure();
+        CirNode node = info.block.closure();
         Binding binding = null;
         while (true) {
             if (node instanceof CirCall) {
@@ -161,16 +161,16 @@ final class FreeVariableCapturing {
                 addValues(call.arguments(), inspectionList, binding);
                 CirJavaFrameDescriptor javaFrameDescriptor = call.javaFrameDescriptor();
                 while (javaFrameDescriptor != null) {
-                    addValues(javaFrameDescriptor.locals(), inspectionList, binding);
-                    addValues(javaFrameDescriptor.stackSlots(), inspectionList, binding);
+                    addValues(javaFrameDescriptor.locals, inspectionList, binding);
+                    addValues(javaFrameDescriptor.stackSlots, inspectionList, binding);
                     javaFrameDescriptor = javaFrameDescriptor.parent();
                 }
                 node = call.procedure();
                 if (node instanceof CirBlock) {
                     final BlockInfo calleeInfo = blockToInfo((CirBlock) node);
                     assert calleeInfo != null : "no callee info found";
-                    assert calleeInfo._callSites != null;
-                    calleeInfo._callSites.append(new BlockCallSite(info, binding, call));
+                    assert calleeInfo.callSites != null;
+                    calleeInfo.callSites.append(new BlockCallSite(info, binding, call));
                 }
             } else {
                 assert node instanceof CirValue;
@@ -181,42 +181,42 @@ final class FreeVariableCapturing {
                 } else {
                     if (node instanceof CirVariable) {
                         final CirVariable variable = (CirVariable) node;
-                        if (isUnbound(variable, binding) && !info._freeVariables.contains(variable)) {
-                            info._freeVariables.add(variable);
+                        if (isUnbound(variable, binding) && !info.freeVariables.contains(variable)) {
+                            info.freeVariables.add(variable);
                         }
                     }
                     if (inspectionList.isEmpty()) {
                         return;
                     }
                     final Inspection inspection = inspectionList.removeFirst();
-                    node = inspection._node;
-                    binding = inspection._binding;
+                    node = inspection.node;
+                    binding = inspection.binding;
                 }
             }
         }
     }
 
     private final class Propagation {
-        private final CirVariable _parameter;
-        private final BlockCallSite _callSite;
+        private final CirVariable parameter;
+        private final BlockCallSite callSite;
 
         private Propagation(CirVariable parameter, BlockCallSite callSite) {
-            _parameter = parameter;
-            _callSite = callSite;
+            this.parameter = parameter;
+            this.callSite = callSite;
         }
 
         @Override
         public boolean equals(Object other) {
             if (other instanceof Propagation) {
                 final Propagation propagation = (Propagation) other;
-                return _parameter == propagation._parameter && _callSite == propagation._callSite;
+                return parameter == propagation.parameter && callSite == propagation.callSite;
             }
             return false;
         }
 
         @Override
         public int hashCode() {
-            return _parameter.hashCode() ^ _callSite.hashCode();
+            return parameter.hashCode() ^ callSite.hashCode();
         }
     }
 
@@ -230,24 +230,24 @@ final class FreeVariableCapturing {
      * or already having checked the same variable at the same call site.
      */
     private void propagateUnboundVariablesToCallers() {
-        final LinkedList<Propagation> toDo = new LinkedList<Propagation>();
-        for (BlockInfo info : _blockInfos) {
+        final LinkedList<Propagation> propagateToDo = new LinkedList<Propagation>();
+        for (BlockInfo info : blockInfos) {
             traceUnboundVariables(info);
-            for (CirVariable parameter : info._freeVariables) {
-                for (BlockCallSite callSite : info._callSites) {
-                    toDo.add(new Propagation(parameter, callSite));
+            for (CirVariable parameter : info.freeVariables) {
+                for (BlockCallSite callSite : info.callSites) {
+                    propagateToDo.add(new Propagation(parameter, callSite));
                 }
             }
         }
         final Set<Propagation> done = new HashSet<Propagation>();
-        while (!toDo.isEmpty()) {
-            final Propagation propagation = toDo.removeFirst();
+        while (!propagateToDo.isEmpty()) {
+            final Propagation propagation = propagateToDo.removeFirst();
             if (!done.contains(propagation)) {
                 done.add(propagation);
-                if (isUnbound(propagation._parameter, propagation._callSite._binding)) {
-                    propagation._callSite._callerInfo._freeVariables.add(propagation._parameter);
-                    for (BlockCallSite callSite : propagation._callSite._callerInfo._callSites) {
-                        toDo.add(new Propagation(propagation._parameter, callSite));
+                if (isUnbound(propagation.parameter, propagation.callSite.binding)) {
+                    propagation.callSite.callerInfo.freeVariables.add(propagation.parameter);
+                    for (BlockCallSite callSite : propagation.callSite.callerInfo.callSites) {
+                        propagateToDo.add(new Propagation(propagation.parameter, callSite));
                     }
                 }
             }
@@ -256,15 +256,15 @@ final class FreeVariableCapturing {
 
     private void traceUnboundVariables(BlockInfo info) {
         if (Trace.hasLevel(4)) {
-            Trace.line(4, info._block + " has unbound variables " + info._freeVariables);
+            Trace.line(4, info.block + " has unbound variables " + info.freeVariables);
         }
     }
 
     private void declareFreeVariablesAsParameters() {
-        for (BlockInfo info : _blockInfos) {
+        for (BlockInfo info : blockInfos) {
             traceDeclareFreeVariables(info);
-            final CirVariable[] free = Sequence.Static.toArray(info._freeVariables, CirVariable.class);
-            final CirVariable[] params = info._block.closure().parameters();
+            final CirVariable[] free = Sequence.Static.toArray(info.freeVariables, CirVariable.class);
+            final CirVariable[] params = info.block.closure().parameters();
 
             final CirVariable[] all = CirClosure.newParameters(free.length + params.length);
             for (int i = 0; i < free.length; i++) {
@@ -273,25 +273,25 @@ final class FreeVariableCapturing {
             for (int i = 0; i < params.length; i++) {
                 all[i + free.length] = params[i];
             }
-            info._block.closure().setParameters(all);
-            assert info._block.closure().verifyParameters();
+            info.block.closure().setParameters(all);
+            assert info.block.closure().verifyParameters();
         }
     }
 
     private void traceDeclareFreeVariables(BlockInfo info) {
         if (Trace.hasLevel(4)) {
-            Trace.line(4, info._block + " has propagated parameters " + info._freeVariables);
+            Trace.line(4, info.block + " has propagated parameters " + info.freeVariables);
         }
     }
 
     private void addCanonicalArgumentsToCall(CirCall call, BlockInfo info) {
         final CirValue[] args = call.arguments();
-        if (args.length == 0 && info._freeVariables.isEmpty()) {
+        if (args.length == 0 && info.freeVariables.isEmpty()) {
             call.setArguments(CirCall.NO_ARGUMENTS);
             return;
         }
 
-        final CirValue[] free = Sequence.Static.toArray(info._freeVariables, CirValue.class);
+        final CirValue[] free = Sequence.Static.toArray(info.freeVariables, CirValue.class);
         final CirValue[] all = CirCall.newArguments(free.length + args.length);
         for (int i = 0; i < free.length; i++) {
             all[i] = free[i];
@@ -320,7 +320,7 @@ final class FreeVariableCapturing {
      * Java locals by calling 'pruneJavaLocals' (see below).
      */
     private void terminateJavaLocals() {
-        final CirClosure closure = _translation.cirClosure();
+        final CirClosure closure = translation.cirClosure();
         final CirVariable[] parameters = closure.parameters();
         final CirValue[] arguments = closure.body().arguments();
         for (int i = 0; i < arguments.length; i++) {
@@ -340,12 +340,12 @@ final class FreeVariableCapturing {
      * as the above 'terminateJavaLocals()' is all we need to do in the frequent case.
      */
     void pruneJavaLocals() {
-        final LinkedList<CirCall> toDo = new LinkedList<CirCall>();
-        final CirCall firstCall = _translation.cirClosure().body();
-        toDo.add(firstCall);
-        while (!toDo.isEmpty()) {
+        final LinkedList<CirCall> pruneToDo = new LinkedList<CirCall>();
+        final CirCall firstCall = translation.cirClosure().body();
+        pruneToDo.add(firstCall);
+        while (!pruneToDo.isEmpty()) {
             boolean havingUndefined = false;
-            final CirCall call = toDo.remove();
+            final CirCall call = pruneToDo.remove();
             final CirBlock block = (CirBlock) call.procedure();
             int i = 0;
             while (i < call.arguments().length) {
@@ -353,8 +353,8 @@ final class FreeVariableCapturing {
                     havingUndefined = true;
                     CirBetaReduction.applySingle(block.closure(), block.closure().parameters()[i], CirValue.UNDEFINED);
                     block.closure().removeParameter(i);
-                    for (BlockCallSite blockCallSite : blockToInfo(block)._callSites) {
-                        blockCallSite._call.removeArgument(i);
+                    for (BlockCallSite blockCallSite : blockToInfo(block).callSites) {
+                        blockCallSite.call.removeArgument(i);
                     }
                     if (call == firstCall) {
                         // the first call is not registered among the call sites in the block info
@@ -369,7 +369,7 @@ final class FreeVariableCapturing {
                     @Override
                     public void visitCall(CirCall c) {
                         if (c.procedure() instanceof CirBlock) {
-                            toDo.add(c);
+                            pruneToDo.add(c);
                         }
                         super.visitCall(c);
                     }
@@ -380,17 +380,17 @@ final class FreeVariableCapturing {
     }
 
     public void run() {
-        for (BlockInfo info : _blockInfos) {
+        for (BlockInfo info : blockInfos) {
             findUnboundVariablesInBlock(info);
         }
         propagateUnboundVariablesToCallers();
         declareFreeVariablesAsParameters();
-        for (BlockInfo info : _blockInfos) {
-            for (BlockCallSite callSite : info._callSites) {
-                addCanonicalArgumentsToCall(callSite._call, info);
+        for (BlockInfo info : blockInfos) {
+            for (BlockCallSite callSite : info.callSites) {
+                addCanonicalArgumentsToCall(callSite.call, info);
             }
         }
-        addCanonicalArgumentsToCall(_translation.cirClosure().body(), _blockInfos.first());
+        addCanonicalArgumentsToCall(translation.cirClosure().body(), blockInfos.first());
         terminateJavaLocals();
     }
 

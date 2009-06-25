@@ -40,10 +40,10 @@ import com.sun.max.vm.type.*;
 @PROTOTYPE_ONLY
 public class TemplateGenerator {
 
-    protected TargetGenerator _targetGenerator;
+    protected TargetGenerator targetGenerator;
 
     public TemplateGenerator() {
-        _targetGenerator = ((TargetGeneratorScheme) MaxineVM.target().configuration().compilerScheme()).targetGenerator();
+        targetGenerator = ((TargetGeneratorScheme) MaxineVM.target().configuration().compilerScheme()).targetGenerator();
 
         // TODO: this hack is to avoid an unresolved call in instrumented templates
         ClassActor.fromJava(AlarmCounter.class);
@@ -59,7 +59,7 @@ public class TemplateGenerator {
     }
 
     protected TargetGenerator targetGenerator() {
-        return _targetGenerator;
+        return targetGenerator;
     }
 
     public ClassMethodActor getClassMethodActor(Method method) {

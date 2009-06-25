@@ -33,40 +33,39 @@ import com.sun.max.tele.*;
  */
 public abstract class InspectorTabbedPane extends JTabbedPane implements InspectionHolder,  Prober {
 
-    private final Inspection _inspection;
+    private final Inspection inspection;
 
     /**
      * Creates a new {@JTabbedPane} specialized for use in the Maxine Inspector.
      */
     protected InspectorTabbedPane(Inspection inspection) {
-        super();
-        _inspection = inspection;
+        this.inspection = inspection;
         setOpaque(true);
         setBackground(inspection.style().defaultBackgroundColor());
     }
 
     public final Inspection inspection() {
-        return _inspection;
+        return inspection;
     }
 
     public final MaxVM maxVM() {
-        return _inspection.maxVM();
+        return inspection.maxVM();
     }
 
     public final MaxVMState maxVMState() {
-        return _inspection.maxVM().maxVMState();
+        return inspection.maxVM().maxVMState();
     }
 
     public final InspectorStyle style() {
-        return _inspection.style();
+        return inspection.style();
     }
 
     public final InspectionFocus focus() {
-        return _inspection.focus();
+        return inspection.focus();
     }
 
     public InspectionActions actions() {
-        return _inspection.actions();
+        return inspection.actions();
     }
 
 }

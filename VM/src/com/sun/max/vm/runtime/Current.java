@@ -56,6 +56,6 @@ public final class Current {
 
     @INLINE
     public static ClassLoader classLoader() {
-        return classActor().classLoader();
+        return classActor().classLoader;
     }
 }

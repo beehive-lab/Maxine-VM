@@ -83,8 +83,8 @@ public abstract class BytecodeTest_subtype<Method_Type extends IrMethod> extends
     static class C9 extends C8 {}
     static class C10 extends C9 {}
 
-    private static Class[] _classes;
-    private static Map<Class, Object> _instances;
+    private static Class[] klasses;
+    private static Map<Class, Object> instances;
 
     public static final int MAX_ARRAY_DIMENSION_TESTED = 3;
 
@@ -108,10 +108,10 @@ public abstract class BytecodeTest_subtype<Method_Type extends IrMethod> extends
 
     @Override
     public void setUp() {
-        if (_instances != null) {
+        if (instances != null) {
             return;
         }
-        _instances = new HashMap<Class, Object>();
+        instances = new HashMap<Class, Object>();
 
         final Set<Class> classes = new LinkedHashSet<Class>(Arrays.asList(new Class[]{
             Object.class,
@@ -129,7 +129,7 @@ public abstract class BytecodeTest_subtype<Method_Type extends IrMethod> extends
 
         for (Kind kind : Kind.VALUES) {
             if (kind != Kind.WORD) {
-                classes.add(kind.toJava());
+                classes.add(kind.javaClass);
             }
         }
 
@@ -147,28 +147,28 @@ public abstract class BytecodeTest_subtype<Method_Type extends IrMethod> extends
                 final Object array = arrayOf(c, i);
                 final Class<?> arrayClass = array.getClass();
                 allClasses.add(arrayClass);
-                _instances.put(arrayClass, array);
+                instances.put(arrayClass, array);
             }
 
             if (c == int.class || c == String.class) {
                 final Object array = arrayOf(c, 255);
                 final Class<?> arrayClass = array.getClass();
                 allClasses.add(arrayClass);
-                _instances.put(arrayClass, array);
+                instances.put(arrayClass, array);
             }
 
             if (!c.isInterface() && !Modifier.isAbstract(c.getModifiers())) {
                 try {
-                    _instances.put(c, c.newInstance());
+                    instances.put(c, c.newInstance());
                 } catch (Exception e) {
                 }
             }
         }
 
-        assert !_instances.containsKey(null);
-        _instances.put(null, null);
+        assert !instances.containsKey(null);
+        instances.put(null, null);
 
-        _classes = allClasses.toArray(new Class[classes.size()]);
+        klasses = allClasses.toArray(new Class[classes.size()]);
     }
 
     private static final Pattern ARRAY_DIMENSIONS = Pattern.compile("(.*?)((?:\\[\\])+)(.*)");
@@ -188,10 +188,10 @@ public abstract class BytecodeTest_subtype<Method_Type extends IrMethod> extends
         return buf;
     }
 
-    private int _testCount;
+    private int testCount;
 
     private String methodName(String testDescription) {
-        return "perform" + (++_testCount) + "_" + testDescription;
+        return "perform" + (++testCount) + "_" + testDescription;
     }
 
     private void instanceof_test(final Class type, Iterable<Object> objects) {
@@ -235,7 +235,7 @@ public abstract class BytecodeTest_subtype<Method_Type extends IrMethod> extends
             final String valueTypeName = value == null ? "null" : valueType.getSimpleName();
             final ClassActor arrayClassActor = ClassActor.fromJava(array.getClass());
             final ClassActor componentClassActor = arrayClassActor.componentClassActor();
-            final boolean expectArrayStoreException = componentClassActor.kind() == Kind.WORD || (value != null && !componentClassActor.isAssignableFrom(ClassActor.fromJava(value.getClass())));
+            final boolean expectArrayStoreException = componentClassActor.kind == Kind.WORD || (value != null && !componentClassActor.isAssignableFrom(ClassActor.fromJava(value.getClass())));
             try {
                 executeWithException(method, ReferenceValue.from(array), ReferenceValue.from(value));
                 if (expectArrayStoreException) {
@@ -291,25 +291,25 @@ public abstract class BytecodeTest_subtype<Method_Type extends IrMethod> extends
     }
 
     public void test_arraystore() {
-        for (Class type : _classes) {
+        for (Class type : klasses) {
             if (type.isArray() && Kind.fromJava(type.getComponentType()) == Kind.fromJava(Object.class)) {
                 Trace.line(TRACE_LEVEL, "aastore " + type.getName());
-                final Object array = _instances.get(type);
-                arraystoreTest(array, _instances.values());
+                final Object array = instances.get(type);
+                arraystoreTest(array, instances.values());
             }
         }
     }
 
     public void test_isAssignableFrom() {
-        for (Class<?> fromType : _classes) {
+        for (Class<?> fromType : klasses) {
             Trace.line(TRACE_LEVEL, "isAssignableFrom " + fromType.getName());
             final ClassActor fromTypeActor = ClassActor.fromJava(fromType);
-            for (Class<?> toType : _classes) {
+            for (Class<?> toType : klasses) {
                 final ClassActor toTypeActor = ClassActor.fromJava(toType);
                 final boolean apiAnswer = toType.isAssignableFrom(fromType);
                 final boolean actorAnswer = toTypeActor.isAssignableFrom(fromTypeActor);
-                if (fromTypeActor.kind() == Kind.WORD) {
-                    if (toTypeActor.kind() != Kind.WORD) {
+                if (fromTypeActor.kind == Kind.WORD) {
+                    if (toTypeActor.kind != Kind.WORD) {
                         if (toType != Accessor.class && toType != UnsafeBox.class && actorAnswer == true) {
                             toTypeActor.isAssignableFrom(fromTypeActor);
                             fail(fromType + " should not be assignable to non-word type " + toType);
@@ -327,17 +327,17 @@ public abstract class BytecodeTest_subtype<Method_Type extends IrMethod> extends
     }
 
     public void test_instanceof() {
-        for (Class<?> type : _classes) {
+        for (Class<?> type : klasses) {
             Trace.line(TRACE_LEVEL, "instanceof " + type.getName());
-            instanceof_test(type, _instances.values());
+            instanceof_test(type, instances.values());
         }
     }
 
     public void test_checkcast() {
-        for (Class<?> type : _classes) {
+        for (Class<?> type : klasses) {
             if (!type.isPrimitive()) {
                 Trace.line(TRACE_LEVEL, "checkcast " + type.getName());
-                checkcast_test(type, _instances.values());
+                checkcast_test(type, instances.values());
             }
         }
     }

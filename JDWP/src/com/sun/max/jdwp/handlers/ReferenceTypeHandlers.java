@@ -70,7 +70,7 @@ public class ReferenceTypeHandlers extends Handlers {
 
         @Override
         public Signature.Reply handle(Signature.IncomingRequest incomingRequest) throws JDWPException {
-            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest._refType);
+            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest.refType);
             return new Signature.Reply(referenceType.getSignature());
         }
     }
@@ -84,7 +84,7 @@ public class ReferenceTypeHandlers extends Handlers {
 
         @Override
         public ClassLoader.Reply handle(ClassLoader.IncomingRequest incomingRequest) throws JDWPException {
-            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest._refType);
+            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest.refType);
             return new ClassLoader.Reply(session().toID(referenceType.classLoader()));
         }
     }
@@ -97,7 +97,7 @@ public class ReferenceTypeHandlers extends Handlers {
 
         @Override
         public Modifiers.Reply handle(Modifiers.IncomingRequest incomingRequest) throws JDWPException {
-            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest._refType);
+            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest.refType);
             return new Modifiers.Reply(referenceType.getFlags());
         }
     }
@@ -110,18 +110,18 @@ public class ReferenceTypeHandlers extends Handlers {
 
         @Override
         public Fields.Reply handle(Fields.IncomingRequest incomingRequest) throws JDWPException {
-            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest._refType);
+            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest.refType);
             final FieldProvider[] fields = referenceType.getFields();
             final Fields.Reply reply = new Fields.Reply();
-            reply._declared = new Fields.FieldInfo[fields.length];
+            reply.declared = new Fields.FieldInfo[fields.length];
             int z = 0;
             for (FieldProvider fieldProvider : fields) {
                 final FieldInfo fieldInfo = new FieldInfo();
-                fieldInfo._fieldID = session().toID(referenceType, fieldProvider);
-                fieldInfo._modBits = fieldProvider.getFlags();
-                fieldInfo._name = fieldProvider.getName();
-                fieldInfo._signature = fieldProvider.getSignature();
-                reply._declared[z] = fieldInfo;
+                fieldInfo.fieldID = session().toID(referenceType, fieldProvider);
+                fieldInfo.modBits = fieldProvider.getFlags();
+                fieldInfo.name = fieldProvider.getName();
+                fieldInfo.signature = fieldProvider.getSignature();
+                reply.declared[z] = fieldInfo;
                 z++;
             }
             return reply;
@@ -136,18 +136,18 @@ public class ReferenceTypeHandlers extends Handlers {
 
         @Override
         public Methods.Reply handle(Methods.IncomingRequest incomingRequest) throws JDWPException {
-            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest._refType);
+            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest.refType);
             final MethodProvider[] methods = referenceType.getMethods();
             final Reply reply = new Reply();
-            reply._declared = new MethodInfo[methods.length];
+            reply.declared = new MethodInfo[methods.length];
             int z = 0;
             for (MethodProvider methodProvider : methods) {
                 final MethodInfo methodInfo = new MethodInfo();
-                methodInfo._methodID = session().toID(referenceType, methodProvider);
-                methodInfo._modBits = methodProvider.getFlags();
-                methodInfo._name = methodProvider.getName();
-                methodInfo._signature = methodProvider.getSignature();
-                reply._declared[z] = methodInfo;
+                methodInfo.methodID = session().toID(referenceType, methodProvider);
+                methodInfo.modBits = methodProvider.getFlags();
+                methodInfo.name = methodProvider.getName();
+                methodInfo.signature = methodProvider.getSignature();
+                reply.declared[z] = methodInfo;
                 z++;
             }
             return reply;
@@ -163,12 +163,12 @@ public class ReferenceTypeHandlers extends Handlers {
         @Override
         public GetValues.Reply handle(GetValues.IncomingRequest incomingRequest) throws JDWPException {
             final GetValues.Reply reply = new GetValues.Reply();
-            reply._values = new JDWPValue[incomingRequest._fields.length];
+            reply.values = new JDWPValue[incomingRequest.fields.length];
             int z = 0;
-            for (GetValues.Field f : incomingRequest._fields) {
-                final ID.FieldID id = f._fieldID;
-                final FieldProvider field = session().getField(incomingRequest._refType, id);
-                reply._values[z] = session().toJDWPValue(field.getStaticValue());
+            for (GetValues.Field f : incomingRequest.fields) {
+                final ID.FieldID id = f.fieldID;
+                final FieldProvider field = session().getField(incomingRequest.refType, id);
+                reply.values[z] = session().toJDWPValue(field.getStaticValue());
                 z++;
             }
             return reply;
@@ -183,7 +183,7 @@ public class ReferenceTypeHandlers extends Handlers {
 
         @Override
         public SourceFile.Reply handle(SourceFile.IncomingRequest incomingRequest) throws JDWPException {
-            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest._refType);
+            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest.refType);
             return new SourceFile.Reply(referenceType.getSourceFileName());
         }
     }
@@ -197,15 +197,15 @@ public class ReferenceTypeHandlers extends Handlers {
 
         @Override
         public NestedTypes.Reply handle(NestedTypes.IncomingRequest incomingRequest) throws JDWPException {
-            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest._refType);
+            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest.refType);
             final ReferenceTypeProvider[] refTypes = referenceType.getNestedTypes();
             final NestedTypes.Reply reply = new NestedTypes.Reply();
-            reply._classes = new NestedTypes.TypeInfo[refTypes.length];
+            reply.classes = new NestedTypes.TypeInfo[refTypes.length];
             for (int i = 0; i < refTypes.length; i++) {
                 final ReferenceTypeProvider curRefType = refTypes[i];
-                reply._classes[i] = new NestedTypes.TypeInfo();
-                reply._classes[i]._refTypeTag = session().getTypeTag(curRefType);
-                reply._classes[i]._typeID = session().toID(curRefType);
+                reply.classes[i] = new NestedTypes.TypeInfo();
+                reply.classes[i].refTypeTag = session().getTypeTag(curRefType);
+                reply.classes[i].typeID = session().toID(curRefType);
             }
             return reply;
         }
@@ -219,7 +219,7 @@ public class ReferenceTypeHandlers extends Handlers {
 
         @Override
         public Status.Reply handle(Status.IncomingRequest incomingRequest) throws JDWPException {
-            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest._refType);
+            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest.refType);
             return new Status.Reply(referenceType.getStatus());
         }
     }
@@ -232,14 +232,14 @@ public class ReferenceTypeHandlers extends Handlers {
 
         @Override
         public Interfaces.Reply handle(Interfaces.IncomingRequest incomingRequest) throws JDWPException {
-            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest._refType);
+            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest.refType);
             final Interfaces.Reply reply = new Interfaces.Reply();
             final InterfaceProvider[] interfaceProviders = referenceType.getImplementedInterfaces();
             final ID.InterfaceID[] result = new ID.InterfaceID[interfaceProviders.length];
             for (int i = 0; i < result.length; i++) {
                 result[i] = session().toID(interfaceProviders[i]);
             }
-            reply._interfaces = result;
+            reply.interfaces = result;
             return reply;
         }
     }
@@ -253,7 +253,7 @@ public class ReferenceTypeHandlers extends Handlers {
 
         @Override
         public ClassObject.Reply handle(ClassObject.IncomingRequest incomingRequest) throws JDWPException {
-            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest._refType);
+            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest.refType);
             return new ClassObject.Reply(session().toID(referenceType.classObject()));
         }
     }
@@ -281,7 +281,7 @@ public class ReferenceTypeHandlers extends Handlers {
 
         @Override
         public SignatureWithGeneric.Reply handle(SignatureWithGeneric.IncomingRequest incomingRequest) throws JDWPException {
-            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest._refType);
+            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest.refType);
             String signatureWithGeneric = referenceType.getSignatureWithGeneric();
             if (signatureWithGeneric == null) {
                 signatureWithGeneric = referenceType.getSignature();
@@ -299,22 +299,22 @@ public class ReferenceTypeHandlers extends Handlers {
 
         @Override
         public FieldsWithGeneric.Reply handle(FieldsWithGeneric.IncomingRequest incomingRequest) throws JDWPException {
-            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest._refType);
+            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest.refType);
             final FieldProvider[] fields = referenceType.getFields();
             final FieldsWithGeneric.Reply reply = new FieldsWithGeneric.Reply();
-            reply._declared = new FieldsWithGeneric.FieldInfo[fields.length];
+            reply.declared = new FieldsWithGeneric.FieldInfo[fields.length];
             int z = 0;
             for (FieldProvider fieldProvider : fields) {
                 final FieldsWithGeneric.FieldInfo fieldInfo = new FieldsWithGeneric.FieldInfo();
-                fieldInfo._fieldID = session().toID(referenceType, fieldProvider);
-                fieldInfo._modBits = fieldProvider.getFlags();
-                fieldInfo._name = fieldProvider.getName();
-                fieldInfo._signature = fieldProvider.getSignature();
-                fieldInfo._genericSignature = fieldProvider.getGenericSignature();
-                if (fieldInfo._genericSignature == null) {
-                    fieldInfo._genericSignature = fieldInfo._signature;
+                fieldInfo.fieldID = session().toID(referenceType, fieldProvider);
+                fieldInfo.modBits = fieldProvider.getFlags();
+                fieldInfo.name = fieldProvider.getName();
+                fieldInfo.signature = fieldProvider.getSignature();
+                fieldInfo.genericSignature = fieldProvider.getGenericSignature();
+                if (fieldInfo.genericSignature == null) {
+                    fieldInfo.genericSignature = fieldInfo.signature;
                 }
-                reply._declared[z] = fieldInfo;
+                reply.declared[z] = fieldInfo;
                 z++;
             }
             return reply;
@@ -330,22 +330,22 @@ public class ReferenceTypeHandlers extends Handlers {
 
         @Override
         public MethodsWithGeneric.Reply handle(MethodsWithGeneric.IncomingRequest incomingRequest) throws JDWPException {
-            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest._refType);
+            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest.refType);
             final MethodProvider[] methods = referenceType.getMethods();
             final MethodsWithGeneric.Reply reply = new MethodsWithGeneric.Reply();
-            reply._declared = new MethodsWithGeneric.MethodInfo[methods.length];
+            reply.declared = new MethodsWithGeneric.MethodInfo[methods.length];
             int z = 0;
             for (MethodProvider methodProvider : methods) {
                 final MethodsWithGeneric.MethodInfo methodInfo = new MethodsWithGeneric.MethodInfo();
-                methodInfo._methodID = session().toID(referenceType, methodProvider);
-                methodInfo._modBits = methodProvider.getFlags();
-                methodInfo._name = methodProvider.getName();
-                methodInfo._signature = methodProvider.getSignature(); // ma.javaSignature(true, false, true);
-                methodInfo._genericSignature = methodProvider.getSignatureWithGeneric();
-                if (methodInfo._genericSignature == null) {
-                    methodInfo._genericSignature = methodInfo._signature;
+                methodInfo.methodID = session().toID(referenceType, methodProvider);
+                methodInfo.modBits = methodProvider.getFlags();
+                methodInfo.name = methodProvider.getName();
+                methodInfo.signature = methodProvider.getSignature(); // ma.javaSignature(true, false, true);
+                methodInfo.genericSignature = methodProvider.getSignatureWithGeneric();
+                if (methodInfo.genericSignature == null) {
+                    methodInfo.genericSignature = methodInfo.signature;
                 }
-                reply._declared[z] = methodInfo;
+                reply.declared[z] = methodInfo;
                 z++;
             }
             return reply;
@@ -361,8 +361,8 @@ public class ReferenceTypeHandlers extends Handlers {
         @Override
         public Instances.Reply handle(Instances.IncomingRequest incomingRequest) throws JDWPException {
 
-            final int maxInstances = incomingRequest._maxInstances;
-            final ReferenceTypeProvider referenceTypeProvider = session().getReferenceType(incomingRequest._refType);
+            final int maxInstances = incomingRequest.maxInstances;
+            final ReferenceTypeProvider referenceTypeProvider = session().getReferenceType(incomingRequest.refType);
             final Instances.Reply reply = new Instances.Reply();
 
             final ObjectProvider[] instances = referenceTypeProvider.getInstances();
@@ -372,9 +372,9 @@ public class ReferenceTypeHandlers extends Handlers {
             }
 
             final int count = Math.min(maxInstances, instances.length);
-            reply._instances = new JDWPValue[count];
+            reply.instances = new JDWPValue[count];
             for (int i = 0; i < count; i++) {
-                reply._instances[i] = new JDWPValue(session().toID(instances[i]));
+                reply.instances[i] = new JDWPValue(session().toID(instances[i]));
             }
 
             return reply;
@@ -390,10 +390,10 @@ public class ReferenceTypeHandlers extends Handlers {
 
         @Override
         public ClassFileVersion.Reply handle(ClassFileVersion.IncomingRequest incomingRequest) throws JDWPException {
-            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest._refType);
+            final ReferenceTypeProvider referenceType = session().getReferenceType(incomingRequest.refType);
             final ClassFileVersion.Reply reply = new ClassFileVersion.Reply();
-            reply._majorVersion = referenceType.majorVersion();
-            reply._minorVersion = referenceType.minorVersion();
+            reply.majorVersion = referenceType.majorVersion();
+            reply.minorVersion = referenceType.minorVersion();
             return reply;
         }
     }

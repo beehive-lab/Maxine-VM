@@ -40,41 +40,41 @@ public class ResolvedAtCompileTime implements ResolvedAtCompileTimeInterface {
     /*
      * The following static variables are used solely for generating template for get/put static bytecodes
      */
-    public static byte _initializedMutableByteVar = 11;
-    public static short _initializedMutableShortVar = 22;
-    public static char _initializedMutableCharVar = '1';
-    public static int _initializedMutableIntVar = 33;
-    public static long _initializedMutableLongVar = 44;
-    public static float _initializedMutableFloatVar = 55;
-    public static double _initializedMutableDoubleVar = 66;
-    public static boolean _initializedMutableBooleanVar = true;
-    public static  Object _initializedMutableObjectVar = null;
+    public static byte initializedMutableByteVar = 11;
+    public static short initializedMutableShortVar = 22;
+    public static char initializedMutableCharVar = '1';
+    public static int initializedMutableIntVar = 33;
+    public static long initializedMutableLongVar = 44;
+    public static float initializedMutableFloatVar = 55;
+    public static double initializedMutableDoubleVar = 66;
+    public static boolean initializedMutableBooleanVar = true;
+    public static  Object initializedMutableObjectVar = null;
 
     /*
      * The following instance variables are used solely for generating template for get/put field bytecodes
      */
-    public int _intField;
-    public byte _byteField;
-    public char _charField;
-    public short _shortField;
-    public long _longField;
-    public float _floatField;
-    public boolean _booleanField;
-    public double _doubleField;
-    public Object _objField;
-    public Word _wordField;
+    public int intField;
+    public byte byteField;
+    public char charField;
+    public short shortField;
+    public long longField;
+    public float floatField;
+    public boolean booleanField;
+    public double doubleField;
+    public Object objField;
+    public Word wordField;
 
     public void parameterlessMethod() {
         // Do enough stuff here to avoid being inlined.
         for (int i = 0; i < 1000; i++) {
-            _intField += i;
+            intField += i;
         }
     }
 
     public static void parameterlessResolvedStaticMethod() {
         // Do enough stuff here to avoid being inlined.
         for (int i = 0; i < 1000; i++) {
-            _initializedMutableIntVar += i;
+            initializedMutableIntVar += i;
         }
     }
     public static int parameterlessResolvedStaticMethodReturningInt() {
@@ -101,7 +101,7 @@ public class ResolvedAtCompileTime implements ResolvedAtCompileTimeInterface {
     public void parameterlessResolvedInterfaceMethod() {
         // Do enough stuff here to avoid being inlined.
         for (int i = 0; i < 1000; i++) {
-            _initializedMutableIntVar += i;
+            initializedMutableIntVar += i;
         }
     }
 }

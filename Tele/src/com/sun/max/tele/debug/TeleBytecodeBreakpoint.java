@@ -44,49 +44,49 @@ import com.sun.max.vm.type.*;
  */
 public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
 
-    private TeleCodeLocation _teleCodeLocation;
-    private final Factory _factory;
+    private TeleCodeLocation teleCodeLocation;
+    private final Factory factory;
 
     @Override
     public TeleCodeLocation teleCodeLocation() {
-        return _teleCodeLocation;
+        return teleCodeLocation;
     }
 
     /**
      * target breakpoints that were created in compilations of the method in the {@link TeleVM}.
      */
-    private AppendableSequence<TeleTargetBreakpoint> _teleTargetBreakpoints;
+    private AppendableSequence<TeleTargetBreakpoint> teleTargetBreakpoints;
 
     private TeleBytecodeBreakpoint(TeleVM teleVM, Factory factory, Key key, boolean isTransient) {
         super(teleVM, isTransient);
-        _teleCodeLocation = new TeleCodeLocation(teleVM, key);
-        _factory = factory;
+        this.teleCodeLocation = new TeleCodeLocation(teleVM, key);
+        this.factory = factory;
     }
 
     /**
      * @return description of the bytecode location of this breakpoint.
      */
     public Key key() {
-        return _teleCodeLocation.key();
+        return teleCodeLocation.key();
     }
 
     private void request() {
-        teleVM().messenger().requestBytecodeBreakpoint(key(), key()._bytecodePosition);
+        teleVM().messenger().requestBytecodeBreakpoint(key(), key().bytecodePosition);
     }
 
-    private Deoptimizer _deoptimizer;
+    private Deoptimizer deoptimizer;
 
     private Deoptimizer makeDeoptimizer() {
-        if (_deoptimizer == null) {
-            switch (teleVM().vmConfiguration().platform().processorKind().instructionSet()) {
+        if (deoptimizer == null) {
+            switch (teleVM().vmConfiguration().platform().processorKind.instructionSet) {
                 case AMD64:
-                    _deoptimizer = AMD64Deoptimizer.deoptimizer();
+                    deoptimizer = AMD64Deoptimizer.deoptimizer();
                     break;
                 default:
                     FatalError.unimplemented();
             }
         }
-        return _deoptimizer;
+        return deoptimizer;
     }
 
     private void triggerDeoptimization(TeleTargetMethod teleTargetMethod) {
@@ -116,16 +116,16 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
     public void activate() {
         final Sequence<TeleTargetMethod> teleTargetMethods = TeleTargetMethod.get(teleVM(), key());
         if (teleTargetMethods.length() > 0) {
-            _teleTargetBreakpoints = new LinkSequence<TeleTargetBreakpoint>();
+            teleTargetBreakpoints = new LinkSequence<TeleTargetBreakpoint>();
             for (TeleTargetMethod teleTargetMethod : teleTargetMethods) {
                 if (teleTargetMethod instanceof TeleJitTargetMethod) {
                     final TeleJitTargetMethod teleJitTargetMethod = (TeleJitTargetMethod) teleTargetMethod;
                     final int[] bytecodeToTargetCodePositionMap = teleJitTargetMethod.bytecodeToTargetCodePositionMap();
-                    final int targetCodePosition = bytecodeToTargetCodePositionMap[key()._bytecodePosition];
+                    final int targetCodePosition = bytecodeToTargetCodePositionMap[key().bytecodePosition];
                     final Address targetAddress = teleTargetMethod.getCodeStart().plus(targetCodePosition);
                     final TeleTargetBreakpoint teleTargetBreakpoint = teleVM().makeTargetBreakpoint(targetAddress);
                     teleTargetBreakpoint.setEnabled(true);
-                    _teleTargetBreakpoints.append(teleTargetBreakpoint);
+                    teleTargetBreakpoints.append(teleTargetBreakpoint);
                 } else {
                     triggerDeoptimization(teleTargetMethod);
                 }
@@ -144,7 +144,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                 if (teleTargetMethod instanceof TeleJitTargetMethod) {
                     final TeleJitTargetMethod teleJitTargetMethod = (TeleJitTargetMethod) teleTargetMethod;
                     final int[] bytecodeToTargetCodePositionMap = teleJitTargetMethod.bytecodeToTargetCodePositionMap();
-                    final int targetCodePosition = bytecodeToTargetCodePositionMap[key()._bytecodePosition];
+                    final int targetCodePosition = bytecodeToTargetCodePositionMap[key().bytecodePosition];
                     final Address targetAddress = teleTargetMethod.getCodeStart().plus(targetCodePosition);
                     final TeleTargetBreakpoint targetBreakpoint = teleVM().getTargetBreakpoint(targetAddress);
                     if (targetBreakpoint != null) {
@@ -153,9 +153,9 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                     // Assume for now the whole VM is stopped; there will be races to be fixed otherwise, likely with an agent thread in the {@link TeleVM}.
                 }
             }
-            _teleTargetBreakpoints = null;
+            teleTargetBreakpoints = null;
         }
-        teleVM().messenger().cancelBytecodeBreakpoint(key(), key()._bytecodePosition);
+        teleVM().messenger().cancelBytecodeBreakpoint(key(), key().bytecodePosition);
         // Note that just sending a message to cancel the breakpoint request in the VM doesn't actually remove any
         // breakpoints generated by the VM in response to the original request.  Those will eventually be discovered
         // and removed remotely.
@@ -164,25 +164,25 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
     @Override
     public void remove() {
         dispose();
-        _factory.removeBreakpoint(key());
+        factory.removeBreakpoint(key());
     }
 
-    private boolean _enabled;
+    private boolean enabled;
 
     @Override
     public boolean isEnabled() {
-        return _enabled;
+        return enabled;
     }
 
     @Override
     public boolean setEnabled(boolean enabled) {
         assert !isTransient() : "cannot disable transient breakpoint: " + this;
-        if (enabled != _enabled) {
-            _enabled = enabled;
+        if (enabled != this.enabled) {
+            this.enabled = enabled;
             if (enabled) {
                 activate();
             }
-            _factory.announceStateChange();
+            factory.announceStateChange();
             // TODO (mlvdv) disable bytecode breakpoint
             return true;
         }
@@ -208,13 +208,13 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
      */
     public static class Key extends DefaultMethodKey {
 
-        protected final int _bytecodePosition;
+        protected final int bytecodePosition;
 
         /**
          * @return bytecode position in the method.
          */
         public int position() {
-            return _bytecodePosition;
+            return bytecodePosition;
         }
 
         public Key(MethodKey methodKey) {
@@ -223,17 +223,17 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
 
         public Key(BytecodeLocation bytecodeLocation) {
             super(bytecodeLocation.classMethodActor());
-            _bytecodePosition = bytecodeLocation.bytecodePosition();
+            this.bytecodePosition = bytecodeLocation.bytecodePosition();
         }
 
         public Key(MethodKey methodKey, int bytecodePosition) {
             super(methodKey.holder(), methodKey.name(), methodKey.signature());
-            _bytecodePosition = bytecodePosition;
+            this.bytecodePosition = bytecodePosition;
         }
 
         public Key(SignatureDescriptor signature, TypeDescriptor holder, Utf8Constant name, int bytecodePosition) {
             super(holder, name, signature);
-            _bytecodePosition = bytecodePosition;
+            this.bytecodePosition = bytecodePosition;
         }
 
         @Override
@@ -243,7 +243,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             }
             if (obj instanceof Key) {
                 final Key otherKey = (Key) obj;
-                return _bytecodePosition == otherKey._bytecodePosition;
+                return bytecodePosition == otherKey.bytecodePosition;
 
             }
             return false;
@@ -251,12 +251,12 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
 
         @Override
         public int hashCode() {
-            return super.hashCode() ^ _bytecodePosition;
+            return super.hashCode() ^ bytecodePosition;
         }
 
         @Override
         public String toString() {
-            return "{" + super.toString() + ", position=" + _bytecodePosition + "}";
+            return "{" + super.toString() + ", position=" + bytecodePosition + "}";
         }
 
     }
@@ -266,22 +266,22 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
      */
     public static class Factory extends Observable {
 
-        private final TeleVM _teleVM;
+        private final TeleVM teleVM;
 
         public Factory(TeleVM teleVM) {
-            _teleVM = teleVM;
+            this.teleVM = teleVM;
             teleVM.addVMStateObserver(new TeleVMStateObserver() {
 
                 public void upate(MaxVMState maxVMState) {
                     if (maxVMState.processState() == ProcessState.TERMINATED) {
-                        _breakpoints.clear();
+                        breakpoints.clear();
                         announceStateChange();
                     }
                 }
             });
         }
 
-        private final VariableMapping<Key, TeleBytecodeBreakpoint> _breakpoints = HashMapping.createVariableEqualityMapping();
+        private final VariableMapping<Key, TeleBytecodeBreakpoint> breakpoints = HashMapping.createVariableEqualityMapping();
 
         /**
          * Notify all observers that there has been a state change concerning these breakpoints.
@@ -297,7 +297,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          */
         public synchronized Iterable<TeleBytecodeBreakpoint> breakpoints() {
             final AppendableSequence<TeleBytecodeBreakpoint> breakpoints = new LinkSequence<TeleBytecodeBreakpoint>();
-            for (TeleBytecodeBreakpoint teleBytecodeBreakpoint : _breakpoints.values()) {
+            for (TeleBytecodeBreakpoint teleBytecodeBreakpoint : this.breakpoints.values()) {
                 breakpoints.append(teleBytecodeBreakpoint);
             }
             return breakpoints;
@@ -307,7 +307,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          * @return the number of bytecode breakpoints that currently exist in the {@link TeleVM}.
          */
         public synchronized int size() {
-            return _breakpoints.length();
+            return breakpoints.length();
         }
 
         /**
@@ -315,12 +315,12 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          * @return a breakpoint set at the position, null if none.
          */
         public synchronized TeleBytecodeBreakpoint getBreakpoint(Key key) {
-            return _breakpoints.get(key);
+            return breakpoints.get(key);
         }
 
         private TeleBytecodeBreakpoint createBreakpoint(Key key, boolean persistent) {
-            final TeleBytecodeBreakpoint breakpoint = new TeleBytecodeBreakpoint(_teleVM, this, key, false);
-            _breakpoints.put(key, breakpoint);
+            final TeleBytecodeBreakpoint breakpoint = new TeleBytecodeBreakpoint(teleVM, this, key, false);
+            breakpoints.put(key, breakpoint);
             announceStateChange();
             return breakpoint;
         }
@@ -344,7 +344,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          * @param key description of a bytecode position in a method
          */
         private synchronized void removeBreakpoint(Key key) {
-            _breakpoints.remove(key);
+            breakpoints.remove(key);
             announceStateChange();
         }
 
@@ -352,10 +352,10 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          * Removes all bytecode breakpoints.
          */
         public synchronized void removeAllBreakpoints() {
-            for (TeleBytecodeBreakpoint teleBytecodeBreakpoint : _breakpoints.values()) {
+            for (TeleBytecodeBreakpoint teleBytecodeBreakpoint : breakpoints.values()) {
                 teleBytecodeBreakpoint.dispose();
             }
-            _breakpoints.clear();
+            breakpoints.clear();
             announceStateChange();
         }
     }

@@ -33,92 +33,91 @@ import com.sun.max.vm.compiler.target.*;
  */
 public class EirBlock extends EirValue implements IrBlock, PoolObject {
 
-    private final EirMethod _method;
+    private final EirMethod method;
 
-    private int _loopNestingDepth;
-    private boolean _isMoveResolverBlock;
+    private int loopNestingDepth;
+    private boolean isMoveResolverBlock;
 
-    private PoolSet<EirVariable> _liveGen;
-    private PoolSet<EirVariable> _liveKill;
-    private PoolSet<EirVariable> _inverseLiveKill;
-    private PoolSet<EirVariable> _liveIn;
-    private PoolSet<EirVariable> _liveOut;
+    private PoolSet<EirVariable> liveGen;
+    private PoolSet<EirVariable> liveKill;
+    private PoolSet<EirVariable> inverseLiveKill;
+    private PoolSet<EirVariable> liveIn;
+    private PoolSet<EirVariable> liveOut;
 
     public void setLiveKill(PoolSet<EirVariable> liveKill) {
-        _liveKill = liveKill;
+        this.liveKill = liveKill;
 
-        _inverseLiveKill = PoolSet.allOf(liveKill.pool());
+        inverseLiveKill = PoolSet.allOf(liveKill.pool());
         for (EirVariable variable : liveKill) {
-            _inverseLiveKill.remove(variable);
+            inverseLiveKill.remove(variable);
         }
     }
 
     public void setLiveGen(PoolSet<EirVariable> liveGen) {
-        _liveGen = liveGen;
+        this.liveGen = liveGen;
     }
 
     public PoolSet<EirVariable> liveGen() {
-        return _liveGen;
+        return liveGen;
     }
 
     public void setLiveIn(PoolSet<EirVariable> liveIn) {
-        _liveIn = liveIn;
+        this.liveIn = liveIn;
     }
 
     public void setLiveOut(PoolSet<EirVariable> liveOut) {
-        _liveOut = liveOut;
+        this.liveOut = liveOut;
     }
 
     public PoolSet<EirVariable> liveIn() {
-        return _liveIn;
+        return liveIn;
     }
 
     public PoolSet<EirVariable> liveOut() {
-        return _liveOut;
+        return liveOut;
     }
 
     public EirMethod method() {
-        return _method;
+        return method;
     }
 
-    private Role _role;
+    private Role role;
 
     public Role role() {
-        return _role;
+        return role;
     }
 
     public void setRole(Role r) {
-        _role = r;
+        role = r;
     }
 
-    private int _serial;
+    private int serial;
 
     public int serial() {
-        return _serial;
+        return serial;
     }
 
     public void setSerial(int serial) {
-        _serial = serial;
+        this.serial = serial;
     }
 
     public EirBlock(EirMethod method, Role role, int serial) {
-        _method = method;
-        _role = role;
-        _serial = serial;
+        this.method = method;
+        this.role = role;
+        this.serial = serial;
         fixLocation(new Location(this));
     }
 
     public final class Location extends EirLocation {
 
-        private final EirBlock _block;
+        private final EirBlock block;
 
         public EirBlock block() {
-            return _block;
+            return block;
         }
 
         private Location(EirBlock block) {
-            super();
-            _block = block;
+            this.block = block;
         }
 
         @Override
@@ -128,35 +127,35 @@ public class EirBlock extends EirValue implements IrBlock, PoolObject {
 
         @Override
         public String toString() {
-            return "<block#" + _block._serial + ">";
+            return "<block#" + block.serial + ">";
         }
 
         @Override
         public TargetLocation toTargetLocation() {
             try {
-                return new TargetLocation.Block(_label.position());
+                return new TargetLocation.Block(label.position());
             } catch (AssemblyException assemblyException) {
                 throw ProgramError.unexpected();
             }
         }
     }
 
-    private VariableDeterministicSet<EirBlock> _predecessors = new LinkedIdentityHashSet<EirBlock>();
+    private VariableDeterministicSet<EirBlock> predecessors = new LinkedIdentityHashSet<EirBlock>();
 
     public DeterministicSet<EirBlock> predecessors() {
-        return _predecessors;
+        return predecessors;
     }
 
     public void addPredecessor(EirBlock block) {
         block.clearSuccessorCache();
-        _predecessors.add(block);
+        predecessors.add(block);
     }
 
     public void clearPredecessors() {
-        for (EirBlock pred : _predecessors) {
+        for (EirBlock pred : predecessors) {
             pred.clearSuccessorCache();
         }
-        _predecessors.clear();
+        predecessors.clear();
     }
 
     public boolean isAdjacentSuccessorOf(EirBlock other) {
@@ -169,13 +168,13 @@ public class EirBlock extends EirValue implements IrBlock, PoolObject {
     }
 
     public void visitSuccessors(Procedure procedure) {
-        if (_instructions.length() > 0) {
-            _instructions.last().visitSuccessorBlocks(procedure);
+        if (instructions.length() > 0) {
+            instructions.last().visitSuccessorBlocks(procedure);
         }
     }
 
-    private Sequence<EirBlock> _cachedNormalSuccessors;
-    private Sequence<EirBlock> _cachedAllSuccessors;
+    private Sequence<EirBlock> cachedNormalSuccessors;
+    private Sequence<EirBlock> cachedAllSuccessors;
 
     /**
      * (tw) Returns normal unique successors of a block without exception successors.
@@ -183,8 +182,8 @@ public class EirBlock extends EirValue implements IrBlock, PoolObject {
      */
     public Sequence<EirBlock> normalUniqueSuccessors() {
 
-        if (_cachedNormalSuccessors != null) {
-            return _cachedNormalSuccessors;
+        if (cachedNormalSuccessors != null) {
+            return cachedNormalSuccessors;
         }
 
         final IdentityHashSet<EirBlock> blocks = new LinkedIdentityHashSet<EirBlock>();
@@ -201,13 +200,13 @@ public class EirBlock extends EirValue implements IrBlock, PoolObject {
 
         instructions().last().visitSuccessorBlocks(filterProcedure);
 
-        _cachedNormalSuccessors = result;
+        cachedNormalSuccessors = result;
         return result;
     }
 
     private void clearSuccessorCache() {
-        _cachedAllSuccessors = null;
-        _cachedNormalSuccessors = null;
+        cachedAllSuccessors = null;
+        cachedNormalSuccessors = null;
     }
 
     /**
@@ -216,8 +215,8 @@ public class EirBlock extends EirValue implements IrBlock, PoolObject {
      */
     public Sequence<EirBlock> allUniqueSuccessors() {
 
-        if (_cachedAllSuccessors != null) {
-            return _cachedAllSuccessors;
+        if (cachedAllSuccessors != null) {
+            return cachedAllSuccessors;
         }
 
         final IdentityHashSet<EirBlock> blocks = new LinkedIdentityHashSet<EirBlock>();
@@ -232,59 +231,59 @@ public class EirBlock extends EirValue implements IrBlock, PoolObject {
             }
         };
 
-        for (EirInstruction instruction : _instructions) {
+        for (EirInstruction instruction : instructions) {
             instruction.visitSuccessorBlocks(filterProcedure);
         }
 
-        _cachedAllSuccessors = result;
+        cachedAllSuccessors = result;
         return result;
     }
 
     public int loopNestingDepth() {
-        return _loopNestingDepth;
+        return loopNestingDepth;
     }
 
     public void setLoopNestingDepth(int loopNestingDepth) {
         assert loopNestingDepth >= 0;
-        _loopNestingDepth = loopNestingDepth;
+        this.loopNestingDepth = loopNestingDepth;
     }
 
-    private final VariableSequence<EirInstruction> _instructions = new ArrayListSequence<EirInstruction>();
+    private final VariableSequence<EirInstruction> instructions = new ArrayListSequence<EirInstruction>();
 
     public IndexedSequence<EirInstruction> instructions() {
-        return _instructions;
+        return instructions;
     }
 
     public void setInstruction(int index, EirInstruction instruction) {
         instruction.setIndex(index);
-        _instructions.set(index, instruction);
+        instructions.set(index, instruction);
     }
 
     public void appendInstruction(EirInstruction instruction) {
-        instruction.setIndex(_instructions.length());
-        _instructions.append(instruction);
+        instruction.setIndex(instructions.length());
+        instructions.append(instruction);
     }
 
     private void updateIndices(int startIndex) {
-        for (int i = startIndex; i < _instructions.length(); i++) {
-            _instructions.get(i).setIndex(i);
+        for (int i = startIndex; i < instructions.length(); i++) {
+            instructions.get(i).setIndex(i);
         }
     }
 
     public void insertInstruction(int index, EirInstruction instruction) {
-        _instructions.insert(index, instruction);
+        instructions.insert(index, instruction);
         updateIndices(index);
     }
 
     public void removeInstruction(int index) {
-        _instructions.remove(index);
+        instructions.remove(index);
         updateIndices(index);
     }
 
-    private Label _label = new Label();
+    private Label label = new Label();
 
     public Label asLabel() {
-        return _label;
+        return label;
     }
 
     public <EirTargetEmitter_Type extends EirTargetEmitter> void emit(EirTargetEmitter_Type emitter) {
@@ -339,27 +338,27 @@ public class EirBlock extends EirValue implements IrBlock, PoolObject {
             writer.print("(MOVE_RESOLVER)");
         }
 
-        if (_liveIn != null) {
-            printSet(writer, "liveIn", _liveIn);
+        if (liveIn != null) {
+            printSet(writer, "liveIn", liveIn);
         }
 
-        if (_liveOut != null) {
-            printSet(writer, "liveOut", _liveOut);
+        if (liveOut != null) {
+            printSet(writer, "liveOut", liveOut);
         }
 
-        if (_liveKill != null) {
-            printSet(writer, "liveKill", _liveKill);
+        if (liveKill != null) {
+            printSet(writer, "liveKill", liveKill);
         }
 
-        if (_liveGen != null) {
-            printSet(writer, "liveGen", _liveGen);
+        if (liveGen != null) {
+            printSet(writer, "liveGen", liveGen);
         }
 
         writer.println();
         writer.indent();
         int i = 0;
-        while (i < _instructions.length()) {
-            writer.println(":" + Integer.toString(i) + " (" + Integer.toString(_instructions.get(i).number()) + ") " + _instructions.get(i).toString());
+        while (i < instructions.length()) {
+            writer.println(":" + Integer.toString(i) + " (" + Integer.toString(instructions.get(i).number()) + ") " + instructions.get(i).toString());
             i++;
         }
         writer.outdent();
@@ -367,24 +366,24 @@ public class EirBlock extends EirValue implements IrBlock, PoolObject {
     }
 
     public PoolSet<EirVariable> inverseLiveKill() {
-        return _inverseLiveKill;
+        return inverseLiveKill;
     }
 
-    private int _beginNumber;
-    private int _endNumber;
+    private int beginNumber;
+    private int endNumber;
 
     public int beginNumber() {
-        return _beginNumber;
+        return beginNumber;
     }
 
     public void setNumbers(int begin, int end) {
         assert begin <= end;
-        _beginNumber = begin;
-        _endNumber = end;
+        beginNumber = begin;
+        endNumber = end;
     }
 
     public int endNumber() {
-        return _endNumber;
+        return endNumber;
     }
 
     /**
@@ -393,10 +392,10 @@ public class EirBlock extends EirValue implements IrBlock, PoolObject {
      */
     public void substitutePredecessorBlocks(VariableMapping<EirBlock, EirBlock> mapping) {
         for (EirBlock block : mapping.keys()) {
-            if (_predecessors.contains(block)) {
+            if (predecessors.contains(block)) {
                 final EirBlock substitute = mapping.get(block);
-                _predecessors.remove(block);
-                _predecessors.add(substitute);
+                predecessors.remove(block);
+                predecessors.add(substitute);
                 substitute.clearSuccessorCache();
                 block.clearSuccessorCache();
             }
@@ -408,14 +407,14 @@ public class EirBlock extends EirValue implements IrBlock, PoolObject {
      * Sets whether this block was only inserted in order to resolve moves during register allocation.
      */
     public void setMoveResolverBlock(boolean b) {
-        _isMoveResolverBlock = b;
+        isMoveResolverBlock = b;
     }
 
     /**
      * Checks whether this block was only inserted in order to resolve moves during register allocation.
      */
     public boolean isMoveResolverBlock() {
-        return _isMoveResolverBlock;
+        return isMoveResolverBlock;
     }
 
 }

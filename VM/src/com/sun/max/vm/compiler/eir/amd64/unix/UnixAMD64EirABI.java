@@ -52,18 +52,18 @@ import com.sun.max.vm.type.*;
  */
 public abstract class UnixAMD64EirABI extends AMD64EirABI {
 
-    private static final IndexedSequence<AMD64EirRegister> _generalParameterRegisters = new ArraySequence<AMD64EirRegister>(RDI, RSI, RDX, RCX, R8, R9);
+    private static final IndexedSequence<AMD64EirRegister> generalParameterRegisters = new ArraySequence<AMD64EirRegister>(RDI, RSI, RDX, RCX, R8, R9);
 
     @Override
     public Sequence<AMD64EirRegister> integerParameterRegisters() {
-        return _generalParameterRegisters;
+        return generalParameterRegisters;
     }
 
-    private static final IndexedSequence<AMD64EirRegister> _xmmParameterRegisters = new ArraySequence<AMD64EirRegister>(XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7);
+    private static final IndexedSequence<AMD64EirRegister> xmmParameterRegisters = new ArraySequence<AMD64EirRegister>(XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7);
 
     @Override
     public Sequence<AMD64EirRegister> floatingPointParameterRegisters() {
-        return _xmmParameterRegisters;
+        return xmmParameterRegisters;
     }
 
     @Override
@@ -72,7 +72,7 @@ public abstract class UnixAMD64EirABI extends AMD64EirABI {
         int iGeneral = 0;
         int iXMM = 0;
         for (int i = 0; i < kinds.length; i++) {
-            switch (kinds[i].asEnum()) {
+            switch (kinds[i].asEnum) {
                 case BYTE:
                 case BOOLEAN:
                 case SHORT:
@@ -81,16 +81,16 @@ public abstract class UnixAMD64EirABI extends AMD64EirABI {
                 case LONG:
                 case WORD:
                 case REFERENCE: {
-                    if (iGeneral < _generalParameterRegisters.length()) {
-                        result[i] = _generalParameterRegisters.get(iGeneral);
+                    if (iGeneral < generalParameterRegisters.length()) {
+                        result[i] = generalParameterRegisters.get(iGeneral);
                         iGeneral++;
                     }
                     break;
                 }
                 case FLOAT:
                 case DOUBLE: {
-                    if (iXMM < _xmmParameterRegisters.length()) {
-                        result[i] = _xmmParameterRegisters.get(iXMM);
+                    if (iXMM < xmmParameterRegisters.length()) {
+                        result[i] = xmmParameterRegisters.get(iXMM);
                         iXMM++;
                     } else {
                         DebugBreak.here();
@@ -125,57 +125,57 @@ public abstract class UnixAMD64EirABI extends AMD64EirABI {
         return result;
     }
 
-    private final PoolSet<AMD64EirRegister> _unallocatableRegisters = createUnallocatableRegisterPoolSet();
+    private final PoolSet<AMD64EirRegister> unallocatableRegisters = createUnallocatableRegisterPoolSet();
 
     @Override
     public PoolSet<AMD64EirRegister> unallocatableRegisters() {
-        return _unallocatableRegisters;
+        return unallocatableRegisters;
     }
 
     private PoolSet<AMD64EirRegister> createAllocatableRegisterPoolSet() {
         final PoolSet<AMD64EirRegister> result = PoolSet.noneOf(AMD64EirRegister.pool());
         result.addAll();
-        for (AMD64EirRegister register : _unallocatableRegisters) {
+        for (AMD64EirRegister register : unallocatableRegisters) {
             result.remove(register);
         }
         return result;
     }
 
-    private final PoolSet<AMD64EirRegister> _allocatableRegisters = createAllocatableRegisterPoolSet();
+    private final PoolSet<AMD64EirRegister> allocatableRegisters = createAllocatableRegisterPoolSet();
 
     @Override
     public PoolSet<AMD64EirRegister> allocatableRegisters() {
-        return _allocatableRegisters;
+        return allocatableRegisters;
     }
 
-    private final PoolSet<AMD64EirRegister> _resultRegisters;
+    private final PoolSet<AMD64EirRegister> resultRegisters;
 
     @Override
     public PoolSet<AMD64EirRegister> resultRegisters() {
-        return _resultRegisters;
+        return resultRegisters;
     }
 
     private static AMD64GeneralRegister64[] getTargetIntegerParameterRegisters() {
-        final AMD64GeneralRegister64[] result = new AMD64GeneralRegister64[_generalParameterRegisters.length()];
-        for (int i = 0; i < _generalParameterRegisters.length(); i++) {
-            final AMD64EirRegister.General r = (AMD64EirRegister.General) _generalParameterRegisters.get(i);
+        final AMD64GeneralRegister64[] result = new AMD64GeneralRegister64[generalParameterRegisters.length()];
+        for (int i = 0; i < generalParameterRegisters.length(); i++) {
+            final AMD64EirRegister.General r = (AMD64EirRegister.General) generalParameterRegisters.get(i);
             result[i] = r.as64();
         }
         return result;
     }
 
     private static AMD64XMMRegister[] getTargetFloatingPointParameterRegisters() {
-        final AMD64XMMRegister[] result = new AMD64XMMRegister[_xmmParameterRegisters.length()];
-        for (int i = 0; i < _xmmParameterRegisters.length(); i++) {
-            final AMD64EirRegister.XMM r = (AMD64EirRegister.XMM) _xmmParameterRegisters.get(i);
+        final AMD64XMMRegister[] result = new AMD64XMMRegister[xmmParameterRegisters.length()];
+        for (int i = 0; i < xmmParameterRegisters.length(); i++) {
+            final AMD64EirRegister.XMM r = (AMD64EirRegister.XMM) xmmParameterRegisters.get(i);
             result[i] = r.as();
         }
         return result;
     }
 
     protected void makeUnallocatable(AMD64EirRegister register) {
-        _unallocatableRegisters.add(register);
-        _allocatableRegisters.remove(register);
+        unallocatableRegisters.add(register);
+        allocatableRegisters.remove(register);
     }
 
     private static TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> targetABI(VMConfiguration vmConfiguration) {
@@ -185,9 +185,9 @@ public abstract class UnixAMD64EirABI extends AMD64EirABI {
 
     protected UnixAMD64EirABI(VMConfiguration vmConfiguration) {
         super(vmConfiguration, targetABI(vmConfiguration));
-        _resultRegisters = PoolSet.noneOf(AMD64EirRegister.pool());
-        _resultRegisters.add((AMD64EirRegister) getResultLocation(Kind.LONG));
-        _resultRegisters.add((AMD64EirRegister) getResultLocation(Kind.DOUBLE));
+        resultRegisters = PoolSet.noneOf(AMD64EirRegister.pool());
+        resultRegisters.add((AMD64EirRegister) getResultLocation(Kind.LONG));
+        resultRegisters.add((AMD64EirRegister) getResultLocation(Kind.DOUBLE));
     }
 
 }

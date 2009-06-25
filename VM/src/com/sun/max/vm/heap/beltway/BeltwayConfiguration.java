@@ -27,25 +27,24 @@ import com.sun.max.unsafe.*;
 /**
  * @author Christos Kotselidis
  */
-
 public final class BeltwayConfiguration extends BeltwayHeapSchemeConfiguration {
 
-    public static final int _numberOfGCThreads = 1;
+    public static final int numberOfGCThreads = 1;
 
-    private static int _numberOfBelts;
+    private static int numberOfBelts;
 
-    public static final boolean _useTLABS = true;
-    public static boolean _useGCTlabs = true;
-    public static boolean _parallelScavenging = false;
+    public static final boolean useTLABS = true;
+    public static boolean useGCTlabs = true;
+    public static boolean parallelScavenging = false;
 
-    private static int[] _percentagesOfUsableMemoryPerBelt;
+    private static int[] percentagesOfUsableMemoryPerBelt;
 
 
     public void initializeBeltWayConfiguration(Address applicationHeapStartAddress, Size applicationMaxHeapSize, int numberOfBelts, int[] percentagesOfUsableMemoryPerBelt) {
-        _applicationHeapStartAddress = applicationHeapStartAddress;
-        _applicationHeapMaxSize = applicationMaxHeapSize;
-        _numberOfBelts = numberOfBelts;
-        _percentagesOfUsableMemoryPerBelt = percentagesOfUsableMemoryPerBelt;
+        BeltwayConfiguration.applicationHeapStartAddress = applicationHeapStartAddress;
+        BeltwayConfiguration.applicationHeapMaxSize = applicationMaxHeapSize;
+        BeltwayConfiguration.numberOfBelts = numberOfBelts;
+        BeltwayConfiguration.percentagesOfUsableMemoryPerBelt = percentagesOfUsableMemoryPerBelt;
     }
 
     public BeltwayConfiguration() {
@@ -54,22 +53,22 @@ public final class BeltwayConfiguration extends BeltwayHeapSchemeConfiguration {
 
     @INLINE
     public static void setNumberOfBelts(int numOfBelts) {
-        _numberOfBelts = numOfBelts;
+        numberOfBelts = numOfBelts;
     }
 
     @INLINE
     public static void setPercentageOfUsableMemoryPerFrame(int[] percent) {
-        _percentagesOfUsableMemoryPerBelt = percent;
+        percentagesOfUsableMemoryPerBelt = percent;
     }
 
     @INLINE
     public static int getPercentOfUsableMemoryPerBelt(int indexOfBelt) {
-        return _percentagesOfUsableMemoryPerBelt[indexOfBelt];
+        return percentagesOfUsableMemoryPerBelt[indexOfBelt];
     }
 
     @INLINE
     public static int getNumberOfBelts() {
-        return _numberOfBelts;
+        return numberOfBelts;
     }
 
 }

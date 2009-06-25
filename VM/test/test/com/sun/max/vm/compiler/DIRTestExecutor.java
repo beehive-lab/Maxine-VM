@@ -47,9 +47,9 @@ import com.sun.max.vm.value.*;
  */
 public class DIRTestExecutor implements JavaExecHarness.Executor {
 
-    private static DirGenerator _generator;
+    private static DirGenerator generator;
 
-    private static Utf8Constant _testMethod = SymbolTable.makeSymbol("test");
+    private static Utf8Constant testMethod = SymbolTable.makeSymbol("test");
 
     private static void initialize(boolean loadingPackages) {
         final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(new OptionSet());
@@ -58,18 +58,18 @@ public class DIRTestExecutor implements JavaExecHarness.Executor {
         final Prototype jpt = prototypeGenerator.createJavaPrototype(cfg, loadingPackages);
         final DirGeneratorScheme dirGeneratorScheme = (DirGeneratorScheme) jpt.vmConfiguration().compilerScheme();
         dirGeneratorScheme.compileSnippets();
-        _generator = dirGeneratorScheme.dirGenerator();
+        generator = dirGeneratorScheme.dirGenerator();
         ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually prototyping/bootstrapping
     }
 
     public void initialize(JavaExecHarness.JavaTestCase c, boolean loadingPackages) {
-        if (_generator == null) {
+        if (generator == null) {
             initialize(loadingPackages);
         }
 
         final ClassActor classActor = ClassActor.fromJava(c.clazz);
         c.slot1 = classActor;
-        c.slot2 = classActor.findLocalStaticMethodActor(_testMethod);
+        c.slot2 = classActor.findLocalStaticMethodActor(testMethod);
     }
 
     public Object execute(JavaExecHarness.JavaTestCase c, Object[] vals) throws InvocationTargetException {
@@ -78,7 +78,7 @@ public class DIRTestExecutor implements JavaExecHarness.Executor {
             args[i] = Value.fromBoxedJavaValue(vals[i]);
         }
         final ClassMethodActor classMethodActor = (ClassMethodActor) c.slot2;
-        final DirMethod method = _generator.makeIrMethod(classMethodActor);
+        final DirMethod method = generator.makeIrMethod(classMethodActor);
         final DirInterpreter interpreter = new DirInterpreter();
         final Value result = interpreter.execute(method, args);
         return result.asBoxedJavaValue();

@@ -26,9 +26,9 @@ package test.hotpath;
  * Runs: 10 = 55; 20 = 210; 30 = 465; 40 = 820;
  */
 public class HP_field02 {
-    public int _a;
-    public int _b;
-    public int _c;
+    public int a;
+    public int b;
+    public int c;
 
     public static int test(int count) {
         return new HP_field02().run(count);
@@ -37,13 +37,13 @@ public class HP_field02 {
     public int run(int count) {
         for (int i = 0; i <= count; i++) {
             if (i > 5) {
-                _a += i;
+                a += i;
             } else if (i > 7) {
-                _b += i;
+                b += i;
             } else {
-                _c += i;
+                c += i;
             }
         }
-        return _a + _b + _c;
+        return a + b + c;
     }
 }

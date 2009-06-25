@@ -36,15 +36,15 @@ import com.sun.max.vm.type.*;
  */
 public class DirBlock extends DirValue implements IrBlock {
 
-    private IrBlock.Role _role;
-    private final VariableSequence<DirInstruction> _instructions = new ArrayListSequence<DirInstruction>();
+    private final IrBlock.Role role;
+    private final VariableSequence<DirInstruction> instructions = new ArrayListSequence<DirInstruction>();
 
     public DirBlock(IrBlock.Role role) {
-        _role = role;
+        this.role = role;
     }
 
     public IrBlock.Role role() {
-        return _role;
+        return role;
     }
 
     public boolean isConstant() {
@@ -57,10 +57,10 @@ public class DirBlock extends DirValue implements IrBlock {
 
     @Override
     public int hashCode() {
-        if (_instructions.isEmpty()) {
+        if (instructions.isEmpty()) {
             return 0;
         }
-        return _instructions.length() ^ _instructions.first().hashCodeForBlock() + _instructions.last().hashCodeForBlock();
+        return instructions.length() ^ instructions.first().hashCodeForBlock() + instructions.last().hashCodeForBlock();
     }
 
     @Override
@@ -71,94 +71,94 @@ public class DirBlock extends DirValue implements IrBlock {
         return super.isEquivalentTo(other, equivalence);
     }
 
-    private static int _nextId = 0;
+    private static int nextId = 0;
 
-    private int _id = _nextId++;
+    private int id = nextId++;
 
     /**
      * @return a unique ID within the compilation unit, for human consumption
      */
     public int id() {
-        return _id;
+        return id;
     }
 
-    private int _serial = -1;
+    private int serial = -1;
 
     /**
      * All blocks in a compilation unit are ordered and this number can be used to compare the relative position of blocks in the overall sequence.
      */
     public int serial() {
-        return _serial;
+        return serial;
     }
 
     public void setSerial(int serial) {
-        _serial = serial;
+        this.serial = serial;
     }
 
-    private GrowableDeterministicSet<DirBlock> _predecessors = new LinkedIdentityHashSet<DirBlock>();
+    private GrowableDeterministicSet<DirBlock> predecessors = new LinkedIdentityHashSet<DirBlock>();
 
     public GrowableDeterministicSet<DirBlock> predecessors() {
-        return _predecessors;
+        return predecessors;
     }
 
     public void setPredecessors(GrowableDeterministicSet<DirBlock> predecessors) {
-        _predecessors = predecessors;
+        this.predecessors = predecessors;
     }
 
-    private GrowableDeterministicSet<DirBlock> _successors = new LinkedIdentityHashSet<DirBlock>();
+    private GrowableDeterministicSet<DirBlock> successors = new LinkedIdentityHashSet<DirBlock>();
 
     public GrowableDeterministicSet<DirBlock> successors() {
-        return _successors;
+        return successors;
     }
 
     public void setSuccessors(GrowableDeterministicSet<DirBlock> successors) {
-        _successors = successors;
+        this.successors = successors;
     }
 
     public VariableSequence<DirInstruction> instructions() {
-        return _instructions;
+        return instructions;
     }
 
     public void appendInstruction(DirInstruction instruction) {
-        _instructions.append(instruction);
+        instructions.append(instruction);
     }
 
     /**
      * @return whether this block only contains a goto and no other instructions
      */
     public boolean isTrivial() {
-        return _instructions.length() == 1 && _instructions.first() instanceof DirGoto;
+        return instructions.length() == 1 && instructions.first() instanceof DirGoto;
     }
 
     /**
      * @return whether this block contains no instructions.
      */
     public boolean isEmpty() {
-        return _instructions.isEmpty();
+        return instructions.isEmpty();
     }
 
     public void printTo(IndentWriter writer) {
         writer.println(this + " {");
         writer.indent();
-        for (DirInstruction instruction : _instructions) {
+        for (DirInstruction instruction : instructions) {
             writer.println(instruction.toString());
         }
         writer.outdent();
         writer.println("}");
     }
 
-    private static final boolean _printindIds = false;
+    private static final boolean printindIds = false;
 
     @Override
     public String toString() {
-        if (_printindIds) {
-            return "Block_" + _id + "#" + _serial;
+        if (printindIds) {
+            return "Block_" + id + "#" + serial;
         }
-        return "Block#" + _serial;
+        return "Block#" + serial;
     }
 
     public void cleanup() {
-        _predecessors = null;
-        _successors = null;
+        predecessors = null;
+        successors = null;
     }
 }

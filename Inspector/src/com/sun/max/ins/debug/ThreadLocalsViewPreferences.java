@@ -33,16 +33,16 @@ import com.sun.max.ins.gui.*;
   */
 public final class ThreadLocalsViewPreferences extends TableColumnVisibilityPreferences<ThreadLocalsColumnKind> {
 
-    private static ThreadLocalsViewPreferences _globalPreferences;
+    private static ThreadLocalsViewPreferences globalPreferences;
 
     /**
      * @return the global, persistent set of user preferences for viewing a table of ThreadLocals.
      */
     static ThreadLocalsViewPreferences globalPreferences(Inspection inspection) {
-        if (_globalPreferences == null) {
-            _globalPreferences = new ThreadLocalsViewPreferences(inspection);
+        if (globalPreferences == null) {
+            globalPreferences = new ThreadLocalsViewPreferences(inspection);
         }
-        return _globalPreferences;
+        return globalPreferences;
     }
 
     /**

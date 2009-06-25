@@ -59,26 +59,26 @@ import com.sun.max.vm.type.*;
 public class CompiledPrototype extends Prototype {
 
     private class ClassInfo {
-        private final IdentityHashSet<MethodActor> _indirectCalls = new IdentityHashSet<MethodActor>();
-        private final IdentityHashSet<ClassActor> _subClasses = new IdentityHashSet<ClassActor>();
-        private final IdentityHashSet<ClassActor> _implementors = new IdentityHashSet<ClassActor>();
+        private final IdentityHashSet<MethodActor> indirectCalls = new IdentityHashSet<MethodActor>();
+        private final IdentityHashSet<ClassActor> subClasses = new IdentityHashSet<ClassActor>();
+        private final IdentityHashSet<ClassActor> implementors = new IdentityHashSet<ClassActor>();
     }
 
-    private final Map<ClassActor, ClassInfo> _classActorInfo = new IdentityHashMap<ClassActor, ClassInfo>();
-    private final Map<MethodActor, GrowableDeterministicSet<ClassActor>> _anonymousClasses = new IdentityHashMap<MethodActor, GrowableDeterministicSet<ClassActor>>();
+    private final Map<ClassActor, ClassInfo> classActorInfo = new IdentityHashMap<ClassActor, ClassInfo>();
+    private final Map<MethodActor, GrowableDeterministicSet<ClassActor>> anonymousClasses = new IdentityHashMap<MethodActor, GrowableDeterministicSet<ClassActor>>();
 
-    private static final GrowableDeterministicSet<ClassActor> _jitCompiledClasses = new LinkedIdentityHashSet<ClassActor>();
-    private static final GrowableDeterministicSet<MethodActor> _jitCompiledMethods = new LinkedIdentityHashSet<MethodActor>();
-    private static final GrowableDeterministicSet<MethodActor> _unlinkedMethods = new LinkedIdentityHashSet<MethodActor>();
-    private static final GrowableDeterministicSet<ClassActor> _unlinkedClasses = new LinkedIdentityHashSet<ClassActor>();
+    private static final GrowableDeterministicSet<ClassActor> jitCompiledClasses = new LinkedIdentityHashSet<ClassActor>();
+    private static final GrowableDeterministicSet<MethodActor> jitCompiledMethods = new LinkedIdentityHashSet<MethodActor>();
+    private static final GrowableDeterministicSet<MethodActor> unlinkedMethods = new LinkedIdentityHashSet<MethodActor>();
+    private static final GrowableDeterministicSet<ClassActor> unlinkedClasses = new LinkedIdentityHashSet<ClassActor>();
 
-    private final VariableMapping<MethodActor, Link> _methodActors = new ChainedHashMapping<MethodActor, Link>();
-    private final LinkedList<MethodActor> _worklist = new LinkedList<MethodActor>();
+    private final VariableMapping<MethodActor, Link> methodActors = new ChainedHashMapping<MethodActor, Link>();
+    private final LinkedList<MethodActor> worklist = new LinkedList<MethodActor>();
 
     /**
      * Methods that must be statically compiled in the boot image.
      */
-    private static final GrowableDeterministicSet<ClassMethodActor> _imageMethodActors = new LinkedIdentityHashSet<ClassMethodActor>();
+    private static final GrowableDeterministicSet<ClassMethodActor> imageMethodActors = new LinkedIdentityHashSet<ClassMethodActor>();
 
     /**
      * The link from a <i>referrer</i> method to a <i>referent</i> method where the referrer caused the referent to be
@@ -94,24 +94,24 @@ public class CompiledPrototype extends Prototype {
             IMPLEMENTS("is implemented by", "implements"),
             OVERRIDES("is overridden by", "overrides");
 
-            final String _asReferrer;
-            final String _asReferent;
+            final String asReferrer;
+            final String asReferent;
 
             private Relationship(String asReferrer, String asReferent) {
-                _asReferrer = asReferrer;
-                _asReferent = asReferent;
+                this.asReferrer = asReferrer;
+                this.asReferent = asReferent;
             }
         }
-        final MethodActor _referent;
-        final MethodActor _referrer;
-        final Relationship _relationship;
+        final MethodActor referent;
+        final MethodActor referrer;
+        final Relationship relationship;
 
         public Link(MethodActor referent, MethodActor referrer, Relationship relationship) {
             assert referent != null;
             //assert referent != referrer;
-            _referent = referent;
-            _referrer = referrer;
-            _relationship = relationship;
+            this.referent = referent;
+            this.referrer = referrer;
+            this.relationship = relationship;
         }
 
         private static String name(MethodActor methodActor) {
@@ -122,36 +122,36 @@ public class CompiledPrototype extends Prototype {
         }
 
         public String referrerName() {
-            return name(_referrer);
+            return name(referrer);
         }
 
         public String referentName() {
-            return name(_referent);
+            return name(referent);
         }
 
         public MethodActor referent() {
-            return _referent;
+            return referent;
         }
 
         public MethodActor referrer() {
-            return _referrer;
+            return referrer;
         }
 
         public Relationship relationship() {
-            return _relationship;
+            return relationship;
         }
 
         @Override
         public String toString() {
-            if (_referrer == null) {
+            if (referrer == null) {
                 return referentName() + " is a VM entry point";
             }
-            return referrerName() + " " + _relationship._asReferrer + " " + referentName();
+            return referrerName() + " " + relationship.asReferrer + " " + referentName();
         }
     }
 
     public IterableWithLength<Link> links() {
-        return _methodActors.values();
+        return methodActors.values();
     }
 
     public CompilerScheme compilerScheme() {
@@ -167,29 +167,29 @@ public class CompiledPrototype extends Prototype {
     }
 
     private ClassInfo lookupInfo(ClassActor classActor) {
-        return _classActorInfo.get(classActor);
+        return classActorInfo.get(classActor);
     }
 
     private ClassInfo getInfo(ClassActor classActor) {
-        ClassInfo info = _classActorInfo.get(classActor);
+        ClassInfo info = classActorInfo.get(classActor);
         if (info == null) {
             info = new ClassInfo();
-            _classActorInfo.put(classActor, info);
+            classActorInfo.put(classActor, info);
         }
         return info;
     }
 
     private GrowableDeterministicSet<ClassActor> getAnonymousClasses(MethodActor actor) {
-        GrowableDeterministicSet<ClassActor> anonymousClasses = _anonymousClasses.get(actor);
+        GrowableDeterministicSet<ClassActor> anonymousClasses = this.anonymousClasses.get(actor);
         if (anonymousClasses == null) {
             anonymousClasses = new LinkedIdentityHashSet<ClassActor>();
-            _anonymousClasses.put(actor, anonymousClasses);
+            this.anonymousClasses.put(actor, anonymousClasses);
         }
         return anonymousClasses;
     }
 
     private GrowableDeterministicSet<ClassActor> lookupAnonymousClasses(MethodActor actor) {
-        return _anonymousClasses.get(actor);
+        return anonymousClasses.get(actor);
     }
 
     private void gatherNewClasses() {
@@ -228,7 +228,7 @@ public class CompiledPrototype extends Prototype {
             final MethodActor methodActor = MethodActor.fromJava(enclosingMethod);
             if (methodActor != null) {
                 getAnonymousClasses(methodActor).add(classActor);
-                if (_methodActors.containsKey(methodActor)) {
+                if (methodActors.containsKey(methodActor)) {
                     traceNewClass(classActor);
                     newClasses.append(classActor);
                 }
@@ -238,22 +238,22 @@ public class CompiledPrototype extends Prototype {
 
     private void processNewClass(ClassActor classActor) {
         getInfo(classActor); // build the class info for this class
-        ClassActor superClassActor = classActor.superClassActor();
+        ClassActor superClassActor = classActor.superClassActor;
         while (superClassActor != null) {
             // for each super class of this class, add this class's implementation of its methods used so far
             final ClassInfo superInfo = getInfo(superClassActor);
-            superInfo._subClasses.add(classActor);
-            for (MethodActor methodActor : superInfo._indirectCalls) {
+            superInfo.subClasses.add(classActor);
+            for (MethodActor methodActor : superInfo.indirectCalls) {
                 add(classActor.findVirtualMethodActor(methodActor), methodActor, Relationship.OVERRIDES);
             }
-            superClassActor = superClassActor.superClassActor();
+            superClassActor = superClassActor.superClassActor;
         }
         if (!classActor.isInterfaceActor()) {
             // for each interface that this class implements, add this class's implementation of its methods used so far
             for (InterfaceActor interfaceActor : classActor.getAllInterfaceActors()) {
                 final ClassInfo interfaceInfo = getInfo(interfaceActor);
-                interfaceInfo._implementors.add(classActor);
-                for (MethodActor methodActor : interfaceInfo._indirectCalls) {
+                interfaceInfo.implementors.add(classActor);
+                for (MethodActor methodActor : interfaceInfo.indirectCalls) {
                     add(classActor.findVirtualMethodActor(methodActor), methodActor, Relationship.IMPLEMENTS);
                 }
             }
@@ -291,12 +291,12 @@ public class CompiledPrototype extends Prototype {
                 } else if (literal instanceof ResolutionGuard) {
                     // resolve any unresolved guards now if possible
                     final ResolutionGuard guard = (ResolutionGuard) literal;
-                    if (guard.get() == null) {
-                        final ConstantPool pool = guard.constantPool();
-                        final ResolvableConstant resolvable = pool.resolvableAt(guard.constantPoolIndex());
+                    if (guard.value == null) {
+                        final ConstantPool pool = guard.constantPool;
+                        final ResolvableConstant resolvable = pool.resolvableAt(guard.constantPoolIndex);
                         if (resolvable.isResolvableWithoutClassLoading(pool)) {
                             try {
-                                guard.set(resolvable.resolve(pool, guard.constantPoolIndex()));
+                                guard.value = resolvable.resolve(pool, guard.constantPoolIndex);
                             } catch (PrototypeOnlyFieldError prototypeOnlyFieldError) {
                             } catch (PrototypeOnlyMethodError prototypeOnlyMethodError) {
                             }
@@ -331,7 +331,7 @@ public class CompiledPrototype extends Prototype {
         }
     }
 
-    private final int _numberOfCompilerThreads;
+    private final int numberOfCompilerThreads;
 
     CompiledPrototype(JavaPrototype javaPrototype, int numberCompilerThreads) {
         super(javaPrototype.vmConfiguration());
@@ -340,8 +340,8 @@ public class CompiledPrototype extends Prototype {
         // Initialization of the JIT compiler comes second as it may rely on features of the optimizing compiler.
         jitScheme().initializeForJitCompilations();
 
-        _numberOfCompilerThreads = numberCompilerThreads;
-        Trace.line(1, "# compiler threads:" + _numberOfCompilerThreads);
+        numberOfCompilerThreads = numberCompilerThreads;
+        Trace.line(1, "# compiler threads:" + numberOfCompilerThreads);
     }
 
     private boolean isIndirectCall(Relationship relationship) {
@@ -356,21 +356,21 @@ public class CompiledPrototype extends Prototype {
             // if this is an indirect call that has not been seen before, add all possibly reaching implementations
             // --even if this actual method implementation may not be compiled.
             final ClassInfo info = getInfo(methodActor.holder());
-            if (!info._indirectCalls.contains(methodActor)) {
-                info._indirectCalls.add(methodActor);
+            if (!info.indirectCalls.contains(methodActor)) {
+                info.indirectCalls.add(methodActor);
                 if (relationship == Relationship.VIRTUAL_CALL) {
-                    for (ClassActor subClass : info._subClasses) {
+                    for (ClassActor subClass : info.subClasses) {
                         add(subClass.findVirtualMethodActor(methodActor), methodActor, Relationship.OVERRIDES);
                     }
                 }
                 if (relationship == Relationship.INTERFACE_CALL) {
-                    for (ClassActor subClass : info._implementors) {
+                    for (ClassActor subClass : info.implementors) {
                         add(subClass.findVirtualMethodActor(methodActor), methodActor, Relationship.IMPLEMENTS);
                     }
                 }
             }
         }
-        if (_methodActors.containsKey(methodActor)) {
+        if (methodActors.containsKey(methodActor)) {
             // this method is already processed or on the queue.
             return false;
         }
@@ -390,14 +390,14 @@ public class CompiledPrototype extends Prototype {
 //            final ClassActor stubClassActor = ClassActor.fromJava(methodActor.makeInvocationStub().getClass());
 //            addMethods(methodActor, stubClassActor.localVirtualMethodActors(), Relationship.INTERFACE_CALL);
         }
-        _methodActors.put(methodActor, new Link(methodActor, referrer, relationship));
-        _worklist.add(methodActor);
+        methodActors.put(methodActor, new Link(methodActor, referrer, relationship));
+        worklist.add(methodActor);
         return true;
     }
 
     private void addMethodsReferencedByExistingTargetCode() {
         final DynamicCompilerScheme dynamicCompilerScheme = compilerScheme();
-        for (TargetMethod targetMethod : Code.bootCodeRegion().targetMethods()) {
+        for (TargetMethod targetMethod : Code.bootCodeRegion.targetMethods()) {
             processNewTargetMethod(dynamicCompilerScheme, targetMethod);
         }
     }
@@ -407,37 +407,37 @@ public class CompiledPrototype extends Prototype {
      */
     public static void registerImageMethod(ClassMethodActor imageMethodActor) {
         ProgramError.check(imageMethodActor != null);
-        _imageMethodActors.add(imageMethodActor);
+        imageMethodActors.add(imageMethodActor);
     }
 
     public static void registerMethodUnlinked(MethodActor methodActor) {
-        _unlinkedMethods.add(methodActor);
+        unlinkedMethods.add(methodActor);
     }
 
     public static void registerClassUnlinked(ClassActor classActor) {
-        _unlinkedClasses.add(classActor);
+        unlinkedClasses.add(classActor);
     }
 
     public static boolean jitCompile(ClassMethodActor classMethodActor) {
-        return _jitCompiledMethods.contains(classMethodActor) || _jitCompiledClasses.contains(classMethodActor.holder());
+        return jitCompiledMethods.contains(classMethodActor) || jitCompiledClasses.contains(classMethodActor.holder());
     }
 
     public static void registerJitClass(Class javaClass) {
-        _jitCompiledClasses.add(ClassActor.fromJava(javaClass));
+        jitCompiledClasses.add(ClassActor.fromJava(javaClass));
     }
 
     public static void registerJitMethod(MethodActor methodActor) {
-        _jitCompiledMethods.add(methodActor);
+        jitCompiledMethods.add(methodActor);
     }
 
-    private static AppendableSequence<MethodActor> _imageInvocationStubMethodActors = new LinkSequence<MethodActor>();
-    private static AppendableSequence<MethodActor> _imageConstructorStubMethodActors = new LinkSequence<MethodActor>();
+    private static AppendableSequence<MethodActor> imageInvocationStubMethodActors = new LinkSequence<MethodActor>();
+    private static AppendableSequence<MethodActor> imageConstructorStubMethodActors = new LinkSequence<MethodActor>();
 
     /**
      * Request the given method have a statically generated and compiled invocation stub in the boot image.
      */
     public static void registerImageInvocationStub(MethodActor methodActorWithInvocationStub) {
-        _imageInvocationStubMethodActors.append(methodActorWithInvocationStub);
+        imageInvocationStubMethodActors.append(methodActorWithInvocationStub);
     }
 
     /**
@@ -445,7 +445,7 @@ public class CompiledPrototype extends Prototype {
      * @param methodActor
      */
     public static void registerImageConstructorStub(MethodActor methodActor) {
-        _imageConstructorStubMethodActors.append(methodActor);
+        imageConstructorStubMethodActors.append(methodActor);
     }
 
     private void addVMEntryPoints() {
@@ -458,7 +458,7 @@ public class CompiledPrototype extends Prototype {
 
         addMethods(null, ClassActor.fromJava(JVMFunctions.class).localStaticMethodActors(), vmEntryPoint);
         addMethods(null, ClassActor.fromJava(JniFunctions.class).localStaticMethodActors(), vmEntryPoint);
-        addMethods(null, _imageMethodActors, vmEntryPoint);
+        addMethods(null, imageMethodActors, vmEntryPoint);
         // we would prefer not to invoke stub-generation/compilation for the shutdown hooks procedure, e.g., after an OutOfMemoryError
         try {
             registerImageInvocationStub(ClassActor.fromJava(Class.forName("java.lang.Shutdown")).findLocalStaticMethodActor("shutdown"));
@@ -466,8 +466,8 @@ public class CompiledPrototype extends Prototype {
             FatalError.unexpected("cannot load java.lang.Shutdown");
         }
 
-        for (MethodActor methodActor : _imageInvocationStubMethodActors) {
-            if (methodActor.holder().toJava().isEnum() && methodActor.name().equals("values")) {
+        for (MethodActor methodActor : imageInvocationStubMethodActors) {
+            if (methodActor.holder().toJava().isEnum() && methodActor.name.equals("values")) {
                 // add a method stub for the "values" method of the enum
                 final ClassActor classActor = ClassActor.fromJava(methodActor.holder().toJava());
                 final ClassMethodActor valuesMethod = classActor.findLocalClassMethodActor(SymbolTable.makeSymbol("values"), SignatureDescriptor.fromJava(Enum[].class));
@@ -476,7 +476,7 @@ public class CompiledPrototype extends Prototype {
             final ClassActor stubClassActor = ClassActor.fromJava(methodActor.makeInvocationStub().getClass());
             addMethods(null, stubClassActor.localVirtualMethodActors(), vmEntryPoint);
         }
-        for (MethodActor methodActor : _imageConstructorStubMethodActors) {
+        for (MethodActor methodActor : imageConstructorStubMethodActors) {
             addStaticAndVirtualMethods(JDK_sun_reflect_ReflectionFactory.createPrePopulatedConstructorStub(methodActor));
         }
 
@@ -495,22 +495,22 @@ public class CompiledPrototype extends Prototype {
         addMethods(null, classActor.localStaticMethodActors(), Relationship.DIRECT_CALL);
     }
 
-    private int _totalCompilations;
+    private int totalCompilations;
 
     private boolean compileWorklist() {
-        Trace.begin(1, "compile: " + _worklist.size() + " new methods");
-        final CodeRegion region = Code.bootCodeRegion();
+        Trace.begin(1, "compile: " + worklist.size() + " new methods");
+        final CodeRegion region = Code.bootCodeRegion;
         final Address oldMark = region.getAllocationMark();
-        int submittedCompilations = _totalCompilations;
+        int submittedCompilations = totalCompilations;
         final long initialNumberOfCompilations = numberOfCompilations();
 
-        final ExecutorService compilationService = Executors.newFixedThreadPool(_numberOfCompilerThreads);
+        final ExecutorService compilationService = Executors.newFixedThreadPool(numberOfCompilerThreads);
         final CompletionService<TargetMethod> compilationCompletionService = new ExecutorCompletionService<TargetMethod>(compilationService);
         final CompilationScheme compilationScheme = vmConfiguration().compilationScheme();
 
         while (true) {
-            while (!_worklist.isEmpty()) {
-                final MethodActor methodActor = _worklist.removeFirst();
+            while (!worklist.isEmpty()) {
+                final MethodActor methodActor = worklist.removeFirst();
                 if (hasCode(methodActor)) {
                     ++submittedCompilations;
                     compilationCompletionService.submit(new Callable<TargetMethod>() {
@@ -524,8 +524,8 @@ public class CompiledPrototype extends Prototype {
                     });
                 }
             }
-            if (_totalCompilations >= submittedCompilations) {
-                if (!_worklist.isEmpty()) {
+            if (totalCompilations >= submittedCompilations) {
+                if (!worklist.isEmpty()) {
                     continue;
                 }
                 break;
@@ -539,9 +539,9 @@ public class CompiledPrototype extends Prototype {
                 compilationService.shutdownNow();
                 ProgramError.unexpected(executionException.getCause());
             }
-            ++_totalCompilations;
-            if (_totalCompilations % 100 == 0) {
-                Trace.line(1, "compiled: " + _totalCompilations + " (" + _methodActors.length() + " methods)");
+            ++totalCompilations;
+            if (totalCompilations % 100 == 0) {
+                Trace.line(1, "compiled: " + totalCompilations + " (" + methodActors.length() + " methods)");
             }
         }
 
@@ -561,20 +561,20 @@ public class CompiledPrototype extends Prototype {
         System.err.println("    " + classMethodActor.format("%H.%n(%p)"));
         MethodActor referent = classMethodActor;
         while (referent != null) {
-            final Link link = _methodActors.get(referent);
+            final Link link = methodActors.get(referent);
             if (link == null) {
                 System.err.println("  (no referrer chain available)");
                 break;
             }
-            if (referent == link._referrer) {
+            if (referent == link.referrer) {
                 System.err.println("  which references itself recursively");
                 break;
             }
-            referent = link._referrer;
+            referent = link.referrer;
             if (referent == null) {
                 System.err.println("    which is a VM entry point");
             } else {
-                System.err.println("    which " + link._relationship._asReferent + " " + referent.format("%H.%n(%p)"));
+                System.err.println("    which " + link.relationship.asReferent + " " + referent.format("%H.%n(%p)"));
             }
         }
         error.printStackTrace(System.err);
@@ -584,7 +584,7 @@ public class CompiledPrototype extends Prototype {
     public void compileUnsafeMethods() {
         Trace.begin(1, "compiling unsafe methods");
         for (ClassMethodActor classMethodActor : UNSAFE.Static.methods()) {
-            _worklist.add(classMethodActor);
+            worklist.add(classMethodActor);
         }
         compileWorklist();
         Trace.end(1, "compiling unsafe methods");
@@ -602,7 +602,7 @@ public class CompiledPrototype extends Prototype {
 
     public void addEntrypoints() {
         // 1. create bootcode region.
-        final CodeRegion region = Code.bootCodeRegion();
+        final CodeRegion region = Code.bootCodeRegion;
         region.setSize(Size.fromInt(Integer.MAX_VALUE / 4)); // enable virtually infinite allocations
         // 2. add only entrypoint methods and methods not to be compiled.
         addMethodsReferencedByExistingTargetCode();
@@ -624,8 +624,8 @@ public class CompiledPrototype extends Prototype {
 
     private void linkNonVirtualCalls() {
         Trace.begin(1, "linkNonVirtualCalls");
-        for (TargetMethod targetMethod : Code.bootCodeRegion().targetMethods()) {
-            if (!_unlinkedClasses.contains(targetMethod.classMethodActor().holder()) && !_unlinkedMethods.contains(targetMethod.classMethodActor())) {
+        for (TargetMethod targetMethod : Code.bootCodeRegion.targetMethods()) {
+            if (!unlinkedClasses.contains(targetMethod.classMethodActor().holder()) && !unlinkedMethods.contains(targetMethod.classMethodActor())) {
                 if (!targetMethod.linkDirectCalls()) {
                     targetMethod.linkDirectCalls();
                     ProgramError.unexpected("did not link all direct calls in method: " + targetMethod);
@@ -643,7 +643,7 @@ public class CompiledPrototype extends Prototype {
     private void linkVTableEntries() {
         Trace.begin(1, "linkVTableEntries");
         for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
-            if (classActor.isReferenceClassActor() && !_unlinkedClasses.contains(classActor)) {
+            if (classActor.isReferenceClassActor() && !unlinkedClasses.contains(classActor)) {
                 linkVTable(classActor);
             }
         }
@@ -655,7 +655,7 @@ public class CompiledPrototype extends Prototype {
         for (int vTableIndex = Hub.vTableStartIndex(); vTableIndex < Hub.vTableStartIndex() + dynamicHub.vTableLength(); vTableIndex++) {
             final VirtualMethodActor dynamicMethodActor = classActor.getVirtualMethodActorByVTableIndex(vTableIndex);
             final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(dynamicMethodActor);
-            if (targetMethod != null && !_unlinkedMethods.contains(dynamicMethodActor)) {
+            if (targetMethod != null && !unlinkedMethods.contains(dynamicMethodActor)) {
                 dynamicHub.setWord(vTableIndex, VTABLE_ENTRY_POINT.in(targetMethod));
             }
         }
@@ -668,12 +668,12 @@ public class CompiledPrototype extends Prototype {
         for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
             if (classActor instanceof InterfaceActor) {
                 final InterfaceActor interfaceActor = (InterfaceActor) classActor;
-                serialToInterfaceActor.put(interfaceActor.id(), interfaceActor);
+                serialToInterfaceActor.put(interfaceActor.id, interfaceActor);
             }
         }
 
         for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
-            if (classActor.isReferenceClassActor() && !_unlinkedClasses.contains(classActor)) {
+            if (classActor.isReferenceClassActor() && !unlinkedClasses.contains(classActor)) {
                 linkITable(classActor, serialToInterfaceActor);
             }
         }
@@ -693,7 +693,7 @@ public class CompiledPrototype extends Prototype {
                         final int iIndex = methodITableIndex - hub.iTableStartIndex();
                         final VirtualMethodActor dynamicMethodActor = classActor.getVirtualMethodActorByIIndex(iIndex);
                         final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(dynamicMethodActor);
-                        if (targetMethod != null && !_unlinkedMethods.contains(dynamicMethodActor)) {
+                        if (targetMethod != null && !unlinkedMethods.contains(dynamicMethodActor)) {
                             hub.setWord(methodITableIndex, VTABLE_ENTRY_POINT.in(targetMethod));
                         }
                     }

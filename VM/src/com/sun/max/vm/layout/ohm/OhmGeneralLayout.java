@@ -58,29 +58,29 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
         return false;
     }
 
-    private final GripScheme _gripScheme;
+    private final GripScheme gripScheme;
 
     /**
      * The offset of the hub pointer.
      */
-    final int _hubOffset = 0;
+    final int hubOffset = 0;
 
     /**
      * The offset of the extras (such as monitor and hashCode info).
      */
-    final int _miscOffset;
+    final int miscOffset;
 
-    final int _arrayLengthOffset;
+    final int arrayLengthOffset;
 
     public OhmGeneralLayout(GripScheme gripScheme) {
-        _gripScheme = gripScheme;
-        _miscOffset = _hubOffset + Word.size();
-        _arrayLengthOffset = _miscOffset + Word.size();
+        this.gripScheme = gripScheme;
+        this.miscOffset = hubOffset + Word.size();
+        this.arrayLengthOffset = miscOffset + Word.size();
     }
 
     @INLINE
     public final GripScheme gripScheme() {
-        return _gripScheme;
+        return gripScheme;
     }
 
     @INLINE
@@ -95,9 +95,9 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
 
     public Offset getOffsetFromOrigin(HeaderField headerField) {
         if (headerField == HeaderField.HUB) {
-            return Offset.fromInt(_hubOffset);
+            return Offset.fromInt(hubOffset);
         } else if (headerField == HeaderField.MISC) {
-            return Offset.fromInt(_miscOffset);
+            return Offset.fromInt(miscOffset);
         }
         throw new IllegalArgumentException(getClass().getSimpleName() + " does not know about header field: " + headerField);
     }
@@ -150,56 +150,56 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
 
     @INLINE
     public final Reference readHubReference(Accessor accessor) {
-        return accessor.readReference(_hubOffset);
+        return accessor.readReference(hubOffset);
     }
 
     @INLINE
     public final Word readHubReferenceAsWord(Accessor accessor) {
-        return accessor.readWord(_hubOffset);
+        return accessor.readWord(hubOffset);
     }
 
     @INLINE
     public final void writeHubReference(Accessor accessor, Reference referenceClassReference) {
-        accessor.writeReference(_hubOffset, referenceClassReference);
+        accessor.writeReference(hubOffset, referenceClassReference);
     }
 
     @INLINE
     public final Word readMisc(Accessor accessor) {
-        return accessor.readWord(_miscOffset);
+        return accessor.readWord(miscOffset);
     }
 
     @INLINE
     public final void writeMisc(Accessor accessor, Word value) {
-        accessor.writeWord(_miscOffset, value);
+        accessor.writeWord(miscOffset, value);
     }
 
     @INLINE
     public final Word compareAndSwapMisc(Accessor accessor, Word suspectedValue, Word newValue) {
-        return accessor.compareAndSwapWord(_miscOffset, suspectedValue, newValue);
+        return accessor.compareAndSwapWord(miscOffset, suspectedValue, newValue);
     }
 
     @INLINE
     public final Grip forwarded(Grip grip) {
         if (grip.isMarked()) {
-            return grip.readGrip(_hubOffset).unmarked();
+            return grip.readGrip(hubOffset).unmarked();
         }
         return grip;
     }
 
     @INLINE
     public final Grip readForwardGrip(Accessor accessor) {
-        final Grip forwardGrip = accessor.readGrip(_hubOffset);
+        final Grip forwardGrip = accessor.readGrip(hubOffset);
         if (forwardGrip.isMarked()) {
             return forwardGrip.unmarked();
         }
 
         // no forward reference has been stored
-        return _gripScheme.zero();
+        return gripScheme.zero();
     }
 
     @INLINE
     public final Grip readForwardGripValue(Accessor accessor) {
-        final Grip forwardGrip = accessor.readGrip(_hubOffset);
+        final Grip forwardGrip = accessor.readGrip(hubOffset);
         if (forwardGrip.isMarked()) {
             return forwardGrip.unmarked();
         }
@@ -210,38 +210,38 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
 
     @INLINE
     public final void writeForwardGrip(Accessor accessor, Grip forwardGrip) {
-        accessor.writeGrip(_hubOffset, forwardGrip.marked());
+        accessor.writeGrip(hubOffset, forwardGrip.marked());
     }
 
     @INLINE
     public final Grip compareAndSwapForwardGrip(Accessor accessor, Grip suspectedGrip, Grip forwardGrip) {
-        return UnsafeLoophole.wordToGrip(accessor.compareAndSwapWord(_hubOffset, UnsafeLoophole.gripToWord(suspectedGrip), UnsafeLoophole.gripToWord(forwardGrip.marked())));
+        return UnsafeLoophole.wordToGrip(accessor.compareAndSwapWord(hubOffset, UnsafeLoophole.gripToWord(suspectedGrip), UnsafeLoophole.gripToWord(forwardGrip.marked())));
     }
 
     @PROTOTYPE_ONLY
     public void visitHeader(ObjectCellVisitor visitor, Object object) {
         final Hub hub = HostObjectAccess.readHub(object);
-        visitor.visitHeaderField(_hubOffset, "hub", JavaTypeDescriptor.forJavaClass(hub.getClass()), ReferenceValue.from(hub));
-        visitor.visitHeaderField(_miscOffset, "misc", JavaTypeDescriptor.WORD, new WordValue(gripScheme().vmConfiguration().monitorScheme().createMisc(object)));
+        visitor.visitHeaderField(hubOffset, "hub", JavaTypeDescriptor.forJavaClass(hub.getClass()), ReferenceValue.from(hub));
+        visitor.visitHeaderField(miscOffset, "misc", JavaTypeDescriptor.WORD, new WordValue(gripScheme().vmConfiguration().monitorScheme().createMisc(object)));
     }
 
     public int getHubReferenceOffsetInCell() {
-        return _hubOffset;
+        return hubOffset;
     }
 
     protected Value readHeaderValue(ObjectMirror mirror, int offset) {
-        if (offset == _hubOffset) {
+        if (offset == hubOffset) {
             return mirror.readHub();
-        } else if (offset == _miscOffset) {
+        } else if (offset == miscOffset) {
             return mirror.readMisc();
         }
         return null;
     }
 
     protected boolean writeHeaderValue(ObjectMirror mirror, int offset, Value value) {
-        if (offset == _hubOffset) {
+        if (offset == hubOffset) {
             mirror.writeHub(value);
-        } else if (offset == _miscOffset) {
+        } else if (offset == miscOffset) {
             mirror.writeMisc(value);
         } else {
             return false;

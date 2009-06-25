@@ -26,14 +26,14 @@ import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
 
 public class Console {
-    public static Option<Boolean> _prettifyOutput = new Option<Boolean>("PrettifyOutput", Boolean.FALSE, OptionTypes.BOOLEAN_TYPE, "Enables colored console output.");
+    public static Option<Boolean> prettifyOutput = new Option<Boolean>("PrettifyOutput", Boolean.FALSE, OptionTypes.BOOLEAN_TYPE, "Enables colored console output.");
 
     private static boolean prettifyOutput() {
-        return _prettifyOutput.getValue() == Boolean.TRUE;
+        return prettifyOutput.getValue() == Boolean.TRUE;
     }
 
-    public static String [] _colorCodes = new String[Color.values().length];
-    public static String [] _backgroundColorCodes = new String[Color.values().length];
+    public static String [] colorCodes = new String[Color.values().length];
+    public static String [] backgroundColorCodes = new String[Color.values().length];
 
     public static enum Color {
         BLACK,
@@ -91,36 +91,36 @@ public class Console {
 
         public static String color(Color color, String s) {
             if (prettifyOutput()) {
-                return (char) 27 + _colorCodes[color.ordinal()] + s + (char) 27 + "[0m";
+                return (char) 27 + colorCodes[color.ordinal()] + s + (char) 27 + "[0m";
             }
             return s;
         }
     }
 
     static {
-        _colorCodes[Color.BLACK.ordinal()] = "[30m";
-        _colorCodes[Color.GRAY.ordinal()] = "[1;30m";
-        _colorCodes[Color.WHITE.ordinal()] = "[37m";
-        _colorCodes[Color.RED.ordinal()] = "[31m";
-        _colorCodes[Color.LIGHTRED.ordinal()] = "[1;31m";
-        _colorCodes[Color.GREEN.ordinal()] = "[32m";
-        _colorCodes[Color.LIGHTGREEN.ordinal()] = "[1;32m";
-        _colorCodes[Color.YELLOW.ordinal()] = "[33m";
-        _colorCodes[Color.LIGHTYELLOW.ordinal()] = "[1;33m";
-        _colorCodes[Color.BLUE.ordinal()] = "[34m";
-        _colorCodes[Color.LIGHTBLUE.ordinal()] = "[1;34m";
-        _colorCodes[Color.MAGENTA.ordinal()] = "[35m";
-        _colorCodes[Color.LIGHTMAGENTA.ordinal()] = "[1;35m";
-        _colorCodes[Color.TEAL.ordinal()] = "[36m";
-        _colorCodes[Color.LIGHTTEAL.ordinal()] = "[1;36m";
+        colorCodes[Color.BLACK.ordinal()] = "[30m";
+        colorCodes[Color.GRAY.ordinal()] = "[1;30m";
+        colorCodes[Color.WHITE.ordinal()] = "[37m";
+        colorCodes[Color.RED.ordinal()] = "[31m";
+        colorCodes[Color.LIGHTRED.ordinal()] = "[1;31m";
+        colorCodes[Color.GREEN.ordinal()] = "[32m";
+        colorCodes[Color.LIGHTGREEN.ordinal()] = "[1;32m";
+        colorCodes[Color.YELLOW.ordinal()] = "[33m";
+        colorCodes[Color.LIGHTYELLOW.ordinal()] = "[1;33m";
+        colorCodes[Color.BLUE.ordinal()] = "[34m";
+        colorCodes[Color.LIGHTBLUE.ordinal()] = "[1;34m";
+        colorCodes[Color.MAGENTA.ordinal()] = "[35m";
+        colorCodes[Color.LIGHTMAGENTA.ordinal()] = "[1;35m";
+        colorCodes[Color.TEAL.ordinal()] = "[36m";
+        colorCodes[Color.LIGHTTEAL.ordinal()] = "[1;36m";
 
-        _backgroundColorCodes[Color.BLACK.ordinal()] = "[40m";
-        _backgroundColorCodes[Color.RED.ordinal()] = "[41m";
-        _backgroundColorCodes[Color.GREEN.ordinal()] = "[42m";
-        _backgroundColorCodes[Color.YELLOW.ordinal()] = "[43m";
-        _backgroundColorCodes[Color.BLUE.ordinal()] = "[44m";
-        _backgroundColorCodes[Color.MAGENTA.ordinal()] = "[45m";
-        _backgroundColorCodes[Color.TEAL.ordinal()] = "[46m";
+        backgroundColorCodes[Color.BLACK.ordinal()] = "[40m";
+        backgroundColorCodes[Color.RED.ordinal()] = "[41m";
+        backgroundColorCodes[Color.GREEN.ordinal()] = "[42m";
+        backgroundColorCodes[Color.YELLOW.ordinal()] = "[43m";
+        backgroundColorCodes[Color.BLUE.ordinal()] = "[44m";
+        backgroundColorCodes[Color.MAGENTA.ordinal()] = "[45m";
+        backgroundColorCodes[Color.TEAL.ordinal()] = "[46m";
     }
 
     public static class ColoredPrintStream extends PrintStream implements ColoredConsole {
@@ -132,17 +132,17 @@ public class Console {
         public void color(Color background, Color foreground) {
             if (prettifyOutput()) {
                 if (background != null) {
-                    print((char) 27 + _backgroundColorCodes[background.ordinal()]);
+                    print((char) 27 + backgroundColorCodes[background.ordinal()]);
                 }
                 if (foreground != null) {
-                    print((char) 27 + _colorCodes[foreground.ordinal()]);
+                    print((char) 27 + colorCodes[foreground.ordinal()]);
                 }
             }
         }
 
         public void color(Color color) {
             if (prettifyOutput()) {
-                print((char) 27 + _colorCodes[color.ordinal()]);
+                print((char) 27 + colorCodes[color.ordinal()]);
             }
         }
 
@@ -176,17 +176,17 @@ public class Console {
         public void color(Color background, Color foreground) {
             if (prettifyOutput()) {
                 if (background != null) {
-                    Log.print((char) 27 + _backgroundColorCodes[background.ordinal()]);
+                    Log.print((char) 27 + backgroundColorCodes[background.ordinal()]);
                 }
                 if (foreground != null) {
-                    Log.print((char) 27 + _colorCodes[foreground.ordinal()]);
+                    Log.print((char) 27 + colorCodes[foreground.ordinal()]);
                 }
             }
         }
 
         public void color(Color color) {
             if (prettifyOutput()) {
-                Log.print((char) 27 + _colorCodes[color.ordinal()]);
+                Log.print((char) 27 + colorCodes[color.ordinal()]);
             }
         }
 
@@ -217,50 +217,50 @@ public class Console {
         }
     }
 
-    public static ColoredConsole _err;
-    public static ColoredConsole _out;
-    public static ColoredConsole _debug;
+    public static ColoredConsole err;
+    public static ColoredConsole out;
+    public static ColoredConsole debug;
 
     static {
-        _err = new ColoredPrintStream(System.err);
-        _out = new ColoredPrintStream(System.out);
-        _debug = _out;
+        err = new ColoredPrintStream(System.err);
+        out = new ColoredPrintStream(System.out);
+        debug = out;
     }
 
     public static ColoredConsole err() {
-        return _err;
+        return err;
     }
 
     public static ColoredConsole out() {
-        return _out;
+        return out;
     }
 
     public static ColoredConsole debug() {
-        return _debug;
+        return debug;
     }
 
     public static void println(Color color, String s) {
-        _debug.println(color, s);
+        debug.println(color, s);
     }
 
     public static void println(String s) {
-        _debug.println(s);
+        debug.println(s);
     }
 
     public static void print(Color color, String s) {
-        _debug.print(color, s);
+        debug.print(color, s);
     }
 
     public static void print(String s) {
-        _debug.print(s);
+        debug.print(s);
     }
 
     public static void printf(Color color, String s, Object ... args) {
-        _debug.print(color, String.format(s, args));
+        debug.print(color, String.format(s, args));
     }
 
     public static void printf(String s, Object ... args) {
-        _debug.print(String.format(s, args));
+        debug.print(String.format(s, args));
     }
 
     public static void println() {

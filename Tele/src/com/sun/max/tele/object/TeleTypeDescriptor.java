@@ -37,16 +37,16 @@ public final class TeleTypeDescriptor extends TeleDescriptor {
         super(teleVM, typeDescriptorReference);
     }
 
-    private TypeDescriptor _typeDescriptor;
+    private TypeDescriptor typeDescriptor;
 
     /**
      * @return local equivalent of the {@link TypeDescriptor} in the target VM.
      */
     public TypeDescriptor toJava() {
-        if (_typeDescriptor == null) {
-            _typeDescriptor = JavaTypeDescriptor.parseTypeDescriptor(string());
+        if (typeDescriptor == null) {
+            typeDescriptor = JavaTypeDescriptor.parseTypeDescriptor(string());
         }
-        return _typeDescriptor;
+        return typeDescriptor;
     }
 
     @Override

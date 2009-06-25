@@ -26,19 +26,19 @@ package test.bytecode;
  */
 public class BC_arraylength {
 
-    static int[] _array1 = {1, 2, 3};
-    static char[] _array2 = {'a', 'b', 'c', 'd'};
-    static Object[] _array3 = new Object[5];
+    static int[] array1 = {1, 2, 3};
+    static char[] array2 = {'a', 'b', 'c', 'd'};
+    static Object[] array3 = new Object[5];
 
     public static int test(int arg) {
         if (arg == 1) {
-            return _array1.length;
+            return array1.length;
         }
         if (arg == 2) {
-            return _array2.length;
+            return array2.length;
         }
         if (arg == 3) {
-            return _array3.length;
+            return array3.length;
         }
         return 42;
     }

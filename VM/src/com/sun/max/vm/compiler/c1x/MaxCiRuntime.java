@@ -37,12 +37,15 @@ import com.sun.max.vm.type.*;
  * @author Ben L. Titzer
  */
 public class MaxCiRuntime implements CiRuntime {
-    final MaxCiConstantPool _globalConstantPool = new MaxCiConstantPool(this, null);
 
-    final WeakHashMap<MaxCiField, MaxCiField> _fields = new WeakHashMap<MaxCiField, MaxCiField>();
-    final WeakHashMap<MaxCiMethod, MaxCiMethod> _methods = new WeakHashMap<MaxCiMethod, MaxCiMethod>();
-    final WeakHashMap<MaxCiType, MaxCiType> _types = new WeakHashMap<MaxCiType, MaxCiType>();
-    final WeakHashMap<ConstantPool, MaxCiConstantPool> _constantPools = new WeakHashMap<ConstantPool, MaxCiConstantPool>();
+    public static final MaxCiRuntime globalRuntime = new MaxCiRuntime();
+
+    final MaxCiConstantPool globalConstantPool = new MaxCiConstantPool(this, null);
+
+    final WeakHashMap<MaxCiField, MaxCiField> fields = new WeakHashMap<MaxCiField, MaxCiField>();
+    final WeakHashMap<MaxCiMethod, MaxCiMethod> methods = new WeakHashMap<MaxCiMethod, MaxCiMethod>();
+    final WeakHashMap<MaxCiType, MaxCiType> types = new WeakHashMap<MaxCiType, MaxCiType>();
+    final WeakHashMap<ConstantPool, MaxCiConstantPool> constantPools = new WeakHashMap<ConstantPool, MaxCiConstantPool>();
 
     /**
      * Gets the constant pool for a specified method.
@@ -53,10 +56,10 @@ public class MaxCiRuntime implements CiRuntime {
         final ClassMethodActor classMethodActor = this.asClassMethodActor(method, "getConstantPool()");
         final ConstantPool cp = classMethodActor.rawCodeAttribute().constantPool();
         synchronized (this) {
-            MaxCiConstantPool constantPool = _constantPools.get(cp);
+            MaxCiConstantPool constantPool = constantPools.get(cp);
             if (constantPool == null) {
                 constantPool = new MaxCiConstantPool(this, cp);
-                _constantPools.put(cp, constantPool);
+                constantPools.put(cp, constantPool);
             }
             return constantPool;
         }
@@ -155,7 +158,7 @@ public class MaxCiRuntime implements CiRuntime {
     public CiType resolveType(String name) {
         final ClassActor classActor = ClassRegistry.get((ClassLoader) null, JavaTypeDescriptor.getDescriptorForJavaString(name));
         if (classActor != null) {
-            return _globalConstantPool.canonicalCiType(classActor);
+            return globalConstantPool.canonicalCiType(classActor);
         }
         return null;
     }
@@ -166,7 +169,7 @@ public class MaxCiRuntime implements CiRuntime {
      * @return the compiler interface type for the specified class
      */
     public CiType getType(Class<?> javaClass) {
-        return _globalConstantPool.canonicalCiType(ClassActor.fromJava(javaClass));
+        return globalConstantPool.canonicalCiType(ClassActor.fromJava(javaClass));
     }
 
     /**
@@ -175,7 +178,7 @@ public class MaxCiRuntime implements CiRuntime {
      * @return the canonical compiler interface method for the method actor
      */
     public CiMethod getCiMethod(MethodActor methodActor) {
-        return _globalConstantPool.canonicalCiMethod(methodActor);
+        return globalConstantPool.canonicalCiMethod(methodActor);
     }
 
     ClassMethodActor asClassMethodActor(CiMethod method, String operation) {

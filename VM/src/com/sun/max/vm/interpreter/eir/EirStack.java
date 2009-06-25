@@ -47,20 +47,20 @@ public class EirStack {
      * Sufficiently high, so the stack can grow downwards. This must also be
      * a word aligned value as the real stack will also be word aligned.
      */
-    private final Address _ceiling;
+    private final Address ceiling;
 
-    private Address _sp;
+    private Address sp;
 
     public EirStack() {
-        _ceiling = VmThread.stackSize();
-        assert !_ceiling.isZero();
-        _sp = _ceiling;
+        ceiling = VmThread.stackSize();
+        assert !ceiling.isZero();
+        sp = ceiling;
     }
 
     protected EirStack(EirStack copy) {
-        _ceiling = copy._ceiling;
-        _sp = copy._sp;
-        _slots = new ArrayListSequence<Value>(copy._slots);
+        ceiling = copy.ceiling;
+        sp = copy.sp;
+        slots = new ArrayListSequence<Value>(copy.slots);
     }
 
     /**
@@ -76,7 +76,7 @@ public class EirStack {
      * a {@link StackAddressOutOfBoundsException}.
      */
     public Address ceiling() {
-        return _ceiling;
+        return ceiling;
     }
 
     /**
@@ -85,31 +85,31 @@ public class EirStack {
      * without throwing a {@link StackAddressOutOfBoundsException}.
      */
     public Address sp() {
-        return _sp;
+        return sp;
     }
 
     public void setSP(Address address) {
-        _sp = address;
+        sp = address;
     }
 
-    private List<Value> _slots = new ArrayListSequence<Value>();
+    private List<Value> slots = new ArrayListSequence<Value>();
 
     private int addressToSlotIndex(Address address) {
-        if (address.lessThan(_sp) || address.greaterEqual(_ceiling)) {
-            final String message = address.toLong() + " < " + _sp.toLong() + " || " + address.toLong() + " >= " + _ceiling.toLong();
+        if (address.lessThan(sp) || address.greaterEqual(ceiling)) {
+            final String message = address.toLong() + " < " + sp.toLong() + " || " + address.toLong() + " >= " + ceiling.toLong();
             throw new StackAddressOutOfBoundsException(message);
         }
-        final int index = _ceiling.minus(address).dividedBy(8).toInt();
-        if (index >= _slots.size()) {
-            for (int i = _slots.size(); i <= index; i++) {
-                _slots.add(null);
+        final int index = ceiling.minus(address).dividedBy(8).toInt();
+        if (index >= slots.size()) {
+            for (int i = slots.size(); i <= index; i++) {
+                slots.add(null);
             }
         }
         return index;
     }
 
     public Value read(Address address) {
-        return _slots.get(addressToSlotIndex(address));
+        return slots.get(addressToSlotIndex(address));
     }
 
     public byte readByte(Address address) {
@@ -142,7 +142,7 @@ public class EirStack {
 
     public void write(Address address, Value value) {
         final int index = addressToSlotIndex(address);
-        _slots.set(index, value);
+        slots.set(index, value);
     }
 
     private WordValue partiallyOverwrite(Address address, int n, int mask) {

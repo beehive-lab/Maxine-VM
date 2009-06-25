@@ -28,14 +28,14 @@ import com.sun.max.jdwp.data.*;
  */
 public abstract class Handlers {
 
-    private JDWPSession _session;
+    private JDWPSession session;
 
     public Handlers(JDWPSession session) {
-        _session = session;
+        this.session = session;
     }
 
     public JDWPSession session() {
-        return _session;
+        return session;
     }
 
     public abstract void registerWith(CommandHandlerRegistry registry);

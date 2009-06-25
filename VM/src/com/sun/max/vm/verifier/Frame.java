@@ -38,25 +38,25 @@ import com.sun.max.vm.verifier.types.*;
  */
 public class Frame implements FrameModel {
 
-    final VerificationType[] _locals;
-    final MethodVerifier _methodVerifier;
-    final VerificationType[] _stack;
+    final VerificationType[] locals;
+    final MethodVerifier methodVerifier;
+    final VerificationType[] stack;
 
-    int _stackSize;
-    int _activeLocals;
+    int stackSize;
+    int activeLocals;
 
     /**
      * Creates the initial stack and local variables frame for a method.
      */
     public Frame(MethodActor classMethodActor, MethodVerifier methodVerifier) {
-        _methodVerifier = methodVerifier;
+        this.methodVerifier = methodVerifier;
 
         final CodeAttribute codeAttribute = methodVerifier.codeAttribute();
         final int maxLocals = codeAttribute.maxLocals();
         final int maxStack = codeAttribute.maxStack();
 
-        _locals = new VerificationType[maxLocals];
-        _stack = new VerificationType[maxStack];
+        this.locals = new VerificationType[maxLocals];
+        this.stack = new VerificationType[maxStack];
 
         initializeEntryFrame(classMethodActor);
     }
@@ -73,7 +73,7 @@ public class Frame implements FrameModel {
             }
         } else {
             if (!classMethodActor.isInstanceInitializer()) {
-                store(_methodVerifier.getObjectType(classActor.typeDescriptor()), 0);
+                store(methodVerifier.getObjectType(classActor.typeDescriptor), 0);
             } else {
                 if (classActor.equals(ClassRegistry.javaLangObjectActor())) {
                     store(VerificationType.OBJECT, 0);
@@ -87,21 +87,21 @@ public class Frame implements FrameModel {
         final SignatureDescriptor signature = classMethodActor.descriptor();
         for (int i = 0; i < signature.numberOfParameters(); i++) {
             final TypeDescriptor parameterType = signature.parameterDescriptorAt(i);
-            final VerificationType type = _methodVerifier.getVerificationType(parameterType);
-            store(type, _activeLocals);
+            final VerificationType type = methodVerifier.getVerificationType(parameterType);
+            store(type, activeLocals);
         }
 
-        for (int i = _activeLocals; i < _locals.length; i++) {
-            _locals[i] = VerificationType.TOP;
+        for (int i = activeLocals; i < locals.length; i++) {
+            locals[i] = VerificationType.TOP;
         }
     }
 
     Frame(Frame from) {
-        _methodVerifier = from._methodVerifier;
-        _locals = from._locals.clone();
-        _stack = from._stack.clone();
-        _activeLocals = from._activeLocals;
-        _stackSize = from._stackSize;
+        methodVerifier = from.methodVerifier;
+        locals = from.locals.clone();
+        stack = from.stack.clone();
+        activeLocals = from.activeLocals;
+        stackSize = from.stackSize;
     }
 
     /**
@@ -112,11 +112,11 @@ public class Frame implements FrameModel {
     }
 
     public VerifyError verifyError(String errorMessage) {
-        throw _methodVerifier.verifyError(errorMessage);
+        throw methodVerifier.verifyError(errorMessage);
     }
 
     public void verifyIsAssignable(VerificationType fromType, VerificationType toType, String errorMessage) {
-        _methodVerifier.verifyIsAssignable(fromType, toType, errorMessage);
+        methodVerifier.verifyIsAssignable(fromType, toType, errorMessage);
     }
 
     /**
@@ -130,11 +130,11 @@ public class Frame implements FrameModel {
      */
     public VerificationType load(VerificationType expectedType, int index) {
         try {
-            if (index < _activeLocals) {
-                final VerificationType type = _locals[index];
+            if (index < activeLocals) {
+                final VerificationType type = locals[index];
                 verifyIsAssignable(type, expectedType, "Invalid load of local variable");
                 if (type.isCategory2()) {
-                    verifyIsAssignable(_locals[index + 1], type.secondWordType(), "Invalid load of two word value");
+                    verifyIsAssignable(locals[index + 1], type.secondWordType(), "Invalid load of two word value");
                 }
                 return type;
             }
@@ -153,12 +153,12 @@ public class Frame implements FrameModel {
      */
     public void store(VerificationType type, int index) {
         try {
-            _locals[index] = type;
+            locals[index] = type;
             if (type.isCategory2()) {
-                _locals[index + 1] = type.secondWordType();
-                _activeLocals = Math.max(_activeLocals, index + 2);
+                locals[index + 1] = type.secondWordType();
+                activeLocals = Math.max(activeLocals, index + 2);
             } else {
-                _activeLocals = Math.max(_activeLocals, index + 1);
+                activeLocals = Math.max(activeLocals, index + 1);
             }
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
             // index < 0 || index >= _locals.length
@@ -175,11 +175,11 @@ public class Frame implements FrameModel {
     public void chopLocals(int numberOfLocals) {
         try {
             for (int i = 0; i < numberOfLocals; i++) {
-                final VerificationType local = _locals[_activeLocals - 1];
+                final VerificationType local = locals[activeLocals - 1];
                 if (local.isSecondWordType()) {
-                    _locals[--_activeLocals] = VerificationType.TOP;
+                    locals[--activeLocals] = VerificationType.TOP;
                 }
-                _locals[--_activeLocals] = VerificationType.TOP;
+                locals[--activeLocals] = VerificationType.TOP;
             }
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
             throw verifyError("Chopping more locals than currently active");
@@ -191,7 +191,7 @@ public class Frame implements FrameModel {
      * of a local variable in this frame whose value is not {@linkplain VerificationType#TOP}.
      */
     public int activeLocals() {
-        return _activeLocals;
+        return activeLocals;
     }
 
     /**
@@ -203,9 +203,9 @@ public class Frame implements FrameModel {
     public void push(VerificationType type) {
         assert !type.isSecondWordType();
         try {
-            _stack[_stackSize++] = type;
+            stack[stackSize++] = type;
             if (type.isCategory2()) {
-                _stack[_stackSize++] = type.secondWordType();
+                stack[stackSize++] = type.secondWordType();
             }
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
             throw verifyError("Stack overflow");
@@ -224,11 +224,11 @@ public class Frame implements FrameModel {
         try {
             final VerificationType type;
             if (expectedType.isCategory2()) {
-                type = _stack[_stackSize - 2];
-                verifyIsAssignable(_stack[_stackSize - 1], type.secondWordType(), "Invalid pop of a two word value from the stack");
-                _stackSize -= 2;
+                type = stack[stackSize - 2];
+                verifyIsAssignable(stack[stackSize - 1], type.secondWordType(), "Invalid pop of a two word value from the stack");
+                stackSize -= 2;
             } else {
-                type = _stack[--_stackSize];
+                type = stack[--stackSize];
             }
             verifyIsAssignable(type, expectedType, "Invalid pop of a value from the stack");
             return type;
@@ -244,12 +244,12 @@ public class Frame implements FrameModel {
      */
     public VerificationType top() {
         try {
-            final VerificationType top = _stack[_stackSize - 1];
+            final VerificationType top = stack[stackSize - 1];
             if (!top.isSecondWordType()) {
                 return top;
             }
-            assert _stack[_stackSize - 2].secondWordType() == top;
-            return _stack[_stackSize - 2];
+            assert stack[stackSize - 2].secondWordType() == top;
+            return stack[stackSize - 2];
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
             throw verifyError("Stack underflow");
         }
@@ -257,8 +257,8 @@ public class Frame implements FrameModel {
     }
 
     public boolean isTypeOnStack(VerificationType type) {
-        for (int i = 0; i < _stackSize; i++) {
-            if (_stack[i].equals(type)) {
+        for (int i = 0; i < stackSize; i++) {
+            if (stack[i].equals(type)) {
                 return true;
             }
         }
@@ -266,30 +266,30 @@ public class Frame implements FrameModel {
     }
 
     public void clearLocals() {
-        for (int i = 0; i < _locals.length; i++) {
-            _locals[i] = VerificationType.TOP;
+        for (int i = 0; i < locals.length; i++) {
+            locals[i] = VerificationType.TOP;
         }
-        _activeLocals = 0;
+        activeLocals = 0;
     }
 
     public void replaceLocals(VerificationType oldType, VerificationType newType) {
-        for (int i = 0; i < _activeLocals; i++) {
-            if (_locals[i].equals(oldType)) {
-                _locals[i] = newType;
+        for (int i = 0; i < activeLocals; i++) {
+            if (locals[i].equals(oldType)) {
+                locals[i] = newType;
             }
         }
     }
 
     public void replaceStack(VerificationType oldType, VerificationType newType) {
-        for (int i = 0; i < _stackSize; i++) {
-            if (_stack[i].equals(oldType)) {
-                _stack[i] = newType;
+        for (int i = 0; i < stackSize; i++) {
+            if (stack[i].equals(oldType)) {
+                stack[i] = newType;
             }
         }
     }
 
     public void clearStack() {
-        _stackSize = 0;
+        stackSize = 0;
     }
 
     public void clear() {
@@ -327,13 +327,13 @@ public class Frame implements FrameModel {
      * @param thisPosition the bytecode position of this frame
      */
     public final void verifyStackIsAssignableFrom(Frame fromFrame, int thisPosition) {
-        if (_stackSize != fromFrame._stackSize) {
+        if (stackSize != fromFrame.stackSize) {
             throw verifyError("Inconsistent stackmap frame for bytecode position " + thisPosition + " (stack sizes differ)" +
                 inconsistentFramesMessageSuffix(fromFrame, this));
         }
 
-        for (int i = 0; i < _stackSize; i++) {
-            if (!_stack[i].isAssignableFrom(fromFrame._stack[i])) {
+        for (int i = 0; i < stackSize; i++) {
+            if (!stack[i].isAssignableFrom(fromFrame.stack[i])) {
                 throw verifyError("Stack slot " + i + " is incompatible with stackmap frame for bytecode position " + thisPosition +
                     inconsistentFramesMessageSuffix(this, fromFrame));
             }
@@ -348,13 +348,13 @@ public class Frame implements FrameModel {
      * @param thisPosition the bytecode position of this frame
      */
     public final void verifyLocalsAreAssignableFrom(Frame fromFrame, int thisPosition) {
-        if (fromFrame._activeLocals < _activeLocals) {
+        if (fromFrame.activeLocals < activeLocals) {
             throw verifyError("Inconsistent stackmap frame for bytecode position " + thisPosition + " (less live locals than implied by stackmap frame)" +
                 inconsistentFramesMessageSuffix(fromFrame, this));
         }
 
-        for (int i = 0; i < fromFrame._activeLocals; i++) {
-            if (!_locals[i].isAssignableFrom(fromFrame._locals[i])) {
+        for (int i = 0; i < fromFrame.activeLocals; i++) {
+            if (!locals[i].isAssignableFrom(fromFrame.locals[i])) {
                 throw verifyError("Local variable " + i + " is incompatible with stackmap frame for bytecode position " + thisPosition +
                     inconsistentFramesMessageSuffix(this, fromFrame));
             }
@@ -370,10 +370,10 @@ public class Frame implements FrameModel {
      * Resets the stack state in this frame to be the same as a given frame.
      */
     public void resetStack(Frame fromFrame) {
-        _stackSize = fromFrame._stackSize;
-        System.arraycopy(fromFrame._stack, 0, _stack, 0, _stackSize);
-        for (int i = _stackSize; i != _stack.length; ++i) {
-            _stack[i] = VerificationType.TOP;
+        stackSize = fromFrame.stackSize;
+        System.arraycopy(fromFrame.stack, 0, stack, 0, stackSize);
+        for (int i = stackSize; i != stack.length; ++i) {
+            stack[i] = VerificationType.TOP;
         }
     }
 
@@ -381,10 +381,10 @@ public class Frame implements FrameModel {
      * Resets the local variable state in this frame to be the same as a given frame.
      */
     public void resetLocals(Frame fromFrame) {
-        _activeLocals = fromFrame._activeLocals;
-        System.arraycopy(fromFrame._locals, 0, _locals, 0, _activeLocals);
-        for (int i = _activeLocals; i != _locals.length; ++i) {
-            _locals[i] = VerificationType.TOP;
+        activeLocals = fromFrame.activeLocals;
+        System.arraycopy(fromFrame.locals, 0, locals, 0, activeLocals);
+        for (int i = activeLocals; i != locals.length; ++i) {
+            locals[i] = VerificationType.TOP;
         }
     }
 
@@ -394,10 +394,10 @@ public class Frame implements FrameModel {
      * @return an array of the types on the stack. The length of this array gives depth of the stack in this frame.
      */
     public VerificationType[] stack() {
-        if (_stackSize == 0) {
+        if (stackSize == 0) {
             return VerificationType.NO_TYPES;
         }
-        return Arrays.copyOf(_stack, _stackSize);
+        return Arrays.copyOf(stack, stackSize);
     }
 
     /**
@@ -407,26 +407,26 @@ public class Frame implements FrameModel {
      *         the maximum number of locals that have live values}.
      */
     public VerificationType[] locals() {
-        if (_activeLocals == 0) {
+        if (activeLocals == 0) {
             return VerificationType.NO_TYPES;
         }
-        return Arrays.copyOf(_locals, _activeLocals);
+        return Arrays.copyOf(locals, activeLocals);
     }
 
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
-        if (_stackSize > 0) {
+        if (stackSize > 0) {
             String prefix = "stack[";
-            for (int i = 0; i != _stackSize; ++i) {
-                sb.append(prefix).append(i).append("] = ").append(_stack[i]).append('\n');
+            for (int i = 0; i != stackSize; ++i) {
+                sb.append(prefix).append(i).append("] = ").append(stack[i]).append('\n');
                 prefix = "     [";
             }
         }
-        if (_activeLocals > 0) {
+        if (activeLocals > 0) {
             String prefix = "local[";
-            for (int i = 0; i != _activeLocals; ++i) {
-                sb.append(prefix).append(i).append("] = ").append(_locals[i]).append('\n');
+            for (int i = 0; i != activeLocals; ++i) {
+                sb.append(prefix).append(i).append("] = ").append(locals[i]).append('\n');
                 prefix = "     [";
             }
         }

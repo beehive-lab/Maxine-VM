@@ -23,10 +23,10 @@ package com.sun.max.vm.compiler.tir.pipeline;
 import com.sun.max.vm.compiler.tir.*;
 
 public class TirInstructionFilter extends TirInstructionAdapter implements TirMessageSink {
-    protected final TirMessageSink _receiver;
+    protected final TirMessageSink receiver;
 
     public TirInstructionFilter(TirMessageSink receiver) {
-        _receiver = TirPipeline.connect(this, receiver);
+        this.receiver = TirPipeline.connect(this, receiver);
     }
 
     public void receive(TirMessage message) {
@@ -52,6 +52,6 @@ public class TirInstructionFilter extends TirInstructionAdapter implements TirMe
     }
 
     public void forward(TirMessage message) {
-        _receiver.receive(message);
+        receiver.receive(message);
     }
 }

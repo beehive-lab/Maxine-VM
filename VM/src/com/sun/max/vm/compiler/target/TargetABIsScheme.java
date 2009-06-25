@@ -32,28 +32,28 @@ public abstract class TargetABIsScheme<IntegerRegister_Type extends Symbol, Floa
         return false;
     }
 
-    private final TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> _nativeABI;
+    private final TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> nativeABI;
 
     public TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> nativeABI() {
-        return _nativeABI;
+        return nativeABI;
     }
 
-    private final TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> _jitABI;
+    private final TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> jitABI;
 
     public TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> jitABI() {
-        return _jitABI;
+        return jitABI;
     }
 
-    private final TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> _optimizedJavaABI;
+    private final TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> optimizedJavaABI;
 
     public TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> optimizedJavaABI() {
-        return _optimizedJavaABI;
+        return optimizedJavaABI;
     }
 
-    private final TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> _interpreterABI;
+    private final TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> interpreterABI;
 
     public TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> interpreterABI() {
-        return _interpreterABI;
+        return interpreterABI;
     }
 
     protected TargetABIsScheme(VMConfiguration vmConfiguration,
@@ -62,9 +62,9 @@ public abstract class TargetABIsScheme<IntegerRegister_Type extends Symbol, Floa
                                TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> optimizedJavaABI,
                                TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> interpreterABI) {
         super(vmConfiguration);
-        _nativeABI = nativeABI;
-        _jitABI = jitABI;
-        _optimizedJavaABI = optimizedJavaABI;
-        _interpreterABI = interpreterABI;
+        this.nativeABI = nativeABI;
+        this.jitABI = jitABI;
+        this.optimizedJavaABI = optimizedJavaABI;
+        this.interpreterABI = interpreterABI;
     }
 }

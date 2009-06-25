@@ -42,14 +42,14 @@ import com.sun.max.vm.value.*;
 public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> extends Inspector {
 
     public abstract static class Key<UniqueInspector_Type extends UniqueInspector> implements Comparable<Key<UniqueInspector_Type>> {
-        private final Class<UniqueInspector_Type> _type;
+        private final Class<UniqueInspector_Type> type;
 
         public Class<UniqueInspector_Type> type() {
-            return _type;
+            return type;
         }
 
         private Key(Class<UniqueInspector_Type> type) {
-            _type = type;
+            this.type = type;
         }
 
         public static <UniqueInspector_Type extends UniqueInspector> Key<UniqueInspector_Type> create(Class<UniqueInspector_Type> type, Value subject) {
@@ -88,41 +88,41 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
 
     private static final class ValueKey<UniqueInspector_Type extends UniqueInspector> extends Key<UniqueInspector_Type> {
 
-        private final Value _subject;
+        private final Value subject;
 
         public Value subject() {
-            return _subject;
+            return subject;
         }
 
         private ValueKey(Class<UniqueInspector_Type> type, Value subject) {
             super(type);
-            _subject = subject;
+            this.subject = subject;
         }
 
         @Override
         public int hashCode() {
-            if (_subject.kind() == Kind.REFERENCE) {
-                return type().hashCode() ^ _subject.asReference().toOrigin().toInt();
+            if (subject.kind() == Kind.REFERENCE) {
+                return type().hashCode() ^ subject.asReference().toOrigin().toInt();
             }
-            return type().hashCode() ^ _subject.toInt();
+            return type().hashCode() ^ subject.toInt();
         }
 
         @Override
         public boolean equals(Object other) {
             if (other instanceof ValueKey) {
                 final ValueKey key = (ValueKey) other;
-                return type() == key.type() && _subject.equals(key._subject);
+                return type() == key.type() && subject.equals(key.subject);
             }
             return false;
         }
 
         public int compareTo(Key<UniqueInspector_Type> other) {
-            if (type() != other._type) {
-                return type().getName().compareTo(other._type.getName());
+            if (type() != other.type) {
+                return type().getName().compareTo(other.type.getName());
             }
             if (other instanceof ValueKey) {
                 final ValueKey key = (ValueKey) other;
-                return _subject.compareTo(key._subject);
+                return subject.compareTo(key.subject);
             }
             assert false;
             return 0;
@@ -131,28 +131,28 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
 
     private static final class FileKey<UniqueInspector_Type extends UniqueInspector> extends Key<UniqueInspector_Type> {
 
-        private final File _file;
+        private final File file;
 
         public File file() {
-            return _file;
+            return file;
         }
 
         private FileKey(Class<UniqueInspector_Type> type, File file) {
             super(type);
             assert file != null;
-            _file = file;
+            this.file = file;
         }
 
         @Override
         public int hashCode() {
-            return _file.hashCode();
+            return file.hashCode();
         }
 
         @Override
         public boolean equals(Object other) {
             if (other instanceof FileKey) {
                 final FileKey key = (FileKey) other;
-                return type() == key.type() && _file.equals(key._file);
+                return type() == key.type() && file.equals(key.file);
             }
             return false;
         }
@@ -160,7 +160,7 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
         public int compareTo(Key<UniqueInspector_Type> other) {
             if (other instanceof FileKey) {
                 final FileKey key = (FileKey) other;
-                return _file.compareTo(key._file);
+                return file.compareTo(key.file);
             }
             return type().getName().compareTo(other.type().getName());
         }
@@ -168,21 +168,21 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
 
     private static final class TeleRoutineKey<UniqueInspector_Type extends UniqueInspector> extends Key<UniqueInspector_Type> {
 
-        private final TeleRoutine _teleRoutine;
+        private final TeleRoutine teleRoutine;
 
         public TeleRoutine teleRoutine() {
-            return _teleRoutine;
+            return teleRoutine;
         }
 
         private TeleRoutineKey(Class<UniqueInspector_Type> type, TeleRoutine teleRoutine) {
             super(type);
             assert teleRoutine != null;
-            _teleRoutine = teleRoutine;
+            this.teleRoutine = teleRoutine;
         }
 
         @Override
         public int hashCode() {
-            return _teleRoutine.hashCode();
+            return teleRoutine.hashCode();
         }
 
         // Tele objects are canonical, so we use object identity.
@@ -190,7 +190,7 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
         public boolean equals(Object other) {
             if (other instanceof TeleRoutineKey) {
                 final TeleRoutineKey key = (TeleRoutineKey) other;
-                return type() == key.type() && _teleRoutine == key._teleRoutine;
+                return type() == key.type() && teleRoutine == key.teleRoutine;
             }
             return false;
         }
@@ -198,7 +198,7 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
         public int compareTo(Key<UniqueInspector_Type> other) {
             if (other instanceof TeleRoutineKey) {
                 final TeleRoutineKey key = (TeleRoutineKey) other;
-                return _teleRoutine.getUniqueName().compareTo(key._teleRoutine.getUniqueName());
+                return teleRoutine.getUniqueName().compareTo(key.teleRoutine.getUniqueName());
             }
             return type().getName().compareTo(other.type().getName());
         }
@@ -206,21 +206,21 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
 
     private static final class TeleTargetMethodKey<UniqueInspector_Type extends UniqueInspector> extends Key<UniqueInspector_Type> {
 
-        private final TeleTargetMethod _teleTargetMethod;
+        private final TeleTargetMethod teleTargetMethod;
 
         public TeleTargetMethod teleTargetMethod() {
-            return _teleTargetMethod;
+            return teleTargetMethod;
         }
 
         private TeleTargetMethodKey(Class<UniqueInspector_Type> type, TeleTargetMethod teleTargetMethod) {
             super(type);
             assert teleTargetMethod != null;
-            _teleTargetMethod = teleTargetMethod;
+            this.teleTargetMethod = teleTargetMethod;
         }
 
         @Override
         public int hashCode() {
-            return _teleTargetMethod.hashCode();
+            return teleTargetMethod.hashCode();
         }
 
         // Tele objects are canonical, so we use object identity.
@@ -228,7 +228,7 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
         public boolean equals(Object other) {
             if (other instanceof TeleTargetMethodKey) {
                 final TeleTargetMethodKey key = (TeleTargetMethodKey) other;
-                return type() == key.type() && _teleTargetMethod == key._teleTargetMethod;
+                return type() == key.type() && teleTargetMethod == key.teleTargetMethod;
             }
             return false;
         }
@@ -236,23 +236,23 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
         public int compareTo(Key<UniqueInspector_Type> other) {
             if (other instanceof TeleTargetMethodKey) {
                 final TeleTargetMethodKey key = (TeleTargetMethodKey) other;
-                return _teleTargetMethod.toString().compareTo(key._teleTargetMethod.toString());
+                return teleTargetMethod.toString().compareTo(key.teleTargetMethod.toString());
             }
             return type().getName().compareTo(other.type().getName());
         }
     }
 
-    private final Key<Inspector_Type> _key;
+    private final Key<Inspector_Type> key;
 
     public Key<Inspector_Type> key() {
-        return _key;
+        return key;
     }
 
     protected UniqueInspector(Inspection inspection, Value subject) {
         super(inspection);
         final Class<Class<Inspector_Type>> classType = null;
         final Class<Inspector_Type> frameType = StaticLoophole.cast(classType, getClass());
-        _key = new ValueKey<Inspector_Type>(frameType, subject);
+        key = new ValueKey<Inspector_Type>(frameType, subject);
     }
 
     protected UniqueInspector(Inspection inspection, Reference subject) {
@@ -267,7 +267,7 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
         super(inspection);
         final Class<Class<Inspector_Type>> classType = null;
         final Class<Inspector_Type> frameType = StaticLoophole.cast(classType, getClass());
-        _key = new FileKey<Inspector_Type>(frameType, file);
+        key = new FileKey<Inspector_Type>(frameType, file);
     }
 
     /**
@@ -285,12 +285,12 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
         if (teleTargetMethod != null) {
             final Class<Class<Inspector_Type>> classType = null;
             final Class<Inspector_Type> frameType = StaticLoophole.cast(classType, getClass());
-            _key = new TeleTargetMethodKey<Inspector_Type>(frameType, teleTargetMethod);
+            key = new TeleTargetMethodKey<Inspector_Type>(frameType, teleTargetMethod);
         } else {
             assert teleRoutine != null;
             final Class<Class<Inspector_Type>> classType = null;
             final Class<Inspector_Type> frameType = StaticLoophole.cast(classType, getClass());
-            _key = new TeleRoutineKey<Inspector_Type>(frameType, teleRoutine);
+            key = new TeleRoutineKey<Inspector_Type>(frameType, teleRoutine);
         }
     }
 
@@ -359,13 +359,13 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
      * Support for marking inspectors, e.g., for GC purposes
      */
 
-    private boolean _marked;
+    private boolean marked;
 
     public boolean marked() {
-        return _marked;
+        return marked;
     }
 
     public void setMarked(boolean val) {
-        _marked = val;
+        marked = val;
     }
 }

@@ -34,27 +34,27 @@ public class ExceptionHandler {
 
     public static final List<ExceptionHandler> ZERO_HANDLERS = Collections.emptyList();
 
-    private final CiExceptionHandler _handler;
-    private BlockBegin _entryBlock;
-    private List<LIRInstr> _entryCode;
-    private int _entryPCO;
-    private int _phiOperand;
-    private int _scopeCount;
+    private final CiExceptionHandler handler;
+    private BlockBegin entryBlock;
+    private List<LIRInstr> entryCode;
+    private int entryPCO;
+    private int phiOperand;
+    private int scopeCount;
 
     public ExceptionHandler(CiExceptionHandler handler) {
-        _handler = handler;
-        _entryPCO = -1;
-        _phiOperand = -1;
-        _scopeCount = -1;
+        this.handler = handler;
+        this.entryPCO = -1;
+        this.phiOperand = -1;
+        this.scopeCount = -1;
     }
 
     public ExceptionHandler(ExceptionHandler other) {
-        _handler = other._handler;
-        _entryBlock = other._entryBlock;
-        _entryCode = other._entryCode;
-        _entryPCO = other._entryPCO;
-        _phiOperand = other._phiOperand;
-        _scopeCount = other._scopeCount;
+        this.handler = other.handler;
+        this.entryBlock = other.entryBlock;
+        this.entryCode = other.entryCode;
+        this.entryPCO = other.entryPCO;
+        this.phiOperand = other.phiOperand;
+        this.scopeCount = other.scopeCount;
     }
 
     /**
@@ -63,7 +63,7 @@ public class ExceptionHandler {
      * @return the compiler interface exception handler
      */
     public final CiExceptionHandler handler() {
-        return _handler;
+        return handler;
     }
 
     /**
@@ -71,7 +71,7 @@ public class ExceptionHandler {
      * @return the bytecode index of the handler
      */
     public int handlerBCI() {
-        return _handler.handlerBCI();
+        return handler.handlerBCI();
     }
 
     /**
@@ -80,7 +80,7 @@ public class ExceptionHandler {
      * @return <code>true</code> if this exception handler covers the specified bytecode
      */
     public final boolean covers(int bci) {
-        return _handler.startBCI() <= bci && bci < _handler.endBCI();
+        return handler.startBCI() <= bci && bci < handler.endBCI();
     }
 
     /**
@@ -88,7 +88,7 @@ public class ExceptionHandler {
      * @return the entry block
      */
     public final BlockBegin entryBlock() {
-        return _entryBlock;
+        return entryBlock;
     }
 
     /**
@@ -97,34 +97,34 @@ public class ExceptionHandler {
      * @return the pc offset of the handler entrypoint
      */
     public final int entryPCO() {
-        return _entryPCO;
+        return entryPCO;
     }
 
     public final int phiOperand() {
-        return _phiOperand;
+        return phiOperand;
     }
 
     public final int scopeCount() {
-        return _scopeCount;
+        return scopeCount;
     }
 
     public final void setEntryBlock(BlockBegin entry) {
-        _entryBlock = entry;
+        entryBlock = entry;
     }
 
     public final void setEntryPCO(int pco) {
-        _entryPCO = pco;
+        entryPCO = pco;
     }
 
     public final void setPhiOperand(int phi) {
-        _phiOperand = phi;
+        phiOperand = phi;
     }
 
     public final void setScopeCount(int count) {
-        _scopeCount = count;
+        scopeCount = count;
     }
 
     public boolean isCatchAll() {
-        return _handler.catchClassIndex() == 0;
+        return handler.catchClassIndex() == 0;
     }
 }

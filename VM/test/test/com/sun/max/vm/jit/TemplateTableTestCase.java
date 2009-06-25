@@ -59,11 +59,11 @@ public abstract class TemplateTableTestCase extends CompilerTestCase<TargetMetho
         if (fieldActor instanceof InjectedReferenceFieldActor) {
             sb.append("<InjectedFieldActor.holder>");
         } else {
-            sb.append(fieldActor.holder().name());
+            sb.append(fieldActor.holder().name);
         }
         sb.append('.');
 
-        sb.append(fieldActor.name());
+        sb.append(fieldActor.name);
         sb.append(" (offset = ");
         sb.append(fieldActor.offset());
         sb.append(')');
@@ -132,50 +132,50 @@ public abstract class TemplateTableTestCase extends CompilerTestCase<TargetMetho
 
     static class TemplateStats {
 
-        int _bytesCount = 0;
-        int _templateCount = 0;
-        int _minSize = 999999;
-        int _maxSize = 0;
-        int _minSizeCount = 0; // How many times have we seen the min size
-        int _maxSizeCount = 0; // How many times have we seen the max size
-        int _minFrameSize = 999999;
-        int _maxFrameSize = 0;
+        int bytesCount = 0;
+        int templateCount = 0;
+        int minSize = 999999;
+        int maxSize = 0;
+        int minSizeCount = 0; // How many times have we seen the min size
+        int maxSizeCount = 0; // How many times have we seen the max size
+        int minFrameSize = 999999;
+        int maxFrameSize = 0;
 
         void update(CompiledBytecodeTemplate template) {
-            final int len = template.targetMethod().codeLength();
-            _bytesCount += len;
-            _templateCount++;
-            if (len <= _minSize) {
-                if (_minSize == len) {
-                    _minSizeCount++;
+            final int len = template.targetMethod.codeLength();
+            bytesCount += len;
+            templateCount++;
+            if (len <= minSize) {
+                if (minSize == len) {
+                    minSizeCount++;
                 } else {
-                    _minSize = len;
-                    _minSizeCount = 1;
+                    minSize = len;
+                    minSizeCount = 1;
                 }
             }
-            if (len >= _maxSize) {
-                if (_maxSize == len) {
-                    _maxSizeCount++;
+            if (len >= maxSize) {
+                if (maxSize == len) {
+                    maxSizeCount++;
                 } else {
-                    _maxSize = len;
-                    _maxSizeCount = 1;
+                    maxSize = len;
+                    maxSizeCount = 1;
                 }
             }
-            final int frameSize = template.targetMethod().frameSize();
+            final int frameSize = template.targetMethod.frameSize();
 
-            if (frameSize > _maxFrameSize) {
-                _maxFrameSize = frameSize;
-            } else if (frameSize < _minFrameSize) {
-                _minFrameSize = frameSize;
+            if (frameSize > maxFrameSize) {
+                maxFrameSize = frameSize;
+            } else if (frameSize < minFrameSize) {
+                minFrameSize = frameSize;
             }
         }
 
         void report() {
-            Trace.line(1, "Templates #: " + _templateCount + " Total Size = " + _bytesCount + " bytes");
-            if (_templateCount > 0) {
-                final int avg = _bytesCount / _templateCount;
-                Trace.line(1, "avg size = " + avg + ", min size = " + _minSize + " (" + _minSizeCount + "),  max size = " + _maxSize + " (" + _maxSizeCount + ")");
-                Trace.line(1, "Frame Size:  min = " + _minFrameSize + ", max =" + _maxFrameSize);
+            Trace.line(1, "Templates #: " + templateCount + " Total Size = " + bytesCount + " bytes");
+            if (templateCount > 0) {
+                final int avg = bytesCount / templateCount;
+                Trace.line(1, "avg size = " + avg + ", min size = " + minSize + " (" + minSizeCount + "),  max size = " + maxSize + " (" + maxSizeCount + ")");
+                Trace.line(1, "Frame Size:  min = " + minFrameSize + ", max =" + maxFrameSize);
             }
         }
     }
@@ -192,7 +192,7 @@ public abstract class TemplateTableTestCase extends CompilerTestCase<TargetMetho
                 if (bytecode == Bytecode.LDC2_W) {
                     kinds = new Kind[]{Kind.LONG, Kind.DOUBLE};
                 } else {
-                    if (selector.resolved() == TemplateChooser.Resolved.YES) {
+                    if (selector.resolved == TemplateChooser.Resolved.YES) {
                         kinds = new Kind[] {Kind.REFERENCE};
                     } else {
                         kinds = new Kind[]{Kind.INT, Kind.FLOAT};
@@ -223,12 +223,12 @@ public abstract class TemplateTableTestCase extends CompilerTestCase<TargetMetho
 
         final TemplateProcessor processor = new TemplateProcessor() {
             public void processTemplate(CompiledBytecodeTemplate template) {
-                final Bytecode bytecode = template.bytecode();
-                final TargetMethod targetMethod = template.targetMethod();
-                final Kind kind = template.kind();
+                final Bytecode bytecode = template.bytecode;
+                final TargetMethod targetMethod = template.targetMethod;
+                final Kind kind = template.kind;
                 String numOperands = "";
                 if (bytecode == Bytecode.MULTIANEWARRAY) {
-                    final String suffix = template.targetMethod().name().substring(bytecode.name().length());
+                    final String suffix = template.targetMethod.name().substring(bytecode.name().length());
                     if (suffix.length() > 0) {
                         numOperands = "[:" + suffix + "] ";
                     }
@@ -236,7 +236,7 @@ public abstract class TemplateTableTestCase extends CompilerTestCase<TargetMetho
                 Trace.line(1, "Generated Template for " + bytecode + (kind == null ? " (" : " [" + kind + "] (") + numOperands + targetMethod.codeLength() + " bytes)");
                 if (targetMethod.code().length > 0) {
                     traceBundleAndDisassemble(targetMethod);
-                    if (template.targetMethod().numberOfCatchRanges() > 0) {
+                    if (template.targetMethod.numberOfCatchRanges() > 0) {
                         Trace.line(1, "\t*** WARNING: template has exception handlers: " + targetMethod.numberOfCatchRanges() + " catch ranges");
                     }
                 }

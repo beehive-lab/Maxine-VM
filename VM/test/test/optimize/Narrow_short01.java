@@ -25,9 +25,9 @@ package test.optimize;
  * @Runs: 0s=0s; 1s=1s; -1s=-1s; 23110s=23110s
  */
 public class Narrow_short01 {
-    public static short _val;
+    public static short val;
     public static short test(short b) {
-        _val = b;
-        return _val;
+        val = b;
+        return val;
     }
 }

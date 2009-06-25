@@ -50,7 +50,7 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         super(block, eirMethod, calleeSavedValues, calleeSavedRegisters, isCalleeSavedParameter, parameters, parameterLocations);
     }
 
-    private static final SPARCAssembler _ASM = SPARCAssembler.createAssembler(WordWidth.BITS_64);
+    private static final SPARCAssembler ASM = SPARCAssembler.createAssembler(WordWidth.BITS_64);
 
     /**
      * The maximum imm13 offset we can get for a stack offset. It leaves about 4K
@@ -79,9 +79,9 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         }
         final int stackBangOffset = stackBangOffset(frameSize);
         if (SPARCAssembler.isSimm13(stackBangOffset)) {
-            return 2 + _ASM.setswNumberOfInstructions(stackBangOffset);
+            return 2 + ASM.setswNumberOfInstructions(stackBangOffset);
         }
-        return 3 + _ASM.setswNumberOfInstructions(stackBangOffset);
+        return 3 + ASM.setswNumberOfInstructions(stackBangOffset);
     }
 
     /**
@@ -142,9 +142,8 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         final int trapStateOffset =  SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer();
         int offset = trapStateOffset;
 
-        // We want to copy in the trap state the value of the latch register at the instruction that causes the trap.
-        // This is in the TRAP_TOP_OF_STACK register.
-        asm.ldx(latchRegister, VmThreadLocal.TRAP_TOP_OF_STACK.offset(), scratchRegister);
+        // We want to copy into the trap state the value of the latch register at the instruction that causes the trap.
+        asm.ldx(latchRegister, VmThreadLocal.TRAP_LATCH_REGISTER.offset(), scratchRegister);
 
         for (GPR register :  SPARCSafepoint.TRAP_SAVED_GLOBAL_SYMBOLIZER) {
             if (register == latchRegister) {
@@ -158,13 +157,9 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
             asm.stx(register, stackPointer, offset);
             offset += wordSize;
         }
-        for (int i = 0; i < 32; i++) {
+        for (int i = 0; i < 64; i += 2) {
             final FPR fpr = FPR.fromValue(i);
-            if (fpr instanceof DFPR) {
-                asm.std((DFPR) fpr, stackPointer, offset);
-            } else {
-                asm.st((SFPR) fpr, stackPointer, offset);
-            }
+            asm.std((DFPR) fpr, stackPointer, offset);
             offset += wordSize;
         }
         asm.rd(StateRegister.CCR, scratchRegister);

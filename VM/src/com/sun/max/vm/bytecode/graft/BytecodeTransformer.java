@@ -35,43 +35,43 @@ import com.sun.max.vm.bytecode.graft.BytecodeAssembler.*;
  */
 public class BytecodeTransformer extends BytecodeAdapter {
 
-    private final BytecodeAssembler _assembler;
+    private final BytecodeAssembler assembler;
 
     public BytecodeTransformer(BytecodeAssembler assembler) {
-        _assembler = assembler;
+        this.assembler = assembler;
     }
 
-    private boolean _ignoreCurrentInstruction;
+    private boolean ignoreCurrentInstruction;
 
-    private int[] _opcodeRelocationMap;
-    private Label[] _relocatableTargets;
-    private int _currentToAddress;
+    private int[] opcodeRelocationMap;
+    private Label[] relocatableTargets;
+    private int currentToAddress;
 
     protected void ignoreCurrentInstruction() {
-        _ignoreCurrentInstruction = true;
+        ignoreCurrentInstruction = true;
     }
 
     public BytecodeAssembler asm() {
-        return _assembler;
+        return assembler;
     }
 
     public final OpcodePositionRelocator transform(BytecodeBlock bytecodeBlock) {
         final int originalCodeLength = bytecodeBlock.code().length;
-        _opcodeRelocationMap = new int[originalCodeLength];
-        _relocatableTargets = new Label[originalCodeLength];
-        _currentToAddress = _assembler.currentAddress();
+        opcodeRelocationMap = new int[originalCodeLength];
+        relocatableTargets = new Label[originalCodeLength];
+        currentToAddress = assembler.currentAddress();
 
         // Initialize the relocation map so that all addresses are initially illegal
-        Arrays.fill(_opcodeRelocationMap, -1);
+        Arrays.fill(opcodeRelocationMap, -1);
 
         new BytecodeScanner(this).scan(bytecodeBlock);
         fixup();
 
-        final int endAddress = _assembler.currentAddress();
-        final int[] opcodeRelocationMap = _opcodeRelocationMap;
+        final int endAddress = assembler.currentAddress();
+        final int[] opcodeRelocationMap = this.opcodeRelocationMap;
 
-        _opcodeRelocationMap = null;
-        _relocatableTargets = null;
+        this.opcodeRelocationMap = null;
+        relocatableTargets = null;
 
         final OpcodePositionRelocator opcodeAddressRelocator = new OpcodePositionRelocator() {
             public int relocate(int address) throws IllegalArgumentException {
@@ -107,44 +107,44 @@ public class BytecodeTransformer extends BytecodeAdapter {
     }
 
     private void fixup() {
-        for (int target = 0; target != _relocatableTargets.length; ++target) {
-            final Label relocatableTarget = _relocatableTargets[target];
+        for (int target = 0; target != relocatableTargets.length; ++target) {
+            final Label relocatableTarget = relocatableTargets[target];
             if (relocatableTarget != null && !relocatableTarget.isBound()) {
-                relocatableTarget.bind(_opcodeRelocationMap[target]);
+                relocatableTarget.bind(opcodeRelocationMap[target]);
             }
         }
     }
 
     @Override
     protected final void instructionDecoded() {
-        if (!_ignoreCurrentInstruction) {
+        if (!ignoreCurrentInstruction) {
             final byte[] bytes = code();
             for (int address = currentOpcodePosition(); address != currentBytePosition(); ++address) {
-                _assembler.appendByte(bytes[address]);
+                assembler.appendByte(bytes[address]);
             }
         } else {
-            _ignoreCurrentInstruction = false;
+            ignoreCurrentInstruction = false;
         }
 
-        _opcodeRelocationMap[currentOpcodePosition()] = _currentToAddress;
-        _currentToAddress = _assembler.currentAddress();
+        opcodeRelocationMap[currentOpcodePosition()] = currentToAddress;
+        currentToAddress = assembler.currentAddress();
     }
 
     private Label relocatableTarget(int offset) {
         final int target = currentOpcodePosition() + offset;
-        if (_relocatableTargets[target] == null) {
-            _relocatableTargets[target] = _assembler.newLabel();
+        if (relocatableTargets[target] == null) {
+            relocatableTargets[target] = assembler.newLabel();
         }
-        return _relocatableTargets[target];
+        return relocatableTargets[target];
     }
 
     private void branch(int offset) {
         final int target = currentOpcodePosition() + offset;
         if (offset < 0) {
-            final int relocatedTarget = _opcodeRelocationMap[target];
-            _assembler.branch(currentOpcode(), relocatedTarget);
+            final int relocatedTarget = opcodeRelocationMap[target];
+            assembler.branch(currentOpcode(), relocatedTarget);
         } else {
-            _assembler.branch(currentOpcode(), relocatableTarget(offset));
+            assembler.branch(currentOpcode(), relocatableTarget(offset));
         }
         ignoreCurrentInstruction();
     }
@@ -245,7 +245,7 @@ public class BytecodeTransformer extends BytecodeAdapter {
         for (int i = 0; i != numberOfCases; ++i) {
             relocatableTargets[i] = relocatableTarget(bytecodeScanner().readSwitchOffset());
         }
-        _assembler.tableswitch(relocatableTarget(defaultOffset), lowMatch, highMatch, relocatableTargets);
+        assembler.tableswitch(relocatableTarget(defaultOffset), lowMatch, highMatch, relocatableTargets);
         ignoreCurrentInstruction();
     }
 
@@ -258,7 +258,7 @@ public class BytecodeTransformer extends BytecodeAdapter {
             matches[i] = scanner.readSwitchCase();
             relocatableTargets[i] = relocatableTarget(scanner.readSwitchOffset());
         }
-        _assembler.lookupswitch(relocatableTarget(defaultOffset), matches, relocatableTargets);
+        assembler.lookupswitch(relocatableTarget(defaultOffset), matches, relocatableTargets);
         ignoreCurrentInstruction();
     }
 

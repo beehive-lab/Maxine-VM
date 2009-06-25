@@ -67,60 +67,60 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
         return teleVM.findTeleTargetRoutine(TeleNativeTargetRoutine.class, address);
     }
 
-    private final TeleRoutine _teleRoutine;
+    private final TeleRoutine teleRoutine;
 
     /**
      * @return surrogate that represents the (implied) code body from which the code was compiled.
      */
     public TeleRoutine teleRoutine() {
-        return _teleRoutine;
+        return teleRoutine;
     }
 
-    private final TargetCodeRegion _targetCodeRegion;
+    private final TargetCodeRegion targetCodeRegion;
 
     public TargetCodeRegion targetCodeRegion() {
-        return _targetCodeRegion;
+        return targetCodeRegion;
     }
 
-    private final String _name;
+    private final String name;
 
     public String getName() {
-        return _name;
+        return name;
     }
 
     private TeleNativeTargetRoutine(TeleVM teleVM, Address start, Size size, String name) {
         super(teleVM);
-        _teleRoutine = new TeleRoutine() {
+        this.teleRoutine = new TeleRoutine() {
             public String getUniqueName() {
                 return "native method @ " + targetCodeRegion().start().toHexString();
             }
         };
-        _targetCodeRegion = new TargetCodeRegion(this, start, size);
-        _name = name;
+        this.targetCodeRegion = new TargetCodeRegion(this, start, size);
+        this.name = name;
         // Register so that it can be located by address.
         teleVM().registerTeleTargetRoutine(this);
     }
 
     public Address getCodeStart() {
-        return _targetCodeRegion.start();
+        return targetCodeRegion.start();
     }
 
     public Size codeSize() {
-        return _targetCodeRegion.size();
+        return targetCodeRegion.size();
     }
 
     public Address callEntryPoint() {
         return getCodeStart();
     }
 
-    private IndexedSequence<TargetCodeInstruction> _instructions;
+    private IndexedSequence<TargetCodeInstruction> instructions;
 
     public IndexedSequence<TargetCodeInstruction> getInstructions() {
-        if (_instructions == null) {
+        if (instructions == null) {
             final byte[] code = teleVM().dataAccess().readFully(getCodeStart(), codeSize().toInt());
-            _instructions = TeleDisassembler.decode(teleVM().vmConfiguration().platform().processorKind(), getCodeStart(), code, null);
+            instructions = TeleDisassembler.decode(teleVM().vmConfiguration().platform().processorKind, getCodeStart(), code, null);
         }
-        return _instructions;
+        return instructions;
     }
 
     public TeleTargetBreakpoint setTargetBreakpointAtEntry() {

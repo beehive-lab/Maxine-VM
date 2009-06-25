@@ -25,21 +25,21 @@ import com.sun.max.vm.compiler.cir.*;
 /**
  * Remove a value that is no longer wanted in all Java frame descriptors in a given graph, outside blocks.
  * This is done by setting the corresponding value to {@link CirValue.UNDEFINED}.
- * 
+ *
  * @author Bernd Mathiske
  */
 public final class CirJavaFrameDescriptorClipping extends CirTraversal.OutsideBlocks {
 
-    private final CirValue _clipValue;
+    private final CirValue clipValue;
 
     private CirJavaFrameDescriptorClipping(CirNode node, CirValue clipValue) {
         super(node);
-        _clipValue = clipValue;
+        this.clipValue = clipValue;
     }
 
     private void clipValues(CirValue[] values) {
         for (int i = 0; i < values.length; i++) {
-            if (values[i] == _clipValue) {
+            if (values[i] == clipValue) {
                 values[i] = CirValue.UNDEFINED;
             }
         }
@@ -49,8 +49,8 @@ public final class CirJavaFrameDescriptorClipping extends CirTraversal.OutsideBl
     protected void visitJavaFrameDescriptor(CirJavaFrameDescriptor javaFrameDescriptor) {
         CirJavaFrameDescriptor j = javaFrameDescriptor;
         while (j != null) {
-            clipValues(j.locals());
-            clipValues(j.stackSlots());
+            clipValues(j.locals);
+            clipValues(j.stackSlots);
             j = j.parent();
         }
     }

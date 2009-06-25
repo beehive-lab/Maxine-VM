@@ -34,7 +34,7 @@ public abstract class InstructionWithOffset extends InstructionWithLabel {
     /**
      * The mask of all the valid offset sizes supported by the union of all instructions that can address some data via an offset.
      */
-    public static final int ALL_VALID_OFFSET_SIZES_MASK = WordWidth.BITS_8.numberOfBytes() | WordWidth.BITS_16.numberOfBytes() | WordWidth.BITS_32.numberOfBytes() | WordWidth.BITS_64.numberOfBytes();
+    public static final int ALL_VALID_OFFSET_SIZES_MASK = WordWidth.BITS_8.numberOfBytes | WordWidth.BITS_16.numberOfBytes | WordWidth.BITS_32.numberOfBytes | WordWidth.BITS_64.numberOfBytes;
 
     private final int validOffsetSizesMask;
     private int offsetSize;
@@ -90,7 +90,7 @@ public abstract class InstructionWithOffset extends InstructionWithLabel {
         if (validOffsetSizesMask == 0) {
             return false;
         }
-        int newOffsetSize = WordWidth.signedEffective(offset()).numberOfBytes();
+        int newOffsetSize = WordWidth.signedEffective(offset()).numberOfBytes;
         if (newOffsetSize > this.offsetSize) {
             final int maxLabelSize = Integer.highestOneBit(validOffsetSizesMask);
             if (newOffsetSize > maxLabelSize) {

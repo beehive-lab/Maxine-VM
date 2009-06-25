@@ -63,54 +63,54 @@ public abstract class IrRoutine {
         return null;
     }
 
-    private final String _name;
-    private final MethodActor _foldingMethodActor;
-    private final Kind _resultKind;
+    private final String name;
+    private final MethodActor foldingMethodActor;
+    private final Kind resultKind;
 
     /**
      * This is used to enforce the constraint that only a single instance of any concrete
      * IrRoutine subclass will be created.
      */
-    private static final Map<Class<? extends IrRoutine>, IrRoutine> _singletonInstances = new HashMap<Class<? extends IrRoutine>, IrRoutine>();
+    private static final Map<Class<? extends IrRoutine>, IrRoutine> singletonInstances = new HashMap<Class<? extends IrRoutine>, IrRoutine>();
 
     @PROTOTYPE_ONLY
     protected IrRoutine(Class foldingMethodHolder) {
-        _name = Naming.toFieldName(getClass().getSimpleName());
+        name = Naming.toFieldName(getClass().getSimpleName());
         if (foldingMethodHolder != null) {
-            _foldingMethodActor = getFoldingMethodActor(foldingMethodHolder, _name, true);
+            foldingMethodActor = getFoldingMethodActor(foldingMethodHolder, name, true);
         } else {
-            _foldingMethodActor = getFoldingMethodActor(getClass(), _name, true);
+            foldingMethodActor = getFoldingMethodActor(getClass(), name, true);
         }
-        _classMethodActor = (ClassMethodActor) _foldingMethodActor;
-        _resultKind = _foldingMethodActor.descriptor().resultKind();
-        assert _singletonInstances.put(getClass(), this) == null;
+        classMethodActor = (ClassMethodActor) foldingMethodActor;
+        resultKind = foldingMethodActor.descriptor().resultKind();
+        assert singletonInstances.put(getClass(), this) == null;
     }
 
     public String name() {
-        return _name;
+        return name;
     }
 
     public MethodActor foldingMethodActor() {
-        return _foldingMethodActor;
+        return foldingMethodActor;
     }
 
-    private final ClassMethodActor _classMethodActor;
+    private final ClassMethodActor classMethodActor;
 
     public ClassMethodActor classMethodActor() {
-        return _classMethodActor;
+        return classMethodActor;
     }
 
     public Kind resultKind() {
-        return _resultKind;
+        return resultKind;
     }
 
-    private Kind[] _parameterKinds;
+    private Kind[] parameterKinds;
 
     public Kind[] parameterKinds() {
-        if (_parameterKinds == null) {
-            _parameterKinds = classMethodActor().getParameterKinds();
+        if (parameterKinds == null) {
+            parameterKinds = classMethodActor().getParameterKinds();
         }
-        return _parameterKinds;
+        return parameterKinds;
     }
 
     public boolean isFoldable(IrValue[] arguments) {

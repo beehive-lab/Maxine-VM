@@ -27,18 +27,18 @@ package com.sun.max.jdwp.data;
  */
 public final class ReplyPacket<IncomingData_Type extends IncomingData, OutgoingData_Type extends OutgoingData> {
 
-    private IncomingPacket<IncomingData_Type, OutgoingData_Type> _incomingPacket;
-    private short _errorCode;
-    private OutgoingData_Type _data;
+    private IncomingPacket<IncomingData_Type, OutgoingData_Type> incomingPacket;
+    private short errorCode;
+    private OutgoingData_Type data;
 
     public ReplyPacket(IncomingPacket<IncomingData_Type, OutgoingData_Type> incomingPacket, short errorCode) {
-        _incomingPacket = incomingPacket;
-        _errorCode = errorCode;
+        this.incomingPacket = incomingPacket;
+        this.errorCode = errorCode;
     }
 
     public ReplyPacket(IncomingPacket<IncomingData_Type, OutgoingData_Type> incomingPacket, OutgoingData_Type data) {
-        _incomingPacket = incomingPacket;
-        _data = data;
+        this.incomingPacket = incomingPacket;
+        this.data = data;
     }
 
     /**
@@ -54,11 +54,11 @@ public final class ReplyPacket<IncomingData_Type extends IncomingData, OutgoingD
      * @return the outgoing data
      */
     public OutgoingData_Type getData() {
-        return _data;
+        return data;
     }
 
     public int getId() {
-        return _incomingPacket.getId();
+        return incomingPacket.getId();
     }
 
     /**
@@ -66,11 +66,11 @@ public final class ReplyPacket<IncomingData_Type extends IncomingData, OutgoingD
      * @return the error code
      */
     public short getErrorCode() {
-        return _errorCode;
+        return errorCode;
     }
 
     public IncomingPacket<IncomingData_Type, OutgoingData_Type> getOriginalPacket() {
-        return _incomingPacket;
+        return incomingPacket;
     }
 
     @Override

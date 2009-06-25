@@ -30,9 +30,9 @@ import com.sun.max.jdwp.vm.proxy.*;
  */
 class CodeLocationImpl implements CodeLocation{
 
-    private MethodProvider _method;
-    private long _position;
-    private boolean _isMachineCode;
+    private MethodProvider method;
+    private long position;
+    private boolean isMachineCode;
 
     CodeLocationImpl(MethodProvider method) {
         this(method, 0);
@@ -43,9 +43,9 @@ class CodeLocationImpl implements CodeLocation{
     }
 
     CodeLocationImpl(MethodProvider method, long position, boolean isMachineCode) {
-        _method = method;
-        _position = position;
-        _isMachineCode = isMachineCode;
+        this.method = method;
+        this.position = position;
+        this.isMachineCode = isMachineCode;
 
         long max = Integer.MIN_VALUE;
         long min = Integer.MAX_VALUE;
@@ -62,15 +62,15 @@ class CodeLocationImpl implements CodeLocation{
     }
 
     public MethodProvider method() {
-        return _method;
+        return method;
     }
 
     public long position() {
-        return _position;
+        return position;
     }
 
     public boolean isMachineCode() {
-        return _isMachineCode;
+        return isMachineCode;
     }
 
     @Override
@@ -79,16 +79,16 @@ class CodeLocationImpl implements CodeLocation{
             return false;
         }
         final CodeLocationImpl cl = (CodeLocationImpl) obj;
-        return cl.method().equals(method()) && cl._position == _position && cl._isMachineCode == _isMachineCode;
+        return cl.method().equals(method()) && cl.position == position && cl.isMachineCode == isMachineCode;
     }
 
     @Override
     public int hashCode() {
-        return (int) (_position << 8) + _method.hashCode() + (_isMachineCode ? 1 : 0);
+        return (int) (position << 8) + method.hashCode() + (isMachineCode ? 1 : 0);
     }
 
     @Override
     public String toString() {
-        return "Location[" + _method.toString() + ", " + _position + ", " + _isMachineCode + "]";
+        return "Location[" + method.toString() + ", " + position + ", " + isMachineCode + "]";
     }
 }

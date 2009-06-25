@@ -31,7 +31,7 @@ import com.sun.c1x.value.BasicType;
  */
 public class UnsafeGetRaw extends UnsafeRawOp {
 
-    boolean _mayBeUnaligned;
+    boolean mayBeUnaligned;
 
     /**
      * Constructs a new UnsafeGetRaw instruction.
@@ -41,7 +41,7 @@ public class UnsafeGetRaw extends UnsafeRawOp {
      */
     public UnsafeGetRaw(BasicType basicType, Instruction addr, boolean mayBeUnaligned) {
         super(basicType, addr, false);
-        _mayBeUnaligned = mayBeUnaligned;
+        this.mayBeUnaligned = mayBeUnaligned;
     }
 
     /**
@@ -54,7 +54,7 @@ public class UnsafeGetRaw extends UnsafeRawOp {
      */
     public UnsafeGetRaw(BasicType basicType, Instruction addr, Instruction index, int log2scale, boolean mayBeUnaligned) {
         super(basicType, addr, index, log2scale, false);
-        _mayBeUnaligned = mayBeUnaligned;
+        this.mayBeUnaligned = mayBeUnaligned;
     }
 
     /**
@@ -62,7 +62,7 @@ public class UnsafeGetRaw extends UnsafeRawOp {
      * @return <code>true</code> if this operation may be unaligned
      */
     public boolean mayBeUnaligned() {
-        return _mayBeUnaligned;
+        return mayBeUnaligned;
     }
 
     /**

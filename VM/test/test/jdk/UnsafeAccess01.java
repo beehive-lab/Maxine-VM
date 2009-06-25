@@ -30,13 +30,13 @@ import sun.misc.*;
  */
 public class UnsafeAccess01 {
 
-    private int _field = 42;
+    private int field = 42;
 
     public static int test(int arg) throws SecurityException, NoSuchFieldException, IllegalAccessException {
         final Unsafe unsafe = getUnsafe();
 
         final UnsafeAccess01 object = new UnsafeAccess01();
-        final Field field = UnsafeAccess01.class.getDeclaredField("_field");
+        final Field field = UnsafeAccess01.class.getDeclaredField("field");
         final long offset = unsafe.objectFieldOffset(field);
         final int value = unsafe.getInt(object, offset);
         return value;

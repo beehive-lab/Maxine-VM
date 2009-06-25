@@ -54,16 +54,16 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
 
     private static final int TRACE_VALUE = 2;
 
-    private static TeleObjectFactory _teleObjectFactory;
+    private static TeleObjectFactory teleObjectFactory;
 
     /**
      * @return the singleton manager for instances of {@link TeleObject}.
      */
     public static TeleObjectFactory make(TeleVM teleVM) {
-        if (_teleObjectFactory == null) {
-            _teleObjectFactory = new TeleObjectFactory(teleVM);
+        if (teleObjectFactory == null) {
+            teleObjectFactory = new TeleObjectFactory(teleVM);
         }
-        return _teleObjectFactory;
+        return teleObjectFactory;
     }
 
     // TODO (mlvdv)  TeleObject weak references
@@ -72,76 +72,76 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
      * Map: Reference to {@link Object}s in the {@link TeleVM} --> canonical local {@link TeleObject} that represents the
      * object in the {@link TeleVM}. Relies on References being canonical and GC-safe.
      */
-    private  final GrowableMapping<Reference, TeleObject> _referenceToTeleObject = HashMapping.createIdentityMapping();
+    private  final GrowableMapping<Reference, TeleObject> referenceToTeleObject = HashMapping.createIdentityMapping();
 
     /**
      * Map: OID --> {@link TeleObject}.
      */
-    private final GrowableMapping<Long, TeleObject> _oidToTeleObject = HashMapping.createEqualityMapping();
+    private final GrowableMapping<Long, TeleObject> oidToTeleObject = HashMapping.createEqualityMapping();
 
     /**
      * Constructors for specific classes of tuple objects in the heap in the {@teleVM}.
      * The most specific class that matches a particular {@link TeleObject} will
      * be used, in an emulation of virtual method dispatch.
      */
-    private final Map<Class, Constructor> _classToTeleTupleObjectConstructor = new HashMap<Class, Constructor>();
+    private final Map<Class, Constructor> classToTeleTupleObjectConstructor = new HashMap<Class, Constructor>();
 
     private TeleObjectFactory(TeleVM teleVM) {
         super(teleVM);
         Trace.begin(1, tracePrefix() + "initializing");
         final long startTimeMillis = System.currentTimeMillis();
         // Representation for all tuple objects not otherwise mentioned
-        _classToTeleTupleObjectConstructor.put(Object.class, getConstructor(TeleTupleObject.class));
+        classToTeleTupleObjectConstructor.put(Object.class, getConstructor(TeleTupleObject.class));
         // Some common Java classes
-        _classToTeleTupleObjectConstructor.put(String.class, getConstructor(TeleString.class));
-        _classToTeleTupleObjectConstructor.put(Enum.class, getConstructor(TeleEnum.class));
-        _classToTeleTupleObjectConstructor.put(ClassLoader.class, getConstructor(TeleClassLoader.class));
+        classToTeleTupleObjectConstructor.put(String.class, getConstructor(TeleString.class));
+        classToTeleTupleObjectConstructor.put(Enum.class, getConstructor(TeleEnum.class));
+        classToTeleTupleObjectConstructor.put(ClassLoader.class, getConstructor(TeleClassLoader.class));
         // Maxine Actors
-        _classToTeleTupleObjectConstructor.put(FieldActor.class, getConstructor(TeleFieldActor.class));
-        _classToTeleTupleObjectConstructor.put(VirtualMethodActor.class, getConstructor(TeleVirtualMethodActor.class));
-        _classToTeleTupleObjectConstructor.put(StaticMethodActor.class, getConstructor(TeleStaticMethodActor.class));
-        _classToTeleTupleObjectConstructor.put(InterfaceMethodActor.class, getConstructor(TeleInterfaceMethodActor.class));
-        _classToTeleTupleObjectConstructor.put(InterfaceActor.class, getConstructor(TeleInterfaceActor.class));
-        _classToTeleTupleObjectConstructor.put(VmThread.class, getConstructor(TeleVmThread.class));
-        _classToTeleTupleObjectConstructor.put(PrimitiveClassActor.class, getConstructor(TelePrimitiveClassActor.class));
-        _classToTeleTupleObjectConstructor.put(ArrayClassActor.class, getConstructor(TeleArrayClassActor.class));
-        _classToTeleTupleObjectConstructor.put(ReferenceClassActor.class, getConstructor(TeleReferenceClassActor.class));
+        classToTeleTupleObjectConstructor.put(FieldActor.class, getConstructor(TeleFieldActor.class));
+        classToTeleTupleObjectConstructor.put(VirtualMethodActor.class, getConstructor(TeleVirtualMethodActor.class));
+        classToTeleTupleObjectConstructor.put(StaticMethodActor.class, getConstructor(TeleStaticMethodActor.class));
+        classToTeleTupleObjectConstructor.put(InterfaceMethodActor.class, getConstructor(TeleInterfaceMethodActor.class));
+        classToTeleTupleObjectConstructor.put(InterfaceActor.class, getConstructor(TeleInterfaceActor.class));
+        classToTeleTupleObjectConstructor.put(VmThread.class, getConstructor(TeleVmThread.class));
+        classToTeleTupleObjectConstructor.put(PrimitiveClassActor.class, getConstructor(TelePrimitiveClassActor.class));
+        classToTeleTupleObjectConstructor.put(ArrayClassActor.class, getConstructor(TeleArrayClassActor.class));
+        classToTeleTupleObjectConstructor.put(ReferenceClassActor.class, getConstructor(TeleReferenceClassActor.class));
         // Maxine code management
-        _classToTeleTupleObjectConstructor.put(JitTargetMethod.class, getConstructor(TeleJitTargetMethod.class));
-        _classToTeleTupleObjectConstructor.put(OptimizedTargetMethod.class, getConstructor(TeleOptimizedTargetMethod.class));
-        _classToTeleTupleObjectConstructor.put(RuntimeStub.class, getConstructor(TeleRuntimeStub.class));
-        _classToTeleTupleObjectConstructor.put(CodeRegion.class, getConstructor(TeleCodeRegion.class));
-        _classToTeleTupleObjectConstructor.put(CodeManager.class, getConstructor(TeleCodeManager.class));
-        _classToTeleTupleObjectConstructor.put(RuntimeMemoryRegion.class, getConstructor(TeleRuntimeMemoryRegion.class));
-        _classToTeleTupleObjectConstructor.put(InterpretedTargetMethod.class, getConstructor(TeleInterpretedTargetMethod.class));
+        classToTeleTupleObjectConstructor.put(JitTargetMethod.class, getConstructor(TeleJitTargetMethod.class));
+        classToTeleTupleObjectConstructor.put(OptimizedTargetMethod.class, getConstructor(TeleOptimizedTargetMethod.class));
+        classToTeleTupleObjectConstructor.put(RuntimeStub.class, getConstructor(TeleRuntimeStub.class));
+        classToTeleTupleObjectConstructor.put(CodeRegion.class, getConstructor(TeleCodeRegion.class));
+        classToTeleTupleObjectConstructor.put(CodeManager.class, getConstructor(TeleCodeManager.class));
+        classToTeleTupleObjectConstructor.put(RuntimeMemoryRegion.class, getConstructor(TeleRuntimeMemoryRegion.class));
+        classToTeleTupleObjectConstructor.put(InterpretedTargetMethod.class, getConstructor(TeleInterpretedTargetMethod.class));
         // Other Maxine support
-        _classToTeleTupleObjectConstructor.put(Kind.class, getConstructor(TeleKind.class));
-        _classToTeleTupleObjectConstructor.put(ObjectReferenceValue.class, getConstructor(TeleObjectReferenceValue.class));
-        _classToTeleTupleObjectConstructor.put(Builtin.class, getConstructor(TeleBuiltin.class));
+        classToTeleTupleObjectConstructor.put(Kind.class, getConstructor(TeleKind.class));
+        classToTeleTupleObjectConstructor.put(ObjectReferenceValue.class, getConstructor(TeleObjectReferenceValue.class));
+        classToTeleTupleObjectConstructor.put(Builtin.class, getConstructor(TeleBuiltin.class));
         // ConstantPool and PoolConstants
-        _classToTeleTupleObjectConstructor.put(ConstantPool.class, getConstructor(TeleConstantPool.class));
-        _classToTeleTupleObjectConstructor.put(CodeAttribute.class, getConstructor(TeleCodeAttribute.class));
-        _classToTeleTupleObjectConstructor.put(PoolConstant.class, getConstructor(TelePoolConstant.class));
-        _classToTeleTupleObjectConstructor.put(Utf8Constant.class, getConstructor(TeleUtf8Constant.class));
-        _classToTeleTupleObjectConstructor.put(StringConstant.class, getConstructor(TeleStringConstant.class));
-        _classToTeleTupleObjectConstructor.put(ClassConstant.Resolved.class, getConstructor(TeleClassConstant.Resolved.class));
-        _classToTeleTupleObjectConstructor.put(ClassConstant.Unresolved.class, getConstructor(TeleClassConstant.Unresolved.class));
-        _classToTeleTupleObjectConstructor.put(FieldRefConstant.Resolved.class, getConstructor(TeleFieldRefConstant.Resolved.class));
-        _classToTeleTupleObjectConstructor.put(FieldRefConstant.Unresolved.class, getConstructor(TeleFieldRefConstant.Unresolved.class));
-        _classToTeleTupleObjectConstructor.put(FieldRefConstant.UnresolvedIndices.class, getConstructor(TeleFieldRefConstant.UnresolvedIndices.class));
-        _classToTeleTupleObjectConstructor.put(ClassMethodRefConstant.Resolved.class, getConstructor(TeleClassMethodRefConstant.Resolved.class));
-        _classToTeleTupleObjectConstructor.put(ClassMethodRefConstant.Unresolved.class, getConstructor(TeleClassMethodRefConstant.Unresolved.class));
-        _classToTeleTupleObjectConstructor.put(ClassMethodRefConstant.UnresolvedIndices.class, getConstructor(TeleClassMethodRefConstant.UnresolvedIndices.class));
-        _classToTeleTupleObjectConstructor.put(InterfaceMethodRefConstant.Resolved.class, getConstructor(TeleInterfaceMethodRefConstant.Resolved.class));
-        _classToTeleTupleObjectConstructor.put(InterfaceMethodRefConstant.Unresolved.class, getConstructor(TeleInterfaceMethodRefConstant.Unresolved.class));
-        _classToTeleTupleObjectConstructor.put(InterfaceMethodRefConstant.UnresolvedIndices.class, getConstructor(TeleInterfaceMethodRefConstant.UnresolvedIndices.class));
+        classToTeleTupleObjectConstructor.put(ConstantPool.class, getConstructor(TeleConstantPool.class));
+        classToTeleTupleObjectConstructor.put(CodeAttribute.class, getConstructor(TeleCodeAttribute.class));
+        classToTeleTupleObjectConstructor.put(PoolConstant.class, getConstructor(TelePoolConstant.class));
+        classToTeleTupleObjectConstructor.put(Utf8Constant.class, getConstructor(TeleUtf8Constant.class));
+        classToTeleTupleObjectConstructor.put(StringConstant.class, getConstructor(TeleStringConstant.class));
+        classToTeleTupleObjectConstructor.put(ClassConstant.Resolved.class, getConstructor(TeleClassConstant.Resolved.class));
+        classToTeleTupleObjectConstructor.put(ClassConstant.Unresolved.class, getConstructor(TeleClassConstant.Unresolved.class));
+        classToTeleTupleObjectConstructor.put(FieldRefConstant.Resolved.class, getConstructor(TeleFieldRefConstant.Resolved.class));
+        classToTeleTupleObjectConstructor.put(FieldRefConstant.Unresolved.class, getConstructor(TeleFieldRefConstant.Unresolved.class));
+        classToTeleTupleObjectConstructor.put(FieldRefConstant.UnresolvedIndices.class, getConstructor(TeleFieldRefConstant.UnresolvedIndices.class));
+        classToTeleTupleObjectConstructor.put(ClassMethodRefConstant.Resolved.class, getConstructor(TeleClassMethodRefConstant.Resolved.class));
+        classToTeleTupleObjectConstructor.put(ClassMethodRefConstant.Unresolved.class, getConstructor(TeleClassMethodRefConstant.Unresolved.class));
+        classToTeleTupleObjectConstructor.put(ClassMethodRefConstant.UnresolvedIndices.class, getConstructor(TeleClassMethodRefConstant.UnresolvedIndices.class));
+        classToTeleTupleObjectConstructor.put(InterfaceMethodRefConstant.Resolved.class, getConstructor(TeleInterfaceMethodRefConstant.Resolved.class));
+        classToTeleTupleObjectConstructor.put(InterfaceMethodRefConstant.Unresolved.class, getConstructor(TeleInterfaceMethodRefConstant.Unresolved.class));
+        classToTeleTupleObjectConstructor.put(InterfaceMethodRefConstant.UnresolvedIndices.class, getConstructor(TeleInterfaceMethodRefConstant.UnresolvedIndices.class));
         // Java language objects
-        _classToTeleTupleObjectConstructor.put(Class.class, getConstructor(TeleClass.class));
-        _classToTeleTupleObjectConstructor.put(Constructor.class, getConstructor(TeleConstructor.class));
-        _classToTeleTupleObjectConstructor.put(Field.class, getConstructor(TeleField.class));
-        _classToTeleTupleObjectConstructor.put(Method.class, getConstructor(TeleMethod.class));
-        _classToTeleTupleObjectConstructor.put(TypeDescriptor.class, getConstructor(TeleTypeDescriptor.class));
-        _classToTeleTupleObjectConstructor.put(SignatureDescriptor.class, getConstructor(TeleSignatureDescriptor.class));
+        classToTeleTupleObjectConstructor.put(Class.class, getConstructor(TeleClass.class));
+        classToTeleTupleObjectConstructor.put(Constructor.class, getConstructor(TeleConstructor.class));
+        classToTeleTupleObjectConstructor.put(Field.class, getConstructor(TeleField.class));
+        classToTeleTupleObjectConstructor.put(Method.class, getConstructor(TeleMethod.class));
+        classToTeleTupleObjectConstructor.put(TypeDescriptor.class, getConstructor(TeleTypeDescriptor.class));
+        classToTeleTupleObjectConstructor.put(SignatureDescriptor.class, getConstructor(TeleSignatureDescriptor.class));
 
         Trace.end(1, tracePrefix() + "initializing", startTimeMillis);
     }
@@ -170,8 +170,8 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
             return null;
         }
         TeleObject teleObject = null;
-        synchronized (_referenceToTeleObject) {
-            teleObject = _referenceToTeleObject.get(reference);
+        synchronized (referenceToTeleObject) {
+            teleObject = referenceToTeleObject.get(reference);
         }
         if (teleObject != null) {
             return teleObject;
@@ -181,37 +181,37 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
             return null;
         }
 
-        final Reference hubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout().readHubReferenceAsWord(reference));
+        final Reference hubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(reference));
         final Reference classActorReference = teleVM().fields().Hub_classActor.readReference(hubReference);
         final ClassActor classActor = teleVM().makeClassActor(classActorReference);
 
         // Must check for the static tuple case first; it doesn't follow the usual rules
-        final Reference hubhubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout().readHubReferenceAsWord(hubReference));
+        final Reference hubhubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(hubReference));
         final Reference hubClassActorReference = teleVM().fields().Hub_classActor.readReference(hubhubReference);
         final ClassActor hubClassActor = teleVM().makeClassActor(hubClassActorReference);
         final Class hubJavaClass = hubClassActor.toJava();  // the class of this object's hub
         if (StaticHub.class.isAssignableFrom(hubJavaClass)) {
             //teleObject = new TeleStaticTuple(teleVM(), reference);       ?????????
-            synchronized (_referenceToTeleObject) {
+            synchronized (referenceToTeleObject) {
                 // Check map again, just in case there's a race
-                teleObject = _referenceToTeleObject.get(reference);
+                teleObject = referenceToTeleObject.get(reference);
                 if (teleObject == null) {
                     teleObject = new TeleStaticTuple(teleVM(), reference);
                 }
             }
         } else if (classActor.isArrayClassActor()) {
-            synchronized (_referenceToTeleObject) {
+            synchronized (referenceToTeleObject) {
                 // Check map again, just in case there's a race
-                teleObject = _referenceToTeleObject.get(reference);
+                teleObject = referenceToTeleObject.get(reference);
                 if (teleObject == null) {
                     teleObject = new TeleArrayObject(teleVM(), reference);
                 }
             }
         } else if (classActor.isHybridClassActor()) {
             final Class javaClass = classActor.toJava();
-            synchronized (_referenceToTeleObject) {
+            synchronized (referenceToTeleObject) {
                 // Check map again, just in case there's a race
-                teleObject = _referenceToTeleObject.get(reference);
+                teleObject = referenceToTeleObject.get(reference);
                 if (teleObject == null) {
                     if (DynamicHub.class.isAssignableFrom(javaClass)) {
                         teleObject = new TeleDynamicHub(teleVM(), reference);
@@ -223,9 +223,9 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
                 }
             }
         } else if (classActor.isTupleClassActor()) {
-            synchronized (_referenceToTeleObject) {
+            synchronized (referenceToTeleObject) {
                 // Check map again, just in case there's a race
-                teleObject = _referenceToTeleObject.get(reference);
+                teleObject = referenceToTeleObject.get(reference);
                 if (teleObject == null) {
                     final Constructor constructor = lookupTeleTupleObjectConstructor(classActor);
                     try {
@@ -243,17 +243,17 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
             throw FatalError.unexpected("invalid object implementation type");
         }
 
-        _oidToTeleObject.put(teleObject.getOID(), teleObject);
-        assert _oidToTeleObject.containsKey(teleObject.getOID());
+        oidToTeleObject.put(teleObject.getOID(), teleObject);
+        assert oidToTeleObject.containsKey(teleObject.getOID());
 
-        _referenceToTeleObject.put(reference, teleObject);
+        referenceToTeleObject.put(reference, teleObject);
         return teleObject;
     }
 
     private Constructor lookupTeleTupleObjectConstructor(ClassActor classActor) {
         Class javaClass = classActor.toJava();
         while (javaClass != null) {
-            final Constructor constructor = _classToTeleTupleObjectConstructor.get(javaClass);
+            final Constructor constructor = classToTeleTupleObjectConstructor.get(javaClass);
             if (constructor != null) {
                 return constructor;
             }
@@ -267,24 +267,24 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
      * @return the {@link TeleObject} with specified OID.
      */
     public TeleObject lookupObject(long id) {
-        return _oidToTeleObject.get(id);
+        return oidToTeleObject.get(id);
     }
 
-    private int _previousTeleObjectCount = 0;
+    private int previousTeleObjectCount = 0;
 
     public void refresh(long processEpoch) {
         Trace.begin(TRACE_VALUE, tracePrefix() + "refreshing");
         final long startTimeMillis = System.currentTimeMillis();
-        for (TeleObject teleObject : _referenceToTeleObject.values()) {
+        for (TeleObject teleObject : referenceToTeleObject.values()) {
             teleObject.refresh(processEpoch);
         }
-        final int currentTeleObjectCount = _referenceToTeleObject.length();
+        final int currentTeleObjectCount = referenceToTeleObject.length();
         final StringBuilder sb = new StringBuilder(100);
         sb.append(tracePrefix());
         sb.append("refreshing, count=").append(Integer.toString(currentTeleObjectCount));
-        sb.append("  new=").append(Integer.toString(currentTeleObjectCount - _previousTeleObjectCount));
+        sb.append("  new=").append(Integer.toString(currentTeleObjectCount - previousTeleObjectCount));
         Trace.end(TRACE_VALUE, sb.toString(), startTimeMillis);
-        _previousTeleObjectCount = currentTeleObjectCount;
+        previousTeleObjectCount = currentTeleObjectCount;
     }
 
 }

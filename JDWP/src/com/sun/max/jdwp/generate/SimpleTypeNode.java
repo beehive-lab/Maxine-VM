@@ -25,32 +25,32 @@ package com.sun.max.jdwp.generate;
  */
 public class SimpleTypeNode extends AbstractSimpleTypeNode {
 
-    private String _docType;
-    private String _javaType;
-    private String _javaRead;
+    private String docType;
+    private String javaType;
+    private String javaRead;
 
     public SimpleTypeNode(String docType, String javaType, String javaRead) {
-        _docType = docType;
-        _javaType = javaType;
-        _javaRead = javaRead;
+        this.docType = docType;
+        this.javaType = javaType;
+        this.javaRead = javaRead;
     }
 
     @Override
     public String docType() {
-        return _docType;
+        return docType;
     }
 
     @Override
     public String javaType() {
-        return _javaType;
+        return javaType;
     }
 
     @Override
     public String javaRead() {
-        return _javaRead;
+        return javaRead;
     }
 
     public Node copy() {
-        return new SimpleTypeNode(_docType, _javaType, _javaRead);
+        return new SimpleTypeNode(docType, javaType, javaRead);
     }
 }

@@ -43,9 +43,9 @@ public final class AMD64Deoptimization extends Deoptimization {
         super();
     }
 
-    private final PrependableSequence<JitStackFrameInfo> _jitStackFrameInfos = new ArrayListSequence<JitStackFrameInfo>();
+    private final PrependableSequence<JitStackFrameInfo> jitStackFrameInfos = new ArrayListSequence<JitStackFrameInfo>();
 
-    private int _currentCallSaveAreaPosition;
+    private int currentCallSaveAreaPosition;
 
     @Override
     protected void createJitFrame(TargetJavaFrameDescriptor javaFrameDescriptor, Deoptimizer.Situation situation) {
@@ -53,13 +53,13 @@ public final class AMD64Deoptimization extends Deoptimization {
         final JitTargetMethod jitTargetMethod = (JitTargetMethod) VMConfiguration.target().jitScheme().compile(classMethodActor, CompilationDirective.DEFAULT);
         final AMD64JitStackFrameLayout layout = (AMD64JitStackFrameLayout) jitTargetMethod.stackFrameLayout();
 
-        int numberOfStackSlots = javaFrameDescriptor.stackSlots().length;
+        int numberOfStackSlots = javaFrameDescriptor.stackSlots.length;
         int numberOfDescribedStackSlots = numberOfStackSlots;
         Kind resultKind = Kind.VOID;
         if (situation != Deoptimizer.Situation.SAFEPOINT) {
             // We are working on the top frame just after a return from a call.
             // Not all of the Java state described by the frame descriptor applies.
-            assert _currentCallSaveAreaPosition == 0;
+            assert currentCallSaveAreaPosition == 0;
 
             // First, subtract the call's arguments (which JIT code would have popped from the stack by now):
             final MethodActor callee = javaFrameDescriptor.getCalleeMethodActor();
@@ -79,16 +79,16 @@ public final class AMD64Deoptimization extends Deoptimization {
             }
         }
 
-        final int stackBottomPosition = _currentCallSaveAreaPosition + numberOfStackSlots * JitStackFrameLayout.JIT_SLOT_SIZE;
+        final int stackBottomPosition = currentCallSaveAreaPosition + numberOfStackSlots * JitStackFrameLayout.JIT_SLOT_SIZE;
         final int framePointerPosition = stackBottomPosition + layout.numberOfNonParameterSlots() * JitStackFrameLayout.JIT_SLOT_SIZE;
-        _currentCallSaveAreaPosition = stackBottomPosition + layout.frameSize();
-        final int incomingParametersPosition = _currentCallSaveAreaPosition + layout.numberOfParameterSlots() * JitStackFrameLayout.JIT_SLOT_SIZE;
+        currentCallSaveAreaPosition = stackBottomPosition + layout.frameSize();
+        final int incomingParametersPosition = currentCallSaveAreaPosition + layout.numberOfParameterSlots() * JitStackFrameLayout.JIT_SLOT_SIZE;
         buffer().extend(incomingParametersPosition);
 
-        if (javaFrameDescriptor.stackSlots() != null) {
+        if (javaFrameDescriptor.stackSlots != null) {
             for (int i = 1; i <= numberOfDescribedStackSlots; i++) {
                 buffer().setPosition(stackBottomPosition - (i * JitStackFrameLayout.JIT_SLOT_SIZE));
-                javaFrameDescriptor.stackSlots()[i - 1].acceptVisitor(this);
+                javaFrameDescriptor.stackSlots[i - 1].acceptVisitor(this);
             }
         }
 
@@ -102,19 +102,19 @@ public final class AMD64Deoptimization extends Deoptimization {
             }
         }
 
-        if (javaFrameDescriptor.locals() != null) {
-            for (int i = 1; i <= javaFrameDescriptor.locals().length; i++) {
+        if (javaFrameDescriptor.locals != null) {
+            for (int i = 1; i <= javaFrameDescriptor.locals.length; i++) {
                 if (i < layout.numberOfParameterSlots()) {
                     buffer().setPosition(incomingParametersPosition - (i * JitStackFrameLayout.JIT_SLOT_SIZE));
                 } else {
                     buffer().setPosition(framePointerPosition - ((i - incomingParametersPosition) * JitStackFrameLayout.JIT_SLOT_SIZE));
                 }
-                javaFrameDescriptor.locals()[i - 1].acceptVisitor(this);
+                javaFrameDescriptor.locals[i - 1].acceptVisitor(this);
             }
         }
 
         final Pointer instructionPointer = jitTargetMethod.codeStart().plus(jitTargetMethod.targetCodePositionFor(javaFrameDescriptor.bytecodePosition()));
-        _jitStackFrameInfos.prepend(new JitStackFrameInfo(_currentCallSaveAreaPosition, framePointerPosition, instructionPointer));
+        jitStackFrameInfos.prepend(new JitStackFrameInfo(currentCallSaveAreaPosition, framePointerPosition, instructionPointer));
     }
 
     public void visit(TargetLocation.Block block) {
@@ -175,41 +175,41 @@ public final class AMD64Deoptimization extends Deoptimization {
         assert jitTargetMethod.adapterReturnPosition() > 0;
         final Pointer instructionPointer = jitTargetMethod.codeStart().plus(jitTargetMethod.adapterReturnPosition());
 
-        _jitStackFrameInfos.prepend(new JitStackFrameInfo(callSaveAreaPosition, instructionPointer));
+        jitStackFrameInfos.prepend(new JitStackFrameInfo(callSaveAreaPosition, instructionPointer));
     }
 
-    private Pointer _stackPointer;
-    private Pointer _instructionPointer;
-    private Pointer _framePointer;
+    private Pointer stackPointer;
+    private Pointer instructionPointer;
+    private Pointer framePointer;
 
     @Override
     protected void fixCallChain() {
-        _stackPointer = parentFrame().stackPointer().minus(buffer().size());
-        _instructionPointer = parentFrame().instructionPointer();
-        _framePointer = parentFrame().framePointer();
-        for (JitStackFrameInfo info : _jitStackFrameInfos) {
+        stackPointer = parentFrame().stackPointer.minus(buffer().size());
+        instructionPointer = parentFrame().instructionPointer;
+        framePointer = parentFrame().framePointer;
+        for (JitStackFrameInfo info : jitStackFrameInfos) {
             buffer().setPosition(info.callSaveAreaPosition() - JavaStackFrameLayout.STACK_SLOT_SIZE);
-            buffer().writeWord(_instructionPointer);
-            _instructionPointer = info.instructionPointer();
+            buffer().writeWord(instructionPointer);
+            instructionPointer = info.instructionPointer();
 
             if (!info.isAdapterFrame()) {
                 buffer().setPosition(info.callSaveAreaPosition() - (2 * JavaStackFrameLayout.STACK_SLOT_SIZE));
-                buffer().writeWord(_framePointer);
-                _framePointer = _stackPointer.plus(info.framePointerPosition());
+                buffer().writeWord(framePointer);
+                framePointer = stackPointer.plus(info.framePointerPosition());
             }
         }
     }
 
-    private static final int _EXTRA_SPACE = 256;
+    private static final int EXTRA_SPACE = 256;
 
     @Override
     protected void patchExecutionContext() {
-        if (VMRegister.getAbiStackPointer().greaterThan(_stackPointer.plus(_EXTRA_SPACE))) {
+        if (VMRegister.getAbiStackPointer().greaterThan(stackPointer.plus(EXTRA_SPACE))) {
             // Recurse until there is sufficient space on the stack to patch the new JIT frames in:
             patchExecutionContext();
         }
-        buffer().copyToMemory(_stackPointer);
+        buffer().copyToMemory(stackPointer);
         Safepoint.enable();
-        AMD64JitCompiler.unwind(_instructionPointer, _stackPointer, _framePointer);
+        AMD64JitCompiler.unwind(instructionPointer, stackPointer, framePointer);
     }
 }

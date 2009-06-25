@@ -42,58 +42,58 @@ public class TypeState extends Frame {
     /**
      * The instruction at this target or null if this type state is not fixed at an position.
      */
-    private Instruction _targetedInstruction;
+    private Instruction targetedInstruction;
 
     /**
      * The stack of subroutines.
      */
-    private SubroutineFrame _subroutineFrame = SubroutineFrame.TOP;
+    private SubroutineFrame subroutineFrame = SubroutineFrame.TOP;
 
-    private boolean _visited;
+    private boolean visited;
 
     public TypeState(MethodActor classMethodActor, MethodVerifier methodVerifier) {
         super(classMethodActor, methodVerifier);
-        _visited = true;
+        visited = true;
     }
 
     public TypeState(TypeState from) {
         super(from);
-        _subroutineFrame = SubroutineFrame.TOP;
+        subroutineFrame = SubroutineFrame.TOP;
     }
 
     public boolean visited() {
-        return _visited;
+        return visited;
     }
 
     public void setVisited() {
-        _visited = true;
+        visited = true;
     }
 
     public int position() {
-        return _targetedInstruction == null ? -1 : _targetedInstruction.position();
+        return targetedInstruction == null ? -1 : targetedInstruction.position();
     }
 
     @Override
     protected void initializeEntryFrame(MethodActor classMethodActor) {
-        _subroutineFrame = SubroutineFrame.TOP;
-        _visited = true;
+        subroutineFrame = SubroutineFrame.TOP;
+        visited = true;
         super.initializeEntryFrame(classMethodActor);
     }
 
     public void pushSubroutine(Subroutine subroutine) {
-        if (_subroutineFrame.contains(subroutine)) {
+        if (subroutineFrame.contains(subroutine)) {
             throw verifyError("Recursive subroutine call");
         }
-        _subroutineFrame = new SubroutineFrame(subroutine, _subroutineFrame);
+        subroutineFrame = new SubroutineFrame(subroutine, subroutineFrame);
     }
 
     /**
      * Sets any locals holding {@linkplain UninitializedType uninitialized} objects to be {@linkplain TopType undefined}.
      */
     public void killUninitializedObjects() {
-        for (int i = 0; i < _activeLocals; i++) {
-            if (UNINITIALIZED.isAssignableFrom(_locals[i])) {
-                _locals[i] = TOP;
+        for (int i = 0; i < activeLocals; i++) {
+            if (UNINITIALIZED.isAssignableFrom(locals[i])) {
+                locals[i] = TOP;
                 access(i);
             }
         }
@@ -106,16 +106,16 @@ public class TypeState extends Frame {
      * @return the number of frames popped
      */
     public int popSubroutine(Subroutine subroutine) {
-        if (_subroutineFrame == SubroutineFrame.TOP) {
+        if (subroutineFrame == SubroutineFrame.TOP) {
             throw verifyError("Should be in a subroutine");
         }
         int numberOfSubroutineFramesPopped = 1;
         try {
-            while (_subroutineFrame.subroutine() != subroutine) {
+            while (subroutineFrame.subroutine != subroutine) {
                 ++numberOfSubroutineFramesPopped;
-                _subroutineFrame = _subroutineFrame.parent();
+                subroutineFrame = subroutineFrame.parent();
             }
-            _subroutineFrame = _subroutineFrame.parent();
+            subroutineFrame = subroutineFrame.parent();
         } catch (NullPointerException nullPointerException) {
             throw verifyError("Illegal return from subroutine");
         }
@@ -123,14 +123,14 @@ public class TypeState extends Frame {
     }
 
     public SubroutineFrame subroutineFrame() {
-        return _subroutineFrame;
+        return subroutineFrame;
     }
 
     @Override
     public void store(VerificationType type, int index) {
         if (SUBROUTINE.isAssignableFrom(type)) {
             try {
-                final VerificationType value = _locals[index];
+                final VerificationType value = locals[index];
                 if (SUBROUTINE.isAssignableFrom(value)) {
                     if (value != type) {
                         throw verifyError("Two subroutines cannot merge to a single RET");
@@ -152,9 +152,9 @@ public class TypeState extends Frame {
     }
 
     public void access(int index) {
-        final boolean isCategory2 = _locals[index].isCategory2();
-        for (SubroutineFrame subroutineFrame = _subroutineFrame; subroutineFrame != SubroutineFrame.TOP; subroutineFrame = subroutineFrame.parent()) {
-            final Subroutine subroutine = subroutineFrame.subroutine();
+        final boolean isCategory2 = locals[index].isCategory2();
+        for (SubroutineFrame subroutineFrame = this.subroutineFrame; subroutineFrame != SubroutineFrame.TOP; subroutineFrame = subroutineFrame.parent()) {
+            final Subroutine subroutine = subroutineFrame.subroutine;
             subroutine.accessesVariable(index);
             if (isCategory2) {
                 subroutine.accessesVariable(index + 1);
@@ -168,24 +168,24 @@ public class TypeState extends Frame {
      * entered the subroutine.
      */
     public void updateLocalsNotAccessedInSubroutine(TypeState typeStateAtJsr, Subroutine subroutine) {
-        final int length = Math.max(_activeLocals, typeStateAtJsr._activeLocals);
+        final int length = Math.max(this.activeLocals, typeStateAtJsr.activeLocals);
         int activeLocals = 0;
         for (int index = 0; index != length; ++index) {
             if (!subroutine.isVariableAccessed(index)) {
-                _locals[index] = typeStateAtJsr._locals[index];
+                locals[index] = typeStateAtJsr.locals[index];
             }
-            if (_locals[index] != TOP) {
+            if (locals[index] != TOP) {
                 activeLocals = index + 1;
             }
         }
-        _activeLocals = activeLocals;
+        this.activeLocals = activeLocals;
     }
 
     @Override
     public void reset(Frame fromFrame) {
         final TypeState targetTypeState = (TypeState) fromFrame;
         super.reset(fromFrame);
-        _subroutineFrame = targetTypeState._subroutineFrame;
+        subroutineFrame = targetTypeState.subroutineFrame;
     }
 
     @Override
@@ -194,32 +194,32 @@ public class TypeState extends Frame {
     }
 
     public Instruction targetedInstruction() {
-        return _targetedInstruction;
+        return targetedInstruction;
     }
 
     public void setTargetedInstruction(Instruction instruction) {
         assert instruction != null;
-        _targetedInstruction = instruction;
+        targetedInstruction = instruction;
     }
 
     private TypeInferencingMethodVerifier verifier() {
-        return (TypeInferencingMethodVerifier) _methodVerifier;
+        return (TypeInferencingMethodVerifier) methodVerifier;
     }
 
     public boolean mergeStackFrom(TypeState fromTypeState, int thisPosition) {
         boolean changed = false;
-        if (_stackSize != fromTypeState._stackSize) {
+        if (stackSize != fromTypeState.stackSize) {
             throw verifyError("Inconsistent height for stacks being merged at bytecode position " + thisPosition);
         }
 
-        for (int i = 0; i < _stackSize; i++) {
-            if (!_stack[i].isAssignableFrom(fromTypeState._stack[i])) {
-                final VerificationType mergedType = _stack[i].mergeWith(fromTypeState._stack[i]);
+        for (int i = 0; i < stackSize; i++) {
+            if (!stack[i].isAssignableFrom(fromTypeState.stack[i])) {
+                final VerificationType mergedType = stack[i].mergeWith(fromTypeState.stack[i]);
                 if (mergedType == TOP) {
                     verifyError("Incompatible types in slot " + i + " of stacks being merged at bytecode position " + thisPosition);
                 }
-                assert mergedType != _stack[i];
-                _stack[i] = mergedType;
+                assert mergedType != stack[i];
+                stack[i] = mergedType;
                 changed = true;
             }
         }
@@ -229,31 +229,31 @@ public class TypeState extends Frame {
     public boolean mergeLocalsFrom(TypeState fromTypeState, int thisPosition) {
         boolean changed = false;
         int activeLocals = 0;
-        for (int i = 0; i < _activeLocals; i++) {
-            if (!_locals[i].isAssignableFrom(fromTypeState._locals[i])) {
-                final VerificationType mergedType = _locals[i].mergeWith(fromTypeState._locals[i]);
-                assert mergedType != _locals[i];
-                _locals[i] = mergedType;
+        for (int i = 0; i < this.activeLocals; i++) {
+            if (!locals[i].isAssignableFrom(fromTypeState.locals[i])) {
+                final VerificationType mergedType = locals[i].mergeWith(fromTypeState.locals[i]);
+                assert mergedType != locals[i];
+                locals[i] = mergedType;
                 changed = true;
             }
-            if (_locals[i] != TOP) {
+            if (locals[i] != TOP) {
                 activeLocals = i + 1;
             }
         }
-        _activeLocals = activeLocals;
+        this.activeLocals = activeLocals;
         return changed;
     }
 
     public boolean mergeSubroutineFrames(TypeState fromTypeState) {
-        final SubroutineFrame fromSubroutineFrame = fromTypeState._subroutineFrame;
-        if (fromSubroutineFrame.depth() != _subroutineFrame.depth()) {
+        final SubroutineFrame fromSubroutineFrame = fromTypeState.subroutineFrame;
+        if (fromSubroutineFrame.depth != subroutineFrame.depth) {
             return false;
         }
 
-        final SubroutineFrame mergedSubroutineFrame = _subroutineFrame.merge(fromSubroutineFrame);
-        if (mergedSubroutineFrame != _subroutineFrame) {
-            _subroutineFrame = mergedSubroutineFrame;
-            assert _subroutineFrame != null;
+        final SubroutineFrame mergedSubroutineFrame = subroutineFrame.merge(fromSubroutineFrame);
+        if (mergedSubroutineFrame != subroutineFrame) {
+            subroutineFrame = mergedSubroutineFrame;
+            assert subroutineFrame != null;
             return true;
         }
         return false;
@@ -262,20 +262,20 @@ public class TypeState extends Frame {
     @Override
     public void mergeFrom(Frame fromFrame, int thisPosition, int catchTypeIndex) {
         final TypeState fromTypeState = (TypeState) fromFrame;
-        if (!_visited) {
+        if (!visited) {
             reset(fromTypeState);
             if (catchTypeIndex != -1) {
                 final ObjectType catchType;
                 if (catchTypeIndex == 0) {
                     catchType = VerificationType.THROWABLE;
                 } else {
-                    final TypeDescriptor catchTypeDescriptor = _methodVerifier.constantPool().classAt(catchTypeIndex).typeDescriptor();
-                    catchType = _methodVerifier.getObjectType(catchTypeDescriptor);
+                    final TypeDescriptor catchTypeDescriptor = methodVerifier.constantPool().classAt(catchTypeIndex).typeDescriptor();
+                    catchType = methodVerifier.getObjectType(catchTypeDescriptor);
                 }
-                _stack[0] = catchType;
-                _stackSize = 1;
+                stack[0] = catchType;
+                stackSize = 1;
             }
-            _visited = true;
+            visited = true;
             verifier().enqueChangedTypeState(this);
         } else {
             boolean changed = mergeSubroutineFrames(fromTypeState);
@@ -292,8 +292,8 @@ public class TypeState extends Frame {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
-        if (_subroutineFrame != null && _subroutineFrame != SubroutineFrame.TOP) {
-            sb.append("in ").append(_subroutineFrame).append("\n");
+        if (subroutineFrame != null && subroutineFrame != SubroutineFrame.TOP) {
+            sb.append("in ").append(subroutineFrame).append("\n");
         }
 
         sb.append(super.toString());
@@ -358,17 +358,17 @@ public class TypeState extends Frame {
         final int previousPosition = previousTypeState.position();
         final int positionDelta = previousPosition == 0 ? position() : position() - previousPosition - 1;
 
-        final VerificationType[] locals = asStackMapTypes(_locals, _activeLocals);
-        final VerificationType[] previousLocals = asStackMapTypes(previousTypeState._locals, previousTypeState._activeLocals);
+        final VerificationType[] locals = asStackMapTypes(this.locals, activeLocals);
+        final VerificationType[] previousLocals = asStackMapTypes(previousTypeState.locals, previousTypeState.activeLocals);
 
-        if (_stackSize == 1) {
+        if (stackSize == 1) {
             if (locals.length == previousLocals.length && diff(previousLocals, locals) == 0) {
                 if (positionDelta < StackMapTable.SAME_FRAME_BOUND) {
-                    return new SameLocalsOneStack(positionDelta, _stack[0]);
+                    return new SameLocalsOneStack(positionDelta, stack[0]);
                 }
-                return new SameLocalsOneStackExtended(positionDelta, _stack[0]);
+                return new SameLocalsOneStackExtended(positionDelta, stack[0]);
             }
-        } else if (_stackSize == 0) {
+        } else if (stackSize == 0) {
             final int diffLength = diff(previousLocals, locals);
             if (diffLength == 0) {
                 if (positionDelta < StackMapTable.SAME_FRAME_BOUND) {
@@ -390,6 +390,6 @@ public class TypeState extends Frame {
         }
 
         // FULL_FRAME
-        return new FullFrame(positionDelta, locals, asStackMapTypes(_stack, _stackSize));
+        return new FullFrame(positionDelta, locals, asStackMapTypes(stack, stackSize));
     }
 }

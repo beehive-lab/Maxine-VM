@@ -37,11 +37,11 @@ import com.sun.max.vm.prototype.*;
  */
 public final class DarwinTeleProcess extends TeleProcess {
 
-    private final DataAccess _dataAccess;
+    private final DataAccess dataAccess;
 
     @Override
     public DataAccess dataAccess() {
-        return _dataAccess;
+        return dataAccess;
     }
 
     private static native long nativeCreateChild(long argv, int vmAgentSocketPort);
@@ -50,22 +50,22 @@ public final class DarwinTeleProcess extends TeleProcess {
     private static native boolean nativeResume(long task);
     private static native boolean nativeWait(long pid, long task);
 
-    private final long _task;
+    private final long task;
 
     public long task() {
-        return _task;
+        return task;
     }
 
     DarwinTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
         super(teleVM, platform, ProcessState.STOPPED);
         final Pointer commandLineArgumentsBuffer = TeleProcess.createCommandLineArgumentsBuffer(programFile, commandLineArguments);
-        _task = nativeCreateChild(commandLineArgumentsBuffer.toLong(), agent.port());
-        if (_task == -1) {
+        task = nativeCreateChild(commandLineArgumentsBuffer.toLong(), agent.port());
+        if (task == -1) {
             ProgramError.unexpected(String.format("task_for_pid() permissions problem -- Need to run java as setgid procmod:%n%n" +
                 "    chgrp procmod <java executable>;  chmod g+s <java executable>%n%n" +
                 "where <java executable> is the platform dependent executable found under or relative to " + System.getProperty("java.home") + "."));
         }
-        _dataAccess = new PageDataAccess(this, platform.processorKind().dataModel());
+        dataAccess = new PageDataAccess(this, platform.processorKind.dataModel);
         try {
             resume();
         } catch (OSExecutionRequestException e) {
@@ -75,35 +75,35 @@ public final class DarwinTeleProcess extends TeleProcess {
 
     @Override
     public void suspend() throws OSExecutionRequestException {
-        if (!nativeSuspend(_task)) {
+        if (!nativeSuspend(task)) {
             ProgramError.unexpected("could not suspend process");
         }
     }
 
     @Override
     public void resume() throws OSExecutionRequestException {
-        if (!nativeResume(_task)) {
+        if (!nativeResume(task)) {
             throw new OSExecutionRequestException("Resume could not be completed");
         }
     }
 
     @Override
     protected boolean waitUntilStopped() {
-        final boolean ok = nativeWait(_task, _task);
+        final boolean ok = nativeWait(task, task);
         return ok;
     }
 
     @Override
     protected void kill() throws OSExecutionRequestException {
-        nativeKill(_task);
+        nativeKill(task);
     }
 
     private native void nativeGatherThreads(long task, AppendableSequence<TeleNativeThread> threads, long threadSpecificsList);
 
     @Override
     protected void gatherThreads(AppendableSequence<TeleNativeThread> threads) {
-        final Word threadSpecificsList = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header()._threadSpecificsListOffset));
-        nativeGatherThreads(_task, threads, threadSpecificsList.asAddress().toLong());
+        final Word threadSpecificsList = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header().threadSpecificsListOffset));
+        nativeGatherThreads(task, threads, threadSpecificsList.asAddress().toLong());
     }
 
     @Override
@@ -129,10 +129,10 @@ public final class DarwinTeleProcess extends TeleProcess {
     protected int read0(Address src, ByteBuffer dst, int offset, int length) {
         assert dst.limit() - offset >= length;
         if (dst.isDirect()) {
-            return nativeReadBytes(_task, src.toLong(), dst, true, offset, length);
+            return nativeReadBytes(task, src.toLong(), dst, true, offset, length);
         }
         assert dst.array() != null;
-        return nativeReadBytes(_task, src.toLong(), dst.array(), false, dst.arrayOffset() + offset, length);
+        return nativeReadBytes(task, src.toLong(), dst.array(), false, dst.arrayOffset() + offset, length);
     }
 
     /**
@@ -152,9 +152,9 @@ public final class DarwinTeleProcess extends TeleProcess {
     protected int write0(ByteBuffer src, int offset, int length, Address dst) {
         assert src.limit() - offset >= length;
         if (src.isDirect()) {
-            return nativeWriteBytes(_task, dst.toLong(), src, true, offset, length);
+            return nativeWriteBytes(task, dst.toLong(), src, true, offset, length);
         }
         assert src.array() != null;
-        return nativeWriteBytes(_task, dst.toLong(), src.array(), false, src.arrayOffset() + offset, length);
+        return nativeWriteBytes(task, dst.toLong(), src.array(), false, src.arrayOffset() + offset, length);
     }
 }

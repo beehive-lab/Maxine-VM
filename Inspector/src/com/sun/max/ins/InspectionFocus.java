@@ -51,47 +51,47 @@ public class InspectionFocus extends AbstractInspectionHolder {
         super(inspection);
     }
 
-    private IdentityHashSet<ViewFocusListener> _listeners = new IdentityHashSet<ViewFocusListener>();
+    private IdentityHashSet<ViewFocusListener> listeners = new IdentityHashSet<ViewFocusListener>();
 
     public void addListener(ViewFocusListener listener) {
         Trace.line(TRACE_VALUE, tracePrefix() + "adding listener: " + listener);
-        _listeners.add(listener);
+        listeners.add(listener);
     }
 
     public void removeListener(ViewFocusListener listener) {
         Trace.line(TRACE_VALUE, tracePrefix() + " removing listener: " + listener);
-        _listeners.remove(listener);
+        listeners.remove(listener);
     }
 
-    private TeleCodeLocation _codeLocation = maxVM().createCodeLocation(Address.zero());
+    private TeleCodeLocation codeLocation = maxVM().createCodeLocation(Address.zero());
 
-    private final Object _codeLocationTracer = new Object() {
+    private final Object codeLocationTracer = new Object() {
         @Override
         public String toString() {
-            return tracePrefix() + "Focus (Code Location):  " + inspection().nameDisplay().longName(_codeLocation);
+            return tracePrefix() + "Focus (Code Location):  " + inspection().nameDisplay().longName(codeLocation);
         }
     };
 
     public void clearAll() {
-        _thread = null;
-        _stackFrame = null;
-        _memoryRegion = null;
-        _breakpoint  = null;
-        _heapObject = null;
+        thread = null;
+        stackFrame = null;
+        memoryRegion = null;
+        breakpoint  = null;
+        heapObject = null;
     }
 
     /**
      * The current location of user interest in the code being inspected (view state).
      */
     public TeleCodeLocation codeLocation() {
-        return _codeLocation;
+        return codeLocation;
     }
 
     /**
      * Is there a currently selected code location.
      */
     public boolean hasCodeLocation() {
-        return _codeLocation != null;
+        return codeLocation != null;
     }
 
     /**
@@ -99,18 +99,18 @@ public class InspectionFocus extends AbstractInspectionHolder {
      * This is view state only, not necessarily related to VM execution.
      */
     public void setCodeLocation(TeleCodeLocation teleCodeLocation, boolean interactiveForNative) {
-        _codeLocation = teleCodeLocation;
-        Trace.line(TRACE_VALUE, _codeLocationTracer);
-        for (ViewFocusListener listener : _listeners.clone()) {
+        codeLocation = teleCodeLocation;
+        Trace.line(TRACE_VALUE, codeLocationTracer);
+        for (ViewFocusListener listener : listeners.clone()) {
             listener.codeLocationFocusSet(teleCodeLocation, interactiveForNative);
         }
         // User Model Policy: when setting code location, if it happens to match a stack frame of the current thread then focus on that frame.
-        if (_thread != null && _codeLocation.hasTargetCodeLocation()) {
-            final Address address = _codeLocation.targetCodeInstructionAddresss();
-            final Sequence<StackFrame> frames = _thread.frames();
+        if (thread != null && codeLocation.hasTargetCodeLocation()) {
+            final Address address = codeLocation.targetCodeInstructionAddresss();
+            final Sequence<StackFrame> frames = thread.frames();
             for (StackFrame stackFrame : frames) {
-                if (stackFrame.instructionPointer().equals(address)) {
-                    setStackFrame(_thread, stackFrame, false);
+                if (stackFrame.instructionPointer.equals(address)) {
+                    setStackFrame(thread, stackFrame, false);
                     break;
                 }
             }
@@ -119,13 +119,13 @@ public class InspectionFocus extends AbstractInspectionHolder {
 
 
 
-    private MaxThread _thread;
+    private MaxThread thread;
 
-    private final Object _threadFocusTracer = new Object() {
+    private final Object threadFocusTracer = new Object() {
         @Override
         public String toString() {
             final StringBuilder name = new StringBuilder();
-            name.append(tracePrefix() + "Focus (Thread): ").append(inspection().nameDisplay().longName(_thread)).append(" {").append(_thread).append("}");
+            name.append(tracePrefix() + "Focus (Thread): ").append(inspection().nameDisplay().longName(thread)).append(" {").append(thread).append("}");
             return name.toString();
         }
     };
@@ -134,14 +134,14 @@ public class InspectionFocus extends AbstractInspectionHolder {
      * @return the {@link MaxThread} that is the current user focus (view state); non-null once set.
      */
     public MaxThread thread() {
-        return _thread;
+        return thread;
     }
 
     /**
      * Is there a currently selected thread.
      */
     public boolean hasThread() {
-        return _thread != null;
+        return thread != null;
     }
 
     /**
@@ -151,20 +151,20 @@ public class InspectionFocus extends AbstractInspectionHolder {
      */
     public void setThread(MaxThread thread) {
         assert thread != null;
-        if (!thread.equals(_thread)) {
-            final MaxThread oldThread = _thread;
-            _thread = thread;
-            Trace.line(TRACE_VALUE, _threadFocusTracer);
-            for (ViewFocusListener listener : _listeners.clone()) {
+        if (!thread.equals(this.thread)) {
+            final MaxThread oldThread = this.thread;
+            this.thread = thread;
+            Trace.line(TRACE_VALUE, threadFocusTracer);
+            for (ViewFocusListener listener : listeners.clone()) {
                 listener.threadFocusSet(oldThread, thread);
             }
             // User Model Policy:  when thread focus changes, restore an old frame focus if possible.
             // If no record of a prior choice and thread is at a breakpoint, focus there.
             // Else focus on the top frame.
-            final StackFrame previousStackFrame = _frameSelections.get(thread);
+            final StackFrame previousStackFrame = frameSelections.get(thread);
             StackFrame newStackFrame = null;
             if (previousStackFrame != null) {
-                for (StackFrame stackFrame : _thread.frames()) {
+                for (StackFrame stackFrame : this.thread.frames()) {
                     if (stackFrame.isSameFrame(previousStackFrame)) {
                         newStackFrame = stackFrame;
                         break;
@@ -176,7 +176,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
                 setStackFrame(thread, newStackFrame, false);
             } else {
                 // No prior frame selection
-                final TeleTargetBreakpoint breakpoint = _thread.breakpoint();
+                final TeleTargetBreakpoint breakpoint = this.thread.breakpoint();
                 if (breakpoint != null) {
                     // thread is at a breakpoint; focus on the breakpoint, which should also cause focus on code and frame
                     setBreakpoint(breakpoint);
@@ -186,22 +186,22 @@ public class InspectionFocus extends AbstractInspectionHolder {
                 }
             }
             // User Model Policy:  when thread focus changes, also set the memory region focus to the thread's stack.
-            setMemoryRegion(_thread.stack());
+            setMemoryRegion(this.thread.stack());
 
         }
     }
 
     // Remember most recent frame selection per thread, and restore this selection (if possible) when thread focus changes.
-    private final VariableMapping<MaxThread, StackFrame> _frameSelections = HashMapping.<MaxThread, StackFrame>createVariableEqualityMapping();
+    private final VariableMapping<MaxThread, StackFrame> frameSelections = HashMapping.<MaxThread, StackFrame>createVariableEqualityMapping();
 
-    private StackFrame _stackFrame;
+    private StackFrame stackFrame;
     // Since frames don't record what stack they're in, we must keep a reference to the thread of the frame.
-    private MaxThread _threadForStackFrame;
+    private MaxThread threadForStackFrame;
 
-    private final Object _stackFrameFocusTracer = new Object() {
+    private final Object stackFrameFocusTracer = new Object() {
         @Override
         public String toString() {
-            return tracePrefix() + "Focus (StackFrame):  " + _stackFrame;
+            return tracePrefix() + "Focus (StackFrame):  " + stackFrame;
         }
     };
 
@@ -209,7 +209,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
      * @return the {@link StackFrame} that is current user focus (view state).
      */
     public StackFrame stackFrame() {
-        return _stackFrame;
+        return stackFrame;
     }
 
     /**
@@ -222,35 +222,35 @@ public class InspectionFocus extends AbstractInspectionHolder {
      * @param interactiveForNative whether (should a side effect be to land in a native method) the user should be consulted if unknown.
      */
     public void setStackFrame(MaxThread thread, StackFrame stackFrame, boolean interactiveForNative) {
-        if (!thread.equals(_threadForStackFrame) || !stackFrame.isSameFrame(_stackFrame)) {
-            final StackFrame oldStackFrame = _stackFrame;
-            _threadForStackFrame = thread;
-            _stackFrame = stackFrame;
-            _frameSelections.put(thread, stackFrame);
-            Trace.line(TRACE_VALUE, _stackFrameFocusTracer);
+        if (!thread.equals(threadForStackFrame) || !stackFrame.isSameFrame(this.stackFrame)) {
+            final StackFrame oldStackFrame = this.stackFrame;
+            threadForStackFrame = thread;
+            this.stackFrame = stackFrame;
+            frameSelections.put(thread, stackFrame);
+            Trace.line(TRACE_VALUE, stackFrameFocusTracer);
             // For consistency, be sure we're in the right thread context before doing anything with the stack frame.
             setThread(thread);
-            for (ViewFocusListener listener : _listeners.clone()) {
+            for (ViewFocusListener listener : listeners.clone()) {
                 listener.stackFrameFocusChanged(oldStackFrame, thread, stackFrame);
             }
         }
         // User Model Policy:  When a stack frame becomes the focus, then also focus on the code at the frame's instruction pointer.
         // Update code location, even if stack frame is the "same", where same means at the same logical position in the stack as the old one.
         // Note that the old and new stack frames are not identical, and in fact may have different instruction pointers.
-        if (!_codeLocation.hasTargetCodeLocation() || !_codeLocation.targetCodeInstructionAddresss().equals(stackFrame.instructionPointer())) {
-            setCodeLocation(maxVM().createCodeLocation(stackFrame.instructionPointer()), interactiveForNative);
+        if (!codeLocation.hasTargetCodeLocation() || !codeLocation.targetCodeInstructionAddresss().equals(stackFrame.instructionPointer)) {
+            setCodeLocation(maxVM().createCodeLocation(stackFrame.instructionPointer), interactiveForNative);
         }
     }
 
 
     // never null, zero if none set
-    private Address _address = Address.zero();
+    private Address address = Address.zero();
 
-    private final Object _addressFocusTracer = new Object() {
+    private final Object addressFocusTracer = new Object() {
         @Override
         public String toString() {
             final StringBuilder name = new StringBuilder();
-            name.append(tracePrefix()).append("Focus (Address): ").append(_address.toHexString());
+            name.append(tracePrefix()).append("Focus (Address): ").append(address.toHexString());
             return name.toString();
         }
     };
@@ -259,14 +259,14 @@ public class InspectionFocus extends AbstractInspectionHolder {
      * @return the {@link Address} that is the current user focus (view state), {@link Address#zero()} if none.
      */
     public Address address() {
-        return _address;
+        return address;
     }
 
     /**
      * Is there a currently selected {@link Address}.
      */
     public boolean hasAddress() {
-        return  !_address.isZero();
+        return  !address.isZero();
     }
 
     /**
@@ -275,11 +275,11 @@ public class InspectionFocus extends AbstractInspectionHolder {
      */
     public void setAddress(Address address) {
         ProgramError.check(address != null, "setAddress(null) should use zero Address instead");
-        if ((address.isZero() && hasAddress()) || (!address.isZero() && !address.equals(_address))) {
-            final Address oldAddress = _address;
-            _address = address;
-            Trace.line(TRACE_VALUE, _addressFocusTracer);
-            for (ViewFocusListener listener : _listeners.clone()) {
+        if ((address.isZero() && hasAddress()) || (!address.isZero() && !address.equals(this.address))) {
+            final Address oldAddress = this.address;
+            this.address = address;
+            Trace.line(TRACE_VALUE, addressFocusTracer);
+            for (ViewFocusListener listener : listeners.clone()) {
                 listener.addressFocusChanged(oldAddress, address);
             }
             // User Model Policy:  select the memory region that contains the newly selected address; clears if not known.
@@ -289,13 +289,13 @@ public class InspectionFocus extends AbstractInspectionHolder {
     }
 
 
-    private MemoryRegion _memoryRegion;
+    private MemoryRegion memoryRegion;
 
-    private final Object _memoryRegionFocusTracer = new Object() {
+    private final Object memoryRegionFocusTracer = new Object() {
         @Override
         public String toString() {
             final StringBuilder name = new StringBuilder();
-            name.append(tracePrefix()).append("Focus (MemoryRegion): ").append(_memoryRegion.description());
+            name.append(tracePrefix()).append("Focus (MemoryRegion): ").append(memoryRegion.description());
             return name.toString();
         }
     };
@@ -304,14 +304,14 @@ public class InspectionFocus extends AbstractInspectionHolder {
      * @return the {@link MemoryRegion} that is the current user focus (view state).
      */
     public MemoryRegion memoryRegion() {
-        return _memoryRegion;
+        return memoryRegion;
     }
 
     /**
      * Is there a currently selected {@link MemoryRegion}.
      */
     public boolean hasMemoryRegion() {
-        return _memoryRegion != null;
+        return memoryRegion != null;
     }
 
     /**
@@ -321,11 +321,11 @@ public class InspectionFocus extends AbstractInspectionHolder {
      */
     public void setMemoryRegion(MemoryRegion memoryRegion) {
         // TODO (mlvdv) see about setting to null if a thread is observed to have died, or mark the region as dead?
-        if ((memoryRegion == null && _memoryRegion != null) || (memoryRegion != null && !memoryRegion.sameAs(_memoryRegion))) {
-            final MemoryRegion oldMemoryRegion = _memoryRegion;
-            _memoryRegion = memoryRegion;
-            Trace.line(TRACE_VALUE, _memoryRegionFocusTracer);
-            for (ViewFocusListener listener : _listeners.clone()) {
+        if ((memoryRegion == null && this.memoryRegion != null) || (memoryRegion != null && !memoryRegion.sameAs(this.memoryRegion))) {
+            final MemoryRegion oldMemoryRegion = this.memoryRegion;
+            this.memoryRegion = memoryRegion;
+            Trace.line(TRACE_VALUE, memoryRegionFocusTracer);
+            for (ViewFocusListener listener : listeners.clone()) {
                 listener.memoryRegionFocusChanged(oldMemoryRegion, memoryRegion);
             }
             // User Model Policy:  When a stack memory region gets selected for focus, also set focus to the thread owning the stack.
@@ -339,12 +339,12 @@ public class InspectionFocus extends AbstractInspectionHolder {
     }
 
 
-    private TeleBreakpoint _breakpoint;
+    private TeleBreakpoint breakpoint;
 
-    private final Object _breakpointFocusTracer = new Object() {
+    private final Object breakpointFocusTracer = new Object() {
         @Override
         public String toString() {
-            return tracePrefix() + "Focus(Breakpoint):  " + (_breakpoint == null ? "null" : inspection().nameDisplay().longName(_breakpoint.teleCodeLocation()));
+            return tracePrefix() + "Focus(Breakpoint):  " + (breakpoint == null ? "null" : inspection().nameDisplay().longName(breakpoint.teleCodeLocation()));
         }
     };
 
@@ -353,14 +353,14 @@ public class InspectionFocus extends AbstractInspectionHolder {
      * May be null.
      */
     public TeleBreakpoint breakpoint() {
-        return _breakpoint;
+        return breakpoint;
     }
 
     /**
      * Is there a currently selected breakpoint in the BreakpointsInspector.
      */
     public boolean hasBreakpoint() {
-        return _breakpoint != null;
+        return breakpoint != null;
     }
 
     /**
@@ -368,11 +368,11 @@ public class InspectionFocus extends AbstractInspectionHolder {
      * This is view state only, not necessarily related to VM execution.
      */
     public void setBreakpoint(TeleBreakpoint teleBreakpoint) {
-        if (_breakpoint != teleBreakpoint) {
-            final TeleBreakpoint oldTeleBreakpoint = _breakpoint;
-            _breakpoint = teleBreakpoint;
-            Trace.line(TRACE_VALUE, _breakpointFocusTracer);
-            for (ViewFocusListener listener : _listeners.clone()) {
+        if (breakpoint != teleBreakpoint) {
+            final TeleBreakpoint oldTeleBreakpoint = breakpoint;
+            breakpoint = teleBreakpoint;
+            Trace.line(TRACE_VALUE, breakpointFocusTracer);
+            for (ViewFocusListener listener : listeners.clone()) {
                 listener.breakpointFocusSet(oldTeleBreakpoint, teleBreakpoint);
             }
         }
@@ -396,12 +396,12 @@ public class InspectionFocus extends AbstractInspectionHolder {
     }
 
 
-    private MaxWatchpoint _watchpoint;
+    private MaxWatchpoint watchpoint;
 
-    private final Object _watchpointFocusTracer = new Object() {
+    private final Object watchpointFocusTracer = new Object() {
         @Override
         public String toString() {
-            return tracePrefix() + "Focus(Watchpoint):  " + (_watchpoint == null ? "null" : _watchpoint.toString());
+            return tracePrefix() + "Focus(Watchpoint):  " + (watchpoint == null ? "null" : watchpoint.toString());
         }
     };
 
@@ -410,14 +410,14 @@ public class InspectionFocus extends AbstractInspectionHolder {
      * May be null.
      */
     public MaxWatchpoint watchpoint() {
-        return _watchpoint;
+        return watchpoint;
     }
 
     /**
      * Is there a currently selected watchpoint in the WatchpointsInspector.
      */
     public boolean hasWatchpoint() {
-        return _watchpoint != null;
+        return watchpoint != null;
     }
 
     /**
@@ -425,23 +425,23 @@ public class InspectionFocus extends AbstractInspectionHolder {
      * This is view state only, not necessarily related to VM execution.
      */
     public void setWatchpoint(MaxWatchpoint watchpoint) {
-        if (_watchpoint != watchpoint) {
-            final MaxWatchpoint oldWatchpoint = _watchpoint;
-            _watchpoint = watchpoint;
-            Trace.line(TRACE_VALUE, _watchpointFocusTracer);
-            for (ViewFocusListener listener : _listeners.clone()) {
+        if (this.watchpoint != watchpoint) {
+            final MaxWatchpoint oldWatchpoint = this.watchpoint;
+            this.watchpoint = watchpoint;
+            Trace.line(TRACE_VALUE, watchpointFocusTracer);
+            for (ViewFocusListener listener : listeners.clone()) {
                 listener.watchpointFocusSet(oldWatchpoint, watchpoint);
             }
         }
     }
 
 
-    private TeleObject _heapObject;
+    private TeleObject heapObject;
 
-    private final Object _objectFocusTracer = new Object() {
+    private final Object objectFocusTracer = new Object() {
         @Override
         public String toString() {
-            return tracePrefix() + "Focus(Heap Object):  " + (_heapObject == null ? "null" : _heapObject.toString());
+            return tracePrefix() + "Focus(Heap Object):  " + (heapObject == null ? "null" : heapObject.toString());
         }
     };
 
@@ -449,14 +449,14 @@ public class InspectionFocus extends AbstractInspectionHolder {
      * Currently selected object in the tele VM heap; may be null.
      */
     public TeleObject heapObject() {
-        return _heapObject;
+        return heapObject;
     }
 
     /**
      * Whether there is a currently selected heap object.
      */
     public boolean hasHeapObject() {
-        return _heapObject != null;
+        return heapObject != null;
     }
 
     /**
@@ -464,11 +464,11 @@ public class InspectionFocus extends AbstractInspectionHolder {
      * This is a view state change that can happen when there is no change to VM state.
      */
     public void setHeapObject(TeleObject heapObject) {
-        if (_heapObject != heapObject) {
-            final TeleObject oldTeleObject = _heapObject;
-            _heapObject = heapObject;
-            Trace.line(TRACE_VALUE, _objectFocusTracer);
-            for (ViewFocusListener listener : _listeners.clone()) {
+        if (this.heapObject != heapObject) {
+            final TeleObject oldTeleObject = this.heapObject;
+            this.heapObject = heapObject;
+            Trace.line(TRACE_VALUE, objectFocusTracer);
+            for (ViewFocusListener listener : listeners.clone()) {
                 listener.heapObjectFocusChanged(oldTeleObject, heapObject);
             }
         }

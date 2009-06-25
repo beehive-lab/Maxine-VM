@@ -31,13 +31,13 @@ import com.sun.max.vm.value.*;
  */
 public abstract class EirValue implements IrValue {
 
-    private LinkedIdentityHashSet<EirOperand> _operands = new LinkedIdentityHashSet<EirOperand>();
+    private LinkedIdentityHashSet<EirOperand> operands = new LinkedIdentityHashSet<EirOperand>();
 
     /**
      * Gets the set of operands representing all the uses of this value by the instructions of an EIR method.
      */
     public final Sequence<EirOperand> operands() {
-        return _operands;
+        return operands;
     }
 
 
@@ -51,7 +51,7 @@ public abstract class EirValue implements IrValue {
             operand.setEirValueWithoutUpdate(other);
         }
 
-        _operands.clear();
+        operands.clear();
     }
 
     public EirVariable asVariable() {
@@ -62,22 +62,22 @@ public abstract class EirValue implements IrValue {
         return null;
     }
 
-    private int _numberOfDefinitions;
+    private int numberOfDefinitions;
 
     public int numberOfDefinitions() {
-        return _numberOfDefinitions;
+        return numberOfDefinitions;
     }
 
-    private int _numberOfUpdates;
+    private int numberOfUpdates;
 
     public int numberOfUpdates() {
-        return _numberOfUpdates;
+        return numberOfUpdates;
     }
 
-    private int _numberOfUses;
+    private int numberOfUses;
 
     public int numberOfUses() {
-        return _numberOfUses;
+        return numberOfUses;
     }
 
     public boolean assertLocationCategory() {
@@ -96,100 +96,99 @@ public abstract class EirValue implements IrValue {
     }
 
     public int numberOfEffects() {
-        return _numberOfDefinitions + _numberOfUpdates + _numberOfUses;
+        return numberOfDefinitions + numberOfUpdates + numberOfUses;
     }
 
     public boolean hasDefinitionsOnly() {
-        return _numberOfUses == 0 && _numberOfUpdates == 0;
+        return numberOfUses == 0 && numberOfUpdates == 0;
     }
 
     public void addOperand(EirOperand operand) {
-        _locationCategories = null;
-        _operands.add(operand);
+        locationCategories = null;
+        operands.add(operand);
         switch (operand.effect()) {
             case USE:
-                _numberOfUses++;
+                numberOfUses++;
                 break;
             case UPDATE:
-                _numberOfUpdates++;
+                numberOfUpdates++;
                 break;
             case DEFINITION:
-                _numberOfDefinitions++;
+                numberOfDefinitions++;
                 break;
         }
     }
 
     public final void removeOperand(EirOperand operand) {
-        _locationCategories = null;
-        _operands.remove(operand);
+        locationCategories = null;
+        operands.remove(operand);
         switch (operand.effect()) {
             case USE:
-                _numberOfUses--;
+                numberOfUses--;
                 break;
             case UPDATE:
-                _numberOfUpdates--;
+                numberOfUpdates--;
                 break;
             case DEFINITION:
-                _numberOfDefinitions--;
+                numberOfDefinitions--;
                 break;
         }
 
         assert assertLocationCategory();
     }
 
-    private PoolSet<EirLocationCategory> _locationCategories;
+    private PoolSet<EirLocationCategory> locationCategories;
 
     public PoolSet<EirLocationCategory> locationCategories() {
-        if (_locationCategories == null) {
-            _locationCategories = EirLocationCategory.all();
-            for (EirOperand operand : _operands) {
-                _locationCategories.and(operand.locationCategories());
+        if (locationCategories == null) {
+            locationCategories = EirLocationCategory.all();
+            for (EirOperand operand : operands) {
+                locationCategories.and(operand.locationCategories());
             }
         }
-        return _locationCategories;
+        return locationCategories;
     }
 
     public void resetLocationCategories() {
-        _locationCategories = null;
+        locationCategories = null;
     }
 
-    private EirLocation _location;
+    private EirLocation location;
 
     public final EirLocation location() {
-        assert !(_isLocationFixed && _location == null);
-        return _location;
+        assert !(isLocationFixed && location == null);
+        return location;
     }
 
     public final void setLocation(EirLocation location) {
-        assert !_isLocationFixed;
-        _location = location;
-
+        assert !isLocationFixed;
+        this.location = location;
         assert assertLocationCategory();
     }
 
-    private boolean _isLocationFixed;
+    private boolean isLocationFixed;
 
     public boolean isLocationFixed() {
-        assert !(_isLocationFixed && _location == null);
-        return _isLocationFixed;
+        assert !(isLocationFixed && location == null);
+        return isLocationFixed;
     }
 
-    public void fixLocation(EirLocation location) {
-        assert !(_isLocationFixed && location != _location);
-        assert location != null : "must not fix location to null!";
-        _location = location;
-        _isLocationFixed = true;
+    public void fixLocation(EirLocation loc) {
+        assert !(isLocationFixed && this.location != loc);
+        assert loc != null : "must not fix location to null!";
+        this.location = loc;
+        isLocationFixed = true;
     }
 
     protected EirValue() {
     }
 
     public static final class Preallocated extends EirValue {
-        private final Kind _kind;
+        private final Kind kind;
 
         @Override
         public Kind kind() {
-            return _kind;
+            return kind;
         }
 
         @Override
@@ -198,20 +197,19 @@ public abstract class EirValue implements IrValue {
         }
 
         public Preallocated(EirLocation location, Kind kind) {
-            super();
-            _kind = kind;
+            this.kind = kind;
             fixLocation(location);
         }
 
-        private final AppendableSequence<EirOperand> _definitions = new LinkSequence<EirOperand>();
+        private final AppendableSequence<EirOperand> definitions = new LinkSequence<EirOperand>();
 
         public Sequence<EirOperand> definitions() {
-            return _definitions;
+            return definitions;
         }
 
         @Override
         public void recordDefinition(EirOperand operand) {
-            _definitions.append(operand);
+            definitions.append(operand);
         }
 
         @Override
@@ -228,8 +226,8 @@ public abstract class EirValue implements IrValue {
     }
 
     public void cleanup() {
-        _operands = null;
-        _locationCategories = null;
+        operands = null;
+        locationCategories = null;
     }
 
     public boolean isConstant() {

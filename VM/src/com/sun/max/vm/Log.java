@@ -269,7 +269,7 @@ public final class Log {
         }
 
         @PROTOTYPE_ONLY
-        private static final OutputStream _prototypeOutputStream;
+        private static final OutputStream prototypeOutputStream;
         static {
             // Use the same environment variable as used by the native code - see Native/share/debug.c
             String path = System.getenv("MAXINE_LOG_FILE");
@@ -277,12 +277,12 @@ public final class Log {
                 path = "stdout";
             }
             if (path.equals("stdout")) {
-                _prototypeOutputStream = System.out;
+                prototypeOutputStream = System.out;
             } else if (path.equals("stderr")) {
-                _prototypeOutputStream = System.err;
+                prototypeOutputStream = System.err;
             } else {
                 try {
-                    _prototypeOutputStream = new FileOutputStream(path);
+                    prototypeOutputStream = new FileOutputStream(path);
                 } catch (FileNotFoundException fileNotFoundException) {
                     throw ProgramError.unexpected("Could not open file for VM output stream: " + path, fileNotFoundException);
                 }
@@ -292,9 +292,9 @@ public final class Log {
         @Override
         public void write(int b) throws IOException {
             if (MaxineVM.isPrototyping()) {
-                _prototypeOutputStream.write(b);
+                prototypeOutputStream.write(b);
                 if (b == '\n') {
-                    _prototypeOutputStream.flush();
+                    prototypeOutputStream.flush();
                 }
             } else {
                 log_print_char(b);
@@ -304,10 +304,10 @@ public final class Log {
         @Override
         public void write(byte[] b, int off, int len) throws IOException {
             if (MaxineVM.isPrototyping()) {
-                _prototypeOutputStream.write(b, off, len);
+                prototypeOutputStream.write(b, off, len);
                 for (int i = (off + len) - 1; i >= off; --i) {
                     if (b[i] == '\n') {
-                        _prototypeOutputStream.flush();
+                        prototypeOutputStream.flush();
                         break;
                     }
                 }
@@ -346,11 +346,11 @@ public final class Log {
         if (!MaxineVM.isPrototyping()) {
             lockDisabledSafepoints = lock();
         }
-        print(fieldActor.name().string());
+        print(fieldActor.name.string);
         print(":");
-        print(fieldActor.descriptor().string());
+        print(fieldActor.descriptor().string);
         print(" in ");
-        print(fieldActor.holder().name().string(), withNewline);
+        print(fieldActor.holder().name.string, withNewline);
         if (!MaxineVM.isPrototyping()) {
             unlock(lockDisabledSafepoints);
         }
@@ -376,10 +376,10 @@ public final class Log {
         if (!MaxineVM.isPrototyping()) {
             lockDisabledSafepoints = lock();
         }
-        print(methodActor.name().string());
-        print(methodActor.descriptor().string());
+        print(methodActor.name.string);
+        print(methodActor.descriptor().string);
         print(" in ");
-        print(methodActor.holder().name().string(), withNewline);
+        print(methodActor.holder().name.string, withNewline);
         if (!MaxineVM.isPrototyping()) {
             unlock(lockDisabledSafepoints);
         }

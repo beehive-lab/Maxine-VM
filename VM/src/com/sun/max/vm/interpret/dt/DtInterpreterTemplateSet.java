@@ -32,17 +32,17 @@ import com.sun.max.vm.template.*;
  */
 public abstract class DtInterpreterTemplateSet {
 
-    private final Set<CompiledBytecodeTemplate> _templates;
-    private int _maxFrameSlots;
+    private final Set<CompiledBytecodeTemplate> templates;
+    private int maxFrameSlots;
 
     public DtInterpreterTemplateSet() {
         final TemplateTable templateTable = templateTable();
-        _maxFrameSlots = templateTable.maxFrameSlots();
-        _templates = new HashSet<CompiledBytecodeTemplate>();
+        maxFrameSlots = templateTable.maxFrameSlots;
+        templates = new HashSet<CompiledBytecodeTemplate>();
         for (Bytecode bytecode : Bytecode.VALUES) {
             // isLegalInClassfile is named wrongly!
             if (!bytecode.isLegalInClassfile() && !exclude(bytecode)) {
-                _templates.add(templateTable.get(bytecode));
+                templates.add(templateTable.get(bytecode));
             }
         }
 
@@ -53,11 +53,11 @@ public abstract class DtInterpreterTemplateSet {
     protected abstract boolean exclude(Bytecode bytecode);
 
     public int maxFrameSlots() {
-        return _maxFrameSlots;
+        return maxFrameSlots;
     }
 
     public Set<CompiledBytecodeTemplate> templates() {
-        return _templates;
+        return templates;
     }
 }
 

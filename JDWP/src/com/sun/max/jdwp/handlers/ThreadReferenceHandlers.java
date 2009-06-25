@@ -63,7 +63,7 @@ public class ThreadReferenceHandlers extends Handlers {
 
         @Override
         public Name.Reply handle(Name.IncomingRequest incomingRequest) throws JDWPException {
-            final ID.ThreadID thread = incomingRequest._thread;
+            final ID.ThreadID thread = incomingRequest.thread;
             final ThreadProvider threadProvider = session().getThread(thread);
             return new Name.Reply(threadProvider.getName());
         }
@@ -77,7 +77,7 @@ public class ThreadReferenceHandlers extends Handlers {
 
         @Override
         public Suspend.Reply handle(Suspend.IncomingRequest incomingRequest) throws JDWPException {
-            final ThreadProvider threadProvider = session().getThread(incomingRequest._thread);
+            final ThreadProvider threadProvider = session().getThread(incomingRequest.thread);
             threadProvider.suspend();
             return new Suspend.Reply();
         }
@@ -91,7 +91,7 @@ public class ThreadReferenceHandlers extends Handlers {
 
         @Override
         public Resume.Reply handle(Resume.IncomingRequest incomingRequest) throws JDWPException {
-            final ThreadProvider threadProvider = session().getThread(incomingRequest._thread);
+            final ThreadProvider threadProvider = session().getThread(incomingRequest.thread);
             threadProvider.resume();
             return new Resume.Reply();
         }
@@ -105,10 +105,10 @@ public class ThreadReferenceHandlers extends Handlers {
 
         @Override
         public Status.Reply handle(Status.IncomingRequest incomingRequest) throws JDWPException {
-            final ThreadProvider thread = session().getThread(incomingRequest._thread);
+            final ThreadProvider thread = session().getThread(incomingRequest.thread);
             final Status.Reply reply = new Status.Reply();
-            reply._suspendStatus = session().getSuspendStatus(thread);
-            reply._threadStatus = session().getThreadStatus(thread);
+            reply.suspendStatus = session().getSuspendStatus(thread);
+            reply.threadStatus = session().getThreadStatus(thread);
             return reply;
         }
     }
@@ -122,7 +122,7 @@ public class ThreadReferenceHandlers extends Handlers {
 
         @Override
         public ThreadGroup.Reply handle(ThreadGroup.IncomingRequest incomingRequest) throws JDWPException {
-            final ThreadProvider threadProvider = session().getThread(incomingRequest._thread);
+            final ThreadProvider threadProvider = session().getThread(incomingRequest.thread);
             final ThreadGroupProvider threadGroupProvider = threadProvider.getThreadGroup();
             return new ThreadGroup.Reply(session().toID(threadGroupProvider));
         }
@@ -136,18 +136,18 @@ public class ThreadReferenceHandlers extends Handlers {
 
         @Override
         public Frames.Reply handle(Frames.IncomingRequest incomingRequest) throws JDWPException {
-            final ThreadProvider threadProvider = session().getThread(incomingRequest._thread);
+            final ThreadProvider threadProvider = session().getThread(incomingRequest.thread);
             final FrameProvider[] frames = threadProvider.getFrames();
 
             final Frames.Reply reply = new Frames.Reply();
-            reply._frames = new Frames.Frame[frames.length];
+            reply.frames = new Frames.Frame[frames.length];
 
             for (int i = 0; i < frames.length; i++) {
                 final Frames.Frame frame = new Frames.Frame();
-                frame._frameID = session().toID(threadProvider, frames[i]);
+                frame.frameID = session().toID(threadProvider, frames[i]);
                 final FrameProvider frameProvider = frames[i];
-                frame._location = session().fromCodeLocation(frameProvider.getLocation());
-                reply._frames[i] = frame;
+                frame.location = session().fromCodeLocation(frameProvider.getLocation());
+                reply.frames[i] = frame;
             }
             return reply;
         }
@@ -162,7 +162,7 @@ public class ThreadReferenceHandlers extends Handlers {
 
         @Override
         public FrameCount.Reply handle(FrameCount.IncomingRequest incomingRequest) throws JDWPException {
-            final ThreadProvider thread = session().getThread(incomingRequest._thread);
+            final ThreadProvider thread = session().getThread(incomingRequest.thread);
             final FrameProvider[] frames = thread.getFrames();
             return new FrameCount.Reply(frames.length);
         }
@@ -180,7 +180,7 @@ public class ThreadReferenceHandlers extends Handlers {
 
             // TODO: Consider implementing this correctly!
             final OwnedMonitors.Reply r = new OwnedMonitors.Reply();
-            r._owned = new JDWPValue[0];
+            r.owned = new JDWPValue[0];
             return r;
         }
     }
@@ -197,7 +197,7 @@ public class ThreadReferenceHandlers extends Handlers {
 
             // TODO: Consider implementing this correctly!
             final CurrentContendedMonitor.Reply r = new CurrentContendedMonitor.Reply();
-            r._monitor = new JDWPValue(ObjectID.create(0, ObjectID.class));
+            r.monitor = new JDWPValue(ObjectID.create(0, ObjectID.class));
             return r;
         }
     }
@@ -210,8 +210,8 @@ public class ThreadReferenceHandlers extends Handlers {
 
         @Override
         public Stop.Reply handle(Stop.IncomingRequest incomingRequest) throws JDWPException {
-            final ThreadProvider thread = session().getThread(incomingRequest._thread);
-            final ObjectProvider exception = session().getObject(incomingRequest._throwable);
+            final ThreadProvider thread = session().getThread(incomingRequest.thread);
+            final ObjectProvider exception = session().getObject(incomingRequest.throwable);
             thread.stop(exception);
             return new Stop.Reply();
         }
@@ -226,7 +226,7 @@ public class ThreadReferenceHandlers extends Handlers {
 
         @Override
         public Interrupt.Reply handle(Interrupt.IncomingRequest incomingRequest) throws JDWPException {
-            final ThreadProvider thread = session().getThread(incomingRequest._thread);
+            final ThreadProvider thread = session().getThread(incomingRequest.thread);
             thread.interrupt();
             return new Interrupt.Reply();
         }
@@ -241,7 +241,7 @@ public class ThreadReferenceHandlers extends Handlers {
 
         @Override
         public SuspendCount.Reply handle(SuspendCount.IncomingRequest incomingRequest) throws JDWPException {
-            final ThreadProvider thread = session().getThread(incomingRequest._thread);
+            final ThreadProvider thread = session().getThread(incomingRequest.thread);
             return new SuspendCount.Reply(thread.suspendCount());
         }
     }

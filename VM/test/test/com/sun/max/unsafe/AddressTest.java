@@ -35,13 +35,13 @@ public class AddressTest extends WordTestCase {
     }
 
     public void test_toString() {
-        String s = _addressLow.toString();
-        assertEquals(s, "@" + Integer.toHexString(_low));
+        String s = addressLow.toString();
+        assertEquals(s, "@" + Integer.toHexString(low));
 
-        s = _address0.toString();
+        s = address0.toString();
         assertEquals(s, "@0");
 
-        s = _addressMax.toString();
+        s = addressMax.toString();
         switch (wordWidth()) {
             case BITS_64:
                 assertEquals(s, "@ffffffffffffffff");
@@ -56,19 +56,19 @@ public class AddressTest extends WordTestCase {
     }
 
     public void test_compareTo() {
-        assertTrue(_addressMedium.compareTo(_address0) > 0);
-        assertTrue(_addressMedium.compareTo(_addressMedium) == 0);
-        assertTrue(_addressMedium.compareTo(_addressHigh) < 0);
-        assertTrue(_address0.compareTo(_addressHigh) < 0);
-        assertTrue(_addressMax.compareTo(_address0) > 0);
-        assertTrue(_addressMax.compareTo(_addressHigh) > 0);
-        assertTrue(_addressMax.compareTo(_addressMax) == 0);
+        assertTrue(addressMedium.compareTo(address0) > 0);
+        assertTrue(addressMedium.compareTo(addressMedium) == 0);
+        assertTrue(addressMedium.compareTo(addressHigh) < 0);
+        assertTrue(address0.compareTo(addressHigh) < 0);
+        assertTrue(addressMax.compareTo(address0) > 0);
+        assertTrue(addressMax.compareTo(addressHigh) > 0);
+        assertTrue(addressMax.compareTo(addressMax) == 0);
         switch (wordWidth()) {
             case BITS_64:
-                assertTrue(_addressMax32.compareTo(_addressMax) < 0);
+                assertTrue(addressMax32.compareTo(addressMax) < 0);
                 break;
             case BITS_32:
-                assertTrue(_addressMax32.compareTo(_addressMax) == 0);
+                assertTrue(addressMax32.compareTo(addressMax) == 0);
                 break;
             default:
                 ProgramError.unknownCase();
@@ -77,22 +77,22 @@ public class AddressTest extends WordTestCase {
     }
 
     public void testLessThan() {
-        assertTrue(_addressLow.lessThan(Integer.MAX_VALUE));
-        assertFalse(_addressMax.lessThan(Integer.MAX_VALUE));
-        assertTrue(_address0.lessThan(1));
-        assertFalse(_address0.lessThan(0));
-        assertFalse(_addressLow.lessThan(_low));
-        assertTrue(_addressLow.lessThan(_low + 1));
-        assertTrue(_address0.lessThan(-1));
-        assertTrue(_address0.lessThan(-_low));
+        assertTrue(addressLow.lessThan(Integer.MAX_VALUE));
+        assertFalse(addressMax.lessThan(Integer.MAX_VALUE));
+        assertTrue(address0.lessThan(1));
+        assertFalse(address0.lessThan(0));
+        assertFalse(addressLow.lessThan(low));
+        assertTrue(addressLow.lessThan(low + 1));
+        assertTrue(address0.lessThan(-1));
+        assertTrue(address0.lessThan(-low));
         switch (wordWidth()) {
             case BITS_64:
-                assertFalse(_addressHigh.lessThan(Integer.MAX_VALUE));
-                assertTrue(_addressMax32.compareTo(_addressHigh) < 0);
+                assertFalse(addressHigh.lessThan(Integer.MAX_VALUE));
+                assertTrue(addressMax32.compareTo(addressHigh) < 0);
                 break;
             case BITS_32:
-                assertTrue(_addressHigh.lessThan(Integer.MAX_VALUE));
-                assertTrue(_addressMax32.compareTo(_addressHigh) > 0);
+                assertTrue(addressHigh.lessThan(Integer.MAX_VALUE));
+                assertTrue(addressMax32.compareTo(addressHigh) > 0);
                 break;
             default:
                 ProgramError.unknownCase();
@@ -101,41 +101,41 @@ public class AddressTest extends WordTestCase {
     }
 
     public void testEquals() {
-        assertTrue(_address0.equals(0));
-        assertTrue(_address1.equals(1));
-        assertTrue(_addressLow.equals(_low));
+        assertTrue(address0.equals(0));
+        assertTrue(address1.equals(1));
+        assertTrue(addressLow.equals(low));
         switch (wordWidth()) {
             case BITS_64:
-                assertFalse(_addressHigh.equals((int) _high));
+                assertFalse(addressHigh.equals((int) high));
                 break;
             case BITS_32:
-                assertTrue(_addressHigh.equals((int) _high));
+                assertTrue(addressHigh.equals((int) high));
                 break;
             default:
                 ProgramError.unknownCase();
                 break;
         }
 
-        assertFalse(_addressLow.equals(-1));
-        assertFalse(_addressLow.equals(-_low));
-        _addressMax.toString();
-        assertTrue(_addressMax.equals(Address.fromLong(-1L)));
+        assertFalse(addressLow.equals(-1));
+        assertFalse(addressLow.equals(-low));
+        addressMax.toString();
+        assertTrue(addressMax.equals(Address.fromLong(-1L)));
     }
 
     public void test_plus_Address() {
-        assertTrue(_addressMedium.plus(_addressLow).toInt() == _medium + _low);
-        assertTrue(_address0.plus(_address0).equals(_address0));
-        assertTrue(_addressMax.plus(_address1).toLong() == 0L);
+        assertTrue(addressMedium.plus(addressLow).toInt() == medium + low);
+        assertTrue(address0.plus(address0).equals(address0));
+        assertTrue(addressMax.plus(address1).toLong() == 0L);
 
-        final long result = _addressHigh.plus(_addressLow).toLong();
+        final long result = addressHigh.plus(addressLow).toLong();
         switch (wordWidth()) {
             case BITS_64:
-                assertTrue(result == _high + _low);
-                assertFalse(result == ((int) _high + _low));
+                assertTrue(result == high + low);
+                assertFalse(result == ((int) high + low));
                 break;
             case BITS_32:
-                assertFalse(result == _high + _low);
-                assertTrue(result == ((int) _high + _low));
+                assertFalse(result == high + low);
+                assertTrue(result == ((int) high + low));
                 break;
             default:
                 ProgramError.unknownCase();
@@ -144,40 +144,40 @@ public class AddressTest extends WordTestCase {
     }
 
     public void test_plus_Offset() {
-        assertTrue(_address0.plus(_offset1).equals(_address1));
-        assertTrue(_address1.plus(_offset1.negate()).equals(_address0));
-        assertTrue(_addressMedium.plus(Offset.fromInt(_low)).toInt() == _medium + _low);
-        assertTrue(_addressMedium.plus(Offset.fromInt(-_low)).toInt() == _medium - _low);
-        assertTrue(_address0.plus(Offset.zero()).equals(_address0));
-        assertTrue(_addressMax.plus(_offset1).toLong() == 0L);
-        assertTrue(_address0.plus(_offset1.negate()).equals(_addressMax));
+        assertTrue(address0.plus(offset1).equals(address1));
+        assertTrue(address1.plus(offset1.negate()).equals(address0));
+        assertTrue(addressMedium.plus(Offset.fromInt(low)).toInt() == medium + low);
+        assertTrue(addressMedium.plus(Offset.fromInt(-low)).toInt() == medium - low);
+        assertTrue(address0.plus(Offset.zero()).equals(address0));
+        assertTrue(addressMax.plus(offset1).toLong() == 0L);
+        assertTrue(address0.plus(offset1.negate()).equals(addressMax));
 
-        long result = _addressHigh.plus(_offsetLow).toLong();
+        long result = addressHigh.plus(offsetLow).toLong();
         switch (wordWidth()) {
             case BITS_64:
-                assertTrue(result == _high + _low);
-                assertFalse(result == ((int) _high + _low));
+                assertTrue(result == high + low);
+                assertFalse(result == ((int) high + low));
                 break;
             case BITS_32:
-                assertFalse(result == _high + _low);
-                assertTrue(result == ((int) _high + _low));
+                assertFalse(result == high + low);
+                assertTrue(result == ((int) high + low));
                 break;
             default:
                 ProgramError.unknownCase();
                 break;
         }
-        assertTrue(_addressLow.plus(_offsetHigh).equals(Address.fromLong(result)));
+        assertTrue(addressLow.plus(offsetHigh).equals(Address.fromLong(result)));
 
-        result = _addressLow.plus(_offsetHigh.negate()).toLong();
-        final long difference = _low - _high;
+        result = addressLow.plus(offsetHigh.negate()).toLong();
+        final long difference = low - high;
         final long differenceLowBits = difference & 0xffffffffL;
         switch (wordWidth()) {
             case BITS_64:
-                assertTrue(result == _low - _high);
+                assertTrue(result == low - high);
                 assertFalse(result == differenceLowBits);
                 break;
             case BITS_32:
-                assertFalse(result == _low - _high);
+                assertFalse(result == low - high);
                 assertTrue(result == differenceLowBits);
                 break;
             default:
@@ -187,50 +187,50 @@ public class AddressTest extends WordTestCase {
     }
 
     public void test_plus_int() {
-        assertTrue(_address0.plus(1).equals(_address1));
-        assertTrue(_address1.plus(-1).equals(_address0));
-        assertTrue(_addressMedium.plus(_low).toInt() == _medium + _low);
-        assertTrue(_addressMedium.plus(-_low).toInt() == _medium - _low);
-        assertTrue(_address0.plus(0).equals(_address0));
+        assertTrue(address0.plus(1).equals(address1));
+        assertTrue(address1.plus(-1).equals(address0));
+        assertTrue(addressMedium.plus(low).toInt() == medium + low);
+        assertTrue(addressMedium.plus(-low).toInt() == medium - low);
+        assertTrue(address0.plus(0).equals(address0));
 
-        assertTrue(_addressMax.plus(1).toLong() == 0L);
-        assertTrue(_address0.plus(-1).equals(_addressMax));
+        assertTrue(addressMax.plus(1).toLong() == 0L);
+        assertTrue(address0.plus(-1).equals(addressMax));
 
-        final long result = _addressHigh.plus(_low).toLong();
+        final long result = addressHigh.plus(low).toLong();
         switch (wordWidth()) {
             case BITS_64:
-                assertTrue(result == _high + _low);
-                assertFalse(result == ((int) _high + _low));
+                assertTrue(result == high + low);
+                assertFalse(result == ((int) high + low));
                 break;
             case BITS_32:
-                assertFalse(result == _high + _low);
-                assertTrue(result == ((int) _high + _low));
+                assertFalse(result == high + low);
+                assertTrue(result == ((int) high + low));
                 break;
             default:
                 ProgramError.unknownCase();
                 break;
         }
-        assertTrue(_addressLow.plus((int) _high).equals(Address.fromInt(_low + (int) _high)));
+        assertTrue(addressLow.plus((int) high).equals(Address.fromInt(low + (int) high)));
     }
 
     public void test_minus_Address() {
-        assertTrue(_address1.minus(_address1).equals(_address0));
-        assertTrue(_address0.minus(_address1).equals(_addressMax));
-        assertTrue(_addressMedium.minus(_addressLow).toInt() == _medium - _low);
+        assertTrue(address1.minus(address1).equals(address0));
+        assertTrue(address0.minus(address1).equals(addressMax));
+        assertTrue(addressMedium.minus(addressLow).toInt() == medium - low);
     }
 
     public void test_minus_Offset() {
-        assertTrue(_address1.minus(_offset1).equals(_address0));
-        assertTrue(_addressMedium.minus(_offsetLow).toInt() == _medium - _low);
-        assertTrue(_address0.minus(_offset1).equals(_addressMax));
+        assertTrue(address1.minus(offset1).equals(address0));
+        assertTrue(addressMedium.minus(offsetLow).toInt() == medium - low);
+        assertTrue(address0.minus(offset1).equals(addressMax));
         switch (wordWidth()) {
             case BITS_64: {
-                assertTrue(_addressLow.minus(_offsetMedium).equals(_offsetLow.minus(_offsetMedium)));
+                assertTrue(addressLow.minus(offsetMedium).equals(offsetLow.minus(offsetMedium)));
                 break;
             }
             case BITS_32: {
-                final long v = ((long) _low - (long) _medium) & LOW_32_BITS_MASK;
-                assertTrue(_addressLow.minus(_offsetMedium).toLong() == v);
+                final long v = ((long) low - (long) medium) & LOW_32_BITS_MASK;
+                assertTrue(addressLow.minus(offsetMedium).toLong() == v);
                 break;
             }
             default: {
@@ -241,56 +241,56 @@ public class AddressTest extends WordTestCase {
     }
 
     public void test_minus_int() {
-        assertTrue(_address1.minus(1).equals(_address0));
-        assertTrue(_addressMedium.minus(_low).toInt() == _medium - _low);
-        assertTrue(_addressMedium.minus(_low).equals(_offsetLow.negate().plus(_offsetMedium)));
-        assertTrue(_address0.minus(1).equals(_addressMax));
+        assertTrue(address1.minus(1).equals(address0));
+        assertTrue(addressMedium.minus(low).toInt() == medium - low);
+        assertTrue(addressMedium.minus(low).equals(offsetLow.negate().plus(offsetMedium)));
+        assertTrue(address0.minus(1).equals(addressMax));
     }
 
     public void test_dividedBy() {
         try {
-            _addressLow.dividedBy(0);
+            addressLow.dividedBy(0);
             fail();
         } catch (ArithmeticException arithmeticException) {
         }
         try {
-            _addressLow.dividedBy(-1);
+            addressLow.dividedBy(-1);
         } catch (ArithmeticException arithmeticException) {
         }
-        assertTrue(_addressLow.dividedBy(4).toInt() == _low / 4);
-        assertTrue(_address0.dividedBy(42).toInt() == 0);
+        assertTrue(addressLow.dividedBy(4).toInt() == low / 4);
+        assertTrue(address0.dividedBy(42).toInt() == 0);
     }
 
     public void test_remainder() {
         try {
-            _addressLow.remainder(0);
+            addressLow.remainder(0);
             fail();
         } catch (ArithmeticException arithmeticException) {
         }
         try {
-            _addressLow.remainder(-1);
+            addressLow.remainder(-1);
         } catch (ArithmeticException arithmeticException) {
         }
         for (int i = 0; i < 10; i++) {
             assertTrue(Address.fromInt(i).remainder(4) == i % 4);
         }
-        assertTrue(_address0.remainder(42) == 0);
+        assertTrue(address0.remainder(42) == 0);
     }
 
     public void test_isRoundedBy() {
         try {
-            _addressLow.isRoundedBy(0);
+            addressLow.isRoundedBy(0);
             fail();
         } catch (ArithmeticException arithmeticException) {
         }
         try {
-            _addressLow.isRoundedBy(-1);
+            addressLow.isRoundedBy(-1);
         } catch (ArithmeticException arithmeticException) {
         }
         for (int i = 0; i < 10; i++) {
             assertTrue(Address.fromInt(i).isRoundedBy(4) == (i % 4 == 0));
         }
-        assertTrue(_address0.isRoundedBy(42));
+        assertTrue(address0.isRoundedBy(42));
     }
 
     private int roundedUpBy(int base, int number) {
@@ -303,38 +303,38 @@ public class AddressTest extends WordTestCase {
 
     public void test_roundedUpBy() {
         try {
-            _addressLow.roundedUpBy(0);
+            addressLow.roundedUpBy(0);
             fail();
         } catch (ArithmeticException arithmeticException) {
         }
         try {
-            _addressLow.roundedUpBy(-1);
+            addressLow.roundedUpBy(-1);
         } catch (ArithmeticException arithmeticException) {
         }
         for (int i = 0; i < 20; i++) {
             assertTrue(Address.fromInt(i).roundedUpBy(8).toInt() == roundedUpBy(8, i));
         }
-        assertTrue(_address0.roundedUpBy(12).equals(_address0));
+        assertTrue(address0.roundedUpBy(12).equals(address0));
     }
 
     public void test_roundedDownBy() {
         try {
-            _addressLow.roundedDownBy(0);
+            addressLow.roundedDownBy(0);
             fail();
         } catch (ArithmeticException arithmeticException) {
         }
         try {
-            _addressLow.roundedDownBy(-1);
+            addressLow.roundedDownBy(-1);
         } catch (ArithmeticException arithmeticException) {
         }
         for (int i = 0; i < 20; i++) {
             assertTrue(Address.fromInt(i).roundedDownBy(8).toInt() == (i & ~7));
         }
-        assertTrue(_address0.roundedDownBy(12).equals(_address0));
+        assertTrue(address0.roundedDownBy(12).equals(address0));
     }
 
     public void test_align() {
-        final int n = Platform.hostOrTarget().processorKind().dataModel().alignment().numberOfBytes();
+        final int n = Platform.hostOrTarget().processorKind.dataModel.alignment.numberOfBytes();
         assertTrue(Address.zero().aligned().toInt() == 0);
         assertTrue(Address.fromInt(1).aligned().toInt() == n);
         assertTrue(Address.fromInt(n).aligned().toInt() == n);
@@ -351,7 +351,7 @@ public class AddressTest extends WordTestCase {
     }
 
     public void test_aligned() {
-        final int n = Platform.hostOrTarget().processorKind().dataModel().alignment().numberOfBytes();
+        final int n = Platform.hostOrTarget().processorKind.dataModel.alignment.numberOfBytes();
         assertTrue(Address.zero().isAligned());
         assertFalse(Address.fromInt(1).isAligned());
         assertFalse(Address.fromInt(n - (n / 2)).isAligned());
@@ -368,27 +368,27 @@ public class AddressTest extends WordTestCase {
     }
 
     public void test_times_Address() {
-        assertTrue(_address0.times(_addressHigh).equals(_address0));
-        assertTrue(_address0.times(_addressLow).toInt() == 0);
-        assertTrue(_address1.times(_address1).toInt() == 1);
-        assertTrue(_addressTiny.times(_addressTiny).toLong() == (long) _tiny * (long) _tiny);
-        assertTrue(_address1.times(_addressHigh).equals(_addressHigh));
-        assertTrue(_address1.times(_addressLow).toInt() == _addressLow.toInt());
+        assertTrue(address0.times(addressHigh).equals(address0));
+        assertTrue(address0.times(addressLow).toInt() == 0);
+        assertTrue(address1.times(address1).toInt() == 1);
+        assertTrue(addressTiny.times(addressTiny).toLong() == (long) tiny * (long) tiny);
+        assertTrue(address1.times(addressHigh).equals(addressHigh));
+        assertTrue(address1.times(addressLow).toInt() == addressLow.toInt());
         switch (wordWidth()) {
             case BITS_64:
-                assertTrue(_addressLow.times(_addressLow).toLong() == (long) _low * (long) _low);
-                assertTrue(_addressMax.times(_addressMax).equals(_address1));
-                _addressHigh.toLong();
-                _addressHigh.times(_addressHigh).toLong();
+                assertTrue(addressLow.times(addressLow).toLong() == (long) low * (long) low);
+                assertTrue(addressMax.times(addressMax).equals(address1));
+                addressHigh.toLong();
+                addressHigh.times(addressHigh).toLong();
 
-                _addressMax.toLong();
-                _addressMax.dividedBy(2).toLong();
+                addressMax.toLong();
+                addressMax.dividedBy(2).toLong();
 
-                assertTrue(_addressHigh.times(_addressHigh).lessThan(_addressMax.dividedBy(2)));
-                assertTrue(_addressHigh.times(_addressHigh).greaterThan(_addressHigh));
+                assertTrue(addressHigh.times(addressHigh).lessThan(addressMax.dividedBy(2)));
+                assertTrue(addressHigh.times(addressHigh).greaterThan(addressHigh));
                 break;
             case BITS_32:
-                assertTrue(_addressLow.times(_addressLow).toLong() < (long) _low * (long) _low);
+                assertTrue(addressLow.times(addressLow).toLong() < (long) low * (long) low);
                 break;
             default:
                 ProgramError.unknownCase();

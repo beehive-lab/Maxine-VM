@@ -37,64 +37,63 @@ import com.sun.max.vm.value.*;
  */
 public abstract class DirToEirInstructionTranslation implements DirVisitor {
 
-    private final DirToEirMethodTranslation _methodTranslation;
+    private final DirToEirMethodTranslation methodTranslation;
 
     public final DirToEirMethodTranslation methodTranslation() {
-        return _methodTranslation;
+        return methodTranslation;
     }
 
-    private EirBlock _eirBlock;
+    private EirBlock eirBlock;
 
     public final EirBlock eirBlock() {
-        return _eirBlock;
+        return eirBlock;
     }
 
     public final void setEirBlock(EirBlock eirBlock) {
-        _eirBlock = eirBlock;
-
+        this.eirBlock = eirBlock;
     }
 
     public final EirABI abi() {
-        return _methodTranslation.eirMethod().abi();
+        return methodTranslation.eirMethod().abi();
     }
 
     public final void addInstruction(EirInstruction instruction) {
-        _eirBlock.appendInstruction(instruction);
+        eirBlock.appendInstruction(instruction);
     }
 
     public final EirBlock createEirBlock(IrBlock.Role role) {
-        return _methodTranslation.createEirBlock(role);
+        return methodTranslation.createEirBlock(role);
     }
 
-    public final void setBlock(EirBlock eirBlock) {
-        _eirBlock = eirBlock;
+    public final void setBlock(EirBlock block) {
+        this.eirBlock = block;
     }
 
     public final EirBlock dirToEirBlock(DirBlock dirBlock) {
-        return _methodTranslation.dirToEirBlock(dirBlock);
+        return methodTranslation.dirToEirBlock(dirBlock);
     }
 
     public DirToEirInstructionTranslation(DirToEirMethodTranslation methodTranslation, EirBlock eirBlock) {
-        _methodTranslation = methodTranslation;
-        _eirBlock = eirBlock;
+        this.methodTranslation = methodTranslation;
+        this.eirBlock = eirBlock;
     }
 
     public final void addTry(DirCall dirCall) {
-        final EirBlock eirCatchBlock = _methodTranslation.dirToEirBlock(dirCall.catchBlock());
+        final EirBlock eirCatchBlock = methodTranslation.dirToEirBlock(dirCall.catchBlock());
         if (eirCatchBlock != null) {
-            eirCatchBlock.addPredecessor(_eirBlock);
+            eirCatchBlock.addPredecessor(eirBlock);
         }
         addInstruction(new EirTry(eirBlock(), eirCatchBlock));
     }
 
     public final void addJump(EirBlock toBlock) {
-        _methodTranslation.addJump(_eirBlock, toBlock);
+        methodTranslation.addJump(eirBlock, toBlock);
     }
 
     public final void splitBlock() {
-        final EirBlock eirBlock = createEirBlock(IrBlock.Role.NORMAL);
-        addJump(eirBlock);
-        setEirBlock(eirBlock);
+        final EirBlock block = createEirBlock(IrBlock.Role.NORMAL);
+        addJump(block);
+        setEirBlock(block);
     }
 
     protected abstract DirToEirBuiltinTranslation createBuiltinTranslation(DirToEirInstructionTranslation instructionTranslation, DirJavaFrameDescriptor javaFrameDescriptor);
@@ -109,11 +108,11 @@ public abstract class DirToEirInstructionTranslation implements DirVisitor {
     }
 
     public final EirVariable createEirVariable(Kind kind) {
-        return _methodTranslation.createEirVariable(kind);
+        return methodTranslation.createEirVariable(kind);
     }
 
     public EirConstant createEirConstant(Value value) {
-        return _methodTranslation.createEirConstant(value);
+        return methodTranslation.createEirConstant(value);
     }
 
     /**
@@ -122,36 +121,36 @@ public abstract class DirToEirInstructionTranslation implements DirVisitor {
     public abstract void assignZero(Kind kind, EirValue variable);
 
     public EirValue dirToEirValue(DirValue dirValue) {
-        if (dirValue != null && dirValue.isZeroConstant() && (dirValue.kind().width() == WordWidth.BITS_64 || dirValue.kind() == Kind.FLOAT)) {
+        if (dirValue != null && dirValue.isZeroConstant() && (dirValue.kind().width == WordWidth.BITS_64 || dirValue.kind() == Kind.FLOAT)) {
             final EirVariable variable = createEirVariable(dirValue.kind());
             assignZero(dirValue.kind(), variable);
             return variable;
         }
-        return _methodTranslation.dirToEirValue(dirValue);
+        return methodTranslation.dirToEirValue(dirValue);
     }
 
     public final EirConstant dirToEirConstant(DirConstant dirConstant) {
-        return _methodTranslation.dirToEirConstant(dirConstant);
+        return methodTranslation.dirToEirConstant(dirConstant);
     }
 
     public final EirInstruction assign(Kind kind, EirValue destination, EirValue source) {
-        final EirInstruction assignment = _methodTranslation.createAssignment(_eirBlock, kind, destination, source);
-        _eirBlock.appendInstruction(assignment);
+        final EirInstruction assignment = methodTranslation.createAssignment(eirBlock, kind, destination, source);
+        eirBlock.appendInstruction(assignment);
         return assignment;
     }
 
     public void visitReturn(DirReturn dirReturn) {
         final DirValue dirValue = dirReturn.returnValue();
 
-        if (_methodTranslation.requiresEpilogue()) {
-            addJump(_methodTranslation.makeEpilogue());
+        if (methodTranslation.requiresEpilogue()) {
+            addJump(methodTranslation.makeEpilogue());
             if (dirValue.kind() != Kind.VOID) {
-                _methodTranslation.addResultValue(_methodTranslation.dirToEirValue(dirValue));
+                methodTranslation.addResultValue(methodTranslation.dirToEirValue(dirValue));
             }
         } else {
-            final EirEpilogue eirEpilogue = _methodTranslation.createEpilogueAndReturn(_eirBlock);
+            final EirEpilogue eirEpilogue = methodTranslation.createEpilogueAndReturn(eirBlock);
             if (dirValue.kind() != Kind.VOID) {
-                final EirValue eirResultValue = _methodTranslation.dirToEirValue(dirValue);
+                final EirValue eirResultValue = methodTranslation.dirToEirValue(dirValue);
                 eirEpilogue.addResultValue(eirResultValue);
             }
         }
@@ -160,30 +159,30 @@ public abstract class DirToEirInstructionTranslation implements DirVisitor {
     private void generateCall(DirJavaFrameDescriptor dirJavaFrameDescriptor, EirABI abi, Kind resultKind, EirValue result, EirValue function, Kind[] argumentKinds, EirValue... arguments) {
         final EirLocation[] argumentLocations = abi.getParameterLocations(EirStackSlot.Purpose.LOCAL, argumentKinds);
         final EirLocation resultLocation = (result == null) ? null : abi.getResultLocation(resultKind);
-        final boolean isTemplate = _methodTranslation.isTemplate();
+        final boolean isTemplate = methodTranslation.isTemplate();
         final EirCall instruction = isTemplate ?
-                        _methodTranslation.createRuntimeCall(_eirBlock, abi, result, resultLocation, function, arguments, argumentLocations) :
-                        _methodTranslation.createCall(_eirBlock, abi, result, resultLocation, function, arguments, argumentLocations);
+                        methodTranslation.createRuntimeCall(eirBlock, abi, result, resultLocation, function, arguments, argumentLocations) :
+                        methodTranslation.createCall(eirBlock, abi, result, resultLocation, function, arguments, argumentLocations);
         addInstruction(instruction);
         if (!isTemplate) {
-            instruction.setEirJavaFrameDescriptor(_methodTranslation.dirToEirJavaFrameDescriptor(dirJavaFrameDescriptor, instruction));
+            instruction.setEirJavaFrameDescriptor(methodTranslation.dirToEirJavaFrameDescriptor(dirJavaFrameDescriptor, instruction));
         }
     }
 
-    private EirValue _raiseThrowableEirValue = null;
+    private EirValue raiseThrowableEirValue = null;
 
     private EirValue makeRaiseThrowableEirValue() {
-        if (_raiseThrowableEirValue == null) {
-            _raiseThrowableEirValue = _methodTranslation.makeEirMethodValue(NonFoldableSnippet.RaiseThrowable.SNIPPET.classMethodActor());
+        if (raiseThrowableEirValue == null) {
+            raiseThrowableEirValue = methodTranslation.makeEirMethodValue(NonFoldableSnippet.RaiseThrowable.SNIPPET.classMethodActor());
         }
-        return _raiseThrowableEirValue;
+        return raiseThrowableEirValue;
     }
 
     public final void visitThrow(DirThrow dirThrow) {
         addInstruction(new EirTry(eirBlock(), null));
         final MethodActor classMethodActor = NonFoldableSnippet.RaiseThrowable.SNIPPET.classMethodActor();
-        final EirValue eirThrowable = _methodTranslation.dirToEirValue(dirThrow.throwable());
-        generateCall(null, _methodTranslation.eirGenerator().eirABIsScheme().javaABI(), null, null,
+        final EirValue eirThrowable = methodTranslation.dirToEirValue(dirThrow.throwable());
+        generateCall(null, methodTranslation.eirGenerator().eirABIsScheme().javaABI(), null, null,
                      makeRaiseThrowableEirValue(), classMethodActor.getParameterKinds(), eirThrowable);
         // No need for a JavaFrameDescriptor here.
         // Throw.raise() disables safepoints until the exception has been delivered to its dispatcher.
@@ -209,11 +208,11 @@ public abstract class DirToEirInstructionTranslation implements DirVisitor {
         EirABI abi;
         if (dirMethodCall.method() instanceof DirMethodValue) {
             final DirMethodValue dirMethodValue = (DirMethodValue) dirMethodCall.method();
-            abi = _methodTranslation.eirGenerator().eirABIsScheme().getABIFor(dirMethodValue.classMethodActor());
+            abi = methodTranslation.eirGenerator().eirABIsScheme().getABIFor(dirMethodValue.classMethodActor());
         } else if (dirMethodCall.isNative()) {
-            abi = _methodTranslation.eirGenerator().eirABIsScheme().nativeABI();
+            abi = methodTranslation.eirGenerator().eirABIsScheme().nativeABI();
         } else {
-            abi = _methodTranslation.eirGenerator().eirABIsScheme().javaABI();
+            abi = methodTranslation.eirGenerator().eirABIsScheme().javaABI();
         }
 
         generateCall(dirMethodCall.javaFrameDescriptor(), abi, resultKind, eirResult, methodEirValue, argumentKinds, eirArguments);
@@ -224,13 +223,13 @@ public abstract class DirToEirInstructionTranslation implements DirVisitor {
     }
 
     public final void visitGoto(DirGoto dirGoto) {
-        final EirBlock eirBlock = _methodTranslation.dirToEirBlock(dirGoto.targetBlock());
-        addJump(eirBlock);
+        final EirBlock block = methodTranslation.dirToEirBlock(dirGoto.targetBlock());
+        addJump(block);
     }
 
     public final void visitAssign(DirAssign dirAssign) {
-        final EirValue destination = _methodTranslation.dirToEirValue(dirAssign.destination());
-        final EirValue source = _methodTranslation.dirToEirValue(dirAssign.source());
+        final EirValue destination = methodTranslation.dirToEirValue(dirAssign.destination());
+        final EirValue source = methodTranslation.dirToEirValue(dirAssign.source());
         assign(destination.kind(), destination, source);
     }
 

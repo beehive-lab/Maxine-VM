@@ -44,81 +44,45 @@ import com.sun.max.vm.value.*;
  */
 public abstract class Kind<Value_Type extends Value<Value_Type>> {
 
-    final KindEnum _kindEnum;
-    private final Utf8Constant _name;
-    private final Class _javaClass;
-    private final Class _javaArrayClass;
-    private final Class<Value_Type> _valueClass;
+    public final KindEnum asEnum;
+    public final Utf8Constant name;
+    public final Class javaClass;
+    public final Class javaArrayClass;
+    public final Class<Value_Type> valueClass;
     @INSPECTED
-    private final char _character;
-    private final Class _boxedClass;
-    private final TypeDescriptor _typeDescriptor;
-    private final WordWidth _width;
+    public final char character;
+    public final Class boxedClass;
+    public final TypeDescriptor typeDescriptor;
+    public final WordWidth width;
 
     protected Kind(KindEnum kindEnum, String name, Class javaClass, Class javaArrayClass, Class<Value_Type> valueClass, char character,
                    final Class boxedClass, TypeDescriptor typeDescriptor, WordWidth width) {
-        _kindEnum = kindEnum;
-        _name = SymbolTable.makeSymbol(name);
-        _javaClass = javaClass;
-        _javaArrayClass = javaArrayClass;
-        _valueClass = valueClass;
-        _character = character;
-        _boxedClass = boxedClass;
-        _typeDescriptor = typeDescriptor;
-        _width = width;
-    }
-
-    @INLINE
-    public final KindEnum asEnum() {
-        return _kindEnum;
+        this.asEnum = kindEnum;
+        this.name = SymbolTable.makeSymbol(name);
+        this.javaClass = javaClass;
+        this.javaArrayClass = javaArrayClass;
+        this.valueClass = valueClass;
+        this.character = character;
+        this.boxedClass = boxedClass;
+        this.typeDescriptor = typeDescriptor;
+        this.width = width;
     }
 
     @Override
     public final int hashCode() {
-        return _name.hashCode();
-    }
-
-    @INLINE
-    public final Utf8Constant name() {
-        return _name;
+        return name.hashCode();
     }
 
     @Override
     public String toString() {
-        return name().toString();
-    }
-
-    /**
-     * @return the number of bits in a value of this kind
-     */
-    @INLINE
-    public final WordWidth width() {
-        return _width;
-    }
-
-    /**
-     * @return the number of bytes in a value of this kind
-     */
-    @INLINE
-    public final int size() {
-        return width().numberOfBytes();
-    }
-
-    @INLINE
-    public final Class toJava() {
-        return _javaClass;
-    }
-
-    @INLINE
-    public final Class javaArrayClass() {
-        return _javaArrayClass;
+        return name.toString();
     }
 
     public static Kind<?> fromJava(Class type) {
         if (MaxineVM.isPrototyping()) {
             if (type.isPrimitive()) {
                 for (Kind kind : Kind.PRIMITIVE_JAVA_CLASSES) {
-                    if (kind._javaClass == type) {
+                    if (kind.javaClass == type) {
                         return kind;
                     }
                 }
@@ -128,14 +92,14 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
             }
             return Kind.REFERENCE;
         }
-        return ClassActor.fromJava(type).kind();
+        return ClassActor.fromJava(type).kind;
     }
 
     public static Kind<?> fromBoxedClass(Class type) {
         assert !type.isPrimitive();
         if (MaxineVM.isPrototyping()) {
             for (Kind kind : Kind.PRIMITIVE_JAVA_CLASSES) {
-                if (kind._boxedClass == type) {
+                if (kind.boxedClass == type) {
                     return kind;
                 }
             }
@@ -145,27 +109,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
             }
             return Kind.REFERENCE;
         }
-        return ClassActor.fromJava(type).kind();
-    }
-
-    @INLINE
-    public final Class<Value_Type> valueClass() {
-        return _valueClass;
-    }
-
-    @INLINE
-    public final char character() {
-        return _character;
-    }
-
-    @INLINE
-    public final Class boxedClass() {
-        return _boxedClass;
-    }
-
-    @INLINE
-    public final TypeDescriptor typeDescriptor() {
-        return _typeDescriptor;
+        return ClassActor.fromJava(type).kind;
     }
 
     public boolean isCategory1() {
@@ -187,15 +131,15 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
      * Determines if this is a primitive kind other than {@code void}.
      */
     public final boolean isPrimitiveValue() {
-        return JavaTypeDescriptor.isPrimitive(typeDescriptor());
+        return JavaTypeDescriptor.isPrimitive(typeDescriptor);
     }
 
     public final boolean isExtendedPrimitiveValue() {
-        return asEnum() != KindEnum.REFERENCE && asEnum() != KindEnum.VOID;
+        return asEnum != KindEnum.REFERENCE && asEnum != KindEnum.VOID;
     }
 
     public final boolean isPrimitiveOfSameSizeAs(Kind kind) {
-        return kind == this || isPrimitiveValue() && kind.isPrimitiveValue() && size() == kind.size();
+        return kind == this || isPrimitiveValue() && kind.isPrimitiveValue() && width.numberOfBytes == kind.width.numberOfBytes;
     }
 
     public abstract ArrayLayout<Value_Type> arrayLayout(LayoutScheme layoutScheme);
@@ -221,7 +165,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
     }
 
     public void writeErasedValue(Object object, int offset, Value value) {
-        final Value_Type v = _valueClass.cast(value);
+        final Value_Type v = valueClass.cast(value);
         writeValue(object, offset, v);
     }
 
@@ -234,7 +178,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
     }
 
     public void setErasedValue(Object array, int index, Value value) {
-        final Value_Type v = _valueClass.cast(value);
+        final Value_Type v = valueClass.cast(value);
         setValue(array, index, v);
     }
 
@@ -381,7 +325,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
 
         @Override
         public final ByteArrayLayout arrayLayout(LayoutScheme layoutScheme) {
-            return layoutScheme.byteArrayLayout();
+            return layoutScheme.byteArrayLayout;
         }
 
         @Override
@@ -458,7 +402,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
 
         @Override
         public final BooleanArrayLayout arrayLayout(LayoutScheme layoutScheme) {
-            return layoutScheme.booleanArrayLayout();
+            return layoutScheme.booleanArrayLayout;
         }
 
         @Override
@@ -535,7 +479,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
 
         @Override
         public final ShortArrayLayout arrayLayout(LayoutScheme layoutScheme) {
-            return layoutScheme.shortArrayLayout();
+            return layoutScheme.shortArrayLayout;
         }
 
         @Override
@@ -612,7 +556,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
 
         @Override
         public final CharArrayLayout arrayLayout(LayoutScheme layoutScheme) {
-            return layoutScheme.charArrayLayout();
+            return layoutScheme.charArrayLayout;
         }
 
         @Override
@@ -684,7 +628,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
 
         @Override
         public final IntArrayLayout arrayLayout(LayoutScheme layoutScheme) {
-            return layoutScheme.intArrayLayout();
+            return layoutScheme.intArrayLayout;
         }
 
         @Override
@@ -756,7 +700,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
 
         @Override
         public final FloatArrayLayout arrayLayout(LayoutScheme layoutScheme) {
-            return layoutScheme.floatArrayLayout();
+            return layoutScheme.floatArrayLayout;
         }
 
         @Override
@@ -843,7 +787,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
 
         @Override
         public final LongArrayLayout arrayLayout(LayoutScheme layoutScheme) {
-            return layoutScheme.longArrayLayout();
+            return layoutScheme.longArrayLayout;
         }
 
         @Override
@@ -930,7 +874,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
 
         @Override
         public final DoubleArrayLayout arrayLayout(LayoutScheme layoutScheme) {
-            return layoutScheme.doubleArrayLayout();
+            return layoutScheme.doubleArrayLayout;
         }
 
         @Override
@@ -1005,7 +949,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
 
         @Override
         public final WordArrayLayout arrayLayout(LayoutScheme layoutScheme) {
-            return layoutScheme.wordArrayLayout();
+            return layoutScheme.wordArrayLayout;
         }
 
         @Override
@@ -1071,7 +1015,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
 
         @Override
         public final ReferenceArrayLayout arrayLayout(LayoutScheme layoutScheme) {
-            return layoutScheme.referenceArrayLayout();
+            return layoutScheme.referenceArrayLayout;
         }
 
         @Override

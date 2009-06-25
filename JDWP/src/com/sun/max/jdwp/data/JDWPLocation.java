@@ -30,53 +30,53 @@ import java.io.*;
  */
 public class JDWPLocation {
 
-    private byte _type;
-    private ID.ClassID _clazz;
-    private ID.MethodID _method;
-    private long _index;
+    private byte type;
+    private ID.ClassID clazz;
+    private ID.MethodID method;
+    private long index;
 
     public JDWPLocation(InputStream is) throws IOException {
         final DataInputStream dis = new DataInputStream(is);
-        _type = dis.readByte();
-        _clazz = ID.read(is, ID.ClassID.class);
-        _method = ID.read(is, ID.MethodID.class);
-        _index = dis.readLong();
+        this.type = dis.readByte();
+        this.clazz = ID.read(is, ID.ClassID.class);
+        this.method = ID.read(is, ID.MethodID.class);
+        this.index = dis.readLong();
     }
 
     public JDWPLocation(byte type, ID.ClassID klass, ID.MethodID method, long index) {
-        _type = type;
-        _clazz = klass;
-        _method = method;
-        _index = index;
+        this.type = type;
+        this.clazz = klass;
+        this.method = method;
+        this.index = index;
     }
 
     public void write(OutputStream os) throws IOException {
         final DataOutputStream dos = new DataOutputStream(os);
-        dos.writeByte(_type);
-        _clazz.write(os);
-        _method.write(os);
-        dos.writeLong(_index);
+        dos.writeByte(type);
+        clazz.write(os);
+        method.write(os);
+        dos.writeLong(index);
     }
 
     public byte getType() {
-        return _type;
+        return type;
     }
 
     public ID.ClassID getClassID() {
-        return _clazz;
+        return clazz;
     }
 
     public ID.MethodID getMethodID() {
-        return _method;
+        return method;
     }
 
     public long getIndex() {
-        return _index;
+        return index;
     }
 
     @Override
     public int hashCode() {
-        final int result = _type + (int) _index << 8;
+        final int result = type + (int) index << 8;
         return result;
     }
 
@@ -84,7 +84,7 @@ public class JDWPLocation {
     public boolean equals(Object obj) {
         if (obj instanceof JDWPLocation) {
             final JDWPLocation other = (JDWPLocation) obj;
-            return other._type == _type && other._index == _index && other._clazz.equals(other._clazz) && other._method.equals(_method);
+            return other.type == type && other.index == index && other.clazz.equals(other.clazz) && other.method.equals(method);
         }
         return super.equals(obj);
     }

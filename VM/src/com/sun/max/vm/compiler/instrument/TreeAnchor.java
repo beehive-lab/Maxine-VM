@@ -40,62 +40,62 @@ public class TreeAnchor extends Anchor {
      * {@link ClassMethodActor} associated with this {@link TreeAnchor}.
      */
     public ClassMethodActor method() {
-        return _location.classMethodActor();
+        return location.classMethodActor();
     }
 
     /**
      * Bytecode position at which this counter is inserted.
      */
     public int position() {
-        return _location.bytecodePosition();
+        return location.bytecodePosition();
     }
 
-    private int _frequency;
+    private int frequency;
 
     /**
      * The tracing threshold, if this value is exceeded a new trace is recorded.
      */
-    private final int _tracingThreshold;
+    private final int tracingThreshold;
 
     /**
      * The number of times the tracer tried to record a trace.
      */
-    private int _numberOfTries;
+    private int numberOfTries;
 
     public int incrementNumberOfTries() {
-        return _numberOfTries++;
+        return numberOfTries++;
     }
 
     public int numberOfTries() {
-        return _numberOfTries;
+        return numberOfTries;
     }
 
     /**
      * Trace tree associated with this {@link TreeAnchor}.
      */
-    private TirTree _tree;
+    private TirTree tree;
 
     public TirTree tree() {
-        return _tree;
+        return tree;
     }
 
     public void setTree(TirTree tree) {
-        _tree = tree;
+        this.tree = tree;
     }
 
-    private int _stackHeight;
+    private int stackHeight;
 
     public int stackHeight() {
-        return _stackHeight;
+        return stackHeight;
     }
 
     public void setStackHeight(int stackHeight) {
-        _stackHeight = stackHeight;
+        this.stackHeight = stackHeight;
     }
 
     public TreeAnchor(BytecodeLocation location, int tracingThreshold) {
         super(location);
-        _tracingThreshold = tracingThreshold;
+        this.tracingThreshold = tracingThreshold;
     }
 
     /**
@@ -115,7 +115,7 @@ public class TreeAnchor extends Anchor {
 
         // Execute the associated trace tree if one exists.
         if (hasTree()) {
-            return _tree.targetTree().targetMethod().start();
+            return tree.targetTree().targetMethod().start();
         }
 
         // Start recording a new trace tree if we've exceeded thresholds.
@@ -128,28 +128,28 @@ public class TreeAnchor extends Anchor {
     }
 
     public boolean exceedsTracingThreshold() {
-        return _frequency > _tracingThreshold;
+        return frequency > tracingThreshold;
     }
 
     public boolean hasTree() {
-        return _tree != null;
+        return tree != null;
     }
 
     @Override
     public String toString() {
-        final int line = _location.classMethodActor().codeAttribute().lineNumberTable().findLineNumber(_location.bytecodePosition());
-        return "loc: " + _location.toString() + ", line: " + line + ", count: " + _frequency;
+        final int line = location.classMethodActor().codeAttribute().lineNumberTable().findLineNumber(location.bytecodePosition());
+        return "loc: " + location.toString() + ", line: " + line + ", count: " + frequency;
     }
 
     public final void incrementFrequency() {
-        _frequency++;
+        frequency++;
     }
 
     public int frequency() {
-        return _frequency;
+        return frequency;
     }
 
     public void resetFrequency() {
-        _frequency = 0;
+        frequency = 0;
     }
 }

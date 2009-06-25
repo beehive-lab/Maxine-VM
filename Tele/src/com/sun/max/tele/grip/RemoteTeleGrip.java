@@ -28,14 +28,14 @@ import com.sun.max.unsafe.*;
  */
 public abstract class RemoteTeleGrip extends TeleGrip {
 
-    private final TeleGripScheme _teleGripScheme;
+    private final TeleGripScheme teleGripScheme;
 
     protected TeleGripScheme teleGripScheme() {
-        return _teleGripScheme;
+        return teleGripScheme;
     }
 
     protected RemoteTeleGrip(TeleGripScheme teleGripScheme) {
-        _teleGripScheme = teleGripScheme;
+        this.teleGripScheme = teleGripScheme;
     }
 
     public abstract Address raw();

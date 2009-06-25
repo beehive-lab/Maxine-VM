@@ -41,21 +41,21 @@ public abstract class EirPrologue<EirInstructionVisitor_Type extends EirInstruct
                                   EirTargetEmitter_Type extends EirTargetEmitter>
                           extends EirInstruction<EirInstructionVisitor_Type, EirTargetEmitter_Type> {
 
-    private final EirMethod _eirMethod;
+    private final EirMethod eirMethod;
 
     public final EirMethod eirMethod() {
-        return _eirMethod;
+        return eirMethod;
     }
 
-    AppendableSequence<EirOperand> _calleeSavedOperands = new LinkSequence<EirOperand>();
-    private final EirOperand[] _parameterOperands;
+    AppendableSequence<EirOperand> calleeSavedOperands = new LinkSequence<EirOperand>();
+    private final EirOperand[] parameterOperands;
 
-    private final AppendableSequence<EirOperand> _definitionOperands = new LinkSequence<EirOperand>();
+    private final AppendableSequence<EirOperand> definitionOperands = new LinkSequence<EirOperand>();
 
     public void addDefinition(EirValue definedValue) {
         final EirOperand operand = new EirOperand(this, EirOperand.Effect.DEFINITION, definedValue.location().category().asSet());
         operand.setEirValue(definedValue);
-        _definitionOperands.append(operand);
+        definitionOperands.append(operand);
     }
 
     protected EirPrologue(EirBlock block, EirMethod eirMethod,
@@ -63,7 +63,7 @@ public abstract class EirPrologue<EirInstructionVisitor_Type extends EirInstruct
                           BitSet isCalleeSavedParameter,
                           EirValue[] parameters, EirLocation[] parameterLocations) {
         super(block);
-        _eirMethod = eirMethod;
+        this.eirMethod = eirMethod;
 
         for (int i = 0; i < calleeSavedValues.length; i++) {
             if (isCalleeSavedParameter.get(i)) {
@@ -74,43 +74,43 @@ public abstract class EirPrologue<EirInstructionVisitor_Type extends EirInstruct
                 final EirOperand operand = new EirOperand(this, EirOperand.Effect.DEFINITION, register.category().asSet());
                 operand.setRequiredLocation(register);
                 operand.setEirValue(calleeSavedValues[i]);
-                _calleeSavedOperands.append(operand);
+                calleeSavedOperands.append(operand);
             }
         }
 
-        _parameterOperands = new EirOperand[parameters.length];
+        parameterOperands = new EirOperand[parameters.length];
         for (int i = 0; i < parameters.length; i++) {
             final EirLocation location = parameterLocations[i];
-            _parameterOperands[i] = new EirOperand(this, EirOperand.Effect.DEFINITION, location.category().asSet());
-            _parameterOperands[i].setRequiredLocation(location);
-            _parameterOperands[i].setEirValue(parameters[i]);
+            parameterOperands[i] = new EirOperand(this, EirOperand.Effect.DEFINITION, location.category().asSet());
+            parameterOperands[i].setRequiredLocation(location);
+            parameterOperands[i].setEirValue(parameters[i]);
         }
     }
 
     @Override
     public void visitOperands(EirOperand.Procedure visitor) {
-        for (EirOperand register : _calleeSavedOperands) {
+        for (EirOperand register : calleeSavedOperands) {
             visitor.run(register);
         }
-        for (EirOperand parameter : _parameterOperands) {
+        for (EirOperand parameter : parameterOperands) {
             visitor.run(parameter);
         }
-        for (EirOperand parameter : _definitionOperands) {
+        for (EirOperand parameter : definitionOperands) {
             visitor.run(parameter);
         }
     }
 
     @Override
     public String toString() {
-        String s = "prologue (" + Arrays.toString(_parameterOperands) + ")";
-        if (!_calleeSavedOperands.isEmpty()) {
-            s += "[Callee saved: " + _calleeSavedOperands.toString() + "]";
+        String s = "prologue (" + Arrays.toString(parameterOperands) + ")";
+        if (!calleeSavedOperands.isEmpty()) {
+            s += "[Callee saved: " + calleeSavedOperands.toString() + "]";
         }
-        if (!_definitionOperands.isEmpty()) {
-            s += "[Defined: " + _definitionOperands.toString() + "]";
+        if (!definitionOperands.isEmpty()) {
+            s += "[Defined: " + definitionOperands.toString() + "]";
         }
-        if (_eirMethod.isGenerated()) {
-            s += " frameSize:" + _eirMethod.frameSize();
+        if (eirMethod.isGenerated()) {
+            s += " frameSize:" + eirMethod.frameSize();
         }
         return s;
     }

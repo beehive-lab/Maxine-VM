@@ -47,36 +47,36 @@ public class Environment<KeyType, ValueType> {
      */
     static final class ExtendedEnvironment<KeyType, ValueType> extends Environment<KeyType, ValueType> {
 
-        private final int _depth;
-        private final KeyType _key;
-        private final ValueType _val;
-        private final ExtendedEnvironment<KeyType, ValueType> _next;
+        private final int depth;
+        private final KeyType key;
+        private final ValueType val;
+        private final ExtendedEnvironment<KeyType, ValueType> next;
 
         private ExtendedEnvironment(KeyType key, ValueType val, ExtendedEnvironment<KeyType, ValueType> next) {
-            _key = key;
-            _val = val;
-            _next = next;
-            _depth = (next == null) ? 0 : next._depth + 1;
+            this.key = key;
+            this.val = val;
+            this.next = next;
+            this.depth = (next == null) ? 0 : next.depth + 1;
         }
 
         @Override
         public ValueType lookup(KeyType x) {
-            if (x == _key) {
-                return _val;
+            if (x == key) {
+                return val;
             }
-            ExtendedEnvironment<KeyType, ValueType> e = _next;
+            ExtendedEnvironment<KeyType, ValueType> e = next;
             while (e != null) {
-                if (e._key == x) {
-                    return e._val;
+                if (e.key == x) {
+                    return e.val;
                 }
-                e = e._next;
+                e = e.next;
             }
             return null;
         }
 
         @Override
-        public Environment<KeyType, ValueType> extend(KeyType key, ValueType val) {
-            return new ExtendedEnvironment<KeyType, ValueType>(key, val, this);
+        public Environment<KeyType, ValueType> extend(KeyType k, ValueType v) {
+            return new ExtendedEnvironment<KeyType, ValueType>(k, v, this);
         }
     }
 }

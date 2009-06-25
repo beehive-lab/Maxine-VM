@@ -45,17 +45,17 @@ public final class Throw {
     private Throw() {
     }
 
-    public static VMBooleanXXOption _dumpStackOnThrowOption = register(new VMBooleanXXOption("-XX:-DumpStackOnThrow",
+    public static VMBooleanXXOption dumpStackOnThrowOption = register(new VMBooleanXXOption("-XX:-DumpStackOnThrow",
                     "Report a stack trace for every throw operation, regardless of whether the exception is " +
                     "caught or uncaught."), MaxineVM.Phase.PRISTINE);
-    public static VMBooleanXXOption _scanStackOnFatalError = register(new VMBooleanXXOption("-XX:-ScanStackOnFatalError",
+    public static VMBooleanXXOption scanStackOnFatalError = register(new VMBooleanXXOption("-XX:-ScanStackOnFatalError",
                     "Report a stack trace scan when a fatal VM occurs."), MaxineVM.Phase.PRISTINE);
 
     private static class StackFrameDumper implements StackFrameVisitor {
-        private final int _maximum;
-        private int _count;
+        private final int maximum;
+        private int count;
         StackFrameDumper(int max) {
-            _maximum = max;
+            maximum = max;
         }
 
         public boolean visitFrame(StackFrame stackFrame) {
@@ -66,24 +66,24 @@ public final class Throw {
             if (targetMethod != null) {
                 if (!stackFrame.isAdapter()) {
                     final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
-                    Log.print(classMethodActor.holder().name());
+                    Log.print(classMethodActor.holder().name);
                     Log.print(".");
-                    Log.print(classMethodActor.name());
+                    Log.print(classMethodActor.name);
                     Log.print(classMethodActor.descriptor());
                 } else {
                     Log.print("<adapter>");
                 }
                 Log.print(" [");
-                Log.print(stackFrame.instructionPointer());
+                Log.print(stackFrame.instructionPointer);
                 Log.print("+");
-                Log.print(stackFrame.instructionPointer().minus(targetMethod.codeStart()).toInt());
+                Log.print(stackFrame.instructionPointer.minus(targetMethod.codeStart()).toInt());
                 Log.print("]");
             } else {
                 Log.print("unknown:");
-                Log.print(stackFrame.instructionPointer());
+                Log.print(stackFrame.instructionPointer);
             }
             Log.println();
-            if (_maximum > 0 && _count-- < 0) {
+            if (maximum > 0 && count-- < 0) {
                 Log.unlock(lockDisabledSafepoints);
                 return false;
             }
@@ -92,7 +92,7 @@ public final class Throw {
         }
     }
 
-    private static final StackFrameDumper _stackFrameDumper = new StackFrameDumper(0);
+    private static final StackFrameDumper stackFrameDumper = new StackFrameDumper(0);
 
     /**
      * Unwinds the current thread's stack to the frame containing an exception handler (there is guaranteed to be one).
@@ -135,7 +135,7 @@ public final class Throw {
      * @param throwable throwable the object to be passed to the exception handler. If this value is null, then a
      *            {@link NullPointerException} is instantiated and raised instead.
      */
-    // Checkstyle: stop parameter assignment check
+    // Checkstyle: stop (parameter assignment)
     public static void raise(Throwable throwable) {
         if (throwable == null) {
             throwable = new NullPointerException();
@@ -152,13 +152,13 @@ public final class Throw {
             FatalError.unexpected("exception thrown while raising another exception");
         }
 
-        if (_dumpStackOnThrowOption.getValue()) {
+        if (dumpStackOnThrowOption.getValue()) {
             throwable.printStackTrace(Log.out);
         }
         Safepoint.disable();
         raise(throwable, VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), VMRegister.getInstructionPointer());
     }
-    // Checkstyle: resume parameter assignment check
+    // Checkstyle: resume
 
     public static void stackDumpWithException(Object throwable) {
         stackDump("Throwing " + throwable + ";", VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer());
@@ -180,7 +180,7 @@ public final class Throw {
     @NEVER_INLINE
     public static void stackDump(String message, final Pointer instructionPointer, final Pointer cpuStackPointer, final Pointer cpuFramePointer) {
         Log.println(message);
-        new VmStackFrameWalker(VmThread.currentVmThreadLocals()).inspect(instructionPointer, cpuStackPointer, cpuFramePointer, _stackFrameDumper);
+        new VmStackFrameWalker(VmThread.currentVmThreadLocals()).inspect(instructionPointer, cpuStackPointer, cpuFramePointer, stackFrameDumper);
     }
 
     /**
@@ -218,8 +218,7 @@ public final class Throw {
             final TargetMethod targetMethod = Code.codePointerToTargetMethod(potentialCodePointer);
             if (targetMethod != null) {
                 Log.print("        -> ");
-                Log.print(targetMethod.classMethodActor().format("%H.%n(%p)"));
-                Log.println();
+                Log.printMethodActor(targetMethod.classMethodActor(), true);
             }
             pointer = pointer.plus(Word.size());
         }
@@ -250,7 +249,7 @@ public final class Throw {
         FatalError.check(array != null && value != null, "Arguments for raising an ArrayStoreException cannot be null");
         final ClassActor arrayClassActor = MaxineVM.isPrototyping() ? ClassActor.fromJava(array.getClass()) : ObjectAccess.readClassActor(array);
         final ClassActor componentClassActor = arrayClassActor.componentClassActor();
-        throw new ArrayStoreException(value.getClass().getName() + " is not assignable to " + componentClassActor.name());
+        throw new ArrayStoreException(value.getClass().getName() + " is not assignable to " + componentClassActor.name);
     }
 
     /**
@@ -263,7 +262,7 @@ public final class Throw {
     @NEVER_INLINE
     public static void classCastException(ClassActor classActor, Object object) {
         FatalError.check(object != null && classActor != null, "Arguments for raising a ClassCastException cannot be null");
-        throw new ClassCastException(object.getClass().getName() + " is not assignable to " + classActor.name());
+        throw new ClassCastException(object.getClass().getName() + " is not assignable to " + classActor.name);
     }
 
     @NEVER_INLINE

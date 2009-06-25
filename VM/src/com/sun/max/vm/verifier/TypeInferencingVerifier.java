@@ -20,10 +20,7 @@
  */
 package com.sun.max.vm.verifier;
 
-import java.io.*;
-
 import com.sun.max.profile.*;
-import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -51,7 +48,7 @@ public class TypeInferencingVerifier extends ClassVerifier {
         // The methods in class files whose version is greater than or equal to 50.0 are required to
         // have stack maps. This method is mostly like being verified with the type inferencing verifier
         // to update the stack maps after bytecode preprocessing.
-        final boolean addStackMapAttribute = classMethodActor.holder().majorVersion() >= 50;
+        final boolean addStackMapAttribute = classMethodActor.holder().majorVersion >= 50;
         return verify(classMethodActor, originalCodeAttribute, addStackMapAttribute);
     }
 
@@ -65,7 +62,7 @@ public class TypeInferencingVerifier extends ClassVerifier {
             if (clearSubroutines() == 0 && !methodVerifier.hasUnvisitedCode()) {
                 break;
             }
-            final SubroutineInliner inliner = new SubroutineInliner(methodVerifier, verbose());
+            final SubroutineInliner inliner = new SubroutineInliner(methodVerifier, methodVerifier.verbose);
             codeAttribute = inliner.rewriteCode();
         }
 
@@ -74,15 +71,14 @@ public class TypeInferencingVerifier extends ClassVerifier {
         }
 
         // Trace only changes (if any)
-        if (verbose() && (addStackMapAttribute || codeAttribute != originalCodeAttribute)) {
-            final PrintStream out = Trace.stream();
-            out.println();
+        if (methodVerifier.verbose && (addStackMapAttribute || codeAttribute != originalCodeAttribute)) {
+            Log.println();
             final String methodSignature = classMethodActor.format("%H.%n(%p)");
-            out.println("Before rewriting " + methodSignature);
-            CodeAttributePrinter.print(out, originalCodeAttribute);
-            out.println();
-            out.println("After rewriting " + methodSignature);
-            CodeAttributePrinter.print(out, codeAttribute);
+            Log.println("Before rewriting " + methodSignature);
+            CodeAttributePrinter.print(Log.out, originalCodeAttribute);
+            Log.println();
+            Log.println("After rewriting " + methodSignature);
+            CodeAttributePrinter.print(Log.out, codeAttribute);
         }
 
         if (MaxineVM.isPrototyping() && addStackMapAttribute) {

@@ -31,14 +31,14 @@ import com.sun.max.vm.type.*;
 public abstract class EirStop<EirInstructionVisitor_Type extends EirInstructionVisitor, EirTargetEmitter_Type extends EirTargetEmitter>
                       extends EirInstruction<EirInstructionVisitor_Type, EirTargetEmitter_Type> {
 
-    private EirJavaFrameDescriptor _javaFrameDescriptor;
+    private EirJavaFrameDescriptor javaFrameDescriptor;
 
     public final EirJavaFrameDescriptor javaFrameDescriptor() {
-        return _javaFrameDescriptor;
+        return javaFrameDescriptor;
     }
 
     public void setEirJavaFrameDescriptor(EirJavaFrameDescriptor javaFrameDescriptor) {
-        _javaFrameDescriptor = javaFrameDescriptor;
+        this.javaFrameDescriptor = javaFrameDescriptor;
     }
 
     public EirStop(EirBlock block) {
@@ -50,7 +50,7 @@ public abstract class EirStop<EirInstructionVisitor_Type extends EirInstructionV
             if (variable.location().category() == EirLocationCategory.STACK_SLOT) {
                 final EirStackSlot stackSlot = (EirStackSlot) variable.location();
                 if (stackSlot.purpose() != EirStackSlot.Purpose.PARAMETER && variable.kind() == Kind.REFERENCE) {
-                    final int stackSlotBitIndex = stackSlot.offset() / stackSlotWidth.numberOfBytes();
+                    final int stackSlotBitIndex = stackSlot.offset() / stackSlotWidth.numberOfBytes;
                     map.set(stackSlotBitIndex);
                 }
             }
@@ -59,9 +59,9 @@ public abstract class EirStop<EirInstructionVisitor_Type extends EirInstructionV
 
     @Override
     public void visitOperands(EirOperand.Procedure visitor) {
-        EirJavaFrameDescriptor javaFrameDescriptor = _javaFrameDescriptor;
+        EirJavaFrameDescriptor javaFrameDescriptor = this.javaFrameDescriptor;
         while (javaFrameDescriptor != null) {
-            for (EirOperand operand : javaFrameDescriptor.locals()) {
+            for (EirOperand operand : javaFrameDescriptor.locals) {
                 visitor.run(operand);
             }
             javaFrameDescriptor = javaFrameDescriptor.parent();

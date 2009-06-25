@@ -30,16 +30,16 @@ import com.sun.max.vm.actor.holder.*;
  */
 public class ResolvedObjectType extends ObjectType implements ResolvedType {
 
-    private final ClassActor _classActor;
+    private final ClassActor classActor;
 
     public ResolvedObjectType(ClassActor classActor) {
-        super(classActor.typeDescriptor(), null);
+        super(classActor.typeDescriptor, null);
         assert !classActor.isArrayClassActor();
-        _classActor = classActor;
+        this.classActor = classActor;
     }
 
     @Override
     public ClassActor resolve() {
-        return _classActor;
+        return classActor;
     }
 }

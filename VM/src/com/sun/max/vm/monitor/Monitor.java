@@ -40,15 +40,15 @@ public final class Monitor {
      */
     @INLINE
     public static boolean traceMonitors() {
-        return _traceMonitors;
+        return traceMonitors;
     }
 
-    private static boolean _traceMonitors;
+    private static boolean traceMonitors;
 
-    private static final VMBooleanXXOption _traceMonitorsOption = register(new VMBooleanXXOption("-XX:-TraceMonitors", "") {
+    private static final VMBooleanXXOption traceMonitorsOption = register(new VMBooleanXXOption("-XX:-TraceMonitors", "") {
         @Override
         public boolean parseValue(Pointer optionValue) {
-            _traceMonitors = getValue();
+            traceMonitors = getValue();
             return true;
         }
     }, Phase.STARTING);

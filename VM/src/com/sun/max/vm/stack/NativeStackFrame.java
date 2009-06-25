@@ -62,7 +62,7 @@ public final class NativeStackFrame extends StackFrame {
     @Override
     public boolean isSameFrame(StackFrame stackFrame) {
         if (stackFrame instanceof NativeStackFrame) {
-            return stackFrame.stackPointer().equals(stackPointer()) && stackFrame.framePointer().equals(framePointer());
+            return stackFrame.stackPointer.equals(stackPointer) && stackFrame.framePointer.equals(framePointer);
         }
         return false;
     }

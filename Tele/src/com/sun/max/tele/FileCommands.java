@@ -39,26 +39,26 @@ public class FileCommands {
     private static final String USER_HOME_PROPERTY = "user.home";
     private static final String DEFAULT_COMMAND_FILE = ".max_ins_commands";
 
-    private static String _defaultCommandFile;
-    private static int _lineNumber;
+    private static String defaultCommandFile;
+    private static int lineNumber;
 
     static {
-        _defaultCommandFile = System.getProperty(DEFAULT_COMMAND_FILE_PROPERTY);
-        if (_defaultCommandFile == null) {
+        defaultCommandFile = System.getProperty(DEFAULT_COMMAND_FILE_PROPERTY);
+        if (defaultCommandFile == null) {
             final String userHome = System.getProperty(USER_HOME_PROPERTY);
             if (userHome != null) {
-                _defaultCommandFile = userHome + File.separator + DEFAULT_COMMAND_FILE;
+                defaultCommandFile = userHome + File.separator + DEFAULT_COMMAND_FILE;
             }
         }
 
     }
 
     public static String defaultCommandFile() {
-        return _defaultCommandFile;
+        return defaultCommandFile;
     }
 
     public static void executeCommandsFromFile(TeleVM teleVM, String filename) {
-        _lineNumber = 0;
+        lineNumber = 0;
         BufferedReader bs = null;
         try {
             bs = new BufferedReader(new FileReader(filename));
@@ -67,7 +67,7 @@ public class FileCommands {
                 if (line == null) {
                     break;
                 }
-                _lineNumber++;
+                lineNumber++;
                 if (line.length() == 0) {
                     continue;
                 }
@@ -124,7 +124,7 @@ public class FileCommands {
 
     static class CommandException extends Exception {
         CommandException(String message) {
-            super("error at line " + +_lineNumber + ": " + message);
+            super("error at line " + +lineNumber + ": " + message);
         }
     }
 }

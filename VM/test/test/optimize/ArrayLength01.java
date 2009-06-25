@@ -27,10 +27,10 @@ package test.optimize;
  */
 public class ArrayLength01 {
     public static final int SIZE = 8;
-    public static final byte[] _array = new byte[5];
+    public static final byte[] arr = new byte[5];
     public static int test(int arg) {
         if (arg == 0) {
-            return _array.length;
+            return arr.length;
         }
         if (arg == 1) {
             return new byte[6].length;

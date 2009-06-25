@@ -38,13 +38,13 @@ import com.sun.max.program.*;
  */
 public abstract class FilteredListDialog<Type> extends InspectorDialog {
 
-    protected final boolean _multiSelection;
-    protected final JTextField _textField = new JTextField();
-    protected final String _actionName;
-    protected final DefaultListModel _listModel = new DefaultListModel();
-    protected final JList _list = new JList(EMPTY_LIST_MODEL);
+    protected final boolean multiSelection;
+    protected final JTextField textField = new JTextField();
+    protected final String actionName;
+    protected final DefaultListModel listModel = new DefaultListModel();
+    protected final JList list = new JList(EMPTY_LIST_MODEL);
 
-    private AppendableSequence<Type> _selectedObjects;
+    private AppendableSequence<Type> selectedObjects;
 
     /**
      * The value representing that no object was selected.
@@ -58,11 +58,11 @@ public abstract class FilteredListDialog<Type> extends InspectorDialog {
      * multi-selection enabled, returns the first selection.
      */
     public Type selectedObject() {
-        return (_selectedObjects != null && _selectedObjects.length() > 0) ? _selectedObjects.first() :  noSelectedObject();
+        return (selectedObjects != null && selectedObjects.length() > 0) ? selectedObjects.first() :  noSelectedObject();
     }
 
     public Sequence<Type> selectedObjects() {
-        return _selectedObjects;
+        return selectedObjects;
     }
 
     /**
@@ -76,15 +76,15 @@ public abstract class FilteredListDialog<Type> extends InspectorDialog {
 
     private final class SelectAction extends InspectorAction {
         private SelectAction() {
-            super(inspection(), _actionName);
+            super(inspection(), actionName);
         }
 
         @Override
         protected void procedure() {
-            final int[] selectedIndices = _list.getSelectedIndices();
-            _selectedObjects = new LinkSequence<Type>();
+            final int[] selectedIndices = list.getSelectedIndices();
+            selectedObjects = new LinkSequence<Type>();
             for (int i = 0; i < selectedIndices.length; i++) {
-                _selectedObjects.append(convertSelectedItem(_listModel.get(selectedIndices[i])));
+                selectedObjects.append(convertSelectedItem(listModel.get(selectedIndices[i])));
             }
             dispose();
         }
@@ -141,49 +141,49 @@ public abstract class FilteredListDialog<Type> extends InspectorDialog {
      * Rebuilds the list.
      */
     protected void rebuildList() {
-        _list.setModel(EMPTY_LIST_MODEL);
-        _listModel.clear();
-        final String text = _textField.getText();
+        list.setModel(EMPTY_LIST_MODEL);
+        listModel.clear();
+        final String text = textField.getText();
         rebuildList(text);
-        _list.setModel(_listModel);
-        if (!_listModel.isEmpty() && _list.getSelectedIndex() == -1) {
-            _list.setSelectedIndex(0);
+        list.setModel(listModel);
+        if (!listModel.isEmpty() && list.getSelectedIndex() == -1) {
+            list.setSelectedIndex(0);
         }
     }
 
     protected FilteredListDialog(Inspection inspection, String title, String filterFieldLabel, String actionName, boolean multiSelection) {
         super(inspection, title, true);
-        _multiSelection = multiSelection;
+        this.multiSelection = multiSelection;
         if (actionName == null) {
-            _actionName = "Select";
+            this.actionName = "Select";
         } else {
-            _actionName = actionName;
+            this.actionName = actionName;
         }
 
         final JPanel dialogPanel = new InspectorPanel(inspection, new BorderLayout());
         final JPanel textPanel = new InspectorPanel(inspection);
 
         textPanel.add(new TextLabel(inspection, filterFieldLabel + ":"));
-        _textField.setFont(style().javaClassNameFont());
-        _textField.setPreferredSize(new Dimension(500, 30));
-        _textField.getDocument().addDocumentListener(new TextListener());
-        textPanel.add(_textField);
+        textField.setFont(style().javaClassNameFont());
+        textField.setPreferredSize(new Dimension(500, 30));
+        textField.getDocument().addDocumentListener(new TextListener());
+        textPanel.add(textField);
         dialogPanel.add(textPanel, BorderLayout.NORTH);
 
         // Allow the user to press DOWN to navigate forward out of the text box into the list (a la Eclipse)
-        final Set<AWTKeyStroke> forwardTraversalKeys = new HashSet<AWTKeyStroke>(_textField.getFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS));
+        final Set<AWTKeyStroke> forwardTraversalKeys = new HashSet<AWTKeyStroke>(textField.getFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS));
         forwardTraversalKeys.add(AWTKeyStroke.getAWTKeyStroke(KeyEvent.VK_DOWN, 0));
-        _textField.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, forwardTraversalKeys);
+        textField.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, forwardTraversalKeys);
 
-        _list.setSelectedIndex(0);
-        _list.setVisibleRowCount(10);
+        list.setSelectedIndex(0);
+        list.setVisibleRowCount(10);
         if (multiSelection) {
-            _list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+            list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         } else {
-            _list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         }
-        _list.setLayoutOrientation(JList.VERTICAL);
-        final JScrollPane scrollPane = new InspectorScrollPane(inspection, _list);
+        list.setLayoutOrientation(JList.VERTICAL);
+        final JScrollPane scrollPane = new InspectorScrollPane(inspection, list);
         scrollPane.setPreferredSize(new Dimension(550, 425));
         dialogPanel.add(scrollPane, BorderLayout.CENTER);
 
@@ -205,20 +205,20 @@ public abstract class FilteredListDialog<Type> extends InspectorDialog {
         getRootPane().registerKeyboardAction(cancelButton.getAction(), KeyStroke.getKeyStroke((char) KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
         // Disable the "Select" button if there is no selected item in the list.
-        _list.addListSelectionListener(new ListSelectionListener() {
+        list.addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent e) {
-                final boolean hasSelection = _list.getSelectedIndex() != -1;
+                final boolean hasSelection = list.getSelectedIndex() != -1;
                 selectButton.setEnabled(hasSelection);
                 selectButton.setFocusable(hasSelection);
             }
         });
 
         // Make double clicking an item in the list equivalent to pressing the "Select" button.
-        _list.addMouseListener(new MouseAdapter() {
+        list.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
-                    final int index = _list.locationToIndex(e.getPoint());
+                    final int index = list.locationToIndex(e.getPoint());
                     if (index != -1) {
                         selectButton.doClick();
                     }
@@ -226,7 +226,7 @@ public abstract class FilteredListDialog<Type> extends InspectorDialog {
             }
         });
 
-        final FocusTraversalPolicy focusTraversalPolicy = new ExplicitFocusTraversalPolicy(_textField, _list, selectButton, cancelButton);
+        final FocusTraversalPolicy focusTraversalPolicy = new ExplicitFocusTraversalPolicy(textField, list, selectButton, cancelButton);
         setFocusTraversalPolicy(focusTraversalPolicy);
 
         setContentPane(dialogPanel);

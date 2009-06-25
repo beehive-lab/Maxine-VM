@@ -53,14 +53,14 @@ public final class ClassActorFactory {
 
 
     public static <Value_Type extends Value<Value_Type>> ArrayClassActor<Value_Type> createArrayClassActor(PrimitiveClassActor<Value_Type> componentClassActor) {
-        return ClassRegistry.put(componentClassActor.classLoader(), new ArrayClassActor<Value_Type>(componentClassActor));
+        return ClassRegistry.put(componentClassActor.classLoader, new ArrayClassActor<Value_Type>(componentClassActor));
     }
 
     /**
      * Creates the actor for the type representing an n-dimensional array of a given {@linkplain ClassActor#componentClassActor() component type}.
      */
     public static ArrayClassActor createArrayClassActor(ClassActor componentClassActor) {
-        return ClassRegistry.put(componentClassActor.classLoader(), new ArrayClassActor(componentClassActor));
+        return ClassRegistry.put(componentClassActor.classLoader, new ArrayClassActor(componentClassActor));
     }
 
     /**

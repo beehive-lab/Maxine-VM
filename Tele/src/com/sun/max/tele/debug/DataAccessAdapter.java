@@ -36,10 +36,10 @@ import com.sun.max.unsafe.*;
  */
 public abstract class DataAccessAdapter implements DataAccess {
 
-    private final WordWidth _wordWidth;
+    private final WordWidth wordWidth;
 
     protected DataAccessAdapter(WordWidth wordWidth) {
-        _wordWidth = wordWidth;
+        this.wordWidth = wordWidth;
     }
 
     public void readFully(Address address, ByteBuffer buffer) {
@@ -167,7 +167,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public Word readWord(Address address) {
-        switch (_wordWidth) {
+        switch (wordWidth) {
             case BITS_32:
                 return Offset.fromInt(readInt(address));
             case BITS_64:
@@ -186,7 +186,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public Word getWord(Address address, int displacement, int index) {
-        return readWord(address.plus(displacement).plus(index * _wordWidth.numberOfBytes()));
+        return readWord(address.plus(displacement).plus(index * wordWidth.numberOfBytes));
     }
 
     public void writeBuffer(Address address, ByteBuffer buffer) {
@@ -317,7 +317,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public void writeWord(Address address, Word value) {
-        switch (_wordWidth) {
+        switch (wordWidth) {
             case BITS_32:
                 writeInt(address, value.asOffset().toInt());
                 break;
@@ -338,7 +338,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public void setWord(Address address, int displacement, int index, Word value) {
-        writeWord(address.plus(displacement).plus(index * _wordWidth.numberOfBytes()), value);
+        writeWord(address.plus(displacement).plus(index * wordWidth.numberOfBytes), value);
     }
 }
 

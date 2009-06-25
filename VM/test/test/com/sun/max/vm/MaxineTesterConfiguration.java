@@ -51,7 +51,7 @@ public class MaxineTesterConfiguration {
     private static final Expectation RAND_DARWIN = new Expectation(OperatingSystem.DARWIN, null, ExpectedResult.NONDETERMINISTIC);
     private static final Expectation RAND_SPARC = new Expectation(OperatingSystem.SOLARIS, ProcessorModel.SPARCV9, ExpectedResult.NONDETERMINISTIC);
 
-    static final Object[] _outputTestList = {
+    static final Object[] outputTestList = {
         test.output.AWTFont.class,                  FAIL_SPARC, FAIL_ALL,
         test.output.JavacTest.class,                FAIL_SPARC, FAIL_LINUX, FAIL_SOLARIS,
         test.output.CatchOutOfMemory.class,         FAIL_SPARC,
@@ -86,18 +86,17 @@ public class MaxineTesterConfiguration {
         test.output.MegaThreads.class,              FAIL_SPARC, RAND_ALL,
     };
 
-    static final Object[] _javaTestList = {
-        test.except.Catch_NPE_03.class,                FAIL_SPARC,
-        test.except.Catch_NPE_04.class,                FAIL_SPARC,
+    static final Object[] javaTestList = {
         test.threads.Thread_isInterrupted02.class,                  FAIL_LINUX,
         test.jdk.EnumMap01.class,                                   RAND_ALL,
+        test.jdk.EnumMap02.class,                                   RAND_ALL,
         test.hotpath.HP_series.class,                  FAIL_SPARC,
         test.hotpath.HP_array02.class,                 FAIL_SPARC,
         test.except.Catch_StackOverflowError_01.class, FAIL_SPARC,
         test.except.Catch_StackOverflowError_02.class, FAIL_SPARC,
     };
 
-    static final String[] _dacapoTests = {
+    static final String[] dacapoTests = {
         "antlr",
         "bloat",
         "xalan",
@@ -111,7 +110,7 @@ public class MaxineTesterConfiguration {
         "pmd"
     };
 
-    static final String[] _specjvm98Tests = {
+    static final String[] specjvm98Tests = {
         "_201_compress",
         "_202_jess",
         "_205_raytrace",
@@ -122,14 +121,14 @@ public class MaxineTesterConfiguration {
         "_228_jack"
     };
 
-    static final String[] _specjvm98IgnoredLinePatterns = {
+    static final String[] specjvm98IgnoredLinePatterns = {
         "Total memory",
         "## IO time",
         "Finished in",
         "Decoding time:"
     };
 
-    static final Object[][] _shootoutBenchmarks = {
+    static final Object[][] shootoutBenchmarks = {
         {"ackermann",       "10"},
         {"ary",             "10000", "300000"},
         {"binarytrees",     "12", "16", "18"},
@@ -179,15 +178,15 @@ public class MaxineTesterConfiguration {
         {"wordfreq",         new File("wordfreq.stdin")},
     };
 
-    static final Map<String, Object[]> _shootoutInputs = buildShootoutMap();
+    static final Map<String, Object[]> shootoutInputs = buildShootoutMap();
 
-    static final Class[] _outputTestClasses = buildOutputTestClassArray();
+    static final Class[] outputTestClasses = buildOutputTestClassArray();
 
-    static final Map<String, Expectation[]> _testExpectationMap = buildTestExpectationMap();
+    static final Map<String, Expectation[]> testExpectationMap = buildTestExpectationMap();
 
     static Map<String, Object[]> buildShootoutMap() {
         final Map<String, Object[]> map = new HashMap<String, Object[]>();
-        for (Object[] array : _shootoutBenchmarks) {
+        for (Object[] array : shootoutBenchmarks) {
             map.put((String) array[0], Arrays.copyOfRange(array, 1, array.length));
         }
         return map;
@@ -195,7 +194,7 @@ public class MaxineTesterConfiguration {
 
     static Class[] buildOutputTestClassArray() {
         final List<Class> classes = new ArrayList<Class>();
-        for (Object o : _outputTestList) {
+        for (Object o : outputTestList) {
             if (o instanceof Class) {
                 classes.add((Class) o);
             }
@@ -205,8 +204,8 @@ public class MaxineTesterConfiguration {
 
     static Map<String, Expectation[]> buildTestExpectationMap() {
         final Map<String, Expectation[]> map = new HashMap<String, Expectation[]>();
-        addTestExpectations(map, _outputTestList);
-        addTestExpectations(map, _javaTestList);
+        addTestExpectations(map, outputTestList);
+        addTestExpectations(map, javaTestList);
         return map;
     }
 
@@ -235,7 +234,7 @@ public class MaxineTesterConfiguration {
         }
     }
 
-    static final String[] _outputTests = com.sun.max.lang.Arrays.map(_outputTestClasses, String.class, new MapFunction<Class, String>() {
+    static final String[] outputTests = com.sun.max.lang.Arrays.map(outputTestClasses, String.class, new MapFunction<Class, String>() {
         public String map(Class from) {
             return from.getSimpleName();
         }
@@ -264,7 +263,7 @@ public class MaxineTesterConfiguration {
         return testNames;
     }
 
-    static final String[] _expectedAutoTestFailures = {
+    static final String[] expectedAutoTestFailures = {
         "test_manyObjectParameters(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",
         "test_arrayCopyForKinds(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_jdk_System)",
         "test_catchNull(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_throw)",
@@ -275,40 +274,39 @@ public class MaxineTesterConfiguration {
         "test_sameNullsArrayCopy(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_jdk_System)"
     };
 
-    static final Map<String, String[]> _imageConfigs = new HashMap<String, String[]>();
-    static final Map<String, String[]> _maxvmConfigs = new HashMap<String, String[]>();
+    static final Map<String, String[]> imageConfigs = new HashMap<String, String[]>();
+    static final Map<String, String[]> maxvmConfigs = new HashMap<String, String[]>();
 
     static {
-        MaxineTesterConfiguration._imageConfigs.put("optopt", new String[] {"-run=test.com.sun.max.vm.testrun.all", "-native-tests"});
-        MaxineTesterConfiguration._imageConfigs.put("optjit", new String[] {"-run=test.com.sun.max.vm.testrun.all", "-native-tests", "-test-callee-jit"});
-        MaxineTesterConfiguration._imageConfigs.put("jitopt", new String[] {"-run=test.com.sun.max.vm.testrun.all", "-native-tests", "-test-caller-jit"});
-        MaxineTesterConfiguration._imageConfigs.put("jitjit", new String[] {"-run=test.com.sun.max.vm.testrun.all", "-native-tests", "-test-caller-jit", "-test-callee-jit"});
-        MaxineTesterConfiguration._imageConfigs.put("java", new String[] {"-run=com.sun.max.vm.run.java"});
+        MaxineTesterConfiguration.imageConfigs.put("optopt", new String[] {"-run=test.com.sun.max.vm.testrun.all", "-native-tests"});
+        MaxineTesterConfiguration.imageConfigs.put("optjit", new String[] {"-run=test.com.sun.max.vm.testrun.all", "-native-tests", "-test-callee-jit"});
+        MaxineTesterConfiguration.imageConfigs.put("jitopt", new String[] {"-run=test.com.sun.max.vm.testrun.all", "-native-tests", "-test-caller-jit"});
+        MaxineTesterConfiguration.imageConfigs.put("jitjit", new String[] {"-run=test.com.sun.max.vm.testrun.all", "-native-tests", "-test-caller-jit", "-test-callee-jit"});
+        MaxineTesterConfiguration.imageConfigs.put("java", new String[] {"-run=com.sun.max.vm.run.java"});
 
-        MaxineTesterConfiguration._maxvmConfigs.put("std", new String[0]);
-        MaxineTesterConfiguration._maxvmConfigs.put("jit", new String[] {"-Xjit"});
-        MaxineTesterConfiguration._maxvmConfigs.put("pgi", new String[] {"-XX:+PGI"});
-        MaxineTesterConfiguration._maxvmConfigs.put("mx256m", new String[] {"-Xmx256m"});
-        MaxineTesterConfiguration._maxvmConfigs.put("mx512m", new String[] {"-Xmx512m"});
+        MaxineTesterConfiguration.maxvmConfigs.put("std", new String[0]);
+        MaxineTesterConfiguration.maxvmConfigs.put("jit", new String[] {"-Xjit"});
+        MaxineTesterConfiguration.maxvmConfigs.put("pgi", new String[] {"-XX:+PGI"});
+        MaxineTesterConfiguration.maxvmConfigs.put("mx256m", new String[] {"-Xmx256m"});
+        MaxineTesterConfiguration.maxvmConfigs.put("mx512m", new String[] {"-Xmx512m"});
 
-        for (String s : _expectedAutoTestFailures) {
+        for (String s : expectedAutoTestFailures) {
             // add the failing autotests to the expectation map
-            _testExpectationMap.put(s, new Expectation[] {FAIL_ALL});
+            testExpectationMap.put(s, new Expectation[] {FAIL_ALL});
         }
     }
 
-    private static final String DEFAULT_MAXVM_OUTPUT_CONFIGS = "std,jit,pgi";
     private static final String DEFAULT_JAVA_TESTER_CONFIGS = "optopt,jitopt,optjit,jitjit";
 
     public static String defaultMaxvmOutputConfigs() {
-        return "std,jit,pgi";
+        return "std,jit";
     }
 
     public static String defaultJavaTesterConfigs() {
         final Platform platform = Platform.host();
-        if (platform.operatingSystem() == OperatingSystem.SOLARIS) {
-            final ProcessorKind processorKind = platform.processorKind();
-            if (processorKind.processorModel() == ProcessorModel.SPARCV9) {
+        if (platform.operatingSystem == OperatingSystem.SOLARIS) {
+            final ProcessorKind processorKind = platform.processorKind;
+            if (processorKind.processorModel == ProcessorModel.SPARCV9) {
                 return "optopt";
             }
         }
@@ -316,7 +314,7 @@ public class MaxineTesterConfiguration {
     }
 
     public static String[] getImageConfigArgs(String imageConfig) {
-        final String[] args = _imageConfigs.get(imageConfig);
+        final String[] args = imageConfigs.get(imageConfig);
         if (args == null) {
             ProgramError.unexpected("unknown image config: " + imageConfig);
         }
@@ -324,7 +322,7 @@ public class MaxineTesterConfiguration {
     }
 
     public static String[] getMaxvmConfigArgs(String maxvmConfig) {
-        final String[] args = _maxvmConfigs.get(maxvmConfig);
+        final String[] args = maxvmConfigs.get(maxvmConfig);
         if (args == null) {
             ProgramError.unexpected("unknown maxvm config: " + maxvmConfig);
         }
@@ -358,15 +356,15 @@ public class MaxineTesterConfiguration {
      * Determines if a given test is known to fail.
      *
      * @param testName a unique identifier for the test
-     * @param config the {@linkplain #_maxvmConfigs maxvm} configuration used during the test execution. This value may be null.
+     * @param config the {@linkplain #maxvmConfigs maxvm} configuration used during the test execution. This value may be null.
      */
     public static ExpectedResult expectedResult(String testName, String config) {
-        final Expectation[] expect = _testExpectationMap.get(testName);
+        final Expectation[] expect = testExpectationMap.get(testName);
         if (expect != null) {
             final Platform platform = Platform.host();
             for (Expectation e : expect) {
                 if (e.matches(platform)) {
-                    return e._expectedResult;
+                    return e.expectedResult;
                 }
             }
         }
@@ -374,7 +372,7 @@ public class MaxineTesterConfiguration {
     }
 
 
-    static final Set<Class> _slowAutoTestClasses = new HashSet<Class>(Arrays.asList((Class)
+    static final Set<Class> slowAutoTestClasses = new HashSet<Class>(Arrays.asList((Class)
                     CompilerTest_max.class,
                     CompilerTest_coreJava.class,
                     CompilerTest_large.class,
@@ -384,11 +382,11 @@ public class MaxineTesterConfiguration {
     /**
      * Determines which JUnit test cases are known to take a non-trivial amount of time to execute.
      * These tests are omitted by the MaxineTester unless the
-     * @param testCase
-     * @return
+     * @param testCase the test case
+     * @return <code>true</code> if the test is probably slow
      */
     public static boolean isSlowAutoTestCase(TestCase testCase) {
-        for (Class<?> c : _slowAutoTestClasses) {
+        for (Class<?> c : slowAutoTestClasses) {
             if (c.isAssignableFrom(testCase.getClass())) {
                 return true;
             }
@@ -397,34 +395,34 @@ public class MaxineTesterConfiguration {
     }
 
     public static String[] getVMOptions(String maxvmConfig) {
-        if (!_maxvmConfigs.containsKey(maxvmConfig)) {
+        if (!maxvmConfigs.containsKey(maxvmConfig)) {
             ProgramError.unexpected("Unknown Maxine VM option configuration: " + maxvmConfig);
         }
-        return _maxvmConfigs.get(maxvmConfig);
+        return maxvmConfigs.get(maxvmConfig);
     }
 
     public static String[] shootoutTests() {
-        return _shootoutInputs.keySet().toArray(new String[0]);
+        return shootoutInputs.keySet().toArray(new String[shootoutInputs.size()]);
     }
 
     public static Object[] shootoutInputs(String benchmark) {
-        return _shootoutInputs.get(benchmark);
+        return shootoutInputs.get(benchmark);
     }
 
     private static class Expectation {
-        private final OperatingSystem _os; // null indicates all OSs
-        private final ProcessorModel _processor; // null indicates all processors
-        private final ExpectedResult _expectedResult;
+        private final OperatingSystem os; // null indicates all OSs
+        private final ProcessorModel processor; // null indicates all processors
+        private final ExpectedResult expectedResult;
 
         Expectation(OperatingSystem os, ProcessorModel pm, ExpectedResult e) {
-            _os = os;
-            _processor = pm;
-            _expectedResult = e;
+            this.os = os;
+            this.processor = pm;
+            expectedResult = e;
         }
 
         public boolean matches(Platform platform) {
-            if (_os == null || _os == platform.operatingSystem()) {
-                if (_processor == null || _processor == platform.processorKind().processorModel()) {
+            if (os == null || os == platform.operatingSystem) {
+                if (processor == null || processor == platform.processorKind.processorModel) {
                     return true;
                 }
             }
@@ -434,11 +432,11 @@ public class MaxineTesterConfiguration {
         @Override
         public String toString() {
             final StringBuffer buffer = new StringBuffer();
-            buffer.append(_os == null ? "ANY" : _os.toString());
+            buffer.append(os == null ? "ANY" : os.toString());
             buffer.append("/");
-            buffer.append(_processor == null ? "ANY" : _processor.toString());
+            buffer.append(processor == null ? "ANY" : processor.toString());
             buffer.append(" = ");
-            buffer.append(_expectedResult);
+            buffer.append(expectedResult);
             return buffer.toString();
         }
     }

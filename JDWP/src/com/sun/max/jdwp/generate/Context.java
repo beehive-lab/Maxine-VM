@@ -31,68 +31,68 @@ class Context {
     static final int READING_REPLY = 1;
     static final int WRITING_COMMAND = 2;
 
-    final String _whereJava;
-    final String _whereC;
+    final String whereJava;
+    final String whereC;
 
-    int _state = OUTER;
-    private boolean _inEvent = false;
+    int state = OUTER;
+    private boolean inEvent = false;
 
     Context() {
-        _whereJava = "";
-        _whereC = "";
+        whereJava = "";
+        whereC = "";
     }
 
     private Context(String whereJava, String whereC) {
-        this._whereJava = whereJava;
-        this._whereC = whereC;
+        this.whereJava = whereJava;
+        this.whereC = whereC;
     }
 
     Context subcontext(String level) {
         Context ctx;
-        if (_whereC.length() == 0) {
+        if (whereC.length() == 0) {
             ctx = new Context(level, level);
         } else {
-            ctx = new Context(_whereJava + "." + level, _whereC + "_" + level);
+            ctx = new Context(whereJava + "." + level, whereC + "_" + level);
         }
-        ctx._state = _state;
-        ctx._inEvent = _inEvent;
+        ctx.state = state;
+        ctx.inEvent = inEvent;
         return ctx;
     }
 
     private Context cloneContext() {
-        final Context ctx = new Context(_whereJava, _whereC);
-        ctx._state = _state;
-        ctx._inEvent = _inEvent;
+        final Context ctx = new Context(whereJava, whereC);
+        ctx.state = state;
+        ctx.inEvent = inEvent;
         return ctx;
     }
 
     Context replyReadingSubcontext() {
         final Context ctx = cloneContext();
-        ctx._state = READING_REPLY;
+        ctx.state = READING_REPLY;
         return ctx;
     }
 
     Context commandWritingSubcontext() {
         final Context ctx = cloneContext();
-        ctx._state = WRITING_COMMAND;
+        ctx.state = WRITING_COMMAND;
         return ctx;
     }
 
     Context inEventSubcontext() {
         final Context ctx = cloneContext();
-        ctx._inEvent = true;
+        ctx.inEvent = true;
         return ctx;
     }
 
     boolean inEvent() {
-        return _inEvent;
+        return inEvent;
     }
 
     boolean isWritingCommand() {
-        return _state == WRITING_COMMAND;
+        return state == WRITING_COMMAND;
     }
 
     boolean isReadingReply() {
-        return _state == READING_REPLY;
+        return state == READING_REPLY;
     }
 }

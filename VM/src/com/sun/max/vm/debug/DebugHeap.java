@@ -160,7 +160,7 @@ public final class DebugHeap {
             if (Heap.traceGC()) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Verifying ");
-                Log.print(hub.classActor().name().string());
+                Log.print(hub.classActor().name.string);
                 Log.print(" at ");
                 Log.print(cell);
                 Log.print(" [");
@@ -179,7 +179,7 @@ public final class DebugHeap {
                 } else if (specificLayout.isReferenceArrayLayout()) {
                     final int length = Layout.readArrayLength(origin);
                     for (int index = 0; index < length; index++) {
-                        verifyGripAtIndex(origin, index * Kind.REFERENCE.size(), Layout.getGrip(origin, index), space);
+                        verifyGripAtIndex(origin, index * Kind.REFERENCE.width.numberOfBytes, Layout.getGrip(origin, index), space);
                     }
                 }
                 cell = cell.plus(Layout.size(origin));

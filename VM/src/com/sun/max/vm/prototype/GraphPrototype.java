@@ -46,14 +46,14 @@ import com.sun.max.vm.type.*;
  */
 public class GraphPrototype extends Prototype {
 
-    private final boolean _debuggingPaths;
-    public final CompiledPrototype _compiledPrototype;
-    private final Map<Object, Link> _objectToParent = new IdentityHashMap<Object, Link>();
-    private LinkedList<Object> _worklist = new LinkedList<Object>();
-    private Sequence<Object> _fixedObjects;
+    private final boolean debuggingPaths;
+    public final CompiledPrototype compiledPrototype;
+    private final Map<Object, Link> objectToParent = new IdentityHashMap<Object, Link>();
+    private LinkedList<Object> worklist = new LinkedList<Object>();
+    private Sequence<Object> fixedObjects;
 
-    final IdentitySet<Object> _objects = new IdentitySet<Object>(Ints.M);
-    final Map<Class, ClassInfo> _classInfos = new IdentityHashMap<Class, ClassInfo>();
+    final IdentitySet<Object> objects = new IdentitySet<Object>(Ints.M);
+    final Map<Class, ClassInfo> classInfos = new IdentityHashMap<Class, ClassInfo>();
 
     /**
      * Create a new graph prototype from the specified compiled prototype and compute the transitive closure
@@ -65,8 +65,8 @@ public class GraphPrototype extends Prototype {
      */
     public GraphPrototype(CompiledPrototype compiledPrototype, boolean tree) {
         super(compiledPrototype.vmConfiguration());
-        _compiledPrototype = compiledPrototype;
-        _debuggingPaths = true;
+        this.compiledPrototype = compiledPrototype;
+        debuggingPaths = true;
         add(null, ClassRegistry.vmClassRegistry(), "[root]");
         gatherObjects();
     }
@@ -125,27 +125,27 @@ public class GraphPrototype extends Prototype {
      * read via {@linkplain Field#get(Object) reflection}.
      */
     static final class ReflectedReferenceFieldInfo extends ReferenceFieldInfo {
-        final Field _field;
-        final FieldActor _fieldActor;
+        final Field field;
+        final FieldActor fieldActor;
 
         ReflectedReferenceFieldInfo(FieldActor fieldActor) {
             final Field field = fieldActor.toJava();
             field.setAccessible(true);
-            _field = field;
-            _fieldActor = fieldActor;
+            this.field = field;
+            this.fieldActor = fieldActor;
         }
         @Override
         String getName() {
-            return _field.getName();
+            return field.getName();
         }
 
         @Override
         Object getValue(Object object) {
             if (fieldActor().isReset()) {
-                return _fieldActor.kind().zeroValue();
+                return fieldActor.kind.zeroValue();
             }
             try {
-                return HostObjectAccess.hostToTarget(_field.get(object));
+                return HostObjectAccess.hostToTarget(field.get(object));
             } catch (IllegalArgumentException e) {
                 throw ProgramError.unexpected(e);
             } catch (IllegalAccessException e) {
@@ -154,7 +154,7 @@ public class GraphPrototype extends Prototype {
         }
         @Override
         FieldActor fieldActor() {
-            return _fieldActor;
+            return fieldActor;
         }
     }
 
@@ -163,27 +163,27 @@ public class GraphPrototype extends Prototype {
      * the purpose of modifying their value in the boot image.
      */
     static final class InterceptedReferenceFieldInfo extends ReferenceFieldInfo {
-        final InterceptedField _interceptedField;
+        final InterceptedField interceptedField;
 
         InterceptedReferenceFieldInfo(InterceptedField interceptedField) {
-            _interceptedField = interceptedField;
+            this.interceptedField = interceptedField;
         }
         @Override
         String getName() {
-            return _interceptedField.getName();
+            return interceptedField.getName();
         }
 
         @Override
         Object getValue(Object object) {
-            return _interceptedField.getValue(object, _interceptedField._fieldActor).unboxObject();
+            return interceptedField.getValue(object, interceptedField.fieldActor).unboxObject();
         }
         @Override
         FieldActor fieldActor() {
-            return _interceptedField._fieldActor;
+            return interceptedField.fieldActor;
         }
         @Override
         boolean isMutable() {
-            return _interceptedField.isMutable();
+            return interceptedField.isMutable();
         }
     }
 
@@ -196,15 +196,14 @@ public class GraphPrototype extends Prototype {
      * and those that do not.
      */
     static class ClassInfo {
-        final Class _clazz;
-        final boolean _instanceIsMutable;
-        final boolean _staticTupleIsMutable;
+        final Class clazz;
+        final boolean instanceIsMutable;
+        final boolean staticTupleIsMutable;
 
-        final Sequence<ReferenceFieldInfo> _instanceFields;
-        final Sequence<ReferenceFieldInfo> _staticFields;
-        final AppendableSequence<ClassInfo> _subClasses = new ArrayListSequence<ClassInfo>();
+        final Sequence<ReferenceFieldInfo> instanceFields;
+        final Sequence<ReferenceFieldInfo> staticFields;
 
-        ClassStats _stats;
+        ClassStats stats;
 
         /**
          * Creates a class info data structure for the specified Java class.
@@ -212,29 +211,28 @@ public class GraphPrototype extends Prototype {
          * @param clazz the java class
          */
         ClassInfo(Class clazz, ClassInfo superInfo) {
-            _clazz = clazz;
+            this.clazz = clazz;
 
             final AppendableSequence<ReferenceFieldInfo> instanceFields = new LinkSequence<ReferenceFieldInfo>();
             final AppendableSequence<ReferenceFieldInfo> staticFields = new LinkSequence<ReferenceFieldInfo>();
 
             if (superInfo != null) {
                 // propagate information from super class field lists to this new class info
-                superInfo._subClasses.append(this);
-                AppendableSequence.Static.appendAll(instanceFields, superInfo._instanceFields);
+                AppendableSequence.Static.appendAll(instanceFields, superInfo.instanceFields);
             }
 
             // Need to iterate over the fields using actors instead of reflection otherwise we'll
             // miss fields that are hidden to reflection (see sun.reflection.Reflection.filterFields(Class, Field[])).
             final ClassActor classActor = ClassActor.fromJava(clazz);
 
-            _instanceIsMutable =  addClassInfoFields(instanceFields, classActor.localInstanceFieldActors()) ||
-                                 (superInfo != null && superInfo._instanceIsMutable) ||
+            this.instanceIsMutable =  addClassInfoFields(instanceFields, classActor.localInstanceFieldActors()) ||
+                                 (superInfo != null && superInfo.instanceIsMutable) ||
                                  isReferenceArray() ||
                                  Reference.class.isAssignableFrom(clazz);
-            _staticTupleIsMutable = addClassInfoFields(staticFields, classActor.localStaticFieldActors());
+            this.staticTupleIsMutable = addClassInfoFields(staticFields, classActor.localStaticFieldActors());
 
-            _instanceFields = instanceFields;
-            _staticFields = staticFields;
+            this.instanceFields = instanceFields;
+            this.staticFields = staticFields;
 
             if (Trace.hasLevel(4)) {
                 printTo(Trace.stream());
@@ -242,18 +240,18 @@ public class GraphPrototype extends Prototype {
         }
 
         boolean isReferenceArray() {
-            final Class componentType = _clazz.getComponentType();
+            final Class componentType = clazz.getComponentType();
             return componentType != null && !componentType.isPrimitive() && !Word.class.isAssignableFrom(componentType);
         }
 
         private static boolean addClassInfoFields(AppendableSequence<ReferenceFieldInfo> fieldInfos, FieldActor[] fieldActors) {
             boolean foundMutableField = false;
             for (FieldActor fieldActor : fieldActors) {
-                if (fieldActor.kind() == Kind.REFERENCE) {
+                if (fieldActor.kind == Kind.REFERENCE) {
                     final InterceptedField interceptedField = JDKInterceptor.getInterceptedField(fieldActor);
                     ReferenceFieldInfo fieldInfo = null;
                     if (interceptedField != null) {
-                        interceptedField._fieldActor = fieldActor;
+                        interceptedField.fieldActor = fieldActor;
                         fieldInfo = new InterceptedReferenceFieldInfo(interceptedField);
                         fieldInfos.append(fieldInfo);
                     } else {
@@ -284,7 +282,7 @@ public class GraphPrototype extends Prototype {
         @Override
         public boolean equals(Object obj) {
             if (obj instanceof ClassInfo) {
-                return ((ClassInfo) obj)._clazz.equals(_clazz);
+                return ((ClassInfo) obj).clazz.equals(clazz);
             }
             return false;
         }
@@ -296,7 +294,7 @@ public class GraphPrototype extends Prototype {
          */
         @Override
         public int hashCode() {
-            return _clazz.hashCode();
+            return clazz.hashCode();
         }
 
         /**
@@ -306,7 +304,7 @@ public class GraphPrototype extends Prototype {
          */
         @Override
         public String toString() {
-            return _clazz.toString();
+            return clazz.toString();
         }
 
         /**
@@ -318,9 +316,9 @@ public class GraphPrototype extends Prototype {
          */
         public Sequence<ReferenceFieldInfo> fieldInfos(Object object) {
             if (object instanceof StaticTuple) {
-                return _staticFields;
+                return staticFields;
             }
-            return _instanceFields;
+            return instanceFields;
         }
 
         /**
@@ -331,9 +329,9 @@ public class GraphPrototype extends Prototype {
          */
         public boolean containsMutableReferences(Object object) {
             if (object instanceof StaticTuple) {
-                return _staticTupleIsMutable;
+                return staticTupleIsMutable;
             }
-            return _instanceIsMutable;
+            return instanceIsMutable;
         }
 
         /**
@@ -342,16 +340,16 @@ public class GraphPrototype extends Prototype {
          * @param stream
          */
         public void printTo(PrintStream stream) {
-            stream.println(_clazz.getName() + ": mutable-instance=" + _instanceIsMutable + ", mutable-static-tuple=" + _staticTupleIsMutable);
-            if (!_instanceFields.isEmpty()) {
+            stream.println(clazz.getName() + ": mutable-instance=" + instanceIsMutable + ", mutable-static-tuple=" + staticTupleIsMutable);
+            if (!instanceFields.isEmpty()) {
                 stream.println("  instance fields:");
-                for (ReferenceFieldInfo fieldInfo : _instanceFields) {
+                for (ReferenceFieldInfo fieldInfo : instanceFields) {
                     stream.println("    " + fieldInfo);
                 }
             }
-            if (!_staticFields.isEmpty()) {
+            if (!staticFields.isEmpty()) {
                 stream.println("  static fields:");
-                for (ReferenceFieldInfo fieldInfo : _staticFields) {
+                for (ReferenceFieldInfo fieldInfo : staticFields) {
                     stream.println("    " + fieldInfo);
                 }
             }
@@ -366,23 +364,23 @@ public class GraphPrototype extends Prototype {
      * @return a collection of all objects in this graph
      */
     public synchronized IterableWithLength<Object> objects() {
-        if (_fixedObjects == null) {
-            final AppendableSequence<Object> fixedObjects = new ArrayListSequence<Object>(_objects.numberOfElements());
-            for (Object object : _objects) {
+        if (this.fixedObjects == null) {
+            final AppendableSequence<Object> fixedObjects = new ArrayListSequence<Object>(objects.numberOfElements());
+            for (Object object : objects) {
                 fixedObjects.append(object);
             }
-            _fixedObjects = fixedObjects;
+            this.fixedObjects = fixedObjects;
         } else {
-            ProgramError.check(_fixedObjects.length() == _objects.numberOfElements());
+            ProgramError.check(this.fixedObjects.length() == objects.numberOfElements());
         }
-        return _fixedObjects;
+        return this.fixedObjects;
     }
 
     public ClassInfo classInfoFor(Object object) {
         if (object instanceof StaticTuple) {
-            return _classInfos.get(((StaticTuple) object).classActor().toJava());
+            return classInfos.get(((StaticTuple) object).classActor().toJava());
         }
-        return _classInfos.get(object.getClass());
+        return classInfos.get(object.getClass());
     }
 
     /**
@@ -390,8 +388,8 @@ public class GraphPrototype extends Prototype {
      * one object to another, an array element, etc.
      */
     static class Link {
-        final Object _parent;
-        final Object _name;
+        final Object parent;
+        final Object name;
 
         /**
          * Creates a new link from the specified parent object the the child object.
@@ -400,8 +398,8 @@ public class GraphPrototype extends Prototype {
          * @param name the name of the link
          */
         Link(Object parent, Object name) {
-            _parent = parent;
-            _name = name;
+            this.parent = parent;
+            this.name = name;
         }
 
         /**
@@ -410,10 +408,10 @@ public class GraphPrototype extends Prototype {
          * @return the name of this link as a string
          */
         public String name() {
-            if (_name instanceof String) {
-                return _name.toString();
+            if (name instanceof String) {
+                return name.toString();
             }
-            return "[" + _name + "]";
+            return "[" + name + "]";
         }
 
         /**
@@ -422,10 +420,10 @@ public class GraphPrototype extends Prototype {
          * @return the name of this link
          */
         public String nameAsSuffix() {
-            if (_name instanceof String) {
-                return "." + _name.toString();
+            if (name instanceof String) {
+                return "." + name.toString();
             }
-            return "[" + _name + "]";
+            return "[" + name + "]";
         }
     }
 
@@ -435,7 +433,7 @@ public class GraphPrototype extends Prototype {
      * @return the set of all links
      */
     public Set<Map.Entry<Object, Link>> links() {
-        return _objectToParent.entrySet();
+        return objectToParent.entrySet();
     }
 
     /**
@@ -447,11 +445,11 @@ public class GraphPrototype extends Prototype {
     public void printPath(Object object, PrintStream out) {
         out.println("BEGIN path");
         out.println(object.getClass().getName() + "    [" + Strings.truncate(object.toString(), 60) + "]");
-        Link link = _objectToParent.get(object);
+        Link link = objectToParent.get(object);
         while (link != null) {
-            final Object parent = link._parent;
+            final Object parent = link.parent;
             out.println(parent.getClass().getName() + link.nameAsSuffix() + "    [" + Strings.truncate(parent.toString(), 60) + "]");
-            link = _objectToParent.get(parent);
+            link = objectToParent.get(parent);
         }
         out.println("END path");
     }
@@ -475,13 +473,13 @@ public class GraphPrototype extends Prototype {
      */
     private void add(Object parent, Object child, Object fieldNameOrArrayIndex) {
         final Object object = HostObjectAccess.hostToTarget(child);
-        if (object != null && !_objects.contains(object)) {
-            assert _fixedObjects == null : "Cannot add more objects to graph prototype once the fixed set objects has been created";
-            _objects.add(object);
-            _worklist.add(object);
+        if (object != null && !objects.contains(object)) {
+            assert fixedObjects == null : "Cannot add more objects to graph prototype once the fixed set objects has been created";
+            objects.add(object);
+            worklist.add(object);
 
-            if (_debuggingPaths) {
-                _objectToParent.put(object, parent == null ? null : new Link(parent, fieldNameOrArrayIndex));
+            if (debuggingPaths) {
+                objectToParent.put(object, parent == null ? null : new Link(parent, fieldNameOrArrayIndex));
             }
 
             if (object instanceof Proxy) {
@@ -497,8 +495,8 @@ public class GraphPrototype extends Prototype {
     private void gatherObjects() {
         Trace.begin(1, "gatherObjects");
         int n = 0;
-        while (!_worklist.isEmpty()) {
-            final Object object = _worklist.removeFirst();
+        while (!worklist.isEmpty()) {
+            final Object object = worklist.removeFirst();
             try {
                 explore(object);
             } catch (Throwable e) {
@@ -521,12 +519,12 @@ public class GraphPrototype extends Prototype {
      * @return the class info for the class
      */
     private synchronized ClassInfo makeClassInfo(Class javaClass) {
-        ClassInfo classInfo = _classInfos.get(javaClass);
+        ClassInfo classInfo = classInfos.get(javaClass);
         if (classInfo == null) {
             final Class superClass = javaClass.getSuperclass();
             final ClassInfo superInfo = superClass == null ? null : makeClassInfo(superClass);
             classInfo = new ClassInfo(javaClass, superInfo);
-            _classInfos.put(javaClass, classInfo);
+            classInfos.put(javaClass, classInfo);
         }
         return classInfo;
     }
@@ -561,7 +559,7 @@ public class GraphPrototype extends Prototype {
         }
 
         // walk the reference fields of the object
-        walkFields(object, classInfo._instanceFields);
+        walkFields(object, classInfo.instanceFields);
 
         // if this is a reference array, walk its elements
         if (object instanceof Object[] && !(object instanceof Word[])) {
@@ -591,7 +589,7 @@ public class GraphPrototype extends Prototype {
         // add the class actor object
         add(javaClass, classActor, "classActor");
         // walk the static fields of the class
-        walkFields(javaClass, makeClassInfo(javaClass)._staticFields);
+        walkFields(javaClass, makeClassInfo(javaClass).staticFields);
     }
 
     private void exploreClassRef(JDK.ClassRef classRef) {

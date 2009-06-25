@@ -137,10 +137,10 @@ public interface InspectorFrame extends Prober {
             return (InternalInspectorFrame) c;
         }
 
-        private static Point _recentMouseLocationOnScreen = new Point(100, 100);
+        private static Point recentMouseLocationOnScreen = new Point(100, 100);
 
         public static Point recentMouseLocationOnScreen() {
-            return _recentMouseLocationOnScreen;
+            return recentMouseLocationOnScreen;
         }
 
 
@@ -148,7 +148,7 @@ public interface InspectorFrame extends Prober {
         public void eventDispatched(AWTEvent event) {
             if (event instanceof MouseEvent && event.getSource() != null) {
                 final MouseEvent mouseEvent = (MouseEvent) event;
-                _recentMouseLocationOnScreen = getLocationOnScreen(mouseEvent);
+                recentMouseLocationOnScreen = getLocationOnScreen(mouseEvent);
                 if (isPopupTrigger(mouseEvent) && isTitleBarSourceEvent(event)) {
                     final InternalInspectorFrame internalInspectorFrame = getInternalInspectorFrame(mouseEvent.getComponent());
                     if (internalInspectorFrame != null) {

@@ -42,21 +42,21 @@ import com.sun.max.vm.value.*;
  */
 public final class PrototypeGripScheme extends AbstractVMScheme implements GripScheme {
 
-    private final DataModel _dataModel;
-    private final WordWidth _gripWidth;
+    private final DataModel dataModel;
+    private final WordWidth gripWidth;
 
     public PrototypeGripScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        _dataModel = vmConfiguration.platform().processorKind().dataModel();
-        _gripWidth = _dataModel.wordWidth();
+        dataModel = vmConfiguration.platform().processorKind.dataModel;
+        gripWidth = dataModel.wordWidth;
     }
 
     public DataModel dataModel() {
-        return _dataModel;
+        return dataModel;
     }
 
     public WordWidth gripWidth() {
-        return _dataModel.wordWidth();
+        return dataModel.wordWidth;
     }
 
     public boolean isConstant() {
@@ -153,7 +153,7 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
             final FieldActor fieldActor = staticTuple.findStaticFieldActor(offset);
             final Class javaClass = staticTuple.classActor().toJava();
             try {
-                WithoutAccessCheck.setStaticField(javaClass, fieldActor.name().toString(), wordOrBoxedJavaValue);
+                WithoutAccessCheck.setStaticField(javaClass, fieldActor.name.toString(), wordOrBoxedJavaValue);
             } catch (Throwable throwable) {
                 ProgramError.unexpected("could not write field: " + fieldActor, throwable);
             }
@@ -176,7 +176,7 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
             final StaticTuple staticTuple = (StaticTuple) object;
             final FieldActor fieldActor = staticTuple.findStaticFieldActor(offset);
             try {
-                return StaticLoophole.cast(castType, WithoutAccessCheck.getStaticField(staticTuple.classActor().toJava(), fieldActor.name().toString()));
+                return StaticLoophole.cast(castType, WithoutAccessCheck.getStaticField(staticTuple.classActor().toJava(), fieldActor.name.toString()));
             } catch (Throwable throwable) {
                 ProgramError.unexpected("could not read field: " + fieldActor, throwable);
             }

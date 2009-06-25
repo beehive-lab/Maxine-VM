@@ -27,19 +27,19 @@ package com.sun.max.vm.heap.beltway.profile;
  */
 public class HeapProfiler {
 
-    private static HeapStatistics _heapStatistics = new HeapStatistics();
-    private static HeapTimer _heapTimer = new HeapTimer();
+    private static HeapStatistics heapStatistics = new HeapStatistics();
+    private static HeapTimer heapTimer = new HeapTimer();
 
     public HeapProfiler() {
 
     }
 
     public static HeapTimer getHeapTimer() {
-        return _heapTimer;
+        return heapTimer;
     }
 
     public static HeapStatistics getHeapStatistics() {
-        return _heapStatistics;
+        return heapStatistics;
     }
 
 }

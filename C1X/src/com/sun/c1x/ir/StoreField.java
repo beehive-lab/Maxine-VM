@@ -30,12 +30,11 @@ import com.sun.c1x.value.*;
  * @author Ben L. Titzer
  */
 public class StoreField extends AccessField {
-    Instruction _value;
+    Instruction value;
 
     /**
      * Creates a new LoadField instance.
      * @param object the receiver object
-     * @param offset the offset of the field if known
      * @param field the compiler interface field
      * @param value the instruction representing the value to store to the field
      * @param isStatic indicates if the field is static
@@ -44,9 +43,9 @@ public class StoreField extends AccessField {
      * @param isLoaded indicates if the class is loaded
      * @param isInitialized indicates if the class is initialized
      */
-    public StoreField(Instruction object, int offset, CiField field, Instruction value, boolean isStatic, ValueStack lockStack, ValueStack stateBefore, boolean isLoaded, boolean isInitialized) {
-        super(object, offset, field, isStatic, lockStack, stateBefore, isLoaded, isInitialized);
-        _value = value;
+    public StoreField(Instruction object, CiField field, Instruction value, boolean isStatic, ValueStack lockStack, ValueStack stateBefore, boolean isLoaded, boolean isInitialized) {
+        super(object, field, isStatic, lockStack, stateBefore, isLoaded, isInitialized);
+        this.value = value;
         setFlag(Flag.NeedsWriteBarrier);
     }
 
@@ -55,7 +54,7 @@ public class StoreField extends AccessField {
      * @return the value
      */
     public Instruction value() {
-        return _value;
+        return value;
     }
 
     /**
@@ -74,7 +73,7 @@ public class StoreField extends AccessField {
     @Override
     public void inputValuesDo(InstructionClosure closure) {
         super.inputValuesDo(closure);
-        _value = closure.apply(_value);
+        value = closure.apply(value);
     }
 
     /**

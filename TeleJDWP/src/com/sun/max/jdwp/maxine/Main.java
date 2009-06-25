@@ -69,9 +69,9 @@ public class Main {
 
     private static final int PORT_RANGE_LENGTH = 50;
 
-    private static final OptionSet _options = new OptionSet();
+    private static final OptionSet options = new OptionSet();
 
-    private static final Option<Integer> _portOption = _options.newIntegerOption("port", 2000,
+    private static final Option<Integer> portOption = options.newIntegerOption("port", 2000,
                     "The port to listen on for client requests. If the socket cannot be opened" +
                     "then the next " + PORT_RANGE_LENGTH + " successive ports are tried.");
 
@@ -106,10 +106,10 @@ public class Main {
         TeleVM t = null;
         try {
             final Options options = new Options();
-            options._debugOption.setValue(Boolean.TRUE);
-            options._sourcepathOption.setValue(Arrays.asList(sourcepath.toStringArray()));
-            options._vmArguments.setValue(com.sun.max.lang.Arrays.toString(arguments, " "));
-            options._bootImageFileOption.setValue(bootImageFile);
+            options.debugOption.setValue(Boolean.TRUE);
+            options.sourcepathOption.setValue(Arrays.asList(sourcepath.toStringArray()));
+            options.vmArguments.setValue(com.sun.max.lang.Arrays.toString(arguments, " "));
+            options.bootImageFileOption.setValue(bootImageFile);
             t = TeleVM.create(options);
         } catch (BootImageException e) {
             LOGGER.severe("Exception occurred while creating TeleVM process: " + e.toString());
@@ -195,7 +195,7 @@ public class Main {
 
         try {
 
-            final Integer firstPort = _portOption.getValue();
+            final Integer firstPort = portOption.getValue();
             ServerSocket serverSocket = null;
             final int lastPort = firstPort + PORT_RANGE_LENGTH - 1;
             for (int port = firstPort; serverSocket == null && port <= lastPort; ++port) {

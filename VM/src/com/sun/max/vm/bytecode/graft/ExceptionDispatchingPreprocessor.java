@@ -91,13 +91,13 @@ import com.sun.max.vm.classfile.constant.*;
  */
 public final class ExceptionDispatchingPreprocessor extends BytecodeAssembler {
 
-    private final SeekableByteArrayOutputStream _codeStream;
-    private final CodeAttribute _result;
+    private final SeekableByteArrayOutputStream codeStream;
+    private final CodeAttribute result;
 
     public ExceptionDispatchingPreprocessor(ConstantPoolEditor constantPoolEditor, CodeAttribute codeAttribute) {
         super(constantPoolEditor, codeAttribute.code().length, codeAttribute.maxStack(), codeAttribute.maxLocals());
 
-        _codeStream = new SeekableByteArrayOutputStream();
+        codeStream = new SeekableByteArrayOutputStream();
 
         final ExceptionDispatcher[] dispatcherMap = synthesizeExceptionDispatchers(codeAttribute.code(), codeAttribute.exceptionHandlerTable());
         final Sequence<ExceptionHandlerEntry> exceptionDispatcherTable = exceptionDispatcherTable(dispatcherMap);
@@ -105,9 +105,9 @@ public final class ExceptionDispatchingPreprocessor extends BytecodeAssembler {
         fixup();
 
         final byte[] originalCode = codeAttribute.code();
-        final byte[] code = Arrays.copyOf(originalCode, originalCode.length + _codeStream.size());
-        _codeStream.copyTo(0, code, originalCode.length, _codeStream.size());
-        _result = new CodeAttribute(codeAttribute.constantPool(),
+        final byte[] code = Arrays.copyOf(originalCode, originalCode.length + codeStream.size());
+        codeStream.copyTo(0, code, originalCode.length, codeStream.size());
+        result = new CodeAttribute(codeAttribute.constantPool(),
                                     code,
                                     (char) maxStack(),
                                     (char) maxLocals(),
@@ -119,16 +119,16 @@ public final class ExceptionDispatchingPreprocessor extends BytecodeAssembler {
 
     @Override
     protected void setWritePosition(int position) {
-        _codeStream.seek(position);
+        codeStream.seek(position);
     }
 
     @Override
     protected void writeByte(byte b) {
-        _codeStream.write(b);
+        codeStream.write(b);
     }
 
     public CodeAttribute codeAttribute() {
-        return _result;
+        return result;
     }
 
     private ExceptionDispatcher[] synthesizeExceptionDispatchers(byte[] code, Sequence<ExceptionHandlerEntry> exceptionHandlerEntries) {
@@ -151,7 +151,7 @@ public final class ExceptionDispatchingPreprocessor extends BytecodeAssembler {
 
     @Override
     public byte[] code() {
-        return _codeStream.toByteArray();
+        return codeStream.toByteArray();
     }
 
     /**

@@ -160,11 +160,11 @@ public abstract class Assembler {
             final int startPosition = currentPosition();
             // Emit placeholder bytes
             final WordWidth width = wordWidth();
-            for (int i = 0; i < width.numberOfBytes(); i++) {
+            for (int i = 0; i < width.numberOfBytes; i++) {
                 emitByte((byte) 0);
             }
             final AddressLiteral addressLiteral = new AddressLiteral(Assembler.this, startPosition, currentPosition(), label);
-            assert addressLiteral.size() == width.numberOfBytes();
+            assert addressLiteral.size() == width.numberOfBytes;
             return addressLiteral;
         }
 
@@ -177,11 +177,11 @@ public abstract class Assembler {
          */
         public OffsetLiteral inlineOffset(Label target, Label base, WordWidth width) {
             final int startPosition = currentPosition();
-            for (int i = 0; i < width.numberOfBytes(); i++) {
+            for (int i = 0; i < width.numberOfBytes; i++) {
                 emitByte((byte) 0);
             }
             final OffsetLiteral offsetLiteral = new OffsetLiteral(Assembler.this, startPosition, currentPosition(), target, base);
-            assert offsetLiteral.size() == width.numberOfBytes();
+            assert offsetLiteral.size() == width.numberOfBytes;
             return offsetLiteral;
         }
     }

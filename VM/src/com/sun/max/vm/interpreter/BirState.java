@@ -31,7 +31,7 @@ public class BirState extends State<Value> {
      * facilitate parameter passing.
      */
     public BirState() {
-        _frames.append(new Frame());
+        frames.append(new Frame());
     }
 
     /**
@@ -53,7 +53,7 @@ public class BirState extends State<Value> {
      * Slices a specified number of frames from this state.
      */
     public BirState slice(int frameCount) {
-        return new BirState(this, this._frames.length() - frameCount, frameCount);
+        return new BirState(this, this.frames.length() - frameCount, frameCount);
     }
 
     @Override
@@ -83,12 +83,12 @@ public class BirState extends State<Value> {
 
     @Override
     protected Value filler() {
-        return BirInterpreter._filler;
+        return BirInterpreter.filler;
     }
 
     @Override
     protected Value undefined() {
-        return BirInterpreter._undefined;
+        return BirInterpreter.undefined;
     }
 
     @Override

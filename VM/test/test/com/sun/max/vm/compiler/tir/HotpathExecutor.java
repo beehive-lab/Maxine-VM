@@ -42,18 +42,18 @@ import com.sun.max.vm.value.*;
 
 public class HotpathExecutor implements JavaExecHarness.Executor {
 
-    private static OptionSet _optionSet = new OptionSet();
-    private static Option<Boolean> _enableHotpath = _optionSet.newBooleanOption("HP", true, "Enable Hotpath.");
-    private static Option<Boolean> _enableHost = _optionSet.newBooleanOption("E", false, "Execute on host vm.");
-    private static Option<Integer> _hotpathThreshold = _optionSet.newIntegerOption("HP:T", 10, "Hotpath tracing threshold.");
+    private static OptionSet optionSet = new OptionSet();
+    private static Option<Boolean> enableHotpath = optionSet.newBooleanOption("HP", true, "Enable Hotpath.");
+    private static Option<Boolean> enableHost = optionSet.newBooleanOption("E", false, "Execute on host vm.");
+    private static Option<Integer> hotpathThreshold = optionSet.newIntegerOption("HP:T", 10, "Hotpath tracing threshold.");
 
     static {
-        _optionSet.addOptions(BirInterpreter._optionSet);
-        _optionSet.addOptions(HotpathProfiler._optionSet);
-        _optionSet.addOptions(TirRecorder._optionSet);
-        _optionSet.addOptions(Tracer._optionSet);
-        _optionSet.addOptions(AsynchronousProfiler._optionSet);
-        _optionSet.addOptions(IrInterpreter._options);
+        optionSet.addOptions(BirInterpreter.optionSet);
+        optionSet.addOptions(HotpathProfiler.optionSet);
+        optionSet.addOptions(TirRecorder.optionSet);
+        optionSet.addOptions(Tracer.optionSet);
+        optionSet.addOptions(AsynchronousProfiler.optionSet);
+        optionSet.addOptions(IrInterpreter.options);
     }
 
     public Object execute(JavaTestCase testCase, Object[] arguments) throws InvocationTargetException {
@@ -62,7 +62,7 @@ public class HotpathExecutor implements JavaExecHarness.Executor {
         printValues(arguments);
         Console.println();
         final BirInterpreter.Profiler profiler;
-        if (_enableHotpath.getValue()) {
+        if (enableHotpath.getValue()) {
             profiler = new HotpathProfiler();
         } else {
             profiler = null;
@@ -71,7 +71,7 @@ public class HotpathExecutor implements JavaExecHarness.Executor {
         final Value[] argumentsValues = Value.fromBoxedJavaValues(arguments);
         final Value resultValue;
         try {
-            if (_enableHost.getValue()) {
+            if (enableHost.getValue()) {
                 resultValue = staticMethodActor.invoke(argumentsValues);
             } else {
                 resultValue = interpreter.execute(staticMethodActor, argumentsValues);
@@ -119,13 +119,13 @@ public class HotpathExecutor implements JavaExecHarness.Executor {
 
     public static void main(String[] arguments) {
         setUp();
-        _optionSet.parseArguments(arguments);
+        optionSet.parseArguments(arguments);
         final Registry<TestHarness> registry = new Registry<TestHarness>(TestHarness.class, true);
         final JavaExecHarness harness = new JavaExecHarness(new HotpathExecutor());
         registry.registerObject("java", harness);
         final TestEngine engine = new TestEngine(registry);
         Console.println(Color.LIGHTGREEN, "Executing Tests ...");
-        engine.parseAndRunTests(_optionSet.getArguments());
+        engine.parseAndRunTests(optionSet.getArguments());
         engine.report(System.out);
         AsynchronousProfiler.print();
     }
@@ -133,8 +133,8 @@ public class HotpathExecutor implements JavaExecHarness.Executor {
     // Checkstyle: stop
     public static void setUp() {
         Console.out().println(Color.LIGHTGREEN, "Initializing ...");
-        final PrototypeGenerator generator = new PrototypeGenerator(_optionSet);
-        Trace.addTo(_optionSet);
+        final PrototypeGenerator generator = new PrototypeGenerator(optionSet);
+        Trace.addTo(optionSet);
         final JavaPrototype javaPrototype = generator.createJavaPrototype(createVMConfiguration(), false);
         javaPrototype.vmConfiguration().initializeSchemes(Phase.RUNNING);
         javaPrototype.vmConfiguration().compilerScheme().compileSnippets();

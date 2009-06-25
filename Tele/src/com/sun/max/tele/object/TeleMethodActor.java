@@ -39,16 +39,16 @@ import com.sun.max.vm.reference.*;
  */
 public abstract class TeleMethodActor extends TeleMemberActor implements TeleRoutine, MethodProvider {
 
-    private MethodActor _methodActor;
+    private MethodActor methodActor;
 
     /**
      * @return local {@link MethodActor} corresponding the the {@link TeleVM}'s {@link MethodActor} for this method.
      */
     public MethodActor methodActor() {
-        if (_methodActor == null) {
-            _methodActor = getTeleHolder().classActor().getLocalMethodActor(getMemberIndex());
+        if (methodActor == null) {
+            methodActor = getTeleHolder().classActor().getLocalMethodActor(getMemberIndex());
         }
-        return _methodActor;
+        return methodActor;
     }
 
     // Keep construction minimal for both performance and synchronization.
@@ -140,7 +140,7 @@ public abstract class TeleMethodActor extends TeleMemberActor implements TeleRou
     }
 
     public String getName() {
-        return methodActor().name().string();
+        return methodActor().name.string;
     }
 
     public String getSignature() {

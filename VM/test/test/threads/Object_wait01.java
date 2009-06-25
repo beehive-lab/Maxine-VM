@@ -28,30 +28,30 @@ package test.threads;
 
 public class Object_wait01 implements Runnable {
 
-    static volatile int _count = 0;
-    static volatile boolean _done;
-    static final Object _object = new Object();
+    static volatile int count = 0;
+    static volatile boolean done;
+    static final Object object = new Object();
 
     public static boolean test(int i) throws InterruptedException {
-        _count = 0;
-        _done = false;
+        count = 0;
+        done = false;
         new Thread(new Object_wait01()).start();
-        synchronized (_object) {
-            while (_count < i) {
-                _object.wait();
+        synchronized (object) {
+            while (count < i) {
+                object.wait();
             }
-            _done = true;
-            return _count >= i;
+            done = true;
+            return count >= i;
         }
 
     }
 
     public void run() {
         int i = 0;
-        while (i++ < 1000000 && !_done) {
-            synchronized (_object) {
-                _count++;
-                _object.notifyAll();
+        while (i++ < 1000000 && !done) {
+            synchronized (object) {
+                count++;
+                object.notifyAll();
             }
         }
     }

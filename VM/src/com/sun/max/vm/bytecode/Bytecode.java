@@ -353,9 +353,9 @@ public enum Bytecode implements BytecodeInfo {
     IMPDEP1,
     IMPDEP2;
 
-    private final int _flags;
+    private final int flags;
 
-    private final int _implicitNumericOperand;
+    private final int implicitNumericOperand;
 
     public static final int INVALID_IMPLICIT_NUMERIC_OPERAND = 0x10101010;
 
@@ -364,17 +364,17 @@ public enum Bytecode implements BytecodeInfo {
     }
 
     private Bytecode(int flags) {
-        _flags = flags;
+        this.flags = flags;
         final String name = name();
         final int lastUnderscoreIndex = name.lastIndexOf('_');
         if (lastUnderscoreIndex != -1 && Character.isDigit(name.charAt(lastUnderscoreIndex + 1))) {
-            _implicitNumericOperand = Integer.parseInt(name.substring(lastUnderscoreIndex + 1));
+            implicitNumericOperand = Integer.parseInt(name.substring(lastUnderscoreIndex + 1));
         } else {
             if (ordinal() == 2) {
                 // ICONST_M1
-                _implicitNumericOperand = -1;
+                implicitNumericOperand = -1;
             } else {
-                _implicitNumericOperand = INVALID_IMPLICIT_NUMERIC_OPERAND;
+                implicitNumericOperand = INVALID_IMPLICIT_NUMERIC_OPERAND;
             }
         }
     }
@@ -403,7 +403,7 @@ public enum Bytecode implements BytecodeInfo {
      * @return {@value #INVALID_IMPLICIT_NUMERIC_OPERAND} if this opcode's mnemonic does not imply a numeric operand
      */
     public int implicitNumericOperand() {
-        return _implicitNumericOperand;
+        return implicitNumericOperand;
     }
 
     /**
@@ -435,7 +435,7 @@ public enum Bytecode implements BytecodeInfo {
      *                a mask of {@linkplain Flags attribute constants}
      */
     public final boolean is(int maskOfFlags) {
-        return (_flags & maskOfFlags) != 0;
+        return (flags & maskOfFlags) != 0;
     }
 
     /**
@@ -444,7 +444,7 @@ public enum Bytecode implements BytecodeInfo {
      * @param maskOfFlags a mask of {@linkplain Flags attribute constants}
      */
     public final boolean isNot(int maskOfFlags) {
-        return (_flags & maskOfFlags) == 0;
+        return (flags & maskOfFlags) == 0;
     }
 
     /**

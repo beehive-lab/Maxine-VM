@@ -34,10 +34,10 @@ import com.sun.c1x.value.ValueType;
  */
 public class ProfileCall extends Instruction {
 
-    CiMethod _method;
-    int _bciOfInvoke;
-    Instruction _object;
-    CiType _knownHolder;
+    CiMethod method;
+    int bciOfInvoke;
+    Instruction object;
+    CiType knownHolder;
 
     /**
      * Constructs a new ProfileCall instruction.
@@ -48,10 +48,10 @@ public class ProfileCall extends Instruction {
      */
     public ProfileCall(CiMethod method, int bci, Instruction object, CiType knownHolder) {
         super(ValueType.VOID_TYPE);
-        _method = method;
-        _bciOfInvoke = bci;
-        _object = object;
-        _knownHolder = knownHolder;
+        this.method = method;
+        this.bciOfInvoke = bci;
+        this.object = object;
+        this.knownHolder = knownHolder;
         pin();
     }
 
@@ -60,7 +60,7 @@ public class ProfileCall extends Instruction {
      * @return the method
      */
     public CiMethod method() {
-        return _method;
+        return method;
     }
 
     /**
@@ -68,7 +68,7 @@ public class ProfileCall extends Instruction {
      * @return the bytecode index
      */
     public int bciOfInvoke() {
-        return _bciOfInvoke;
+        return bciOfInvoke;
     }
 
     /**
@@ -76,7 +76,7 @@ public class ProfileCall extends Instruction {
      * @return the instruction generating the object
      */
     public Instruction object() {
-        return _object;
+        return object;
     }
 
     /**
@@ -84,7 +84,7 @@ public class ProfileCall extends Instruction {
      * @return the known holder
      */
     public CiType knownHolder() {
-        return _knownHolder;
+        return knownHolder;
     }
 
     /**
@@ -93,8 +93,8 @@ public class ProfileCall extends Instruction {
      */
     @Override
     public void inputValuesDo(InstructionClosure closure) {
-        if (_object != null) {
-            _object = closure.apply(_object);
+        if (object != null) {
+            object = closure.apply(object);
         }
     }
 

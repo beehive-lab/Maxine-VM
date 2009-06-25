@@ -36,7 +36,7 @@ import com.sun.max.vm.hotpath.compiler.*;
 import com.sun.max.vm.type.*;
 
 public class DirTracer {
-    private static final GrowableMapping<ClassMethodActor, DirMethod> _translationCache = new OpenAddressingHashMapping<ClassMethodActor, DirMethod>();
+    private static final GrowableMapping<ClassMethodActor, DirMethod> translationCache = new OpenAddressingHashMapping<ClassMethodActor, DirMethod>();
 
     /**
      * Translates a {@link Snippet} into Trace IR.
@@ -56,45 +56,45 @@ public class DirTracer {
      */
     public static TirInstruction trace(ClassMethodActor method, TirTrace trace, TirInstruction[] arguments, TirRecorder recorder) {
         synchronized (DirTracer.class) {
-            DirMethod dirMethod = _translationCache.get(method);
+            DirMethod dirMethod = translationCache.get(method);
             if (dirMethod == null) {
                 dirMethod = makeDirMethod(method);
-                _translationCache.put(method, dirMethod);
+                translationCache.put(method, dirMethod);
             }
             assert dirMethod.parameters().length == arguments.length;
             return new DirTracer(dirMethod).trace(trace, arguments, recorder);
         }
     }
 
-    private final DirMethod _method;
-    private final GrowableDeterministicSet<DirBlock> _tracedBlocks = new LinkedIdentityHashSet<DirBlock>();
-    private final GrowableMapping<DirValue, TirInstruction> _values = new OpenAddressingHashMapping<DirValue, TirInstruction>();
-    private TirInstruction _returnInstruction;
+    private final DirMethod method;
+    private final GrowableDeterministicSet<DirBlock> tracedBlocks = new LinkedIdentityHashSet<DirBlock>();
+    private final GrowableMapping<DirValue, TirInstruction> values = new OpenAddressingHashMapping<DirValue, TirInstruction>();
+    private TirInstruction returnInstruction;
 
     protected DirTracer(DirMethod method) {
-        _method = method;
+        this.method = method;
     }
 
     private TirInstruction trace(final TirTrace trace, TirInstruction[] arguments, TirRecorder recorder) {
         // Map arguments onto parameters.
-        for (int i = 0; i < _method.parameters().length; i++) {
-            _values.put(_method.parameters()[i], arguments[i]);
+        for (int i = 0; i < method.parameters().length; i++) {
+            values.put(method.parameters()[i], arguments[i]);
         }
 
         final AppendableSequence<TirInstruction> path = new ArrayListSequence<TirInstruction>();
-        final boolean isTraceable = trace(_method.blocks().first(), path, trace, recorder);
+        final boolean isTraceable = trace(method.blocks().first(), path, trace, recorder);
 
         if (isTraceable) {
             trace.append(path);
         } else {
-            final TirDirCall call = new TirDirCall(_method, arguments);
+            final TirDirCall call = new TirDirCall(method, arguments);
             trace.append(call);
             if (call.resultKind() != Kind.VOID) {
-                _returnInstruction = call;
+                returnInstruction = call;
             }
         }
 
-        return _returnInstruction;
+        return returnInstruction;
     }
 
     private TirInstruction map(DirValue value) {
@@ -102,7 +102,7 @@ public class DirTracer {
             final DirConstant dirConstant = (DirConstant) value;
             return new TirConstant(dirConstant.value());
         }
-        final TirInstruction instruction = _values.get(value);
+        final TirInstruction instruction = values.get(value);
         assert instruction != null;
         return instruction;
     }
@@ -117,7 +117,7 @@ public class DirTracer {
 
     private boolean trace(DirBlock block, final AppendableSequence<TirInstruction> path, final TirTrace trace, final TirRecorder recorder) {
         final MutableInnerClassGlobal<Boolean> isTraceable = new MutableInnerClassGlobal<Boolean>(true);
-        _tracedBlocks.add(block);
+        tracedBlocks.add(block);
 
         for (DirInstruction instruction : block.instructions()) {
             if (isTraceable.value() == false) {
@@ -132,7 +132,7 @@ public class DirTracer {
 
                 @Override
                 public void visitAssign(DirAssign dirMove) {
-                    _values.put(dirMove.destination(), map(dirMove.source()));
+                    values.put(dirMove.destination(), map(dirMove.source()));
                 }
 
                 @Override
@@ -141,7 +141,7 @@ public class DirTracer {
                     final TirBuiltinCall call = new TirBuiltinCall(dirBuiltinCall.builtin(), instructions);
                     if (dirBuiltinCall.builtin().resultKind() != Kind.VOID) {
                         assert dirBuiltinCall.result() != null;
-                        _values.put(dirBuiltinCall.result(), call);
+                        values.put(dirBuiltinCall.result(), call);
                     }
                     path.append(call);
                 }
@@ -149,16 +149,16 @@ public class DirTracer {
                 @Override
                 public void visitReturn(DirReturn dirReturn) {
                     if (dirReturn.returnValue() != DirConstant.VOID) {
-                        _returnInstruction = map(dirReturn.returnValue());
+                        returnInstruction = map(dirReturn.returnValue());
                     } else {
-                        ProgramError.check(_method.classMethodActor().resultKind() == Kind.VOID);
+                        ProgramError.check(method.classMethodActor().resultKind() == Kind.VOID);
                     }
                 }
 
                 @Override
                 public void visitSwitch(DirSwitch dirSwitch) {
                     // We can only trace control flow that is non-cyclic ...
-                    if (_tracedBlocks.contains(dirSwitch.targetBlocks()[0])) {
+                    if (tracedBlocks.contains(dirSwitch.targetBlocks()[0])) {
                         isTraceable.setValue(false);
                         return;
                     }

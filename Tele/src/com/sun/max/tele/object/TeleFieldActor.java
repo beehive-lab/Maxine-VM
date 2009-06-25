@@ -36,16 +36,16 @@ import com.sun.max.vm.type.*;
  */
 public final class TeleFieldActor extends TeleMemberActor implements FieldProvider {
 
-    private FieldActor _fieldActor;
+    private FieldActor fieldActor;
 
     /**
      * @return local {@link FieldActor} corresponding the the target VM's {@link FieldActor} for this field.
      */
     public FieldActor fieldActor() {
-        if (_fieldActor == null) {
-            _fieldActor = getTeleHolder().classActor().getLocalFieldActor(getMemberIndex());
+        if (fieldActor == null) {
+            fieldActor = getTeleHolder().classActor().getLocalFieldActor(getMemberIndex());
         }
-        return _fieldActor;
+        return fieldActor;
     }
 
     // Keep construction minimal for both performance and synchronization.
@@ -67,14 +67,14 @@ public final class TeleFieldActor extends TeleMemberActor implements FieldProvid
     public VMValue getStaticValue() {
 
         final Pointer pointer = this.getTeleHolder().getTeleStaticTuple().getReference().toOrigin();
-        final int offset = _fieldActor.offset();
-        final Kind kind = _fieldActor.kind();
+        final int offset = fieldActor.offset();
+        final Kind kind = fieldActor.kind;
         return teleVM().maxineValueToJDWPValue(teleVM().readValue(kind, pointer, offset));
     }
 
     public VMValue getValue(ObjectProvider object) {
         final Reference reference = ((TeleObject) object).getReference();
-        return teleVM().maxineValueToJDWPValue(teleVM().readValue(_fieldActor.kind(), reference.toOrigin(), _fieldActor.offset()));
+        return teleVM().maxineValueToJDWPValue(teleVM().readValue(fieldActor.kind, reference.toOrigin(), fieldActor.offset()));
     }
 
     public void setStaticValue(VMValue value) {
@@ -90,7 +90,7 @@ public final class TeleFieldActor extends TeleMemberActor implements FieldProvid
     }
 
     public Type getType() {
-        return TeleVM.maxineKindToJDWPType(fieldActor().kind());
+        return TeleVM.maxineKindToJDWPType(fieldActor().kind);
     }
 
     public int getFlags() {
@@ -98,7 +98,7 @@ public final class TeleFieldActor extends TeleMemberActor implements FieldProvid
     }
 
     public String getName() {
-        return fieldActor().name().toString();
+        return fieldActor().name.toString();
     }
 
     public String getSignature() {

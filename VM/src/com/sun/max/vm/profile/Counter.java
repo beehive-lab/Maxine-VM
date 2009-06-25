@@ -27,10 +27,10 @@ package com.sun.max.vm.profile;
  */
 public class Counter {
 
-    protected int _count;
+    protected int value;
 
     public Counter(int initialCount) {
-        _count = initialCount;
+        value = initialCount;
     }
 
     public Counter() {
@@ -38,14 +38,14 @@ public class Counter {
     }
 
     public void increment() {
-        _count++;
+        value++;
     }
 
     public void reset() {
-        _count = 0;
+        value = 0;
     }
 
     public int value() {
-        return _count;
+        return value;
     }
 }

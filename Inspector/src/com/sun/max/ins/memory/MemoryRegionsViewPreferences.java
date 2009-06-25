@@ -32,16 +32,16 @@ import com.sun.max.ins.*;
   */
 public final class MemoryRegionsViewPreferences extends com.sun.max.ins.gui.TableColumnVisibilityPreferences<MemoryRegionsColumnKind> {
 
-    private static MemoryRegionsViewPreferences _globalPreferences;
+    private static MemoryRegionsViewPreferences globalPreferences;
 
     /**
      * @return the global, persistent set of user preferences for viewing a table of memory regions.
      */
     static MemoryRegionsViewPreferences globalPreferences(Inspection inspection) {
-        if (_globalPreferences == null) {
-            _globalPreferences = new MemoryRegionsViewPreferences(inspection);
+        if (globalPreferences == null) {
+            globalPreferences = new MemoryRegionsViewPreferences(inspection);
         }
-        return _globalPreferences;
+        return globalPreferences;
     }
 
     /**

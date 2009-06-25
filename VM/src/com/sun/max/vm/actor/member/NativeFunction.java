@@ -33,17 +33,17 @@ import com.sun.max.vm.jni.*;
  * @author Doug Simon
  */
 public class NativeFunction {
-    private final ClassMethodActor _classMethodActor;
-    private String _symbol;
+    private final ClassMethodActor classMethodActor;
+    private String symbol;
     @CONSTANT_WHEN_NOT_ZERO
-    private Word _address = Address.zero();
+    private Word address = Address.zero();
 
     public NativeFunction(ClassMethodActor classMethodActor) {
-        _classMethodActor = classMethodActor;
+        this.classMethodActor = classMethodActor;
     }
 
     public ClassMethodActor classMethodActor() {
-        return _classMethodActor;
+        return classMethodActor;
     }
 
     /**
@@ -51,9 +51,9 @@ public class NativeFunction {
      */
     @NEVER_INLINE
     private boolean isOverloadedByNativeMethod() {
-        return _classMethodActor.holder().forAllClassMethodActors(new Predicate<ClassMethodActor>() {
-            public boolean evaluate(ClassMethodActor classMethodActor) {
-                return classMethodActor != _classMethodActor && classMethodActor.isNative() && classMethodActor.name().equals(_classMethodActor.name());
+        return classMethodActor.holder().forAllClassMethodActors(new Predicate<ClassMethodActor>() {
+            public boolean evaluate(ClassMethodActor cma) {
+                return classMethodActor != cma && cma.isNative() && cma.name.equals(classMethodActor.name);
             }
         });
     }
@@ -65,11 +65,11 @@ public class NativeFunction {
      * first call.
      */
     public String makeSymbol() {
-        if (_symbol == null) {
-            final ClassMethodActor m = _classMethodActor;
-            _symbol = m.isCFunction() ? m.name().toString() : Mangle.mangleMethod(m.holder().typeDescriptor(), m.name().toString(), isOverloadedByNativeMethod() ? m.descriptor() : null);
+        if (symbol == null) {
+            final ClassMethodActor m = classMethodActor;
+            symbol = m.isCFunction() ? m.name.toString() : Mangle.mangleMethod(m.holder().typeDescriptor, m.name.toString(), isOverloadedByNativeMethod() ? m.descriptor() : null);
         }
-        return _symbol;
+        return symbol;
     }
 
     /**
@@ -83,25 +83,25 @@ public class NativeFunction {
      * @throws UnsatisfiedLinkError if the native function cannot be found
      */
     public Word link() throws UnsatisfiedLinkError {
-        if (_address.isZero()) {
-            _address = DynamicLinker.lookup(_classMethodActor, makeSymbol());
+        if (address.isZero()) {
+            address = DynamicLinker.lookup(classMethodActor, makeSymbol());
             if (!MaxineVM.isPrimordialOrPristine()) {
                 if (JniNativeInterface.verbose()) {
-                    Log.println("[Dynamic-linking native method " + _classMethodActor.holder().name() + "." + _classMethodActor.name() + " = " + _address.toHexString() + "]");
+                    Log.println("[Dynamic-linking native method " + classMethodActor.holder().name + "." + classMethodActor.name + " = " + address.toHexString() + "]");
                 }
             }
         }
-        return _address;
+        return address;
     }
 
     /**
      * Sets (or clears) the machine code address for this native function.
      */
     public void setAddress(Word address) {
-        _address = address;
+        this.address = address;
         if (!MaxineVM.isPrimordialOrPristine()) {
             if (JniNativeInterface.verbose()) {
-                Log.println("[" + (address.isZero() ? "Unregistering" : "Registering") + " JNI native method " + _classMethodActor.holder().name() + "." + _classMethodActor.name() + "]");
+                Log.println("[" + (address.isZero() ? "Unregistering" : "Registering") + " JNI native method " + classMethodActor.holder().name + "." + classMethodActor.name + "]");
             }
         }
     }

@@ -41,65 +41,65 @@ public final class LineNumberTable {
 
     public static final class Entry {
 
-        private final char _position;
-        private final char _lineNumber;
+        private final char position;
+        private final char lineNumber;
 
         public int position() {
-            return _position;
+            return position;
         }
 
         public int lineNumber() {
-            return _lineNumber;
+            return lineNumber;
         }
 
         public Entry(char position, char lineNumber) {
-            _position = position;
-            _lineNumber = lineNumber;
+            this.position = position;
+            this.lineNumber = lineNumber;
         }
     }
 
     public static final LineNumberTable EMPTY = new LineNumberTable(new Entry[0]);
 
-    private final char[] _encodedEntries;
+    private final char[] encodedEntries;
 
     public Entry[] entries() {
-        final Entry[] entries = new Entry[_encodedEntries.length >> 1];
+        final Entry[] entries = new Entry[encodedEntries.length >> 1];
         int encodedIndex = 0;
         for (int i = 0; i < entries.length; i++) {
-            entries[i] = new Entry(_encodedEntries[encodedIndex++], _encodedEntries[encodedIndex++]);
+            entries[i] = new Entry(encodedEntries[encodedIndex++], encodedEntries[encodedIndex++]);
         }
         return entries;
     }
 
     public LineNumberTable relocate(OpcodePositionRelocator relocator) {
-        if (_encodedEntries.length == 0) {
+        if (encodedEntries.length == 0) {
             return this;
         }
-        final char[] encodedEntries = new char[_encodedEntries.length];
-        for (int i = 0; i < _encodedEntries.length; i += 2) {
-            encodedEntries[i] = (char) relocator.relocate(_encodedEntries[i]);
-            encodedEntries[i + 1] = _encodedEntries[i + 1];
+        final char[] relocEncodedEntries = new char[this.encodedEntries.length];
+        for (int i = 0; i < relocEncodedEntries.length; i += 2) {
+            relocEncodedEntries[i] = (char) relocator.relocate(relocEncodedEntries[i]);
+            relocEncodedEntries[i + 1] = relocEncodedEntries[i + 1];
         }
-        return new LineNumberTable(encodedEntries);
+        return new LineNumberTable(relocEncodedEntries);
     }
 
     public boolean isEmpty() {
-        return _encodedEntries.length == 0;
+        return encodedEntries.length == 0;
     }
 
     LineNumberTable(char[] encodedEntries) {
-        _encodedEntries = encodedEntries;
+        this.encodedEntries = encodedEntries;
     }
 
     public LineNumberTable(LineNumberTable prefix, ClassfileStream classfileStream, int codeLength) {
         final int length = classfileStream.readUnsigned2();
         int encodedIndex;
-        if (prefix._encodedEntries.length == 0) {
-            _encodedEntries = new char[length * 2];
+        if (prefix.encodedEntries.length == 0) {
+            encodedEntries = new char[length * 2];
             encodedIndex = 0;
         } else {
-            encodedIndex = prefix._encodedEntries.length;
-            _encodedEntries = Arrays.copyOf(prefix._encodedEntries, encodedIndex + (length * 2));
+            encodedIndex = prefix.encodedEntries.length;
+            encodedEntries = Arrays.copyOf(prefix.encodedEntries, encodedIndex + (length * 2));
         }
         for (int i = 0; i != length; ++i) {
             final char position = (char) classfileStream.readUnsigned2();
@@ -107,17 +107,17 @@ public final class LineNumberTable {
             if (position >= codeLength) {
                 throw classFormatError("Invalid address in LineNumberTable entry " + i);
             }
-            _encodedEntries[encodedIndex++] = position;
-            _encodedEntries[encodedIndex++] = lineNumber;
+            encodedEntries[encodedIndex++] = position;
+            encodedEntries[encodedIndex++] = lineNumber;
         }
     }
 
     public LineNumberTable(Entry[] entries) {
-        _encodedEntries = new char[entries.length * 2];
+        encodedEntries = new char[entries.length * 2];
         int encodedIndex = 0;
         for (Entry entry : entries) {
-            _encodedEntries[encodedIndex++] = entry._position;
-            _encodedEntries[encodedIndex++] = entry._lineNumber;
+            encodedEntries[encodedIndex++] = entry.position;
+            encodedEntries[encodedIndex++] = entry.lineNumber;
         }
     }
 
@@ -129,14 +129,14 @@ public final class LineNumberTable {
      */
     public int findLineNumber(int bytecodePosition) {
         int lineNumber = -1;
-        if (_encodedEntries.length != 0) {
+        if (encodedEntries.length != 0) {
             int index = 0;
-            while (index != _encodedEntries.length) {
-                final int position = _encodedEntries[index++];
+            while (index != encodedEntries.length) {
+                final int position = encodedEntries[index++];
                 if (position > bytecodePosition) {
                     break;
                 }
-                lineNumber = _encodedEntries[index++];
+                lineNumber = encodedEntries[index++];
             }
         }
         return lineNumber;
@@ -144,19 +144,19 @@ public final class LineNumberTable {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder(_encodedEntries.length * 10);
+        final StringBuilder sb = new StringBuilder(encodedEntries.length * 10);
         sb.append('[');
-        for (int i = 0; i != _encodedEntries.length; i += 2) {
+        for (int i = 0; i != encodedEntries.length; i += 2) {
             if (sb.length() != 1) {
                 sb.append(", ");
             }
-            sb.append((int) _encodedEntries[i]).append(':').append((int) _encodedEntries[i + 1]);
+            sb.append((int) encodedEntries[i]).append(':').append((int) encodedEntries[i + 1]);
         }
         return sb.append(']').toString();
     }
 
     public void encode(DataOutputStream dataOutputStream) throws IOException {
-        CodeAttribute.writeCharArray(dataOutputStream, _encodedEntries);
+        CodeAttribute.writeCharArray(dataOutputStream, encodedEntries);
     }
 
     public static LineNumberTable decode(DataInputStream dataInputStream) throws IOException {
@@ -172,8 +172,8 @@ public final class LineNumberTable {
      * @param constantPoolEditor
      */
     public void writeAttributeInfo(DataOutputStream stream, ConstantPoolEditor constantPoolEditor) throws IOException {
-        stream.writeShort(_encodedEntries.length >> 1);
-        for (char c : _encodedEntries) {
+        stream.writeShort(encodedEntries.length >> 1);
+        for (char c : encodedEntries) {
             stream.writeShort(c);
         }
     }

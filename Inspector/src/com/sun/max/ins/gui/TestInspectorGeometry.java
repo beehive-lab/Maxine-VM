@@ -30,80 +30,80 @@ import java.awt.*;
 public class TestInspectorGeometry implements InspectorGeometry {
 
     // Main Inspector Frame
-    private static final Point _inspectionFrameDefaultLocation = new Point(100, 100);
-    private static final Dimension _inspectionFrameMinSize = new Dimension(100, 100);
-    private static final Dimension _inspectionFramePrefSize = new Dimension(1625, 1040);
+    private static final Point inspectionFrameDefaultLocation = new Point(100, 100);
+    private static final Dimension inspectionFrameMinSize = new Dimension(100, 100);
+    private static final Dimension inspectionFramePrefSize = new Dimension(1625, 1040);
 
     public Point inspectorFrameDefaultLocation() {
-        return _inspectionFrameDefaultLocation;
+        return inspectionFrameDefaultLocation;
     }
     public Dimension inspectorFrameMinSize() {
-        return _inspectionFrameMinSize;
+        return inspectionFrameMinSize;
     }
     public Dimension inspectorFramePrefSize() {
-        return _inspectionFramePrefSize;
+        return inspectionFramePrefSize;
     }
 
-    private static final Point _testFrameDefaultLocation = new Point(100, 100);
-    private static final Dimension _testFramePrefSize = new Dimension(300, 300);
-    private static final Rectangle _testFrameDefaultBounds = new Rectangle(100, 100, 300, 300);
+    private static final Point testFrameDefaultLocation = new Point(100, 100);
+    private static final Dimension testFramePrefSize = new Dimension(300, 300);
+    private static final Rectangle testFrameDefaultBounds = new Rectangle(100, 100, 300, 300);
 
     public  Rectangle threadsFrameDefaultBounds() {
-        return _testFrameDefaultBounds;
+        return testFrameDefaultBounds;
     }
 
     public Rectangle registersFrameDefaultBounds() {
-        return  _testFrameDefaultBounds;
+        return  testFrameDefaultBounds;
     }
 
     public Rectangle stackFrameDefaultBounds() {
-        return _testFrameDefaultBounds;
+        return testFrameDefaultBounds;
     }
 
     public Rectangle methodsFrameDefaultBounds() {
-        return _testFrameDefaultBounds;
+        return testFrameDefaultBounds;
     }
 
     public Rectangle breakpointsFrameDefaultBounds() {
-        return _testFrameDefaultBounds;
+        return testFrameDefaultBounds;
     }
 
     public Rectangle watchpointsFrameDefaultBounds() {
-        return _testFrameDefaultBounds;
+        return testFrameDefaultBounds;
     }
 
     public Rectangle threadLocalsFrameDefaultBounds() {
-        return _testFrameDefaultBounds;
+        return testFrameDefaultBounds;
     }
 
     public Rectangle memoryRegionsFrameDefaultBounds() {
-        return _testFrameDefaultBounds;
+        return testFrameDefaultBounds;
     }
 
     public Rectangle bootImageFrameDefaultBounds() {
-        return _testFrameDefaultBounds;
+        return testFrameDefaultBounds;
     }
 
     // Java Source Inspector frame
     public Point javaSourceFrameDefaultLocation() {
-        return _testFrameDefaultLocation;
+        return testFrameDefaultLocation;
     }
     public Dimension javaSourceFramePrefSize() {
-        return _testFramePrefSize;
+        return testFramePrefSize;
     }
 
     // Offset from mouse location for new frames
-    public static final int _defaultNewFrameXOffset = 50;
-    public static final int _defaultNewFrameYOffset = 50;
-    public static final int _objectInspectorNewFrameDiagonalOffset = 5;
+    public static final int defaultNewFrameXOffset = 50;
+    public static final int defaultNewFrameYOffset = 50;
+    public static final int objectInspectorNewFrameDiagonalOffset = 5;
     public int defaultNewFrameXOffset() {
-        return _defaultNewFrameXOffset;
+        return defaultNewFrameXOffset;
     }
     public int defaultNewFrameYOffset() {
-        return _defaultNewFrameYOffset;
+        return defaultNewFrameYOffset;
     }
     public int objectInspectorNewFrameDiagonalOffset() {
-        return _objectInspectorNewFrameDiagonalOffset;
+        return objectInspectorNewFrameDiagonalOffset;
     }
 
 

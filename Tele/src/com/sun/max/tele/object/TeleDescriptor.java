@@ -38,15 +38,15 @@ public abstract class TeleDescriptor extends TeleTupleObject {
     }
 
     // The string field is final; cache it.
-    private String _string;
+    private String string;
 
     public String string() {
-        if (_string == null) {
+        if (string == null) {
             final Reference stringReference = teleVM().fields().Descriptor_string.readReference(reference());
             final TeleString teleString = (TeleString) teleVM().makeTeleObject(stringReference);
-            _string = teleString.getString();
+            string = teleString.getString();
         }
-        return _string;
+        return string;
     }
 
 }

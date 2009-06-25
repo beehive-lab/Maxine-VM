@@ -40,7 +40,7 @@ import com.sun.max.vm.value.*;
 @RunWith(org.junit.runners.AllTests.class)
 public class TeleInterpreterRemoteTest extends TeleInterpreterTestCase {
 
-    private static TeleVM _teleVM;
+    private static TeleVM teleVM;
 
     public TeleInterpreterRemoteTest() {
     }
@@ -72,16 +72,16 @@ public class TeleInterpreterRemoteTest extends TeleInterpreterTestCase {
     @Override
     protected TeleVM teleVM() {
         synchronized (getClass()) {
-            if (_teleVM == null) {
+            if (teleVM == null) {
                 try {
-                    _teleVM = TeleVM.create(new Options());
-                    _teleVM.refresh(0);
+                    teleVM = TeleVM.create(new Options());
+                    teleVM.refresh(0);
                 } catch (BootImageException e) {
                     throw ProgramError.unexpected(e);
                 }
             }
         }
-        return _teleVM;
+        return teleVM;
     }
 
     //this test is just here as a sanity check that starting the inspector etc works

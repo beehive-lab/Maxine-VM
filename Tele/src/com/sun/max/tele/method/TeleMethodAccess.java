@@ -49,9 +49,9 @@ public abstract class TeleMethodAccess extends AbstractTeleVMHolder {
         final ClassActor classActor = PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.forJavaClass(holder));
         MethodActor uniqueMethodActor = null;
         for (MethodActor methodActor : classActor.getLocalMethodActors()) {
-            if (methodActor.name().string().equals(name)) {
+            if (methodActor.name.string.equals(name)) {
                 if (uniqueMethodActor != null) {
-                    ProgramError.unexpected("need to disambiguate method named '" + name + "' in " + classActor.name() + " with a signature");
+                    ProgramError.unexpected("need to disambiguate method named '" + name + "' in " + classActor.name + " with a signature");
                 }
                 uniqueMethodActor = methodActor;
             }
@@ -59,20 +59,20 @@ public abstract class TeleMethodAccess extends AbstractTeleVMHolder {
         return uniqueMethodActor;
     }
 
-    private final MethodActor _methodActor;
+    private final MethodActor methodActor;
 
     protected final MethodActor methodActor() {
-        return _methodActor;
+        return methodActor;
     }
 
     protected TeleMethodAccess(TeleVM teleVM, Class holder, String name, SignatureDescriptor signature) {
         super(teleVM);
         if (signature != null) {
-            _methodActor = findMethodActor(holder, name, signature);
-            ProgramError.check(_methodActor != null, "could not find method " + name + signature + " in " + holder);
+            methodActor = findMethodActor(holder, name, signature);
+            ProgramError.check(methodActor != null, "could not find method " + name + signature + " in " + holder);
         } else {
-            _methodActor = findMethodActor(holder, name);
-            ProgramError.check(_methodActor != null, "could not find method named '" + name + "' in " + holder);
+            methodActor = findMethodActor(holder, name);
+            ProgramError.check(methodActor != null, "could not find method named '" + name + "' in " + holder);
         }
     }
 
@@ -86,8 +86,8 @@ public abstract class TeleMethodAccess extends AbstractTeleVMHolder {
      */
     public Value interpret(Value... arguments) {
         try {
-            ProgramError.check(_methodActor instanceof ClassMethodActor, "cannot interpret interface method");
-            return TeleInterpreter.execute(teleVM(), (ClassMethodActor) _methodActor, arguments);
+            ProgramError.check(methodActor instanceof ClassMethodActor, "cannot interpret interface method");
+            return TeleInterpreter.execute(teleVM(), (ClassMethodActor) methodActor, arguments);
         } catch (TeleInterpreterException teleInterpreterException) {
             ProgramError.unexpected("method interpretation failed", teleInterpreterException);
             return null;

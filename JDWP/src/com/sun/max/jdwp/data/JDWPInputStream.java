@@ -31,34 +31,34 @@ import java.util.*;
  */
 public class JDWPInputStream {
 
-    private DataInputStream _dataInputStream;
-    private CommandHandler<IncomingData, OutgoingData> _commandHandler;
-    private IncomingData _incomingData;
+    private DataInputStream dataInputStream;
+    private CommandHandler<IncomingData, OutgoingData> commandHandler;
+    private IncomingData incomingData;
 
     public JDWPInputStream(InputStream inputStream, CommandHandler<IncomingData, OutgoingData> handler, IncomingData incomingData) {
-        _dataInputStream = new DataInputStream(inputStream);
-        _commandHandler = handler;
-        _incomingData = incomingData;
+        this.dataInputStream = new DataInputStream(inputStream);
+        this.commandHandler = handler;
+        this.incomingData = incomingData;
     }
 
     public boolean readBoolean() throws IOException {
-        return _dataInputStream.readBoolean();
+        return dataInputStream.readBoolean();
     }
 
     public byte readByte() throws IOException {
-        return _dataInputStream.readByte();
+        return dataInputStream.readByte();
     }
 
     public int readInt() throws IOException {
-        return _dataInputStream.readInt();
+        return dataInputStream.readInt();
     }
 
     public long readLong() throws IOException {
-        return _dataInputStream.readLong();
+        return dataInputStream.readLong();
     }
 
     public InputStream getInputStream() {
-        return _dataInputStream;
+        return dataInputStream;
     }
 
     /**
@@ -68,17 +68,17 @@ public class JDWPInputStream {
      */
     public String readString() throws IOException {
 
-        final int length = _dataInputStream.readInt();
+        final int length = dataInputStream.readInt();
 
         final byte[] data = new byte[length];
-        _dataInputStream.read(data);
+        dataInputStream.read(data);
 
         final String s = new String(data);
         return s;
     }
 
     public JDWPLocation readLocation() throws IOException {
-        return new JDWPLocation(_dataInputStream);
+        return new JDWPLocation(dataInputStream);
     }
 
     /**
@@ -89,13 +89,13 @@ public class JDWPInputStream {
     public ID.ObjectID readTaggedObjectReference() throws IOException {
 
         // Read over tag, this information is currently not used.
-        _dataInputStream.readByte();
+        dataInputStream.readByte();
 
-        return ID.read(_dataInputStream, ID.ObjectID.class);
+        return ID.read(dataInputStream, ID.ObjectID.class);
     }
 
     public JDWPValue readValue() throws IOException {
-        return new JDWPValue(_dataInputStream);
+        return new JDWPValue(dataInputStream);
     }
 
     /**
@@ -107,7 +107,7 @@ public class JDWPInputStream {
      * @throws JDWPException this exception is thrown, when the command handler had a problem resolving the tag
      */
     public JDWPValue readUntaggedValue() throws IOException, JDWPException {
-        return new JDWPValue(_dataInputStream, _commandHandler.helpAtDecodingUntaggedValue(_incomingData));
+        return new JDWPValue(dataInputStream, commandHandler.helpAtDecodingUntaggedValue(incomingData));
     }
 
     /**

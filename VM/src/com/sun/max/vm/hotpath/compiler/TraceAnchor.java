@@ -24,32 +24,32 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.tir.*;
 
 public class TraceAnchor extends Anchor {
-    private TirTrace _trace;
-    private TirGuard _guard;
+    private TirTrace trace;
+    private TirGuard guard;
 
     public TraceAnchor(BytecodeLocation location, TirGuard guard) {
         super(location);
-        _guard = guard;
+        this.guard = guard;
     }
 
 
     public void setTrace(TirTrace trace) {
-        _trace = trace;
+        this.trace = trace;
     }
 
     public TirTrace trace() {
-        return _trace;
+        return trace;
     }
 
     @Override
     public String toString() {
-        final int line = _location.classMethodActor().codeAttribute().lineNumberTable().findLineNumber(_location.bytecodePosition());
-        return "loc: " + _location.toString() + ", line: " + line + ", count: " + 0;
+        final int line = location.classMethodActor().codeAttribute().lineNumberTable().findLineNumber(location.bytecodePosition());
+        return "loc: " + location.toString() + ", line: " + line + ", count: " + 0;
     }
 
 
     public TirGuard guard() {
-        return _guard;
+        return guard;
     }
 
 }

@@ -25,24 +25,24 @@ package test.hotpath;
  * @Runs: 1000 = 2019980;
  */
 public class HP_field03 {
-    public static byte _b;
-    public static char _c;
-    public static short _s;
-    public static int _i;
-    public static long _l;
-    public static float _f;
-    public static double _d;
+    public static byte b;
+    public static char c;
+    public static short s;
+    public static int i;
+    public static long l;
+    public static float f;
+    public static double d;
 
     public static int test(int count) {
-        for (int i = 0; i <= count; i++) {
-            _b += i;
-            _c += i;
-            _s += i;
-            _i += i;
-            _l += i;
-            _f += i;
-            _d += i;
+        for (int x = 0; x <= count; x++) {
+            b += x;
+            c += x;
+            s += x;
+            i += x;
+            l += x;
+            f += x;
+            d += x;
         }
-        return (int) (_b + _c + _s + _i + _l + _f + _d);
+        return (int) (b + c + s + i + l + f + d);
     }
 }

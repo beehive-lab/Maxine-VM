@@ -38,14 +38,14 @@ import com.sun.max.vm.type.*;
  */
 public class BirToCirMethodTranslation {
 
-    private final BirMethod _birMethod;
-    private final CirGenerator _cirGenerator;
+    private final BirMethod birMethod;
+    private final CirGenerator cirGenerator;
 
-    private final CirVariableFactory _variableFactory;
-    private final LocalVariableFactory _localVariableFactory;
-    private final StackVariableFactory _stackVariableFactory;
+    private final CirVariableFactory variableFactory;
+    private final LocalVariableFactory localVariableFactory;
+    private final StackVariableFactory stackVariableFactory;
 
-    private final CirClosure _rootClosure;
+    private final CirClosure rootClosure;
 
     private CirVariable[] createParameters(ClassMethodActor methodActor) {
         final SignatureDescriptor signature = methodActor.descriptor();
@@ -53,109 +53,109 @@ public class BirToCirMethodTranslation {
         final CirVariable[] parameters = CirClosure.newParameters(numberOfParameters + 2);
         int i = 0;
         if (!methodActor.isStatic()) {
-            parameters[i] = _variableFactory.createMethodParameter(methodActor.holder().kind(), i);
+            parameters[i] = variableFactory.createMethodParameter(methodActor.holder().kind, i);
             i++;
         }
         int j = 0;
         while (i < numberOfParameters) {
-            parameters[i] = _variableFactory.createMethodParameter(signature.parameterDescriptorAt(j).toKind(), i);
+            parameters[i] = variableFactory.createMethodParameter(signature.parameterDescriptorAt(j).toKind(), i);
             i++;
             j++;
         }
-        parameters[i++] = _variableFactory.normalContinuationParameter();
-        parameters[i++] = _variableFactory.exceptionContinuationParameter();
+        parameters[i++] = variableFactory.normalContinuationParameter();
+        parameters[i++] = variableFactory.exceptionContinuationParameter();
         return parameters;
     }
 
-    private final BlockState[] _blockStateMap;
+    private final BlockState[] blockStateMap;
 
-    private final Sequence<BirBlock> _birExceptionDispatchers;
-    private final BlockState[] _exceptionDispatcherBlockStateMap;
+    private final Sequence<BirBlock> birExceptionDispatchers;
+    private final BlockState[] exceptionDispatcherBlockStateMap;
 
     BirToCirMethodTranslation(BirMethod birMethod, CirVariableFactory variableFactory, CirGenerator cirGenerator) {
-        _birMethod = birMethod;
-        _variableFactory = variableFactory;
-        _cirGenerator = cirGenerator;
+        this.birMethod = birMethod;
+        this.variableFactory = variableFactory;
+        this.cirGenerator = cirGenerator;
 
         final CirVariable[] parameters = createParameters(birMethod.classMethodActor());
 
-        _localVariableFactory = new LocalVariableFactory(_variableFactory, birMethod.maxLocals(), parameters);
-        _stackVariableFactory = new StackVariableFactory(_variableFactory, birMethod.maxStack());
+        localVariableFactory = new LocalVariableFactory(variableFactory, birMethod.maxLocals(), parameters);
+        stackVariableFactory = new StackVariableFactory(variableFactory, birMethod.maxStack());
 
-        _blockStateMap = new BlockState[birMethod.code().length];
-        final AppendableSequence<BirBlock> birExceptionDispatchers = new LinkSequence<BirBlock>();
+        blockStateMap = new BlockState[birMethod.code().length];
+        final AppendableSequence<BirBlock> dispatchers = new LinkSequence<BirBlock>();
         for (BirBlock birBlock : birMethod.blocks()) {
             if (birBlock.isReachable()) {
                 final BlockState blockState = new BlockState(birBlock);
                 for (int i = birBlock.bytecodeBlock().start(); i <= birBlock.bytecodeBlock().end(); i++) {
-                    _blockStateMap[i] = blockState;
+                    blockStateMap[i] = blockState;
                 }
 
                 if (birBlock.role() == IrBlock.Role.EXCEPTION_DISPATCHER) {
-                    birExceptionDispatchers.append(birBlock);
+                    dispatchers.append(birBlock);
                 }
             } else {
                 ProgramWarning.message("unreachable block: " + birBlock + "  " + birMethod);
             }
         }
-        _birExceptionDispatchers = birExceptionDispatchers;
+        this.birExceptionDispatchers = dispatchers;
 
         if (birMethod.exceptionDispatcherTable().isEmpty()) {
-            _exceptionDispatcherBlockStateMap = null;
+            exceptionDispatcherBlockStateMap = null;
         } else {
-            _exceptionDispatcherBlockStateMap = new BlockState[birMethod.code().length];
+            exceptionDispatcherBlockStateMap = new BlockState[birMethod.code().length];
             for (ExceptionHandlerEntry exceptionDispatcherEntry : birMethod.exceptionDispatcherTable()) {
-                final BlockState dispatcherBlockState = _blockStateMap[exceptionDispatcherEntry.handlerPosition()];
+                final BlockState dispatcherBlockState = blockStateMap[exceptionDispatcherEntry.handlerPosition()];
                 assert dispatcherBlockState != null;
                 for (int i = exceptionDispatcherEntry.startPosition(); i != exceptionDispatcherEntry.endPosition(); ++i) {
                     // This checks the invariant established by generating exception dispatchers in bytecode
-                    ProgramError.check(_exceptionDispatcherBlockStateMap[i] == null, "no more than one exception handler should cover a bytecode address");
-                    _exceptionDispatcherBlockStateMap[i] = dispatcherBlockState;
+                    ProgramError.check(exceptionDispatcherBlockStateMap[i] == null, "no more than one exception handler should cover a bytecode address");
+                    exceptionDispatcherBlockStateMap[i] = dispatcherBlockState;
                 }
             }
         }
 
-        final CirCall rootCall = newCirCall(_blockStateMap[0].cirBlock());
-        _rootClosure = new CirClosure(rootCall, parameters);
+        final CirCall rootCall = newCirCall(blockStateMap[0].cirBlock());
+        rootClosure = new CirClosure(rootCall, parameters);
     }
 
     public BirMethod birMethod() {
-        return _birMethod;
+        return birMethod;
     }
 
     public Sequence<BirBlock> birExceptionDispatchers() {
-        return _birExceptionDispatchers;
+        return birExceptionDispatchers;
     }
 
     public CirGenerator cirGenerator() {
-        return _cirGenerator;
+        return cirGenerator;
     }
 
     public ClassMethodActor classMethodActor() {
-        return _birMethod.classMethodActor();
+        return birMethod.classMethodActor();
     }
 
     public CirVariableFactory variableFactory() {
-        return _variableFactory;
+        return variableFactory;
     }
 
     public StackVariableFactory stackVariableFactory() {
-        return _stackVariableFactory;
+        return stackVariableFactory;
     }
 
     public CirClosure cirClosure() {
-        return _rootClosure;
+        return rootClosure;
     }
 
     BlockState getBlockStateAt(int bytecodePosition) {
-        return _blockStateMap[bytecodePosition];
+        return blockStateMap[bytecodePosition];
     }
 
     public BlockState getExceptionDispatcherState(int opcodePosition) {
-        if (_exceptionDispatcherBlockStateMap == null || _exceptionDispatcherBlockStateMap.length <= opcodePosition) {
+        if (exceptionDispatcherBlockStateMap == null || exceptionDispatcherBlockStateMap.length <= opcodePosition) {
             return null;
         }
-        return _exceptionDispatcherBlockStateMap[opcodePosition];
+        return exceptionDispatcherBlockStateMap[opcodePosition];
     }
 
     public CirCall newCirCall(CirBlock block) {
@@ -165,10 +165,10 @@ public class BirToCirMethodTranslation {
     }
 
     public JavaFrame createFrame() {
-        return new JavaFrame(_localVariableFactory);
+        return new JavaFrame(localVariableFactory);
     }
 
     public JavaStack createStack() {
-        return new JavaStack(_stackVariableFactory);
+        return new JavaStack(stackVariableFactory);
     }
 }

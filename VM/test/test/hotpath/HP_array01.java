@@ -18,20 +18,19 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-// Checkstyle: stop
 package test.hotpath;
 /*
  * @Harness: java
  * @Runs: 40 = 780;
  */
 public class HP_array01 {
-    public static int [] _array = new int [40];
+    public static int [] array = new int [40];
 
     public static int test(int count) {
         int sum = 0;
         for (int i = 0; i < count; i++) {
-            _array[i] = i;
-            sum += _array[i];
+            array[i] = i;
+            sum += array[i];
         }
         return sum;
     }

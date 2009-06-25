@@ -31,8 +31,8 @@ import com.sun.c1x.util.InstructionClosure;
  */
 public abstract class NewArray extends StateSplit {
 
-    Instruction _length;
-    ValueStack _stateBefore;
+    Instruction length;
+    ValueStack stateBefore;
 
     /**
      * Constructs a new NewArray instruction.
@@ -41,8 +41,8 @@ public abstract class NewArray extends StateSplit {
      */
     NewArray(Instruction length, ValueStack stateBefore) {
         super(ValueType.OBJECT_TYPE);
-        _length = length;
-        _stateBefore = stateBefore;
+        this.length = length;
+        this.stateBefore = stateBefore;
         setFlag(Flag.NonNull);
     }
 
@@ -51,7 +51,7 @@ public abstract class NewArray extends StateSplit {
      * @return the state before this instruction
      */
     public ValueStack stateBefore() {
-        return _stateBefore;
+        return stateBefore;
     }
 
     /**
@@ -59,7 +59,7 @@ public abstract class NewArray extends StateSplit {
      * @return the instruction that produces the length
      */
     public Instruction length() {
-        return _length;
+        return length;
     }
 
     /**
@@ -78,7 +78,7 @@ public abstract class NewArray extends StateSplit {
      */
     @Override
     public void inputValuesDo(InstructionClosure closure) {
-        _length = closure.apply(_length);
+        length = closure.apply(length);
     }
 
     /**
@@ -88,8 +88,8 @@ public abstract class NewArray extends StateSplit {
     @Override
     public void otherValuesDo(InstructionClosure closure) {
         super.otherValuesDo(closure);
-        if (_stateBefore != null) {
-            _stateBefore.valuesDo(closure);
+        if (stateBefore != null) {
+            stateBefore.valuesDo(closure);
         }
     }
 }

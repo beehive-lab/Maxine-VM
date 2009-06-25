@@ -24,10 +24,10 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 
 public class Frame {
-    ClassMethodActor _method;
-    int _lp;
-    int _sp;
-    int _pc;
+    ClassMethodActor method;
+    int lp;
+    int sp;
+    int pc;
 
     public Frame() {
 
@@ -38,55 +38,55 @@ public class Frame {
     }
 
     public Frame(Frame frame, int offset) {
-        _method = frame._method;
-        _lp = frame._lp + offset;
-        _sp = frame._sp + offset;
-        _pc = frame._pc;
+        this.method = frame.method;
+        this.lp = frame.lp + offset;
+        this.sp = frame.sp + offset;
+        this.pc = frame.pc;
     }
 
     public Frame(ClassMethodActor method, int pc, int sp) {
-        _method = method;
-        _sp = sp;
-        _pc = pc;
+        this.method = method;
+        this.sp = sp;
+        this.pc = pc;
     }
 
     public Frame(BytecodeLocation location, int sp) {
-        _method = location.classMethodActor();
-        _sp = sp;
-        _pc = location.bytecodePosition();
+        this.method = location.classMethodActor();
+        this.sp = sp;
+        this.pc = location.bytecodePosition();
     }
 
     public ClassMethodActor method() {
-        return _method;
+        return method;
     }
 
     public int pc() {
-        return _pc;
+        return pc;
     }
 
     public void setPc(int pc) {
-        _pc = pc;
+        this.pc = pc;
     }
 
     public int lp() {
-        return _lp;
+        return lp;
     }
 
     public int sp() {
-        return _sp;
+        return sp;
     }
 
     public int stackHeight() {
-        return _sp - _lp;
+        return sp - lp;
     }
 
     @Override
     public String toString() {
         String name = "null";
-        if (_method != null) {
-            name = _method.name().toString();
+        if (method != null) {
+            name = method.name.toString();
         }
-        return name + " lp: " + _lp + ", sp: " + _sp + ", pc: " + _pc;
+        return name + " lp: " + lp + ", sp: " + sp + ", pc: " + pc;
     }
 
     public Frame copy() {
@@ -96,25 +96,25 @@ public class Frame {
     @Override
     public boolean equals(Object obj) {
         final Frame other = (Frame) obj;
-        return _method == other._method && _lp == other._lp && _sp == other._sp && _pc == other._pc;
+        return method == other.method && lp == other.lp && sp == other.sp && pc == other.pc;
     }
 
     /**
      * Tests if two frames have the same method and stack height.
      */
     public boolean matches(Frame other) {
-        return _method == other._method && stackHeight() == other.stackHeight();
+        return method == other.method && stackHeight() == other.stackHeight();
     }
 
     public void empty() {
-        _sp = _lp + _method.codeAttribute().maxLocals();
+        sp = lp + method.codeAttribute().maxLocals();
     }
 
     public boolean isEmpty() {
-        return _sp == _lp + _method.codeAttribute().maxLocals();
+        return sp == lp + method.codeAttribute().maxLocals();
     }
 
     public BytecodeLocation location() {
-        return new BytecodeLocation(_method, _pc);
+        return new BytecodeLocation(method, pc);
     }
 }

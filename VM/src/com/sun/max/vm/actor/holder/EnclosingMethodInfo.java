@@ -24,30 +24,30 @@ import com.sun.max.vm.type.*;
 
 /**
  * The information parsed from an EnclosingMethodAttribute.
- * 
+ *
  * @author Doug Simon
  */
 public final class EnclosingMethodInfo {
 
-    private final TypeDescriptor _holder;
-    private final String _name;
-    private final String _descriptor;
+    private final TypeDescriptor holder;
+    private final String name;
+    private final String descriptor;
 
     public EnclosingMethodInfo(TypeDescriptor holder, String name, String descriptor) {
-        _holder = holder;
-        _name = name;
-        _descriptor = descriptor;
+        this.holder = holder;
+        this.name = name;
+        this.descriptor = descriptor;
     }
 
     public TypeDescriptor holder() {
-        return _holder;
+        return holder;
     }
 
     public String name() {
-        return _name;
+        return name;
     }
 
     public String descriptor() {
-        return _descriptor;
+        return descriptor;
     }
 }

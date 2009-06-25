@@ -106,7 +106,7 @@ public final class FatalError extends Error {
      * @param message a message describing the trap. This value may be {@code null}.
      * @param throwable an exception given more detail on the cause of the error condition. This value may be {@code null}.
      * @param nativeTrapAddress if this value is not equal to {@link Address#zero()}, then it is the address reported by
-     *            the OS at which a trap occurred
+     *            the OS at which a trap occurred in native code
      */
     public static FatalError unexpected(String message, Address nativeTrapAddress, Throwable throwable) {
         if (MaxineVM.isPrototyping()) {
@@ -129,8 +129,9 @@ public final class FatalError extends Error {
             Log.print("Caused by: ");
             throwable.printStackTrace(Log.out);
         }
-        if (Throw._scanStackOnFatalError.getValue()) {
-            Throw.stackScan("stack scan", VMRegister.getCpuStackPointer(), VmThread.current().vmThreadLocals());
+        if (!nativeTrapAddress.isZero() || Throw.scanStackOnFatalError.getValue()) {
+            final Word highestStackAddress = VmThreadLocal.HIGHEST_STACK_SLOT_ADDRESS.getConstantWord();
+            Throw.stackScan("RAW STACK SCAN FOR CODE POINTERS:", VMRegister.getCpuStackPointer(), highestStackAddress.asPointer());
         }
         Log.unlock(lockDisabledSafepoints);
         if (nativeTrapAddress.isZero()) {

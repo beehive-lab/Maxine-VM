@@ -41,69 +41,57 @@ public class SubroutineFrame {
      */
     public static final SubroutineCall TOP = new SubroutineCall(null, null, null);
 
-    private final Subroutine _subroutine;
-    private final int _depth;
-    private final SubroutineFrame _parent;
+    final Subroutine subroutine;
+    final int depth;
+    final SubroutineFrame parent;
 
     public SubroutineFrame(Subroutine subroutine, SubroutineFrame parent) {
         assert (subroutine != null && parent != null) || TOP == null;
-        _subroutine = subroutine;
-        _parent = parent;
-        _depth = parent == null ? 0 : 1 + parent._depth;
+        this.subroutine = subroutine;
+        this.parent = parent;
+        this.depth = parent == null ? 0 : 1 + parent.depth;
     }
 
     /**
      * Determines if this subroutine context or any of its callers is for a given subroutine.
      */
     public boolean contains(Subroutine subroutine) {
-        if (subroutine == _subroutine) {
+        if (subroutine == this.subroutine) {
             return true;
         }
-        return _parent == null ? false : _parent.contains(subroutine);
-    }
-
-    /**
-     * Gets the subroutine for which this context models a call to.
-     * @return
-     */
-    public Subroutine subroutine() {
-        return _subroutine;
+        return parent == null ? false : parent.contains(subroutine);
     }
 
     public SubroutineFrame parent() {
-        return _parent;
-    }
-
-    public int depth() {
-        return _depth;
+        return parent;
     }
 
     /**
      * Merges this context with another. If the result of the merge is identical to this context, then this context object is returned.
      */
     public SubroutineFrame merge(SubroutineFrame subroutineFrame) {
-        assert depth() == subroutineFrame.depth();
+        assert depth == subroutineFrame.depth;
         if (subroutineFrame == this) {
             return this;
         }
-        final SubroutineFrame mergedParent = _parent.merge(subroutineFrame.parent());
-        if (_subroutine != subroutineFrame.subroutine()) {
-            if (_subroutine == MERGED_SUBROUTINE && mergedParent == _parent) {
+        final SubroutineFrame mergedParent = parent.merge(subroutineFrame.parent());
+        if (subroutine != subroutineFrame.subroutine) {
+            if (subroutine == MERGED_SUBROUTINE && mergedParent == parent) {
                 return this;
             }
             return new SubroutineFrame(MERGED_SUBROUTINE, mergedParent);
         }
-        if (mergedParent == _parent) {
+        if (mergedParent == parent) {
             return this;
         }
-        return new SubroutineFrame(_subroutine, mergedParent);
+        return new SubroutineFrame(subroutine, mergedParent);
     }
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder(_subroutine == null ? "method-entry-frame" : _subroutine.toString());
-        if (_parent != null) {
-            sb.append("\n    called from ").append(_parent.toString());
+        final StringBuilder sb = new StringBuilder(subroutine == null ? "method-entry-frame" : subroutine.toString());
+        if (parent != null) {
+            sb.append("\n    called from ").append(parent.toString());
         }
         return sb.toString();
     }

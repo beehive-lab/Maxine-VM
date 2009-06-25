@@ -26,9 +26,9 @@ package test.bytecode;
  */
 public class BC_aaload {
 
-    static Object[] _array = {null, null, ""};
+    static Object[] array = {null, null, ""};
 
     public static Object test(int arg) {
-        return _array[arg];
+        return array[arg];
     }
 }

@@ -161,9 +161,9 @@ public class AMD64TranslatorTest_referencedMethod extends CompilerTestCase<Targe
         });
     }
 
-    static int _c;
+    static int c;
     public static void aStaticCall() {
-        _c++;
+        c++;
     }
 
     public void test_checkReferencedMethods2() {

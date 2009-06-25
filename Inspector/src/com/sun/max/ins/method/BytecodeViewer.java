@@ -59,64 +59,64 @@ public abstract class BytecodeViewer extends CodeViewer {
         return "Bytecodes";
     }
 
-    private final TeleClassMethodActor _teleClassMethodActor;
+    private final TeleClassMethodActor teleClassMethodActor;
 
     /**
      * @return Local {@link TeleClassMethodActor} corresponding to the VM method being viewed.
      */
     public TeleClassMethodActor teleClassMethodActor() {
-        return _teleClassMethodActor;
+        return teleClassMethodActor;
     }
 
-    private final MethodActorKey _methodActorKey;
+    private final MethodActorKey methodActorKey;
 
-    private final TeleTargetMethod _teleTargetMethod;
+    private final TeleTargetMethod teleTargetMethod;
 
     /**
      * The compilation associated with this view, if exists.
      */
     protected TeleTargetMethod teleTargetMethod() {
-        return _teleTargetMethod;
+        return teleTargetMethod;
     }
 
-    private final byte[] _methodBytes;
+    private final byte[] methodBytes;
 
-    private final TeleConstantPool _teleConstantPool;
+    private final TeleConstantPool teleConstantPool;
 
     /**
      * @return local surrogate for the {@link ConstantPool} in the VM that is associated with this method.
      */
     protected TeleConstantPool teleConstantPool() {
-        return _teleConstantPool;
+        return teleConstantPool;
     }
 
-    private final ConstantPool _localConstantPool;
+    private final ConstantPool localConstantPool;
 
     /**
      * @return local {@link ConstantPool}, should be equivalent to the one in the VM that is associated with this method.
      */
     protected ConstantPool localConstantPool() {
-        return _localConstantPool;
+        return localConstantPool;
     }
 
     /**
      * Disassembled target code instructions from the associated compilation of the method, null if none associated.
      */
-    private IndexedSequence<TargetCodeInstruction> _targetCodeInstructions = null;
+    private IndexedSequence<TargetCodeInstruction> targetCodeInstructions = null;
 
-    private boolean _haveTargetCodeAddresses = false;
+    private boolean haveTargetCodeAddresses = false;
 
     /**
      * True if a compiled version of the method is available and if we have a map between bytecode and target locations.
      */
     protected boolean haveTargetCodeAddresses() {
-        return _haveTargetCodeAddresses;
+        return haveTargetCodeAddresses;
     }
 
-    private AppendableIndexedSequence<BytecodeInstruction> _bytecodeInstructions = null;
+    private AppendableIndexedSequence<BytecodeInstruction> bytecodeInstructions = null;
 
     protected AppendableIndexedSequence<BytecodeInstruction> bytecodeInstructions() {
-        return _bytecodeInstructions;
+        return bytecodeInstructions;
     }
 
     /**
@@ -125,50 +125,50 @@ public abstract class BytecodeViewer extends CodeViewer {
      */
     protected BytecodeViewer(Inspection inspection, MethodInspector parent, TeleClassMethodActor teleClassMethodActor, TeleTargetMethod teleTargetMethod) {
         super(inspection, parent);
-        _teleClassMethodActor = teleClassMethodActor;
-        _teleTargetMethod = teleTargetMethod;
-        _methodActorKey = new MethodActorKey(teleClassMethodActor.classMethodActor());
+        this.teleClassMethodActor = teleClassMethodActor;
+        this.teleTargetMethod = teleTargetMethod;
+        methodActorKey = new MethodActorKey(teleClassMethodActor.classMethodActor());
         final TeleCodeAttribute teleCodeAttribute = teleClassMethodActor.getTeleCodeAttribute();
         // Always use the {@link ConstantPool} taken from the {@link CodeAttribute}; in a substituted method, the
         // constant pool for the bytecodes is the one from the origin of the substitution, not the current holder of the method.
-        _teleConstantPool = teleCodeAttribute.getTeleConstantPool();
-        _localConstantPool = _teleConstantPool.getTeleHolder().classActor().constantPool();
-        _methodBytes = teleCodeAttribute.readBytecodes();
+        teleConstantPool = teleCodeAttribute.getTeleConstantPool();
+        localConstantPool = teleConstantPool.getTeleHolder().classActor().constantPool();
+        methodBytes = teleCodeAttribute.readBytecodes();
         buildView();
-        _rowToStackFrameInfo = new StackFrameInfo[_bytecodeInstructions.length()];
+        rowToStackFrameInfo = new StackFrameInfo[bytecodeInstructions.length()];
     }
 
     private void buildView() {
         int[] bytecodeToTargetCodePositionMap = null;
-        if (_teleTargetMethod != null) {
-            _targetCodeInstructions = _teleTargetMethod.getInstructions();
-            bytecodeToTargetCodePositionMap = _teleTargetMethod.bytecodeToTargetCodePositionMap();
+        if (teleTargetMethod != null) {
+            targetCodeInstructions = teleTargetMethod.getInstructions();
+            bytecodeToTargetCodePositionMap = teleTargetMethod.bytecodeToTargetCodePositionMap();
             // TODO (mlvdv) can only map bytecodes to JIT target code so far
             if (bytecodeToTargetCodePositionMap != null) {
-                _haveTargetCodeAddresses = true;
+                haveTargetCodeAddresses = true;
             }
         }
-        _bytecodeInstructions = new ArrayListSequence<BytecodeInstruction>(10);
+        bytecodeInstructions = new ArrayListSequence<BytecodeInstruction>(10);
         int currentBytecodeOffset = 0;
         int bytecodeRow = 0;
         int targetCodeRow = 0;
         Address targetCodeFirstAddress = Address.zero();
-        while (currentBytecodeOffset < _methodBytes.length) {
+        while (currentBytecodeOffset < methodBytes.length) {
             final OutputStream stream = new NullOutputStream();
             try {
-                final InspectorBytecodePrinter bytecodePrinter = new InspectorBytecodePrinter(new PrintStream(stream), _localConstantPool);
+                final InspectorBytecodePrinter bytecodePrinter = new InspectorBytecodePrinter(new PrintStream(stream), localConstantPool);
                 final BytecodeScanner bytecodeScanner = new BytecodeScanner(bytecodePrinter);
-                final int nextBytecodeOffset = bytecodeScanner.scanInstruction(_methodBytes, currentBytecodeOffset);
-                final byte[] instructionBytes = Bytes.getSection(_methodBytes, currentBytecodeOffset, nextBytecodeOffset);
+                final int nextBytecodeOffset = bytecodeScanner.scanInstruction(methodBytes, currentBytecodeOffset);
+                final byte[] instructionBytes = Bytes.getSection(methodBytes, currentBytecodeOffset, nextBytecodeOffset);
                 if (bytecodeToTargetCodePositionMap != null) {
-                    while (_targetCodeInstructions.get(targetCodeRow).position() < bytecodeToTargetCodePositionMap[currentBytecodeOffset]) {
+                    while (targetCodeInstructions.get(targetCodeRow).position() < bytecodeToTargetCodePositionMap[currentBytecodeOffset]) {
                         targetCodeRow++;
                     }
-                    targetCodeFirstAddress = _targetCodeInstructions.get(targetCodeRow).address();
+                    targetCodeFirstAddress = targetCodeInstructions.get(targetCodeRow).address();
                 }
                 final BytecodeInstruction instruction = new BytecodeInstruction(bytecodeRow, currentBytecodeOffset, instructionBytes, bytecodePrinter.opcode(), bytecodePrinter.operand1(),
                                 bytecodePrinter.operand2(), targetCodeRow, targetCodeFirstAddress);
-                _bytecodeInstructions.append(instruction);
+                bytecodeInstructions.append(instruction);
                 bytecodeRow++;
                 currentBytecodeOffset = nextBytecodeOffset;
             } catch (Throwable throwable) {
@@ -182,18 +182,18 @@ public abstract class BytecodeViewer extends CodeViewer {
      * @return Whether the compiled code in the VM for the bytecode at specified row contains the specified address.
      */
     protected boolean rowContainsAddress(int row, Address address) {
-        if (_haveTargetCodeAddresses) {
-            final BytecodeInstruction bytecodeInstruction = _bytecodeInstructions.get(row);
-            if (address.lessThan(bytecodeInstruction._targetCodeFirstAddress)) {
+        if (haveTargetCodeAddresses) {
+            final BytecodeInstruction bytecodeInstruction = bytecodeInstructions.get(row);
+            if (address.lessThan(bytecodeInstruction.targetCodeFirstAddress)) {
                 // before the first byte location of the first target instruction for this bytecode
                 return false;
             }
-            if (row < (_bytecodeInstructions.length() - 1)) {
+            if (row < (bytecodeInstructions.length() - 1)) {
                 // All but last bytecode instruction: see if before the first byte location of the first target instruction for the next bytecode
-                return address.lessThan(_bytecodeInstructions.get(row + 1)._targetCodeFirstAddress);
+                return address.lessThan(bytecodeInstructions.get(row + 1).targetCodeFirstAddress);
             }
             // Last bytecode instruction:  see if before the end of the target code
-            final TargetCodeInstruction lastTargetCodeInstruction = _targetCodeInstructions.last();
+            final TargetCodeInstruction lastTargetCodeInstruction = targetCodeInstructions.last();
             return address.lessThan(lastTargetCodeInstruction.address().plus(lastTargetCodeInstruction.length()));
         }
         return false;
@@ -208,17 +208,17 @@ public abstract class BytecodeViewer extends CodeViewer {
         if (haveTargetCodeAddresses()) {
             final MaxThread thread = inspection().focus().thread();
             final Sequence<StackFrame> frames = thread.frames();
-            for (int row = 0; row < _bytecodeInstructions.length(); row++) {
+            for (int row = 0; row < bytecodeInstructions.length(); row++) {
                 int stackPosition = 0;
                 StackFrameInfo stackFrameInfo = null;
                 for (StackFrame frame : frames) {
-                    if (rowContainsAddress(row, frame.instructionPointer())) {
+                    if (rowContainsAddress(row, frame.instructionPointer)) {
                         stackFrameInfo = new StackFrameInfo(frame, thread, stackPosition);
                         break;
                     }
                     stackPosition++;
                 }
-                _rowToStackFrameInfo[row] = stackFrameInfo;
+                rowToStackFrameInfo[row] = stackFrameInfo;
             }
         }
     }
@@ -229,7 +229,7 @@ public abstract class BytecodeViewer extends CodeViewer {
      */
     protected Sequence<TeleTargetBreakpoint> getTargetBreakpointsAtRow(int row) {
         final AppendableSequence<TeleTargetBreakpoint> teleTargetBreakpoints = new LinkSequence<TeleTargetBreakpoint>();
-        if (_haveTargetCodeAddresses) {
+        if (haveTargetCodeAddresses) {
             for (TeleTargetBreakpoint teleTargetBreakpoint : maxVM().targetBreakpoints()) {
                 if (rowContainsAddress(row, teleTargetBreakpoint.address())) {
                     teleTargetBreakpoints.append(teleTargetBreakpoint);
@@ -246,7 +246,7 @@ public abstract class BytecodeViewer extends CodeViewer {
         for (TeleBytecodeBreakpoint teleBytecodeBreakpoint : maxVM().bytecodeBreakpoints()) {
             final Key key = teleBytecodeBreakpoint.key();
             // the direction of key comparison is significant
-            if (_methodActorKey.equals(key) &&  bytecodeInstructions().get(row).position() == key.position()) {
+            if (methodActorKey.equals(key) &&  bytecodeInstructions().get(row).position() == key.position()) {
                 return teleBytecodeBreakpoint;
             }
         }
@@ -260,48 +260,48 @@ public abstract class BytecodeViewer extends CodeViewer {
 
     protected class BytecodeInstruction {
 
-        int _position;
+        int position;
 
         /** AsPosition of first byte of bytecode instruction. */
         int position() {
-            return _position;
+            return position;
         }
 
         /** bytes constituting this bytecode instruction. */
-        byte[] _instructionBytes;
+        byte[] instructionBytes;
 
-        private int _row;
+        private int row;
 
         /** index of this bytecode instruction in the method. */
         int row() {
-            return _row;
+            return row;
         }
 
         /** index of the first target code instruction implementing this bytecode (Jit only for now). */
-        int _targetCodeRow;
+        int targetCodeRow;
 
-        private Address _targetCodeFirstAddress;
+        private Address targetCodeFirstAddress;
 
         /** address of the first byte in the target code instructions implementing this bytecode (Jit only for now. */
         Address targetCodeFirstAddress() {
-            return _targetCodeFirstAddress;
+            return targetCodeFirstAddress;
         }
 
-        Bytecode _opcode;
+        Bytecode opcode;
 
         // * Either a rendering component or an index into the constant pool if a reference kind. */
-        Object _operand1;
-        Object _operand2;
+        Object operand1;
+        Object operand2;
 
         BytecodeInstruction(int bytecodeRow, int position, byte[] bytes, Bytecode opcode, Object operand1, Object operand2, int targetCodeRow, Address targetCodeFirstAddress) {
-            _row = bytecodeRow;
-            _position = position;
-            _instructionBytes = bytes;
-            _opcode = opcode;
-            _operand1 = operand1;
-            _operand2 = operand2;
-            _targetCodeRow = targetCodeRow;
-            _targetCodeFirstAddress = targetCodeFirstAddress;
+            this.row = bytecodeRow;
+            this.position = position;
+            this.instructionBytes = bytes;
+            this.opcode = opcode;
+            this.operand1 = operand1;
+            this.operand2 = operand2;
+            this.targetCodeRow = targetCodeRow;
+            this.targetCodeFirstAddress = targetCodeFirstAddress;
         }
     }
 
@@ -315,62 +315,62 @@ public abstract class BytecodeViewer extends CodeViewer {
         protected void prolog() {
         }
 
-        private Bytecode _opcode;
+        private Bytecode opcode;
 
         @Override
         protected void printOpcode() {
-            _opcode = currentOpcode();
+            opcode = currentOpcode();
         }
 
         public Bytecode opcode() {
-            return _opcode;
+            return opcode;
         }
 
-        private Object _operand1 = new BytecodeOperandLabel(inspection(), "");
+        private Object operand1 = new BytecodeOperandLabel(inspection(), "");
 
         public Object operand1() {
-            return _operand1;
+            return operand1;
         }
 
-        private JComponent _operand2 = new BytecodeOperandLabel(inspection(), "");
+        private JComponent operand2 = new BytecodeOperandLabel(inspection(), "");
 
         public JComponent operand2() {
-            return _operand2;
+            return operand2;
         }
 
         @Override
         protected void printImmediate(int immediate) {
-            _operand1 = new BytecodeOperandLabel(inspection(), immediate);
+            operand1 = new BytecodeOperandLabel(inspection(), immediate);
         }
 
         @Override
         protected void printKind(Kind kind) {
-            _operand1 = new BytecodeOperandLabel(inspection(), kind.name().toString());
+            operand1 = new BytecodeOperandLabel(inspection(), kind.name.toString());
         }
 
         @Override
         protected void printConstant(final int index) {
-            _operand1 = new Integer(index);
+            operand1 = new Integer(index);
         }
 
         @Override
         public void iinc(int index, int addend) {
             printOpcode();
-            _operand1 = new BytecodeOperandLabel(inspection(), index);
-            _operand2 = new BytecodeOperandLabel(inspection(), addend);
+            operand1 = new BytecodeOperandLabel(inspection(), index);
+            operand2 = new BytecodeOperandLabel(inspection(), addend);
         }
 
         @Override
         public void multianewarray(int index, int nDimensions) {
             printOpcode();
             printConstant(index);
-            _operand2 = new BytecodeOperandLabel(inspection(), nDimensions);
+            operand2 = new BytecodeOperandLabel(inspection(), nDimensions);
         }
 
         @Override
         public void tableswitch(int defaultOffset, int lowMatch, int highMatch, int numberOfCases) {
             printOpcode();
-            _operand1 = new BytecodeOperandLabel(inspection(), defaultOffset + ", [" + lowMatch + " - " + highMatch + "] -> ");
+            operand1 = new BytecodeOperandLabel(inspection(), defaultOffset + ", [" + lowMatch + " - " + highMatch + "] -> ");
             final StringBuilder sb = new StringBuilder();
             for (int i = 0; i != numberOfCases; ++i) {
                 sb.append(bytecodeScanner().readSwitchOffset());
@@ -378,7 +378,7 @@ public abstract class BytecodeViewer extends CodeViewer {
                     sb.append(' ');
                 }
             }
-            _operand2 = new BytecodeOperandLabel(inspection(), sb.toString());
+            operand2 = new BytecodeOperandLabel(inspection(), sb.toString());
         }
 
         @Override
@@ -391,7 +391,7 @@ public abstract class BytecodeViewer extends CodeViewer {
                 s += separator + bytecodeScanner().readSwitchCase() + "->" + bytecodeScanner().readSwitchOffset();
                 separator = " ";
             }
-            _operand2 = new BytecodeOperandLabel(inspection(), s);
+            operand2 = new BytecodeOperandLabel(inspection(), s);
         }
     }
 

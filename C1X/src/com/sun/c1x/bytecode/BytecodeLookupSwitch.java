@@ -37,25 +37,25 @@ public class BytecodeLookupSwitch extends BytecodeSwitch {
 
     @Override
     public int defaultOffset() {
-        return readWord(_aligned);
+        return readWord(aligned);
     }
 
     @Override
     public int offsetAt(int i) {
-        return readWord(_aligned + 12 + 8 * i);
+        return readWord(aligned + 12 + 8 * i);
     }
 
     public int keyAt(int i) {
-        return readWord(_aligned + 8 + 8 * i);
+        return readWord(aligned + 8 + 8 * i);
     }
 
     @Override
     public int numberOfCases() {
-        return readWord(_aligned + 4);
+        return readWord(aligned + 4);
     }
 
     @Override
     public int size() {
-        return _aligned + 8 + 8 * numberOfCases() - _bci;
+        return aligned + 8 + 8 * numberOfCases() - bci;
     }
 }

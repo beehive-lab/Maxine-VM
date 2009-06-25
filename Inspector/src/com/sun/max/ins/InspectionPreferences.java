@@ -84,18 +84,18 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
     private static final String INVESTIGATE_WORD_VALUES_PREFERENCE = "investigateWordValues";
     private static final String EXTERNAL_VIEWER_PREFERENCE = "externalViewer";
 
-    private final Inspection _inspection;
-    private final InspectionSettings _settings;
-    private final InspectorStyleFactory _styleFactory;
-    private InspectorStyle _style;
-    private InspectorGeometry _geometry;
-    private boolean _investigateWordValues = true;
+    private final Inspection inspection;
+    private final InspectionSettings settings;
+    private final InspectorStyleFactory styleFactory;
+    private InspectorStyle style;
+    private InspectorGeometry geometry;
+    private boolean investigateWordValues = true;
 
-    private ExternalViewerType _externalViewerType = ExternalViewerType.NONE;
-    private final Map<ExternalViewerType, String> _externalViewerConfig = new EnumMap<ExternalViewerType, String>(ExternalViewerType.class);
+    private ExternalViewerType externalViewerType = ExternalViewerType.NONE;
+    private final Map<ExternalViewerType, String> externalViewerConfig = new EnumMap<ExternalViewerType, String>(ExternalViewerType.class);
 
-    private final AppendableSequence<InspectorAction> _actionsWithKeyBindings = new ArrayListSequence<InspectorAction>();
-    private KeyBindingMap _keyBindingMap = InspectorKeyBindings.DEFAULT_KEY_BINDINGS;
+    private final AppendableSequence<InspectorAction> actionsWithKeyBindings = new ArrayListSequence<InspectorAction>();
+    private KeyBindingMap keyBindingMap = InspectorKeyBindings.DEFAULT_KEY_BINDINGS;
 
 
     /**
@@ -106,14 +106,14 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
      */
     InspectionPreferences(Inspection inspection, InspectionSettings settings) {
         super(INSPECTION_SETTINGS_NAME);
-        _inspection = inspection;
-        _settings = settings;
-        _styleFactory = new InspectorStyleFactory(inspection);
-        _style = _styleFactory.defaultStyle();
+        this.inspection = inspection;
+        this.settings = settings;
+        this.styleFactory = new InspectorStyleFactory(inspection);
+        this.style = styleFactory.defaultStyle();
 
         // TODO (mlvdv) need some way to configure this default in conjunction with style defaults.
         //_geometry = new InspectorGeometry10Pt();
-        _geometry = new InspectorGeometry12Pt();
+        this.geometry = new InspectorGeometry12Pt();
 
         settings.addSaveSettingsListener(this);
 
@@ -131,18 +131,18 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
 
             if (settings.containsKey(this, DISPLAY_STYLE_PREFERENCE)) {
                 final String displayStyleName = settings.get(this, DISPLAY_STYLE_PREFERENCE, OptionTypes.STRING_TYPE, null);
-                InspectorStyle style = _styleFactory.findStyle(displayStyleName);
+                InspectorStyle style = styleFactory.findStyle(displayStyleName);
                 if (style == null) {
-                    style = _styleFactory.defaultStyle();
+                    style = styleFactory.defaultStyle();
                 }
-                _style = style;
+                this.style = style;
             }
 
-            _investigateWordValues = settings.get(this, INVESTIGATE_WORD_VALUES_PREFERENCE, OptionTypes.BOOLEAN_TYPE, true);
-            _externalViewerType = settings.get(this, EXTERNAL_VIEWER_PREFERENCE, new OptionTypes.EnumType<ExternalViewerType>(ExternalViewerType.class), ExternalViewerType.NONE);
+            investigateWordValues = settings.get(this, INVESTIGATE_WORD_VALUES_PREFERENCE, OptionTypes.BOOLEAN_TYPE, true);
+            externalViewerType = settings.get(this, EXTERNAL_VIEWER_PREFERENCE, new OptionTypes.EnumType<ExternalViewerType>(ExternalViewerType.class), ExternalViewerType.NONE);
             for (ExternalViewerType externalViewerType : ExternalViewerType.VALUES) {
                 final String config = settings.get(this, "externalViewer." + externalViewerType.name(), OptionTypes.STRING_TYPE, null);
-                _externalViewerConfig.put(externalViewerType, config);
+                externalViewerConfig.put(externalViewerType, config);
             }
         } catch (Option.Error optionError) {
             ProgramWarning.message(optionError.getMessage());
@@ -154,47 +154,47 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
      * The current configuration for visual style.
      */
     public InspectorStyle style() {
-        return _style;
+        return style;
     }
 
     private void setStyle(InspectorStyle style) {
-        _style = style;
-        _inspection.updateViewConfiguration();
+        this.style = style;
+        inspection.updateViewConfiguration();
     }
 
     /**
      * Default size and layout for windows; overridden by persistent settings from previous sessions.
      */
     public InspectorGeometry geometry() {
-        return _geometry;
+        return geometry;
     }
 
     /**
      * @return Does the Inspector attempt to discover proactively what word values might point to in the VM.
      */
     public boolean investigateWordValues() {
-        return _investigateWordValues;
+        return investigateWordValues;
     }
 
     public ExternalViewerType externalViewerType() {
-        return _externalViewerType;
+        return externalViewerType;
     }
 
     public Map<ExternalViewerType, String> externalViewerConfig() {
-        return _externalViewerConfig;
+        return externalViewerConfig;
     }
 
     public void setExternalViewer(ExternalViewerType externalViewerType) {
-        if (_externalViewerType != externalViewerType) {
-            _externalViewerType = externalViewerType;
-            _settings.save();
+        if (this.externalViewerType != externalViewerType) {
+            this.externalViewerType = externalViewerType;
+            settings.save();
         }
     }
 
     public void setExternalViewerConfiguration(ExternalViewerType externalViewerType, String config) {
-        if (_externalViewerConfig.get(externalViewerType) != config) {
-            _externalViewerConfig.put(externalViewerType, config);
-            _settings.save();
+        if (externalViewerConfig.get(externalViewerType) != config) {
+            externalViewerConfig.put(externalViewerType, config);
+            settings.save();
         }
     }
 
@@ -204,8 +204,8 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
     public void registerAction(InspectorAction inspectorAction) {
         final Class<? extends InspectorAction> actionClass = inspectorAction.getClass();
         if (InspectorKeyBindings.KEY_BINDABLE_ACTIONS.contains(actionClass)) {
-            _actionsWithKeyBindings.append(inspectorAction);
-            final KeyStroke keyStroke = _keyBindingMap.get(actionClass);
+            actionsWithKeyBindings.append(inspectorAction);
+            final KeyStroke keyStroke = keyBindingMap.get(actionClass);
             inspectorAction.putValue(Action.ACCELERATOR_KEY, keyStroke);
         }
     }
@@ -217,9 +217,9 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
      *            binding map, then the accelerator keys of all the relevant inspector actions are updated.
      */
     public void setKeyBindingMap(KeyBindingMap keyBindingMap) {
-        if (keyBindingMap != _keyBindingMap) {
-            _keyBindingMap = keyBindingMap;
-            for (InspectorAction inspectorAction : _actionsWithKeyBindings) {
+        if (keyBindingMap != this.keyBindingMap) {
+            this.keyBindingMap = keyBindingMap;
+            for (InspectorAction inspectorAction : actionsWithKeyBindings) {
                 final KeyStroke keyStroke = keyBindingMap.get(inspectorAction.getClass());
                 Trace.line(TRACE_VALUE, "Binding " + keyStroke + " to " + inspectorAction);
                 inspectorAction.putValue(Action.ACCELERATOR_KEY, keyStroke);
@@ -229,12 +229,12 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
 
 
     public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
-        saveSettingsEvent.save(KEY_BINDINGS_PREFERENCE, _keyBindingMap.name());
+        saveSettingsEvent.save(KEY_BINDINGS_PREFERENCE, keyBindingMap.name());
         saveSettingsEvent.save(DISPLAY_STYLE_PREFERENCE, style().name());
-        saveSettingsEvent.save(INVESTIGATE_WORD_VALUES_PREFERENCE, _investigateWordValues);
-        saveSettingsEvent.save(EXTERNAL_VIEWER_PREFERENCE, _externalViewerType.name());
+        saveSettingsEvent.save(INVESTIGATE_WORD_VALUES_PREFERENCE, investigateWordValues);
+        saveSettingsEvent.save(EXTERNAL_VIEWER_PREFERENCE, externalViewerType.name());
         for (ExternalViewerType externalViewerType : ExternalViewerType.VALUES) {
-            final String config = _externalViewerConfig.get(externalViewerType);
+            final String config = externalViewerConfig.get(externalViewerType);
             if (config != null) {
                 saveSettingsEvent.save(EXTERNAL_VIEWER_PREFERENCE + "." + externalViewerType.name(), config);
             }
@@ -245,7 +245,7 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
      * Gets a panel for configuring general Inspector preferences..
      */
     JPanel getPanel() {
-        final JPanel panel = new InspectorPanel(_inspection);
+        final JPanel panel = new InspectorPanel(inspection);
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
         final JPanel keyBindingsPanel = getUIPanel();
@@ -268,34 +268,34 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
      */
     private JPanel getUIPanel() {
 
-        final JPanel interiorPanel = new InspectorPanel(_inspection);
+        final JPanel interiorPanel = new InspectorPanel(inspection);
 
         // Add key binding chooser
         final Collection<KeyBindingMap> allKeyBindingMaps = KeyBindingMap.ALL.values();
-        final JComboBox keyBindingsComboBox = new InspectorComboBox(_inspection, allKeyBindingMaps.toArray());
-        keyBindingsComboBox.setSelectedItem(_keyBindingMap);
+        final JComboBox keyBindingsComboBox = new InspectorComboBox(inspection, allKeyBindingMaps.toArray());
+        keyBindingsComboBox.setSelectedItem(keyBindingMap);
         keyBindingsComboBox.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
                 setKeyBindingMap((KeyBindingMap) keyBindingsComboBox.getSelectedItem());
             }
         });
-        interiorPanel.add(new TextLabel(_inspection, "Key Bindings:  "));
+        interiorPanel.add(new TextLabel(inspection, "Key Bindings:  "));
         interiorPanel.add(keyBindingsComboBox);
 
         // Add display style chooser
-        final JComboBox uiComboBox = new InspectorComboBox(_inspection, _styleFactory.allStyles());
-        uiComboBox.setSelectedItem(_style);
+        final JComboBox uiComboBox = new InspectorComboBox(inspection, styleFactory.allStyles());
+        uiComboBox.setSelectedItem(style);
         uiComboBox.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
                 setStyle((InspectorStyle) uiComboBox.getSelectedItem());
             }
         });
-        interiorPanel.add(new TextLabel(_inspection, "Display style:  "));
+        interiorPanel.add(new TextLabel(inspection, "Display style:  "));
         interiorPanel.add(uiComboBox);
 
-        final JPanel panel = new InspectorPanel(_inspection, new BorderLayout());
+        final JPanel panel = new InspectorPanel(inspection, new BorderLayout());
         panel.add(interiorPanel, BorderLayout.WEST);
         return panel;
     }
@@ -306,23 +306,23 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
     private JPanel getDebugPanel() {
 
         final JCheckBox wordValueCheckBox =
-            new InspectorCheckBox(_inspection,
+            new InspectorCheckBox(inspection,
                             "Investigate memory references",
                             "Should displayed memory words be investigated as possible references by reading from the VM",
-                            _investigateWordValues);
+                            investigateWordValues);
         wordValueCheckBox.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent actionEvent) {
                 final JCheckBox checkBox = (JCheckBox) actionEvent.getSource();
-                _investigateWordValues = checkBox.isSelected();
-                _inspection.updateViewConfiguration();
+                investigateWordValues = checkBox.isSelected();
+                inspection.updateViewConfiguration();
             }
         });
 
-        final JPanel panel = new InspectorPanel(_inspection, new BorderLayout());
+        final JPanel panel = new InspectorPanel(inspection, new BorderLayout());
 
-        final JPanel interiorPanel = new InspectorPanel(_inspection);
-        interiorPanel.add(new TextLabel(_inspection, "Debugging:  "));
+        final JPanel interiorPanel = new InspectorPanel(inspection);
+        interiorPanel.add(new TextLabel(inspection, "Debugging:  "));
 
         /*
          * Until there's a good reason for supporting the synchronous debugging mode, it's no longer selectable.
@@ -342,16 +342,16 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
      */
     public JPanel getExternalViewerPanel() {
 
-        final JPanel cards = new InspectorPanel(_inspection, new CardLayout());
-        final JPanel noneCard = new InspectorPanel(_inspection);
+        final JPanel cards = new InspectorPanel(inspection, new CardLayout());
+        final JPanel noneCard = new InspectorPanel(inspection);
 
-        final JPanel processCard = new InspectorPanel(_inspection);
-        processCard.add(new TextLabel(_inspection, "Command: "));
+        final JPanel processCard = new InspectorPanel(inspection);
+        processCard.add(new TextLabel(inspection, "Command: "));
         processCard.setToolTipText("The pattern '$file' will be replaced with the full path to the file and '$line' will be replaced with the line number to view.");
         final JTextArea commandTextArea = new JTextArea(2, 30);
         commandTextArea.setLineWrap(true);
         commandTextArea.setWrapStyleWord(true);
-        commandTextArea.setText(_externalViewerConfig.get(ExternalViewerType.PROCESS));
+        commandTextArea.setText(externalViewerConfig.get(ExternalViewerType.PROCESS));
         commandTextArea.addFocusListener(new FocusAdapter() {
 
             @Override
@@ -360,13 +360,13 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
                 setExternalViewerConfiguration(ExternalViewerType.PROCESS, command);
             }
         });
-        final JScrollPane scrollPane = new InspectorScrollPane(_inspection, commandTextArea);
+        final JScrollPane scrollPane = new InspectorScrollPane(inspection, commandTextArea);
         processCard.add(scrollPane);
 
-        final JPanel socketCard = new InspectorPanel(_inspection);
+        final JPanel socketCard = new InspectorPanel(inspection);
         final JTextField portTextField = new JTextField(6);
-        portTextField.setText(_externalViewerConfig.get(ExternalViewerType.SOCKET));
-        socketCard.add(new TextLabel(_inspection, "Port: "));
+        portTextField.setText(externalViewerConfig.get(ExternalViewerType.SOCKET));
+        socketCard.add(new TextLabel(inspection, "Port: "));
         socketCard.add(portTextField);
         portTextField.addFocusListener(new FocusAdapter() {
 
@@ -382,7 +382,7 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
         cards.add(socketCard, ExternalViewerType.SOCKET.name());
 
         final ExternalViewerType[] values = ExternalViewerType.values();
-        final JComboBox comboBox = new InspectorComboBox(_inspection, values);
+        final JComboBox comboBox = new InspectorComboBox(inspection, values);
         comboBox.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
@@ -392,15 +392,15 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
                 cardLayout.show(cards, externalViewerType.name());
             }
         });
-        comboBox.setSelectedItem(_externalViewerType);
+        comboBox.setSelectedItem(externalViewerType);
         final CardLayout cardLayout = (CardLayout) cards.getLayout();
-        cardLayout.show(cards, _externalViewerType.name());
+        cardLayout.show(cards, externalViewerType.name());
 
-        final JPanel comboBoxPanel = new InspectorPanel(_inspection);
-        comboBoxPanel.add(new TextLabel(_inspection, "External File Viewer:  "));
+        final JPanel comboBoxPanel = new InspectorPanel(inspection);
+        comboBoxPanel.add(new TextLabel(inspection, "External File Viewer:  "));
         comboBoxPanel.add(comboBox);
 
-        final JPanel panel = new InspectorPanel(_inspection);
+        final JPanel panel = new InspectorPanel(inspection);
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.add(comboBoxPanel);
         panel.add(cards);

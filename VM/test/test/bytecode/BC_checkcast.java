@@ -25,18 +25,18 @@ package test.bytecode;
  * @Runs: 0 = -1; 1 = -1; 4 = 4
  */
 public class BC_checkcast {
-    static Object _object2 = new Object();
-    static Object _object3 = "";
-    static Object _object4 = new BC_checkcast();
+    static Object object2 = new Object();
+    static Object object3 = "";
+    static Object object4 = new BC_checkcast();
 
     public static int test(int arg) {
         Object obj;
         if (arg == 2) {
-            obj = _object2;
+            obj = object2;
         } else if (arg == 3) {
-            obj = _object3;
+            obj = object3;
         } else if (arg == 4) {
-            obj = _object4;
+            obj = object4;
         } else {
             obj = null;
         }

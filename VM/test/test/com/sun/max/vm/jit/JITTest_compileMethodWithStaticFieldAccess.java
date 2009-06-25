@@ -37,58 +37,58 @@ import com.sun.max.vm.type.*;
  * @author Laurent Daynes
  */
 public class JITTest_compileMethodWithStaticFieldAccess extends JitCompilerTestCase {
-    static byte _staticByteField;
-    static boolean _staticBooleanField;
-    static char _staticCharField;
-    static short _staticShortField;
-    static int _staticIntField;
-    static float _staticFloatField;
-    static long _staticLongField;
-    static double _staticDoubleField;
-    static JITTest_compileMethodWithStaticFieldAccess _staticObjectField;
+    static byte staticByteField;
+    static boolean staticBooleanField;
+    static char staticCharField;
+    static short staticShortField;
+    static int staticIntField;
+    static float staticFloatField;
+    static long staticLongField;
+    static double staticDoubleField;
+    static JITTest_compileMethodWithStaticFieldAccess staticObjectField;
 
     String methodNameFor(String typeName, boolean resolved) {
         return "use" + (resolved ? "Resolved" : "Unresolved") + "Static" + typeName + "Field";
     }
 
     String methodNameForKind(Kind kind, boolean resolved) {
-        final String kindName = kind.name().toString();
+        final String kindName = kind.name.toString();
         return  methodNameFor(kindName.substring(0, 1).toUpperCase() +  kindName.substring(1).toLowerCase(), resolved);
     }
 
     /////////////////////////////////////////////// RESOLVED & INITIALIZED CLASS
     void useResolvedStaticByteField() {
-        _staticByteField++;
+        staticByteField++;
     }
 
     void useResolvedStaticBooleanField() {
-        _staticBooleanField ^= true;
+        staticBooleanField ^= true;
     }
 
     void useResolvedStaticShortField() {
-        _staticShortField++;
+        staticShortField++;
     }
 
     void useResolvedStaticIntField() {
-        _staticIntField++;
+        staticIntField++;
     }
 
     void useResolvedStaticLongField() {
-        _staticLongField++;
+        staticLongField++;
     }
 
     void useResolvedStaticFloatField() {
-        _staticFloatField *= 0.15F;
+        staticFloatField *= 0.15F;
     }
 
     void useResolvedStaticDoubleField() {
-        _staticDoubleField *= 0.125D;
+        staticDoubleField *= 0.125D;
     }
 
     @SuppressWarnings("unused")
     void useResolvedStaticObjectField() {
-        final Object o = _staticObjectField;
-        _staticObjectField =  null;
+        final Object o = staticObjectField;
+        staticObjectField =  null;
     }
 
     public void test_useResolvedStaticByteField() {
@@ -125,37 +125,37 @@ public class JITTest_compileMethodWithStaticFieldAccess extends JitCompilerTestC
 
     /////////////////////////////////////////////// UNRESOLVED & UNINITIALIZED CLASS
     void useUnresolvedStaticByteField()  {
-        UnresolvedAtTestTime._staticByteField++;
+        UnresolvedAtTestTime.staticByteField++;
     }
 
     void useUnresolvedStaticBooleanField() {
-        UnresolvedAtTestTime._staticBooleanField ^= true;
+        UnresolvedAtTestTime.staticBooleanField ^= true;
     }
 
     void useUnresolvedStaticShortField()  {
-        UnresolvedAtTestTime._staticShortField++;
+        UnresolvedAtTestTime.staticShortField++;
     }
 
     void useUnresolvedStaticIntField()  {
-        UnresolvedAtTestTime._staticIntField++;
+        UnresolvedAtTestTime.staticIntField++;
     }
 
     void useUnresolvedStaticLongField() {
-        UnresolvedAtTestTime._staticLongField++;
+        UnresolvedAtTestTime.staticLongField++;
     }
 
     void useUnresolvedStaticFloatField() {
-        UnresolvedAtTestTime._staticFloatField *= 0.15F;
+        UnresolvedAtTestTime.staticFloatField *= 0.15F;
     }
 
     void useUnresolvedStaticDoubleField() {
-        UnresolvedAtTestTime._staticDoubleField *= 0.125D;
+        UnresolvedAtTestTime.staticDoubleField *= 0.125D;
     }
 
     @SuppressWarnings("unused")
     void useUnresolvedStaticObjectField() {
-        final Object o = UnresolvedAtTestTime._staticObjectField;
-        UnresolvedAtTestTime._staticObjectField =  null;
+        final Object o = UnresolvedAtTestTime.staticObjectField;
+        UnresolvedAtTestTime.staticObjectField =  null;
     }
 
     public void test_useUnresolvedStaticByteField() {

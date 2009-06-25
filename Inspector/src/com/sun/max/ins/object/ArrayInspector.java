@@ -31,7 +31,7 @@ import com.sun.max.vm.layout.*;
  */
 public final class ArrayInspector extends ObjectInspector {
 
-    private ObjectPane _elementsPane;
+    private ObjectPane elementsPane;
 
     ArrayInspector(Inspection inspection, ObjectInspectorFactory factory, TeleObject teleObject) {
         super(inspection, factory, teleObject);
@@ -42,13 +42,13 @@ public final class ArrayInspector extends ObjectInspector {
     protected void createView() {
         super.createView();
         final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject();
-        _elementsPane = ObjectPane.createArrayElementsPane(this, teleArrayObject);
-        frame().getContentPane().add(_elementsPane);
+        elementsPane = ObjectPane.createArrayElementsPane(this, teleArrayObject);
+        frame().getContentPane().add(elementsPane);
     }
 
     @Override
     protected void refreshView(boolean force) {
-        _elementsPane.refresh(force);
+        elementsPane.refresh(force);
         super.refreshView(force);
     }
 

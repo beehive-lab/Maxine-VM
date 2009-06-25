@@ -29,57 +29,57 @@ import com.sun.max.vm.compiler.tir.target.*;
 
 public class TirTree extends AbstractIrMethod {
     public static class Profile {
-        public int _iterations;
-        public int _executions;
+        public int iterations;
+        public int executions;
     }
 
-    private final Profile _profile = new Profile();
+    private final Profile profile = new Profile();
 
     public Profile profile() {
-        return _profile;
+        return profile;
     }
 
-    private final TreeAnchor _anchor;
-    private TargetTree _targetTree;
+    private final TreeAnchor anchor;
+    private TargetTree targetTree;
 
     public TargetTree targetTree() {
-        return _targetTree;
+        return targetTree;
     }
 
     public void setTarget(TargetTree targetTree) {
-        _targetTree = targetTree;
+        this.targetTree = targetTree;
     }
 
-    private AppendableIndexedSequence<TirLocal> _locals = new ArrayListSequence<TirLocal>();
-    private AppendableIndexedSequence<TirInstruction> _prologue = new ArrayListSequence<TirInstruction>();
-    private AppendableIndexedSequence<TirTrace> _traces = new ArrayListSequence<TirTrace>();
+    private AppendableIndexedSequence<TirLocal> locals = new ArrayListSequence<TirLocal>();
+    private AppendableIndexedSequence<TirInstruction> prologue = new ArrayListSequence<TirInstruction>();
+    private AppendableIndexedSequence<TirTrace> traces = new ArrayListSequence<TirTrace>();
 
     public Sequence<TirTrace> traces() {
-        return _traces;
+        return traces;
     }
 
-    private final TirState _entryState;
+    private final TirState entryState;
 
     public TirState entryState() {
-        return _entryState;
+        return entryState;
     }
 
     public TirTree(TreeAnchor anchor, TirState entryState) {
         super(anchor.method());
-        _anchor = anchor;
-        _entryState = entryState;
+        this.anchor = anchor;
+        this.entryState = entryState;
     }
 
     public void append(TirLocal local) {
-        _locals.append(local);
+        locals.append(local);
     }
 
     public void append(TirInstruction instruction) {
-        _prologue.append(instruction);
+        prologue.append(instruction);
     }
 
     public void append(TirTrace trace) {
-        _traces.append(trace);
+        traces.append(trace);
     }
 
     public void send(TirMessageSink sink) {
@@ -91,26 +91,26 @@ public class TirTree extends AbstractIrMethod {
     }
 
     private void sendTraces(TirMessageSink sink) {
-        for (int i = _traces.length() - 1; i >= 0; i--) {
-            _traces.get(i).send(sink);
+        for (int i = traces.length() - 1; i >= 0; i--) {
+            traces.get(i).send(sink);
         }
     }
 
     private void sendPrologue(TirMessageSink sink) {
-        for (int i = _prologue.length() - 1; i >= 0; i--) {
-            sink.receive(_prologue.get(i));
+        for (int i = prologue.length() - 1; i >= 0; i--) {
+            sink.receive(prologue.get(i));
         }
     }
 
     private void sendLocals(TirMessageSink sink) {
-        for (int i = _locals.length() - 1; i >= 0; i--) {
-            sink.receive(_locals.get(i));
+        for (int i = locals.length() - 1; i >= 0; i--) {
+            sink.receive(locals.get(i));
         }
     }
 
     @Override
     public String toString() {
-        return _entryState.frames().first().toString();
+        return entryState.frames().first().toString();
     }
 
     public boolean isGenerated() {
@@ -122,28 +122,28 @@ public class TirTree extends AbstractIrMethod {
     }
 
     public TreeAnchor anchor() {
-        return _anchor;
+        return anchor;
     }
 
     public Sequence<TirInstruction> prologue() {
-        return _prologue;
+        return prologue;
     }
 
     public Sequence<TirLocal> locals() {
-        return _locals;
+        return locals;
     }
 
     public int getNumber(final TirInstruction instruction) {
         final MutableInnerClassGlobal<Integer> result = new MutableInnerClassGlobal<Integer>(-1);
         final Class<? extends TirInstruction> cls = instruction.getClass();
         send(new TirReverse(new TirMessageSink() {
-            private int _number = 0;
+            private int number = 0;
             public void receive(TirMessage message) {
                 if (cls.isAssignableFrom(message.getClass())) {
                     if (message == instruction) {
-                        result.setValue(_number);
+                        result.setValue(number);
                     } else {
-                        _number++;
+                        number++;
                     }
                 }
             }

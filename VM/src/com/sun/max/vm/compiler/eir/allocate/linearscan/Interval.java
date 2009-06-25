@@ -35,44 +35,44 @@ public final class Interval {
         NONE, UNHANDLED, ACTIVE, INACTIVE, HANDLED
     }
 
-    private IntervalState _state = IntervalState.NONE;
+    private IntervalState state = IntervalState.NONE;
 
     public IntervalState state() {
-        return _state;
+        return state;
     }
 
     public void setState(IntervalState state) {
-        _state = state;
+        this.state = state;
     }
 
     private static class Range {
 
-        public int _from;
-        public int _to;
-        public Range _next;
+        public int from;
+        public int to;
+        public Range next;
 
         public Range(int from, int to) {
-            _from = from;
-            _to = to;
+            this.from = from;
+            this.to = to;
             assert assertValid();
         }
 
         public boolean canMerge(Range r) {
-            return r._to >= _from && r._from <= _from;
+            return r.to >= from && r.from <= from;
         }
 
         public void merge(Range r) {
             assert canMerge(r);
-            _from = r._from;
+            from = r.from;
             assert assertValid();
         }
 
         public boolean biggerThan(Range r) {
-            return r._to < _from;
+            return r.to < from;
         }
 
         public boolean assertValid() {
-            assert _from < _to : "Invalid range (" + _from + " to " + _to + ")";
+            assert from < to : "Invalid range (" + from + " to " + to + ")";
             return true;
         }
     }
@@ -80,15 +80,15 @@ public final class Interval {
     public static enum UsePositionKind {
         NONE('N'), LOOP_END_MARKER('L'), SHOULD_HAVE_REGISTER('Y'), MUST_HAVE_REGISTER('X');
 
-        private char _shortCut;
+        private char shortCut;
 
         UsePositionKind(char shortCut) {
-            _shortCut = shortCut;
+            this.shortCut = shortCut;
         }
 
         @Override
         public String toString() {
-            return Character.toString(_shortCut);
+            return Character.toString(shortCut);
         }
 
         public static UsePositionKind stronger(UsePositionKind a, UsePositionKind b) {
@@ -101,120 +101,120 @@ public final class Interval {
 
     private static class UsePosition {
 
-        public int _pos;
-        public UsePosition _next;
-        public UsePositionKind _kind;
+        public final int pos;
+        public UsePosition next;
+        public UsePositionKind kind;
 
         public UsePosition(int pos, UsePositionKind kind) {
-            _pos = pos;
-            _kind = kind;
+            this.pos = pos;
+            this.kind = kind;
 
             assert pos % 2 == 0 : "use positions are always at even positions";
         }
 
         public boolean biggerThan(UsePosition u) {
-            return _pos > u._pos;
+            return pos > u.pos;
         }
 
         @Override
         public String toString() {
-            return _pos + _kind.toString();
+            return pos + kind.toString();
         }
     }
 
-    private boolean _insertMoveWhenActivated;
-    private Range _firstRange;
-    private ParentInterval _parent;
-    private UsePosition _firstUsePosition;
-    private Range _lastRange;
-    private EirVariable _variable;
-    private EirLocation _preferredLocation;
-    private EirRegister _register;
+    private boolean insertMoveWhenActivated;
+    private Range firstRange;
+    private ParentInterval parent;
+    private UsePosition firstUsePosition;
+    private Range lastRange;
+    private EirVariable variable;
+    private EirLocation preferredLocation;
+    private EirRegister register;
 
     Interval(ParentInterval parent, EirVariable variable) {
-        _parent = parent;
-        _variable = variable;
+        this.parent = parent;
+        this.variable = variable;
         if (variable.location() != null) {
-            _register = variable.location().asRegister();
+            this.register = variable.location().asRegister();
         }
     }
 
     public EirVariable variable() {
-        return _variable;
+        return variable;
     }
 
     public ParentInterval parent() {
-        return _parent;
+        return parent;
     }
 
     public EirLocation preferredLocation() {
-        return _preferredLocation;
+        return preferredLocation;
     }
 
     public void setPreferredLocation(EirLocation location) {
-        _preferredLocation = location;
+        preferredLocation = location;
     }
 
     public void prependRange(int beginNumber, int endNumber) {
         final Range r = new Range(beginNumber, endNumber);
-        if (_firstRange == null) {
-            _firstRange = r;
-            _lastRange = r;
-        } else if (_firstRange.canMerge(r)) {
-            _firstRange.merge(r);
+        if (firstRange == null) {
+            firstRange = r;
+            lastRange = r;
+        } else if (firstRange.canMerge(r)) {
+            firstRange.merge(r);
         } else {
-            assert _firstRange.biggerThan(r);
-            r._next = _firstRange;
-            _firstRange = r;
+            assert firstRange.biggerThan(r);
+            r.next = firstRange;
+            firstRange = r;
         }
     }
 
     public void addUsePosition(int pos, UsePositionKind kind) {
         final UsePosition u = new UsePosition(pos, kind);
 
-        if (_firstUsePosition != null && _firstUsePosition._pos == pos) {
-            _firstUsePosition._kind = UsePositionKind.stronger(kind, _firstUsePosition._kind);
+        if (firstUsePosition != null && firstUsePosition.pos == pos) {
+            firstUsePosition.kind = UsePositionKind.stronger(kind, firstUsePosition.kind);
         } else {
-            assert _firstUsePosition == null || _firstUsePosition.biggerThan(u);
-            u._next = _firstUsePosition;
-            _firstUsePosition = u;
+            assert firstUsePosition == null || firstUsePosition.biggerThan(u);
+            u.next = firstUsePosition;
+            firstUsePosition = u;
         }
     }
 
     public boolean isEmpty() {
-        return _firstRange == null;
+        return firstRange == null;
     }
 
     public int getFirstRangeStart() {
         assert !isEmpty();
-        return _firstRange._from;
+        return firstRange.from;
     }
 
     private int getFirstRangeEnd() {
         assert !isEmpty();
-        return _firstRange._to;
+        return firstRange.to;
     }
 
     public int getLastRangeEnd() {
         assert !isEmpty();
-        return _lastRange._to;
+        return lastRange.to;
     }
 
     public String detailedToString() {
 
         final StringBuilder result = new StringBuilder();
         result.append(toString() + ": ");
-        Range curRange = _firstRange;
+        Range curRange = firstRange;
         while (curRange != null) {
-            result.append("[" + curRange._from + ", " + curRange._to + "[ ");
-            curRange = curRange._next;
+            result.append("[" + curRange.from + ", " + curRange.to + "[ ");
+            curRange = curRange.next;
         }
 
-        UsePosition curUsePosition = _firstUsePosition;
+        UsePosition curUsePosition = firstUsePosition;
         while (curUsePosition != null) {
             result.append(curUsePosition.toString() + " ");
 
-            curUsePosition = curUsePosition._next;
+            curUsePosition = curUsePosition.next;
         }
 
         return result.toString();
@@ -222,26 +222,26 @@ public final class Interval {
 
     public void print(IndentWriter writer, int length) {
 
-        UsePosition curUsePosition = _firstUsePosition;
-        Range curRange = _firstRange;
+        UsePosition curUsePosition = firstUsePosition;
+        Range curRange = firstRange;
 
         boolean inInterval = false;
 
         for (int i = 0; i < length; i++) {
 
-            if (curRange != null && curRange._from == i) {
+            if (curRange != null && curRange.from == i) {
                 inInterval = true;
             }
 
-            if (curRange != null && curRange._to == i) {
+            if (curRange != null && curRange.to == i) {
                 inInterval = false;
-                curRange = curRange._next;
+                curRange = curRange.next;
             }
 
-            if (curUsePosition != null && curUsePosition._pos == i) {
+            if (curUsePosition != null && curUsePosition.pos == i) {
 
-                writer.print(curUsePosition._kind.toString());
-                curUsePosition = curUsePosition._next;
+                writer.print(curUsePosition.kind.toString());
+                curUsePosition = curUsePosition.next;
 
             } else if (inInterval) {
                 writer.print("-");
@@ -252,8 +252,8 @@ public final class Interval {
     }
 
     public EirRegister register() {
-        assert (variable().location() == null && _register == null) || variable().location().asRegister() == _register;
-        return this._register;
+        assert (variable().location() == null && register == null) || variable().location().asRegister() == register;
+        return this.register;
     }
 
     public EirStackSlot stackSlot() {
@@ -270,24 +270,24 @@ public final class Interval {
         assert getFirstRangeStart() <= pos;
         assert getFirstRangeEnd() > pos;
 
-        _firstRange._from = pos;
-        assert _firstRange.assertValid();
+        firstRange.from = pos;
+        assert firstRange.assertValid();
     }
 
     public boolean coversEndInclusive(int position) {
-        Range cur = _firstRange;
+        Range cur = firstRange;
         while (cur != null) {
-            if (cur._from <= position && cur._to >= position) {
+            if (cur.from <= position && cur.to >= position) {
                 return true;
             }
-            cur = cur._next;
+            cur = cur.next;
         }
 
         return false;
 
     }
 
-    Range _lastCoverRange;
+    Range lastCoverRange;
 
     /**
      * Must only be called with increasing position!
@@ -297,34 +297,34 @@ public final class Interval {
      */
     public boolean coversIncremental(int position) {
 
-        assert _lastCoverRange == null || _lastCoverRange._to <= _lastRange._to;
+        assert lastCoverRange == null || lastCoverRange.to <= lastRange.to;
 
-        Range cur = _lastCoverRange;
+        Range cur = lastCoverRange;
         if (cur == null) {
-            cur = _firstRange;
+            cur = firstRange;
         }
 
-        while (cur != null && cur._from <= position) {
-            if (cur._to > position) {
-                _lastCoverRange = cur;
+        while (cur != null && cur.from <= position) {
+            if (cur.to > position) {
+                lastCoverRange = cur;
                 assert covers(position);
                 return true;
             }
-            cur = cur._next;
+            cur = cur.next;
         }
 
         assert !covers(position);
-        _lastCoverRange = cur;
+        lastCoverRange = cur;
         return false;
     }
 
     public boolean covers(int position) {
-        Range cur = _firstRange;
-        while (cur != null && cur._from <= position) {
-            if (cur._to > position) {
+        Range cur = firstRange;
+        while (cur != null && cur.from <= position) {
+            if (cur.to > position) {
                 return true;
             }
-            cur = cur._next;
+            cur = cur.next;
         }
 
         return false;
@@ -344,7 +344,7 @@ public final class Interval {
             return -1;
         }
 
-        return firstIntersection(_firstRange, current._firstRange);
+        return firstIntersection(firstRange, current.firstRange);
     }
 
     public int firstIntersectionIncremental(int position, Interval current) {
@@ -353,7 +353,7 @@ public final class Interval {
             return -1;
         }
 
-        final int result = firstIntersection((_lastCoverRange == null) ? _firstRange : _lastCoverRange, (current._lastCoverRange == null) ? current._firstRange : current._lastCoverRange);
+        final int result = firstIntersection((lastCoverRange == null) ? firstRange : lastCoverRange, (current.lastCoverRange == null) ? current.firstRange : current.lastCoverRange);
         assert result == firstIntersection(position, current);
         return result;
     }
@@ -364,23 +364,23 @@ public final class Interval {
 
         do {
 
-            if (r1._from < r2._from) {
-                if (r1._to <= r2._from) {
+            if (r1.from < r2.from) {
+                if (r1.to <= r2.from) {
                     // Move r1 on
-                    r1 = r1._next;
+                    r1 = r1.next;
                 } else {
-                    return r2._from;
+                    return r2.from;
                 }
-            } else if (r2._from < r1._from) {
-                if (r2._to <= r1._from) {
+            } else if (r2.from < r1.from) {
+                if (r2.to <= r1.from) {
                     // Move r2 on
-                    r2 = r2._next;
+                    r2 = r2.next;
                 } else {
-                    return r1._from;
+                    return r1.from;
                 }
             } else {
-                assert r1._from == r2._from;
-                return r1._from;
+                assert r1.from == r2.from;
+                return r1.from;
             }
 
         } while (r1 != null && r2 != null);
@@ -391,7 +391,7 @@ public final class Interval {
     public void assignRegister(EirRegister eirRegister) {
         assert variable().location() == null;
         this.variable().setLocation(eirRegister);
-        _register = eirRegister;
+        register = eirRegister;
         assert this.variable().assertLocationCategory() : "incorrect register category";
     }
 
@@ -407,35 +407,35 @@ public final class Interval {
     }
 
     public int previousShouldHaveRegister(int position) {
-        UsePosition cur = _firstUsePosition;
+        UsePosition cur = firstUsePosition;
         UsePosition last = null;
-        while (cur != null && cur._pos < position) {
+        while (cur != null && cur.pos < position) {
 
-            if (cur._kind == UsePositionKind.SHOULD_HAVE_REGISTER || cur._kind == UsePositionKind.MUST_HAVE_REGISTER) {
+            if (cur.kind == UsePositionKind.SHOULD_HAVE_REGISTER || cur.kind == UsePositionKind.MUST_HAVE_REGISTER) {
                 last = cur;
             }
 
-            cur = cur._next;
+            cur = cur.next;
         }
 
         if (last == null) {
             return -1;
         }
 
-        assert last._kind == UsePositionKind.SHOULD_HAVE_REGISTER || last._kind == UsePositionKind.MUST_HAVE_REGISTER;
-        return last._pos;
+        assert last.kind == UsePositionKind.SHOULD_HAVE_REGISTER || last.kind == UsePositionKind.MUST_HAVE_REGISTER;
+        return last.pos;
     }
 
     public int nextMustHaveRegister(int minPos) {
-        UsePosition cur = _firstUsePosition;
+        UsePosition cur = firstUsePosition;
 
         while (cur != null) {
 
-            if (cur._pos >= minPos && cur._kind == UsePositionKind.MUST_HAVE_REGISTER) {
-                return cur._pos;
+            if (cur.pos >= minPos && cur.kind == UsePositionKind.MUST_HAVE_REGISTER) {
+                return cur.pos;
             }
 
-            cur = cur._next;
+            cur = cur.next;
         }
 
         return Integer.MAX_VALUE;
@@ -443,16 +443,16 @@ public final class Interval {
 
     private boolean assertLastCoverRange() {
 
-        if (_lastCoverRange == null) {
+        if (lastCoverRange == null) {
             return true;
         }
 
-        Range cur = _firstRange;
+        Range cur = firstRange;
         while (cur != null) {
-            if (cur == _lastCoverRange) {
+            if (cur == lastCoverRange) {
                 return true;
             }
-            cur = cur._next;
+            cur = cur.next;
         }
 
         return false;
@@ -466,54 +466,54 @@ public final class Interval {
 
         final Interval result = parent().createChild(variable);
         Range prev = null;
-        Range cur = _firstRange;
-        while (cur != null && cur._to <= pos) {
+        Range cur = firstRange;
+        while (cur != null && cur.to <= pos) {
             prev = cur;
-            cur = cur._next;
+            cur = cur.next;
         }
 
         assert cur != null : "split interval after end of last range";
 
-        if (cur._from < pos) {
-            result._firstRange = new Range(pos, cur._to);
-            result._firstRange._next = cur._next;
-            if (cur == _lastRange) {
-                result._lastRange = result._firstRange;
+        if (cur.from < pos) {
+            result.firstRange = new Range(pos, cur.to);
+            result.firstRange.next = cur.next;
+            if (cur == lastRange) {
+                result.lastRange = result.firstRange;
             } else {
-                result._lastRange = _lastRange;
+                result.lastRange = lastRange;
             }
 
-            cur._to = pos;
-            cur._next = null;
-            _lastRange = cur;
+            cur.to = pos;
+            cur.next = null;
+            lastRange = cur;
         } else {
             assert prev != null : "split before start of first range";
-            result._firstRange = cur;
-            result._lastRange = _lastRange;
-            prev._next = null;
-            _lastRange = prev;
+            result.firstRange = cur;
+            result.lastRange = lastRange;
+            prev.next = null;
+            lastRange = prev;
         }
 
-        if (this._lastCoverRange != null && this._lastCoverRange._to > this._lastRange._to) {
-            result._lastCoverRange = this._lastCoverRange;
-            this._lastCoverRange = this._lastRange;
+        if (this.lastCoverRange != null && this.lastCoverRange.to > this.lastRange.to) {
+            result.lastCoverRange = this.lastCoverRange;
+            this.lastCoverRange = this.lastRange;
         }
 
         assert assertLastCoverRange();
         assert result.assertLastCoverRange();
 
-        UsePosition curUsePosition = this._firstUsePosition;
+        UsePosition curUsePosition = this.firstUsePosition;
         UsePosition prevUsePosition = null;
-        while (curUsePosition != null && curUsePosition._pos < pos) {
+        while (curUsePosition != null && curUsePosition.pos < pos) {
             prevUsePosition = curUsePosition;
-            curUsePosition = curUsePosition._next;
+            curUsePosition = curUsePosition.next;
         }
 
-        result._firstUsePosition = curUsePosition;
+        result.firstUsePosition = curUsePosition;
         if (prevUsePosition == null) {
-            this._firstUsePosition = null;
+            this.firstUsePosition = null;
         } else {
-            prevUsePosition._next = null;
+            prevUsePosition.next = null;
         }
 
         assert assertValid();
@@ -524,10 +524,10 @@ public final class Interval {
     }
 
     public boolean assertUsePositionsValid() {
-        UsePosition cur = _firstUsePosition;
+        UsePosition cur = firstUsePosition;
         while (cur != null) {
-            assert this.coversEndInclusive(cur._pos);
-            cur = cur._next;
+            assert this.coversEndInclusive(cur.pos);
+            cur = cur.next;
         }
 
         return true;
@@ -541,10 +541,10 @@ public final class Interval {
 
     public boolean assertRangeValid() {
 
-        assert _firstRange != null || _lastRange == null;
+        assert firstRange != null || lastRange == null;
 
-        if (_firstRange != null) {
-            Range cur = _firstRange;
+        if (firstRange != null) {
+            Range cur = firstRange;
             Range prev = null;
             while (cur != null) {
 
@@ -553,33 +553,33 @@ public final class Interval {
                 }
 
                 prev = cur;
-                cur = cur._next;
+                cur = cur.next;
             }
 
-            assert prev == _lastRange;
+            assert prev == lastRange;
         }
 
         return true;
     }
 
     public boolean insertMoveWhenActivated() {
-        return _insertMoveWhenActivated;
+        return insertMoveWhenActivated;
     }
 
     public void setInsertMoveWhenActivated(boolean b) {
-        _insertMoveWhenActivated = b;
+        insertMoveWhenActivated = b;
     }
 
     public int nextUsageAfter(int minPos) {
-        UsePosition cur = _firstUsePosition;
+        UsePosition cur = firstUsePosition;
 
         while (cur != null) {
 
-            if (cur._pos >= minPos) {
-                return cur._pos;
+            if (cur.pos >= minPos) {
+                return cur.pos;
             }
 
-            cur = cur._next;
+            cur = cur.next;
         }
 
         return Integer.MAX_VALUE;
@@ -588,16 +588,16 @@ public final class Interval {
     public int firstUsage() {
 
         // TODO: Check if this is a hack...
-        if (_firstUsePosition == null) {
+        if (firstUsePosition == null) {
             return this.getLastRangeEnd();
         }
-        assert _firstUsePosition != null;
-        return _firstUsePosition._pos;
+        assert firstUsePosition != null;
+        return firstUsePosition.pos;
     }
 
     public void assignStackSlot(EirStackSlot stackSlot) {
         variable().setLocation(stackSlot);
-        _register = null;
+        register = null;
         assert this.variable().assertLocationCategory() : "cannot assign stack slot to this variable";
     }
 

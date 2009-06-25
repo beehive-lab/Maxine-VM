@@ -45,41 +45,41 @@ import com.sun.max.vm.runtime.*;
  */
 class Compilation implements Future<TargetMethod> {
 
-    private static final VMOption _verboseOption = register(new VMOption("-verbose:comp", "Display information about each compilation performed."), MaxineVM.Phase.PRISTINE);
+    private static final VMOption verboseOption = register(new VMOption("-verbose:comp", "Display information about each compilation performed."), MaxineVM.Phase.PRISTINE);
 
     /**
      * A reference to the enclosing instance of the compilation scheme.
      */
-    private final AdaptiveCompilationScheme _adaptiveCompilationScheme;
+    private final AdaptiveCompilationScheme adaptiveCompilationScheme;
 
     /**
      * The state of the method this compilation is to compile.
      */
-    protected final AdaptiveMethodState _methodState;
+    protected final AdaptiveMethodState methodState;
 
     /**
      * Compilation options to be passed on to the underlying compiler.
      */
-    protected final CompilationDirective _compilationDirective;
+    protected final CompilationDirective compilationDirective;
 
     /**
      * The compiler to use for this compilation.
      */
-    protected DynamicCompilerScheme _compiler;
+    protected DynamicCompilerScheme compiler;
 
     /**
      * State of this compilation. If {@code true}, then this compilation has finished and the target method is
      * available.
      */
-    protected boolean _done;
+    protected boolean done;
 
-    protected final Thread _compilingThread;
+    protected final Thread compilingThread;
 
     Compilation(AdaptiveCompilationScheme adaptiveCompilationScheme, AdaptiveMethodState methodState, CompilationDirective compilationDirective) {
-        this._adaptiveCompilationScheme = adaptiveCompilationScheme;
-        _methodState = methodState;
-        _compilingThread = Thread.currentThread();
-        _compilationDirective = compilationDirective;
+        this.adaptiveCompilationScheme = adaptiveCompilationScheme;
+        this.methodState = methodState;
+        this.compilingThread = Thread.currentThread();
+        this.compilationDirective = compilationDirective;
     }
 
     /**
@@ -100,7 +100,7 @@ class Compilation implements Future<TargetMethod> {
      * Returns whether this compilation is done.
      */
     public boolean isDone() {
-        return _done;
+        return done;
     }
 
     /**
@@ -109,18 +109,18 @@ class Compilation implements Future<TargetMethod> {
      * @return the target method that resulted from this compilation
      */
     public TargetMethod get() throws InterruptedException {
-        if (!_done) {
-            synchronized (_methodState) {
-                if (_compilingThread == Thread.currentThread()) {
-                    FatalError.unexpected("Compilation of " + _methodState.classMethodActor().format("%H.%n(%p)") + " is recursive");
+        if (!done) {
+            synchronized (methodState) {
+                if (compilingThread == Thread.currentThread()) {
+                    FatalError.unexpected("Compilation of " + methodState.classMethodActor().format("%H.%n(%p)") + " is recursive");
                 }
 
                 // the method state object is used here as the condition variable
-                _methodState.wait();
-                return _methodState.currentTargetMethod(_compilationDirective);
+                methodState.wait();
+                return methodState.currentTargetMethod(compilationDirective);
             }
         }
-        return _methodState.currentTargetMethod(_compilationDirective);
+        return methodState.currentTargetMethod(compilationDirective);
     }
 
     /**
@@ -129,81 +129,81 @@ class Compilation implements Future<TargetMethod> {
      * @return the target method that resulted from this compilation
      */
     public TargetMethod get(long timeout, TimeUnit unit) throws InterruptedException {
-        if (!_done) {
-            synchronized (_methodState) {
+        if (!done) {
+            synchronized (methodState) {
                 // the method state object is used here as the condition variable
-                _methodState.wait(timeout); // TODO: convert timeout to milliseconds
-                return _methodState.currentTargetMethod(_compilationDirective);
+                methodState.wait(timeout); // TODO: convert timeout to milliseconds
+                return methodState.currentTargetMethod(compilationDirective);
             }
         }
-        return _methodState.currentTargetMethod(_compilationDirective);
+        return methodState.currentTargetMethod(compilationDirective);
     }
 
-    void compile(CompilationDirective compilationDirective) {
-        if (AdaptiveCompilationScheme._gcOnCompileOption.getValue()) {
+    void compile(CompilationDirective directive) {
+        if (AdaptiveCompilationScheme.gcOnCompileOption.getValue()) {
             System.gc();
         }
-        DynamicCompilerScheme compiler = _compiler;
-        if (compiler == null) {
-            if (compilationDirective.jitOnly() || compilationDirective.traceInstrument()) {
-                assert _methodState.classMethodActor().isUnsafe() == false;
-                compiler = this._adaptiveCompilationScheme._jitCompiler;
+        DynamicCompilerScheme comp = this.compiler;
+        if (comp == null) {
+            if (directive.jitOnly() || directive.traceInstrument()) {
+                assert methodState.classMethodActor().isUnsafe() == false;
+                comp = this.adaptiveCompilationScheme.jitCompiler;
             } else {
-                compiler = this._adaptiveCompilationScheme.selectCompiler(_methodState);
+                comp = this.adaptiveCompilationScheme.selectCompiler(methodState);
             }
         }
-        assert _methodState.currentCompilation(compilationDirective) == this;
+        assert methodState.currentCompilation(directive) == this;
         TargetMethod targetMethod = null;
 
-        _adaptiveCompilationScheme.observeBeforeCompilation(this, compiler);
+        adaptiveCompilationScheme.observeBeforeCompilation(this, comp);
 
         try {
             String methodString = null;
-            if (_verboseOption.isPresent()) {
-                methodString = _methodState.classMethodActor().format("%H.%n(%p)");
-                Log.println(compiler.name() + ": Compiling " + methodString);
+            if (verboseOption.isPresent()) {
+                methodString = methodState.classMethodActor().format("%H.%n(%p)");
+                Log.println(comp.name() + ": Compiling " + methodString);
             }
-            final CompilerStats stats = _statsOptions.start(compiler, _methodState.classMethodActor());
-            targetMethod = IrTargetMethod.asTargetMethod(compiler.compile(_methodState.classMethodActor(), compilationDirective));
-            _statsOptions.stop(stats);
-            if (_verboseOption.isPresent()) {
-                Log.print(compiler.name() + ": Compiled  " + methodString + " @ ");
+            final CompilerStats stats = statsOptions.start(comp, methodState.classMethodActor());
+            targetMethod = IrTargetMethod.asTargetMethod(comp.compile(methodState.classMethodActor(), directive));
+            statsOptions.stop(stats);
+            if (verboseOption.isPresent()) {
+                Log.print(comp.name() + ": Compiled  " + methodString + " @ ");
                 Log.print(targetMethod.codeStart());
                 Log.print(" {code length=" + targetMethod.codeLength() + "}");
                 Log.println();
             }
         } finally {
-            _done = true;
+            done = true;
 
-            synchronized (_methodState) {
+            synchronized (methodState) {
                 if (targetMethod != null) {
                     // compilation succeeded and produced a target method
-                    _methodState.setTargetMethod(targetMethod, compilationDirective);
+                    methodState.setTargetMethod(targetMethod, directive);
                 }
-                _methodState.setCurrentCompilation(null, compilationDirective);
-                _methodState.notifyAll();
+                methodState.setCurrentCompilation(null, directive);
+                methodState.notifyAll();
             }
 
-            _adaptiveCompilationScheme.observeAfterCompilation(this, compiler, targetMethod);
-            synchronized (_adaptiveCompilationScheme._completionLock) {
-                _adaptiveCompilationScheme._completed++;
+            adaptiveCompilationScheme.observeAfterCompilation(this, comp, targetMethod);
+            synchronized (adaptiveCompilationScheme.completionLock) {
+                adaptiveCompilationScheme.completed++;
             }
         }
     }
 
-    private static final CompilationStatsOption _statsOptions = register(new CompilationStatsOption(), MaxineVM.Phase.STARTING);
+    private static final CompilationStatsOption statsOptions = register(new CompilationStatsOption(), MaxineVM.Phase.STARTING);
 
     static class CompilationStatsOption extends TimerOption {
         static class CompilerStats {
             CompilerStats(DynamicCompilerScheme compiler) {
-                _compiler = compiler;
+                this.compiler = compiler;
             }
-            final DynamicCompilerScheme _compiler;
-            final AtomicLong _time = new AtomicLong();
-            final AtomicLong _bytes = new AtomicLong();
+            final DynamicCompilerScheme compiler;
+            final AtomicLong time = new AtomicLong();
+            final AtomicLong bytes = new AtomicLong();
         }
 
-        private CompilerStats[] _allCompilerStats;
+        private CompilerStats[] allCompilerStats;
 
         CompilationStatsOption() {
             super("Compilation", "Time compilation.", new MultiThreadTimer(Clock.SYSTEM_MILLISECONDS));
@@ -214,36 +214,36 @@ class Compilation implements Future<TargetMethod> {
             if (isPresent()) {
                 stats = makeStats(compiler);
                 final int bytes = classMethodActor.codeAttribute().code().length;
-                stats._bytes.addAndGet(bytes);
-                _timerMetric.start();
+                stats.bytes.addAndGet(bytes);
+                timerMetric.start();
             }
             return stats;
         }
 
         private CompilerStats makeStats(DynamicCompilerScheme compiler) {
-            if (_allCompilerStats == null) {
+            if (allCompilerStats == null) {
                 final CompilerStats stats = new CompilerStats(compiler);
-                _allCompilerStats = new CompilerStats[] {stats};
+                allCompilerStats = new CompilerStats[] {stats};
                 return stats;
             }
             CompilerStats stats = null;
-            for (CompilerStats s : _allCompilerStats) {
-                if (s._compiler == compiler) {
+            for (CompilerStats s : allCompilerStats) {
+                if (s.compiler == compiler) {
                     stats = s;
                 }
             }
             if (stats == null) {
                 stats = new CompilerStats(compiler);
-                _allCompilerStats = Arrays.copyOf(_allCompilerStats, _allCompilerStats.length + 1);
-                _allCompilerStats[_allCompilerStats.length - 1] = stats;
+                allCompilerStats = Arrays.copyOf(allCompilerStats, allCompilerStats.length + 1);
+                allCompilerStats[allCompilerStats.length - 1] = stats;
             }
             return stats;
         }
 
         void stop(CompilerStats stats) {
             if (isPresent()) {
-                _timerMetric.stop();
-                stats._time.addAndGet(_timerMetric.getLastElapsedTime());
+                timerMetric.stop();
+                stats.time.addAndGet(timerMetric.getLastElapsedTime());
             }
         }
 
@@ -265,13 +265,13 @@ class Compilation implements Future<TargetMethod> {
 
         @Override
         protected void beforeExit() {
-            if (_allCompilerStats != null) {
+            if (allCompilerStats != null) {
                 long bytesTotal = 0;
-                for (CompilerStats stats : _allCompilerStats) {
-                    printStats(stats._compiler.name(), stats._time.get(), stats._bytes.get());
-                    bytesTotal += stats._bytes.get();
+                for (CompilerStats stats : allCompilerStats) {
+                    printStats(stats.compiler.name(), stats.time.get(), stats.bytes.get());
+                    bytesTotal += stats.bytes.get();
                 }
-                printStats("All", _timerMetric.getElapsedTime(), bytesTotal);
+                printStats("All", timerMetric.getElapsedTime(), bytesTotal);
             }
         }
     }

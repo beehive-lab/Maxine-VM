@@ -26,11 +26,11 @@ package test.optimize;
  * @Runs: 0=true; 1=true; 2=false
  */
 public class Fold_InstanceOf01 {
-    static final Object _object = new Fold_InstanceOf01();
+    static final Object object = new Fold_InstanceOf01();
 
     public static boolean test(int arg) {
         if (arg == 0) {
-            return _object instanceof Fold_InstanceOf01;
+            return object instanceof Fold_InstanceOf01;
         }
         if (arg == 1) {
             Object obj = new Fold_InstanceOf01();

@@ -30,29 +30,29 @@ import com.sun.max.vm.compiler.ir.observer.*;
 
 public abstract class IrGenerator<CompilerScheme_Type extends DynamicCompilerScheme, IrMethod_Type extends IrMethod> {
 
-    private long _numberOfCompilations = 0L;
+    private long numberOfCompilations = 0L;
 
-    private final CompilerScheme_Type _compilerScheme;
-    private final String _irName;
+    private final CompilerScheme_Type compilerScheme;
+    private final String irName;
 
     @RESET
-    protected transient LinkedList<IrObserver> _irObservers;
+    protected transient LinkedList<IrObserver> irObservers;
 
     protected IrGenerator(CompilerScheme_Type compilerScheme, String irName) {
-        _compilerScheme = compilerScheme;
-        _irName = irName;
+        this.compilerScheme = compilerScheme;
+        this.irName = irName;
     }
 
     public final String irName() {
-        return _irName;
+        return irName;
     }
 
     public CompilerScheme_Type compilerScheme() {
-        return _compilerScheme;
+        return compilerScheme;
     }
 
     public boolean isCrossCompiling() {
-        return !_compilerScheme.vmConfiguration().equals(VMConfiguration.host());
+        return !compilerScheme.vmConfiguration().equals(VMConfiguration.host());
     }
 
     /**
@@ -93,9 +93,9 @@ public abstract class IrGenerator<CompilerScheme_Type extends DynamicCompilerSch
     }
 
     public final void notifyAllocation(IrMethod irMethod) {
-        if (_irObservers != null) {
+        if (irObservers != null) {
             synchronized (this) {
-                for (IrObserver observer : _irObservers) {
+                for (IrObserver observer : irObservers) {
                     observer.observeAllocation(irMethod);
                 }
             }
@@ -103,9 +103,9 @@ public abstract class IrGenerator<CompilerScheme_Type extends DynamicCompilerSch
     }
 
     public final void notifyBeforeGeneration(IrMethod irMethod) {
-        if (_irObservers != null) {
+        if (irObservers != null) {
             synchronized (this) {
-                for (IrObserver observer : _irObservers) {
+                for (IrObserver observer : irObservers) {
                     observer.observeBeforeGeneration(irMethod, this);
                 }
             }
@@ -113,20 +113,20 @@ public abstract class IrGenerator<CompilerScheme_Type extends DynamicCompilerSch
     }
 
     public final void notifyAfterGeneration(IrMethod irMethod) {
-        if (_irObservers != null) {
+        if (irObservers != null) {
             synchronized (this) {
-                for (IrObserver observer : _irObservers) {
+                for (IrObserver observer : irObservers) {
                     observer.observeAfterGeneration(irMethod, this);
                 }
             }
         }
-        _numberOfCompilations++;
+        numberOfCompilations++;
     }
 
     public final void notifyBeforeTransformation(IrMethod irMethod, Object context, Object transform) {
-        if (_irObservers != null) {
+        if (irObservers != null) {
             synchronized (this) {
-                for (IrObserver observer : _irObservers) {
+                for (IrObserver observer : irObservers) {
                     observer.observeBeforeTransformation(irMethod, context, transform);
                 }
             }
@@ -134,9 +134,9 @@ public abstract class IrGenerator<CompilerScheme_Type extends DynamicCompilerSch
     }
 
     public final void notifyAfterTransformation(IrMethod irMethod, Object context, Object transform) {
-        if (_irObservers != null) {
+        if (irObservers != null) {
             synchronized (this) {
-                for (IrObserver observer : _irObservers) {
+                for (IrObserver observer : irObservers) {
                     observer.observeAfterTransformation(irMethod, context, transform);
                 }
             }
@@ -144,9 +144,9 @@ public abstract class IrGenerator<CompilerScheme_Type extends DynamicCompilerSch
     }
 
     public final void notifyAfterFinish() {
-        if (_irObservers != null) {
+        if (irObservers != null) {
             synchronized (this) {
-                for (IrObserver observer : _irObservers) {
+                for (IrObserver observer : irObservers) {
                     observer.finish();
                 }
             }
@@ -161,10 +161,10 @@ public abstract class IrGenerator<CompilerScheme_Type extends DynamicCompilerSch
      * @param observer the new observer to add to this generator
      */
     public synchronized void addIrObserver(IrObserver observer) {
-        if (_irObservers == null) {
-            _irObservers = new LinkedList<IrObserver>();
+        if (irObservers == null) {
+            irObservers = new LinkedList<IrObserver>();
         }
-        _irObservers.add(observer);
+        irObservers.add(observer);
     }
 
     /**
@@ -174,10 +174,10 @@ public abstract class IrGenerator<CompilerScheme_Type extends DynamicCompilerSch
      * @param observer the observer to remove from this IR generator
      */
     public synchronized void removeIrObserver(IrObserver observer) {
-        if (_irObservers != null) {
-            _irObservers.remove(observer);
-            if (_irObservers.size() == 0) {
-                _irObservers = null; // remove the list if it becomes empty
+        if (irObservers != null) {
+            irObservers.remove(observer);
+            if (irObservers.size() == 0) {
+                irObservers = null; // remove the list if it becomes empty
             }
         }
     }
@@ -201,11 +201,11 @@ public abstract class IrGenerator<CompilerScheme_Type extends DynamicCompilerSch
     }
 
     public long numberOfCompilations() {
-        return _numberOfCompilations;
+        return numberOfCompilations;
     }
 
     @Override
     public String toString() {
-        return _irName + "Generator";
+        return irName + "Generator";
     }
 }

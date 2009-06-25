@@ -47,53 +47,53 @@ import com.sun.max.vm.actor.member.*;
  */
 public abstract class ObjectInspector extends Inspector {
 
-    private final ObjectInspectorFactory _factory;
+    private final ObjectInspectorFactory factory;
 
-    private final TeleObject _teleObject;
+    private final TeleObject teleObject;
 
     /**
      * @return local surrogate for the object being inspected in the VM
      */
     TeleObject teleObject() {
-        return _teleObject;
+        return teleObject;
     }
 
     /** The origin is an actual location in memory of the VM;
      * keep a copy for comparison, since it might change via GC.
      */
-    private Pointer _currentObjectOrigin;
+    private Pointer currentObjectOrigin;
 
     /**
      * @return The actual location in VM memory where
      * the object resides at present; this may change via GC.
      */
     Pointer currentOrigin() {
-        return _currentObjectOrigin;
+        return currentObjectOrigin;
     }
 
-    private boolean _showHeader;
-    private boolean _showAddresses;
-    private boolean _showOffsets;
-    private boolean _showFieldTypes;
-    private boolean _showMemoryRegions;
-    private boolean _hideNullArrayElements;
+    private boolean showHeader;
+    private boolean showAddresses;
+    private boolean showOffsets;
+    private boolean showFieldTypes;
+    private boolean showMemoryRegions;
+    private boolean hideNullArrayElements;
 
-    private InspectorTable _objectHeaderTable;
+    private InspectorTable objectHeaderTable;
 
     protected ObjectInspector(final Inspection inspection, ObjectInspectorFactory factory, final TeleObject teleObject) {
         super(inspection);
-        _factory = factory;
+        this.factory = factory;
         final ObjectInspectorPreferences preferences = ObjectInspectorPreferences.globalPreferences(inspection);
-        _teleObject = teleObject;
-        _currentObjectOrigin = teleObject().getCurrentOrigin();
+        this.teleObject = teleObject;
+        this.currentObjectOrigin = teleObject().getCurrentOrigin();
         Trace.line(1, tracePrefix() + " creating for " + getTextForTitle());
 
-        _showHeader = preferences.showHeader();
-        _showAddresses = preferences.showAddresses();
-        _showOffsets = preferences.showOffsets();
-        _showFieldTypes = preferences.showFieldTypes();
-        _showMemoryRegions = preferences.showMemoryRegions();
-        _hideNullArrayElements = preferences.hideNullArrayElements();
+        showHeader = preferences.showHeader();
+        showAddresses = preferences.showAddresses();
+        showOffsets = preferences.showOffsets();
+        showFieldTypes = preferences.showFieldTypes();
+        showMemoryRegions = preferences.showMemoryRegions();
+        hideNullArrayElements = preferences.hideNullArrayElements();
     }
 
     @Override
@@ -104,35 +104,35 @@ public abstract class ObjectInspector extends Inspector {
         frame().menu().add(new InspectorAction(inspection(), "Inspect Memory") {
             @Override
             protected void procedure() {
-                MemoryInspector.create(inspection(), _teleObject).highlight();
+                MemoryInspector.create(inspection(), teleObject).highlight();
             }
         });
         frame().menu().add(new InspectorAction(inspection(), "Inspect Memory Words") {
             @Override
             protected void procedure() {
-                MemoryWordInspector.create(inspection(), _teleObject).highlight();
+                MemoryWordInspector.create(inspection(), teleObject).highlight();
             }
         });
         frame().menu().addSeparator();
-        frame().menu().add(actions().closeViews(_otherObjectInspectorsPredicate, "Close other object inspectors"));
-        frame().menu().add(actions().closeViews(_allObjectInspectorsPredicate, "Close all object inspectors"));
+        frame().menu().add(actions().closeViews(otherObjectInspectorsPredicate, "Close other object inspectors"));
+        frame().menu().add(actions().closeViews(allObjectInspectorsPredicate, "Close all object inspectors"));
     }
 
     @Override
     protected void createView() {
         final JPanel panel = new InspectorPanel(inspection(), new BorderLayout());
-        if (_showHeader) {
-            _objectHeaderTable = new ObjectHeaderTable(this);
-            _objectHeaderTable.setBorder(style().defaultPaneBottomBorder());
+        if (showHeader) {
+            objectHeaderTable = new ObjectHeaderTable(this);
+            objectHeaderTable.setBorder(style().defaultPaneBottomBorder());
             // Will add without column headers
-            panel.add(_objectHeaderTable, BorderLayout.NORTH);
+            panel.add(objectHeaderTable, BorderLayout.NORTH);
         }
         frame().setContentPane(panel);
     }
 
     @Override
     public final String getTextForTitle() {
-        return _teleObject.getCurrentOrigin().toHexString() + inspection().nameDisplay().referenceLabelText(_teleObject);
+        return teleObject.getCurrentOrigin().toHexString() + inspection().nameDisplay().referenceLabelText(teleObject);
     }
 
     @Override
@@ -158,15 +158,15 @@ public abstract class ObjectInspector extends Inspector {
 
     @Override
     public void inspectorGetsWindowFocus() {
-        if (_teleObject != inspection().focus().heapObject()) {
-            inspection().focus().setHeapObject(_teleObject);
+        if (teleObject != inspection().focus().heapObject()) {
+            inspection().focus().setHeapObject(teleObject);
         }
         super.inspectorGetsWindowFocus();
     }
 
     @Override
     public void inspectorLosesWindowFocus() {
-        if (_teleObject == inspection().focus().heapObject()) {
+        if (teleObject == inspection().focus().heapObject()) {
             inspection().focus().setHeapObject(null);
         }
         super.inspectorLosesWindowFocus();
@@ -176,10 +176,10 @@ public abstract class ObjectInspector extends Inspector {
     public void inspectorClosing() {
         // don't try to recompute the title, just get the one that's been in use
         Trace.line(1, tracePrefix() + " closing for " + getCurrentTitle());
-        if (_teleObject == inspection().focus().heapObject()) {
+        if (teleObject == inspection().focus().heapObject()) {
             inspection().focus().setHeapObject(null);
         }
-        _factory.objectInspectorClosing(this);
+        factory.objectInspectorClosing(this);
         super.inspectorClosing();
     }
 
@@ -197,32 +197,32 @@ public abstract class ObjectInspector extends Inspector {
      * @return whether to display the "Address" column for headers, tuples, and arrays
      */
     boolean showAddresses() {
-        return _showAddresses;
+        return showAddresses;
     }
 
     /**
      * @return whether to display the "Offset" column for headers, tuples and arrays
      */
     boolean showOffsets() {
-        return _showOffsets;
+        return showOffsets;
     }
 
     /**
      * @return whether to display the "Type" column for headers and tuples
      */
     boolean showFieldTypes() {
-        return _showFieldTypes;
+        return showFieldTypes;
     }
 
     boolean hideNullArrayElements() {
-        return _hideNullArrayElements;
+        return hideNullArrayElements;
     }
 
     /**
      * @return whether to display the "Region" column for headers and tuples
      */
     boolean showMemoryRegions() {
-        return _showMemoryRegions;
+        return showMemoryRegions;
     }
 
     /**
@@ -262,13 +262,13 @@ public abstract class ObjectInspector extends Inspector {
         return result;
     }
 
-    private static final Predicate<Inspector> _allObjectInspectorsPredicate = new Predicate<Inspector>() {
+    private static final Predicate<Inspector> allObjectInspectorsPredicate = new Predicate<Inspector>() {
         public boolean evaluate(Inspector inspector) {
             return inspector instanceof ObjectInspector;
         }
     };
 
-    private final Predicate<Inspector> _otherObjectInspectorsPredicate = new Predicate<Inspector>() {
+    private final Predicate<Inspector> otherObjectInspectorsPredicate = new Predicate<Inspector>() {
         public boolean evaluate(Inspector inspector) {
             return inspector instanceof ObjectInspector && inspector != ObjectInspector.this;
         }
@@ -276,14 +276,14 @@ public abstract class ObjectInspector extends Inspector {
 
     @Override
     protected void refreshView(boolean force) {
-        final Pointer newOrigin = _teleObject.getCurrentOrigin();
-        if (!newOrigin.equals(_currentObjectOrigin)) {
+        final Pointer newOrigin = teleObject.getCurrentOrigin();
+        if (!newOrigin.equals(currentObjectOrigin)) {
             // The object has been relocated in memory
-            _currentObjectOrigin = newOrigin;
+            currentObjectOrigin = newOrigin;
             reconstructView();
         } else {
-            if (_objectHeaderTable != null) {
-                _objectHeaderTable.refresh(force);
+            if (objectHeaderTable != null) {
+                objectHeaderTable.refresh(force);
             }
         }
         super.refreshView(force);
@@ -305,7 +305,7 @@ public abstract class ObjectInspector extends Inspector {
                 return aOffset.compareTo(b.offset());
             }
         });
-        collectFieldActors(teleObject().classActorForType(), _teleObject instanceof TeleStaticTuple, fieldActors);
+        collectFieldActors(teleObject().classActorForType(), teleObject instanceof TeleStaticTuple, fieldActors);
         return fieldActors;
     }
 
@@ -315,7 +315,7 @@ public abstract class ObjectInspector extends Inspector {
             for (FieldActor fieldActor : localFieldActors) {
                 fieldActors.add(fieldActor);
             }
-            collectFieldActors(classActor.superClassActor(), isStatic, fieldActors);
+            collectFieldActors(classActor.superClassActor, isStatic, fieldActors);
         }
     }
 
@@ -327,48 +327,48 @@ public abstract class ObjectInspector extends Inspector {
         public ViewOptionsPanel(Inspection inspection) {
             super(inspection, new BorderLayout());
 
-            final InspectorCheckBox showHeaderCheckBox = new InspectorCheckBox(inspection(), "Header", "Display Object Header", _showHeader);
+            final InspectorCheckBox showHeaderCheckBox = new InspectorCheckBox(inspection(), "Header", "Display Object Header", showHeader);
             showHeaderCheckBox.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent actionEvent) {
-                    _showHeader = showHeaderCheckBox.isSelected();
+                    showHeader = showHeaderCheckBox.isSelected();
                     if (!showHeaderCheckBox.isSelected()) {
-                        _objectHeaderTable = null;
+                        objectHeaderTable = null;
                     }
                     reconstructView();
                 }
             });
-            final InspectorCheckBox showAddressesCheckBox = new InspectorCheckBox(inspection(), "Addresses", "Display addresses", _showAddresses);
+            final InspectorCheckBox showAddressesCheckBox = new InspectorCheckBox(inspection(), "Addresses", "Display addresses", showAddresses);
             showAddressesCheckBox.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent actionEvent) {
-                    _showAddresses = showAddressesCheckBox.isSelected();
+                    showAddresses = showAddressesCheckBox.isSelected();
                     reconstructView();
                 }
             });
-            final InspectorCheckBox showOffsetsCheckBox = new InspectorCheckBox(inspection(), "Offsets", "Display offsets", _showOffsets);
+            final InspectorCheckBox showOffsetsCheckBox = new InspectorCheckBox(inspection(), "Offsets", "Display offsets", showOffsets);
             showOffsetsCheckBox.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent actionEvent) {
-                    _showOffsets = showOffsetsCheckBox.isSelected();
+                    showOffsets = showOffsetsCheckBox.isSelected();
                     reconstructView();
                 }
             });
-            final InspectorCheckBox showTypesCheckBox = new InspectorCheckBox(inspection(), "Type", "Display tuple types", _showFieldTypes);
+            final InspectorCheckBox showTypesCheckBox = new InspectorCheckBox(inspection(), "Type", "Display tuple types", showFieldTypes);
             showTypesCheckBox.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent actionEvent) {
-                    _showFieldTypes = showTypesCheckBox.isSelected();
+                    showFieldTypes = showTypesCheckBox.isSelected();
                     reconstructView();
                 }
             });
-            final InspectorCheckBox showMemoryRegionsCheckBox = new InspectorCheckBox(inspection(), "Region", "Display memory regions", _showMemoryRegions);
+            final InspectorCheckBox showMemoryRegionsCheckBox = new InspectorCheckBox(inspection(), "Region", "Display memory regions", showMemoryRegions);
             showMemoryRegionsCheckBox.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent actionEvent) {
-                    _showMemoryRegions = showMemoryRegionsCheckBox.isSelected();
+                    showMemoryRegions = showMemoryRegionsCheckBox.isSelected();
                     reconstructView();
                 }
             });
-            final InspectorCheckBox hideNullArrayElementsCheckBox = new InspectorCheckBox(inspection(), "Hide null array elements", "Hide null array elements", _hideNullArrayElements);
+            final InspectorCheckBox hideNullArrayElementsCheckBox = new InspectorCheckBox(inspection(), "Hide null array elements", "Hide null array elements", hideNullArrayElements);
             hideNullArrayElementsCheckBox.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent actionEvent) {
-                    _hideNullArrayElements = hideNullArrayElementsCheckBox.isSelected();
+                    hideNullArrayElements = hideNullArrayElementsCheckBox.isSelected();
                     reconstructView();
                 }
             });

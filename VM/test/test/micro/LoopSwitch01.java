@@ -25,7 +25,7 @@ package test.micro;
  * @Runs: 0 = "ok0"; 10 = "ok0"; 25 = "ok0";
  */
 public class LoopSwitch01 {
-    static int _count = 0;
+    static int count = 0;
     public static String test(int arg) {
         String line;
         while ((line = string()) != null) {
@@ -41,13 +41,13 @@ public class LoopSwitch01 {
                     break;
             }
         }
-        return "ok" + _count;
+        return "ok" + count;
     }
     private static String string() {
-        if (_count == 0) {
+        if (count == 0) {
             return null;
         }
-        _count--;
-        return "" + ('a' + _count);
+        count--;
+        return "" + ('a' + count);
     }
 }

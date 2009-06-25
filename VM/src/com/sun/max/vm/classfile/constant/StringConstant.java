@@ -26,7 +26,7 @@ import com.sun.max.vm.value.*;
 
 /**
  * #4.4.3.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
@@ -38,36 +38,32 @@ public final class StringConstant extends AbstractPoolConstant<StringConstant> i
     }
 
     @INSPECTED
-    private final String _value;
+    public final String value;
 
     StringConstant(String value) {
-        _value = value;
-    }
-
-    public String value() {
-        return _value;
+        this.value = value;
     }
 
     public String valueString(ConstantPool pool) {
-        return '"' + _value + '"';
+        return '"' + value + '"';
     }
 
     @Override
     public boolean equals(Object other) {
         if (other instanceof StringConstant) {
             final StringConstant key = (StringConstant) other;
-            return _value.equals(key._value);
+            return value.equals(key.value);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return _value.hashCode();
+        return value.hashCode();
     }
 
     public Value value(ConstantPool pool, int index) {
-        return ReferenceValue.from(_value);
+        return ReferenceValue.from(value);
     }
 
     @Override

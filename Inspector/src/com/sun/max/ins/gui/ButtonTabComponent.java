@@ -42,16 +42,16 @@ import com.sun.max.ins.*;
  * @author Michael Van De Vanter
  */
 public class ButtonTabComponent extends InspectorPanel {
-    private final TabbedInspector _tabbedInspector;
-    private final Inspector _inspector;
-    private final JTabbedPane _tabbedPane;
+    private final TabbedInspector tabbedInspector;
+    private final Inspector inspector;
+    private final JTabbedPane tabbedPane;
 
-    public ButtonTabComponent(Inspection inspection, final TabbedInspector tabbedInspector, Inspector inspector, JTabbedPane tabbedPane) {
+    public ButtonTabComponent(Inspection inspection, final TabbedInspector tabbedInspector, Inspector inspector, JTabbedPane tabPane) {
         //unset default FlowLayout' gaps
         super(inspection, new FlowLayout(FlowLayout.LEFT, 0, 0));
-        _tabbedInspector = tabbedInspector;
-        _inspector = inspector;
-        _tabbedPane = tabbedPane;
+        this.tabbedInspector = tabbedInspector;
+        this.inspector = inspector;
+        this.tabbedPane = tabPane;
         setOpaque(false);
 
         //make JLabel read titles from JTabbedPane
@@ -59,9 +59,9 @@ public class ButtonTabComponent extends InspectorPanel {
 
             @Override
             public String getText() {
-                final int i = _tabbedPane.indexOfTabComponent(ButtonTabComponent.this);
+                final int i = tabbedPane.indexOfTabComponent(ButtonTabComponent.this);
                 if (i != -1) {
-                    return _tabbedPane.getTitleAt(i);
+                    return tabbedPane.getTitleAt(i);
                 }
                 return null;
             }
@@ -109,7 +109,7 @@ public class ButtonTabComponent extends InspectorPanel {
         }
 
         public void actionPerformed(ActionEvent e) {
-            _tabbedInspector.close(_inspector);
+            tabbedInspector.close(inspector);
         }
 
         //we don't want to update UI for this button

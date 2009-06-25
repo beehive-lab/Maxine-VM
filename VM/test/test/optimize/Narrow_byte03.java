@@ -26,10 +26,10 @@ package test.optimize;
  */
 public class Narrow_byte03 {
 
-    static byte[] _val = new byte[4];
+    static byte[] val = new byte[4];
 
     public static byte test(byte b) {
-        _val[0] = b;
-        return _val[0];
+        val[0] = b;
+        return val[0];
     }
 }

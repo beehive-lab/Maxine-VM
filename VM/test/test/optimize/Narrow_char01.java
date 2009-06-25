@@ -25,9 +25,9 @@ package test.optimize;
  * @Runs: 0c=0c; 1c=1c; 255c=255c; 65000c=65000c
  */
 public class Narrow_char01 {
-    public static char _val;
+    public static char val;
     public static char test(char b) {
-        _val = b;
-        return _val;
+        val = b;
+        return val;
     }
 }

@@ -47,36 +47,36 @@ import com.sun.max.vm.value.*;
  */
 public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
 
-    private final EirRegister[] _calleeSavedEirRegisters;
+    private final EirRegister[] calleeSavedEirRegisters;
 
     public final EirRegister[] calleeSavedEirRegisters() {
-        return _calleeSavedEirRegisters;
+        return calleeSavedEirRegisters;
     }
 
-    private final EirVariable[] _calleeSavedEirVariables;
+    private final EirVariable[] calleeSavedEirVariables;
 
     public final EirVariable[] calleeSavedEirVariables() {
-        return _calleeSavedEirVariables;
+        return calleeSavedEirVariables;
     }
 
-    private final EirVariable[] _calleeRepositoryEirVariables;
+    private final EirVariable[] calleeRepositoryEirVariables;
 
-    private final BitSet _isCalleeSavedParameter = new BitSet();
+    private final BitSet isCalleeSavedParameter = new BitSet();
 
     public final BitSet isCalleeSavedParameter() {
-        return _isCalleeSavedParameter;
+        return isCalleeSavedParameter;
     }
 
-    private final EirLocation[] _parameterEirLocations;
+    private final EirLocation[] parameterEirLocations;
 
     public final EirLocation[] parameterEirLocations() {
-        return _parameterEirLocations;
+        return parameterEirLocations;
     }
 
-    private final EirVariable[] _eirParameters;
+    private final EirVariable[] eirParameters;
 
     public final EirVariable[] eirParameters() {
-        return _eirParameters;
+        return eirParameters;
     }
 
     protected abstract EirPrologue createPrologue(EirBlock block);
@@ -94,14 +94,14 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
 
     @Override
     public EirEpilogue createEpilogueAndReturn(EirBlock eirBlock) {
-        for (int i = 0; i < _calleeSavedEirRegisters.length; i++) {
-            eirBlock.appendInstruction(createAssignment(eirBlock, _calleeSavedEirRegisters[i].kind(), _calleeSavedEirVariables[i], _calleeRepositoryEirVariables[i]));
+        for (int i = 0; i < calleeSavedEirRegisters.length; i++) {
+            eirBlock.appendInstruction(createAssignment(eirBlock, calleeSavedEirRegisters[i].kind(), calleeSavedEirVariables[i], calleeRepositoryEirVariables[i]));
         }
         final EirEpilogue eirEpilogue = createEpilogue(eirBlock);
         eirBlock.appendInstruction(eirEpilogue);
         if (!isTemplate()) {
-            if (_eirMethod.isTrampoline()) {
-                final boolean isStaticTrampoline = ((TrampolineMethodActor) _eirMethod.classMethodActor()).invocation() == TRAMPOLINE.Invocation.STATIC;
+            if (eirMethod.isTrampoline()) {
+                final boolean isStaticTrampoline = ((TrampolineMethodActor) eirMethod.classMethodActor()).invocation() == TRAMPOLINE.Invocation.STATIC;
                 eirBlock.appendInstruction(createTrampolineExit(eirBlock, isStaticTrampoline));
             } else if (eirMethod().classMethodActor().isTrapStub()) {
                 eirBlock.appendInstruction(createTrapStubExit(eirBlock));
@@ -112,20 +112,20 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
         return eirEpilogue;
     }
 
-    private final boolean _requiresEpilogue;
+    private final boolean requiresEpilogue;
 
     public boolean requiresEpilogue() {
-        return _requiresEpilogue;
+        return requiresEpilogue;
     }
 
     protected DirToEirMethodTranslation(EirGenerator eirGenerator, EirMethod eirMethod, DirMethod dirMethod) {
         super(eirGenerator, eirMethod.abi(), eirMethod.isTemplate());
-        _requiresEpilogue = eirMethod.isTemplate() || eirMethod.isNative();
-        _eirMethod = eirMethod;
-        _dirMethod = dirMethod;
+        this.requiresEpilogue = eirMethod.isTemplate() || eirMethod.isNative();
+        this.eirMethod = eirMethod;
+        this.dirMethod = dirMethod;
 
         // Location where translated method returns its result.
-        _resultEirLocation = abi().getReturnLocation(eirMethod.classMethodActor().resultKind());
+        resultEirLocation = abi().getReturnLocation(eirMethod.classMethodActor().resultKind());
 
         final EirRegister safepointLatchRegister = abi().safepointLatchRegister();
         final EirVariable safepointLatchVariable = makeRegisterVariable(safepointLatchRegister);
@@ -135,51 +135,51 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
 
 
         final Kind[] parameterKinds = IrValue.Static.toKinds(dirMethod.parameters());
-        _parameterEirLocations = abi().getParameterLocations(dirMethod.classMethodActor(), EirStackSlot.Purpose.PARAMETER, parameterKinds);
+        parameterEirLocations = abi().getParameterLocations(dirMethod.classMethodActor(), EirStackSlot.Purpose.PARAMETER, parameterKinds);
 
-        _eirParameters = new EirVariable[_parameterEirLocations.length];
-        for (int i = 0; i < _parameterEirLocations.length; i++) {
-            _eirParameters[i] = dirToEirVariable(dirMethod.parameters()[i]);
-            if (_parameterEirLocations[i] instanceof EirRegister) {
-                final EirRegister eirRegister = (EirRegister) _parameterEirLocations[i];
-                sharedEirVariables[eirRegister.serial()] = _eirParameters[i];
+        eirParameters = new EirVariable[parameterEirLocations.length];
+        for (int i = 0; i < parameterEirLocations.length; i++) {
+            eirParameters[i] = dirToEirVariable(dirMethod.parameters()[i]);
+            if (parameterEirLocations[i] instanceof EirRegister) {
+                final EirRegister eirRegister = (EirRegister) parameterEirLocations[i];
+                sharedEirVariables[eirRegister.serial()] = eirParameters[i];
             }
         }
 
         if (eirMethod.isTrampoline()) {
             // Make all potential parameters of the trampoline's compilees callee-saved by the trampoline:
-            _calleeSavedEirRegisters = new EirRegister[abi().integerParameterRegisters().length() + abi().floatingPointParameterRegisters().length()];
+            calleeSavedEirRegisters = new EirRegister[abi().integerParameterRegisters().length() + abi().floatingPointParameterRegisters().length()];
             int i = 0;
             for (Object register : abi().integerParameterRegisters()) {
-                _calleeSavedEirRegisters[i++] = (EirRegister) register;
+                calleeSavedEirRegisters[i++] = (EirRegister) register;
             }
             for (Object register : abi().floatingPointParameterRegisters()) {
-                _calleeSavedEirRegisters[i++] = (EirRegister) register;
+                calleeSavedEirRegisters[i++] = (EirRegister) register;
             }
         } else {
             final PoolSet<EirRegister> calleeSavedRegisters = StaticLoophole.cast(abi().calleeSavedRegisters());
-            _calleeSavedEirRegisters = com.sun.max.lang.Arrays.from(EirRegister.class, calleeSavedRegisters);
+            calleeSavedEirRegisters = com.sun.max.lang.Arrays.from(EirRegister.class, calleeSavedRegisters);
         }
 
-        _calleeSavedEirVariables = new EirVariable[_calleeSavedEirRegisters.length];
-        _calleeRepositoryEirVariables = new EirVariable[_calleeSavedEirRegisters.length];
-        for (int i = 0; i < _calleeSavedEirRegisters.length; i++) {
-            final EirVariable sharedEirVariable = sharedEirVariables[_calleeSavedEirRegisters[i].serial()];
+        calleeSavedEirVariables = new EirVariable[calleeSavedEirRegisters.length];
+        calleeRepositoryEirVariables = new EirVariable[calleeSavedEirRegisters.length];
+        for (int i = 0; i < calleeSavedEirRegisters.length; i++) {
+            final EirVariable sharedEirVariable = sharedEirVariables[calleeSavedEirRegisters[i].serial()];
             if (sharedEirVariable != null) {
-                _calleeSavedEirVariables[i] = sharedEirVariable;
-                _isCalleeSavedParameter.set(i);
+                calleeSavedEirVariables[i] = sharedEirVariable;
+                isCalleeSavedParameter.set(i);
             } else {
-                _calleeSavedEirVariables[i] = createEirVariable(_calleeSavedEirRegisters[i].kind());
+                calleeSavedEirVariables[i] = createEirVariable(calleeSavedEirRegisters[i].kind());
             }
-            _calleeRepositoryEirVariables[i] = createEirVariable(_calleeSavedEirRegisters[i].kind());
-            _calleeRepositoryEirVariables[i].fixLocation(allocateSpillStackSlot());
+            calleeRepositoryEirVariables[i] = createEirVariable(calleeSavedEirRegisters[i].kind());
+            calleeRepositoryEirVariables[i].fixLocation(allocateSpillStackSlot());
         }
 
         final EirBlock prologueBlock = createEirBlock(IrBlock.Role.NORMAL);
         final EirPrologue prologue = createPrologue(prologueBlock);
         prologueBlock.appendInstruction(prologue);
-        for (int i = 0; i < _calleeSavedEirRegisters.length; i++) {
-            prologueBlock.appendInstruction(createAssignment(prologueBlock, _calleeSavedEirRegisters[i].kind(), _calleeRepositoryEirVariables[i], _calleeSavedEirVariables[i]));
+        for (int i = 0; i < calleeSavedEirRegisters.length; i++) {
+            prologueBlock.appendInstruction(createAssignment(prologueBlock, calleeSavedEirRegisters[i].kind(), calleeRepositoryEirVariables[i], calleeSavedEirVariables[i]));
         }
 
         final Class<PoolSet<EirRegister>> type = null;
@@ -192,68 +192,68 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
 
         createBodyEirBlocks();
 
-        addJump(prologueBlock, _dirToEirBlock.get(dirMethod.blocks().first()));
+        addJump(prologueBlock, dirToEirBlock.get(dirMethod.blocks().first()));
     }
 
-    private final EirMethod _eirMethod;
+    private final EirMethod eirMethod;
 
     @Override
     public EirMethod eirMethod() {
-        return _eirMethod;
+        return eirMethod;
     }
 
     @Override
     public ClassMethodActor classMethodActor() {
-        return _eirMethod.classMethodActor();
+        return eirMethod.classMethodActor();
     }
 
-    private final DirMethod _dirMethod;
+    private final DirMethod dirMethod;
 
-    private final EirLocation _resultEirLocation;
+    private final EirLocation resultEirLocation;
 
     public EirLocation resultEirLocation() {
-        return _resultEirLocation;
+        return resultEirLocation;
     }
 
-    protected final Map<DirBlock, EirBlock> _dirToEirBlock = new IdentityHashMap<DirBlock, EirBlock>();
+    protected final Map<DirBlock, EirBlock> dirToEirBlock = new IdentityHashMap<DirBlock, EirBlock>();
 
     public EirBlock dirToEirBlock(DirBlock dirBlock) {
-        return _dirToEirBlock.get(dirBlock);
+        return dirToEirBlock.get(dirBlock);
     }
 
     protected void createBodyEirBlocks() {
-        for (DirBlock dirBlock : _dirMethod.blocks()) {
+        for (DirBlock dirBlock : dirMethod.blocks()) {
             final EirBlock eirBlock = createEirBlock(dirBlock.role());
-            _dirToEirBlock.put(dirBlock, eirBlock);
+            dirToEirBlock.put(dirBlock, eirBlock);
         }
     }
 
-    private final Map<DirVariable, EirVariable> _dirToEirVariable = new IdentityHashMap<DirVariable, EirVariable>();
+    private final Map<DirVariable, EirVariable> dirToEirVariable = new IdentityHashMap<DirVariable, EirVariable>();
 
     private EirVariable dirToEirVariable(DirVariable dirVariable) {
-        EirVariable eirVariable = _dirToEirVariable.get(dirVariable);
+        EirVariable eirVariable = dirToEirVariable.get(dirVariable);
         if (eirVariable == null) {
             eirVariable = createEirVariable(dirVariable.kind());
-            _dirToEirVariable.put(dirVariable, eirVariable);
+            dirToEirVariable.put(dirVariable, eirVariable);
         }
         return eirVariable;
     }
 
-    private final Map<Value, EirConstant> _valueToEirConstant = new HashMap<Value, EirConstant>();
+    private final Map<Value, EirConstant> valueToEirConstant = new HashMap<Value, EirConstant>();
 
     public EirConstant dirToEirConstant(DirConstant dirConstant) {
         Value value = dirConstant.value();
         value = value.kind().toStackKind().convert(value); // we make no EIR constants smaller than INT
 
-        EirConstant eirConstant = _valueToEirConstant.get(value);
+        EirConstant eirConstant = valueToEirConstant.get(value);
         if (eirConstant == null) {
             eirConstant = createEirConstant(value);
-            _valueToEirConstant.put(value, eirConstant);
+            valueToEirConstant.put(value, eirConstant);
         }
         return eirConstant;
     }
 
-    private final Map<ClassMethodActor, EirMethodValue> _classMethodActorToEirMethodConstant = new IdentityHashMap<ClassMethodActor, EirMethodValue>();
+    private final Map<ClassMethodActor, EirMethodValue> classMethodActorToEirMethodConstant = new IdentityHashMap<ClassMethodActor, EirMethodValue>();
 
     public EirValue dirToEirValue(DirValue dirValue) {
         if (dirValue == null) {
@@ -274,10 +274,10 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
     }
 
     public EirMethodValue makeEirMethodValue(ClassMethodActor classMethodActor) {
-        EirMethodValue eirMethodValue = _classMethodActorToEirMethodConstant.get(classMethodActor);
+        EirMethodValue eirMethodValue = classMethodActorToEirMethodConstant.get(classMethodActor);
         if (eirMethodValue == null) {
             eirMethodValue = createEirMethodValue(classMethodActor);
-            _classMethodActorToEirMethodConstant.put(classMethodActor, eirMethodValue);
+            classMethodActorToEirMethodConstant.put(classMethodActor, eirMethodValue);
         }
         return eirMethodValue;
     }
@@ -299,8 +299,8 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
                                           dirToEirJavaFrameDescriptor(dirJavaFrameDescriptor.parent(), instruction),
                                           dirJavaFrameDescriptor.classMethodActor(),
                                           dirJavaFrameDescriptor.bytecodePosition(),
-                                          dirToEirValues(dirJavaFrameDescriptor.locals()),
-                                          dirToEirValues(dirJavaFrameDescriptor.stackSlots()));
+                                          dirToEirValues(dirJavaFrameDescriptor.locals),
+                                          dirToEirValues(dirJavaFrameDescriptor.stackSlots));
     }
 
     protected abstract DirToEirInstructionTranslation createInstructionTranslation(EirBlock eirBlock);
@@ -318,13 +318,13 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
     }
 
     private void translateDirBlocks() {
-        for (DirBlock dirBlock : _dirMethod.blocks()) {
+        for (DirBlock dirBlock : dirMethod.blocks()) {
             final EirBlock eirBlock = dirToEirBlock(dirBlock);
             translateBlock(dirBlock, eirBlock);
         }
     }
 
-    private static final Timer _registerAllocationTimer = GlobalMetrics.newTimer("RegisterAllocation", Clock.SYSTEM_MILLISECONDS);
+    private static final Timer registerAllocationTimer = GlobalMetrics.newTimer("RegisterAllocation", Clock.SYSTEM_MILLISECONDS);
 
     public void translateMethod() {
         // do the translation
@@ -333,9 +333,9 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
         notifyAfterTransformation(eirBlocks(), Transformation.INITIAL_EIR_CREATION);
 
         // perform register allocation
-        _registerAllocationTimer.start();
+        registerAllocationTimer.start();
         EirAllocatorFactory.createAllocator(this).run();
-        _registerAllocationTimer.stop();
+        registerAllocationTimer.stop();
 
         notifyBeforeTransformation(eirBlocks(), Transformation.BLOCK_LAYOUT);
         rearrangeBlocks();

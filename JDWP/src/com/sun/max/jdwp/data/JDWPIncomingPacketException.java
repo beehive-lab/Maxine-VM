@@ -27,12 +27,12 @@ package com.sun.max.jdwp.data;
  */
 public class JDWPIncomingPacketException extends JDWPException {
 
-    private final JDWPException _innerException;
-    private final IncomingPacket<? extends IncomingData, ? extends OutgoingData> _packet;
+    private final JDWPException innerException;
+    private final IncomingPacket<? extends IncomingData, ? extends OutgoingData> packet;
 
     public JDWPIncomingPacketException(JDWPException innerException, IncomingPacket<? extends IncomingData, ? extends OutgoingData> packet) {
-        _innerException = innerException;
-        _packet = packet;
+        this.innerException = innerException;
+        this.packet = packet;
     }
 
     /**
@@ -40,7 +40,7 @@ public class JDWPIncomingPacketException extends JDWPException {
      * @return the inner JDWP exception
      */
     public JDWPException innerException() {
-        return _innerException;
+        return innerException;
     }
 
     /**
@@ -48,6 +48,6 @@ public class JDWPIncomingPacketException extends JDWPException {
      * @return the packet whose parsing caused the exception
      */
     public IncomingPacket<? extends IncomingData, ? extends OutgoingData> packet() {
-        return _packet;
+        return packet;
     }
 }

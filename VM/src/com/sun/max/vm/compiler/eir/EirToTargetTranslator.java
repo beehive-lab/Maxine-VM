@@ -49,18 +49,18 @@ import com.sun.max.vm.tele.*;
  */
 public abstract class EirToTargetTranslator extends TargetGenerator {
 
-    private final int _registerReferenceMapSize;
+    private final int registerReferenceMapSize;
 
     protected EirToTargetTranslator(TargetGeneratorScheme targetGeneratorScheme, InstructionSet instructionSet, int registerReferenceMapSize) {
         super(targetGeneratorScheme, instructionSet);
-        _registerReferenceMapSize = registerReferenceMapSize;
+        this.registerReferenceMapSize = registerReferenceMapSize;
     }
 
     private Address fixLiteralLabels(EirTargetEmitter emitter, Sequence<EirLiteral> literals, Address address) {
         Address a = address;
         for (EirLiteral literal : literals) {
             emitter.fixLabel(literal.asLabel(), a);
-            a = a.plus(literal.value().kind().size());
+            a = a.plus(literal.value().kind().width.numberOfBytes);
         }
         return a;
     }
@@ -70,7 +70,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
             return null;
         }
         final EirLiteral lastLiteral = scalarLiterals.last();
-        final ByteArrayOutputStream stream = new ByteArrayOutputStream(lastLiteral.index() + lastLiteral.value().kind().size());
+        final ByteArrayOutputStream stream = new ByteArrayOutputStream(lastLiteral.index() + lastLiteral.value().kind().width.numberOfBytes);
         for (EirLiteral literal : scalarLiterals) {
             try {
                 assert literal.index() == stream.size();
@@ -173,7 +173,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         }
     }
 
-    private byte[] packReferenceMaps(TargetBundleLayout targetBundleLayout, EirTargetEmitter<?> emitter, int frameReferenceMapSize, int registerReferenceMapSize) {
+    private byte[] packReferenceMaps(TargetBundleLayout targetBundleLayout, EirTargetEmitter<?> emitter, int frameReferenceMapSize, int regReferenceMapSize) {
         if (targetBundleLayout.cellSize(ArrayField.referenceMaps).isZero()) {
             return null;
         }
@@ -185,7 +185,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
             addStackReferenceMaps(emitter.indirectCalls(), stackSlotWidth, bitMap);
             addStackReferenceMaps(emitter.safepoints(), stackSlotWidth, bitMap);
         }
-        bitMap.setSize(_registerReferenceMapSize);
+        bitMap.setSize(regReferenceMapSize);
         for (EirSafepoint safepoint : emitter.safepoints()) {
             safepoint.addRegisterReferenceMap(bitMap);
             bitMap.next();
@@ -214,7 +214,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         return targetMethod;
     }
 
-    private static final TimerMetric _timer = GlobalMetrics.newTimer("Translate-EirToTarget", Clock.SYSTEM_MILLISECONDS);
+    private static final TimerMetric timer = GlobalMetrics.newTimer("Translate-EirToTarget", Clock.SYSTEM_MILLISECONDS);
 
     @Override
     protected void generateIrMethod(TargetMethod targetMethod, CompilationDirective compilationDirective) {
@@ -222,9 +222,9 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         final EirGenerator<?> eirGenerator = eirGeneratorScheme.eirGenerator();
         final EirMethod eirMethod = eirGenerator.makeIrMethod(targetMethod.classMethodActor());
 
-        _timer.start();
+        timer.start();
         generateTarget(targetMethod, eirMethod);
-        _timer.stop();
+        timer.stop();
     }
 
     private void generateTarget(TargetMethod targetMethod, final EirMethod eirMethod) throws ProgramError {
@@ -233,7 +233,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         eirMethod.emit(emitter);
         emitter.emitFrameAdapterEpilogue();
 
-        final DataModel dataModel = compilerScheme().vmConfiguration().platform().processorKind().dataModel();
+        final DataModel dataModel = compilerScheme().vmConfiguration().platform().processorKind.dataModel;
 
         final Sequence<EirLiteral> scalarLiterals = eirMethod.literalPool().scalarLiterals();
         final Sequence<EirLiteral> referenceLiterals = eirMethod.literalPool().referenceLiterals();

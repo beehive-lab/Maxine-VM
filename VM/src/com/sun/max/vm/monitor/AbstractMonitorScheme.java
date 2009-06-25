@@ -33,14 +33,14 @@ public abstract class AbstractMonitorScheme extends AbstractVMScheme  implements
         super(vmConfiguration);
     }
 
-    private int _counter;
+    private int counter;
 
     @INLINE
     public final int createHashCode(Object object) {
         if (MaxineVM.isPrototyping()) {
             return System.identityHashCode(object);
         }
-        return Reference.fromJava(object).toOrigin().unsignedShiftedRight(3).toInt() ^ _counter++;
+        return Reference.fromJava(object).toOrigin().unsignedShiftedRight(3).toInt() ^ counter++;
     }
 
 

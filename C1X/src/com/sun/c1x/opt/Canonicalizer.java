@@ -26,12 +26,15 @@ import com.sun.c1x.bytecode.Bytecodes;
 import com.sun.c1x.util.InstructionVisitor;
 import com.sun.c1x.util.Util;
 import com.sun.c1x.C1XOptions;
-import com.sun.c1x.ci.CiType;
-import com.sun.c1x.ci.CiField;
-import com.sun.c1x.ci.CiConstant;
+import com.sun.c1x.C1XIntrinsic;
+import com.sun.c1x.C1XMetrics;
+import com.sun.c1x.ci.*;
 
 import java.util.List;
 import java.util.LinkedList;
+import java.util.ArrayList;
+import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * The <code>Canonicalizer</code> reduces instructions to a canonical form by folding constants,
@@ -42,9 +45,11 @@ import java.util.LinkedList;
  */
 public class Canonicalizer extends InstructionVisitor {
 
-    Instruction _canonical;
-    List<Instruction> _extra;
-    int _bci;
+    private static final Object[] NO_ARGUMENTS = {};
+
+    Instruction canonical;
+    List<Instruction> extra;
+    int bci;
 
     /**
      * Creates a new Canonicalizer for the specified instruction.
@@ -53,8 +58,8 @@ public class Canonicalizer extends InstructionVisitor {
      */
     public Canonicalizer(Instruction original, int bci) {
         // XXX: reusing a canonicalizer instance for each operation would reduce allocation
-        _canonical = original;
-        _bci = bci;
+        canonical = original;
+        this.bci = bci;
         original.accept(this);
     }
 
@@ -70,18 +75,18 @@ public class Canonicalizer extends InstructionVisitor {
      * @return the canonicalized version of the instruction
      */
     public Instruction canonical() {
-        return _canonical;
+        return canonical;
     }
 
     public List<Instruction> extra() {
-        return _extra;
+        return extra;
     }
 
     private <T extends Instruction> T addInstr(T x) {
-        if (_extra == null) {
-            _extra = new LinkedList<Instruction>();
+        if (extra == null) {
+            extra = new LinkedList<Instruction>();
         }
-        _extra.add(x);
+        extra.add(x);
         return x;
     }
 
@@ -94,46 +99,46 @@ public class Canonicalizer extends InstructionVisitor {
     }
 
     private Instruction setCanonical(Instruction x) {
-        return _canonical = x;
+        return canonical = x;
     }
 
     private Instruction setIntConstant(int val) {
-        return _canonical = Constant.forInt(val);
+        return canonical = Constant.forInt(val);
     }
 
     private Instruction setBooleanConstant(boolean val) {
-        return _canonical = Constant.forBoolean(val);
+        return canonical = Constant.forBoolean(val);
     }
 
     private Instruction setObjectConstant(Object val) {
         if (C1XOptions.SupportObjectConstants) {
-            return _canonical = Constant.forObject(val);
+            return canonical = Constant.forObject(val);
         }
-        return _canonical;
+        return canonical;
     }
 
     private Instruction setLongConstant(long val) {
-        return _canonical = Constant.forLong(val);
+        return canonical = Constant.forLong(val);
     }
 
     private Instruction setFloatConstant(float val) {
-        return _canonical = Constant.forFloat(val);
+        return canonical = Constant.forFloat(val);
     }
 
     private Instruction setDoubleConstant(double val) {
-        return _canonical = Constant.forDouble(val);
+        return canonical = Constant.forDouble(val);
     }
 
     private Instruction setByteConstant(byte val) {
-        return _canonical = new Constant(ConstType.forByte(val));
+        return canonical = new Constant(ConstType.forByte(val));
     }
 
     private Instruction setCharConstant(char val) {
-        return _canonical = new Constant(ConstType.forChar(val));
+        return canonical = new Constant(ConstType.forChar(val));
     }
 
     private Instruction setShortConstant(short val) {
-        return _canonical = new Constant(ConstType.forShort(val));
+        return canonical = new Constant(ConstType.forShort(val));
     }
 
     private void moveConstantToRight(Op2 x) {
@@ -229,7 +234,7 @@ public class Canonicalizer extends InstructionVisitor {
                 // floating point operations need to be extra careful
             }
         }
-        assert Instruction.sameBasicType(i, _canonical);
+        assert Instruction.sameBasicType(i, canonical);
     }
 
     private Instruction reduceIntOp2(Op2 original, Instruction x, int y) {
@@ -418,7 +423,7 @@ public class Canonicalizer extends InstructionVisitor {
                 Instruction nv = eliminateNarrowing(i.field().basicType(), (Convert) v);
                 // limit this optimization to the current basic block
                 if (nv != null && inCurrentBlock(v)) {
-                    setCanonical(new StoreField(i.object(), i.offset(), i.field(), nv, i.isStatic(),
+                    setCanonical(new StoreField(i.object(), i.field(), nv, i.isStatic(),
                                                 i.lockStack(), i.stateBefore(), i.isLoaded(), i.isInitialized()));
                 }
             }
@@ -444,7 +449,7 @@ public class Canonicalizer extends InstructionVisitor {
         } else if (array instanceof LoadField) {
             // the array is a load of a field; check if it is a constant
             CiField field = ((LoadField) array).field();
-            if (field.isConstant()) {
+            if (field.isConstant() && field.isStatic()) {
                 Object obj = field.constantValue().asObject();
                 if (obj != null) {
                     setIntConstant(java.lang.reflect.Array.getLength(obj));
@@ -485,7 +490,7 @@ public class Canonicalizer extends InstructionVisitor {
                 case Double: setDoubleConstant(-vt.asConstant().asDouble()); break;
             }
         }
-        assert vt.basicType() == _canonical.type().basicType();
+        assert vt.basicType() == canonical.type().basicType();
     }
 
     @Override
@@ -556,7 +561,7 @@ public class Canonicalizer extends InstructionVisitor {
                 }
             }
         }
-        assert Instruction.sameBasicType(i, _canonical);
+        assert Instruction.sameBasicType(i, canonical);
     }
 
     @Override
@@ -664,6 +669,22 @@ public class Canonicalizer extends InstructionVisitor {
     }
 
     @Override
+    public void visitInvoke(Invoke i) {
+        if (C1XOptions.CanonicalizeFoldableMethods) {
+            CiMethod method = i.target();
+            if (method.isLoaded()) {
+                // only try to fold resolved method invocations
+                ConstType result = foldInvocation(i.target(), i.arguments());
+                if (result != null) {
+                    // folding was successful
+                    BasicType basicType = method.signatureType().returnBasicType();
+                    setCanonical(new Constant(new ConstType(basicType, result, basicType == BasicType.Object)));
+                }
+            }
+        }
+    }
+
+    @Override
     public void visitCheckCast(CheckCast i) {
         // we can remove a redundant check cast if it is an object constant or the exact type is known
         if (i.targetClass().isLoaded()) {
@@ -723,7 +744,7 @@ public class Canonicalizer extends InstructionVisitor {
         }
         Instruction[] args = i.arguments();
         for (Instruction arg : args) {
-            if (!arg.type().isConstant()) {
+            if (arg != null && !arg.type().isConstant()) {
                 // one input is not constant, give up
                 return;
             }
@@ -837,11 +858,11 @@ public class Canonicalizer extends InstructionVisitor {
             case java_lang_Math$sin:   setDoubleConstant(Math.sin(argAsDouble(args, 0))); return;
             case java_lang_Math$cos:   setDoubleConstant(Math.cos(argAsDouble(args, 0))); return;
             case java_lang_Math$tan:   setDoubleConstant(Math.tan(argAsDouble(args, 0))); return;
-            case java_lang_Math$atan2: setDoubleConstant(Math.atan2(argAsDouble(args, 0), argAsDouble(args, 1))); return;
+            case java_lang_Math$atan2: setDoubleConstant(Math.atan2(argAsDouble(args, 0), argAsDouble(args, 2))); return;
             case java_lang_Math$sqrt:  setDoubleConstant(Math.sqrt(argAsDouble(args, 0))); return;
             case java_lang_Math$log:   setDoubleConstant(Math.log(argAsDouble(args, 0))); return;
             case java_lang_Math$log10: setDoubleConstant(Math.log10(argAsDouble(args, 0))); return;
-            case java_lang_Math$pow:   setDoubleConstant(Math.pow(argAsDouble(args, 0), argAsDouble(args, 1))); return;
+            case java_lang_Math$pow:   setDoubleConstant(Math.pow(argAsDouble(args, 0), argAsDouble(args, 2))); return;
             case java_lang_Math$exp:   setDoubleConstant(Math.exp(argAsDouble(args, 0))); return;
             case java_lang_Math$min:   setIntConstant(Math.min(argAsInt(args, 0), argAsInt(args, 1))); return;
             case java_lang_Math$max:   setIntConstant(Math.max(argAsInt(args, 0), argAsInt(args, 1))); return;
@@ -882,7 +903,7 @@ public class Canonicalizer extends InstructionVisitor {
                 return;
             }
         }
-        assert Instruction.sameBasicType(i, _canonical);
+        assert Instruction.sameBasicType(i, canonical);
     }
 
     @Override
@@ -979,7 +1000,7 @@ public class Canonicalizer extends InstructionVisitor {
                 visitIf(canon);
             } else {
                 setCanonical(canon);
-                _canonical.setBCI(cmp.bci());
+                canonical.setBCI(cmp.bci());
             }
         }
     }
@@ -1169,4 +1190,58 @@ public class Canonicalizer extends InstructionVisitor {
         return args[index].type().asConstant().asLong();
     }
 
+    public static ConstType foldInvocation(CiMethod method, Instruction[] args) {
+        Method reflectMethod = C1XIntrinsic.getFoldableMethod(method);
+        if (reflectMethod != null) {
+            // the method is foldable. check that all input arguments are constants
+            for (Instruction a : args) {
+                if (a != null && !a.type().isConstant()) {
+                    return null;
+                }
+            }
+            // build the argument list
+            Object recvr;
+            Object[] argArray = NO_ARGUMENTS;
+            if (method.isStatic()) {
+                // static method invocation
+                recvr = null;
+                if (args.length > 0) {
+                    ArrayList<Object> list = new ArrayList<Object>();
+                    for (Instruction a : args) {
+                        if (a != null) {
+                            list.add(a.type().asConstant().boxedValue());
+                        }
+                    }
+                    argArray = list.toArray();
+                }
+            } else {
+                // instance method invocation
+                recvr = args[0].type().asConstant().asObject();
+                if (args.length > 1) {
+                    ArrayList<Object> list = new ArrayList<Object>();
+                    for (int i = 1; i < args.length; i++) {
+                        Instruction a = args[i];
+                        if (a != null) {
+                            list.add(a.type().asConstant().boxedValue());
+                        }
+                    }
+                    argArray = list.toArray();
+                }
+            }
+            try {
+                // attempt to invoke the method
+                Object result = reflectMethod.invoke(recvr, argArray);
+                BasicType basicType = method.signatureType().returnBasicType();
+                // set the result of this instruction to be the result of invocation
+                C1XMetrics.MethodsFolded++;
+                return new ConstType(basicType, result, basicType == BasicType.Object);
+                // note that for void, we will have a void constant with value null
+            } catch (IllegalAccessException e) {
+                // folding failed; too bad
+            } catch (InvocationTargetException e) {
+                // folding failed; too bad
+            }
+        }
+        return null;
+    }
 }

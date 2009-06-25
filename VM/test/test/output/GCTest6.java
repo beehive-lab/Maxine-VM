@@ -28,10 +28,10 @@ package test.output;
  */
 public final class GCTest6 {
 
-    private final Object _object;
+    private final Object object;
 
     private GCTest6() {
-        _object = this;
+        object = this;
     }
 
     /**
@@ -53,7 +53,7 @@ public final class GCTest6 {
         for (int i = 0; i < max / 3; i++) {
             final GCTest6 garbageTest = new GCTest6();
             objects[i * 3] = garbageTest;
-            objects[i * 3 + 1] = garbageTest._object;
+            objects[i * 3 + 1] = garbageTest.object;
         }
     }
 

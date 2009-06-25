@@ -34,14 +34,14 @@ import com.sun.max.vm.value.*;
 public class InjectedLongFieldActor extends LongFieldActor implements InjectedFieldActor<LongValue> {
 
     public TypeDescriptor holderTypeDescriptor() {
-        return _holder;
+        return holder;
     }
 
     public LongValue readInjectedValue(Reference reference) {
         return LongValue.ZERO;
     }
 
-    private final TypeDescriptor _holder;
+    private final TypeDescriptor holder;
 
     /**
      * Creates an actor for an injected long field.
@@ -53,7 +53,7 @@ public class InjectedLongFieldActor extends LongFieldActor implements InjectedFi
     public InjectedLongFieldActor(Class holder, String name) {
         super(SymbolTable.makeSymbol("_$injected$" + name),
               ACC_SYNTHETIC + ACC_PRIVATE + INJECTED);
-        _holder = JavaTypeDescriptor.forJavaClass(holder);
+        this.holder = JavaTypeDescriptor.forJavaClass(holder);
         Static.registerInjectedFieldActor(this);
     }
 

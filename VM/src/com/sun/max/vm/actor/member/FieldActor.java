@@ -50,7 +50,7 @@ import com.sun.max.vm.value.*;
  */
 public abstract class FieldActor<Value_Type extends Value<Value_Type>> extends MemberActor {
 
-    private final Kind<Value_Type> _kind;
+    public final Kind<Value_Type> kind;
 
     protected FieldActor(Kind<Value_Type> kind,
                     Utf8Constant name,
@@ -59,7 +59,7 @@ public abstract class FieldActor<Value_Type extends Value<Value_Type>> extends M
         super(name,
               descriptor,
               flags);
-        _kind = kind;
+        this.kind = kind;
         assert isInjected() == this instanceof InjectedFieldActor;
     }
 
@@ -92,17 +92,8 @@ public abstract class FieldActor<Value_Type extends Value<Value_Type>> extends M
     }
 
     @INLINE
-    @Override
     public final TypeDescriptor descriptor() {
-        return (TypeDescriptor) super.descriptor();
-    }
-
-    public Kind<Value_Type> kind() {
-        return _kind;
-    }
-
-    public int valueSize() {
-        return _kind.size();
+        return (TypeDescriptor) descriptor;
     }
 
     /**
@@ -118,19 +109,19 @@ public abstract class FieldActor<Value_Type extends Value<Value_Type>> extends M
      * Gets the actor for this field's type.
      */
     public ClassActor type() {
-        return descriptor().resolve(holder().classLoader());
+        return descriptor().resolve(holder().classLoader);
     }
 
     @CONSTANT
-    private int _offset;
+    private int offset;
 
     public void setOffset(int offset) {
-        _offset = offset;
+        this.offset = offset;
     }
 
     @INLINE
     public final int offset() {
-        return _offset;
+        return offset;
     }
 
     public Value_Type readValue(Reference reference) {
@@ -139,11 +130,11 @@ public abstract class FieldActor<Value_Type extends Value<Value_Type>> extends M
             return injectedFieldActor.readInjectedValue(reference);
         }
 
-        return _kind.readValue(reference, _offset);
+        return kind.readValue(reference, offset);
     }
 
     public void writeValue(Object reference, Value value) {
-        _kind.writeErasedValue(reference, _offset, value);
+        kind.writeErasedValue(reference, offset, value);
     }
 
     public static FieldActor fromJava(Field javaField) {
@@ -164,7 +155,7 @@ public abstract class FieldActor<Value_Type extends Value<Value_Type>> extends M
             return JavaPrototype.javaPrototype().toJava(this);
         }
         final Class javaHolder = holder().toJava();
-        final Field javaField = ReflectionFactory.getReflectionFactory().newField(javaHolder, name().toString(), type().toJava(), flags(), memberIndex(), genericSignatureString(), runtimeVisibleAnnotationsBytes());
+        final Field javaField = ReflectionFactory.getReflectionFactory().newField(javaHolder, name.toString(), type().toJava(), flags(), memberIndex(), genericSignatureString(), runtimeVisibleAnnotationsBytes());
         Field_fieldActor.writeObject(javaField, this);
         return javaField;
     }

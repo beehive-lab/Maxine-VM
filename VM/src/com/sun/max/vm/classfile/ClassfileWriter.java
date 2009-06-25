@@ -53,8 +53,8 @@ import com.sun.max.vm.value.*;
  */
 public class ClassfileWriter {
 
-    final ConstantPoolEditor _constantPoolEditor;
-    DataOutputStream _dataOutputStream;
+    final ConstantPoolEditor constantPoolEditor;
+    DataOutputStream dataOutputStream;
 
     /**
      * Saves a generated class actor as a class file accessible to the {@linkplain VmClassLoader VM class loader} or to
@@ -66,9 +66,9 @@ public class ClassfileWriter {
     public static void saveGeneratedClass(ClassInfo classInfo, final ConstantPoolEditor constantPoolEditor) throws IOException {
         final byte[] classfile = toByteArray(classInfo, constantPoolEditor);
         if (MaxineVM.isPrototyping()) {
-            VmClassLoader.VM_CLASS_LOADER.saveGeneratedClassfile(classInfo._actor.name().string(), classfile);
+            VmClassLoader.VM_CLASS_LOADER.saveGeneratedClassfile(classInfo.actor.name.string, classfile);
         } else {
-            classInfo._actor.setClassfile(classfile);
+            classInfo.actor.classfile = classfile;
         }
     }
 
@@ -79,7 +79,7 @@ public class ClassfileWriter {
      * @return a byte array containing the class file
      */
     public static byte[] toByteArray(ClassInfo classInfo) {
-        return toByteArray(classInfo, mutableConstantPoolEditorFor(classInfo._actor));
+        return toByteArray(classInfo, mutableConstantPoolEditorFor(classInfo.actor));
     }
 
     /**
@@ -128,23 +128,24 @@ public class ClassfileWriter {
      *
      * @param classInfo the class to be written as a class file
      * @param constantPoolEditor an editor on a constant pool associated with {@code classInfo}.
-     *            <p>
+     *
      *            <b>It's imperative that this constant pool editor was obtained AFTER {@code classInfo} was constructed
      *            as the construction of a ClassInfo object may add more entries to the given class actor's constant
      *            pool.</b>
+     *
      * @param outputStream where to write the class file
      * @throws IOException if an IO error occurs while writing to {@code outputStream}
      */
     public ClassfileWriter(ClassInfo classInfo, ConstantPoolEditor constantPoolEditor, OutputStream outputStream) throws IOException {
-        _constantPoolEditor = constantPoolEditor;
-        _constantPoolEditor.append(makeUtf8Constant("--- START OF CONSTANTS ADDED FOR CLASS FILE GENERATION ---"));
+        this.constantPoolEditor = constantPoolEditor;
+        this.constantPoolEditor.append(makeUtf8Constant("--- START OF CONSTANTS ADDED FOR CLASS FILE GENERATION ---"));
 
         // Initially write nothing: this is just to flesh out the creation of constant pool entries
-        _dataOutputStream = new DataOutputStream(new NullOutputStream());
+        dataOutputStream = new DataOutputStream(new NullOutputStream());
         classInfo.write(this);
 
         // Now write to the provided stream
-        _dataOutputStream = outputStream instanceof DataOutputStream ? (DataOutputStream) outputStream : new DataOutputStream(outputStream);
+        dataOutputStream = outputStream instanceof DataOutputStream ? (DataOutputStream) outputStream : new DataOutputStream(outputStream);
         classInfo.write(this);
     }
 
@@ -152,7 +153,7 @@ public class ClassfileWriter {
      * @see ConstantPoolEditor#indexOf(PoolConstant)
      */
     protected int indexOf(PoolConstant poolConstant) {
-        return _constantPoolEditor.indexOf(poolConstant);
+        return constantPoolEditor.indexOf(poolConstant);
     }
 
     protected int indexOfUtf8(Utf8Constant utf8Constant) {
@@ -164,11 +165,11 @@ public class ClassfileWriter {
     }
 
     protected int indexOfUtf8(Descriptor descriptor) {
-        return indexOfUtf8(makeUtf8Constant(descriptor.string()));
+        return indexOfUtf8(makeUtf8Constant(descriptor.string));
     }
 
     protected int indexOfClass(ClassActor classActor) {
-        return indexOf(createClassConstant(classActor.typeDescriptor()));
+        return indexOf(createClassConstant(classActor.typeDescriptor));
     }
 
     protected int indexOfClass(TypeDescriptor typeDescriptor) {
@@ -176,19 +177,19 @@ public class ClassfileWriter {
     }
 
     protected void writeUnsigned2(int value) throws IOException {
-        _dataOutputStream.writeShort(value);
+        dataOutputStream.writeShort(value);
     }
 
     protected void writeUnsigned4(int value) throws IOException {
-        _dataOutputStream.writeInt(value);
+        dataOutputStream.writeInt(value);
     }
 
     protected void writeUnsigned1Array(byte[] value) throws IOException {
-        _dataOutputStream.write(value);
+        dataOutputStream.write(value);
     }
 
     protected void writeUnsigned2Array(byte[] value) throws IOException {
-        _dataOutputStream.write(value);
+        dataOutputStream.write(value);
     }
 
     public void writeAttributes(Sequence<Attribute> attributes) throws IOException {
@@ -199,37 +200,37 @@ public class ClassfileWriter {
     }
 
     public static class Attribute {
-        public final Utf8Constant _name;
-        protected int _length = -1;
+        public final Utf8Constant name;
+        protected int length = -1;
 
         public Attribute(String name) {
-            _name = makeUtf8Constant(name);
+            this.name = makeUtf8Constant(name);
         }
 
         protected void writeData(ClassfileWriter cf) throws IOException {
         }
 
         public final void write(ClassfileWriter cf) throws IOException {
-            cf.writeUnsigned2(cf.indexOf(_name));
-            cf.writeUnsigned4(_length);
-            final int start = cf._dataOutputStream.size();
+            cf.writeUnsigned2(cf.indexOf(name));
+            cf.writeUnsigned4(length);
+            final int start = cf.dataOutputStream.size();
             writeData(cf);
-            final int length =  cf._dataOutputStream.size() - start;
-            assert _length == length || _length == -1;
-            _length = length;
-            assert _length != -1;
+            final int lth = cf.dataOutputStream.size() - start;
+            assert this.length == lth || this.length == -1;
+            this.length = lth;
+            assert this.length != -1;
         }
     }
 
     public static class BytesAttribute extends Attribute {
-        protected final byte[] _bytes;
+        protected final byte[] bytes;
         public BytesAttribute(String name, byte[] bytes) {
             super(name);
-            _bytes = bytes;
+            this.bytes = bytes;
         }
         @Override
         protected void writeData(ClassfileWriter cf) throws IOException {
-            cf.writeUnsigned1Array(_bytes);
+            cf.writeUnsigned1Array(bytes);
         }
     }
 
@@ -237,15 +238,15 @@ public class ClassfileWriter {
      * Represents the class file info common to classes, fields and methods.
      */
     public abstract static class Info<Actor_Type extends Actor> {
-        protected final AppendableSequence<Attribute> _attributes = new ArrayListSequence<Attribute>();
-        public final Actor_Type _actor;
+        protected final AppendableSequence<Attribute> attributes = new ArrayListSequence<Attribute>();
+        public final Actor_Type actor;
 
         protected Info(Actor_Type actor) {
-            _actor = actor;
+            this.actor = actor;
             final Utf8Constant genericSignature = actor.genericSignature();
             final byte[] runtimeVisibleAnnotationsBytes = actor.runtimeVisibleAnnotationsBytes();
             if (genericSignature != null) {
-                _attributes.append(new Attribute("Signature") {
+                attributes.append(new Attribute("Signature") {
                     @Override
                     protected void writeData(ClassfileWriter cf) throws IOException {
                         cf.writeUnsigned2(cf.indexOfUtf8(genericSignature));
@@ -253,25 +254,25 @@ public class ClassfileWriter {
                 });
             }
             if (runtimeVisibleAnnotationsBytes != null) {
-                _attributes.append(new BytesAttribute("RuntimeVisibleAnnotations", runtimeVisibleAnnotationsBytes));
+                attributes.append(new BytesAttribute("RuntimeVisibleAnnotations", runtimeVisibleAnnotationsBytes));
             }
-            if (_actor.isSynthetic()) {
+            if (actor.isSynthetic()) {
                 final ClassActor holder;
                 if (actor instanceof ClassActor) {
                     holder = (ClassActor) actor;
                 } else {
                     holder = ((MemberActor) actor).holder();
                 }
-                if (holder.majorVersion() < 49) {
-                    _attributes.append(new Attribute("Synthetic"));
+                if (holder.majorVersion < 49) {
+                    attributes.append(new Attribute("Synthetic"));
                 } else {
                     // The ACC_SYNTHETIC flag was introduced in version 49 of the class file format
                     // and so it is used in preference to the Synthetic attribute. The former is far
                     // more compact and easier to process.
                 }
             }
-            if (_actor.isDeprecated()) {
-                _attributes.append(new Attribute("Deprecated"));
+            if (actor.isDeprecated()) {
+                attributes.append(new Attribute("Deprecated"));
             }
         }
 
@@ -314,22 +315,22 @@ public class ClassfileWriter {
      */
     public static class ClassInfo extends Info<ClassActor> {
 
-        protected final InterfaceActor[] _interfaceActors;
-        protected final MethodInfo[] _methods;
-        protected final FieldInfo[] _fields;
+        protected final InterfaceActor[] interfaceActors;
+        protected final MethodInfo[] methods;
+        protected final FieldInfo[] fields;
 
         /**
          * Creates a representation of a class that can be written as a class file.
          */
         public ClassInfo(ClassActor classActor) {
             super(classActor);
-            _interfaceActors = classActor.localInterfaceActors();
-            _methods = Arrays.map(Arrays.join(MethodActor.class, classActor.localInterfaceMethodActors(), classActor.localVirtualMethodActors(), classActor.localStaticMethodActors()), MethodInfo.class, new MapFunction<MethodActor, MethodInfo>() {
+            interfaceActors = classActor.localInterfaceActors();
+            methods = Arrays.map(Arrays.join(MethodActor.class, classActor.localInterfaceMethodActors(), classActor.localVirtualMethodActors(), classActor.localStaticMethodActors()), MethodInfo.class, new MapFunction<MethodActor, MethodInfo>() {
                 public MethodInfo map(MethodActor methodActor) {
                     return new MethodInfo(methodActor);
                 }
             });
-            _fields = Arrays.map(Arrays.join(FieldActor.class, classActor.localInstanceFieldActors(), classActor.localStaticFieldActors()), FieldInfo.class, new MapFunction<FieldActor, FieldInfo>() {
+            fields = Arrays.map(Arrays.join(FieldActor.class, classActor.localInstanceFieldActors(), classActor.localStaticFieldActors()), FieldInfo.class, new MapFunction<FieldActor, FieldInfo>() {
                 public FieldInfo map(FieldActor fieldActor) {
                     return new FieldInfo(fieldActor);
                 }
@@ -337,10 +338,10 @@ public class ClassfileWriter {
             final TypeDescriptor outerClass = classActor.outerClassDescriptor();
             final TypeDescriptor[] innerClasses = classActor.innerClassDescriptors();
             final EnclosingMethodInfo enclosingMethod = classActor.enclosingMethodInfo();
-            final String sourceFileName = classActor.sourceFileName();
+            final String sourceFileName = classActor.sourceFileName;
 
             if (sourceFileName != null) {
-                _attributes.append(new Attribute("SourceFile") {
+                attributes.append(new Attribute("SourceFile") {
                     @Override
                     protected void writeData(ClassfileWriter cf) throws IOException {
                         cf.writeUnsigned2(cf.indexOfUtf8(sourceFileName));
@@ -348,14 +349,14 @@ public class ClassfileWriter {
                 });
             }
             if (enclosingMethod != null) {
-                _attributes.append(new Attribute("EnclosingMethod") {
+                attributes.append(new Attribute("EnclosingMethod") {
                     @Override
                     protected void writeData(ClassfileWriter cf) throws IOException {
                         cf.writeUnsigned2(cf.indexOfClass(enclosingMethod.holder()));
                         if (enclosingMethod.name() != null) {
-                            final Utf8Constant name = makeUtf8Constant(enclosingMethod.name());
+                            final Utf8Constant methodName = makeUtf8Constant(enclosingMethod.name());
                             final Utf8Constant descriptor = makeUtf8Constant(enclosingMethod.descriptor());
-                            final NameAndTypeConstant nameAndType = createNameAndTypeConstant(name, descriptor);
+                            final NameAndTypeConstant nameAndType = createNameAndTypeConstant(methodName, descriptor);
                             cf.writeUnsigned2(cf.indexOf(nameAndType));
                         } else {
                             cf.writeUnsigned2(0);
@@ -365,18 +366,18 @@ public class ClassfileWriter {
             }
 
             if (outerClass != null || innerClasses != null) {
-                _attributes.append(new Attribute("InnerClasses") {
+                attributes.append(new Attribute("InnerClasses") {
                     @Override
                     protected void writeData(ClassfileWriter cf) throws IOException {
                         cf.writeUnsigned2((outerClass == null ? 0 : 1) + (innerClasses == null ? 0 : innerClasses.length));
                         if (outerClass != null) {
-                            cf.writeUnsigned2(cf.indexOfClass(_actor.typeDescriptor()));
+                            cf.writeUnsigned2(cf.indexOfClass(actor.typeDescriptor));
                             cf.writeUnsigned2(cf.indexOfClass(outerClass));
-                            cf.writeUnsigned2(cf.innerClassNameIndex(_actor.typeDescriptor()));
-                            cf.writeUnsigned2(_actor.flags() & Actor.JAVA_CLASS_FLAGS);
+                            cf.writeUnsigned2(cf.innerClassNameIndex(actor.typeDescriptor));
+                            cf.writeUnsigned2(actor.flags() & Actor.JAVA_CLASS_FLAGS);
                         }
                         if (innerClasses != null) {
-                            final int outerClassIndex = cf.indexOfClass(_actor.typeDescriptor());
+                            final int outerClassIndex = cf.indexOfClass(actor.typeDescriptor);
                             for (TypeDescriptor innerClass : innerClasses) {
                                 // Not really correct: would require resolving inner classes first
                                 final int innerClassFlags = 0;
@@ -394,36 +395,36 @@ public class ClassfileWriter {
 
         @Override
         protected void write(ClassfileWriter cf) throws IOException {
-            final String className = _actor.name().string();
+            final String className = actor.name.string;
             final TypeDescriptor classDescriptor = JavaTypeDescriptor.getDescriptorForWellFormedTupleName(className);
             final int thisClassIndex = cf.indexOf(createClassConstant(classDescriptor));
-            final ClassActor superClassActor = _actor.superClassActor();
-            final int superClassIndex = superClassActor == null ? 0 : cf.indexOf(createClassConstant(superClassActor.typeDescriptor()));
+            final ClassActor superClassActor = actor.superClassActor;
+            final int superClassIndex = superClassActor == null ? 0 : cf.indexOf(createClassConstant(superClassActor.typeDescriptor));
             cf.writeUnsigned4(0xcafebabe);
-            cf.writeUnsigned2(_actor.minorVersion());
-            cf.writeUnsigned2(_actor.majorVersion());
-            cf._constantPoolEditor.write(cf._dataOutputStream);
+            cf.writeUnsigned2(actor.minorVersion);
+            cf.writeUnsigned2(actor.majorVersion);
+            cf.constantPoolEditor.write(cf.dataOutputStream);
 
-            cf.writeUnsigned2(_actor.flags() & Actor.JAVA_CLASS_FLAGS);
+            cf.writeUnsigned2(actor.flags() & Actor.JAVA_CLASS_FLAGS);
             cf.writeUnsigned2(thisClassIndex);
             cf.writeUnsigned2(superClassIndex);
 
-            cf.writeUnsigned2(_interfaceActors.length);
-            for (InterfaceActor interfaceActor : _interfaceActors) {
+            cf.writeUnsigned2(interfaceActors.length);
+            for (InterfaceActor interfaceActor : interfaceActors) {
                 cf.writeUnsigned2(cf.indexOfClass(interfaceActor));
             }
 
-            cf.writeUnsigned2(_fields.length);
-            for (FieldInfo field : _fields) {
+            cf.writeUnsigned2(fields.length);
+            for (FieldInfo field : fields) {
                 field.write(cf);
             }
 
-            cf.writeUnsigned2(_methods.length);
-            for (MethodInfo method : _methods) {
+            cf.writeUnsigned2(methods.length);
+            for (MethodInfo method : methods) {
                 method.write(cf);
             }
 
-            cf.writeAttributes(_attributes);
+            cf.writeAttributes(attributes);
         }
     }
 
@@ -441,9 +442,9 @@ public class ClassfileWriter {
         @Override
         protected void write(ClassfileWriter cf) throws IOException {
             cf.writeUnsigned2(classfileFlags());
-            cf.writeUnsigned2(cf.indexOfUtf8(_actor.name()));
-            cf.writeUnsigned2(cf.indexOfUtf8(_actor.descriptor()));
-            cf.writeAttributes(_attributes);
+            cf.writeUnsigned2(cf.indexOfUtf8(actor.name));
+            cf.writeUnsigned2(cf.indexOfUtf8(actor.descriptor));
+            cf.writeAttributes(attributes);
         }
     }
 
@@ -459,13 +460,13 @@ public class ClassfileWriter {
             final byte[] annotationDefaultBytes = methodActor.annotationDefaultBytes();
             final TypeDescriptor[] checkedExceptions = methodActor.checkedExceptions();
             if (runtimeVisibleParameterAnnotationsBytes != null) {
-                _attributes.append(new BytesAttribute("RuntimeVisibleParameterAnnotations", runtimeVisibleParameterAnnotationsBytes));
+                attributes.append(new BytesAttribute("RuntimeVisibleParameterAnnotations", runtimeVisibleParameterAnnotationsBytes));
             }
             if (annotationDefaultBytes != null) {
-                _attributes.append(new BytesAttribute("AnnotationDefault", annotationDefaultBytes));
+                attributes.append(new BytesAttribute("AnnotationDefault", annotationDefaultBytes));
             }
             if (checkedExceptions.length != 0) {
-                _attributes.append(new Attribute("Exceptions") {
+                attributes.append(new Attribute("Exceptions") {
                     @Override
                     protected void writeData(ClassfileWriter cf) throws IOException {
                         cf.writeUnsigned2(checkedExceptions.length);
@@ -478,56 +479,56 @@ public class ClassfileWriter {
             }
 
             if (codeAttribute != null) {
-                _attributes.append(new Code(codeAttribute));
+                attributes.append(new Code(codeAttribute));
             }
         }
 
         @Override
         protected int classfileFlags() {
-            return _actor.flags() & Actor.JAVA_METHOD_FLAGS;
+            return actor.flags() & Actor.JAVA_METHOD_FLAGS;
         }
     }
 
     public static class Code extends Attribute {
-        protected final AppendableSequence<Attribute> _attributes = new ArrayListSequence<Attribute>();
-        protected final CodeAttribute _codeAttribute;
+        protected final AppendableSequence<Attribute> attributes = new ArrayListSequence<Attribute>();
+        protected final CodeAttribute codeAttribute;
 
         public Code(CodeAttribute codeAttribute) {
             super("Code");
-            _codeAttribute = codeAttribute;
+            this.codeAttribute = codeAttribute;
             final StackMapTable stackMapTable = codeAttribute.stackMapTable();
             final LineNumberTable lineNumberTable = codeAttribute.lineNumberTable();
             final LocalVariableTable localVariableTable = codeAttribute.localVariableTable();
 
             if (!lineNumberTable.isEmpty()) {
-                _attributes.append(new Attribute("LineNumberTable") {
+                attributes.append(new Attribute("LineNumberTable") {
                     @Override
                     protected void writeData(ClassfileWriter cf) throws IOException {
-                        lineNumberTable.writeAttributeInfo(cf._dataOutputStream, cf._constantPoolEditor);
+                        lineNumberTable.writeAttributeInfo(cf.dataOutputStream, cf.constantPoolEditor);
                     }
                 });
             }
             if (!localVariableTable.isEmpty()) {
-                _attributes.append(new Attribute("LocalVariableTable") {
+                attributes.append(new Attribute("LocalVariableTable") {
                     @Override
                     protected void writeData(ClassfileWriter cf) throws IOException {
-                        localVariableTable.writeLocalVariableTableAttributeInfo(cf._dataOutputStream, cf._constantPoolEditor);
+                        localVariableTable.writeLocalVariableTableAttributeInfo(cf.dataOutputStream, cf.constantPoolEditor);
                     }
                 });
             }
             if (localVariableTable.numberOfEntriesWithSignature() != 0) {
-                _attributes.append(new Attribute("LocalVariableTypeTable") {
+                attributes.append(new Attribute("LocalVariableTypeTable") {
                     @Override
                     protected void writeData(ClassfileWriter cf) throws IOException {
-                        localVariableTable.writeLocalVariableTypeTableAttributeInfo(cf._dataOutputStream, cf._constantPoolEditor);
+                        localVariableTable.writeLocalVariableTypeTableAttributeInfo(cf.dataOutputStream, cf.constantPoolEditor);
                     }
                 });
             }
             if (stackMapTable != null) {
-                _attributes.append(new Attribute("StackMapTable") {
+                attributes.append(new Attribute("StackMapTable") {
                     @Override
                     protected void writeData(ClassfileWriter cf) throws IOException {
-                        stackMapTable.writeAttributeInfo(cf._dataOutputStream, cf._constantPoolEditor);
+                        stackMapTable.writeAttributeInfo(cf.dataOutputStream, cf.constantPoolEditor);
                     }
                 });
             }
@@ -562,11 +563,11 @@ public class ClassfileWriter {
 
         @Override
         protected void writeData(ClassfileWriter cf) throws IOException {
-            final CodeAttribute codeAttribute = _codeAttribute;
-            final Sequence<ExceptionHandlerEntry> exceptionHandlerTable = codeAttribute.exceptionHandlerTable();
-            cf.writeUnsigned2(codeAttribute.maxStack());
-            cf.writeUnsigned2(codeAttribute.maxLocals());
-            final byte[] code = standardizeCode(codeAttribute, cf);
+            final CodeAttribute codeAttributeCopy = this.codeAttribute;
+            final Sequence<ExceptionHandlerEntry> exceptionHandlerTable = codeAttributeCopy.exceptionHandlerTable();
+            cf.writeUnsigned2(codeAttributeCopy.maxStack());
+            cf.writeUnsigned2(codeAttributeCopy.maxLocals());
+            final byte[] code = standardizeCode(codeAttributeCopy, cf);
             cf.writeUnsigned4(code.length);
             cf.writeUnsigned1Array(code);
             cf.writeUnsigned2(exceptionHandlerTable.length());
@@ -576,7 +577,7 @@ public class ClassfileWriter {
                 cf.writeUnsigned2(info.handlerPosition()); // handler_pc
                 cf.writeUnsigned2(info.catchTypeIndex()); // catch_type
             }
-            cf.writeAttributes(_attributes);
+            cf.writeAttributes(attributes);
         }
     }
 
@@ -589,10 +590,10 @@ public class ClassfileWriter {
             final Value constantValue = fieldActor.constantValue();
 
             if (constantValue != null) {
-                _attributes.append(new Attribute("ConstantValue") {
+                attributes.append(new Attribute("ConstantValue") {
                     @Override
                     protected void writeData(ClassfileWriter cf) throws IOException {
-                        switch (_actor.kind().asEnum()) {
+                        switch (actor.kind.asEnum) {
                             case BOOLEAN:
                             case BYTE:
                             case CHAR:
@@ -624,7 +625,7 @@ public class ClassfileWriter {
                                 break;
                             }
                             default: {
-                                throw classFormatError("Cannot have ConstantValue for fields of type " + _actor.kind());
+                                throw classFormatError("Cannot have ConstantValue for fields of type " + actor.kind);
                             }
                         }
                     }
@@ -634,7 +635,7 @@ public class ClassfileWriter {
 
         @Override
         protected int classfileFlags() {
-            return _actor.flags() & Actor.JAVA_FIELD_FLAGS;
+            return actor.flags() & Actor.JAVA_FIELD_FLAGS;
         }
     }
 
@@ -708,7 +709,7 @@ public class ClassfileWriter {
         final ClassActor classActor = ClassActor.fromJava(javaClass);
         final byte[] classfileBytes = toByteArray(new ClassInfo(classActor));
 
-        final File classfileFile = new File(outputDirectory, classActor.name().string().replace(".", File.separator) + ".class").getAbsoluteFile();
+        final File classfileFile = new File(outputDirectory, classActor.name.string.replace(".", File.separator) + ".class").getAbsoluteFile();
         BufferedOutputStream bs = null;
         try {
             final File classfileDirectory = classfileFile.getParentFile();
@@ -748,7 +749,7 @@ public class ClassfileWriter {
             final URL[] urls = {outputDirectory.toURI().toURL()};
             final ClassLoader urlClassLoader = URLClassLoader.newInstance(urls);
             final TestClassLoader testClassLoader = new TestClassLoader();
-            ClassRegistry._classLoaderToRegistryMap.put(testClassLoader, null);
+            ClassRegistry.classLoaderToRegistryMap.put(testClassLoader, null);
             for (Map.Entry<String, byte[]> entry : classNameToClassfileMap.entrySet()) {
                 final String className = entry.getKey();
                 final byte[] classfileBytes = entry.getValue();

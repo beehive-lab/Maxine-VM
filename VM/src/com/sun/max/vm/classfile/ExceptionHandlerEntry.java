@@ -37,55 +37,55 @@ public final class ExceptionHandlerEntry {
 
     public static final ExceptionHandlerEntry[] NONE = {};
 
-    private final int _startPosition;
+    private final int startPosition;
 
-    private final int _endPosition;
+    private final int endPosition;
 
-    private final int _handlerPosition;
+    private final int handlerPosition;
 
-    private final int _catchTypeIndex;
+    private final int catchTypeIndex;
 
     public int startPosition() {
-        return _startPosition;
+        return startPosition;
     }
 
     public int endPosition() {
-        return _endPosition;
+        return endPosition;
     }
 
     public int handlerPosition() {
-        return _handlerPosition;
+        return handlerPosition;
     }
 
     public int catchTypeIndex() {
-        return _catchTypeIndex;
+        return catchTypeIndex;
     }
 
     public ExceptionHandlerEntry(int startAddress, int endAddress, int handlerAddress, int catchTypeIndex) {
-        _startPosition = startAddress;
-        _endPosition = endAddress;
-        _handlerPosition = handlerAddress;
-        _catchTypeIndex = catchTypeIndex;
+        this.startPosition = startAddress;
+        this.endPosition = endAddress;
+        this.handlerPosition = handlerAddress;
+        this.catchTypeIndex = catchTypeIndex;
     }
 
     public ExceptionHandlerEntry changeEndPosition(int address) {
-        return new ExceptionHandlerEntry(_startPosition, address, _handlerPosition, _catchTypeIndex);
+        return new ExceptionHandlerEntry(startPosition, address, handlerPosition, catchTypeIndex);
     }
 
     /**
      * Determines if a given offset is within the range {@code [startProgramCounter() .. endProgramCounter())}.
      */
     public boolean rangeIncludes(int offset) {
-        return _startPosition <= offset && offset < _endPosition;
+        return startPosition <= offset && offset < endPosition;
     }
 
     public ExceptionHandlerEntry relocate(OpcodePositionRelocator relocator) {
-        return new ExceptionHandlerEntry(relocator.relocate(_startPosition), relocator.relocate(_endPosition), relocator.relocate(_handlerPosition), _catchTypeIndex);
+        return new ExceptionHandlerEntry(relocator.relocate(startPosition), relocator.relocate(endPosition), relocator.relocate(handlerPosition), catchTypeIndex);
     }
 
     @Override
     public String toString() {
-        return "[" + _startPosition + " .. " + _endPosition + ") -> " + _handlerPosition + " {type=" + _catchTypeIndex + "}";
+        return "[" + startPosition + " .. " + endPosition + ") -> " + handlerPosition + " {type=" + catchTypeIndex + "}";
     }
 
     /**
@@ -123,7 +123,7 @@ public final class ExceptionHandlerEntry {
         dataOutputStream.writeShort(length);
         boolean byteEncoding = true;
         for (ExceptionHandlerEntry entry : entries) {
-            if (!(entry._startPosition <= 0xff && entry._endPosition <= 0xff && entry._handlerPosition <= 0xff && entry._catchTypeIndex <= 0xff)) {
+            if (!(entry.startPosition <= 0xff && entry.endPosition <= 0xff && entry.handlerPosition <= 0xff && entry.catchTypeIndex <= 0xff)) {
                 byteEncoding = false;
                 break;
             }
@@ -131,17 +131,17 @@ public final class ExceptionHandlerEntry {
         dataOutputStream.writeBoolean(byteEncoding);
         if (byteEncoding) {
             for (ExceptionHandlerEntry entry : entries) {
-                dataOutputStream.writeByte(entry._startPosition);
-                dataOutputStream.writeByte(entry._endPosition);
-                dataOutputStream.writeByte(entry._handlerPosition);
-                dataOutputStream.writeByte(entry._catchTypeIndex);
+                dataOutputStream.writeByte(entry.startPosition);
+                dataOutputStream.writeByte(entry.endPosition);
+                dataOutputStream.writeByte(entry.handlerPosition);
+                dataOutputStream.writeByte(entry.catchTypeIndex);
             }
         } else {
             for (ExceptionHandlerEntry entry : entries) {
-                dataOutputStream.writeShort(entry._startPosition);
-                dataOutputStream.writeShort(entry._endPosition);
-                dataOutputStream.writeShort(entry._handlerPosition);
-                dataOutputStream.writeShort(entry._catchTypeIndex);
+                dataOutputStream.writeShort(entry.startPosition);
+                dataOutputStream.writeShort(entry.endPosition);
+                dataOutputStream.writeShort(entry.handlerPosition);
+                dataOutputStream.writeShort(entry.catchTypeIndex);
             }
         }
     }

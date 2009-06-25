@@ -511,7 +511,7 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public long allocateMemory(long bytes) {
-        if (bytes < 0L || bytes > Word.width().max()) {
+        if (bytes < 0L || bytes > Word.width().max) {
             throw new IllegalArgumentException();
         }
         return Memory.allocate(Size.fromLong(bytes)).toLong();
@@ -529,7 +529,7 @@ final class JDK_sun_misc_Unsafe {
         if (bytes == 0) {
             return 0L;
         }
-        if (bytes < 0L || bytes > Word.width().max()) {
+        if (bytes < 0L || bytes > Word.width().max) {
             throw new IllegalArgumentException();
         }
         return Memory.reallocate(Pointer.fromLong(address), Size.fromLong(bytes)).toLong();
@@ -636,7 +636,7 @@ final class JDK_sun_misc_Unsafe {
     @SUBSTITUTE
     public int arrayIndexScale(Class arrayClass) {
         final ArrayClassActor arrayClassActor = (ArrayClassActor) ClassActor.fromJava(arrayClass);
-        return arrayClassActor.componentClassActor().valueSize();
+        return arrayClassActor.componentClassActor().kind.width.numberOfBytes;
     }
 
     /**
@@ -656,7 +656,7 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public int pageSize() {
-        return VMConfiguration.hostOrTarget().platform().pageSize();
+        return VMConfiguration.hostOrTarget().platform().pageSize;
     }
 
     /**

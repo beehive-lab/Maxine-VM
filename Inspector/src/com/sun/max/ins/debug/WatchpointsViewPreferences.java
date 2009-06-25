@@ -32,16 +32,16 @@ import com.sun.max.ins.*;
   */
 public final class WatchpointsViewPreferences extends com.sun.max.ins.gui.TableColumnVisibilityPreferences<WatchpointsColumnKind> {
 
-    private static WatchpointsViewPreferences _globalPreferences;
+    private static WatchpointsViewPreferences globalPreferences;
 
     /**
      * @return the global, persistent set of user preferences for viewing a table of watchpoints.
      */
     static WatchpointsViewPreferences globalPreferences(Inspection inspection) {
-        if (_globalPreferences == null) {
-            _globalPreferences = new WatchpointsViewPreferences(inspection);
+        if (globalPreferences == null) {
+            globalPreferences = new WatchpointsViewPreferences(inspection);
         }
-        return _globalPreferences;
+        return globalPreferences;
     }
 
     /**

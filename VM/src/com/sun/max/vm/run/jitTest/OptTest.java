@@ -24,22 +24,22 @@ import com.sun.max.annotate.*;
 
 
 public class OptTest  implements InterfaceTest {
-    private int _intField;
+    private int intField;
 
     public int getInt() {
-        return _intField;
+        return intField;
     }
 
     public int addInt(int i) {
-        return _intField + i;
+        return intField + i;
     }
 
     public int timesInt(int i) {
-        return _intField * 8;
+        return intField * 8;
     }
 
     public void neg() {
-        _intField = -_intField;
+        intField = -intField;
     }
 
     @BOOT_IMAGE_DIRECTIVE(keepUnlinked = true)
@@ -54,11 +54,11 @@ public class OptTest  implements InterfaceTest {
 
     @BOOT_IMAGE_DIRECTIVE(keepUnlinked = true)
     public void unresolved(int i) {
-        _intField = i;
+        intField = i;
     }
 
     public OptTest(int i) {
-        _intField = i;
+        intField = i;
     }
 
     public int computeMe() {

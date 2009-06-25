@@ -28,10 +28,10 @@ package test.except;
 
 public class BC_sastore {
 
-    static short[] _array = {0, 0, 0, 0};
+    static short[] arr = {0, 0, 0, 0};
 
     public static short test(int arg, short val) {
-        final short[] array = arg == -2 ? null : _array;
+        final short[] array = arg == -2 ? null : arr;
         array[arg] = val;
         return array[arg];
     }

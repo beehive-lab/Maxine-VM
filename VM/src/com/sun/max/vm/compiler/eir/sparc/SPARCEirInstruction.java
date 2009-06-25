@@ -72,21 +72,21 @@ public interface SPARCEirInstruction {
     }
 
     public abstract static class BranchOnIntegerConditionCode extends SPARCEirConditionalBranch {
-        private final ICCOperand _conditionCode;
+        private final ICCOperand conditionCode;
 
         public ICCOperand conditionCode() {
-            return _conditionCode;
+            return conditionCode;
         }
 
         public BranchOnIntegerConditionCode(EirBlock block, EirBlock target, EirBlock next, Kind comparisonKind) {
             super(block, target, next);
-            _conditionCode = comparisonKind.width().equals(WordWidth.BITS_64) ? ICCOperand.XCC : ICCOperand.ICC;
+            conditionCode = comparisonKind.width.equals(WordWidth.BITS_64) ? ICCOperand.XCC : ICCOperand.ICC;
         }
 
         @Override
         public String toString() {
             final String s = super.toString();
-            return s + " %" + _conditionCode;
+            return s + " %" + conditionCode;
         }
     }
 
@@ -310,20 +310,20 @@ public interface SPARCEirInstruction {
     }
 
     public abstract static class SPARCEirBranchOnIntegerRegister extends SPARCEirConditionalBranch {
-        private final EirOperand _testedOperand;
+        private final EirOperand testedOperand;
 
         public EirValue testedValue() {
-            return _testedOperand.eirValue();
+            return testedOperand.eirValue();
         }
 
         public EirLocation testedOperandLocation() {
-            return _testedOperand.location();
+            return testedOperand.location();
         }
 
         public SPARCEirBranchOnIntegerRegister(EirBlock block, EirBlock target, EirBlock next, EirValue testedValue) {
             super(block, target, next);
-            _testedOperand = new EirOperand(this, EirOperand.Effect.USE, G);
-            _testedOperand.setEirValue(testedValue);
+            testedOperand = new EirOperand(this, EirOperand.Effect.USE, G);
+            testedOperand.setEirValue(testedValue);
         }
 
         public SPARCEirRegister.GeneralPurpose testedOperandGeneralRegister() {
@@ -333,12 +333,12 @@ public interface SPARCEirInstruction {
         @Override
         public void visitOperands(EirOperand.Procedure visitor) {
             super.visitOperands(visitor);
-            visitor.run(_testedOperand);
+            visitor.run(testedOperand);
         }
 
         @Override
         public String toString() {
-            return super.toString() + " [" + _testedOperand + "]";
+            return super.toString() + " [" + testedOperand + "]";
         }
     }
 
@@ -531,11 +531,11 @@ public interface SPARCEirInstruction {
      *  Moving the register windows is the callee's decision. See EirPrologue and return instructions.
      */
     public static class CALL extends EirCall<EirInstructionVisitor, SPARCEirTargetEmitter> implements SPARCEirInstruction  {
-        final SPARCEirRegister.GeneralPurpose _savedSafepointLatch;
-        final SPARCEirRegister.GeneralPurpose _safepointLatch;
+        final SPARCEirRegister.GeneralPurpose savedSafepointLatch;
+        final SPARCEirRegister.GeneralPurpose safepointLatch;
 
         public SPARCEirRegister.GeneralPurpose savedSafepointLatch() {
-            return _savedSafepointLatch;
+            return savedSafepointLatch;
         }
 
         public CALL(EirBlock block, EirABI abi, EirValue result, EirLocation resultLocation,
@@ -543,13 +543,13 @@ public interface SPARCEirInstruction {
                         EirMethodGeneration methodGeneration) {
             super(block, abi, result, resultLocation, function, M_G, arguments, argumentLocations, methodGeneration);
             final SPARCEirABI sparcAbi = (SPARCEirABI) abi;
-            _safepointLatch = (SPARCEirRegister.GeneralPurpose) sparcAbi.safepointLatchRegister();
+            safepointLatch = (SPARCEirRegister.GeneralPurpose) sparcAbi.safepointLatchRegister();
             final DirToSPARCEirMethodTranslation sparcMethodGeneration = (DirToSPARCEirMethodTranslation) methodGeneration;
-            if (sparcAbi.callerSavedRegisters().contains(_safepointLatch) && sparcMethodGeneration.callerMustSaveLatchRegister()) {
-                _savedSafepointLatch = DirToSPARCEirMethodTranslation.SAVED_SAFEPOINT_LATCH_LOCAL;
+            if (sparcAbi.callerSavedRegisters().contains(safepointLatch) && sparcMethodGeneration.callerMustSaveLatchRegister()) {
+                savedSafepointLatch = DirToSPARCEirMethodTranslation.SAVED_SAFEPOINT_LATCH_LOCAL;
                 sparcMethodGeneration.needsSavingSafepointLatchInLocal();
             } else {
-                _savedSafepointLatch = null;
+                savedSafepointLatch = null;
             }
         }
 
@@ -576,11 +576,11 @@ public interface SPARCEirInstruction {
             }
             // This is a workaround to a problem with the current register allocator which makes it very hard to reload a spilled - preallocated caller save
             // register (the only occurrence of which is the safepoint latch) into its preallocated location.
-            if (_savedSafepointLatch != null) {
+            if (savedSafepointLatch != null) {
                 // Save safepoint latch in delay slot
-                emitter.assembler().mov(_safepointLatch.as(), _savedSafepointLatch.as());
+                emitter.assembler().mov(safepointLatch.as(), savedSafepointLatch.as());
                 // Restore it on return
-                emitter.assembler().mov(_savedSafepointLatch.as(), _safepointLatch.as());
+                emitter.assembler().mov(savedSafepointLatch.as(), safepointLatch.as());
             } else {
                 // TODO: fill delay slot.
                 emitter.assembler().nop();
@@ -597,10 +597,10 @@ public interface SPARCEirInstruction {
             TRAP_STUB
         }
 
-        final FROM _from;
+        final FROM from;
         public RET(EirBlock block, FROM returnFrom) {
             super(block);
-            _from = returnFrom;
+            from = returnFrom;
         }
         public RET(EirBlock block) {
             this(block, FROM.JAVA_METHOD);
@@ -608,7 +608,7 @@ public interface SPARCEirInstruction {
 
         @Override
         public void emit(SPARCEirTargetEmitter emitter) {
-            switch(_from) {
+            switch(from) {
                 case TRAMPOLINE:
                     emitter.assembler().jmpl(O0, G0, G0);
                     emitter.assembler().restore(O1, G0, O0);   // Restore the receiver in %o0
@@ -808,22 +808,22 @@ public interface SPARCEirInstruction {
     }
 
     public static class SET_I32 extends SPARCEirUnaryOperation {
-        private final  EirOperand _immediateOperand;
+        private final  EirOperand immediateOperand;
 
         public EirOperand immediateOperand() {
-            return _immediateOperand;
+            return immediateOperand;
         }
 
         public SET_I32(EirBlock block, EirValue destination, EirConstant immediateSource) {
             super(block, destination, EirOperand.Effect.DEFINITION, G);
-            _immediateOperand = new EirOperand(this, EirOperand.Effect.USE, I);
-            _immediateOperand.setEirValue(immediateSource);
+            immediateOperand = new EirOperand(this, EirOperand.Effect.USE, I);
+            immediateOperand.setEirValue(immediateSource);
         }
         @Override
         public void emit(SPARCEirTargetEmitter emitter) {
             if  (operand().location().category().equals(INTEGER_REGISTER)) {
                 try {
-                    final int immediateValue =  _immediateOperand.value().asInt();
+                    final int immediateValue =  immediateOperand.value().asInt();
                     emitter.assembler().set(immediateValue, operandGeneralRegister().as());
                 } catch (AssemblyException e) {
                 }
@@ -1767,16 +1767,16 @@ public interface SPARCEirInstruction {
     }
 
     public static class MEMBAR extends SPARCEirOperation {
-        private final MembarOperand _ordering;
+        private final MembarOperand ordering;
 
         public MEMBAR(EirBlock block, MembarOperand ordering) {
             super(block);
-            _ordering = ordering;
+            this.ordering = ordering;
         }
 
         @Override
         public void emit(SPARCEirTargetEmitter emitter) {
-            emitter.assembler().membar(_ordering);
+            emitter.assembler().membar(ordering);
         }
 
         @Override
@@ -1786,7 +1786,7 @@ public interface SPARCEirInstruction {
 
         @Override
         public String toString() {
-            return super.toString() + " " + _ordering;
+            return super.toString() + " " + ordering;
         }
     }
 
@@ -1836,10 +1836,10 @@ public interface SPARCEirInstruction {
     }
 
     public static class SET_STACK_ADDRESS extends SPARCEirBinaryOperation {
-        private final StackVariable _stackVariableKey;
+        private final StackVariable stackVariableKey;
         public SET_STACK_ADDRESS(EirBlock block, EirValue destination, EirValue source, StackVariable stackVariableKey) {
             super(block, destination,   EirOperand.Effect.DEFINITION, G, source, EirOperand.Effect.USE, S);
-            _stackVariableKey = stackVariableKey;
+            this.stackVariableKey = stackVariableKey;
         }
 
         @Override
@@ -1861,8 +1861,8 @@ public interface SPARCEirInstruction {
                     ProgramError.unexpected();
                 }
             }
-            if (_stackVariableKey != null) {
-                emitter.recordStackVariableOffset(_stackVariableKey, offset);
+            if (stackVariableKey != null) {
+                emitter.recordStackVariableOffset(stackVariableKey, offset);
             }
         }
     }
@@ -1880,11 +1880,11 @@ public interface SPARCEirInstruction {
         }
         @Override
         public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister) {
-            emitter.assembler().movne((ICCOperand) _conditionCode, sourceRegister.as(), destinationRegister.as());
+            emitter.assembler().movne((ICCOperand) conditionCode, sourceRegister.as(), destinationRegister.as());
         }
         @Override
         public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
-            emitter.assembler().movne((ICCOperand) _conditionCode, sourceImmediate, destinationRegister.as());
+            emitter.assembler().movne((ICCOperand) conditionCode, sourceImmediate, destinationRegister.as());
         }
         @Override
         public void acceptVisitor(SPARCEirInstructionVisitor visitor) {
@@ -1905,11 +1905,11 @@ public interface SPARCEirInstruction {
         }
         @Override
         public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister) {
-            emitter.assembler().movne((FCCOperand) _conditionCode, sourceRegister.as(), destinationRegister.as());
+            emitter.assembler().movne((FCCOperand) conditionCode, sourceRegister.as(), destinationRegister.as());
         }
         @Override
         public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
-            emitter.assembler().movne((FCCOperand) _conditionCode, sourceImmediate, destinationRegister.as());
+            emitter.assembler().movne((FCCOperand) conditionCode, sourceImmediate, destinationRegister.as());
         }
         @Override
         public void acceptVisitor(SPARCEirInstructionVisitor visitor) {
@@ -1931,11 +1931,11 @@ public interface SPARCEirInstruction {
         }
         @Override
         public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister) {
-            emitter.assembler().move((ICCOperand) _conditionCode, sourceRegister.as(), destinationRegister.as());
+            emitter.assembler().move((ICCOperand) conditionCode, sourceRegister.as(), destinationRegister.as());
         }
         @Override
         public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
-            emitter.assembler().move((ICCOperand) _conditionCode, sourceImmediate, destinationRegister.as());
+            emitter.assembler().move((ICCOperand) conditionCode, sourceImmediate, destinationRegister.as());
         }
         @Override
         public void acceptVisitor(SPARCEirInstructionVisitor visitor) {
@@ -1956,11 +1956,11 @@ public interface SPARCEirInstruction {
         }
         @Override
         public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister) {
-            emitter.assembler().move((FCCOperand) _conditionCode, sourceRegister.as(), destinationRegister.as());
+            emitter.assembler().move((FCCOperand) conditionCode, sourceRegister.as(), destinationRegister.as());
         }
         @Override
         public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
-            emitter.assembler().move((FCCOperand) _conditionCode, sourceImmediate, destinationRegister.as());
+            emitter.assembler().move((FCCOperand) conditionCode, sourceImmediate, destinationRegister.as());
         }
         @Override
         public void acceptVisitor(SPARCEirInstructionVisitor visitor) {
@@ -1982,11 +1982,11 @@ public interface SPARCEirInstruction {
         }
         @Override
         public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister) {
-            emitter.assembler().movg((ICCOperand) _conditionCode, sourceRegister.as(), destinationRegister.as());
+            emitter.assembler().movg((ICCOperand) conditionCode, sourceRegister.as(), destinationRegister.as());
         }
         @Override
         public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
-            emitter.assembler().movg((ICCOperand) _conditionCode, sourceImmediate, destinationRegister.as());
+            emitter.assembler().movg((ICCOperand) conditionCode, sourceImmediate, destinationRegister.as());
         }
         @Override
         public void acceptVisitor(SPARCEirInstructionVisitor visitor) {
@@ -2006,11 +2006,11 @@ public interface SPARCEirInstruction {
             super(block, iccConditionCode, destination, source);
         }       @Override
         public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister) {
-            emitter.assembler().movg((ICCOperand) _conditionCode, sourceRegister.as(), destinationRegister.as());
+            emitter.assembler().movg((ICCOperand) conditionCode, sourceRegister.as(), destinationRegister.as());
         }
         @Override
         public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
-            emitter.assembler().movg((ICCOperand) _conditionCode, sourceImmediate, destinationRegister.as());
+            emitter.assembler().movg((ICCOperand) conditionCode, sourceImmediate, destinationRegister.as());
         }
         @Override
         public void acceptVisitor(SPARCEirInstructionVisitor visitor) {
@@ -2033,11 +2033,11 @@ public interface SPARCEirInstruction {
         }
         @Override
         public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister) {
-            emitter.assembler().movcc((ICCOperand) _conditionCode, sourceRegister.as(), destinationRegister.as());
+            emitter.assembler().movcc((ICCOperand) conditionCode, sourceRegister.as(), destinationRegister.as());
         }
         @Override
         public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
-            emitter.assembler().movcc((ICCOperand) _conditionCode, sourceImmediate, destinationRegister.as());
+            emitter.assembler().movcc((ICCOperand) conditionCode, sourceImmediate, destinationRegister.as());
         }
         @Override
         public void acceptVisitor(SPARCEirInstructionVisitor visitor) {
@@ -2058,11 +2058,11 @@ public interface SPARCEirInstruction {
         }
         @Override
         public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister) {
-            emitter.assembler().movl((ICCOperand) _conditionCode, sourceRegister.as(), destinationRegister.as());
+            emitter.assembler().movl((ICCOperand) conditionCode, sourceRegister.as(), destinationRegister.as());
         }
         @Override
         public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
-            emitter.assembler().movl((ICCOperand) _conditionCode, sourceImmediate, destinationRegister.as());
+            emitter.assembler().movl((ICCOperand) conditionCode, sourceImmediate, destinationRegister.as());
         }
         @Override
         public void acceptVisitor(SPARCEirInstructionVisitor visitor) {
@@ -2083,14 +2083,14 @@ public interface SPARCEirInstruction {
         }
         @Override
         public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister) {
-            if (_conditionCode instanceof FCCOperand) {
-                emitter.assembler().movl((FCCOperand) _conditionCode, sourceRegister.as(), destinationRegister.as());
+            if (conditionCode instanceof FCCOperand) {
+                emitter.assembler().movl((FCCOperand) conditionCode, sourceRegister.as(), destinationRegister.as());
             }
         }
         @Override
         public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
-            if (_conditionCode instanceof FCCOperand) {
-                emitter.assembler().movl((FCCOperand) _conditionCode, sourceImmediate, destinationRegister.as());
+            if (conditionCode instanceof FCCOperand) {
+                emitter.assembler().movl((FCCOperand) conditionCode, sourceImmediate, destinationRegister.as());
             }
         }
         @Override
@@ -2112,14 +2112,14 @@ public interface SPARCEirInstruction {
         }
         @Override
         public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister) {
-            if (_conditionCode instanceof FCCOperand) {
-                emitter.assembler().movg((FCCOperand) _conditionCode, sourceRegister.as(), destinationRegister.as());
+            if (conditionCode instanceof FCCOperand) {
+                emitter.assembler().movg((FCCOperand) conditionCode, sourceRegister.as(), destinationRegister.as());
             }
         }
         @Override
         public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
-            if (_conditionCode instanceof FCCOperand) {
-                emitter.assembler().movg((FCCOperand) _conditionCode, sourceImmediate, destinationRegister.as());
+            if (conditionCode instanceof FCCOperand) {
+                emitter.assembler().movg((FCCOperand) conditionCode, sourceImmediate, destinationRegister.as());
             }
         }
         @Override
@@ -2144,11 +2144,11 @@ public interface SPARCEirInstruction {
         }
         @Override
         public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister) {
-            emitter.assembler().movl((ICCOperand) _conditionCode, sourceRegister.as(), destinationRegister.as());
+            emitter.assembler().movl((ICCOperand) conditionCode, sourceRegister.as(), destinationRegister.as());
         }
         @Override
         public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
-            emitter.assembler().movl((ICCOperand) _conditionCode, sourceImmediate, destinationRegister.as());
+            emitter.assembler().movl((ICCOperand) conditionCode, sourceImmediate, destinationRegister.as());
         }
         @Override
         public void acceptVisitor(SPARCEirInstructionVisitor visitor) {
@@ -2169,11 +2169,11 @@ public interface SPARCEirInstruction {
         }
         @Override
         public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister) {
-            emitter.assembler().movle((ICCOperand) _conditionCode, sourceRegister.as(), destinationRegister.as());
+            emitter.assembler().movle((ICCOperand) conditionCode, sourceRegister.as(), destinationRegister.as());
         }
         @Override
         public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
-            emitter.assembler().movle((ICCOperand) _conditionCode, sourceImmediate, destinationRegister.as());
+            emitter.assembler().movle((ICCOperand) conditionCode, sourceImmediate, destinationRegister.as());
         }
         @Override
         public void acceptVisitor(SPARCEirInstructionVisitor visitor) {
@@ -2183,7 +2183,7 @@ public interface SPARCEirInstruction {
 
     public static final class ZERO extends SPARCEirUnaryOperation {
         public static PoolSet<EirLocationCategory> locationCategories(Kind kind) {
-            switch (kind.asEnum()) {
+            switch (kind.asEnum) {
                 case INT:
                 case LONG:
                 case WORD:
@@ -2197,15 +2197,11 @@ public interface SPARCEirInstruction {
             }
         }
 
-        private Kind _kind;
-
-        public Kind kind() {
-            return _kind;
-        }
+        public final Kind kind;
 
         public ZERO(EirBlock block, Kind kind, EirValue operand) {
             super(block, operand, EirOperand.Effect.DEFINITION, locationCategories(kind));
-            _kind = kind;
+            this.kind = kind;
         }
 
         @Override
@@ -2215,7 +2211,7 @@ public interface SPARCEirInstruction {
                     emitter.assembler().mov(G0, operandGeneralRegister().as());
                     break;
                 case FLOATING_POINT_REGISTER: {
-                    switch (kind().asEnum()) {
+                    switch (kind.asEnum) {
                         case FLOAT:  {
                             final SFPR freg = operandFloatingPointRegister().asSinglePrecision();
                             emitter.assembler().fsubs(freg, freg, freg);
@@ -2248,10 +2244,10 @@ public interface SPARCEirInstruction {
 
     public static class SWITCH_I32 extends SPARCEirIntSwitch {
 
-        private final EirOperand _indexRegister;
+        private final EirOperand indexRegister;
 
         public EirOperand indexRegister() {
-            return _indexRegister;
+            return indexRegister;
         }
 
         public SPARCEirRegister.GeneralPurpose indexGeneralRegister() {
@@ -2261,10 +2257,10 @@ public interface SPARCEirInstruction {
         public SWITCH_I32(EirBlock block, EirValue tag, EirValue[] matches, EirBlock[] targets, EirBlock defaultTarget, EirVariable indexRegister) {
             super(block, tag, matches, targets, defaultTarget);
             if (selectedImplementation().equals(INT_SWITCH_SELECTED_IMPLEMENTATION.TABLE_SWITCH)) {
-                _indexRegister = new EirOperand(this, EirOperand.Effect.DEFINITION, G);
-                _indexRegister.setEirValue(indexRegister);
+                this.indexRegister = new EirOperand(this, EirOperand.Effect.DEFINITION, G);
+                this.indexRegister.setEirValue(indexRegister);
             } else {
-                _indexRegister = null;
+                this.indexRegister = null;
             }
         }
 
@@ -2272,7 +2268,7 @@ public interface SPARCEirInstruction {
         public void visitOperands(EirOperand.Procedure visitor) {
             super.visitOperands(visitor);
             if (selectedImplementation().equals(INT_SWITCH_SELECTED_IMPLEMENTATION.TABLE_SWITCH)) {
-                visitor.run(_indexRegister);
+                visitor.run(indexRegister);
             }
         }
 
@@ -2282,7 +2278,7 @@ public interface SPARCEirInstruction {
             if (SPARCEirOperation.isSimm13(minMatchValue()) && SPARCEirOperation.isSimm13(maxMatchValue())) {
                 for (int i = 0; i < matches().length; i++) {
                     emitter.assembler().cmp(tagRegister, matches()[i].value().asInt());
-                    emitter.assembler().be(targets()[i].asLabel());
+                    emitter.assembler().be(targets[i].asLabel());
                     emitter.assembler().nop(); // empty delay slot
                 }
             } else {
@@ -2307,7 +2303,7 @@ public interface SPARCEirInstruction {
                         }
                         emitter.assembler().cmp(tagRegister, matchRegister);
                     }
-                    emitter.assembler().be(AnnulBit.NO_A, targets()[i].asLabel());
+                    emitter.assembler().be(AnnulBit.NO_A, targets[i].asLabel());
                     if (i == last) {
                         emitter.assembler().nop(); // empty delay slot
                         break;
@@ -2342,7 +2338,7 @@ public interface SPARCEirInstruction {
             final Label defaultTargetLabel = defaultTarget().asLabel();
             final Label jumpTable = new Label();
             for (int i = 0; i < matches.length; i++) {
-                targetLabels[i] = targets()[i].asLabel();
+                targetLabels[i] = targets[i].asLabel();
             }
             final GPR tagRegister = tagGeneralRegister().as();
             final int numElements = numberOfTableElements();
@@ -2415,7 +2411,7 @@ public interface SPARCEirInstruction {
                     impossibleImmediateWidth();
                 }
             }
-            emitter.assembler().be(AnnulBit.NO_A, targets()[middleIndex].asLabel());
+            emitter.assembler().be(AnnulBit.NO_A, targets[middleIndex].asLabel());
             emitter.assembler().nop(); // TODO -- exploit delay slot
             if (bottomIndex == topIndex) {
                 branchToDefaultTarget(emitter);

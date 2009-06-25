@@ -51,21 +51,21 @@ public abstract class IrInterpreter<Method_Type extends IrMethod> {
 
     public static final String PROPERTY_PREFIX = "max.interpreter.";
 
-    public static final OptionSet _options = new OptionSet();
-    protected static final Option<List<String>> _traceFiltersOption = _options.newStringListOption("filter", (String[]) null,
+    public static final OptionSet options = new OptionSet();
+    protected static final Option<List<String>> traceFiltersOption = options.newStringListOption("filter", (String[]) null,
         "trace filters, separated by \",\"");
-    protected static final Option<Boolean> _jitOption = _options.newBooleanOption("jit", false,
+    protected static final Option<Boolean> jitOption = options.newBooleanOption("jit", false,
         "compile and interpret called methods (instead of using reflection)");
-    protected static final Option<Boolean> _traceCpuOption = _options.newBooleanOption("tracecpu", false,
+    protected static final Option<Boolean> traceCpuOption = options.newBooleanOption("tracecpu", false,
         "include CPU state in the trace");
-    protected static final Option<Boolean> _traceStackOption = _options.newBooleanOption("tracestack", false,
+    protected static final Option<Boolean> traceStackOption = options.newBooleanOption("tracestack", false,
         "include full stack frame state in the trace");
-    protected static final Option<Boolean> _traceOption = _options.newBooleanOption("trace", false,
-        "enable tracing of each IR instruction. This option can be omitted if -" + _traceFiltersOption +
-        ", -" + _traceCpuOption + ", or -" + _traceStackOption + " is given a non-default value.");
+    protected static final Option<Boolean> traceOption = options.newBooleanOption("trace", false,
+        "enable tracing of each IR instruction. This option can be omitted if -" + traceFiltersOption +
+        ", -" + traceCpuOption + ", or -" + traceStackOption + " is given a non-default value.");
 
     static {
-        _options.loadSystemProperties(PROPERTY_PREFIX);
+        options.loadSystemProperties(PROPERTY_PREFIX);
     }
 
     protected IrInterpreter() {
@@ -95,7 +95,7 @@ public abstract class IrInterpreter<Method_Type extends IrMethod> {
             final Field field = fieldActor.toJava();
             field.setAccessible(true);
             try {
-                return fieldActor.kind().asValue(field.get(null));
+                return fieldActor.kind.asValue(field.get(null));
             } catch (Throwable throwable) {
                 ProgramError.unexpected("could not read field: " + field, throwable);
             }
@@ -130,7 +130,7 @@ public abstract class IrInterpreter<Method_Type extends IrMethod> {
             final StaticTuple staticTuple = (StaticTuple) object;
             final int offset = arguments[1].toInt();
             final FieldActor fieldActor = staticTuple.findStaticFieldActor(offset);
-            final Object value = fieldActor.kind().convert(arguments[2]).asBoxedJavaValue();
+            final Object value = fieldActor.kind.convert(arguments[2]).asBoxedJavaValue();
             final Field field = fieldActor.toJava();
             field.setAccessible(true);
             try {

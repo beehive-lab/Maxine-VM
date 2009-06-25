@@ -32,9 +32,9 @@ import com.sun.c1x.util.InstructionClosure;
  */
 public abstract class TypeCheck extends StateSplit {
 
-    final CiType _targetClass;
-    Instruction _object;
-    ValueStack _stateBefore;
+    final CiType targetClass;
+    Instruction object;
+    ValueStack stateBefore;
 
     /**
      * Creates a new TypeCheck instruction.
@@ -45,9 +45,9 @@ public abstract class TypeCheck extends StateSplit {
      */
     public TypeCheck(CiType targetClass, Instruction object, ValueType type, ValueStack stateBefore) {
         super(type);
-        _targetClass = targetClass;
-        _object = object;
-        _stateBefore = stateBefore;
+        this.targetClass = targetClass;
+        this.object = object;
+        this.stateBefore = stateBefore;
     }
 
     /**
@@ -55,7 +55,7 @@ public abstract class TypeCheck extends StateSplit {
      * @return the state before this instruction
      */
     public ValueStack stateBefore() {
-        return _stateBefore;
+        return stateBefore;
     }
 
     /**
@@ -63,7 +63,7 @@ public abstract class TypeCheck extends StateSplit {
      * @return the target class
      */
     public CiType targetClass() {
-        return _targetClass;
+        return targetClass;
     }
 
     /**
@@ -71,7 +71,7 @@ public abstract class TypeCheck extends StateSplit {
      * @return the instruction producing the object
      */
     public Instruction object() {
-        return _object;
+        return object;
     }
 
     /**
@@ -79,7 +79,7 @@ public abstract class TypeCheck extends StateSplit {
      * @return <code>true</code> if the target class is loaded
      */
     public boolean isLoaded() {
-        return _targetClass != null;
+        return targetClass != null;
     }
 
     /**
@@ -106,7 +106,7 @@ public abstract class TypeCheck extends StateSplit {
      */
     @Override
     public void inputValuesDo(InstructionClosure closure) {
-        _object = closure.apply(_object);
+        object = closure.apply(object);
     }
 
     /**
@@ -115,8 +115,8 @@ public abstract class TypeCheck extends StateSplit {
      */
     @Override
     public void otherValuesDo(InstructionClosure closure) {
-        if (_stateBefore != null) {
-            _stateBefore.valuesDo(closure);
+        if (stateBefore != null) {
+            stateBefore.valuesDo(closure);
         }
     }
 

@@ -34,18 +34,18 @@ import com.sun.max.vm.jni.*;
  */
 public abstract class AbstractIrMethod implements IrMethod {
 
-    private final ClassMethodActor _classMethodActor;
+    private final ClassMethodActor classMethodActor;
 
     protected AbstractIrMethod(ClassMethodActor classMethodActor) {
-        _classMethodActor = classMethodActor;
+        this.classMethodActor = classMethodActor;
     }
 
     public ClassMethodActor classMethodActor() {
-        return _classMethodActor;
+        return classMethodActor;
     }
 
     public String name() {
-        return classMethodActor().name().toString();
+        return classMethodActor().name.toString();
     }
 
     public boolean isNative() {
@@ -56,12 +56,12 @@ public abstract class AbstractIrMethod implements IrMethod {
     }
 
     public Word getEntryPoint(CallEntryPoint callEntryPoint) {
-        return MethodID.fromMethodActor(_classMethodActor);
+        return MethodID.fromMethodActor(classMethodActor);
     }
 
     @Override
     public String toString() {
-        return _classMethodActor.format("%H.%n(%p)");
+        return classMethodActor.format("%H.%n(%p)");
     }
 
     public boolean contains(final Builtin builtin, boolean defaultResult) {

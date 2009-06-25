@@ -41,17 +41,17 @@ import com.sun.max.vm.type.*;
  */
 public abstract class EirABI<EirRegister_Type extends EirRegister> {
 
-    private final VMConfiguration _vmConfiguration;
+    private final VMConfiguration vmConfiguration;
 
     public VMConfiguration vmConfiguration() {
-        return _vmConfiguration;
+        return vmConfiguration;
     }
 
-    private final Class<EirRegister_Type> _registerType;
+    private final Class<EirRegister_Type> registerType;
 
     protected EirABI(VMConfiguration vmConfiguration, Class<EirRegister_Type> registerType) {
-        _vmConfiguration = vmConfiguration;
-        _registerType = registerType;
+        this.vmConfiguration = vmConfiguration;
+        this.registerType = registerType;
     }
 
     public abstract int stackSlotSize();
@@ -81,7 +81,7 @@ public abstract class EirABI<EirRegister_Type extends EirRegister> {
 
     private EirLocation getResultLocation(Kind kind, VMRegister.Role role) {
         if (kind != null) {
-            switch (kind.asEnum()) {
+            switch (kind.asEnum) {
                 case VOID:
                     return null;
                 case BYTE:
@@ -132,7 +132,7 @@ public abstract class EirABI<EirRegister_Type extends EirRegister> {
     }
 
     public EirRegister_Type getScratchRegister(Kind kind) {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case BYTE:
             case BOOLEAN:
             case SHORT:
@@ -217,13 +217,13 @@ public abstract class EirABI<EirRegister_Type extends EirRegister> {
      */
     public abstract PoolSet<EirRegister_Type> callerSavedRegisters();
 
-    private EirRegister_Type[] _callerSavedRegisterArray;
+    private EirRegister_Type[] callerSavedRegisterArray;
 
     public EirRegister_Type[] callerSavedRegisterArray() {
-        if (_callerSavedRegisterArray == null) {
-            _callerSavedRegisterArray = Arrays.from(_registerType, callerSavedRegisters());
+        if (callerSavedRegisterArray == null) {
+            callerSavedRegisterArray = Arrays.from(registerType, callerSavedRegisters());
         }
-        return _callerSavedRegisterArray;
+        return callerSavedRegisterArray;
     }
 
     /**

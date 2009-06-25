@@ -26,10 +26,10 @@ import com.sun.max.ins.*;
 
 public abstract class InspectorMouseClickAdapter implements MouseListener {
 
-    private final Inspection _inspection;
+    private final Inspection inspection;
 
     protected InspectorMouseClickAdapter(Inspection inspection) {
-        _inspection = inspection;
+        this.inspection = inspection;
     }
 
     public abstract void procedure(MouseEvent mouseEvent);
@@ -41,7 +41,7 @@ public abstract class InspectorMouseClickAdapter implements MouseListener {
 //            _inspection.invalidate();
 //            _inspection.repaint();
         } catch (InspectorError inspectorError) {
-            inspectorError.display(_inspection);
+            inspectorError.display(inspection);
         }
     }
 

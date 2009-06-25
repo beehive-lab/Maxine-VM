@@ -30,8 +30,8 @@ public final class Monitor_contended01 implements Runnable {
     private Monitor_contended01() {
     }
 
-    static final Object _cond = new Object();
-    static final Object _object = new Object();
+    static final Object cond = new Object();
+    static final Object obj = new Object();
 
     boolean started = false;
     boolean acquired = false;
@@ -39,36 +39,36 @@ public final class Monitor_contended01 implements Runnable {
     public static boolean test(int i) throws InterruptedException {
         // test contention for monitor
         final Monitor_contended01 object = new Monitor_contended01();
-        synchronized (_object) {
+        synchronized (obj) {
             new Thread(object).start();
             // wait for other thread to startup and contend
-            synchronized (_cond) {
-                _cond.wait(1000);
+            synchronized (cond) {
+                cond.wait(1000);
                 if (!object.started) {
                     return false;
                 }
             }
         }
         // wait for other thread to acquire monitor and then exit
-        synchronized (_cond) {
-            _cond.wait(1000);
+        synchronized (cond) {
+            cond.wait(1000);
         }
         return object.acquired;
     }
 
     public void run() {
         // signal that we have started up so first thread will release lock
-        synchronized (_cond) {
+        synchronized (cond) {
             started = true;
-            _cond.notifyAll();
+            cond.notifyAll();
         }
-        synchronized (_object) {
+        synchronized (obj) {
 
         }
         // signal that we have successfully acquired and released the monitor
-        synchronized (_cond) {
+        synchronized (cond) {
             acquired = true;
-            _cond.notifyAll();
+            cond.notifyAll();
         }
     }
 

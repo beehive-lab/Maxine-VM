@@ -47,7 +47,7 @@ public abstract class AdapterStackFrame<AdapterStackFrameLayout_Type extends Ada
     @Override
     public boolean isSameFrame(StackFrame stackFrame) {
         if (stackFrame.getClass().equals(getClass())) {
-            return stackFrame.stackPointer().equals(stackPointer()) && stackFrame.framePointer().equals(framePointer());
+            return stackFrame.stackPointer.equals(stackPointer) && stackFrame.framePointer.equals(framePointer);
         }
         return false;
     }

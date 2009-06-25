@@ -42,36 +42,36 @@ public final class StringPane extends InspectorScrollPane {
         String fetchString();
     }
 
-    private final StringSource _stringSource;
-    private String _stringValue;
-    private final JTextArea _textArea;
+    private final StringSource stringSource;
+    private String stringValue;
+    private final JTextArea textArea;
 
     private StringPane(Inspection inspection, JTextArea textArea, StringSource stringSource) {
         super(inspection, textArea);
-        _stringSource = stringSource;
-        _stringValue = _stringSource.fetchString();
-        _textArea = textArea;
-        _textArea.append(_stringValue);
-        _textArea.setEditable(false);
+        this.stringSource = stringSource;
+        this.stringValue = stringSource.fetchString();
+        this.textArea = textArea;
+        this.textArea.append(stringValue);
+        this.textArea.setEditable(false);
         refresh(true);
     }
 
     @Override
     public void redisplay() {
-        _textArea.setFont(style().defaultTextFont());
+        textArea.setFont(style().defaultTextFont());
     }
 
-    private MaxVMState _lastRefreshedState = null;
+    private MaxVMState lastRefreshedState = null;
 
     @Override
     public void refresh(boolean force) {
-        if (maxVMState().newerThan(_lastRefreshedState) || force) {
-            _lastRefreshedState = maxVMState();
-            final String newString = _stringSource.fetchString();
-            if (newString != _stringValue) {
-                _stringValue = newString;
-                _textArea.selectAll();
-                _textArea.replaceSelection(_stringValue);
+        if (maxVMState().newerThan(lastRefreshedState) || force) {
+            lastRefreshedState = maxVMState();
+            final String newString = stringSource.fetchString();
+            if (newString != stringValue) {
+                stringValue = newString;
+                textArea.selectAll();
+                textArea.replaceSelection(stringValue);
             }
         }
     }

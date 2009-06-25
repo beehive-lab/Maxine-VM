@@ -45,8 +45,8 @@ public class GCTest4 {
         int len = 0;
         Node1 node = start;
         while (node != null) {
-            assert node._id.equals(String.valueOf(len));
-            node = node._next;
+            assert node.id.equals(String.valueOf(len));
+            node = node.next;
             len++;
         }
         assert len == length;
@@ -64,25 +64,25 @@ public class GCTest4 {
 
 class Node1 {
 
-    String _id;
-    Node1 _next = null;
-    long[] _array;
+    String id;
+    Node1 next = null;
+    long[] array;
 
     Node1(String id) {
-        _id = id;
-        _array = new long[500];
+        this.id = id;
+        this.array = new long[500];
     }
 
     public String getId() {
-        return _id;
+        return id;
     }
 
     public void setNext(Node1 next) {
-        _next = next;
+        this.next = next;
     }
 
     public Node1 getNext() {
-        return _next;
+        return next;
     }
 
 }

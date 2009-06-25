@@ -45,7 +45,7 @@ public final class SemiSpaceMemoryRegion extends RuntimeMemoryRegion {
      * @param address sets an inspected field that can be used for debugging.
      */
     void setAllocationMark(Address address) {
-        _mark = address;
+        mark = address;
     }
 
 }

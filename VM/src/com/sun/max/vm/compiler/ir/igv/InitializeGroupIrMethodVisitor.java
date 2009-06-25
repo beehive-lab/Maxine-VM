@@ -44,34 +44,34 @@ class InitializeGroupIrMethodVisitor implements IrMethodVisitor {
     private static final String EIR_TYPE_PROPERTY_VALUE = "com.sun.max.vm.compiler.eir";
     private static final String EIR_NAME_PROPERTY_SUFFIX = "EIR";
 
-    private final GraphWriter.Group _group;
+    private final GraphWriter.Group group;
 
     InitializeGroupIrMethodVisitor(GraphWriter.Group group) {
-        _group = group;
+        this.group = group;
     }
 
-    private void initGroupName(GraphWriter.Group group, IrMethod method, String suffix) {
-        group.getProperties().setProperty(NAME_PROPERTY_NAME, method.classMethodActor().format("%H.%n(%p)") + " / " + suffix);
+    private void initGroupName(GraphWriter.Group grp, IrMethod method, String suffix) {
+        grp.getProperties().setProperty(NAME_PROPERTY_NAME, method.classMethodActor().format("%H.%n(%p)") + " / " + suffix);
     }
 
     public void visit(BirMethod method) {
-        _group.getProperties().setProperty(TYPE_PROPERTY_NAME, BIR_TYPE_PROPERTY_VALUE);
-        initGroupName(_group, method, BIR_NAME_PROPERTY_SUFFIX);
+        group.getProperties().setProperty(TYPE_PROPERTY_NAME, BIR_TYPE_PROPERTY_VALUE);
+        initGroupName(group, method, BIR_NAME_PROPERTY_SUFFIX);
     }
 
     public void visit(CirMethod method) {
-        _group.getProperties().setProperty(TYPE_PROPERTY_NAME, CIR_TYPE_PROPERTY_VALUE);
-        initGroupName(_group, method, CIR_NAME_PROPERTY_SUFFIX);
+        group.getProperties().setProperty(TYPE_PROPERTY_NAME, CIR_TYPE_PROPERTY_VALUE);
+        initGroupName(group, method, CIR_NAME_PROPERTY_SUFFIX);
     }
 
     public void visit(DirMethod method) {
-        _group.getProperties().setProperty(TYPE_PROPERTY_NAME, DIR_TYPE_PROPERTY_VALUE);
-        initGroupName(_group, method, DIR_NAME_PROPERTY_SUFFIX);
+        group.getProperties().setProperty(TYPE_PROPERTY_NAME, DIR_TYPE_PROPERTY_VALUE);
+        initGroupName(group, method, DIR_NAME_PROPERTY_SUFFIX);
 
     }
 
     public void visit(EirMethod method) {
-        _group.getProperties().setProperty(TYPE_PROPERTY_NAME, EIR_TYPE_PROPERTY_VALUE);
-        initGroupName(_group, method, EIR_NAME_PROPERTY_SUFFIX);
+        group.getProperties().setProperty(TYPE_PROPERTY_NAME, EIR_TYPE_PROPERTY_VALUE);
+        initGroupName(group, method, EIR_NAME_PROPERTY_SUFFIX);
     }
 }

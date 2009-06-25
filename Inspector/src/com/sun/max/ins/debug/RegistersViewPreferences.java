@@ -32,16 +32,16 @@ import com.sun.max.ins.gui.*;
   */
 public final class RegistersViewPreferences extends TableColumnVisibilityPreferences<RegistersColumnKind> {
 
-    private static RegistersViewPreferences _globalPreferences;
+    private static RegistersViewPreferences globalPreferences;
 
     /**
      * @return the global, persistent set of user preferences for viewing a table of breakpoints.
      */
     static RegistersViewPreferences globalPreferences(Inspection inspection) {
-        if (_globalPreferences == null) {
-            _globalPreferences = new RegistersViewPreferences(inspection);
+        if (globalPreferences == null) {
+            globalPreferences = new RegistersViewPreferences(inspection);
         }
-        return _globalPreferences;
+        return globalPreferences;
     }
 
     /**

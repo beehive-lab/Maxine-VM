@@ -33,11 +33,11 @@ import com.sun.max.ins.gui.*;
  */
 public final class InspectorMainMenuBar extends InspectorMenuBar {
 
-    private final InspectionActions _actions;
+    private final InspectionActions actions;
 
     public InspectorMainMenuBar(InspectionActions actions) {
         super(actions.inspection());
-        _actions = actions;
+        this.actions = actions;
         addMenus();
     }
 
@@ -74,38 +74,38 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
     private JMenu createInspectionMenu() {
         final JMenu menu = new JMenu("Inspector");
         if (!maxVM().isBootImageRelocated()) {
-            menu.add(_actions.relocateBootImage());
+            menu.add(actions.relocateBootImage());
             menu.addSeparator();
         }
-        menu.add(_actions.setInspectorTraceLevel());
-        menu.add(_actions.changeInterpreterUseLevel());
-        menu.add(_actions.setTransportDebugLevel());
-        menu.add(_actions.runFileCommands());
-        menu.add(_actions.updateClasspathTypes());
+        menu.add(actions.setInspectorTraceLevel());
+        menu.add(actions.changeInterpreterUseLevel());
+        menu.add(actions.setTransportDebugLevel());
+        menu.add(actions.runFileCommands());
+        menu.add(actions.updateClasspathTypes());
         menu.addSeparator();
-        menu.add(_actions.refreshAll());
+        menu.add(actions.refreshAll());
         menu.addSeparator();
-        menu.add(_actions.closeAllViews());
+        menu.add(actions.closeAllViews());
         menu.addSeparator();
-        menu.add(_actions.preferences());
+        menu.add(actions.preferences());
         menu.addSeparator();
-        menu.add(_actions.quit());
+        menu.add(actions.quit());
         return menu;
     }
 
     private JMenu createClassMenu() {
         final JMenu menu = new JMenu("Class");
-        menu.add(_actions.inspectClassActorByName());
-        menu.add(_actions.inspectClassActorByHexId());
-        menu.add(_actions.inspectClassActorByDecimalId());
+        menu.add(actions.inspectClassActorByName());
+        menu.add(actions.inspectClassActorByHexId());
+        menu.add(actions.inspectClassActorByDecimalId());
         return menu;
     }
 
     private JMenu createObjectMenu() {
         final JMenu menu = new JMenu("Object");
-        menu.add(_actions.inspectBootClassRegistry());
-        menu.add(_actions.inspectObject());
-        menu.add(_actions.inspectObjectByID());
+        menu.add(actions.inspectBootClassRegistry());
+        menu.add(actions.inspectObject());
+        menu.add(actions.inspectObjectByID());
         return menu;
     }
 
@@ -113,75 +113,75 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
         final JMenu menu = new JMenu("Memory");
 
         final JMenu wordsMenu = new JMenu("As words");
-        wordsMenu.add(_actions.inspectBootHeapMemoryWords());
-        wordsMenu.add(_actions.inspectBootCodeMemoryWords());
-        wordsMenu.add(_actions.inspectMemoryWords());
+        wordsMenu.add(actions.inspectBootHeapMemoryWords());
+        wordsMenu.add(actions.inspectBootCodeMemoryWords());
+        wordsMenu.add(actions.inspectMemoryWords());
         menu.add(wordsMenu);
 
         final JMenu bytesMenu = new JMenu("As bytes");
-        bytesMenu.add(_actions.inspectBootHeapMemory());
-        bytesMenu.add(_actions.inspectBootCodeMemory());
-        bytesMenu.add(_actions.inspectMemory());
+        bytesMenu.add(actions.inspectBootHeapMemory());
+        bytesMenu.add(actions.inspectBootCodeMemory());
+        bytesMenu.add(actions.inspectMemory());
         menu.add(bytesMenu);
         return menu;
     }
 
     private JMenu createMethodMenu() {
         final JMenu menu = new JMenu("Method");
-        menu.add(_actions.inspectMethodActorByName());
-        menu.add(_actions.viewMethodCodeAtSelection());
-        menu.add(_actions.viewMethodCodeAtIP());
-        menu.add(_actions.viewMethodBytecodeByName());
-        menu.add(_actions.viewMethodTargetCodeByName());
+        menu.add(actions.inspectMethodActorByName());
+        menu.add(actions.viewMethodCodeAtSelection());
+        menu.add(actions.viewMethodCodeAtIP());
+        menu.add(actions.viewMethodBytecodeByName());
+        menu.add(actions.viewMethodTargetCodeByName());
         final JMenu sub = new JMenu("View boot image method code");
-        sub.add(_actions.viewRunMethodCodeInBootImage());
-        sub.add(_actions.viewThreadRunMethodCodeInBootImage());
-        sub.add(_actions.viewSchemeRunMethodCodeInBootImage());
+        sub.add(actions.viewRunMethodCodeInBootImage());
+        sub.add(actions.viewThreadRunMethodCodeInBootImage());
+        sub.add(actions.viewSchemeRunMethodCodeInBootImage());
         menu.add(sub);
-        menu.add(_actions.viewMethodCodeByAddress());
-        menu.add(_actions.viewNativeCodeByAddress());
-        menu.add(_actions.viewRuntimeStubByAddress());
+        menu.add(actions.viewMethodCodeByAddress());
+        menu.add(actions.viewNativeCodeByAddress());
+        menu.add(actions.viewRuntimeStubByAddress());
         return menu;
     }
 
     private JMenu createDebugMenu() {
         final JMenu menu = new JMenu("Debug");
-        menu.add(_actions.debugResume());
-        menu.add(_actions.debugSingleStep());
-        menu.add(_actions.debugStepOverWithBreakpoints());
-        menu.add(_actions.debugStepOver());
-        menu.add(_actions.debugReturnFromFrameWithBreakpoints());
-        menu.add(_actions.debugReturnFromFrame());
-        menu.add(_actions.debugRunToSelectedInstructionWithBreakpoints());
-        menu.add(_actions.debugRunToSelectedInstruction());
-        menu.add(_actions.debugRunToNextCallWithBreakpoints());
-        menu.add(_actions.debugRunToNextCall());
-        menu.add(_actions.debugPause());
+        menu.add(actions.debugResume());
+        menu.add(actions.debugSingleStep());
+        menu.add(actions.debugStepOverWithBreakpoints());
+        menu.add(actions.debugStepOver());
+        menu.add(actions.debugReturnFromFrameWithBreakpoints());
+        menu.add(actions.debugReturnFromFrame());
+        menu.add(actions.debugRunToSelectedInstructionWithBreakpoints());
+        menu.add(actions.debugRunToSelectedInstruction());
+        menu.add(actions.debugRunToNextCallWithBreakpoints());
+        menu.add(actions.debugRunToNextCall());
+        menu.add(actions.debugPause());
         menu.addSeparator();
-        final JMenuItem viewBreakpointsMenuItem = new JMenuItem(_actions.viewBreakpoints());
+        final JMenuItem viewBreakpointsMenuItem = new JMenuItem(actions.viewBreakpoints());
         viewBreakpointsMenuItem.setText("View Breakpoints");
         menu.add(viewBreakpointsMenuItem);
         final JMenu methodEntryBreakpoints = new JMenu("Break at method entry");
-        methodEntryBreakpoints.add(_actions.setTargetCodeBreakpointAtMethodEntriesByName());
-        methodEntryBreakpoints.add(_actions.setBytecodeBreakpointAtMethodEntryByName());
-        methodEntryBreakpoints.add(_actions.setBytecodeBreakpointAtMethodEntryByKey());
+        methodEntryBreakpoints.add(actions.setTargetCodeBreakpointAtMethodEntriesByName());
+        methodEntryBreakpoints.add(actions.setBytecodeBreakpointAtMethodEntryByName());
+        methodEntryBreakpoints.add(actions.setBytecodeBreakpointAtMethodEntryByKey());
         menu.add(methodEntryBreakpoints);
-        menu.add(_actions.setTargetCodeBreakpointAtObjectInitializer());
-        menu.add(_actions.removeAllBreakpoints());
+        menu.add(actions.setTargetCodeBreakpointAtObjectInitializer());
+        menu.add(actions.removeAllBreakpoints());
         menu.addSeparator();
-        menu.add(_actions.toggleTargetCodeBreakpoint());
-        menu.add(_actions.setTargetCodeLabelBreakpoints());
-        menu.add(_actions.removeTargetCodeLabelBreakpoints());
-        menu.add(_actions.removeAllTargetCodeBreakpoints());
+        menu.add(actions.toggleTargetCodeBreakpoint());
+        menu.add(actions.setTargetCodeLabelBreakpoints());
+        menu.add(actions.removeTargetCodeLabelBreakpoints());
+        menu.add(actions.removeAllTargetCodeBreakpoints());
         menu.addSeparator();
-        menu.add(_actions.toggleBytecodeBreakpoint());
-        menu.add(_actions.removeAllBytecodeBreakpoints());
+        menu.add(actions.toggleBytecodeBreakpoint());
+        menu.add(actions.removeAllBytecodeBreakpoints());
         if (maxVM().watchpointsEnabled()) {
             menu.addSeparator();
-            final JMenuItem viewWatchpointsMenuItem = new JMenuItem(_actions.viewWatchpoints());
+            final JMenuItem viewWatchpointsMenuItem = new JMenuItem(actions.viewWatchpoints());
             viewWatchpointsMenuItem.setText("View Watchpoints");
             menu.add(viewWatchpointsMenuItem);
-            menu.add(_actions.setWordWatchpoint());
+            menu.add(actions.setWordWatchpoint());
         }
 
         return menu;
@@ -189,41 +189,41 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
 
     public JMenu createViewMenu() {
         final JMenu menu = new JMenu("View");
-        menu.add(_actions.viewBootImage());
-        menu.add(_actions.viewMemoryRegions());
-        menu.add(_actions.viewThreads());
-        menu.add(_actions.viewVmThreadLocals());
-        menu.add(_actions.viewRegisters());
-        menu.add(_actions.viewStack());
-        menu.add(_actions.viewMethodCode());
-        menu.add(_actions.viewBreakpoints());
+        menu.add(actions.viewBootImage());
+        menu.add(actions.viewMemoryRegions());
+        menu.add(actions.viewThreads());
+        menu.add(actions.viewVmThreadLocals());
+        menu.add(actions.viewRegisters());
+        menu.add(actions.viewStack());
+        menu.add(actions.viewMethodCode());
+        menu.add(actions.viewBreakpoints());
         if (maxVM().watchpointsEnabled()) {
-            menu.add(_actions.viewWatchpoints());
+            menu.add(actions.viewWatchpoints());
         }
         return menu;
     }
 
     private JMenu createJavaMenu() {
         final JMenu menu = new JMenu("Java");
-        menu.add(_actions.setVMTraceLevel());
-        menu.add(_actions.setVMTraceThreshold());
+        menu.add(actions.setVMTraceLevel());
+        menu.add(actions.setVMTraceThreshold());
         menu.addSeparator();
-        menu.add(_actions.inspectJavaFrameDescriptor());
+        menu.add(actions.inspectJavaFrameDescriptor());
         return menu;
     }
 
     private JMenu createTestMenu() {
         final JMenu menu = new JMenu("Test");
-        menu.add(_actions.viewFocus());
-        menu.add(_actions.listVMStateHistory());
-        menu.add(_actions.listCodeRegistry());
-        menu.add(_actions.listCodeRegistryToFile());
+        menu.add(actions.viewFocus());
+        menu.add(actions.listVMStateHistory());
+        menu.add(actions.listCodeRegistry());
+        menu.add(actions.listCodeRegistryToFile());
         return menu;
     }
 
     private JMenu createHelpMenu() {
         final JMenu menu = new JMenu("Help");
-        menu.add(_actions.about());
+        menu.add(actions.about());
         return menu;
     }
 

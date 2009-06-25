@@ -30,12 +30,12 @@ package test.lang;
 
 public class Object_toString02 {
 
-    static final Object _object = new Object_toString02();
+    static final Object obj = new Object_toString02();
 
     public static String test(int i) {
         Object object = null;
         if (i == 0) {
-            object = _object;
+            object = obj;
         }
         else if (i == 1) {
             object = "string";

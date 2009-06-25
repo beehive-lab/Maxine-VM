@@ -95,14 +95,14 @@ public final class ConstantPool {
         UTF8(1),
         INVALID(0);
 
-        private final byte _classfileTag;
+        private final byte classfileTag;
 
         /**
          * @param classfileTag
          */
         private Tag(int classfileTag) {
             assert (byte) classfileTag == classfileTag;
-            _classfileTag = (byte) classfileTag;
+            this.classfileTag = (byte) classfileTag;
         }
 
         /**
@@ -115,7 +115,7 @@ public final class ConstantPool {
         }
 
         public byte classfileTag() {
-            return _classfileTag;
+            return classfileTag;
         }
 
         /**
@@ -171,50 +171,50 @@ public final class ConstantPool {
      * Must only be updated by {@link ConstantPoolEditor#append(PoolConstant)}.
      */
     @INSPECTED
-    private PoolConstant[] _constants;
+    private PoolConstant[] constants;
 
     public PoolConstant[] constants() {
-        return _constants;
+        return constants;
     }
 
     public void setConstants(PoolConstant[] constants) {
-        _constants = constants;
+        this.constants = constants;
     }
 
     public void setConstant(int index, PoolConstant constant) {
-        _constants[index] = constant;
+        constants[index] = constant;
     }
 
     /**
      * Must only be updated by {@link ConstantPoolEditor#append(PoolConstant)}.
      */
-    int _length;
+    int length;
 
-    private final IntHashMap<ResolutionGuard> _guards;
-    private final ClassLoader _classLoader;
+    private final IntHashMap<ResolutionGuard> guards;
+    private final ClassLoader classLoader;
 
     /**
      * Creates a constant pool from a class file.
      */
     public ConstantPool(ClassLoader classLoader, ClassfileStream classfileStream) {
-        final int length = classfileStream.readUnsigned2();
-        if (length < 1) {
-            throw classFormatError("Invalid constant pool size (" + length + ")");
+        final int poolLength = classfileStream.readUnsigned2();
+        if (poolLength < 1) {
+            throw classFormatError("Invalid constant pool size (" + poolLength + ")");
         }
 
-        final Tag[] tags = new Tag[length];
-        final int[] rawEntries = new int[length];
-        final PoolConstant[] constants = new PoolConstant[length];
-        constants[0] = InvalidConstant.VALUE;
+        final Tag[] tags = new Tag[poolLength];
+        final int[] rawEntries = new int[poolLength];
+        final PoolConstant[] poolConstants = new PoolConstant[poolLength];
+        poolConstants[0] = InvalidConstant.VALUE;
 
-        _classLoader = classLoader;
-        _length = length;
+        this.classLoader = classLoader;
+        this.length = poolLength;
 
         int numberOfResolvableConstants = 0;
 
         // Pass 1: read in the primitive values
         int i = 1;
-        while (i < length) {
+        while (i < poolLength) {
             final int tagByte = classfileStream.readUnsigned1();
             final Tag tag = Tag.fromClassfile(tagByte);
             tags[i] = tag;
@@ -244,37 +244,37 @@ public final class ConstantPool {
                     break;
                 }
                 case INTEGER: {
-                    constants[i] = createIntegerConstant(classfileStream.readInt());
+                    poolConstants[i] = createIntegerConstant(classfileStream.readInt());
                     break;
                 }
                 case FLOAT: {
-                    constants[i] = createFloatConstant(classfileStream.readFloat());
+                    poolConstants[i] = createFloatConstant(classfileStream.readFloat());
                     break;
                 }
                 case LONG: {
-                    constants[i] = createLongConstant(classfileStream.readLong());
+                    poolConstants[i] = createLongConstant(classfileStream.readLong());
                     ++i;
                     try {
                         tags[i] = INVALID;
-                        constants[i] = InvalidConstant.VALUE;
+                        poolConstants[i] = InvalidConstant.VALUE;
                     } catch (ArrayIndexOutOfBoundsException e) {
                         throw classFormatError("Invalid long constant index " + (i - 1));
                     }
                     break;
                 }
                 case DOUBLE: {
-                    constants[i] = createDoubleConstant(classfileStream.readDouble());
+                    poolConstants[i] = createDoubleConstant(classfileStream.readDouble());
                     ++i;
                     try {
                         tags[i] = INVALID;
-                        constants[i] = InvalidConstant.VALUE;
+                        poolConstants[i] = InvalidConstant.VALUE;
                     } catch (ArrayIndexOutOfBoundsException e) {
                         throw classFormatError("Invalid double constant index " + (i - 1));
                     }
                     break;
                 }
                 case UTF8: {
-                    constants[i] = makeUtf8Constant(classfileStream.readUtf8String());
+                    poolConstants[i] = makeUtf8Constant(classfileStream.readUtf8String());
                     break;
                 }
                 default: {
@@ -286,35 +286,35 @@ public final class ConstantPool {
 
         // Pass 2: first verification pass - validate cross references and fixup class and string constants
         i = 1;
-        while (i < length) {
+        while (i < poolLength) {
             try {
                 final Tag tag = tags[i];
                 switch (tag) {
                     case CLASS: {
                         final int nameIndex = rawEntries[i];
-                        final Utf8Constant utf8Constant = (Utf8Constant) constants[nameIndex];
+                        final Utf8Constant utf8Constant = (Utf8Constant) poolConstants[nameIndex];
                         final String name = utf8Constant.toString();
                         if (name.charAt(0) == '[') {
-                            constants[i] = createClassConstant(JavaTypeDescriptor.parseTypeDescriptor(name));
+                            poolConstants[i] = createClassConstant(JavaTypeDescriptor.parseTypeDescriptor(name));
                         } else {
-                            constants[i] = createClassConstant(JavaTypeDescriptor.parseTypeDescriptor('L' + name + ';'));
+                            poolConstants[i] = createClassConstant(JavaTypeDescriptor.parseTypeDescriptor('L' + name + ';'));
                         }
                         break;
                     }
                     case STRING: {
                         final int stringIndex = rawEntries[i];
-                        final Utf8Constant utf8Constant = (Utf8Constant) constants[stringIndex];
+                        final Utf8Constant utf8Constant = (Utf8Constant) poolConstants[stringIndex];
                         final String string = utf8Constant.toString();
-                        constants[i] = createStringConstant(string);
+                        poolConstants[i] = createStringConstant(string);
                         break;
                     }
                     case NAME_AND_TYPE: {
                         final int nameAndType = rawEntries[i];
                         final int nameIndex = nameAndType >>> 16;
                         final int descriptorIndex = nameAndType & 0xffff;
-                        final Utf8Constant name = (Utf8Constant) constants[nameIndex];
-                        final Utf8Constant descriptor = (Utf8Constant) constants[descriptorIndex];
-                        constants[i] = new NameAndTypeConstant(name, descriptor);
+                        final Utf8Constant name = (Utf8Constant) poolConstants[nameIndex];
+                        final Utf8Constant descriptor = (Utf8Constant) poolConstants[descriptorIndex];
+                        poolConstants[i] = new NameAndTypeConstant(name, descriptor);
                         break;
                     }
                     case FIELD_REF: {
@@ -322,7 +322,7 @@ public final class ConstantPool {
                         final int classIndex = classNameAndType >> 16;
                         final int nameAndTypeIndex = classNameAndType & 0xFFFF;
                         final FieldRefConstant.UnresolvedIndices fieldRef = new FieldRefConstant.UnresolvedIndices(classIndex, nameAndTypeIndex, tags);
-                        constants[i] = fieldRef;
+                        poolConstants[i] = fieldRef;
                         break;
                     }
                     case METHOD_REF: {
@@ -330,7 +330,7 @@ public final class ConstantPool {
                         final int classIndex = classNameAndType >> 16;
                         final int nameAndTypeIndex = classNameAndType & 0xFFFF;
                         final ClassMethodRefConstant.UnresolvedIndices methodRef = new ClassMethodRefConstant.UnresolvedIndices(classIndex, nameAndTypeIndex, tags);
-                        constants[i] = methodRef;
+                        poolConstants[i] = methodRef;
                         break;
                     }
                     case INTERFACE_METHOD_REF: {
@@ -338,7 +338,7 @@ public final class ConstantPool {
                         final int classIndex = classNameAndType >> 16;
                         final int nameAndTypeIndex = classNameAndType & 0xFFFF;
                         final InterfaceMethodRefConstant.UnresolvedIndices methodRef = new InterfaceMethodRefConstant.UnresolvedIndices(classIndex, nameAndTypeIndex, tags);
-                        constants[i] = methodRef;
+                        poolConstants[i] = methodRef;
                         break;
                     }
                     default:
@@ -354,12 +354,12 @@ public final class ConstantPool {
             ++i;
         }
 
-        _constants = constants;
-        _guards = new IntHashMap<ResolutionGuard>(numberOfResolvableConstants);
+        this.constants = poolConstants;
+        guards = new IntHashMap<ResolutionGuard>(numberOfResolvableConstants);
 
         // Pass 3: second verification pass - checks the strings are of the right format
         i = 1;
-        while (i < length) {
+        while (i < poolLength) {
             try {
                 final Tag tag = tags[i];
                 switch (tag) {
@@ -394,19 +394,19 @@ public final class ConstantPool {
      * Creates a constant pool for a generated class.
      */
     public ConstantPool(ClassLoader classLoader) {
-        _classLoader = classLoader;
-        _constants = new PoolConstant[INITIAL_CAPACITY];
-        _guards = new IntHashMap<ResolutionGuard>();
+        this.classLoader = classLoader;
+        this.constants = new PoolConstant[INITIAL_CAPACITY];
+        this.guards = new IntHashMap<ResolutionGuard>();
 
         // Index 0 is always invalid
-        _constants[_length++] = InvalidConstant.VALUE;
+        this.constants[length++] = InvalidConstant.VALUE;
     }
 
     /**
      * Creates a constant pool for a generated class.
      */
     public ConstantPool(ClassLoader classLoader, PoolConstant[] constants, int length) {
-        _classLoader = classLoader;
+        this.classLoader = classLoader;
 
         if (length < 1 || length > constants.length) {
             throw new IllegalArgumentException("length < 1 || length > constants.length");
@@ -415,9 +415,9 @@ public final class ConstantPool {
         if (constants[0] != InvalidConstant.VALUE) {
             throw new IllegalArgumentException("constants make have " + Tag.INVALID + " entry at index 0");
         }
-        _constants = constants;
-        _length = length;
-        _guards = new IntHashMap<ResolutionGuard>(length);
+        this.constants = constants;
+        this.length = length;
+        this.guards = new IntHashMap<ResolutionGuard>(length);
     }
 
     /**
@@ -427,37 +427,37 @@ public final class ConstantPool {
      * @param index the index of a resolvable entry in this constant pool
      */
     public ResolutionGuard makeResolutionGuard(int index, ResolutionSnippet snippet) {
-        synchronized (_guards) {
+        synchronized (guards) {
             assert (snippet.serial() & 0xffff) == snippet.serial();
             final int key = snippet.serial() << 16 | index;
-            ResolutionGuard guard = _guards.get(key);
+            ResolutionGuard guard = guards.get(key);
             if (guard == null) {
                 guard = snippet.createGuard(this, index);
-                _guards.put(key, guard);
+                guards.put(key, guard);
             }
             return guard;
         }
     }
 
     public ClassLoader classLoader() {
-        return _classLoader;
+        return classLoader;
     }
 
     public int numberOfConstants() {
-        return _length;
+        return length;
     }
 
     @INSPECTED
     @CONSTANT
-    private ClassActor _holder;
+    private ClassActor holder;
 
     public void setHolder(ClassActor holder) {
-        assert _holder == null;
-        _holder = holder;
+        assert this.holder == null;
+        this.holder = holder;
     }
 
     public ClassActor holder() {
-        return _holder;
+        return holder;
     }
 
     static ClassFormatError unexpectedEntry(int index, Tag tag, String description, Tag... expected) {
@@ -474,7 +474,7 @@ public final class ConstantPool {
 
     public PoolConstant at(int index, String description) {
         try {
-            return _constants[index];
+            return constants[index];
         } catch (IndexOutOfBoundsException exception) {
             throw verifyError("Constant pool index (" + index + ")" + (description == null ? "" : " for " + description) + " is out of range");
         }
@@ -493,9 +493,9 @@ public final class ConstantPool {
      */
     void updateAt(int index, ResolvableConstant constant) {
         assert constant.isResolved() || constant instanceof ClassConstant.UnresolvedWithError;
-        assert _constants[index].tag() == constant.tag();
+        assert constants[index].tag() == constant.tag();
 
-        _constants[index] = constant;
+        constants[index] = constant;
     }
 
     /**
@@ -504,7 +504,7 @@ public final class ConstantPool {
      */
     public Tag tagAt(int index) {
         try {
-            return _constants[index].tag();
+            return constants[index].tag();
         } catch (IndexOutOfBoundsException exception) {
             throw verifyError("Constant pool index " + index + " is out of range");
         }
@@ -675,7 +675,7 @@ public final class ConstantPool {
     }
 
     public String stringAt(int index) {
-        return stringConstantAt(index).value();
+        return stringConstantAt(index).value;
     }
 
     public Class[] resolveClassesAtToJava(char[] indexes) {
@@ -695,7 +695,7 @@ public final class ConstantPool {
     public void trace(int requiredLevel) {
         if (Trace.hasLevel(requiredLevel)) {
             Trace.begin(requiredLevel, "ConstantPool: " + numberOfConstants());
-            for (int i = 0; i < _length; i++) {
+            for (int i = 0; i < length; i++) {
                 final Tag tag = tagAt(i);
                 if (tag == INVALID) {
                     // The entry after a long or double constant is empty
@@ -708,7 +708,7 @@ public final class ConstantPool {
         }
     }
 
-    ConstantPoolEditor _editor;
+    ConstantPoolEditor editor;
 
     /**
      * Invoking this method is equivalent to {@link #edit(boolean) edit(true)}.
@@ -728,19 +728,19 @@ public final class ConstantPool {
      *            specifies if the client is allowed to append entries to the pool
      */
     public synchronized ConstantPoolEditor edit(boolean allowAppending) {
-        if (_editor == null || _editor.owner() != Thread.currentThread()) {
-            while (_editor != null) {
+        if (editor == null || editor.owner() != Thread.currentThread()) {
+            while (editor != null) {
                 //if (_holder != null) System.err.printAddress(Thread.currentThread() + ": waiting to edit " + this);
                 try {
                     wait();
                 } catch (InterruptedException e) {
                 }
             }
-            _editor = new ConstantPoolEditor(this, allowAppending);
+            editor = new ConstantPoolEditor(this, allowAppending);
         } else {
-            _editor.acquire();
+            editor.acquire();
         }
-        return _editor;
+        return editor;
     }
 
     /**

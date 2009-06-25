@@ -1011,7 +1011,7 @@ public abstract class BytecodeAggregatingVisitor extends BytecodeVisitor {
                 break;
             case STRING:
                 final StringConstant stringConstant = (StringConstant) constant;
-                constantReference(stringConstant.value());
+                constantReference(stringConstant.value);
                 break;
             case CLASS:
                 final ClassConstant classConstant = (ClassConstant) constant;

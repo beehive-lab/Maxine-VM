@@ -29,25 +29,25 @@ package com.sun.max.jdwp.vm.data;
  */
 public class Registers extends AbstractSerializableObject {
 
-    private String _name;
-    private String[] _names;
-    private long[] _values;
+    private String name;
+    private String[] names;
+    private long[] values;
 
     public Registers(String name, String[] names, long[] values) {
-        _name = name;
-        _names = names;
-        _values = values;
+        this.name = name;
+        this.names = names;
+        this.values = values;
     }
 
     public String getName() {
-        return _name;
+        return name;
     }
 
     public String[] getRegisterNames() {
-        return _names;
+        return names;
     }
 
     public long[] getRegisterValues() {
-        return _values;
+        return values;
     }
 }

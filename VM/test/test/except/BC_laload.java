@@ -28,10 +28,10 @@ package test.except;
 
 public class BC_laload {
 
-    static long[] _array = {0L, -1L, 4L, 1000000000000L};
+    static long[] arr = {0L, -1L, 4L, 1000000000000L};
 
     public static long test(int arg) {
-        final long[] array = arg == -2 ? null : _array;
+        final long[] array = arg == -2 ? null : arr;
         return array[arg];
     }
 }

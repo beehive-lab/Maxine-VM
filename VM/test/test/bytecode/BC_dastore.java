@@ -26,10 +26,10 @@ package test.bytecode;
  */
 public class BC_dastore {
 
-    static double[] _array = {0, 0, 0, 0};
+    static double[] array = {0, 0, 0, 0};
 
     public static double test(int arg, double val) {
-        _array[arg] = val;
-        return _array[arg];
+        array[arg] = val;
+        return array[arg];
     }
 }

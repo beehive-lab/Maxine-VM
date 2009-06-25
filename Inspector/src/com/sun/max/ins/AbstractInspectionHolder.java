@@ -32,49 +32,49 @@ import com.sun.max.tele.*;
 public abstract class AbstractInspectionHolder implements InspectionHolder {
 
 
-    private final Inspection _inspection;
+    private final Inspection inspection;
 
-    private final String _tracePrefix;
+    private final String tracePrefix;
 
     protected AbstractInspectionHolder(Inspection inspection) {
-        _inspection = inspection;
-        _tracePrefix = "[" + getClass().getSimpleName() + "] ";
+        this.inspection = inspection;
+        this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
     }
 
     public final Inspection inspection() {
-        return _inspection;
+        return inspection;
     }
 
     public final MaxVM maxVM() {
-        return _inspection.maxVM();
+        return inspection.maxVM();
     }
 
     public final MaxVMState maxVMState() {
-        return _inspection.maxVM().maxVMState();
+        return inspection.maxVM().maxVMState();
     }
 
 
     public InspectorGUI gui() {
-        return _inspection.gui();
+        return inspection.gui();
     }
 
     public final InspectorStyle style() {
-        return _inspection.style();
+        return inspection.style();
     }
 
     public final InspectionFocus focus() {
-        return _inspection.focus();
+        return inspection.focus();
     }
 
     public final InspectionActions actions() {
-        return _inspection.actions();
+        return inspection.actions();
     }
 
     /**
      * @return default prefix text for trace messages; identifies the class being traced.
      */
     protected String tracePrefix() {
-        return _tracePrefix;
+        return tracePrefix;
     }
 
 }

@@ -24,20 +24,20 @@ package com.sun.max.vm.classfile.create;
  * A {@code MillCode} assembles the byte codes of one Java(TM) method.
  * This class contains what can be seen as templates for byte code assembly
  * language statements.
- * 
+ *
  * @see MillClass
- * 
+ *
  * @author Bernd Mathiske
  * @version 1.0
  */
 public class MillCode {
 
-    final int _numberOfLocals;
-    final int _numberOfMaxStackWords;
+    final int numberOfLocals;
+    final int numberOfMaxStackWords;
 
     /**
      * Create a new byte code sequence and set basic stack information.
-     * 
+     *
      * @param nParameters
      *            The number of parameters of the method to which this byte code
      *            will belong.
@@ -49,53 +49,53 @@ public class MillCode {
      *            will (hopefully) never exceed.
      */
     public MillCode(int nLocals, int nMaxStackWords) {
-        this._numberOfLocals = nLocals;
-        this._numberOfMaxStackWords = nMaxStackWords;
+        this.numberOfLocals = nLocals;
+        this.numberOfMaxStackWords = nMaxStackWords;
     }
 
-    private Operation _operation = null;
-    private int _n = 0;
+    private Operation operation = null;
+    private int n = 0;
 
     /**
      * Determine the accumulated number of bytes in this code when generated.
-     * 
+     *
      * @return The accumulated number of bytes in this code when generated.
      */
     public int nBytes() {
-        return _n;
+        return n;
     }
 
     private void append(int code) {
-        _operation = new Operation((byte) code, _operation);
-        _n++;
+        operation = new Operation((byte) code, operation);
+        n++;
     }
 
     private void appendRef(int code, MillConstant constant) {
-        _operation = new Operation((byte) code, constant, _operation);
-        _n += 3;
+        operation = new Operation((byte) code, constant, operation);
+        n += 3;
     }
 
     void assemble(byte[] b, int offset) {
-        int index = offset + _n;
-        while (_operation != null) {
-            if (_operation._constant != null) {
-                b[--index] = MillWord.byte0(_operation._constant._index);
-                b[--index] = MillWord.byte1(_operation._constant._index);
+        int index = offset + n;
+        while (operation != null) {
+            if (operation.constant != null) {
+                b[--index] = MillWord.byte0(operation.constant.index);
+                b[--index] = MillWord.byte1(operation.constant.index);
             }
-            b[--index] = _operation._code;
-            _operation = _operation._next;
+            b[--index] = operation.code;
+            operation = operation.next;
         }
     }
 
     /**
      * Get the stack index of a local variable.
-     * 
+     *
      * @param The
      *            logical index among locals of the local we are interested in.
      * @return The stack index of the local.
      */
     public byte local(int i) {
-        if (i > _numberOfLocals) {
+        if (i > numberOfLocals) {
             throw new IllegalArgumentException();
         }
         return (byte) i;
@@ -110,7 +110,7 @@ public class MillCode {
 
     /**
      * Append an iconst byte code.
-     * 
+     *
      * @param x
      *            The operand of the iconst byte code.
      */
@@ -124,7 +124,7 @@ public class MillCode {
 
     /**
      * Append a bipush byte code.
-     * 
+     *
      * @param x
      *            The operand of the bipush byte code.
      */
@@ -135,7 +135,7 @@ public class MillCode {
 
     /**
      * Append an ldc_w byte code.
-     * 
+     *
      * @param _x
      *            The operand of the bipush byte code.
      */
@@ -479,11 +479,11 @@ public class MillCode {
 
     /**
      * Append a getfield byte code.
-     * 
+     *
      * @param fieldRef
      *            The operand of the getfield byte code: a field reference
      *            constant.
-     * 
+     *
      * @see MillFieldRefConstant
      * @see MillClass
      */
@@ -493,11 +493,11 @@ public class MillCode {
 
     /**
      * Append a putfield byte code.
-     * 
+     *
      * @param fieldRef
      *            The operand of the putfield byte code: a field reference
      *            constant.
-     * 
+     *
      * @see MillFieldRefConstant
      * @see MillClass
      */
@@ -507,11 +507,11 @@ public class MillCode {
 
     /**
      * Append an invokespecial byte code.
-     * 
+     *
      * @param methodRef
      *            The operand of the invokespecial byte code: a method reference
      *            constant.
-     * 
+     *
      * @see MillMethodRefConstant
      * @see MillClass
      */
@@ -521,11 +521,11 @@ public class MillCode {
 
     /**
      * Append an invokestatic byte code.
-     * 
+     *
      * @param methodRef
      *            The operand of the invokestatic byte code: a method reference
      *            constant.
-     * 
+     *
      * @see MillMethodRefConstant
      * @see MillClass
      */
@@ -545,11 +545,11 @@ public class MillCode {
      * Append a {@code new} byte code. This code is slightly renamed here
      * to avoid conflict with the {@code new} keyword in the Java(TM)
      * Programming Language.
-     * 
+     *
      * @param classRef
      *            The operand of the newObject byte code: a class reference
      *            constant.
-     * 
+     *
      * @see MillClassConstant
      * @see MillClass
      */
@@ -559,11 +559,11 @@ public class MillCode {
 
     /**
      * Append an anewarray byte code.
-     * 
+     *
      * @param classRef
      *            The operand of the anewarray byte code: a class reference
      *            constant.
-     * 
+     *
      * @see MillClassConstant
      * @see MillClass
      */
@@ -595,20 +595,20 @@ public class MillCode {
 
 class Operation {
 
-    final byte _code;
-    final MillConstant _constant;
-    final Operation _next;
+    final byte code;
+    final MillConstant constant;
+    final Operation next;
 
     Operation(byte code, Operation next) {
-        _code = code;
-        _constant = null;
-        _next = next;
+        this.code = code;
+        this.constant = null;
+        this.next = next;
     }
 
     Operation(byte code, MillConstant constant, Operation next) {
-        _code = code;
-        _constant = constant;
-        _next = next;
+        this.code = code;
+        this.constant = constant;
+        this.next = next;
     }
 
 }

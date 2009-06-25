@@ -80,13 +80,13 @@ import com.sun.max.vm.type.*;
  */
 public class AMD64DtInterpreterStackFrameLayout extends JavaStackFrameLayout {
 
-    private final int _numberOfLocalSlots;
-    private final int _numberOfParameterSlots;
-    private final AMD64DtInterpreter _interpreter;
+    private final int numberOfLocalSlots;
+    private final int numberOfParameterSlots;
+    private final AMD64DtInterpreter interpreter;
 
     public static final int DTI_SLOT_SIZE = getDtiSlotSize();
 
-    private static final Endianness ENDIANNESS =  VMConfiguration.target().platform().processorKind().dataModel().endianness();
+    private static final Endianness ENDIANNESS =  VMConfiguration.target().platform().processorKind.dataModel.endianness;
 
     private static int getDtiSlotSize() {
         final int stackFrameAlignment = VMConfiguration.target().targetABIsScheme().interpreterABI().stackFrameAlignment();
@@ -94,14 +94,14 @@ public class AMD64DtInterpreterStackFrameLayout extends JavaStackFrameLayout {
     }
 
     public static int offsetWithinWord(Kind kind) {
-        return ENDIANNESS.offsetWithinWord(Kind.WORD.width(), kind.width());
+        return ENDIANNESS.offsetWithinWord(Kind.WORD.width, kind.width);
     }
 
     private static final int CAT1_OFFSET_WITHIN_WORD = offsetWithinWord(Kind.INT);
     private static final int CAT2_OFFSET_WITHIN_WORD = offsetWithinWord(Kind.LONG);
 
     public static int offsetInStackSlot(Kind kind) {
-        if (kind.width().equals(WordWidth.BITS_64)) {
+        if (kind.width.equals(WordWidth.BITS_64)) {
             return CAT2_OFFSET_WITHIN_WORD;
         }
         return CAT1_OFFSET_WITHIN_WORD;
@@ -109,9 +109,9 @@ public class AMD64DtInterpreterStackFrameLayout extends JavaStackFrameLayout {
 
     public AMD64DtInterpreterStackFrameLayout(ClassMethodActor classMethodActor, AMD64DtInterpreter interpreter) {
         final CodeAttribute codeAttribute = classMethodActor.codeAttribute();
-        _numberOfLocalSlots = codeAttribute.maxLocals();
-        _numberOfParameterSlots = classMethodActor.numberOfParameterSlots();
-        _interpreter = interpreter;
+        this.numberOfLocalSlots = codeAttribute.maxLocals();
+        this.numberOfParameterSlots = classMethodActor.numberOfParameterSlots();
+        this.interpreter = interpreter;
 
     }
 
@@ -121,12 +121,12 @@ public class AMD64DtInterpreterStackFrameLayout extends JavaStackFrameLayout {
 
 
     public int numberOfNonParameterSlots() {
-        return _numberOfLocalSlots - _numberOfParameterSlots;
+        return numberOfLocalSlots - numberOfParameterSlots;
     }
 
     @Override
     public int frameSize() {
-        return _interpreter.baseFrameSize() + sizeOfNonParameterLocals();
+        return interpreter.baseFrameSize() + sizeOfNonParameterLocals();
     }
 
     @Override

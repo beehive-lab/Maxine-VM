@@ -34,26 +34,26 @@ public class AMD64InstructionEditor implements AssemblyInstructionEditor {
     /**
      * Target code containing the instruction to edit.
      */
-    public final byte[] _code;
+    public final byte[] code;
 
     /**
-     * Position of the instruction to edit within {@link #_code}.
+     * Position of the instruction to edit within {@link #code}.
      */
-    public final int _startPosition;
+    public final int startPosition;
 
     /**
      * The size of the instruction to edit.
      */
-    public final int _size;
+    public final int size;
 
     /**
      * For editing a single instruction stored in a byte array.
      * The instruction is edited in place.
      */
     public AMD64InstructionEditor(byte[] code) {
-        _startPosition = 0;
-        _size = code.length;
-        _code = code;
+        this.startPosition = 0;
+        this.size = code.length;
+        this.code = code;
     }
 
     /**
@@ -61,17 +61,17 @@ public class AMD64InstructionEditor implements AssemblyInstructionEditor {
      * The instruction is edited in place.
      */
     public AMD64InstructionEditor(byte[] code, int startPosition, int size) {
-        _startPosition = startPosition;
-        _size = size;
-        _code = code;
+        this.startPosition = startPosition;
+        this.size = size;
+        this.code = code;
     }
 
     public  int getIntDisplacement(WordWidth displacementWidth) throws AssemblyException {
         // Displacement always appended in the end. Same as immediate
-        final int displacementOffset = _startPosition + _size - displacementWidth.numberOfBytes();
+        final int displacementOffset = startPosition + size - displacementWidth.numberOfBytes;
         switch(displacementWidth) {
             case BITS_8:
-                return _code[displacementOffset];
+                return code[displacementOffset];
             case BITS_16:
                 return getImm16(displacementOffset);
             case BITS_32:
@@ -82,10 +82,10 @@ public class AMD64InstructionEditor implements AssemblyInstructionEditor {
     }
 
     public int getIntImmediate(WordWidth immediateWidth) throws AssemblyException {
-        final int immediateOffset = _startPosition + _size - immediateWidth.numberOfBytes();
+        final int immediateOffset = startPosition + size - immediateWidth.numberOfBytes;
         switch(immediateWidth) {
             case BITS_8:
-                return _code[immediateOffset];
+                return code[immediateOffset];
             case BITS_16:
                 return getImm16(immediateOffset);
             case BITS_32:
@@ -100,74 +100,74 @@ public class AMD64InstructionEditor implements AssemblyInstructionEditor {
         // instruction here has a displacement of the specified width
 
         // Displacement always appended in the end.
-        final int displacementOffset = _startPosition + _size - displacementWidth.numberOfBytes();
+        final int displacementOffset = startPosition + size - displacementWidth.numberOfBytes;
 
         // low order byte come first, so we write the offset value first, regardless of the width of the original offset.
-        _code[displacementOffset] = disp8;
+        code[displacementOffset] = disp8;
         if (displacementWidth == WordWidth.BITS_32) {
-            _code[displacementOffset + 1] = 0;
-            _code[displacementOffset + 2] = 0;
-            _code[displacementOffset + 3] = 0;
+            code[displacementOffset + 1] = 0;
+            code[displacementOffset + 2] = 0;
+            code[displacementOffset + 3] = 0;
         }
     }
 
-    private void fixImm8(int startPosition, int imm8) {
-        _code[startPosition] = (byte) (imm8 & 0xff);
+    private void fixImm8(int position, int imm8) {
+        code[position] = (byte) (imm8 & 0xff);
     }
 
-    private int getImm8(int startPosition) {
-        return _code[startPosition] & 0xff;
+    private int getImm8(int position) {
+        return code[position] & 0xff;
     }
 
-    private void fixImm16(int startPosition, int imm16) {
+    private void fixImm16(int position, int imm16) {
         int imm = imm16;
-        _code[startPosition] = (byte) (imm & 0xff);
+        code[position] = (byte) (imm & 0xff);
         imm >>= 8;
-        _code[startPosition + 1] = (byte) (imm & 0xff);
+        code[position + 1] = (byte) (imm & 0xff);
     }
 
-    private int getImm16(int startPosition) {
+    private int getImm16(int position) {
         int imm16 = 0;
-        imm16 |= getImm8(startPosition + 1) << 8;
-        imm16 |= getImm8(startPosition);
+        imm16 |= getImm8(position + 1) << 8;
+        imm16 |= getImm8(position);
         return imm16;
     }
 
-    private void fixImm32(int startPosition, int imm32) {
+    private void fixImm32(int position, int imm32) {
         int imm = imm32;
-        _code[startPosition] = (byte) (imm & 0xff);
+        code[position] = (byte) (imm & 0xff);
         imm >>= 8;
-        _code[startPosition + 1] = (byte) (imm & 0xff);
+        code[position + 1] = (byte) (imm & 0xff);
         imm >>= 8;
-        _code[startPosition + 2] = (byte) (imm & 0xff);
+        code[position + 2] = (byte) (imm & 0xff);
         imm >>= 8;
-        _code[startPosition + 3] = (byte) (imm & 0xff);
+        code[position + 3] = (byte) (imm & 0xff);
     }
 
-    private int getImm32(int startPosition) {
+    private int getImm32(int position) {
         int imm32 = 0;
-        imm32 |= getImm16(startPosition + 2) << 16;
-        imm32 |= getImm16(startPosition);
+        imm32 |= getImm16(position + 2) << 16;
+        imm32 |= getImm16(position);
         return imm32;
     }
 
-    private void fixImm64(int startPosition, long imm64) {
+    private void fixImm64(int position, long imm64) {
         long imm = imm64;
-        _code[startPosition] = (byte) (imm & 0xff);
+        code[position] = (byte) (imm & 0xff);
         imm >>= 8;
-        _code[startPosition + 1] = (byte) (imm & 0xff);
+        code[position + 1] = (byte) (imm & 0xff);
         imm >>= 8;
-        _code[startPosition + 2] = (byte) (imm & 0xff);
+        code[position + 2] = (byte) (imm & 0xff);
         imm >>= 8;
-        _code[startPosition + 3] = (byte) (imm & 0xff);
+        code[position + 3] = (byte) (imm & 0xff);
         imm >>= 8;
-        _code[startPosition + 4] = (byte) (imm & 0xff);
+        code[position + 4] = (byte) (imm & 0xff);
         imm >>= 8;
-        _code[startPosition + 5] = (byte) (imm & 0xff);
+        code[position + 5] = (byte) (imm & 0xff);
         imm >>= 8;
-        _code[startPosition + 6] = (byte) (imm & 0xff);
+        code[position + 6] = (byte) (imm & 0xff);
         imm >>= 8;
-        _code[startPosition + 7] = (byte) (imm & 0xff);
+        code[position + 7] = (byte) (imm & 0xff);
     }
 
     public void fixDisplacement(WordWidth displacementWidth, boolean withIndex, int disp32) throws AssemblyException {
@@ -175,16 +175,16 @@ public class AMD64InstructionEditor implements AssemblyInstructionEditor {
             throw new AssemblyException("Invalid offset width. Can't");
         }
         // index to the first byte displacement parameter (it's always appended in the end).
-        final int displacementStart = _startPosition + _size - displacementWidth.numberOfBytes();
+        final int displacementStart = startPosition + size - displacementWidth.numberOfBytes;
         fixImm32(displacementStart, disp32);
     }
 
     public void fixBranchRelativeDisplacement(WordWidth displacementWidth, int disp32) throws AssemblyException {
         final WordWidth effectiveDispWidth = WordWidth.signedEffective(disp32);
-        if  (effectiveDispWidth.numberOfBits() > displacementWidth.numberOfBits()) {
+        if  (effectiveDispWidth.numberOfBits > displacementWidth.numberOfBits) {
             throw new AssemblyException("Width of displacement too long for instruction.");
         }
-        final int displacementStart = _startPosition + _size - displacementWidth.numberOfBytes();
+        final int displacementStart = startPosition + size - displacementWidth.numberOfBytes;
         if (displacementWidth == WordWidth.BITS_8) {
             fixImm8(displacementStart, disp32);
         } else {
@@ -194,15 +194,15 @@ public class AMD64InstructionEditor implements AssemblyInstructionEditor {
 
     private void zeroFillFrom(int start) {
         int i = start;
-        while (i < _size) {
-            _code[i++] = 0;
+        while (i < size) {
+            code[i++] = 0;
         }
     }
 
     public void fixImmediateOperand(WordWidth operandWidth, byte imm8) {
-        final int numBytes = operandWidth.numberOfBytes();
-        final int immediateStart = _startPosition + _size - numBytes;
-        _code[immediateStart] = imm8;
+        final int numBytes = operandWidth.numberOfBytes;
+        final int immediateStart = startPosition + size - numBytes;
+        code[immediateStart] = imm8;
         zeroFillFrom(immediateStart + 1);
     }
 
@@ -210,9 +210,9 @@ public class AMD64InstructionEditor implements AssemblyInstructionEditor {
         // The Eir to AMD64 code generation uses only two width for immediate operands: 8 bits, or 32 bits.
         final WordWidth effectiveOperandWidth =  (operandWidth == WordWidth.BITS_8) ? WordWidth.BITS_8 : WordWidth.BITS_32;
         // index to the first byte of the immediate value
-        final int immediateStart = _startPosition + _size - effectiveOperandWidth.numberOfBytes();
+        final int immediateStart = startPosition + size - effectiveOperandWidth.numberOfBytes;
         fixImm16(immediateStart, imm16);
-        zeroFillFrom(immediateStart + operandWidth.numberOfBytes());
+        zeroFillFrom(immediateStart + operandWidth.numberOfBytes);
     }
 
     /*
@@ -220,7 +220,7 @@ public class AMD64InstructionEditor implements AssemblyInstructionEditor {
      */
     public void fixSingleShortOperand(short imm16) {
         // index to the first byte of the immediate value
-        final int immediateStart = _startPosition + _size - WordWidth.BITS_16.numberOfBytes();
+        final int immediateStart = startPosition + size - WordWidth.BITS_16.numberOfBytes;
         fixImm16(immediateStart, imm16);
     }
 
@@ -234,11 +234,11 @@ public class AMD64InstructionEditor implements AssemblyInstructionEditor {
         // The Eir to AMD64 code generation uses only two width for immediate operands: 8 bits, or 32 bits.
         if (operandWidth == WordWidth.BITS_8) {
             // index to the first byte of the immediate value
-            final int immediateStart = _startPosition + _size - WordWidth.BITS_8.numberOfBytes();
+            final int immediateStart = startPosition + size - WordWidth.BITS_8.numberOfBytes;
             fixImm8(immediateStart, imm32);
         } else {
             // index to the first byte of the immediate value
-            final int immediateStart = _startPosition + _size - WordWidth.BITS_32.numberOfBytes();
+            final int immediateStart = startPosition + size - WordWidth.BITS_32.numberOfBytes;
             fixImm32(immediateStart, imm32);
         }
     }
@@ -251,17 +251,17 @@ public class AMD64InstructionEditor implements AssemblyInstructionEditor {
      */
     public void fixImmediateOperand(int imm32) {
         // index to the first byte of the immediate value
-        final int immediateStart = _startPosition + _size - WordWidth.BITS_32.numberOfBytes();
+        final int immediateStart = startPosition + size - WordWidth.BITS_32.numberOfBytes;
         fixImm32(immediateStart, imm32);
     }
 
     public void fixImmediateOperand(long imm64) {
         // index to the first byte of the immediate value
-        final int immediateStart = _startPosition + _size - WordWidth.BITS_64.numberOfBytes();
+        final int immediateStart = startPosition + size - WordWidth.BITS_64.numberOfBytes;
         fixImm64(immediateStart, imm64);
     }
 
     public void writeTo(OutputStream outputStream) throws IOException {
-        outputStream.write(_code, _startPosition, _size);
+        outputStream.write(code, startPosition, size);
     }
 }

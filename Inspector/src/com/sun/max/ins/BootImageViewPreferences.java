@@ -33,16 +33,16 @@ import com.sun.max.vm.*;
   */
 public final class BootImageViewPreferences extends TableColumnVisibilityPreferences<BootImageColumnKind> {
 
-    private static BootImageViewPreferences _globalPreferences;
+    private static BootImageViewPreferences globalPreferences;
 
     /**
      * @return the global, persistent set of user preferences for viewing  {@link VMConfiguration} information in the VM boot image.
      */
     static BootImageViewPreferences globalPreferences(Inspection inspection) {
-        if (_globalPreferences == null) {
-            _globalPreferences = new BootImageViewPreferences(inspection);
+        if (globalPreferences == null) {
+            globalPreferences = new BootImageViewPreferences(inspection);
         }
-        return _globalPreferences;
+        return globalPreferences;
     }
 
     /**

@@ -34,39 +34,39 @@ import com.sun.max.vm.tele.*;
  */
 public final class TeleRoots extends AbstractTeleVMHolder{
 
-    private final TeleGripScheme _teleGripScheme;
-    private final WordArrayLayout _wordArrayLayout;
+    private final TeleGripScheme teleGripScheme;
+    private final WordArrayLayout wordArrayLayout;
 
     TeleRoots(TeleGripScheme teleGripScheme) {
         super(teleGripScheme.teleVM());
-        _teleGripScheme = teleGripScheme;
-        _wordArrayLayout = teleGripScheme.teleVM().layoutScheme().wordArrayLayout();
+        this.teleGripScheme = teleGripScheme;
+        this.wordArrayLayout = teleGripScheme.teleVM().layoutScheme().wordArrayLayout;
     }
 
     // Points to the static field {@link TeleHeap#_roots TeleHeap._roots} in the {@link TeleVM}, assuming that the
     // static tuple of the class will not be relocated because it is in the boot image.
-    private Pointer _teleRootsPointer = Pointer.zero();
+    private Pointer teleRootsPointer = Pointer.zero();
 
-    private final Address[] _cachedRoots = new Address[TeleHeapInfo.MAX_NUMBER_OF_ROOTS];
-    private final BitSet _usedIndices = new BitSet();
+    private final Address[] cachedRoots = new Address[TeleHeapInfo.MAX_NUMBER_OF_ROOTS];
+    private final BitSet usedIndices = new BitSet();
 
     private RemoteTeleGrip teleRoots() {
-        if (_teleRootsPointer.isZero()) {
-            _teleRootsPointer = teleVM().fields().TeleHeapInfo_roots.staticTupleReference(teleVM()).toOrigin().plus(teleVM().fields().TeleHeapInfo_roots.fieldActor().offset());
+        if (teleRootsPointer.isZero()) {
+            teleRootsPointer = teleVM().fields().TeleHeapInfo_roots.staticTupleReference(teleVM()).toOrigin().plus(teleVM().fields().TeleHeapInfo_roots.fieldActor().offset());
         }
-        return _teleGripScheme.createTemporaryRemoteTeleGrip(teleVM().dataAccess().readWord(_teleRootsPointer).asAddress());
+        return teleGripScheme.createTemporaryRemoteTeleGrip(teleVM().dataAccess().readWord(teleRootsPointer).asAddress());
     }
 
     /**
      * Register a VM location in the VM's Inspector root table.
      */
     int register(Address rawGrip) {
-        final int index = _usedIndices.nextClearBit(0);
-        _usedIndices.set(index);
+        final int index = usedIndices.nextClearBit(0);
+        usedIndices.set(index);
         // Local copy of root table
-        WordArray.set(_cachedRoots, index, rawGrip);
+        WordArray.set(cachedRoots, index, rawGrip);
         // Remote root table
-        _wordArrayLayout.setWord(teleRoots(), index, rawGrip);
+        wordArrayLayout.setWord(teleRoots(), index, rawGrip);
         return index;
     }
 
@@ -74,25 +74,25 @@ public final class TeleRoots extends AbstractTeleVMHolder{
      * Remove a VM location from the VM's Tele root table.
      */
     void unregister(int index) {
-        WordArray.set(_cachedRoots, index, Address.zero());
-        _usedIndices.clear(index);
-        _wordArrayLayout.setWord(teleRoots(), index, Word.zero());
+        WordArray.set(cachedRoots, index, Address.zero());
+        usedIndices.clear(index);
+        wordArrayLayout.setWord(teleRoots(), index, Word.zero());
     }
 
     /**
      * The remote location bits currently at a position in the Inspector root table.
      */
     Address getRawGrip(int index) {
-        return WordArray.get(_cachedRoots, index);
+        return WordArray.get(cachedRoots, index);
     }
 
     /**
      * Flush local cache; copy remote contents of Inspectors' root table into Inspector's local cache.
      */
     void refresh() {
-        final int numberOfIndices = _usedIndices.length();
+        final int numberOfIndices = usedIndices.length();
         for (int i = 0; i < numberOfIndices; i++) {
-            WordArray.set(_cachedRoots, i, _wordArrayLayout.getWord(teleRoots(), i).asAddress());
+            WordArray.set(cachedRoots, i, wordArrayLayout.getWord(teleRoots(), i).asAddress());
         }
     }
 

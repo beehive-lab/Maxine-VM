@@ -39,8 +39,8 @@ import com.sun.max.vm.prototype.*;
  */
 public class TestTeleVM {
 
-    private static final String _TELE_LIBRARY_NAME = "tele";
-    private static TeleVM _teleVM = null;
+    private static final String TELE_LIBRARY_NAME = "tele";
+    private static TeleVM teleVM = null;
 
     public static TeleVM create() {
         final Options options = new Options();
@@ -51,7 +51,7 @@ public class TestTeleVM {
         classpathPrefix = classpathPrefix.prepend(bootJar.getAbsolutePath());
         final Classpath classpath = Classpath.fromSystem().prepend(classpathPrefix);
         PrototypeClassLoader.setClasspath(classpath);
-        Prototype.loadLibrary(_TELE_LIBRARY_NAME);
+        Prototype.loadLibrary(TELE_LIBRARY_NAME);
         final File projectDirectory = JavaProject.findVcsProjectDirectory();
         final String vmArguments =
             "-verbose:class " +
@@ -59,19 +59,19 @@ public class TestTeleVM {
             projectDirectory.toString() + "/bin " +
             "test.com.sun.max.tele.HelloWorld";
 
-        options._debugOption.setValue(Boolean.TRUE);
-        options._bootImageFileOption.setValue(BinaryImageGenerator.getDefaultBootImageFilePath());
-        options._sourcepathOption.setValue(Arrays.asList(JavaProject.getSourcePath(true).toStringArray()));
-        options._vmArguments.setValue(vmArguments);
+        options.debugOption.setValue(Boolean.TRUE);
+        options.bootImageFileOption.setValue(BinaryImageGenerator.getDefaultBootImageFilePath());
+        options.sourcepathOption.setValue(Arrays.asList(JavaProject.getSourcePath(true).toStringArray()));
+        options.vmArguments.setValue(vmArguments);
 
         try {
-            _teleVM = TeleVM.create(options);
+            teleVM = TeleVM.create(options);
         } catch (BootImageException e) {
             System.out.println("Failed to load boot image " + BinaryImageGenerator.getDefaultBootImageFilePath().toString());
             e.printStackTrace();
         }
 
-        return _teleVM;
+        return teleVM;
     }
 
     public static void main(String[] argv) {

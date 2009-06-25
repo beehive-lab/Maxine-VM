@@ -27,23 +27,23 @@ import com.sun.max.vm.type.*;
  */
 class MillMethod {
 
-    final int _modifiers;
-    final int _nameIndex;
-    final int _descriptorIndex;
-    final MillCode _code;
-    final MillClassConstant[] _exceptions;
-    final int _numberOfBytes;
-    final MillMethod _next;
+    final int modifiers;
+    final int nameIndex;
+    final int descriptorIndex;
+    final MillCode code;
+    final MillClassConstant[] exceptions;
+    final int numberOfBytes;
+    final MillMethod next;
 
     MillMethod(MillClass millClass, int modifiers, String name, SignatureDescriptor signatureDescriptor, MillCode code, MillClassConstant[] exceptions) {
-        this._modifiers = modifiers;
-        this._nameIndex = millClass.makeUtf8Constant(name)._index;
-        this._descriptorIndex = millClass.makeUtf8Constant(signatureDescriptor.toString())._index;
-        this._code = code;
-        this._exceptions = exceptions;
-        this._numberOfBytes = 8 + 14 + code.nBytes() + 4 + ((exceptions.length > 0) ? 8 + (2 * exceptions.length) : 0);
-        this._next = millClass._methodList;
-        millClass._methodList = this;
+        this.modifiers = modifiers;
+        this.nameIndex = millClass.makeUtf8Constant(name).index;
+        this.descriptorIndex = millClass.makeUtf8Constant(signatureDescriptor.toString()).index;
+        this.code = code;
+        this.exceptions = exceptions;
+        this.numberOfBytes = 8 + 14 + code.nBytes() + 4 + ((exceptions.length > 0) ? 8 + (2 * exceptions.length) : 0);
+        this.next = millClass.methodList;
+        millClass.methodList = this;
     }
 
 }

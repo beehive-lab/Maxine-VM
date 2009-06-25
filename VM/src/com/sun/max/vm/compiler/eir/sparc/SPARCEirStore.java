@@ -33,7 +33,7 @@ import com.sun.max.vm.type.*;
 public final class SPARCEirStore extends SPARCEirPointerOperation {
 
     private static PoolSet<EirLocationCategory> valueLocationCategories(Kind kind) {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case FLOAT:
             case DOUBLE:
                 return F;
@@ -77,7 +77,7 @@ public final class SPARCEirStore extends SPARCEirPointerOperation {
 
 
     static void emit(SPARCEirTargetEmitter emitter, Kind kind, EirRegister value,  SPARCEirRegister.GeneralPurpose pointerRegister,  SPARCEirRegister.GeneralPurpose offsetRegister) {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case BYTE:
             case BOOLEAN:
                 emitter.assembler().stb(toGeneralRegister(value).as(), pointerRegister.as(), offsetRegister.as());
@@ -108,7 +108,7 @@ public final class SPARCEirStore extends SPARCEirPointerOperation {
 
     static void emit(SPARCEirTargetEmitter emitter, Kind kind, EirRegister value,  SPARCEirRegister.GeneralPurpose pointerRegister, int simm13) {
         assert isSimm13(simm13);
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case BYTE:
             case BOOLEAN:
                 emitter.assembler().stb(toGeneralRegister(value).as(), pointerRegister.as(), simm13);
@@ -139,17 +139,17 @@ public final class SPARCEirStore extends SPARCEirPointerOperation {
 
     @Override
     protected void emit(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose pointerRegister,  SPARCEirRegister.GeneralPurpose offsetRegister) {
-        emit(emitter, kind(), (EirRegister) destinationLocation(), pointerRegister, offsetRegister);
+        emit(emitter, kind, (EirRegister) destinationLocation(), pointerRegister, offsetRegister);
     }
 
     @Override
     protected void emit(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose pointerRegister, int simm13) {
-        emit(emitter, kind(), (EirRegister) destinationLocation(), pointerRegister, simm13);
+        emit(emitter, kind, (EirRegister) destinationLocation(), pointerRegister, simm13);
     }
 
     @Override
     public String toString() {
-        return "store-" + kind().character() + " " + addressString() + " := " + valueOperand();
+        return "store-" + kind.character + " " + addressString() + " := " + valueOperand();
     }
 
 }

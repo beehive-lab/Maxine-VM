@@ -30,8 +30,8 @@ import java.util.*;
  */
 public class WeakReferenceTest03 {
 
-    private static ReferenceQueue<T> _refQueue = new ReferenceQueue<T>();
-    private static int _count;
+    private static ReferenceQueue<T> refQueue = new ReferenceQueue<T>();
+    private static int count;
 
     public static void main(String[] args) {
         for (int i = 0; i < 5; i++) {
@@ -40,7 +40,7 @@ public class WeakReferenceTest03 {
             t = null;
             System.gc();
             NT q;
-            while ((q = (NT) _refQueue.poll()) == null) {
+            while ((q = (NT) refQueue.poll()) == null) {
                 // do nothing.
             }
             System.out.println("q = " + q);
@@ -49,32 +49,32 @@ public class WeakReferenceTest03 {
 
     static class T {
 
-        private NT _native;
-        private int _id = _count++;
+        private NT nt;
+        private int id = count++;
 
         T() {
-            _native = new NT(this);
+            nt = new NT(this);
         }
 
         @Override
         public String toString() {
-            return "a T #" + _id;
+            return "a T #" + id;
         }
     }
 
     static class NT extends WeakReference<T> {
 
-        private static List<NT> _refList = new ArrayList<NT>();
-        private int _id = _count++;
+        private static List<NT> refList = new ArrayList<NT>();
+        private int id = count++;
 
         NT(T t) {
-            super(t, _refQueue);
-            _refList.add(this);
+            super(t, refQueue);
+            refList.add(this);
         }
 
         @Override
         public String toString() {
-            return "a T #" + _id;
+            return "a T #" + id;
         }
     }
 }

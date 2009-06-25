@@ -45,7 +45,7 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
      */
     private static final   int [] DEFAULT_BELT_HEAP_PERCENTAGE = new int[] {10, 40, 50};
 
-    protected static BeltwayGenerationalCollector _beltCollectorGenerational = new BeltwayGenerationalCollector();
+    protected static BeltwayGenerationalCollector beltCollectorGenerational = new BeltwayGenerationalCollector();
 
     public BeltwayHeapSchemeGenerational(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -57,27 +57,27 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
         if (phase == MaxineVM.Phase.PRISTINE) {
             final Size heapSize = calculateHeapSize();
             final Address address = allocateMemory(heapSize);
-            _beltwayConfiguration.initializeBeltWayConfiguration(address.roundedUpBy(BeltwayConfiguration.TLAB_SIZE.toInt()),
+            beltwayConfiguration.initializeBeltWayConfiguration(address.roundedUpBy(BeltwayConfiguration.TLAB_SIZE.toInt()),
                 heapSize.roundedUpBy(BeltwayConfiguration.TLAB_SIZE.toInt()).asSize(), DEFAULT_BELT_HEAP_PERCENTAGE.length,
                 DEFAULT_BELT_HEAP_PERCENTAGE);
-            _beltManager.initializeBelts();
+            beltManager.initializeBelts();
             if (Heap.verbose()) {
-                _beltManager.printBeltsInfo();
+                beltManager.printBeltsInfo();
             }
-            final Size coveredRegionSize = _beltManager.getEnd().minus(Heap.bootHeapRegion().start()).asSize();
-            _cardRegion.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize));
-            _sideTable.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize).plus(_cardRegion.cardTableSize()).roundedUpBy(
-                            Platform.target().pageSize()));
-            BeltwayCardRegion.switchToRegularCardTable(_cardRegion.cardTableBase().asPointer());
+            final Size coveredRegionSize = beltManager.getEnd().minus(Heap.bootHeapRegion().start()).asSize();
+            cardRegion.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize));
+            sideTable.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize).plus(cardRegion.cardTableSize()).roundedUpBy(
+                            Platform.target().pageSize));
+            BeltwayCardRegion.switchToRegularCardTable(cardRegion.cardTableBase().asPointer());
             TeleHeapInfo.registerMemoryRegions(getEdenSpace(), getToSpace(), getMatureSpace());
         } else if (phase == MaxineVM.Phase.STARTING) {
-            _collectorThread = new BeltwayStopTheWorldDaemon("GC", _beltCollector);
+            collectorThread = new BeltwayStopTheWorldDaemon("GC", beltCollector);
         } else if (phase == MaxineVM.Phase.RUNNING) {
-            _beltCollectorGenerational.setBeltwayHeapScheme(this);
-            _beltCollector.setRunnable(_beltCollectorGenerational);
-            _heapVerifier.initialize(this);
-            _heapVerifier.getRootsVerifier().setFromSpace(BeltManager.getApplicationHeap());
-            _heapVerifier.getRootsVerifier().setToSpace(getMatureSpace());
+            beltCollectorGenerational.setBeltwayHeapScheme(this);
+            beltCollector.setRunnable(beltCollectorGenerational);
+            heapVerifier.initialize(this);
+            heapVerifier.getRootsVerifier().setFromSpace(BeltManager.getApplicationHeap());
+            heapVerifier.getRootsVerifier().setToSpace(getMatureSpace());
             if (Heap.verbose()) {
                 HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "EdenGC", "ToSpaceGC", "MatureSpaceGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "CardScan", "Scavenge");
             }
@@ -86,17 +86,17 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
 
     @INLINE
     public final Belt getEdenSpace() {
-        return _beltManager.getBelt(0);
+        return beltManager.getBelt(0);
     }
 
     @INLINE
     public final Belt getToSpace() {
-        return _beltManager.getBelt(1);
+        return beltManager.getBelt(1);
     }
 
     @INLINE
     public final Belt getMatureSpace() {
-        return _beltManager.getBelt(2);
+        return beltManager.getBelt(2);
     }
 
     /**
@@ -112,44 +112,44 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
         if (!MaxineVM.isRunning()) {
             return bumpAllocateSlowPath(getEdenSpace(), size);
         }
-        if (BeltwayConfiguration._useTLABS) {
+        if (BeltwayConfiguration.useTLABS) {
             return tlabAllocate(getEdenSpace(), size);
         }
         return heapAllocate(getEdenSpace(), size);
     }
 
     public synchronized boolean collectGarbage(Size requestedFreeSpace) {
-        if (_outOfMemory) {
+        if (outOfMemory) {
             return false;
         }
-        _beltCollector.setRunnable(_beltCollectorGenerational.getMinorGC());
-        _collectorThread.execute();
+        beltCollector.setRunnable(beltCollectorGenerational.getMinorGC());
+        collectorThread.execute();
 
         if (Heap.verbose()) {
             HeapStatistics.incrementEdenCollections();
         }
         if (getToSpace().getRemainingMemorySize().lessEqual(getEdenSpace().size())) {
-            _beltCollector.setRunnable(_beltCollectorGenerational.getToGC());
-            _collectorThread.execute();
+            beltCollector.setRunnable(beltCollectorGenerational.getToGC());
+            collectorThread.execute();
 
             if (Heap.verbose()) {
                 HeapStatistics.incrementToSpaceCollections();
             }
             if (getMatureSpace().getRemainingMemorySize().lessEqual(getToSpace().size().dividedBy(2))) {
-                _beltCollector.setRunnable(_beltCollectorGenerational.getMajorGC());
-                _collectorThread.execute();
+                beltCollector.setRunnable(beltCollectorGenerational.getMajorGC());
+                collectorThread.execute();
 
                 if (Heap.verbose()) {
                     HeapStatistics.incrementMatureCollections();
                 }
                 if (getMatureSpace().getRemainingMemorySize().lessEqual(getToSpace().size().dividedBy(2))) {
-                    throw _outOfMemoryError;
+                    throw outOfMemoryError;
                 }
 
             }
         }
 
-        _cardRegion.clearAllCards();
+        cardRegion.clearAllCards();
         return true;
     }
 

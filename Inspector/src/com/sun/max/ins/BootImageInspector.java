@@ -37,31 +37,31 @@ import com.sun.max.vm.*;
 public final class BootImageInspector extends Inspector  implements TableColumnViewPreferenceListener {
 
     // Set to null when inspector closed.
-    private static BootImageInspector _bootImageInspector;
+    private static BootImageInspector bootImageInspector;
 
     /**
      * Displays the (singleton) BootImage inspector.
      * @return  The BootImage inspector, possibly newly created.
      */
     public static BootImageInspector make(Inspection inspection) {
-        if (_bootImageInspector == null) {
-            _bootImageInspector = new BootImageInspector(inspection);
+        if (bootImageInspector == null) {
+            bootImageInspector = new BootImageInspector(inspection);
         }
-        return _bootImageInspector;
+        return bootImageInspector;
     }
 
-    private final SaveSettingsListener _saveSettingsListener = createGeometrySettingsClient(this, "bootImageInspector");
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "bootImageInspector");
 
     // This is a singleton viewer, so only use a single level of view preferences.
-    private final BootImageViewPreferences _viewPreferences;
+    private final BootImageViewPreferences viewPreferences;
 
-    private BootImageTable _table;
+    private BootImageTable table;
 
     private BootImageInspector(Inspection inspection) {
         super(inspection);
         Trace.begin(1, tracePrefix() + "initializing");
-        _viewPreferences = BootImageViewPreferences.globalPreferences(inspection());
-        _viewPreferences.addListener(this);
+        viewPreferences = BootImageViewPreferences.globalPreferences(inspection());
+        viewPreferences.addListener(this);
         createFrame(null);
         Trace.end(1, tracePrefix() + "initializing");
     }
@@ -73,18 +73,18 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
 
     @Override
     protected void createView() {
-        _table = new BootImageTable(inspection(), _viewPreferences);
-        frame().setContentPane(new InspectorScrollPane(inspection(), _table));
+        table = new BootImageTable(inspection(), viewPreferences);
+        frame().setContentPane(new InspectorScrollPane(inspection(), table));
     }
 
     @Override
     protected SaveSettingsListener saveSettingsListener() {
-        return _saveSettingsListener;
+        return saveSettingsListener;
     }
 
     @Override
     protected InspectorTable getTable() {
-        return _table;
+        return table;
     }
 
     @Override
@@ -97,7 +97,7 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
         return new InspectorAction(inspection(), "View Options") {
             @Override
             public void procedure() {
-                new TableColumnVisibilityPreferences.Dialog<BootImageColumnKind>(inspection(), "Boot Image View Options", _viewPreferences);
+                new TableColumnVisibilityPreferences.Dialog<BootImageColumnKind>(inspection(), "Boot Image View Options", viewPreferences);
             }
         };
     }
@@ -109,7 +109,7 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
 
     @Override
     protected void refreshView(boolean force) {
-        _table.refresh(force);
+        table.refresh(force);
         super.refreshView(force);
     }
 
@@ -124,16 +124,16 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
     @Override
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing");
-        _bootImageInspector = null;
-        _viewPreferences.removeListener(this);
+        bootImageInspector = null;
+        viewPreferences.removeListener(this);
         super.inspectorClosing();
     }
 
     @Override
     public void vmProcessTerminated() {
         Trace.line(1, tracePrefix() + " closing - process terminated");
-        _bootImageInspector = null;
-        _viewPreferences.removeListener(this);
+        bootImageInspector = null;
+        viewPreferences.removeListener(this);
         dispose();
     }
 

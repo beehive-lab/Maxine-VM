@@ -56,24 +56,24 @@ public enum CompilationDirective {
     /**
      * The compiled method should be compiled using the JIT compiler.
      */
-    protected boolean _jitOnly;
+    protected boolean jitOnly;
 
     public boolean jitOnly() {
-        return _jitOnly;
+        return jitOnly;
     }
 
     /**
      * The compiled method should include trace instrumentation.
      */
-    protected boolean _traceInstrument;
+    protected boolean traceInstrument;
 
     public boolean traceInstrument() {
-        return _traceInstrument;
+        return traceInstrument;
     }
 
     private CompilationDirective(boolean jitOnly, boolean traceInstrument) {
-        _jitOnly = jitOnly;
-        _traceInstrument = traceInstrument;
+        this.jitOnly = jitOnly;
+        this.traceInstrument = traceInstrument;
     }
 
     public static int count() {

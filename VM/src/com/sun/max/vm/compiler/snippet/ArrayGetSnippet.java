@@ -151,7 +151,7 @@ public abstract class ArrayGetSnippet extends BuiltinsSnippet {
     }
 
     public static ArrayGetSnippet getSnippet(Kind kind) {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case BYTE:
                 return GetByte.SNIPPET;
             case CHAR:

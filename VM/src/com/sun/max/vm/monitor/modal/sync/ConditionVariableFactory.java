@@ -37,15 +37,15 @@ public abstract class ConditionVariableFactory {
      */
     public static final String CONDITIONVARIABLE_FACTORY_CLASS_PROPERTY_NAME = "max.conditionvariable.factory.class";
 
-    private static final ConditionVariableFactory _instance;
+    private static final ConditionVariableFactory instance;
 
     static {
         final String factoryClassName = System.getProperty(CONDITIONVARIABLE_FACTORY_CLASS_PROPERTY_NAME);
         if (factoryClassName == null) {
-            _instance = new NativeConditionVariableFactory();
+            instance = new NativeConditionVariableFactory();
         } else {
             try {
-                _instance = (ConditionVariableFactory) Class.forName(factoryClassName).newInstance();
+                instance = (ConditionVariableFactory) Class.forName(factoryClassName).newInstance();
             } catch (Exception exception) {
                 throw ProgramError.unexpected("Error instantiating " + factoryClassName, exception);
             }
@@ -69,13 +69,13 @@ public abstract class ConditionVariableFactory {
      * @return a particular subclass of a ConditionVariable
      */
     public static ConditionVariable create() {
-        return _instance.newConditionVariable();
+        return instance.newConditionVariable();
     }
 
     /**
      * Initialize the ConditionVariable implementation.
      */
     public static void initialize() {
-        _instance.initializeImpl();
+        instance.initializeImpl();
     }
 }

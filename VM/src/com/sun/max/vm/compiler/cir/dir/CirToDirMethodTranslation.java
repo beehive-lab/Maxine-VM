@@ -57,24 +57,24 @@ import com.sun.max.vm.type.*;
  */
 class CirToDirMethodTranslation {
 
-    private Kind _resultKind;
-    private final CirClosure _cirClosure;
-    private final DirGenerator _dirGenerator;
-    private final DirMethod _dirMethod;
+    private Kind resultKind;
+    private final CirClosure cirClosure;
+    private final DirGenerator dirGenerator;
+    private final DirMethod dirMethod;
 
     public CirToDirMethodTranslation(Kind resultKind, CirClosure cirClosure, DirMethod dirMethod, DirGenerator dirGenerator) {
-        _resultKind = resultKind;
-        _cirClosure = cirClosure;
-        _dirGenerator = dirGenerator;
-        _dirMethod = dirMethod;
+        this.resultKind = resultKind;
+        this.cirClosure = cirClosure;
+        this.dirGenerator = dirGenerator;
+        this.dirMethod = dirMethod;
     }
 
     /**
      * All generated blocks.
      */
-    private final GrowableDeterministicSet<DirBlock> _dirExceptionDispatchers = new LinkedIdentityHashSet<DirBlock>();
+    private final GrowableDeterministicSet<DirBlock> dirExceptionDispatchers = new LinkedIdentityHashSet<DirBlock>();
 
-    final CirVariableFactory _variableFactory = new CirVariableFactory();
+    final CirVariableFactory variableFactory = new CirVariableFactory();
 
     /**
      *  We regard every combination of a CIR closure and a continuation as a different
@@ -90,21 +90,21 @@ class CirToDirMethodTranslation {
      *  but we need to get to direct style somehow for the backend.
      */
     private class Translation {
-        final IrBlock.Role _role;
-        final CirClosure _closure;
-        final Translation _cc;
-        final Translation _ce;
-        final DirBlock _dirBlock;
+        final IrBlock.Role role;
+        final CirClosure closure;
+        final Translation cc;
+        final Translation ce;
+        final DirBlock dirBlock;
 
         Translation(IrBlock.Role role, CirClosure closure, Translation cc, Translation ce) {
-            _role = role;
-            _closure = closure;
-            _cc = cc;
-            _ce = ce;
+            this.role = role;
+            this.closure = closure;
+            this.cc = cc;
+            this.ce = ce;
             if (role == IrBlock.Role.EXCEPTION_DISPATCHER) {
-                _dirBlock = new DirCatchBlock(cirToDirVariable(_closure.parameters()[0]));
+                this.dirBlock = new DirCatchBlock(cirToDirVariable(closure.parameters()[0]));
             } else {
-                _dirBlock = new DirBlock(role);
+                this.dirBlock = new DirBlock(role);
             }
         }
 
@@ -112,36 +112,36 @@ class CirToDirMethodTranslation {
         public boolean equals(Object other) {
             if (other instanceof Translation) {
                 final Translation translation = (Translation) other;
-                return _closure == translation._closure && _cc == translation._cc && _ce == translation._ce;
+                return closure == translation.closure && cc == translation.cc && ce == translation.ce;
             }
             return false;
         }
 
         @Override
         public int hashCode() {
-            return _closure.hashCode();
+            return closure.hashCode();
         }
 
         @Override
         public String toString() {
             final CharArrayWriter charArrayWriter = new CharArrayWriter();
             final IndentWriter writer = new IndentWriter(charArrayWriter);
-            _dirBlock.printTo(writer);
+            dirBlock.printTo(writer);
             return charArrayWriter.toString();
         }
     }
 
-    private final Map<Translation, Translation> _translations = new HashMap<Translation, Translation>();
+    private final Map<Translation, Translation> translations = new HashMap<Translation, Translation>();
 
     private Translation makeTranslation(IrBlock.Role role, CirClosure closure, Translation cc, Translation ce) {
         final Translation newTranslation = new Translation(role, closure, cc, ce);
-        final Translation oldTranslation = _translations.get(newTranslation);
+        final Translation oldTranslation = translations.get(newTranslation);
         if (oldTranslation != null) {
-            assert oldTranslation._role == role : "old = " + oldTranslation._role + " new = " + role;
+            assert oldTranslation.role == role : "old = " + oldTranslation.role + " new = " + role;
             return oldTranslation;
         }
-        _translations.put(newTranslation, newTranslation);
-        _translationList.append(newTranslation);
+        translations.put(newTranslation, newTranslation);
+        translationList.append(newTranslation);
         return newTranslation;
     }
 
@@ -154,22 +154,22 @@ class CirToDirMethodTranslation {
     }
 
     private Translation makeNormalTranslation(CirValue continuation, Translation translation) {
-        return makeTranslation(IrBlock.Role.NORMAL, valueToClosure(continuation), translation._cc, translation._ce);
+        return makeTranslation(IrBlock.Role.NORMAL, valueToClosure(continuation), translation.cc, translation.ce);
     }
 
     private Translation makeExceptionDispatcherTranslation(CirValue continuation, Translation translation) {
-        final Translation exceptionDispatcherTranslation = makeTranslation(IrBlock.Role.EXCEPTION_DISPATCHER, valueToClosure(continuation), translation._cc, translation._ce);
-        _dirExceptionDispatchers.add(exceptionDispatcherTranslation._dirBlock);
+        final Translation exceptionDispatcherTranslation = makeTranslation(IrBlock.Role.EXCEPTION_DISPATCHER, valueToClosure(continuation), translation.cc, translation.ce);
+        dirExceptionDispatchers.add(exceptionDispatcherTranslation.dirBlock);
         return exceptionDispatcherTranslation;
     }
 
-    private final Map<CirVariable, DirVariable> _cirVariableToDirVariable = new IdentityHashMap<CirVariable, DirVariable>();
+    private final Map<CirVariable, DirVariable> cirVariableToDirVariable = new IdentityHashMap<CirVariable, DirVariable>();
 
     DirVariable cirToDirVariable(CirVariable cirVariable) {
-        DirVariable dirVariable = _cirVariableToDirVariable.get(cirVariable);
+        DirVariable dirVariable = cirVariableToDirVariable.get(cirVariable);
         if (dirVariable == null) {
             dirVariable = new DirVariable(cirVariable.kind(), cirVariable.serial());
-            _cirVariableToDirVariable.put(cirVariable, dirVariable);
+            cirVariableToDirVariable.put(cirVariable, dirVariable);
         }
         return dirVariable;
     }
@@ -199,7 +199,7 @@ class CirToDirMethodTranslation {
         });
     }
 
-    private final MapFunction<CirValue, DirValue> _mapCirValueToDirValue = new MapFunction<CirValue, DirValue>() {
+    private final MapFunction<CirValue, DirValue> mapCirValueToDirValue = new MapFunction<CirValue, DirValue>() {
         public DirValue map(CirValue cirValue) {
             return cirToDirValue(cirValue);
         }
@@ -207,22 +207,22 @@ class CirToDirMethodTranslation {
 
     private void generateDirReturn(Translation translation, CirValue[] cirArguments) {
         if (cirArguments.length == 0) {
-            translation._dirBlock.instructions().append(new DirReturn(DirConstant.VOID));
+            translation.dirBlock.instructions().append(new DirReturn(DirConstant.VOID));
         } else {
             assert cirArguments.length == 1;
-            translation._dirBlock.instructions().append(new DirReturn(cirToDirValue(cirArguments[0])));
+            translation.dirBlock.instructions().append(new DirReturn(cirToDirValue(cirArguments[0])));
         }
     }
 
     private void generateDirThrow(Translation translation, CirValue[] cirArguments) {
         assert cirArguments.length == 1;
-        translation._dirBlock.instructions().append(new DirThrow(cirToDirValue(cirArguments[0])));
+        translation.dirBlock.instructions().append(new DirThrow(cirToDirValue(cirArguments[0])));
     }
 
     private void generateDirAssign(Translation translation, CirVariable cirVariable, DirValue dirValue) {
         final DirVariable dirVariable = cirToDirVariable(cirVariable);
         if (dirValue != dirVariable) {
-            translation._dirBlock.instructions().append(new DirAssign(dirVariable, dirValue));
+            translation.dirBlock.instructions().append(new DirAssign(dirVariable, dirValue));
         }
     }
 
@@ -236,12 +236,12 @@ class CirToDirMethodTranslation {
     }
 
     private void generateDirGoto(Translation fromTranslation, Translation toTranslation) {
-        fromTranslation._dirBlock.instructions().append(new DirGoto(toTranslation._dirBlock));
-        link(fromTranslation._dirBlock, toTranslation._dirBlock);
+        fromTranslation.dirBlock.instructions().append(new DirGoto(toTranslation.dirBlock));
+        link(fromTranslation.dirBlock, toTranslation.dirBlock);
     }
 
     private void generateDirGoto(Translation fromTranslation, Translation toTranslation, DirValue dirArgument) {
-        final CirVariable[] parameters = toTranslation._closure.parameters();
+        final CirVariable[] parameters = toTranslation.closure.parameters();
         // TODO: temporary fix: I do know not how we come here with parameters of length 1 when cirArguments is empty.
         // I assume here that the combination is legal, but that the test is incomplete.
         if (parameters.length == 1 && dirArgument != null) {
@@ -260,70 +260,69 @@ class CirToDirMethodTranslation {
     private DirBlock translateSwitchTarget(Translation translation, CirValue continuation) {
         if (!CirVariable.class.isInstance(continuation)) {
             final Translation targetTranslation = makeNormalTranslation(continuation, translation);
-            link(translation._dirBlock, targetTranslation._dirBlock);
-            return targetTranslation._dirBlock;
+            link(translation.dirBlock, targetTranslation.dirBlock);
+            return targetTranslation.dirBlock;
         }
-        if (translation._cc != null) {
-            link(translation._dirBlock, translation._cc._dirBlock);
-            return translation._cc._dirBlock;
+        if (translation.cc != null) {
+            link(translation.dirBlock, translation.cc.dirBlock);
+            return translation.cc.dirBlock;
         }
-        final DirBlock returnBlock = getReturnBlock();
-        link(translation._dirBlock, returnBlock);
-        return returnBlock;
+        final DirBlock returnBlk = getReturnBlock();
+        link(translation.dirBlock, returnBlk);
+        return returnBlk;
     }
 
     private void generateDirSwitch(Translation translation, CirSwitch cirSwitch, CirValue[] cirArguments) {
-        assert cirArguments.length >= 4;
         final CirValue[] cirMatches = Arrays.subArray(cirArguments, 1, cirSwitch.numberOfMatches());
-        final DirValue[] dirMatches = Arrays.map(cirMatches, DirValue.class, _mapCirValueToDirValue);
+        final DirValue[] dirMatches = Arrays.map(cirMatches, DirValue.class, mapCirValueToDirValue);
         final DirBlock[] targetBlocks = new DirBlock[cirSwitch.numberOfMatches()];
         for (int i = 0; i < targetBlocks.length; i++) {
             targetBlocks[i] = translateSwitchTarget(translation, cirArguments[1 + cirSwitch.numberOfMatches() + i]);
         }
         final DirBlock defaultTargetBlock = translateSwitchTarget(translation, cirArguments[cirArguments.length - 1]);
-        translation._dirBlock.instructions().append(new DirSwitch(cirSwitch.comparisonKind(), cirSwitch.valueComparator(), cirToDirValue(cirArguments[0]), dirMatches, targetBlocks, defaultTargetBlock));
+        translation.dirBlock.instructions().append(new DirSwitch(cirSwitch.comparisonKind(), cirSwitch.valueComparator(), cirToDirValue(cirArguments[0]), dirMatches, targetBlocks, defaultTargetBlock));
     }
 
-    private final Map<CirJavaFrameDescriptor, DirJavaFrameDescriptor> _cirToDirJavaFrameDescriptor =
+    private final Map<CirJavaFrameDescriptor, DirJavaFrameDescriptor> cirToDirJavaFrameDescriptor =
         new HashMap<CirJavaFrameDescriptor, DirJavaFrameDescriptor>();
 
     private DirJavaFrameDescriptor cirToDirJavaFrameDescriptor(CirJavaFrameDescriptor cirJavaFrameDescriptor) {
         if (cirJavaFrameDescriptor == null) {
             return null;
         }
-        DirJavaFrameDescriptor dirJavaFrameDescriptor = _cirToDirJavaFrameDescriptor.get(cirJavaFrameDescriptor);
+        DirJavaFrameDescriptor dirJavaFrameDescriptor = cirToDirJavaFrameDescriptor.get(cirJavaFrameDescriptor);
         if (dirJavaFrameDescriptor == null) {
             dirJavaFrameDescriptor = new DirJavaFrameDescriptor(cirToDirJavaFrameDescriptor(cirJavaFrameDescriptor.parent()),
                                                                        cirJavaFrameDescriptor.classMethodActor(),
                                                                        cirJavaFrameDescriptor.bytecodePosition(),
-                                                                       cirToDirValues(cirJavaFrameDescriptor.locals()),
-                                                                       cirToDirValues(cirJavaFrameDescriptor.stackSlots()));
-            _cirToDirJavaFrameDescriptor.put(cirJavaFrameDescriptor, dirJavaFrameDescriptor);
+                                                                       cirToDirValues(cirJavaFrameDescriptor.locals),
+                                                                       cirToDirValues(cirJavaFrameDescriptor.stackSlots));
+            cirToDirJavaFrameDescriptor.put(cirJavaFrameDescriptor, dirJavaFrameDescriptor);
         }
         return dirJavaFrameDescriptor;
     }
 
-    private DirVariable _exceptionVariable;
+    private DirVariable exceptionVariable;
 
     private DirVariable getExceptionVariable() {
-        if (_exceptionVariable == null) {
-            _exceptionVariable = new DirVariable(Kind.REFERENCE, -1);
+        if (exceptionVariable == null) {
+            exceptionVariable = new DirVariable(Kind.REFERENCE, -1);
         }
-        return _exceptionVariable;
+        return exceptionVariable;
     }
 
-    private DirVariable _returnVariable;
+    private DirVariable returnVariable;
 
     private DirVariable getReturnVariable() {
-        if (_returnVariable == null && _resultKind != Kind.VOID) {
-            _returnVariable = new DirVariable(_resultKind, -1);
+        if (returnVariable == null && resultKind != Kind.VOID) {
+            returnVariable = new DirVariable(resultKind, -1);
         }
-        return _returnVariable;
+        return returnVariable;
     }
 
     private DirVariable getResultVariable(Translation cc) {
         if (cc != null) {
-            final CirVariable[] parameters = cc._closure.parameters();
+            final CirVariable[] parameters = cc.closure.parameters();
             if (parameters.length == 1) {
                 return cirToDirVariable(parameters[0]);
             }
@@ -333,14 +332,14 @@ class CirToDirMethodTranslation {
         return getReturnVariable();
     }
 
-    private DirBlock _returnBlock;
+    private DirBlock returnBlock;
 
     private DirBlock getReturnBlock() {
-        if (_returnBlock == null) {
-            _returnBlock = new DirBlock(IrBlock.Role.NORMAL);
-            _returnBlock.instructions().append(new DirReturn(getReturnVariable()));
+        if (returnBlock == null) {
+            returnBlock = new DirBlock(IrBlock.Role.NORMAL);
+            returnBlock.instructions().append(new DirReturn(getReturnVariable()));
         }
-        return _returnBlock;
+        return returnBlock;
     }
 
     /**
@@ -365,7 +364,7 @@ class CirToDirMethodTranslation {
          * Translates a CIR call.
          *
          * @param translation the translation to be processed
-         * @param cirProcedure the procedure applied by the body of the {@linkplain Translation#_closure closure} being translated
+         * @param cirProcedure the procedure applied by the body of the {@linkplain Translation#closure closure} being translated
          * @param cirArguments the arguments of the procedure application
          * @param isNativeCall specifies if this is a call to native code (i.e. one that crosses an ABI boundary)
          * @param javaFrameDescriptor the frame descriptor for the call (may be null)
@@ -375,10 +374,10 @@ class CirToDirMethodTranslation {
             Translation cc;
             DirVariable result;
             if (normalContinuation instanceof CirNormalContinuationParameter) {
-                cc  = translation._cc;
+                cc  = translation.cc;
                 result = getResultVariable(cc);
             } else if (normalContinuation instanceof CirExceptionContinuationParameter) {
-                cc = translation._ce;
+                cc = translation.ce;
                 result = getExceptionVariable();
             } else if (normalContinuation == CirValue.UNDEFINED) {
                 assert cirProcedure == CirSnippet.get(NonFoldableSnippet.RaiseThrowable.SNIPPET);
@@ -393,59 +392,59 @@ class CirToDirMethodTranslation {
 
             final DirCatchBlock catchBlock;
             if (exceptionContinuation instanceof CirExceptionContinuationParameter) {
-                if (translation._ce == null) {
+                if (translation.ce == null) {
                     catchBlock = null;
                 } else {
-                    catchBlock = (DirCatchBlock) translation._ce._dirBlock;
+                    catchBlock = (DirCatchBlock) translation.ce.dirBlock;
                 }
             } else if (exceptionContinuation instanceof CirNormalContinuationParameter) {
-                if (translation._cc == null) {
+                if (translation.cc == null) {
                     catchBlock = null;
                 } else {
-                    catchBlock = (DirCatchBlock) translation._cc._dirBlock;
+                    catchBlock = (DirCatchBlock) translation.cc.dirBlock;
                 }
             } else if (exceptionContinuation == CirValue.UNDEFINED) {
                 catchBlock = null;
             } else {
                 assert exceptionContinuation != null;
-                catchBlock = (DirCatchBlock) makeExceptionDispatcherTranslation(exceptionContinuation, translation)._dirBlock;
+                catchBlock = (DirCatchBlock) makeExceptionDispatcherTranslation(exceptionContinuation, translation).dirBlock;
             }
 
             final CirValue[] a = Arrays.subArray(cirArguments, 0, cirArguments.length - 2); // clip the exception arguments
-            final DirValue[] dirArguments = Arrays.map(a, DirValue.class, _mapCirValueToDirValue);
+            final DirValue[] dirArguments = Arrays.map(a, DirValue.class, mapCirValueToDirValue);
 
-            translation._dirBlock.instructions().append(createCallInstruction(result, cirProcedure, dirArguments, catchBlock, isNativeCall, javaFrameDescriptor));
+            translation.dirBlock.instructions().append(createCallInstruction(result, cirProcedure, dirArguments, catchBlock, isNativeCall, javaFrameDescriptor));
 
             if (cc != null) {
                 generateDirGoto(translation, cc, result);
             } else if (normalContinuation instanceof CirNormalContinuationParameter) {
-                translation._dirBlock.instructions().append(new DirReturn(result));
+                translation.dirBlock.instructions().append(new DirReturn(result));
             } else {
                 if (normalContinuation == CirValue.UNDEFINED) {
                     assert cirProcedure == CirSnippet.get(NonFoldableSnippet.RaiseThrowable.SNIPPET);
                 } else {
                     assert normalContinuation instanceof CirExceptionContinuationParameter;
-                    translation._dirBlock.instructions().append(new DirThrow(result));
+                    translation.dirBlock.instructions().append(new DirThrow(result));
                 }
             }
         }
     }
 
-    private final CallGenerator<CirValue> _methodCallGenerator = new CallGenerator<CirValue>() {
+    private final CallGenerator<CirValue> methodCallGenerator = new CallGenerator<CirValue>() {
         @Override
         protected DirInstruction createCallInstruction(DirVariable result, CirValue cirMethod, DirValue[] arguments, DirCatchBlock catchBlock, boolean isNativeCall, DirJavaFrameDescriptor javaFrameDescriptor) {
             return new DirMethodCall(result, cirToDirValue(cirMethod), arguments, catchBlock, isNativeCall, javaFrameDescriptor);
         }
     };
 
-    private final CallGenerator<CirBuiltin> _builtinCallGenerator = new CallGenerator<CirBuiltin>() {
+    private final CallGenerator<CirBuiltin> builtinCallGenerator = new CallGenerator<CirBuiltin>() {
         @Override
         protected DirInstruction createCallInstruction(DirVariable result, CirBuiltin cirBuiltin, DirValue[] arguments, DirCatchBlock catchBlock, boolean isNativeCall, DirJavaFrameDescriptor javaFrameDescriptor) {
             return new DirBuiltinCall(result, cirBuiltin.builtin(), arguments, catchBlock, javaFrameDescriptor);
         }
     };
 
-    private final CallGenerator<CirBuiltin> _safepointGenerator = new CallGenerator<CirBuiltin>() {
+    private final CallGenerator<CirBuiltin> safepointGenerator = new CallGenerator<CirBuiltin>() {
         @Override
         protected DirInstruction createCallInstruction(DirVariable result, CirBuiltin cirBuiltin, DirValue[] arguments, DirCatchBlock catchBlock, boolean isNativeCall, DirJavaFrameDescriptor javaFrameDescriptor) {
             assert javaFrameDescriptor != null;
@@ -453,15 +452,15 @@ class CirToDirMethodTranslation {
         }
     };
 
-    private void translateClosureCall(Translation translation, CirClosure cirClosure, CirValue[] cirArguments) {
-        final int temporaryVariableInsertionIndex = translation._dirBlock.instructions().length();
-        final CirVariable[] cirParameters = cirClosure.parameters();
+    private void translateClosureCall(Translation translation, CirClosure closure, CirValue[] cirArguments) {
+        final int temporaryVariableInsertionIndex = translation.dirBlock.instructions().length();
+        final CirVariable[] cirParameters = closure.parameters();
 
         // Have to search for continuation variables among the parameters
         // because they are not necessarily present
         // and if they are present, then not necessarily at the end
-        Translation cc = translation._cc;
-        Translation ce = translation._ce;
+        Translation cc = translation.cc;
+        Translation ce = translation.ce;
         for (int i = 0; i < cirParameters.length; i++) {
             final CirVariable cirParameter = cirParameters[i];
             final CirValue cirArgument = cirArguments[i];
@@ -483,7 +482,7 @@ class CirToDirMethodTranslation {
                     final DirVariable dirTemporary = new DirVariable(cirArgument.kind(), -1);
 
                     // Prepend an assignment to a temp var to solve the ordering problem:
-                    translation._dirBlock.instructions().insert(temporaryVariableInsertionIndex, new DirAssign(dirTemporary, dirArgument));
+                    translation.dirBlock.instructions().insert(temporaryVariableInsertionIndex, new DirAssign(dirTemporary, dirArgument));
 
                     // Append an assignment from the temp var:
                     generateDirAssign(translation, cirParameter, dirTemporary);
@@ -492,32 +491,32 @@ class CirToDirMethodTranslation {
                 generateDirAssign(translation, cirParameter, cirArgument);
             }
         }
-        final Translation t = makeTranslation(IrBlock.Role.NORMAL, cirClosure, cc, ce);
+        final Translation t = makeTranslation(IrBlock.Role.NORMAL, closure, cc, ce);
         generateDirGoto(translation, t);
     }
 
     private void translate(Translation translation) {
-        final CirCall cirCall = translation._closure.body();
+        final CirCall cirCall = translation.closure.body();
         final CirValue cirProcedure = cirCall.procedure();
         final CirValue[] cirArguments = cirCall.arguments();
 
         if (cirProcedure instanceof CirVariable) {
             if (cirProcedure instanceof CirNormalContinuationParameter) {
-                if (translation._cc == null) {
+                if (translation.cc == null) {
                     generateDirReturn(translation, cirArguments);
                 } else {
-                    generateDirGoto(translation, translation._cc, cirArguments);
+                    generateDirGoto(translation, translation.cc, cirArguments);
                 }
             } else if (cirProcedure instanceof CirExceptionContinuationParameter) {
                 assert cirArguments.length == 1;
-                if (translation._ce  == null) {
+                if (translation.ce  == null) {
                     generateDirThrow(translation, cirArguments);
                 } else {
-                    generateDirGoto(translation, translation._ce, cirArguments);
+                    generateDirGoto(translation, translation.ce, cirArguments);
                 }
             } else {
                 final DirJavaFrameDescriptor dirJavaFrameDescriptor = cirToDirJavaFrameDescriptor(cirCall.javaFrameDescriptor());
-                _methodCallGenerator.generateCall(translation, cirProcedure, cirArguments, cirCall.isNative(), dirJavaFrameDescriptor);
+                methodCallGenerator.generateCall(translation, cirProcedure, cirArguments, cirCall.isNative(), dirJavaFrameDescriptor);
             }
         } else if (cirProcedure instanceof CirSwitch) {
             generateDirSwitch(translation, (CirSwitch) cirProcedure, cirArguments);
@@ -525,13 +524,13 @@ class CirToDirMethodTranslation {
             final CirBuiltin cirBuiltin = (CirBuiltin) cirProcedure;
             final DirJavaFrameDescriptor dirJavaFrameDescriptor = cirToDirJavaFrameDescriptor(cirCall.javaFrameDescriptor());
             if (cirBuiltin.builtin() == SafepointBuiltin.SoftSafepoint.BUILTIN || cirBuiltin.builtin() == SafepointBuiltin.HardSafepoint.BUILTIN) {
-                _safepointGenerator.generateCall(translation, cirBuiltin, cirArguments, false, dirJavaFrameDescriptor);
+                safepointGenerator.generateCall(translation, cirBuiltin, cirArguments, false, dirJavaFrameDescriptor);
             } else {
-                _builtinCallGenerator.generateCall(translation, cirBuiltin, cirArguments, false, dirJavaFrameDescriptor);
+                builtinCallGenerator.generateCall(translation, cirBuiltin, cirArguments, false, dirJavaFrameDescriptor);
             }
         } else if (cirProcedure instanceof CirMethod || cirProcedure instanceof CirConstant) {
             final DirJavaFrameDescriptor dirJavaFrameDescriptor = cirToDirJavaFrameDescriptor(cirCall.javaFrameDescriptor());
-            _methodCallGenerator.generateCall(translation, cirProcedure, cirArguments, cirCall.isNative(), dirJavaFrameDescriptor);
+            methodCallGenerator.generateCall(translation, cirProcedure, cirArguments, cirCall.isNative(), dirJavaFrameDescriptor);
         } else if (cirProcedure instanceof CirBlock) {
             final CirBlock cirBlock = (CirBlock) cirProcedure;
             if (cirBlock.numberOfCalls() > 1) {
@@ -545,11 +544,11 @@ class CirToDirMethodTranslation {
         }
     }
 
-    private final VariableSequence<Translation> _translationList = new ArrayListSequence<Translation>();
+    private final VariableSequence<Translation> translationList = new ArrayListSequence<Translation>();
 
     private void translate() {
-        while (!_translationList.isEmpty()) {
-            final Translation translation = _translationList.removeFirst();
+        while (!translationList.isEmpty()) {
+            final Translation translation = translationList.removeFirst();
             translate(translation);
         }
     }
@@ -606,7 +605,7 @@ class CirToDirMethodTranslation {
         }
     }
 
-    private int _serial = 0;
+    private int serial = 0;
 
     private void gatherMergedDirBlocks(DirBlock dirBlock, AppendableSequence<DirBlock> result) {
         final LinkedList<DirBlock> toDo = new LinkedList<DirBlock>();
@@ -616,8 +615,8 @@ class CirToDirMethodTranslation {
             if (block.serial() < 0) {
                 if (!block.isTrivial()) {
                     result.append(block);
-                    block.setSerial(_serial);
-                    _serial++;
+                    block.setSerial(serial);
+                    serial++;
                     assimilateSuccessors(block);
                     forwardTrivialGotos(block);
                 }
@@ -690,7 +689,7 @@ class CirToDirMethodTranslation {
      * @return DIR blocks generated from the CIR closure of the method
      */
     IndexedSequence<DirBlock> translateMethod() {
-        final Translation translation = makeTranslation(IrBlock.Role.NORMAL, _cirClosure, null, null);
+        final Translation translation = makeTranslation(IrBlock.Role.NORMAL, cirClosure, null, null);
         translate();
 
         final AppendableIndexedSequence<DirBlock> mergedBlocks = new ArrayListSequence<DirBlock>();
@@ -698,16 +697,16 @@ class CirToDirMethodTranslation {
         // but by gathering only the normal control flow first,
         // we end up with all the "normal" blocks at the beginning,
         // which is nicer later on for human consumption of DIR listings .
-        gatherMergedDirBlocks(translation._dirBlock, mergedBlocks);
+        gatherMergedDirBlocks(translation.dirBlock, mergedBlocks);
 
-        for (DirBlock exceptionDispatcher : _dirExceptionDispatchers) {
+        for (DirBlock exceptionDispatcher : dirExceptionDispatchers) {
             assert exceptionDispatcher.role() == IrBlock.Role.EXCEPTION_DISPATCHER;
             gatherMergedDirBlocks(exceptionDispatcher, mergedBlocks);
         }
 
-        _dirGenerator.notifyBeforeTransformation(_dirMethod, mergedBlocks, Transformation.BLOCK_UNIFICATION);
+        dirGenerator.notifyBeforeTransformation(dirMethod, mergedBlocks, Transformation.BLOCK_UNIFICATION);
         final IndexedSequence<DirBlock> unifiedBlocks = unifyBlocks(mergedBlocks);
-        _dirGenerator.notifyAfterTransformation(_dirMethod, mergedBlocks, Transformation.BLOCK_UNIFICATION);
+        dirGenerator.notifyAfterTransformation(dirMethod, mergedBlocks, Transformation.BLOCK_UNIFICATION);
 
         return unifiedBlocks;
     }

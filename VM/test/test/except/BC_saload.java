@@ -29,10 +29,10 @@ package test.except;
 
 public class BC_saload {
 
-    static short[] _array = {0, -1, 4, 10000};
+    static short[] arr = {0, -1, 4, 10000};
 
     public static short test(int arg) {
-        final short[] array = arg == -2 ? null : _array;
+        final short[] array = arg == -2 ? null : arr;
         return array[arg];
     }
 }

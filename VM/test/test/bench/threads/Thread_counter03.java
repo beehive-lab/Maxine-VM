@@ -46,49 +46,49 @@ import test.bench.util.*;
  */
 public class Thread_counter03  extends RunBench {
 
-    private static volatile long _count;
-    private static Object _object = new Object();
-    private static int _threadCount;
+    private static volatile long count;
+    private static Object object = new Object();
+    private static int threadCount;
 
     protected Thread_counter03(LoopRunnable bench) {
         super(bench);
     }
 
     public static boolean test(int i, int t) throws InterruptedException {
-        _threadCount = t;
-        _count = 0;
+        threadCount = t;
+        count = 0;
         final String threadCountProp = System.getProperty("test.bench.threads.threadcount");
         if (threadCountProp != null) {
-            _threadCount = Integer.parseInt(threadCountProp);
+            threadCount = Integer.parseInt(threadCountProp);
         }
         new Thread_counter03(new Bench()).runBench(false);
-        Trace.line(0, "  count: " + _count);
+        Trace.line(0, "  count: " + count);
         return true;
     }
 
     static class Bench implements LoopRunnable, Runnable {
 
-        private static Thread_counter01.Timer _benchTimer;
+        private static Thread_counter01.Timer benchTimer;
 
         public void run(long loopCount) throws InterruptedException {
-            final Thread[] threads = new Thread[_threadCount];
-            for (int i = 0; i < _threadCount; i++) {
+            final Thread[] threads = new Thread[threadCount];
+            for (int i = 0; i < threadCount; i++) {
                 threads[i] = new Thread(new Bench());
             }
-            _benchTimer = new Thread_counter01.Timer(loopCount);
-            new Thread(_benchTimer).start();
-            for (int i = 0; i < _threadCount; i++) {
+            benchTimer = new Thread_counter01.Timer(loopCount);
+            new Thread(benchTimer).start();
+            for (int i = 0; i < threadCount; i++) {
                 threads[i].start();
             }
-            for (int i = 0; i < _threadCount; i++) {
+            for (int i = 0; i < threadCount; i++) {
                 threads[i].join();
             }
         }
 
         public void run() {
-            while (_benchTimer.running()) {
-                synchronized (_object) {
-                    _count++;
+            while (benchTimer.running()) {
+                synchronized (object) {
+                    count++;
                 }
             }
         }

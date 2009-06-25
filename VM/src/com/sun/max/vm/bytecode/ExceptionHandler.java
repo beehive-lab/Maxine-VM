@@ -32,34 +32,31 @@ import com.sun.max.vm.classfile.constant.*;
  */
 public final class ExceptionHandler {
 
-    private final ExceptionHandler _next;
-    private final int _catchTypeIndex;
-    private final int _position;
+    private final ExceptionHandler next;
+    private final int catchTypeIndex;
+    private final int position;
 
     /**
      * Creates an object representing an exception handler.
      *
-     * @param next
-     *                one or more other exception handlers that cover the same bytecode position as this handler
-     * @param catchTypeIndex
-     *                the constant pool index of the {@link ClassConstant} representing the type of exceptions caught by
-     *                this handler
-     * @param position
-     *                the bytecode position denoting the start of this exception handler
+     * @param next one or more other exception handlers that cover the same bytecode position as this handler
+     * @param catchTypeIndex the constant pool index of the {@link ClassConstant} representing the type of exceptions
+     *            caught by this handler
+     * @param position the bytecode position denoting the start of this exception handler
      */
     private ExceptionHandler(ExceptionHandler next, int catchTypeIndex, int position) {
-        _catchTypeIndex = catchTypeIndex;
-        _position = position;
+        this.catchTypeIndex = catchTypeIndex;
+        this.position = position;
 
         ExceptionHandler n = next;
-        while (n != null && n._catchTypeIndex == catchTypeIndex) {
-            n = n._next;
+        while (n != null && n.catchTypeIndex == catchTypeIndex) {
+            n = n.next;
         }
-        _next = n;
+        this.next = n;
     }
 
     public ExceptionHandler next() {
-        return _next;
+        return next;
     }
 
     /**
@@ -67,23 +64,23 @@ public final class ExceptionHandler {
      * handler.
      */
     public int catchTypeIndex() {
-        return _catchTypeIndex;
+        return catchTypeIndex;
     }
 
     /**
      * Gets the bytecode position denoting the start of this exception handler.
      */
     public int position() {
-        return _position;
+        return position;
     }
 
     @Override
     public int hashCode() {
-        final int n = _position ^ _catchTypeIndex;
-        if (_next == null) {
+        final int n = position ^ catchTypeIndex;
+        if (next == null) {
             return n;
         }
-        return n * _next.hashCode();
+        return n * next.hashCode();
     }
 
     @Override
@@ -92,13 +89,13 @@ public final class ExceptionHandler {
             return false;
         }
         final ExceptionHandler handler = (ExceptionHandler) other;
-        if (_catchTypeIndex != handler._catchTypeIndex || _position != handler._position) {
+        if (catchTypeIndex != handler.catchTypeIndex || position != handler.position) {
             return false;
         }
-        if (_next == null) {
-            return handler._next == null;
+        if (next == null) {
+            return handler.next == null;
         }
-        return _next.equals(handler._next);
+        return next.equals(handler.next);
     }
 
     /**

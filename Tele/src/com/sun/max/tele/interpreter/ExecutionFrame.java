@@ -37,47 +37,47 @@ import com.sun.max.vm.value.*;
  */
 class ExecutionFrame {
 
-    private final ClassMethodActor _method;
-    private int _currentOpcodePosition;
-    private int _currentBytePosition;
-    private final Value[] _locals;
-    private final Stack<Value> _operands;
-    private final ExecutionFrame _callersFrame;
-    private final byte[] _code;
-    private final int _depth;
+    private final ClassMethodActor method;
+    private int currentOpcodePosition;
+    private int currentBytePosition;
+    private final Value[] locals;
+    private final Stack<Value> operands;
+    private final ExecutionFrame callersFrame;
+    private final byte[] code;
+    private final int depth;
 
     public ExecutionFrame(ExecutionFrame callersFrame, ClassMethodActor method) {
-        _method = method;
-        _locals = new Value[method.codeAttribute().maxLocals()];
-        _operands = new Stack<Value>();
-        _callersFrame = callersFrame;
-        _code = method.codeAttribute().code();
-        _depth = callersFrame == null ? 1 : callersFrame._depth + 1;
+        this.method = method;
+        this.locals = new Value[method.codeAttribute().maxLocals()];
+        this.operands = new Stack<Value>();
+        this.callersFrame = callersFrame;
+        this.code = method.codeAttribute().code();
+        this.depth = callersFrame == null ? 1 : callersFrame.depth + 1;
     }
 
     /**
      * Computes the number of frames on the call stack up to and including this frame.
      */
     public int depth() {
-        return _depth;
+        return depth;
     }
 
     public ExecutionFrame callersFrame() {
-        return _callersFrame;
+        return callersFrame;
     }
 
     public void setLocal(int index, Value value) {
-        _locals[index] = value;
+        locals[index] = value;
     }
 
     public Bytecode readOpcode() {
-        _currentOpcodePosition = _currentBytePosition;
+        currentOpcodePosition = currentBytePosition;
         return Bytecode.from(readByte());
     }
 
     public byte readByte() {
         try {
-            return _code[_currentBytePosition++];
+            return code[currentBytePosition++];
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
             throw new VerifyError("Ran off end of code");
         }
@@ -98,55 +98,55 @@ class ExecutionFrame {
     }
 
     public void skipBytes(int n) {
-        _currentBytePosition += n;
+        currentBytePosition += n;
     }
 
     public void alignInstructionPosition() {
-        final int remainder = _currentBytePosition % 4;
+        final int remainder = currentBytePosition % 4;
         if (remainder != 0) {
-            _currentBytePosition += 4 - remainder;
+            currentBytePosition += 4 - remainder;
         }
     }
 
     public void jump(int offset) {
-        _currentBytePosition = _currentOpcodePosition + offset;
+        currentBytePosition = currentOpcodePosition + offset;
     }
 
     public int currentOpcodePosition() {
-        return _currentOpcodePosition;
+        return currentOpcodePosition;
     }
 
     public int currentBytePosition() {
-        return _currentBytePosition;
+        return currentBytePosition;
     }
 
     public void setBytecodePosition(int bcp) {
-        _currentBytePosition = bcp;
+        currentBytePosition = bcp;
     }
 
     public byte[] code() {
-        return _code;
+        return code;
     }
 
     public Value getLocal(int index) {
-        return _locals[index];
+        return locals[index];
     }
 
     public Stack<Value> stack() {
-        return _operands;
+        return operands;
     }
 
     public ConstantPool constantPool() {
-        return _method.codeAttribute().constantPool();
+        return method.codeAttribute().constantPool();
     }
 
     public ClassMethodActor method() {
-        return _method;
+        return method;
     }
 
     @Override
     public String toString() {
-        return _method.format("%H.%n(%p) @ " + _currentBytePosition);
+        return method.format("%H.%n(%p) @ " + currentBytePosition);
     }
 
     /**
@@ -163,17 +163,17 @@ class ExecutionFrame {
      * @return {@code true} if an exception handler was found, {@code false} otherwise
      */
     public boolean handleException(ClassActor throwableClassActor) {
-        final int bcp = _currentOpcodePosition;
+        final int bcp = currentOpcodePosition;
         final Sequence<ExceptionHandlerEntry> handlers = method().codeAttribute().exceptionHandlerTable();
         for (ExceptionHandlerEntry handler : handlers) {
             if (bcp >= handler.startPosition() && bcp < handler.endPosition()) {
                 if (handler.catchTypeIndex() == 0) {
-                    _currentBytePosition = handler.handlerPosition();
+                    currentBytePosition = handler.handlerPosition();
                     return true;
                 }
                 final ClassActor catchType = constantPool().classAt(handler.catchTypeIndex()).resolve(constantPool(), handler.catchTypeIndex());
                 if (catchType.isAssignableFrom(throwableClassActor)) {
-                    _currentBytePosition = handler.handlerPosition();
+                    currentBytePosition = handler.handlerPosition();
                     return true;
                 }
             }

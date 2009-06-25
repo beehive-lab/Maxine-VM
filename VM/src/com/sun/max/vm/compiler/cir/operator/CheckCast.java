@@ -41,7 +41,7 @@ public class CheckCast extends JavaResolvableOperator<ClassActor> {
 
     @Override
     public Kind[] parameterKinds() {
-        return new Kind[] {_constantPool.classAt(_index).typeDescriptor().toKind()};
+        return new Kind[] {constantPool.classAt(index).typeDescriptor().toKind()};
     }
 
     @Override

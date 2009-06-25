@@ -28,7 +28,7 @@ import com.sun.max.vm.value.*;
 
 /**
  * A textual display label associated with an integer that represents the value of
- * the {@link Actor#_flags} field in instances of {@link Actor} in the VM.
+ * the {@link Actor#flags} field in instances of {@link Actor} in the VM.
  *
  * @see TeleActor
  *
@@ -36,29 +36,29 @@ import com.sun.max.vm.value.*;
   */
 public final class ActorFlagsValueLabel extends ValueLabel {
 
-    private final TeleActor _teleActor;
-    private String _flagsAsHex;
-    private String _flagsAsString;
+    private final TeleActor teleActor;
+    private String flagsAsHex;
+    private String flagsAsString;
 
     public ActorFlagsValueLabel(Inspection inspection, TeleActor teleActor) {
         super(inspection);
-        _teleActor = teleActor;
+        this.teleActor = teleActor;
         initializeValue();
         redisplay();
     }
 
     @Override
     protected Value fetchValue() {
-        final int flags = _teleActor.readFlags();
-        _flagsAsHex = "Flags: 0x" + Integer.toHexString(flags);
-        _flagsAsString = _teleActor.flagsAsString();
+        final int flags = teleActor.readFlags();
+        flagsAsHex = "Flags: 0x" + Integer.toHexString(flags);
+        flagsAsString = teleActor.flagsAsString();
         return IntValue.from(flags);
     }
 
     @Override
     protected void updateText() {
-        setText(_flagsAsHex);
-        setToolTipText(_flagsAsString);
+        setText(flagsAsHex);
+        setToolTipText(flagsAsString);
     }
 
     public void redisplay() {

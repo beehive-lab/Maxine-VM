@@ -32,16 +32,16 @@ import com.sun.max.ins.*;
   */
 public final class BreakpointsViewPreferences extends com.sun.max.ins.gui.TableColumnVisibilityPreferences<BreakpointsColumnKind> {
 
-    private static BreakpointsViewPreferences _globalPreferences;
+    private static BreakpointsViewPreferences globalPreferences;
 
     /**
      * @return the global, persistent set of user preferences for viewing a table of breakpoints.
      */
     static BreakpointsViewPreferences globalPreferences(Inspection inspection) {
-        if (_globalPreferences == null) {
-            _globalPreferences = new BreakpointsViewPreferences(inspection);
+        if (globalPreferences == null) {
+            globalPreferences = new BreakpointsViewPreferences(inspection);
         }
-        return _globalPreferences;
+        return globalPreferences;
     }
 
     /**

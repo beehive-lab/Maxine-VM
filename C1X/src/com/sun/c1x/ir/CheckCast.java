@@ -35,8 +35,8 @@ import com.sun.c1x.bytecode.Bytecodes;
  */
 public class CheckCast extends TypeCheck {
 
-    CiMethod _profiledMethod;
-    int _profiledBCI;
+    CiMethod profiledMethod;
+    int profiledBCI;
 
     /**
      * Creates a new CheckCast instruction.
@@ -53,7 +53,7 @@ public class CheckCast extends TypeCheck {
      * @return the profiled method
      */
     public CiMethod profiledMethod() {
-        return _profiledMethod;
+        return profiledMethod;
     }
 
     /**
@@ -61,7 +61,7 @@ public class CheckCast extends TypeCheck {
      * @return the profiled bytecode index
      */
     public int profiledBCI() {
-        return _profiledBCI;
+        return profiledBCI;
     }
 
     /**
@@ -69,7 +69,7 @@ public class CheckCast extends TypeCheck {
      * @return <code>true</code> if profiling should be added to this instruction
      */
     public boolean shouldProfile() {
-        return _profiledMethod != null;
+        return profiledMethod != null;
     }
 
     /**
@@ -78,8 +78,8 @@ public class CheckCast extends TypeCheck {
      * @param bci the bytecode index
      */
     public void setProfile(CiMethod method, int bci) {
-        _profiledMethod = method;
-        _profiledBCI = bci;
+        profiledMethod = method;
+        profiledBCI = bci;
     }
 
     /**
@@ -88,7 +88,7 @@ public class CheckCast extends TypeCheck {
      */
     @Override
     public CiType declaredType() {
-        return _targetClass;
+        return targetClass;
     }
 
     /**
@@ -97,7 +97,7 @@ public class CheckCast extends TypeCheck {
      */
     @Override
     public CiType exactType() {
-        return _targetClass.exactType();
+        return targetClass.exactType();
     }
 
     /**
@@ -111,14 +111,14 @@ public class CheckCast extends TypeCheck {
 
     @Override
     public int valueNumber() {
-        return _targetClass.isLoaded() ? Util.hash1(Bytecodes.CHECKCAST, _object) : 0;
+        return targetClass.isLoaded() ? Util.hash1(Bytecodes.CHECKCAST, object) : 0;
     }
 
     @Override
     public boolean valueEqual(Instruction i) {
         if (i instanceof CheckCast) {
             CheckCast o = (CheckCast) i;
-            return _targetClass == o._targetClass && _object == o._object;
+            return targetClass == o.targetClass && object == o.object;
         }
         return false;
     }

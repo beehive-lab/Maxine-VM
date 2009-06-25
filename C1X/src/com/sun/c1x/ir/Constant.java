@@ -32,7 +32,7 @@ import com.sun.c1x.util.InstructionClosure;
  */
 public class Constant extends Instruction {
 
-    private ValueStack _state;
+    private ValueStack state;
 
     /**
      * Constructs a new instruction representing the specified constant.
@@ -50,7 +50,7 @@ public class Constant extends Instruction {
      */
     public Constant(ClassType type, ValueStack state) {
         super(type);
-        _state = state;
+        this.state = state;
     }
 
     /**
@@ -59,7 +59,7 @@ public class Constant extends Instruction {
      * @return the value stack at this constant
      */
     public ValueStack state() {
-        return _state;
+        return state;
     }
 
     /**
@@ -70,7 +70,7 @@ public class Constant extends Instruction {
      */
     @Override
     public boolean canTrap() {
-        return _state != null;
+        return state != null;
     }
 
     /**
@@ -83,31 +83,14 @@ public class Constant extends Instruction {
     }
 
     /**
-     * Compare this instruction to another instruction. This method only
-     * returns true if this instruction and the other instruction are both
-     * the same constant (regardless of where they are computed). Note that
-     * this method is <b>not</b> the <code>equals()</code> method.
-     * @param i the other instruction
-     * @return <code>true</code> if this instruction and the other instruction are value-numbering equal.
-     */
-    public boolean isEqual(Instruction i) {
-        if (i instanceof Constant) {
-            Constant c = (Constant) i;
-            // XXX: why isn't this the equals method?
-            return c.type().asConstant().equivalent(type());
-        }
-        return false;
-    }
-
-    /**
      * Iterates over the "other" values in this instruction. In the case of constants,
      * this method iterates over any values in the state if this constant may need patching.
      * @param closure the closure to apply to each value
      */
     @Override
     public void otherValuesDo(InstructionClosure closure) {
-        if (_state != null) {
-            _state.valuesDo(closure);
+        if (state != null) {
+            state.valuesDo(closure);
         }
     }
 

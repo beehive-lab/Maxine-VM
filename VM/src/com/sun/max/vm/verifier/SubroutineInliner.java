@@ -29,6 +29,7 @@ import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.util.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.verifier.TypeInferencingMethodVerifier.*;
@@ -44,21 +45,21 @@ import com.sun.max.vm.verifier.TypeInferencingMethodVerifier.*;
  */
 public class SubroutineInliner {
 
-    private final TypeInferencingMethodVerifier _verifier;
-    private final boolean _verbose;
-    private final AppendableIndexedSequence<InstructionHandle> _instructionHandles;
+    private final TypeInferencingMethodVerifier verifier;
+    private final boolean verbose;
+    private final AppendableIndexedSequence<InstructionHandle> instructionHandles;
 
     /**
      * Map from each original instruction position to the handles representing the copies of the instruction in the
      * rewritten method. Each original instruction that was in a subroutine may occur more than once in the rewritten method.
      */
-    private final InstructionHandle[] _instructionMap;
+    private final InstructionHandle[] instructionMap;
 
     public SubroutineInliner(TypeInferencingMethodVerifier verifier, boolean verbose) {
-        _verifier = verifier;
-        _verbose = verbose;
-        _instructionHandles = new ArrayListSequence<InstructionHandle>();
-        _instructionMap = new InstructionHandle[verifier.codeAttribute().code().length];
+        this.verifier = verifier;
+        this.verbose = verbose;
+        this.instructionHandles = new ArrayListSequence<InstructionHandle>();
+        this.instructionMap = new InstructionHandle[verifier.codeAttribute().code().length];
     }
 
     public CodeAttribute rewriteCode() {
@@ -68,7 +69,7 @@ public class SubroutineInliner {
         final LineNumberTable lineNumberTable = fixupLineNumberTable();
         final LocalVariableTable localVariableTable = fixupLocalVariableTable();
 
-        final CodeAttribute oldCodeAttribute = _verifier.codeAttribute();
+        final CodeAttribute oldCodeAttribute = verifier.codeAttribute();
         final CodeAttribute newCodeAttribute = new CodeAttribute(
             oldCodeAttribute.constantPool(),
             newCode,
@@ -83,12 +84,12 @@ public class SubroutineInliner {
 
     private void rewriteOneSubroutine(SubroutineCall subroutineCall) {
         int count = 0;
-        final int depth = subroutineCall.depth();
-        final int codeLength = _verifier.codeAttribute().code().length;
+        final int depth = subroutineCall.depth;
+        final int codeLength = verifier.codeAttribute().code().length;
 
         InstructionHandle retHandle = null;
         InstructionHandle instructionHandle = null;
-        final TypeState[] typeStateMap = _verifier.typeStateMap();
+        final TypeState[] typeStateMap = verifier.typeStateMap();
 
         int typeStatePosition = 0;
         while (typeStatePosition < codeLength) {
@@ -98,33 +99,33 @@ public class SubroutineInliner {
                 while (true) {
                     final int position = instruction.position();
                     if (subroutineCall.matches(typeState.subroutineFrame())) {
-                        instructionHandle = new InstructionHandle(instruction, subroutineCall, _instructionMap[position]);
-                        _instructionMap[position] = instructionHandle;
-                        _instructionHandles.append(instructionHandle);
+                        instructionHandle = new InstructionHandle(instruction, subroutineCall, instructionMap[position]);
+                        instructionMap[position] = instructionHandle;
+                        instructionHandles.append(instructionHandle);
                         ++count;
 
                         if (count == 1 && depth > 0) {
                             // This is the first instruction included as part of the subroutine call.
-                            final InstructionHandle callerHandle = subroutineCall.caller();
-                            final Jsr caller = (Jsr) callerHandle.instruction();
+                            final InstructionHandle callerHandle = subroutineCall.caller;
+                            final Jsr caller = (Jsr) callerHandle.instruction;
 
-                            if (instruction != caller.target().targetedInstruction()) {
+                            if (instruction != caller.target.targetedInstruction()) {
                                 // If it's not the target of the JSR that got us here the JSR will be converted into a goto.
-                                callerHandle.setFlag(JSR_TARGETED_GOTO);
+                                callerHandle.flag = JSR_TARGETED_GOTO;
                             }
                         }
 
-                        switch (instruction.opcode()) {
+                        switch (instruction.opcode) {
                             case JSR:
                             case JSR_W: {
                                 final Jsr jsr = (Jsr) instruction;
                                 if (jsr.ret() == null) {
                                     // The subroutine doesn't have a RET instruction so we turn the JSR into a goto.
-                                    instructionHandle.setFlag(JSR_SIMPLE_GOTO);
+                                    instructionHandle.flag = JSR_SIMPLE_GOTO;
                                 } else {
-                                    instructionHandle.setFlag(SKIP);
+                                    instructionHandle.flag = SKIP;
                                 }
-                                final SubroutineCall innerSubroutine = new SubroutineCall(jsr.target().subroutineFrame().subroutine(), subroutineCall, instructionHandle);
+                                final SubroutineCall innerSubroutine = new SubroutineCall(jsr.target.subroutineFrame().subroutine, subroutineCall, instructionHandle);
                                 rewriteOneSubroutine(innerSubroutine);
                                 break;
                             }
@@ -139,8 +140,8 @@ public class SubroutineInliner {
                             case ASTORE_2:
                             case ASTORE_3:
                             case ASTORE: {
-                                if (_verifier.isReturnPositionStore(instruction)) {
-                                    instructionHandle.setFlag(SKIP);
+                                if (verifier.isReturnPositionStore(instruction)) {
+                                    instructionHandle.flag = SKIP;
                                 }
                                 break;
                             }
@@ -149,7 +150,7 @@ public class SubroutineInliner {
                                 break;
                         }
                     }
-                    if (instruction.opcode().is(FALL_THROUGH_DELIMITER)) {
+                    if (instruction.opcode.is(FALL_THROUGH_DELIMITER)) {
                         typeStatePosition = position + instruction.size();
                         break;
                     }
@@ -160,15 +161,15 @@ public class SubroutineInliner {
             }
         }
 
-        final int nextHandleIndex = _instructionHandles.length();
+        final int nextHandleIndex = instructionHandles.length();
         if (depth > 0) {
             subroutineCall.setNextInstuctionHandleIndex(nextHandleIndex);
             if (retHandle != null) {
                 // If the last instruction isn't a RET, convert it into a goto
                 if (retHandle == instructionHandle) {
-                    retHandle.setFlag(SKIP);
+                    retHandle.flag = SKIP;
                 } else {
-                    retHandle.setFlag(RET_SIMPLE_GOTO);
+                    retHandle.flag = RET_SIMPLE_GOTO;
                 }
             }
         }
@@ -176,11 +177,11 @@ public class SubroutineInliner {
 
     private byte[] fixupCode() {
         int position = 0;
-        for (InstructionHandle instructionHandle : _instructionHandles) {
-            instructionHandle.setPosition(position);
-            if (instructionHandle.flag() != SKIP) {
-                final Instruction instruction = instructionHandle.instruction();
-                switch (instruction.opcode()) {
+        for (InstructionHandle instructionHandle : instructionHandles) {
+            instructionHandle.position = position;
+            if (instructionHandle.flag != SKIP) {
+                final Instruction instruction = instructionHandle.instruction;
+                switch (instruction.opcode) {
                     case TABLESWITCH:
                     case LOOKUPSWITCH:
                         final int oldPadSize = 3 - instruction.position() % 4;
@@ -198,11 +199,10 @@ public class SubroutineInliner {
             }
         }
 
-        if (_verbose) {
-            final PrintStream out = Trace.stream();
-            out.println();
-            final String methodSignature = _verifier.classMethodActor().format("%H.%n(%p)");
-            out.println("Rewriting " + methodSignature);
+        if (verbose) {
+            Log.println();
+            final String methodSignature = verifier.classMethodActor().format("%H.%n(%p)");
+            Log.println("Rewriting " + methodSignature);
         }
 
         final int newCodeSize = position;
@@ -210,47 +210,46 @@ public class SubroutineInliner {
         try {
             final ByteArrayOutputStream newCodeStream = new ByteArrayOutputStream(newCodeSize);
             final DataOutputStream dataStream = new DataOutputStream(newCodeStream);
-            for (InstructionHandle instructionHandle : _instructionHandles) {
-                if (_verbose) {
-                    final PrintStream out = Trace.stream();
-                    out.println(instructionHandle + "   // " + instructionHandle.flag());
+            for (InstructionHandle instructionHandle : instructionHandles) {
+                if (verbose) {
+                    Log.println(instructionHandle + "   // " + instructionHandle.flag);
                 }
-                if (instructionHandle.flag() != SKIP) {
-                    final Instruction instruction = instructionHandle.instruction();
-                    position = instructionHandle.position();
+                if (instructionHandle.flag != SKIP) {
+                    final Instruction instruction = instructionHandle.instruction;
+                    position = instructionHandle.position;
                     assert position == newCodeStream.size();
-                    final SubroutineCall subroutine = instructionHandle.subroutineCall();
+                    final SubroutineCall subroutine = instructionHandle.subroutineCall;
 
                     if (instruction instanceof Branch) {
                         final Branch branch = (Branch) instruction;
-                        final Bytecode opcode = instruction.opcode();
+                        final Bytecode opcode = instruction.opcode;
 
                         if (instruction instanceof Jsr) {
                             final Jsr jsr = (Jsr) branch;
-                            assert instructionHandle.flag() == JSR_SIMPLE_GOTO || instructionHandle.flag() == JSR_TARGETED_GOTO;
-                            final SubroutineCall innerSubroutine = new SubroutineCall(jsr.target().subroutineFrame().subroutine(), subroutine, instructionHandle);
+                            assert instructionHandle.flag == JSR_SIMPLE_GOTO || instructionHandle.flag == JSR_TARGETED_GOTO;
+                            final SubroutineCall innerSubroutine = new SubroutineCall(jsr.target.subroutineFrame().subroutine, subroutine, instructionHandle);
 
                             if (opcode == Bytecode.JSR_W) {
                                 assert instruction.size() == 5;
                                 Bytecode.GOTO_W.writeTo(dataStream);
-                                dataStream.writeInt(calculateNewOffset(position, innerSubroutine, branch.target().position(), Ints.VALUE_RANGE));
+                                dataStream.writeInt(calculateNewOffset(position, innerSubroutine, branch.target.position(), Ints.VALUE_RANGE));
                             } else {
                                 assert instruction.size() == 3;
                                 Bytecode.GOTO.writeTo(dataStream);
-                                dataStream.writeShort(calculateNewOffset(position, innerSubroutine, branch.target().position(), Shorts.VALUE_RANGE));
+                                dataStream.writeShort(calculateNewOffset(position, innerSubroutine, branch.target.position(), Shorts.VALUE_RANGE));
                             }
                         } else {
                             opcode.writeTo(dataStream);
                             if (opcode == Bytecode.GOTO_W) {
                                 assert instruction.size() == 5;
-                                dataStream.writeInt(calculateNewOffset(position, subroutine, branch.target().position(), Ints.VALUE_RANGE));
+                                dataStream.writeInt(calculateNewOffset(position, subroutine, branch.target.position(), Ints.VALUE_RANGE));
                             } else {
                                 assert instruction.size() == 3;
-                                dataStream.writeShort(calculateNewOffset(position, subroutine, branch.target().position(), Shorts.VALUE_RANGE));
+                                dataStream.writeShort(calculateNewOffset(position, subroutine, branch.target.position(), Shorts.VALUE_RANGE));
                             }
                         }
                     } else {
-                        final Bytecode opcode = instruction.opcode();
+                        final Bytecode opcode = instruction.opcode;
                         switch (opcode) {
                             case RET: {
                                 final Ret ret = (Ret) instruction;
@@ -261,8 +260,8 @@ public class SubroutineInliner {
                                     --extraFramesToPop;
                                 }
 
-                                final InstructionHandle gotoTarget = _instructionHandles.get(callingSuboutine.nextInstuctionHandleIndex());
-                                final int offset = gotoTarget.position() - position;
+                                final InstructionHandle gotoTarget = instructionHandles.get(callingSuboutine.nextInstuctionHandleIndex());
+                                final int offset = gotoTarget.position - position;
                                 checkOffset(offset, Shorts.VALUE_RANGE);
                                 Bytecode.GOTO.writeTo(dataStream);
                                 dataStream.writeShort(offset);
@@ -279,19 +278,19 @@ public class SubroutineInliner {
                                 }
 
                                 // Update default target
-                                dataStream.writeInt(calculateNewOffset(position, subroutine, select.defaultTarget().position(), Ints.VALUE_RANGE));
+                                dataStream.writeInt(calculateNewOffset(position, subroutine, select.defaultTarget.position(), Ints.VALUE_RANGE));
 
                                 if (opcode == Bytecode.TABLESWITCH) {
                                     final Tableswitch tableswitch = (Tableswitch) select;
-                                    dataStream.writeInt(tableswitch.low());
-                                    dataStream.writeInt(tableswitch.high());
-                                    for (TypeState target : tableswitch.caseTargets()) {
+                                    dataStream.writeInt(tableswitch.low);
+                                    dataStream.writeInt(tableswitch.high);
+                                    for (TypeState target : tableswitch.caseTargets) {
                                         dataStream.writeInt(calculateNewOffset(position, subroutine, target.position(), Ints.VALUE_RANGE));
                                     }
                                 } else {
                                     final Lookupswitch lookupswitch = (Lookupswitch) select;
-                                    final TypeState[] caseTargets = lookupswitch.caseTargets();
-                                    final int[] matches = lookupswitch.matches();
+                                    final TypeState[] caseTargets = lookupswitch.caseTargets;
+                                    final int[] matches = lookupswitch.matches;
                                     dataStream.writeInt(matches.length); // npairs
                                     for (int i = 0; i != matches.length; ++i) {
                                         final TypeState target = caseTargets[i];
@@ -323,9 +322,9 @@ public class SubroutineInliner {
     }
 
     private int calculateNewOffset(int fromPosition, SubroutineCall fromSubroutine, int oldToPosition, Range allowableOffsetRange) {
-        for (InstructionHandle target = _instructionMap[oldToPosition]; target != null; target = target.next()) {
-            if (fromSubroutine.canGoto(target.subroutineCall())) {
-                final int offset = target.position() - fromPosition;
+        for (InstructionHandle target = instructionMap[oldToPosition]; target != null; target = target.next) {
+            if (fromSubroutine.canGoto(target.subroutineCall)) {
+                final int offset = target.position - fromPosition;
                 checkOffset(offset, allowableOffsetRange);
                 return offset;
             }
@@ -334,7 +333,7 @@ public class SubroutineInliner {
     }
 
     private Sequence<ExceptionHandlerEntry> fixupExceptionHandlers(byte[] newCode) {
-        final CodeAttribute codeAttribute = _verifier.codeAttribute();
+        final CodeAttribute codeAttribute = verifier.codeAttribute();
         final Sequence<ExceptionHandlerEntry> oldHandlers = codeAttribute.exceptionHandlerTable();
         if (oldHandlers.isEmpty()) {
             return oldHandlers;
@@ -342,25 +341,25 @@ public class SubroutineInliner {
         final AppendableSequence<ExceptionHandlerEntry> newHandlers = new ArrayListSequence<ExceptionHandlerEntry>(oldHandlers.length() * 2);
         for (ExceptionHandlerEntry oldHandler : oldHandlers) {
             // For each instruction handle that maps to this handler, match it to all instructions that go to the handler.
-            for (InstructionHandle handlerHandle = _instructionMap[oldHandler.handlerPosition()]; handlerHandle != null; handlerHandle = handlerHandle.next()) {
+            for (InstructionHandle handlerHandle = instructionMap[oldHandler.handlerPosition()]; handlerHandle != null; handlerHandle = handlerHandle.next) {
                 // Find all instructions that go to this handler
                 boolean lastMatch = false;
                 ExceptionHandlerEntry currentHandler = null;
-                for (InstructionHandle instructionHandle : _instructionHandles) {
-                    final Instruction instruction = instructionHandle.instruction();
+                for (InstructionHandle instructionHandle : instructionHandles) {
+                    final Instruction instruction = instructionHandle.instruction;
                     final int position = instruction.position();
-                    if (instructionHandle.flag() != SKIP) {
+                    if (instructionHandle.flag != SKIP) {
                         final boolean match =
                             (position >= oldHandler.startPosition()) &&
                             (position < oldHandler.endPosition()) &&
-                            instructionHandle.subroutineCall().canGoto(handlerHandle.subroutineCall());
+                            instructionHandle.subroutineCall.canGoto(handlerHandle.subroutineCall);
                         if (match && !lastMatch) {
                             // start a new catch frame
-                            currentHandler = new ExceptionHandlerEntry(instructionHandle.position(), oldHandler.endPosition(),
-                                handlerHandle.position(), oldHandler.catchTypeIndex());
+                            currentHandler = new ExceptionHandlerEntry(instructionHandle.position, oldHandler.endPosition(),
+                                handlerHandle.position, oldHandler.catchTypeIndex());
                             lastMatch = true;
                         } else if (lastMatch && !match) {
-                            currentHandler = currentHandler.changeEndPosition(instructionHandle.position());
+                            currentHandler = currentHandler.changeEndPosition(instructionHandle.position);
                             newHandlers.append(currentHandler);
                             lastMatch = false;
                         }
@@ -378,7 +377,7 @@ public class SubroutineInliner {
     }
 
     private LineNumberTable fixupLineNumberTable() {
-        final CodeAttribute codeAttribute = _verifier.codeAttribute();
+        final CodeAttribute codeAttribute = verifier.codeAttribute();
         final LineNumberTable lineNumberTable = codeAttribute.lineNumberTable();
         if (lineNumberTable.isEmpty()) {
             return LineNumberTable.EMPTY;
@@ -410,12 +409,12 @@ public class SubroutineInliner {
 
         int currentLineNumber = -1;
         final AppendableSequence<LineNumberTable.Entry> newEntries = new ArrayListSequence<LineNumberTable.Entry>();
-        for (InstructionHandle instructionHandle : _instructionHandles) {
-            if (instructionHandle.flag() != SKIP) {
-                final Instruction instruction = instructionHandle.instruction();
+        for (InstructionHandle instructionHandle : instructionHandles) {
+            if (instructionHandle.flag != SKIP) {
+                final Instruction instruction = instructionHandle.instruction;
                 final int nextLineNumber = oldPositionToLineNumberMap[instruction.position()];
                 if (nextLineNumber != currentLineNumber) {
-                    final LineNumberTable.Entry entry = new LineNumberTable.Entry((char) instructionHandle.position(), (char) nextLineNumber);
+                    final LineNumberTable.Entry entry = new LineNumberTable.Entry((char) instructionHandle.position, (char) nextLineNumber);
                     newEntries.append(entry);
                     currentLineNumber = nextLineNumber;
                 }
@@ -426,7 +425,7 @@ public class SubroutineInliner {
     }
 
     private LocalVariableTable fixupLocalVariableTable() {
-        final CodeAttribute codeAttribute = _verifier.codeAttribute();
+        final CodeAttribute codeAttribute = verifier.codeAttribute();
         final LocalVariableTable localVariableTable = codeAttribute.localVariableTable();
         if (localVariableTable.isEmpty()) {
             return LocalVariableTable.EMPTY;
@@ -439,17 +438,17 @@ public class SubroutineInliner {
             InstructionHandle lastMatchedHandle = null;
 
             int lastMatchedStartPc = -1;
-            for (InstructionHandle instructionHandle : _instructionHandles) {
-                if (instructionHandle.flag() != SKIP) {
-                    final Instruction instruction = instructionHandle.instruction();
+            for (InstructionHandle instructionHandle : instructionHandles) {
+                if (instructionHandle.flag != SKIP) {
+                    final Instruction instruction = instructionHandle.instruction;
                     final boolean matches = instruction.position() >= startPc && instruction.position() <= endPc;
                     if (lastMatchedHandle == null && matches) {
-                        lastMatchedStartPc = instructionHandle.position();
+                        lastMatchedStartPc = instructionHandle.position;
                         lastMatchedHandle = instructionHandle;
                     } else if (lastMatchedHandle != null && !matches) {
                         final LocalVariableTable.Entry newEntry =
                             new LocalVariableTable.Entry((char) lastMatchedStartPc,
-                                                         (char) (lastMatchedHandle.position() - lastMatchedStartPc),
+                                                         (char) (lastMatchedHandle.position - lastMatchedStartPc),
                                                          (char) entry.slot(),
                                                          (char) entry.nameIndex(),
                                                          (char) entry.descriptorIndex(),
@@ -462,7 +461,7 @@ public class SubroutineInliner {
             if (lastMatchedHandle != null) {
                 final LocalVariableTable.Entry newEntry =
                     new LocalVariableTable.Entry((char) lastMatchedStartPc,
-                                    (char) (lastMatchedHandle.position() - lastMatchedStartPc),
+                                    (char) (lastMatchedHandle.position - lastMatchedStartPc),
                                     (char) entry.slot(),
                                     (char) entry.nameIndex(),
                                     (char) entry.descriptorIndex(),

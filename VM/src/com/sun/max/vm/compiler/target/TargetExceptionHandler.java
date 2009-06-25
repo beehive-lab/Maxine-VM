@@ -37,7 +37,7 @@ public class TargetExceptionHandler {
     /**
      * Offset to the first instruction of the exception handler in the target method.
      */
-    private final int _offsetInTarget;
+    private final int offsetInTarget;
 
     /**
      * Resolution guard for the exception class declared in the catch clause for this handler.
@@ -46,42 +46,42 @@ public class TargetExceptionHandler {
      * if the declared exception class wasn't resolved, an instance of it (or of one of its sub-classes)
      * couldn't be created, hence this handler cannot handle the exception.
      */
-    private final ResolutionGuard _declaredExceptionResolutionGuard;
+    private final ResolutionGuard declaredExceptionResolutionGuard;
 
      /**
      * Next handler covering the same range of instructions as this handler.
      */
-    private TargetExceptionHandler _next;
+    private TargetExceptionHandler next;
 
-    private final ExceptionHandlerEntry _exceptionHandlerInfo;
+    private final ExceptionHandlerEntry exceptionHandlerInfo;
 
     public TargetExceptionHandler(int offsetInTarget, ExceptionHandlerEntry exceptionHandlerEntry, ResolutionGuard guard, TargetExceptionHandler next) {
-        _offsetInTarget = offsetInTarget;
-        _declaredExceptionResolutionGuard = guard;
-        _next = next;
-        _exceptionHandlerInfo = exceptionHandlerEntry;
+        this.offsetInTarget = offsetInTarget;
+        this.declaredExceptionResolutionGuard = guard;
+        this.next = next;
+        this.exceptionHandlerInfo = exceptionHandlerEntry;
     }
 
     public ExceptionHandlerEntry exceptionHandlerEntry() {
-        return _exceptionHandlerInfo;
+        return exceptionHandlerInfo;
     }
 
     public TargetExceptionHandler last() {
         TargetExceptionHandler lastHandler = this;
-        TargetExceptionHandler next = lastHandler._next;
-        while (next != null) {
-            lastHandler =  next;
-            next = lastHandler._next;
+        TargetExceptionHandler n = lastHandler.next;
+        while (n != null) {
+            lastHandler =  n;
+            n = lastHandler.next;
         }
-        return  lastHandler;
+        return lastHandler;
     }
 
     public TargetExceptionHandler next() {
-        return _next;
+        return next;
     }
 
     public void setNext(TargetExceptionHandler next) {
-        _next = next;
+        this.next = next;
     }
 
     /**
@@ -90,17 +90,17 @@ public class TargetExceptionHandler {
      */
     public boolean handlesException(Object throwable) {
         assert throwable != null;
-        if (_declaredExceptionResolutionGuard.isClear()) {
+        if (declaredExceptionResolutionGuard.value == null) {
             // Guard isn't set. Either the class hasn't been loaded yet (in which case the
             // exception cannot be thrown), or it hasn't been resolved yet by guard.
-            final ConstantPool constantPool = _declaredExceptionResolutionGuard.constantPool();
-            final int index = _declaredExceptionResolutionGuard.constantPoolIndex();
+            final ConstantPool constantPool = declaredExceptionResolutionGuard.constantPool;
+            final int index = declaredExceptionResolutionGuard.constantPoolIndex;
             if (!constantPool.classAt(index).isResolvableWithoutClassLoading(constantPool)) {
                 return false;
             }
-            _declaredExceptionResolutionGuard.set(constantPool.classAt(index).resolve(constantPool, index));
+            declaredExceptionResolutionGuard.value = constantPool.classAt(index).resolve(constantPool, index);
         }
-        final ClassActor declaredExceptionClassActor = (ClassActor) _declaredExceptionResolutionGuard.get();
+        final ClassActor declaredExceptionClassActor = (ClassActor) declaredExceptionResolutionGuard.value;
         if (MaxineVM.isPrototyping()) {
             return declaredExceptionClassActor.toJava().isInstance(throwable);
         }
@@ -108,8 +108,8 @@ public class TargetExceptionHandler {
     }
 
     public String declaredExceptionName() {
-        final ConstantPool constantPool = _declaredExceptionResolutionGuard.constantPool();
-        final int index = _declaredExceptionResolutionGuard.constantPoolIndex();
+        final ConstantPool constantPool = declaredExceptionResolutionGuard.constantPool;
+        final int index = declaredExceptionResolutionGuard.constantPoolIndex;
         return constantPool.classAt(index).valueString(constantPool);
     }
 
@@ -117,7 +117,7 @@ public class TargetExceptionHandler {
      * @return offset in the target method to the first instruction of the handler.
      */
     public int offsetInTarget() {
-        return _offsetInTarget;
+        return offsetInTarget;
     }
 
     public TargetExceptionHandler find(Object throwable) {
@@ -126,7 +126,7 @@ public class TargetExceptionHandler {
             if (handler.handlesException(throwable)) {
                 break;
             }
-            handler = handler._next;
+            handler = handler.next;
         } while(handler != null);
         return handler;
     }

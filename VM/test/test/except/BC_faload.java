@@ -28,10 +28,10 @@ package test.except;
 
 public class BC_faload {
 
-    static float[] _array = {0.0f, -1.1f, 4.32f, 6.06f};
+    static float[] arr = {0.0f, -1.1f, 4.32f, 6.06f};
 
     public static float test(int arg) {
-        final float[] array = arg == -2 ? null : _array;
+        final float[] array = arg == -2 ? null : arr;
         return array[arg];
     }
 }

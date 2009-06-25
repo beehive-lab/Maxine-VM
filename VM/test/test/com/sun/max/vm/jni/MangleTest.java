@@ -146,7 +146,7 @@ public class MangleTest extends MaxTestCase {
             native String overload(int arg1, String arg2);
             native String overload(String arg2);
 
-            final Object _localAnonymousClass = new Object() {
+            final Object localAnonymousClass = new Object() {
                 native void simple(int arg1, String arg2, Exception arg3);
                 native void underscore_(int arg1, String arg2, Exception arg3);
                 public native void overload();
@@ -178,7 +178,7 @@ public class MangleTest extends MaxTestCase {
         mangleAndDemangle(InnerClass.class);
         mangleAndDemangle(LocalClass.class);
         mangleAndDemangle(anonymousClass.getClass());
-        mangleAndDemangle(new LocalClass()._localAnonymousClass.getClass());
+        mangleAndDemangle(new LocalClass().localAnonymousClass.getClass());
         mangleAndDemangle(LocalClass.InnerClass.class);
 
         mangleAndDemangle(MakeStackVariable.class);

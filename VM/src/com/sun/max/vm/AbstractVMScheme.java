@@ -29,15 +29,15 @@ import com.sun.max.program.*;
  */
 public abstract class AbstractVMScheme extends AbstractScheme {
 
-    private final VMConfiguration _vmConfiguration;
-    private final Class<? extends VMScheme> _specification;
+    private final VMConfiguration vmConfiguration;
+    private final Class<? extends VMScheme> specification;
 
     public VMConfiguration vmConfiguration() {
-        return _vmConfiguration;
+        return vmConfiguration;
     }
 
     protected AbstractVMScheme(VMConfiguration vmConfiguration) {
-        _vmConfiguration = vmConfiguration;
+        this.vmConfiguration = vmConfiguration;
         Class<? extends VMScheme> specification = null;
         Class<?> implementation = getClass();
         ProgramError.check(VMScheme.class.isAssignableFrom(implementation), "Subclass of " + AbstractVMScheme.class + " must implement " + VMScheme.class + ": " + implementation);
@@ -59,11 +59,11 @@ public abstract class AbstractVMScheme extends AbstractScheme {
             specification = last;
         }
         ProgramError.check(specification != null, "Cannot find specification for scheme implemented by " + getClass());
-        _specification = specification;
+        this.specification = specification;
     }
 
     public Class<? extends VMScheme> specification() {
-        return _specification;
+        return specification;
     }
 
     public void initialize(MaxineVM.Phase phase) {

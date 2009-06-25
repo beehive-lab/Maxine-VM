@@ -33,8 +33,8 @@ import com.sun.c1x.bytecode.Bytecodes;
  */
 public class NullCheck extends Instruction {
 
-    Instruction _object;
-    ValueStack _lockStack;
+    Instruction object;
+    ValueStack lockStack;
 
     /**
      * Constructs a new NullCheck instruction.
@@ -43,11 +43,11 @@ public class NullCheck extends Instruction {
      */
     public NullCheck(Instruction obj, ValueStack lockStack) {
         super(obj.type().base());
-        _object = obj;
-        _lockStack = lockStack;
+        this.object = obj;
+        this.lockStack = lockStack;
         setFlag(Flag.CanTrap);
         setFlag(Flag.NonNull);
-        pin(PinReason.PinExplicitNullCheck);
+        setFlag(Flag.PinExplicitNullCheck);
     }
 
     /**
@@ -55,7 +55,7 @@ public class NullCheck extends Instruction {
      * @return the instruction producing the object
      */
     public Instruction object() {
-        return _object;
+        return object;
     }
 
     /**
@@ -63,7 +63,7 @@ public class NullCheck extends Instruction {
      * @return the lock stack
      */
     public ValueStack lockStack() {
-        return _lockStack;
+        return lockStack;
     }
 
     /**
@@ -71,7 +71,7 @@ public class NullCheck extends Instruction {
      * @param lockStack the lock stack
      */
     public void setLockStack(ValueStack lockStack) {
-        _lockStack = lockStack;
+        this.lockStack = lockStack;
     }
 
     /**
@@ -97,7 +97,7 @@ public class NullCheck extends Instruction {
      */
     @Override
     public void inputValuesDo(InstructionClosure closure) {
-        _object = closure.apply(_object);
+        object = closure.apply(object);
     }
 
     /**
@@ -106,8 +106,8 @@ public class NullCheck extends Instruction {
      */
     @Override
     public void otherValuesDo(InstructionClosure closure) {
-        if (_lockStack != null) {
-            _lockStack.valuesDo(closure);
+        if (lockStack != null) {
+            lockStack.valuesDo(closure);
         }
     }
 
@@ -122,14 +122,14 @@ public class NullCheck extends Instruction {
 
     @Override
     public int valueNumber() {
-        return Util.hash1(Bytecodes.IFNONNULL, _object);
+        return Util.hash1(Bytecodes.IFNONNULL, object);
     }
 
     @Override
     public boolean valueEqual(Instruction i) {
         if (i instanceof NullCheck) {
             NullCheck o = (NullCheck) i;
-            return _object == o._object;
+            return object == o.object;
         }
         return false;
     }

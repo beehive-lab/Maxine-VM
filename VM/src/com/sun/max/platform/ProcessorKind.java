@@ -20,7 +20,6 @@
  */
 package com.sun.max.platform;
 
-import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.lang.*;
 
@@ -31,29 +30,14 @@ import com.sun.max.lang.*;
  */
 public class ProcessorKind {
 
-    private final ProcessorModel _processorModel;
-    private final InstructionSet _instructionSet;
-    private final DataModel _dataModel;
+    public final ProcessorModel processorModel;
+    public final InstructionSet instructionSet;
+    public final DataModel dataModel;
 
     public ProcessorKind(ProcessorModel processorModel, InstructionSet instructionSet, DataModel dataModel) {
-        _processorModel = processorModel;
-        _instructionSet = instructionSet;
-        _dataModel = dataModel;
-    }
-
-    @INLINE
-    public final ProcessorModel processorModel() {
-        return _processorModel;
-    }
-
-    @INLINE
-    public final InstructionSet instructionSet() {
-        return _instructionSet;
-    }
-
-    @INLINE
-    public final DataModel dataModel() {
-        return _dataModel;
+        this.processorModel = processorModel;
+        this.instructionSet = instructionSet;
+        this.dataModel = dataModel;
     }
 
     public static ProcessorKind defaultForInstructionSet(InstructionSet instructionSet) {
@@ -67,12 +51,12 @@ public class ProcessorKind {
             return false;
         }
         final ProcessorKind processorKind = (ProcessorKind) other;
-        return _processorModel.equals(processorKind._processorModel) && _instructionSet.equals(processorKind._instructionSet) && _dataModel.equals(processorKind._dataModel);
+        return processorModel.equals(processorKind.processorModel) && instructionSet.equals(processorKind.instructionSet) && dataModel.equals(processorKind.dataModel);
     }
 
     @Override
     public String toString() {
-        return _processorModel.toString().toLowerCase() + ", isa=" + _instructionSet + ", " + _dataModel;
+        return processorModel.toString().toLowerCase() + ", isa=" + instructionSet + ", " + dataModel;
     }
 
 }

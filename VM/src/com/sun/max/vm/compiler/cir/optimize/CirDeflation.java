@@ -35,15 +35,15 @@ import com.sun.max.vm.compiler.cir.transform.*;
  */
 public class CirDeflation {
 
-    private final CirOptimizer _optimizer;
-    private final CirNode _node;
+    private final CirOptimizer optimizer;
+    private final CirNode node;
 
     protected CirDeflation(CirOptimizer optimizer, CirNode node) {
-        _optimizer = optimizer;
-        _node = node;
+        this.optimizer = optimizer;
+        this.node = node;
     }
 
-    private boolean _reducedAny;
+    private boolean reducedAny;
 
     /**
      * A utility class for encapsulating a transformation that deflates a CIR graph rooted by a {@link CirCall}.
@@ -54,12 +54,12 @@ public class CirDeflation {
      * @author Doug Simon
      */
     abstract class CallTransformation {
-        final CirCall _call;
-        final CirValue[] _arguments;
+        final CirCall call;
+        final CirValue[] arguments;
 
         CallTransformation(CirCall call, CirValue[] arguments) {
-            _call = call;
-            _arguments = arguments;
+            this.call = call;
+            this.arguments = arguments;
         }
 
         abstract TransformationType description();
@@ -72,21 +72,21 @@ public class CirDeflation {
          * @return {@code true} if the deflation succeeded, {@code false} otherwise
          */
         final boolean apply() {
-            final Transformation transform = new Transformation(description(), _call.procedure().toString());
-            _optimizer.notifyBeforeTransformation(_call.procedure(), transform);
+            final Transformation transform = new Transformation(description(), call.procedure().toString());
+            optimizer.notifyBeforeTransformation(call.procedure(), transform);
             final boolean result = run();
-            _optimizer.notifyAfterTransformation(_call.procedure(), transform);
+            optimizer.notifyAfterTransformation(call.procedure(), transform);
             return result;
         }
     }
 
     class Folding extends CallTransformation {
 
-        final CirFoldable _foldable;
+        final CirFoldable foldable;
 
         Folding(CirCall call, CirFoldable foldable, CirValue[] arguments) {
             super(call, arguments);
-            _foldable = foldable;
+            this.foldable = foldable;
         }
 
         @Override
@@ -97,9 +97,9 @@ public class CirDeflation {
         @Override
         public boolean run() {
             try {
-                final CirCall call = _foldable.fold(_optimizer, _arguments);
-                _call.setProcedure(call.procedure());
-                _call.setArguments(call.arguments());
+                final CirCall newCall = foldable.fold(optimizer, arguments);
+                call.setProcedure(newCall.procedure());
+                call.setArguments(newCall.arguments());
                 return true;
             } catch (CirFoldingException cirFoldingException) {
                 return false;
@@ -108,17 +108,17 @@ public class CirDeflation {
 
         @Override
         public String target() {
-            return _foldable.toString();
+            return foldable.toString();
         }
     }
 
     class Reducing extends CallTransformation {
 
-        final CirBuiltin _builtin;
+        final CirBuiltin builtin;
 
         Reducing(CirCall call, CirBuiltin builtin, CirValue[] arguments) {
             super(call, arguments);
-            _builtin = builtin;
+            this.builtin = builtin;
         }
 
         @Override
@@ -128,24 +128,24 @@ public class CirDeflation {
 
         @Override
         public boolean run() {
-            _call.assign(_builtin.reduce(_optimizer, _arguments));
+            call.assign(builtin.reduce(optimizer, arguments));
             return true;
         }
 
         @Override
         public String target() {
-            return _builtin.toString();
+            return builtin.toString();
         }
     }
 
     private boolean reduceCallByFoldable(CirCall call, CirFoldable foldable, CirValue[] arguments) {
-        if (foldable.isFoldable(_optimizer, arguments)) {
+        if (foldable.isFoldable(optimizer, arguments)) {
             return new Folding(call, foldable, arguments).apply();
         }
 
         if (foldable instanceof CirBuiltin) {
             final CirBuiltin builtin = (CirBuiltin) foldable;
-            if (builtin.isReducible(_optimizer, arguments)) {
+            if (builtin.isReducible(optimizer, arguments)) {
                 return new Reducing(call, builtin, arguments).apply();
             }
         }
@@ -161,10 +161,10 @@ public class CirDeflation {
             return reduceCallByFoldable(call, foldable, arguments);
         }
         if (procedure instanceof CirClosure) {
-            _optimizer.notifyBeforeTransformation(_optimizer.node(), TransformationType.BETA_REDUCTION);
+            optimizer.notifyBeforeTransformation(optimizer.node(), TransformationType.BETA_REDUCTION);
             final CirClosure closure = (CirClosure) procedure;
             call.assign(CirBetaReduction.applyMultiple(closure, arguments));
-            _optimizer.notifyAfterTransformation(_optimizer.node(), TransformationType.BETA_REDUCTION);
+            optimizer.notifyAfterTransformation(optimizer.node(), TransformationType.BETA_REDUCTION);
             return true;
         }
         return false;
@@ -186,17 +186,17 @@ public class CirDeflation {
         final CirDeflation deflation = new CirDeflation(cirOptimizer, node);
         deflation.reduceCalls();
         cirOptimizer.notifyAfterTransformation(node, TransformationType.DEFLATION);
-        return deflation._reducedAny;
+        return deflation.reducedAny;
     }
 
     protected void reduceCalls() {
         final LinkedList<CirNode> inspectionList = new LinkedList<CirNode>();
         final Set<CirBlock> visitedBlocks = new HashSet<CirBlock>();
-        CirNode currentNode = _node;
+        CirNode currentNode = node;
         while (true) {
             if (currentNode instanceof CirCall) {
                 final CirCall call = (CirCall) currentNode;
-                _reducedAny |= updateCall(call);
+                reducedAny |= updateCall(call);
 
                 final CirValue[] arguments = call.arguments();
                 for (int i = 0; i < arguments.length; i++) {
@@ -211,7 +211,7 @@ public class CirDeflation {
                         } else if (closure.hasTheseParameters(body.arguments())) {
                             // We found a trivial wrapper closure that just tail-calls a non-closure, e.g. a continuation variable.
                             arguments[i] = procedure;
-                            _reducedAny = true;
+                            reducedAny = true;
 
                             // Don't add argument to work list
                             continue;

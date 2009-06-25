@@ -24,17 +24,13 @@ import com.sun.max.annotate.*;
 
 /**
  * String descriptions of Java types and signatures, see #4.3.
- * 
+ *
  * @author Bernd Mathiske
  */
 public abstract class Descriptor implements Comparable<Descriptor> {
 
     @INSPECTED
-    private final String _string;
-
-    public final String string() {
-        return _string;
-    }
+    public final String string;
 
     public static String dottified(String className) {
         return className.replace('/', '.');
@@ -45,12 +41,12 @@ public abstract class Descriptor implements Comparable<Descriptor> {
     }
 
     protected Descriptor(String value) {
-        _string = slashified(value);
+        string = slashified(value);
     }
 
     @Override
     public final String toString() {
-        return _string;
+        return string;
     }
 
     @Override
@@ -60,11 +56,11 @@ public abstract class Descriptor implements Comparable<Descriptor> {
 
     @Override
     public final int hashCode() {
-        return _string.hashCode();
+        return string.hashCode();
     }
 
     public final int compareTo(Descriptor other) {
-        return _string.compareTo(other._string);
+        return string.compareTo(other.string);
     }
 
 }

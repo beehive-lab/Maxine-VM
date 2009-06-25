@@ -49,25 +49,25 @@ import com.sun.max.vm.type.*;
  */
 public class JavaPrototype extends Prototype {
 
-    private static JavaPrototype _theJavaPrototype;
-    private Sequence<MaxPackage> _basePackages;
-    private final Map<MaxPackage, MaxPackage> _excludedMaxPackages = new HashMap<MaxPackage, MaxPackage>();
-    private final Set<MaxPackage> _loadedMaxPackages = new HashSet<MaxPackage>();
-    private final Map<MethodActor, AccessibleObject> _methodActorMap = new HashMap<MethodActor, AccessibleObject>();
-    private final Map<FieldActor, Field> _fieldActorMap = new HashMap<FieldActor, Field>();
-    private final Map<ClassActor, Class> _classActorMap = new HashMap<ClassActor, Class>();
-    private final Map<Class, ClassActor> _javaClassMap = new HashMap<Class, ClassActor>();
-    private final Map<Method, MethodActor> _javaMethodMap = new HashMap<Method, MethodActor>();
-    private final Map<Constructor, MethodActor> _javaConstructorMap = new HashMap<Constructor, MethodActor>();
-    private final Map<Field, FieldActor> _javaFieldMap = new HashMap<Field, FieldActor>();
+    private static JavaPrototype theJavaPrototype;
+    private Sequence<MaxPackage> basePackages;
+    private final Map<MaxPackage, MaxPackage> excludedMaxPackages = new HashMap<MaxPackage, MaxPackage>();
+    private final Set<MaxPackage> loadedMaxPackages = new HashSet<MaxPackage>();
+    private final Map<MethodActor, AccessibleObject> methodActorMap = new HashMap<MethodActor, AccessibleObject>();
+    private final Map<FieldActor, Field> fieldActorMap = new HashMap<FieldActor, Field>();
+    private final Map<ClassActor, Class> classActorMap = new HashMap<ClassActor, Class>();
+    private final Map<Class, ClassActor> javaClassMap = new HashMap<Class, ClassActor>();
+    private final Map<Method, MethodActor> javaMethodMap = new HashMap<Method, MethodActor>();
+    private final Map<Constructor, MethodActor> javaConstructorMap = new HashMap<Constructor, MethodActor>();
+    private final Map<Field, FieldActor> javaFieldMap = new HashMap<Field, FieldActor>();
 
     /**
-     * Gets a reference to the singleton java prototype.
+     * Gets a reference to the singleton Java prototype.
      *
      * @return the global java prototype
      */
     public static JavaPrototype javaPrototype() {
-        return _theJavaPrototype;
+        return theJavaPrototype;
     }
 
     /**
@@ -92,13 +92,13 @@ public class JavaPrototype extends Prototype {
      * @return a sequence of all basic packages
      */
     public Sequence<MaxPackage> basePackages() {
-        if (_basePackages == null) {
-            _basePackages = getPackages(BasePackage.class, new com.sun.max.Package());
+        if (basePackages == null) {
+            basePackages = getPackages(BasePackage.class, new com.sun.max.Package());
         }
-        return _basePackages;
+        return basePackages;
     }
 
-    private Sequence<MaxPackage> _asmPackages;
+    private Sequence<MaxPackage> asmPackages;
 
     /**
      * Returns a sequence of all the assembler packages.
@@ -106,13 +106,13 @@ public class JavaPrototype extends Prototype {
      * @return a sequence of all the assembler packages
      */
     public Sequence<MaxPackage> asmPackages() {
-        if (_asmPackages == null) {
-            _asmPackages = getPackages(AsmPackage.class, new com.sun.max.asm.Package());
+        if (asmPackages == null) {
+            asmPackages = getPackages(AsmPackage.class, new com.sun.max.asm.Package());
         }
-        return _asmPackages;
+        return asmPackages;
     }
 
-    private Sequence<MaxPackage> _vmPackages;
+    private Sequence<MaxPackage> vmPackages;
 
     /**
      * Returns a sequence of all the VM packages.
@@ -120,10 +120,10 @@ public class JavaPrototype extends Prototype {
      * @return a sequence of VM packages
      */
     public Sequence<MaxPackage> vmPackages() {
-        if (_vmPackages == null) {
-            _vmPackages = getPackages(VMPackage.class, new com.sun.max.vm.Package());
+        if (vmPackages == null) {
+            vmPackages = getPackages(VMPackage.class, new com.sun.max.vm.Package());
         }
-        return _vmPackages;
+        return vmPackages;
     }
 
     /**
@@ -147,7 +147,7 @@ public class JavaPrototype extends Prototype {
         Classes.load(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, name);
     }
 
-    private final PackageLoader _packageLoader;
+    private final PackageLoader packageLoader;
 
     /**
      * Gets the package loader for this java prototype.
@@ -155,7 +155,7 @@ public class JavaPrototype extends Prototype {
      * @return the package loader for this prototype
      */
     public PackageLoader packageLoader() {
-        return _packageLoader;
+        return packageLoader;
     }
 
     /**
@@ -165,21 +165,21 @@ public class JavaPrototype extends Prototype {
      * @param maxPackage the package to load
      */
     private void loadPackage(MaxPackage maxPackage) {
-        final MaxPackage excludedBy = _excludedMaxPackages.get(maxPackage);
+        final MaxPackage excludedBy = excludedMaxPackages.get(maxPackage);
         if (excludedBy != null) {
             Trace.line(1, "Excluding " + maxPackage + " (excluded by " + excludedBy + ")");
             return;
         }
 
         for (MaxPackage excludedPackage : maxPackage.excludes()) {
-            if (_loadedMaxPackages.contains(excludedPackage)) {
+            if (loadedMaxPackages.contains(excludedPackage)) {
                 ProgramError.unexpected("Package " + excludedPackage + " is excluded by " + maxPackage + ". " +
                                 "Adjust class path to ensure " + maxPackage + " is loaded before " + excludedPackage);
             }
-            _excludedMaxPackages.put(excludedPackage, maxPackage);
+            excludedMaxPackages.put(excludedPackage, maxPackage);
         }
-        _packageLoader.load(maxPackage, false);
-        _loadedMaxPackages.add(maxPackage);
+        packageLoader.load(maxPackage, false);
+        loadedMaxPackages.add(maxPackage);
     }
 
     /**
@@ -191,7 +191,7 @@ public class JavaPrototype extends Prototype {
      * @return a sequence of all the classes loaded from the specified package (and potentially its subpackages).
      */
     public Sequence<Class> loadPackage(String name, boolean recursive) {
-        return _packageLoader.load(name, recursive);
+        return packageLoader.load(name, recursive);
     }
 
     /**
@@ -269,10 +269,10 @@ public class JavaPrototype extends Prototype {
         loadClass(sun.security.action.GetPropertyAction.class);
     }
 
-    private static Sequence<Class> _mainPackageClasses = new ArrayListSequence<Class>();
+    private static Sequence<Class> mainPackageClasses = new ArrayListSequence<Class>();
 
     public static Sequence<Class> mainPackageClasses() {
-        return _mainPackageClasses;
+        return mainPackageClasses;
     }
 
     /**
@@ -300,8 +300,8 @@ public class JavaPrototype extends Prototype {
     public JavaPrototype(final VMConfiguration vmConfiguration, final boolean loadPackages) {
         super(vmConfiguration);
 
-        _packageLoader = new PackageLoader(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.classpath());
-        _theJavaPrototype = this;
+        packageLoader = new PackageLoader(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.classpath());
+        theJavaPrototype = this;
 
         MaxineVM.setTarget(new MaxineVM(vmConfiguration));
         vmConfiguration.loadAndInstantiateSchemes();
@@ -322,9 +322,9 @@ public class JavaPrototype extends Prototype {
 
                 initializeMaxClasses();
 
-                vmConfiguration.compilerScheme().createBuiltins(_packageLoader);
+                vmConfiguration.compilerScheme().createBuiltins(packageLoader);
                 Builtin.register(vmConfiguration.compilerScheme());
-                vmConfiguration.compilerScheme().createSnippets(_packageLoader);
+                vmConfiguration.compilerScheme().createSnippets(packageLoader);
                 Snippet.register();
 
                 if (loadPackages) {
@@ -359,16 +359,16 @@ public class JavaPrototype extends Prototype {
      * @return the Java reflection method for the specified method actor
      */
     public Method toJava(MethodActor methodActor) {
-        synchronized (_methodActorMap) {
-            Method javaMethod = (Method) _methodActorMap.get(methodActor);
+        synchronized (methodActorMap) {
+            Method javaMethod = (Method) methodActorMap.get(methodActor);
             if (javaMethod == null) {
                 final Class<?> holder = methodActor.holder().toJava();
                 final SignatureDescriptor descriptor = methodActor.descriptor();
                 final Class[] parameterTypes = descriptor.resolveParameterTypes(holder.getClassLoader());
                 final ClassLoader classLoader = holder.getClassLoader();
-                final String name = methodActor.isSurrogate() ? com.sun.max.annotate.SURROGATE.Static.toSurrogateName(methodActor.name().toString()) : methodActor.name().toString();
+                final String name = methodActor.isSurrogate() ? com.sun.max.annotate.SURROGATE.Static.toSurrogateName(methodActor.name.toString()) : methodActor.name.toString();
                 javaMethod = Classes.getDeclaredMethod(holder, descriptor.resultDescriptor().resolveType(classLoader), name, parameterTypes);
-                _methodActorMap.put(methodActor, javaMethod);
+                methodActorMap.put(methodActor, javaMethod);
             }
             assert MethodActor.fromJava(javaMethod) == methodActor;
             return javaMethod;
@@ -382,13 +382,13 @@ public class JavaPrototype extends Prototype {
      * @return the Java reflection method for the specified method actor
      */
     public Constructor toJavaConstructor(MethodActor methodActor) {
-        synchronized (_methodActorMap) {
-            Constructor javaConstructor = (Constructor) _methodActorMap.get(methodActor);
+        synchronized (methodActorMap) {
+            Constructor javaConstructor = (Constructor) methodActorMap.get(methodActor);
             if (javaConstructor == null) {
                 final Class<?> holder = methodActor.holder().toJava();
                 final Class[] parameterTypes = methodActor.descriptor().resolveParameterTypes(holder.getClassLoader());
                 javaConstructor = Classes.getDeclaredConstructor(holder, parameterTypes);
-                _methodActorMap.put(methodActor, javaConstructor);
+                methodActorMap.put(methodActor, javaConstructor);
             }
             assert MethodActor.fromJavaConstructor(javaConstructor) == methodActor;
             return javaConstructor;
@@ -402,12 +402,12 @@ public class JavaPrototype extends Prototype {
      * @return the Java reflection field for the specified field actor
      */
     public Field toJava(FieldActor fieldActor) {
-        synchronized (_fieldActorMap) {
-            Field javaField = _fieldActorMap.get(fieldActor);
+        synchronized (fieldActorMap) {
+            Field javaField = fieldActorMap.get(fieldActor);
             if (javaField == null) {
                 final Class javaHolder = fieldActor.holder().toJava();
-                javaField = Classes.getDeclaredField(javaHolder, fieldActor.name().toString());
-                _fieldActorMap.put(fieldActor, javaField);
+                javaField = Classes.getDeclaredField(javaHolder, fieldActor.name.toString());
+                fieldActorMap.put(fieldActor, javaField);
             }
             return javaField;
         }
@@ -420,16 +420,16 @@ public class JavaPrototype extends Prototype {
      * @return the Java reflection class for the specified class actor
      */
     public Class toJava(ClassActor classActor) {
-        synchronized (_classActorMap) {
-            Class javaClass = _classActorMap.get(classActor);
+        synchronized (classActorMap) {
+            Class javaClass = classActorMap.get(classActor);
             if (javaClass == null) {
                 try {
-                    javaClass = classActor.typeDescriptor().resolveType(classActor.classLoader());
+                    javaClass = classActor.typeDescriptor.resolveType(classActor.classLoader);
                 } catch (NoClassDefFoundError noClassDefFoundError) {
                     // try again with the prototype class loader.
-                    javaClass = classActor.typeDescriptor().resolveType(VmClassLoader.VM_CLASS_LOADER); // TODO: Shouldn't this be PROTOTYPE_CLASS_LOADER?
+                    javaClass = classActor.typeDescriptor.resolveType(VmClassLoader.VM_CLASS_LOADER); // TODO: Shouldn't this be PROTOTYPE_CLASS_LOADER?
                 }
-                _classActorMap.put(classActor, javaClass);
+                classActorMap.put(classActor, javaClass);
             }
             return javaClass;
         }
@@ -445,11 +445,11 @@ public class JavaPrototype extends Prototype {
         if (MaxineVM.isPrototypeOnly(javaClass)) {
             return null;
         }
-        synchronized (_javaClassMap) {
-            ClassActor classActor = _javaClassMap.get(javaClass);
+        synchronized (javaClassMap) {
+            ClassActor classActor = javaClassMap.get(javaClass);
             if (classActor == null) {
                 classActor = JavaTypeDescriptor.forJavaClass(javaClass).resolve(javaClass.getClassLoader());
-                _javaClassMap.put(javaClass, classActor);
+                javaClassMap.put(javaClass, classActor);
             }
             return classActor;
         }
@@ -462,15 +462,15 @@ public class JavaPrototype extends Prototype {
      * @return the method actor for {@code javaMethod}
      */
     public MethodActor toMethodActor(Method javaMethod) {
-        synchronized (_javaMethodMap) {
-            MethodActor methodActor = _javaMethodMap.get(javaMethod);
+        synchronized (javaMethodMap) {
+            MethodActor methodActor = javaMethodMap.get(javaMethod);
             if (methodActor == null) {
                 final Utf8Constant name = SymbolTable.makeSymbol(javaMethod.getAnnotation(SURROGATE.class) != null ? toSubstituteeName(javaMethod.getName()) : javaMethod.getName());
                 final ClassActor holder = ClassActor.fromJava(javaMethod.getDeclaringClass());
                 final SignatureDescriptor signature = SignatureDescriptor.fromJava(javaMethod);
                 methodActor = holder.findLocalMethodActor(name, signature);
                 ProgramError.check(methodActor != null, "Could not find " + name + signature + " in " + holder);
-                _javaMethodMap.put(javaMethod, methodActor);
+                javaMethodMap.put(javaMethod, methodActor);
             }
             return methodActor;
         }
@@ -483,14 +483,14 @@ public class JavaPrototype extends Prototype {
      * @return the method actor for {@code javaConstructor}
      */
     public MethodActor toMethodActor(Constructor javaConstructor) {
-        synchronized (_javaConstructorMap) {
-            MethodActor methodActor = _javaConstructorMap.get(javaConstructor);
+        synchronized (javaConstructorMap) {
+            MethodActor methodActor = javaConstructorMap.get(javaConstructor);
             if (methodActor == null) {
                 final ClassActor holder = ClassActor.fromJava(javaConstructor.getDeclaringClass());
                 final SignatureDescriptor signature = SignatureDescriptor.fromJava(javaConstructor);
                 methodActor = holder.findLocalMethodActor(SymbolTable.INIT, signature);
                 ProgramError.check(methodActor != null, "Could not find <init>" + signature + " in " + holder);
-                _javaConstructorMap.put(javaConstructor, methodActor);
+                javaConstructorMap.put(javaConstructor, methodActor);
             }
             return methodActor;
         }
@@ -503,15 +503,15 @@ public class JavaPrototype extends Prototype {
      * @return the field actor for {@code javaField}
      */
     public FieldActor toFieldActor(Field javaField) {
-        synchronized (_javaFieldMap) {
-            FieldActor fieldActor = _javaFieldMap.get(javaField);
+        synchronized (javaFieldMap) {
+            FieldActor fieldActor = javaFieldMap.get(javaField);
             if (fieldActor == null) {
                 final ClassActor holder = ClassActor.fromJava(javaField.getDeclaringClass());
                 final TypeDescriptor signature = JavaTypeDescriptor.forJavaClass(javaField.getType());
                 final Utf8Constant name = SymbolTable.makeSymbol(javaField.getName());
                 fieldActor = holder.findFieldActor(name, signature);
                 ProgramError.check(fieldActor != null, "Could not find " + name + signature + " in " + holder);
-                _javaFieldMap.put(javaField, fieldActor);
+                javaFieldMap.put(javaField, fieldActor);
             }
             return fieldActor;
         }

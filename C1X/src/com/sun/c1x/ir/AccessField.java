@@ -34,17 +34,16 @@ import com.sun.c1x.util.InstructionClosure;
  */
 public abstract class AccessField extends Instruction {
 
-    Instruction _object;
-    final int _offset;
-    final CiField _field;
-    final ValueStack _stateBefore;
-    ValueStack _lockStack;
-    NullCheck _explicitNullCheck;
+    Instruction object;
+    final int offset;
+    final CiField field;
+    final ValueStack stateBefore;
+    ValueStack lockStack;
+    NullCheck explicitNullCheck;
 
     /**
      * Constructs a new access field object.
      * @param object the instruction producing the receiver object
-     * @param offset the offset of the field in bytes, if known
      * @param field the compiler interface representation of the field
      * @param isStatic indicates if the field is static
      * @param lockStack the lock stack
@@ -52,14 +51,14 @@ public abstract class AccessField extends Instruction {
      * @param isLoaded indicates if the class is loaded
      * @param isInitialized indicates if the class is initialized
      */
-    public AccessField(Instruction object, int offset, CiField field, boolean isStatic,
+    public AccessField(Instruction object, CiField field, boolean isStatic,
                        ValueStack lockStack, ValueStack stateBefore, boolean isLoaded, boolean isInitialized) {
         super(ValueType.fromBasicType(field.basicType()));
-        _object = object;
-        _offset = offset;
-        _field = field;
-        _lockStack = lockStack;
-        _stateBefore = stateBefore;
+        this.object = object;
+        this.offset = isLoaded ? field.offset() : -1;
+        this.field = field;
+        this.lockStack = lockStack;
+        this.stateBefore = stateBefore;
         if (!isLoaded || (C1XOptions.TestPatching && !field.isVolatile())) {
             // require patching if the field is not loaded (i.e. resolved),
             // or if patch testing is turned on (but not if the field is volatile)
@@ -77,7 +76,7 @@ public abstract class AccessField extends Instruction {
      * @return the instruction that produces the receiver object
      */
     public Instruction object() {
-        return _object;
+        return object;
     }
 
     /**
@@ -85,7 +84,7 @@ public abstract class AccessField extends Instruction {
      * @return the offset of the field within the object
      */
     public int offset() {
-        return _offset;
+        return offset;
     }
 
     /**
@@ -93,7 +92,7 @@ public abstract class AccessField extends Instruction {
      * @return the compiler interface field for this field access
      */
     public CiField field() {
-        return _field;
+        return field;
     }
 
     /**
@@ -125,16 +124,16 @@ public abstract class AccessField extends Instruction {
      * @return the state before this field access
      */
     public ValueStack stateBefore() {
-        return _stateBefore;
+        return stateBefore;
     }
 
     public ValueStack lockStack() {
         // XXX: what is a lock stack?
-        return _lockStack;
+        return lockStack;
     }
 
     public void setLockStack(ValueStack lockStack) {
-        _lockStack = lockStack;
+        this.lockStack = lockStack;
     }
 
     /**
@@ -142,7 +141,7 @@ public abstract class AccessField extends Instruction {
      * @return the object representing an explicit null check
      */
     public Object explicitNullCheck() {
-        return _explicitNullCheck;
+        return explicitNullCheck;
     }
 
     /**
@@ -150,7 +149,7 @@ public abstract class AccessField extends Instruction {
      * @param explicitNullCheck the instruction representing the explicit check
      */
     public void setExplicitNullCheck(NullCheck explicitNullCheck) {
-        _explicitNullCheck = explicitNullCheck;
+        this.explicitNullCheck = explicitNullCheck;
     }
 
     /**
@@ -168,7 +167,7 @@ public abstract class AccessField extends Instruction {
      */
     @Override
     public boolean canTrap() {
-        return needsPatching() || (!checkFlag(Flag.IsStatic) && !_object.isNonNull());
+        return needsPatching() || (!checkFlag(Flag.IsStatic) && !object.isNonNull());
     }
 
     /**
@@ -178,7 +177,7 @@ public abstract class AccessField extends Instruction {
      */
     @Override
     public void inputValuesDo(InstructionClosure closure) {
-        _object = closure.apply(_object);
+        object = closure.apply(object);
     }
 
     /**
@@ -189,11 +188,11 @@ public abstract class AccessField extends Instruction {
      */
     @Override
     public void otherValuesDo(InstructionClosure closure) {
-        if (_stateBefore != null) {
-            _stateBefore.valuesDo(closure);
+        if (stateBefore != null) {
+            stateBefore.valuesDo(closure);
         }
-        if (_lockStack != null) {
-            _lockStack.valuesDo(closure);
+        if (lockStack != null) {
+            lockStack.valuesDo(closure);
         }
     }
 }

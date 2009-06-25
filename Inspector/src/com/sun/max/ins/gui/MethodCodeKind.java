@@ -33,12 +33,12 @@ public enum MethodCodeKind {
     BYTECODES("Bytecodes", false),
     JAVA_SOURCE("Java Source", false);
 
-    private final String _label;
-    private final boolean _defaultVisibility;
+    private final String label;
+    private final boolean defaultVisibility;
 
     private MethodCodeKind(String label, boolean defaultVisibility) {
-        _label = label;
-        _defaultVisibility = defaultVisibility;
+        this.label = label;
+        this.defaultVisibility = defaultVisibility;
     }
 
     /**
@@ -51,19 +51,19 @@ public enum MethodCodeKind {
     }
 
     public String label() {
-        return _label;
+        return label;
     }
 
     @Override
     public String toString() {
-        return _label;
+        return label;
     }
 
     /**
      * Determines if this kind should be visible by default in new inspectors.
      */
     public boolean defaultVisibility() {
-        return _defaultVisibility;
+        return defaultVisibility;
     }
 
     public static final IndexedSequence<MethodCodeKind> VALUES = new ArraySequence<MethodCodeKind>(values());

@@ -23,14 +23,14 @@ package com.sun.max.vm.hotpath.compiler;
 import com.sun.max.vm.compiler.tir.*;
 
 public class Bailout {
-    private final TirGuard _guard;
+    private final TirGuard guard;
 
     public TirGuard guard() {
-        return _guard;
+        return guard;
     }
 
     public Bailout(TirGuard guard) {
-        _guard = guard;
+        this.guard = guard;
     }
 
     public TirTree tree() {
@@ -38,7 +38,7 @@ public class Bailout {
     }
 
     private TirTrace trace() {
-        return _guard.trace();
+        return guard.trace();
     }
 
     public static void bailout(TirGuard guard) {

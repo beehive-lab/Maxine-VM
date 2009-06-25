@@ -36,29 +36,29 @@ import com.sun.max.vm.*;
 
 public class GuestVMXenTeleDomain extends TeleProcess {
 
-    private int _domainId;
+    private int domainId;
     public int domainId() {
-        return _domainId;
+        return domainId;
     }
 
-    private final DataAccess _dataAccess;
+    private final DataAccess dataAccess;
 
-    private boolean _terminated = false;
+    private boolean terminated = false;
 
     protected GuestVMXenTeleDomain(TeleVM teleVM, Platform platform, int id) {
         super(teleVM, platform, ProcessState.STOPPED);
         if (id < 0) {
-            _domainId = Integer.parseInt(JOptionPane.showInputDialog(null, "Enter the domain id"));
+            domainId = Integer.parseInt(JOptionPane.showInputDialog(null, "Enter the domain id"));
         } else {
-            _domainId = id;
+            domainId = id;
         }
-        GuestVMXenDBChannel.attach(this, _domainId);
-        _dataAccess = new PageDataAccess(this, platform.processorKind().dataModel());
+        GuestVMXenDBChannel.attach(this, domainId);
+        dataAccess = new PageDataAccess(this, platform.processorKind.dataModel);
     }
 
     @Override
     public DataAccess dataAccess() {
-        return _dataAccess;
+        return dataAccess;
     }
 
     public Pointer getBootHeap() {
@@ -70,7 +70,7 @@ public class GuestVMXenTeleDomain extends TeleProcess {
         /* Need to align and skip over the guard page at the base of the stack.
          * N.B. "base" is low address (i.e., actually the end of the stack!).
          */
-        final int pageSize = VMConfiguration.hostOrTarget().platform().pageSize();
+        final int pageSize = VMConfiguration.hostOrTarget().platform().pageSize;
         final long stackBottom = pageAlign(stackBase, pageSize) + pageSize;
         final long adjStackSize = stackSize - (stackBottom - stackBase);
         return new GuestVMXenNativeThread(this, id, threadId, stackBottom, adjStackSize);
@@ -92,13 +92,13 @@ public class GuestVMXenTeleDomain extends TeleProcess {
 
     @Override
     protected boolean waitUntilStopped() {
-        return !_terminated;
+        return !terminated;
     }
 
     @Override
     protected void resume() throws OSExecutionRequestException {
-        final int rrc = GuestVMXenDBChannel.resume(_domainId);
-        _terminated = rrc != 0;
+        final int rrc = GuestVMXenDBChannel.resume(domainId);
+        terminated = rrc != 0;
     }
 
     @Override
@@ -128,7 +128,7 @@ public class GuestVMXenTeleDomain extends TeleProcess {
 
     @Override
     protected void gatherThreads(AppendableSequence<TeleNativeThread> threads) {
-        final Word threadSpecificsList = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header()._threadSpecificsListOffset));
-        GuestVMXenDBChannel.gatherThreads(threads, _domainId, threadSpecificsList.asAddress().toLong());
+        final Word threadSpecificsList = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header().threadSpecificsListOffset));
+        GuestVMXenDBChannel.gatherThreads(threads, domainId, threadSpecificsList.asAddress().toLong());
     }
 }

@@ -38,39 +38,39 @@ public final class TeleHeapInfo {
     }
 
     @INSPECTED
-    private static MemoryRegion[] _memoryRegions;
+    private static MemoryRegion[] memoryRegions;
 
     public static void registerMemoryRegions(MemoryRegion... memoryRegions) {
         if (MaxineMessenger.isVmInspected()) {
-            if (_roots == null) {
-                _roots = new Object[MAX_NUMBER_OF_ROOTS];
+            if (roots == null) {
+                roots = new Object[MAX_NUMBER_OF_ROOTS];
             }
-            _memoryRegions = memoryRegions;
+            TeleHeapInfo.memoryRegions = memoryRegions;
         }
     }
 
     public static final int MAX_NUMBER_OF_ROOTS = Ints.M / 8;
 
     @INSPECTED
-    private static Object[] _roots = new Object[MAX_NUMBER_OF_ROOTS];
+    private static Object[] roots = new Object[MAX_NUMBER_OF_ROOTS];
 
     @INSPECTED
-    private static long _rootEpoch;
+    private static long rootEpoch;
 
     @INSPECTED
-    private static long _collectionEpoch;
+    private static long collectionEpoch;
 
     /**
      * For remote inspection:  records that a GC has begun.
      */
     public static void beforeGarbageCollection() {
-        _collectionEpoch++;
+        collectionEpoch++;
     }
 
     /**
      * For remote inspection:  records that a GC has concluded.
      */
     public static void afterGarbageCollection() {
-        _rootEpoch = _collectionEpoch;
+        rootEpoch = collectionEpoch;
     }
 }

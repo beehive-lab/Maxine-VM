@@ -33,10 +33,10 @@ public abstract class BytecodeTest_getstatic<Method_Type extends IrMethod> exten
         super(name);
     }
 
-    private static byte _byteField = 111;
+    private static byte byteField = 111;
 
     private static byte perform_getstatic_byte() {
-        return _byteField;
+        return byteField;
     }
 
     public void test_getstatic_byte() {
@@ -49,14 +49,14 @@ public abstract class BytecodeTest_getstatic<Method_Type extends IrMethod> exten
             }
         };
         final Value result = execute(method);
-        assertTrue(result.asByte() == _byteField);
+        assertTrue(result.asByte() == byteField);
         assertTrue(result.asByte() == 111);
     }
 
-    private static boolean _booleanField = true;
+    private static boolean booleanField = true;
 
     private static boolean perform_getstatic_boolean() {
-        return _booleanField;
+        return booleanField;
     }
 
     public void test_getstatic_boolean() {
@@ -69,14 +69,14 @@ public abstract class BytecodeTest_getstatic<Method_Type extends IrMethod> exten
             }
         };
         final Value result = execute(method);
-        assertTrue(result.asBoolean() == _booleanField);
+        assertTrue(result.asBoolean() == booleanField);
         assertTrue(result.asBoolean());
     }
 
-    private static short _shortField = 333;
+    private static short shortField = 333;
 
     private static short perform_getstatic_short() {
-        return _shortField;
+        return shortField;
     }
 
     public void test_getstatic_short() {
@@ -89,14 +89,14 @@ public abstract class BytecodeTest_getstatic<Method_Type extends IrMethod> exten
             }
         };
         final Value result = execute(method);
-        assertTrue(result.asShort() == _shortField);
+        assertTrue(result.asShort() == shortField);
         assertTrue(result.asShort() == 333);
     }
 
-    private static char _charField = 444;
+    private static char charField = 444;
 
     private static char perform_getstatic_char() {
-        return _charField;
+        return charField;
     }
 
     public void test_getstatic_char() {
@@ -109,14 +109,14 @@ public abstract class BytecodeTest_getstatic<Method_Type extends IrMethod> exten
             }
         };
         final Value result = execute(method);
-        assertTrue(result.asChar() == _charField);
+        assertTrue(result.asChar() == charField);
         assertTrue(result.asChar() == 444);
     }
 
-    private static int _intField = 55;
+    private static int intField = 55;
 
     private static int perform_getstatic_int() {
-        return _intField;
+        return intField;
     }
 
     public void test_getstatic_int() {
@@ -129,14 +129,14 @@ public abstract class BytecodeTest_getstatic<Method_Type extends IrMethod> exten
             }
         };
         final Value result = execute(method);
-        assertTrue(result.asInt() == _intField);
+        assertTrue(result.asInt() == intField);
         assertTrue(result.asInt() == 55);
     }
 
-    private static float _floatField = 66;
+    private static float floatField = 66;
 
     private static float perform_getstatic_float() {
-        return _floatField;
+        return floatField;
     }
 
     public void test_getstatic_float() {
@@ -149,14 +149,14 @@ public abstract class BytecodeTest_getstatic<Method_Type extends IrMethod> exten
             }
         };
         final Value result = execute(method);
-        assertTrue(result.asFloat() == _floatField);
+        assertTrue(result.asFloat() == floatField);
         assertTrue(result.asFloat() == 66);
     }
 
-    private static long _longField = 77L;
+    private static long longField = 77L;
 
     private static long perform_getstatic_long() {
-        return _longField;
+        return longField;
     }
 
     public void test_getstatic_long() {
@@ -169,14 +169,14 @@ public abstract class BytecodeTest_getstatic<Method_Type extends IrMethod> exten
             }
         };
         final Value result = execute(method);
-        assertTrue(result.asLong() == _longField);
+        assertTrue(result.asLong() == longField);
         assertTrue(result.asLong() == 77L);
     }
 
-    private static double _doubleField = 77;
+    private static double doubleField = 77;
 
     private static double perform_getstatic_double() {
-        return _doubleField;
+        return doubleField;
     }
 
     public void test_getstatic_double() {
@@ -189,18 +189,18 @@ public abstract class BytecodeTest_getstatic<Method_Type extends IrMethod> exten
             }
         };
         final Value result = execute(method);
-        assertTrue(result.asDouble() == _doubleField);
+        assertTrue(result.asDouble() == doubleField);
         assertTrue(result.asDouble() == 77);
     }
 
-    protected static Word _wordField;
+    protected static Word wordField;
 
     private static Word perform_getstatic_word() {
-        return _wordField;
+        return wordField;
     }
 
     public void test_getstatic_word() {
-        _wordField = Offset.fromInt(88);
+        wordField = Offset.fromInt(88);
         final Method_Type method = compileMethod("perform_getstatic_word", SignatureDescriptor.create(Word.class));
         new BytecodeConfirmation(method.classMethodActor()) {
 
@@ -210,14 +210,14 @@ public abstract class BytecodeTest_getstatic<Method_Type extends IrMethod> exten
             }
         };
         final Value result = execute(method);
-        assertTrue(result.asWord().equals(_wordField));
+        assertTrue(result.asWord().equals(wordField));
         assertTrue(result.asWord().asOffset().toInt() == 88);
     }
 
-    private static Object _referenceField = BytecodeTest_getstatic.class;
+    private static Object referenceField = BytecodeTest_getstatic.class;
 
     private static Object perform_getstatic_reference() {
-        return _referenceField;
+        return referenceField;
     }
 
     public void test_getstatic_reference() {
@@ -230,7 +230,7 @@ public abstract class BytecodeTest_getstatic<Method_Type extends IrMethod> exten
             }
         };
         final Value result = execute(method);
-        assertTrue(result.asObject() == _referenceField);
+        assertTrue(result.asObject() == referenceField);
         assertTrue(result.asObject() == BytecodeTest_getstatic.class);
     }
 

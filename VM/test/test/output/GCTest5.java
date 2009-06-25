@@ -27,7 +27,7 @@ package test.output;
  */
 public class GCTest5 {
     private static class ComputeThread extends Thread {
-        private final Class _thisClass = getClass();
+        private final Class thisClass = getClass();
         @Override
         public void run() {
             while (true) {
@@ -73,8 +73,8 @@ public class GCTest5 {
         }
         private void assertReferences(Object param) {
             assert this == param;
-            assert this.getClass() == _thisClass;
-            assert this.getClass().hashCode() == _thisClass.hashCode();
+            assert this.getClass() == thisClass;
+            assert this.getClass().hashCode() == thisClass.hashCode();
         }
     }
 

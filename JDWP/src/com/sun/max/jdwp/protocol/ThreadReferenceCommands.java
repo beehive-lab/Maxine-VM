@@ -45,22 +45,22 @@ public final class ThreadReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ThreadID _thread;
+            public ID.ThreadID thread;
             public IncomingRequest(ID.ThreadID thread) {
-                this._thread = thread;
+                this.thread = thread;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _thread.write(ps.getOutputStream());
+                thread.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_thread=" + _thread);
+                stringBuilder.append("thread=" + thread);
                 return stringBuilder.toString();
             }
         }
@@ -69,22 +69,22 @@ public final class ThreadReferenceCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public String _threadName;
+            public String threadName;
             public Reply(String threadName) {
-                this._threadName = threadName;
+                this.threadName = threadName;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _threadName = ps.readString();
+                threadName = ps.readString();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_threadName);
+                ps.write(threadName);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_threadName=" + _threadName);
+                stringBuilder.append("threadName=" + threadName);
                 return stringBuilder.toString();
             }
         }
@@ -102,22 +102,22 @@ public final class ThreadReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ThreadID _thread;
+            public ID.ThreadID thread;
             public IncomingRequest(ID.ThreadID thread) {
-                this._thread = thread;
+                this.thread = thread;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _thread.write(ps.getOutputStream());
+                thread.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_thread=" + _thread);
+                stringBuilder.append("thread=" + thread);
                 return stringBuilder.toString();
             }
         }
@@ -151,22 +151,22 @@ public final class ThreadReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ThreadID _thread;
+            public ID.ThreadID thread;
             public IncomingRequest(ID.ThreadID thread) {
-                this._thread = thread;
+                this.thread = thread;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _thread.write(ps.getOutputStream());
+                thread.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_thread=" + _thread);
+                stringBuilder.append("thread=" + thread);
                 return stringBuilder.toString();
             }
         }
@@ -200,22 +200,22 @@ public final class ThreadReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ThreadID _thread;
+            public ID.ThreadID thread;
             public IncomingRequest(ID.ThreadID thread) {
-                this._thread = thread;
+                this.thread = thread;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _thread.write(ps.getOutputStream());
+                thread.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_thread=" + _thread);
+                stringBuilder.append("thread=" + thread);
                 return stringBuilder.toString();
             }
         }
@@ -224,30 +224,30 @@ public final class ThreadReferenceCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public int _threadStatus;
+            public int threadStatus;
 
-            public int _suspendStatus;
+            public int suspendStatus;
             public Reply(int threadStatus,
                 int suspendStatus) {
-                this._threadStatus = threadStatus;
-                this._suspendStatus = suspendStatus;
+                this.threadStatus = threadStatus;
+                this.suspendStatus = suspendStatus;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _threadStatus = ps.readInt();
-                _suspendStatus = ps.readInt();
+                threadStatus = ps.readInt();
+                suspendStatus = ps.readInt();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_threadStatus);
-                ps.write(_suspendStatus);
+                ps.write(threadStatus);
+                ps.write(suspendStatus);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_threadStatus=" + _threadStatus);
+                stringBuilder.append("threadStatus=" + threadStatus);
                 stringBuilder.append(", ");
-                stringBuilder.append("_suspendStatus=" + _suspendStatus);
+                stringBuilder.append("suspendStatus=" + suspendStatus);
                 return stringBuilder.toString();
             }
         }
@@ -265,22 +265,22 @@ public final class ThreadReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ThreadID _thread;
+            public ID.ThreadID thread;
             public IncomingRequest(ID.ThreadID thread) {
-                this._thread = thread;
+                this.thread = thread;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _thread.write(ps.getOutputStream());
+                thread.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_thread=" + _thread);
+                stringBuilder.append("thread=" + thread);
                 return stringBuilder.toString();
             }
         }
@@ -289,22 +289,22 @@ public final class ThreadReferenceCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public ID.ThreadGroupID _group;
+            public ID.ThreadGroupID group;
             public Reply(ID.ThreadGroupID group) {
-                this._group = group;
+                this.group = group;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _group = ID.read(ps.getInputStream(), ID.ThreadGroupID.class);
+                group = ID.read(ps.getInputStream(), ID.ThreadGroupID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _group.write(ps.getOutputStream());
+                group.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_group=" + _group);
+                stringBuilder.append("group=" + group);
                 return stringBuilder.toString();
             }
         }
@@ -322,68 +322,68 @@ public final class ThreadReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ThreadID _thread;
+            public ID.ThreadID thread;
 
-            public int _startFrame;
+            public int startFrame;
 
-            public int _length;
+            public int length;
             public IncomingRequest(ID.ThreadID thread,
                 int startFrame,
                 int length) {
-                this._thread = thread;
-                this._startFrame = startFrame;
-                this._length = length;
+                this.thread = thread;
+                this.startFrame = startFrame;
+                this.length = length;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
-                _startFrame = ps.readInt();
-                _length = ps.readInt();
+                thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                startFrame = ps.readInt();
+                length = ps.readInt();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _thread.write(ps.getOutputStream());
-                ps.write(_startFrame);
-                ps.write(_length);
+                thread.write(ps.getOutputStream());
+                ps.write(startFrame);
+                ps.write(length);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_thread=" + _thread);
+                stringBuilder.append("thread=" + thread);
                 stringBuilder.append(", ");
-                stringBuilder.append("_startFrame=" + _startFrame);
+                stringBuilder.append("startFrame=" + startFrame);
                 stringBuilder.append(", ");
-                stringBuilder.append("_length=" + _length);
+                stringBuilder.append("length=" + length);
                 return stringBuilder.toString();
             }
         }
 
         public static class Frame {
 
-            public ID.FrameID _frameID;
+            public ID.FrameID frameID;
 
-            public JDWPLocation _location;
+            public JDWPLocation location;
             public Frame(ID.FrameID frameID,
                 JDWPLocation location) {
-                this._frameID = frameID;
-                this._location = location;
+                this.frameID = frameID;
+                this.location = location;
             }
             public Frame() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _frameID = ID.read(ps.getInputStream(), ID.FrameID.class);
-                _location = ps.readLocation();
+                frameID = ID.read(ps.getInputStream(), ID.FrameID.class);
+                location = ps.readLocation();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _frameID.write(ps.getOutputStream());
-                ps.write(_location);
+                frameID.write(ps.getOutputStream());
+                ps.write(location);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_frameID=" + _frameID);
+                stringBuilder.append("frameID=" + frameID);
                 stringBuilder.append(", ");
-                stringBuilder.append("_location=" + _location);
+                stringBuilder.append("location=" + location);
                 return stringBuilder.toString();
             }
         }
@@ -392,33 +392,33 @@ public final class ThreadReferenceCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public Frame[] _frames;
+            public Frame[] frames;
             public Reply(Frame[] frames) {
-                this._frames = frames;
+                this.frames = frames;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
                 final int framesCount = ps.readInt();
-                _frames = new Frame[framesCount];
+                frames = new Frame[framesCount];
                 for (int i = 0; i < framesCount; i++) {
-                    _frames[i] = new Frame();
-                    _frames[i].read(ps);
+                    frames[i] = new Frame();
+                    frames[i].read(ps);
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_frames.length);
-                for (int i = 0; i < _frames.length; i++) {
-                    _frames[i].write(ps);
+                ps.write(frames.length);
+                for (int i = 0; i < frames.length; i++) {
+                    frames[i].write(ps);
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_frames=[" + _frames.length + "]{");
-                for (int i = 0; i < _frames.length; i++) {
+                stringBuilder.append("frames=[" + frames.length + "]{");
+                for (int i = 0; i < frames.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_frames[i]=" + _frames[i]);
+                    stringBuilder.append("frames[i]=" + frames[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();
@@ -438,22 +438,22 @@ public final class ThreadReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ThreadID _thread;
+            public ID.ThreadID thread;
             public IncomingRequest(ID.ThreadID thread) {
-                this._thread = thread;
+                this.thread = thread;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _thread.write(ps.getOutputStream());
+                thread.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_thread=" + _thread);
+                stringBuilder.append("thread=" + thread);
                 return stringBuilder.toString();
             }
         }
@@ -462,22 +462,22 @@ public final class ThreadReferenceCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public int _frameCount;
+            public int frameCount;
             public Reply(int frameCount) {
-                this._frameCount = frameCount;
+                this.frameCount = frameCount;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _frameCount = ps.readInt();
+                frameCount = ps.readInt();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_frameCount);
+                ps.write(frameCount);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_frameCount=" + _frameCount);
+                stringBuilder.append("frameCount=" + frameCount);
                 return stringBuilder.toString();
             }
         }
@@ -495,22 +495,22 @@ public final class ThreadReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ThreadID _thread;
+            public ID.ThreadID thread;
             public IncomingRequest(ID.ThreadID thread) {
-                this._thread = thread;
+                this.thread = thread;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _thread.write(ps.getOutputStream());
+                thread.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_thread=" + _thread);
+                stringBuilder.append("thread=" + thread);
                 return stringBuilder.toString();
             }
         }
@@ -519,32 +519,32 @@ public final class ThreadReferenceCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public JDWPValue[] _owned;
+            public JDWPValue[] owned;
             public Reply(JDWPValue[] owned) {
-                this._owned = owned;
+                this.owned = owned;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
                 final int ownedCount = ps.readInt();
-                _owned = new JDWPValue[ownedCount];
+                owned = new JDWPValue[ownedCount];
                 for (int i = 0; i < ownedCount; i++) {
-                    _owned[i] = ps.readValue();
+                    owned[i] = ps.readValue();
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_owned.length);
-                for (int i = 0; i < _owned.length; i++) {
-                    ps.write(_owned[i]);
+                ps.write(owned.length);
+                for (int i = 0; i < owned.length; i++) {
+                    ps.write(owned[i]);
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_owned=[" + _owned.length + "]{");
-                for (int i = 0; i < _owned.length; i++) {
+                stringBuilder.append("owned=[" + owned.length + "]{");
+                for (int i = 0; i < owned.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_owned[i]=" + _owned[i]);
+                    stringBuilder.append("owned[i]=" + owned[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();
@@ -564,22 +564,22 @@ public final class ThreadReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ThreadID _thread;
+            public ID.ThreadID thread;
             public IncomingRequest(ID.ThreadID thread) {
-                this._thread = thread;
+                this.thread = thread;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _thread.write(ps.getOutputStream());
+                thread.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_thread=" + _thread);
+                stringBuilder.append("thread=" + thread);
                 return stringBuilder.toString();
             }
         }
@@ -588,22 +588,22 @@ public final class ThreadReferenceCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public JDWPValue _monitor;
+            public JDWPValue monitor;
             public Reply(JDWPValue monitor) {
-                this._monitor = monitor;
+                this.monitor = monitor;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _monitor = ps.readValue();
+                monitor = ps.readValue();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_monitor);
+                ps.write(monitor);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_monitor=" + _monitor);
+                stringBuilder.append("monitor=" + monitor);
                 return stringBuilder.toString();
             }
         }
@@ -621,30 +621,30 @@ public final class ThreadReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ThreadID _thread;
+            public ID.ThreadID thread;
 
-            public ID.ObjectID _throwable;
+            public ID.ObjectID throwable;
             public IncomingRequest(ID.ThreadID thread,
                 ID.ObjectID throwable) {
-                this._thread = thread;
-                this._throwable = throwable;
+                this.thread = thread;
+                this.throwable = throwable;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
-                _throwable = ID.read(ps.getInputStream(), ID.ObjectID.class);
+                thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                throwable = ID.read(ps.getInputStream(), ID.ObjectID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _thread.write(ps.getOutputStream());
-                _throwable.write(ps.getOutputStream());
+                thread.write(ps.getOutputStream());
+                throwable.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_thread=" + _thread);
+                stringBuilder.append("thread=" + thread);
                 stringBuilder.append(", ");
-                stringBuilder.append("_throwable=" + _throwable);
+                stringBuilder.append("throwable=" + throwable);
                 return stringBuilder.toString();
             }
         }
@@ -678,22 +678,22 @@ public final class ThreadReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ThreadID _thread;
+            public ID.ThreadID thread;
             public IncomingRequest(ID.ThreadID thread) {
-                this._thread = thread;
+                this.thread = thread;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _thread.write(ps.getOutputStream());
+                thread.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_thread=" + _thread);
+                stringBuilder.append("thread=" + thread);
                 return stringBuilder.toString();
             }
         }
@@ -727,22 +727,22 @@ public final class ThreadReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ThreadID _thread;
+            public ID.ThreadID thread;
             public IncomingRequest(ID.ThreadID thread) {
-                this._thread = thread;
+                this.thread = thread;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _thread.write(ps.getOutputStream());
+                thread.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_thread=" + _thread);
+                stringBuilder.append("thread=" + thread);
                 return stringBuilder.toString();
             }
         }
@@ -751,22 +751,22 @@ public final class ThreadReferenceCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public int _suspendCount;
+            public int suspendCount;
             public Reply(int suspendCount) {
-                this._suspendCount = suspendCount;
+                this.suspendCount = suspendCount;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _suspendCount = ps.readInt();
+                suspendCount = ps.readInt();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_suspendCount);
+                ps.write(suspendCount);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_suspendCount=" + _suspendCount);
+                stringBuilder.append("suspendCount=" + suspendCount);
                 return stringBuilder.toString();
             }
         }
@@ -784,52 +784,52 @@ public final class ThreadReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ThreadID _thread;
+            public ID.ThreadID thread;
             public IncomingRequest(ID.ThreadID thread) {
-                this._thread = thread;
+                this.thread = thread;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _thread.write(ps.getOutputStream());
+                thread.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_thread=" + _thread);
+                stringBuilder.append("thread=" + thread);
                 return stringBuilder.toString();
             }
         }
 
         public static class monitor {
 
-            public JDWPValue _monitor;
+            public JDWPValue monitor;
 
-            public int _stack_depth;
+            public int stack_depth;
             public monitor(JDWPValue monitor,
                 int stack_depth) {
-                this._monitor = monitor;
-                this._stack_depth = stack_depth;
+                this.monitor = monitor;
+                this.stack_depth = stack_depth;
             }
             public monitor() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _monitor = ps.readValue();
-                _stack_depth = ps.readInt();
+                monitor = ps.readValue();
+                stack_depth = ps.readInt();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_monitor);
-                ps.write(_stack_depth);
+                ps.write(monitor);
+                ps.write(stack_depth);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_monitor=" + _monitor);
+                stringBuilder.append("monitor=" + monitor);
                 stringBuilder.append(", ");
-                stringBuilder.append("_stack_depth=" + _stack_depth);
+                stringBuilder.append("stack_depth=" + stack_depth);
                 return stringBuilder.toString();
             }
         }
@@ -838,33 +838,33 @@ public final class ThreadReferenceCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public monitor[] _owned;
+            public monitor[] owned;
             public Reply(monitor[] owned) {
-                this._owned = owned;
+                this.owned = owned;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
                 final int ownedCount = ps.readInt();
-                _owned = new monitor[ownedCount];
+                owned = new monitor[ownedCount];
                 for (int i = 0; i < ownedCount; i++) {
-                    _owned[i] = new monitor();
-                    _owned[i].read(ps);
+                    owned[i] = new monitor();
+                    owned[i].read(ps);
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_owned.length);
-                for (int i = 0; i < _owned.length; i++) {
-                    _owned[i].write(ps);
+                ps.write(owned.length);
+                for (int i = 0; i < owned.length; i++) {
+                    owned[i].write(ps);
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_owned=[" + _owned.length + "]{");
-                for (int i = 0; i < _owned.length; i++) {
+                stringBuilder.append("owned=[" + owned.length + "]{");
+                for (int i = 0; i < owned.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_owned[i]=" + _owned[i]);
+                    stringBuilder.append("owned[i]=" + owned[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();
@@ -884,30 +884,30 @@ public final class ThreadReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ThreadID _thread;
+            public ID.ThreadID thread;
 
-            public JDWPValue _value;
+            public JDWPValue value;
             public IncomingRequest(ID.ThreadID thread,
                 JDWPValue value) {
-                this._thread = thread;
-                this._value = value;
+                this.thread = thread;
+                this.value = value;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
-                _value = ps.readValue();
+                thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                value = ps.readValue();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _thread.write(ps.getOutputStream());
-                ps.write(_value);
+                thread.write(ps.getOutputStream());
+                ps.write(value);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_thread=" + _thread);
+                stringBuilder.append("thread=" + thread);
                 stringBuilder.append(", ");
-                stringBuilder.append("_value=" + _value);
+                stringBuilder.append("value=" + value);
                 return stringBuilder.toString();
             }
         }

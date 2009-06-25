@@ -325,12 +325,12 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
     }
 
     public void visitWordWidth64(PointerLoadBuiltin builtin, IR_Type result, IR_Type[] arguments) {
-        assert Platform.target().processorKind().dataModel().wordWidth() == WordWidth.BITS_64;
+        assert Platform.target().processorKind.dataModel.wordWidth == WordWidth.BITS_64;
         visitPointerLoadBuiltin(builtin, result, arguments);
     }
 
     public void visitCiscInstructionSet(PointerLoadBuiltin builtin, IR_Type result, IR_Type[] arguments) {
-        assert Platform.target().processorKind().instructionSet().category() == InstructionSet.Category.CISC;
+        assert Platform.target().processorKind.instructionSet.category() == InstructionSet.Category.CISC;
         visitPointerLoadBuiltin(builtin, result, arguments);
     }
 
@@ -450,12 +450,12 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
     }
 
     public void visitWordWidth64(PointerStoreBuiltin builtin, IR_Type result, IR_Type[] arguments) {
-        assert Platform.target().processorKind().dataModel().wordWidth() == WordWidth.BITS_64;
+        assert Platform.target().processorKind.dataModel.wordWidth == WordWidth.BITS_64;
         visitPointerStoreBuiltin(builtin, result, arguments);
     }
 
     public void visitCiscInstructionSet(PointerStoreBuiltin builtin, IR_Type result, IR_Type[] arguments) {
-        assert Platform.target().processorKind().instructionSet().category() == InstructionSet.Category.CISC;
+        assert Platform.target().processorKind.instructionSet.category() == InstructionSet.Category.CISC;
         visitPointerStoreBuiltin(builtin, result, arguments);
     }
 

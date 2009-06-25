@@ -34,47 +34,47 @@ import com.sun.max.vm.heap.beltway.*;
  */
 public class TLAB extends RuntimeMemoryRegion implements Allocator {
 
-    private Address _endAllocationMark;
-    private Address _previousAllocationMark;
-    private Address _nextTLAB = Address.zero();
-    private Address _startScavengeAddress = Address.zero();
-    private Address _stopScavengeAddress = Address.zero();
+    private Address endAllocationMark;
+    private Address previousAllocationMark;
+    private Address nextTLAB = Address.zero();
+    private Address startScavengeAddress = Address.zero();
+    private Address stopScavengeAddress = Address.zero();
 
     // This variable will be written only during GC allocate TLABS
     // When 0 that TLAB (space) has not been scavenged yet.
     // It is also used for synchronization when accessing the linked list
-    private Address _scavenged;
-    private Pointer _scavengedPointer;
+    private Address scavenged;
+    private Pointer scavengedPointer;
 
     public TLAB() {
         super();
-        _mark = start();
+        mark = start();
     }
 
     public TLAB(Address start, Size size) {
         super(start, size);
-        _mark = start();
+        mark = start();
 
     }
 
     public TLAB(Size size) {
         super(size);
-        _mark = start();
+        mark = start();
         setDescription("TLAB");
     }
 
     public void initializeTLAB(Address newAddress) {
         setStart(newAddress);
         setSize(BeltwayHeapSchemeConfiguration.TLAB_SIZE);
-        _mark = newAddress;
+        mark = newAddress;
         if (VMConfiguration.hostOrTarget().debugging()) {
-            _endAllocationMark = end().asPointer().minusWords(4);
+            endAllocationMark = end().asPointer().minusWords(4);
         } else {
-            _endAllocationMark = end().asPointer().minusWords(3);
+            endAllocationMark = end().asPointer().minusWords(3);
 
         }
-        _scavenged.asPointer().bitSet(0);
-        _scavengedPointer = ClassActor.fromJava(TLAB.class).findLocalInstanceFieldActor("_scavenged").pointer(this);
+        scavenged.asPointer().bitSet(0);
+        scavengedPointer = ClassActor.fromJava(TLAB.class).findLocalInstanceFieldActor("scavenged").pointer(this);
 
     }
 
@@ -83,102 +83,102 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
         // Add one word in case of debugging, because we pass the parameter of the start
         // address without the taking account the debug word
         setSize(size);
-        _mark = allocationMark;
-        _previousAllocationMark = allocationMark;
+        mark = allocationMark;
+        previousAllocationMark = allocationMark;
         if (VMConfiguration.hostOrTarget().debugging()) {
-            _endAllocationMark = end().asPointer().minusWords(4);
+            endAllocationMark = end().asPointer().minusWords(4);
         } else {
-            _endAllocationMark = end().asPointer().minusWords(3);
+            endAllocationMark = end().asPointer().minusWords(3);
 
         }
-        _scavenged.asPointer().bitSet(0);
-        _scavengedPointer = ClassActor.fromJava(TLAB.class).findLocalInstanceFieldActor("_scavenged").pointer(this);
+        scavenged.asPointer().bitSet(0);
+        scavengedPointer = ClassActor.fromJava(TLAB.class).findLocalInstanceFieldActor("scavenged").pointer(this);
 
     }
 
     public void undoLastAllocation() {
-        _mark = _previousAllocationMark;
+        mark = previousAllocationMark;
     }
 
     @INLINE
     public final void resetTLAB() {
-        _mark = Address.zero();
+        mark = Address.zero();
     }
 
     @INLINE
     public final void setAllocationMark(Address allocationMark) {
-        _mark = allocationMark;
+        mark = allocationMark;
     }
 
     @INLINE
     public final void setScavengeStart(Address startScavenge) {
-        _startScavengeAddress = startScavenge;
+        startScavengeAddress = startScavenge;
     }
 
     @INLINE
     public final void setScavengeStop(Address stopScavenge) {
-        _stopScavengeAddress = stopScavenge;
+        stopScavengeAddress = stopScavenge;
     }
 
     @INLINE
     public final  boolean isSet() {
-        return !_mark.isZero();
+        return !mark.isZero();
     }
 
     @INLINE
     public final void unSet() {
-        _mark = Address.zero();
+        mark = Address.zero();
     }
 
     @INLINE
     public final void setNextTLAB(Address tlab) {
-        _nextTLAB = tlab;
+        nextTLAB = tlab;
     }
 
     @INLINE
     public final Address getNextTLAB() {
-        return _nextTLAB;
+        return nextTLAB;
     }
 
     @INLINE
     public final Address getScavengeStartAddress() {
-        return _startScavengeAddress;
+        return startScavengeAddress;
     }
 
     @INLINE
     public final Address getScavengeStopAddress() {
-        return _stopScavengeAddress;
+        return stopScavengeAddress;
     }
 
     @INLINE
     public final boolean isScavenged() {
-        return _scavengedPointer.isBitSet(0);
+        return scavengedPointer.isBitSet(0);
     }
 
     @INLINE
     public final void setScavenged() {
-        _scavengedPointer.setBit(0);
+        scavengedPointer.setBit(0);
     }
 
     @INLINE
     public  final Pointer getScavengedPointer() {
-        return _scavengedPointer;
+        return scavengedPointer;
     }
 
     @INLINE
     public final Address getScavengedAddress() {
-        return _scavenged;
+        return scavenged;
     }
 
     @INLINE
     public final void setScavengedAddress(Address scavenged) {
-        _scavenged = scavenged;
+        this.scavenged = scavenged;
     }
 
     @INLINE
     public final Pointer allocate(Size size) {
         Pointer cell;
-        final Pointer oldAllocationMark = _mark.asPointer();
+        final Pointer oldAllocationMark = mark.asPointer();
         if (VMConfiguration.hostOrTarget().debugging()) {
             cell = oldAllocationMark.plusWords(1);
         } else {
@@ -186,12 +186,12 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
         }
         final Pointer end = cell.plus(size);
 
-        if (end.greaterThan(_endAllocationMark)) {
+        if (end.greaterThan(endAllocationMark)) {
             fillTLAB();
             return Pointer.zero();
         }
-        _mark = end;
-        _previousAllocationMark = _mark;
+        mark = end;
+        previousAllocationMark = mark;
         return cell;
     }
 
@@ -207,13 +207,13 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
 
     @INLINE
     public final void fillTLAB() {
-        final Size fillingSize = _endAllocationMark.minus(_mark).asPointer().asSize();
-        _endAllocationMark = end();
-        Cell.plantArray(_mark.asPointer().plusWords(1), PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub(), fillingSize.toInt());
-        _mark = end();
+        final Size fillingSize = endAllocationMark.minus(mark).asPointer().asSize();
+        endAllocationMark = end();
+        Cell.plantArray(mark.asPointer().plusWords(1), PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub(), fillingSize.toInt());
+        mark = end();
     }
 
     public Pointer compareAndSwapScavengePointer(Pointer suspectedValue, Pointer newValue) {
-        return _scavengedPointer.compareAndSwapWord(suspectedValue, newValue).asPointer();
+        return scavengedPointer.compareAndSwapWord(suspectedValue, newValue).asPointer();
     }
 }

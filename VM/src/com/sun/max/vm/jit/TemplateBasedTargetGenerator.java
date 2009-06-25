@@ -44,15 +44,15 @@ import com.sun.max.vm.template.source.*;
 public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
 
     @CONSTANT_WHEN_NOT_ZERO
-    private TemplateTable _templateTable;
+    private TemplateTable templateTable;
 
     public TemplateTable templateTable() {
-        return _templateTable;
+        return templateTable;
     }
 
     public void initializeTemplateTable(TemplateTable templateTable) {
-        if (_templateTable == null) {
-            _templateTable = templateTable;
+        if (this.templateTable == null) {
+            this.templateTable = templateTable;
         }
     }
 
@@ -78,7 +78,7 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
 
     protected TemplateBasedTargetGenerator(TargetGeneratorScheme targetGeneratorScheme, InstructionSet instructionSet, TemplateTable templateTable) {
         super(targetGeneratorScheme, instructionSet);
-        _templateTable = templateTable;
+        this.templateTable = templateTable;
     }
 
     protected abstract BytecodeToTargetTranslator makeTargetTranslator(ClassMethodActor classMethodActor, CompilationDirective compilationDirective);
@@ -134,8 +134,8 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
         final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(
                         codeGenerator.numberOfCatchRanges(),
                         stops.numberOfDirectCalls(),
-                        stops._numberOfIndirectCalls,
-                        stops._numberOfSafepoints,
+                        stops.numberOfIndirectCalls,
+                        stops.numberOfSafepoints,
                         0, // no scalar literals ever
                         (referenceLiterals == null) ? 0 : referenceLiterals.length,
                                         codeGenerator.codeBuffer().currentPosition(),

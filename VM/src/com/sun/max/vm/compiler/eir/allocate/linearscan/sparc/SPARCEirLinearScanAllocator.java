@@ -33,43 +33,43 @@ import com.sun.max.vm.compiler.eir.sparc.*;
  */
 public final class SPARCEirLinearScanAllocator extends LinearScanRegisterAllocator<SPARCEirRegister> {
 
-    private final PoolSet<SPARCEirRegister> _noRegisters = PoolSet.noneOf(SPARCEirRegister.pool());
+    private final PoolSet<SPARCEirRegister> noRegisters = PoolSet.noneOf(SPARCEirRegister.pool());
 
     @Override
     protected PoolSet<SPARCEirRegister> noRegisters() {
-        return _noRegisters;
+        return noRegisters;
     }
 
-    private final PoolSet<SPARCEirRegister> _allocatableIntegerRegisters;
+    private final PoolSet<SPARCEirRegister> allocatableIntegerRegisters;
 
     @Override
     protected PoolSet<SPARCEirRegister> allocatableIntegerRegisters() {
-        return _allocatableIntegerRegisters;
+        return allocatableIntegerRegisters;
     }
 
-    private final PoolSet<SPARCEirRegister> _allocatableFloatingPointRegisters;
+    private final PoolSet<SPARCEirRegister> allocatableFloatingPointRegisters;
 
     @Override
     protected PoolSet<SPARCEirRegister> allocatableFloatingPointRegisters() {
-        return _allocatableFloatingPointRegisters;
+        return allocatableFloatingPointRegisters;
     }
 
     public SPARCEirLinearScanAllocator(EirMethodGeneration methodGeneration) {
         super(methodGeneration);
         final SPARCEirABI abi = (SPARCEirABI) methodGeneration.abi();
 
-        _allocatableIntegerRegisters = PoolSet.allOf(SPARCEirRegister.pool());
-        _allocatableIntegerRegisters.and(SPARCEirRegister.GeneralPurpose.poolSet());
-        _allocatableIntegerRegisters.and(abi.allocatableRegisters());
+        allocatableIntegerRegisters = PoolSet.allOf(SPARCEirRegister.pool());
+        allocatableIntegerRegisters.and(SPARCEirRegister.GeneralPurpose.poolSet());
+        allocatableIntegerRegisters.and(abi.allocatableRegisters());
         if (((DirToSPARCEirMethodTranslation) methodGeneration).saveSafetpoinLatchInLocal()) {
             // Reserve L5
-            _allocatableIntegerRegisters.remove(DirToSPARCEirMethodTranslation.SAVED_SAFEPOINT_LATCH_LOCAL);
+            allocatableIntegerRegisters.remove(DirToSPARCEirMethodTranslation.SAVED_SAFEPOINT_LATCH_LOCAL);
         }
 
-        _allocatableFloatingPointRegisters = PoolSet.allOf(SPARCEirRegister.pool());
-        _allocatableFloatingPointRegisters.and(SPARCEirRegister.FloatingPoint.singlePrecisionPoolSet());
-        _allocatableFloatingPointRegisters.and(SPARCEirRegister.FloatingPoint.doublePrecisionPoolSet());
-        _allocatableFloatingPointRegisters.and(SPARCEirRegister.FloatingPoint.poolSet());
-        _allocatableFloatingPointRegisters.and(abi.allocatableRegisters());
+        allocatableFloatingPointRegisters = PoolSet.allOf(SPARCEirRegister.pool());
+        allocatableFloatingPointRegisters.and(SPARCEirRegister.FloatingPoint.singlePrecisionPoolSet());
+        allocatableFloatingPointRegisters.and(SPARCEirRegister.FloatingPoint.doublePrecisionPoolSet());
+        allocatableFloatingPointRegisters.and(SPARCEirRegister.FloatingPoint.poolSet());
+        allocatableFloatingPointRegisters.and(abi.allocatableRegisters());
     }
 }

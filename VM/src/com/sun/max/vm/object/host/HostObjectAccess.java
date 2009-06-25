@@ -132,16 +132,16 @@ public final class HostObjectAccess {
     /**
      * The system thread group singleton.
      */
-    private static final ThreadGroup _systemThreadGroup = getSystemThreadGroup();
+    private static final ThreadGroup systemThreadGroup = getSystemThreadGroup();
 
     /**
      * The main thread running this virtual machine.
      */
-    private static Thread _mainThread;
+    private static Thread mainThread;
 
     static {
-        final ThreadGroup[] subGroups = new ThreadGroup[_systemThreadGroup.activeGroupCount()];
-        final int count = _systemThreadGroup.enumerate(subGroups);
+        final ThreadGroup[] subGroups = new ThreadGroup[systemThreadGroup.activeGroupCount()];
+        final int count = systemThreadGroup.enumerate(subGroups);
         for (int i = 0; i < count; ++i) {
             final ThreadGroup threadGroup = subGroups[i];
             if (threadGroup.getName().equals("main")) {
@@ -150,7 +150,7 @@ public final class HostObjectAccess {
                 for (int j = 0; j < threadCount; ++j) {
                     final Thread thread = threads[j];
                     if (thread.getName().equals("main")) {
-                        _mainThread = thread;
+                        mainThread = thread;
                     }
                 }
             }
@@ -162,9 +162,9 @@ public final class HostObjectAccess {
      * @param thread the main thread
      */
     public static void setMainThread(Thread thread) {
-        assert _mainThread == null || _mainThread == thread;
+        assert mainThread == null || mainThread == thread;
         assert thread.getName().equals("main");
-        _mainThread = thread;
+        mainThread = thread;
     }
 
     /**
@@ -172,7 +172,7 @@ public final class HostObjectAccess {
      * @return the main thread
      */
     public static Thread mainThread() {
-        return _mainThread;
+        return mainThread;
     }
 
     /**
@@ -184,12 +184,12 @@ public final class HostObjectAccess {
      * A map used during prototyping time to replace references to a particular object with
      * references to another object during graph reachability.
      */
-    private static Map<Object, Object> _objectMap; // TODO: this map and its uses should probably be moved to the prototype
+    private static Map<Object, Object> objectMap; // TODO: this map and its uses should probably be moved to the prototype
 
     /**
      * A map used to canonicalize instances of the Maxine value classes.
      */
-    private static final Map<Object, Object> _valueMap = new HashMap<Object, Object>();
+    private static final Map<Object, Object> valueMap = new HashMap<Object, Object>();
 
     /**
      * This method maps a host object to a target object. For most objects, this method will return the parameter
@@ -202,10 +202,10 @@ public final class HostObjectAccess {
     public static Object hostToTarget(Object object) {
         if (object instanceof String || object instanceof Value || object instanceof NameAndTypeConstant) {
             // canonicalize all instances of these classes using .equals()
-            Object result = _valueMap.get(object);
+            Object result = valueMap.get(object);
             if (result == null) {
                 result = object;
-                _valueMap.put(object, object);
+                valueMap.put(object, object);
             }
             return result;
         }
@@ -220,28 +220,28 @@ public final class HostObjectAccess {
     }
 
     private static Object getObjectReplacement(Object object) {
-        if (_objectMap == null) {
+        if (objectMap == null) {
             // check the object identity map certain objects to certain other objects
             initializeObjectIdentityMap();
         }
-        final Object replace = _objectMap.get(object);
+        final Object replace = objectMap.get(object);
         return replace;
     }
 
     private static void initializeObjectIdentityMap() {
-        _objectMap = new IdentityHashMap<Object, Object>();
+        objectMap = new IdentityHashMap<Object, Object>();
 
-        _objectMap.put(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, VmClassLoader.VM_CLASS_LOADER);
-        _objectMap.put(VmClassLoader.VM_CLASS_LOADER.getParent(), NULL);
-        _objectMap.put(_systemThreadGroup, NULL);
-        _objectMap.put(_mainThread, _mainThread);
-        _objectMap.put(Trace.stream(), Log.out);
+        objectMap.put(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, VmClassLoader.VM_CLASS_LOADER);
+        objectMap.put(VmClassLoader.VM_CLASS_LOADER.getParent(), NULL);
+        objectMap.put(systemThreadGroup, NULL);
+        objectMap.put(mainThread, mainThread);
+        objectMap.put(Trace.stream(), Log.out);
         final ThreadGroup threadGroup = new ThreadGroup("MaxineVM");
         WithoutAccessCheck.setInstanceField(threadGroup, "parent", null);
-        _objectMap.put(_mainThread.getThreadGroup(), threadGroup);
-        _objectMap.put(threadGroup, threadGroup);
-        _objectMap.put(MaxineVM.host(), MaxineVM.target());
-        _objectMap.put(TTY.out, new LogStream(Log.os));
-        _objectMap.put(WithoutAccessCheck.getStaticField(System.class, "props"), JDKInterceptor._initialSystemProperties);
+        objectMap.put(mainThread.getThreadGroup(), threadGroup);
+        objectMap.put(threadGroup, threadGroup);
+        objectMap.put(MaxineVM.host(), MaxineVM.target());
+        objectMap.put(TTY.out, new LogStream(Log.os));
+        objectMap.put(WithoutAccessCheck.getStaticField(System.class, "props"), JDKInterceptor.initialSystemProperties);
     }
 }

@@ -54,7 +54,7 @@ public class Field_get03 {
         }
     }
 
-    private static final Field_get03 _object = new Field_get03();
+    private static final Field_get03 object = new Field_get03();
 
     public final byte byteField = 11;
     public final short shortField = 12;
@@ -67,21 +67,21 @@ public class Field_get03 {
 
     public static boolean test(int arg) throws NoSuchFieldException, IllegalAccessException {
         if (arg == 0) {
-            return BYTE_FIELD.get(_object).equals(_object.byteField);
+            return BYTE_FIELD.get(object).equals(object.byteField);
         } else if (arg == 1) {
-            return SHORT_FIELD.get(_object).equals(_object.shortField);
+            return SHORT_FIELD.get(object).equals(object.shortField);
         } else if (arg == 2) {
-            return CHAR_FIELD.get(_object).equals(_object.charField);
+            return CHAR_FIELD.get(object).equals(object.charField);
         } else if (arg == 3) {
-            return INT_FIELD.get(_object).equals(_object.intField);
+            return INT_FIELD.get(object).equals(object.intField);
         } else if (arg == 4) {
-            return LONG_FIELD.get(_object).equals(_object.longField);
+            return LONG_FIELD.get(object).equals(object.longField);
         } else if (arg == 5) {
-            return FLOAT_FIELD.get(_object).equals(_object.floatField);
+            return FLOAT_FIELD.get(object).equals(object.floatField);
         } else if (arg == 6) {
-            return DOUBLE_FIELD.get(_object).equals(_object.doubleField);
+            return DOUBLE_FIELD.get(object).equals(object.doubleField);
         } else if (arg == 7) {
-            return BOOLEAN_FIELD.get(_object).equals(_object.booleanField);
+            return BOOLEAN_FIELD.get(object).equals(object.booleanField);
         }
         return false;
     }

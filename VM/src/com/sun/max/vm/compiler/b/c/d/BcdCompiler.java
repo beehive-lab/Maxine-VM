@@ -33,15 +33,15 @@ import com.sun.max.vm.compiler.ir.*;
  */
 public class BcdCompiler extends BcCompiler implements DirGeneratorScheme {
 
-    private final CirToDirTranslator _cirToDirTranslator;
+    private final CirToDirTranslator cirToDirTranslator;
 
     public BcdCompiler(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        _cirToDirTranslator = new CirToDirTranslator(this);
+        cirToDirTranslator = new CirToDirTranslator(this);
     }
 
     public DirGenerator dirGenerator() {
-        return _cirToDirTranslator;
+        return cirToDirTranslator;
     }
 
     @Override
@@ -51,6 +51,6 @@ public class BcdCompiler extends BcCompiler implements DirGeneratorScheme {
 
     @Override
     public Sequence<IrGenerator> irGenerators() {
-        return Sequence.Static.appended(super.irGenerators(), _cirToDirTranslator);
+        return Sequence.Static.appended(super.irGenerators(), cirToDirTranslator);
     }
 }

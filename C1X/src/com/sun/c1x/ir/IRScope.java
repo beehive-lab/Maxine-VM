@@ -45,14 +45,14 @@ public class IRScope {
     final int callerBCI;
     final List<IRScope> callees;
 
-    ValueStack _callerState;
-    List<ExceptionHandler> _exceptionHandlers;
-    int _numberOfLocks;
-    BlockBegin _start;
+    ValueStack callerState;
+    List<ExceptionHandler> exceptionHandlers;
+    int numberOfLocks;
+    BlockBegin start;
 
-    int _lockStackSize;
+    int lockStackSize;
 
-    BitMap _storesInLoops;
+    BitMap storesInLoops;
 
     public IRScope(C1XCompilation compilation, IRScope caller, int callerBCI, CiMethod method, int osrBCI) {
         this.compilation = compilation;
@@ -68,8 +68,8 @@ public class IRScope {
      * @param size the number of locks required
      */
     public void setMinimumNumberOfLocks(int size) {
-        if (size > _numberOfLocks) {
-            _numberOfLocks = size;
+        if (size > numberOfLocks) {
+            numberOfLocks = size;
         }
     }
 
@@ -78,7 +78,7 @@ public class IRScope {
      * @return the number of locks
      */
     public final int numberOfLocks() {
-        return _numberOfLocks;
+        return numberOfLocks;
     }
 
     /**
@@ -94,7 +94,7 @@ public class IRScope {
      * @return the value stack at the point of this call
      */
     public final ValueStack callerState() {
-        return _callerState;
+        return callerState;
     }
 
     /**
@@ -110,7 +110,7 @@ public class IRScope {
      * @return the block for the start of this method
      */
     public final BlockBegin start() {
-        return _start;
+        return start;
     }
 
     /**
@@ -118,7 +118,7 @@ public class IRScope {
      * @return the list of exception handlers
      */
     public List<ExceptionHandler> exceptionHandlers() {
-        return _exceptionHandlers;
+        return exceptionHandlers;
     }
 
     /**
@@ -126,10 +126,10 @@ public class IRScope {
      * @param handler the exception handler to add
      */
     public void addExceptionHandler(ExceptionHandler handler) {
-        if (_exceptionHandlers == null) {
-            _exceptionHandlers = new ArrayList<ExceptionHandler>();
+        if (exceptionHandlers == null) {
+            exceptionHandlers = new ArrayList<ExceptionHandler>();
         }
-        _exceptionHandlers.add(handler);
+        exceptionHandlers.add(handler);
     }
 
     /**
@@ -138,7 +138,7 @@ public class IRScope {
      * @return the phi bitmap for this IR scope
      */
     public final BitMap getStoresInLoops() {
-        return _storesInLoops;
+        return storesInLoops;
     }
 
     /**
@@ -146,7 +146,7 @@ public class IRScope {
      * @return <code>true</code> if this IR scope is valid
      */
     public final boolean isValid() {
-        return _start != null;
+        return start != null;
     }
 
     /**
@@ -162,11 +162,11 @@ public class IRScope {
      * @param callerState the new caller state
      */
     public final void setCallerState(ValueStack callerState) {
-        _callerState = callerState;
+        this.callerState = callerState;
     }
 
     public final void setStoresInLoops(BitMap storesInLoops) {
-        _storesInLoops = storesInLoops;
+        this.storesInLoops = storesInLoops;
     }
 
     /**
@@ -210,20 +210,20 @@ public class IRScope {
 
     public final void computeLockStackSize() {
         if (!C1XOptions.InlineMethodsWithExceptionHandlers) {
-            _lockStackSize = 0;
+            lockStackSize = 0;
             return;
         }
         IRScope curScope = this;
-        while (curScope != null && curScope._exceptionHandlers.size() > 0) {
+        while (curScope != null && curScope.exceptionHandlers.size() > 0) {
             curScope = curScope.caller;
         }
-        _lockStackSize = (curScope == null ? 0 :
+        lockStackSize = (curScope == null ? 0 :
                           (curScope.callerState() == null ? 0 :
                            curScope.callerState().stackSize()));
     }
 
     public int lockStackSize() {
-        assert _lockStackSize >= 0;
-        return _lockStackSize;
+        assert lockStackSize >= 0;
+        return lockStackSize;
     }
 }

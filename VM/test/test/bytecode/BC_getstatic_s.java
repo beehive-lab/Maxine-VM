@@ -28,8 +28,8 @@ package test.bytecode;
  * @Runs: 0 = 11s; 1 = 11s
  */
 public class BC_getstatic_s {
-    private static short _field = 11;
+    private static short field = 11;
     public static short test(int a) {
-        return _field;
+        return field;
     }
 }

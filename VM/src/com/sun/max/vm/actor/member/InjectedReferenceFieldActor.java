@@ -40,14 +40,14 @@ import com.sun.max.vm.value.*;
 public class InjectedReferenceFieldActor<T> extends ReferenceFieldActor implements InjectedFieldActor<ReferenceValue> {
 
     public TypeDescriptor holderTypeDescriptor() {
-        return _holder;
+        return holder;
     }
 
     public ReferenceValue readInjectedValue(Reference reference) {
         throw ProgramError.unexpected(this + " cannot be read while prototyping");
     }
 
-    private final TypeDescriptor _holder;
+    private final TypeDescriptor holder;
 
     /**
      * Creates an actor for an injected long field.
@@ -60,7 +60,7 @@ public class InjectedReferenceFieldActor<T> extends ReferenceFieldActor implemen
         super(SymbolTable.makeSymbol("_$injected$" + fieldType.getSimpleName()),
               JavaTypeDescriptor.forJavaClass(fieldType),
               ACC_SYNTHETIC + ACC_PRIVATE + INJECTED);
-        _holder = JavaTypeDescriptor.forJavaClass(holder);
+        this.holder = JavaTypeDescriptor.forJavaClass(holder);
         Static.registerInjectedFieldActor(this);
     }
 

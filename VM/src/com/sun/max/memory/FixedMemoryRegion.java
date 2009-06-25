@@ -27,46 +27,46 @@ import com.sun.max.unsafe.*;
  */
 public class FixedMemoryRegion implements MemoryRegion {
 
-    private final Address _start;
+    private final Address start;
 
     public Address start() {
-        return _start;
+        return start;
     }
 
-    private final Size _size;
+    private final Size size;
 
     public Size size() {
-        return _size;
+        return size;
     }
 
-    private final Address _end;
+    private final Address end;
 
     public Address end() {
-        return _end;
+        return end;
     }
 
-    private String _description;
+    private String description;
 
     public String description() {
-        return _description;
+        return description;
     }
 
     public void setDescription(String description) {
-        _description = description;
+        this.description = description;
     }
 
     public FixedMemoryRegion(Address start, Size size, String description) {
-        _start = start;
-        _size = size;
-        _end = start.plus(size);
-        _description = description;
+        this.start = start;
+        this.size = size;
+        this.end = start.plus(size);
+        this.description = description;
     }
 
     public FixedMemoryRegion(MemoryRegion memoryRegion, String description) {
-        _start = memoryRegion.start();
-        _size = memoryRegion.size();
-        _end = memoryRegion.end();
-        _description = description();
+        start = memoryRegion.start();
+        size = memoryRegion.size();
+        end = memoryRegion.end();
+        this.description = description;
     }
 
     public boolean contains(Address address) {
@@ -74,8 +74,8 @@ public class FixedMemoryRegion implements MemoryRegion {
     }
 
     public boolean overlaps(MemoryRegion memoryRegion) {
-        return (_start.greaterEqual(memoryRegion.start()) && _start.lessThan(memoryRegion.end())) ||
-               (_end.greaterEqual(memoryRegion.start()) && _end.lessThan(memoryRegion.end()));
+        return (start.greaterEqual(memoryRegion.start()) && start.lessThan(memoryRegion.end())) ||
+               (end.greaterEqual(memoryRegion.start()) && end.lessThan(memoryRegion.end()));
     }
 
     public boolean sameAs(MemoryRegion otherMemoryRegion) {

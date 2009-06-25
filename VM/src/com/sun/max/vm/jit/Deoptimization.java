@@ -29,24 +29,24 @@ import com.sun.max.vm.thread.*;
  * @author Bernd Mathiske
  */
 public abstract class Deoptimization implements StackFrameVisitor, TargetLocationVisitor {
-    private StackFrame _sourceFrame;
+    private StackFrame sourceFrame;
 
     protected StackFrame sourceFrame() {
-        return _sourceFrame;
+        return sourceFrame;
     }
 
-    private StackFrame _parentFrame;
+    private StackFrame parentFrame;
 
     protected StackFrame parentFrame() {
-        return _parentFrame;
+        return parentFrame;
     }
 
-    private boolean _isParentFrameOptimized = true;
+    private boolean isParentFrameOptimized = true;
 
-    private final RandomAccessWordBuffer _buffer = new RandomAccessWordBuffer();
+    private final RandomAccessWordBuffer buffer = new RandomAccessWordBuffer();
 
     protected RandomAccessWordBuffer buffer() {
-        return _buffer;
+        return buffer;
     }
 
     protected Deoptimization() {
@@ -54,14 +54,14 @@ public abstract class Deoptimization implements StackFrameVisitor, TargetLocatio
 
     public boolean visitFrame(StackFrame stackFrame) {
         if (stackFrame.isTopFrame()) {
-            _sourceFrame = stackFrame;
+            sourceFrame = stackFrame;
             return true;
         }
         if (stackFrame.isAdapter()) {
-            _isParentFrameOptimized = false;
+            isParentFrameOptimized = false;
             return true;
         }
-        _parentFrame = stackFrame;
+        parentFrame = stackFrame;
         return false;
     }
 
@@ -82,7 +82,7 @@ public abstract class Deoptimization implements StackFrameVisitor, TargetLocatio
             d = next;
             createJitFrame(d, Deoptimizer.Situation.SAFEPOINT);
         }
-        if (_isParentFrameOptimized) {
+        if (isParentFrameOptimized) {
             final ClassMethodActor classMethodActor = d.classMethodActor();
             if (!(classMethodActor.isStatic() && (classMethodActor.descriptor().numberOfParameters() == 0))) {
                 createAdapterFrame(d);
