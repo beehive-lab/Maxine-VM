@@ -49,11 +49,11 @@ import com.sun.max.vm.value.*;
  * @author Hiroshi Yamauchi
  * @author Doug Simon
  */
-public class FieldActor<Value_Type extends Value<Value_Type>> extends MemberActor {
+public class FieldActor extends MemberActor {
 
-    public final Kind<Value_Type> kind;
+    public final Kind kind;
 
-    public FieldActor(Kind<Value_Type> kind,
+    public FieldActor(Kind kind,
                     Utf8Constant name,
                     TypeDescriptor descriptor,
                     int flags) {
@@ -125,9 +125,9 @@ public class FieldActor<Value_Type extends Value<Value_Type>> extends MemberActo
         return offset;
     }
 
-    public Value_Type readValue(Reference reference) {
+    public Value readValue(Reference reference) {
         if (MaxineVM.isPrototyping() && this instanceof InjectedFieldActor) {
-            final InjectedFieldActor<Value_Type> injectedFieldActor = StaticLoophole.cast(this);
+            final InjectedFieldActor injectedFieldActor = StaticLoophole.cast(this);
             return injectedFieldActor.readInjectedValue(reference);
         }
 

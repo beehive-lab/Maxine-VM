@@ -23,7 +23,6 @@ package com.sun.max.vm.template.source;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
 

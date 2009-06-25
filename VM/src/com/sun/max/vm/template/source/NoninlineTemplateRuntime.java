@@ -21,7 +21,6 @@
 package com.sun.max.vm.template.source;
 
 import static com.sun.max.vm.compiler.snippet.MethodSelectionSnippet.SelectInterfaceMethod.*;
-import static com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveClass.*;
 import static com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveInstanceFieldForReading.*;
 import static com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveInstanceFieldForWriting.*;
 import static com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveInterfaceMethod.*;
@@ -35,7 +34,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.snippet.*;
-import com.sun.max.vm.compiler.snippet.NonFoldableSnippet.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 
