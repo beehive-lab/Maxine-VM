@@ -97,7 +97,7 @@ public final class HostTupleAccess {
      * @param byteFieldActor the field actor representing the field to be read
      * @return the value of the field of the specified object
      */
-    public static byte readByte(Object tuple, ByteFieldActor byteFieldActor) {
+    public static byte readByte(Object tuple, FieldActor byteFieldActor) {
         try {
             final Field field = byteFieldActor.toJava();
             field.setAccessible(true);
@@ -114,7 +114,7 @@ public final class HostTupleAccess {
      * @param booleanFieldActor the field actor representing the field to be read
      * @return the value of the field of the specified object
      */
-    public static boolean readBoolean(Object tuple, BooleanFieldActor booleanFieldActor) {
+    public static boolean readBoolean(Object tuple, FieldActor booleanFieldActor) {
         try {
             final Field field = booleanFieldActor.toJava();
             field.setAccessible(true);
@@ -131,7 +131,7 @@ public final class HostTupleAccess {
      * @param shortFieldActor the field actor representing the field to be read
      * @return the value of the field of the specified object
      */
-    public static short readShort(Object tuple, ShortFieldActor shortFieldActor) {
+    public static short readShort(Object tuple, FieldActor shortFieldActor) {
         try {
             final Field field = shortFieldActor.toJava();
             field.setAccessible(true);
@@ -148,7 +148,7 @@ public final class HostTupleAccess {
      * @param charFieldActor the field actor representing the field to be read
      * @return the value of the field of the specified object
      */
-    public static char readChar(Object tuple, CharFieldActor charFieldActor) {
+    public static char readChar(Object tuple, FieldActor charFieldActor) {
         try {
             final Field field = charFieldActor.toJava();
             field.setAccessible(true);
@@ -165,7 +165,7 @@ public final class HostTupleAccess {
      * @param intFieldActor the field actor representing the field to be read
      * @return the value of the field of the specified object
      */
-    public static int readInt(Object tuple, IntFieldActor intFieldActor) {
+    public static int readInt(Object tuple, FieldActor intFieldActor) {
         try {
             final Field field = intFieldActor.toJava();
             field.setAccessible(true);
@@ -182,7 +182,7 @@ public final class HostTupleAccess {
      * @param floatFieldActor the field actor representing the field to be read
      * @return the value of the field of the specified object
      */
-    public static float readFloat(Object tuple, FloatFieldActor floatFieldActor) {
+    public static float readFloat(Object tuple, FieldActor floatFieldActor) {
         try {
             final Field field = floatFieldActor.toJava();
             field.setAccessible(true);
@@ -199,7 +199,7 @@ public final class HostTupleAccess {
      * @param longFieldActor the field actor representing the field to be read
      * @return the value of the field of the specified object
      */
-    public static long readLong(Object tuple, LongFieldActor longFieldActor) {
+    public static long readLong(Object tuple, FieldActor longFieldActor) {
         try {
             final Field field = longFieldActor.toJava();
             field.setAccessible(true);
@@ -216,7 +216,7 @@ public final class HostTupleAccess {
      * @param doubleFieldActor the field actor representing the field to be read
      * @return the value of the field of the specified object
      */
-    public static double readDouble(Object tuple, DoubleFieldActor doubleFieldActor) {
+    public static double readDouble(Object tuple, FieldActor doubleFieldActor) {
         try {
             final Field field = doubleFieldActor.toJava();
             field.setAccessible(true);
@@ -233,7 +233,7 @@ public final class HostTupleAccess {
      * @param wordFieldActor the field actor representing the field to be read
      * @return the value of the field of the specified object
      */
-    public static Word readWord(Object tuple, WordFieldActor wordFieldActor) {
+    public static Word readWord(Object tuple, FieldActor wordFieldActor) {
         try {
             final Field field = wordFieldActor.toJava();
             field.setAccessible(true);
@@ -267,7 +267,7 @@ public final class HostTupleAccess {
      * @param byteFieldActor the field actor representing the field to write
      * @param value the value to write into the field
      */
-    public static void writeByte(Object tuple, ByteFieldActor byteFieldActor, byte value) {
+    public static void writeByte(Object tuple, FieldActor byteFieldActor, byte value) {
         try {
             final Field field = byteFieldActor.toJava();
             field.setAccessible(true);
@@ -280,10 +280,10 @@ public final class HostTupleAccess {
     /**
      * Write a boolean into the specified field of the specified object.
      * @param tuple the object to which to write
-     * @param byteFieldActor the field actor representing the field to write
+     * @param booleanFieldActor the field actor representing the field to write
      * @param value the value to write into the field
      */
-    public static void writeBoolean(Object tuple, BooleanFieldActor booleanFieldActor, boolean value) {
+    public static void writeBoolean(Object tuple, FieldActor booleanFieldActor, boolean value) {
         try {
             final Field field = booleanFieldActor.toJava();
             field.setAccessible(true);
@@ -299,7 +299,7 @@ public final class HostTupleAccess {
      * @param shortFieldActor the field actor representing the field to write
      * @param value the value to write into the field
      */
-    public static void writeShort(Object tuple, ShortFieldActor shortFieldActor, short value) {
+    public static void writeShort(Object tuple, FieldActor shortFieldActor, short value) {
         try {
             final Field field = shortFieldActor.toJava();
             field.setAccessible(true);
@@ -315,7 +315,7 @@ public final class HostTupleAccess {
      * @param charFieldActor the field actor representing the field to write
      * @param value the value to write into the field
      */
-    public static void writeChar(Object tuple, CharFieldActor charFieldActor, char value) {
+    public static void writeChar(Object tuple, FieldActor charFieldActor, char value) {
         try {
             final Field field = charFieldActor.toJava();
             field.setAccessible(true);
@@ -331,7 +331,7 @@ public final class HostTupleAccess {
      * @param intFieldActor the field actor representing the field to write
      * @param value the value to write into the field
      */
-    public static void writeInt(Object tuple, IntFieldActor intFieldActor, int value) {
+    public static void writeInt(Object tuple, FieldActor intFieldActor, int value) {
         try {
             final Field field = intFieldActor.toJava();
             field.setAccessible(true);
@@ -347,7 +347,7 @@ public final class HostTupleAccess {
      * @param floatFieldActor the field actor representing the field to write
      * @param value the value to write into the field
      */
-    public static void writeFloat(Object tuple, FloatFieldActor floatFieldActor, float value) {
+    public static void writeFloat(Object tuple, FieldActor floatFieldActor, float value) {
         try {
             final Field field = floatFieldActor.toJava();
             field.setAccessible(true);
@@ -363,7 +363,7 @@ public final class HostTupleAccess {
      * @param longFieldActor the field actor representing the field to write
      * @param value the value to write into the field
      */
-    public static void writeLong(Object tuple, LongFieldActor longFieldActor, long value) {
+    public static void writeLong(Object tuple, FieldActor longFieldActor, long value) {
         try {
             final Field field = longFieldActor.toJava();
             field.setAccessible(true);
@@ -379,7 +379,7 @@ public final class HostTupleAccess {
      * @param doubleFieldActor the field actor representing the field to write
      * @param value the value to write into the field
      */
-    public static void writeDouble(Object tuple, DoubleFieldActor doubleFieldActor, double value) {
+    public static void writeDouble(Object tuple, FieldActor doubleFieldActor, double value) {
         try {
             final Field field = doubleFieldActor.toJava();
             field.setAccessible(true);
@@ -395,7 +395,7 @@ public final class HostTupleAccess {
      * @param wordFieldActor the field actor representing the field to write
      * @param value the value to write into the field
      */
-    public static void writeWord(Object tuple, WordFieldActor wordFieldActor, Word value) {
+    public static void writeWord(Object tuple, FieldActor wordFieldActor, Word value) {
         try {
             final Field field = wordFieldActor.toJava();
             field.setAccessible(true);

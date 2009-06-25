@@ -213,10 +213,12 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
 
     public abstract Value_Type zeroValue();
 
-    public abstract FieldActor<Value_Type> createFieldActor(
+    public FieldActor<Value_Type> createFieldActor(
                     Utf8Constant name,
                     TypeDescriptor descriptor,
-                    int flags);
+                    int flags) {
+        return new FieldActor<Value_Type>(this, name, this.typeDescriptor, flags);
+    }
 
     public static final Kind<VoidValue> VOID = new Kind<VoidValue>(KindEnum.VOID, "void", void.class, null, VoidValue.class, 'V', Void.class, JavaTypeDescriptor.VOID, null) {
         @Override
@@ -327,14 +329,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         public final ByteArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.byteArrayLayout;
         }
-
-        @Override
-        public ByteFieldActor createFieldActor(
-                        Utf8Constant name,
-                        TypeDescriptor descriptor,
-                        int flags) {
-            return new ByteFieldActor(name, flags);
-        }
     };
 
     public static final Kind<BooleanValue> BOOLEAN = new Kind<BooleanValue>(KindEnum.BOOLEAN, "boolean", boolean.class, boolean[].class,
@@ -403,14 +397,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         @Override
         public final BooleanArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.booleanArrayLayout;
-        }
-
-        @Override
-        public BooleanFieldActor createFieldActor(
-                        Utf8Constant name,
-                        TypeDescriptor descriptor,
-                        int flags) {
-            return new BooleanFieldActor(name, flags);
         }
     };
 
@@ -481,14 +467,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         public final ShortArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.shortArrayLayout;
         }
-
-        @Override
-        public ShortFieldActor createFieldActor(
-                        Utf8Constant name,
-                        TypeDescriptor descriptor,
-                        int flags) {
-            return new ShortFieldActor(name, flags);
-        }
     };
 
     public static final Kind<CharValue> CHAR = new Kind<CharValue>(KindEnum.CHAR, "char", char.class, char[].class,
@@ -558,14 +536,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         public final CharArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.charArrayLayout;
         }
-
-        @Override
-        public CharFieldActor createFieldActor(
-                        Utf8Constant name,
-                        TypeDescriptor descriptor,
-                        int flags) {
-            return new CharFieldActor(name, flags);
-        }
     };
 
     public static final Kind<IntValue> INT = new Kind<IntValue>(KindEnum.INT, "int", int.class, int[].class,
@@ -630,14 +600,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         public final IntArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.intArrayLayout;
         }
-
-        @Override
-        public IntFieldActor createFieldActor(
-                        Utf8Constant name,
-                        TypeDescriptor descriptor,
-                        int flags) {
-            return new IntFieldActor(name, flags);
-        }
     };
 
     public static final Kind<FloatValue> FLOAT = new Kind<FloatValue>(KindEnum.FLOAT, "float", float.class, float[].class,
@@ -701,14 +663,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         @Override
         public final FloatArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.floatArrayLayout;
-        }
-
-        @Override
-        public FloatFieldActor createFieldActor(
-                        Utf8Constant name,
-                        TypeDescriptor descriptor,
-                        int flags) {
-            return new FloatFieldActor(name, flags);
         }
     };
 
@@ -789,14 +743,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         public final LongArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.longArrayLayout;
         }
-
-        @Override
-        public LongFieldActor createFieldActor(
-                        Utf8Constant name,
-                        TypeDescriptor descriptor,
-                        int flags) {
-            return new LongFieldActor(name, flags);
-        }
     };
 
     public static final Kind<DoubleValue> DOUBLE = new Kind<DoubleValue>(KindEnum.DOUBLE, "double", double.class, double[].class,
@@ -876,14 +822,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         public final DoubleArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.doubleArrayLayout;
         }
-
-        @Override
-        public DoubleFieldActor createFieldActor(
-                        Utf8Constant name,
-                        TypeDescriptor descriptor,
-                        int flags) {
-            return new DoubleFieldActor(name, flags);
-        }
     };
 
     public static final Kind<WordValue> WORD = new Kind<WordValue>(KindEnum.WORD, "Word", Word.class, Word[].class,
@@ -953,11 +891,11 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public WordFieldActor createFieldActor(
+        public FieldActor<WordValue> createFieldActor(
                         Utf8Constant name,
                         TypeDescriptor descriptor,
                         int flags) {
-            return new WordFieldActor(name, descriptor, flags);
+            return new FieldActor<WordValue>(this, name, descriptor, flags);
         }
     };
 

@@ -29,6 +29,7 @@ import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.object.TupleAccess;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
@@ -157,7 +158,8 @@ public final class VmClassLoader extends ClassLoader {
             final ClassActor classActor = JDK.java_lang_ClassLoader$NativeLibrary.classActor();
             final VirtualMethodActor constructor = ClassMethodActor.findVirtual(classActor, SymbolTable.INIT.toString());
             final Object nativeLibrary = constructor.invokeConstructor(ReferenceValue.from(VmClassLoader.class), ReferenceValue.from(path)).asObject();
-            LongFieldActor.findInstance(classActor.toJava(), "handle").writeLong(nativeLibrary, handle.asAddress().toLong());
+            final FieldActor longFieldActor = FieldActor.findInstance(classActor.toJava(), "handle");
+            TupleAccess.writeLong(nativeLibrary, longFieldActor.offset(), handle.asAddress().toLong());
             return nativeLibrary;
         } catch (Throwable throwable) {
             ProgramError.unexpected(throwable);

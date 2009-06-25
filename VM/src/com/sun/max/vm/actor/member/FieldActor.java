@@ -48,11 +48,11 @@ import com.sun.max.vm.value.*;
  * @author Hiroshi Yamauchi
  * @author Doug Simon
  */
-public abstract class FieldActor<Value_Type extends Value<Value_Type>> extends MemberActor {
+public class FieldActor<Value_Type extends Value<Value_Type>> extends MemberActor {
 
     public final Kind<Value_Type> kind;
 
-    protected FieldActor(Kind<Value_Type> kind,
+    public FieldActor(Kind<Value_Type> kind,
                     Utf8Constant name,
                     TypeDescriptor descriptor,
                     int flags) {
