@@ -73,7 +73,7 @@ public abstract class PointerLoadBuiltin extends PointerBuiltin {
         @BUILTIN(builtinClass = ReadByteAtIntOffset.class)
         private static byte readByteAtIntOffset(Object tuple, int offset) {
             final Hub hub = HostObjectAccess.readHub(tuple);
-            return HostTupleAccess.readByte(tuple, (ByteFieldActor) hub.findFieldActor(offset));
+            return HostTupleAccess.readByte(tuple, hub.findFieldActor(offset));
         }
 
         @Override
@@ -111,7 +111,7 @@ public abstract class PointerLoadBuiltin extends PointerBuiltin {
         @BUILTIN(builtinClass = ReadShortAtIntOffset.class)
         private static short readShortAtIntOffset(Object tuple, int offset) {
             final Hub hub = HostObjectAccess.readHub(tuple);
-            return HostTupleAccess.readShort(tuple, (ShortFieldActor) hub.findFieldActor(offset));
+            return HostTupleAccess.readShort(tuple, hub.findFieldActor(offset));
         }
 
         @Override
@@ -148,7 +148,7 @@ public abstract class PointerLoadBuiltin extends PointerBuiltin {
         @BUILTIN(builtinClass = ReadCharAtIntOffset.class)
         private static char readCharAtIntOffset(Object tuple, int offset) {
             final Hub hub = HostObjectAccess.readHub(tuple);
-            return HostTupleAccess.readChar(tuple, (CharFieldActor) hub.findFieldActor(offset));
+            return HostTupleAccess.readChar(tuple, hub.findFieldActor(offset));
         }
 
         @Override
@@ -185,7 +185,7 @@ public abstract class PointerLoadBuiltin extends PointerBuiltin {
         @BUILTIN(builtinClass = ReadIntAtIntOffset.class)
         private static int readIntAtIntOffset(Object tuple, int offset) {
             final Hub hub = HostObjectAccess.readHub(tuple);
-            return HostTupleAccess.readInt(tuple, (IntFieldActor) hub.findFieldActor(offset));
+            return HostTupleAccess.readInt(tuple, hub.findFieldActor(offset));
         }
 
         @Override
@@ -223,7 +223,7 @@ public abstract class PointerLoadBuiltin extends PointerBuiltin {
         @BUILTIN(builtinClass = ReadFloatAtIntOffset.class)
         private static float readFloatAtIntOffset(Object tuple, int offset) {
             final Hub hub = HostObjectAccess.readHub(tuple);
-            return HostTupleAccess.readFloat(tuple, (FloatFieldActor) hub.findFieldActor(offset));
+            return HostTupleAccess.readFloat(tuple, hub.findFieldActor(offset));
         }
 
         @Override
@@ -261,7 +261,7 @@ public abstract class PointerLoadBuiltin extends PointerBuiltin {
         @BUILTIN(builtinClass = ReadLongAtIntOffset.class)
         private static long readLongAtIntOffset(Object tuple, int offset) {
             final Hub hub = HostObjectAccess.readHub(tuple);
-            return HostTupleAccess.readLong(tuple, (LongFieldActor) hub.findFieldActor(offset));
+            return HostTupleAccess.readLong(tuple, hub.findFieldActor(offset));
         }
 
         @Override
@@ -299,7 +299,7 @@ public abstract class PointerLoadBuiltin extends PointerBuiltin {
         @BUILTIN(builtinClass = ReadDoubleAtIntOffset.class)
         private static double readDoubleAtIntOffset(Object tuple, int offset) {
             final Hub hub = HostObjectAccess.readHub(tuple);
-            return HostTupleAccess.readDouble(tuple, (DoubleFieldActor) hub.findFieldActor(offset));
+            return HostTupleAccess.readDouble(tuple, hub.findFieldActor(offset));
         }
 
         @Override
@@ -337,7 +337,7 @@ public abstract class PointerLoadBuiltin extends PointerBuiltin {
         @BUILTIN(builtinClass = ReadWordAtIntOffset.class)
         private static Word readWordAtIntOffset(Object tuple, int offset) {
             final Hub hub = HostObjectAccess.readHub(tuple);
-            return HostTupleAccess.readWord(tuple, (WordFieldActor) hub.findFieldActor(offset));
+            return HostTupleAccess.readWord(tuple, hub.findFieldActor(offset));
         }
 
         @Override
@@ -375,7 +375,7 @@ public abstract class PointerLoadBuiltin extends PointerBuiltin {
         @BUILTIN(builtinClass = ReadReferenceAtIntOffset.class)
         private static Object readReferenceAtIntOffset(Object tuple, int offset) {
             final Hub hub = HostObjectAccess.readHub(tuple);
-            return HostTupleAccess.readObject(tuple, (ReferenceFieldActor) hub.findFieldActor(offset));
+            return HostTupleAccess.readObject(tuple, hub.findFieldActor(offset));
         }
 
         @Override

@@ -75,7 +75,7 @@ public final class SPARCSafepoint extends Safepoint {
     private final boolean is32Bit;
 
     public SPARCSafepoint(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+        super();
         is32Bit = vmConfiguration.platform().processorKind.dataModel.wordWidth == WordWidth.BITS_32;
     }
 

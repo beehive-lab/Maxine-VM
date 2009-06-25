@@ -209,7 +209,7 @@ public class VmThread {
     }
 
     public static VmThread fromJava(Thread javaThread) {
-        return (VmThread) Thread_vmThread.readObject(javaThread);
+        return (VmThread) TupleAccess.readObject(javaThread, Thread_vmThread.offset());
     }
 
     public Word nativeThread() {

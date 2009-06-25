@@ -363,7 +363,7 @@ public final class StackReferenceMapPreparer {
      * @param trapState the trap state
      */
     public void prepareStackReferenceMapFromTrap(Pointer vmThreadLocals, Pointer trapState) {
-        final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
+        final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint;
         final Pointer instructionPointer = safepoint.getInstructionPointer(trapState);
         final TargetMethod targetMethod = Code.codePointerToTargetMethod(instructionPointer);
         final Pointer stackPointer = safepoint.getStackPointer(trapState, targetMethod);

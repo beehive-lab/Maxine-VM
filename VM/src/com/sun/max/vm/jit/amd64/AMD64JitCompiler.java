@@ -370,7 +370,7 @@ public class AMD64JitCompiler extends JitCompiler {
         final Pointer trapState = stackFrameWalker.trapState();
         if (!trapState.isZero()) {
             FatalError.check(!targetMethod.classMethodActor().isTrapStub(), "Cannot have a trap in the trapStub");
-            final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
+            final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint;
             if (safepoint.getTrapNumber(trapState) == Trap.Number.STACK_FAULT) {
                 // There's no need to deal with the any references in a frame that triggered a stack overflow.
                 // The explicit stack banging code that causes a stack overflow trap is always in the

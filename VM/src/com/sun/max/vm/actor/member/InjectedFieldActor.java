@@ -52,7 +52,6 @@ public interface InjectedFieldActor<Value_Type extends Value<Value_Type>> {
 
         static {
             Classes.initialize(InjectedReferenceFieldActor.class);
-            Classes.initialize(InjectedLongFieldActor.class);
         }
 
         private Static() {

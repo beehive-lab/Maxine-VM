@@ -29,7 +29,7 @@ import com.sun.max.vm.run.*;
 
 /**
  * @see MaxPackage
- * 
+ *
  * @author Ben L. Titzer
  */
 public class Package extends VMPackage {
@@ -40,6 +40,6 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.runPackage().equals(this);
+        return vmConfiguration.runPackage.equals(this);
     }
 }

@@ -1775,7 +1775,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     private final InspectorAction viewSchemeRunMethodCodeInBootImage =
-        new ViewMethodCodeInBootImageAction(maxVM().bootImage().header().runSchemeRunMethodOffset, maxVM().vmConfiguration().runPackage().schemeTypeToImplementation(RunScheme.class), "run");
+            new ViewMethodCodeInBootImageAction(maxVM().bootImage().header().runSchemeRunMethodOffset, maxVM().vmConfiguration().runPackage.schemeTypeToImplementation(RunScheme.class), "run");
 
     /**
      * @return an Action that displays in the {@link MethodInspector} the code of

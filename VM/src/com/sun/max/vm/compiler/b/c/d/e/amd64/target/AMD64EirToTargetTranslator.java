@@ -58,7 +58,7 @@ public final class AMD64EirToTargetTranslator extends EirToTargetTranslator {
                 adapterFrameGenerator = AMD64AdapterFrameGenerator.jitToOptimizingCompilerAdapterFrameGenerator(eirMethod.classMethodActor(), eirMethod.abi());
             }
         }
-        return new AMD64EirTargetEmitter((AMD64EirABI) eirMethod.abi(), eirMethod.frameSize(), compilerScheme().vmConfiguration().safepoint(), adapterFrameGenerator);
+        return new AMD64EirTargetEmitter((AMD64EirABI) eirMethod.abi(), eirMethod.frameSize(), compilerScheme().vmConfiguration().safepoint, adapterFrameGenerator);
     }
 
 }
