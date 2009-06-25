@@ -134,7 +134,7 @@ public final class Trap {
             // do nothing for an asynchronous interrupt.
             return;
         }
-        final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
+        final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint;
         final Pointer instructionPointer = safepoint.getInstructionPointer(trapState);
         final Object origin = checkTrapOrigin(trapNumber, trapState, faultAddress);
         if (origin instanceof TargetMethod) {
@@ -184,7 +184,7 @@ public final class Trap {
      *         null} if neither a runtime stub nor a target method produced the trap
      */
     private static Object checkTrapOrigin(int trapNumber, Pointer trapState, Address trapInstructionPointer) {
-        final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
+        final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint;
         final Pointer instructionPointer = safepoint.getInstructionPointer(trapState);
 
         if (dumpStackOnTrap.getValue()) {
@@ -235,7 +235,7 @@ public final class Trap {
     private static void handleMemoryFault(Pointer instructionPointer, TargetMethod targetMethod, Pointer stackPointer, Pointer framePointer, Pointer trapState, Address faultAddress) {
         final Pointer disabledVmThreadLocals = VmThread.currentVmThreadLocals();
 
-        final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
+        final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint;
         final Pointer triggeredVmThreadLocals = VmThreadLocal.SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(disabledVmThreadLocals).asPointer();
         final Pointer safepointLatch = safepoint.getSafepointLatch(trapState);
 
@@ -298,7 +298,7 @@ public final class Trap {
         final Address catchAddress = targetMethod.throwAddressToCatchAddress(throwAddress);
         if (!catchAddress.isZero()) {
             if (!(throwable instanceof StackOverflowError) || VmThread.current().hasSufficentStackToReprotectGuardPage(stackPointer)) {
-                final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
+                final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint;
                 safepoint.setInstructionPointer(trapState, catchAddress.asPointer());
                 safepoint.setReturnValue(trapState, Reference.fromJava(throwable).toOrigin());
             }

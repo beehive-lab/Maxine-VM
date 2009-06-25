@@ -214,11 +214,6 @@ public final class VMConfiguration {
                         runPackage);
     }
 
-    @FOLD
-    public Safepoint safepoint() {
-        return safepoint;
-    }
-
     /**
      * Configuration information for method entry points.
      * @see CallEntryPoint

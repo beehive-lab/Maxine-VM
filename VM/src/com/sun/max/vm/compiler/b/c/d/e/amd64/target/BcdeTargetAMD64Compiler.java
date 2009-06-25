@@ -255,7 +255,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                 Pointer trapState = stackFrameWalker.trapState();
                 if (!trapState.isZero()) {
                     FatalError.check(!targetMethod.classMethodActor().isTrapStub(), "Cannot have a trap in the trapStub");
-                    final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
+                    final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint;
                     if (Trap.Number.isImplicitException(safepoint.getTrapNumber(trapState))) {
                         final Address catchAddress = targetMethod.throwAddressToCatchAddress(safepoint.getInstructionPointer(trapState));
                         if (catchAddress.isZero()) {
@@ -269,7 +269,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                     }
                 } else {
                     if (targetMethod.classMethodActor().isTrapStub()) {
-                        final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
+                        final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint;
                         trapState = AMD64Safepoint.getTrapStateFromRipPointer(ripPointer);
                         stackFrameWalker.setTrapState(trapState);
                         if (Trap.Number.isImplicitException(safepoint.getTrapNumber(trapState))) {
