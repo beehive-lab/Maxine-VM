@@ -79,7 +79,7 @@ public class SimpleAllocation {
                 barrier1.waitForRelease();
             } catch (InterruptedException e) { }
             for (int i = 0; i < nrAllocations; i++) {
-                if (i%100000 == 0) {
+                if (i % 100000 == 0) {
                     Log.print("Alloc thread ");
                     Log.println(threadId);
                 }
