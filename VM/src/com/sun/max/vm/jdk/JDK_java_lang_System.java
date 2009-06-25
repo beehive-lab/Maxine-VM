@@ -67,7 +67,8 @@ public final class JDK_java_lang_System {
      */
     @SUBSTITUTE
     private static void setIn0(InputStream in) {
-        ReferenceFieldActor.findStatic(System.class, "in").writeStatic(in);
+        final FieldActor fieldActor = FieldActor.findStatic(System.class, "in");
+        TupleAccess.writeObject(fieldActor.holder().staticTuple(), fieldActor.offset(), in);
     }
 
     /**
@@ -77,17 +78,19 @@ public final class JDK_java_lang_System {
      */
     @SUBSTITUTE
     private static void setOut0(PrintStream out) {
-        ReferenceFieldActor.findStatic(System.class, "out").writeStatic(out);
+        final FieldActor fieldActor = FieldActor.findStatic(System.class, "out");
+        TupleAccess.writeObject(fieldActor.holder().staticTuple(), fieldActor.offset(), out);
     }
 
     /**
      * Sets the error stream {@link java.lang.System#err System.err} to the specified error stream.
      *
-     * @param out the new system error stream
+     * @param err the new system error stream
      */
     @SUBSTITUTE
     private static void setErr0(PrintStream err) {
-        ReferenceFieldActor.findStatic(System.class, "err").writeStatic(err);
+        final FieldActor fieldActor = FieldActor.findStatic(System.class, "err");
+        TupleAccess.writeObject(fieldActor.holder().staticTuple(), fieldActor.offset(), err);
     }
 
     /**

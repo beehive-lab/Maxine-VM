@@ -859,8 +859,8 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static JniHandle GetObjectField(Pointer env, JniHandle object, FieldID fieldID) {
-        final ReferenceFieldActor fieldActor = (ReferenceFieldActor) FieldID.toFieldActor(fieldID);
-        return JniHandles.createLocalHandle(fieldActor.readObject(object.unhand()));
+        final FieldActor fieldActor = FieldID.toFieldActor(fieldID);
+        return JniHandles.createLocalHandle(TupleAccess.readObject(object.unhand(), fieldActor.offset()));
     }
 
     @JNI_FUNCTION
@@ -913,8 +913,8 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static void SetObjectField(Pointer env, JniHandle object, FieldID fieldID, JniHandle value) {
-        final ReferenceFieldActor referenceFieldActor = (ReferenceFieldActor) FieldID.toFieldActor(fieldID);
-        referenceFieldActor.writeObject(object.unhand(), value.unhand());
+        final FieldActor referenceFieldActor = FieldID.toFieldActor(fieldID);
+        TupleAccess.writeObject(object.unhand(), referenceFieldActor.offset(), value.unhand());
     }
 
     @JNI_FUNCTION
@@ -1210,8 +1210,8 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static JniHandle GetStaticObjectField(Pointer env, JniHandle javaType, FieldID fieldID) {
-        final ReferenceFieldActor referenceFieldActor = (ReferenceFieldActor) FieldID.toFieldActor(fieldID);
-        return JniHandles.createLocalHandle(referenceFieldActor.readObject(javaTypeToStaticTuple(javaType)));
+        final FieldActor referenceFieldActor = FieldID.toFieldActor(fieldID);
+        return JniHandles.createLocalHandle(TupleAccess.readObject(javaTypeToStaticTuple(javaType), referenceFieldActor.offset()));
     }
 
     @JNI_FUNCTION
@@ -1264,8 +1264,8 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static void SetStaticObjectField(Pointer env, JniHandle javaType, FieldID fieldID, JniHandle value) {
-        final ReferenceFieldActor referenceFieldActor = (ReferenceFieldActor) FieldID.toFieldActor(fieldID);
-        referenceFieldActor.writeObject(javaTypeToStaticTuple(javaType), value.unhand());
+        final FieldActor referenceFieldActor = FieldID.toFieldActor(fieldID);
+        TupleAccess.writeObject(javaTypeToStaticTuple(javaType), referenceFieldActor.offset(), value.unhand());
     }
 
     @JNI_FUNCTION

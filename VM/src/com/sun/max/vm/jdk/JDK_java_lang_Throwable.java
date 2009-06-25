@@ -33,6 +33,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.object.TupleAccess;
 
 /**
  * Substitutions for {@link java.lang.Throwable} that collect the stack trace.
@@ -47,7 +48,7 @@ public final class JDK_java_lang_Throwable {
      * This field provides access to the private field "stackTrace" in the {@link java.lang.Throwable java.lang.Throwable}
      * class.
      */
-    private static final ReferenceFieldActor stackTrace = (ReferenceFieldActor) ClassActor.fromJava(Throwable.class).findFieldActor(SymbolTable.makeSymbol("stackTrace"));
+    private static final FieldActor stackTrace = ClassActor.fromJava(Throwable.class).findFieldActor(SymbolTable.makeSymbol("stackTrace"));
 
     private JDK_java_lang_Throwable() {
     }
@@ -82,7 +83,7 @@ public final class JDK_java_lang_Throwable {
         final StackFrameWalker stackFrameWalker = new VmStackFrameWalker(VmThread.current().vmThreadLocals());
         final Pointer instructionPointer = VMRegister.getInstructionPointer();
         final Pointer cpuStackPointer = VMRegister.getCpuStackPointer();
-        final Pointer  cpuFramePointer = VMRegister.getCpuFramePointer();
+        final Pointer cpuFramePointer = VMRegister.getCpuFramePointer();
 
         boolean atImplicitExceptionThrow = false;
         boolean inFiller = true;
@@ -118,7 +119,8 @@ public final class JDK_java_lang_Throwable {
             }
             addStackTraceElements(result, targetMethod, stackFrame);
         }
-        stackTrace.writeObject(thisThrowable, result.toArray(new StackTraceElement[result.size()]));
+        final Object value = result.toArray(new StackTraceElement[result.size()]);
+        TupleAccess.writeObject(thisThrowable, stackTrace.offset(), value);
         return thisThrowable;
     }
 
@@ -187,7 +189,7 @@ public final class JDK_java_lang_Throwable {
      */
     @INLINE
     private StackTraceElement[] getStackTraceElements() {
-        return (StackTraceElement[]) stackTrace.readObject(thisThrowable());
+        return (StackTraceElement[]) TupleAccess.readObject(thisThrowable(), stackTrace.offset());
     }
 
 }

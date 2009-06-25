@@ -375,7 +375,7 @@ public abstract class PointerLoadBuiltin extends PointerBuiltin {
         @BUILTIN(builtinClass = ReadReferenceAtIntOffset.class)
         private static Object readReferenceAtIntOffset(Object tuple, int offset) {
             final Hub hub = HostObjectAccess.readHub(tuple);
-            return HostTupleAccess.readObject(tuple, (ReferenceFieldActor) hub.findFieldActor(offset));
+            return HostTupleAccess.readObject(tuple, hub.findFieldActor(offset));
         }
 
         @Override

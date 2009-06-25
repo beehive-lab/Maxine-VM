@@ -213,13 +213,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
 
     public abstract Value_Type zeroValue();
 
-    public FieldActor<Value_Type> createFieldActor(
-                    Utf8Constant name,
-                    TypeDescriptor descriptor,
-                    int flags) {
-        return new FieldActor<Value_Type>(this, name, this.typeDescriptor, flags);
-    }
-
     public static final Kind<VoidValue> VOID = new Kind<VoidValue>(KindEnum.VOID, "void", void.class, null, VoidValue.class, 'V', Void.class, JavaTypeDescriptor.VOID, null) {
         @Override
         public VoidValue convert(Value value) {
@@ -251,14 +244,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         @Override
         public int stackSlots() {
             return 0;
-        }
-
-        @Override
-        public FieldActor<VoidValue> createFieldActor(
-                        Utf8Constant name,
-                        TypeDescriptor descriptor,
-                        int flags) {
-            throw classFormatError("Fields cannot be of type void");
         }
     };
 
@@ -889,14 +874,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         public final WordArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.wordArrayLayout;
         }
-
-        @Override
-        public FieldActor<WordValue> createFieldActor(
-                        Utf8Constant name,
-                        TypeDescriptor descriptor,
-                        int flags) {
-            return new FieldActor<WordValue>(this, name, descriptor, flags);
-        }
     };
 
     public static final Kind<ReferenceValue> REFERENCE = new Kind<ReferenceValue>(KindEnum.REFERENCE, "Reference", Object.class, Object[].class,
@@ -954,14 +931,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         @Override
         public final ReferenceArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.referenceArrayLayout;
-        }
-
-        @Override
-        public ReferenceFieldActor createFieldActor(
-                        Utf8Constant name,
-                        TypeDescriptor descriptor,
-                        int flags) {
-            return new ReferenceFieldActor(name, descriptor, flags);
         }
     };
 

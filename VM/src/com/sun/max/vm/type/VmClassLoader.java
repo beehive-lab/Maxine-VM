@@ -173,12 +173,12 @@ public final class VmClassLoader extends ClassLoader {
         final Object nativeLibrary = createNativeLibrary(fileName, handle);
 
         final Class<Vector<Object>> type = null;
-        final ReferenceFieldActor l = ReferenceFieldActor.findStatic(ClassLoader.class, "loadedLibraryNames");
-        final Vector<Object> loadedLibraryNames = StaticLoophole.cast(type, l.readObject(StaticTuple.fromJava(ClassLoader.class)));
+        final FieldActor l = FieldActor.findStatic(ClassLoader.class, "loadedLibraryNames");
+        final Vector<Object> loadedLibraryNames = StaticLoophole.cast(type, TupleAccess.readObject(StaticTuple.fromJava(ClassLoader.class), l.offset()));
         loadedLibraryNames.addElement(fileName);
 
-        final ReferenceFieldActor n = ReferenceFieldActor.findInstance(ClassLoader.class, "nativeLibraries");
-        final Vector<Object> nativeLibraries = StaticLoophole.cast(type, n.readObject(this));
+        final FieldActor n = FieldActor.findInstance(ClassLoader.class, "nativeLibraries");
+        final Vector<Object> nativeLibraries = StaticLoophole.cast(type, TupleAccess.readObject(this, n.offset()));
         nativeLibraries.addElement(nativeLibrary);
     }
 

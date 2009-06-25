@@ -37,7 +37,7 @@ import com.sun.max.vm.value.*;
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public class InjectedReferenceFieldActor<T> extends ReferenceFieldActor implements InjectedFieldActor<ReferenceValue> {
+public class InjectedReferenceFieldActor<T> extends FieldActor<ReferenceValue> implements InjectedFieldActor<ReferenceValue> {
 
     public TypeDescriptor holderTypeDescriptor() {
         return holder;
@@ -57,7 +57,7 @@ public class InjectedReferenceFieldActor<T> extends ReferenceFieldActor implemen
      */
     @PROTOTYPE_ONLY
     public InjectedReferenceFieldActor(Class holder, Class<T> fieldType) {
-        super(SymbolTable.makeSymbol("_$injected$" + fieldType.getSimpleName()),
+        super(Kind.REFERENCE, SymbolTable.makeSymbol("_$injected$" + fieldType.getSimpleName()),
               JavaTypeDescriptor.forJavaClass(fieldType),
               ACC_SYNTHETIC + ACC_PRIVATE + INJECTED);
         this.holder = JavaTypeDescriptor.forJavaClass(holder);

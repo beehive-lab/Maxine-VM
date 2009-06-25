@@ -214,11 +214,11 @@ public class FieldReadSnippet extends BuiltinsSnippet {
 
         @SNIPPET
         @INLINE
-        public static Object readReference(Object tuple, ReferenceFieldActor referenceFieldActor) {
+        public static Object readReference(Object tuple, FieldActor referenceFieldActor) {
             if (MaxineVM.isPrototyping()) {
                 return HostTupleAccess.readObject(tuple, referenceFieldActor);
             }
-            return referenceFieldActor.readObject(tuple);
+            return TupleAccess.readObject(tuple, referenceFieldActor.offset());
         }
 
         public static final ReadReference SNIPPET = new ReadReference(TupleOffsetSnippet.ReadReference.SNIPPET);
