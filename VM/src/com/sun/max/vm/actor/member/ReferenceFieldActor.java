@@ -23,7 +23,6 @@ package com.sun.max.vm.actor.member;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -34,16 +33,6 @@ public class ReferenceFieldActor extends FieldActor<ReferenceValue> {
 
     public ReferenceFieldActor(Utf8Constant name, TypeDescriptor descriptor, int flags) {
         super(Kind.REFERENCE, name, descriptor, flags);
-    }
-
-    @INLINE
-    public final Reference readReference(Reference reference) {
-        return reference.readReference(offset());
-    }
-
-    @INLINE
-    public final void writeReference(Reference reference, Reference value) {
-        reference.writeReference(offset(), value);
     }
 
     @INLINE

@@ -31,6 +31,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.vm.object.TupleAccess;
 
 /*
  * Provides substitutions for native methods in {@link java.lang.Class java.lang.Class}.
@@ -469,8 +470,8 @@ final class JDK_java_lang_Class {
         final ClassActor classActor = ClassActor.fromJava(javaClass);
         final FieldActor fieldActor = classActor.findLocalStaticFieldActor(ASSERTIONS_DISABLED, JavaTypeDescriptor.BOOLEAN);
         if (fieldActor != null) {
-            final BooleanFieldActor booleanFieldActor = (BooleanFieldActor) fieldActor;
-            return booleanFieldActor.readBoolean(classActor.staticTuple());
+            final FieldActor booleanFieldActor = fieldActor;
+            return TupleAccess.readBoolean(classActor.staticTuple(), booleanFieldActor.offset());
         }
         return false;
     }
