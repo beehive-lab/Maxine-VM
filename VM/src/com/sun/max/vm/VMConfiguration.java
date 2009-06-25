@@ -51,221 +51,50 @@ import com.sun.max.vm.trampoline.*;
  */
 public final class VMConfiguration {
 
-    private final BuildLevel buildLevel;
+    public final BuildLevel buildLevel;
+    public final Platform platform;
+    public final VMPackage referencePackage;
+    public final VMPackage gripPackage;
+    public final VMPackage layoutPackage;
+    public final VMPackage heapPackage;
+    public final VMPackage monitorPackage;
+    public final VMPackage compilerPackage;
+    public final VMPackage jitPackage;
+    public final VMPackage interpreterPackage;
+    public final VMPackage trampolinePackage;
+    public final VMPackage targetABIsPackage;
+    public final VMPackage runPackage;
+    public final Safepoint safepoint;
+    private final int[] offsetsToCallEntryPoints;
+    private final int[] offsetsToCalleeEntryPoints;
 
-    @INLINE
-    public BuildLevel buildLevel() {
-        return buildLevel;
-    }
-
-    private final Platform platform;
-
-    @INLINE
-    public Platform platform() {
-        return platform;
-    }
-
-    private final VMPackage referencePackage;
-
-    public VMPackage referencePackage() {
-        return referencePackage;
-    }
+    private AppendableIndexedSequence<VMScheme> vmSchemes = new ArrayListSequence<VMScheme>();
+    private boolean areSchemesLoadedAndInstantiated = false;
 
     @CONSTANT_WHEN_NOT_ZERO
     private ReferenceScheme referenceScheme = null;
-
-    @INLINE
-    public ReferenceScheme referenceScheme() {
-        return referenceScheme;
-    }
-
-    private final VMPackage gripPackage;
-
-    public VMPackage gripPackage() {
-        return gripPackage;
-    }
-
     @CONSTANT_WHEN_NOT_ZERO
     private GripScheme gripScheme = null;
-
-    @INLINE
-    public GripScheme gripScheme() {
-        return gripScheme;
-    }
-
-    private final VMPackage layoutPackage;
-
-    public VMPackage layoutPackage() {
-        return layoutPackage;
-    }
-
     @CONSTANT_WHEN_NOT_ZERO
     private LayoutScheme layoutScheme;
-
-    @INLINE
-    public LayoutScheme layoutScheme() {
-        return layoutScheme;
-    }
-
-    public VMPackage heapPackage() {
-        return heapPackage;
-    }
-
-    private final VMPackage heapPackage;
-
     @CONSTANT_WHEN_NOT_ZERO
     private HeapScheme heapScheme = null;
-
-    @INLINE
-    public HeapScheme heapScheme() {
-        return heapScheme;
-    }
-
-    private final VMPackage monitorPackage;
-
-    public VMPackage monitorPackage() {
-        return monitorPackage;
-    }
-
     @CONSTANT_WHEN_NOT_ZERO
     private MonitorScheme monitorScheme = null;
-
-    @INLINE
-    public MonitorScheme monitorScheme() {
-        return monitorScheme;
-    }
-
-    private final VMPackage compilerPackage;
-
-    public VMPackage compilerPackage() {
-        return compilerPackage;
-    }
-
     @CONSTANT_WHEN_NOT_ZERO
     private CompilerScheme compilerScheme = null;
-
-    @INLINE
-    public CompilerScheme compilerScheme() {
-        return compilerScheme;
-    }
-
-    private final VMPackage jitPackage;
-
-    public VMPackage jitPackage() {
-        return jitPackage;
-    }
-
     @CONSTANT_WHEN_NOT_ZERO
     private DynamicCompilerScheme jitScheme = null;
-
-    @INLINE
-    public DynamicCompilerScheme jitScheme() {
-        return jitScheme;
-    }
-
-    private final VMPackage interpreterPackage;
-
-    public VMPackage interpreterPackage() {
-        return interpreterPackage;
-    }
-
     @CONSTANT_WHEN_NOT_ZERO
     private InterpreterScheme interpreterScheme = null;
-
-    @INLINE
-    public InterpreterScheme interpreterScheme() {
-        return interpreterScheme;
-    }
-
     @CONSTANT_WHEN_NOT_ZERO
     private CompilationScheme compilationScheme = null;
-
-    @INLINE
-    public CompilationScheme compilationScheme() {
-        return compilationScheme;
-    }
-
-    private final VMPackage trampolinePackage;
-
-    public VMPackage trampolinePackage() {
-        return trampolinePackage;
-    }
-
     @CONSTANT_WHEN_NOT_ZERO
     private DynamicTrampolineScheme trampolineScheme = null;
-
-    @INLINE
-    public DynamicTrampolineScheme trampolineScheme() {
-        return trampolineScheme;
-    }
-
-    private final VMPackage targetABIsPackage;
-
-    public VMPackage targetABIsPackage() {
-        return targetABIsPackage;
-    }
-
     @CONSTANT_WHEN_NOT_ZERO
     private TargetABIsScheme targetABIsScheme = null;
-
-    @INLINE
-    public TargetABIsScheme  targetABIsScheme() {
-        return targetABIsScheme;
-    }
-
-    private final VMPackage runPackage;
-
-    public VMPackage runPackage() {
-        return runPackage;
-    }
-
     @CONSTANT_WHEN_NOT_ZERO
     private RunScheme runScheme = null;
-
-    @INLINE
-    public RunScheme runScheme() {
-        return runScheme;
-    }
-
-    public Sequence<MaxPackage> packages() {
-        return new ArraySequence<MaxPackage>(
-                        referencePackage,
-                        layoutPackage,
-                        heapPackage,
-                        monitorPackage,
-                        compilerPackage,
-                        trampolinePackage,
-                        targetABIsPackage,
-                        gripPackage,
-                        runPackage);
-    }
-
-    private final Safepoint safepoint;
-
-    @FOLD
-    public Safepoint safepoint() {
-        return safepoint;
-    }
-
-    /**
-     * Configuration information for method entry points.
-     * @see CallEntryPoint
-     */
-    private final int[] offsetsToCallEntryPoints;
-
-    public int[] offsetToCallEntryPoints() {
-        return offsetsToCallEntryPoints;
-    }
-
-    /**
-     * Configuration information for method's callees entry points.
-     * @see CallEntryPoint
-     */
-    private final int[] offsetsToCalleeEntryPoints;
-
-    public int[] offsetsToCalleeEntryPoints() {
-        return offsetsToCalleeEntryPoints;
-    }
 
     public VMConfiguration(BuildLevel buildLevel, Platform platform, VMPackage gripPackage, VMPackage referencePackage, VMPackage layoutPackage, VMPackage heapPackage,
         VMPackage monitorPackage, VMPackage compilerPackage, VMPackage jitPackage, VMPackage interpreterPackage, VMPackage trampolinePackage, VMPackage targetABIsPackage, VMPackage runPackage) {
@@ -287,7 +116,7 @@ public final class VMConfiguration {
         // It is useful for now to build a VM with a single compiler, where the JIT and optimizing compiler are the same.
         // The CallEntryPoint enum gets the value of the call entry point offset from offsetToCallEntryPoints()
         // Ideally, we would want to get it from adapterFrameScheme().offsetToCallEntryPoints()
-        if (jitPackage() == null || jitPackage().equals(compilerPackage())) {
+        if (this.jitPackage == null || this.jitPackage.equals(this.compilerPackage)) {
             // zero-fill array -- all entry points are at code start (for now -- may change with inline caches).
             this.offsetsToCallEntryPoints = new int[CallEntryPoint.VALUES.length()];
             this.offsetsToCalleeEntryPoints = new int[CallEntryPoint.VALUES.length()];
@@ -303,7 +132,111 @@ public final class VMConfiguration {
         }
     }
 
-    private AppendableIndexedSequence<VMScheme> vmSchemes = new ArrayListSequence<VMScheme>();
+    @INLINE
+    public BuildLevel buildLevel() {
+        return buildLevel;
+    }
+
+    @INLINE
+    public Platform platform() {
+        return platform;
+    }
+
+    @INLINE
+    public ReferenceScheme referenceScheme() {
+        return referenceScheme;
+    }
+
+    @INLINE
+    public GripScheme gripScheme() {
+        return gripScheme;
+    }
+
+    @INLINE
+    public LayoutScheme layoutScheme() {
+        return layoutScheme;
+    }
+
+    @INLINE
+    public HeapScheme heapScheme() {
+        return heapScheme;
+    }
+
+    @INLINE
+    public MonitorScheme monitorScheme() {
+        return monitorScheme;
+    }
+
+    @INLINE
+    public CompilerScheme compilerScheme() {
+        return compilerScheme;
+    }
+
+    @INLINE
+    public DynamicCompilerScheme jitScheme() {
+        return jitScheme;
+    }
+
+    @INLINE
+    public InterpreterScheme interpreterScheme() {
+        return interpreterScheme;
+    }
+
+    @INLINE
+    public CompilationScheme compilationScheme() {
+        return compilationScheme;
+    }
+
+    @INLINE
+    public DynamicTrampolineScheme trampolineScheme() {
+        return trampolineScheme;
+    }
+
+    @INLINE
+    public TargetABIsScheme  targetABIsScheme() {
+        return targetABIsScheme;
+    }
+
+    @INLINE
+    public RunScheme runScheme() {
+        return runScheme;
+    }
+
+    public Sequence<MaxPackage> packages() {
+        return new ArraySequence<MaxPackage>(
+                        referencePackage,
+                        layoutPackage,
+                        heapPackage,
+                        monitorPackage,
+                        compilerPackage,
+                        trampolinePackage,
+                        targetABIsPackage,
+                        gripPackage,
+                        runPackage);
+    }
+
+    @FOLD
+    public Safepoint safepoint() {
+        return safepoint;
+    }
+
+    /**
+     * Configuration information for method entry points.
+     * @see CallEntryPoint
+     * @return an array of the offsets to call entry points
+     */
+    public int[] offsetToCallEntryPoints() {
+        return offsetsToCallEntryPoints;
+    }
+
+    /**
+     * Configuration information for method's callees entry points.
+     * @see CallEntryPoint
+     * @return an array of the offsets to callee entry points
+     */
+    public int[] offsetsToCalleeEntryPoints() {
+        return offsetsToCalleeEntryPoints;
+    }
 
     public Sequence<VMScheme> vmSchemes() {
         return vmSchemes;
@@ -311,39 +244,37 @@ public final class VMConfiguration {
 
     public synchronized <VMScheme_Type extends VMScheme> VMScheme_Type loadAndInstantiateScheme(MaxPackage p, Class<VMScheme_Type> vmSchemeType, Object... arguments) {
         if (p == null) {
-            ProgramError.unexpected("Package not found for scheme: " + vmSchemeType.getSimpleName());
+            throw ProgramError.unexpected("Package not found for scheme: " + vmSchemeType.getSimpleName());
         }
         final VMScheme_Type vmScheme = p.loadAndInstantiateScheme(vmSchemeType, arguments);
         vmSchemes.append(vmScheme);
         return vmScheme;
     }
 
-    private boolean areSchemesLoadedAndInstantiated = false;
-
     public void loadAndInstantiateSchemes() {
         if (areSchemesLoadedAndInstantiated) {
             return;
         }
-        gripScheme = loadAndInstantiateScheme(gripPackage(), GripScheme.class, this);
-        referenceScheme = loadAndInstantiateScheme(referencePackage(), ReferenceScheme.class, this);
+        gripScheme = loadAndInstantiateScheme(gripPackage, GripScheme.class, this);
+        referenceScheme = loadAndInstantiateScheme(referencePackage, ReferenceScheme.class, this);
         layoutScheme = loadAndInstantiateScheme(layoutPackage, LayoutScheme.class, this, gripScheme);
-        monitorScheme = loadAndInstantiateScheme(monitorPackage(), MonitorScheme.class, this);
-        heapScheme = loadAndInstantiateScheme(heapPackage(), HeapScheme.class, this);
-        targetABIsScheme = loadAndInstantiateScheme(targetABIsPackage(), TargetABIsScheme.class, this);
-        compilerScheme = loadAndInstantiateScheme(compilerPackage(), CompilerScheme.class, this);
-        trampolineScheme = loadAndInstantiateScheme(trampolinePackage(), DynamicTrampolineScheme.class, this);
-        if (jitPackage() != null) {
-            jitScheme = loadAndInstantiateScheme(jitPackage(), DynamicCompilerScheme.class, this);
+        monitorScheme = loadAndInstantiateScheme(monitorPackage, MonitorScheme.class, this);
+        heapScheme = loadAndInstantiateScheme(heapPackage, HeapScheme.class, this);
+        targetABIsScheme = loadAndInstantiateScheme(targetABIsPackage, TargetABIsScheme.class, this);
+        compilerScheme = loadAndInstantiateScheme(compilerPackage, CompilerScheme.class, this);
+        trampolineScheme = loadAndInstantiateScheme(trampolinePackage, DynamicTrampolineScheme.class, this);
+        if (jitPackage != null) {
+            jitScheme = loadAndInstantiateScheme(jitPackage, DynamicCompilerScheme.class, this);
         } else {
             // no JIT, always using the optimizing compiler
             jitScheme = compilerScheme;
         }
-        interpreterScheme = loadAndInstantiateScheme(interpreterPackage(), InterpreterScheme.class, this);
+        interpreterScheme = loadAndInstantiateScheme(interpreterPackage, InterpreterScheme.class, this);
 
         compilationScheme = new AdaptiveCompilationScheme(this);
         vmSchemes.append(compilationScheme);
 
-        runScheme = loadAndInstantiateScheme(runPackage(), RunScheme.class, this);
+        runScheme = loadAndInstantiateScheme(runPackage, RunScheme.class, this);
         areSchemesLoadedAndInstantiated = true;
     }
 
@@ -397,11 +328,12 @@ public final class VMConfiguration {
 
     @INLINE
     public WordWidth wordWidth() {
-        return platform().processorKind.dataModel.wordWidth;
+        return platform.processorKind.dataModel.wordWidth;
     }
 
     /**
      * Determines if a given package is considered part of the VM under this VM configuration.
+     * @return {@code true} if the specified package is part of this VM in this configuration
      */
     public boolean isMaxineVMPackage(MaxPackage maxPackage) {
         if (maxPackage instanceof BasePackage) {

@@ -50,7 +50,7 @@ public class UnixAMD64EirTemplateABI extends UnixAMD64EirJavaABI {
         makeUnallocatable(AMD64EirRegister.General.RBP);
 
         // TODO (Simon W): Need a better way of specializing the template ABI for a generated interpreter.
-        if (vmConfiguration.interpreterPackage() instanceof com.sun.max.vm.interpret.dt.amd64.Package) {
+        if (vmConfiguration.interpreterPackage instanceof com.sun.max.vm.interpret.dt.amd64.Package) {
             for (AMD64EirRegister.General reg : AMD64DtInterpreterABI.unallocatableToTemplateABI()) {
                 makeUnallocatable(reg);
             }

@@ -24,7 +24,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 
 /**
- * 
+ *
  *
  * @author Laurent Daynes
  */
@@ -36,6 +36,6 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.compilerPackage().equals(this);
+        return vmConfiguration.compilerPackage.equals(this);
     }
 }
