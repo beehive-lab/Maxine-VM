@@ -26,18 +26,36 @@ import com.sun.max.annotate.FOLD;
  * @Harness: java
  * @Runs: 0=true
  */
-public class Fold01 {
+public class Fold02 {
 
     public static boolean test(int arg) {
-        return result();
+        return fint(10, 10) && ffloat(0.1f, 0.1f) && fobj(null, null);
     }
 
     @FOLD
-    static boolean result() {
+    static boolean fint(int x, int y) {
         int j = 2;
         for (int i = 0; i < 100; i++) {
             j = j + 8 / j;
         }
-        return true;
+        return x == y;
+    }
+
+    @FOLD
+    static boolean ffloat(float x, float y) {
+        int j = 2;
+        for (int i = 0; i < 100; i++) {
+            j = j + 8 / j;
+        }
+        return x == y;
+    }
+
+    @FOLD
+    static boolean fobj(Object x, Object y) {
+        int j = 2;
+        for (int i = 0; i < 100; i++) {
+            j = j + 8 / j;
+        }
+        return x == y;
     }
 }

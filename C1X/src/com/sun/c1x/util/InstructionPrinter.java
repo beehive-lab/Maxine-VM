@@ -433,14 +433,16 @@ public class InstructionPrinter extends InstructionVisitor {
 
     @Override
     public void visitInvoke(Invoke invoke) {
-        if (invoke.object() != null) {
-            out.print(invoke.object()).print('.');
+        int argStart = 0;
+        if (invoke.hasReceiver()) {
+            out.print(invoke.receiver()).print('.');
+            argStart = 1;
           }
 
           out.print(Bytecodes.name(invoke.opcode())).print('(');
           Instruction[] arguments = invoke.arguments();
-          for (int i = 0; i < arguments.length; i++) {
-              if (i > 0) {
+          for (int i = argStart; i < arguments.length; i++) {
+              if (i > argStart) {
                   out.print(", ");
               }
               out.print(arguments[i]);
