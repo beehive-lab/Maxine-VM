@@ -43,11 +43,10 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.trampoline.*;
 
 /**
- * Aggregation of configuration choices for building a VM.
- * A VM can currently have up to two dynamic compilers: an optimizing compiler,
- * and an optional JIT compiler whose focus is speed of compilation.
+ * The configuration of a VM, which includes the schemes, safepoint mechanism, etc.
  *
  * @author Bernd Mathiske
+ * @author Ben L. Titzer
  */
 public final class VMConfiguration {
 

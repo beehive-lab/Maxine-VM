@@ -89,7 +89,7 @@ public final class AMD64Safepoint extends Safepoint {
     }
 
     public AMD64Safepoint(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+        super();
     }
 
     @Override
