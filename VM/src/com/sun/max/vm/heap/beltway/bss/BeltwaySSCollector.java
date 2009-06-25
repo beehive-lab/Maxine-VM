@@ -26,6 +26,9 @@ import com.sun.max.vm.heap.beltway.*;
 import com.sun.max.vm.tele.*;
 
 /**
+ * Semi-space Collector based on Beltways.
+ * Used a single belt with two increment (to and from spaces).
+ *
  * @author Christos Kotselidis
  */
 
