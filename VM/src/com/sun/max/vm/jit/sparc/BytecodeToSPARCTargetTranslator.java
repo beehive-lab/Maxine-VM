@@ -694,7 +694,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
         final Class<TargetABI<GPR, FPR>> type = null;
         targetABI = StaticLoophole.cast(type, VMConfiguration.target().targetABIsScheme().jitABI());
         cpuFramePointer = targetABI.registerRoleAssignment().integerRegisterActingAs(Role.CPU_FRAME_POINTER);
-        safepointTemplate = VMConfiguration.target().safepoint().code;
+        safepointTemplate = VMConfiguration.target().safepoint.code;
         assert safepointTemplate.length == SPARCStackFrameLayout.SPARC_INSTRUCTION_WIDTH;
         final Endianness endianness = VMConfiguration.target().platform().processorKind.dataModel.endianness;
         final SPARCAssembler asm =  SPARCAssembler.createAssembler(VMConfiguration.target().platform().processorKind.dataModel.wordWidth);
