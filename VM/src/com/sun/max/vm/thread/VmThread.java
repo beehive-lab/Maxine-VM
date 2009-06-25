@@ -380,7 +380,7 @@ public class VmThread {
      * Initializes the VM thread system and starts the main Java thread.
      */
     public static void createAndRunMainThread() {
-        final Size requestedStackSize = stackSizeOption.getValue().aligned(Platform.host().pageSize()).asSize();
+        final Size requestedStackSize = stackSizeOption.getValue().aligned(Platform.host().pageSize).asSize();
 
         final Word nativeThread = nativeThreadCreate(mainVMThread.id, requestedStackSize, Thread.NORM_PRIORITY);
         if (nativeThread.isZero()) {
@@ -786,7 +786,7 @@ public class VmThread {
      */
     public void start0() {
         state = Thread.State.RUNNABLE;
-        VmThreadMap.ACTIVE.startVmThread(this, stackSizeOption.getValue().aligned(Platform.host().pageSize()).asSize(), javaThread.getPriority());
+        VmThreadMap.ACTIVE.startVmThread(this, stackSizeOption.getValue().aligned(Platform.host().pageSize).asSize(), javaThread.getPriority());
     }
 
     public boolean isInterrupted(boolean clearInterrupted) {
@@ -910,7 +910,7 @@ public class VmThread {
     }
 
     public static int guardPageSize() {
-        return VMConfiguration.target().platform().pageSize();
+        return VMConfiguration.target().platform().pageSize;
     }
 
     /**

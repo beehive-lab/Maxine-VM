@@ -65,7 +65,7 @@ final class JDK_java_lang_reflect_Array {
      */
     private static void checkIndex(Object array, int index) {
         checkArray(array);
-        ArrayAccess.inlineCheckIndex(array, index);
+        ArrayAccess.checkIndex(array, index);
     }
 
     /**

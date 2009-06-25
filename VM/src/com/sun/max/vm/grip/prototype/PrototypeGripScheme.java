@@ -47,8 +47,8 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
 
     public PrototypeGripScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        dataModel = vmConfiguration.platform().processorKind().dataModel();
-        gripWidth = dataModel.wordWidth();
+        dataModel = vmConfiguration.platform().processorKind.dataModel;
+        gripWidth = dataModel.wordWidth;
     }
 
     public DataModel dataModel() {
@@ -56,7 +56,7 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
     }
 
     public WordWidth gripWidth() {
-        return dataModel.wordWidth();
+        return dataModel.wordWidth;
     }
 
     public boolean isConstant() {

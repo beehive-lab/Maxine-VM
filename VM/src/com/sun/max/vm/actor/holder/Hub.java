@@ -82,7 +82,7 @@ public abstract class Hub extends Hybrid {
     }
 
     public WordWidth wordWidth() {
-        return specificLayout.gripScheme().dataModel().wordWidth();
+        return specificLayout.gripScheme().dataModel().wordWidth;
     }
 
     @INLINE

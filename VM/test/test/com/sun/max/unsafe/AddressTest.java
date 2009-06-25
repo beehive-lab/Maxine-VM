@@ -334,7 +334,7 @@ public class AddressTest extends WordTestCase {
     }
 
     public void test_align() {
-        final int n = Platform.hostOrTarget().processorKind().dataModel().alignment().numberOfBytes();
+        final int n = Platform.hostOrTarget().processorKind.dataModel.alignment.numberOfBytes();
         assertTrue(Address.zero().aligned().toInt() == 0);
         assertTrue(Address.fromInt(1).aligned().toInt() == n);
         assertTrue(Address.fromInt(n).aligned().toInt() == n);
@@ -351,7 +351,7 @@ public class AddressTest extends WordTestCase {
     }
 
     public void test_aligned() {
-        final int n = Platform.hostOrTarget().processorKind().dataModel().alignment().numberOfBytes();
+        final int n = Platform.hostOrTarget().processorKind.dataModel.alignment.numberOfBytes();
         assertTrue(Address.zero().isAligned());
         assertFalse(Address.fromInt(1).isAligned());
         assertFalse(Address.fromInt(n - (n / 2)).isAligned());

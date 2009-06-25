@@ -60,7 +60,7 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
             final Size coveredRegionSize = beltManager.getEnd().minus(Heap.bootHeapRegion().start()).asSize();
             cardRegion.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize));
             sideTable.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize).plus(cardRegion.cardTableSize()).roundedUpBy(
-                            Platform.target().pageSize()));
+                            Platform.target().pageSize));
             BeltwayCardRegion.switchToRegularCardTable(cardRegion.cardTableBase().asPointer());
             adjustedCardTableAddress = BeltwayCardRegion.adjustedCardTableBase(cardRegion.cardTableBase().asPointer());
             beltManager.swapBelts(getMatureSpace(), getNurserySpace());

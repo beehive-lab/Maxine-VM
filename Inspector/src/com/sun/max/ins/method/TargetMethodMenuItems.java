@@ -73,7 +73,7 @@ public final class TargetMethodMenuItems extends AbstractInspectionHolder implem
             writer.println("compilation: " + inspection().nameDisplay().methodCompilationID(teleTargetMethod) + "  " + teleTargetMethod.classActorForType().simpleName());
             teleTargetMethod.traceBundle(writer);
             writer.flush();
-            final ProcessorKind processorKind = maxVM().vmConfiguration().platform().processorKind();
+            final ProcessorKind processorKind = maxVM().vmConfiguration().platform().processorKind;
             final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(teleTargetMethod.getEncodedInlineDataDescriptors());
             final Pointer startAddress = teleTargetMethod.getCodeStart();
             final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {

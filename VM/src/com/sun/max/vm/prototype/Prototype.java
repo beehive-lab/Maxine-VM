@@ -196,7 +196,7 @@ public abstract class Prototype {
             processorModel = ProcessorModel.valueOf(processorModelName);
             assert processorModel.instructionSet() == instructionSet;
         }
-        final Alignment alignment = processorModel.defaultDataModel().alignment();
+        final Alignment alignment = processorModel.defaultDataModel().alignment;
         final DataModel dataModel = new DataModel(wordWidth, endianness, alignment);
         final ProcessorKind processorKind = new ProcessorKind(processorModel, instructionSet, dataModel);
 

@@ -25,7 +25,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.jit.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -61,39 +60,11 @@ public final class ArrayAccess {
      * @param index the index into the array
      */
     @INLINE
-    public static void inlineCheckIndex(Object array, int index) {
+    public static void checkIndex(Object array, int index) {
         // note that we must read the array length first (implicit null check has precedence over bounds check)
         if (SpecialBuiltin.unsignedIntGreaterEqual(index, readArrayLength(array))) {
             Throw.arrayIndexOutOfBoundsException(array, index);
         }
-    }
-
-    /**
-     * An inlined method to check an array index against the bounds of the array. This
-     * specialized version compiles such that it does not require any reference literals,
-     * which makes it suitable for use in JIT templates. For more information on constraints
-     * imposed on JIT templates, see {@link TemplateBasedTargetGenerator the JIT}.
-     *
-     * @param array the array object
-     * @param index the index into the array
-     */
-    @INLINE
-    public static void inlineCheckIndexWithoutLiterals(Object array, int index) {
-        // note that we must read the array length first (implicit null check has precedence over bounds check)
-        if (SpecialBuiltin.unsignedIntGreaterEqual(index, readArrayLength(array))) {
-            Throw.arrayIndexOutOfBoundsException(array, index);
-        }
-    }
-
-    /**
-     * A non-inlineable version of an array bounds check.
-     *
-     * @param array the array object
-     * @param index the index into the array
-     */
-    @NEVER_INLINE
-    public static void noninlineCheckIndex(Object array, int index) {
-        inlineCheckIndex(array, index);
     }
 
     /**
@@ -447,8 +418,4 @@ public final class ArrayAccess {
         Layout.setReference(Reference.fromJava(array), index, Reference.fromJava(value));
     }
 
-    @NEVER_INLINE
-    public static void noninlineSetObject(Object array, int index, Object value) {
-        setObject(array, index, value);
-    }
 }

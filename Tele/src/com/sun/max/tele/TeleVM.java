@@ -187,7 +187,7 @@ public abstract class TeleVM implements MaxVM {
     private static TeleVM create(File bootImageFile, Classpath sourcepath, String[] commandlineArguments, int processID) throws BootImageException {
         final BootImage bootImage = new BootImage(bootImageFile);
         TeleVM teleVM = null;
-        switch (bootImage.vmConfiguration().platform().operatingSystem()) {
+        switch (bootImage.vmConfiguration().platform().operatingSystem) {
             case DARWIN:
                 teleVM = new DarwinTeleVM(bootImageFile, bootImage, sourcepath, commandlineArguments, processID);
                 break;
@@ -436,14 +436,14 @@ public abstract class TeleVM implements MaxVM {
         this.vmConfiguration = vm.configuration();
 
         // Pre-initialize an appropriate disassembler to save time.
-        TeleDisassembler.initialize(vmConfiguration.platform().processorKind());
+        TeleDisassembler.initialize(vmConfiguration.platform().processorKind);
 
-        this.wordSize = vmConfiguration.platform().processorKind().dataModel().wordWidth().numberOfBytes;
+        this.wordSize = vmConfiguration.platform().processorKind.dataModel.wordWidth.numberOfBytes;
         this.programFile = new File(bootImageFile.getParent(), PROGRAM_NAME);
 
         if (commandLineArguments == null) {
             this.teleProcess = attachToTeleProcess(processID);
-            switch (bootImage.vmConfiguration().platform().operatingSystem()) {
+            switch (bootImage.vmConfiguration().platform().operatingSystem) {
                 case GUESTVM:
                     this.bootImageStart = loadBootImage(agent);
                     break;
@@ -500,7 +500,7 @@ public abstract class TeleVM implements MaxVM {
         try {
             final Socket socket = agent.waitForVM();
             final InputStream stream = socket.getInputStream();
-            final Endianness endianness = vmConfiguration.platform().processorKind().dataModel().endianness();
+            final Endianness endianness = vmConfiguration.platform().processorKind.dataModel.endianness;
             final Pointer heap = Word.read(stream, endianness).asPointer();
             Trace.line(1, "Received boot image address from VM: 0x" + heap.toHexString());
             socket.close();

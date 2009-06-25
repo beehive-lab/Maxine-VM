@@ -81,9 +81,9 @@ public class NoninlineTemplateRuntime {
 
     @NEVER_INLINE
     public static void noninlineArrayStore(final int index, final Object array, final Object value) {
-        ArrayAccess.noninlineCheckIndex(array, index);
+        ArrayAccess.checkIndex(array, index);
         ArrayAccess.checkSetObject(array, value);
-        ArrayAccess.noninlineSetObject(array, index, value);
+        ArrayAccess.setObject(array, index, value);
     }
 
     //== Putfield routines ====================================================================================

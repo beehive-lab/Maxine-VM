@@ -57,7 +57,7 @@ public final class UnoptimizedBytecodeTemplateSource {
     public static void aaload() {
         final int index = JitStackFrameOperation.peekInt(0);
         final Object array = JitStackFrameOperation.peekReference(1);
-        ArrayAccess.noninlineCheckIndex(array, index);
+        ArrayAccess.checkIndex(array, index);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeReference(0, ArrayAccess.getObject(array, index));
     }
@@ -153,7 +153,7 @@ public final class UnoptimizedBytecodeTemplateSource {
     public static void baload() {
         final int index = JitStackFrameOperation.peekInt(0);
         final Object array = JitStackFrameOperation.peekReference(1);
-        ArrayAccess.noninlineCheckIndex(array, index);
+        ArrayAccess.checkIndex(array, index);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeInt(0, ArrayAccess.getByte(array, index));
     }
@@ -162,7 +162,7 @@ public final class UnoptimizedBytecodeTemplateSource {
     public static void bastore() {
         final int index = JitStackFrameOperation.peekInt(1);
         final Object array = JitStackFrameOperation.peekReference(2);
-        ArrayAccess.noninlineCheckIndex(array, index);
+        ArrayAccess.checkIndex(array, index);
         final byte value = (byte) JitStackFrameOperation.peekInt(0);
         ArrayAccess.setByte(array, index, value);
         JitStackFrameOperation.removeSlots(3);
@@ -177,7 +177,7 @@ public final class UnoptimizedBytecodeTemplateSource {
     public static void caload() {
         final int index = JitStackFrameOperation.peekInt(0);
         final Object array = JitStackFrameOperation.peekReference(1);
-        ArrayAccess.noninlineCheckIndex(array, index);
+        ArrayAccess.checkIndex(array, index);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeInt(0, ArrayAccess.getChar(array, index));
     }
@@ -186,7 +186,7 @@ public final class UnoptimizedBytecodeTemplateSource {
     public static void castore() {
         final int index = JitStackFrameOperation.peekInt(1);
         final Object array = JitStackFrameOperation.peekReference(2);
-        ArrayAccess.noninlineCheckIndex(array, index);
+        ArrayAccess.checkIndex(array, index);
         final char value = (char) JitStackFrameOperation.peekInt(0);
         ArrayAccess.setChar(array, index, value);
         JitStackFrameOperation.removeSlots(3);
@@ -229,7 +229,7 @@ public final class UnoptimizedBytecodeTemplateSource {
     public static void daload() {
         final int index = JitStackFrameOperation.peekInt(0);
         final Object array = JitStackFrameOperation.peekReference(1);
-        ArrayAccess.noninlineCheckIndex(array, index);
+        ArrayAccess.checkIndex(array, index);
         JitStackFrameOperation.pokeDouble(0, ArrayAccess.getDouble(array, index));
     }
 
@@ -237,7 +237,7 @@ public final class UnoptimizedBytecodeTemplateSource {
     public static void dastore() {
         final int index = JitStackFrameOperation.peekInt(2);
         final Object array = JitStackFrameOperation.peekReference(3);
-        ArrayAccess.noninlineCheckIndex(array, index);
+        ArrayAccess.checkIndex(array, index);
         final double value = JitStackFrameOperation.peekDouble(0);
         ArrayAccess.setDouble(array, index, value);
         JitStackFrameOperation.removeSlots(4);
@@ -452,7 +452,7 @@ public final class UnoptimizedBytecodeTemplateSource {
     public static void faload() {
         final int index = JitStackFrameOperation.peekInt(0);
         final Object array = JitStackFrameOperation.peekReference(1);
-        ArrayAccess.noninlineCheckIndex(array, index);
+        ArrayAccess.checkIndex(array, index);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeFloat(0, ArrayAccess.getFloat(array, index));
     }
@@ -461,7 +461,7 @@ public final class UnoptimizedBytecodeTemplateSource {
     public static void fastore() {
         final int index = JitStackFrameOperation.peekInt(1);
         final Object array = JitStackFrameOperation.peekReference(2);
-        ArrayAccess.noninlineCheckIndex(array, index);
+        ArrayAccess.checkIndex(array, index);
         final float value = JitStackFrameOperation.peekFloat(0);
         ArrayAccess.setFloat(array, index, value);
         JitStackFrameOperation.removeSlots(3);
@@ -914,7 +914,7 @@ public final class UnoptimizedBytecodeTemplateSource {
     public static void iaload() {
         final int index = JitStackFrameOperation.peekInt(0);
         final Object array = JitStackFrameOperation.peekReference(1);
-        ArrayAccess.noninlineCheckIndex(array, index);
+        ArrayAccess.checkIndex(array, index);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeInt(0, ArrayAccess.getInt(array, index));
     }
@@ -931,7 +931,7 @@ public final class UnoptimizedBytecodeTemplateSource {
     public static void iastore() {
         final int index = JitStackFrameOperation.peekInt(1);
         final Object array = JitStackFrameOperation.peekReference(2);
-        ArrayAccess.noninlineCheckIndex(array, index);
+        ArrayAccess.checkIndex(array, index);
         final int value = JitStackFrameOperation.peekInt(0);
         ArrayAccess.setInt(array, index, value);
         JitStackFrameOperation.removeSlots(3);
@@ -1322,7 +1322,7 @@ public final class UnoptimizedBytecodeTemplateSource {
     public static void laload() {
         final int index = JitStackFrameOperation.peekInt(0);
         final Object array = JitStackFrameOperation.peekReference(1);
-        ArrayAccess.noninlineCheckIndex(array, index);
+        ArrayAccess.checkIndex(array, index);
         JitStackFrameOperation.pokeLong(0, ArrayAccess.getLong(array, index));
     }
 
@@ -1338,7 +1338,7 @@ public final class UnoptimizedBytecodeTemplateSource {
     public static void lastore() {
         final int index = JitStackFrameOperation.peekInt(2);
         final Object array = JitStackFrameOperation.peekReference(3);
-        ArrayAccess.noninlineCheckIndex(array, index);
+        ArrayAccess.checkIndex(array, index);
         final long value = JitStackFrameOperation.peekLong(0);
         ArrayAccess.setLong(array, index, value);
         JitStackFrameOperation.removeSlots(4);
@@ -1563,7 +1563,7 @@ public final class UnoptimizedBytecodeTemplateSource {
     public static void saload() {
         final int index = JitStackFrameOperation.peekInt(0);
         final Object array = JitStackFrameOperation.peekReference(1);
-        ArrayAccess.noninlineCheckIndex(array, index);
+        ArrayAccess.checkIndex(array, index);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeInt(0, ArrayAccess.getShort(array, index));
     }
@@ -1573,7 +1573,7 @@ public final class UnoptimizedBytecodeTemplateSource {
         final short value = (short) JitStackFrameOperation.peekInt(0);
         final int index = JitStackFrameOperation.peekInt(1);
         final Object array = JitStackFrameOperation.peekReference(2);
-        ArrayAccess.noninlineCheckIndex(array, index);
+        ArrayAccess.checkIndex(array, index);
         ArrayAccess.setShort(array, index, value);
         JitStackFrameOperation.removeSlots(3);
     }

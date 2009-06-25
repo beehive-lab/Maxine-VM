@@ -114,7 +114,7 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
 
     Size layoutFields(ClassActor superClassActor, FieldActor[] fieldActors, int headerSize) {
         setInvalidOffsets(fieldActors);
-        final int nAlignmentBytes = Platform.target().processorKind().dataModel().alignment().numberOfBytes();
+        final int nAlignmentBytes = Platform.target().processorKind.dataModel.alignment.numberOfBytes();
         int offset = (superClassActor == null || superClassActor.typeDescriptor == JavaTypeDescriptor.HYBRID) ? headerSize : superClassActor.dynamicTupleSize().toInt();
         if (Size.fromInt(offset).dividedBy(nAlignmentBytes).toInt() != 0) {
             offset = fillAlignmentGap(fieldActors, offset, nAlignmentBytes);

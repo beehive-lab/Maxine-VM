@@ -48,7 +48,7 @@ public final class Disassemble {
     }
 
     public static Disassembler createDisassembler(ProcessorKind processorKind, Address startAddress, InlineDataDecoder inlineDataDecoder) {
-        switch (processorKind.instructionSet()) {
+        switch (processorKind.instructionSet) {
             case ARM:
                 return new ARMDisassembler(startAddress.toInt(), inlineDataDecoder);
             case AMD64:
@@ -56,12 +56,12 @@ public final class Disassemble {
             case IA32:
                 return new IA32Disassembler(startAddress.toInt(), inlineDataDecoder);
             case PPC:
-                if (processorKind.dataModel().wordWidth() == WordWidth.BITS_64) {
+                if (processorKind.dataModel.wordWidth == WordWidth.BITS_64) {
                     return new PPC64Disassembler(startAddress.toLong(), inlineDataDecoder);
                 }
                 return new PPC32Disassembler(startAddress.toInt(), inlineDataDecoder);
             case SPARC:
-                if (processorKind.dataModel().wordWidth() == WordWidth.BITS_64) {
+                if (processorKind.dataModel.wordWidth == WordWidth.BITS_64) {
                     return new SPARC64Disassembler(startAddress.toLong(), inlineDataDecoder);
                 }
                 return new SPARC32Disassembler(startAddress.toInt(), inlineDataDecoder);
@@ -100,7 +100,7 @@ public final class Disassemble {
      * @param targetMethod the target method whose code is to be disassembled
      */
     public static void disassemble(OutputStream out, final TargetMethod targetMethod) {
-        final ProcessorKind processorKind = targetMethod.compilerScheme().vmConfiguration().platform().processorKind();
+        final ProcessorKind processorKind = targetMethod.compilerScheme().vmConfiguration().platform().processorKind;
         final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors());
         final Pointer startAddress = targetMethod.codeStart();
         final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {

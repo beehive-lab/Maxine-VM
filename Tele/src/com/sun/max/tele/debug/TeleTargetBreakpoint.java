@@ -164,7 +164,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
 
         public Factory(TeleVM teleVM) {
             this.teleVM = teleVM;
-            this.code = TargetBreakpoint.createBreakpointCode(teleVM.vmConfiguration().platform().processorKind().instructionSet());
+            this.code = TargetBreakpoint.createBreakpointCode(teleVM.vmConfiguration().platform().processorKind.instructionSet);
             teleVM.addVMStateObserver(new TeleVMStateObserver() {
 
                 public void upate(MaxVMState maxVMState) {

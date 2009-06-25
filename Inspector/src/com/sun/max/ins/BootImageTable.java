@@ -143,8 +143,8 @@ public class BootImageTable extends InspectorTable {
             final BootImage.Header header = bootImage.header();
             final VMConfiguration vmConfiguration = bootImage.vmConfiguration();
             final Platform platform = vmConfiguration.platform();
-            final ProcessorKind processorKind = platform.processorKind();
-            final DataModel processorDataModel = processorKind.dataModel();
+            final ProcessorKind processorKind = platform.processorKind;
+            final DataModel processorDataModel = processorKind.dataModel;
             dummyLabel = new PlainLabel(inspection, "");
 
             addRow("identification:", new DataLabel.IntAsHex(inspection(), header.identification), null);
@@ -153,15 +153,15 @@ public class BootImageTable extends InspectorTable {
 
             addRow("build level:", new DataLabel.EnumAsText(inspection(), vmConfiguration.buildLevel()), null);
 
-            addRow("processor model:", new DataLabel.EnumAsText(inspection(), processorKind.processorModel()), null);
-            addRow("instruction set:", new DataLabel.EnumAsText(inspection(), processorKind.instructionSet()), null);
+            addRow("processor model:", new DataLabel.EnumAsText(inspection(), processorKind.processorModel), null);
+            addRow("instruction set:", new DataLabel.EnumAsText(inspection(), processorKind.instructionSet), null);
 
-            addRow("bits/word:", new DataLabel.IntAsDecimal(inspection(), processorDataModel.wordWidth().numberOfBits), null);
-            addRow("endianness:", new DataLabel.EnumAsText(inspection(), processorDataModel.endianness()), null);
-            addRow("alignment:", new DataLabel.IntAsDecimal(inspection(), processorDataModel.alignment().numberOfBytes()), null);
+            addRow("bits/word:", new DataLabel.IntAsDecimal(inspection(), processorDataModel.wordWidth.numberOfBits), null);
+            addRow("endianness:", new DataLabel.EnumAsText(inspection(), processorDataModel.endianness), null);
+            addRow("alignment:", new DataLabel.IntAsDecimal(inspection(), processorDataModel.alignment.numberOfBytes()), null);
 
-            addRow("operating system:", new DataLabel.EnumAsText(inspection(), platform.operatingSystem()), null);
-            addRow("page size:", new DataLabel.IntAsDecimal(inspection(), platform.pageSize()), null);
+            addRow("operating system:", new DataLabel.EnumAsText(inspection(), platform.operatingSystem), null);
+            addRow("page size:", new DataLabel.IntAsDecimal(inspection(), platform.pageSize), null);
 
             addRow("grip scheme:", new JavaNameLabel(inspection(), vmConfiguration.gripScheme().name(), vmConfiguration.gripScheme().getClass().getName()), null);
             addRow("reference scheme:", new JavaNameLabel(inspection(), vmConfiguration.referenceScheme().name(), vmConfiguration.referenceScheme().getClass().getName()), null);

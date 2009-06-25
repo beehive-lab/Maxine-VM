@@ -77,7 +77,7 @@ public abstract class CompilerTestSetup<Method_Type extends IrMethod> extends Te
      * @return a disassembler for the ISA specific code in {@code targetMethod} or null if no such disassembler is available
      */
     public final Disassembler disassemblerFor(TargetMethod targetMethod) {
-        return Disassemble.createDisassembler(VMConfiguration.target().platform().processorKind(), targetMethod.codeStart(), InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors()));
+        return Disassemble.createDisassembler(VMConfiguration.target().platform().processorKind, targetMethod.codeStart(), InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors()));
     }
 
     protected void chainedSetUp() {

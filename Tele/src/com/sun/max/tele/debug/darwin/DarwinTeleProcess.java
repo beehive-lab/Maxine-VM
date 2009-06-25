@@ -65,7 +65,7 @@ public final class DarwinTeleProcess extends TeleProcess {
                 "    chgrp procmod <java executable>;  chmod g+s <java executable>%n%n" +
                 "where <java executable> is the platform dependent executable found under or relative to " + System.getProperty("java.home") + "."));
         }
-        dataAccess = new PageDataAccess(this, platform.processorKind().dataModel());
+        dataAccess = new PageDataAccess(this, platform.processorKind.dataModel);
         try {
             resume();
         } catch (OSExecutionRequestException e) {

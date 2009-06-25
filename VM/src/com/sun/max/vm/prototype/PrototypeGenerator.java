@@ -124,13 +124,13 @@ public final class PrototypeGenerator {
      */
     VMConfiguration createVMConfiguration(final VMConfiguration defaultConfiguration) {
         // set the defaults manually using the default configuration
-        processorModel.setDefaultValue(defaultConfiguration.platform().processorKind().processorModel());
-        instructionSet.setDefaultValue(defaultConfiguration.platform().processorKind().instructionSet());
-        operatingSystem.setDefaultValue(defaultConfiguration.platform().operatingSystem());
-        pageSizeOption.setDefaultValue(defaultConfiguration.platform().pageSize());
-        wordWidth.setDefaultValue(defaultConfiguration.platform().processorKind().dataModel().wordWidth());
-        endiannessOption.setDefaultValue(defaultConfiguration.platform().processorKind().dataModel().endianness());
-        alignmentOption.setDefaultValue(defaultConfiguration.platform().processorKind().dataModel().alignment());
+        processorModel.setDefaultValue(defaultConfiguration.platform().processorKind.processorModel);
+        instructionSet.setDefaultValue(defaultConfiguration.platform().processorKind.instructionSet);
+        operatingSystem.setDefaultValue(defaultConfiguration.platform().operatingSystem);
+        pageSizeOption.setDefaultValue(defaultConfiguration.platform().pageSize);
+        wordWidth.setDefaultValue(defaultConfiguration.platform().processorKind.dataModel.wordWidth);
+        endiannessOption.setDefaultValue(defaultConfiguration.platform().processorKind.dataModel.endianness);
+        alignmentOption.setDefaultValue(defaultConfiguration.platform().processorKind.dataModel.alignment);
         gripScheme.setDefaultValue(defaultConfiguration.gripPackage());
         referenceScheme.setDefaultValue(defaultConfiguration.referencePackage());
         layoutScheme.setDefaultValue(defaultConfiguration.layoutPackage());
@@ -151,7 +151,7 @@ public final class PrototypeGenerator {
         final ProcessorKind processorKind = new ProcessorKind(processorModel.getValue(), instructionSet.getValue(), dataModel);
         final OperatingSystem operatingSystem = this.operatingSystem.getValue();
         int pageSizeValue = pageSizeOption.getValue();
-        if (!options.hasOptionSpecified(pageSizeOption.getName()) && operatingSystem != defaultConfiguration.platform().operatingSystem()) {
+        if (!options.hasOptionSpecified(pageSizeOption.getName()) && operatingSystem != defaultConfiguration.platform().operatingSystem) {
             pageSizeValue = operatingSystem.defaultPageSize();
         }
         final Platform platform = new Platform(processorKind, operatingSystem, pageSizeValue);

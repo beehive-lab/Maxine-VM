@@ -22,36 +22,20 @@ package com.sun.max.lang;
 
 import java.io.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.value.*;
 
 public class DataModel {
 
-    private final WordWidth wordWidth;
-    private final Endianness endianness;
-    private final Alignment alignment;
+    public final WordWidth wordWidth;
+    public final Endianness endianness;
+    public final Alignment alignment;
 
     public DataModel(WordWidth wordWidth, Endianness endianness, Alignment alignment) {
         this.wordWidth = wordWidth;
         this.endianness = endianness;
         this.alignment = alignment;
-    }
-
-    @INLINE
-    public final WordWidth wordWidth() {
-        return wordWidth;
-    }
-
-    @INLINE
-    public final Endianness endianness() {
-        return endianness;
-    }
-
-    @INLINE
-    public final Alignment alignment() {
-        return alignment;
     }
 
     @Override
@@ -64,7 +48,7 @@ public class DataModel {
     }
 
     public byte[] toBytes(byte value) {
-        return endianness().toBytes(value);
+        return endianness.toBytes(value);
     }
 
     public byte[] toBytes(boolean value) {
@@ -74,34 +58,34 @@ public class DataModel {
     }
 
     public byte[] toBytes(short value) {
-        return endianness().toBytes(value);
+        return endianness.toBytes(value);
     }
 
     public byte[] toBytes(char value) {
         final short shortValue = UnsafeLoophole.charToShort(value);
-        return endianness().toBytes(shortValue);
+        return endianness.toBytes(shortValue);
     }
 
     public byte[] toBytes(int value) {
-        return endianness().toBytes(value);
+        return endianness.toBytes(value);
     }
 
     public byte[] toBytes(float value) {
         final int intValue = UnsafeLoophole.floatToInt(value);
-        return endianness().toBytes(intValue);
+        return endianness.toBytes(intValue);
     }
 
     public byte[] toBytes(long value) {
-        return endianness().toBytes(value);
+        return endianness.toBytes(value);
     }
 
     public byte[] toBytes(double value) {
         final long longValue = UnsafeLoophole.doubleToLong(value);
-        return endianness().toBytes(longValue);
+        return endianness.toBytes(longValue);
     }
 
     public byte[] toBytes(Word value) {
-        switch (wordWidth()) {
+        switch (wordWidth) {
             case BITS_64:
                 return toBytes(value.asOffset().toLong());
             case BITS_32:

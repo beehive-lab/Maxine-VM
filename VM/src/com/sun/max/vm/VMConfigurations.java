@@ -38,7 +38,7 @@ public final class VMConfigurations {
     }
 
     private static VMPackage defaultCompilerPackage(Platform platform) {
-        switch (platform.processorKind().instructionSet()) {
+        switch (platform.processorKind.instructionSet) {
             case AMD64:
                 return new com.sun.max.vm.compiler.b.c.d.e.amd64.target.Package();
             case SPARC:
@@ -49,7 +49,7 @@ public final class VMConfigurations {
     }
 
     private static VMPackage defaultJitCompilerPackage(Platform platform) {
-        switch (platform.processorKind().instructionSet()) {
+        switch (platform.processorKind.instructionSet) {
             case AMD64:
                 return new com.sun.max.vm.jit.amd64.Package();
             case SPARC:
@@ -60,7 +60,7 @@ public final class VMConfigurations {
     }
 
     private static VMPackage defaultInterpreterPackage(Platform platform) {
-        switch (platform.processorKind().instructionSet()) {
+        switch (platform.processorKind.instructionSet) {
             case AMD64:
                 return new com.sun.max.vm.interpret.dt.amd64.Package();
             default:
@@ -69,7 +69,7 @@ public final class VMConfigurations {
     }
 
     private static VMPackage defaultTargetABIsPackage(Platform platform) {
-        switch (platform.processorKind().instructionSet()) {
+        switch (platform.processorKind.instructionSet) {
             case AMD64:
                 return new com.sun.max.vm.compiler.target.amd64.Package();
             case SPARC:

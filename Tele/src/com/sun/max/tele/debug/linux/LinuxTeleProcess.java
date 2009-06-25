@@ -58,7 +58,7 @@ public final class LinuxTeleProcess extends TeleProcess {
         if (task == null) {
             throw new BootImageException("Error launching VM");
         }
-        dataAccess = new PageDataAccess(this, platform.processorKind().dataModel());
+        dataAccess = new PageDataAccess(this, platform.processorKind.dataModel);
         try {
             resume();
         } catch (OSExecutionRequestException e) {

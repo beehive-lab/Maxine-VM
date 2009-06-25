@@ -98,7 +98,7 @@ public final class VirtualMemory {
      * @return true if the memory was allocated, false otherwise
      */
     public static boolean allocatePageAlignedAtFixedAddress(Address pointer, Size size, Type type) {
-        if (!pointer.isAligned(Platform.target().pageSize())) {
+        if (!pointer.isAligned(Platform.target().pageSize)) {
             throw new IllegalArgumentException("start address of the request memory must be page aligned ");
         }
         return virtualMemory_allocateAtFixedAddress(pointer, size, type.ordinal());
@@ -210,7 +210,7 @@ public final class VirtualMemory {
      * @throws IOException
      */
     public static Pointer mapFileIn31BitSpace(int size, FileDescriptor fileDescriptor, Address fileOffset) throws IOException {
-        if (Platform.hostOrTarget().operatingSystem() != OperatingSystem.LINUX) {
+        if (Platform.hostOrTarget().operatingSystem != OperatingSystem.LINUX) {
             throw new UnsupportedOperationException();
         }
         final Integer fd = (Integer) WithoutAccessCheck.getInstanceField(fileDescriptor, "fd");

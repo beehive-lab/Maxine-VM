@@ -355,7 +355,7 @@ public final class DataPrototype extends Prototype {
         }
 
         byte[] referenceMapBytes = referenceMap.bytes();
-        if (dataModel.endianness() != Endianness.LITTLE) {
+        if (dataModel.endianness != Endianness.LITTLE) {
             // Convert the bytes in the reference map to the target endianness so that it can be
             // correctly read as words. By default, the reference map can be read as an array
             // of little endian words and so there's no need for the conversion in this case.
@@ -366,10 +366,10 @@ public final class DataPrototype extends Prototype {
                 final int referenceMapWordLength = length / Word.size();
                 for (int i = 0; i < referenceMapWordLength; ++i) {
                     final Word referenceMapWord = Word.read(inputStream, Endianness.LITTLE);
-                    referenceMapWord.write(outputStream, dataModel.endianness());
+                    referenceMapWord.write(outputStream, dataModel.endianness);
                 }
             } catch (IOException ioException) {
-                throw ProgramError.unexpected("Error converting boot heap reference map from little endian to " + dataModel.endianness(), ioException);
+                throw ProgramError.unexpected("Error converting boot heap reference map from little endian to " + dataModel.endianness, ioException);
             }
             referenceMapBytes = outputStream.toByteArray();
             assert length == referenceMapBytes.length;
@@ -798,7 +798,7 @@ public final class DataPrototype extends Prototype {
     private int createData(final IndexedSequence<Object> objects, MemoryRegionVisitor memoryRegionVisitor) {
         final String regionName = memoryRegionVisitor.name;
         Trace.begin(1, "createData: " + regionName);
-        final byte[] tagBytes = dataModel.wordWidth() == WordWidth.BITS_64 ? dataModel.toBytes(DebugHeap.LONG_OBJECT_TAG) : dataModel.toBytes(DebugHeap.INT_OBJECT_TAG);
+        final byte[] tagBytes = dataModel.wordWidth == WordWidth.BITS_64 ? dataModel.toBytes(DebugHeap.LONG_OBJECT_TAG) : dataModel.toBytes(DebugHeap.INT_OBJECT_TAG);
 
         final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(numberOfProcessors);
         final CompletionService<Integer> completionService = new ExecutorCompletionService<Integer>(executor);
@@ -1126,9 +1126,9 @@ public final class DataPrototype extends Prototype {
         super(graphPrototype.vmConfiguration());
         this.graphPrototype = graphPrototype;
         final Platform platform = graphPrototype.vmConfiguration().platform();
-        pageSize = platform.pageSize();
-        dataModel = platform.processorKind().dataModel();
-        alignment = dataModel.alignment().numberOfBytes();
+        pageSize = platform.pageSize;
+        dataModel = platform.processorKind.dataModel;
+        alignment = dataModel.alignment.numberOfBytes();
         layoutScheme = graphPrototype.vmConfiguration().layoutScheme();
         gripScheme = graphPrototype.vmConfiguration().gripScheme();
         debugging = graphPrototype.vmConfiguration().debugging();
