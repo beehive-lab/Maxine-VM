@@ -493,6 +493,9 @@ public class VmThread {
         triggeredVmThreadLocals.setWord(SAFEPOINTS_DISABLED_THREAD_LOCALS.index(), disabledVmThreadLocals);
         triggeredVmThreadLocals.setWord(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index(), triggeredVmThreadLocals);
 
+        ALLOCATION_MARK.setVariableWord(Word.zero());
+        ALLOCATION_TOP.setVariableWord(Word.zero());
+
         NATIVE_THREAD.setConstantWord(enabledVmThreadLocals, nativeThread);
         JNI_ENV.setConstantWord(enabledVmThreadLocals, JniNativeInterface.pointer());
         VmThreadLocal.TAG.setConstantWord(enabledVmThreadLocals, TAG);
