@@ -265,11 +265,11 @@ public abstract class TeleVM implements MaxVM {
         final VMConfiguration vmConfiguration = new VMConfiguration(
                 b.buildLevel(),
                 b.platform(),
-                getInspectorGripPackage(b.gripPackage()),
+                getInspectorGripPackage(b.gripPackage),
                 new com.sun.max.tele.reference.plain.Package(),
-                    b.layoutPackage(), b.heapPackage(), b.monitorPackage(),
-                b.compilerPackage(), b.jitPackage(), b.interpreterPackage(), b.trampolinePackage(),
-                    b.targetABIsPackage(), b.runPackage());
+                b.layoutPackage, b.heapPackage, b.monitorPackage,
+                b.compilerPackage, b.jitPackage, b.interpreterPackage, b.trampolinePackage,
+                b.targetABIsPackage, b.runPackage);
         vmConfiguration.loadAndInstantiateSchemes();
 
         final MaxineVM vm = new MaxineVM(vmConfiguration);

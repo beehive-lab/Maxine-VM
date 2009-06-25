@@ -38,6 +38,6 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.trampolinePackage().equals(this);
+        return vmConfiguration.trampolinePackage.equals(this);
     }
 }

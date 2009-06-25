@@ -441,23 +441,23 @@ public class BootImage {
             instructionSetName = vmConfiguration.platform().processorKind.instructionSet.name();
             operatingSystemName = vmConfiguration.platform().operatingSystem.name();
 
-            gripPackageName = vmConfiguration.gripPackage().name();
-            referencePackageName = vmConfiguration.referencePackage().name();
-            layoutPackageName = vmConfiguration.layoutPackage().name();
-            heapPackageName = vmConfiguration.heapPackage().name();
-            monitorPackageName = vmConfiguration.monitorPackage().name();
-            compilerPackageName = vmConfiguration.compilerPackage().name();
+            gripPackageName = vmConfiguration.gripPackage.name();
+            referencePackageName = vmConfiguration.referencePackage.name();
+            layoutPackageName = vmConfiguration.layoutPackage.name();
+            heapPackageName = vmConfiguration.heapPackage.name();
+            monitorPackageName = vmConfiguration.monitorPackage.name();
+            compilerPackageName = vmConfiguration.compilerPackage.name();
             // Jit Package is optional and may be null. In which case, fall back to the default compiler.
-            if (vmConfiguration.jitPackage() == null) {
+            if (vmConfiguration.jitPackage == null) {
                 jitPackageName = compilerPackageName;
             } else {
-                jitPackageName = vmConfiguration.jitPackage().name();
+                jitPackageName = vmConfiguration.jitPackage.name();
             }
-            interpreterPackageName = vmConfiguration.interpreterPackage().name();
+            interpreterPackageName = vmConfiguration.interpreterPackage.name();
 
-            trampolinePackageName = vmConfiguration.trampolinePackage().name();
-            targetABIsPackageName = vmConfiguration.targetABIsPackage().name();
-            runPackageName = vmConfiguration.runPackage().name();
+            trampolinePackageName = vmConfiguration.trampolinePackage.name();
+            targetABIsPackageName = vmConfiguration.targetABIsPackage.name();
+            runPackageName = vmConfiguration.runPackage.name();
         }
 
         private void checkPackage(String packageName) throws BootImageException {
