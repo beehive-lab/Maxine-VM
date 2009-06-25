@@ -32,25 +32,25 @@ import com.sun.c1x.value.*;
 public class Invoke extends StateSplit {
 
     final int opcode;
-    Instruction object;
     Instruction[] arguments;
     int vtableIndex;
+    final boolean isStatic;
     final CiMethod target;
 
     /**
      * Constructs a new Invoke instruction.
      * @param opcode the opcode of the invoke
      * @param result the result type
-     * @param object the instruction producing the receiver object
-     * @param args the list of instructions producing arguments to the invocation
+     * @param args the list of instructions producing arguments to the invocation, including the receiver object
+     * @param isStatic {@code true} if this call is static (no receiver object)
      * @param vtableIndex the vtable index for a virtual or interface call
      * @param target the target method being called
      */
-    public Invoke(int opcode, ValueType result, Instruction object, Instruction[] args, int vtableIndex, CiMethod target) {
+    public Invoke(int opcode, ValueType result, Instruction[] args, boolean isStatic, int vtableIndex, CiMethod target) {
         super(result);
         this.opcode = opcode;
-        this.object = object;
         this.arguments = args;
+        this.isStatic = isStatic;
         this.vtableIndex = vtableIndex;
         this.target = target;
         if (target.isLoaded()) {
@@ -73,8 +73,9 @@ public class Invoke extends StateSplit {
      * @return the instruction that produces the receiver object for this invocation if any, <code>null</code>
      * if this invocation does not take a receiver object
      */
-    public Instruction object() {
-        return object;
+    public Instruction receiver() {
+        assert !isStatic;
+        return arguments[0];
     }
 
     /**
@@ -116,7 +117,7 @@ public class Invoke extends StateSplit {
      * if this is a static call
      */
     public boolean hasReceiver() {
-        return object != null;
+        return !isStatic;
     }
 
     /**
@@ -125,9 +126,6 @@ public class Invoke extends StateSplit {
      */
     @Override
     public void inputValuesDo(InstructionClosure closure) {
-        if (object != null) {
-            object = closure.apply(object);
-        }
         for (int i = 0; i < arguments.length; i++) {
             arguments[i] = closure.apply(arguments[i]);
         }

@@ -101,19 +101,30 @@ public class GraphBuilder {
             // the root method is an intrinsic; load the parameters onto the stack and try to inline it
             curState = initialState.copy();
             lastInstr = curBlock;
-            loadParameters(method);
-
-            if (tryInlineIntrinsic(method)) {
-                // pop the return value off the stack
-                ValueType rt = returnValueType(method);
-                Instruction result = null;
-                if (!rt.isVoid()) {
-                    result = pop(rt);
+            if (C1XOptions.InlineIntrinsics) {
+                // try to inline an Intrinsic node
+                boolean isStatic = method.isStatic();
+                int argsSize = method.signatureType().argumentSize(!isStatic);
+                Instruction[] args = new Instruction[argsSize];
+                for (int i = 0; i < args.length; i++) {
+                    args[i] = curState.localAt(i);
                 }
-                methodReturn(result);
-                BlockEnd end = (BlockEnd) lastInstr;
-                curBlock.setEnd(end);
-                end.setState(curState);
+                if (tryInlineIntrinsic(method, args, isStatic, intrinsic)) {
+                    // intrinsic inlining succeeded, add the return node
+                    ValueType rt = returnValueType(method);
+                    Instruction result = null;
+                    if (!rt.isVoid()) {
+                        result = pop(rt);
+                    }
+                    methodReturn(result);
+                    BlockEnd end = (BlockEnd) lastInstr;
+                    curBlock.setEnd(end);
+                    end.setState(curState);
+                }  else {
+                    // try intrinsic failed; do the normal parsing
+                    scopeData.addToWorkList(start);
+                    iterateAllBlocks();
+                }
             } else {
                 // do the normal parsing
                 scopeData.addToWorkList(start);
@@ -648,7 +659,7 @@ public class GraphBuilder {
         Instruction y = pop(type);
         Instruction x = pop(type);
         Instruction result = append(new ArithmeticOp(opcode, x, y, method().isStrictFP(), stack));
-        if (scope().method.isStrictFP()) {
+        if (C1XOptions.RoundFPResults && scopeData.scope.method.isStrictFP()) {
             result = roundFp(result);
         }
         push(type, result);
@@ -856,60 +867,62 @@ public class GraphBuilder {
     }
 
     void invokeStatic(CiMethod target) {
-        if (!tryInline(target, null)) {
-            profileInvocation(target);
-            ValueType resultType = returnValueType(target);
-            Instruction[] args = popArguments(target);
-            appendInvoke(Bytecodes.INVOKESTATIC, resultType, null, args, target);
+        Instruction[] args = curState.popArguments(target.signatureType().argumentSize(false));
+        if (!tryOptimizeCall(target, args, true)) {
+            if (!tryInline(target, args, null)) {
+                profileInvocation(target);
+                appendInvoke(Bytecodes.INVOKESTATIC, target, args, true);
+            }
         }
     }
 
     void invokeInterface(CiMethod target) {
-        ValueType resultType = returnValueType(target);
-        Instruction[] args = popArguments(target);
-        Instruction receiver = apop();
-        profileCall(receiver, null);
-        appendInvoke(Bytecodes.INVOKEINTERFACE, resultType, receiver, args, target);
+        Instruction[] args = curState.popArguments(target.signatureType().argumentSize(true));
+        if (!tryOptimizeCall(target, args, false)) {
+            // XXX: attempt devirtualization / deinterfacification of INVOKEINTERFACE
+            profileCall(args[0], null);
+            appendInvoke(Bytecodes.INVOKEINTERFACE, target, args, false);
+        }
     }
 
     void invokeVirtual(CiMethod target) {
-        Instruction receiver = getReceiver(target);
-        // attempt to devirtualize the call
-        if (target.isLoaded() && target.holder().isLoaded()) {
-            CiType klass = target.holder();
-            // 0. check for trivial cases
-            if (target.canBeStaticallyBound() && !target.isAbstract()) {
-                // check for trivial cases (e.g. final methods, nonvirtual methods)
-                invokeSpecial(target, target.holder());
-                return;
+        Instruction[] args = curState.popArguments(target.signatureType().argumentSize(true));
+        if (!tryOptimizeCall(target, args, false)) {
+            Instruction receiver = args[0];
+            // attempt to devirtualize the call
+            if (target.isLoaded() && target.holder().isLoaded()) {
+                CiType klass = target.holder();
+                // 0. check for trivial cases
+                if (target.canBeStaticallyBound() && !target.isAbstract()) {
+                    // check for trivial cases (e.g. final methods, nonvirtual methods)
+                    invokeDirect(target, args, target.holder());
+                    return;
+                }
+                // 1. check if the exact type of the receiver can be determined
+                CiType exact = getExactType(klass, receiver);
+                if (exact != null && exact.isLoaded()) {
+                    // either the holder class is exact, or the receiver object has an exact type
+                    invokeDirect(exact.resolveMethodImpl(target), args, exact);
+                    return;
+                }
+                // 2. check if an assumed leaf method can be found
+                CiMethod leaf = getAssumedLeafMethod(target, receiver);
+                if (leaf != null && leaf.isLoaded() && !leaf.isAbstract() && leaf.holder().isLoaded()) {
+                    invokeDirect(leaf, args, null);
+                    return;
+                }
+                // 3. check if the either of the holder or declared type of receiver can be assumed to be a leaf
+                exact = getAssumedLeafType(klass, receiver);
+                if (exact != null && exact.isLoaded()) {
+                    // either the holder class is exact, or the receiver object has an exact type
+                    invokeDirect(exact.resolveMethodImpl(target), args, exact);
+                    return;
+                }
             }
-            // 1. check if the exact type of the receiver can be determined
-            CiType exact = getExactType(klass, receiver);
-            if (exact != null && exact.isLoaded()) {
-                // either the holder class is exact, or the receiver object has an exact type
-                invokeSpecial(exact.resolveMethodImpl(target), exact);
-                return;
-            }
-            // 2. check if an assumed leaf method can be found
-            CiMethod leaf = getAssumedLeafMethod(target, receiver);
-            if (leaf != null && leaf.isLoaded() && !leaf.isAbstract() && leaf.holder().isLoaded()) {
-                invokeSpecial(leaf, null);
-                return;
-            }
-            // 3. check if the either of the holder or declared type of receiver can be assumed to be a leaf
-            exact = getAssumedLeafType(klass, receiver);
-            if (exact != null && exact.isLoaded()) {
-                // either the holder class is exact, or the receiver object has an exact type
-                invokeSpecial(exact.resolveMethodImpl(target), exact);
-                return;
-            }
+            // devirtualization failed, produce an actual invokevirtual
+            profileCall(args[0], null);
+            appendInvoke(Bytecodes.INVOKEVIRTUAL, target, args, false);
         }
-        // devirtualization failed, compile a bonafide invokevirtual
-        ValueType resultType = returnValueType(target);
-        Instruction[] args = popArguments(target);
-        receiver = apop();
-        profileCall(receiver, null);
-        appendInvoke(Bytecodes.INVOKEVIRTUAL, resultType, receiver, args, target);
     }
 
     private ValueType returnValueType(CiMethod target) {
@@ -917,21 +930,24 @@ public class GraphBuilder {
     }
 
     void invokeSpecial(CiMethod target, CiType knownHolder) {
-        if (!tryInline(target, knownHolder)) {
-            profileInvocation(target);
-            ValueType resultType = returnValueType(target);
-            Instruction[] args = popArguments(target);
-            Instruction receiver = apop();
-            profileCall(receiver, target.holder());
-            appendInvoke(Bytecodes.INVOKESPECIAL, resultType, receiver, args, target);
+        invokeDirect(target, curState.popArguments(target.signatureType().argumentSize(true)), knownHolder);
+    }
+
+    private void invokeDirect(CiMethod target, Instruction[] args, CiType knownHolder) {
+        if (!tryOptimizeCall(target, args, false)) {
+            if (!tryInline(target, args, knownHolder)) {
+                // could not optimize or inline the method call
+                profileInvocation(target);
+                profileCall(args[0], target.holder());
+                appendInvoke(Bytecodes.INVOKESPECIAL, target, args, false);
+            }
         }
     }
 
-
-    private void appendInvoke(int opcode, ValueType resultType, Instruction receiver, Instruction[] args, CiMethod target) {
-        int vtableIndex = target.vtableIndex();
-        Instruction result = append(new Invoke(opcode, resultType, receiver, args, vtableIndex, target));
-        if (method().isStrictFP()) {
+    private void appendInvoke(int opcode, CiMethod target, Instruction[] args, boolean isStatic) {
+        ValueType resultType = returnValueType(target);
+        Instruction result = append(new Invoke(opcode, resultType, args, isStatic, target.vtableIndex(), target));
+        if (C1XOptions.RoundFPResults && scopeData.scope.method.isStrictFP()) {
             pushReturn(resultType, roundFp(result));
         } else {
             pushReturn(resultType, result);
@@ -1019,7 +1035,7 @@ public class GraphBuilder {
             // append a call to the registration intrinsic
             loadLocal(ValueType.OBJECT_TYPE, 0);
             append(new Intrinsic(ValueType.VOID_TYPE, C1XIntrinsic.java_lang_Object$init,
-                                          curState.popArguments(1), true, lockStack(), true, true));
+                                          curState.popArguments(1), false, lockStack(), true, true));
             C1XMetrics.InlinedFinalizerChecks++;
         }
 
@@ -1402,30 +1418,83 @@ public class GraphBuilder {
         return state;
     }
 
-    boolean tryInline(CiMethod target, CiType knownHolder) {
-        return tryInlineIntrinsic(target) || checkInliningConditions(target) && tryInlineFull(target, knownHolder);
+    boolean tryOptimizeCall(CiMethod target, Instruction[] args, boolean isStatic) {
+        if (target.isLoaded()) {
+            if (C1XOptions.InlineIntrinsics) {
+                // try to create an intrinsic node
+                C1XIntrinsic intrinsic = C1XIntrinsic.getIntrinsic(target);
+                if (intrinsic != null && tryInlineIntrinsic(target, args, isStatic, intrinsic)) {
+                    // this method is not an intrinsic
+                    return true;
+                }
+            }
+            if (C1XOptions.CanonicalizeFoldableMethods) {
+                // next try to fold the method call
+                if (tryFoldable(target, args, isStatic)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean tryInlineIntrinsic(CiMethod target, Instruction[] args, boolean isStatic, C1XIntrinsic intrinsic) {
+        boolean preservesState = true;
+        boolean canTrap = false;
+
+        // handle intrinsics differently
+        switch (intrinsic) {
+            // java.lang.Object
+            case java_lang_Object$init:     // fall through
+            case java_lang_Object$clone:    return false;
+            // TODO: preservesState and canTrap for complex intrinsics
+        }
+
+        // get the arguments for the intrinsic
+        ValueType resultType = returnValueType(target);
+
+        // create the intrinsic node
+        Intrinsic result = new Intrinsic(resultType, intrinsic, args, isStatic, lockStack(), preservesState, canTrap);
+        pushReturn(resultType, append(result));
+        C1XMetrics.InlinedIntrinsics++;
+        return true;
+    }
+
+    private boolean tryFoldable(CiMethod target, Instruction[] args, boolean isStatic) {
+        ConstType result = Canonicalizer.foldInvocation(target, args);
+        if (result != null) {
+            pushReturn(returnValueType(target), new Constant(result));
+            return true;
+        }
+        return false;
+    }
+
+    boolean tryInline(CiMethod target, Instruction[] args, CiType knownHolder) {
+        return checkInliningConditions(target) && tryInlineFull(target, args, knownHolder);
     }
 
     boolean checkInliningConditions(CiMethod target) {
         if (!C1XOptions.InlineMethods) {
             return cannotInline(target, "all inlining is turned off");
         }
-        if (scope().level > C1XOptions.MaximumInlineLevel) {
-            return cannotInline(target, "inlining too deep");
-        }
         if (!target.isLoaded()) {
             return cannotInline(target, "method is not resolved");
         }
-        if (recursiveInlineLevel(target) > C1XOptions.MaximumRecursiveInlineLevel) {
-            return cannotInline(target, "recursive inlining too depth");
-        }
-        // TODO: check the total number of bytecodes is less than desired method limit
         if (!target.holder().isInitialized()) {
             return cannotInline(target, "holder is not initialized");
+        }
+        if (recursiveInlineLevel(target) > C1XOptions.MaximumRecursiveInlineLevel) {
+            return cannotInline(target, "recursive inlining too deep");
         }
         if (compilation.runtime.mustInline(target)) {
             C1XMetrics.InlineForcedMethods++;
             return true;
+        }
+        if (scopeData.scope.level > C1XOptions.MaximumInlineLevel) {
+            return cannotInline(target, "inlining too deep");
+        }
+        if (instrCount > C1XOptions.MaximumDesiredSize) {
+            return cannotInline(target, "compilation already too big " + "(" + compilation.totalInstructions() + " insts)");
         }
         if (compilation.runtime.mustNotInline(target)) {
             return cannotInline(target, "inlining excluded by runtime");
@@ -1469,13 +1538,12 @@ public class GraphBuilder {
         return false;
     }
 
-    boolean tryInlineFull(CiMethod target, CiType knownHolder) {
+    boolean tryInlineFull(CiMethod target, Instruction[] args, CiType knownHolder) {
         BlockBegin orig = curBlock;
-        int argsBase = curState.stackSize() - target.signatureType().argumentSize(!target.isStatic());
         Instruction receiver = null;
         if (!target.isStatic()) {
             // the receiver object must be nullchecked for instance methods
-            receiver = curState.stackAt(argsBase);
+            receiver = args[0];
             nullCheck(receiver);
         }
 
@@ -1507,22 +1575,17 @@ public class GraphBuilder {
 
         // pass parameters into the callee state
         ValueStack calleeState = curState;
-        ValueStack callerState = scope().callerState();
-        for (int i = argsBase; i < callerState.stackSize(); i++) {
-            int param = i - argsBase;
-            Instruction arg = callerState.stackAt(i);
+        for (int i = 0; i < args.length; i++) {
+            Instruction arg = args[i];
             if (arg != null) {
-                calleeState.storeLocal(param, roundFp(arg));
+                calleeState.storeLocal(i, roundFp(arg));
             }
         }
-
-        // remove arguments from the stack
-        callerState.truncateStack(argsBase);
 
         // setup state that is used at returns from the inlined method.
         // this is essentially the state of the continuation block,
         // but without the return value on the stack.
-        scopeData.setContinuationState(callerState.copy());
+        scopeData.setContinuationState(scope().callerState().copy());
 
         // compute the lock stack size for callee scope
         scope().computeLockStackSize();
@@ -1661,42 +1724,6 @@ public class GraphBuilder {
         curBlock = origBlock;
         curState = origState;
         lastInstr = origLast;
-    }
-
-    boolean tryInlineIntrinsic(CiMethod target) {
-        C1XIntrinsic intrinsic = C1XIntrinsic.getIntrinsic(target);
-        if (intrinsic == null) {
-            // this method is not an intrinsic
-            return false;
-        }
-        if (!C1XOptions.InlineIntrinsics) {
-            return cannotInline(target, "inlining of intrinsics is turned off");
-        }
-        if (!target.isLoaded()) {
-            return cannotInline(target, "cannot inline unresolved intrinsic");
-        }
-        boolean preservesState = true;
-        boolean canTrap = false;
-
-        // handle intrinsics differently
-        switch (intrinsic) {
-            // java.lang.Object
-            case java_lang_Object$init:     // fall through
-            case java_lang_Object$clone:    return false;
-            // TODO: preservesState and canTrap for complex intrinsics
-        }
-
-        // get the arguments for the intrinsic
-        boolean hasReceiver = !target.isStatic();
-        ValueType resultType = returnValueType(target);
-        Instruction[] args = curState.popArguments(target.signatureType().argumentSize(hasReceiver));
-
-        // create the intrinsic node
-        Intrinsic result = new Intrinsic(resultType, intrinsic, args, hasReceiver, lockStack(), preservesState, canTrap);
-        Instruction value = append(result);
-        pushReturn(resultType, value);
-        C1XMetrics.InlinedIntrinsics++;
-        return true;
     }
 
     void inlineIntoCurrentBlock() {

@@ -26,18 +26,27 @@ import com.sun.max.annotate.FOLD;
  * @Harness: java
  * @Runs: 0=true
  */
-public class Fold01 {
+public class Fold03 {
 
     public static boolean test(int arg) {
-        return result();
+        return flong(10, 10) && fdouble(0.0d, 0.0d);
     }
 
     @FOLD
-    static boolean result() {
+    static boolean flong(long x, long y) {
         int j = 2;
         for (int i = 0; i < 100; i++) {
             j = j + 8 / j;
         }
-        return true;
+        return x == y;
+    }
+
+    @FOLD
+    static boolean fdouble(double x, double y) {
+        int j = 2;
+        for (int i = 0; i < 100; i++) {
+            j = j + 8 / j;
+        }
+        return x == y;
     }
 }
