@@ -1185,7 +1185,7 @@ public final class ClassfileReader {
                 final FieldActor fieldActor = fieldActors[i];
                 if (fieldActor.name.equals("referent")) {
                     // replace the field actor with a new one that has the flag set
-                    fieldActors[i] = new FieldActor<ReferenceValue>(Kind.REFERENCE, fieldActor.name, fieldActor.descriptor(), fieldActor.flags() | Actor.SPECIAL_REFERENCE);
+                    fieldActors[i] = new FieldActor(Kind.REFERENCE, fieldActor.name, fieldActor.descriptor(), fieldActor.flags() | Actor.SPECIAL_REFERENCE);
                     break;
                 }
             }
