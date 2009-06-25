@@ -66,7 +66,7 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
             final Size coveredRegionSize = beltManager.getEnd().minus(Heap.bootHeapRegion().start()).asSize();
             cardRegion.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize));
             sideTable.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize).plus(cardRegion.cardTableSize()).roundedUpBy(
-                            Platform.target().pageSize()));
+                            Platform.target().pageSize));
             BeltwayCardRegion.switchToRegularCardTable(cardRegion.cardTableBase().asPointer());
             TeleHeapInfo.registerMemoryRegions(getEdenSpace(), getToSpace(), getMatureSpace());
         } else if (phase == MaxineVM.Phase.STARTING) {

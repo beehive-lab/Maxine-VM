@@ -173,7 +173,7 @@ public abstract class Snippet extends IrRoutine {
             if (MaxineVM.isPrototyping()) {
                 HostArrayAccess.checkIndex(array, index);
             } else {
-                ArrayAccess.inlineCheckIndex(array, index);
+                ArrayAccess.checkIndex(array, index);
             }
         }
         public static final CheckArrayIndex SNIPPET = new CheckArrayIndex();

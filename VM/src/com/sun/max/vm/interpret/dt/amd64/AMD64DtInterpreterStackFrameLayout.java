@@ -86,7 +86,7 @@ public class AMD64DtInterpreterStackFrameLayout extends JavaStackFrameLayout {
 
     public static final int DTI_SLOT_SIZE = getDtiSlotSize();
 
-    private static final Endianness ENDIANNESS =  VMConfiguration.target().platform().processorKind().dataModel().endianness();
+    private static final Endianness ENDIANNESS =  VMConfiguration.target().platform().processorKind.dataModel.endianness;
 
     private static int getDtiSlotSize() {
         final int stackFrameAlignment = VMConfiguration.target().targetABIsScheme().interpreterABI().stackFrameAlignment();

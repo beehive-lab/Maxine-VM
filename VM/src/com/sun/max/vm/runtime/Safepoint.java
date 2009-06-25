@@ -91,7 +91,7 @@ public abstract class Safepoint {
 
     public static Safepoint create(VMConfiguration vmConfiguration) {
         try {
-            final String isa = vmConfiguration.platform().processorKind().instructionSet().name();
+            final String isa = vmConfiguration.platform().processorKind.instructionSet.name();
             final Class<?> safepointClass = Class.forName(MaxPackage.fromClass(Safepoint.class).subPackage(isa.toLowerCase()).name() + "." + isa + Safepoint.class.getSimpleName());
             final Constructor<?> constructor = safepointClass.getConstructor(VMConfiguration.class);
             return (Safepoint) constructor.newInstance(vmConfiguration);

@@ -369,7 +369,7 @@ public final class JDK_java_lang_System {
      * @return a string representing the path of the Java home
      */
     private static String findJavaHome() {
-        switch (VMConfiguration.hostOrTarget().platform().operatingSystem()) {
+        switch (VMConfiguration.hostOrTarget().platform().operatingSystem) {
             case GUESTVM:
             case SOLARIS:
             case LINUX: {
@@ -415,7 +415,7 @@ public final class JDK_java_lang_System {
      * @return a string representing the java library path as determined from the OS environment
      */
     private static String getenvJavaLibraryPath() {
-        switch (VMConfiguration.hostOrTarget().platform().operatingSystem()) {
+        switch (VMConfiguration.hostOrTarget().platform().operatingSystem) {
             case DARWIN:
             case LINUX:
             case SOLARIS: {
@@ -436,7 +436,7 @@ public final class JDK_java_lang_System {
      * @return a string representing the Java class path as determined from the OS environment
      */
     private static String getenvClassPath() {
-        switch (VMConfiguration.hostOrTarget().platform().operatingSystem()) {
+        switch (VMConfiguration.hostOrTarget().platform().operatingSystem) {
             case DARWIN:
             case LINUX:
             case SOLARIS: {
@@ -480,7 +480,7 @@ public final class JDK_java_lang_System {
      * @return the name of this VM's target ISA
      */
     private static String getISA() {
-        switch (Platform.hostOrTarget().processorKind().instructionSet()) {
+        switch (Platform.hostOrTarget().processorKind.instructionSet) {
             case ARM:
                 FatalError.unimplemented();
                 break;
@@ -502,7 +502,7 @@ public final class JDK_java_lang_System {
      * @return a list of this VM's target ISAs
      */
     private static String getISAList() {
-        switch (Platform.hostOrTarget().processorKind().instructionSet()) {
+        switch (Platform.hostOrTarget().processorKind.instructionSet) {
             case ARM:
                 FatalError.unimplemented();
                 break;
@@ -644,7 +644,7 @@ public final class JDK_java_lang_System {
         setIfAbsent(properties, "sun.arch.data.model", Integer.toString(Word.width().numberOfBits));
         setIfAbsent(properties, "sun.cpu.endian", Word.endianness().name().toLowerCase());
 
-        switch (Platform.hostOrTarget().processorKind().dataModel().endianness()) {
+        switch (Platform.hostOrTarget().processorKind.dataModel.endianness) {
             case LITTLE:
                 setIfAbsent(properties, "sun.io.unicode.encoding", "UnicodeLittle");
                 break;
@@ -669,7 +669,7 @@ public final class JDK_java_lang_System {
         ClassActor.fromJava(Classes.forName("java.lang.ProcessEnvironment")).callInitializer();
 
         // 4. perform OS-specific initialization
-        switch (Platform.hostOrTarget().operatingSystem()) {
+        switch (Platform.hostOrTarget().operatingSystem) {
             case DARWIN:
                 setIfAbsent(properties, "os.name", "Mac OS X");
                 initBasicUnixProperties(properties);
@@ -713,9 +713,9 @@ public final class JDK_java_lang_System {
 
         // 7. set up classpath and library path
         final String[] javaAndZipLibraryPaths = new String[2];
-        if (Platform.hostOrTarget().operatingSystem() == OperatingSystem.DARWIN) {
+        if (Platform.hostOrTarget().operatingSystem == OperatingSystem.DARWIN) {
             initDarwinPathProperties(properties, javaHome, javaAndZipLibraryPaths);
-        } else if (Platform.hostOrTarget().operatingSystem() == OperatingSystem.WINDOWS) {
+        } else if (Platform.hostOrTarget().operatingSystem == OperatingSystem.WINDOWS) {
             initWindowsPathProperties(properties, javaHome, javaAndZipLibraryPaths);
         } else {
             initUnixPathProperties(properties, javaHome, isa, javaAndZipLibraryPaths);
@@ -796,7 +796,7 @@ public final class JDK_java_lang_System {
         javaAndZipLibraryPaths[0] = jreLibIsaPath;
         javaAndZipLibraryPaths[1] = jreLibIsaPath;
 
-        final OperatingSystem os = Platform.hostOrTarget().operatingSystem();
+        final OperatingSystem os = Platform.hostOrTarget().operatingSystem;
         if (os == OperatingSystem.LINUX) {
             setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext"), "/usr/java/packages/lib/ext"));
         } else if (os == OperatingSystem.SOLARIS) {
@@ -908,7 +908,7 @@ public final class JDK_java_lang_System {
         if (libraryName == null) {
             throw new NullPointerException();
         }
-        switch (VMConfiguration.hostOrTarget().platform().operatingSystem()) {
+        switch (VMConfiguration.hostOrTarget().platform().operatingSystem) {
             case DARWIN:
                 // System.loadLibrary() first wants to look for a library with the extension ".jnilib",
                 // then if the library was not found, try again with extension ".dylib".

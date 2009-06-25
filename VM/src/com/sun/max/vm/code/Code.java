@@ -53,7 +53,7 @@ public final class Code {
      */
     @PROTOTYPE_ONLY
     private static CodeManager createCodeManager() {
-        switch (Platform.hostOrTarget().operatingSystem()) {
+        switch (Platform.hostOrTarget().operatingSystem) {
             case LINUX: {
                 return new LowAddressCodeManager();
             }

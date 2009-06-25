@@ -50,8 +50,8 @@ public final class DirectGripScheme extends AbstractVMScheme implements GripSche
 
     public DirectGripScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        dataModel = vmConfiguration.platform().processorKind().dataModel();
-        gripWidth = dataModel.wordWidth();
+        dataModel = vmConfiguration.platform().processorKind.dataModel;
+        gripWidth = dataModel.wordWidth;
     }
 
     @INLINE

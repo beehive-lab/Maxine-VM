@@ -20,7 +20,6 @@
  */
 package com.sun.max.platform;
 
-import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.lang.*;
 
@@ -31,29 +30,14 @@ import com.sun.max.lang.*;
  */
 public class ProcessorKind {
 
-    private final ProcessorModel processorModel;
-    private final InstructionSet instructionSet;
-    private final DataModel dataModel;
+    public final ProcessorModel processorModel;
+    public final InstructionSet instructionSet;
+    public final DataModel dataModel;
 
     public ProcessorKind(ProcessorModel processorModel, InstructionSet instructionSet, DataModel dataModel) {
         this.processorModel = processorModel;
         this.instructionSet = instructionSet;
         this.dataModel = dataModel;
-    }
-
-    @INLINE
-    public final ProcessorModel processorModel() {
-        return processorModel;
-    }
-
-    @INLINE
-    public final InstructionSet instructionSet() {
-        return instructionSet;
-    }
-
-    @INLINE
-    public final DataModel dataModel() {
-        return dataModel;
     }
 
     public static ProcessorKind defaultForInstructionSet(InstructionSet instructionSet) {

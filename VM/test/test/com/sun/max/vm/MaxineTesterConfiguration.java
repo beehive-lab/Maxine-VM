@@ -304,9 +304,9 @@ public class MaxineTesterConfiguration {
 
     public static String defaultJavaTesterConfigs() {
         final Platform platform = Platform.host();
-        if (platform.operatingSystem() == OperatingSystem.SOLARIS) {
-            final ProcessorKind processorKind = platform.processorKind();
-            if (processorKind.processorModel() == ProcessorModel.SPARCV9) {
+        if (platform.operatingSystem == OperatingSystem.SOLARIS) {
+            final ProcessorKind processorKind = platform.processorKind;
+            if (processorKind.processorModel == ProcessorModel.SPARCV9) {
                 return "optopt";
             }
         }
@@ -421,8 +421,8 @@ public class MaxineTesterConfiguration {
         }
 
         public boolean matches(Platform platform) {
-            if (os == null || os == platform.operatingSystem()) {
-                if (processor == null || processor == platform.processorKind().processorModel()) {
+            if (os == null || os == platform.operatingSystem) {
+                if (processor == null || processor == platform.processorKind.processorModel) {
                     return true;
                 }
             }

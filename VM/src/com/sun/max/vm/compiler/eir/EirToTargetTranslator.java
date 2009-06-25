@@ -233,7 +233,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         eirMethod.emit(emitter);
         emitter.emitFrameAdapterEpilogue();
 
-        final DataModel dataModel = compilerScheme().vmConfiguration().platform().processorKind().dataModel();
+        final DataModel dataModel = compilerScheme().vmConfiguration().platform().processorKind.dataModel;
 
         final Sequence<EirLiteral> scalarLiterals = eirMethod.literalPool().scalarLiterals();
         final Sequence<EirLiteral> referenceLiterals = eirMethod.literalPool().referenceLiterals();

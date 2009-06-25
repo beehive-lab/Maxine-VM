@@ -260,16 +260,16 @@ public class BootImage {
         }
 
         private Header(DataPrototype dataPrototype, StringInfo stringInfo) {
-            super(dataPrototype.vmConfiguration().platform().processorKind().dataModel().endianness());
+            super(dataPrototype.vmConfiguration().platform().processorKind.dataModel.endianness);
             final VMConfiguration vmConfiguration = dataPrototype.vmConfiguration();
             isBigEndian = endianness() == Endianness.LITTLE ? 0 : 0xffffffff;
             identification = IDENTIFICATION;
             version = VERSION;
             randomID = UUID.randomUUID().hashCode();
-            wordSize = vmConfiguration.platform().processorKind().dataModel().wordWidth().numberOfBytes;
-            alignmentSize = vmConfiguration.platform().processorKind().dataModel().alignment().numberOfBytes();
+            wordSize = vmConfiguration.platform().processorKind.dataModel.wordWidth.numberOfBytes;
+            alignmentSize = vmConfiguration.platform().processorKind.dataModel.alignment.numberOfBytes();
             relocationScheme = RelocationScheme.DEFAULT.ordinal();
-            pageSize = vmConfiguration.platform().pageSize();
+            pageSize = vmConfiguration.platform().pageSize;
             vmThreadLocalsSize = VmThreadLocal.THREAD_LOCAL_STORAGE_SIZE.toInt();
             vmThreadLocalsTrapNumberOffset = VmThreadLocal.TRAP_NUMBER.offset();
             vmRunMethodOffset = Static.getCriticalEntryPoint(getRunMethodActor(MaxineVM.class), CallEntryPoint.C_ENTRY_POINT).toInt();
@@ -437,9 +437,9 @@ public class BootImage {
         private StringInfo(VMConfiguration vmConfiguration) {
             super();
             buildLevelName = vmConfiguration.buildLevel().name();
-            processorModelName = vmConfiguration.platform().processorKind().processorModel().name();
-            instructionSetName = vmConfiguration.platform().processorKind().instructionSet().name();
-            operatingSystemName = vmConfiguration.platform().operatingSystem().name();
+            processorModelName = vmConfiguration.platform().processorKind.processorModel.name();
+            instructionSetName = vmConfiguration.platform().processorKind.instructionSet.name();
+            operatingSystemName = vmConfiguration.platform().operatingSystem.name();
 
             gripPackageName = vmConfiguration.gripPackage().name();
             referencePackageName = vmConfiguration.referencePackage().name();
@@ -567,7 +567,7 @@ public class BootImage {
     private final DataPrototype dataPrototype;
 
     public int pagePaddingSize(int numberOfBytesSoFar) throws IOException {
-        final int pageSize = vmConfiguration().platform().pageSize();
+        final int pageSize = vmConfiguration().platform().pageSize;
         final int rest = numberOfBytesSoFar % pageSize;
         if (rest == 0) {
             return 0;

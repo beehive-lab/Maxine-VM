@@ -46,12 +46,12 @@ public class PageDataAccess extends DataAccessAdapter {
     private final ByteBuffer writeBuffer;
 
     public PageDataAccess(TeleIO teleProcess, DataModel dataModel) {
-        super(dataModel.wordWidth());
+        super(dataModel.wordWidth);
         teleIO = teleProcess;
         ProgramError.check(Ints.isPowerOfTwoOrZero(teleIO.pageSize()), "Page size is not a power of 2: " + teleIO.pageSize());
         indexShift = Integer.numberOfTrailingZeros(teleProcess.pageSize());
         offsetMask = teleProcess.pageSize() - 1;
-        writeBuffer = ByteBuffer.wrap(new byte[Longs.SIZE]).order(dataModel.endianness().asByteOrder());
+        writeBuffer = ByteBuffer.wrap(new byte[Longs.SIZE]).order(dataModel.endianness.asByteOrder());
     }
 
     public int pageSize() {

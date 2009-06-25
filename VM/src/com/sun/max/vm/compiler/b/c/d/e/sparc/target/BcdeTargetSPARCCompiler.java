@@ -140,7 +140,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
         final Pointer callSite = targetMethod.codeStart().plus(callOffset).asPointer();
         final Label label = new Label();
         SPARCAssembler assembler;
-        if (vmConfiguration().platform().processorKind().dataModel().wordWidth().equals(WordWidth.BITS_64)) {
+        if (vmConfiguration().platform().processorKind.dataModel.wordWidth.equals(WordWidth.BITS_64)) {
             final SPARC64Assembler asm = new SPARC64Assembler(callSite.toLong());
             asm.fixLabel(label, callEntryPoint.asAddress().toLong());
             assembler = asm;

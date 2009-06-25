@@ -340,13 +340,13 @@ public abstract class Offset extends Word {
 
     @INLINE(override = true)
     public final Offset aligned() {
-        final int n = Platform.target().processorKind().dataModel().alignment().numberOfBytes();
+        final int n = Platform.target().processorKind.dataModel.alignment.numberOfBytes();
         return plus(n - 1).and(Offset.fromInt(n - 1).not());
     }
 
     @INLINE(override = true)
     public final boolean isAligned() {
-        final int n = Platform.target().processorKind().dataModel().alignment().numberOfBytes();
+        final int n = Platform.target().processorKind.dataModel.alignment.numberOfBytes();
         return and(n - 1).equals(Offset.zero());
     }
 

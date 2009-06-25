@@ -202,7 +202,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
         this.teleVmThreadLocals = id >= 0 ? new EnumMap<Safepoint.State, TeleThreadLocalValues>(Safepoint.State.class) : null;
         this.stack = new TeleNativeStack(this, Address.fromLong(stackBase), Size.fromLong(stackSize));
-        this.breakpointIsAtInstructionPointer = vmConfiguration.platform().processorKind().instructionSet() == InstructionSet.SPARC;
+        this.breakpointIsAtInstructionPointer = vmConfiguration.platform().processorKind.instructionSet == InstructionSet.SPARC;
     }
 
     /* (non-Javadoc)

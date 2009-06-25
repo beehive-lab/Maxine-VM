@@ -181,7 +181,7 @@ public final class VmClassLoader extends ClassLoader {
     }
 
     public void loadJavaAndZipNativeLibraries(String javaLibraryPath, String zipLibraryPath) {
-        if (VMConfiguration.hostOrTarget().platform().operatingSystem() == OperatingSystem.GUESTVM) {
+        if (VMConfiguration.hostOrTarget().platform().operatingSystem == OperatingSystem.GUESTVM) {
             // no native libraries in GuestVM
             return;
         }

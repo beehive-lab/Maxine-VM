@@ -56,8 +56,8 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
 
     public DirectInspectorGripScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        dataModel = vmConfiguration.platform().processorKind().dataModel();
-        gripWidth = dataModel.wordWidth();
+        dataModel = vmConfiguration.platform().processorKind.dataModel;
+        gripWidth = dataModel.wordWidth;
     }
 
     public boolean isConstant() {

@@ -88,7 +88,7 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
         heapOffsetInImage += bootImage.pagePaddingSize(heapOffsetInImage);
 
         final MappedByteBuffer bootImageBuffer = randomAccessFile.getChannel().map(MapMode.PRIVATE, heapOffsetInImage, header.bootHeapSize + header.bootCodeSize);
-        bootImageBuffer.order(bootImage.vmConfiguration().platform().processorKind().dataModel().endianness().asByteOrder());
+        bootImageBuffer.order(bootImage.vmConfiguration().platform().processorKind.dataModel.endianness.asByteOrder());
 
         return new MappedByteBufferDataAccess(bootImageBuffer, heap, WordWidth.BITS_64);
     }

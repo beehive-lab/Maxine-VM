@@ -656,7 +656,7 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public int pageSize() {
-        return VMConfiguration.hostOrTarget().platform().pageSize();
+        return VMConfiguration.hostOrTarget().platform().pageSize;
     }
 
     /**

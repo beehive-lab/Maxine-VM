@@ -696,8 +696,8 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
         cpuFramePointer = targetABI.registerRoleAssignment().integerRegisterActingAs(Role.CPU_FRAME_POINTER);
         safepointTemplate = VMConfiguration.target().safepoint().code;
         assert safepointTemplate.length == SPARCStackFrameLayout.SPARC_INSTRUCTION_WIDTH;
-        final Endianness endianness = VMConfiguration.target().platform().processorKind().dataModel().endianness();
-        final SPARCAssembler asm =  SPARCAssembler.createAssembler(VMConfiguration.target().platform().processorKind().dataModel().wordWidth());
+        final Endianness endianness = VMConfiguration.target().platform().processorKind.dataModel.endianness;
+        final SPARCAssembler asm =  SPARCAssembler.createAssembler(VMConfiguration.target().platform().processorKind.dataModel.wordWidth);
         asm.nop();
         nopTemplate = toByteArrayAndReset(asm);
 

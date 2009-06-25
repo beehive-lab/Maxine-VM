@@ -104,7 +104,7 @@ public abstract class ObjectAggregator {
      */
     public final Size add(TeleVM teleVM, int offset) {
         if (alignment == 0) {
-            alignment = teleVM.vmConfiguration().platform().processorKind().dataModel().alignment().numberOfBytes();
+            alignment = teleVM.vmConfiguration().platform().processorKind.dataModel.alignment.numberOfBytes();
         }
 
         final Pointer cell = base.plus(offset);

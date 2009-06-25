@@ -32,9 +32,9 @@ import com.sun.max.vm.*;
  */
 public final class Platform {
 
-    private final ProcessorKind processorKind;
-    private final OperatingSystem operatingSystem;
-    private final int pageSize;
+    public final ProcessorKind processorKind;
+    public final OperatingSystem operatingSystem;
+    public final int pageSize;
 
     public Platform(ProcessorKind processorKind, OperatingSystem operatingSystem, int pageSize) {
         this.processorKind = processorKind;
@@ -57,27 +57,12 @@ public final class Platform {
         return MaxineVM.hostOrTarget().configuration().platform();
     }
 
-    @INLINE
-    public ProcessorKind processorKind() {
-        return processorKind;
-    }
-
-    @INLINE
-    public OperatingSystem operatingSystem() {
-        return operatingSystem;
-    }
-
-    @INLINE
-    public int pageSize() {
-        return pageSize;
-    }
-
     public Platform constrainedByInstructionSet(InstructionSet instructionSet) {
-        ProcessorKind processor = processorKind();
-        if (processor.instructionSet() != instructionSet) {
+        ProcessorKind processor = processorKind;
+        if (processor.instructionSet != instructionSet) {
             processor = ProcessorKind.defaultForInstructionSet(instructionSet);
         }
-        return new Platform(processor, operatingSystem(), pageSize());
+        return new Platform(processor, operatingSystem, pageSize);
     }
 
     @Override
@@ -86,13 +71,13 @@ public final class Platform {
     }
 
     public void inspect(PlatformInspector inspector) {
-        inspector.inspectAlignment(processorKind.dataModel().alignment());
-        inspector.inspectEndianness(processorKind.dataModel().endianness());
-        inspector.inspectWordWidth(processorKind.dataModel().wordWidth());
-        inspector.inspectInstructionSet(processorKind.instructionSet());
+        inspector.inspectAlignment(processorKind.dataModel.alignment);
+        inspector.inspectEndianness(processorKind.dataModel.endianness);
+        inspector.inspectWordWidth(processorKind.dataModel.wordWidth);
+        inspector.inspectInstructionSet(processorKind.instructionSet);
         inspector.inspectOperatingSystem(operatingSystem);
         inspector.inspectPageSize(pageSize);
-        inspector.inspectProcessorModel(processorKind.processorModel());
+        inspector.inspectProcessorModel(processorKind.processorModel);
     }
 
     /**

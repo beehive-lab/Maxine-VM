@@ -397,7 +397,7 @@ public final class VMConfiguration {
 
     @INLINE
     public WordWidth wordWidth() {
-        return platform().processorKind().dataModel().wordWidth();
+        return platform().processorKind.dataModel.wordWidth;
     }
 
     /**
@@ -409,7 +409,7 @@ public final class VMConfiguration {
         }
         if (maxPackage instanceof AsmPackage) {
             final AsmPackage asmPackage = (AsmPackage) maxPackage;
-            return asmPackage.isPartOfAssembler(platform().processorKind().instructionSet());
+            return asmPackage.isPartOfAssembler(platform().processorKind.instructionSet);
         }
         if (maxPackage instanceof VMPackage) {
             final VMPackage vmPackage = (VMPackage) maxPackage;
