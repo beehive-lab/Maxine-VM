@@ -40,9 +40,19 @@ public final class BeltManager {
     // The List of Belts used
     private static final List<Belt> _belts = new ArrayList<Belt>();
 
-    private static Belt _applicationHeap = new Belt();
+    private static Belt _applicationHeap;
 
-    private static Belt _tempBelt = new Belt();
+    private static Belt _tempBelt;
+
+    static {
+        MaxineVM.usingTarget(new Runnable() {
+            public void run() {
+                _applicationHeap = new Belt();
+                _tempBelt = new Belt();
+            }
+        });
+    }
+
 
     public BeltManager() {
     }
