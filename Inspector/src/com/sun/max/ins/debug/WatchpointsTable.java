@@ -91,7 +91,9 @@ public class WatchpointsTable extends InspectorTable {
             model.refresh();
             for (TableColumn column : columns) {
                 final Prober prober = (Prober) column.getCellRenderer();
-                prober.refresh(force);
+                if (prober != null) {
+                    prober.refresh(force);
+                }
             }
         }
         invalidate();
@@ -101,7 +103,9 @@ public class WatchpointsTable extends InspectorTable {
     public void redisplay() {
         for (TableColumn column : columns) {
             final Prober prober = (Prober) column.getCellRenderer();
-            prober.redisplay();
+            if (prober != null) {
+                prober.redisplay();
+            }
         }
         invalidate();
         repaint();

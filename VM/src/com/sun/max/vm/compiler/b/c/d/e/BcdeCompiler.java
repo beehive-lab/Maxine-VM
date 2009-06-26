@@ -26,8 +26,8 @@ import java.util.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
+import com.sun.max.lang.*;
 import com.sun.max.lang.Arrays;
-import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.b.c.d.*;
 import com.sun.max.vm.compiler.builtin.*;
@@ -77,7 +77,7 @@ public abstract class BcdeCompiler<EirGenerator_Type extends EirGenerator> exten
         isBuiltinImplemented = new boolean[Builtin.builtins().length()];
         for (int i = 0; i < Builtin.builtins().length(); i++) {
             final Builtin builtin = Builtin.builtins().get(i);
-            isBuiltinImplemented[i] = methodNames.contains("visit" + Naming.toClassName(builtin.name()));
+            isBuiltinImplemented[i] = methodNames.contains("visit" + Strings.firstCharToUpperCase(builtin.name()));
         }
     }
 }

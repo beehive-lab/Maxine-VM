@@ -18,12 +18,41 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.bench.allocator;
-
-import com.sun.max.vm.*;
+package test.bench.threads;
 
 
-public class SimpleAllocation {
+/**
+ * Test for the scalability of heap allocation. This test is designed to
+ * show the performance benefits of thread local allocation buffers (TLABs).
+ *
+ * @author Hannes Payer
+ */
+public class Object_new {
+
+    static class Barrier {
+        private int threads;
+        private int threadCount = 0;
+
+        public Barrier(int threads) {
+            this.threads = threads;
+        }
+
+        public synchronized void reset() {
+            threadCount = 0;
+        }
+
+        public synchronized void waitForRelease() throws InterruptedException {
+            threadCount++;
+            if (threadCount == threads) {
+                notifyAll();
+            } else {
+                while (threadCount < threads) {
+                    wait();
+                }
+            }
+        }
+    }
+
 
     protected static Barrier barrier1;
     protected static Barrier barrier2;
@@ -55,7 +84,7 @@ public class SimpleAllocation {
         } catch (InterruptedException e) { }
 
         final long benchtime = System.nanoTime() - start;
-        System.out.println(benchtime);
+        System.out.println(benchtime + " ns");
 
         /*System.out.println("Simple Allocator Benchmark Result (nr threads: " + nrThreads +
                             "; size: " + allocSize + "; nr allocs: " + nrAllocs +
@@ -80,8 +109,7 @@ public class SimpleAllocation {
             } catch (InterruptedException e) { }
             for (int i = 0; i < nrAllocations; i++) {
                 if (i % 100000 == 0) {
-                    Log.print("Alloc thread ");
-                    Log.println(threadId);
+                    System.out.println("Alloc thread " + threadId);
                 }
 
                 final byte[] tmp = new byte[size];

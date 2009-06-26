@@ -321,7 +321,7 @@ public final class Inspection {
     private final class VMStateObserver implements TeleVMStateObserver {
 
         public void upate(final MaxVMState maxVMState) {
-            System.out.println("MaxVMState=" + maxVMState);
+            Trace.stream().println("MaxVMState=" + maxVMState);
             for (MaxThread thread : maxVMState.threadsStarted()) {
                 Trace.line(TRACE_VALUE, tracePrefix() + "started: " + thread);
             }

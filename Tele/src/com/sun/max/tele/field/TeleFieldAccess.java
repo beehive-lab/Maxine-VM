@@ -32,9 +32,11 @@ import com.sun.max.vm.type.*;
  */
 public abstract class TeleFieldAccess {
 
-    public static FieldActor findFieldActor(Class holder, String name) {
+    private static FieldActor findFieldActor(Class holder, String name) {
         final ClassActor classActor = PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.forJavaClass(holder));
-        return classActor.findFieldActor(SymbolTable.makeSymbol(name));
+        final FieldActor fieldActor = classActor.findFieldActor(SymbolTable.makeSymbol(name));
+        ProgramError.check(fieldActor != null, "could not find field: " + name + " in class: " + holder);
+        return fieldActor;
     }
 
     private final FieldActor fieldActor;
@@ -45,7 +47,6 @@ public abstract class TeleFieldAccess {
 
     protected TeleFieldAccess(Class holder, String name, Kind kind) {
         fieldActor = findFieldActor(holder, name);
-        ProgramError.check(fieldActor != null, "could not find field: " + name + " in class: " + holder);
         ProgramError.check(fieldActor.kind == kind, "field has wrong kind: " + name + " in class: " + holder);
     }
 
