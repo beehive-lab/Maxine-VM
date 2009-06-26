@@ -67,4 +67,18 @@ public interface MemoryRegion {
      */
     String description();
 
+    public static class Util {
+        /**
+         * Gets a string representation for a memory region composed of its {@linkplain MemoryRegion#description() description}
+         * and {@linkplain MemoryRegion#start()} - {@linkplain MemoryRegion#end()} address range.
+         */
+        public static String asString(MemoryRegion memoryRegion) {
+            final StringBuilder sb = new StringBuilder();
+            if (memoryRegion.description() != null) {
+                sb.append(memoryRegion.description()).append(":");
+            }
+            sb.append("[").append(memoryRegion.start().toHexString()).append(" - ").append(memoryRegion.end().minus(1).toHexString()).append("]");
+            return sb.toString();
+        }
+    }
 }
