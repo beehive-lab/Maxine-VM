@@ -384,7 +384,6 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
         final String classMessage = "Copying static fields of " + javaClass + " from VM";
         Trace.begin(COPY_TRACE_VALUE, classMessage);
         try {
-
             for (FieldActor fieldActor : classActor.localStaticFieldActors()) {
                 final String fieldMessage = "Copying static field " + fieldActor.format("%t %n") + " from VM";
                 Trace.begin(COPY_TRACE_VALUE, fieldMessage);
