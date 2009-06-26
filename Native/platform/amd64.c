@@ -64,7 +64,7 @@ void isa_canonicalizeTeleFloatingPointRegisters(isa_OsTeleFloatingPointRegisters
 #elif os_SOLARIS
 #define CANONICALIZE(reg) c->xmm##reg = (Word) (Word *) &os->fp_reg_set.fpchip_state.xmm[reg]
 #elif os_GUESTVMXEN
-#define CANONICALIZE(reg) c->xmm##reg = (Word) 0
+#define CANONICALIZE(reg) c->xmm##reg = (Word) os->xmm##reg
 #else
 #define CANONICALIZE(reg, ucReg) c_UNIMPLEMENTED()
 #endif
@@ -101,7 +101,7 @@ void isa_canonicalizeTeleStateRegisters(isa_OsTeleStateRegisters os, isa_Canonic
     c->flags = (Word) os[REG_RFL];
 #elif os_GUESTVMXEN
     c->rip = (Word) os->rip;
-    c->flags = (Word) 0xdeadbeef; // TODO
+    c->flags = (Word) os->flags;
 #else
     c_UNIMPLEMENTED();
 #endif
