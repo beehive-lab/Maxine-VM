@@ -640,24 +640,22 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             oldAllocationMark = allocationMark.asPointer();
             cell = allocateWithDebugTag(oldAllocationMark);
             end = cell.plus(size);
-            do {
-                if (end.greaterThan(top)) {
-                    if (!Heap.collectGarbage(size)) {
-                        if (inSafetyZone) {
-                            FatalError.crash("out of memory again after throwing OutOfMemoryError");
-                        } else {
-                            // Use the safety region to do the throw
-                            top = top.plus(safetyZoneSize);
-                            inSafetyZone = true;
-                            // This new will now be ok
-                            throw new OutOfMemoryError();
-                        }
+            while (end.greaterThan(top)) {
+                if (!Heap.collectGarbage(size)) {
+                    if (inSafetyZone) {
+                        FatalError.crash("out of memory again after throwing OutOfMemoryError");
+                    } else {
+                        // Use the safety region to do the throw
+                        top = top.plus(safetyZoneSize);
+                        inSafetyZone = true;
+                        // This new will now be ok
+                        throw new OutOfMemoryError();
                     }
-                    oldAllocationMark = allocationMark.asPointer();
-                    cell = allocateWithDebugTag(oldAllocationMark);
-                    end = cell.plus(size);
                 }
-            } while (end.greaterThan(top));
+                oldAllocationMark = allocationMark.asPointer();
+                cell = allocateWithDebugTag(oldAllocationMark);
+                end = cell.plus(size);
+            }
         } while (allocationMarkPointer.compareAndSwapWord(oldAllocationMark, end) != oldAllocationMark);
         return cell;
     }
