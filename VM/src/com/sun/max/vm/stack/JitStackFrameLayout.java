@@ -69,7 +69,7 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
 
     public static final TargetABI JIT_ABI = VMConfiguration.target().targetABIsScheme().jitABI();
 
-    private static final Endianness ENDIANNESS =  VMConfiguration.target().platform().processorKind().dataModel().endianness();
+    private static final Endianness ENDIANNESS =  VMConfiguration.target().platform().processorKind.dataModel.endianness;
 
     /**
      * Return the offset of a value of a given kind within a word. This helps hiding endianness issues for

@@ -78,7 +78,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
 
     private Deoptimizer makeDeoptimizer() {
         if (deoptimizer == null) {
-            switch (teleVM().vmConfiguration().platform().processorKind().instructionSet()) {
+            switch (teleVM().vmConfiguration().platform().processorKind.instructionSet) {
                 case AMD64:
                     deoptimizer = AMD64Deoptimizer.deoptimizer();
                     break;

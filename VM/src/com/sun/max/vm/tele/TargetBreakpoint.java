@@ -55,7 +55,7 @@ public final class TargetBreakpoint {
                     return assembler.toByteArray();
                 }
                 case SPARC: {
-                    final WordWidth wordWidth = VMConfiguration.target().platform().processorKind().dataModel().wordWidth();
+                    final WordWidth wordWidth = VMConfiguration.target().platform().processorKind.dataModel.wordWidth;
                     final SPARCAssembler assembler = wordWidth == WordWidth.BITS_64 ? new SPARC64Assembler() : new SPARC32Assembler();
                     assembler.ta(ICCOperand.XCC, GPR.G0, SoftwareTrap.ST_BREAKPOINT.trapNumber());
                     return assembler.toByteArray();
@@ -71,7 +71,7 @@ public final class TargetBreakpoint {
         return null;
     }
 
-    public static final byte[] breakpointCode = createBreakpointCode(Platform.target().processorKind().instructionSet());
+    public static final byte[] breakpointCode = createBreakpointCode(Platform.target().processorKind.instructionSet);
 
     private final Pointer instructionPointer;
 

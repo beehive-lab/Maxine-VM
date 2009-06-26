@@ -23,7 +23,6 @@ package com.sun.max.vm.template.source;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
 
@@ -42,7 +41,7 @@ public final class InitializedBytecodeTemplateSource {
      */
     @BYTECODE_TEMPLATE(bytecode = Bytecode.NEW)
     public static void new_(ClassActor classActor) {
-        JitStackFrameOperation.pushReference(NonFoldableSnippet.CreateTupleOrHybrid.createTupleOrHybrid(classActor));
+        JitStackFrameOperation.pushReference(NoninlineTemplateRuntime.noninlineNew(classActor));
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKESTATIC, kind = KindEnum.VOID)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,34 +18,35 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.actor.member;
+package test.directives;
 
-import com.sun.max.annotate.*;
-import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.object.*;
-import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
+import com.sun.max.annotate.FOLD;
 
-/**
- * @author Bernd Mathiske
+/*
+ * @Harness: java
+ * @Runs: 0=true
  */
-public class DoubleFieldActor extends FieldActor<DoubleValue> {
+public class Fold03 {
 
-    public DoubleFieldActor(Utf8Constant name, int flags) {
-        super(Kind.DOUBLE,
-              name,
-              JavaTypeDescriptor.DOUBLE,
-              flags);
+    public static boolean test(int arg) {
+        return flong(10, 10) && fdouble(0.0d, 0.0d);
     }
 
-    @INLINE
-    public final double readDouble(Object object) {
-        return TupleAccess.readDouble(object, offset());
+    @FOLD
+    static boolean flong(long x, long y) {
+        int j = 2;
+        for (int i = 0; i < 100; i++) {
+            j = j + 8 / j;
+        }
+        return x == y;
     }
 
-    @INLINE
-    public final void writeDouble(Object object, double value) {
-        TupleAccess.writeDouble(object, offset(), value);
+    @FOLD
+    static boolean fdouble(double x, double y) {
+        int j = 2;
+        for (int i = 0; i < 100; i++) {
+            j = j + 8 / j;
+        }
+        return x == y;
     }
-
 }

@@ -436,7 +436,10 @@ public final class ClassfileReader {
                 }
 
                 final Kind kind = descriptor.toKind();
-                final FieldActor<?> fieldActor = kind.createFieldActor(name, descriptor, flags);
+                if (kind == Kind.VOID) {
+                    throw classFormatError("Fields cannot be of type void");
+                }
+                final FieldActor fieldActor = new FieldActor(kind, name, descriptor, flags);
 
                 if (constantValueIndex != 0) {
                     switch (fieldActor.kind.asEnum) {
@@ -1180,9 +1183,9 @@ public final class ClassfileReader {
             // find the "referent" field and mark it as a special reference too.
             for (int i = 0; i < fieldActors.length; i++) {
                 final FieldActor fieldActor = fieldActors[i];
-                if (fieldActor instanceof ReferenceFieldActor && fieldActor.name.equals("referent")) {
+                if (fieldActor.name.equals("referent")) {
                     // replace the field actor with a new one that has the flag set
-                    fieldActors[i] = new ReferenceFieldActor(fieldActor.name, fieldActor.descriptor(), fieldActor.flags() | Actor.SPECIAL_REFERENCE);
+                    fieldActors[i] = new FieldActor(Kind.REFERENCE, fieldActor.name, fieldActor.descriptor(), fieldActor.flags() | Actor.SPECIAL_REFERENCE);
                     break;
                 }
             }

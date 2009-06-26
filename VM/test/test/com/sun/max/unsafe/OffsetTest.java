@@ -268,7 +268,7 @@ public class OffsetTest extends WordTestCase {
     }
 
     public void test_align() {
-        final int n = Platform.hostOrTarget().processorKind().dataModel().alignment().numberOfBytes();
+        final int n = Platform.hostOrTarget().processorKind.dataModel.alignment.numberOfBytes();
         assertTrue(Offset.zero().aligned().toInt() == 0);
         assertTrue(Offset.fromInt(1).aligned().toInt() == n);
         assertTrue(Offset.fromInt(n).aligned().toInt() == n);
@@ -284,7 +284,7 @@ public class OffsetTest extends WordTestCase {
     }
 
     public void test_aligned() {
-        final int n = Platform.hostOrTarget().processorKind().dataModel().alignment().numberOfBytes();
+        final int n = Platform.hostOrTarget().processorKind.dataModel.alignment.numberOfBytes();
         assertTrue(Offset.zero().isAligned());
         assertFalse(Offset.fromInt(1).isAligned());
         assertFalse(Offset.fromInt(n - (n / 2)).isAligned());

@@ -18,6 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+#include <unistd.h>
 #include "word.h"
 #include "isa.h"
 #include "jni.h"
@@ -45,8 +46,7 @@ Java_com_sun_max_vm_prototype_Prototype_nativeGetOperatingSystem(JNIEnv *env, jc
 
 JNIEXPORT jint JNICALL
 Java_com_sun_max_vm_prototype_Prototype_nativeGetPageSize(JNIEnv *env, jclass c) {
-    extern int getpagesize(void);
-    return getpagesize();
+    return (jint) sysconf(_SC_PAGESIZE);
 }
 
 /*

@@ -35,7 +35,6 @@ import com.sun.max.vm.heap.beltway.profile.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -117,7 +116,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     public static volatile long retrievedTLABS = 0;
     public static Object tlabRetrieveMutex = new Object();
     public static boolean inGC = false;
-    public static boolean inScavening = false;
+    public static boolean inScavenging = false;
 
     public static TLAB[] scavengerTLABs = new TLAB[BeltwayConfiguration.numberOfGCThreads + 1];
 
@@ -143,7 +142,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
 
     @INLINE
     protected final Address allocateMemory(Size size) {
-        final Address endOfCodeRegion = BootImage.getEndOfCodeRegion();
+        final Address endOfCodeRegion = Code.bootCodeRegion.end();
         if (VirtualMemory.allocatePageAlignedAtFixedAddress(endOfCodeRegion, size, VirtualMemory.Type.HEAP)) {
             return endOfCodeRegion;
         }

@@ -32,7 +32,7 @@ public class GuestVMXenDataAccess extends DataAccessAdapter {
     private final int domainId;
 
     protected GuestVMXenDataAccess(DataModel dataModel, int domainId) {
-        super(dataModel.wordWidth());
+        super(dataModel.wordWidth);
         this.domainId = domainId;
     }
 

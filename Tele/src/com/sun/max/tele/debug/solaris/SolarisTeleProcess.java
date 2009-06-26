@@ -69,7 +69,7 @@ public final class SolarisTeleProcess extends TeleProcess {
         super(teleVM, platform, ProcessState.STOPPED);
         final Pointer commandLineArgumentsBuffer = TeleProcess.createCommandLineArgumentsBuffer(programFile, commandLineArguments);
         processHandle = nativeCreateChild(commandLineArgumentsBuffer.toLong(), agent.port());
-        dataAccess = new PageDataAccess(this, platform.processorKind().dataModel());
+        dataAccess = new PageDataAccess(this, platform.processorKind.dataModel);
         try {
             resume();
         } catch (OSExecutionRequestException e) {

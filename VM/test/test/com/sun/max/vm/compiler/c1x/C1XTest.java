@@ -432,7 +432,7 @@ public class C1XTest {
                     try {
                         final int value = field.getInt(null);
                         final String name = field.getName();
-                        out.print(Strings.padLengthWithSpaces(name, 40) + ": " + value + "\n");
+                        out.print(C1XMetrics.class.getSimpleName() + "." + Strings.padLengthWithSpaces(name, 40) + " = " + value + "\n");
                     } catch (IllegalAccessException e) {
                         // do nothing.
                     }

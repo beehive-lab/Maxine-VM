@@ -146,7 +146,7 @@ public class TeleRuntimeStub extends TeleRuntimeMemoryRegion implements TeleTarg
     public IndexedSequence<TargetCodeInstruction> getInstructions() {
         if (instructions == null) {
             final byte[] code = teleVM().dataAccess().readFully(getCodeStart(), codeSize().toInt());
-            instructions = TeleDisassembler.decode(teleVM().vmConfiguration().platform().processorKind(), getCodeStart(), code, null);
+            instructions = TeleDisassembler.decode(teleVM().vmConfiguration().platform().processorKind, getCodeStart(), code, null);
         }
         return instructions;
     }

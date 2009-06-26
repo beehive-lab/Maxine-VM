@@ -705,8 +705,8 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     };
 
     LiteralRenderer getLiteralRenderer(Inspection inspection) {
-        final ProcessorKind processorKind = maxVM().vmConfiguration().platform().processorKind();
-        switch (processorKind.instructionSet()) {
+        final ProcessorKind processorKind = maxVM().vmConfiguration().platform().processorKind;
+        switch (processorKind.instructionSet) {
             case AMD64:
                 return AMD64_LITERAL_RENDERER;
             case SPARC:

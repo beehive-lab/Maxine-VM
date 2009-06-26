@@ -25,6 +25,7 @@ import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.object.TupleAccess;
 
 /**
  * Implements method substitutions necessary for native library handling.
@@ -42,16 +43,16 @@ class JDK_java_lang_ClassLoader_NativeLibrary {
      * library. The {@code FieldActor} for that field is used here to gain access.
      */
     @CONSTANT_WHEN_NOT_ZERO
-    private static LongFieldActor handleFieldActor;
+    private static FieldActor handleFieldActor;
 
     /**
      * Apparently the body of this method is bootstrap-sensitive depending on your write barrier.
      * Keeping it never inlined breaks the potential circular dependency.
      */
     @NEVER_INLINE
-    private static LongFieldActor getHandleFieldActor(Class javaClass) {
+    private static FieldActor getHandleFieldActor(Class javaClass) {
         if (handleFieldActor == null) {
-            handleFieldActor =  (LongFieldActor) FieldActor.fromJava(Classes.getDeclaredField(javaClass, "handle", long.class));
+            handleFieldActor =  FieldActor.fromJava(Classes.getDeclaredField(javaClass, "handle", long.class));
         }
         return handleFieldActor;
     }
@@ -61,7 +62,7 @@ class JDK_java_lang_ClassLoader_NativeLibrary {
      * @return the field actor for reading the "handle" field from the underlying native library object
      */
     @INLINE
-    private LongFieldActor handleFieldActor() {
+    private FieldActor handleFieldActor() {
         return getHandleFieldActor(getClass());
     }
 
@@ -86,7 +87,7 @@ class JDK_java_lang_ClassLoader_NativeLibrary {
                 }
             }
         }
-        handleFieldActor().writeLong(this, address.toLong());
+        TupleAccess.writeLong(this, handleFieldActor().offset(), address.toLong());
     }
 
     /**
@@ -97,7 +98,8 @@ class JDK_java_lang_ClassLoader_NativeLibrary {
      */
     @SUBSTITUTE
     long find(String symbolName) {
-        return DynamicLinker.lookupSymbol(Address.fromLong(handleFieldActor().readLong(this)), symbolName).asAddress().toLong();
+        final Address handle = Address.fromLong(TupleAccess.readLong(this, handleFieldActor().offset()));
+        return DynamicLinker.lookupSymbol(handle, symbolName).asAddress().toLong();
     }
 
     /**
@@ -106,7 +108,8 @@ class JDK_java_lang_ClassLoader_NativeLibrary {
      */
     @SUBSTITUTE
     void unload() {
-        DynamicLinker.close(Address.fromLong(handleFieldActor().readLong(this)));
+        final Address handle = Address.fromLong(TupleAccess.readLong(this, handleFieldActor().offset()));
+        DynamicLinker.close(handle);
     }
 
 }

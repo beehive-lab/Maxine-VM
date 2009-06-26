@@ -555,7 +555,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     }
 
     public final int pageSize() {
-        return platform().pageSize();
+        return platform().pageSize;
     }
 
     public final int read(Address address, ByteBuffer buffer, int offset, int length) {

@@ -299,14 +299,14 @@ public class MaxineTesterConfiguration {
     private static final String DEFAULT_JAVA_TESTER_CONFIGS = "optopt,jitopt,optjit,jitjit";
 
     public static String defaultMaxvmOutputConfigs() {
-        return "std,jit,pgi";
+        return "std,jit";
     }
 
     public static String defaultJavaTesterConfigs() {
         final Platform platform = Platform.host();
-        if (platform.operatingSystem() == OperatingSystem.SOLARIS) {
-            final ProcessorKind processorKind = platform.processorKind();
-            if (processorKind.processorModel() == ProcessorModel.SPARCV9) {
+        if (platform.operatingSystem == OperatingSystem.SOLARIS) {
+            final ProcessorKind processorKind = platform.processorKind;
+            if (processorKind.processorModel == ProcessorModel.SPARCV9) {
                 return "optopt";
             }
         }
@@ -421,8 +421,8 @@ public class MaxineTesterConfiguration {
         }
 
         public boolean matches(Platform platform) {
-            if (os == null || os == platform.operatingSystem()) {
-                if (processor == null || processor == platform.processorKind().processorModel()) {
+            if (os == null || os == platform.operatingSystem) {
+                if (processor == null || processor == platform.processorKind.processorModel) {
                     return true;
                 }
             }

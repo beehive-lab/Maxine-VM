@@ -313,7 +313,7 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
     }
 
     public SPARCAssembler createAssembler() {
-        return SPARCAssembler.createAssembler(vmConfiguration().platform().processorKind().dataModel().wordWidth());
+        return SPARCAssembler.createAssembler(vmConfiguration().platform().processorKind.dataModel.wordWidth);
     }
 
     protected SPARCEirABI(VMConfiguration vmConfiguration) {

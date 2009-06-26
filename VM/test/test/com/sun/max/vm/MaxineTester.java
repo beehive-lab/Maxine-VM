@@ -86,7 +86,7 @@ public class MaxineTester {
                     "can be specified by appending a ':' followed by a '+' separated list of test name substrings. For example:\n\n" +
                     "-tests=specjvm98:jess+db,dacapo:pmd+fop\n\nwill " +
                     "run the _202_jess and _209_db SpecJVM98 benchmarks as well as the pmd and fop Dacapo benchmarks.\n\n" +
-                    "Ouput tests: " + Arrays.toString(MaxineTesterConfiguration.outputTests) + "\n\n" +
+                    "Output tests: " + Arrays.toString(MaxineTesterConfiguration.outputTests) + "\n\n" +
                     "Dacapo tests: " + Arrays.toString(MaxineTesterConfiguration.dacapoTests) + "\n\n" +
                     "SpecJVM98 tests: " + Arrays.toString(MaxineTesterConfiguration.specjvm98Tests) + "\n\n" +
                     "Shootout tests: " + Arrays.toString(MaxineTesterConfiguration.shootoutTests()));

@@ -673,44 +673,12 @@ public class Canonicalizer extends InstructionVisitor {
         if (C1XOptions.CanonicalizeFoldableMethods) {
             CiMethod method = i.target();
             if (method.isLoaded()) {
-                // only fold resolved methods
-                Method reflectMethod = C1XIntrinsic.getFoldableMethod(method);
-                if (reflectMethod != null) {
-                    // the method is foldable. check that all input arguments are constants
-                    Instruction obj = i.object();
-                    if (obj != null && !obj.type().isConstant()) {
-                        return;
-                    }
-                    Instruction[] args = i.arguments();
-                    for (Instruction a : args) {
-                        if (a != null && !a.type().isConstant()) {
-                            return;
-                        }
-                    }
-                    // build the argument list
-                    Object[] argArray = NO_ARGUMENTS;
-                    if (args.length > 0) {
-                        ArrayList<Object> list = new ArrayList<Object>();
-                        for (Instruction a : args) {
-                            if (a != null) {
-                                list.add(a.type().asConstant().boxedValue());
-                            }
-                        }
-                        argArray = list.toArray();
-                    }
-                    try {
-                        // attempt to invoke the method
-                        Object result = reflectMethod.invoke(obj == null ? null : obj.type().asConstant().asObject(), argArray);
-                        BasicType basicType = method.signatureType().returnBasicType();
-                        // set the result of this instruction to be the result of invocation
-                        setCanonical(new Constant(new ConstType(basicType, result, basicType == BasicType.Object)));
-                        C1XMetrics.MethodsFolded++;
-                        // note that for void, we will have a void constant with value null
-                    } catch (IllegalAccessException e) {
-                        // folding failed; too bad
-                    } catch (InvocationTargetException e) {
-                        // folding failed; too bad
-                    }
+                // only try to fold resolved method invocations
+                ConstType result = foldInvocation(i.target(), i.arguments());
+                if (result != null) {
+                    // folding was successful
+                    BasicType basicType = method.signatureType().returnBasicType();
+                    setCanonical(new Constant(new ConstType(basicType, result, basicType == BasicType.Object)));
                 }
             }
         }
@@ -1222,4 +1190,58 @@ public class Canonicalizer extends InstructionVisitor {
         return args[index].type().asConstant().asLong();
     }
 
+    public static ConstType foldInvocation(CiMethod method, Instruction[] args) {
+        Method reflectMethod = C1XIntrinsic.getFoldableMethod(method);
+        if (reflectMethod != null) {
+            // the method is foldable. check that all input arguments are constants
+            for (Instruction a : args) {
+                if (a != null && !a.type().isConstant()) {
+                    return null;
+                }
+            }
+            // build the argument list
+            Object recvr;
+            Object[] argArray = NO_ARGUMENTS;
+            if (method.isStatic()) {
+                // static method invocation
+                recvr = null;
+                if (args.length > 0) {
+                    ArrayList<Object> list = new ArrayList<Object>();
+                    for (Instruction a : args) {
+                        if (a != null) {
+                            list.add(a.type().asConstant().boxedValue());
+                        }
+                    }
+                    argArray = list.toArray();
+                }
+            } else {
+                // instance method invocation
+                recvr = args[0].type().asConstant().asObject();
+                if (args.length > 1) {
+                    ArrayList<Object> list = new ArrayList<Object>();
+                    for (int i = 1; i < args.length; i++) {
+                        Instruction a = args[i];
+                        if (a != null) {
+                            list.add(a.type().asConstant().boxedValue());
+                        }
+                    }
+                    argArray = list.toArray();
+                }
+            }
+            try {
+                // attempt to invoke the method
+                Object result = reflectMethod.invoke(recvr, argArray);
+                BasicType basicType = method.signatureType().returnBasicType();
+                // set the result of this instruction to be the result of invocation
+                C1XMetrics.MethodsFolded++;
+                return new ConstType(basicType, result, basicType == BasicType.Object);
+                // note that for void, we will have a void constant with value null
+            } catch (IllegalAccessException e) {
+                // folding failed; too bad
+            } catch (InvocationTargetException e) {
+                // folding failed; too bad
+            }
+        }
+        return null;
+    }
 }

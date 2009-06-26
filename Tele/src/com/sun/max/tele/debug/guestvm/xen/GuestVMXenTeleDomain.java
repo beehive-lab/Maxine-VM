@@ -53,7 +53,7 @@ public class GuestVMXenTeleDomain extends TeleProcess {
             domainId = id;
         }
         GuestVMXenDBChannel.attach(this, domainId);
-        dataAccess = new PageDataAccess(this, platform.processorKind().dataModel());
+        dataAccess = new PageDataAccess(this, platform.processorKind.dataModel);
     }
 
     @Override
@@ -70,7 +70,7 @@ public class GuestVMXenTeleDomain extends TeleProcess {
         /* Need to align and skip over the guard page at the base of the stack.
          * N.B. "base" is low address (i.e., actually the end of the stack!).
          */
-        final int pageSize = VMConfiguration.hostOrTarget().platform().pageSize();
+        final int pageSize = VMConfiguration.hostOrTarget().platform().pageSize;
         final long stackBottom = pageAlign(stackBase, pageSize) + pageSize;
         final long adjStackSize = stackSize - (stackBottom - stackBase);
         return new GuestVMXenNativeThread(this, id, threadId, stackBottom, adjStackSize);

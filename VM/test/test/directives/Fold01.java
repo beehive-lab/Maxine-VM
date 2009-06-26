@@ -24,7 +24,7 @@ import com.sun.max.annotate.FOLD;
 
 /*
  * @Harness: java
- * @Runs: 0=true; 1=true
+ * @Runs: 0=true
  */
 public class Fold01 {
 

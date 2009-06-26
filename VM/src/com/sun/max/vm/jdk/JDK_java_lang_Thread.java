@@ -29,6 +29,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.object.TupleAccess;
 
 /**
  * Method substitutions for {@link java.lang.Thread java.lang.Thread}.
@@ -84,7 +85,7 @@ final class JDK_java_lang_Thread {
         if (VmThread.fromJava(thread) == null) {
             // Aha, we must have gotten here during the constructor, otherwise the injected field would have been set already
             final VmThread vmThread = VmThreadFactory.create(thread);
-            Thread_vmThread.writeObject(thread, vmThread);
+            TupleAccess.writeObject(thread, Thread_vmThread.offset(), vmThread);
         }
     }
 
@@ -250,12 +251,12 @@ final class JDK_java_lang_Thread {
     }
 
     @CONSTANT_WHEN_NOT_ZERO
-    private static ReferenceFieldActor nameFieldActor;
+    private static FieldActor nameFieldActor;
 
     @INLINE
-    private static ReferenceFieldActor nameFieldActor() {
+    private static FieldActor nameFieldActor() {
         if (nameFieldActor == null) {
-            nameFieldActor = (ReferenceFieldActor) ClassActor.fromJava(Thread.class).findFieldActor(SymbolTable.makeSymbol("name"));
+            nameFieldActor = ClassActor.fromJava(Thread.class).findFieldActor(SymbolTable.makeSymbol("name"));
         }
         return nameFieldActor;
     }
@@ -268,7 +269,7 @@ final class JDK_java_lang_Thread {
     private void setName(String name) {
         checkAccess();
         thisVMThread().setName(name);
-        nameFieldActor().writeObject(this, name.toCharArray());
+        TupleAccess.writeObject(this, nameFieldActor().offset(), name.toCharArray());
     }
 
 }

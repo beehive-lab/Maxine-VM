@@ -38,6 +38,7 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -653,6 +654,35 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 end = cell.plus(size);
             }
         } while (allocationMarkPointer.compareAndSwapWord(oldAllocationMark, end) != oldAllocationMark);
+        return cell;
+    }
+
+    @NEVER_INLINE
+    public Pointer retryAllocate0(Size size) {
+        //final Pointer allocationMark = VmThreadLocal.ALLOCATION_MARK.getVariableWord().asPointer();
+        //final Pointer allocationTop = VmThreadLocal.ALLOCATION_TOP.getVariableWord().asPointer().minus(24);
+        //if (!allocationMark.equals(allocationTop)) {
+            //createArray(ClassActor.fromJava(Byte.class).dynamicHub(), ((allocationTop.minus(allocationMark)).minus(24)).toInt());
+        //}
+        final Size tlabSize = Size.fromLong(Math.max(size.toLong(), 64 * 1024));
+        final Pointer tlab = retryAllocate(tlabSize);
+        final Pointer cell = allocateWithDebugTag(tlab);
+        final Pointer end = cell.plus(size);
+        VmThreadLocal.ALLOCATION_TOP.setVariableWord(tlab.plus(tlabSize));
+        VmThreadLocal.ALLOCATION_MARK.setVariableWord(end);
+        return cell;
+    }
+
+    @INLINE
+    public Pointer allocate0(Size size) {
+        final Pointer oldAllocationMark = VmThreadLocal.ALLOCATION_MARK.getVariableWord().asPointer();
+        final Pointer cell = allocateWithDebugTag(oldAllocationMark);
+        final Pointer end = cell.plus(size);
+        if (end.greaterThan(VmThreadLocal.ALLOCATION_TOP.getVariableWord().asAddress())) {
+            return retryAllocate0(size);
+        }
+        VmThreadLocal.ALLOCATION_MARK.setVariableWord(end);
+
         return cell;
     }
 

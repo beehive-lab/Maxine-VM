@@ -74,7 +74,7 @@ public abstract class TeleRegisters {
      */
     public final void refresh() {
         registerDataInputStream.reset();
-        final Endianness endianness = vmConfiguration.platform().processorKind().dataModel().endianness();
+        final Endianness endianness = vmConfiguration.platform().processorKind.dataModel.endianness;
         for (int i = 0; i != registerValues.length; i++) {
             try {
                 registerValues[i] = Word.read(registerDataInputStream, endianness).asAddress();

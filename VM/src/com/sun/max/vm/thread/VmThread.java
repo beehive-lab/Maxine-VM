@@ -209,7 +209,7 @@ public class VmThread {
     }
 
     public static VmThread fromJava(Thread javaThread) {
-        return (VmThread) Thread_vmThread.readObject(javaThread);
+        return (VmThread) TupleAccess.readObject(javaThread, Thread_vmThread.offset());
     }
 
     public Word nativeThread() {
@@ -380,7 +380,7 @@ public class VmThread {
      * Initializes the VM thread system and starts the main Java thread.
      */
     public static void createAndRunMainThread() {
-        final Size requestedStackSize = stackSizeOption.getValue().aligned(Platform.host().pageSize()).asSize();
+        final Size requestedStackSize = stackSizeOption.getValue().aligned(Platform.host().pageSize).asSize();
 
         final Word nativeThread = nativeThreadCreate(mainVMThread.id, requestedStackSize, Thread.NORM_PRIORITY);
         if (nativeThread.isZero()) {
@@ -492,6 +492,9 @@ public class VmThread {
         triggeredVmThreadLocals.setWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index(), enabledVmThreadLocals);
         triggeredVmThreadLocals.setWord(SAFEPOINTS_DISABLED_THREAD_LOCALS.index(), disabledVmThreadLocals);
         triggeredVmThreadLocals.setWord(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index(), triggeredVmThreadLocals);
+
+        ALLOCATION_MARK.setVariableWord(Word.zero());
+        ALLOCATION_TOP.setVariableWord(Word.zero());
 
         NATIVE_THREAD.setConstantWord(enabledVmThreadLocals, nativeThread);
         JNI_ENV.setConstantWord(enabledVmThreadLocals, JniNativeInterface.pointer());
@@ -786,7 +789,7 @@ public class VmThread {
      */
     public void start0() {
         state = Thread.State.RUNNABLE;
-        VmThreadMap.ACTIVE.startVmThread(this, stackSizeOption.getValue().aligned(Platform.host().pageSize()).asSize(), javaThread.getPriority());
+        VmThreadMap.ACTIVE.startVmThread(this, stackSizeOption.getValue().aligned(Platform.host().pageSize).asSize(), javaThread.getPriority());
     }
 
     public boolean isInterrupted(boolean clearInterrupted) {
@@ -910,7 +913,7 @@ public class VmThread {
     }
 
     public static int guardPageSize() {
-        return VMConfiguration.target().platform().pageSize();
+        return VMConfiguration.target().platform().pageSize;
     }
 
     /**

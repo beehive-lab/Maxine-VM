@@ -88,7 +88,7 @@ public abstract class EirMethodGeneration {
     protected EirMethodGeneration(EirGenerator eirGenerator, EirABI abi, boolean isTemplate) {
         this.eirGenerator = eirGenerator;
         this.abi = abi;
-        this.memoryModel = eirGenerator.compilerScheme().vmConfiguration().platform().processorKind().processorModel().memoryModel();
+        this.memoryModel = eirGenerator.compilerScheme().vmConfiguration().platform().processorKind.processorModel.memoryModel();
         this.isTemplate = isTemplate;
 
         this.integerRegisterRoleValues = new EirValue[VMRegister.Role.VALUES.length()];

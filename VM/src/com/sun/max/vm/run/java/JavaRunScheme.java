@@ -34,6 +34,7 @@ import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.object.TupleAccess;
 import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -175,10 +176,10 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         // The parent of the system (app) class loader is the extension class loader and
         // we need to set the private "parent" field of it to our VMClassLoader in order to
         // be able to  find classes compiled into the image.
-        final ReferenceFieldActor parentFieldActor = (ReferenceFieldActor) ClassActor.fromJava(ClassLoader.class).findFieldActor(SymbolTable.makeSymbol("parent"));
+        final FieldActor parentFieldActor = ClassActor.fromJava(ClassLoader.class).findFieldActor(SymbolTable.makeSymbol("parent"));
         // ClassLoader.getParent() has checks we don't want
-        final ClassLoader parent = (ClassLoader) parentFieldActor.readObject(systemClassLoader);
-        parentFieldActor.writeObject(parent, VmClassLoader.VM_CLASS_LOADER);
+        final ClassLoader parent = (ClassLoader) TupleAccess.readObject(systemClassLoader, parentFieldActor.offset());
+        TupleAccess.writeObject(parent, parentFieldActor.offset(), VmClassLoader.VM_CLASS_LOADER);
     }
 
     /**

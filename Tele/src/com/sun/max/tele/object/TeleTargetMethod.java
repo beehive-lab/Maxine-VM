@@ -212,7 +212,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
         if (instructions == null) {
             final byte[] code = getCode();
             if (code != null) {
-                instructions = TeleDisassembler.decode(teleVM().vmConfiguration().platform().processorKind(), getCodeStart(), code, getEncodedInlineDataDescriptors());
+                instructions = TeleDisassembler.decode(teleVM().vmConfiguration().platform().processorKind, getCodeStart(), code, getEncodedInlineDataDescriptors());
             }
         }
         return instructions;

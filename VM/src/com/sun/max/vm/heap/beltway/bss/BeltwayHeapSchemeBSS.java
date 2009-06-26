@@ -32,6 +32,7 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.tele.*;
 
 /**
+ * Heap scheme for a semi-space beltway collector. Use a single belt with two increments, each allocated half of the total heap space.
  * @author Christos Kotselidis
  */
 
@@ -59,7 +60,7 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
             final Size coveredRegionSize = beltManager.getEnd().minus(Heap.bootHeapRegion().start()).asSize();
             cardRegion.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize));
             sideTable.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize).plus(cardRegion.cardTableSize()).roundedUpBy(
-                            Platform.target().pageSize()));
+                            Platform.target().pageSize));
             BeltwayCardRegion.switchToRegularCardTable(cardRegion.cardTableBase().asPointer());
             TeleHeapInfo.registerMemoryRegions(getToSpace(), getFromSpace());
         } else if (phase == MaxineVM.Phase.STARTING) {
@@ -74,12 +75,10 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
         }
     }
 
-    @INLINE
     public Belt getFromSpace() {
         return beltManager.getBelt(0);
     }
 
-    @INLINE
     public Belt getToSpace() {
         return beltManager.getBelt(1);
     }
@@ -95,7 +94,7 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
         return false;
     }
 
-    @INLINE
+    @INLINE(override = true)
     @NO_SAFEPOINTS("TODO")
     public Pointer allocate(Size size) {
         if (!MaxineVM.isRunning()) {
@@ -107,7 +106,6 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
         return heapAllocate(getFromSpace(), size);
     }
 
-    @INLINE
     private Size immediateFreeSpace() {
         return getFromSpace().end().minus(getFromSpace().getAllocationMark()).asSize();
     }
@@ -117,7 +115,7 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
         return address.greaterEqual(Heap.bootHeapRegion().start()) && address.lessEqual(BeltwayConfiguration.getApplicationHeapEndAddress());
     }
 
-    @INLINE
+    @INLINE(override = true)
     public void writeBarrier(Reference from, Reference to) {
         // do nothing.
     }

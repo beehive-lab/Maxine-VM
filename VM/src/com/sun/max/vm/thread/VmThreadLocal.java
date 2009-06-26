@@ -78,6 +78,10 @@ public enum VmThreadLocal {
      */
     SAFEPOINTS_TRIGGERED_THREAD_LOCALS(Kind.WORD),
 
+    ALLOCATION_MARK(Kind.WORD),
+    ALLOCATION_TOP(Kind.WORD),
+
+
     SAFEPOINT_EPOCH(Kind.WORD),
 
     /**
@@ -156,8 +160,6 @@ public enum VmThreadLocal {
      * disabled thread local space. The latter is where the trap saved register values.
      */
     DEOPTIMIZER_INSTRUCTION_POINTER(Kind.WORD),
-
-    METHOD_TRACE_COUNT(Kind.WORD),
 
     /**
      * The address of the stack slot with the highest address that is covered by the {@linkplain #STACK_REFERENCE_MAP

@@ -36,7 +36,7 @@ import com.sun.c1x.C1XIntrinsic;
 public class Intrinsic extends StateSplit {
 
     final C1XIntrinsic intrinsic;
-    final boolean hasReceiver;
+    final boolean isStatic;
     Instruction[] arguments;
     ValueStack lockStack;
 
@@ -45,18 +45,18 @@ public class Intrinsic extends StateSplit {
      * @param type the result type of the instruction
      * @param intrinsic the actual intrinsic
      * @param arguments the arguments to the call (including the receiver object)
-     * @param hasReceiver <code>true</code> if this method takes a receiver object
+     * @param isStatic <code>true</code> if this method is static
      * @param lockStack the lock stack
      * @param preservesState <code>true</code> if the implementation of this intrinsic preserves register state
      * @param canTrap <code>true</code> if this intrinsic can cause a trap
      */
-    public Intrinsic(ValueType type, C1XIntrinsic intrinsic, Instruction[] arguments, boolean hasReceiver,
+    public Intrinsic(ValueType type, C1XIntrinsic intrinsic, Instruction[] arguments, boolean isStatic,
                      ValueStack lockStack, boolean preservesState, boolean canTrap) {
         super(type);
         this.intrinsic = intrinsic;
         this.arguments = arguments;
         this.lockStack = lockStack;
-        this.hasReceiver = hasReceiver;
+        this.isStatic = isStatic;
         // Preserves state means that the intrinsic preserves register state across all cases,
         // including slow cases--even if it causes a trap. If so, it can still be a candidate
         // for load elimination and common subexpression elimination
@@ -94,7 +94,7 @@ public class Intrinsic extends StateSplit {
      * @return <code>true</code> if this intrinsic has a receiver object
      */
     public boolean hasReceiver() {
-        return hasReceiver;
+        return !isStatic;
     }
 
     /**
@@ -102,7 +102,7 @@ public class Intrinsic extends StateSplit {
      * @return the instruction producing the receiver object
      */
     public Instruction receiver() {
-        assert hasReceiver;
+        assert !isStatic;
         return arguments[0];
     }
 

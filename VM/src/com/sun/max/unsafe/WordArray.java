@@ -94,7 +94,7 @@ public final class WordArray {
     @SURROGATE
     @INLINE
     private static Word get_(Word[] array, int index) {
-        ArrayAccess.inlineCheckIndex(array, index);
+        ArrayAccess.checkIndex(array, index);
         return ArrayAccess.getWord(array, index);
     }
 
@@ -117,7 +117,7 @@ public final class WordArray {
     @SURROGATE
     @INLINE
     private static <Word_Type extends Word> void set_(Word_Type[] array, int index, Word_Type value) {
-        ArrayAccess.inlineCheckIndex(array, index);
+        ArrayAccess.checkIndex(array, index);
         ArrayAccess.setWord(array, index, value);
     }
 
