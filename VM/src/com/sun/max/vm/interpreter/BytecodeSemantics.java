@@ -127,7 +127,7 @@ public class BytecodeSemantics {
     // =============================================================================
     public boolean booleanGetField(Object object, ResolutionGuard guard) {
         final FieldActor fieldActor = ResolutionSnippet.ResolveInstanceFieldForReading.resolveInstanceFieldForReading(guard);
-        return FieldReadSnippet.ReadBoolean.readBoolean(object, UnsafeLoophole.<BooleanFieldActor>cast(fieldActor));
+        return FieldReadSnippet.ReadBoolean.readBoolean(object, UnsafeLoophole.<FieldActor>cast(fieldActor));
     }
 
     public boolean booleanGetField(Object object, int offset) {

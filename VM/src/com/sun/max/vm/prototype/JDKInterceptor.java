@@ -203,16 +203,10 @@ public final class JDKInterceptor {
      * Checks whether the specified field should be omitted.
      *
      * @param field the field to check
+     * @return {@code true} if the field should be omitted
      */
     public static boolean isOmittedField(Field field) {
-        if (field.getName().startsWith("$SWITCH_TABLE")) {
-            return true;
-        }
-        final InterceptedField interceptedField = getInterceptedField(field);
-        if (interceptedField instanceof ZeroField) {
-            return true;
-        }
-        return false;
+        return field.getName().startsWith("$SWITCH_TABLE") || getInterceptedField(field) instanceof ZeroField;
     }
 
     public static InterceptedField getInterceptedField(FieldActor fieldActor) {
@@ -309,6 +303,7 @@ public final class JDKInterceptor {
          * Override of mutability: null:no-override, TRUE:mutable, FALSE:immutable.
          */
         private final Boolean mutabilityOverride;
+
         InterceptedField(String name) {
             final char lastChar = name.charAt(name.length() - 1);
             if (lastChar == '-' || lastChar == '+') {
@@ -320,6 +315,7 @@ public final class JDKInterceptor {
                 assert Character.isJavaIdentifierPart(lastChar) : "Invalid Java field name: " + name;
             }
         }
+
         public String getName() {
             return name;
         }

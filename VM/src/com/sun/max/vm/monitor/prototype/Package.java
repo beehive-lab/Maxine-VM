@@ -30,7 +30,7 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.monitorPackage().equals(this);
+        return vmConfiguration.monitorPackage.equals(this);
     }
 
 }

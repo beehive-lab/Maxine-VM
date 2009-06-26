@@ -27,7 +27,7 @@ import com.sun.max.vm.grip.*;
 
 /**
  * @see MaxPackage
- * 
+ *
  * @author Matthew Seidl
  */
 public class Package extends VMPackage {
@@ -37,6 +37,6 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.gripPackage().equals(this);
+        return vmConfiguration.gripPackage.equals(this);
     }
 }

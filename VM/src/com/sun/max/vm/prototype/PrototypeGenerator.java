@@ -131,17 +131,17 @@ public final class PrototypeGenerator {
         wordWidth.setDefaultValue(defaultConfiguration.platform().processorKind.dataModel.wordWidth);
         endiannessOption.setDefaultValue(defaultConfiguration.platform().processorKind.dataModel.endianness);
         alignmentOption.setDefaultValue(defaultConfiguration.platform().processorKind.dataModel.alignment);
-        gripScheme.setDefaultValue(defaultConfiguration.gripPackage());
-        referenceScheme.setDefaultValue(defaultConfiguration.referencePackage());
-        layoutScheme.setDefaultValue(defaultConfiguration.layoutPackage());
-        heapScheme.setDefaultValue(defaultConfiguration.heapPackage());
-        monitorScheme.setDefaultValue(defaultConfiguration.monitorPackage());
-        compilerScheme.setDefaultValue(defaultConfiguration.compilerPackage());
-        jitScheme.setDefaultValue(defaultConfiguration.jitPackage());
-        interpreterScheme.setDefaultValue(defaultConfiguration.interpreterPackage());
-        trampolineScheme.setDefaultValue(defaultConfiguration.trampolinePackage());
-        targetABIsScheme.setDefaultValue(defaultConfiguration.targetABIsPackage());
-        runScheme.setDefaultValue(defaultConfiguration.runPackage());
+        gripScheme.setDefaultValue(defaultConfiguration.gripPackage);
+        referenceScheme.setDefaultValue(defaultConfiguration.referencePackage);
+        layoutScheme.setDefaultValue(defaultConfiguration.layoutPackage);
+        heapScheme.setDefaultValue(defaultConfiguration.heapPackage);
+        monitorScheme.setDefaultValue(defaultConfiguration.monitorPackage);
+        compilerScheme.setDefaultValue(defaultConfiguration.compilerPackage);
+        jitScheme.setDefaultValue(defaultConfiguration.jitPackage);
+        interpreterScheme.setDefaultValue(defaultConfiguration.interpreterPackage);
+        trampolineScheme.setDefaultValue(defaultConfiguration.trampolinePackage);
+        targetABIsScheme.setDefaultValue(defaultConfiguration.targetABIsPackage);
+        runScheme.setDefaultValue(defaultConfiguration.runPackage);
 
         if (threadsOption.getValue() <= 0) {
             throw new Option.Error("The value specified for " + threadsOption + " must be greater than 0.");
