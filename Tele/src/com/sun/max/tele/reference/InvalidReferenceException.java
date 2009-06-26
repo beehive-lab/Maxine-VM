@@ -40,4 +40,12 @@ public class InvalidReferenceException extends RuntimeException {
         return reference;
     }
 
+    @Override
+    public String getMessage() {
+        try {
+            return reference.toGrip().toOrigin().toHexString();
+        } catch (Throwable t) {
+            return "Error converting invalid reference to string: " + t;
+        }
+    }
 }

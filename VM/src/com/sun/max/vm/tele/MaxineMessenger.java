@@ -55,8 +55,8 @@ public final class MaxineMessenger {
 
     /**
      * If a non-zero value is put here remotely before we execute initialize() below,
-     * then this variable contains a pointer to a malloc-ed struct
-     * referenced by the substrate as well and recorded in the image header.
+     * then this variable contains a pointer to a struct malloc-ed by
+     * the substrate and recorded in the image header.
      * Otherwise it remains zero and there is no messenger traffic.
      */
     @INSPECTED
