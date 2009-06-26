@@ -29,6 +29,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.object.host.*;
+import com.sun.max.vm.object.TupleAccess;
 import com.sun.max.vm.type.*;
 
 /**
@@ -60,11 +61,11 @@ public class FieldReadSnippet extends BuiltinsSnippet {
 
         @SNIPPET
         @INLINE
-        public static byte readByte(Object tuple, ByteFieldActor byteFieldActor) {
+        public static byte readByte(Object tuple, FieldActor byteFieldActor) {
             if (MaxineVM.isPrototyping()) {
                 return HostTupleAccess.readByte(tuple, byteFieldActor);
             }
-            return byteFieldActor.readByte(tuple);
+            return TupleAccess.readByte(tuple, byteFieldActor.offset());
         }
 
         public static final ReadByte SNIPPET = new ReadByte(TupleOffsetSnippet.ReadByte.SNIPPET);
@@ -77,11 +78,11 @@ public class FieldReadSnippet extends BuiltinsSnippet {
 
         @SNIPPET
         @INLINE
-        public static boolean readBoolean(Object tuple, BooleanFieldActor booleanFieldActor) {
+        public static boolean readBoolean(Object tuple, FieldActor booleanFieldActor) {
             if (MaxineVM.isPrototyping()) {
                 return HostTupleAccess.readBoolean(tuple, booleanFieldActor);
             }
-            return booleanFieldActor.readBoolean(tuple);
+            return TupleAccess.readBoolean(tuple, booleanFieldActor.offset());
         }
 
         public static final ReadBoolean SNIPPET = new ReadBoolean(TupleOffsetSnippet.ReadBoolean.SNIPPET);
@@ -94,11 +95,11 @@ public class FieldReadSnippet extends BuiltinsSnippet {
 
         @SNIPPET
         @INLINE
-        public static short readShort(Object tuple, ShortFieldActor shortFieldActor) {
+        public static short readShort(Object tuple, FieldActor shortFieldActor) {
             if (MaxineVM.isPrototyping()) {
                 return HostTupleAccess.readShort(tuple, shortFieldActor);
             }
-            return shortFieldActor.readShort(tuple);
+            return TupleAccess.readShort(tuple, shortFieldActor.offset());
         }
 
         public static final ReadShort SNIPPET = new ReadShort(TupleOffsetSnippet.ReadShort.SNIPPET);
@@ -111,11 +112,11 @@ public class FieldReadSnippet extends BuiltinsSnippet {
 
         @SNIPPET
         @INLINE
-        public static char readChar(Object tuple, CharFieldActor charFieldActor) {
+        public static char readChar(Object tuple, FieldActor charFieldActor) {
             if (MaxineVM.isPrototyping()) {
                 return HostTupleAccess.readChar(tuple, charFieldActor);
             }
-            return charFieldActor.readChar(tuple);
+            return TupleAccess.readChar(tuple, charFieldActor.offset());
         }
 
         public static final ReadChar SNIPPET = new ReadChar(TupleOffsetSnippet.ReadChar.SNIPPET);
@@ -128,11 +129,11 @@ public class FieldReadSnippet extends BuiltinsSnippet {
 
         @SNIPPET
         @INLINE
-        public static int readInt(Object tuple, IntFieldActor intFieldActor) {
+        public static int readInt(Object tuple, FieldActor intFieldActor) {
             if (MaxineVM.isPrototyping()) {
                 return HostTupleAccess.readInt(tuple, intFieldActor);
             }
-            return intFieldActor.readInt(tuple);
+            return TupleAccess.readInt(tuple, intFieldActor.offset());
         }
 
         public static final ReadInt SNIPPET = new ReadInt(TupleOffsetSnippet.ReadInt.SNIPPET);
@@ -145,11 +146,11 @@ public class FieldReadSnippet extends BuiltinsSnippet {
 
         @SNIPPET
         @INLINE
-        public static float readFloat(Object tuple, FloatFieldActor floatFieldActor) {
+        public static float readFloat(Object tuple, FieldActor floatFieldActor) {
             if (MaxineVM.isPrototyping()) {
                 return HostTupleAccess.readFloat(tuple, floatFieldActor);
             }
-            return floatFieldActor.readFloat(tuple);
+            return TupleAccess.readFloat(tuple, floatFieldActor.offset());
         }
 
         public static final ReadFloat SNIPPET = new ReadFloat(TupleOffsetSnippet.ReadFloat.SNIPPET);
@@ -162,11 +163,11 @@ public class FieldReadSnippet extends BuiltinsSnippet {
 
         @SNIPPET
         @INLINE
-        public static long readLong(Object tuple, LongFieldActor longFieldActor) {
+        public static long readLong(Object tuple, FieldActor longFieldActor) {
             if (MaxineVM.isPrototyping()) {
                 return HostTupleAccess.readLong(tuple, longFieldActor);
             }
-            return longFieldActor.readLong(tuple);
+            return TupleAccess.readLong(tuple, longFieldActor.offset());
         }
 
         public static final ReadLong SNIPPET = new ReadLong(TupleOffsetSnippet.ReadLong.SNIPPET);
@@ -179,11 +180,11 @@ public class FieldReadSnippet extends BuiltinsSnippet {
 
         @SNIPPET
         @INLINE
-        public static double readDouble(Object tuple, DoubleFieldActor doubleFieldActor) {
+        public static double readDouble(Object tuple, FieldActor doubleFieldActor) {
             if (MaxineVM.isPrototyping()) {
                 return HostTupleAccess.readDouble(tuple, doubleFieldActor);
             }
-            return doubleFieldActor.readDouble(tuple);
+            return TupleAccess.readDouble(tuple, doubleFieldActor.offset());
         }
 
         public static final ReadDouble SNIPPET = new ReadDouble(TupleOffsetSnippet.ReadDouble.SNIPPET);
@@ -196,11 +197,11 @@ public class FieldReadSnippet extends BuiltinsSnippet {
 
         @SNIPPET
         @INLINE
-        public static Word readWord(Object tuple, WordFieldActor wordFieldActor) {
+        public static Word readWord(Object tuple, FieldActor wordFieldActor) {
             if (MaxineVM.isPrototyping()) {
                 return HostTupleAccess.readWord(tuple, wordFieldActor);
             }
-            return wordFieldActor.readWord(tuple);
+            return TupleAccess.readWord(tuple, wordFieldActor.offset());
         }
 
         public static final ReadWord SNIPPET = new ReadWord(TupleOffsetSnippet.ReadWord.SNIPPET);
@@ -213,11 +214,11 @@ public class FieldReadSnippet extends BuiltinsSnippet {
 
         @SNIPPET
         @INLINE
-        public static Object readReference(Object tuple, ReferenceFieldActor referenceFieldActor) {
+        public static Object readReference(Object tuple, FieldActor referenceFieldActor) {
             if (MaxineVM.isPrototyping()) {
                 return HostTupleAccess.readObject(tuple, referenceFieldActor);
             }
-            return referenceFieldActor.readObject(tuple);
+            return TupleAccess.readObject(tuple, referenceFieldActor.offset());
         }
 
         public static final ReadReference SNIPPET = new ReadReference(TupleOffsetSnippet.ReadReference.SNIPPET);

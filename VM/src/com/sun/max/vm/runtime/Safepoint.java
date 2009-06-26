@@ -71,15 +71,6 @@ public abstract class Safepoint {
             this.key = key;
         }
 
-        /**
-         * Gets the address of VM thread locals storage area corresponding to this safepoint state.
-         *
-         * @param vmThreadLocals a pointer to any one of the thread locals storage areas
-         */
-        public Pointer vmThreadLocalsArea(Pointer vmThreadLocals) {
-            return key.getConstantWord(vmThreadLocals).asPointer();
-        }
-
         public int serial() {
             return ordinal();
         }
@@ -101,14 +92,9 @@ public abstract class Safepoint {
         }
     }
 
-    private VMConfiguration vmConfiguration;
+    public final byte[] code = createCode();
 
-    public VMConfiguration vmConfiguration() {
-        return vmConfiguration;
-    }
-
-    protected Safepoint(VMConfiguration vmConfiguration) {
-        this.vmConfiguration = vmConfiguration;
+    protected Safepoint() {
     }
 
     @INLINE
@@ -129,7 +115,7 @@ public abstract class Safepoint {
     /**
      * Sets the value of the {@linkplain VmThreadLocal#SAFEPOINT_LATCH safepoint latch} in the safepoints-enabled VM
      * thread locals to point to the safepoints-triggered VM thread locals. This will cause a safepoint trap the next
-     * time a safepoint instruction is executed while safepoints are {@linkplain #isEnabled() enabled}.
+     * time a safepoint instruction is executed while safepoints are enabled.
      *
      * @param vmThreadLocals a pointer to a copy of the thread locals from which the base of the safepoints-enabled
      *            thread locals can be obtained
@@ -153,6 +139,7 @@ public abstract class Safepoint {
 
     /**
      * Determines if safepoints are disabled for the current thread.
+     * @return {@code true} if safepoints are disabled
      */
     public static boolean isDisabled() {
         return getLatchRegister().equals(SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord().asPointer());
@@ -160,13 +147,11 @@ public abstract class Safepoint {
 
     /**
      * Determines if safepoints are triggered for the current thread.
+     * @return {@code true} if safepoints are triggered
      */
     @INLINE
     public static boolean isTriggered() {
-        if (MaxineVM.isPrototyping()) {
-            return false;
-        }
-        return SAFEPOINT_LATCH.getVariableWord().equals(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord());
+        return !MaxineVM.isPrototyping() && SAFEPOINT_LATCH.getVariableWord().equals(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord());
     }
 
     @INLINE
@@ -216,8 +201,6 @@ public abstract class Safepoint {
 
     protected abstract byte[] createCode();
 
-    public final byte[] code = createCode();
-
     public boolean isAt(Pointer instructionPointer) {
         return Memory.equals(instructionPointer, code);
     }
@@ -235,7 +218,7 @@ public abstract class Safepoint {
          * Indicates that a safepoint has been reached from Java code
          * without entering any native code since the safepoint was triggered.
          */
-        JAVA;
+        JAVA
     }
 
     /**
@@ -247,7 +230,7 @@ public abstract class Safepoint {
      * Note also that this method will spin
      * if that thread is already executing or is scheduled to execute another procedure.
      *
-     * @param runnable the procedure to run on this thread
+     * @param procedure the procedure to run on this thread
      */
     public static void runProcedure(Pointer vmThreadLocals, Procedure procedure) {
         // spin until the SAFEPOINT_PROCEDURE field is null
@@ -264,7 +247,7 @@ public abstract class Safepoint {
      * Cancel a procedure that may be outstanding for a thread. If the thread has not yet executed the procedure,
      * then it will be cancelled (i.e. {@link VmThreadLocal#SAFEPOINT_PROCEDURE} will be set to {@code null}).
      *
-     * @param vmThread the VMThread for which to cancel the procedure
+     * @param vmThreadLocals the VMThreadLocals for which to cancel the procedure
      * @param procedure the procedure to cancel
      */
     public static void cancelProcedure(Pointer vmThreadLocals, Procedure procedure) {

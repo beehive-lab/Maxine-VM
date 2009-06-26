@@ -37,7 +37,7 @@ public final class SPARCEirSafepoint extends EirSafepoint<EirInstructionVisitor,
     @Override
     public void emit(SPARCEirTargetEmitter emitter) {
         emitter.addSafepoint(this);
-        final GPR register =  (GPR) VMConfiguration.hostOrTarget().safepoint().latchRegister();
+        final GPR register =  (GPR) VMConfiguration.hostOrTarget().safepoint.latchRegister();
         emitter.assembler().ldx(register, GPR.G0, register);
     }
 

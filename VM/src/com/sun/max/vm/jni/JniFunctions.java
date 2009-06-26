@@ -43,6 +43,7 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
+import com.sun.max.vm.object.TupleAccess;
 
 /**
  * Upcalls from C that implement JNI functions.
@@ -858,110 +859,110 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static JniHandle GetObjectField(Pointer env, JniHandle object, FieldID fieldID) {
-        final ReferenceFieldActor fieldActor = (ReferenceFieldActor) FieldID.toFieldActor(fieldID);
-        return JniHandles.createLocalHandle(fieldActor.readObject(object.unhand()));
+        final FieldActor fieldActor = FieldID.toFieldActor(fieldID);
+        return JniHandles.createLocalHandle(TupleAccess.readObject(object.unhand(), fieldActor.offset()));
     }
 
     @JNI_FUNCTION
     private static boolean GetBooleanField(Pointer env, JniHandle object, FieldID fieldID) {
-        final BooleanFieldActor booleanFieldActor = (BooleanFieldActor) FieldID.toFieldActor(fieldID);
-        return booleanFieldActor.readBoolean(object.unhand());
+        final FieldActor booleanFieldActor = FieldID.toFieldActor(fieldID);
+        return TupleAccess.readBoolean(object.unhand(), booleanFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static byte GetByteField(Pointer env, JniHandle object, FieldID fieldID) {
-        final ByteFieldActor byteFieldActor = (ByteFieldActor) FieldID.toFieldActor(fieldID);
-        return byteFieldActor.readByte(object.unhand());
+        final FieldActor byteFieldActor = FieldID.toFieldActor(fieldID);
+        return TupleAccess.readByte(object.unhand(), byteFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static char GetCharField(Pointer env, JniHandle object, FieldID fieldID) {
-        final CharFieldActor charFieldActor = (CharFieldActor) FieldID.toFieldActor(fieldID);
-        return charFieldActor.readChar(object.unhand());
+        final FieldActor charFieldActor = FieldID.toFieldActor(fieldID);
+        return TupleAccess.readChar(object.unhand(), charFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static short GetShortField(Pointer env, JniHandle object, FieldID fieldID) {
-        final ShortFieldActor shortFieldActor = (ShortFieldActor) FieldID.toFieldActor(fieldID);
-        return shortFieldActor.readShort(object.unhand());
+        final FieldActor shortFieldActor = FieldID.toFieldActor(fieldID);
+        return TupleAccess.readShort(object.unhand(), shortFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static int GetIntField(Pointer env, JniHandle object, FieldID fieldID) {
-        final IntFieldActor intFieldActor = (IntFieldActor) FieldID.toFieldActor(fieldID);
-        return intFieldActor.readInt(object.unhand());
+        final FieldActor intFieldActor = FieldID.toFieldActor(fieldID);
+        return TupleAccess.readInt(object.unhand(), intFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static long GetLongField(Pointer env, JniHandle object, FieldID fieldID) {
-        final LongFieldActor longFieldActor = (LongFieldActor) FieldID.toFieldActor(fieldID);
-        return longFieldActor.readLong(object.unhand());
+        final FieldActor longFieldActor = FieldID.toFieldActor(fieldID);
+        return TupleAccess.readLong(object.unhand(), longFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static float GetFloatField(Pointer env, JniHandle object, FieldID fieldID) {
-        final FloatFieldActor floatFieldActor = (FloatFieldActor) FieldID.toFieldActor(fieldID);
-        return floatFieldActor.readFloat(object.unhand());
+        final FieldActor floatFieldActor = FieldID.toFieldActor(fieldID);
+        return TupleAccess.readFloat(object.unhand(), floatFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static double GetDoubleField(Pointer env, JniHandle object, FieldID fieldID) {
-        final DoubleFieldActor doubleFieldActor = (DoubleFieldActor) FieldID.toFieldActor(fieldID);
-        return doubleFieldActor.readDouble(object.unhand());
+        final FieldActor doubleFieldActor = FieldID.toFieldActor(fieldID);
+        return TupleAccess.readDouble(object.unhand(), doubleFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static void SetObjectField(Pointer env, JniHandle object, FieldID fieldID, JniHandle value) {
-        final ReferenceFieldActor referenceFieldActor = (ReferenceFieldActor) FieldID.toFieldActor(fieldID);
-        referenceFieldActor.writeObject(object.unhand(), value.unhand());
+        final FieldActor referenceFieldActor = FieldID.toFieldActor(fieldID);
+        TupleAccess.writeObject(object.unhand(), referenceFieldActor.offset(), value.unhand());
     }
 
     @JNI_FUNCTION
     private static void SetBooleanField(Pointer env, JniHandle object, FieldID fieldID, boolean value) {
-        final BooleanFieldActor booleanFieldActor = (BooleanFieldActor) FieldID.toFieldActor(fieldID);
-        booleanFieldActor.writeBoolean(object.unhand(), value);
+        final FieldActor booleanFieldActor = FieldID.toFieldActor(fieldID);
+        TupleAccess.writeBoolean(object.unhand(), booleanFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetByteField(Pointer env, JniHandle object, FieldID fieldID, byte value) {
-        final ByteFieldActor byteFieldActor = (ByteFieldActor) FieldID.toFieldActor(fieldID);
-        byteFieldActor.writeByte(object.unhand(), value);
+        final FieldActor byteFieldActor = FieldID.toFieldActor(fieldID);
+        TupleAccess.writeByte(object.unhand(), byteFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetCharField(Pointer env, JniHandle object, FieldID fieldID, char value) {
-        final CharFieldActor charFieldActor = (CharFieldActor) FieldID.toFieldActor(fieldID);
-        charFieldActor.writeChar(object.unhand(), value);
+        final FieldActor charFieldActor = FieldID.toFieldActor(fieldID);
+        TupleAccess.writeChar(object.unhand(), charFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetShortField(Pointer env, JniHandle object, FieldID fieldID, short value) {
-        final ShortFieldActor shortFieldActor = (ShortFieldActor) FieldID.toFieldActor(fieldID);
-        shortFieldActor.writeShort(object.unhand(), value);
+        final FieldActor shortFieldActor = FieldID.toFieldActor(fieldID);
+        TupleAccess.writeShort(object.unhand(), shortFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetIntField(Pointer env, JniHandle object, FieldID fieldID, int value) {
-        final IntFieldActor intFieldActor = (IntFieldActor) FieldID.toFieldActor(fieldID);
-        intFieldActor.writeInt(object.unhand(), value);
+        final FieldActor intFieldActor = FieldID.toFieldActor(fieldID);
+        TupleAccess.writeInt(object.unhand(), intFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetLongField(Pointer env, JniHandle object, FieldID fieldID, long value) {
-        final LongFieldActor longFieldActor = (LongFieldActor) FieldID.toFieldActor(fieldID);
-        longFieldActor.writeLong(object.unhand(), value);
+        final FieldActor longFieldActor = FieldID.toFieldActor(fieldID);
+        TupleAccess.writeLong(object.unhand(), longFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetFloatField(Pointer env, JniHandle object, FieldID fieldID, float value) {
-        final FloatFieldActor floatFieldActor = (FloatFieldActor) FieldID.toFieldActor(fieldID);
-        floatFieldActor.writeFloat(object.unhand(), value);
+        final FieldActor floatFieldActor = FieldID.toFieldActor(fieldID);
+        TupleAccess.writeFloat(object.unhand(), floatFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetDoubleField(Pointer env, JniHandle object, FieldID fieldID, double value) {
-        final DoubleFieldActor doubleFieldActor = (DoubleFieldActor) FieldID.toFieldActor(fieldID);
-        doubleFieldActor.writeDouble(object.unhand(), value);
+        final FieldActor doubleFieldActor = FieldID.toFieldActor(fieldID);
+        TupleAccess.writeDouble(object.unhand(), doubleFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
@@ -1209,110 +1210,110 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static JniHandle GetStaticObjectField(Pointer env, JniHandle javaType, FieldID fieldID) {
-        final ReferenceFieldActor referenceFieldActor = (ReferenceFieldActor) FieldID.toFieldActor(fieldID);
-        return JniHandles.createLocalHandle(referenceFieldActor.readObject(javaTypeToStaticTuple(javaType)));
+        final FieldActor referenceFieldActor = FieldID.toFieldActor(fieldID);
+        return JniHandles.createLocalHandle(TupleAccess.readObject(javaTypeToStaticTuple(javaType), referenceFieldActor.offset()));
     }
 
     @JNI_FUNCTION
     private static boolean GetStaticBooleanField(Pointer env, JniHandle javaType, FieldID fieldID) {
-        final BooleanFieldActor booleanFieldActor = (BooleanFieldActor) FieldID.toFieldActor(fieldID);
-        return booleanFieldActor.readBoolean(javaTypeToStaticTuple(javaType));
+        final FieldActor booleanFieldActor = FieldID.toFieldActor(fieldID);
+        return TupleAccess.readBoolean(javaTypeToStaticTuple(javaType), booleanFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static byte GetStaticByteField(Pointer env, JniHandle javaType, FieldID fieldID) {
-        final ByteFieldActor byteFieldActor = (ByteFieldActor) FieldID.toFieldActor(fieldID);
-        return byteFieldActor.readByte(javaTypeToStaticTuple(javaType));
+        final FieldActor byteFieldActor = FieldID.toFieldActor(fieldID);
+        return TupleAccess.readByte(javaTypeToStaticTuple(javaType), byteFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static char GetStaticCharField(Pointer env, JniHandle javaType, FieldID fieldID) {
-        final CharFieldActor charFieldActor = (CharFieldActor) FieldID.toFieldActor(fieldID);
-        return charFieldActor.readChar(javaTypeToStaticTuple(javaType));
+        final FieldActor charFieldActor = FieldID.toFieldActor(fieldID);
+        return TupleAccess.readChar(javaTypeToStaticTuple(javaType), charFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static short GetStaticShortField(Pointer env, JniHandle javaType, FieldID fieldID) {
-        final ShortFieldActor shortFieldActor = (ShortFieldActor) FieldID.toFieldActor(fieldID);
-        return shortFieldActor.readShort(javaTypeToStaticTuple(javaType));
+        final FieldActor shortFieldActor = FieldID.toFieldActor(fieldID);
+        return TupleAccess.readShort(javaTypeToStaticTuple(javaType), shortFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static int GetStaticIntField(Pointer env, JniHandle javaType, FieldID fieldID) {
-        final IntFieldActor intFieldActor = (IntFieldActor) FieldID.toFieldActor(fieldID);
-        return intFieldActor.readInt(javaTypeToStaticTuple(javaType));
+        final FieldActor intFieldActor = FieldID.toFieldActor(fieldID);
+        return TupleAccess.readInt(javaTypeToStaticTuple(javaType), intFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static long GetStaticLongField(Pointer env, JniHandle javaType, FieldID fieldID) {
-        final LongFieldActor longFieldActor = (LongFieldActor) FieldID.toFieldActor(fieldID);
-        return longFieldActor.readLong(javaTypeToStaticTuple(javaType));
+        final FieldActor longFieldActor = FieldID.toFieldActor(fieldID);
+        return TupleAccess.readLong(javaTypeToStaticTuple(javaType), longFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static float GetStaticFloatField(Pointer env, JniHandle javaType, FieldID fieldID) {
-        final FloatFieldActor floatFieldActor = (FloatFieldActor) FieldID.toFieldActor(fieldID);
-        return floatFieldActor.readFloat(javaTypeToStaticTuple(javaType));
+        final FieldActor floatFieldActor = FieldID.toFieldActor(fieldID);
+        return TupleAccess.readFloat(javaTypeToStaticTuple(javaType), floatFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static double GetStaticDoubleField(Pointer env, JniHandle javaType, FieldID fieldID) {
-        final DoubleFieldActor doubleFieldActor = (DoubleFieldActor) FieldID.toFieldActor(fieldID);
-        return doubleFieldActor.readDouble(javaTypeToStaticTuple(javaType));
+        final FieldActor doubleFieldActor = FieldID.toFieldActor(fieldID);
+        return TupleAccess.readDouble(javaTypeToStaticTuple(javaType), doubleFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static void SetStaticObjectField(Pointer env, JniHandle javaType, FieldID fieldID, JniHandle value) {
-        final ReferenceFieldActor referenceFieldActor = (ReferenceFieldActor) FieldID.toFieldActor(fieldID);
-        referenceFieldActor.writeObject(javaTypeToStaticTuple(javaType), value.unhand());
+        final FieldActor referenceFieldActor = FieldID.toFieldActor(fieldID);
+        TupleAccess.writeObject(javaTypeToStaticTuple(javaType), referenceFieldActor.offset(), value.unhand());
     }
 
     @JNI_FUNCTION
     private static void SetStaticBooleanField(Pointer env, JniHandle javaType, FieldID fieldID, boolean value) {
-        final BooleanFieldActor booleanFieldActor = (BooleanFieldActor) FieldID.toFieldActor(fieldID);
-        booleanFieldActor.writeBoolean(javaTypeToStaticTuple(javaType), value);
+        final FieldActor booleanFieldActor = FieldID.toFieldActor(fieldID);
+        TupleAccess.writeBoolean(javaTypeToStaticTuple(javaType), booleanFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetStaticByteField(Pointer env, JniHandle javaType, FieldID fieldID, byte value) {
-        final ByteFieldActor byteFieldActor = (ByteFieldActor) FieldID.toFieldActor(fieldID);
-        byteFieldActor.writeByte(javaTypeToStaticTuple(javaType), value);
+        final FieldActor byteFieldActor = FieldID.toFieldActor(fieldID);
+        TupleAccess.writeByte(javaTypeToStaticTuple(javaType), byteFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetStaticCharField(Pointer env, JniHandle javaType, FieldID fieldID, char value) {
-        final CharFieldActor charFieldActor = (CharFieldActor) FieldID.toFieldActor(fieldID);
-        charFieldActor.writeChar(javaTypeToStaticTuple(javaType), value);
+        final FieldActor charFieldActor = FieldID.toFieldActor(fieldID);
+        TupleAccess.writeChar(javaTypeToStaticTuple(javaType), charFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetStaticShortField(Pointer env, JniHandle javaType, FieldID fieldID, short value) {
-        final ShortFieldActor shortFieldActor = (ShortFieldActor) FieldID.toFieldActor(fieldID);
-        shortFieldActor.writeShort(javaTypeToStaticTuple(javaType), value);
+        final FieldActor shortFieldActor = FieldID.toFieldActor(fieldID);
+        TupleAccess.writeShort(javaTypeToStaticTuple(javaType), shortFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetStaticIntField(Pointer env, JniHandle javaType, FieldID fieldID, int value) {
-        final IntFieldActor intFieldActor = (IntFieldActor) FieldID.toFieldActor(fieldID);
-        intFieldActor.writeInt(javaTypeToStaticTuple(javaType), value);
+        final FieldActor intFieldActor = FieldID.toFieldActor(fieldID);
+        TupleAccess.writeInt(javaTypeToStaticTuple(javaType), intFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetStaticLongField(Pointer env, JniHandle javaType, FieldID fieldID, long value) {
-        final LongFieldActor longFieldActor = (LongFieldActor) FieldID.toFieldActor(fieldID);
-        longFieldActor.writeLong(javaTypeToStaticTuple(javaType), value);
+        final FieldActor longFieldActor = FieldID.toFieldActor(fieldID);
+        TupleAccess.writeLong(javaTypeToStaticTuple(javaType), longFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetStaticFloatField(Pointer env, JniHandle javaType, FieldID fieldID, float value) {
-        final FloatFieldActor floatFieldActor = (FloatFieldActor) FieldID.toFieldActor(fieldID);
-        floatFieldActor.writeFloat(javaTypeToStaticTuple(javaType), value);
+        final FieldActor floatFieldActor = FieldID.toFieldActor(fieldID);
+        TupleAccess.writeFloat(javaTypeToStaticTuple(javaType), floatFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetStaticDoubleField(Pointer env, JniHandle javaType, FieldID fieldID, double value) {
-        final DoubleFieldActor doubleFieldActor = (DoubleFieldActor) FieldID.toFieldActor(fieldID);
-        doubleFieldActor.writeDouble(javaTypeToStaticTuple(javaType), value);
+        final FieldActor doubleFieldActor = FieldID.toFieldActor(fieldID);
+        TupleAccess.writeDouble(javaTypeToStaticTuple(javaType), doubleFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION

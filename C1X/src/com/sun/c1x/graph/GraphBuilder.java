@@ -168,23 +168,6 @@ public class GraphBuilder {
         return constantPool().newExceptionHandler(0, method.codeSize(), -1, 0);
     }
 
-    private void loadParameters(CiMethod method) {
-        int index = 0;
-        if (!method.isStatic()) {
-            // add the receiver and assume it is non null
-            loadLocal(ValueType.OBJECT_TYPE, 0);
-            index++;
-        }
-        CiSignature sig = method.signatureType();
-        int max = sig.arguments();
-        for (int i = 0; i < max; i++) {
-            BasicType type = sig.argumentBasicTypeAt(i);
-            ValueType vt = ValueType.fromBasicType(type);
-            loadLocal(vt, index);
-            index += vt.size();
-        }
-    }
-
     public BlockBegin start() {
         return startBlock;
     }
