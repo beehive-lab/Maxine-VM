@@ -24,6 +24,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.builtin.*;
@@ -44,8 +45,8 @@ public abstract class IrRoutine {
 
     @PROTOTYPE_ONLY
     protected MethodActor getFoldingMethodActor(Class holder, String name, boolean fatalIfMissing) {
-        final String className = Naming.toClassName(name);
-        final String methodName = Naming.toMethodName(className);
+        final String className = Strings.firstCharToUpperCase(name);
+        final String methodName = Strings.firstCharToLowerCase(className);
         final Method[] methods = holder.getDeclaredMethods();
         for (Method method : methods) {
             final BUILTIN builtinAnnotation = method.getAnnotation(BUILTIN.class);
@@ -75,7 +76,7 @@ public abstract class IrRoutine {
 
     @PROTOTYPE_ONLY
     protected IrRoutine(Class foldingMethodHolder) {
-        name = Naming.toFieldName(getClass().getSimpleName());
+        name = getClass().getSimpleName();
         if (foldingMethodHolder != null) {
             foldingMethodActor = getFoldingMethodActor(foldingMethodHolder, name, true);
         } else {

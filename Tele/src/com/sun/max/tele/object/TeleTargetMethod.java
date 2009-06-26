@@ -566,15 +566,19 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
     public synchronized TargetMethod reducedShallowCopy() {
         TargetMethod targetMethod = teleTargetMethodToTargetMethod.get(this);
         if (targetMethod == null) {
-            targetMethod = (TargetMethod) deepCopy(new OmittedTargetMethodFields());
+            targetMethod = (TargetMethod) deepCopy(new OmittedTargetMethodFields(teleVM()));
             teleTargetMethodToTargetMethod.put(this, targetMethod);
         }
         return targetMethod;
     }
 
     private static class OmittedTargetMethodFields implements FieldIncludeChecker {
-        private static final FieldActor scalarLiteralBytes = TeleFieldAccess.findFieldActor(TargetMethod.class, "_scalarLiteralBytes");
-        private static final FieldActor referenceLiterals = TeleFieldAccess.findFieldActor(TargetMethod.class, "_referenceLiterals");
+        public OmittedTargetMethodFields(TeleVM teleVM) {
+            scalarLiteralBytes = teleVM.fields().TargetMethod_scalarLiteralBytes.fieldActor();
+            referenceLiterals = teleVM.fields().TargetMethod_referenceLiterals.fieldActor();
+        }
+        private final FieldActor scalarLiteralBytes;
+        private final FieldActor referenceLiterals;
 
         public boolean include(int level, FieldActor fieldActor) {
             return !(fieldActor.equals(referenceLiterals) || fieldActor.equals(scalarLiteralBytes));

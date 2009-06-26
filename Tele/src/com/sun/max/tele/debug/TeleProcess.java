@@ -128,7 +128,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                         return;
                     }
 
-                    teleVM().refresh(epoch);
+                    teleVM().refresh(++epoch);
                     refreshThreads();
                     final Sequence<TeleTargetBreakpoint> deactivatedBreakpoints = targetBreakpointFactory().deactivateAll();
                     Trace.line(TRACE_VALUE, tracePrefix() + "Execution stopped: " + request);
@@ -510,7 +510,6 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     private void refreshThreads() {
         Trace.begin(TRACE_VALUE, tracePrefix() + "Refreshing remote threads:");
         final long startTimeMillis = System.currentTimeMillis();
-        epoch++;
         final AppendableSequence<TeleNativeThread> currentThreads = new ArrayListSequence<TeleNativeThread>(handleToThreadMap.size());
         gatherThreads(currentThreads);
 

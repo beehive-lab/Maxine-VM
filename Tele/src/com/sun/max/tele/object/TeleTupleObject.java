@@ -104,13 +104,18 @@ public class TeleTupleObject extends TeleObject {
     protected Object createDeepCopy(DeepCopyContext context) {
         final ClassActor classActor = classActorForType();
         final Class<?> javaClass = classActor.toJava();
+        final String classMessage = "Copying instance fields of " + javaClass + " from VM";
+        Trace.begin(COPY_TRACE_VALUE, classMessage);
         try {
             final Object newTuple = Objects.allocateInstance(javaClass);
             context.register(this, newTuple);
             ClassActor holderClassActor = classActor;
             do {
                 for (FieldActor fieldActor : holderClassActor.localInstanceFieldActors()) {
+                    final String fieldMessage = "Copying instance field " + fieldActor.format("%t %n") + " from VM";
+                    Trace.begin(COPY_TRACE_VALUE, fieldMessage);
                     copyField(context, this, newTuple, fieldActor);
+                    Trace.end(COPY_TRACE_VALUE, fieldMessage);
                 }
                 holderClassActor = holderClassActor.superClassActor;
             } while (holderClassActor != null);
@@ -118,6 +123,8 @@ public class TeleTupleObject extends TeleObject {
         } catch (InstantiationException instantiationException) {
             ProgramError.unexpected("could not allocate instance: " + javaClass, instantiationException);
             return null;
+        } finally {
+            Trace.end(COPY_TRACE_VALUE, classMessage);
         }
     }
 
