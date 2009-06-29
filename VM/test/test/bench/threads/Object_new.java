@@ -108,17 +108,13 @@ public class Object_new {
                 barrier1.waitForRelease();
             } catch (InterruptedException e) { }
             for (int i = 0; i < nrAllocations; i++) {
-                if (i % 100000 == 0) {
-                    System.out.println("Alloc thread " + threadId);
-                }
-
                 final byte[] tmp = new byte[size];
                 tmp[0] = 1;
-                //tmp = 1;
             }
             try {
                 barrier2.waitForRelease();
             } catch (InterruptedException e) { }
+            System.out.println("Thread " + threadId + " done");
         }
     }
 }
