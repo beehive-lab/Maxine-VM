@@ -577,7 +577,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     }
 
     public synchronized boolean collectGarbage(Size requestedFreeSpace) {
-        if (immediateFreeSpace().lessThan(requestedFreeSpace)) {
+        if (requestedFreeSpace.toInt() == 0 || immediateFreeSpace().lessThan(requestedFreeSpace)) {
             executeCollectorThread();
         }
         if (immediateFreeSpace().greaterEqual(requestedFreeSpace)) {
