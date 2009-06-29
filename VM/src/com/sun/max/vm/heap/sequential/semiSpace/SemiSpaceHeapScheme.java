@@ -577,10 +577,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     }
 
     public synchronized boolean collectGarbage(Size requestedFreeSpace) {
-        if ((allocationMark.plus(requestedFreeSpace.toInt())).lessThan(top)) {
-            return true;
+        if (immediateFreeSpace().lessThan(requestedFreeSpace)) {
+            executeCollectorThread();
         }
-        executeCollectorThread();
         if (immediateFreeSpace().greaterEqual(requestedFreeSpace)) {
             // check to see if we can reset safety zone
             if (inSafetyZone) {
@@ -669,7 +668,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         //}
         final Size tlabSize = Size.fromLong(Math.max(size.toLong(), 64 * 1024));
         final Pointer tlab = retryAllocate(tlabSize);
-        final Pointer cell = allocateWithDebugTag(tlab);
+        final Pointer cell = allocateWithDebugTag(tlab); // TODO:check this
         final Pointer end = cell.plus(size);
         VmThreadLocal.ALLOCATION_TOP.setVariableWord(tlab.plus(tlabSize));
         VmThreadLocal.ALLOCATION_MARK.setVariableWord(end);
