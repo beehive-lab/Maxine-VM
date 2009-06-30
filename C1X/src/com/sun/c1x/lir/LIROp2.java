@@ -158,7 +158,7 @@ public class LIROp2 extends LIRInstruction {
      * @param tmp the temporary operand used by this instruction
      */
     public LIROp2(LIROpcode opcode, LIROperand opr1, LIROperand opr2, LIROperand result, LIROperand tmp) {
-        super(opcode, result, (CodeEmitInfo) null);
+        super(opcode, result, null);
         this.opr1 = opr1;
         this.opr2 = opr2;
         this.type = BasicType.Illegal;

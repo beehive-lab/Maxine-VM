@@ -48,9 +48,9 @@ public class LIROp1 extends LIRInstruction {
     }
 
     /**
-     * Sets the flags for this instruction.
+     * Sets the move kind for this instruction.
      *
-     * @param result the result operand
+     * @param kind the kind
      */
      void setKind(LIRMoveKind kind) {
         assert opcode == LIROpcode.Move : "Instruction opcode must be of kind LIROpcode.Move";
@@ -85,7 +85,7 @@ public class LIROp1 extends LIRInstruction {
       * @param patch the patching code for this instruction
       */
      public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, BasicType type, LIRPatchCode patch) {
-         this(opcode, opr, result, type, patch, (CodeEmitInfo) null);
+         this(opcode, opr, result, type, patch, null);
      }
 
      /**
@@ -116,7 +116,6 @@ public class LIROp1 extends LIRInstruction {
       *
       * @param opcode the instruction's opcode
       * @param opr the first input operand
-      * @param result the operand that holds the result of this instruction
       */
      public LIROp1(LIROpcode opcode, LIROperand opr) {
          this(opcode, opr, LIROperandFactory.illegalOperand);
@@ -147,11 +146,7 @@ public class LIROp1 extends LIRInstruction {
       *
       * @param opcode the instruction's opcode
       * @param opr the first input operand
-      * @param result the operand that holds the result of this instruction
-      * @param type the basic type of this instruction
-      * @param patch the patching code for this instruction
       * @param info the object holding information needed to emit debug information
-      * @param kind the kind of move the instruction represents
       */
      public LIROp1(LIROpcode opcode, LIROperand opr, CodeEmitInfo info) {
          super(opcode, LIROperandFactory.illegalOperand, info);
@@ -207,11 +202,6 @@ public class LIROp1 extends LIRInstruction {
          return flags;
      }
 
-     /**
-      * Gets the kind of move of this instruction.
-      *
-      * @return flags the constant that represents the move kind.
-      */
      @Override
      public void emitCode(LIRAssembler masm) {
          masm.emitOp1(this);
