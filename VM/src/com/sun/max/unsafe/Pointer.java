@@ -181,14 +181,14 @@ public abstract class Pointer extends Address implements Accessor {
 
     @Override
     @INLINE
-    public final Pointer aligned() {
-        return asAddress().aligned().asPointer();
+    public final Pointer wordAligned() {
+        return asAddress().wordAligned().asPointer();
     }
 
     @Override
     @INLINE(override = true)
-    public final boolean isAligned() {
-        return asAddress().isAligned();
+    public final boolean isWordAligned() {
+        return asAddress().isWordAligned();
     }
 
     @Override

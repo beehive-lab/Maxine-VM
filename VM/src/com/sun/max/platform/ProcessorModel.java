@@ -32,12 +32,13 @@ import com.sun.max.memory.*;
 public enum ProcessorModel {
 
     /* Generic default cores: */
-    AMD64(InstructionSet.AMD64, new DataModel(WordWidth.BITS_64, Endianness.LITTLE, Alignment.BYTES_8), MemoryModel.AMD64),
-    ARM32(InstructionSet.ARM, new DataModel(WordWidth.BITS_32, Endianness.LITTLE, Alignment.BYTES_4), MemoryModel.SequentialConsistency),
-    IA32(InstructionSet.IA32, new DataModel(WordWidth.BITS_32, Endianness.LITTLE, Alignment.BYTES_4), MemoryModel.RelaxedMemoryOrder),
-    PPC(InstructionSet.PPC, new DataModel(WordWidth.BITS_32, Endianness.BIG, Alignment.BYTES_4), MemoryModel.RelaxedMemoryOrder),
-    SPARC(InstructionSet.SPARC, new DataModel(WordWidth.BITS_32, Endianness.BIG, Alignment.BYTES_4), MemoryModel.TotalStoreOrder),
-    SPARCV9(InstructionSet.SPARC, new DataModel(WordWidth.BITS_64, Endianness.BIG, Alignment.BYTES_8), MemoryModel.TotalStoreOrder);
+    // TODO: Obtain the cache alignment at runtime, e.g. by using sysconf(_SC_LEVEL2_CACHE_LINESIZE)
+    AMD64(InstructionSet.AMD64, new DataModel(WordWidth.BITS_64, Endianness.LITTLE, 64), MemoryModel.AMD64),
+    ARM32(InstructionSet.ARM, new DataModel(WordWidth.BITS_32, Endianness.LITTLE, 64), MemoryModel.SequentialConsistency),
+    IA32(InstructionSet.IA32, new DataModel(WordWidth.BITS_32, Endianness.LITTLE, 64), MemoryModel.RelaxedMemoryOrder),
+    PPC(InstructionSet.PPC, new DataModel(WordWidth.BITS_32, Endianness.BIG, 64), MemoryModel.RelaxedMemoryOrder),
+    SPARC(InstructionSet.SPARC, new DataModel(WordWidth.BITS_32, Endianness.BIG, 64), MemoryModel.TotalStoreOrder),
+    SPARCV9(InstructionSet.SPARC, new DataModel(WordWidth.BITS_64, Endianness.BIG, 64), MemoryModel.TotalStoreOrder);
 
     private final InstructionSet instructionSet;
 

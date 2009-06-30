@@ -33,7 +33,7 @@ import com.sun.max.vm.runtime.*;
 public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements HeapRegion {
 
     public void setMark(Address mark) {
-        this.mark = mark.aligned();
+        this.mark = mark.wordAligned();
     }
 
     public LinearAllocatorHeapRegion(String description) {
@@ -43,7 +43,7 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
 
     public LinearAllocatorHeapRegion(Address start, Size size, String description) {
         super(start, size);
-        mark = start().aligned();
+        mark = start().wordAligned();
         setDescription(description);
     }
 
@@ -52,7 +52,7 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
     }
 
     public Pointer allocateCell(Size cellSize) {
-        assert mark.isAligned();
+        assert mark.isWordAligned();
         final Pointer cellStart = VMConfiguration.target().debugging() ? mark.plus(Word.size()).asPointer() : mark.asPointer();
         final Address cellEnd = cellStart.plus(cellSize);
         if (cellEnd.greaterThan(end())) {
@@ -61,7 +61,7 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
             }
             return Pointer.zero();
         }
-        mark = cellEnd.aligned();
+        mark = cellEnd.wordAligned();
         return cellStart;
     }
 
@@ -75,13 +75,13 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
      * @return start address of allocated space
      */
     public Pointer allocateSpace(Size spaceSize) {
-        assert mark.isAligned();
+        assert mark.isWordAligned();
         final Pointer spaceStart = mark.asPointer();
         final Address spaceEnd = spaceStart.plus(spaceSize);
         if (spaceEnd.greaterThan(end())) {
             return Pointer.zero();
         }
-        mark = spaceEnd.aligned();
+        mark = spaceEnd.wordAligned();
         return spaceStart;
     }
 

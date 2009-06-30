@@ -20,7 +20,6 @@
  */
 package test.com.sun.max.unsafe;
 
-import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 
@@ -268,7 +267,7 @@ public class OffsetTest extends WordTestCase {
     }
 
     public void test_align() {
-        final int n = Platform.hostOrTarget().processorKind.dataModel.alignment.numberOfBytes();
+        final int n = Word.size();
         assertTrue(Offset.zero().aligned().toInt() == 0);
         assertTrue(Offset.fromInt(1).aligned().toInt() == n);
         assertTrue(Offset.fromInt(n).aligned().toInt() == n);
@@ -284,7 +283,7 @@ public class OffsetTest extends WordTestCase {
     }
 
     public void test_aligned() {
-        final int n = Platform.hostOrTarget().processorKind.dataModel.alignment.numberOfBytes();
+        final int n = Word.size();
         assertTrue(Offset.zero().isAligned());
         assertFalse(Offset.fromInt(1).isAligned());
         assertFalse(Offset.fromInt(n - (n / 2)).isAligned());

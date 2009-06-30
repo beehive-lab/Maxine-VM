@@ -64,7 +64,7 @@ public class OhmArrayHeaderLayout extends OhmGeneralLayout implements ArrayHeade
 
     @INLINE
     public final Size getArraySize(Kind kind, int length) {
-        return Size.fromInt(kind.width.numberOfBytes).times(length).plus(headerSize).aligned();
+        return Size.fromInt(kind.width.numberOfBytes).times(length).plus(headerSize).wordAligned();
     }
 
     @INLINE
