@@ -36,7 +36,7 @@ public abstract class LIRInstruction {
     CodeEmitInfo info;      // used to emit debug information
     int id;                 // value id for register allocation
     int fpuPopCount;
-    Instruction  source;    // for debugging
+    Instruction source;    // for debugging
 
     /**
      * Constructs a new Instruction.
@@ -144,7 +144,7 @@ public abstract class LIRInstruction {
     /**
      * Sets the Fpu pop counter of this instruction. This is a counter to FPU stack simulation, only used on Intel.
      *
-     * @param id the value
+     * @param fpuPopCount the value
      */
     public void setFpuPopCount(int fpuPopCount) {
         this.fpuPopCount = fpuPopCount;
@@ -194,9 +194,9 @@ public abstract class LIRInstruction {
     /**
      * Abstract method to be print this instruction.
      *
-     * @param out the LogStream to print into.
+     * @param stream the LogStream to print into.
      */
-    public void printOn(LogStream st) {
+    public void printOn(LogStream stream) {
 
     }
 

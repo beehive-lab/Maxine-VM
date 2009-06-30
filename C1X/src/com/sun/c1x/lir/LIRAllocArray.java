@@ -52,10 +52,10 @@ public class LIRAllocArray extends LIRInstruction {
      * @param type
      * @param stub
      */
-    public LIRAllocArray(LIROperand klass, LIROperand len, LIROperand result, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, LIROperand tmp4, BasicType type, CodeStub stub) {
-        super(LIROpcode.AllocArray, result, (CodeEmitInfo) null);
+    public LIRAllocArray(LIROperand klass, LIROperand length, LIROperand result, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, LIROperand tmp4, BasicType type, CodeStub stub) {
+        super(LIROpcode.AllocArray, result, null);
         this.klass = klass;
-        this.length = len;
+        this.length = length;
         this.tmp1 = tmp1;
         this.tmp2 = tmp2;
         this.tmp3 = tmp3;
@@ -93,7 +93,7 @@ public class LIRAllocArray extends LIRInstruction {
 
     /**
      * Gets the second temporary associated with this call instruction.
-     * TODO: what information does the tnp hold?
+     * TODO: what information does the tmp hold?
      *
      * @return the tmp2
      */
@@ -103,7 +103,7 @@ public class LIRAllocArray extends LIRInstruction {
 
     /**
      * Gets the third temporary associated with this call instruction.
-     * TODO: what information does the tnp hold?
+     * TODO: what information does the tmp hold?
      *
      * @return the tmp3
      */
@@ -113,7 +113,7 @@ public class LIRAllocArray extends LIRInstruction {
 
     /**
      * Gets the fourth temporary associated with this call instruction.
-     * TODO: what information does the tnp hold?
+     * TODO: what information does the tmp hold?
      *
      * @return the tmp4
      */

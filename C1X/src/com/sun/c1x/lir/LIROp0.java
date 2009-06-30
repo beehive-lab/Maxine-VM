@@ -47,7 +47,7 @@ public class LIROp0 extends LIRInstruction {
      * @param result the result operand to the new instruction
      */
     public LIROp0(LIROpcode opcode, LIROperand result) {
-        this(opcode, result, (CodeEmitInfo) null);
+        this(opcode, result, null);
     }
 
     /**
@@ -58,7 +58,7 @@ public class LIROp0 extends LIRInstruction {
      * @param info used to emit debug information associated to this instruction
      */
     public LIROp0(LIROpcode opcode, LIROperand result, CodeEmitInfo info) {
-        super(opcode, LIROperandFactory.illegalOperand, (CodeEmitInfo) null);
+        super(opcode, LIROperandFactory.illegalOperand, null);
         assert isInRange(opcode, LIROpcode.BeginOp0, LIROpcode.EndOp0) : "Opcode " + opcode + " is invalid for a LIROP0 instruction";
     }
 

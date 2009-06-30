@@ -29,23 +29,14 @@ package com.sun.c1x.lir;
  */
 public class LIRVisitState {
 
-    /**
-     *
-     */
     public void doSlowCase() {
         // TODO to be completed later
     }
 
-    /**
-     *
-     */
     public void doInput(LIROperand input) {
         // TODO to be completed later
     }
 
-    /**
-    *
-    */
    public void doOutput(LIROperand result) {
        // TODO to be completed later
    }

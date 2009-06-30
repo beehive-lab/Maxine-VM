@@ -175,7 +175,7 @@ public class LIRConstant extends LIROperandPtr {
      * @return the reference to the input constant if succeeded.
      */
     public static LIRConstant assertType(LIRConstant c, BasicType t) {
-        assert c.type() == t : "type check failed on LIRConstant.java";
+        assert c.type() == t : "constant is wrong type";
         return c;
     }
 
@@ -185,7 +185,7 @@ public class LIRConstant extends LIROperandPtr {
      * @return the reference to the input constant if succeeded.
      */
     public static LIRConstant assertType(LIRConstant c, BasicType t1, BasicType t2) {
-        assert c.type() == t1 || c.type() == t2 : "type check failed on LIRConstant.java";
+        assert c.type() == t1 || c.type() == t2 : "constant is wrong type";
         return c;
     }
 
@@ -195,6 +195,7 @@ public class LIRConstant extends LIROperandPtr {
      * @return the int value of the constant.
      */
     public int asIntBits() {
+        // TODO: floats, longs
         assertType(this, BasicType.Float, BasicType.Int);
         return value.asInt();
     }
@@ -205,8 +206,9 @@ public class LIRConstant extends LIROperandPtr {
      * @return the int value of the low order 32 bits of a double constant
      */
     public int asIntLoBits() {
-        if (type() == BasicType.Double) {
-            return (int) (long) value.asDouble();
+        // TODO: floats, longs
+        if (value.isDouble()) {
+            return (int) Double.doubleToLongBits(value.asDouble());
         } else {
             return value.asInt();
         }
@@ -218,8 +220,9 @@ public class LIRConstant extends LIROperandPtr {
      * @return the int value of the high order 32 bits of a double constant
      */
     public int asIntHiBits() {
-        if (type() == BasicType.Double) {
-            return (int) ((long) value.asDouble() >> 32);
+        // TODO: floats, longs
+        if (value.isDouble()) {
+            return (int) (Double.doubleToLongBits(value.asDouble()) >> 32);
         } else {
             return asIntHi();
         }
@@ -231,8 +234,9 @@ public class LIRConstant extends LIROperandPtr {
      * @return the long value of the constant, if it is a double constant.
      */
     public long asLongBits() {
-      if (type() == BasicType.Double) {
-        return (long) value.asDouble();
+        // TODO: floats, longs
+      if (value.isDouble()) {
+        return Double.doubleToLongBits(value.asDouble());
       } else {
         return asLong();
       }
@@ -295,7 +299,7 @@ public class LIRConstant extends LIROperandPtr {
                 out.print("double:" + asDouble());
                 break;
             case Object:
-                out.print("obectj:0x" + asObject());
+                out.print("object:0x" + asObject());
                 break;
             default:
                 out.print(type() + ":" + asDouble());

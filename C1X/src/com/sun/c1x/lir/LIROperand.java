@@ -149,15 +149,15 @@ public class LIROperand {
             this.value = value;
         }
 
-        static final int rightNBits(int n) {
+        static int rightNBits(int n) {
             return nthBit(n) - 1;
         }
 
-        static final int nthBit(int n) {
+        static int nthBit(int n) {
             return n >= C1XOptions.BitsPerWord ? 0 : 1 << (n);
         }
 
-        static final int leftNBits(int n) {
+        static int leftNBits(int n) {
             return (rightNBits(n) << (n >= C1XOptions.BitsPerWord ? 0 : (C1XOptions.BitsPerWord - n)));
         }
 
@@ -234,7 +234,7 @@ public class LIROperand {
         return null;
     }
     public static OperandSize sizeFor(BasicType t) {
-        switch(t){
+        switch(t) {
             case Long:
             case Double:
                 return OperandSize.DoubleSize;

@@ -169,8 +169,8 @@ public final class ClassfileReader {
     /**
      * Verifies that the class file version is supported.
      *
-     * @param major
-     * @param minor
+     * @param major the major version number
+     * @param minor the minor version number
      */
     public static void verifyVersion(int major, int minor) {
         if ((major >= JAVA_MIN_SUPPORTED_VERSION) &&
@@ -218,8 +218,9 @@ public final class ClassfileReader {
     /**
      * Verifies that the flags for a field are valid.
      *
+     * @param name the name of the field
      * @param flags the flags to test
-     * @param classModifiers the flags of the enclosing class
+     * @param isInterface if the field flags are being tested for an interface
      * @throws ClassFormatError if the flags are invalid
      */
     public static void verifyFieldFlags(String name, int flags, boolean isInterface) {
@@ -242,7 +243,7 @@ public final class ClassfileReader {
             valid = (flags & ~ACC_SYNTHETIC) == (ACC_STATIC | ACC_FINAL | ACC_PUBLIC);
         }
         if (!valid) {
-            throw classFormatError(name + "Invalid field flags 0x" + Integer.toHexString(flags));
+            throw classFormatError(name + ": invalid field flags 0x" + Integer.toHexString(flags));
         }
     }
 
@@ -252,6 +253,7 @@ public final class ClassfileReader {
      * @param flags the flags to test
      * @param isInit true if the method is "<init>"
      * @param isClinit true if the method is "<clinit>"
+     * @param majorVersion the version of the class file
      * @throws ClassFormatError if the flags are invalid
      */
     public static void verifyMethodFlags(String name, int flags, boolean isInterface, boolean isInit, boolean isClinit, int majorVersion) {
