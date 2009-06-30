@@ -60,7 +60,7 @@ public class MemoryWordsTable extends InspectorTable {
     public MemoryWordsTable(final ObjectInspector objectInspector, Address startAddress, int wordCount) {
         super(objectInspector.inspection());
         //_objectInspector = objectInspector;
-        this.startAddress = startAddress.aligned();
+        this.startAddress = startAddress.wordAligned();
         this.wordCount = wordCount;
 
         model = new MemoryWordsTableModel();

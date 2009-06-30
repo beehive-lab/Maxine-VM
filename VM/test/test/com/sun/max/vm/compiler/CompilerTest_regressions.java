@@ -28,7 +28,6 @@ import sun.misc.*;
 import test.micro.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -258,13 +257,6 @@ public abstract class CompilerTest_regressions<Method_Type extends IrMethod> ext
             final Value result = execute(method, new WordValue(Pointer.fromInt(957)));
             assertTrue(result.asWord().asOffset().toLong() == 1012L);
         }
-    }
-
-    /**
-     * Exposed bug when selecting a VirtualMethodActor (for the method Object.clone()) based on an array receiver.
-     */
-    public void test_Alignment_values() {
-        compileMethod(getClassMethodActor(Alignment.class, "values", SignatureDescriptor.create(Alignment[].class)));
     }
 
     /**

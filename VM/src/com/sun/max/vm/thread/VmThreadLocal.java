@@ -221,7 +221,7 @@ public enum VmThreadLocal {
     static {
         THREAD_LOCAL_STORAGE_SIZE = Size.fromInt(VALUES.length() * Word.size());
         ProgramError.check(TAG.ordinal() == VALUES.length() - 1);
-        ProgramError.check(THREAD_LOCAL_STORAGE_SIZE.aligned().equals(THREAD_LOCAL_STORAGE_SIZE), "THREAD_LOCAL_STORAGE_SIZE is not word-aligned");
+        ProgramError.check(THREAD_LOCAL_STORAGE_SIZE.isWordAligned(), "THREAD_LOCAL_STORAGE_SIZE is not word-aligned");
 
         // The C code in trap.c relies on the following relationships:
         ProgramError.check(TRAP_NUMBER.ordinal() + 1 == TRAP_INSTRUCTION_POINTER.ordinal());

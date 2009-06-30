@@ -30,12 +30,12 @@ public class DataModel {
 
     public final WordWidth wordWidth;
     public final Endianness endianness;
-    public final Alignment alignment;
+    public final int cacheAlignment;
 
-    public DataModel(WordWidth wordWidth, Endianness endianness, Alignment alignment) {
+    public DataModel(WordWidth wordWidth, Endianness endianness, int cacheAlignment) {
         this.wordWidth = wordWidth;
         this.endianness = endianness;
-        this.alignment = alignment;
+        this.cacheAlignment = cacheAlignment;
     }
 
     @Override
@@ -44,7 +44,7 @@ public class DataModel {
             return false;
         }
         final DataModel dataModel = (DataModel) other;
-        return wordWidth.equals(dataModel.wordWidth) && endianness.equals(dataModel.endianness) && alignment.equals(dataModel.alignment);
+        return wordWidth.equals(dataModel.wordWidth) && endianness.equals(dataModel.endianness) && cacheAlignment == dataModel.cacheAlignment;
     }
 
     public byte[] toBytes(byte value) {
@@ -105,6 +105,6 @@ public class DataModel {
 
     @Override
     public String toString() {
-        return wordWidth + "-bit, " + endianness + " endian, " + alignment + "-byte aligned";
+        return wordWidth + "-bit, " + endianness + " endian, " + cacheAlignment + "-byte aligned cache";
     }
 }

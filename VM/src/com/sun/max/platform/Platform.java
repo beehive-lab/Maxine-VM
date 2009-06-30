@@ -71,7 +71,7 @@ public final class Platform {
     }
 
     public void inspect(PlatformInspector inspector) {
-        inspector.inspectAlignment(processorKind.dataModel.alignment);
+        inspector.inspectCacheAlignment(processorKind.dataModel.cacheAlignment);
         inspector.inspectEndianness(processorKind.dataModel.endianness);
         inspector.inspectWordWidth(processorKind.dataModel.wordWidth);
         inspector.inspectInstructionSet(processorKind.instructionSet);
@@ -90,7 +90,7 @@ public final class Platform {
         void inspectProcessorModel(ProcessorModel cpu);
         void inspectWordWidth(WordWidth wordWidth);
         void inspectEndianness(Endianness endianness);
-        void inspectAlignment(Alignment alignment);
+        void inspectCacheAlignment(int alignment);
     }
 
     /**
@@ -98,7 +98,7 @@ public final class Platform {
      * the configuration details that are of concern in a given context.
      */
     public static class PlatformInspectorAdapter implements PlatformInspector {
-        public void inspectAlignment(Alignment alignment) {
+        public void inspectCacheAlignment(int alignment) {
         }
 
         public void inspectEndianness(Endianness endianness) {

@@ -45,7 +45,7 @@ public final class Code {
      * The code region that contains the boot code.
      */
     @INSPECTED
-    public static final CodeRegion bootCodeRegion = new CodeRegion(Address.fromInt(Integer.MAX_VALUE / 2).aligned(), Size.fromInt(Integer.MAX_VALUE / 4), "Code-Boot");
+    public static final CodeRegion bootCodeRegion = new CodeRegion(Address.fromInt(Integer.MAX_VALUE / 2).wordAligned(), Size.fromInt(Integer.MAX_VALUE / 4), "Code-Boot");
 
     /**
      * Creates the singleton code manager for this operating system.
