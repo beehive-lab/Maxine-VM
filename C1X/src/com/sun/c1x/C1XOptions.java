@@ -101,6 +101,16 @@ public class C1XOptions {
     public static boolean UseInlineCaches                    = ____;
     public static boolean RegisterFinalizersAtInit           = TRUE;
 
+    // low level intermediate representation settings
+    public static int BitsPerInt                             = 32;
+    public static int BitsPerWord                            = 64;
+
+    // Number of register in the target machine
+    // TODO: need to think better about how to get this information
+    //       dinamically, according to the current hardware
+    public static int  NumberOfRegisters                     = 16;
+    public static boolean LIRFillDelaySlots                  = ____;
+
     // future settings
     public static boolean DoGlobalValueNumbering             = ____;
     public static boolean DoArrayBoundsCheckElimination      = ____;

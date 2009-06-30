@@ -21,7 +21,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.ci.CiExceptionHandler;
-import com.sun.c1x.lir.LIRInstr;
+import com.sun.c1x.lir.LIRInstruction;
 
 import java.util.*;
 
@@ -36,7 +36,7 @@ public class ExceptionHandler {
 
     private final CiExceptionHandler handler;
     private BlockBegin entryBlock;
-    private List<LIRInstr> entryCode;
+    private List<LIRInstruction> entryCode;
     private int entryPCO;
     private int phiOperand;
     private int scopeCount;
