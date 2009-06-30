@@ -39,7 +39,7 @@
 #include "word.h"
 
 /* TODO: make this cpu-dependent: */
-#define MIN_ALIGNMENT 4
+#define MIN_CACHE_ALIGNMENT 8
 
 #define IMAGE_IDENTIFICATION             0xcafe4dad
 #define IMAGE_VERSION                    1
@@ -189,8 +189,8 @@ static void checkImage(void) {
     if ((_header->wordSize == 8) != word_64_BITS) {
         log_exit(2, "image has wrong word size - expected: %d bits, found: %d bits", word_64_BITS ? 64 : 32, _header->wordSize * 8);
     }
-    if (_header->alignmentSize < MIN_ALIGNMENT) {
-        log_exit(2, "image has insufficient alignment - expected: %d, found: %d", MIN_ALIGNMENT, _header->alignmentSize);
+    if (_header->cacheAlignment < MIN_CACHE_ALIGNMENT) {
+        log_exit(2, "image has insufficient alignment - expected: %d, found: %d", MIN_CACHE_ALIGNMENT, _header->cacheAlignment);
     }
     if (_header->pageSize != getpagesize()) {
         log_exit(2, "image has wrong page size - expected: %d, found: %d", getpagesize(), _header->pageSize);
@@ -350,7 +350,7 @@ static void relocate(int fd) {
     relocationData = (Byte*)(((char*)&maxvm_image_start) + wantedFileOffset);
 #endif
 
-    relocation_apply((void *) _heap, _header->relocationScheme, relocationData, _header->relocationDataSize, _header->alignmentSize, word_BIG_ENDIAN, _header->wordSize);
+    relocation_apply((void *) _heap, _header->relocationScheme, relocationData, _header->relocationDataSize, _header->cacheAlignment, word_BIG_ENDIAN, _header->wordSize);
 
 #if !MEMORY_IMAGE
     free(relocationData);

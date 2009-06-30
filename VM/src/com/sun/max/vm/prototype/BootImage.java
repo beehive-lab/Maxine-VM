@@ -206,10 +206,6 @@ public class BootImage {
             return WordWidth.fromInt(wordSize * 8);
         }
 
-        public int relocationScheme() {
-            return relocationScheme;
-        }
-
         private Header(DataInputStream dataInputStream) throws IOException {
             super(dataInputStream.readInt() == 0 ? Endianness.LITTLE : Endianness.BIG);
             final Endianness endian = endianness();
@@ -291,7 +287,7 @@ public class BootImage {
             BootImageException.check(identification == IDENTIFICATION, "not a MaxineVM VM boot image file, wrong identification: " + identification);
             BootImageException.check(version == VERSION, "wrong version: " + version);
             BootImageException.check(wordSize == 4 || wordSize == 8, "illegal word size: " + wordSize);
-            BootImageException.check(cacheAlignment > 4 && Ints.isPowerOfTwoOrZero(cacheAlignment), "implausible alignment size");
+            BootImageException.check(cacheAlignment > 4 && Ints.isPowerOfTwoOrZero(cacheAlignment), "implausible alignment size: " + cacheAlignment);
             BootImageException.check(pageSize >= Longs.K && pageSize % Longs.K == 0, "implausible page size: " + pageSize);
         }
 
@@ -554,7 +550,7 @@ public class BootImage {
         return vmConfiguration;
     }
 
-    private static native void nativeRelocate(long heapPointer, int relocationScheme, byte[] relocationDataPointer, int relocationDataSize, int alignmentSize, int isBigEndian, int wordSize);
+    private static native void nativeRelocate(long heapPointer, int relocationScheme, byte[] relocationDataPointer, int relocationDataSize, int cacheAlignment, int isBigEndian, int wordSize);
 
     private void relocate(Pointer heap, byte[] relocationData) {
         nativeRelocate(heap.toLong(), header.relocationScheme, relocationData, relocationData.length, header.cacheAlignment, header.isBigEndian, header.wordSize);
