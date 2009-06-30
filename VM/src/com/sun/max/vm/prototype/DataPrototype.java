@@ -295,7 +295,7 @@ public final class DataPrototype extends Prototype {
     private void createHeapReferenceMap(BootHeapRegion heapRegion, Sequence<Object> mutableHeapObjects) {
         Trace.begin(1, "createHeapReferenceMap:");
         final int mutableHeapObjectsSize = heapRegion.getAllocationMark().toInt();
-        final int heapReferenceMapSize = Size.fromLong(ByteArrayBitMap.computeBitMapSize(mutableHeapObjectsSize / Word.size())).aligned().toInt();
+        final int heapReferenceMapSize = Size.fromLong(ByteArrayBitMap.computeBitMapSize(mutableHeapObjectsSize / Word.size())).wordAligned().toInt();
         final ByteArrayBitMap referenceMap = new ByteArrayBitMap(new byte[heapReferenceMapSize]);
         final AppendableSequence<Reference> specialReferences = new ArrayListSequence<Reference>();
 
@@ -1128,7 +1128,7 @@ public final class DataPrototype extends Prototype {
         final Platform platform = graphPrototype.vmConfiguration().platform();
         pageSize = platform.pageSize;
         dataModel = platform.processorKind.dataModel;
-        alignment = dataModel.alignment.numberOfBytes();
+        alignment = Word.size();
         layoutScheme = graphPrototype.vmConfiguration().layoutScheme();
         gripScheme = graphPrototype.vmConfiguration().gripScheme();
         debugging = graphPrototype.vmConfiguration().debugging();

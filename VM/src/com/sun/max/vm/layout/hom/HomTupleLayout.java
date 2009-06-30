@@ -22,7 +22,6 @@ package com.sun.max.vm.layout.hom;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -128,7 +127,7 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
 
     public Size layoutFields(ClassActor superClassActor, FieldActor[] fieldActors) {
         setInvalidOffsets(fieldActors);
-        final int nAlignmentBytes = Platform.target().processorKind.dataModel.alignment.numberOfBytes();
+        final int nAlignmentBytes = Word.size();
         int offset = (superClassActor == null || superClassActor.toJava() == Hybrid.class) ? 0 : superClassActor.dynamicTupleSize().toInt() - headerSize();
         if (offset % nAlignmentBytes != 0) {
             offset = fillAlignmentGap(fieldActors, offset, nAlignmentBytes);

@@ -212,7 +212,7 @@ public final class Throw {
      */
     public static void stackScan(String message, final Pointer stackPointer, final Pointer endPointer) {
         Log.println(message);
-        Pointer pointer = stackPointer.aligned();
+        Pointer pointer = stackPointer.wordAligned();
         while (pointer.lessThan(endPointer)) {
             final Address potentialCodePointer = pointer.getWord().asAddress();
             final TargetMethod targetMethod = Code.codePointerToTargetMethod(potentialCodePointer);

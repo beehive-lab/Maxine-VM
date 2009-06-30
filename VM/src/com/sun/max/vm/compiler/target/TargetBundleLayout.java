@@ -154,7 +154,7 @@ public final class TargetBundleLayout {
         initialize(code, numberOfCodeBytes, region);
 
         bundleSize = region.getAllocationMark().asSize();
-        assert bundleSize.isAligned();
+        assert bundleSize.isWordAligned();
     }
 
     /**
@@ -242,7 +242,7 @@ public final class TargetBundleLayout {
             }
         }
         bundleSize = region.getAllocationMark().asSize();
-        assert bundleSize.isAligned();
+        assert bundleSize.isWordAligned();
     }
 
     private void initialize(ArrayField field, int length, LinearAllocatorHeapRegion region) {

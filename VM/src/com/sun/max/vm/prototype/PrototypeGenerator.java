@@ -74,8 +74,8 @@ public final class PrototypeGenerator {
             "Specifies the target machine word with in bits.");
     private final Option<Endianness> endiannessOption = options.newEnumOption("endianness", null, Endianness.class,
             "Specifies the endianness of the target.");
-    private final Option<Alignment> alignmentOption = options.newEnumOption("align", null, Alignment.class,
-            "Specifies the alignment of the target.");
+    private final Option<Integer> cacheAlignmentOption = options.newIntegerOption("align", null,
+            "Specifies the cache alignment of the target.");
     private final Option<MaxPackage> gripScheme = schemeOption("grip", new com.sun.max.vm.grip.Package(), GripScheme.class,
             "Specifies the grip scheme for the target.");
     private final Option<MaxPackage> referenceScheme = schemeOption("reference", new com.sun.max.vm.reference.Package(), ReferenceScheme.class,
@@ -130,7 +130,7 @@ public final class PrototypeGenerator {
         pageSizeOption.setDefaultValue(defaultConfiguration.platform().pageSize);
         wordWidth.setDefaultValue(defaultConfiguration.platform().processorKind.dataModel.wordWidth);
         endiannessOption.setDefaultValue(defaultConfiguration.platform().processorKind.dataModel.endianness);
-        alignmentOption.setDefaultValue(defaultConfiguration.platform().processorKind.dataModel.alignment);
+        cacheAlignmentOption.setDefaultValue(defaultConfiguration.platform().processorKind.dataModel.cacheAlignment);
         gripScheme.setDefaultValue(defaultConfiguration.gripPackage);
         referenceScheme.setDefaultValue(defaultConfiguration.referencePackage);
         layoutScheme.setDefaultValue(defaultConfiguration.layoutPackage);
@@ -147,7 +147,7 @@ public final class PrototypeGenerator {
             throw new Option.Error("The value specified for " + threadsOption + " must be greater than 0.");
         }
 
-        final DataModel dataModel = new DataModel(wordWidth.getValue(), endiannessOption.getValue(), alignmentOption.getValue());
+        final DataModel dataModel = new DataModel(wordWidth.getValue(), endiannessOption.getValue(), cacheAlignmentOption.getValue());
         final ProcessorKind processorKind = new ProcessorKind(processorModel.getValue(), instructionSet.getValue(), dataModel);
         final OperatingSystem operatingSystem = this.operatingSystem.getValue();
         int pageSizeValue = pageSizeOption.getValue();

@@ -64,7 +64,7 @@ public final class MemoryWordInspector extends Inspector {
             @Override
             public void update(Address value) {
                 if (!value.equals(address)) {
-                    address = value.aligned();
+                    address = value.wordAligned();
                     setText(address.toUnsignedString(16));
                     MemoryWordInspector.this.reconstructView();
                 }
@@ -333,7 +333,7 @@ public final class MemoryWordInspector extends Inspector {
 
     private MemoryWordInspector(Inspection inspection, Address address, int numberOfWords) {
         super(inspection);
-        this.address = address.aligned();
+        this.address = address.wordAligned();
         selectedAddress = this.address;
         this.numberOfWords = numberOfWords;
         wordHexChars = maxVM().wordSize() * 2;

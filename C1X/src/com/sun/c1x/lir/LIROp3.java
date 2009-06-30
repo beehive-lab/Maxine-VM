@@ -20,11 +20,53 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.util.*;
+
+
 /**
- * The <code>LIRInstr</code> class definition.
+ * The <code>LIROp3</code> class definition.
  *
- * @author Ben L. Titzer
+ * @author Marcelo Cintra
+ *
  */
-public class LIRInstr {
-    // Nothing yet
+public class LIROp3 extends LIRInstruction {
+
+    LIROperand opr1;
+    LIROperand opr2;
+    LIROperand opr3;
+
+    public LIROp3(LIROpcode opcode, LIROperand opr1, LIROperand opr2, LIROperand opr3, LIROperand result, CodeEmitInfo info) {
+        super(opcode, result, info);
+        this.opr1 = opr1;
+        this.opr2 = opr2;
+        this.opr3 = opr3;
+        assert isInRange(opcode, LIROpcode.BeginOp3, LIROpcode.EndOp3) : "The " + opcode + " is not a valid LIROp3 opcode";
+    }
+
+    /**
+     * Emits assembly code for this instruction.
+     *
+     * @param masm the target assembler
+     */
+    @Override
+    public void emitCode(LIRAssembler masm) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /**
+     * Prints this instruction.
+     *
+     * @param out the output log stream.
+     */
+    @Override
+    public void printInstruction(LogStream out) {
+        opr1.print(out);
+        out.print(" ");
+        opr2.print(out);
+        out.print(" ");
+        opr3.print(out);
+        out.print(" ");
+        result.print(out);
+    }
 }

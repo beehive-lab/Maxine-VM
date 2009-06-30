@@ -53,7 +53,7 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
 
     @PROTOTYPE_ONLY
     public void init(byte[] refMap, Reference[] specialRefs) {
-        ProgramError.check(Address.fromInt(refMap.length).isAligned(), "Boot heap reference map must have word-aligned size");
+        ProgramError.check(Address.fromInt(refMap.length).isWordAligned(), "Boot heap reference map must have word-aligned size");
         this.referenceMapBytes = refMap;
         this.specialReferences = specialRefs;
     }

@@ -31,7 +31,7 @@
         for (i = 0; i < relocationDataSize; i++) { \
             Byte byte = bytes[i]; \
             if (byte == 0) { \
-                dataOffset += 8 * alignmentSize; \
+                dataOffset += 8 * wordSize; \
             } else { \
                 for (bit = 0; bit < 8; bit++) { \
                     if ((byte & (1 << bit)) != 0) { \
@@ -42,7 +42,7 @@
                             putWord(p, value); \
                         } \
                     } \
-                    dataOffset += alignmentSize; \
+                    dataOffset += wordSize; \
                 } \
             } \
         } \
@@ -73,7 +73,9 @@ void relocation_apply(void *heap, int relocationScheme, void *relocationData, in
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_vm_prototype_BootImage_nativeRelocate(JNIEnv *env, jclass c, jlong heap, jint relocationScheme, jbyteArray relocationData, jint relocationDataSize, jint alignmentSize, jint isBigEndian, jint wordSize) {
+Java_com_sun_max_vm_prototype_BootImage_nativeRelocate(JNIEnv *env, jclass c, jlong heap, jint relocationScheme,
+                                                       jbyteArray relocationData, jint relocationDataSize, jint alignmentSize,
+                                                       jint isBigEndian, jint wordSize) {
     jboolean isCopy;
     jbyte *bytes = (*env)->GetByteArrayElements(env, relocationData, &isCopy);
     relocation_apply((void *) (Address) heap, relocationScheme, bytes, relocationDataSize, alignmentSize, isBigEndian, wordSize);
