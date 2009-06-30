@@ -29,7 +29,7 @@ import java.util.*;
  * @author Marcelo Cintra
  *
  */
-public class LIRRTCall extends LIRCall{
+public class LIRRuntimeCall extends LIRCall{
 
     private LIROperand tmp;
 
@@ -42,7 +42,7 @@ public class LIRRTCall extends LIRCall{
      * @param arguments
      * @param info
      */
-    public LIRRTCall(int address, LIROperand tmp, LIROperand result, ArrayList<LIRInstruction> arguments, CodeEmitInfo info) {
+    public LIRRuntimeCall(int address, LIROperand tmp, LIROperand result, ArrayList<LIRInstruction> arguments, CodeEmitInfo info) {
         super(LIROpcode.RtCall, address, result, arguments, info);
         this.tmp = tmp;
     }

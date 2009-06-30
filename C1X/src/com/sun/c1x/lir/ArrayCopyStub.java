@@ -22,7 +22,7 @@ package com.sun.c1x.lir;
 
 
 /**
- * The <code>ArrayCopyStub</code> class definition.
+ * The <code>ArrayCopyStub</code> class represents a code stub for array copy.
  *
  * @author Marcelo Cintra
  *
@@ -34,26 +34,26 @@ public class ArrayCopyStub {
     /**
      * Creates a new ArrayCopyStub.
      *
-     * @param op
+     * @param arrayCopy the LIR operation representing the array copy
      */
     public ArrayCopyStub(LIRArrayCopy arrayCopy) {
         super();
         this.arrayCopy = arrayCopy;
     }
 
-    public LIROperand src() {
+    public LIROperand source() {
         return arrayCopy.src();
     }
 
-    public LIROperand srcPos() {
+    public LIROperand sourcePos() {
         return arrayCopy.srcPos();
     }
 
-    public LIROperand dst() {
+    public LIROperand dest() {
         return arrayCopy.dst();
     }
 
-    public LIROperand dstPos() {
+    public LIROperand destPos() {
         return arrayCopy.dstPos();
     }
 
@@ -65,30 +65,4 @@ public class ArrayCopyStub {
     public LIROperand tmp() {
         return arrayCopy.tmp();
     }
-
-
-
-//    private:
-//        LIR_OpArrayCopy* _op;
-//
-//       public:
-//        ArrayCopyStub(LIR_OpArrayCopy* op): _op(op) { }
-//
-//        LIR_Opr src() const                         { return _op->src(); }
-//        LIR_Opr src_pos() const                     { return _op->src_pos(); }
-//        LIR_Opr dst() const                         { return _op->dst(); }
-//        LIR_Opr dst_pos() const                     { return _op->dst_pos(); }
-//        LIR_Opr length() const                      { return _op->length(); }
-//        LIR_Opr tmp() const                         { return _op->tmp(); }
-//
-//        virtual void emit_code(LIR_Assembler* e);
-//        virtual CodeEmitInfo* info() const          { return _op->info(); }
-//        virtual void visit(LIR_OpVisitState* visitor) {
-//          // don't pass in the code emit info since it's processed in the fast path
-//          visitor->do_slow_case();
-//        }
-//      #ifndef PRODUCT
-//        virtual void print_name(outputStream* out) const { out->print("ArrayCopyStub"); }
-//      #endif // PRODUCT
-
 }

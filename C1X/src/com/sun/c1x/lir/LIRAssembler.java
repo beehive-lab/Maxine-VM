@@ -31,5 +31,4 @@ public class LIRAssembler {
 
     public void emitOp1(LIROp1 instruction) {
     }
-
 }
