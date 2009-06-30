@@ -48,7 +48,7 @@
         } \
     } while (0)
 
-void relocation_apply(void *heap, int relocationScheme, void *relocationData, int relocationDataSize, int alignmentSize, int isBigEndian, int wordSize) {
+void relocation_apply(void *heap, int relocationScheme, void *relocationData, int relocationDataSize, int cacheAlignment, int isBigEndian, int wordSize) {
     int i, bit;
     Address base = (Address) heap;
     Byte *bytes = (Byte *) relocationData;
@@ -74,10 +74,10 @@ void relocation_apply(void *heap, int relocationScheme, void *relocationData, in
 
 JNIEXPORT void JNICALL
 Java_com_sun_max_vm_prototype_BootImage_nativeRelocate(JNIEnv *env, jclass c, jlong heap, jint relocationScheme,
-                                                       jbyteArray relocationData, jint relocationDataSize, jint alignmentSize,
+                                                       jbyteArray relocationData, jint relocationDataSize, jint cacheAlignment,
                                                        jint isBigEndian, jint wordSize) {
     jboolean isCopy;
     jbyte *bytes = (*env)->GetByteArrayElements(env, relocationData, &isCopy);
-    relocation_apply((void *) (Address) heap, relocationScheme, bytes, relocationDataSize, alignmentSize, isBigEndian, wordSize);
+    relocation_apply((void *) (Address) heap, relocationScheme, bytes, relocationDataSize, cacheAlignment, isBigEndian, wordSize);
     (*env)->ReleaseByteArrayElements(env, relocationData, bytes, JNI_ABORT);
 }
