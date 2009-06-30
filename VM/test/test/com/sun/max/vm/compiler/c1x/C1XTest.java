@@ -27,6 +27,8 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.target.Target;
+import com.sun.c1x.target.Architecture;
 import com.sun.c1x.util.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
@@ -145,6 +147,7 @@ public class C1XTest {
         final MaxCiRuntime runtime = new MaxCiRuntime();
         final List<MethodActor> methods = findMethodsToCompile(arguments);
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
+        final Target target = createTarget();
 
         for (int i = 0; i < warmupOption.getValue(); i++) {
             if (i == 0) {
@@ -153,7 +156,7 @@ public class C1XTest {
             out.print(".");
             out.flush();
             for (MethodActor actor : methods) {
-                compile(runtime, actor, false, true);
+                compile(target, runtime, actor, false, true);
             }
             if (i == warmupOption.getValue() - 1) {
                 out.print("\n");
@@ -162,7 +165,7 @@ public class C1XTest {
 
         for (MethodActor methodActor : methods) {
             progress.begin(methodActor.toString());
-            final C1XCompilation compilation = compile(runtime, methodActor, printBailoutOption.getValue(), false);
+            final C1XCompilation compilation = compile(target, runtime, methodActor, printBailoutOption.getValue(), false);
             if (compilation == null || compilation.startBlock() != null) {
                 progress.pass();
 
@@ -188,10 +191,10 @@ public class C1XTest {
         reportMetrics();
     }
 
-    private static C1XCompilation compile(MaxCiRuntime runtime, MethodActor method, boolean printBailout, boolean warmup) {
+    private static C1XCompilation compile(Target target, MaxCiRuntime runtime, MethodActor method, boolean printBailout, boolean warmup) {
         if (isCompilable(method)) {
             final long startNs = System.nanoTime();
-            final C1XCompilation compilation = new C1XCompilation(runtime, runtime.getCiMethod(method));
+            final C1XCompilation compilation = new C1XCompilation(target, runtime, runtime.getCiMethod(method));
             if (compilation.startBlock() == null) {
                 if (printBailout) {
                     compilation.bailout().printStackTrace(out);
@@ -461,5 +464,10 @@ public class C1XTest {
         public double instructionsPerSecond() {
             return 1000000000 * (instructions / (double) nanoSeconds);
         }
+    }
+
+    private static Target createTarget() {
+        // TODO: configure architecture according to host platform
+        return new Target(Architecture.AMD64);
     }
 }
