@@ -61,6 +61,7 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
                 VmThreadLocal.prepareStackReferenceMapFromTrap(vmThreadLocals, trapState);
             } else {
                 // GC may already be ongoing
+                Log.println("GC may already be ongoing");
             }
 
             synchronized (VmThreadMap.ACTIVE) {

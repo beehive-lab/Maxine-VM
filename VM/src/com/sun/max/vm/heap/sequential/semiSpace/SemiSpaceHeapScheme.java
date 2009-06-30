@@ -577,7 +577,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     }
 
     public synchronized boolean collectGarbage(Size requestedFreeSpace) {
-        executeCollectorThread();
+        if (requestedFreeSpace.toInt() == 0 || immediateFreeSpace().lessThan(requestedFreeSpace)) {
+            executeCollectorThread();
+        }
         if (immediateFreeSpace().greaterEqual(requestedFreeSpace)) {
             // check to see if we can reset safety zone
             if (inSafetyZone) {
@@ -637,7 +639,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             oldAllocationMark = allocationMark.asPointer();
             cell = allocateWithDebugTag(oldAllocationMark);
             end = cell.plus(size);
-            if (end.greaterThan(top)) {
+            while (end.greaterThan(top)) {
                 if (!Heap.collectGarbage(size)) {
                     if (inSafetyZone) {
                         FatalError.crash("out of memory again after throwing OutOfMemoryError");
@@ -666,7 +668,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         //}
         final Size tlabSize = Size.fromLong(Math.max(size.toLong(), 64 * 1024));
         final Pointer tlab = retryAllocate(tlabSize);
-        final Pointer cell = allocateWithDebugTag(tlab);
+        final Pointer cell = allocateWithDebugTag(tlab); // TODO:check this
         final Pointer end = cell.plus(size);
         VmThreadLocal.ALLOCATION_TOP.setVariableWord(tlab.plus(tlabSize));
         VmThreadLocal.ALLOCATION_MARK.setVariableWord(end);

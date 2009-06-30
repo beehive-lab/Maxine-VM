@@ -401,7 +401,7 @@ public final class ObjectFieldsTable extends InspectorTable {
                             return teleObject.readFieldValue(fieldActor);
                         }
                     };
-                } else if (isTeleActor && fieldActor.name.toString().equals("_flags")) {
+                } else if (isTeleActor && fieldActor.name.toString().equals("flags")) {
                     final TeleActor teleActor = (TeleActor) teleObject;
                     label = new ActorFlagsValueLabel(inspection, teleActor);
                 } else {

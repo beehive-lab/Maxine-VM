@@ -456,7 +456,7 @@ public final class TupleAccess {
     }
 
     /**
-     * Write a reference into the specified object at the specified offset.
+     * Writes a reference into the specified object at the specified offset.
      * @param tuple the object to write the value into
      * @param offset the offset from the origin of the object
      * @param value the value to write into the object
@@ -467,7 +467,7 @@ public final class TupleAccess {
     }
 
     /**
-     * Write a reference into the specified object at the specified offset.
+     * Writes a reference into the specified object at the specified offset.
      * @param tuple the object to write the value into
      * @param offset the offset from the origin of the object
      * @param value the value to write into the object
@@ -477,6 +477,17 @@ public final class TupleAccess {
         Reference.fromJava(tuple).writeReference(offset, Reference.fromJava(value));
     }
 
+    /**
+     * Writes a reference into the specified object at the specified offset.
+     *
+     * This non-inline version is required for the JIT templates. These templates
+     * cannot contain reference literals while the compiled version of {@link #writeObject(Object, int, Object)}
+     * might depending on any write barrier configured for the VM.
+     *
+     * @param tuple the object to write the value into
+     * @param offset the offset from the origin of the object
+     * @param value the value to write into the object
+     */
     @NEVER_INLINE
     public static void noninlineWriteObject(Object tuple, int offset, Object value) {
         writeObject(tuple, offset, value);

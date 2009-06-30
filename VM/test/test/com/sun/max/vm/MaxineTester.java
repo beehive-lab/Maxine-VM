@@ -360,7 +360,7 @@ public class MaxineTester {
                     timesOut.close();
 
                     out.println();
-                    out.println("Timing info: -> see " + fileRef(timesOutFile));
+                    out.println("Timing info -> see: " + fileRef(timesOutFile));
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 }
