@@ -34,6 +34,7 @@ import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.constant.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.object.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
@@ -286,7 +287,26 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             setRowSelectionAllowed(true);
             setColumnSelectionAllowed(true);
             setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-            addMouseListener(new TableCellMouseClickAdapter(inspection(), this));
+            addMouseListener(new TableCellMouseClickAdapter(inspection(), this) {
+                @Override
+                public void procedure(final MouseEvent mouseEvent) {
+                    if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
+                        // So far, only breakpoint-related items on this popup menu.
+                        final Point p = mouseEvent.getPoint();
+                        final int hitRowIndex = rowAtPoint(p);
+                        final int columnIndex = getColumnModel().getColumnIndexAtX(p.x);
+                        final int modelIndex = getColumnModel().getColumn(columnIndex).getModelIndex();
+                        if (modelIndex == ObjectFieldColumnKind.TAG.ordinal()) {
+                            final InspectorMenu menu = new InspectorMenu();
+                            final Address address = JTableTargetCodeViewer.this.model.getTargetCodeInstruction(hitRowIndex).address();
+                            menu.add(actions().setTargetCodeBreakpoint(address, "Set breakpoint"));
+                            menu.add(actions().removeTargetCodeBreakpoint(address, "Unset breakpoint"));
+                            menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                        }
+                        super.procedure(mouseEvent);
+                    }
+                }
+            });
         }
 
         @Override
