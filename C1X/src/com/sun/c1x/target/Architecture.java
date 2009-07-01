@@ -47,7 +47,7 @@ public enum Architecture {
     }
 
     /**
-     * Converts this architecture to a string
+     * Converts this architecture to a string.
      * @return the string representation of this architecture
      */
     @Override

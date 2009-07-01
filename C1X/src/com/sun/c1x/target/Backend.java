@@ -30,7 +30,11 @@ import com.sun.c1x.lir.LIRGenerator;
  * @author Ben L. Titzer
  */
 public abstract class Backend {
-    public Target target;
+    public final Target target;
+
+    protected Backend(Target target) {
+        this.target = target;
+    }
 
     public abstract LIRGenerator newLIRGenerator(C1XCompilation compilation);
     public abstract LIRAssembler newLIRAssembler(C1XCompilation compilation);
