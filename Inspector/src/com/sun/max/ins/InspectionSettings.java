@@ -26,6 +26,7 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.max.collect.*;
+import com.sun.max.ins.gui.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.prototype.*;
@@ -108,19 +109,19 @@ public class InspectionSettings {
         String name();
 
         /**
-         * The component responsible for the displaying this object in a GUI. If this object does not have a visual
+         * The Inspector responsible for the displaying this object in a GUI. If this object does not have a visual
          * presentation, then this method should return null.
          *
          * In addition to the other listener specific settings, the {@linkplain Component#getBounds() geometry} of the
-         * {@linkplain #component() component} responsible for the displaying the object are automatically saved
+         * {@linkplain #inspector() inspector} responsible for the displaying the object are automatically saved
          * whenever the inspection settings are {@linkplain InspectionSettings#save() persisted}. The inspection
-         * settings are persisted any time the component is
+         * settings are persisted any time the inspection is
          * {@linkplain ComponentListener#componentMoved(ComponentEvent) moved} or
          * {@linkplain ComponentListener#componentResized(ComponentEvent) resized} and whenever the component is made
          * {@linkplain ComponentListener#componentShown(ComponentEvent) visible}, its bounds are updated from the
          * settings.
          */
-        Component component();
+        Inspector inspector();
 
         /**
          * @return geometry to apply to a newly shown component when there have been no geometry settings saved.
@@ -133,25 +134,25 @@ public class InspectionSettings {
      */
     public abstract static class AbstractSaveSettingsListener implements SaveSettingsListener {
         protected final String name;
-        protected final Component component;
+        protected final Inspector inspector;
         protected final Rectangle defaultBounds;
 
-        protected AbstractSaveSettingsListener(String name, Component component, Rectangle defaultBounds) {
+        private AbstractSaveSettingsListener(String name, Inspector inspector, Rectangle defaultBounds) {
             this.name = name;
-            this.component = component;
+            this.inspector = inspector;
             this.defaultBounds = defaultBounds;
         }
 
-        protected AbstractSaveSettingsListener(String name, Component component) {
-            this(name, component, null);
+        public AbstractSaveSettingsListener(String name, Inspector inspector) {
+            this(name, inspector, null);
         }
 
         protected AbstractSaveSettingsListener(String name) {
             this (name, null, null);
         }
 
-        public Component component() {
-            return component;
+        public Inspector inspector() {
+            return inspector;
         }
 
         public String name() {
@@ -168,6 +169,7 @@ public class InspectionSettings {
         }
     }
 
+    private final Inspection inspection;
     private final SaveSettingsListener bootimageClient;
     private final Properties properties = new SortedProperties();
     private final File settingsFile;
@@ -175,6 +177,7 @@ public class InspectionSettings {
     private final Map<String, SaveSettingsListener> clients;
 
     public InspectionSettings(Inspection inspection, File settingsFile) {
+        this.inspection = inspection;
         this.settingsFile = settingsFile;
         clients = new IdentityHashMap<String, SaveSettingsListener>();
         try {
@@ -208,9 +211,9 @@ public class InspectionSettings {
         final SaveSettingsListener oldClient = clients.put(saveSettingsListener.name(), saveSettingsListener);
         assert oldClient == null || oldClient == saveSettingsListener;
 
-        final Component component = saveSettingsListener.component();
-        if (component != null) {
-            component.addComponentListener(new ComponentListener() {
+        final Inspector inspector = saveSettingsListener.inspector();
+        if (inspector != null) {
+            inspector.component().addComponentListener(new ComponentListener() {
                 public void componentHidden(ComponentEvent e) {
                 }
                 public void componentMoved(ComponentEvent e) {
@@ -220,10 +223,10 @@ public class InspectionSettings {
                     save();
                 }
                 public void componentShown(ComponentEvent e) {
-                    refreshComponentClient(saveSettingsListener);
+                    repositionInspectorFromSettings(saveSettingsListener);
                 }
             });
-            refreshComponentClient(saveSettingsListener);
+            repositionInspectorFromSettings(saveSettingsListener);
         }
     }
 
@@ -231,22 +234,27 @@ public class InspectionSettings {
         clients.remove(saveSettingsListener.name());
     }
 
-    private void refreshComponentClient(SaveSettingsListener saveSettingsListener) {
-        final Component component = saveSettingsListener.component();
-        if (component != null) {
-            final Rectangle oldBounds = component.getBounds();
-            Rectangle newBounds = saveSettingsListener.defaultBounds();
-            if (get(saveSettingsListener, COMPONENT_X_KEY, OptionTypes.INT_TYPE, -1) >= 0) {
-                newBounds = new Rectangle(
-                    get(saveSettingsListener, COMPONENT_X_KEY, OptionTypes.INT_TYPE, oldBounds.x),
-                    get(saveSettingsListener, COMPONENT_Y_KEY, OptionTypes.INT_TYPE, oldBounds.y),
-                    get(saveSettingsListener, COMPONENT_WIDTH_KEY, OptionTypes.INT_TYPE, oldBounds.width),
-                    get(saveSettingsListener, COMPONENT_HEIGHT_KEY, OptionTypes.INT_TYPE, oldBounds.height));
-            }
-            if (newBounds != null && !newBounds.equals(oldBounds)) {
-                component.setBounds(newBounds);
-            }
+    /**
+     * Repositions an Inspector from its previous settings, or
+     * if none, from the default.  Ensures that the ultimate location is visible.
+     *
+     * @param saveSettingsListener a listener that has an associated Inspector
+     */
+    private void repositionInspectorFromSettings(SaveSettingsListener saveSettingsListener) {
+        final Inspector inspector = saveSettingsListener.inspector();
+        final Rectangle oldBounds = inspector.component().getBounds();
+        Rectangle newBounds = saveSettingsListener.defaultBounds();
+        if (get(saveSettingsListener, COMPONENT_X_KEY, OptionTypes.INT_TYPE, -1) >= 0) {
+            newBounds = new Rectangle(
+                get(saveSettingsListener, COMPONENT_X_KEY, OptionTypes.INT_TYPE, oldBounds.x),
+                get(saveSettingsListener, COMPONENT_Y_KEY, OptionTypes.INT_TYPE, oldBounds.y),
+                get(saveSettingsListener, COMPONENT_WIDTH_KEY, OptionTypes.INT_TYPE, oldBounds.width),
+                get(saveSettingsListener, COMPONENT_HEIGHT_KEY, OptionTypes.INT_TYPE, oldBounds.height));
         }
+        if (newBounds != null && !newBounds.equals(oldBounds)) {
+            inspector.component().setBounds(newBounds);
+        }
+        inspection.gui().moveToMiddleIfNotVisble(inspector);
     }
 
     /**
@@ -347,9 +355,9 @@ public class InspectionSettings {
         for (SaveSettingsListener saveSettingsListener : clients.values()) {
             final SaveSettingsEvent saveSettingsEvent = new SaveSettingsEvent(saveSettingsListener, newProperties);
             saveSettingsListener.saveSettings(saveSettingsEvent);
-            final Component component = saveSettingsListener.component();
-            if (component != null) {
-                final Rectangle bounds = component.getBounds();
+            final Inspector inspector = saveSettingsListener.inspector();
+            if (inspector != null) {
+                final Rectangle bounds = inspector.component().getBounds();
                 saveSettingsEvent.save(COMPONENT_X_KEY, bounds.x);
                 saveSettingsEvent.save(COMPONENT_Y_KEY, bounds.y);
                 saveSettingsEvent.save(COMPONENT_WIDTH_KEY, bounds.width);
