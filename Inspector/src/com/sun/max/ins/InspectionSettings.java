@@ -235,7 +235,7 @@ public class InspectionSettings {
     }
 
     /**
-     * Repositions an Inspector from its previous settings, or
+     * Repositions an Inspector's location from its previous settings, or
      * if none, from the default.  Ensures that the ultimate location is visible.
      *
      * @param saveSettingsListener a listener that has an associated Inspector
