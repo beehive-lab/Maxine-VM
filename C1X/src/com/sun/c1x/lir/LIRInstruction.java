@@ -1,25 +1,23 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc. All rights reserved.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product that is
+ * described in this document. In particular, and without limitation, these intellectual property rights may include one
+ * or more of the U.S. patents listed at http://www.sun.com/patents and one or more additional patents or pending patent
+ * applications in the U.S. and in other countries.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun Microsystems, Inc. standard
+ * license agreement and applicable provisions of the FAR and its supplements.
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or registered
+ * trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks are used under license and
+ * are trademarks or registered trademarks of SPARC International, Inc. in the U.S. and other countries.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open Company, Ltd.
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
 
@@ -30,26 +28,24 @@ import com.sun.c1x.util.*;
  */
 public abstract class LIRInstruction {
 
-    LIROperand result;      // the result operand for this instruction
-    LIROpcode opcode;       // the opcode of this instruction
-    LIRMoveKind flags;      // flag that indicate the kind of move
-    CodeEmitInfo info;      // used to emit debug information
-    int id;                 // value id for register allocation
-    int fpuPopCount;
-    Instruction  source;    // for debugging
+    public enum LIRMoveKind {
+        Normal, Volatile, Unaligned, MaxFlag
+    }
+
+    protected LIROperand result; // the result operand for this instruction
+    protected LIROpcode code; // the opcode of this instruction
+    protected LIRMoveKind flags; // flag that indicate the kind of move
+    private CodeEmitInfo info; // used to emit debug information
+    private int id; // value id for register allocation
+    private int fpuPopCount;
+    private Instruction source; // for debugging
 
     /**
      * Constructs a new Instruction.
      *
      */
     public LIRInstruction() {
-        result = LIROperandFactory.illegalOperand;
-        opcode = LIROpcode.None;
-        info = null;
-        flags = LIRMoveKind.Normal;
-        fpuPopCount = 0;
-        source = null;
-        id = -1;
+        this(LIROpcode.None, LIROperandFactory.illegalOperand, null);
     }
 
     /**
@@ -61,12 +57,30 @@ public abstract class LIRInstruction {
      */
     public LIRInstruction(LIROpcode opcode, LIROperand result, CodeEmitInfo info) {
         this.result = result;
-        this.opcode = opcode;
+        this.code = opcode;
         this.info = info;
         flags = LIRMoveKind.Normal;
         fpuPopCount = 0;
         source = null;
         id = -1;
+    }
+
+    /**
+     * Gets the code emission info of this instruction.
+     *
+     * @return info the object containing additional information to produce generate debug information.
+     */
+    public CodeEmitInfo info() {
+        return info;
+    }
+
+    /**
+     * Gets the opcode of this instruction.
+     *
+     * @return return the instruction's opcode.
+     */
+    public LIROpcode code() {
+        return code;
     }
 
     /**
@@ -88,21 +102,13 @@ public abstract class LIRInstruction {
     }
 
     /**
-     * Gets the opcode of this instruction.
+     * Gets the instruction name.
      *
-     * @return return the instruction's opcode.
+     * @return the name of the enum constant that represents the instruction opcode, exactly as declared in the enum
+     *         LIROpcode declaration.
      */
-    public LIROpcode opcode() {
-        return opcode;
-    }
-
-    /**
-     * Gets the code emission info of this instruction.
-     *
-     * @return info the object containing additional information to produce generate debug information.
-     */
-    public CodeEmitInfo info() {
-        return info;
+    public String name() {
+        return code.name();
     }
 
     /**
@@ -124,12 +130,12 @@ public abstract class LIRInstruction {
     }
 
     /**
-     * Gets the instruction name.
+     * Sets the Fpu pop counter of this instruction. This is a counter to FPU stack simulation, only used on Intel.
      *
-     * @return the name of the enum constant that represents the instruction opcode, exactly as declared in the enum LIROpcode declaration.
+     * @param id the value
      */
-    public String name() {
-        return opcode.name();
+    public void setFpuPopCount(int fpuPopCount) {
+        this.fpuPopCount = fpuPopCount;
     }
 
     /**
@@ -139,15 +145,6 @@ public abstract class LIRInstruction {
      */
     public int fpuPopCount() {
         return fpuPopCount;
-    }
-
-    /**
-     * Sets the Fpu pop counter of this instruction. This is a counter to FPU stack simulation, only used on Intel.
-     *
-     * @param id the value
-     */
-    public void setFpuPopCount(int fpuPopCount) {
-        this.fpuPopCount = fpuPopCount;
     }
 
     /**
@@ -197,7 +194,20 @@ public abstract class LIRInstruction {
      * @param out the LogStream to print into.
      */
     public void printOn(LogStream st) {
+        if (id() != -1 || C1XOptions.PrintCFGToFile) {
+            st.printf("%4d ", id());
+        } else {
+            st.print("     ");
+        }
+        st.print(name());
+        st.print(" ");
+        printInstruction(st);
+        if (info() != null) {
+            st.printf(" [bci:%d]", info().bci());
+        }
+    }
 
+    public void verify() {
     }
 
     /**
@@ -207,11 +217,115 @@ public abstract class LIRInstruction {
      * @param start the lower bound range limit of valid opcodes
      * @param end the upper bound range limit of valid opcodes
      */
-    protected static boolean isInRange(LIROpcode opcode, LIROpcode start, LIROpcode end)  {
+    protected static boolean isInRange(LIROpcode opcode, LIROpcode start, LIROpcode end) {
         return start.ordinal() < opcode.ordinal() && opcode.ordinal() < end.ordinal();
     }
 
-    public void verify() {
+    LIRCall asCall() {
+        return null;
+    }
 
+    LIRJavaCall asJavaCall() {
+        return null;
+    }
+
+    LIRLabel asLabel() {
+        return null;
+    }
+
+    LIRDelay asDelay() {
+        return null;
+    }
+
+    LIRLock asLock() {
+        return null;
+    }
+
+    LIRAllocArray asAllocArray() {
+        return null;
+    }
+
+    LIRAllocObj asAllocObj() {
+        return null;
+    }
+
+    LIRRoundFP asRoundFP() {
+        return null;
+    }
+
+    LIRBranch asBranch() {
+        return null;
+    }
+
+    LIRRTCall asRTCall() {
+        return null;
+    }
+
+    LIRConvert asConvert() {
+        return null;
+    }
+
+    LIROp0 asOp0() {
+        return null;
+    }
+
+    LIROp1 asOp1() {
+        return null;
+    }
+
+    LIROp2 asOp2() {
+        return null;
+    }
+
+    LIROp3 asOp3() {
+        return null;
+    }
+
+    LIRArrayCopy asArrayCopy() {
+        return null;
+    }
+
+    LIRTypeCheck asTypeCheck() {
+        return null;
+    }
+
+    LIRCompareAndSwap asCompareAndSwap() {
+        return null;
+    }
+
+    LIRProfileCall asProfileCall() {
+        return null;
+    }
+
+    protected static void printCondition(LogStream out, LIRCondition cond) {
+        switch (cond) {
+            case Equal:
+                out.print("[EQ]");
+                break;
+            case NotEqual:
+                out.print("[NE]");
+                break;
+            case Less:
+                out.print("[LT]");
+                break;
+            case LessEqual:
+                out.print("[LE]");
+                break;
+            case GreaterEqual:
+                out.print("[GT]");
+                break;
+            case BelowEqual:
+                out.print("[BE]");
+                break;
+            case AboveEqual:
+                out.print("[AE]");
+                break;
+            case Always:
+                out.print("[AL]");
+                break;
+            default:
+                out.printf("[%d]", cond.ordinal());
+                break;
+        }
     }
 }

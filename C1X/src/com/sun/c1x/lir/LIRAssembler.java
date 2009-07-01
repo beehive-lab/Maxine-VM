@@ -32,4 +32,29 @@ public class LIRAssembler {
     public void emitOp1(LIROp1 instruction) {
     }
 
+    public void emitOp0(LIROp0 lirOp0) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void emitLabel(LIRLabel lirLabel) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void emitBranch(LIRBranch lirBranch) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void emitStub(CodeStub stub) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void emitConvert(LIRConvert lirConvert) {
+        // TODO Auto-generated method stub
+
+    }
+
 }

@@ -40,7 +40,7 @@ public abstract class CodeStub {
      *
      * @return the entry
      */
-    public Label getEntry() {
+    public Label entry() {
         return entry;
     }
 
@@ -93,6 +93,11 @@ public abstract class CodeStub {
      */
     public boolean isDivideByZero() {
         return false;
+    }
+
+    public CodeEmitInfo info() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 

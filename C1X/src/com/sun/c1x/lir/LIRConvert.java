@@ -1,28 +1,24 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc. All rights reserved.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product that is
+ * described in this document. In particular, and without limitation, these intellectual property rights may include one
+ * or more of the U.S. patents listed at http://www.sun.com/patents and one or more additional patents or pending patent
+ * applications in the U.S. and in other countries.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun Microsystems, Inc. standard
+ * license agreement and applicable provisions of the FAR and its supplements.
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or registered
+ * trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks are used under license and
+ * are trademarks or registered trademarks of SPARC International, Inc. in the U.S. and other countries.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open Company, Ltd.
  */
 package com.sun.c1x.lir;
 
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.util.*;
-
 
 /**
  * The <code>LIRConvert</code> class definition.
@@ -72,7 +68,15 @@ public class LIRConvert extends LIROp1 {
      */
     @Override
     public void emitCode(LIRAssembler masm) {
-        // TODO: not yet implemented
+        masm.emitConvert(this);
+        if (stub() != null) {
+            masm.emitStub(stub());
+        }
+    }
+
+    @Override
+    LIRConvert asConvert() {
+        return this;
     }
 
     /**
@@ -82,11 +86,63 @@ public class LIRConvert extends LIROp1 {
      */
     @Override
     public void printInstruction(LogStream out) {
-        super.printInstruction(out);
-        out.print(Bytecodes.name(bytecode));
+        printBytecode(out, bytecode);
         opr.print(out);
         out.print(" ");
         result.print(out);
         out.print(" ");
+    }
+
+    public static void printBytecode(LogStream out, int bytecode) {
+        switch (bytecode) {
+            case Bytecodes.D2F:
+                out.print("[d2f] ");
+                break;
+            case Bytecodes.D2I:
+                out.print("[d2i] ");
+                break;
+            case Bytecodes.D2L:
+                out.print("[d2l] ");
+                break;
+            case Bytecodes.F2D:
+                out.print("[f2d] ");
+                break;
+            case Bytecodes.F2I:
+                out.print("[f2i] ");
+                break;
+            case Bytecodes.F2L:
+                out.print("[f2l] ");
+                break;
+            case Bytecodes.I2B:
+                out.print("[i2b] ");
+                break;
+            case Bytecodes.I2C:
+                out.print("[i2c] ");
+                break;
+            case Bytecodes.I2D:
+                out.print("[i2d] ");
+                break;
+            case Bytecodes.I2F:
+                out.print("[i2f] ");
+                break;
+            case Bytecodes.I2L:
+                out.print("[i2l] ");
+                break;
+            case Bytecodes.I2S:
+                out.print("[i2s] ");
+                break;
+            case Bytecodes.L2I:
+                out.print("[l2i] ");
+                break;
+            case Bytecodes.L2F:
+                out.print("[l2f] ");
+                break;
+            case Bytecodes.L2D:
+                out.print("[l2d] ");
+                break;
+            default:
+                out.printf("[?%d]", bytecode);
+                break;
+        }
     }
 }
