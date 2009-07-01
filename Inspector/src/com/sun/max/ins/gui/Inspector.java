@@ -65,10 +65,21 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     private InspectorFrame frame;
 
     /**
-     * @return the window system frame in which the Inspector displays its view
+     * @return the inspector frame in which the Inspector displays its view.
+     *
+     * <strong>NOTE</strong> The need for the distinction between and {@link InspectorFrame} and the
+     * actual implementation class, which is a {@link JInternalFrame} is an anachronism
+     * from an earlier design phase.  It should be cleaned up.
      */
-    public InspectorFrame frame() {
+    public final InspectorFrame frame() {
         return frame;
+    }
+
+    /**
+     * @return the window system component in which the Inspector displays its view.
+     */
+    public final Component component() {
+        return (Component) frame;
     }
 
     /**
@@ -92,11 +103,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      * Creates a settings client for this inspector that causes window geometry to be saved & restored.
      */
     protected static SaveSettingsListener createGeometrySettingsClient(final Inspector inspector, final String name) {
-        return new AbstractSaveSettingsListener(name) {
-            @Override
-            public Component component() {
-                return (Component) inspector.frame();
-            }
+        return new AbstractSaveSettingsListener(name, inspector) {
 
             @Override
             public Rectangle defaultBounds() {
