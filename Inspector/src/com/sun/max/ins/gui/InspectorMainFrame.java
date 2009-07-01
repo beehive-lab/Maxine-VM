@@ -45,59 +45,20 @@ import com.sun.max.util.*;
  */
 public final class InspectorMainFrame extends JFrame implements InspectorGUI, Prober {
 
+    private static final String FRAME_SETTINGS_NAME = "inspectorMainFrame";
+    private static final String FRAME_X_KEY = "frameX";
+    private static final String FRAME_Y_KEY = "frameY";
+    private static final String FRAME_HEIGHT_KEY = "frameHeight";
+    private static final String FRAME_WIDTH_KEY = "frameWidth";
+
     private final Inspection inspection;
+    private final SaveSettingsListener saveSettingsListener;
     private final Cursor busyCursor = new Cursor(Cursor.WAIT_CURSOR);
     private final JDesktopPane desktopPane;
     private final JScrollPane scrollPane;
     private final InspectorMainMenuBar menuBar;
     private final InspectorMenu desktopMenu = new InspectorMenu();
     private final InspectorLabel missingDataTableCellRenderer;
-
-    /**
-     * Manages saving and restoring the geometry of the main GUI window, accounting
-     * for possibly differing screen sizes across sessions, and correcting any off-screen
-     * locations.
-     *
-     * @author Michael Van De Vanter
-     */
-    private class InspectorMainFrameSaveSettingsListener extends AbstractSaveSettingsListener {
-
-        private static final String FRAME_SETTINGS_NAME = "inspectorMainFrame";
-        private static final String FRAME_X_KEY = "frameX";
-        private static final String FRAME_Y_KEY = "frameY";
-        private static final String FRAME_HEIGHT_KEY = "frameHeight";
-        private static final String FRAME_WIDTH_KEY = "frameWidth";
-
-        private final JFrame frame;
-
-        public InspectorMainFrameSaveSettingsListener(JFrame frame, InspectionSettings settings) {
-            super(FRAME_SETTINGS_NAME);
-            this.frame = frame;
-            settings.addSaveSettingsListener(this);
-            try {
-                if (settings.containsKey(this, FRAME_X_KEY)) {
-                    // Adjust any negative (off-screen) locations to be on-screen.
-                    final int x = Math.max(settings.get(this, FRAME_X_KEY, OptionTypes.INT_TYPE, -1), 0);
-                    final int y = Math.max(settings.get(this, FRAME_Y_KEY, OptionTypes.INT_TYPE, -1), 0);
-                    // Adjust any excessive window size to fit within the screen
-                    final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-                    final int width = Math.min(settings.get(this, FRAME_WIDTH_KEY, OptionTypes.INT_TYPE, -1), screenSize.width);
-                    final int height = Math.min(settings.get(this, FRAME_HEIGHT_KEY, OptionTypes.INT_TYPE, -1), screenSize.height);
-                    this.frame.setBounds(x, y, width, height);
-                }
-            } catch (Option.Error optionError) {
-                ProgramWarning.message("Inspector Main Frame settings: " + optionError.getMessage());
-            }
-        }
-
-        public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
-            final Rectangle bounds = frame.getBounds();
-            saveSettingsEvent.save(FRAME_X_KEY, bounds.x);
-            saveSettingsEvent.save(FRAME_Y_KEY, bounds.y);
-            saveSettingsEvent.save(FRAME_WIDTH_KEY, bounds.width);
-            saveSettingsEvent.save(FRAME_HEIGHT_KEY, bounds.height);
-        }
-    }
 
     /**
      * Creates a new main window frame for the Maxine VM inspection session.
@@ -165,10 +126,35 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
                 }
             }
         });
-        pack();
-        settings.addSaveSettingsListener(new InspectorMainFrameSaveSettingsListener(this, settings));
-
         missingDataTableCellRenderer = new MissingDataTableCellRenderer(inspection);
+        saveSettingsListener = new AbstractSaveSettingsListener(FRAME_SETTINGS_NAME) {
+            public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
+                final Rectangle bounds = getBounds();
+                saveSettingsEvent.save(FRAME_X_KEY, bounds.x);
+                saveSettingsEvent.save(FRAME_Y_KEY, bounds.y);
+                saveSettingsEvent.save(FRAME_WIDTH_KEY, bounds.width);
+                saveSettingsEvent.save(FRAME_HEIGHT_KEY, bounds.height);
+            }
+        };
+        settings.addSaveSettingsListener(saveSettingsListener);
+
+        pack();
+
+        try {
+            if (settings.containsKey(saveSettingsListener, FRAME_X_KEY)) {
+                // Adjust any negative (off-screen) locations to be on-screen.
+                final int x = Math.max(settings.get(saveSettingsListener, FRAME_X_KEY, OptionTypes.INT_TYPE, -1), 0);
+                final int y = Math.max(settings.get(saveSettingsListener, FRAME_Y_KEY, OptionTypes.INT_TYPE, -1), 0);
+                // Adjust any excessive window size to fit within the screen
+                final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+                final int width = Math.min(settings.get(saveSettingsListener, FRAME_WIDTH_KEY, OptionTypes.INT_TYPE, -1), screenSize.width);
+                final int height = Math.min(settings.get(saveSettingsListener, FRAME_HEIGHT_KEY, OptionTypes.INT_TYPE, -1), screenSize.height);
+                setBounds(x, y, width, height);
+            }
+        } catch (Option.Error optionError) {
+            ProgramWarning.message("Inspector Main Frame settings: " + optionError.getMessage());
+        }
+
     }
 
     public void addInspector(Inspector inspector) {
@@ -308,6 +294,15 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     public void moveToMiddle(Inspector inspector) {
         final InspectorFrame frame = inspector.frame();
         frame.setLocation(getMiddle(frame));
+    }
+
+    /* (non-Javadoc)
+     * @see com.sun.max.ins.gui.InspectorGUI#moveToMiddleIfNotVisble(com.sun.max.ins.gui.Inspector)
+     */
+    public void moveToMiddleIfNotVisble(Inspector inspector) {
+        if (!getContentPane().contains(inspector.component().getLocation())) {
+            moveToMiddle(inspector);
+        }
     }
 
     public void moveToMiddle(JDialog dialog) {
