@@ -31,7 +31,7 @@ import com.sun.c1x.value.*;
  */
 public class LIRConstant extends LIROperandPtr {
 
-    ConstType value;
+    private ConstType value;
 
     /**
      * Create a new integer constant.
@@ -180,7 +180,7 @@ public class LIRConstant extends LIROperandPtr {
     }
 
     /**
-     * Asserts that a given constant c if of type t1 or t2.
+     * Asserts that a given constant c has type t1 or t2.
      *
      * @return the reference to the input constant if succeeded.
      */
@@ -190,7 +190,7 @@ public class LIRConstant extends LIROperandPtr {
     }
 
     /**
-     * Converts a float constant to an int constant.
+     * Converts a float constant into an int constant.
      *
      * @return the int value of the constant.
      */

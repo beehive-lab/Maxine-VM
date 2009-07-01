@@ -64,11 +64,15 @@ public class LIRRTCall extends LIRCall{
         // TODO Not yet implemented.
     }
 
+    private String nameForAddress() {
+        return String.valueOf(address); // TODO needs to get the String at the address by calling Runtime. Check the original code on Hotspot.
+    }
+
     /**
      * Verifies this instruction.
      */
     @Override
     public void verify() {
-        // TODO Not yet implemented.
+        assert !nameForAddress().equals("<unknown function>") : "unknown function";
     }
 }
