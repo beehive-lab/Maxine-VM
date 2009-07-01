@@ -115,6 +115,11 @@ public interface InspectorGUI {
     void moveToMiddle(Inspector inspector);
 
     /**
+     * Sets Inspector frame location to middle of Inspection display if it would otherwise be completely outside the visible area.
+     */
+    void moveToMiddleIfNotVisble(Inspector inspector);
+
+    /**
      * Sets dialog frame location to middle of Inspection display.
      */
     void moveToMiddle(JDialog dialog);
