@@ -31,6 +31,7 @@ import com.sun.c1x.graph.GraphBuilder;
 import com.sun.c1x.ir.BlockBegin;
 import com.sun.c1x.ir.IRScope;
 import com.sun.c1x.util.*;
+import com.sun.c1x.target.Target;
 
 /**
  * The <code>Compilation</code> class encapsulates global information about the compilation
@@ -41,6 +42,7 @@ import com.sun.c1x.util.*;
  */
 public class C1XCompilation {
 
+    public final Target target;
     public final CiRuntime runtime;
     public final CiMethod method;
     final int osrBCI;
@@ -58,11 +60,13 @@ public class C1XCompilation {
 
     /**
      * Creates a new compilation for the specified method and runtime.
+     * @param target the target of the compilation, including architecture information
      * @param runtime the runtime implementation
      * @param method the method to be compiled
      * @param osrBCI the bytecode index for on-stack replacement, if requested
      */
-    public C1XCompilation(CiRuntime runtime, CiMethod method, int osrBCI) {
+    public C1XCompilation(Target target, CiRuntime runtime, CiMethod method, int osrBCI) {
+        this.target = target;
         this.runtime = runtime;
         this.method = method;
         this.osrBCI = osrBCI;
@@ -70,10 +74,12 @@ public class C1XCompilation {
 
     /**
      * Creates a new compilation for the specified method and runtime.
+     * @param target the target of the compilation, including architecture information
      * @param runtime the runtime implementation
      * @param method the method to be compiled
      */
-    public C1XCompilation(CiRuntime runtime, CiMethod method) {
+    public C1XCompilation(Target target, CiRuntime runtime, CiMethod method) {
+        this.target = target;
         this.runtime = runtime;
         this.method = method;
         this.osrBCI = -1;
