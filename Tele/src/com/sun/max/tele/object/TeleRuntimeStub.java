@@ -158,16 +158,16 @@ public class TeleRuntimeStub extends TeleRuntimeMemoryRegion implements TeleTarg
 
     public void setTargetCodeLabelBreakpoints() {
         for (TargetCodeInstruction targetCodeInstruction : getInstructions()) {
-            if (targetCodeInstruction.label() != null) {
-                teleVM().makeTargetBreakpoint(targetCodeInstruction.address());
+            if (targetCodeInstruction.label != null) {
+                teleVM().makeTargetBreakpoint(targetCodeInstruction.address);
             }
         }
     }
 
     public void removeTargetCodeLabelBreakpoints() {
         for (TargetCodeInstruction targetCodeInstruction : getInstructions()) {
-            if (targetCodeInstruction.label() != null) {
-                final TeleTargetBreakpoint targetBreakpoint = teleVM().getTargetBreakpoint(targetCodeInstruction.address());
+            if (targetCodeInstruction.label != null) {
+                final TeleTargetBreakpoint targetBreakpoint = teleVM().getTargetBreakpoint(targetCodeInstruction.address);
                 if (targetBreakpoint != null) {
                     targetBreakpoint.remove();
                 }
@@ -180,7 +180,7 @@ public class TeleRuntimeStub extends TeleRuntimeMemoryRegion implements TeleTarg
         final MachineCodeInstruction[] result = new MachineCodeInstruction[instructions.length()];
         for (int i = 0; i < result.length; i++) {
             final TargetCodeInstruction ins = instructions.get(i);
-            result[i] = new MachineCodeInstruction(ins.getMnemonic(), ins.getPosition(), ins.getAddress(), ins.getLabel(), ins.getBytes(), ins.getOperands(), ins.getTargetAddress());
+            result[i] = new MachineCodeInstruction(ins.mnemonic, ins.position, ins.address.toLong(), ins.label, ins.bytes, ins.operands, ins.getTargetAddressAsLong());
         }
         return new MachineCodeInstructionArray(result);
     }
