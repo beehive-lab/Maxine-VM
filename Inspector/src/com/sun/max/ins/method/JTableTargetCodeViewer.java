@@ -56,124 +56,6 @@ import com.sun.max.vm.runtime.*;
  */
 public class JTableTargetCodeViewer extends TargetCodeViewer {
 
-    /**
-     * Defines the columns supported by the inspector; the view includes one of each
-     * kind.  The visibility of them, however, may be changed by the user.
-     */
-    private enum ColumnKind {
-        TAG("Tag", "Tags:  IP, stack return, breakpoints", true, 20) {
-            @Override
-            public boolean canBeMadeInvisible() {
-                return false;
-            }
-        },
-        NUMBER("No.", "Index of instruction in the method", false, 15),
-        ADDRESS("Addr.", "Memory address of target instruction start", false, -1),
-        POSITION("Pos.", "Position in bytes of target instruction start", false, 20),
-        LABEL("Label", "Labels synthesized during disassembly", true, -1),
-        INSTRUCTION("Instr.", "Instruction mnemonic", true, -1),
-        OPERANDS("Operands", "Instruction operands", true, -1),
-        SOURCE_LINE("Line", "Line number in source code (may be approximate)", true, -1),
-        BYTES("Bytes", "Instruction bytes", false, -1);
-
-        private final String label;
-        private final String toolTipText;
-        private final boolean defaultVisibility;
-        private final int minWidth;
-
-        private ColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
-            this.label = label;
-            this.toolTipText = toolTipText;
-            this.defaultVisibility = defaultVisibility;
-            this.minWidth = minWidth;
-            assert defaultVisibility || canBeMadeInvisible();
-        }
-
-        /**
-         * @return text to appear in the column header
-         */
-        public String label() {
-            return label;
-        }
-
-        /**
-         * @return text to appear in the column header's toolTip, null if none specified
-         */
-        public String toolTipText() {
-            return toolTipText;
-        }
-
-        /**
-         * @return whether this column kind should be allowed to be made invisible.
-         */
-        public boolean canBeMadeInvisible() {
-            return true;
-        }
-
-        /**
-         * @return whether this column should be visible by default.
-         */
-        public boolean defaultVisibility() {
-            return defaultVisibility;
-        }
-
-        /**
-         * @return minimum width allowed for this column when resized by user; -1 if none specified.
-         */
-        public int minWidth() {
-            return minWidth;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
-
-        public static final IndexedSequence<ColumnKind> VALUES = new ArraySequence<ColumnKind>(values());
-    }
-
-    private static TargetCodeViewerPreferences globalPreferences;
-
-    private static TargetCodeViewerPreferences globalPreferences(Inspection inspection) {
-        if (globalPreferences == null) {
-            globalPreferences = new TargetCodeViewerPreferences(inspection);
-        }
-        return globalPreferences;
-    }
-
-    /**
-     * @return a GUI panel suitable for setting global preferences for this kind of view.
-     */
-    public static JPanel globalPreferencesPanel(Inspection inspection) {
-        return globalPreferences(inspection).getPanel();
-    }
-
-    public static class TargetCodeViewerPreferences extends TableColumnVisibilityPreferences<ColumnKind> {
-        public TargetCodeViewerPreferences(TableColumnVisibilityPreferences<ColumnKind> otherPreferences) {
-            super(otherPreferences);
-        }
-
-        public TargetCodeViewerPreferences(Inspection inspection) {
-            super(inspection, "targetCodeInspectorPrefs", ColumnKind.class, ColumnKind.VALUES);
-        }
-
-        @Override
-        protected boolean canBeMadeInvisible(ColumnKind columnType) {
-            return columnType.canBeMadeInvisible();
-        }
-
-        @Override
-        protected boolean defaultVisibility(ColumnKind columnType) {
-            return columnType.defaultVisibility();
-        }
-
-        @Override
-        protected String label(ColumnKind columnType) {
-            return columnType.label();
-        }
-    }
-
-
     private final Inspection inspection;
     private final TargetCodeTable table;
     private final TargetCodeTableModel model;
@@ -188,7 +70,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         this.operandsRenderer = new OperandsRenderer();
         this.sourceLineRenderer = new SourceLineRenderer();
         this.model = new TargetCodeTableModel(teleTargetRoutine.getInstructions());
-        this.columns = new TableColumn[ColumnKind.VALUES.length()];
+        this.columns = new TableColumn[TargetCodeColumnKind.VALUES.length()];
         this.columnModel = new TargetCodeTableColumnModel();
         this.table = new TargetCodeTable(inspection, model, columnModel);
         createView();
@@ -253,7 +135,8 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
         final JButton viewOptionsButton = new InspectorButton(inspection(), new AbstractAction("View...") {
             public void actionPerformed(ActionEvent actionEvent) {
-                new TableColumnVisibilityPreferences.Dialog<ColumnKind>(inspection(), "TargetCode View Options", columnModel.preferences(), globalPreferences(inspection()));
+                final TargetCodeViewerPreferences globalPreferences = TargetCodeViewerPreferences.globalPreferences(inspection());
+                new TableColumnVisibilityPreferences.Dialog<TargetCodeColumnKind>(inspection(), "TargetCode View Options", columnModel.preferences(), globalPreferences);
             }
         });
         viewOptionsButton.setToolTipText("Target code view options");
@@ -311,7 +194,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         public int getColumnCount() {
-            return ColumnKind.VALUES.length();
+            return TargetCodeColumnKind.VALUES.length();
         }
 
         public int getRowCount() {
@@ -320,7 +203,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
         public Object getValueAt(int row, int col) {
             final TargetCodeInstruction targetCodeInstruction = getTargetCodeInstruction(row);
-            switch (ColumnKind.VALUES.get(col)) {
+            switch (TargetCodeColumnKind.VALUES.get(col)) {
                 case TAG:
                     return null;
                 case NUMBER:
@@ -347,7 +230,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
         @Override
         public Class< ? > getColumnClass(int col) {
-            switch (ColumnKind.VALUES.get(col)) {
+            switch (TargetCodeColumnKind.VALUES.get(col)) {
                 case TAG:
                     return Object.class;
                 case NUMBER:
@@ -424,7 +307,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                     final Point p = mouseEvent.getPoint();
                     final int index = getColumnModel().getColumnIndexAtX(p.x);
                     final int modelIndex = getColumnModel().getColumn(index).getModelIndex();
-                    return ColumnKind.VALUES.get(modelIndex).toolTipText();
+                    return TargetCodeColumnKind.VALUES.get(modelIndex).toolTipText();
                 }
             };
         }
@@ -486,9 +369,9 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         private final TargetCodeViewerPreferences preferences;
 
         private TargetCodeTableColumnModel() {
-            preferences = new TargetCodeViewerPreferences(JTableTargetCodeViewer.globalPreferences(inspection())) {
+            preferences = new TargetCodeViewerPreferences(TargetCodeViewerPreferences.globalPreferences(inspection())) {
                 @Override
-                public void setIsVisible(ColumnKind columnKind, boolean visible) {
+                public void setIsVisible(TargetCodeColumnKind columnKind, boolean visible) {
                     super.setIsVisible(columnKind, visible);
                     final int col = columnKind.ordinal();
                     if (visible) {
@@ -502,22 +385,22 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             };
 
             final Address startAddress = model.getTargetCodeInstruction(0).address();
-            createColumn(ColumnKind.TAG, new TagRenderer());
-            createColumn(ColumnKind.NUMBER, new NumberRenderer());
-            createColumn(ColumnKind.ADDRESS, new AddressRenderer(startAddress));
-            createColumn(ColumnKind.POSITION, new PositionRenderer(startAddress));
-            createColumn(ColumnKind.LABEL, new LabelRenderer(startAddress));
-            createColumn(ColumnKind.INSTRUCTION, new InstructionRenderer(inspection));
-            createColumn(ColumnKind.OPERANDS, operandsRenderer);
-            createColumn(ColumnKind.SOURCE_LINE, sourceLineRenderer);
-            createColumn(ColumnKind.BYTES, new BytesRenderer(inspection));
+            createColumn(TargetCodeColumnKind.TAG, new TagRenderer());
+            createColumn(TargetCodeColumnKind.NUMBER, new NumberRenderer());
+            createColumn(TargetCodeColumnKind.ADDRESS, new AddressRenderer(startAddress));
+            createColumn(TargetCodeColumnKind.POSITION, new PositionRenderer(startAddress));
+            createColumn(TargetCodeColumnKind.LABEL, new LabelRenderer(startAddress));
+            createColumn(TargetCodeColumnKind.INSTRUCTION, new InstructionRenderer(inspection));
+            createColumn(TargetCodeColumnKind.OPERANDS, operandsRenderer);
+            createColumn(TargetCodeColumnKind.SOURCE_LINE, sourceLineRenderer);
+            createColumn(TargetCodeColumnKind.BYTES, new BytesRenderer(inspection));
         }
 
         private TargetCodeViewerPreferences preferences() {
             return preferences;
         }
 
-        private void createColumn(ColumnKind columnKind, TableCellRenderer renderer) {
+        private void createColumn(TargetCodeColumnKind columnKind, TableCellRenderer renderer) {
             final int col = columnKind.ordinal();
             columns[col] = new TableColumn(col, 0, renderer, null);
             columns[col].setHeaderValue(columnKind.label());
@@ -654,7 +537,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final Integer position = (Integer) model.getValueAt(row, ColumnKind.POSITION.ordinal());
+            final Integer position = (Integer) model.getValueAt(row, TargetCodeColumnKind.POSITION.ordinal());
             setLocation(value.toString(), position);
             setFont(style().defaultTextFont());
             setBackground(rowToBackgroundColor(row));

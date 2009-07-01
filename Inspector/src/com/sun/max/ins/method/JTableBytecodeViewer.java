@@ -32,11 +32,9 @@ import javax.swing.table.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
-import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.constant.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.program.*;
-import com.sun.max.program.option.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -54,184 +52,6 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
     /** Maximum literal string length displayed directly in operand field. */
     public static final int MAX_BYTECODE_OPERAND_DISPLAY = 15;
-    /**
-     * Defines the columns supported by the inspector; the view includes one of each
-     * kind.  The visibility of them, however, may be changed by the user.
-     */
-    private enum ColumnKind {
-        TAG("Tag", "Tags:  IP, stack return, breakpoints", true, 20) {
-            @Override
-            public boolean canBeMadeInvisible() {
-                return false;
-            }
-        },
-        NUMBER("No.", "Index of instruction in the method", false, 15),
-        POSITION("Pos.", "Position in bytes of bytecode instruction start", true, 15),
-        INSTRUCTION("Instr.", "Instruction mnemonic", true, -1),
-        OPERAND1("Operand 1", "Instruction operand 1", true, -1),
-        OPERAND2("Operand 2", "Instruction operand 2", true, -1),
-        SOURCE_LINE("Line", "Line number in source code (may be approximate)", true, -1),
-        BYTES("Bytes", "Instruction bytes", false, -1);
-
-        private final String label;
-        private final String toolTipText;
-        private final boolean defaultVisibility;
-        private final int minWidth;
-
-        private ColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
-            this.label = label;
-            this.toolTipText = toolTipText;
-            this.defaultVisibility = defaultVisibility;
-            this.minWidth = minWidth;
-            assert defaultVisibility || canBeMadeInvisible();
-        }
-
-        /**
-         * @return text to appear in the column header
-         */
-        public String label() {
-            return label;
-        }
-
-        /**
-         * @return text to appear in the column header's toolTip, null if none specified
-         */
-        public String toolTipText() {
-            return toolTipText;
-        }
-
-        /**
-         * @return whether this column kind should be allowed to be made invisible.
-         */
-        public boolean canBeMadeInvisible() {
-            return true;
-        }
-
-        /**
-         * @return whether this column should be visible by default.
-         */
-        public boolean defaultVisibility() {
-            return defaultVisibility;
-        }
-
-        /**
-         * @return minimum width allowed for this column when resized by user; -1 if none specified.
-         */
-        public int minWidth() {
-            return minWidth;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
-
-        public static final IndexedSequence<ColumnKind> VALUES = new ArraySequence<ColumnKind>(values());
-    }
-
-    public static class BytecodeViewerPreferences extends TableColumnVisibilityPreferences<ColumnKind> {
-
-        private static final String OPERAND_DISPLAY_MODE_PREFERENCE = "operandDisplayMode";
-
-        private PoolConstantLabel.Mode operandDisplayMode;
-
-        public BytecodeViewerPreferences(Inspection inspection) {
-            super(inspection, "bytecodeInspectorPrefs", ColumnKind.class, ColumnKind.VALUES);
-            final OptionTypes.EnumType<PoolConstantLabel.Mode> optionType = new OptionTypes.EnumType<PoolConstantLabel.Mode>(PoolConstantLabel.Mode.class);
-            operandDisplayMode = inspection.settings().get(saveSettingsListener, OPERAND_DISPLAY_MODE_PREFERENCE, optionType, PoolConstantLabel.Mode.JAVAP);
-        }
-
-        public BytecodeViewerPreferences(BytecodeViewerPreferences otherPreferences) {
-            super(otherPreferences);
-            operandDisplayMode = otherPreferences.operandDisplayMode;
-        }
-
-        @Override
-        protected boolean canBeMadeInvisible(ColumnKind columnType) {
-            return columnType.canBeMadeInvisible();
-        }
-
-        @Override
-        protected boolean defaultVisibility(ColumnKind columnType) {
-            return columnType.defaultVisibility();
-        }
-
-        @Override
-        protected String label(ColumnKind columnType) {
-            return columnType.label();
-        }
-
-        public PoolConstantLabel.Mode operandDisplayMode() {
-            return operandDisplayMode;
-        }
-
-        public void setOperandDisplayMode(PoolConstantLabel.Mode mode) {
-            final boolean needToSave = mode != operandDisplayMode;
-            operandDisplayMode = mode;
-            if (needToSave) {
-                inspection().settings().save();
-            }
-        }
-
-        @Override
-        protected void saveSettings(SaveSettingsEvent saveSettingsEvent) {
-            super.saveSettings(saveSettingsEvent);
-            saveSettingsEvent.save(OPERAND_DISPLAY_MODE_PREFERENCE, operandDisplayMode.name());
-        }
-
-        @Override
-        public JPanel getPanel() {
-            final JRadioButton javapButton = new InspectorRadioButton(inspection(), "javap style", "Display bytecode operands in a style similar to the 'javap' tool and the JVM spec book");
-            final JRadioButton terseButton = new InspectorRadioButton(inspection(), "terse style", "Display bytecode operands in a terse style");
-            final ButtonGroup group = new ButtonGroup();
-            group.add(javapButton);
-            group.add(terseButton);
-
-            javapButton.setSelected(operandDisplayMode == PoolConstantLabel.Mode.JAVAP);
-            terseButton.setSelected(operandDisplayMode == PoolConstantLabel.Mode.TERSE);
-
-            final ActionListener styleActionListener = new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    if (javapButton.isSelected()) {
-                        setOperandDisplayMode(PoolConstantLabel.Mode.JAVAP);
-                    } else if (terseButton.isSelected()) {
-                        setOperandDisplayMode(PoolConstantLabel.Mode.TERSE);
-                    }
-                }
-            };
-            javapButton.addActionListener(styleActionListener);
-            terseButton.addActionListener(styleActionListener);
-
-            final JPanel panel2 = new InspectorPanel(inspection(), new BorderLayout());
-
-            final JPanel operandStylePanel = new InspectorPanel(inspection());
-            operandStylePanel.add(new TextLabel(inspection(), "Operand Style:  "));
-            operandStylePanel.add(javapButton);
-            operandStylePanel.add(terseButton);
-            panel2.add(operandStylePanel, BorderLayout.WEST);
-
-            final JPanel panel = new InspectorPanel(inspection(), new BorderLayout());
-            panel.add(super.getPanel(), BorderLayout.NORTH);
-            panel.add(operandStylePanel, BorderLayout.SOUTH);
-            return panel;
-        }
-    }
-
-    private static BytecodeViewerPreferences globalPreferences;
-
-    private static BytecodeViewerPreferences globalPreferences(Inspection inspection) {
-        if (globalPreferences == null) {
-            globalPreferences = new BytecodeViewerPreferences(inspection);
-        }
-        return globalPreferences;
-    }
-
-    /**
-     * @return a GUI panel suitable for setting global preferences for this kind of view.
-     */
-    public static JPanel globalPreferencesPanel(Inspection inspection) {
-        return globalPreferences(inspection).getPanel();
-    }
 
     private final Inspection inspection;
     private final BytecodeTable table;
@@ -244,10 +64,10 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         super(inspection, parent, teleClassMethodActor, teleTargetMethod);
         this.inspection = inspection;
         model = new BytecodeTableModel(bytecodeInstructions());
-        columns = new TableColumn[ColumnKind.VALUES.length()];
+        columns = new TableColumn[BytecodeColumnKind.VALUES.length()];
         columnModel = new BytecodeTableColumnModel();
         table = new BytecodeTable(inspection, model, columnModel);
-        operandDisplayMode = globalPreferences(inspection()).operandDisplayMode;
+        operandDisplayMode = BytecodeViewerPreferences.globalPreferences(inspection()).operandDisplayMode();
         createView();
     }
 
@@ -317,7 +137,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
         final JButton viewOptionsButton = new InspectorButton(inspection, new AbstractAction("View...") {
             public void actionPerformed(ActionEvent actionEvent) {
-                new TableColumnVisibilityPreferences.Dialog<ColumnKind>(inspection(), "Bytecode View Options", columnModel.preferences(), globalPreferences(inspection()));
+                final BytecodeViewerPreferences globalPreferences = BytecodeViewerPreferences.globalPreferences(inspection());
+                new TableColumnVisibilityPreferences.Dialog<BytecodeColumnKind>(inspection(), "Bytecode View Options", columnModel.preferences(), globalPreferences);
             }
         });
         viewOptionsButton.setToolTipText("Bytecode view options");
@@ -371,7 +192,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
 
         public int getColumnCount() {
-            return ColumnKind.VALUES.length();
+            return BytecodeColumnKind.VALUES.length();
         }
 
         public int getRowCount() {
@@ -380,7 +201,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
         public Object getValueAt(int row, int col) {
             final BytecodeInstruction instruction = getBytecodeInstruction(row);
-            switch (ColumnKind.VALUES.get(col)) {
+            switch (BytecodeColumnKind.VALUES.get(col)) {
                 case TAG:
                     return null;
                 case NUMBER:
@@ -404,7 +225,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
         @Override
         public Class< ? > getColumnClass(int col) {
-            switch (ColumnKind.VALUES.get(col)) {
+            switch (BytecodeColumnKind.VALUES.get(col)) {
                 case TAG:
                     return Object.class;
                 case NUMBER:
@@ -495,7 +316,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     final Point p = mouseEvent.getPoint();
                     final int index = getColumnModel().getColumnIndexAtX(p.x);
                     final int modelIndex = getColumnModel().getColumn(index).getModelIndex();
-                    return ColumnKind.VALUES.get(modelIndex).toolTipText();
+                    return BytecodeColumnKind.VALUES.get(modelIndex).toolTipText();
                 }
             };
         }
@@ -565,9 +386,9 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         private final BytecodeViewerPreferences preferences;
 
         BytecodeTableColumnModel() {
-            preferences = new BytecodeViewerPreferences(JTableBytecodeViewer.globalPreferences(inspection())) {
+            preferences = new BytecodeViewerPreferences(BytecodeViewerPreferences.globalPreferences(inspection())) {
                 @Override
-                public void setIsVisible(ColumnKind columnKind, boolean visible) {
+                public void setIsVisible(BytecodeColumnKind columnKind, boolean visible) {
                     super.setIsVisible(columnKind, visible);
                     final int col = columnKind.ordinal();
                     if (visible) {
@@ -579,17 +400,17 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     refresh(true);
                 }
             };
-            createColumn(ColumnKind.TAG, new TagRenderer());
-            createColumn(ColumnKind.NUMBER, new NumberRenderer());
-            createColumn(ColumnKind.POSITION, new PositionRenderer());
-            createColumn(ColumnKind.INSTRUCTION, new InstructionRenderer());
-            createColumn(ColumnKind.OPERAND1, new OperandRenderer());
-            createColumn(ColumnKind.OPERAND2, new OperandRenderer());
-            createColumn(ColumnKind.SOURCE_LINE, new SourceLineRenderer());
-            createColumn(ColumnKind.BYTES, new BytesRenderer());
+            createColumn(BytecodeColumnKind.TAG, new TagRenderer());
+            createColumn(BytecodeColumnKind.NUMBER, new NumberRenderer());
+            createColumn(BytecodeColumnKind.POSITION, new PositionRenderer());
+            createColumn(BytecodeColumnKind.INSTRUCTION, new InstructionRenderer());
+            createColumn(BytecodeColumnKind.OPERAND1, new OperandRenderer());
+            createColumn(BytecodeColumnKind.OPERAND2, new OperandRenderer());
+            createColumn(BytecodeColumnKind.SOURCE_LINE, new SourceLineRenderer());
+            createColumn(BytecodeColumnKind.BYTES, new BytesRenderer());
         }
 
-        private void createColumn(ColumnKind columnKind, TableCellRenderer renderer) {
+        private void createColumn(BytecodeColumnKind columnKind, TableCellRenderer renderer) {
             final int col = columnKind.ordinal();
             columns[col] = new TableColumn(col, 0, renderer, null);
             columns[col].setHeaderValue(columnKind.label());
