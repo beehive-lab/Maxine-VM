@@ -140,7 +140,7 @@ public class LIRTypeCheck extends LIRInstruction {
      * @return the array
      */
     public LIROperand array() {
-        assert opcode == LIROpcode.StoreCheck : "opcode is not valid.";
+        assert code == LIROpcode.StoreCheck : "opcode is not valid.";
         return array;
     }
 

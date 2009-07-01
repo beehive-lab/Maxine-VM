@@ -78,7 +78,7 @@ public class LIRJavaCall extends LIRCall {
      * @return the virtual table offset for this call.
      */
     public int vtableOffset() {
-        assert opcode == LIROpcode.VirtualCall : "Only have vtable for real virtual call";
+        assert code == LIROpcode.VirtualCall : "Only have vtable for real virtual call";
         return address();
     }
 

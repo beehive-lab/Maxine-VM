@@ -30,7 +30,7 @@ import com.sun.c1x.util.*;
  * @author Marcelo Cintra
  *
  */
-public class ConversionStub {
+public class ConversionStub extends CodeStub {
 
     private Bytecodes bytecode;
     private LIROperand input;
@@ -75,16 +75,19 @@ public class ConversionStub {
         return result;
     }
 
+    @Override
     public void emitCode(LIRAssembler masm) {
         // TODO to be completed later
     }
 
+    @Override
     public void visit(LIRVisitState visitor) {
         visitor.doSlowCase();
         visitor.doInput(input);
         visitor.doOutput(result);
     }
 
+    @Override
     public void printName(LogStream out) {
         out.print("ConversionStub");
     }

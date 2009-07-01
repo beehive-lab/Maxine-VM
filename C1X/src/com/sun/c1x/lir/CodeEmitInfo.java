@@ -29,5 +29,10 @@ package com.sun.c1x.lir;
  */
 public class CodeEmitInfo {
 
+    public int bci() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
     // TODO nothing for now
 }
