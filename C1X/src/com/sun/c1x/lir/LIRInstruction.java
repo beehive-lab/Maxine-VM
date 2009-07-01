@@ -56,8 +56,8 @@ public abstract class LIRInstruction {
      * Constructs a new Instruction.
      *
      * @param opcode the opcode of the new instruction
-     * @param result the operand that holds operation result of this instruction
-     * @param info the object holding information needed to emit debug information
+     * @param result the operand that holds the operation result of this instruction
+     * @param info the object holding information needed to perform deoptimization
      */
     public LIRInstruction(LIROpcode opcode, LIROperand result, CodeEmitInfo info) {
         this.result = result;
@@ -192,7 +192,7 @@ public abstract class LIRInstruction {
     public abstract void printInstruction(LogStream out);
 
     /**
-     * Abstract method to be print this instruction.
+     * Prints information common to all LIR instruction.
      *
      * @param out the LogStream to print into.
      */
@@ -211,9 +211,7 @@ public abstract class LIRInstruction {
         return start.ordinal() < opcode.ordinal() && opcode.ordinal() < end.ordinal();
     }
 
-
     public void verify() {
 
     }
-
 }
