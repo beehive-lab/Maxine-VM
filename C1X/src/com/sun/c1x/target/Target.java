@@ -20,6 +20,9 @@
  */
 package com.sun.c1x.target;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+
 /**
  * The <code>Target</code> class represents the target of a compilation, including
  * the CPU architecture and other configuration information of the machine. Such
@@ -44,20 +47,25 @@ public class Target {
         cacheAlignment = arch.wordSize;
         heapAlignment = arch.wordSize;
         backend = makeBackend(arch);
-        backend.target = this;
     }
 
     private Backend makeBackend(Architecture arch) {
+        // load and instantiate the backend via reflection
         String className = "com.sun.c1x.target." + arch.backend + "." + arch.backend.toUpperCase() + "Backend";
         try {
             Class javaClass = Class.forName(className);
-            return (Backend) javaClass.newInstance();
+            Constructor constructor = javaClass.getDeclaredConstructor(Target.class);
+            return (Backend) constructor.newInstance(this);
         } catch (InstantiationException e) {
             throw new Error("could not instantiate backend class: " + className);
         } catch (IllegalAccessException e) {
             throw new Error("could not access backend class: " + className);
         } catch (ClassNotFoundException e) {
             throw new Error("could not find backend class: " + className);
+        } catch (NoSuchMethodException e) {
+            throw new Error("could not find backend class constructor: " + className);
+        } catch (InvocationTargetException e) {
+            throw new Error("backend constructor threw an exception: " + e, e.getTargetException());
         }
     }
 
