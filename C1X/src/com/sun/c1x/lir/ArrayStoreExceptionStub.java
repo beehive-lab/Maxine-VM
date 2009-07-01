@@ -46,6 +46,7 @@ public class ArrayStoreExceptionStub extends CodeStub {
      *
      * @return the info
      */
+    @Override
     public CodeEmitInfo info() {
         return info;
     }
