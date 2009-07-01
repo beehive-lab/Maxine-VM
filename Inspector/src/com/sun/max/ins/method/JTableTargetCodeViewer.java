@@ -165,7 +165,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
     @Override
     protected void setFocusAtRow(int row) {
-        inspection.focus().setCodeLocation(maxVM().createCodeLocation(model.getTargetCodeInstruction(row).address()), false);
+        inspection.focus().setCodeLocation(maxVM().createCodeLocation(model.getTargetCodeInstruction(row).address), false);
     }
 
     @Override
@@ -210,20 +210,20 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                 case NUMBER:
                     return row;
                 case ADDRESS:
-                    return targetCodeInstruction.address();
+                    return targetCodeInstruction.address;
                 case POSITION:
-                    return targetCodeInstruction.position();
+                    return targetCodeInstruction.position;
                 case LABEL:
-                    final String label = targetCodeInstruction.label();
+                    final String label = targetCodeInstruction.label;
                     return label != null ? label + ":" : "";
                 case INSTRUCTION:
-                    return targetCodeInstruction.mnemonic();
+                    return targetCodeInstruction.mnemonic;
                 case OPERANDS:
-                    return targetCodeInstruction.operands();
+                    return targetCodeInstruction.operands;
                 case SOURCE_LINE:
                     return "";
                 case BYTES:
-                    return targetCodeInstruction.bytes();
+                    return targetCodeInstruction.bytes;
                 default:
                     throw new RuntimeException("Column out of range: " + col);
             }
@@ -263,7 +263,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         public int getRowAtAddress(Address address) {
             int row = 0;
             for (TargetCodeInstruction targetCodeInstruction : instructions) {
-                if (targetCodeInstruction.address().equals(address)) {
+                if (targetCodeInstruction.address.equals(address)) {
                     return row;
                 }
                 row++;
@@ -298,7 +298,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                         final int modelIndex = getColumnModel().getColumn(columnIndex).getModelIndex();
                         if (modelIndex == ObjectFieldColumnKind.TAG.ordinal()) {
                             final InspectorMenu menu = new InspectorMenu();
-                            final Address address = JTableTargetCodeViewer.this.model.getTargetCodeInstruction(hitRowIndex).address();
+                            final Address address = JTableTargetCodeViewer.this.model.getTargetCodeInstruction(hitRowIndex).address;
                             menu.add(actions().setTargetCodeBreakpoint(address, "Set breakpoint"));
                             menu.add(actions().removeTargetCodeBreakpoint(address, "Unset breakpoint"));
                             menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
@@ -341,7 +341,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                 final int selectedRow = getSelectedRow();
                 final TargetCodeTableModel targetCodeTableModel = (TargetCodeTableModel) getModel();
                 if (selectedRow >= 0 && selectedRow < targetCodeTableModel.getRowCount()) {
-                    inspection().focus().setCodeLocation(maxVM().createCodeLocation(targetCodeTableModel.getTargetCodeInstruction(selectedRow).address()), true);
+                    inspection().focus().setCodeLocation(maxVM().createCodeLocation(targetCodeTableModel.getTargetCodeInstruction(selectedRow).address), true);
                 }
             }
         }
@@ -404,7 +404,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                 }
             };
 
-            final Address startAddress = model.getTargetCodeInstruction(0).address();
+            final Address startAddress = model.getTargetCodeInstruction(0).address;
             createColumn(TargetCodeColumnKind.TAG, new TagRenderer());
             createColumn(TargetCodeColumnKind.NUMBER, new NumberRenderer());
             createColumn(TargetCodeColumnKind.ADDRESS, new AddressRenderer(startAddress));
@@ -713,7 +713,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             InspectorLabel inspectorLabel = wordValueLabels[row];
             if (inspectorLabel == null) {
                 final TargetCodeInstruction targetCodeInstruction = model.getTargetCodeInstruction(row);
-                final String text = targetCodeInstruction.operands();
+                final String text = targetCodeInstruction.operands;
                 if (targetCodeInstruction.targetAddress != null && !teleTargetRoutine().targetCodeRegion().contains(targetCodeInstruction.targetAddress)) {
                     inspectorLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.CALL_ENTRY_POINT, targetCodeInstruction.targetAddress, table);
                     wordValueLabels[row] = inspectorLabel;
