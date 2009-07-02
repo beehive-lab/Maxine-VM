@@ -24,7 +24,6 @@ import java.math.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.box.*;
 import com.sun.max.vm.compiler.builtin.*;
@@ -363,8 +362,8 @@ public abstract class Address extends Word {
     }
 
     @INLINE(override = true)
-    public Address aligned() {
-        final int n = Platform.target().processorKind.dataModel.alignment.numberOfBytes();
+    public Address wordAligned() {
+        final int n = Word.size();
         return plus(n - 1).and(Address.fromInt(n - 1).not());
     }
 
@@ -374,8 +373,8 @@ public abstract class Address extends Word {
     }
 
     @INLINE(override = true)
-    public boolean isAligned() {
-        final int n = Platform.target().processorKind.dataModel.alignment.numberOfBytes();
+    public boolean isWordAligned() {
+        final int n = Word.size();
         return and(n - 1).equals(Address.zero());
     }
 

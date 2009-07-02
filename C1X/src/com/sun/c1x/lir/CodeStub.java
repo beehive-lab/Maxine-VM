@@ -36,7 +36,7 @@ public abstract class CodeStub {
     protected Label continuation;
 
     /**
-     * Returns the entry for this Code stub.
+     * Returns the entry label for this code stub.
      *
      * @return the entry
      */
@@ -99,6 +99,5 @@ public abstract class CodeStub {
         // TODO Auto-generated method stub
         return null;
     }
-
 
 }

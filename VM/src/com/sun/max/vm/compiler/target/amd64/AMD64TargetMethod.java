@@ -74,7 +74,7 @@ public interface AMD64TargetMethod {
             } else {
                 // TODO: Patching code is probably not thread safe!
                 //       Patch location must not straddle a cache-line (32-byte) boundary.
-                FatalError.check(true | callSite.isAligned(), "Method " + targetMethod.classMethodActor().format("%H.%n(%p)") + " entry point is not word aligned.");
+                FatalError.check(true | callSite.isWordAligned(), "Method " + targetMethod.classMethodActor().format("%H.%n(%p)") + " entry point is not word aligned.");
                 // The read, modify, write below should be changed to simply a write once we have the method entry point alignment fixed.
                 final Word patch = callSite.readWord(0).asAddress().and(0xFFFFFF0000000000L).or((displacement << 8) | controlTransferOpcode);
                 callSite.writeWord(0, patch);

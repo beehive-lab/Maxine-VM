@@ -30,7 +30,11 @@ import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.program.option.*;
 
-
+/**
+ * Persistent preferences for viewing heap objects in the VM.
+ *
+ * @author Michael Van De Vanter
+  */
 public final class ObjectInspectorPreferences extends AbstractInspectionHolder {
 
     private static ObjectInspectorPreferences globalPreferences;

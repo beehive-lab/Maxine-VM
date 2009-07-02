@@ -143,9 +143,6 @@ public class LIRVisitState {
         // TODO to be completed later
     }
 
-    /**
-    *
-    */
    public void doOutput(LIROperand result) {
        // TODO to be completed later
    }

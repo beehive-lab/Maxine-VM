@@ -62,7 +62,7 @@ void isa_canonicalizeTeleFloatingPointRegisters(isa_OsTeleFloatingPointRegisters
 #elif os_LINUX
 #define CANONICALIZE(reg) c->xmm##reg = (Word) ((XMMRegister *) &os->xmm_space)[reg].low
 #elif os_SOLARIS
-#define CANONICALIZE(reg) c->xmm##reg = (Word) (Word *) &os->fp_reg_set.fpchip_state.xmm[reg]
+#define CANONICALIZE(reg) c->xmm##reg = (Word) *((Word *) &os->fp_reg_set.fpchip_state.xmm[reg])
 #elif os_GUESTVMXEN
 #define CANONICALIZE(reg) c->xmm##reg = (Word) os->xmm##reg
 #else

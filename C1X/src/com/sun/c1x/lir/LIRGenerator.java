@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,47 +18,12 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.lang;
-
-import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
+package com.sun.c1x.lir;
 
 /**
- * TODO: clarify what exactly is being aligned.
+ * The <code>LIRGenerator</code> class definition.
  *
- * @author Bernd Mathiske
+ * @author Ben L. Titzer
  */
-public enum Alignment {
-
-    BYTES_1(1),
-    BYTES_2(2),
-    BYTES_4(4),
-    BYTES_8(8);
-
-    public static final IndexedSequence<Alignment> VALUES = new ArraySequence<Alignment>(values());
-
-    private final int nBytes;
-
-    private Alignment(int nBytes) {
-        this.nBytes = nBytes;
-    }
-
-    @Override
-    public String toString() {
-        return Integer.toString(nBytes);
-    }
-
-    @INLINE
-    public final int numberOfBytes() {
-        return nBytes;
-    }
-
-    public static Alignment fromInt(int nBytes) {
-        for (Alignment value : Alignment.VALUES) {
-            if (value.nBytes == nBytes) {
-                return value;
-            }
-        }
-        return null;
-    }
+public class LIRGenerator {
 }

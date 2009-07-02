@@ -32,33 +32,31 @@ import com.sun.c1x.util.*;
  */
 public class ConversionStub extends CodeStub {
 
-    private Bytecodes bytecode;
+    private final int opcode;
     private LIROperand input;
     private LIROperand result;
-    //private float floatZero = 0.0f;
-    //private double doubleZero = 0.0;
 
     /**
      * Constructs a new conversion stub.
      *
-     * @param bytecode
+     * @param opcode
      * @param input
      * @param result
      */
-    public ConversionStub(Bytecodes bytecode, LIROperand input, LIROperand result) {
+    public ConversionStub(int opcode, LIROperand input, LIROperand result) {
         super();
-        this.bytecode = bytecode;
+        this.opcode = opcode;
         this.input = input;
         this.result = result;
     }
 
     /**
-     * Gets the bytecode of this conversiton stub.
+     * Gets the bytecode of this conversion stub.
      *
      * @return the bytecode
      */
-    public Bytecodes bytecode() {
-        return bytecode;
+    public int bytecode() {
+        return opcode;
     }
 
     /**

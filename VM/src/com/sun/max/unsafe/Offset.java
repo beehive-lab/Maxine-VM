@@ -22,7 +22,6 @@ package com.sun.max.unsafe;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.box.*;
 
@@ -340,13 +339,13 @@ public abstract class Offset extends Word {
 
     @INLINE(override = true)
     public final Offset aligned() {
-        final int n = Platform.target().processorKind.dataModel.alignment.numberOfBytes();
+        final int n = Word.size();
         return plus(n - 1).and(Offset.fromInt(n - 1).not());
     }
 
     @INLINE(override = true)
     public final boolean isAligned() {
-        final int n = Platform.target().processorKind.dataModel.alignment.numberOfBytes();
+        final int n = Word.size();
         return and(n - 1).equals(Offset.zero());
     }
 

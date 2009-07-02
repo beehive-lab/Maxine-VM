@@ -18,51 +18,43 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.target.x86;
 
+import com.sun.c1x.target.Backend;
+import com.sun.c1x.target.Target;
+import com.sun.c1x.lir.LIRGenerator;
+import com.sun.c1x.lir.LIRAssembler;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.C1XCompilation;
 
 /**
- * The <code>ArrayCopyStub</code> class represents a code stub for array copy.
+ * The <code>X86Backend</code> class represents the backend for the x86 architectures,
+ * i.e. {@link com.sun.c1x.target.Architecture#AMD64} and {@link com.sun.c1x.target.Architecture#IA32}.
  *
- * @author Marcelo Cintra
- *
+ * @author Ben L. Titzer
  */
-public class ArrayCopyStub {
+public class X86Backend extends Backend {
 
-    private LIRArrayCopy arrayCopy;
+    public X86Backend(Target target) {
+        super(target);
+    }
+    /**
+     * Creates a new LIRGenerator for x86.
+     * @param compilation the compilation for which to create the LIR generator
+     * @return an appropriate LIR generator instance
+     */
+    @Override
+    public LIRGenerator newLIRGenerator(C1XCompilation compilation) {
+        throw Util.unimplemented();
+    }
 
     /**
-     * Creates a new ArrayCopyStub.
-     *
-     * @param arrayCopy the LIR operation representing the array copy
+     * Creates a new LIRAssembler for x86.
+     * @param compilation the compilation for which to create the LIR assembler
+     * @return an appropriate LIR assembler instance
      */
-    public ArrayCopyStub(LIRArrayCopy arrayCopy) {
-        super();
-        this.arrayCopy = arrayCopy;
-    }
-
-    public LIROperand source() {
-        return arrayCopy.src();
-    }
-
-    public LIROperand sourcePos() {
-        return arrayCopy.srcPos();
-    }
-
-    public LIROperand dest() {
-        return arrayCopy.dst();
-    }
-
-    public LIROperand destPos() {
-        return arrayCopy.dstPos();
-    }
-
-    public LIROperand length() {
-        return arrayCopy.length();
-    }
-
-
-    public LIROperand tmp() {
-        return arrayCopy.tmp();
+    @Override
+    public LIRAssembler newLIRAssembler(C1XCompilation compilation) {
+        throw Util.unimplemented();
     }
 }

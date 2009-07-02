@@ -20,49 +20,55 @@
  */
 package com.sun.c1x.lir;
 
+import java.util.*;
+
 
 /**
- * The <code>ArrayCopyStub</code> class represents a code stub for array copy.
+ * The <code>LIRRTCall</code> class definition.
  *
  * @author Marcelo Cintra
  *
  */
-public class ArrayCopyStub {
+public class LIRRuntimeCall extends LIRCall{
 
-    private LIRArrayCopy arrayCopy;
+    private LIROperand tmp;
 
     /**
-     * Creates a new ArrayCopyStub.
+     * Creates a new LIRRTCall instruction.
      *
-     * @param arrayCopy the LIR operation representing the array copy
+     * @param address
+     * @param tmp
+     * @param result
+     * @param arguments
+     * @param info
      */
-    public ArrayCopyStub(LIRArrayCopy arrayCopy) {
-        super();
-        this.arrayCopy = arrayCopy;
+    public LIRRuntimeCall(int address, LIROperand tmp, LIROperand result, ArrayList<LIRInstruction> arguments, CodeEmitInfo info) {
+        super(LIROpcode.RtCall, address, result, arguments, info);
+        this.tmp = tmp;
     }
 
-    public LIROperand source() {
-        return arrayCopy.src();
-    }
-
-    public LIROperand sourcePos() {
-        return arrayCopy.srcPos();
-    }
-
-    public LIROperand dest() {
-        return arrayCopy.dst();
-    }
-
-    public LIROperand destPos() {
-        return arrayCopy.dstPos();
-    }
-
-    public LIROperand length() {
-        return arrayCopy.length();
-    }
-
-
+    /**
+     * Gets the temporary operand associated to this call.
+     * @return the tmp
+     */
     public LIROperand tmp() {
-        return arrayCopy.tmp();
+        return tmp;
+    }
+
+    /** Emits target assembly code for this instruction.
+    *
+    * @param masm the target assembler
+    */
+    @Override
+    public void emitCode(LIRAssembler masm) {
+        // TODO Not yet implemented.
+    }
+
+    /**
+     * Verifies this instruction.
+     */
+    @Override
+    public void verify() {
+        // TODO Not yet implemented.
     }
 }

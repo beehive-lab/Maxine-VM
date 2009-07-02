@@ -18,51 +18,24 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.target;
 
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.lir.LIRAssembler;
+import com.sun.c1x.lir.LIRGenerator;
 
 /**
- * The <code>ArrayCopyStub</code> class represents a code stub for array copy.
+ * The <code>Backend</code> class represents a compiler backend for C1X.
  *
- * @author Marcelo Cintra
- *
+ * @author Ben L. Titzer
  */
-public class ArrayCopyStub {
+public abstract class Backend {
+    public final Target target;
 
-    private LIRArrayCopy arrayCopy;
-
-    /**
-     * Creates a new ArrayCopyStub.
-     *
-     * @param arrayCopy the LIR operation representing the array copy
-     */
-    public ArrayCopyStub(LIRArrayCopy arrayCopy) {
-        super();
-        this.arrayCopy = arrayCopy;
+    protected Backend(Target target) {
+        this.target = target;
     }
 
-    public LIROperand source() {
-        return arrayCopy.src();
-    }
-
-    public LIROperand sourcePos() {
-        return arrayCopy.srcPos();
-    }
-
-    public LIROperand dest() {
-        return arrayCopy.dst();
-    }
-
-    public LIROperand destPos() {
-        return arrayCopy.dstPos();
-    }
-
-    public LIROperand length() {
-        return arrayCopy.length();
-    }
-
-
-    public LIROperand tmp() {
-        return arrayCopy.tmp();
-    }
+    public abstract LIRGenerator newLIRGenerator(C1XCompilation compilation);
+    public abstract LIRAssembler newLIRAssembler(C1XCompilation compilation);
 }

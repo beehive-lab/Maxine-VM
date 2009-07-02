@@ -23,7 +23,7 @@
 
 #define relocation_DEFAULT_SCHEME   0
 
-extern void relocation_apply(void *heap, int relocationScheme, void *relocationData, int relocationDataSize, int alignmentSize, int isBigEndian, int wordSize);
+extern void relocation_apply(void *heap, int relocationScheme, void *relocationData, int relocationDataSize, int cacheAlignment, int isBigEndian, int wordSize);
 
 #endif /*__relocation_h__*/
 

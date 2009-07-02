@@ -21,6 +21,7 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.util.*;
+import com.sun.c1x.ci.CiType;
 
 /**
  * The <code>LIRArrayCopy</code> class definition.
@@ -37,17 +38,17 @@ public class LIRArrayCopy extends LIRInstruction {
     private LIROperand dstPos;
     private LIROperand length;
     private LIROperand tmp;
-    // private ciArrayClass expectedType; TODO implement ciArrayClass
+    private CiType expectedType;
     private int arrayCopyFlags;
 
 
     /**
      * Creates a new LIRArrayCopy instruction.
      *
-     * @param source
-     * @param sourcePos
-     * @param dest
-     * @param destPos
+     * @param src
+     * @param srcPos
+     * @param dst
+     * @param dstPos
      * @param length
      * @param tmp
      */
@@ -154,6 +155,5 @@ public class LIRArrayCopy extends LIRInstruction {
     @Override
     public void printInstruction(LogStream out) {
         // TODO Auto-generated method stub
-
     }
 }

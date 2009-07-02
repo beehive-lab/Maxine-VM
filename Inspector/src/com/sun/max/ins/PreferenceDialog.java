@@ -73,7 +73,7 @@ public class PreferenceDialog extends InspectorDialog {
         targetCodeLabelPanel.add(new TextLabel(inspection, "Target Code"), BorderLayout.WEST);
         prefPanel.add(targetCodeLabelPanel);
 
-        final JPanel targetCodeInspectorPanel = JTableTargetCodeViewer.globalPreferencesPanel(inspection);
+        final JPanel targetCodeInspectorPanel = TargetCodeViewerPreferences.globalPreferences(inspection).getPanel();
         targetCodeInspectorPanel.setBorder(border);
         prefPanel.add(targetCodeInspectorPanel);
 
@@ -82,7 +82,7 @@ public class PreferenceDialog extends InspectorDialog {
         bytecodeLabelPanel.add(new TextLabel(inspection, "Bytecode"), BorderLayout.WEST);
         prefPanel.add(bytecodeLabelPanel);
 
-        final JPanel bytecodeInspectorPanel = JTableBytecodeViewer.globalPreferencesPanel(inspection);
+        final JPanel bytecodeInspectorPanel = BytecodeViewerPreferences.globalPreferences(inspection).getPanel();
         bytecodeInspectorPanel.setBorder(border);
         prefPanel.add(bytecodeInspectorPanel);
 

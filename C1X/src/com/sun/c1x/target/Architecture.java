@@ -18,51 +18,56 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
-
+package com.sun.c1x.target;
 
 /**
- * The <code>ArrayCopyStub</code> class represents a code stub for array copy.
+ * The <code>Architecture</code> class represents a CPU architecture that is supported by
+ * the backend of C1X.
  *
- * @author Marcelo Cintra
- *
+ * @author Ben L. Titzer
  */
-public class ArrayCopyStub {
-
-    private LIRArrayCopy arrayCopy;
+public enum Architecture {
+    IA32(4, "x86"),
+    AMD64(8, "x86"),
+    SPARC(4, "sparc"),
+    SPARCV9(8, "sparc");
+    // PPC(4),
+    // PPC64(8),
+    // ARM(4),
 
     /**
-     * Creates a new ArrayCopyStub.
-     *
-     * @param arrayCopy the LIR operation representing the array copy
+     * Represents the natural size of words (typically registers and pointers) of this architecture.
      */
-    public ArrayCopyStub(LIRArrayCopy arrayCopy) {
-        super();
-        this.arrayCopy = arrayCopy;
+    public final int wordSize;
+    public final String backend;
+
+    Architecture(int wordSize, String backend) {
+        this.wordSize = wordSize;
+        this.backend = backend;
     }
 
-    public LIROperand source() {
-        return arrayCopy.src();
+    /**
+     * Converts this architecture to a string.
+     * @return the string representation of this architecture
+     */
+    @Override
+    public String toString() {
+        return name().toLowerCase();
     }
 
-    public LIROperand sourcePos() {
-        return arrayCopy.srcPos();
+    /**
+     * Checks whether this is a 32-bit architecture.
+     * @return <code>true</code> if this architecture is 32-bit
+     */
+    public boolean is32bit() {
+        return wordSize == 4;
     }
 
-    public LIROperand dest() {
-        return arrayCopy.dst();
-    }
-
-    public LIROperand destPos() {
-        return arrayCopy.dstPos();
-    }
-
-    public LIROperand length() {
-        return arrayCopy.length();
-    }
-
-
-    public LIROperand tmp() {
-        return arrayCopy.tmp();
+    /**
+     * Checks whether this is a 64-bit architecture.
+     * @return <code>true</code> if this architecture is 64-bit
+     */
+    public boolean is64bit() {
+        return wordSize == 8;
     }
 }

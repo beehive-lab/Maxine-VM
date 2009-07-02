@@ -1826,7 +1826,74 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:  removes the breakpoint from the VM that is currently selected.
+     * Action:  set a target code breakpoint at a particular address.
+     */
+    final class SetTargetCodeBreakpointAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Set target code breakpoint";
+
+        private final Address address;
+
+        public SetTargetCodeBreakpointAction(Address address, String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            this.address = address;
+            refresh(true);
+        }
+
+        @Override
+        protected void procedure() {
+            final TeleTargetBreakpoint breakpoint = maxVM().makeTargetBreakpoint(address);
+            focus().setBreakpoint(breakpoint);
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(maxVM().getTargetBreakpoint(address) == null);
+        }
+    }
+
+    public final InspectorAction setTargetCodeBreakpoint(Address address, String title) {
+        return new SetTargetCodeBreakpointAction(address, title);
+    }
+
+
+    /**
+     * Action:  remove a target code breakpoint at a particular address.
+     */
+    final class RemoveTargetCodeBreakpointAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Remove target code breakpoint";
+
+        private final Address address;
+
+        public RemoveTargetCodeBreakpointAction(Address address, String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            this.address = address;
+            refresh(true);
+        }
+
+        @Override
+        protected void procedure() {
+            final TeleTargetBreakpoint breakpoint = maxVM().getTargetBreakpoint(address);
+            if (breakpoint != null) {
+                breakpoint.remove();
+                focus().setBreakpoint(null);
+            }
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(maxVM().getTargetBreakpoint(address) != null);
+        }
+    }
+
+    public final InspectorAction removeTargetCodeBreakpoint(Address address, String title) {
+        return new RemoveTargetCodeBreakpointAction(address, title);
+    }
+
+
+    /**
+     * Action:  removes the currently selected breakpoint from the VM.
      */
     final class RemoveSelectedBreakpointAction extends InspectorAction {
 

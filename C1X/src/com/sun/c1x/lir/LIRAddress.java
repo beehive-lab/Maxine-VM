@@ -29,17 +29,13 @@ import com.sun.c1x.value.*;
  *
  * @author Marcelo Cintra
  */
-public class LIRAddress extends LIROperandPtr{
+public class LIRAddress extends LIROperandPtr {
 
     public enum Scale {
         Times1,
         Times2,
         Times4,
         Times8;
-
-        public int mask() {
-            return ordinal();
-        }
     }
 
     private LIROperand base;
@@ -92,16 +88,13 @@ public class LIRAddress extends LIROperandPtr{
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof LIROperand)) {
-            return false;
+        if (other instanceof LIRAddress) {
+            LIRAddress otherAddress = (LIRAddress) other;
+            return base == otherAddress.base && index == otherAddress.index && displacement == otherAddress.displacement && scale() == otherAddress.scale;
         }
-        LIRAddress otherAddress = (LIRAddress) other;
-        return base == otherAddress.base && index == otherAddress.index && displacement == otherAddress.displacement && scale() == otherAddress.scale;
+        return false;
     }
 
-    /**
-    *
-    */
    @Override
    public void printValueOn(LogStream out) {
        out.print("Base:" + base);
@@ -125,11 +118,9 @@ public class LIRAddress extends LIROperandPtr{
    }
 
    public void verify() {
-
    }
 
    public static Scale scale(BasicType type) {
        return null;
    }
-
 }

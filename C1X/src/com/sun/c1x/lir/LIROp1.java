@@ -52,9 +52,9 @@ public class LIROp1 extends LIRInstruction {
     }
 
     /**
-     * Sets the flags for this instruction.
+     * Sets the move kind for this instruction.
      *
-     * @param result the result operand
+     * @param kind the kind
      */
     void setKind(LIRMoveKind kind) {
         assert code == LIROpcode.Move : "Instruction opcode must be of kind LIROpcode.Move";

@@ -28,6 +28,7 @@ import com.sun.c1x.util.*;
  */
 public abstract class LIRInstruction {
 
+<<<<<<< local
     public enum LIRMoveKind {
         Normal, Volatile, Unaligned, MaxFlag
     }
@@ -39,6 +40,15 @@ public abstract class LIRInstruction {
     private int id; // value id for register allocation
     private int fpuPopCount;
     private Instruction source; // for debugging
+=======
+    LIROperand result;      // the result operand for this instruction
+    LIROpcode opcode;       // the opcode of this instruction
+    LIRMoveKind flags;      // flag that indicate the kind of move
+    CodeEmitInfo info;      // used to emit debug information
+    int id;                 // value id for register allocation
+    int fpuPopCount;
+    Instruction source;    // for debugging
+>>>>>>> other
 
     /**
      * Constructs a new Instruction.
@@ -148,6 +158,18 @@ public abstract class LIRInstruction {
     }
 
     /**
+<<<<<<< local
+=======
+     * Sets the Fpu pop counter of this instruction. This is a counter to FPU stack simulation, only used on Intel.
+     *
+     * @param fpuPopCount the value
+     */
+    public void setFpuPopCount(int fpuPopCount) {
+        this.fpuPopCount = fpuPopCount;
+    }
+
+    /**
+>>>>>>> other
      * Checks if the Fpu stack is not empty. This FPU stack simulation is only used on Intel.
      *
      * @return <code>true</code> if the Fpu stack is not empty.
@@ -191,8 +213,9 @@ public abstract class LIRInstruction {
     /**
      * Prints information common to all LIR instruction.
      *
-     * @param out the LogStream to print into.
+     * @param stream the LogStream to print into.
      */
+<<<<<<< local
     public void printOn(LogStream st) {
         if (id() != -1 || C1XOptions.PrintCFGToFile) {
             st.printf("%4d ", id());
@@ -206,6 +229,9 @@ public abstract class LIRInstruction {
             st.printf(" [bci:%d]", info().bci());
         }
     }
+=======
+    public void printOn(LogStream stream) {
+>>>>>>> other
 
     public void verify() {
     }

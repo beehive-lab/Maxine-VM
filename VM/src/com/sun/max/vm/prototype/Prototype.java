@@ -196,8 +196,8 @@ public abstract class Prototype {
             processorModel = ProcessorModel.valueOf(processorModelName);
             assert processorModel.instructionSet() == instructionSet;
         }
-        final Alignment alignment = processorModel.defaultDataModel().alignment;
-        final DataModel dataModel = new DataModel(wordWidth, endianness, alignment);
+        final int cacheAlignment = processorModel.defaultDataModel().cacheAlignment;
+        final DataModel dataModel = new DataModel(wordWidth, endianness, cacheAlignment);
         final ProcessorKind processorKind = new ProcessorKind(processorModel, instructionSet, dataModel);
 
         final OperatingSystem operatingSystem = OperatingSystem.valueOf(System.getProperty(OPERATING_SYSTEM_PROPERTY, nativeGetOperatingSystem()));

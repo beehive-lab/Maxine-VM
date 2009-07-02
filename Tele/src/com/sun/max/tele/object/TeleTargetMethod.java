@@ -497,7 +497,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
         final MachineCodeInstruction[] result = new MachineCodeInstruction[instructions.length()];
         for (int i = 0; i < result.length; i++) {
             final TargetCodeInstruction ins = instructions.get(i);
-            result[i] = new MachineCodeInstruction(ins.getMnemonic(), ins.getPosition(), ins.getAddress(), ins.getLabel(), ins.getBytes(), ins.getOperands(), ins.getTargetAddress());
+            result[i] = new MachineCodeInstruction(ins.mnemonic, ins.position, ins.address.toLong(), ins.label, ins.bytes, ins.operands, ins.getTargetAddressAsLong());
         }
         return new MachineCodeInstructionArray(result);
     }
@@ -527,8 +527,8 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
         final IndexedSequence<TargetCodeInstruction> instructions = getInstructions();
         if (instructions != null) {
             for (TargetCodeInstruction targetCodeInstruction : instructions) {
-                if (targetCodeInstruction.label() != null) {
-                    teleVM().makeTargetBreakpoint(targetCodeInstruction.address());
+                if (targetCodeInstruction.label != null) {
+                    teleVM().makeTargetBreakpoint(targetCodeInstruction.address);
                 }
             }
         }
@@ -542,8 +542,8 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
         final IndexedSequence<TargetCodeInstruction> instructions = getInstructions();
         if (instructions != null) {
             for (TargetCodeInstruction targetCodeInstruction : instructions) {
-                if (targetCodeInstruction.label() != null) {
-                    final TeleTargetBreakpoint targetBreakpoint = teleVM().getTargetBreakpoint(targetCodeInstruction.address());
+                if (targetCodeInstruction.label != null) {
+                    final TeleTargetBreakpoint targetBreakpoint = teleVM().getTargetBreakpoint(targetCodeInstruction.address);
                     if (targetBreakpoint != null) {
                         targetBreakpoint.remove();
                     }
