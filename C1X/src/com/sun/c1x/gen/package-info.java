@@ -18,21 +18,18 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
-
+package com.sun.c1x.gen;
 
 /**
- * The <code>CodeEmitInfo</code> class definition.
- *
  * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
+ *
+ * Port of the generator from HIR to LIR to Java
+ *
+ * List of ported files:
+ *
+ * c1_LIRGenerator.hpp
+ * SwitchRange -> SwitchRange (Status: Ported)
+ * ResolveNode -> ResolveNode (Status: Ported)
  *
  */
-public class CodeEmitInfo {
-
-    public int bci() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    // TODO nothing for now
-}

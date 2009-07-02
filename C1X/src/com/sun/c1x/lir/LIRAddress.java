@@ -97,25 +97,25 @@ public class LIRAddress extends LIROperandPtr {
 
    @Override
    public void printValueOn(LogStream out) {
-           out.print("Base:" + base);
-           if (!index.isIllegal()) {
-             out.print(" Index:" + index);
-             switch (scale()) {
-             case Times1:
-                 break;
-             case Times2:
-                 out.print(" * 2");
-                 break;
-             case Times4:
-                 out.print(" * 4");
-                 break;
-             case Times8:
-                 out.print(" * 8");
-                 break;
-             }
+       out.print("Base:" + base);
+       if (!index.isIllegal()) {
+           out.print(" Index:" + index);
+           switch (scale()) {
+               case Times1:
+                   break;
+               case Times2:
+                   out.print(" * 2");
+                   break;
+               case Times4:
+                   out.print(" * 4");
+                   break;
+               case Times8:
+                   out.print(" * 8");
+                   break;
            }
-           out.print(" Disp: %d" + displacement);
-         }
+       }
+       out.print(" Disp: %d" + displacement);
+   }
 
    public void verify() {
    }

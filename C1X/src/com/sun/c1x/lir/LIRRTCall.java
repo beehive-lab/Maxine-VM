@@ -20,53 +20,59 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.*;
-import com.sun.c1x.util.*;
+import java.util.*;
 
 
 /**
- * The <code>LIRDelay</code> class definition.
+ * The <code>LIRRTCall</code> class definition.
  *
  * @author Marcelo Cintra
  *
  */
-public class LIRDelay extends LIRInstruction {
+public class LIRRTCall extends LIRCall{
 
-    private LIRInstruction operand;
+    private LIROperand tmp;
 
-    public LIRDelay(LIRInstruction operand, CodeEmitInfo info) {
-        super(LIROpcode.DelaySlot, LIROperandFactory.illegalOperand, info);
-        this.operand = operand;
-        assert operand.code == LIROpcode.Nop || C1XOptions.LIRFillDelaySlots == true : "Should be filling with nops";
+    /**
+     * Creates a new LIRRTCall instruction.
+     *
+     * @param address
+     * @param tmp
+     * @param result
+     * @param arguments
+     * @param info
+     */
+    public LIRRTCall(int address, LIROperand tmp, LIROperand result, ArrayList<LIRInstruction> arguments, CodeEmitInfo info) {
+        super(LIROpcode.RtCall, address, result, arguments, info);
+        this.tmp = tmp;
     }
 
     /**
-     * Gets the delay operand of this instruction.
-     *
-     * @return the operand
+     * Gets the temporary operand associated to this call.
+     * @return the tmp
      */
-    public LIRInstruction delayOperand() {
-        return operand;
+    public LIROperand tmp() {
+        return tmp;
     }
 
-    /**
-     * Emit target assembly code for this instruction.
-     *
-     * @param masm the target assembler
-     */
+    /** Emits target assembly code for this instruction.
+    *
+    * @param masm the target assembler
+    */
     @Override
     public void emitCode(LIRAssembler masm) {
-        // TODO Auto-generated method stub
+        // TODO Not yet implemented.
+    }
 
+    private String nameForAddress() {
+        return String.valueOf(address); // TODO needs to get the String at the address by calling Runtime. Check the original code on Hotspot.
     }
 
     /**
-     * Prints this instruction.
-     *
-     * @param out the output log stream.
+     * Verifies this instruction.
      */
     @Override
-    public void printInstruction(LogStream out) {
-        operand.printInstruction(out);
+    public void verify() {
+        assert !nameForAddress().equals("<unknown function>") : "unknown function";
     }
 }

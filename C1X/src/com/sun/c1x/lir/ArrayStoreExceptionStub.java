@@ -24,65 +24,75 @@ import com.sun.c1x.util.*;
 
 
 /**
- * The <code>LIROp0</code> class definition.
+ * The <code>ArrayStoreExceptionStub</code> class definition.
  *
  * @author Marcelo Cintra
  *
  */
-public class LIROp0 extends LIRInstruction {
+public class ArrayStoreExceptionStub extends CodeStub {
+
+    private CodeEmitInfo info;
 
     /**
-     * Creates a LIROp0 instruction.
-     *
-     * @param opcode the opcode of the new instruction
+     * @param info
      */
-    public LIROp0(LIROpcode opcode) {
-        this(opcode, LIROperandFactory.illegalOperand);
+    public ArrayStoreExceptionStub(CodeEmitInfo info) {
+        super();
+        this.info = info;
     }
 
     /**
-     * Creates a LIROp0 instruction.
+     * Gets the info of this class.
      *
-     * @param opcode the opcode of the new instruction
-     * @param result the result operand to the new instruction
+     * @return the info
      */
-    public LIROp0(LIROpcode opcode, LIROperand result) {
-        this(opcode, result, null);
+    @Override
+    public CodeEmitInfo info() {
+        return info;
+    }
+
+    /* (non-Javadoc)
+     * @see com.sun.c1x.lir.CodeStub#visit(com.sun.c1x.lir.LIRVisitState)
+     */
+    @Override
+    public void visit(LIRVisitState visitor) {
+        visitor.doSlowCase();
     }
 
     /**
-     * Creates a LIROp0 instruction.
+     * Emit the code stub for an array store exception.
      *
-     * @param opcode the opcode of the new instruction
-     * @param result the result operand to the new instruction
-     * @param info used to emit debug information associated to this instruction
-     */
-    public LIROp0(LIROpcode opcode, LIROperand result, CodeEmitInfo info) {
-        super(opcode, LIROperandFactory.illegalOperand, info);
-        assert isInRange(opcode, LIROpcode.BeginOp0, LIROpcode.EndOp0) : "Opcode " + opcode + " is invalid for a LIROP0 instruction";
-    }
-
-    /**
-     * Emit assembly code for this instruction.
      * @param masm the target assembler
      */
     @Override
     public void emitCode(LIRAssembler masm) {
-        masm.emitOp0(this);
+        // TODO Auto-generated method stub
+
     }
 
-    /**
-     * Prints this LIROp0 instruction.
-     * @param out the output stream to print the instruction
+    /* (non-Javadoc)
+     * @see com.sun.c1x.lir.CodeStub#printName(com.sun.c1x.util.LogStream)
      */
     @Override
-    public void printInstruction(LogStream out) {
-        result().print(out);
+    public void printName(LogStream out) {
+        out.print("ArrayStoreExceptionStub");
     }
 
-    @Override
-    LIROp0 asOp0() {
-        return this;
-    }
 
+
+
+//    private:
+//        CodeEmitInfo* _info;
+//
+//       public:
+//        ArrayStoreExceptionStub(CodeEmitInfo* info);
+//        virtual void emit_code(LIR_Assembler* emit);
+//        virtual CodeEmitInfo* info() const             { return _info; }
+//        virtual bool is_exception_throw_stub() const   { return true; }
+//        virtual void visit(LIR_OpVisitState* visitor) {
+//          visitor->do_slow_case(_info);
+//        }
+//      #ifndef PRODUCT
+//        virtual void print_name(outputStream* out) const { out->print("ArrayStoreExceptionStub"); }
+//      #endif // PRODUCT
 }

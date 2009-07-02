@@ -20,19 +20,20 @@
  */
 package com.sun.c1x.lir;
 
-
 /**
- * The <code>CodeEmitInfo</code> class definition.
- *
  * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
+ *
+ * Port of the backend (LIR) of the client compiler to Java.
+ *
+ * List of ported files:
+ *
+ * c1_LIR.hpp
+ * LIR_Op -> LIRInstruction (Status: Ported)
+ * LIR_Op0 -> LIROp0 (Status: Ported)
+ * LIR_OpLabel -> LIRLabel (Status: Ported)
+ * LIR_Op1 -> LIROp1 (Status: Ported)
+ * LIR_OpBranch -> LIRBranch (Status: Ported)
+ * LIR_OpConvert -> LIRConvert (Status: Ported)
  *
  */
-public class CodeEmitInfo {
-
-    public int bci() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    // TODO nothing for now
-}

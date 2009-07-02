@@ -23,6 +23,7 @@ package com.sun.c1x.ir;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.asm.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
@@ -580,5 +581,12 @@ public class BlockBegin extends StateSplit {
             }
         }
         return builder.toString();
+    }
+
+    /**
+     * @return the label associated with the block, used by the LIR
+     */
+    public Label label() {
+        return null;
     }
 }
