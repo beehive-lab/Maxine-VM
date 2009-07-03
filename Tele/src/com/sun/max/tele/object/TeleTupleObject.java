@@ -26,6 +26,7 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.value.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.ir.*;
@@ -48,6 +49,11 @@ public class TeleTupleObject extends TeleObject {
     @Override
     public ObjectKind getObjectKind() {
         return ObjectKind.TUPLE;
+    }
+
+    @Override
+    public Address getFieldAddress(FieldActor fieldActor) {
+        return getCurrentOrigin().plus(fieldActor.offset());
     }
 
     @Override

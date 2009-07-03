@@ -216,6 +216,14 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     }
 
     /**
+     * Gets the current memory address of a field in the object.
+     *
+     * @param fieldActor descriptor for a field in this class
+     * @return the current location in memory of the field in this object
+     */
+    public abstract Address getFieldAddress(FieldActor fieldActor);
+
+    /**
      * @param fieldActor local {@link FieldActor}, part of the {@link ClassActor} for the type of this object, that
      *            describes a field in this object in the {@link TeleVM}
      * @return contents of the designated field in this object in the {@link TeleVM}

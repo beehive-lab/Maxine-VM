@@ -1124,10 +1124,27 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#setWatchpoint(com.sun.max.unsafe.Address, com.sun.max.unsafe.Size)
+     * @see com.sun.max.tele.MaxVM#setRegionWatchpoint(java.lang.String, com.sun.max.unsafe.Address, com.sun.max.unsafe.Size, boolean, boolean, boolean, boolean)
      */
-    public final MaxWatchpoint setWatchpoint(Address address, Size size, boolean after, boolean read, boolean write, boolean exec) throws TooManyWatchpointsException, DuplicateWatchpointException {
-        return teleProcess.watchpointFactory().setWatchpoint(address, size, after, read, write, exec);
+    public final MaxWatchpoint setRegionWatchpoint(String description, Address start, Size size, boolean after, boolean read, boolean write, boolean exec)
+        throws TooManyWatchpointsException, DuplicateWatchpointException {
+        return teleProcess.watchpointFactory().setRegionWatchpoint(description, start, size, after, read, write, exec);
+    }
+
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxVM#setFieldWatchpoint(java.lang.String, com.sun.max.tele.object.TeleObject, com.sun.max.vm.actor.member.FieldActor, boolean, boolean, boolean, boolean)
+     */
+    public final MaxWatchpoint setFieldWatchpoint(String description, TeleObject teleObject, FieldActor fieldActor, boolean after, boolean read, boolean write, boolean exec)
+        throws TooManyWatchpointsException, DuplicateWatchpointException {
+        return teleProcess.watchpointFactory().setFieldWatchpoint(description, teleObject, fieldActor, after, read, write, exec);
+    }
+
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxVM#setHeaderWatchpoint(java.lang.String, com.sun.max.tele.object.TeleObject, com.sun.max.unsafe.Offset, com.sun.max.unsafe.Size, java.lang.String, boolean, boolean, boolean, boolean)
+     */
+    public final MaxWatchpoint setHeaderWatchpoint(String description, TeleObject teleObject, Offset offset, Size size, String name, boolean after, boolean read, boolean write, boolean exec)
+        throws TooManyWatchpointsException, DuplicateWatchpointException {
+        return teleProcess.watchpointFactory().setHeaderWatchpoint(description, teleObject, offset, size, name, after, read, write, exec);
     }
 
     /*
