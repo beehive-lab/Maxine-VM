@@ -189,11 +189,16 @@ public abstract class DataLabel extends InspectorLabel {
     }
 
     /**
-     * A label that displays the decimal value of an unchanging integer; a ToolTip displays the value in hex.
+     * A label that displays the decimal value of an integer; a ToolTip displays the value in hex.
      */
-    public static final class IntAsDecimal extends DataLabel {
+    public static class IntAsDecimal extends DataLabel {
+
+        private int n;
+
         public IntAsDecimal(Inspection inspection, int n) {
-            super(inspection, Integer.toString(n), "int: 0x" + Integer.toHexString(n));
+            super(inspection, "");
+            this.n = n;
+            updateText();
             redisplay();
         }
         @Override
@@ -202,14 +207,29 @@ public abstract class DataLabel extends InspectorLabel {
             setForeground(style().decimalDataColor());
             setBackground(style().decimalDataBackgroundColor());
         }
+
+        public void setValue(int n) {
+            this.n = n;
+            updateText();
+        }
+
+        private void updateText() {
+            setText(Integer.toString(n));
+            setToolTipText("int: 0x" + Integer.toHexString(n));
+        }
     }
 
     /**
-     * A label that displays the hex value of an unchanging int; a ToolTip displays the value in decimal.
+     * A label that displays the hex value of an  int; a ToolTip displays the value in decimal.
      */
-    public static final class IntAsHex extends DataLabel {
+    public static class IntAsHex extends DataLabel {
+
+        private int n;
+
         public IntAsHex(Inspection inspection, int n) {
-            super(inspection, "0x" + Integer.toHexString(n), "int:  " + Integer.toString(n));
+            super(inspection, "");
+            this.n = n;
+            updateText();
             redisplay();
         }
         @Override
@@ -218,6 +238,17 @@ public abstract class DataLabel extends InspectorLabel {
             setForeground(style().hexDataColor());
             setBackground(style().hexDataBackgroundColor());
         }
+
+        public void setValue(int n) {
+            this.n = n;
+            updateText();
+        }
+
+        private void updateText() {
+            setText("0x" + Integer.toHexString(n));
+            setToolTipText("int:  " + Integer.toString(n));
+        }
+
     }
 
     public static final class FloatAsText extends DataLabel {
