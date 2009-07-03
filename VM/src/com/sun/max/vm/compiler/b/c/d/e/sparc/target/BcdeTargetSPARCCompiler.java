@@ -335,7 +335,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
             }
             case RAW_INSPECTING: {
                 final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
-                final int flags = RawStackFrameVisitor.Util.makeFlags(isTopFrame, true);
+                final int flags = RawStackFrameVisitor.Util.makeFlags(isTopFrame, false);
                 if (!stackFrameVisitor.visitFrame(targetMethod, instructionPointer, framePointer, stackPointer, flags)) {
                     return false;
                 }
