@@ -57,9 +57,9 @@ public class LIRVisitState {
 
     // optimization: the operands and infos are not stored in a variable-length
     //               list, but in a fixed-size array to save time of size checks and resizing
-    private int oprsLen[];
-    private LIROperand oprsNew[][];
-    private CodeEmitInfo infoNew[];
+    private int [] oprsLen;
+    private LIROperand [][] oprsNew;
+    private CodeEmitInfo [] infoNew;
     private int infoLen;
     private boolean hasCall;
     private boolean hasSlowCase;

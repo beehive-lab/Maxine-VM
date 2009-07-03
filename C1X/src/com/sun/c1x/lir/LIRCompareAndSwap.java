@@ -31,21 +31,25 @@ import com.sun.c1x.util.*;
  */
 public class LIRCompareAndSwap extends LIRInstruction {
 
-    private LIROperand address;
+    private LIROperand addr;
     private LIROperand cmpValue;
     private LIROperand newValue;
     private LIROperand tmp1;
     private LIROperand tmp2;
+
+
     /**
-     * @param address
+     * Constructs a new LIRCompareAndSwap instruction.
+     *
+     * @param addr
      * @param cmpValue
      * @param newValue
      * @param tmp1
      * @param tmp2
      */
-    public LIRCompareAndSwap(LIROpcode opcode, LIROperand address, LIROperand cmpValue, LIROperand newValue, LIROperand tmp1, LIROperand tmp2) {
+    public LIRCompareAndSwap(LIROpcode opcode, LIROperand addr, LIROperand cmpValue, LIROperand newValue, LIROperand tmp1, LIROperand tmp2) {
         super(opcode, LIROperandFactory.illegalOperand, null);
-        this.address = address;
+        this.addr = addr;
         this.cmpValue = cmpValue;
         this.newValue = newValue;
         this.tmp1 = tmp1;
@@ -58,7 +62,7 @@ public class LIRCompareAndSwap extends LIRInstruction {
      * @return the address
      */
     public LIROperand address() {
-        return address;
+        return addr;
     }
 
     /**
@@ -104,8 +108,7 @@ public class LIRCompareAndSwap extends LIRInstruction {
      */
     @Override
     public void emitCode(LIRAssembler masm) {
-        // TODO Auto-generated method stub
-
+        masm.emitCompareAndSwap(this);
     }
 
     /**
@@ -115,7 +118,7 @@ public class LIRCompareAndSwap extends LIRInstruction {
      */
     @Override
     public void printInstruction(LogStream out) {
-        address.print(out);
+        addr.print(out);
         out.print(" ");
         cmpValue.print(out);
         out.print(" ");

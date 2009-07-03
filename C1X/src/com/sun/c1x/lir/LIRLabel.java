@@ -63,11 +63,6 @@ public class LIRLabel extends LIROp0 {
         masm.emitLabel(this);
     }
 
-    @Override
-    LIRLabel asLabel() {
-        return this;
-    }
-
     /**
      * Prints this instruction to a LogStream.
      *

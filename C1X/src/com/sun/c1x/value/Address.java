@@ -18,57 +18,42 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
-
-import java.util.*;
+package com.sun.c1x.value;
 
 
 /**
- * The <code>LIRRTCall</code> class definition.
+ * The <code>Address</code> class definition.
  *
  * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
  *
  */
-public class LIRRuntimeCall extends LIRCall{
-
-    private LIROperand tmp;
+public class Address {
+    private long address;
 
     /**
-     * Creates a new LIRRTCall instruction.
+     * Constructs a new Address, which holds a runtime address.
      *
      * @param address
-     * @param tmp
-     * @param result
-     * @param arguments
-     * @param info
      */
-    public LIRRuntimeCall(int address, LIROperand tmp, LIROperand result, ArrayList<LIRInstruction> arguments, CodeEmitInfo info) {
-        super(LIROpcode.RtCall, address, result, arguments, info);
-        this.tmp = tmp;
+    public Address(long address) {
+        super();
+        this.address = address;
     }
 
     /**
-     * Gets the temporary operand associated to this call.
-     * @return the tmp
+     * @return the long value which represents an internal address
      */
-    public LIROperand tmp() {
-        return tmp;
-    }
-
-    /** Emits target assembly code for this instruction.
-    *
-    * @param masm the target assembler
-    */
-    @Override
-    public void emitCode(LIRAssembler masm) {
-        // TODO Not yet implemented.
+    public long address() {
+        return address;
     }
 
     /**
-     * Verifies this instruction.
+     * Sets the address.
+     *
+     * @param address the new address
      */
-    @Override
-    public void verify() {
-        // TODO Not yet implemented.
+    public void setAddress(long address) {
+        this.address = address;
     }
 }
