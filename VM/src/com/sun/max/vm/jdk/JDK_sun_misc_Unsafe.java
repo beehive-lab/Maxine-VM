@@ -623,7 +623,7 @@ final class JDK_sun_misc_Unsafe {
     @SUBSTITUTE
     public int arrayBaseOffset(Class arrayClass) {
         final ArrayClassActor arrayClassActor = (ArrayClassActor) ClassActor.fromJava(arrayClass);
-        final ArrayLayout arrayLayout = (ArrayLayout) arrayClassActor.dynamicHub().specificLayout();
+        final ArrayLayout arrayLayout = (ArrayLayout) arrayClassActor.dynamicHub().specificLayout;
         return arrayLayout.getElementOffsetFromOrigin(0).toInt();
     }
 

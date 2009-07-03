@@ -305,7 +305,7 @@ public final class DataPrototype extends Prototype {
             assert classInfo.containsMutableReferences(object);
             final Address cell = objectToCell.get(object);
             final Hub hub = HostObjectAccess.readHub(object);
-            final SpecificLayout specificLayout = hub.specificLayout();
+            final SpecificLayout specificLayout = hub.specificLayout;
             if (specificLayout.isArrayLayout()) {
                 if (specificLayout.isReferenceArrayLayout()) {
                     final ArrayLayout arrayLayout = (ArrayLayout) specificLayout;
@@ -833,7 +833,7 @@ public final class DataPrototype extends Prototype {
 
                         m.setOffset(offset, object);
                         try {
-                            hub.specificLayout().visitObjectCell(object, m);
+                            hub.specificLayout.visitObjectCell(object, m);
                         } catch (MissingCellException e) {
                             System.err.println("no cell for object: class=" + e.object.getClass().getName() + " toString=\"" + e.object + "\"");
                             graphPrototype.printPath(object, System.err);
@@ -937,7 +937,7 @@ public final class DataPrototype extends Prototype {
      */
     private int getInstanceFieldOffsetInTupleCell(Class javaClass, Utf8Constant fieldName, TypeDescriptor fieldType) {
         final ClassActor classActor = ClassActor.fromJava(javaClass);
-        final TupleLayout tupleLayout = (TupleLayout) classActor.dynamicHub().specificLayout();
+        final TupleLayout tupleLayout = (TupleLayout) classActor.dynamicHub().specificLayout;
         final FieldActor fieldActor = classActor.findInstanceFieldActor(fieldName, fieldType);
         ProgramError.check(fieldActor != null, "could not find field: " + fieldName);
         return tupleLayout.getFieldOffsetInCell(fieldActor);
@@ -973,7 +973,7 @@ public final class DataPrototype extends Prototype {
      */
     private synchronized int setRelocationFlags(Object object, Address cell) {
         final Hub hub = HostObjectAccess.readHub(object);
-        final SpecificLayout specificLayout = hub.specificLayout();
+        final SpecificLayout specificLayout = hub.specificLayout;
         setRelocationFlag(cell.plus(specificLayout.getHubReferenceOffsetInCell()));
         if (specificLayout.isArrayLayout()) {
             if (specificLayout.isReferenceArrayLayout()) {
@@ -990,7 +990,7 @@ public final class DataPrototype extends Prototype {
         }
         final Pointer origin = specificLayout.cellToOrigin(cell.asPointer());
         TupleReferenceMap.visitOriginOffsets(hub, origin, originOffsetVisitor);
-        return 1 + hub.referenceMapLength();
+        return 1 + hub.referenceMapLength;
     }
 
     /**

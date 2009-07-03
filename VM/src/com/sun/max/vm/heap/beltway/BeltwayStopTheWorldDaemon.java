@@ -93,13 +93,7 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
         }
     };
 
-    private final Pointer.Procedure resetSafepoint = new Pointer.Procedure() {
-
-        public void run(Pointer vmThreadLocals) {
-            Safepoint.cancelProcedure(vmThreadLocals, suspendProcedure);
-            Safepoint.reset(vmThreadLocals);
-        }
-    };
+    private final Pointer.Procedure resetSafepoint = new Safepoint.ResetSafepoints();
 
     private final Pointer.Procedure waitUntilNonMutating = new Pointer.Procedure() {
 

@@ -137,7 +137,7 @@ public final class DebugHeap {
 
         Hub h = hub;
         if (h instanceof StaticHub) {
-            final ClassActor classActor = hub.classActor();
+            final ClassActor classActor = hub.classActor;
             FatalError.check(classActor.staticHub() == h, "lost static hub");
             h = ObjectAccess.readHub(h);
         }
@@ -160,7 +160,7 @@ public final class DebugHeap {
             if (Heap.traceGC()) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Verifying ");
-                Log.print(hub.classActor().name.string);
+                Log.print(hub.classActor.name.string);
                 Log.print(" at ");
                 Log.print(cell);
                 Log.print(" [");
@@ -169,10 +169,10 @@ public final class DebugHeap {
                 Log.unlock(lockDisabledSafepoints);
             }
 
-            final SpecificLayout specificLayout = hub.specificLayout();
+            final SpecificLayout specificLayout = hub.specificLayout;
             if (specificLayout.isTupleLayout()) {
                 TupleReferenceMap.visitOriginOffsets(hub, origin, verifier);
-                cell = cell.plus(hub.tupleSize());
+                cell = cell.plus(hub.tupleSize);
             } else {
                 if (specificLayout.isHybridLayout()) {
                     TupleReferenceMap.visitOriginOffsets(hub, origin, verifier);

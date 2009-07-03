@@ -53,8 +53,8 @@ public class Target {
         // load and instantiate the backend via reflection
         String className = "com.sun.c1x.target." + arch.backend + "." + arch.backend.toUpperCase() + "Backend";
         try {
-            Class javaClass = Class.forName(className);
-            Constructor constructor = javaClass.getDeclaredConstructor(Target.class);
+            Class<?> javaClass = Class.forName(className);
+            Constructor<?> constructor = javaClass.getDeclaredConstructor(Target.class);
             return (Backend) constructor.newInstance(this);
         } catch (InstantiationException e) {
             throw new Error("could not instantiate backend class: " + className);

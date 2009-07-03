@@ -91,6 +91,10 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             }
             VmThreadLocal.SAFEPOINT_VENUE.setVariableReference(Reference.fromJava(Safepoint.Venue.NATIVE));
         }
+        @Override
+        public String toString() {
+            return "BiasedLockModeHandler-BlockForBiasRevocation";
+        }
     };
 
     protected ModalLockWord64 revokeBias(Object object) {
@@ -125,7 +129,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             // Trigger safepoint for bias owner
             Safepoint.runProcedure(vmThreadLocals, safepointProcedure);
             // Wait until bias owner is not mutating
-            while (biasOwnerThread.isInNative()) {
+            while (VmThreadLocal.inJava(vmThreadLocals)) {
                 try {
                     Thread.sleep(1);
                 } catch (InterruptedException interruptedException) {
@@ -245,9 +249,9 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         return threadHoldsMonitorResult[0];
     }
 
-    private static final class FastPathNoEpoch extends BiasedLockModeHandler {
+    static final class FastPathNoEpoch extends BiasedLockModeHandler {
 
-        private FastPathNoEpoch(ModeDelegate delegate) {
+        FastPathNoEpoch(ModeDelegate delegate) {
             super(delegate);
         }
 
@@ -348,9 +352,9 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         }
     }
 
-    private static final class FastPathWithEpoch extends BiasedLockModeHandler {
+    static final class FastPathWithEpoch extends BiasedLockModeHandler {
 
-        private FastPathWithEpoch(ModeDelegate delegate) {
+        FastPathWithEpoch(ModeDelegate delegate) {
             super(delegate);
         }
 
@@ -361,7 +365,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                 return;
             }
             final int lockwordThreadID = encodeCurrentThreadIDForLockword();
-            final BiasedLockEpoch classEpoch = ObjectAccess.readHub(object).biasedLockEpoch();
+            final BiasedLockEpoch classEpoch = ObjectAccess.readHub(object).biasedLockEpoch;
             // We cannot have any safepoints (and hence any revocation) on the code path between here and the lockword store.
             final ModalLockWord64 lockWord = ModalLockWord64.from(ObjectAccess.readMisc(object));
             if (BiasedLockWord64.isBiasedLockWord(lockWord)) {
@@ -378,9 +382,9 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             ModalLockWord64 currentLockWord = lockWord;
             while (BiasedLockWord64.isBiasedLockWord(currentLockWord)) {
                 final BiasedLockWord64 biasedLockWord = BiasedLockWord64.from(currentLockWord);
-                final BiasedLockEpoch classEpoch = ObjectAccess.readHub(object).biasedLockEpoch();
+                final BiasedLockEpoch classEpoch = ObjectAccess.readHub(object).biasedLockEpoch;
                 if (classEpoch.isBulkRevocation()) {
-                    // Objects of this class are no longer eligable for biased locking
+                    // Objects of this class are no longer eligible for biased locking
                     if (biasedLockWord.equals(biasedLockWord.asAnonBiased())) {
                         // Object is not biased or locked, change the lockword to the next locking mode
                         final ModalLockWord64 newLockWord = delegate().prepareModalLockWord(object, currentLockWord);
@@ -453,7 +457,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                 }
 
                 // Do we own the bias?
-                final BiasedLockEpoch classEpoch = ObjectAccess.readHub(object).biasedLockEpoch();
+                final BiasedLockEpoch classEpoch = ObjectAccess.readHub(object).biasedLockEpoch;
                 final int lockwordThreadID = encodeCurrentThreadIDForLockword();
                 if (biasedLockWord.getBiasOwnerID() == lockwordThreadID) {
                     if (biasedLockWord.getEpoch().equals(classEpoch) || !biasedLockWord.countUnderflow()) {
@@ -534,12 +538,12 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         private ModalLockWord64 revokeWithOwnerSafepointedAndBulkRevoke(Object object) {
             ModalLockWord64 postRevokeLockWord;
             synchronized (VmThreadMap.ACTIVE) {
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(VmThreadMap.isNotCurrent, triggerSafepoint);
+                VmThreadMap.ACTIVE.forAllVmThreadLocals(VmThreadMap.isNotCurrent, triggerSafepoints);
                 VmThreadMap.ACTIVE.forAllVmThreadLocals(VmThreadMap.isNotCurrent, waitUntilNonMutating);
                 final Hub hub = ObjectAccess.readHub(object);
-                hub.setBiasedLockEpoch(BiasedLockEpoch.bulkRevocation());
+                hub.biasedLockEpoch = BiasedLockEpoch.bulkRevocation();
                 postRevokeLockWord = revokeBias(object);
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(VmThreadMap.isNotCurrent, resetSafepoint);
+                VmThreadMap.ACTIVE.forAllVmThreadLocals(VmThreadMap.isNotCurrent, resetSafepoints);
             }
             return postRevokeLockWord;
         }
@@ -547,18 +551,18 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         private ModalLockWord64 revokeWithOwnerSafepointedAndBulkRebias(Object object) {
             ModalLockWord64 postRevokeLockWord;
             synchronized (VmThreadMap.ACTIVE) {
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(VmThreadMap.isNotCurrent, triggerSafepoint);
+                VmThreadMap.ACTIVE.forAllVmThreadLocals(VmThreadMap.isNotCurrent, triggerSafepoints);
                 VmThreadMap.ACTIVE.forAllVmThreadLocals(VmThreadMap.isNotCurrent, waitUntilNonMutating);
                 final Hub hub = ObjectAccess.readHub(object);
-                final BiasedLockEpoch epoch = hub.biasedLockEpoch();
-                hub.setBiasedLockEpoch(epoch.increment());
+                final BiasedLockEpoch epoch = hub.biasedLockEpoch;
+                hub.biasedLockEpoch = epoch.increment();
                 postRevokeLockWord = revokeBias(object);
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(VmThreadMap.isNotCurrent, resetSafepoint);
+                VmThreadMap.ACTIVE.forAllVmThreadLocals(VmThreadMap.isNotCurrent, resetSafepoints);
             }
             return postRevokeLockWord;
         }
 
-        private final Pointer.Procedure triggerSafepoint = new Pointer.Procedure() {
+        private final Pointer.Procedure triggerSafepoints = new Pointer.Procedure() {
             public void run(Pointer vmThreadLocals) {
                 if (vmThreadLocals.isZero()) {
                     // Thread is still starting up.
@@ -569,11 +573,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             }
         };
 
-        private final Pointer.Procedure resetSafepoint = new Pointer.Procedure() {
-            public void run(Pointer vmThreadLocals) {
-                Safepoint.reset(vmThreadLocals);
-            }
-        };
+        private final Safepoint.ResetSafepoints resetSafepoints = new Safepoint.ResetSafepoints();
 
         private final Pointer.Procedure waitUntilNonMutating = new Pointer.Procedure() {
             public void run(Pointer vmThreadLocals) {

@@ -206,7 +206,7 @@ public abstract class ClassActor extends Actor {
                     }
 
                     final DynamicHub dHub = new DynamicHub(dynamicTupleSize, specificLayout, ClassActor.this, superClassActorSerials, allInterfaceActors, vTableLength, dynamicReferenceMap);
-                    ClassActor.this.iToV = new int[dHub.iTableLength()];
+                    ClassActor.this.iToV = new int[dHub.iTableLength];
                     ClassActor.this.dynamicHub = dHub.expand(superClassActorSerials, allInterfaceActors, methodLookup, iToV, dynamicReferenceMap);
                 }
             }
@@ -1205,7 +1205,7 @@ public abstract class ClassActor extends Actor {
     }
 
     public Size dynamicTupleSize() {
-        return dynamicHub.tupleSize();
+        return dynamicHub.tupleSize;
     }
 
     public final ClassRegistry classRegistry() {

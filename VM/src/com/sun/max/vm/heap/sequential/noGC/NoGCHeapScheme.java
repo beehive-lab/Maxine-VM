@@ -68,7 +68,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     }
 
     public boolean isGcThread(Thread thread) {
-        return thread instanceof StopTheWorldDaemon;
+        return thread instanceof StopTheWorldGCDaemon;
     }
 
     public int adjustedCardTableShift() {
@@ -172,7 +172,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
         }
     };
 
-    private StopTheWorldDaemon collectorThread;
+    private StopTheWorldGCDaemon collectorThread;
 
     private NoGCHeapMemoryRegion space = new NoGCHeapMemoryRegion("Heap-NoGC");
     private Address top;
@@ -200,7 +200,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
 
             TeleHeapInfo.registerMemoryRegions(space);
         } else if (phase == MaxineVM.Phase.STARTING) {
-            collectorThread = new StopTheWorldDaemon("GC", collect);
+            collectorThread = new StopTheWorldGCDaemon("GC", collect);
         }
     }
 
@@ -287,7 +287,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     @INLINE
     @NO_SAFEPOINTS("TODO")
     public Object createArray(DynamicHub dynamicHub, int length) {
-        final Size size = Layout.getArraySize(dynamicHub.classActor().componentClassActor().kind, length);
+        final Size size = Layout.getArraySize(dynamicHub.classActor.componentClassActor().kind, length);
         final Pointer cell = allocate(size);
         return Cell.plantArray(cell, size, dynamicHub, length);
     }
@@ -295,13 +295,13 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     @INLINE
     @NO_SAFEPOINTS("TODO")
     public Object createTuple(Hub hub) {
-        final Pointer cell = allocate(hub.tupleSize());
+        final Pointer cell = allocate(hub.tupleSize);
         return Cell.plantTuple(cell, hub);
     }
 
     @NO_SAFEPOINTS("TODO")
     public Object createHybrid(DynamicHub hub) {
-        final Size size = hub.tupleSize();
+        final Size size = hub.tupleSize;
         final Pointer cell = allocate(size);
         return Cell.plantHybrid(cell, size, hub);
     }
@@ -370,8 +370,8 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
 
         Hub h = hub;
         if (h instanceof StaticHub) {
-            final ClassActor classActor = hub.classActor();
-            checkClassActor(h.classActor());
+            final ClassActor classActor = hub.classActor;
+            checkClassActor(h.classActor);
             FatalError.check(classActor.staticHub() == h, "lost static hub");
             h = ObjectAccess.readHub(h);
         }
@@ -411,10 +411,10 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
             }
             final Pointer origin = Layout.cellToOrigin(cell);
             final Hub hub = checkHub(origin);
-            final SpecificLayout specificLayout = hub.specificLayout();
+            final SpecificLayout specificLayout = hub.specificLayout;
             if (specificLayout.isTupleLayout()) {
                 TupleReferenceMap.visitOriginOffsets(hub, origin, pointerOffsetGripVerifier);
-                cell = cell.plus(hub.tupleSize());
+                cell = cell.plus(hub.tupleSize);
             } else {
                 if (specificLayout.isHybridLayout()) {
                     TupleReferenceMap.visitOriginOffsets(hub, origin, pointerOffsetGripVerifier);

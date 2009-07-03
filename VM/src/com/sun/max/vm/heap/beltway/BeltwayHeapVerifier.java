@@ -81,10 +81,10 @@ public class BeltwayHeapVerifier {
             cellVerifier.verifyGrip(belt, hubGrip);
             final Hub hub = UnsafeLoophole.cast(hubGrip.toJava());
             cellVerifier.checkHub(hub);
-            final SpecificLayout specificLayout = hub.specificLayout();
+            final SpecificLayout specificLayout = hub.specificLayout;
             if (specificLayout.isTupleLayout()) {
                 TupleReferenceMap.visitOriginOffsets(hub, origin, pointerOffsetVisitor);
-                cell = cell.plus(hub.tupleSize());
+                cell = cell.plus(hub.tupleSize);
             } else {
                 if (specificLayout.isHybridLayout()) {
                     TupleReferenceMap.visitOriginOffsets(hub, origin, pointerOffsetVisitor);

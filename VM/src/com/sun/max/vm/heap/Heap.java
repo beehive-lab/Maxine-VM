@@ -265,7 +265,7 @@ public final class Heap {
     private static void traceCreateArray(DynamicHub hub, int length, final Object array) {
         final boolean lockDisabledSafepoints = Log.lock();
         Log.print("Allocated array ");
-        Log.print(hub.classActor().name.string);
+        Log.print(hub.classActor.name.string);
         Log.print(" of length ");
         Log.print(length);
         Log.print(" at ");
@@ -289,11 +289,11 @@ public final class Heap {
     private static void traceCreateTuple(Hub hub, final Object object) {
         final boolean lockDisabledSafepoints = Log.lock();
         Log.print("Allocated tuple ");
-        Log.print(hub.classActor().name.string);
+        Log.print(hub.classActor.name.string);
         Log.print(" at ");
         Log.print(Layout.originToCell(ObjectAccess.toOrigin(object)));
         Log.print(" [");
-        Log.print(hub.tupleSize().toInt());
+        Log.print(hub.tupleSize.toInt());
         Log.println(" bytes]");
         Log.unlock(lockDisabledSafepoints);
     }
@@ -311,11 +311,11 @@ public final class Heap {
     private static void traceCreateHybrid(DynamicHub hub, final Object hybrid) {
         final boolean lockDisabledSafepoints = Log.lock();
         Log.print("Allocated hybrid ");
-        Log.print(hub.classActor().name.string);
+        Log.print(hub.classActor.name.string);
         Log.print(" at ");
         Log.print(Layout.originToCell(ObjectAccess.toOrigin(hybrid)));
         Log.print(" [");
-        Log.print(hub.tupleSize().toInt());
+        Log.print(hub.tupleSize.toInt());
         Log.println(" bytes]");
         Log.unlock(lockDisabledSafepoints);
     }
@@ -334,11 +334,11 @@ public final class Heap {
         final boolean lockDisabledSafepoints = Log.lock();
         Log.print("Allocated expanded hybrid ");
         final Hub hub = ObjectAccess.readHub(hybrid);
-        Log.print(hub.classActor().name.string);
+        Log.print(hub.classActor.name.string);
         Log.print(" at ");
         Log.print(Layout.originToCell(ObjectAccess.toOrigin(expandedHybrid)));
         Log.print(" [");
-        Log.print(hub.tupleSize().toInt());
+        Log.print(hub.tupleSize.toInt());
         Log.println(" bytes]");
         Log.unlock(lockDisabledSafepoints);
     }
@@ -357,11 +357,11 @@ public final class Heap {
         final boolean lockDisabledSafepoints = Log.lock();
         Log.print("Allocated cloned ");
         final Hub hub = ObjectAccess.readHub(object);
-        Log.print(hub.classActor().name.string);
+        Log.print(hub.classActor.name.string);
         Log.print(" at ");
         Log.print(Layout.originToCell(ObjectAccess.toOrigin(clone)));
         Log.print(" [");
-        Log.print(hub.tupleSize().toInt());
+        Log.print(hub.tupleSize.toInt());
         Log.println(" bytes]");
         Log.unlock(lockDisabledSafepoints);
     }

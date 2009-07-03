@@ -38,7 +38,7 @@ public class VTableTrampoline extends DynamicTrampoline {
     protected Address getMethodEntryPoint(Object receiver) {
         final int dispatchTableIndex = dispatchTableIndex();
         final Hub hub = ObjectAccess.readHub(receiver);
-        final VirtualMethodActor selectedCallee = hub.classActor().getVirtualMethodActorByVTableIndex(dispatchTableIndex);
+        final VirtualMethodActor selectedCallee = hub.classActor.getVirtualMethodActorByVTableIndex(dispatchTableIndex);
         if (selectedCallee.isAbstract()) {
             throw new AbstractMethodError();
         }

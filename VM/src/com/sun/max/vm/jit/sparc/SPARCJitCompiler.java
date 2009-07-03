@@ -150,6 +150,14 @@ public class SPARCJitCompiler extends JitCompiler {
             case REFERENCE_MAP_PREPARING: {
                 break;
             }
+            case RAW_INSPECTING: {
+                final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
+                final int flags = RawStackFrameVisitor.Util.makeFlags(isTopFrame, true);
+                if (!stackFrameVisitor.visitFrame(targetMethod, instructionPointer, framePointer, stackPointer, flags)) {
+                    return false;
+                }
+                break;
+            }
             case INSPECTING: {
                 final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
                 final StackFrame stackFrame = new SPARCOptimizedToJitAdapterFrame(stackFrameWalker.calleeStackFrame(), targetMethod, instructionPointer, framePointer, stackPointer, adapterFrameSize);
@@ -157,9 +165,6 @@ public class SPARCJitCompiler extends JitCompiler {
                     return false;
                 }
                 break;
-            }
-            default: {
-                ProgramError.unknownCase();
             }
         }
 
@@ -266,6 +271,14 @@ public class SPARCJitCompiler extends JitCompiler {
                         unwind(unwindingContext, catchAddress, catcherStackPointer, localVariablesBase, literalBase);
                         // We should never reach here
                     }
+                }
+                break;
+            }
+            case RAW_INSPECTING: {
+                final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
+                final int flags = RawStackFrameVisitor.Util.makeFlags(isTopFrame, false);
+                if (!stackFrameVisitor.visitFrame(targetMethod, stackFrameWalker.instructionPointer(), stackFrameWalker.stackPointer(), localVariablesBase, flags)) {
+                    return false;
                 }
                 break;
             }
@@ -472,7 +485,7 @@ public class SPARCJitCompiler extends JitCompiler {
 
         @Override
         public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, Purpose purpose, Object context) {
-            FatalError.check(purpose == Purpose.INSPECTING, "Cannot walk stack unwind stub unless inspecting");
+            FatalError.check(purpose == Purpose.INSPECTING || purpose == Purpose.RAW_INSPECTING, "Cannot walk stack unwind stub unless inspecting");
             final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
             final Pointer instructionPointer = stackFrameWalker.instructionPointer();
             final Pointer callerInstructionPointer;
