@@ -35,26 +35,27 @@ public class LIRProfileCall extends LIRInstruction {
     private CiMethod profiledMethod;
     private int profiledBci;
     private LIROperand mdo;
-    private LIROperand receiver;
+    private LIROperand recv;
     private LIROperand tmp1;
-//    ciKlass knownHolder; TODO: needs to be defined
-
+    private CiType knownHolder;
 
     /**
+     * Constructs a new LIRProfileCall Instruction.
+     *
      * @param profiledMethod
      * @param profiledBci
      * @param mdo
      * @param receiver
      * @param tmp1
      */
-    public LIRProfileCall(LIROpcode opcode, CiMethod profiledMethod, int profiledBci, LIROperand mdo, LIROperand receiver, LIROperand tmp1) {
+    public LIRProfileCall(LIROpcode opcode, CiMethod profiledMethod, int profiledBci, LIROperand mdo, LIROperand recv, LIROperand tmp1, CiType knownHolder) {
         super(opcode, LIROperandFactory.illegalOperand, null);
         this.profiledMethod = profiledMethod;
         this.profiledBci = profiledBci;
         this.mdo = mdo;
-        this.receiver = receiver;
+        this.recv = recv;
         this.tmp1 = tmp1;
-        //this.knownHolder = knownHolder;
+        this.knownHolder = knownHolder;
     }
 
     /**
@@ -89,8 +90,8 @@ public class LIRProfileCall extends LIRInstruction {
      *
      * @return the receiver
      */
-    public LIROperand receiver() {
-        return receiver;
+    public LIROperand recv() {
+        return recv;
     }
 
     /**
@@ -107,9 +108,9 @@ public class LIRProfileCall extends LIRInstruction {
      *
      * @return the knownHolder
      */
- //   public ciKlass knownHolder() {
- //       return knownHolder;
- //   }
+    public CiType knownHolder() {
+        return knownHolder;
+    }
 
     /**
      * Emits target assembly code for this instruction.
@@ -118,8 +119,7 @@ public class LIRProfileCall extends LIRInstruction {
      */
     @Override
     public void emitCode(LIRAssembler masm) {
-        // TODO Auto-generated method stub
-
+        masm.emitProfileCall(this);
     }
 
     /**
@@ -129,13 +129,13 @@ public class LIRProfileCall extends LIRInstruction {
      */
     @Override
     public void printInstruction(LogStream out) {
-        out.print(profiledMethod.name().toString());
+        out.print(profiledMethod.name().toString()); // TODO: the method name was changed from ciSymbol to String
         out.print(".");
         out.print(profiledMethod.holder().name().toString());
-        out.print(" @ " + profiledBci);
+        out.printf(" @ %d", profiledBci);
         mdo.print(out);
         out.print(" ");
-        receiver.print(out);
+        recv.print(out);
         out.print(" ");
         tmp1.print(out);
     }

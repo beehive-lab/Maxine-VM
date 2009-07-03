@@ -35,22 +35,45 @@ public class LIRBranch extends LIRInstruction {
     private LIRCondition cond;
     private BasicType type;
     private Label label;
-    private BlockBegin block; // if this is a branch to a block, this is the block
+    private BlockBegin block;  // if this is a branch to a block, this is the block
     private BlockBegin ublock; // if this is a float-branch, this is the unordered block
-    private CodeStub stub; // if this is a branch to a stub, this is the stub
+    private CodeStub stub;     // if this is a branch to a stub, this is the stub
 
+    /**
+     * Creates a new LIRBranch instruction.
+     *
+     * @param cond the branch condition
+     * @param label target label
+     *
+     */
     public LIRBranch(LIRCondition cond, Label label) {
         super(LIROpcode.Branch, LIROperandFactory.illegalOperand, null);
         this.cond = cond;
         this.label = label;
     }
 
+    /**
+     * Creates a new LIRBranch instruction.
+     *
+     * @param cond the branch condition
+     * @param type
+     * @param stub
+     *
+     */
     public LIRBranch(LIRCondition cond, BasicType type, CodeStub stub) {
         this(cond, stub.entry());
         this.type = type;
         this.stub = stub;
     }
 
+    /**
+     * Creates a new LIRBranch instruction.
+     *
+     * @param cond
+     * @param type
+     * @param block
+     *
+     */
     public LIRBranch(LIRCondition cond, BasicType type, BlockBegin block) {
         this(cond, type, block, null);
     }
@@ -63,10 +86,16 @@ public class LIRBranch extends LIRInstruction {
         this.ublock = ublock;
     }
 
+    /**
+     * @return the condition
+     */
     LIRCondition cond() {
         return cond;
     }
 
+    /**
+     * @return the type of this condition
+     */
     BasicType type() {
         return type;
     }
@@ -131,11 +160,6 @@ public class LIRBranch extends LIRInstruction {
         if (stub() != null) {
             masm.emitStub(stub());
         }
-    }
-
-    @Override
-    LIRBranch asBranch() {
-        return this;
     }
 
     @Override

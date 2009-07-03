@@ -21,20 +21,19 @@
 package com.sun.c1x.lir;
 
 import java.util.*;
-
-import com.sun.c1x.util.*;
-
+import com.sun.c1x.value.*;
 
 /**
  * The <code>LIRCall</code> class definition.
  *
  * @author Marcelo Cintra
+ * @param <T>
  *
  */
-public class LIRCall extends LIRInstruction {
+public abstract class LIRCall extends LIRInstruction {
 
-    protected int address;   // TODO not sure if we should create a new class for address
-    protected ArrayList<LIRInstruction> arguments;
+    protected Address addr;   // TODO not sure if we should create a new class for address
+    protected List<LIROperand> arguments;
 
     /**
      * Creates a new LIRCall instruction.
@@ -42,9 +41,9 @@ public class LIRCall extends LIRInstruction {
      * @param address
      * @param arguments
      */
-    public LIRCall(LIROpcode opcode, int address, LIROperand result, ArrayList<LIRInstruction> arguments, CodeEmitInfo info) {
+    public LIRCall(LIROpcode opcode, Address address, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info) {
         super(opcode, result, info);
-        this.address = address;
+        this.addr = address;
         this.arguments = arguments;
     }
 
@@ -53,38 +52,16 @@ public class LIRCall extends LIRInstruction {
      *
      * @return the address
      */
-    public int address() {
-        return address;
+    public Address address() {
+        return addr;
     }
 
     /**
-     * Gets the arguments of this call.
+     * Gets the arguments list of this call.
      *
      * @return the arguments
      */
-    public ArrayList<LIRInstruction> arguments() {
+    public List<LIROperand> arguments() {
         return arguments;
-    }
-
-    /**
-     * Emits code for this instruction.
-     *
-     * @param masm the target assembler
-     */
-    @Override
-    public void emitCode(LIRAssembler masm) {
-        // TODO Auto-generated method stub
-
-    }
-
-    /**
-     * Prints this instruction.
-     *
-     * @param out the output log stream.
-     */
-    @Override
-    public void printInstruction(LogStream out) {
-        out.print("call: ");
-        out.print("[addr: 0x" + address());
     }
 }

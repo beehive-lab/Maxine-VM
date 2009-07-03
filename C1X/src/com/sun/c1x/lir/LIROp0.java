@@ -79,10 +79,4 @@ public class LIROp0 extends LIRInstruction {
     public void printInstruction(LogStream out) {
         result().print(out);
     }
-
-    @Override
-    LIROp0 asOp0() {
-        return this;
-    }
-
 }

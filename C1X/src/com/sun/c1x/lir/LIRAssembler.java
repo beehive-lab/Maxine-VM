@@ -56,4 +56,100 @@ public class LIRAssembler {
         // TODO Auto-generated method stub
 
     }
+
+    /**
+     * @param lirAllocObj
+     */
+    public void emitAllocObj(LIRAllocObj lirAllocObj) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /**
+     * @param lirOp2
+     */
+    public void emitLIROp2(LIROp2 lirOp2) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /**
+     * @param lirDelay
+     */
+    public void emitDelay(LIRDelay lirDelay) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /**
+     * @param lirOp3
+     */
+    public void emitOp3(LIROp3 lirOp3) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /**
+     * @param lirAllocArray
+     */
+    public void emitAllocArray(LIRAllocArray lirAllocArray) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /**
+     * @param lirJavaCall
+     */
+    public void emitJavaCall(LIRJavaCall lirJavaCall) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /**
+     * @param lirrtCall
+     */
+    public void emitRTCall(LIRRTCall lirrtCall) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /**
+     * @param lirArrayCopy
+     */
+    public void emitArrayCopy(LIRArrayCopy lirArrayCopy) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /**
+     * @param lirLock
+     */
+    public void emitLock(LIRLock lirLock) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /**
+     * @param lirTypeCheck
+     */
+    public void emitTypeCheck(LIRTypeCheck lirTypeCheck) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /**
+     * @param lirCompareAndSwap
+     */
+    public void emitCompareAndSwap(LIRCompareAndSwap lirCompareAndSwap) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /**
+     * @param lirProfileCall
+     */
+    public void emitProfileCall(LIRProfileCall lirProfileCall) {
+        // TODO Auto-generated method stub
+
+    }
 }

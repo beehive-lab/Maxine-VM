@@ -1,19 +1,22 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc. All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product that is
- * described in this document. In particular, and without limitation, these intellectual property rights may include one
- * or more of the U.S. patents listed at http://www.sun.com/patents and one or more additional patents or pending patent
- * applications in the U.S. and in other countries.
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun Microsystems, Inc. standard
- * license agreement and applicable provisions of the FAR and its supplements.
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or registered
- * trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks are used under license and
- * are trademarks or registered trademarks of SPARC International, Inc. in the U.S. and other countries.
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open Company, Ltd.
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
  */
 package com.sun.c1x.lir;
 
@@ -28,7 +31,6 @@ import com.sun.c1x.util.*;
  */
 public abstract class LIRInstruction {
 
-<<<<<<< local
     public enum LIRMoveKind {
         Normal, Volatile, Unaligned, MaxFlag
     }
@@ -40,15 +42,6 @@ public abstract class LIRInstruction {
     private int id; // value id for register allocation
     private int fpuPopCount;
     private Instruction source; // for debugging
-=======
-    LIROperand result;      // the result operand for this instruction
-    LIROpcode opcode;       // the opcode of this instruction
-    LIRMoveKind flags;      // flag that indicate the kind of move
-    CodeEmitInfo info;      // used to emit debug information
-    int id;                 // value id for register allocation
-    int fpuPopCount;
-    Instruction source;    // for debugging
->>>>>>> other
 
     /**
      * Constructs a new Instruction.
@@ -158,18 +151,6 @@ public abstract class LIRInstruction {
     }
 
     /**
-<<<<<<< local
-=======
-     * Sets the Fpu pop counter of this instruction. This is a counter to FPU stack simulation, only used on Intel.
-     *
-     * @param fpuPopCount the value
-     */
-    public void setFpuPopCount(int fpuPopCount) {
-        this.fpuPopCount = fpuPopCount;
-    }
-
-    /**
->>>>>>> other
      * Checks if the Fpu stack is not empty. This FPU stack simulation is only used on Intel.
      *
      * @return <code>true</code> if the Fpu stack is not empty.
@@ -215,7 +196,6 @@ public abstract class LIRInstruction {
      *
      * @param stream the LogStream to print into.
      */
-<<<<<<< local
     public void printOn(LogStream st) {
         if (id() != -1 || C1XOptions.PrintCFGToFile) {
             st.printf("%4d ", id());
@@ -229,10 +209,6 @@ public abstract class LIRInstruction {
             st.printf(" [bci:%d]", info().bci());
         }
     }
-=======
-    public void printOn(LogStream stream) {
->>>>>>> other
-
     public void verify() {
     }
 
@@ -245,82 +221,6 @@ public abstract class LIRInstruction {
      */
     protected static boolean isInRange(LIROpcode opcode, LIROpcode start, LIROpcode end) {
         return start.ordinal() < opcode.ordinal() && opcode.ordinal() < end.ordinal();
-    }
-
-    LIRCall asCall() {
-        return null;
-    }
-
-    LIRJavaCall asJavaCall() {
-        return null;
-    }
-
-    LIRLabel asLabel() {
-        return null;
-    }
-
-    LIRDelay asDelay() {
-        return null;
-    }
-
-    LIRLock asLock() {
-        return null;
-    }
-
-    LIRAllocArray asAllocArray() {
-        return null;
-    }
-
-    LIRAllocObj asAllocObj() {
-        return null;
-    }
-
-    LIRRoundFP asRoundFP() {
-        return null;
-    }
-
-    LIRBranch asBranch() {
-        return null;
-    }
-
-    LIRRTCall asRTCall() {
-        return null;
-    }
-
-    LIRConvert asConvert() {
-        return null;
-    }
-
-    LIROp0 asOp0() {
-        return null;
-    }
-
-    LIROp1 asOp1() {
-        return null;
-    }
-
-    LIROp2 asOp2() {
-        return null;
-    }
-
-    LIROp3 asOp3() {
-        return null;
-    }
-
-    LIRArrayCopy asArrayCopy() {
-        return null;
-    }
-
-    LIRTypeCheck asTypeCheck() {
-        return null;
-    }
-
-    LIRCompareAndSwap asCompareAndSwap() {
-        return null;
-    }
-
-    LIRProfileCall asProfileCall() {
-        return null;
     }
 
     protected static void printCondition(LogStream out, LIRCondition cond) {
