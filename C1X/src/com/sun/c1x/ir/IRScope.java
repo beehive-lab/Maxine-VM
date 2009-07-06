@@ -21,7 +21,6 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.ci.CiMethod;
-import com.sun.c1x.ci.CiExceptionHandler;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.util.BitMap;
 import com.sun.c1x.C1XOptions;

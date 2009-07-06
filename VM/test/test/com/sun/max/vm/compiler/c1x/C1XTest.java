@@ -454,10 +454,10 @@ public class C1XTest {
     }
 
     private static void printClassFields(Class<?> javaClass) {
-        String className = javaClass.getSimpleName();
+        final String className = javaClass.getSimpleName();
         out.println(className + " {");
         for (final Field field : javaClass.getFields()) {
-            String fieldName = Strings.padLengthWithSpaces(field.getName(), 35);
+            final String fieldName = Strings.padLengthWithSpaces(field.getName(), 35);
             try {
                 if (field.getType() == int.class) {
                     out.print("    " + fieldName + " = " + field.getInt(null) + "\n");
