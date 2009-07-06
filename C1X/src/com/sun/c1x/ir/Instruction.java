@@ -307,8 +307,8 @@ public abstract class Instruction {
     }
 
     /**
-     * Checks whether this instruction needs a null check.
-     * @return <code>true</code> if this instruction needs a null check
+     * Checks whether this instruction produces a value which is guaranteed to be non-null.
+     * @return <code>true</code> if this instruction's value is not null
      */
     public final boolean isNonNull() {
         return checkFlag(Flag.NonNull);
