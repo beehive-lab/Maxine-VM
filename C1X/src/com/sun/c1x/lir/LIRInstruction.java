@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
 
@@ -30,22 +31,37 @@ import com.sun.c1x.util.*;
  */
 public abstract class LIRInstruction {
 
-    LIROperand result;      // the result operand for this instruction
-    LIROpcode opcode;       // the opcode of this instruction
-    LIRMoveKind flags;      // flag that indicate the kind of move
-    CodeEmitInfo info;      // used to emit debug information
-    int id;                 // value id for register allocation
-    int fpuPopCount;
-    Instruction source;    // for debugging
+    public enum LIRMoveKind {
+        Normal, Volatile, Unaligned, MaxFlag
+    }
+
+    protected LIROperand result; // the result operand for this instruction
+    protected LIROpcode code; // the opcode of this instruction
+    protected LIRMoveKind flags; // flag that indicate the kind of move
+    private CodeEmitInfo info; // used to emit debug information
+    private int id; // value id for register allocation
+    private int fpuPopCount;
+    private Instruction source; // for debugging
 
     /**
      * Constructs a new Instruction.
      *
      */
     public LIRInstruction() {
-        result = LIROperandFactory.illegalOperand;
-        opcode = LIROpcode.None;
-        info = null;
+        this(LIROpcode.None, LIROperandFactory.illegalOperand, null);
+    }
+
+    /**
+     * Constructs a new Instruction.
+     *
+     * @param opcode the opcode of the new instruction
+     * @param result the operand that holds the operation result of this instruction
+     * @param info the object holding information needed to perform deoptimization
+     */
+    public LIRInstruction(LIROpcode opcode, LIROperand result, CodeEmitInfo info) {
+        this.result = result;
+        this.code = opcode;
+        this.info = info;
         flags = LIRMoveKind.Normal;
         fpuPopCount = 0;
         source = null;
@@ -53,20 +69,21 @@ public abstract class LIRInstruction {
     }
 
     /**
-     * Constructs a new Instruction.
+     * Gets the code emission info of this instruction.
      *
-     * @param opcode the opcode of the new instruction
-     * @param result the operand that holds operation result of this instruction
-     * @param info the object holding information needed to emit debug information
+     * @return info the object containing additional information to produce generate debug information.
      */
-    public LIRInstruction(LIROpcode opcode, LIROperand result, CodeEmitInfo info) {
-        this.result = result;
-        this.opcode = opcode;
-        this.info = info;
-        flags = LIRMoveKind.Normal;
-        fpuPopCount = 0;
-        source = null;
-        id = -1;
+    public CodeEmitInfo info() {
+        return info;
+    }
+
+    /**
+     * Gets the opcode of this instruction.
+     *
+     * @return return the instruction's opcode.
+     */
+    public LIROpcode code() {
+        return code;
     }
 
     /**
@@ -88,21 +105,13 @@ public abstract class LIRInstruction {
     }
 
     /**
-     * Gets the opcode of this instruction.
+     * Gets the instruction name.
      *
-     * @return return the instruction's opcode.
+     * @return the name of the enum constant that represents the instruction opcode, exactly as declared in the enum
+     *         LIROpcode declaration.
      */
-    public LIROpcode opcode() {
-        return opcode;
-    }
-
-    /**
-     * Gets the code emission info of this instruction.
-     *
-     * @return info the object containing additional information to produce generate debug information.
-     */
-    public CodeEmitInfo info() {
-        return info;
+    public String name() {
+        return code.name();
     }
 
     /**
@@ -124,12 +133,12 @@ public abstract class LIRInstruction {
     }
 
     /**
-     * Gets the instruction name.
+     * Sets the Fpu pop counter of this instruction. This is a counter to FPU stack simulation, only used on Intel.
      *
-     * @return the name of the enum constant that represents the instruction opcode, exactly as declared in the enum LIROpcode declaration.
+     * @param id the value
      */
-    public String name() {
-        return opcode.name();
+    public void setFpuPopCount(int fpuPopCount) {
+        this.fpuPopCount = fpuPopCount;
     }
 
     /**
@@ -139,15 +148,6 @@ public abstract class LIRInstruction {
      */
     public int fpuPopCount() {
         return fpuPopCount;
-    }
-
-    /**
-     * Sets the Fpu pop counter of this instruction. This is a counter to FPU stack simulation, only used on Intel.
-     *
-     * @param fpuPopCount the value
-     */
-    public void setFpuPopCount(int fpuPopCount) {
-        this.fpuPopCount = fpuPopCount;
     }
 
     /**
@@ -192,12 +192,24 @@ public abstract class LIRInstruction {
     public abstract void printInstruction(LogStream out);
 
     /**
-     * Abstract method to be print this instruction.
+     * Prints information common to all LIR instruction.
      *
      * @param stream the LogStream to print into.
      */
-    public void printOn(LogStream stream) {
-
+    public void printOn(LogStream st) {
+        if (id() != -1 || C1XOptions.PrintCFGToFile) {
+            st.printf("%4d ", id());
+        } else {
+            st.print("     ");
+        }
+        st.print(name());
+        st.print(" ");
+        printInstruction(st);
+        if (info() != null) {
+            st.printf(" [bci:%d]", info().bci());
+        }
+    }
+    public void verify() {
     }
 
     /**
@@ -207,13 +219,39 @@ public abstract class LIRInstruction {
      * @param start the lower bound range limit of valid opcodes
      * @param end the upper bound range limit of valid opcodes
      */
-    protected static boolean isInRange(LIROpcode opcode, LIROpcode start, LIROpcode end)  {
+    protected static boolean isInRange(LIROpcode opcode, LIROpcode start, LIROpcode end) {
         return start.ordinal() < opcode.ordinal() && opcode.ordinal() < end.ordinal();
     }
 
-
-    public void verify() {
-
+    protected static void printCondition(LogStream out, LIRCondition cond) {
+        switch (cond) {
+            case Equal:
+                out.print("[EQ]");
+                break;
+            case NotEqual:
+                out.print("[NE]");
+                break;
+            case Less:
+                out.print("[LT]");
+                break;
+            case LessEqual:
+                out.print("[LE]");
+                break;
+            case GreaterEqual:
+                out.print("[GT]");
+                break;
+            case BelowEqual:
+                out.print("[BE]");
+                break;
+            case AboveEqual:
+                out.print("[AE]");
+                break;
+            case Always:
+                out.print("[AL]");
+                break;
+            default:
+                out.printf("[%d]", cond.ordinal());
+                break;
+        }
     }
-
 }

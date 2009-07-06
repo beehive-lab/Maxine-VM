@@ -81,7 +81,7 @@ public abstract class AccessIndexed extends AccessArray {
      * is to always require it.
      * @return <code>true</code> if a range check is required for this instruction
      */
-    boolean computeNeedsRangeCheck() {
+    public boolean computeNeedsRangeCheck() {
         return true;
     }
 

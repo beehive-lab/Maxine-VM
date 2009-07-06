@@ -32,7 +32,7 @@ import com.sun.c1x.value.*;
 public class LIRAllocArray extends LIRInstruction {
 
     LIROperand klass;
-    LIROperand length;
+    LIROperand len;
     LIROperand tmp1;
     LIROperand tmp2;
     LIROperand tmp3;
@@ -42,9 +42,9 @@ public class LIRAllocArray extends LIRInstruction {
 
     /**
      * Creates a new LIRAllocArray instruction.
-     * TODO: fill out comments.
+     *
      * @param klass
-     * @param length
+     * @param len
      * @param tmp1
      * @param tmp2
      * @param tmp3
@@ -52,10 +52,10 @@ public class LIRAllocArray extends LIRInstruction {
      * @param type
      * @param stub
      */
-    public LIRAllocArray(LIROperand klass, LIROperand length, LIROperand result, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, LIROperand tmp4, BasicType type, CodeStub stub) {
+    public LIRAllocArray(LIROperand klass, LIROperand len, LIROperand result, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, LIROperand tmp4, BasicType type, CodeStub stub) {
         super(LIROpcode.AllocArray, result, null);
         this.klass = klass;
-        this.length = length;
+        this.len = len;
         this.tmp1 = tmp1;
         this.tmp2 = tmp2;
         this.tmp3 = tmp3;
@@ -78,12 +78,20 @@ public class LIRAllocArray extends LIRInstruction {
      * @return the array length to be allocated
      */
     public LIROperand length() {
-        return length;
+        return len;
+    }
+
+    /**
+     * Gets the result operand of this instruction.
+     *
+     * @return the result operand
+     */
+    public LIROperand obj() {
+        return result();
     }
 
     /**
      * Gets the first temporary associated with this call instruction.
-     * TODO: what information does the tnp hold?
      *
      * @return the tmp1
      */
@@ -146,8 +154,7 @@ public class LIRAllocArray extends LIRInstruction {
      */
     @Override
     public void emitCode(LIRAssembler masm) {
-        // TODO Not yet implemented.
-
+        masm.emitAllocArray(this);
     }
 
     /**
@@ -159,7 +166,9 @@ public class LIRAllocArray extends LIRInstruction {
     public void printInstruction(LogStream out) {
         klass.print(out);
         out.print(" ");
-        length.print(out);
+        len.print(out);
+        out.print(" ");
+        obj().print(out);
         out.print(" ");
         result.print(out);
         out.print(" ");
@@ -171,10 +180,7 @@ public class LIRAllocArray extends LIRInstruction {
         out.print(" ");
         tmp4.print(out);
         out.print(" ");
-        out.print("[type:0x" + type.toString() + "]");
-        out.print(" ");
-        out.print("[label:0x");
-        stub.entry.printInstruction(out);
-        out.print("]");
+        out.printf("[type:0x%x] ", type());
+        out.printf("[label:0x%x]", stub.entry());
     }
 }

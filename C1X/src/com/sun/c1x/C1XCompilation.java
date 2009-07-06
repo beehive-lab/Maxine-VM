@@ -28,8 +28,8 @@ import com.sun.c1x.ci.CiRuntime;
 import com.sun.c1x.ci.CiType;
 import com.sun.c1x.graph.BlockMap;
 import com.sun.c1x.graph.GraphBuilder;
-import com.sun.c1x.ir.BlockBegin;
-import com.sun.c1x.ir.IRScope;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.target.Target;
 
@@ -41,6 +41,18 @@ import com.sun.c1x.target.Target;
  * @author Ben L. Titzer
  */
 public class C1XCompilation {
+
+    public enum MethodCompilation {
+        InvocationEntryBci(-1),
+        InvalidOSREntryBci(-2),
+        SynchronizationEntryBCI(-1);
+
+        public final int value;
+
+        MethodCompilation(int value) {
+            this.value = value;
+        }
+    }
 
     public final Target target;
     public final CiRuntime runtime;
@@ -57,6 +69,7 @@ public class C1XCompilation {
 
     int totalBlocks = 1;
     int totalInstructions;
+    private Instruction currentInstruction;
 
     /**
      * Creates a new compilation for the specified method and runtime.
@@ -100,7 +113,8 @@ public class C1XCompilation {
                     }
                 }
 
-                final GraphBuilder builder = new GraphBuilder(this, new IRScope(this, null, 0, method, osrBCI));
+                final IRScope topScope = new IRScope(this, null, 0, method, osrBCI);
+                final GraphBuilder builder = new GraphBuilder(this, topScope);
                 start = builder.start();
                 totalInstructions = builder.instructionCount();
 
@@ -259,5 +273,34 @@ public class C1XCompilation {
 
     public int nextBlockNumber() {
         return totalBlocks++;
+    }
+
+    /**
+     * Updates the current instruction to a new value and returns the old one.
+     * @param instr the new current instruction
+     * @return the old current instruction
+     */
+    public Instruction setCurrentInstruction(Instruction instr) {
+        final Instruction previous = currentInstruction;
+        currentInstruction = instr;
+        return previous;
+    }
+
+    /**
+     * Returns the current processed instruction. This method is used during HIR to LIR transformations.
+     * @return the current instruction
+     */
+    public Instruction currentInstruction() {
+        return currentInstruction;
+    }
+
+    /**
+     * Returns the frame map of this compilation.
+     * @return the frame map
+     */
+    public FrameMap frameMap() {
+        // TODO Return the frame map
+        Util.unimplemented();
+        return null;
     }
 }

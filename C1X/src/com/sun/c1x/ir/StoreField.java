@@ -84,4 +84,5 @@ public class StoreField extends AccessField {
     public void accept(InstructionVisitor v) {
         v.visitStoreField(this);
     }
+
 }

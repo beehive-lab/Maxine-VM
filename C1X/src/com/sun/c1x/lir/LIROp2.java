@@ -32,7 +32,7 @@ import com.sun.c1x.value.*;
  */
 public class LIROp2 extends LIRInstruction {
 
-    int fpuStackSize;     // used for sin/cos implementation on Intel
+    private int fpuStackSize;     // used for sin/cos implementation on Intel
     protected LIROperand opr1;
     LIROperand opr2;
     BasicType type;
@@ -57,18 +57,6 @@ public class LIROp2 extends LIRInstruction {
         this.fpuStackSize = 0;
         this.tmp = LIROperandFactory.illegalOperand;
         assert opcode == LIROpcode.Cmp : "Instruction opcode should be of type LIROpcode.Cmp";
-    }
-
-    /**
-     * Constructs a new LIROp2 instruction.
-     *
-     * @param opcode the instruction's opcode
-     * @param condition the instruction's condition
-     * @param opr1 the first input operand
-     * @param opr2 the second input operand
-     */
-    public LIROp2(LIROpcode opcode, LIRCondition condition, LIROperand opr1, LIROperand opr2) {
-        this(opcode, condition, opr1, opr2, (CodeEmitInfo) null);
     }
 
     /**
@@ -169,14 +157,77 @@ public class LIROp2 extends LIRInstruction {
     }
 
     /**
+     * Gets the first input operand.
+     *
+     * @return opr1 the first input operand
+     */
+    public LIROperand opr1() {
+        return opr1;
+    }
+
+    /**
+     * Gets the second input operand.
+     *
+     * @return opr2 the second input operand
+     */
+    public LIROperand opr2() {
+        return opr2;
+    }
+
+    /**
+     * Gets the resulting type of this instruction.
+     *
+     * @return type the resulting type
+     *
+     */
+    public BasicType type() {
+        return type;
+    }
+
+    /**
+     * Gets the temporary operand of this instruction.
+     *
+     * @return tmp the temporary operand of this instruction
+     *
+     */
+    public LIROperand tmp() {
+        return tmp;
+    }
+
+    /**
+     * Gets the condition of this instruction, if it is a Cmp or Cmove LIR instruction
+     * .
+     * @return condition the condition of this instruction
+     */
+    public LIRCondition condition() {
+        assert code() == LIROpcode.Cmp || code() == LIROpcode.Cmove : "Field access only valid for cmp and cmove";
+        return condition;
+    }
+
+    public void setFpuStackSize(int fpuStackSize) {
+        this.fpuStackSize = fpuStackSize;
+    }
+
+    public int fpuStackSize() {
+        return fpuStackSize;
+    }
+
+    public void setOpr1(LIROperand opr1) {
+        this.opr1 = opr1;
+    }
+
+    public void setOpr2(LIROperand opr2) {
+        this.opr2 = opr2;
+    }
+
+    /**
      * Emit target assembly code for this instruction.
      *
      * @param masm the target assembler
      */
     @Override
     public void emitCode(LIRAssembler masm) {
-        // TODO to be completed later
-
+        masm.emitLIROp2(this);
     }
 
     /**
@@ -186,7 +237,19 @@ public class LIROp2 extends LIRInstruction {
      */
     @Override
     public void printInstruction(LogStream out) {
-        // TODO to be completed later
+        if (code() == LIROpcode.Cmove) {
+            printCondition(out, condition());
+            out.print(" ");
+        }
+        opr1().print(out);
+        out.print(" ");
+        opr2().print(out);
+        out.print(" ");
+        if (tmp().isValid()) {
+            tmp().print(out);
+            out.print(" ");
+        }
+        result().print(out);
     }
 }
 
