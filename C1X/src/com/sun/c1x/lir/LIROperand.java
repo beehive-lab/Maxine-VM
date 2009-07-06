@@ -21,6 +21,7 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.*;
+import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
@@ -288,6 +289,46 @@ public class LIROperand {
 
     public void print(LogStream out) {
         // TODO to be completed later
+    }
+
+    public int vregNumber() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public BasicType type() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Constant asConstantPtr() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public boolean isSingleFpu() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public LIROperandPtr valueType() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public LIRAddress asAddressPtr() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public int asJint() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public boolean isDoubleFpu() {
+        // TODO Auto-generated method stub
+        return false;
     }
 
     // TODO continue from  bool is_float_kind() const

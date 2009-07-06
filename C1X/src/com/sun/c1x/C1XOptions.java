@@ -123,4 +123,18 @@ public class C1XOptions {
     public static float   MonomorphicProfileRatio            = 0.85f;
     public static float   BimorphicProfileRatio              = 0.90f;
     public static int     MaximumTypeSwitchInlining          = 10;
+
+    // LIR settings
+    public static boolean PrintIRWithLIR                     = ____;
+    public static boolean LIRTraceExecution                  = ____;
+    public static boolean TwoOperandLIRForm                  = ____;
+    public static boolean PatchALot                          = ____;
+    public static boolean GenerateSynchronizationCode        = ____;
+    public static boolean UseFastLocking                     = ____;
+    public static boolean UseFastNewInstance                 = ____;
+    public static boolean PrintNotLoaded                     = ____;
+    public static boolean GenerateRangeChecks                = ____;
+    public static boolean PrintC1Statistics                  = ____;
+    public static boolean GenerateCompilerNullChecks         = ____;
+    public static boolean UseTableRanges                     = ____;
 }

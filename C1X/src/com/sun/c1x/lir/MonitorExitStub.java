@@ -23,69 +23,22 @@ package com.sun.c1x.lir;
 import com.sun.c1x.util.*;
 
 
-/**
- * The <code>ConversionStub</code> class definition.
- *
- * @author Marcelo Cintra
- *
- */
-public class ConversionStub extends CodeStub {
+public class MonitorExitStub extends CodeStub {
 
-    private final int opcode;
-    private LIROperand input;
-    private LIROperand result;
-
-    /**
-     * Constructs a new conversion stub.
-     *
-     * @param opcode
-     * @param input
-     * @param result
-     */
-    public ConversionStub(int opcode, LIROperand input, LIROperand result) {
-        super();
-        this.opcode = opcode;
-        this.input = input;
-        this.result = result;
-    }
-
-    /**
-     * Gets the bytecode of this conversion stub.
-     *
-     * @return the bytecode
-     */
-    public int bytecode() {
-        return opcode;
-    }
-
-    /**
-     * @return the input
-     */
-    public LIROperand input() {
-        return input;
-    }
-
-    /**
-     * @return the result
-     */
-    public LIROperand result() {
-        return result;
+    public MonitorExitStub(LIROperand lock, boolean usefastlocking, int monitorNo) {
+        // TODO Auto-generated constructor stub
     }
 
     @Override
-    public void emitCode(LIRAssembler masm) {
-        // TODO to be completed later
-    }
+    public void emitCode(LIRAssembler e) {
+        // TODO Auto-generated method stub
 
-    @Override
-    public void visit(LIRVisitState visitor) {
-        visitor.doSlowCase();
-        visitor.doInput(input);
-        visitor.doOutput(result);
     }
 
     @Override
     public void printName(LogStream out) {
-        out.print("ConversionStub");
+        // TODO Auto-generated method stub
+
     }
+
 }

@@ -20,6 +20,11 @@
  */
 package com.sun.c1x.lir;
 
+import java.util.*;
+
+import com.sun.c1x.ir.*;
+import com.sun.c1x.value.*;
+
 
 /**
  * The <code>CodeEmitInfo</code> class definition.
@@ -29,9 +34,26 @@ package com.sun.c1x.lir;
  */
 public class CodeEmitInfo {
 
+    public CodeEmitInfo(int bci, ValueStack state, List<ExceptionHandler> list) {
+        // TODO Auto-generated constructor stub
+    }
+
+    public CodeEmitInfo(CodeEmitInfo info) {
+        // TODO Auto-generated constructor stub
+    }
+
+    public CodeEmitInfo(CodeEmitInfo info, boolean b) {
+        // TODO Auto-generated constructor stub
+    }
+
     public int bci() {
         // TODO Auto-generated method stub
         return 0;
+    }
+
+    public List<ExceptionHandler> exceptionHandlers() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     // TODO nothing for now

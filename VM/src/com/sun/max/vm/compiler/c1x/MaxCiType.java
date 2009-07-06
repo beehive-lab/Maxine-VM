@@ -374,4 +374,22 @@ public class MaxCiType implements CiType {
         return typeDescriptor.toString() + " [unresolved]";
     }
 
+    @Override
+    public Class<?> javaMirror() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean layoutHelperNeedsSlowPath() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public int sizeHelper() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
 }
