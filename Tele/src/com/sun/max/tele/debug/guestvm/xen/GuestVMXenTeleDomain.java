@@ -25,6 +25,7 @@ import java.nio.*;
 import javax.swing.*;
 
 import com.sun.max.collect.*;
+import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -130,5 +131,31 @@ public class GuestVMXenTeleDomain extends TeleProcess {
     protected void gatherThreads(AppendableSequence<TeleNativeThread> threads) {
         final Word threadSpecificsList = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header().threadSpecificsListOffset));
         GuestVMXenDBChannel.gatherThreads(threads, domainId, threadSpecificsList.asAddress().toLong());
+    }
+
+    @Override
+    public int maximumWatchpointCount() {
+        // not sure how many are supported; we'll try this
+        return Integer.MAX_VALUE;
+    }
+
+    @Override
+    protected boolean activateWatchpoint(TeleWatchpoint teleWatchpoint) {
+        return GuestVMXenDBChannel.activateWatchpoint(domainId, teleWatchpoint);
+    }
+
+    @Override
+    protected boolean deactivateWatchpoint(MemoryRegion memoryRegion) {
+        return GuestVMXenDBChannel.deactivateWatchpoint(domainId, memoryRegion);
+    }
+
+    @Override
+    protected long readWatchpointAddress() {
+        return GuestVMXenDBChannel.readWatchpointAddress(domainId);
+    }
+
+    @Override
+    protected int readWatchpointAccessCode() {
+        return GuestVMXenDBChannel.readWatchpointAccessCode(domainId);
     }
 }
