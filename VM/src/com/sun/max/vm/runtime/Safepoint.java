@@ -58,6 +58,30 @@ import com.sun.max.vm.thread.*;
  */
 public abstract class Safepoint {
 
+    public static final boolean UseThreadStateWordForGCMutatorSynchronization = false;
+
+    public static final int cas(Pointer statePointer, int suspectedValue, int newValue) {
+        Log.printVmThread(VmThread.current(), false);
+        Log.print(": ");
+        Log.print(suspectedValue);
+        Log.print(" -> ");
+        Log.println(newValue);
+        final int result = statePointer.compareAndSwapInt(suspectedValue, newValue);
+        Log.printVmThread(VmThread.current(), false);
+        Log.print(": ");
+        Log.print(suspectedValue);
+        Log.print(" -> ");
+        Log.print(newValue);
+        Log.println(" done");
+        return result;
+    }
+
+    public static final int THREAD_IN_JAVA = 0;
+    public static final int THREAD_IN_NATIVE = 1;
+    public static final int THREAD_IN_JAVA_STOPPING_FOR_GC = 2;
+    public static final int THREAD_IN_GC_FROM_JAVA = 3;
+    public static final int THREAD_IN_GC_FROM_NATIVE = 4;
+
     public enum State implements PoolObject {
         ENABLED(SAFEPOINTS_ENABLED_THREAD_LOCALS),
         DISABLED(SAFEPOINTS_DISABLED_THREAD_LOCALS),
@@ -126,14 +150,26 @@ public abstract class Safepoint {
 
     /**
      * Sets the value of the {@linkplain VmThreadLocal#SAFEPOINT_LATCH safepoint latch} in the safepoints-enabled VM
-     * thread locals to point to itself. This means that subsequent executions of a safepoint instruction will cause a trap
+     * thread locals to point to itself. This means that subsequent executions of a safepoint instruction will not cause a trap
      * until safepoints are once again {@linkplain #trigger(Pointer) triggered}.
      *
      * @param vmThreadLocals a pointer to a copy of the thread locals from which the base of the safepoints-enabled
      *            thread locals can be obtained
      */
     public static void reset(Pointer vmThreadLocals) {
-        SAFEPOINT_VENUE.setVariableReference(vmThreadLocals, Reference.fromJava(Safepoint.Venue.NATIVE));
+        if (UseThreadStateWordForGCMutatorSynchronization) {
+            final int state = STATE.getVariableWord(vmThreadLocals).asAddress().toInt();
+            if (state == THREAD_IN_GC_FROM_NATIVE) {
+                STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_NATIVE));
+            } else {
+                if (state != THREAD_IN_GC_FROM_JAVA) {
+                    reportIllegalThreadState("While resetting safepoints", state);
+                }
+                STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_JAVA));
+            }
+        } else {
+            SAFEPOINT_VENUE.setVariableReference(vmThreadLocals, Reference.fromJava(Safepoint.Venue.NATIVE));
+        }
         SAFEPOINT_LATCH.setVariableWord(vmThreadLocals, SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals));
     }
 
@@ -187,14 +223,15 @@ public abstract class Safepoint {
      */
     @INLINE
     public static void hard() {
-        // Ensure that safepoint triggering is serialized:
+        // Ensure that all stores on this thread are globally visible before the safepoint trap:
         MemoryBarrier.storeLoad();
 
         SafepointBuiltin.hardSafepoint();
         SafepointBuiltin.hardSafepoint();
 
-        // Ensure that subsequent stores only happen once the safepoint trap has occurred
+        // Ensure that subsequent loads and stores only happen once the safepoint trap has occurred
         MemoryBarrier.loadStore();
+        MemoryBarrier.loadLoad();
     }
 
     public abstract Symbol latchRegister();
@@ -234,8 +271,10 @@ public abstract class Safepoint {
      */
     public static void runProcedure(Pointer vmThreadLocals, Procedure procedure) {
         // spin until the SAFEPOINT_PROCEDURE field is null
+        final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+        final Pointer safepointProcedurePointer = SAFEPOINT_PROCEDURE.pointer(enabledVmThreadLocals);
         while (true) {
-            if (SAFEPOINT_PROCEDURE.pointer(vmThreadLocals).compareAndSwapReference(null, Reference.fromJava(procedure)).isZero()) {
+            if (safepointProcedurePointer.compareAndSwapReference(null, Reference.fromJava(procedure)).isZero()) {
                 Safepoint.trigger(vmThreadLocals);
                 return;
             }
@@ -245,13 +284,12 @@ public abstract class Safepoint {
 
     /**
      * Cancel a procedure that may be outstanding for a thread. If the thread has not yet executed the procedure,
-     * then it will be cancelled (i.e. {@link VmThreadLocal#SAFEPOINT_PROCEDURE} will be set to {@code null}).
+     * then it will be canceled (i.e. {@link VmThreadLocal#SAFEPOINT_PROCEDURE} will be set to {@code null}).
      *
-     * @param vmThreadLocals the VMThreadLocals for which to cancel the procedure
-     * @param procedure the procedure to cancel
+     * @param vmThreadLocals the thread for which to cancel the procedure
      */
-    public static void cancelProcedure(Pointer vmThreadLocals, Procedure procedure) {
-        SAFEPOINT_PROCEDURE.pointer(vmThreadLocals).compareAndSwapReference(Reference.fromJava(procedure), null);
+    public static void cancelProcedure(Pointer vmThreadLocals) {
+        SAFEPOINT_PROCEDURE.setVariableReference(vmThreadLocals, null);
     }
 
     /**
@@ -260,7 +298,25 @@ public abstract class Safepoint {
      * @author Ben L. Titzer
      */
     public interface Procedure {
+        /**
+         * Runs this procedure.
+         *
+         * @param trapState the thread state recorded by the trap
+         */
         void run(Pointer trapState);
+    }
+
+    /**
+     * A procedure that resets safepoints for a given thread.
+     */
+    public static class ResetSafepoints implements Pointer.Procedure {
+        /**
+         * Resets safepoints for the thread associated with the given thread locals.
+         */
+        public void run(Pointer vmThreadLocals) {
+            cancelProcedure(vmThreadLocals);
+            reset(vmThreadLocals);
+        }
     }
 
     /**
@@ -279,4 +335,11 @@ public abstract class Safepoint {
     public abstract int getTrapNumber(Pointer trapState);
     public abstract Pointer getRegisterState(Pointer trapState);
     public abstract void setTrapNumber(Pointer trapState, int trapNumber);
+
+    public static void reportIllegalThreadState(String context, int oldValue) {
+        Log.print(context);
+        Log.print(" encountered thread in illegal state: ");
+        Log.println(oldValue);
+        FatalError.unexpected("Encountered thread in illegal state");
+    }
 }

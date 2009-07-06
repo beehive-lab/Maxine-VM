@@ -18,71 +18,43 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.target.x86;
 
-import com.sun.c1x.util.*;
-
+import com.sun.c1x.target.Backend;
+import com.sun.c1x.target.Target;
+import com.sun.c1x.lir.LIRGenerator;
+import com.sun.c1x.lir.LIRAssembler;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.C1XCompilation;
 
 /**
- * The <code>ConversionStub</code> class definition.
+ * The <code>X86Backend</code> class represents the backend for the x86 architectures,
+ * i.e. {@link com.sun.c1x.target.Architecture#AMD64} and {@link com.sun.c1x.target.Architecture#IA32}.
  *
- * @author Marcelo Cintra
- *
+ * @author Ben L. Titzer
  */
-public class ConversionStub {
+public class X86Backend extends Backend {
 
-    private final int opcode;
-    private LIROperand input;
-    private LIROperand result;
-
+    public X86Backend(Target target) {
+        super(target);
+    }
     /**
-     * Constructs a new conversion stub.
-     *
-     * @param opcode
-     * @param input
-     * @param result
+     * Creates a new LIRGenerator for x86.
+     * @param compilation the compilation for which to create the LIR generator
+     * @return an appropriate LIR generator instance
      */
-    public ConversionStub(int opcode, LIROperand input, LIROperand result) {
-        super();
-        this.opcode = opcode;
-        this.input = input;
-        this.result = result;
+    @Override
+    public LIRGenerator newLIRGenerator(C1XCompilation compilation) {
+        throw Util.unimplemented();
     }
 
     /**
-     * Gets the bytecode of this conversion stub.
-     *
-     * @return the bytecode
+     * Creates a new LIRAssembler for x86.
+     * @param compilation the compilation for which to create the LIR assembler
+     * @return an appropriate LIR assembler instance
      */
-    public int bytecode() {
-        return opcode;
-    }
-
-    /**
-     * @return the input
-     */
-    public LIROperand input() {
-        return input;
-    }
-
-    /**
-     * @return the result
-     */
-    public LIROperand result() {
-        return result;
-    }
-
-    public void emitCode(LIRAssembler masm) {
-        // TODO to be completed later
-    }
-
-    public void visit(LIRVisitState visitor) {
-        visitor.doSlowCase();
-        visitor.doInput(input);
-        visitor.doOutput(result);
-    }
-
-    public void printName(LogStream out) {
-        out.print("ConversionStub");
+    @Override
+    public LIRAssembler newLIRAssembler(C1XCompilation compilation) {
+        throw Util.unimplemented();
     }
 }

@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.max.vm.stack.RawStackFrameVisitor.Util.*;
 import static com.sun.max.vm.VMOptions.*;
 
 import com.sun.max.annotate.*;
@@ -51,20 +52,15 @@ public final class Throw {
     public static VMBooleanXXOption scanStackOnFatalError = register(new VMBooleanXXOption("-XX:-ScanStackOnFatalError",
                     "Report a stack trace scan when a fatal VM occurs."), MaxineVM.Phase.PRISTINE);
 
-    private static class StackFrameDumper implements StackFrameVisitor {
-        private final int maximum;
+    private static class StackFrameDumper implements RawStackFrameVisitor {
+        private int maximum;
         private int count;
-        StackFrameDumper(int max) {
-            maximum = max;
-        }
-
-        public boolean visitFrame(StackFrame stackFrame) {
+        public boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, int flags) {
             final boolean lockDisabledSafepoints = Log.lock();
-            // N.B. use "->" to make dumped stacks look slightly different than exception stacktraces.
+            // N.B. use "->" to make dumped stacks look slightly different than exception stack traces.
             Log.print("        -> ");
-            final TargetMethod targetMethod = stackFrame.targetMethod();
             if (targetMethod != null) {
-                if (!stackFrame.isAdapter()) {
+                if (!isAdapter(flags)) {
                     final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
                     Log.print(classMethodActor.holder().name);
                     Log.print(".");
@@ -74,13 +70,13 @@ public final class Throw {
                     Log.print("<adapter>");
                 }
                 Log.print(" [");
-                Log.print(stackFrame.instructionPointer);
+                Log.print(instructionPointer);
                 Log.print("+");
-                Log.print(stackFrame.instructionPointer.minus(targetMethod.codeStart()).toInt());
+                Log.print(instructionPointer.minus(targetMethod.codeStart()).toInt());
                 Log.print("]");
             } else {
                 Log.print("unknown:");
-                Log.print(stackFrame.instructionPointer);
+                Log.print(instructionPointer);
             }
             Log.println();
             if (maximum > 0 && count-- < 0) {
@@ -92,7 +88,10 @@ public final class Throw {
         }
     }
 
-    private static final StackFrameDumper stackFrameDumper = new StackFrameDumper(0);
+    /**
+     * Shared global object for dumping stack traces without incurring any allocation.
+     */
+    private static final StackFrameDumper stackFrameDumper = new StackFrameDumper();
 
     /**
      * Unwinds the current thread's stack to the frame containing an exception handler (there is guaranteed to be one).
@@ -107,7 +106,7 @@ public final class Throw {
      */
     public static void raise(Throwable throwable, Pointer stackPointer, Pointer framePointer, Pointer instructionPointer) {
         FatalError.check(throwable != null, "Trying to raise an exception with a null Throwable object");
-        VmThread.current().stackFrameWalker().unwind(instructionPointer, stackPointer, framePointer, throwable);
+        VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(instructionPointer, stackPointer, framePointer, throwable);
         FatalError.unexpected("could not find top-level exception handler");
     }
 
@@ -140,7 +139,7 @@ public final class Throw {
         if (throwable == null) {
             throwable = new NullPointerException();
         }
-        final VmStackFrameWalker stackFrameWalker = VmThread.current().stackFrameWalker();
+        final VmStackFrameWalker stackFrameWalker = VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker();
         if (stackFrameWalker.isInUse()) {
             Log.println("exception thrown while raising another exception");
             if (!stackFrameWalker.isDumpingFatalStackTrace()) {
@@ -180,7 +179,7 @@ public final class Throw {
     @NEVER_INLINE
     public static void stackDump(String message, final Pointer instructionPointer, final Pointer cpuStackPointer, final Pointer cpuFramePointer) {
         Log.println(message);
-        new VmStackFrameWalker(VmThread.currentVmThreadLocals()).inspect(instructionPointer, cpuStackPointer, cpuFramePointer, stackFrameDumper);
+        VmThread.current().stackDumpStackFrameWalker().inspect(instructionPointer, cpuStackPointer, cpuFramePointer, stackFrameDumper);
     }
 
     /**
@@ -196,7 +195,9 @@ public final class Throw {
      */
     public static void stackDump(String message, final Pointer instructionPointer, final Pointer cpuStackPointer, final Pointer cpuFramePointer, int depth) {
         Log.println(message);
-        new VmStackFrameWalker(VmThread.currentVmThreadLocals()).inspect(instructionPointer, cpuStackPointer, cpuFramePointer, new StackFrameDumper(depth));
+        stackFrameDumper.maximum = depth;
+        VmThread.current().stackDumpStackFrameWalker().inspect(instructionPointer, cpuStackPointer, cpuFramePointer, stackFrameDumper);
+        stackFrameDumper.maximum = 0;
     }
 
     /**

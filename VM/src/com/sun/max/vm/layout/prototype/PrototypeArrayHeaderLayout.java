@@ -54,7 +54,7 @@ public class PrototypeArrayHeaderLayout extends PrototypeGeneralLayout implement
     }
 
     public Kind getElementKind(Accessor accessor) {
-        return HostObjectAccess.readHub(accessor).classActor().componentClassActor().kind;
+        return HostObjectAccess.readHub(accessor).classActor.componentClassActor().kind;
     }
 
     public int readLength(Accessor accessor) {

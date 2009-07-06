@@ -110,7 +110,7 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
     @INLINE
     public final Layout.Category category(Accessor accessor) {
         final Hub hub = getHub(accessor);
-        return hub.layoutCategory();
+        return hub.layoutCategory;
     }
 
     @INLINE
@@ -130,17 +130,17 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
 
     @INLINE
     public final SpecificLayout specificLayout(Accessor accessor) {
-        return getHub(accessor).specificLayout();
+        return getHub(accessor).specificLayout;
     }
 
     @INLINE
     public final Size size(Accessor accessor) {
         final Hub hub = getHub(accessor);
-        switch (hub.layoutCategory()) {
+        switch (hub.layoutCategory) {
             case TUPLE:
                 return Layout.tupleLayout().specificSize(accessor);
             case ARRAY:
-                return Layout.arrayHeaderLayout().getArraySize(hub.elementKind(), Layout.arrayHeaderLayout().readLength(accessor));
+                return Layout.arrayHeaderLayout().getArraySize(hub.elementKind, Layout.arrayHeaderLayout().readLength(accessor));
             case HYBRID:
                 return Layout.hybridLayout().specificSize(accessor);
         }

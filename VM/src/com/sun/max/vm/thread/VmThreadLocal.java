@@ -27,6 +27,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jit.*;
+import com.sun.max.vm.jni.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -89,10 +90,28 @@ public enum VmThreadLocal {
      */
     SAFEPOINT_PROCEDURE(Kind.REFERENCE),
 
+    /**
+     * The identifier used to identify the thread in the {@linkplain VmThreadMap thread map}.
+     *
+     * @see VmThread#id()
+     */
     ID(Kind.WORD),
+
+    /**
+     * Reference to the {@link VmThread} associated with a set of thread locals.
+     */
     VM_THREAD(Kind.REFERENCE),
+
+    /**
+     * Handle to the native threading library object for a thread (e.g. a pthread_t value).
+     */
     NATIVE_THREAD(Kind.WORD),
+
+    /**
+     * The address of the table of {@linkplain JniNativeInterface#pointer() JNI functions}.
+     */
     JNI_ENV(Kind.WORD),
+
     LAST_JAVA_CALLER_STACK_POINTER(Kind.WORD),
     LAST_JAVA_CALLER_FRAME_POINTER(Kind.WORD),
 
@@ -103,19 +122,19 @@ public enum VmThreadLocal {
     LAST_JAVA_CALLER_INSTRUCTION_POINTER(Kind.WORD),
 
     /**
-     * Records information for the last Java caller for direct/C_FUNCTION calls.
+     * Records information for the last Java caller for {@link C_FUNCTION} calls.
      * This is only used by the Inspector for debugging
      */
     LAST_JAVA_CALLER_STACK_POINTER_FOR_C(Kind.WORD),
 
     /**
-     * Records information for the last Java caller for direct/C_FUNCTION calls.
+     * Records information for the last Java caller for {@link C_FUNCTION} calls.
      * This is only used by the Inspector for debugging
      */
     LAST_JAVA_CALLER_FRAME_POINTER_FOR_C(Kind.WORD),
 
     /**
-     * Records information for the last Java caller for direct/C_FUNCTION calls.
+     * Records information for the last Java caller for {@link C_FUNCTION} calls.
      * This is only used by the Inspector for debugging
      */
     LAST_JAVA_CALLER_INSTRUCTION_POINTER_FOR_C(Kind.WORD),
@@ -124,7 +143,13 @@ public enum VmThreadLocal {
      * Holds the biased card table address. Card table writes are usually done using *(cardTableBase + reference-heap a.
      */
     ADJUSTED_CARDTABLE_BASE(Kind.WORD),
+
+    /**
+     * The {@linkplain Safepoint.Venue value} indicating the type of code that a thread was executing when the last safepoint occurred.
+     */
     SAFEPOINT_VENUE(Kind.REFERENCE),
+
+    STATE(Kind.WORD),
 
     /**
      * The number of the trap (i.e. signal) that occurred.
@@ -481,7 +506,8 @@ public enum VmThreadLocal {
      * @return the amount of time taken to prepare the reference map
      */
     public static long prepareStackReferenceMap(Pointer vmThreadLocals) {
-        final StackReferenceMapPreparer stackReferenceMapPreparer = VmThread.current().stackReferenceMapPreparer();
+        final VmThread vmThread = UnsafeLoophole.cast(VM_THREAD.getConstantReference(vmThreadLocals));
+        final StackReferenceMapPreparer stackReferenceMapPreparer = vmThread.stackReferenceMapPreparer();
         stackReferenceMapPreparer.prepareStackReferenceMap(vmThreadLocals);
         return stackReferenceMapPreparer.preparationTime();
     }

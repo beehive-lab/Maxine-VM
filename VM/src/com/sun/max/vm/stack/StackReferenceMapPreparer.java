@@ -139,7 +139,7 @@ public final class StackReferenceMapPreparer {
         LOWEST_ACTIVE_STACK_SLOT_ADDRESS.setVariableWord(vmThreadLocals, stackPointer);
 
         final VmThread vmThread = UnsafeLoophole.cast(VM_THREAD.getConstantReference(vmThreadLocals));
-        if (this != VmThread.current().stackReferenceMapPreparer()) {
+        if (this != vmThread.stackReferenceMapPreparer()) {
             FatalError.unexpected("Cannot use stack reference map preparer of another thread");
         }
 
@@ -178,7 +178,7 @@ public final class StackReferenceMapPreparer {
         prepareVmThreadLocalsReferenceMap(triggeredVmThreadLocals);
 
         // walk the stack and prepare references for each stack frame
-        final StackFrameWalker stackFrameWalker = vmThread.stackFrameWalker();
+        final StackFrameWalker stackFrameWalker = vmThread.unwindingOrReferenceMapPreparingStackFrameWalker();
         stackFrameWalker.prepareReferenceMap(instructionPointer, stackPointer, framePointer, this);
 
         if (Heap.traceGCRootScanning()) {
@@ -247,7 +247,7 @@ public final class StackReferenceMapPreparer {
         }
 
         // walk the stack and prepare references for each stack frame
-        final StackFrameWalker stackFrameWalker = vmThread.stackFrameWalker();
+        final StackFrameWalker stackFrameWalker = vmThread.unwindingOrReferenceMapPreparingStackFrameWalker();
         completingReferenceMap = true;
         stackFrameWalker.prepareReferenceMap(instructionPointer, stackPointer, framePointer, this);
         completingReferenceMap = false;

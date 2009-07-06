@@ -54,9 +54,36 @@ public abstract class StackFrameWalker {
         this.compilerScheme = compilerScheme;
     }
 
+    /**
+     * Constants deonting the finite set of reasons for which a stack walk can be performed.
+     * Every implementation of {@link DynamicCompilerScheme#walkFrame(StackFrameWalker, boolean, TargetMethod, Purpose, Object)}
+     * must deal with each type of stack walk.
+     *
+     * @author Doug Simon
+     */
     public enum Purpose {
+        /**
+         * Raising an exception.
+         * This type of stack walk is allocation free.
+         */
         EXCEPTION_HANDLING(StackUnwindingContext.class),
+
+        /**
+         * Preparing {@linkplain StackReferenceMapPreparer stack reference map} for a thread's stack.
+         * This type of stack walk is allocation free.
+         */
         REFERENCE_MAP_PREPARING(StackReferenceMapPreparer.class),
+
+        /**
+         * Reflecting on the frames of a thread's stack.
+         * This type of stack walk is allocation free.
+         */
+        RAW_INSPECTING(RawStackFrameVisitor.class),
+
+        /**
+         * Reflecting on the frames of a thread's stack.
+         * This type of stack walk is not allocation free.
+         */
         INSPECTING(StackFrameVisitor.class);
 
         private final Class contextType;
@@ -70,19 +97,6 @@ public abstract class StackFrameWalker {
          */
         public final boolean isValidContext(Object context) {
             return contextType.isInstance(context);
-        }
-    }
-
-    protected static class CallerFrameCollector implements StackFrameVisitor {
-        int count;
-        StackFrame result;
-
-        public boolean visitFrame(StackFrame frame) {
-            if (count++ == 2) {
-                result = frame;
-                return false;
-            }
-            return true;
         }
     }
 
@@ -128,7 +142,7 @@ public abstract class StackFrameWalker {
 
         while (!this.stackPointer.isZero()) {
             final TargetMethod targetMethod = targetMethodFor(this.instructionPointer);
-            if (targetMethod != null && (!inNative || purpose == INSPECTING)) {
+            if (targetMethod != null && (!inNative || purpose == INSPECTING || purpose == RAW_INSPECTING)) {
                 // Java frame
                 checkVmEntrypointCaller(lastJavaCallee, targetMethod);
 
@@ -147,7 +161,7 @@ public abstract class StackFrameWalker {
                 }
             } else {
                 final RuntimeStub stub = runtimeStubFor(this.instructionPointer);
-                if (stub != null && (!inNative || purpose == INSPECTING)) {
+                if (stub != null && (!inNative || purpose == INSPECTING || purpose == RAW_INSPECTING)) {
                     if (!stub.walkFrame(this, isTopFrame, purpose, context)) {
                         return;
                     }
@@ -155,6 +169,12 @@ public abstract class StackFrameWalker {
                     if (purpose == INSPECTING) {
                         final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
                         if (!stackFrameVisitor.visitFrame(new NativeStackFrame(calleeStackFrame, this.instructionPointer, this.framePointer, this.stackPointer))) {
+                            return;
+                        }
+                    } else if (purpose == RAW_INSPECTING) {
+                        final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
+                        final int flags = RawStackFrameVisitor.Util.makeFlags(isTopFrame, false);
+                        if (!stackFrameVisitor.visitFrame(null, this.instructionPointer, this.framePointer, this.stackPointer, flags)) {
                             return;
                         }
                     }
@@ -244,7 +264,7 @@ public abstract class StackFrameWalker {
             return true;
         }
         if (!isRunMethod(lastJavaCalleeMethodActor)) {
-            FatalError.check(purpose == INSPECTING, "Could not unwind stack past Java method annotated with @C_FUNCTION");
+            FatalError.check(purpose == INSPECTING || purpose == RAW_INSPECTING, "Could not unwind stack past Java method annotated with @C_FUNCTION");
         }
 
         return false;
@@ -262,7 +282,7 @@ public abstract class StackFrameWalker {
             lastJavaCallerStackPointer = readPointer(LAST_JAVA_CALLER_STACK_POINTER);
             lastJavaCallerFramePointer = readPointer(LAST_JAVA_CALLER_FRAME_POINTER);
         } else {
-            FatalError.check(purpose == INSPECTING, "Thread cannot be 'in native' without having recorded the last Java caller in thread locals");
+            FatalError.check(purpose == INSPECTING || purpose == RAW_INSPECTING, "Thread cannot be 'in native' without having recorded the last Java caller in thread locals");
             // This code is currently only used by the inspector. The inspector might pause a thread when it is
             // in a C function. We use the LAST_JAVA_CALLER_INSTRUCTION_POINTER_FOR_C in a VM thread's locals
             // to display the Java stack
@@ -272,7 +292,7 @@ public abstract class StackFrameWalker {
 
             FatalError.check(!lastJavaCallerInstructionPointer.isZero(), "Thread cannot be 'in native' without having recorded the last Java caller in thread locals");
         }
-        advance(getNativeFunctionCallInstructionPointerInNativeStub(lastJavaCallerInstructionPointer, purpose != INSPECTING),
+        advance(getNativeFunctionCallInstructionPointerInNativeStub(lastJavaCallerInstructionPointer, purpose != INSPECTING && purpose != RAW_INSPECTING),
                 lastJavaCallerStackPointer,
                 lastJavaCallerFramePointer);
     }
@@ -351,6 +371,16 @@ public abstract class StackFrameWalker {
             }
         };
         walk(instructionPointer, stackPointer, framePointer, INSPECTING, wrapper);
+        calleeStackFrame = null;
+        reset();
+    }
+
+    /**
+     * Walks a thread's stack for the purpose of inspecting one or more frames on the stack. This method takes care of
+     * {@linkplain #reset() resetting} this walker before returning.
+     */
+    public final void inspect(Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, final RawStackFrameVisitor visitor) {
+        walk(instructionPointer, stackPointer, framePointer, RAW_INSPECTING, visitor);
         calleeStackFrame = null;
         reset();
     }
@@ -555,11 +585,4 @@ public abstract class StackFrameWalker {
      * @param targetABI
      */
     public abstract void useABI(TargetABI targetABI);
-
-    @NEVER_INLINE
-    public StackFrame getCallerFrame() {
-        final CallerFrameCollector visitor = new CallerFrameCollector();
-        walk(VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), INSPECTING, visitor);
-        return visitor.result;
-    }
 }

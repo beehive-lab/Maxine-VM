@@ -125,7 +125,7 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
 
     public Layout.Category category(Accessor accessor) {
         final Hub hub = getHub(accessor);
-        return hub.layoutCategory();
+        return hub.layoutCategory;
     }
 
     @INLINE
@@ -145,7 +145,7 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
 
     @INLINE
     public final SpecificLayout specificLayout(Accessor accessor) {
-        return getHub(accessor).specificLayout();
+        return getHub(accessor).specificLayout;
     }
 
     @INLINE(override = true)
@@ -224,7 +224,7 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
     @PROTOTYPE_ONLY
     public void visitHeader(ObjectCellVisitor visitor, Object object) {
         final Hub hub = HostObjectAccess.readHub(object);
-        final int origin = hub.specificLayout().isTupleLayout() ? -miscOffset : -arrayLengthOffset;
+        final int origin = hub.specificLayout.isTupleLayout() ? -miscOffset : -arrayLengthOffset;
         visitor.visitHeaderField(origin + hubOffset, "hub", JavaTypeDescriptor.forJavaClass(hub.getClass()), ReferenceValue.from(hub));
         visitor.visitHeaderField(origin + miscOffset, "misc", JavaTypeDescriptor.WORD, new WordValue(gripScheme().vmConfiguration().monitorScheme().createMisc(object)));
     }

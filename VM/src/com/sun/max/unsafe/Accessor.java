@@ -528,24 +528,41 @@ public interface Accessor {
     /**
      * Atomic compare and swap.
      *
-     * Compare a suspected value with the value in the location given by this accessor and an offset.
-     * Iff they are same, place a new value into the location and return the suspected value.
-     * Do all of the above in one atomic hardware transaction.
-     *
-     * Iff the suspected and actual value are different, return the value from memory.
+     * Compares a suspected value with the actual value in a location denoted by this accessor and a given offset.
+     * Iff they are same, {@code newValue} is placed into the location and the {@code suspectedValue} is returned.
+     * Otherwise, the actual value is returned.
+     * All of the above is performed in one atomic hardware transaction.
      *
      * @param offset offset from accessor origin
-     * @param suspectedValue if this value is in the accessor location, perform the swap
+     * @param suspectedValue if this value is currently in the accessor location, perform the swap
      * @param newValue the new value to put into the accessor location
-     * @return either the suspected value or the unused new value
+     * @return either {@code suspectedValue} or the actual value
      */
     int compareAndSwapInt(Offset offset, int suspectedValue, int newValue);
+
+    /**
+     * @see #compareAndSwapInt(Offset, int, int)
+     */
     int compareAndSwapInt(int offset, int suspectedValue, int newValue);
 
+    /**
+     * @see #compareAndSwapInt(Offset, int, int)
+     */
     Word compareAndSwapWord(Offset offset, Word suspectedValue, Word newValue);
+
+    /**
+     * @see #compareAndSwapInt(Offset, int, int)
+     */
     Word compareAndSwapWord(int offset, Word suspectedValue, Word newValue);
 
+    /**
+     * @see #compareAndSwapInt(Offset, int, int)
+     */
     Reference compareAndSwapReference(Offset offset, Reference suspectedValue, Reference newValue);
+
+    /**
+     * @see #compareAndSwapInt(Offset, int, int)
+     */
     Reference compareAndSwapReference(int offset, Reference suspectedValue, Reference newValue);
 }
 

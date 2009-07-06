@@ -155,7 +155,7 @@ public abstract class ObjectAggregator {
         protected Size sizeOf(TeleVM teleVM, Pointer cell) {
             final Reference reference = teleVM.cellToReference(cell);
             final Hub hub = teleVM.makeLocalHubForObject(reference);
-            return hub.tupleSize();
+            return hub.tupleSize;
         }
     }
 

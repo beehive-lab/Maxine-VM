@@ -39,60 +39,37 @@ import com.sun.max.vm.type.*;
  */
 public abstract class Hub extends Hybrid {
 
-    private final Size tupleSize;
-    private final Kind elementKind;
-    private final SpecificLayout specificLayout;
-    @INSPECTED
-    private final ClassActor classActor;
-    private final Layout.Category layoutCategory;
-    private BiasedLockEpoch biasedLockEpoch = BiasedLockEpoch.init();
-    @CONSTANT_WHEN_NOT_ZERO
-    private static int firstWordIndex;
-    private final int iTableStartIndex;
-    private final int iTableLength;
-    @INSPECTED
-    private final int mTableStartIndex;
-    @INSPECTED
-    private final int mTableLength;
-    @INSPECTED
-    private final int referenceMapLength;
-    private final boolean isSpecialReference;
-
     /**
-     * Indicate the "tuple cell size" for objects as follows.
+     * Indicates the "tuple cell size" for objects as follows.
      * - tuples:  the permanent cell size
      * - hybrids: the cell size before expansion
      * - arrays:  the object header size
      *
      * @return the "tuple size" of objects having this hub
      */
-    @INLINE
-    public final Size tupleSize() {
-        return tupleSize;
-    }
-
-    @INLINE
-    public final Kind elementKind() {
-        return elementKind;
-    }
-
-    @INLINE
-    public final SpecificLayout specificLayout() {
-        return specificLayout;
-    }
+    public final Size tupleSize;
+    public final Kind elementKind;
+    public final SpecificLayout specificLayout;
+    @INSPECTED
+    public final ClassActor classActor;
+    public final Layout.Category layoutCategory;
+    public BiasedLockEpoch biasedLockEpoch = BiasedLockEpoch.init();
+    @CONSTANT_WHEN_NOT_ZERO
+    private static int firstWordIndex;
+    public final int iTableStartIndex;
+    public final int iTableLength;
+    @INSPECTED
+    public final int mTableStartIndex;
+    @INSPECTED
+    public final int mTableLength;
+    @INSPECTED
+    public final int referenceMapLength;
+    @INSPECTED
+    public final int referenceMapStartIndex;
+    public final boolean isSpecialReference;
 
     public WordWidth wordWidth() {
         return specificLayout.gripScheme().dataModel().wordWidth;
-    }
-
-    @INLINE
-    public final ClassActor classActor() {
-        return classActor;
-    }
-
-    @INLINE
-    public final Layout.Category layoutCategory() {
-        return layoutCategory;
     }
 
     /**
@@ -162,51 +139,6 @@ public abstract class Hub extends Hybrid {
 
     public final int vTableLength() {
         return iTableStartIndex - vTableStartIndex();
-    }
-
-    public final int iTableStartIndex() {
-        return iTableStartIndex;
-    }
-
-    public final int iTableLength() {
-        return iTableLength;
-    }
-
-    @INLINE
-    public final int mTableStartIndex() {
-        return mTableStartIndex;
-    }
-
-    @INLINE
-    public final int mTableLength() {
-        return mTableLength;
-    }
-
-    @INSPECTED
-    private final int referenceMapStartIndex;
-
-    @INLINE
-    public final int referenceMapStartIndex() {
-        return referenceMapStartIndex;
-    }
-
-    @INLINE
-    public final int referenceMapLength() {
-        return referenceMapLength;
-    }
-
-    @INLINE
-    public final BiasedLockEpoch biasedLockEpoch() {
-        return biasedLockEpoch;
-    }
-
-    @INLINE
-    public final boolean isSpecialReference() {
-        return isSpecialReference;
-    }
-
-    public void setBiasedLockEpoch(BiasedLockEpoch biasedLockEpoch) {
-        this.biasedLockEpoch = biasedLockEpoch;
     }
 
     @CONSTANT_WHEN_NOT_ZERO
@@ -283,7 +215,7 @@ public abstract class Hub extends Hybrid {
 
     @INLINE
     public final int getMTableIndex(int serial) {
-        return (serial % mTableLength()) + mTableStartIndex();
+        return (serial % mTableLength) + mTableStartIndex;
     }
 
     @INLINE
@@ -306,6 +238,6 @@ public abstract class Hub extends Hybrid {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "[" + classActor() + "]";
+        return getClass().getSimpleName() + "[" + classActor + "]";
     }
 }

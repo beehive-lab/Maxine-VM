@@ -24,12 +24,11 @@ import com.sun.max.program.*;
 
 /**
  * A daemon thread that hangs around, waiting,
- * then executes a given procedure when requested,
+ * then {@linkplain #execute(Runnable) executes) a given procedure when requested,
  * then waits again.
  *
- * The client thread is blocking while the server thread
- * is executing a request and
- * the server thread is blocking between serving requests.
+ * The client thread is blocked while the server thread is executing a request and
+ * the server thread is blocked between serving requests.
  *
  * Only one thread at a time can interact with the server thread.
  *
@@ -37,6 +36,9 @@ import com.sun.max.program.*;
  */
 public class BlockingServerDaemon extends Thread {
 
+    /**
+     * The lock object used to synchronize client/server interaction.
+     */
     private final Object token = new Object();
 
     public BlockingServerDaemon(String name) {
@@ -59,6 +61,9 @@ public class BlockingServerDaemon extends Thread {
 
     private Runnable procedure;
 
+    /**
+     * The server loop that will run any {@linkplain #execute(Runnable) scheduled} request.
+     */
     @Override
     public final void run() {
         while (true) {
@@ -75,6 +80,12 @@ public class BlockingServerDaemon extends Thread {
         }
     }
 
+    /**
+     * Schedules a given procedure to be run on the server thread. The client calling this method is
+     * blocked until the given procedure has been executed.
+     *
+     * @param proc a procedure to be executed on the server thread
+     */
     public synchronized void execute(Runnable proc) {
         this.procedure = proc;
         synchronized (token) {
@@ -91,5 +102,4 @@ public class BlockingServerDaemon extends Thread {
             }
         }
     }
-
 }

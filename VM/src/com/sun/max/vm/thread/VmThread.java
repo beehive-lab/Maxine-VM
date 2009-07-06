@@ -154,15 +154,25 @@ public class VmThread {
     private final VmStackFrameWalker stackFrameWalker = new VmStackFrameWalker(Pointer.zero());
 
     /**
-     * Gets an object that can be used to walk the frames in this thread's stack.
+     * Gets a pre-allocated, thread local object that can be used to walk the frames in this thread's stack.
      *
      * <b>This must only be used when {@linkplain Throw#raise(Object, Pointer, Pointer, Pointer) throwing an exception}
-     * or {@linkplain StackReferenceMapPreparer preparing} a stack reference map. These are the only contexts in which
-     * allocation must not occur.</b> All other stack walks must create a new stack walker instance.
+     * or {@linkplain StackReferenceMapPreparer preparing} a stack reference map.
+     * Allocation must not occur in these contexts.</b>
      */
-    public VmStackFrameWalker stackFrameWalker() {
+    public VmStackFrameWalker unwindingOrReferenceMapPreparingStackFrameWalker() {
         FatalError.check(stackFrameWalker != null, "Thread-local stack frame walker cannot be null for a running thread");
         return stackFrameWalker;
+    }
+
+    private final VmStackFrameWalker stackDumpStackFrameWalker = new VmStackFrameWalker(Pointer.zero());
+
+    /**
+     * Gets a pre-allocated, thread local object that can be used to log a stack dump without incurring any allocation.
+     */
+    public VmStackFrameWalker stackDumpStackFrameWalker() {
+        FatalError.check(stackDumpStackFrameWalker != null, "Thread-local stack frame walker cannot be null for a running thread");
+        return stackDumpStackFrameWalker;
     }
 
     private final StackReferenceMapPreparer stackReferenceMapPreparer = new StackReferenceMapPreparer(this);
@@ -221,11 +231,16 @@ public class VmThread {
      * A thread that has not been added to the thread map, will have an identifier of 0 and
      * a thread that has been terminated and removed from the map will have an identifier
      * of -1.
+     *
+     * This value is identical to the {@link VmThreadLocal#ID} value of a running thread.
      */
     public int id() {
         return id;
     }
 
+    /**
+     * @see #id()
+     */
     void setID(int id) {
         this.id = id;
     }
@@ -456,7 +471,7 @@ public class VmThread {
      * @param id the unique identifier assigned to this thread when it was {@linkplain #start0() started}. This
      *            identifier is only bound to this thread until it is {@linkplain #beTerminated() terminated}. That is,
      *            only active threads have unique identifiers.
-     * @param nativeThread the address of the native thread data structure (e.g. a pointer to a pthread_t value)
+     * @param nativeThread a handle to the native thread data structure (e.g. a pthread_t value)
      * @param enabledVmThreadLocals the address of the VM thread locals in effect when safepoints are
      *            {@linkplain Safepoint#enable() enabled} for this thread
      * @param disabledVmThreadLocals the address of the VM thread locals in effect when safepoints are
@@ -499,7 +514,9 @@ public class VmThread {
         NATIVE_THREAD.setConstantWord(enabledVmThreadLocals, nativeThread);
         JNI_ENV.setConstantWord(enabledVmThreadLocals, JniNativeInterface.pointer());
         VmThreadLocal.TAG.setConstantWord(enabledVmThreadLocals, TAG);
-        SAFEPOINT_VENUE.setVariableReference(enabledVmThreadLocals, Reference.fromJava(Safepoint.Venue.NATIVE));
+        if (!Safepoint.UseThreadStateWordForGCMutatorSynchronization) {
+            SAFEPOINT_VENUE.setVariableReference(enabledVmThreadLocals, Reference.fromJava(Safepoint.Venue.NATIVE));
+        }
 
         // Add the VM thread locals to the active map
         final VmThread vmThread = VmThreadMap.ACTIVE.addVmThreadLocals(id, enabledVmThreadLocals);
@@ -677,15 +694,8 @@ public class VmThread {
      * {@linkplain JniFunctionWrapper#reenterJavaFromNative(Pointer) instruction} that resets the 'in native' flag or after
      * the {@linkplain JniFunctionWrapper#exitJavaToNative instruction} that sets the 'in native'
      * flag.</li>
-     * <li>code in or called from a {@linkplain C_FUNCTION#isSignalHandler() Java trap handler} when a trap occurs with
-     * the 'in native' already set. This mostly cause of this is a trap occuring while executing native code called via
-     * a JNI stub.</li>
-     * <li>code in or called from a {@linkplain C_FUNCTION#isSignalHandlerStub() Java trap stub} when a trap occurs with
-     * the 'in native' already set. This mostly cause of this is a trap occuring while executing native code called via
-     * a JNI stub.</li>
      * </ul>
      * <p>
-     * ATTENTION: only call this when there is no race with thread termination!
      */
     @INLINE
     public final boolean isInNative() {

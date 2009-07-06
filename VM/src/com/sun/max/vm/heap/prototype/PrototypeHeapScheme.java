@@ -68,7 +68,7 @@ public class PrototypeHeapScheme extends HeapSchemeAdaptor implements HeapScheme
     }
 
     public Object createArray(DynamicHub hub, int length) {
-        final Class javaArrayClass = hub.classActor().toJava();
+        final Class javaArrayClass = hub.classActor.toJava();
         return Array.newInstance(javaArrayClass.getComponentType(), length);
     }
 
@@ -78,9 +78,9 @@ public class PrototypeHeapScheme extends HeapSchemeAdaptor implements HeapScheme
 
     public Object createTuple(Hub hub) {
         if (hub instanceof StaticHub) {
-            return StaticTuple.create(hub.classActor());
+            return StaticTuple.create(hub.classActor);
         }
-        final Class javaTupleClass = hub.classActor().toJava();
+        final Class javaTupleClass = hub.classActor.toJava();
         try {
             return javaTupleClass.newInstance();
         } catch (Throwable throwable) {
