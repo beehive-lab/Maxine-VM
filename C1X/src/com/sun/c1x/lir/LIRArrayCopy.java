@@ -38,7 +38,7 @@ public class LIRArrayCopy extends LIRInstruction {
     private LIROperand dstPos;
     private LIROperand length;
     private LIROperand tmp;
-//    private CiType expectedType;
+    private CiType expectedType;
     private int arrayCopyFlags;
 
     public enum Flags {
