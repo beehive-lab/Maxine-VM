@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.CiExceptionHandler;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.lir.LIRInstruction;
 
 import java.util.*;
@@ -126,5 +126,10 @@ public class ExceptionHandler {
 
     public boolean isCatchAll() {
         return handler.catchClassIndex() == 0;
+    }
+
+    public static boolean couldCatch(List<ExceptionHandler> exceptionHandlers, CiType throwKlass, boolean typeIsExact) {
+        // TODO Port implementation
+        return false;
     }
 }

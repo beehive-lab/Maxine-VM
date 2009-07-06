@@ -23,6 +23,7 @@ package com.sun.max.vm.compiler.c1x;
 import java.util.*;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.value.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -66,6 +67,39 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     /**
+     * Resolves a compiler interface type by its name. Note that this
+     * method should only be called for globally available classes (e.g. java.lang.*),
+     * since it does not supply a constant pool.
+     * @param name the name of the class
+     * @return the compiler interface type for the class
+     */
+    public CiType resolveType(String name) {
+        final ClassActor classActor = ClassRegistry.get((ClassLoader) null, JavaTypeDescriptor.getDescriptorForJavaString(name));
+        if (classActor != null) {
+            return globalConstantPool.canonicalCiType(classActor);
+        }
+        return null;
+    }
+
+    /**
+     * Gets the compiler interface type for the specified Java class.
+     * @param javaClass the java class object
+     * @return the compiler interface type for the specified class
+     */
+    public CiType getType(Class<?> javaClass) {
+        return globalConstantPool.canonicalCiType(ClassActor.fromJava(javaClass));
+    }
+
+    /**
+     * Gets the <code>CiMethod</code> for a given method actor.
+     * @param methodActor the method actor
+     * @return the canonical compiler interface method for the method actor
+     */
+    public CiMethod getCiMethod(MethodActor methodActor) {
+        return globalConstantPool.canonicalCiMethod(methodActor);
+    }
+
+    /**
      * Gets the OSR frame for a particular method at a particular bytecode index.
      * @param method the compiler interface method
      * @param bci the bytecode index
@@ -105,82 +139,6 @@ public class MaxCiRuntime implements CiRuntime {
         return false;
     }
 
-    /**
-     * Performs an instanceof test on an object and a compiler interface type.
-     * @param object the object to test
-     * @param type the compiler interface type to test
-     * @return <code>true</code> if the object is an instance of the specified class
-     */
-    public boolean instanceOf(Object object, CiType type) {
-        return asClassActor(type, "instanceOf").isInstance(object);
-    }
-
-    /**
-     * Performs a checkcast operation on an object and a compiler interface type.
-     * @param object the object to cast
-     * @param type the compiler interface type to cast to
-     * @return the object if the cast fails
-     * @throws ClassCastException if the cast fails
-     */
-    public Object checkCast(Object object, CiType type) {
-        if (object == null || asClassActor(type, "instanceOf").isInstance(object)) {
-            return object;
-        }
-        throw new ClassCastException();
-    }
-
-    /**
-     * Allocates an object of the specified compiler interface type.
-     * @param type the type
-     * @return a non-initialized instance of the specified compiler interface type
-     */
-    public Object allocateObject(CiType type) {
-        throw FatalError.unimplemented();
-    }
-
-    /**
-     * Allocates an array with the specified element type.
-     * @param type the element type
-     * @param length the length of the array
-     * @return an initialized array with the specified length and element type
-     */
-    public Object allocateArray(CiType type, int length) {
-        throw FatalError.unimplemented();
-    }
-
-    /**
-     * Resolves a compiler interface type by its name. Note that this
-     * method should only be called for globally available classes (e.g. java.lang.*),
-     * since it does not supply a constant pool.
-     * @param name the name of the class
-     * @return the compiler interface type for the class
-     */
-    public CiType resolveType(String name) {
-        final ClassActor classActor = ClassRegistry.get((ClassLoader) null, JavaTypeDescriptor.getDescriptorForJavaString(name));
-        if (classActor != null) {
-            return globalConstantPool.canonicalCiType(classActor);
-        }
-        return null;
-    }
-
-    /**
-     * Gets the compiler interface type for the specified Java class.
-     * @param javaClass the java class object
-     * @return the compiler interface type for the specified class
-     */
-    public CiType getType(Class<?> javaClass) {
-        return globalConstantPool.canonicalCiType(ClassActor.fromJava(javaClass));
-    }
-
-    /**
-     * Gets the <code>CiMethod</code> for a given method actor.
-     * @param methodActor the method actor
-     * @return the canonical compiler interface method for the method actor
-     */
-    public CiMethod getCiMethod(MethodActor methodActor) {
-        return globalConstantPool.canonicalCiMethod(methodActor);
-    }
-
     ClassMethodActor asClassMethodActor(CiMethod method, String operation) {
         if (method instanceof MaxCiMethod) {
             return ((MaxCiMethod) method).asClassMethodActor(operation);
@@ -193,5 +151,107 @@ public class MaxCiRuntime implements CiRuntime {
             return ((MaxCiType) type).asClassActor(operation);
         }
         throw new MaxCiUnresolved("invalid CiType instance: " + type.getClass());
+    }
+
+    @Override
+    public int arrayLengthOffsetInBytes() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public boolean dtraceMethodProbes() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public Address getRuntimeEntry(CiRuntimeCall runtimeCall) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public int headerSize() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public boolean isMP() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public int javaNioBufferLimitOffset() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public boolean jvmtiCanPostExceptions() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public int klassJavaMirrorOffsetInBytes() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public int klassOffsetInBytes() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public boolean needsExplicitNullCheck(int offset) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public int threadExceptionOopOffset() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public int threadExceptionPcOffset() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public int threadObjOffset() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public Address throwCountAddress() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public int vtableEntryMethodOffsetInBytes() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public int vtableEntrySize() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public int vtableStartOffset() {
+        // TODO Auto-generated method stub
+        return 0;
     }
 }

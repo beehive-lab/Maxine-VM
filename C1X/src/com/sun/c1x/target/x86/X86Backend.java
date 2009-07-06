@@ -22,7 +22,7 @@ package com.sun.c1x.target.x86;
 
 import com.sun.c1x.target.Backend;
 import com.sun.c1x.target.Target;
-import com.sun.c1x.lir.LIRGenerator;
+import com.sun.c1x.gen.*;
 import com.sun.c1x.lir.LIRAssembler;
 import com.sun.c1x.util.Util;
 import com.sun.c1x.C1XCompilation;

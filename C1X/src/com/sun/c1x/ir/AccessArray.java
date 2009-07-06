@@ -59,6 +59,7 @@ public abstract class AccessArray extends Instruction {
      * Gets the lock stack.
      * @return the lock stack
      */
+    @Override
     public ValueStack lockStack() {
         return lockStack;
     }

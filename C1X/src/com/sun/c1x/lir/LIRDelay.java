@@ -41,23 +41,13 @@ public class LIRDelay extends LIRInstruction {
     }
 
     /**
-     * Gets the delay operand of this instruction.
-     *
-     * @return the operand
-     */
-    public LIRInstruction delayOperand() {
-        return operand;
-    }
-
-    /**
      * Emit target assembly code for this instruction.
      *
      * @param masm the target assembler
      */
     @Override
     public void emitCode(LIRAssembler masm) {
-        // TODO Auto-generated method stub
-
+        masm.emitDelay(this);
     }
 
     /**
@@ -68,5 +58,21 @@ public class LIRDelay extends LIRInstruction {
     @Override
     public void printInstruction(LogStream out) {
         operand.printInstruction(out);
+    }
+
+    /**
+     * Gets the delay operand of this instruction.
+     *
+     * @return the operand
+     */
+    public LIRInstruction delayOperand() {
+        return operand;
+    }
+
+    /**
+     * @return the object with information for
+     */
+    public CodeEmitInfo callInfo() {
+        return info();
     }
 }

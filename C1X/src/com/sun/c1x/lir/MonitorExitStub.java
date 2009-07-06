@@ -20,55 +20,25 @@
  */
 package com.sun.c1x.lir;
 
-import java.util.*;
+import com.sun.c1x.util.*;
 
 
-/**
- * The <code>LIRRTCall</code> class definition.
- *
- * @author Marcelo Cintra
- *
- */
-public class LIRRuntimeCall extends LIRCall{
+public class MonitorExitStub extends CodeStub {
 
-    private LIROperand tmp;
-
-    /**
-     * Creates a new LIRRTCall instruction.
-     *
-     * @param address
-     * @param tmp
-     * @param result
-     * @param arguments
-     * @param info
-     */
-    public LIRRuntimeCall(int address, LIROperand tmp, LIROperand result, ArrayList<LIRInstruction> arguments, CodeEmitInfo info) {
-        super(LIROpcode.RtCall, address, result, arguments, info);
-        this.tmp = tmp;
+    public MonitorExitStub(LIROperand lock, boolean usefastlocking, int monitorNo) {
+        // TODO Auto-generated constructor stub
     }
 
-    /**
-     * Gets the temporary operand associated to this call.
-     * @return the tmp
-     */
-    public LIROperand tmp() {
-        return tmp;
-    }
-
-    /** Emits target assembly code for this instruction.
-    *
-    * @param masm the target assembler
-    */
     @Override
-    public void emitCode(LIRAssembler masm) {
-        // TODO Not yet implemented.
+    public void emitCode(LIRAssembler e) {
+        // TODO Auto-generated method stub
+
     }
 
-    /**
-     * Verifies this instruction.
-     */
     @Override
-    public void verify() {
-        // TODO Not yet implemented.
+    public void printName(LogStream out) {
+        // TODO Auto-generated method stub
+
     }
+
 }
