@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
@@ -30,6 +29,11 @@ import com.sun.c1x.value.*;
  * @author Marcelo Cintra
  */
 public class LIROperand {
+    public static int BitsPerWord                            = 64;
+    // Number of register in the target machine
+    // TODO: need to think better about how to get this information
+    //       dinamically, according to the current hardware
+    public static int  NumberOfRegisters                     = 16;
 
     public enum OperandKind {
         PointerValue(0),
@@ -71,7 +75,7 @@ public class LIROperand {
         LastUseBits(1),
         IsFpuStackOffsetBits(1),        // used in assertion checking on x86 for FPU stack slot allocation
         NonDataBits(KindBits.value() + TypeBits.value() + SizeBits.value() + DestroysBits.value() + LastUseBits.value() + IsFpuStackOffsetBits.value() + VirtualBits.value() + IsXmmBits.value()),
-        DataBits (C1XOptions.BitsPerInt - IsXmmBits.value()),
+        DataBits (32 - IsXmmBits.value()),
         RegBits(DataBits.value() / 2);      // for two registers in one value encoding
 
         private final int value;
@@ -154,11 +158,11 @@ public class LIROperand {
         }
 
         static int nthBit(int n) {
-            return n >= C1XOptions.BitsPerWord ? 0 : 1 << (n);
+            return n >= BitsPerWord ? 0 : 1 << (n);
         }
 
         static int leftNBits(int n) {
-            return (rightNBits(n) << (n >= C1XOptions.BitsPerWord ? 0 : (C1XOptions.BitsPerWord - n)));
+            return (rightNBits(n) << (n >= BitsPerWord ? 0 : (BitsPerWord - n)));
         }
 
         public final int value() {
@@ -167,7 +171,7 @@ public class LIROperand {
     }
 
     public enum VirtualRegister {
-        RegisterBase(C1XOptions.NumberOfRegisters),
+        RegisterBase(NumberOfRegisters),
         MaxRegisters((1 << OperandBits.DataBits.value) - 1);
 
         private final int value;
