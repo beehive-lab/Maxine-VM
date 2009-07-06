@@ -45,7 +45,7 @@ import com.sun.max.vm.value.*;
  *
  * @author Michael Van De Vanter
  */
-public class ObjectHeaderTable extends InspectorTable {
+public final class ObjectHeaderTable extends InspectorTable {
 
     private static final int MAX_ROW_COUNT = 3;
     private static final int HEADER_HUB_ROW = 0;
@@ -57,9 +57,9 @@ public class ObjectHeaderTable extends InspectorTable {
     private final TeleObject teleObject;
     private Pointer objectOrigin;
     private TeleHub teleHub;
-    private final int hubReferenceOffset; // Property of the layout scheme; doesn't change
-    private final int miscWordOffset; // Property of the layout scheme; doesn't change
-    private final int arrayLengthOffset; // Property of the layout scheme; doesn't change
+    private final Offset hubReferenceOffset; // Property of the layout scheme; doesn't change
+    private final Offset miscWordOffset; // Property of the layout scheme; doesn't change
+    private final Offset arrayLengthOffset; // Property of the layout scheme; doesn't change
 
     private final ObjectHeaderTableModel model;
     private final ObjectHeaderTableColumnModel columnModel;
@@ -78,9 +78,9 @@ public class ObjectHeaderTable extends InspectorTable {
         this.inspection = objectInspector.inspection();
         this.teleObject = objectInspector.teleObject();
         final LayoutScheme layoutScheme = maxVM().vmConfiguration().layoutScheme();
-        this.hubReferenceOffset = layoutScheme.generalLayout.getOffsetFromOrigin(HeaderField.HUB).toInt();
-        this.miscWordOffset = layoutScheme.generalLayout.getOffsetFromOrigin(HeaderField.MISC).toInt();
-        this.arrayLengthOffset = layoutScheme.arrayHeaderLayout.getOffsetFromOrigin(HeaderField.LENGTH).toInt();
+        this.hubReferenceOffset = layoutScheme.generalLayout.getOffsetFromOrigin(HeaderField.HUB);
+        this.miscWordOffset = layoutScheme.generalLayout.getOffsetFromOrigin(HeaderField.MISC);
+        this.arrayLengthOffset = layoutScheme.arrayHeaderLayout.getOffsetFromOrigin(HeaderField.LENGTH);
 
         this.model = new ObjectHeaderTableModel();
         this.columns = new TableColumn[ObjectFieldColumnKind.VALUES.length()];
@@ -116,9 +116,12 @@ public class ObjectHeaderTable extends InspectorTable {
                         final int modelIndex = getColumnModel().getColumn(columnIndex).getModelIndex();
                         if (modelIndex == ObjectFieldColumnKind.TAG.ordinal()) {
                             final InspectorMenu menu = new InspectorMenu();
-                            final Address address = model.rowToAddress(hitRowIndex);
-                            menu.add(actions().setWordWatchpoint(address, "Watch this memory word"));
-                            menu.add(actions().removeWatchpoint(address, "Un-watch this memory word"));
+                            final Offset offset = model.rowToOffset(hitRowIndex);
+                            final Size size = model.rowToSize(hitRowIndex);
+                            final String name = model.rowToName(hitRowIndex);
+                            menu.add(actions().setHeaderWatchpoint(teleObject, offset, size, name, "Watch this field's memory"));
+                            menu.add(actions().editHeaderWatchpoint(teleObject, offset, size, name, "Edit memory watchpoint"));
+                            menu.add(actions().removeHeaderWatchpoint(teleObject, offset, size, name, "Remove memory watchpoint"));
                             menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                         }
                     }
@@ -221,7 +224,7 @@ public class ObjectHeaderTable extends InspectorTable {
             return Integer.class;
         }
 
-        public int rowToOffset(int row) {
+        public Offset rowToOffset(int row) {
             switch (row) {
                 case HEADER_HUB_ROW:
                     return hubReferenceOffset;
@@ -232,7 +235,8 @@ public class ObjectHeaderTable extends InspectorTable {
                 default:
                     ProgramError.unexpected();
             }
-            return -1;
+            // TODO (mlvdv) bogus returning -1, could be this naturally
+            return Offset.fromInt(-1);
         }
 
         public Address rowToAddress(int row) {
@@ -251,6 +255,10 @@ public class ObjectHeaderTable extends InspectorTable {
                     ProgramError.unexpected();
             }
             return null;
+        }
+
+        public Size rowToSize(int row) {
+            return Size.fromInt(rowToType(row).toKind().width.numberOfBytes);
         }
 
         public String rowToName(int row) {
@@ -282,8 +290,8 @@ public class ObjectHeaderTable extends InspectorTable {
         public int addressToRow(Address address) {
             if (!address.isZero()) {
                 final int wordSize = maxVM().wordSize();
-                final Address endAddress = teleObject.getObjectKind() == ObjectKind.TUPLE ? objectOrigin.plus(miscWordOffset + wordSize) : objectOrigin.plus(arrayLengthOffset +
-                    wordSize);
+                final Address endAddress = teleObject.getObjectKind() ==
+                    ObjectKind.TUPLE ? objectOrigin.plus(miscWordOffset.plus(wordSize)) : objectOrigin.plus(arrayLengthOffset.plus(wordSize));
                 if (address.greaterEqual(objectOrigin) && address.lessThan(endAddress)) {
                     return address.minus(objectOrigin).dividedBy(wordSize).toInt();
                 }
@@ -338,7 +346,7 @@ public class ObjectHeaderTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(model.rowToOffset(row), objectOrigin);
+            setValue(model.rowToOffset(row).toInt(), objectOrigin);
             return this;
         }
     }
@@ -350,7 +358,7 @@ public class ObjectHeaderTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(model.rowToOffset(row), objectOrigin);
+            setValue(model.rowToOffset(row).toInt(), objectOrigin);
             return this;
         }
     }

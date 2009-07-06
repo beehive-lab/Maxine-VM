@@ -88,7 +88,7 @@ public abstract class MethodSelectionSnippet extends Snippet {
                 return classActor.findVirtualMethodActor(interfaceMethod);
             }
             final InterfaceActor interfaceActor = UnsafeLoophole.cast(interfaceMethod.holder());
-            final int interfaceIIndex = classActor.dynamicHub().getITableIndex(interfaceActor.id) - classActor.dynamicHub().iTableStartIndex();
+            final int interfaceIIndex = classActor.dynamicHub().getITableIndex(interfaceActor.id) - classActor.dynamicHub().iTableStartIndex;
             return classActor.getVirtualMethodActorByIIndex(interfaceIIndex + interfaceMethod.iIndexInInterface());
         }
 

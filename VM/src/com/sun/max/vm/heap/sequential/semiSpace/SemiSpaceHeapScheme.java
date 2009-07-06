@@ -124,7 +124,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     private final SequentialHeapRootsScanner heapRootsScanner = new SequentialHeapRootsScanner(pointerIndexGripUpdater);
     private final SequentialHeapRootsScanner heapRootsVerifier = new SequentialHeapRootsScanner(pointerIndexGripVerifier);
 
-    private StopTheWorldDaemon collectorThread;
+    private StopTheWorldGCDaemon collectorThread;
 
     private SemiSpaceMemoryRegion fromSpace = new SemiSpaceMemoryRegion("Heap-From");
     private SemiSpaceMemoryRegion toSpace = new SemiSpaceMemoryRegion("Heap-To");
@@ -334,7 +334,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 this.growPolicy = new DoubleGrowPolicy();
             }
             increaseGrowPolicy = new LinearGrowPolicy();
-            collectorThread = new StopTheWorldDaemon("GC", collect);
+            collectorThread = new StopTheWorldGCDaemon("GC", collect);
         }
     }
 
@@ -364,7 +364,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     }
 
     public boolean isGcThread(Thread thread) {
-        return thread instanceof StopTheWorldDaemon;
+        return thread instanceof StopTheWorldGCDaemon;
     }
 
     public int adjustedCardTableShift() {
@@ -413,7 +413,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 final boolean lockDisabledSafepoints = Log.lock();
                 final Hub hub = UnsafeLoophole.cast(Layout.readHubReference(grip).toJava());
                 Log.print("Forwarding ");
-                Log.print(hub.classActor().name.string);
+                Log.print(hub.classActor.name.string);
                 Log.print(" from ");
                 Log.print(fromCell);
                 Log.print(" to ");
@@ -455,13 +455,13 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             Layout.writeHubGrip(origin, newHubGrip);
         }
         final Hub hub = UnsafeLoophole.cast(newHubGrip.toJava());
-        final SpecificLayout specificLayout = hub.specificLayout();
+        final SpecificLayout specificLayout = hub.specificLayout;
         if (specificLayout.isTupleLayout()) {
             TupleReferenceMap.visitOriginOffsets(hub, origin, pointerOffsetGripUpdater);
-            if (hub.isSpecialReference()) {
+            if (hub.isSpecialReference) {
                 SpecialReferenceManager.discoverSpecialReference(Grip.fromOrigin(origin));
             }
-            return cell.plus(hub.tupleSize());
+            return cell.plus(hub.tupleSize);
         }
         if (specificLayout.isHybridLayout()) {
             TupleReferenceMap.visitOriginOffsets(hub, origin, pointerOffsetGripUpdater);
@@ -577,7 +577,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     }
 
     public synchronized boolean collectGarbage(Size requestedFreeSpace) {
-        executeCollectorThread();
+        if (requestedFreeSpace.toInt() == 0 || immediateFreeSpace().lessThan(requestedFreeSpace)) {
+            executeCollectorThread();
+        }
         if (immediateFreeSpace().greaterEqual(requestedFreeSpace)) {
             // check to see if we can reset safety zone
             if (inSafetyZone) {
@@ -637,7 +639,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             oldAllocationMark = allocationMark.asPointer();
             cell = allocateWithDebugTag(oldAllocationMark);
             end = cell.plus(size);
-            if (end.greaterThan(top)) {
+            while (end.greaterThan(top)) {
                 if (!Heap.collectGarbage(size)) {
                     if (inSafetyZone) {
                         FatalError.crash("out of memory again after throwing OutOfMemoryError");
@@ -666,7 +668,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         //}
         final Size tlabSize = Size.fromLong(Math.max(size.toLong(), 64 * 1024));
         final Pointer tlab = retryAllocate(tlabSize);
-        final Pointer cell = allocateWithDebugTag(tlab);
+        final Pointer cell = allocateWithDebugTag(tlab); // TODO:check this
         final Pointer end = cell.plus(size);
         VmThreadLocal.ALLOCATION_TOP.setVariableWord(tlab.plus(tlabSize));
         VmThreadLocal.ALLOCATION_MARK.setVariableWord(end);
@@ -709,7 +711,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     @INLINE
     @NO_SAFEPOINTS("initialization must be atomic")
     public Object createArray(DynamicHub dynamicHub, int length) {
-        final Size size = Layout.getArraySize(dynamicHub.classActor().componentClassActor().kind, length);
+        final Size size = Layout.getArraySize(dynamicHub.classActor.componentClassActor().kind, length);
         final Pointer cell = allocate(size);
         return Cell.plantArray(cell, size, dynamicHub, length);
     }
@@ -717,13 +719,13 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     @INLINE
     @NO_SAFEPOINTS("initialization must be atomic")
     public Object createTuple(Hub hub) {
-        final Pointer cell = allocate(hub.tupleSize());
+        final Pointer cell = allocate(hub.tupleSize);
         return Cell.plantTuple(cell, hub);
     }
 
     @NO_SAFEPOINTS("initialization must be atomic")
     public Object createHybrid(DynamicHub hub) {
-        final Size size = hub.tupleSize();
+        final Size size = hub.tupleSize;
         final Pointer cell = allocate(size);
         return Cell.plantHybrid(cell, size, hub);
     }
@@ -840,7 +842,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     @Override
     public void finalize(MaxineVM.Phase phase) {
         if (MaxineVM.isPrototyping()) {
-            StopTheWorldDaemon.checkInvariants();
+            StopTheWorldGCDaemon.checkInvariants();
         }
         if (MaxineVM.Phase.RUNNING == phase) {
             if (Heap.traceGCTime()) {

@@ -26,6 +26,7 @@ import java.util.logging.*;
 
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.tele.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -78,6 +79,11 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
      */
     public Value readElementValue(int index) {
         return teleVM().getElementValue(componentKind(), reference(), index);
+    }
+
+    @Override
+    public  Address getFieldAddress(FieldActor fieldActor) {
+        throw FatalError.unexpected("Maxine Array objects don't contain fields");
     }
 
     @Override

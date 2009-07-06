@@ -682,7 +682,7 @@ public class CompiledPrototype extends Prototype {
 
     private void linkITable(ClassActor classActor, final IntHashMap<InterfaceActor> serialToInterfaceActor) {
         final DynamicHub hub = classActor.dynamicHub();
-        for (int mTableIndex = hub.mTableStartIndex(); mTableIndex < hub.mTableStartIndex() + hub.mTableLength(); mTableIndex++) {
+        for (int mTableIndex = hub.mTableStartIndex; mTableIndex < hub.mTableStartIndex + hub.mTableLength; mTableIndex++) {
             final int interfaceITableIndex = hub.getInt(mTableIndex);
             if (interfaceITableIndex > 0) {
                 final int serial = hub.getWord(interfaceITableIndex).asAddress().toInt();
@@ -690,7 +690,7 @@ public class CompiledPrototype extends Prototype {
                 if (interfaceActor != null) {
                     for (InterfaceMethodActor interfaceMethodActor : interfaceActor.localInterfaceMethodActors()) {
                         final int methodITableIndex = interfaceITableIndex + interfaceMethodActor.iIndexInInterface();
-                        final int iIndex = methodITableIndex - hub.iTableStartIndex();
+                        final int iIndex = methodITableIndex - hub.iTableStartIndex;
                         final VirtualMethodActor dynamicMethodActor = classActor.getVirtualMethodActorByIIndex(iIndex);
                         final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(dynamicMethodActor);
                         if (targetMethod != null && !unlinkedMethods.contains(dynamicMethodActor)) {

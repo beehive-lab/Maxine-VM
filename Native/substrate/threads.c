@@ -495,10 +495,14 @@ JNIEXPORT void JNICALL
 Java_com_sun_max_vm_thread_VmThread_nativeYield(JNIEnv *env, jclass c) {
 #if os_SOLARIS
     thr_yield();
+#elif os_DARWIN
+    sched_yield();
+#elif os_LINUX
+    pthread_yield();
 #elif os_GUESTVMXEN
     guestvmXen_yield();
 #else
-    log_println("nativeYield ignored!");
+    c_UNIMPLEMENTED();
 #endif
 }
 
@@ -522,7 +526,7 @@ Java_com_sun_max_vm_thread_VmThread_nativeInterrupt(JNIEnv *env, jclass c, Addre
 #elif os_GUESTVMXEN
 	guestvmXen_interrupt((void*) nativeThread);
 #else
-    log_println("nativeInterrupt ignored!");
+    c_UNIMPLEMENTED();
  #endif
 }
 

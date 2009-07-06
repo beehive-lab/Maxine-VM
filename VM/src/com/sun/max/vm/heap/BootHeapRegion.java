@@ -53,7 +53,7 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
 
     @PROTOTYPE_ONLY
     public void init(byte[] refMap, Reference[] specialRefs) {
-        ProgramError.check(Address.fromInt(refMap.length).isAligned(), "Boot heap reference map must have word-aligned size");
+        ProgramError.check(Address.fromInt(refMap.length).isWordAligned(), "Boot heap reference map must have word-aligned size");
         this.referenceMapBytes = refMap;
         this.specialReferences = specialRefs;
     }
@@ -107,10 +107,10 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
         final Pointer origin = Layout.cellToOrigin(cell);
         final Grip newHubGrip = Layout.readHubGrip(origin);
         final Hub hub = UnsafeLoophole.cast(newHubGrip.toJava());
-        final SpecificLayout specificLayout = hub.specificLayout();
+        final SpecificLayout specificLayout = hub.specificLayout;
         if (specificLayout.isTupleLayout()) {
             TupleReferenceMap.visitOriginOffsets(hub, origin, this);
-            return cell.plus(hub.tupleSize());
+            return cell.plus(hub.tupleSize);
         }
         if (specificLayout.isHybridLayout()) {
             TupleReferenceMap.visitOriginOffsets(hub, origin, this);

@@ -161,10 +161,10 @@ public abstract class BytecodeViewer extends CodeViewer {
                 final int nextBytecodeOffset = bytecodeScanner.scanInstruction(methodBytes, currentBytecodeOffset);
                 final byte[] instructionBytes = Bytes.getSection(methodBytes, currentBytecodeOffset, nextBytecodeOffset);
                 if (bytecodeToTargetCodePositionMap != null) {
-                    while (targetCodeInstructions.get(targetCodeRow).position() < bytecodeToTargetCodePositionMap[currentBytecodeOffset]) {
+                    while (targetCodeInstructions.get(targetCodeRow).position < bytecodeToTargetCodePositionMap[currentBytecodeOffset]) {
                         targetCodeRow++;
                     }
-                    targetCodeFirstAddress = targetCodeInstructions.get(targetCodeRow).address();
+                    targetCodeFirstAddress = targetCodeInstructions.get(targetCodeRow).address;
                 }
                 final BytecodeInstruction instruction = new BytecodeInstruction(bytecodeRow, currentBytecodeOffset, instructionBytes, bytecodePrinter.opcode(), bytecodePrinter.operand1(),
                                 bytecodePrinter.operand2(), targetCodeRow, targetCodeFirstAddress);
@@ -194,7 +194,7 @@ public abstract class BytecodeViewer extends CodeViewer {
             }
             // Last bytecode instruction:  see if before the end of the target code
             final TargetCodeInstruction lastTargetCodeInstruction = targetCodeInstructions.last();
-            return address.lessThan(lastTargetCodeInstruction.address().plus(lastTargetCodeInstruction.length()));
+            return address.lessThan(lastTargetCodeInstruction.address.plus(lastTargetCodeInstruction.bytes.length));
         }
         return false;
     }

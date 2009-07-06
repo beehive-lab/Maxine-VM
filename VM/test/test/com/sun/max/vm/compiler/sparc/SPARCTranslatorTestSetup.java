@@ -57,7 +57,7 @@ public class SPARCTranslatorTestSetup extends CompilerTestSetup<TargetMethod> {
 
     private static Platform platform() {
         final ProcessorKind proc = new ProcessorKind(ProcessorModel.SPARC, InstructionSet.SPARC,
-                        new DataModel(WordWidth.BITS_64, Endianness.BIG, Alignment.BYTES_8));
+                        new DataModel(WordWidth.BITS_64, Endianness.BIG, 64));
         return new Platform(proc, OperatingSystem.SOLARIS, OperatingSystem.SOLARIS.defaultPageSize());
     }
 }

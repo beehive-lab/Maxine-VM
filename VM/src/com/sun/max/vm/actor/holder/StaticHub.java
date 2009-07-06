@@ -44,6 +44,6 @@ public class StaticHub extends Hub {
 
     @Override
     public FieldActor findFieldActor(int offset) {
-        return classActor().findStaticFieldActor(offset);
+        return classActor.findStaticFieldActor(offset);
     }
 }

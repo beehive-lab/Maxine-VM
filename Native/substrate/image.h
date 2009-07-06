@@ -41,7 +41,7 @@ typedef struct image_Header {
     jint randomID;           /* Specific to one particular instance of boot image file */
 
     jint wordSize;           /* 4 or 8 */
-    jint alignmentSize;      /* 0, 1, 2, 4, 8 */
+    jint cacheAlignment;
     jint relocationScheme;
 
     jint pageSize;           /* multiple of 1024 */

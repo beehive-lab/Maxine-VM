@@ -20,7 +20,6 @@
  */
 package test.com.sun.max.unsafe;
 
-import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 
@@ -334,37 +333,37 @@ public class AddressTest extends WordTestCase {
     }
 
     public void test_align() {
-        final int n = Platform.hostOrTarget().processorKind.dataModel.alignment.numberOfBytes();
-        assertTrue(Address.zero().aligned().toInt() == 0);
-        assertTrue(Address.fromInt(1).aligned().toInt() == n);
-        assertTrue(Address.fromInt(n).aligned().toInt() == n);
-        assertTrue(Address.fromInt(n - 1).aligned().toInt() == n);
-        assertTrue(Address.fromInt(n / 2).aligned().toInt() == n);
-        assertTrue(Address.fromInt(n + 1).aligned().toInt() == n + n);
-        assertTrue(Address.fromInt(n + (n / 2)).aligned().toInt() == n + n);
-        assertTrue(Address.fromInt(n + n).aligned().toInt() == n + n);
-        assertTrue(Address.fromInt(n + n - 1).aligned().toInt() == n + n);
-        assertTrue(Address.fromInt(2003 * n).aligned().toInt() == 2003 * n);
-        assertTrue(Address.fromInt(2003 * n - 1).aligned().toInt() == 2003 * n);
-        assertTrue(Address.fromInt(2003 * n + 1).aligned().toInt() == 2003 * n + n);
+        final int n = Word.size();
+        assertTrue(Address.zero().wordAligned().toInt() == 0);
+        assertTrue(Address.fromInt(1).wordAligned().toInt() == n);
+        assertTrue(Address.fromInt(n).wordAligned().toInt() == n);
+        assertTrue(Address.fromInt(n - 1).wordAligned().toInt() == n);
+        assertTrue(Address.fromInt(n / 2).wordAligned().toInt() == n);
+        assertTrue(Address.fromInt(n + 1).wordAligned().toInt() == n + n);
+        assertTrue(Address.fromInt(n + (n / 2)).wordAligned().toInt() == n + n);
+        assertTrue(Address.fromInt(n + n).wordAligned().toInt() == n + n);
+        assertTrue(Address.fromInt(n + n - 1).wordAligned().toInt() == n + n);
+        assertTrue(Address.fromInt(2003 * n).wordAligned().toInt() == 2003 * n);
+        assertTrue(Address.fromInt(2003 * n - 1).wordAligned().toInt() == 2003 * n);
+        assertTrue(Address.fromInt(2003 * n + 1).wordAligned().toInt() == 2003 * n + n);
 
     }
 
     public void test_aligned() {
-        final int n = Platform.hostOrTarget().processorKind.dataModel.alignment.numberOfBytes();
-        assertTrue(Address.zero().isAligned());
-        assertFalse(Address.fromInt(1).isAligned());
-        assertFalse(Address.fromInt(n - (n / 2)).isAligned());
-        assertFalse(Address.fromInt(n - 1).isAligned());
-        assertTrue(Address.fromInt(n).isAligned());
-        assertFalse(Address.fromInt(n + 1).isAligned());
-        assertFalse(Address.fromInt(n + (n / 2)).isAligned());
-        assertFalse(Address.fromInt(n + n - 1).isAligned());
-        assertTrue(Address.fromInt(n + n).isAligned());
-        assertFalse(Address.fromInt(n + n + 1).isAligned());
-        assertFalse(Address.fromInt(2003 * n - 1).isAligned());
-        assertTrue(Address.fromInt(2003 * n).isAligned());
-        assertFalse(Address.fromInt(2003 * n + 1).isAligned());
+        final int n = Word.size();
+        assertTrue(Address.zero().isWordAligned());
+        assertFalse(Address.fromInt(1).isWordAligned());
+        assertFalse(Address.fromInt(n - (n / 2)).isWordAligned());
+        assertFalse(Address.fromInt(n - 1).isWordAligned());
+        assertTrue(Address.fromInt(n).isWordAligned());
+        assertFalse(Address.fromInt(n + 1).isWordAligned());
+        assertFalse(Address.fromInt(n + (n / 2)).isWordAligned());
+        assertFalse(Address.fromInt(n + n - 1).isWordAligned());
+        assertTrue(Address.fromInt(n + n).isWordAligned());
+        assertFalse(Address.fromInt(n + n + 1).isWordAligned());
+        assertFalse(Address.fromInt(2003 * n - 1).isWordAligned());
+        assertTrue(Address.fromInt(2003 * n).isWordAligned());
+        assertFalse(Address.fromInt(2003 * n + 1).isWordAligned());
     }
 
     public void test_times_Address() {

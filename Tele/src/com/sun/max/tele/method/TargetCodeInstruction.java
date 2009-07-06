@@ -30,53 +30,31 @@ import com.sun.max.unsafe.*;
   */
 public final class TargetCodeInstruction {
 
-    private final String mnemonic;
+    /**
+     * disassembled mnemonic for this instruction.
+     */
+    public final String mnemonic;
 
     /**
-     * @return disassembled mnemonic for this instruction.
+     * position in bytes in the sequence of instructions for this method.
      */
-    public String mnemonic() {
-        return mnemonic;
-    }
-
-    private final int position;
+    public final int position;
 
     /**
-     * @return position in bytes in the sequence of instructions for this method
+     * address of the first byte of the instruction.
      */
-    public int position() {
-        return position;
-    }
-
-    private final Address address;
-
-    /**
-     * @return address of the first byte of the instruction
-     */
-    public Address address() {
-        return address;
-    }
-
-    private final String label;
+    public final Address address;
 
     /**
      * The label (if any) at this instruction's address.
      */
-    public String label() {
-        return label;
-    }
+    public final String label;
 
-    private final byte[] bytes;
 
-    public byte[] bytes() {
-        return bytes;
-    }
+    public final byte[] bytes;
 
-    private final String operands;
 
-    public String operands() {
-        return operands;
-    }
+    public final String operands;
 
     /**
      * The target address of this instruction if it is a direct call or jump instruction otherwise null.
@@ -88,37 +66,6 @@ public final class TargetCodeInstruction {
      * (e.g., load relative to current pc, or relative of a base register, etc...)
      */
     public final Address literalSourceAddress;
-
-    public String getMnemonic() {
-        return mnemonic;
-    }
-
-    public int getPosition() {
-        return position;
-    }
-
-    public long getAddress() {
-        return address.toLong();
-    }
-
-    public String getLabel() {
-        return label;
-    }
-
-    public byte[] getBytes() {
-        return bytes;
-    }
-
-    public String getOperands() {
-        return operands;
-    }
-
-    public long getTargetAddress() {
-        if (targetAddress == null) {
-            return 0;
-        }
-        return targetAddress.toLong();
-    }
 
     TargetCodeInstruction(String mnemonic, Address address, int position, String label, byte[] bytes, String operands, Address targetAddress, Address literalSourceAddress) {
         this.mnemonic = mnemonic;
@@ -132,10 +79,13 @@ public final class TargetCodeInstruction {
     }
 
     /**
-     * @return length in bytes of the instruction.
+     * @return The target address of this instruction if it is a direct call or jump instruction, else 0.
      */
-    public int length() {
-        return bytes.length;
+    public long getTargetAddressAsLong() {
+        if (targetAddress == null) {
+            return 0;
+        }
+        return targetAddress.toLong();
     }
 
     @Override

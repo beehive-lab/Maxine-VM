@@ -84,15 +84,15 @@ public final class HostObjectAccess {
      */
     public static Size getSize(final Hub hub, Object object) {
         if (object.getClass().isArray()) {
-            final ArrayLayout arrayLayout = (ArrayLayout) hub.specificLayout();
+            final ArrayLayout arrayLayout = (ArrayLayout) hub.specificLayout;
             return arrayLayout.getArraySize(Array.getLength(object));
         }
         if (object instanceof Hybrid) {
             final Hybrid hybrid = (Hybrid) object;
-            final HybridLayout hybridLayout = (HybridLayout) hub.specificLayout();
+            final HybridLayout hybridLayout = (HybridLayout) hub.specificLayout;
             return hybridLayout.getArraySize(hybrid.length());
         }
-        return hub.tupleSize();
+        return hub.tupleSize;
     }
 
     /**

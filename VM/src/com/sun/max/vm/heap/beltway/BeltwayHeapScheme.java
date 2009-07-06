@@ -543,7 +543,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     @INLINE
     @NO_SAFEPOINTS("TODO")
     public final Object createArray(DynamicHub dynamicHub, int length) {
-        final Size size = Layout.getArraySize(dynamicHub.classActor().componentClassActor().kind, length);
+        final Size size = Layout.getArraySize(dynamicHub.classActor.componentClassActor().kind, length);
         final Pointer cell = allocate(size);
         return Cell.plantArray(cell, size, dynamicHub, length);
     }
@@ -555,13 +555,13 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     @INLINE
     @NO_SAFEPOINTS("TODO")
     public final Object createTuple(Hub hub) {
-        final Pointer cell = allocate(hub.tupleSize());
+        final Pointer cell = allocate(hub.tupleSize);
         return Cell.plantTuple(cell, hub);
     }
 
     @NO_SAFEPOINTS("TODO")
     public Object createHybrid(DynamicHub hub) {
-        final Size size = hub.tupleSize();
+        final Size size = hub.tupleSize;
         final Pointer cell = allocate(size);
         return Cell.plantHybrid(cell, size, hub);
     }

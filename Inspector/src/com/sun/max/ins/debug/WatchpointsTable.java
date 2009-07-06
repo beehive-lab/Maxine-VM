@@ -34,6 +34,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.vm.value.*;
 
 
@@ -42,7 +43,7 @@ import com.sun.max.vm.value.*;
  *
  * @author Michael Van De Vanter
  */
-public class WatchpointsTable extends InspectorTable {
+public final class WatchpointsTable extends InspectorTable {
 
     private final WatchpointsTableModel model;
     private final WatchpointsColumnModel columnModel;
@@ -65,7 +66,31 @@ public class WatchpointsTable extends InspectorTable {
         setRowSelectionAllowed(true);
         setColumnSelectionAllowed(false);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        addMouseListener(new TableCellMouseClickAdapter(inspection(), this));
+        addMouseListener(new TableCellMouseClickAdapter(inspection(), this) {
+            @Override
+            public void procedure(final MouseEvent mouseEvent) {
+                if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
+                    if (maxVM().watchpointsEnabled()) {
+                        // So far, only watchpoint-related items on this popup menu.
+                        final Point p = mouseEvent.getPoint();
+                        final int hitRowIndex = rowAtPoint(p);
+                        final int columnIndex = getColumnModel().getColumnIndexAtX(p.x);
+                        final int modelIndex = getColumnModel().getColumn(columnIndex).getModelIndex();
+                        if (modelIndex == WatchpointsColumnKind.DESCRIPTION.ordinal()) {
+                            final InspectorMenu menu = new InspectorMenu();
+                            final MaxWatchpoint watchpoint = (MaxWatchpoint) model.getValueAt(hitRowIndex, modelIndex);
+                            final TeleObject teleObject = watchpoint.getTeleObject();
+                            if (teleObject != null) {
+                                menu.add(actions().inspectObject(teleObject, "Inspect Object"));
+                                menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                            }
+                        }
+                    }
+                }
+                super.procedure(mouseEvent);
+            }
+        }
+        );
         refresh(true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
         updateFocusSelection();
@@ -148,7 +173,9 @@ public class WatchpointsTable extends InspectorTable {
         private WatchpointsColumnModel(WatchpointsViewPreferences viewPreferences) {
             this.viewPreferences = viewPreferences;
             createColumn(WatchpointsColumnKind.START, new StartAddressCellRenderer(inspection()), null);
+            createColumn(WatchpointsColumnKind.SIZE, new SizeCellRenderer(inspection()), null);
             createColumn(WatchpointsColumnKind.END, new EndAddressCellRenderer(inspection()), null);
+            createColumn(WatchpointsColumnKind.DESCRIPTION, new DescriptionCellRenderer(inspection()), null);
             createColumn(WatchpointsColumnKind.REGION, new RegionRenderer(inspection()), null);
             createColumn(WatchpointsColumnKind.READ, null, new DefaultCellEditor(new JCheckBox()));
         }
@@ -225,6 +252,7 @@ public class WatchpointsTable extends InspectorTable {
     private final class StartAddressCellRenderer extends DefaultTableCellRenderer implements Prober{
 
         private final Inspection inspection;
+        // WordValueLabels have important user interaction state, so create one per watchpoint and keep them around
         private final Map<MaxWatchpoint, WeakReference<WordValueLabel> > watchpointToLabelMap = new HashMap<MaxWatchpoint, WeakReference<WordValueLabel> >();
 
         public StartAddressCellRenderer(Inspection inspection) {
@@ -287,9 +315,29 @@ public class WatchpointsTable extends InspectorTable {
         }
     }
 
+    private final class SizeCellRenderer extends DataLabel.IntAsDecimal implements TableCellRenderer {
+
+        public SizeCellRenderer(Inspection inspection) {
+            super(inspection, 0);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            final MaxWatchpoint watchpoint = (MaxWatchpoint) value;
+            setValue(watchpoint.size().toInt());
+            if (row == getSelectionModel().getMinSelectionIndex()) {
+                setBackground(style().defaultCodeAlternateBackgroundColor());
+            } else {
+                setBackground(style().defaultTextBackgroundColor());
+            }
+            return this;
+        }
+    }
+
     private final class EndAddressCellRenderer extends DefaultTableCellRenderer implements Prober{
 
         private final Inspection inspection;
+        // WordValueLabels have important user interaction state, so create one per watchpoint and keep them around
         private final Map<MaxWatchpoint, WeakReference<WordValueLabel> > watchpointToLabelMap = new HashMap<MaxWatchpoint, WeakReference<WordValueLabel> >();
 
         public EndAddressCellRenderer(Inspection inspection) {
@@ -349,6 +397,25 @@ public class WatchpointsTable extends InspectorTable {
             public Value fetchValue() {
                 return watchpoint == null ? null : new WordValue(watchpoint.end());
             }
+        }
+    }
+
+    private final class DescriptionCellRenderer extends PlainLabel implements TableCellRenderer {
+
+        public DescriptionCellRenderer(Inspection inspection) {
+            super(inspection, "");
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            final MaxWatchpoint watchpoint = (MaxWatchpoint) value;
+            setText(watchpoint.description());
+            if (row == getSelectionModel().getMinSelectionIndex()) {
+                setBackground(style().defaultCodeAlternateBackgroundColor());
+            } else {
+                setBackground(style().defaultTextBackgroundColor());
+            }
+            return this;
         }
     }
 

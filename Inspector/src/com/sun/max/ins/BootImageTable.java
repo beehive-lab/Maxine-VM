@@ -42,7 +42,7 @@ import com.sun.max.vm.prototype.*;
  *
  * @author Michael Van De Vanter
  */
-public class BootImageTable extends InspectorTable {
+public final class BootImageTable extends InspectorTable {
 
     private final BootImageTableModel model;
     private BootImageColumnModel columnModel;
@@ -158,7 +158,7 @@ public class BootImageTable extends InspectorTable {
 
             addRow("bits/word:", new DataLabel.IntAsDecimal(inspection(), processorDataModel.wordWidth.numberOfBits), null);
             addRow("endianness:", new DataLabel.EnumAsText(inspection(), processorDataModel.endianness), null);
-            addRow("alignment:", new DataLabel.IntAsDecimal(inspection(), processorDataModel.alignment.numberOfBytes()), null);
+            addRow("cache alignment:", new DataLabel.IntAsDecimal(inspection(), processorDataModel.cacheAlignment), null);
 
             addRow("operating system:", new DataLabel.EnumAsText(inspection(), platform.operatingSystem), null);
             addRow("page size:", new DataLabel.IntAsDecimal(inspection(), platform.pageSize), null);

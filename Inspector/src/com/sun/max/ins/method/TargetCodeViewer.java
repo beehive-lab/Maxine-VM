@@ -160,7 +160,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
                 final int bytecodePosition = bytecodeIndex;
                 // To check if we're crossing a bytecode boundary in the JITed code, compare the offset of the instruction at the current row with the offset recorded by the JIT
                 // for the start of bytecode template.
-                final int instructionPosition = instructions.get(row).position();
+                final int instructionPosition = instructions.get(row).position;
                 if (bytecodePosition < bytecodeToTargetCodePositionMap.length && instructionPosition == bytecodeToTargetCodePositionMap[bytecodePosition]) {
                     alternate = !alternate;
                     final BytecodeInfo bytecodeInfo = bytecodeInfos[bytecodePosition];
@@ -187,7 +187,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
             }
         } else {
             for (int row = 0; row < targetInstructionCount; row++) {
-                final int stopIndex = positionToStopIndex[instructions.get(row).position()];
+                final int stopIndex = positionToStopIndex[instructions.get(row).position];
                 if (stopIndex >= 0) {
                     // the row is at a stop point
                     rowToBackGroundColor[row] = stopBackgroundColor;
@@ -288,7 +288,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
             if (isFrameForThisCode) {
                 int row = 0;
                 for (TargetCodeInstruction targetCodeInstruction : instructions) {
-                    final Address address = targetCodeInstruction.address();
+                    final Address address = targetCodeInstruction.address;
                     if (address.equals(frame.instructionPointer)) {
                         rowToStackFrameInfo[row] = new StackFrameInfo(frame, thread, stackPosition);
                         break;
@@ -304,7 +304,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
      * Does the instruction address have a target code breakpoint set in the VM.
      */
     protected TeleTargetBreakpoint getTargetBreakpointAtRow(int row) {
-        return maxVM().getTargetBreakpoint(instructions.get(row).address());
+        return maxVM().getTargetBreakpoint(instructions.get(row).address);
     }
 
     protected final Color rowToBackgroundColor(int row) {

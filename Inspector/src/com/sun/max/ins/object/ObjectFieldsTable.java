@@ -129,9 +129,10 @@ public final class ObjectFieldsTable extends InspectorTable {
                         final int modelIndex = getColumnModel().getColumn(columnIndex).getModelIndex();
                         if (modelIndex == ObjectFieldColumnKind.TAG.ordinal()) {
                             final InspectorMenu menu = new InspectorMenu();
-                            final Address address = model.rowToAddress(hitRowIndex);
-                            menu.add(actions().setWordWatchpoint(address, "Watch this memory word"));
-                            menu.add(actions().removeWatchpoint(address, "Un-watch this memory word"));
+                            final FieldActor fieldActor = model.rowToFieldActor(hitRowIndex);
+                            menu.add(actions().setFieldWatchpoint(teleObject, fieldActor, "Watch this field's memory"));
+                            menu.add(actions().editFieldWatchpoint(teleObject, fieldActor, "Edit memory watchpoint"));
+                            menu.add(actions().removeFieldWatchpoint(teleObject, fieldActor, "Remove memory watchpoint"));
                             menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                         }
                     }
@@ -233,6 +234,10 @@ public final class ObjectFieldsTable extends InspectorTable {
          */
         public Address rowToAddress(int row) {
             return objectOrigin.plus(rowToOffset(row)).asAddress();
+        }
+
+        FieldActor rowToFieldActor(int row) {
+            return fieldActors[row];
         }
 
         public TypeDescriptor rowToType(int row) {

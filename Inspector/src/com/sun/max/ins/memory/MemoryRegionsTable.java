@@ -48,7 +48,7 @@ import com.sun.max.vm.value.*;
  *
  * @author Michael Van De Vanter
  */
-public class MemoryRegionsTable extends InspectorTable {
+public final class MemoryRegionsTable extends InspectorTable {
 
     private final HeapRegionDisplay bootHeapRegionDisplay;
     private final CodeRegionDisplay bootCodeRegionDisplay;

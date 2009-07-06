@@ -22,7 +22,6 @@ package com.sun.max.vm.layout.ohm;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -49,7 +48,7 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
     @INLINE
     public Size specificSize(Accessor accessor) {
         final Hub hub = UnsafeLoophole.cast(readHubReference(accessor).toJava());
-        return hub.tupleSize();
+        return hub.tupleSize;
     }
 
     public OhmTupleLayout(GripScheme gripScheme) {
@@ -114,7 +113,7 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
 
     Size layoutFields(ClassActor superClassActor, FieldActor[] fieldActors, int headerSize) {
         setInvalidOffsets(fieldActors);
-        final int nAlignmentBytes = Platform.target().processorKind.dataModel.alignment.numberOfBytes();
+        final int nAlignmentBytes = Word.size();
         int offset = (superClassActor == null || superClassActor.typeDescriptor == JavaTypeDescriptor.HYBRID) ? headerSize : superClassActor.dynamicTupleSize().toInt();
         if (Size.fromInt(offset).dividedBy(nAlignmentBytes).toInt() != 0) {
             offset = fillAlignmentGap(fieldActors, offset, nAlignmentBytes);
@@ -147,7 +146,7 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
     @PROTOTYPE_ONLY
     void visitFields(ObjectCellVisitor visitor, Object tuple) {
         final Hub hub = HostObjectAccess.readHub(tuple);
-        ClassActor classActor = hub.classActor();
+        ClassActor classActor = hub.classActor;
         if (hub instanceof StaticHub) {
             visitFields(visitor, tuple, classActor.localStaticFieldActors());
         } else {

@@ -41,7 +41,7 @@ import com.sun.max.vm.value.*;
  *
  * @author Michael Van De Vanter
  */
-public class MemoryWordsTable extends InspectorTable {
+public final class MemoryWordsTable extends InspectorTable {
 
     //private final ObjectInspector _objectInspector;
     private final Address startAddress;
@@ -60,7 +60,7 @@ public class MemoryWordsTable extends InspectorTable {
     public MemoryWordsTable(final ObjectInspector objectInspector, Address startAddress, int wordCount) {
         super(objectInspector.inspection());
         //_objectInspector = objectInspector;
-        this.startAddress = startAddress.aligned();
+        this.startAddress = startAddress.wordAligned();
         this.wordCount = wordCount;
 
         model = new MemoryWordsTableModel();

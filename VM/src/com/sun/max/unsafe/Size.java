@@ -161,8 +161,8 @@ public abstract class Size extends Address {
 
     @INLINE
     @Override
-    public final Size aligned() {
-        return asAddress().aligned().asSize();
+    public final Size wordAligned() {
+        return asAddress().wordAligned().asSize();
     }
 
     @INLINE(override = true)
@@ -173,8 +173,8 @@ public abstract class Size extends Address {
 
     @INLINE(override = true)
     @Override
-    public final boolean isAligned() {
-        return asAddress().isAligned();
+    public final boolean isWordAligned() {
+        return asAddress().isWordAligned();
     }
 
     @INLINE

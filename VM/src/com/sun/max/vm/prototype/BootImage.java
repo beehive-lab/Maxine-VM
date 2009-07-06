@@ -166,7 +166,7 @@ public class BootImage {
         public final int randomID;
 
         public final int wordSize;
-        public final int alignmentSize;
+        public final int cacheAlignment;
         public final int relocationScheme;
 
         public final int pageSize;
@@ -206,14 +206,6 @@ public class BootImage {
             return WordWidth.fromInt(wordSize * 8);
         }
 
-        public Alignment alignment() {
-            return Alignment.fromInt(alignmentSize);
-        }
-
-        public int relocationScheme() {
-            return relocationScheme;
-        }
-
         private Header(DataInputStream dataInputStream) throws IOException {
             super(dataInputStream.readInt() == 0 ? Endianness.LITTLE : Endianness.BIG);
             final Endianness endian = endianness();
@@ -224,7 +216,7 @@ public class BootImage {
             randomID = endian.readInt(dataInputStream);
 
             wordSize = endian.readInt(dataInputStream);
-            alignmentSize = endian.readInt(dataInputStream);
+            cacheAlignment = endian.readInt(dataInputStream);
             relocationScheme = endian.readInt(dataInputStream);
 
             pageSize = endian.readInt(dataInputStream);
@@ -267,7 +259,7 @@ public class BootImage {
             version = VERSION;
             randomID = UUID.randomUUID().hashCode();
             wordSize = vmConfiguration.platform().processorKind.dataModel.wordWidth.numberOfBytes;
-            alignmentSize = vmConfiguration.platform().processorKind.dataModel.alignment.numberOfBytes();
+            cacheAlignment = vmConfiguration.platform().processorKind.dataModel.cacheAlignment;
             relocationScheme = RelocationScheme.DEFAULT.ordinal();
             pageSize = vmConfiguration.platform().pageSize;
             vmThreadLocalsSize = VmThreadLocal.THREAD_LOCAL_STORAGE_SIZE.toInt();
@@ -295,7 +287,7 @@ public class BootImage {
             BootImageException.check(identification == IDENTIFICATION, "not a MaxineVM VM boot image file, wrong identification: " + identification);
             BootImageException.check(version == VERSION, "wrong version: " + version);
             BootImageException.check(wordSize == 4 || wordSize == 8, "illegal word size: " + wordSize);
-            BootImageException.check(alignmentSize == 4 || alignmentSize == 8, "illegal alignment"); // only 4 and 8 are allowed for now
+            BootImageException.check(cacheAlignment > 4 && Ints.isPowerOfTwoOrZero(cacheAlignment), "implausible alignment size: " + cacheAlignment);
             BootImageException.check(pageSize >= Longs.K && pageSize % Longs.K == 0, "implausible page size: " + pageSize);
         }
 
@@ -558,10 +550,10 @@ public class BootImage {
         return vmConfiguration;
     }
 
-    private static native void nativeRelocate(long heapPointer, int relocationScheme, byte[] relocationDataPointer, int relocationDataSize, int alignmentSize, int isBigEndian, int wordSize);
+    private static native void nativeRelocate(long heapPointer, int relocationScheme, byte[] relocationDataPointer, int relocationDataSize, int cacheAlignment, int isBigEndian, int wordSize);
 
     private void relocate(Pointer heap, byte[] relocationData) {
-        nativeRelocate(heap.toLong(), header.relocationScheme, relocationData, relocationData.length, header.alignmentSize, header.isBigEndian, header.wordSize);
+        nativeRelocate(heap.toLong(), header.relocationScheme, relocationData, relocationData.length, header.cacheAlignment, header.isBigEndian, header.wordSize);
     }
 
     private final DataPrototype dataPrototype;
@@ -589,7 +581,7 @@ public class BootImage {
                 stringInfo.check();
                 BootImageException.check(header.stringInfoSize == stringInfo.size(), "inconsistent string area size");
 
-                final DataModel dataModel = new DataModel(header.wordWidth(), header.endianness(), header.alignment());
+                final DataModel dataModel = new DataModel(header.wordWidth(), header.endianness(), header.cacheAlignment);
                 final ProcessorKind processorKind = new ProcessorKind(stringInfo.processorModel(), stringInfo.instructionSet(), dataModel);
                 final Platform platform = new Platform(processorKind, stringInfo.operatingSystem(), header.pageSize);
                 vmConfiguration = new VMConfiguration(stringInfo.buildLevel(), platform,
@@ -638,7 +630,7 @@ public class BootImage {
         header.write(outputStream);
         stringInfo.write(outputStream);
         outputStream.write(dataPrototype.relocationData());
-        final byte[] padding = new byte[pagePaddingSize(header.size() + stringInfo.size() /*+ _dataPrototype.cardOffsetTable().length*/ +  dataPrototype.relocationData().length)];
+        final byte[] padding = new byte[pagePaddingSize(header.size() + stringInfo.size() /*+ dataPrototype.cardOffsetTable().length*/ +  dataPrototype.relocationData().length)];
         outputStream.write(padding);
         outputStream.write(dataPrototype.heapData());
         outputStream.write(dataPrototype.codeData());

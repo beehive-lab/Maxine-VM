@@ -143,6 +143,9 @@ public final class JniNativeInterface {
 
     private static Pointer pointer = Pointer.zero();
 
+    /**
+     * Get the address of the table of JNI functions.
+     */
     public static Pointer pointer() {
         if (pointer.isZero()) {
             pointer = Memory.mustAllocate(jniFunctions.length * Word.size());
