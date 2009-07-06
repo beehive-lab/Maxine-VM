@@ -127,6 +127,7 @@ public abstract class AccessField extends Instruction {
         return stateBefore;
     }
 
+    @Override
     public ValueStack lockStack() {
         // XXX: what is a lock stack?
         return lockStack;
@@ -140,7 +141,7 @@ public abstract class AccessField extends Instruction {
      * Gets the instruction representing an explicit null check for this field access.
      * @return the object representing an explicit null check
      */
-    public Object explicitNullCheck() {
+    public NullCheck explicitNullCheck() {
         return explicitNullCheck;
     }
 

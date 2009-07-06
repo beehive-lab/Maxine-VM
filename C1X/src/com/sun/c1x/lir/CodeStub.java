@@ -49,7 +49,7 @@ public abstract class CodeStub {
      *
      * @return the continuation
      */
-    public Label getContinuation() {
+    public Label continuation() {
         return continuation;
     }
 

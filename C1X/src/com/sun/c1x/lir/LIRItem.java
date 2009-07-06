@@ -20,42 +20,75 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.gen.LIRGenerator;
+import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
 
 
-/**
- * The <code>LIROperandFactory</code> class definition.
- *
- * @author Marcelo Cintra
- *
- */
-public class LIROperandFactory {
+public class LIRItem {
 
-    public static LIROperand illegalOperand;
-
-    public LIROperand singleCpu(int reg) {
-        return null;
+    public LIRItem(Instruction receiver, LIRGenerator lirGenerator) {
+        // TODO Auto-generated constructor stub
     }
 
-    public static LIROperand valueType(ValueType type) {
+    public LIRItem(LIRGenerator lirGenerator) {
+        // TODO Auto-generated constructor stub
+    }
+
+    public ValueType type() {
         // TODO Auto-generated method stub
         return null;
     }
 
-    public static LIROperand intConst(int increment) {
+    public void loadItemForce(LIROperand loc) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void loadForStore(BasicType type) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public LIROperand result() {
         // TODO Auto-generated method stub
         return null;
     }
 
-    public static LIROperand virtualRegister(int vreg, BasicType type) {
+    public void loadItem() {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void loadByteItem() {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void setInstruction(Instruction length) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public boolean isConstant() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public void dontLoadItem() {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void loadNonconstant() {
+        // TODO Auto-generated method stub
+
+    }
+
+    public Instruction value() {
         // TODO Auto-generated method stub
         return null;
     }
 
-    public static LIRConstant oopConst(Object encoding) {
-        // TODO Auto-generated method stub
-        return null;
-    }
 
-    // TODO to be completed
 }

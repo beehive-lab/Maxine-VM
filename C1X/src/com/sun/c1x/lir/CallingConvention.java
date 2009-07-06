@@ -18,20 +18,26 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.gen;
+package com.sun.c1x.lir;
 
-/**
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
- *
- * Port of the generator from HIR to LIR to Java
- *
- * List of ported files:
- *
- * c1_LIRGenerator.hpp
- * SwitchRange -> SwitchRange (Status: Ported)
- * ResolveNode -> ResolveNode (Status: Ported)
- * PhiResolverState -> PhiResolver.PhiResolverState (Status: Ported)
- * LIRGenerator -> LIRGenerator (Status: Ported)
- *
- */
+import java.util.*;
+
+
+public class CallingConvention {
+
+    public int length() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public LIROperand at(int i) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public List<LIROperand> args() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+}

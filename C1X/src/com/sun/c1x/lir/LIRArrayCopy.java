@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.ci.CiType;
 
@@ -46,7 +45,7 @@ public class LIRArrayCopy extends LIRInstruction {
         SrcNullCheck,
         DstNullCheck,
         SrcPosPositiveCheck,
-        DstPositiveCheck,
+        DstPosPositiveCheck,
         LengthPositiveCheck,
         SrcRangeCheck,
         DstRangeCheck,

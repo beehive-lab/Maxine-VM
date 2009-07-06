@@ -51,7 +51,7 @@ public class LoadIndexed extends AccessIndexed {
      * Gets the instruction representing an explicit null check for this instruction.
      * @return the explicit null check instruction
      */
-    public Object explicitNullCheck() {
+    public NullCheck explicitNullCheck() {
         return explicitNullCheck;
     }
 

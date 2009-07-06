@@ -49,5 +49,6 @@ package com.sun.c1x.lir;
  * LIR_OpTypeCheck -> LIRTypeCheck (Status : Ported)
  * LIR_OpCompareAndSwap -> LIRCompareAndSwap (Status : Ported)
  * LIR_OpProfileCall -> LIRProfileCall (Status : Ported)
+ * LIR_List -> LIRList (Status: Identified)
  *
  */
