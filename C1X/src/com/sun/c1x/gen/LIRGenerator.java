@@ -437,7 +437,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         List<LIRItem> args = new ArrayList<LIRItem>(1);
         args.add(new LIRItem(arg1, this));
 
-        BasicType[] signature = new BasicType[] { arg1.type().basicType()};
+        BasicType[] signature = new BasicType[] {arg1.type().basicType()};
 
         return callRuntimeWithItems(signature, args, entry, resultType, info);
     }
@@ -448,7 +448,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         args.add(new LIRItem(arg1, this));
         args.add(new LIRItem(arg2, this));
 
-        BasicType[] signature = new BasicType[] { arg1.type().basicType(), arg2.type().basicType()};
+        BasicType[] signature = new BasicType[] {arg1.type().basicType(), arg2.type().basicType()};
         return callRuntimeWithItems(signature, args, entry, resultType, info);
     }
 
@@ -1379,7 +1379,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         LIRItem receiver = new LIRItem(x.argumentAt(0), this);
 
         receiver.loadItem();
-        BasicType[] signature = new BasicType[] { BasicType.Object};
+        BasicType[] signature = new BasicType[] {BasicType.Object};
         List<LIROperand> args = new ArrayList<LIROperand>();
         args.add(receiver.result());
         CodeEmitInfo info = stateFor(x, x.state());
@@ -1994,7 +1994,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         if (block().next() instanceof OsrEntry) {
             // need to free up storage used for OSR entry point
             LIROperand osrBuffer = block().next().operand();
-            BasicType[] signature = new BasicType[] { BasicType.Int};
+            BasicType[] signature = new BasicType[] {BasicType.Int};
             CallingConvention cc = frameMap().runtimeCallingConvention(signature);
             lir().move(osrBuffer, cc.args().get(0));
             lir().callRuntimeLeaf(compilation.runtime.getRuntimeEntry(CiRuntimeCall.OSRMigrationEnd), getThreadTemp(), LIROperandFactory.illegalOperand, cc.args());
@@ -2052,7 +2052,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
 
         if (compilation.runtime.dtraceMethodProbes()) {
-            BasicType[] signature = new BasicType[] { BasicType.Int, // thread
+            BasicType[] signature = new BasicType[] {BasicType.Int, // thread
                             BasicType.Object}; // methodOop
             List<LIROperand> arguments = new ArrayList<LIROperand>(2);
             arguments.add(getThreadPointer());
