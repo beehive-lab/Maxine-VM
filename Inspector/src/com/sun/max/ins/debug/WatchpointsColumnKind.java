@@ -30,9 +30,16 @@ import com.sun.max.collect.*;
  */
 public enum WatchpointsColumnKind {
     START("Start", "Starting address", true, 20),
-    END("End", "Ending address", true, 20),
+    SIZE("Size", "Size of watched region, in bytes", true, 6),
+    END("End", "Ending address", false, 20),
+    DESCRIPTION("Description", "Description of how watchpoint was created", true, 30),
     REGION("Region", "Memory region pointed to by value", false, 20),
-    READ("R", "Read?", true, 5);
+    READ("R", "Read?", true, 5) {
+        @Override
+        public boolean canBeMadeInvisible() {
+            return false;
+        }
+    };
 
     private final String label;
     private final String toolTipText;

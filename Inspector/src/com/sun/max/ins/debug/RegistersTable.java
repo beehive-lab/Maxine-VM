@@ -40,7 +40,7 @@ import com.sun.max.vm.value.*;
  *
  * @author Michael Van De Vanter
  */
-public class RegistersTable extends InspectorTable {
+public final class RegistersTable extends InspectorTable {
 
     private static final Color[] ageColors = {Color.RED, Color.MAGENTA, Color.BLUE};
 

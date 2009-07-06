@@ -52,6 +52,11 @@ public abstract class TeleHybridObject extends TeleObject {
     }
 
     @Override
+    public Address getFieldAddress(FieldActor fieldActor) {
+        return getCurrentOrigin().plus(fieldActor.offset());
+    }
+
+    @Override
     public Value readFieldValue(FieldActor fieldActor) {
         if (fieldActor.kind == Kind.REFERENCE) {
             return TeleReferenceValue.from(teleVM(), teleVM().wordToReference(reference().readWord(fieldActor.offset())));

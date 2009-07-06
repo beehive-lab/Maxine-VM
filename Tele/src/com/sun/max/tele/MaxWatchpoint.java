@@ -22,6 +22,7 @@ package com.sun.max.tele;
 
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.object.*;
 
 /**
  * Access to a memory watchpoint in the Maxine VM.
@@ -31,37 +32,60 @@ import com.sun.max.program.*;
  */
 public interface MaxWatchpoint extends MemoryRegion {
 
+    /*
+     * We probably need to expose the booleans isRead, isWrite, and isExec
+     * eventually, isActive should be equivalent to isRead || is Write || isExec,
+     * and this means that the Factory can have a watchpoint that is disabled,
+     * as with breakpoints.
+     *
+     * I've renamed remove() to dispose(), which causes the factory to disable
+     * it completely and permanently, and then forget about it.  Being disabled
+     * this way is orthogonal to the three flag settings;  invariant is that watchpoints
+     * are either in the Factory's list or they are permanently disabled.
+     * mlvdv 7/1/09
+     */
+
     /**
-     * @return true while the watchpoint is active in the VM; false when deleted from VM.
+     * @return true while the watchpoint is active, even if not currently configured
+     * to trap anything; permanently false and forgotten once disposed.
+     *
+     * @see #dispose()
      */
     boolean isActive();
 
     /**
-     * Removes the memory watchpoint from the VM.
+     * Removes the memory watchpoint from the VM, at which time it
+     * becomes permanently inactive.
      *
      * @return whether the removal succeeded.
      * @throws ProgramError when not active (already deleted)
      */
-    boolean remove();
+    boolean dispose();
 
     /**
      * Set read flag for this watchpoint.
-     * @param read
+     * @param read whether the watchpoint should trap when watched memory is read from
      * @return whether set succeeded
      */
     boolean setRead(boolean read);
 
     /**
      * Set write flag for this watchpoint.
-     * @param write
+     * @param write whether the watchpoint should trap when watched memory is written to
      * @return whether set succeeded.
      */
     boolean setWrite(boolean write);
 
     /**
      * Set execute flag for this watchpoint.
-     * @param exec
+     * @param exec whether the watchpoint should trap when watched memory is executed from
      * @return whether set succeeded.
      */
     boolean setExec(boolean exec);
+
+    /**
+     * @return a heap object in the VM with which the watchpoint is associated, null if none.
+     */
+    TeleObject getTeleObject();
+
 }

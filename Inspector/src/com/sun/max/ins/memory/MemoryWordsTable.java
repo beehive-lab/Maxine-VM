@@ -41,7 +41,7 @@ import com.sun.max.vm.value.*;
  *
  * @author Michael Van De Vanter
  */
-public class MemoryWordsTable extends InspectorTable {
+public final class MemoryWordsTable extends InspectorTable {
 
     //private final ObjectInspector _objectInspector;
     private final Address startAddress;
