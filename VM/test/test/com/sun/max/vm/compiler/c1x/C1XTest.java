@@ -67,6 +67,8 @@ public class C1XTest {
         "Stop compilation upon the first bailout.");
     private static final Option<Boolean> timingOption = options.newBooleanOption("timing", false,
         "Report compilation time for each successful compile.");
+    private static final Option<Boolean> c1xOptionsOption = options.newBooleanOption("c1x-options", false,
+        "Print settings of C1XOptions.");
     private static final Option<Boolean> averageOption = options.newBooleanOption("average", true,
         "Report only the average compilation speed.");
     private static final Option<Integer> warmupOption = options.newIntegerOption("warmup", 0,
@@ -115,6 +117,7 @@ public class C1XTest {
 
     public static void main(String[] args) {
         options.parseArguments(args);
+        reportC1XOptions();
         final String[] arguments = options.getArguments();
 
         if (helpOption.getValue()) {
@@ -149,20 +152,16 @@ public class C1XTest {
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
         final Target target = createTarget();
 
-        for (int i = 0; i < warmupOption.getValue(); i++) {
-            if (i == 0) {
-                out.print("Warming up");
-            }
-            out.print(".");
-            out.flush();
-            for (MethodActor actor : methods) {
-                compile(target, runtime, actor, false, true);
-            }
-            if (i == warmupOption.getValue() - 1) {
-                out.print("\n");
-            }
-        }
+        doWarmup(runtime, methods, target);
+        doCompile(runtime, methods, progress, target);
 
+        progress.report();
+        reportTiming();
+        reportMetrics();
+    }
+
+    private static void doCompile(MaxCiRuntime runtime, List<MethodActor> methods, ProgressPrinter progress, Target target) {
+        // compile all the methods and report progress
         for (MethodActor methodActor : methods) {
             progress.begin(methodActor.toString());
             final C1XCompilation compilation = compile(target, runtime, methodActor, printBailoutOption.getValue(), false);
@@ -185,13 +184,27 @@ public class C1XTest {
                 }
             }
         }
+    }
 
-        progress.report();
-        reportTiming();
-        reportMetrics();
+    private static void doWarmup(MaxCiRuntime runtime, List<MethodActor> methods, Target target) {
+        // compile all the methods in the list some number of times first to warmup the C1X code in the host VM
+        for (int i = 0; i < warmupOption.getValue(); i++) {
+            if (i == 0) {
+                out.print("Warming up");
+            }
+            out.print(".");
+            out.flush();
+            for (MethodActor actor : methods) {
+                compile(target, runtime, actor, false, true);
+            }
+            if (i == warmupOption.getValue() - 1) {
+                out.print("\n");
+            }
+        }
     }
 
     private static C1XCompilation compile(Target target, MaxCiRuntime runtime, MethodActor method, boolean printBailout, boolean warmup) {
+        // compile a single method
         if (isCompilable(method)) {
             final long startNs = System.nanoTime();
             final C1XCompilation compilation = new C1XCompilation(target, runtime, runtime.getCiMethod(method));
@@ -430,18 +443,36 @@ public class C1XTest {
 
     private static void reportMetrics() {
         if (C1XOptions.PrintMetrics && verboseOption.getValue() > 0) {
-            for (final Field field : C1XMetrics.class.getFields()) {
+            printClassFields(C1XMetrics.class);
+        }
+    }
+
+    private static void reportC1XOptions() {
+        if (c1xOptionsOption.getValue()) {
+            printClassFields(C1XOptions.class);
+        }
+    }
+
+    private static void printClassFields(Class<?> javaClass) {
+        String className = javaClass.getSimpleName();
+        out.println(className + " {");
+        for (final Field field : javaClass.getFields()) {
+            String fieldName = Strings.padLengthWithSpaces(field.getName(), 35);
+            try {
                 if (field.getType() == int.class) {
-                    try {
-                        final int value = field.getInt(null);
-                        final String name = field.getName();
-                        out.print(C1XMetrics.class.getSimpleName() + "." + Strings.padLengthWithSpaces(name, 40) + " = " + value + "\n");
-                    } catch (IllegalAccessException e) {
-                        // do nothing.
-                    }
+                    out.print("    " + fieldName + " = " + field.getInt(null) + "\n");
+                } else if (field.getType() == boolean.class) {
+                    out.print("    " + fieldName + " = " + field.getBoolean(null) + "\n");
+                } else if (field.getType() == float.class) {
+                    out.print("    " + fieldName + " = " + field.getFloat(null) + "\n");
+                } else if (field.getType() == String.class) {
+                    out.print("    " + fieldName + " = " + field.get(null) + "\n");
                 }
+            } catch (IllegalAccessException e) {
+                // do nothing.
             }
         }
+        out.println("}");
     }
 
     private static class Timing {

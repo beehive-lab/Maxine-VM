@@ -73,11 +73,11 @@ public class BlockMap {
             if (canTrap.get(bci)) {
                 // XXX: replace with faster algorithm (sort exception handlers by start and end)
                 for (CiExceptionHandler h : allHandlers) {
-                    if (h.startBCI() <= bci && bci <= h.endBCI()) {
+                    if (h.startBCI() <= bci && bci < h.endBCI()) {
+                        addHandler(block, get(h.handlerBCI()));
                         if (h.isCatchAll()) {
                             break;
                         }
-                        addHandler(block, get(h.handlerBCI()));
                     }
                 }
             }
@@ -257,6 +257,9 @@ public class BlockMap {
             int opcode = Bytes.beU1(code, bci);
             switch (opcode) {
                 case Bytecodes.ATHROW:  // fall through
+                    if (exceptionMap != null) {
+                        exceptionMap.setCanTrap(bci);
+                    }
                 case Bytecodes.IRETURN: // fall through
                 case Bytecodes.LRETURN: // fall through
                 case Bytecodes.FRETURN: // fall through
