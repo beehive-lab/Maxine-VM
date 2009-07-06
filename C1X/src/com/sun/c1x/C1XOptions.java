@@ -133,8 +133,7 @@ public class C1XOptions {
     public static boolean UseFastLocking                     = ____;
     public static boolean UseFastNewInstance                 = ____;
     public static boolean PrintNotLoaded                     = ____;
-    public static boolean GenerateRangeChecks                = ____;
-    public static boolean PrintC1Statistics                  = ____;
+    public static boolean GenerateBoundsChecks               = ____;
     public static boolean GenerateCompilerNullChecks         = ____;
     public static boolean UseTableRanges                     = ____;
 }

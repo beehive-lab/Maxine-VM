@@ -85,13 +85,6 @@ public interface CiRuntime {
     int arrayLengthOffsetInBytes();
 
     /**
-     * Converts an object size to an aligned object size.
-     * @param size the object size to convert
-     * @return the aligned object size
-     */
-    int alignObjectSize(int size);
-
-    /**
      * The header size of an object in words.
      * @return the header size in words
      */

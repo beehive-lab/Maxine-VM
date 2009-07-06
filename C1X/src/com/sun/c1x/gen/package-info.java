@@ -24,7 +24,8 @@ package com.sun.c1x.gen;
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  *
- * Port of the generator from HIR to LIR to Java
+ * This package contains the port of the LIRGenerator which translates
+ * HIR instructions to LIR instructions for the backend.
  *
  * List of ported files:
  *

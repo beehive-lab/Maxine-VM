@@ -22,22 +22,41 @@ package com.sun.c1x.lir;
 
 import java.util.*;
 
+import com.sun.c1x.util.*;
 
+/**
+ * This class represents a calling convention instance for a particular method invocation and describes
+ * the ABI for outgoing arguments and the return value, both runtime calls and Java calls.
+ *
+ * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
+ *
+ */
 public class CallingConvention {
 
+    /**
+     * Returns the number of arguments.
+     * @return the number of arguments
+     */
     public int length() {
-        // TODO Auto-generated method stub
-        return 0;
+        throw Util.unimplemented();
     }
 
+    /**
+     * Get the LIROperand representing the argument at the specified index.
+     * @param i the index into the arguments
+     * @return the LIROperand representing the argument
+     */
     public LIROperand at(int i) {
-        // TODO Auto-generated method stub
-        return null;
+        throw Util.unimplemented();
     }
 
+    /**
+     * Gets a list of the LIROperands for all the arguments.
+     * @return the list of arguments
+     */
     public List<LIROperand> args() {
-        // TODO Auto-generated method stub
-        return null;
+        throw Util.unimplemented();
     }
 
 }

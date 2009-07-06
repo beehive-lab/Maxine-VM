@@ -375,12 +375,6 @@ public class MaxCiType implements CiType {
     }
 
     @Override
-    public Class<?> javaMirror() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
     public boolean layoutHelperNeedsSlowPath() {
         // TODO Auto-generated method stub
         return false;

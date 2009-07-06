@@ -97,6 +97,11 @@ public class Util {
         return 63 - Long.numberOfLeadingZeros(val);
     }
 
+    public static int align(int size, int align) {
+        assert isPowerOf2(align);
+        return (size + align - 1) & ~(align - 1);
+    }
+
     /**
      * Statically cast an object to an arbitrary Object type. Dynamically checked.
      */
@@ -453,24 +458,5 @@ public class Util {
 
         assert list.size() >= pos + 1;
         list.set(pos, x);
-    }
-
-    public static int exactLog2(int c) {
-        assert isPowerOf2(c);
-        return log2(c);
-    }
-
-    public static boolean couldCatch(List<ExceptionHandler> exceptionHandlers, CiType throwKlass, boolean typeIsExact) {
-        // TODO Port implementation
-        return false;
-    }
-
-    /**
-     * Offset of the klass part (C1 HotSpot specific). Probably this method can be removed later on.
-     * @return the offset of the klass part
-     */
-    public static int klassPartOffsetInBytes() {
-        // TODO: Find proper implementation or remove
-        return 0;
     }
 }

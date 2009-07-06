@@ -47,6 +47,5 @@ public abstract class LIROperandPtr extends LIROperand {
         return null;
     }
 
-    //public abstract BasicType type();
     public abstract void printValueOn(LogStream out);
 }

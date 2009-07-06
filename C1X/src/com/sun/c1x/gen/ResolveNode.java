@@ -24,39 +24,35 @@ import java.util.*;
 
 import com.sun.c1x.lir.*;
 
+/**
+ * XXX: what does this really mean?
+ * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
+ *
+ */
+class ResolveNode {
 
-public class ResolveNode {
+    final LIROperand operand;
+    final List<ResolveNode> destinations;
 
-    private LIROperand operand;
-    private List<ResolveNode> destinations;
-    private boolean assigned;
-    private boolean visited;
-    private boolean startNode;
+    boolean assigned;
+    boolean visited;
+    boolean startNode;
 
-    public ResolveNode(LIROperand operand) {
+    ResolveNode(LIROperand operand) {
         this.operand = operand;
         destinations = new ArrayList<ResolveNode>();
     }
-
-    LIROperand operand() {
-        return operand;
-    }
-
-    int noOfDestinations() {
-        return destinations.size();
-    }
-
-    ResolveNode destinationAt(int index) { return destinations.get(index); }
-    boolean assigned() { return assigned; }
-    boolean visited() { return visited; }
-    boolean startNode() { return startNode; }
-
 
     void append(ResolveNode dest) {
         destinations.add(dest);
     }
 
-    void setAssigned() { assigned = true; }
-    void setVisited() { visited = true; }
-    void setStartNode() { startNode = true; }
+    ResolveNode destinationAt(int index) {
+        return destinations.get(index);
+    }
+
+    int numDestinations() {
+        return destinations.size();
+    }
 }

@@ -24,6 +24,13 @@ import java.util.*;
 
 import com.sun.c1x.lir.*;
 
+/**
+ * Converts the HIR program's Phi instructions into moves.
+ * XXX: are we sure?
+ * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
+ *
+ */
 public class PhiResolver {
 
     public static class PhiResolverState {
@@ -49,24 +56,49 @@ public class PhiResolver {
     private ResolveNode loop;
     private LIROperand temp;
 
-    private List<ResolveNode> virtualOperands() {
-        return state.virtualOperands;
+    public PhiResolver(LIRGenerator gen, int maxVregs) {
+        this.gen = gen;
+        state.reset(maxVregs);
+        temp = LIROperandFactory.illegalOperand;
     }
 
-    private List<ResolveNode> otherOperands() {
-        return state.otherOperands;
+    public void dispose() {
+        int i;
+        // resolve any cycles in moves from and to virtual registers
+        for (i = virtualOperands().size() - 1; i >= 0; i--) {
+            ResolveNode node = virtualOperands().get(i);
+            if (!node.visited) {
+                loop = null;
+                move(null, node);
+                node.startNode = true;
+                assert temp.isIllegal() : "moveTempTo() call missing";
+            }
+        }
+
+        // generate move for move from non virtual register to abitrary destination
+        for (i = otherOperands().size() - 1; i >= 0; i--) {
+            ResolveNode node = otherOperands().get(i);
+            for (int j = node.numDestinations() - 1; j >= 0; j--) {
+                emitMove(node.operand, node.destinationAt(j).operand);
+            }
+        }
     }
 
-    private ResolveNode[] vregTable() {
-        return state.vregTable;
-    }
+    public void move(LIROperand src, LIROperand dest) {
+        assert dest.isVirtual() :  "";
+        // tty.print("move "); src.print(); tty.print(" to "); dest.print(); tty.cr();
+        assert src.isValid() :  "";
+        assert dest.isValid() :  "";
+        ResolveNode source = sourceNode(src);
+        source.append(destinationNode(dest));
+      }
 
     private ResolveNode createNode(LIROperand opr, boolean source) {
         ResolveNode node;
         if (opr.isVirtual()) {
             int vregNum = opr.vregNumber();
             node = vregTable()[vregNum];
-            assert node == null || node.operand() == opr;
+            assert node == null || node.operand == opr;
             if (node == null) {
                 node = new ResolveNode(opr);
                 vregTable()[vregNum] = node;
@@ -84,10 +116,6 @@ public class PhiResolver {
         return node;
     }
 
-    private ResolveNode sourceNode(LIROperand opr) {
-        return createNode(opr, true);
-    }
-
     private ResolveNode destinationNode(LIROperand opr) {
         return createNode(opr, false);
     }
@@ -95,19 +123,11 @@ public class PhiResolver {
     private void emitMove(LIROperand src, LIROperand dest) {
         assert src.isValid();
         assert dest.isValid();
-        gen().lir().move(src, dest);
+        gen().lir.move(src, dest);
     }
 
-    private void moveToTemp(LIROperand src) {
-        assert temp.isIllegal();
-        temp = gen().newRegister(src.type());
-        emitMove(src, temp);
-    }
-
-    private void moveTempTo(LIROperand dest) {
-        assert temp.isValid();
-        emitMove(temp, dest);
-        temp = LIROperandFactory.illegalOperand;
+    private LIRGenerator gen() {
+        return gen;
     }
 
     // Traverse assignment graph in depth first order and generate moves in post order
@@ -118,68 +138,55 @@ public class PhiResolver {
     // Call graph: move(NULL, a) -> move(a, b) -> move(b, a)
     // Generates moves in this order: move b to temp, move a to b, move temp to a
     private void move(ResolveNode src, ResolveNode dest) {
-        if (!dest.visited()) {
-            dest.setVisited();
-            for (int i = dest.noOfDestinations() - 1; i >= 0; i--) {
+        if (!dest.visited) {
+            dest.visited = true;
+            for (int i = dest.numDestinations() - 1; i >= 0; i--) {
                 move(dest, dest.destinationAt(i));
             }
-        } else if (!dest.startNode()) {
+        } else if (!dest.startNode) {
             // cylce in graph detected
             assert loop == null : "only one loop valid!";
             loop = dest;
-            moveToTemp(src.operand());
+            moveToTemp(src.operand);
             return;
         } // else dest is a start node
 
-        if (!dest.assigned()) {
+        if (!dest.assigned) {
             if (loop == dest) {
-                moveTempTo(dest.operand());
-                dest.setAssigned();
+                moveTempTo(dest.operand);
+                dest.assigned = true;
             } else if (src != null) {
-                emitMove(src.operand(), dest.operand());
-                dest.setAssigned();
+                emitMove(src.operand, dest.operand);
+                dest.assigned = true;
             }
         }
     }
 
-    private LIRGenerator gen() {
-        return gen;
-    }
-
-    public void dispose() {
-        int i;
-        // resolve any cycles in moves from and to virtual registers
-        for (i = virtualOperands().size() - 1; i >= 0; i--) {
-            ResolveNode node = virtualOperands().get(i);
-            if (!node.visited()) {
-                loop = null;
-                move(null, node);
-                node.setStartNode();
-                assert temp.isIllegal() : "moveTempTo() call missing";
-            }
-        }
-
-        // generate move for move from non virtual register to abitrary destination
-        for (i = otherOperands().size() - 1; i >= 0; i--) {
-            ResolveNode node = otherOperands().get(i);
-            for (int j = node.noOfDestinations() - 1; j >= 0; j--) {
-                emitMove(node.operand(), node.destinationAt(j).operand());
-            }
-        }
-    }
-
-    public void move(LIROperand src, LIROperand dest) {
-        assert dest.isVirtual() :  "";
-        // tty.print("move "); src.print(); tty.print(" to "); dest.print(); tty.cr();
-        assert src.isValid() :  "";
-        assert dest.isValid() :  "";
-        ResolveNode source = sourceNode(src);
-        source.append(destinationNode(dest));
-      }
-
-    public PhiResolver(LIRGenerator gen, int maxVregs) {
-        this.gen = gen;
-        state.reset(maxVregs);
+    private void moveTempTo(LIROperand dest) {
+        assert temp.isValid();
+        emitMove(temp, dest);
         temp = LIROperandFactory.illegalOperand;
+    }
+
+    private void moveToTemp(LIROperand src) {
+        assert temp.isIllegal();
+        temp = gen().newRegister(src.type());
+        emitMove(src, temp);
+    }
+
+    private List<ResolveNode> otherOperands() {
+        return state.otherOperands;
+    }
+
+    private ResolveNode sourceNode(LIROperand opr) {
+        return createNode(opr, true);
+    }
+
+    private List<ResolveNode> virtualOperands() {
+        return state.virtualOperands;
+    }
+
+    private ResolveNode[] vregTable() {
+        return state.vregTable;
     }
 }
