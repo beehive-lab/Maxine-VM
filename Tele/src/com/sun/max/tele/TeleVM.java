@@ -1214,8 +1214,8 @@ public abstract class TeleVM implements MaxVM {
     private void refreshReferences() {
         Trace.begin(TRACE_VALUE, refreshReferencesTracer);
         final long startTimeMillis = System.currentTimeMillis();
-        final long teleRootEpoch = fields().TeleHeapInfo_rootEpoch.readLong(this);
-        final long teleCollectionEpoch = fields().TeleHeapInfo_collectionEpoch.readLong(this);
+        final long teleRootEpoch = fields().InspectableHeapInfo_rootEpoch.readLong(this);
+        final long teleCollectionEpoch = fields().InspectableHeapInfo_collectionEpoch.readLong(this);
         if (teleCollectionEpoch != teleRootEpoch) {
             // A GC is in progress, local cache is out of date by definition but can't update yet
             assert teleCollectionEpoch != cachedCollectionEpoch;

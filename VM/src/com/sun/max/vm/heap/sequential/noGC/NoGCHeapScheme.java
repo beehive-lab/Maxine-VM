@@ -104,7 +104,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
             verifyHeap();
 
             ++numberOfGarbageCollectionInvocations;
-            TeleHeapInfo.beforeGarbageCollection();
+            InspectableHeapInfo.beforeGarbageCollection();
             VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
             gcTimer.start();
@@ -139,7 +139,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
 
             verifyHeap();
 
-            TeleHeapInfo.afterGarbageCollection();
+            InspectableHeapInfo.afterGarbageCollection();
 
             if (Heap.traceGC()) {
                 final boolean lockDisabledSafepoints = Log.lock();
@@ -198,7 +198,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
             // For debugging
             space.setAllocationMark(allocationMark);
 
-            TeleHeapInfo.registerMemoryRegions(space);
+            InspectableHeapInfo.registerMemoryRegions(space);
         } else if (phase == MaxineVM.Phase.STARTING) {
             collectorThread = new StopTheWorldGCDaemon("GC", collect);
         }

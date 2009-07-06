@@ -104,7 +104,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
             Trace.begin(TRACE_VALUE, tracePrefix() + "refreshing");
             final long startTimeMillis = System.currentTimeMillis();
             updatingHeapMemoryRegions = true;
-            final Reference runtimeHeapRegionsArrayReference = teleVM().fields().TeleHeapInfo_memoryRegions.readReference(teleVM());
+            final Reference runtimeHeapRegionsArrayReference = teleVM().fields().InspectableHeapInfo_memoryRegions.readReference(teleVM());
             if (!runtimeHeapRegionsArrayReference.isZero()) {
                 final TeleArrayObject teleArrayObject = (TeleArrayObject) teleVM().makeTeleObject(runtimeHeapRegionsArrayReference);
                 final Reference[] heapRegionReferences = (Reference[]) teleArrayObject.shallowCopy();
