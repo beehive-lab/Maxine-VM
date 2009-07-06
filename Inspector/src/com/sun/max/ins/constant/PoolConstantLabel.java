@@ -30,7 +30,6 @@ import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.classfile.constant.ConstantPool.*;
 import com.sun.max.vm.classfile.constant.FieldRefConstant.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
@@ -89,29 +88,33 @@ public abstract class PoolConstantLabel extends InspectorLabel {
     }
 
     public static PoolConstantLabel make(Inspection inspection, int index, ConstantPool localConstantPool, TeleConstantPool teleConstantPool, Mode mode) {
-        final Tag tag = localConstantPool.at(index).tag();
         PoolConstantLabel poolConstantLabel;
-        switch (tag) {
-            case CLASS:
-                poolConstantLabel = new PoolConstantLabel.Class(inspection, index, localConstantPool, teleConstantPool, mode);
-                break;
-            case FIELD_REF:
-                poolConstantLabel = new PoolConstantLabel.Field(inspection, index, localConstantPool, teleConstantPool, mode);
-                break;
-            case METHOD_REF:
-                poolConstantLabel = new PoolConstantLabel.ClassMethod(inspection, index, localConstantPool, teleConstantPool, mode);
-                break;
-            case INTERFACE_METHOD_REF:
-                poolConstantLabel = new PoolConstantLabel.InterfaceMethod(inspection, index, localConstantPool, teleConstantPool, mode);
-                break;
-            case STRING:
-                poolConstantLabel = new PoolConstantLabel.StringConstant(inspection, index, localConstantPool, teleConstantPool, mode);
-                break;
-            case UTF8:
-                poolConstantLabel = new PoolConstantLabel.Utf8Constant(inspection, index, localConstantPool, teleConstantPool, mode);
-                break;
-            default:
-                poolConstantLabel = new PoolConstantLabel.Other(inspection, index, localConstantPool, teleConstantPool, mode);
+        final PoolConstant poolConstant = localConstantPool.at(index);
+        if (poolConstant == null) {
+            poolConstantLabel = new PoolConstantLabel.Null(inspection, index, localConstantPool, teleConstantPool, mode);
+        } else {
+            switch (poolConstant.tag()) {
+                case CLASS:
+                    poolConstantLabel = new PoolConstantLabel.Class(inspection, index, localConstantPool, teleConstantPool, mode);
+                    break;
+                case FIELD_REF:
+                    poolConstantLabel = new PoolConstantLabel.Field(inspection, index, localConstantPool, teleConstantPool, mode);
+                    break;
+                case METHOD_REF:
+                    poolConstantLabel = new PoolConstantLabel.ClassMethod(inspection, index, localConstantPool, teleConstantPool, mode);
+                    break;
+                case INTERFACE_METHOD_REF:
+                    poolConstantLabel = new PoolConstantLabel.InterfaceMethod(inspection, index, localConstantPool, teleConstantPool, mode);
+                    break;
+                case STRING:
+                    poolConstantLabel = new PoolConstantLabel.StringConstant(inspection, index, localConstantPool, teleConstantPool, mode);
+                    break;
+                case UTF8:
+                    poolConstantLabel = new PoolConstantLabel.Utf8Constant(inspection, index, localConstantPool, teleConstantPool, mode);
+                    break;
+                default:
+                    poolConstantLabel = new PoolConstantLabel.Other(inspection, index, localConstantPool, teleConstantPool, mode);
+            }
         }
         return poolConstantLabel;
     }
@@ -492,5 +495,23 @@ public abstract class PoolConstantLabel extends InspectorLabel {
         }
 
     }
+
+    private static final class Null extends PoolConstantLabel {
+
+        private Null(Inspection inspection, int index, ConstantPool localConstantPool, TeleConstantPool teleConstantPool, Mode mode) {
+            super(inspection, index, localConstantPool, teleConstantPool, mode);
+            redisplay();
+        }
+
+        @Override
+        public void updateText() {
+            final String text = "Error: null";
+            setJavapToolTipText("", text);
+            setForeground(style().defaultErrorTextColor());
+            setBackground(style().defaultErrorTextBackgroundColor());
+        }
+
+    }
+
 
 }

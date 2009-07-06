@@ -46,7 +46,7 @@ import com.sun.max.vm.value.*;
  *
  * @author Michael Van De Vanter
  */
-public class FocusTable extends InspectorTable implements ViewFocusListener {
+public final class FocusTable extends InspectorTable implements ViewFocusListener {
 
     /**
      * Columns to display when viewing focus data.

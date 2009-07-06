@@ -42,7 +42,7 @@ import com.sun.max.vm.prototype.*;
  *
  * @author Michael Van De Vanter
  */
-public class BootImageTable extends InspectorTable {
+public final class BootImageTable extends InspectorTable {
 
     private final BootImageTableModel model;
     private BootImageColumnModel columnModel;

@@ -399,6 +399,12 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     JTableColumnResizer.adjustColumnPreferredWidths(table);
                     refresh(true);
                 }
+                @Override
+                public void setOperandDisplayMode(PoolConstantLabel.Mode mode) {
+                    super.setOperandDisplayMode(mode);
+                    operandDisplayMode = mode;
+                    model.fireTableDataChanged();
+                }
             };
             createColumn(BytecodeColumnKind.TAG, new TagRenderer());
             createColumn(BytecodeColumnKind.NUMBER, new NumberRenderer());

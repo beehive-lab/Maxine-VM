@@ -63,6 +63,12 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     public Color defaultTextBackgroundColor() {
         return defaultBackgroundColor();
     }
+    public Color defaultErrorTextColor() {
+        return InspectorStyle.Red;
+    }
+    public Color defaultErrorTextBackgroundColor() {
+        return InspectorStyle.Yellow;
+    }
 
     // Plain text labels
     public Font textLabelFont() {

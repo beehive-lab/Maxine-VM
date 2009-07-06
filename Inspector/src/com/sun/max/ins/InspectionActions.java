@@ -2563,21 +2563,21 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             if (address != null) {
-                setWordWatchpoint(address);
+                setWordWatchpoint(address, "");
             } else {
                 new AddressInputDialog(inspection(), maxVM().bootImageStart(), "Watch word at address...", "Watch") {
                     @Override
                     public void entered(Address address) {
-                        setWordWatchpoint(address);
+                        setWordWatchpoint(address, "User specified region");
                     }
                 };
             }
         }
 
-        private void setWordWatchpoint(Address address) {
+        private void setWordWatchpoint(Address address, String description) {
             final Size size = Size.fromInt(Word.size());
             try {
-                final MaxWatchpoint watchpoint = maxVM().setWatchpoint(address, size, true, true, true, true);
+                final MaxWatchpoint watchpoint = maxVM().setRegionWatchpoint(description, address, size, true, true, true, true);
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {
@@ -2617,24 +2617,87 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
 
+    /**
+     * Action: edit the settings for a memory watchpoint.
+     */
+    final class EditWordWatchpointAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Edit memory watchpoint";
+        private final boolean interactive;
+        private final MaxWatchpoint watchpoint;
+
+        EditWordWatchpointAction() {
+            super(inspection(), "Edit memory watchpoint at address...");
+            interactive = true;
+            watchpoint = null;
+            setEnabled(true);
+        }
+
+        EditWordWatchpointAction(Address address, String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            interactive = false;
+            watchpoint = maxVM().findWatchpoint(address);
+            setEnabled(watchpoint != null);
+        }
+
+        @Override
+        protected void procedure() {
+            if (interactive) {
+                new AddressInputDialog(inspection(), maxVM().bootImageStart(), "Edit memory watchpoint at address...", "Edit") {
+                    @Override
+                    public void entered(Address address) {
+                        final MaxWatchpoint watchpoint = maxVM().findWatchpoint(address);
+                        if (watchpoint == null) {
+                            gui().errorMessage("No watchpoint at this address: " + address.toHexString());
+                        } else {
+                            gui().informationMessage("Watchpoint editing not implemented yet");
+                        }
+                    }
+                };
+            } else {
+                gui().informationMessage("Watchpoint editing not implemented yet");
+            }
+        }
+    }
+
+    private final EditWordWatchpointAction editWordWatchpointAction = new EditWordWatchpointAction();
+
+    /**
+     * @return an interactive Action that will allow interactive editing of a memory watchpoint's settings.
+     */
+    public final InspectorAction editWordWatchpoint() {
+        return editWordWatchpointAction;
+    }
+
+    /**
+     * Creates an action that will allow interactive editing of a memory watchpoint's settings.
+     *
+     * @param address a memory location in the VM
+     * @param string a title for the action, use default name if null
+     * @return an Action that will allow interactive editing of a memory watchpoint's settings.
+     */
+    public final InspectorAction editWordWatchpoint(Address address, String title) {
+        return new EditWordWatchpointAction(address, title);
+    }
+
 
     /**
      * Action: remove a memory word watchpoint, interactive if no location specified.
      */
-    final class RemoveWatchpointAction extends InspectorAction {
+    final class RemoveWordWatchpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Un-watch memory word";
         private final boolean interactive;
         private final MaxWatchpoint watchpoint;
 
-        RemoveWatchpointAction() {
+        RemoveWordWatchpointAction() {
             super(inspection(), "Un-watch memory word at address...");
             interactive = true;
             watchpoint = null;
             setEnabled(true);
         }
 
-        RemoveWatchpointAction(Address address, String title) {
+        RemoveWordWatchpointAction(Address address, String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
             interactive = false;
             watchpoint = maxVM().findWatchpoint(address);
@@ -2651,23 +2714,23 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                         if (watchpoint == null) {
                             gui().errorMessage("No watchpoint at this address: " + address.toHexString());
                         } else {
-                            watchpoint.remove();
+                            watchpoint.dispose();
                         }
                     }
                 };
             } else {
-                watchpoint.remove();
+                watchpoint.dispose();
             }
         }
     }
 
-    private final RemoveWatchpointAction removeWatchpointAction = new RemoveWatchpointAction();
+    private final RemoveWordWatchpointAction removeWordWatchpointAction = new RemoveWordWatchpointAction();
 
     /**
      * @return an interactive Action that will create a memory word watchpoint in the VM.
      */
-    public final InspectorAction removeWatchpoint() {
-        return removeWatchpointAction;
+    public final InspectorAction removeWordWatchpoint() {
+        return removeWordWatchpointAction;
     }
 
     /**
@@ -2677,10 +2740,314 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * @param string a title for the action, use default name if null
      * @return an Action that will remove a memory watchpoint at the address.
      */
-    public final InspectorAction removeWatchpoint(Address address, String title) {
-        return new RemoveWatchpointAction(address, title);
+    public final InspectorAction removeWordWatchpoint(Address address, String title) {
+        return new RemoveWordWatchpointAction(address, title);
     }
 
+
+    /**
+     * Action: create an object field watchpoint.
+     */
+    final class SetFieldWatchpointAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Watch object field";
+        private final TeleObject teleObject;
+        private final FieldActor fieldActor;
+
+        SetFieldWatchpointAction(TeleObject teleObject, FieldActor fieldActor, String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            this.teleObject = teleObject;
+            this.fieldActor = fieldActor;
+            refresh(true);
+        }
+
+        @Override
+        protected void procedure() {
+            try {
+                final String description = "Field \"" + fieldActor.name.toString() + "\" in " + inspection().nameDisplay().referenceLabelText(teleObject);
+                final MaxWatchpoint watchpoint = maxVM().setFieldWatchpoint(description, teleObject, fieldActor, true, true, true, true);
+                if (watchpoint == null) {
+                    gui().errorMessage("Watchpoint creation failed");
+                } else {
+                    inspection().focus().setWatchpoint(watchpoint);
+                }
+            } catch (TooManyWatchpointsException tooManyWatchpointsException) {
+                gui().errorMessage(tooManyWatchpointsException.getMessage());
+            } catch (DuplicateWatchpointException duplicateWatchpointException) {
+                gui().errorMessage(duplicateWatchpointException.getMessage());
+            }
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(inspection().hasProcess()
+                && maxVM().watchpointsEnabled()
+                && maxVM().findWatchpoint(teleObject.getFieldAddress(fieldActor)) == null);
+        }
+    }
+
+    /**
+     * Creates an action that will create an object field watchpoint.
+     *
+     * @param teleObject a heap object in the VM
+     * @param fieldActor description of a field in the class type of the heap object
+     * @param string a title for the action, use default name if null
+     * @return an Action that will set an object field watchpoint.
+     */
+    public final InspectorAction setFieldWatchpoint(TeleObject teleObject, FieldActor fieldActor, String string) {
+        return new SetFieldWatchpointAction(teleObject, fieldActor, string);
+    }
+
+
+    /**
+     * Action: edit the settings for an object field watchpoint.
+     */
+    final class EditFieldWatchpointAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Edit object field watchpoint";
+        private final TeleObject teleObject;
+        private final FieldActor fieldActor;
+
+        EditFieldWatchpointAction(TeleObject teleObject, FieldActor fieldActor, String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            this.teleObject = teleObject;
+            this.fieldActor = fieldActor;
+            refresh(true);
+        }
+
+        @Override
+        protected void procedure() {
+            final MaxWatchpoint watchpoint = maxVM().findWatchpoint(teleObject.getFieldAddress(fieldActor));
+            ProgramError.check(watchpoint != null, "Unable to locate field watchpoint for editing");
+            gui().informationMessage("Watchpoint editing not implemented yet");
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(inspection().hasProcess()
+                && maxVM().watchpointsEnabled()
+                && maxVM().findWatchpoint(teleObject.getFieldAddress(fieldActor)) != null);
+        }
+    }
+
+    /**
+     * Creates an action that will allow interactive editing of an object field watchpoint's settings.
+     *
+     * @param teleObject a heap object in the VM
+     * @param fieldActor description of a field in the class type of the heap object
+     * @param string a title for the action, use default name if null
+     * @return an Action that will allow interactive editing of an object field watchpoint's settings.
+     */
+    public final InspectorAction editFieldWatchpoint(TeleObject teleObject, FieldActor fieldActor, String string) {
+        return new EditFieldWatchpointAction(teleObject, fieldActor, string);
+    }
+
+
+    /**
+     * Action: remove an object field watchpoint.
+     */
+    final class RemoveFieldWatchpointAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Un-watch object field";
+        private final TeleObject teleObject;
+        private final FieldActor fieldActor;
+
+        RemoveFieldWatchpointAction(TeleObject teleObject, FieldActor fieldActor, String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            this.teleObject = teleObject;
+            this.fieldActor = fieldActor;
+            refresh(true);
+        }
+
+        @Override
+        protected void procedure() {
+            final MaxWatchpoint watchpoint = maxVM().findWatchpoint(teleObject.getFieldAddress(fieldActor));
+            ProgramError.check(watchpoint != null, "Unable to locate field watchpoint for removal");
+            if (watchpoint.dispose()) {
+                inspection().focus().setWatchpoint(null);
+            }  else {
+                gui().errorMessage("Watchpoint removal failed");
+            }
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(inspection().hasProcess()
+                && maxVM().watchpointsEnabled()
+                && maxVM().findWatchpoint(teleObject.getFieldAddress(fieldActor)) != null);
+        }
+    }
+
+    /**
+     * Creates an action that will remove an object field watchpoint.
+     *
+     * @param teleObject a heap object in the VM
+     * @param fieldActor description of a field in the class type of the heap object
+     * @param string a title for the action, use default name if null
+     * @return an Action that will remove a memory watchpoint at the address.
+     */
+    public final InspectorAction removeFieldWatchpoint(TeleObject teleObject, FieldActor fieldActor, String string) {
+        return new RemoveFieldWatchpointAction(teleObject, fieldActor, string);
+    }
+
+
+    /**
+     * Action: create an object header field watchpoint.
+     */
+    final class SetHeaderWatchpointAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Watch object header field";
+        private final TeleObject teleObject;
+        private final Offset offset;
+        private final Size size;
+        private final String name;
+
+        SetHeaderWatchpointAction(TeleObject teleObject, Offset offset, Size size, String name, String title)  {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            this.teleObject = teleObject;
+            this.offset = offset;
+            this.size = size;
+            this.name = name;
+            refresh(true);
+        }
+
+        @Override
+        protected void procedure() {
+            try {
+                final String description = "Field \"" + name + "\" in header of " + inspection().nameDisplay().referenceLabelText(teleObject);
+                final MaxWatchpoint watchpoint = maxVM().setHeaderWatchpoint(description, teleObject, offset, size, name, true, true, true, true);
+                if (watchpoint == null) {
+                    gui().errorMessage("Watchpoint creation failed");
+                } else {
+                    inspection().focus().setWatchpoint(watchpoint);
+                }
+            } catch (TooManyWatchpointsException tooManyWatchpointsException) {
+                gui().errorMessage(tooManyWatchpointsException.getMessage());
+            } catch (DuplicateWatchpointException duplicateWatchpointException) {
+                gui().errorMessage(duplicateWatchpointException.getMessage());
+            }
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(inspection().hasProcess()
+                && maxVM().watchpointsEnabled()
+                && maxVM().findWatchpoint(teleObject.getCurrentOrigin().plus(offset)) == null);
+        }
+    }
+
+    /**
+     * Creates an action that will create an object header field watchpoint.
+     *
+     * @param teleObject a heap object in the VM
+     * @param offset location of the header field, relative to the objects origin
+     * @param size the size in bytes of the field
+     * @param name the name of the header field
+     * @param title a title for the action, use default name if null
+     * @return an Action that will set an object header watchpoint
+     */
+    public final InspectorAction setHeaderWatchpoint(TeleObject teleObject, Offset offset, Size size, String name, String title) {
+        return new SetHeaderWatchpointAction(teleObject, offset, size, name, title);
+    }
+
+
+    /**
+     * Action: edit the settings for an object header watchpoint.
+     */
+    final class EditHeaderWatchpointAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Edit object header field watchpoint";
+        private final TeleObject teleObject;
+        private final Offset offset;
+        private final Size size;
+        private final String name;
+
+        EditHeaderWatchpointAction(TeleObject teleObject, Offset offset, Size size, String name, String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            this.teleObject = teleObject;
+            this.offset = offset;
+            this.size = size;
+            this.name = name;
+            refresh(true);
+        }
+
+        @Override
+        protected void procedure() {
+            final MaxWatchpoint watchpoint = maxVM().findWatchpoint(teleObject.getCurrentOrigin().plus(offset));
+            ProgramError.check(watchpoint != null, "Unable to locate field watchpoint for editing");
+            gui().informationMessage("Watchpoint editing not implemented yet");
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(inspection().hasProcess()
+                && maxVM().watchpointsEnabled()
+                && maxVM().findWatchpoint(teleObject.getCurrentOrigin().plus(offset)) != null);
+        }
+    }
+
+    /**
+     * Creates an action that will allow interactive editing of an object header watchpoint's settings.
+     *
+     * @param teleObject a heap object in the VM
+     * @param fieldActor description of a field in the class type of the heap object
+     * @param string a title for the action, use default name if null
+     * @return an Action that will allow interactive editing of an object field watchpoint's settings.
+     */
+    public final InspectorAction editHeaderWatchpoint(TeleObject teleObject, Offset offset, Size size, String name, String title) {
+        return new EditHeaderWatchpointAction(teleObject, offset, size, name, title);
+    }
+
+    /**
+     * Action: remove an object header field watchpoint.
+     */
+    final class RemoveHeaderWatchpointAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Un-watch object header field";
+        private final TeleObject teleObject;
+        private final Offset offset;
+        private final Size size;
+        private final String name;
+
+        RemoveHeaderWatchpointAction(TeleObject teleObject, Offset offset, Size size, String name, String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            this.teleObject = teleObject;
+            this.offset = offset;
+            this.size = size;
+            this.name = name;
+            refresh(true);
+        }
+
+        @Override
+        protected void procedure() {
+            final MaxWatchpoint watchpoint = maxVM().findWatchpoint(teleObject.getCurrentOrigin().plus(offset));
+            ProgramError.check(watchpoint != null, "Unable to locate header field watchpoint for removal");
+            if (watchpoint.dispose()) {
+                inspection().focus().setWatchpoint(null);
+            }  else {
+                gui().errorMessage("Watchpoint removal failed");
+            }
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(inspection().hasProcess()
+                && maxVM().watchpointsEnabled()
+                && maxVM().findWatchpoint(teleObject.getCurrentOrigin().plus(offset)) != null);
+        }
+    }
+
+    /**
+     * Creates an action that will remove an object field watchpoint.
+     *
+     * @param teleObject a heap object in the VM
+     * @param fieldActor description of a field in the class type of the heap object
+     * @param string a title for the action, use default name if null
+     * @return an Action that will remove a memory watchpoint at the address.
+     */
+    public final InspectorAction removeHeaderWatchpoint(TeleObject teleObject, Offset offset, Size size, String name, String string) {
+        return new RemoveHeaderWatchpointAction(teleObject, offset, size, name, string);
+    }
 
 
     /**
@@ -2705,8 +3072,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxWatchpoint watchpoint = focus().watchpoint();
             if (watchpoint != null) {
-                watchpoint.remove();
-                focus().setWatchpoint(null);
+                if (watchpoint.dispose()) {
+                    focus().setWatchpoint(null);
+                } else {
+                    gui().errorMessage("Watchpoint removal failed");
+                }
             } else {
                 gui().errorMessage("No watchpoint selected");
             }
@@ -2718,13 +3088,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private InspectorAction removeWatchpoint = new RemoveSelectedWatchpointAction(null);
+    private InspectorAction removeSelectedWatchpoint = new RemoveSelectedWatchpointAction(null);
 
     /**
      * @return an Action that will remove the currently selected breakpoint, if any.
      */
     public final InspectorAction removeSelectedWatchpoint() {
-        return removeWatchpoint;
+        return removeSelectedWatchpoint;
     }
 
 
@@ -2750,7 +3120,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             focus().setWatchpoint(null);
             for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
-                watchpoint.remove();
+                if (!watchpoint.dispose()) {
+                    gui().errorMessage("Failed to remove watchpoint" + watchpoint);
+                }
             }
         }
 
