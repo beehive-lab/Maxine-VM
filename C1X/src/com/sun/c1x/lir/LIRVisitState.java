@@ -20,8 +20,6 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.lir.LIROperand.*;
-
 
 /**
  * The <code>LIRVisitState</code> class definition.
