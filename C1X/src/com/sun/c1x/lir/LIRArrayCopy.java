@@ -40,6 +40,21 @@ public class LIRArrayCopy extends LIRInstruction {
 //    private CiType expectedType;
     private int arrayCopyFlags;
 
+    public enum Flags {
+        SrcNullCheck,
+        DstNullCheck,
+        SrcPosPositiveCheck,
+        DstPosPositiveCheck,
+        LengthPositiveCheck,
+        SrcRangeCheck,
+        DstRangeCheck,
+        TypeCheck,
+        AllFlags;
+
+        public final int mask() {
+            return 1 << ordinal();
+        }
+    }
 
     /**
      * Creates a new LIRArrayCopy instruction.
@@ -51,7 +66,7 @@ public class LIRArrayCopy extends LIRInstruction {
      * @param length
      * @param tmp
      */
-    public LIRArrayCopy(LIROperand src, LIROperand srcPos, LIROperand dst, LIROperand dstPos, LIROperand length, LIROperand tmp, int arrayCopyFlags, CodeEmitInfo info) {
+    public LIRArrayCopy(LIROperand src, LIROperand srcPos, LIROperand dst, LIROperand dstPos, LIROperand length, LIROperand tmp, CiType expectedType, int arrayCopyFlags, CodeEmitInfo info) {
         super(LIROpcode.ArrayCopy, LIROperandFactory.illegalOperand, info);
         this.src = src;
         this.srcPos = srcPos;
@@ -59,17 +74,9 @@ public class LIRArrayCopy extends LIRInstruction {
         this.dstPos = dstPos;
         this.length = length;
         this.tmp = tmp;
+        this.expectedType = expectedType;
         this.arrayCopyFlags = arrayCopyFlags;
         stub = new ArrayCopyStub(this);
-    }
-
-    /**
-     * Gets the stub of this class.
-     *
-     * @return the stub
-     */
-    public ArrayCopyStub stub() {
-        return stub;
     }
 
     /**
@@ -136,23 +143,50 @@ public class LIRArrayCopy extends LIRInstruction {
     }
 
     /**
+     *
+     * @return the expected type
+     */
+    public CiType expectedType() {
+        return expectedType;
+    }
+
+    /**
+     * Gets the stub of this class.
+     *
+     * @return the stub
+     */
+    public ArrayCopyStub stub() {
+        return stub;
+    }
+
+    /**
      * Emits target assembly code for this instruction.
      *
      * @param masm the target assembler
      */
     @Override
     public void emitCode(LIRAssembler masm) {
-        // TODO Auto-generated method stub
-
+        masm.emitArrayCopy(this);
     }
 
-    /**
+     /**
      * Prints this instruction.
      *
      * @param out the output stream
      */
     @Override
     public void printInstruction(LogStream out) {
-        // TODO Auto-generated method stub
+        src().print(out);
+        out.print(" ");
+        srcPos().print(out);
+        out.print(" ");
+        dst().print(out);
+        out.print(" ");
+        dstPos().print(out);
+        out.print(" ");
+        length().print(out);
+        out.print(" ");
+        tmp().print(out);
+        out.print(" ");
     }
 }

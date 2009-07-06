@@ -18,57 +18,20 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
-
-import java.util.*;
-
+package com.sun.c1x.gen;
 
 /**
- * The <code>LIRRTCall</code> class definition.
- *
  * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
+ *
+ * Port of the generator from HIR to LIR to Java
+ *
+ * List of ported files:
+ *
+ * c1_LIRGenerator.hpp
+ * SwitchRange -> SwitchRange (Status: Ported)
+ * ResolveNode -> ResolveNode (Status: Ported)
+ * PhiResolverState -> PhiResolver.PhiResolverState (Status: Ported)
+ * LIRGenerator -> LIRGenerator (Status: Ported)
  *
  */
-public class LIRRuntimeCall extends LIRCall{
-
-    private LIROperand tmp;
-
-    /**
-     * Creates a new LIRRTCall instruction.
-     *
-     * @param address
-     * @param tmp
-     * @param result
-     * @param arguments
-     * @param info
-     */
-    public LIRRuntimeCall(int address, LIROperand tmp, LIROperand result, ArrayList<LIRInstruction> arguments, CodeEmitInfo info) {
-        super(LIROpcode.RtCall, address, result, arguments, info);
-        this.tmp = tmp;
-    }
-
-    /**
-     * Gets the temporary operand associated to this call.
-     * @return the tmp
-     */
-    public LIROperand tmp() {
-        return tmp;
-    }
-
-    /** Emits target assembly code for this instruction.
-    *
-    * @param masm the target assembler
-    */
-    @Override
-    public void emitCode(LIRAssembler masm) {
-        // TODO Not yet implemented.
-    }
-
-    /**
-     * Verifies this instruction.
-     */
-    @Override
-    public void verify() {
-        // TODO Not yet implemented.
-    }
-}

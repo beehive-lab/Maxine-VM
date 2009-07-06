@@ -40,7 +40,7 @@ public class Label {
     // locator >= 0   bound label, locator() encodes the target (jump) position
     // locator == -1  unbound label
     // The locator encodes both offset and section
-    private int locator;
+    private int loc;
 
     // References to instructions that jump to this unresolved label.
     // These instructions need to be patched when the label is bound
@@ -58,7 +58,7 @@ public class Label {
     }
 
     public void init() {
-        locator = -1;
+        loc = -1;
         patchIndex = 0;
         patchOverflow = null;
       }
@@ -69,9 +69,9 @@ public class Label {
      *
      * @return locator
      */
-    public int locator() {
-        assert locator >= 0 : "Unbounded label is being referenced";
-        return locator;
+    public int loc() {
+        assert loc >= 0 : "Unbounded label is being referenced";
+        return loc;
     }
 
     /**
@@ -81,8 +81,8 @@ public class Label {
      */
     public void bindLocation(int locator) {
         assert locator >= 0 : "The locator " + locator + " is not a valid binding locator";
-        assert this.locator == -1 : "The Label is already baunded";
-        this.locator = locator;
+        assert this.loc == -1 : "The Label is already baunded";
+        this.loc = locator;
     }
 
     /**
@@ -92,7 +92,7 @@ public class Label {
      */
     public int locatorOffset() {
         // TODO: to be implemented. Depends on CodeBuffer
-        return locator >> 2;
+        return loc >> 2;
     }
 
     /**
@@ -102,23 +102,23 @@ public class Label {
      */
     public int locatorSection() {
         // TODO: to be implemented. Depends on CodeBuffer
-        return locator & 2;
+        return loc & 2;
     }
 
     public boolean isBound() {
-        return locator >=  0;
+        return loc >=  0;
     }
 
     public boolean isUnbound() {
-        return locator == -1 && patchIndex > 0;
+        return loc == -1 && patchIndex > 0;
     }
 
     public boolean isUnused() {
-        return locator == -1 && patchIndex == 0;
+        return loc == -1 && patchIndex == 0;
     }
 
     public void addPatchAt(CodeBuffer cb, int branchLocator) {
-        assert locator == -1 : "Label is unbounded";
+        assert loc == -1 : "Label is unbounded";
         if (patchIndex < PATCHCACHESIZE) {
           patches[patchIndex] = branchLocator;
         } else {

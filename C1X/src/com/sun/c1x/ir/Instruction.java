@@ -315,10 +315,18 @@ public abstract class Instruction {
     }
 
     /**
+     * Checks whether this instruction needs a null check.
+     * @return <code>true</code> if this instruction needs a null check
+     */
+    public final boolean needsNullCheck() {
+        return !checkFlag(Flag.NonNull);
+    }
+
+    /**
      * Gets the LIR operand associated with this instruction.
      * @return the LIR operand for this instruction
      */
-    public Object lirOperand() {
+    public LIROperand operand() {
         return lirOperand;
     }
 
@@ -326,8 +334,16 @@ public abstract class Instruction {
      * Sets the LIR operand associated with this instruction.
      * @param operand the operand to associate with this instruction
      */
-    public void setLirOperand(LIROperand operand) {
+    public void setOperand(LIROperand operand) {
+        assert operand != LIROperandFactory.illegalOperand : "operand must exist";
         lirOperand = operand;
+    }
+
+    /**
+     * Clears the LIR operand associated with this instruction.
+     */
+    public void clearOperand() {
+        lirOperand = LIROperandFactory.illegalOperand;
     }
 
     /**
@@ -507,5 +523,30 @@ public abstract class Instruction {
      */
     public static String valueString(Instruction value) {
         return value == null ? "null" : "" + value.type().tchar() + value.id();
+    }
+
+    /**
+     * Gets the lock stack of the instruction if one exists.
+     * @return the lock stack
+     */
+    public ValueStack lockStack() {
+        return null;
+    }
+
+    /**
+     * Determines whether this instruction has 1 or more used.
+     * @return true if the instruction is used somewhere, false otherwise
+     */
+    public boolean hasUses() {
+        return useCount() > 0;
+    }
+
+    /**
+     * Gets the number of uses of this instruction.
+     * @return the number of uses
+     */
+    public int useCount() {
+        // TODO Find a different way to solve this!
+        return 1;
     }
 }
