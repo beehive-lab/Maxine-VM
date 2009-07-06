@@ -58,6 +58,8 @@ public interface InspectorStyle {
     int defaultTextFontSize();
     Color defaultTextColor();
     Color defaultTextBackgroundColor();
+    Color defaultErrorTextColor();
+    Color defaultErrorTextBackgroundColor();
 
     // Plain text labels
     Font textLabelFont();
@@ -325,6 +327,8 @@ public interface InspectorStyle {
     Color DarkOrange = new Color(255, 140, 0);
     Color Orange = new Color(255, 165, 0);
     Color MediumOrchid = new Color(186, 85, 211);
+    Color Yellow = new Color(255, 255, 0);
+    Color LightYellow = new Color(255, 255, 224);
 
     Color LightGreen = new Color(144, 238, 144);
     Color ForestGreen = new Color(24, 139, 34);
