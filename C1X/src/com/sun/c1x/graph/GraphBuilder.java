@@ -411,32 +411,35 @@ public class GraphBuilder {
             assert bci == Instruction.SYNCHRONIZATION_ENTRY_BCI || bci == curScopeData.stream.currentBCI() : "invalid bci";
 
             // join with all potential exception handlers
-            for (ExceptionHandler h : curScopeData.exceptionHandlers()) {
-                if (h.covers(bci)) {
-                    // if the handler covers this bytecode index, add it to the list
-                    if (addExceptionHandler(exceptionHandlers, h, curScopeData, s, scopeCount)) {
-                        return exceptionHandlers;
+            List<ExceptionHandler> handlers = curScopeData.exceptionHandlers();
+            if (handlers != null) {
+                for (ExceptionHandler h : handlers) {
+                    if (h.covers(bci)) {
+                        // if the handler covers this bytecode index, add it to the list
+                        if (addExceptionHandler(exceptionHandlers, h, curScopeData, s, scopeCount)) {
+                            // if the handler was a default handler, we are done
+                            return exceptionHandlers;
+                        }
                     }
                 }
-
-                // set up iteration for next time
-                // if parsing a JSR, do not grab exception handlers from the parent
-                // scopes for this method (already got them, and they need to be cloned)
-                if (curScopeData.parsingJsr()) {
-                    IRScope tmp = curScopeData.scope;
-                    while (curScopeData.parent != null && curScopeData.parent.scope == tmp) {
-                        curScopeData = curScopeData.parent;
-                    }
-                }
-                if (curScopeData.parent != null) {
-                    s = s.popScope();
-                }
-                bci = curScopeData.scope.callerBCI();
-                curScopeData = curScopeData.parent;
-                scopeCount++;
             }
+            // pop the scope to the next IRScope level
+            // if parsing a JSR, skip scopes until the next IRScope level
+            IRScope curScope = curScopeData.scope;
+            while (curScopeData.parent != null && curScopeData.parent.scope == curScope) {
+                curScopeData = curScopeData.parent;
+            }
+            if (curScopeData.parent == null) {
+                // no more levels, done
+                break;
+            }
+            // there is another level, pop
+            s = s.popScope();
+            bci = curScopeData.scope.callerBCI();
+            curScopeData = curScopeData.parent;
+            scopeCount++;
 
-        } while (curScopeData != null);
+        } while (true);
 
         return exceptionHandlers;
     }
@@ -1342,10 +1345,7 @@ public class GraphBuilder {
     void pushScopeForJsr(BlockBegin jsrCont, int jsrStart) {
         BytecodeStream stream = new BytecodeStream(scope().method.code());
         CiConstantPool constantPool = scopeData.constantPool;
-        ScopeData data = new ScopeData(scopeData, scope(), scopeData.blockMap, stream, constantPool);
-        data.setJsrEntryBCI(jsrStart);
-        data.setJsrEntryReturnAddressLocal(-1);
-        data.setupJsrExceptionHandlers();
+        ScopeData data = new ScopeData(scopeData, scope(), scopeData.blockMap, stream, constantPool, jsrStart);
         data.setContinuation(jsrCont);
         if (scopeData.continuation() != null) {
             assert scopeData.continuationState() != null;

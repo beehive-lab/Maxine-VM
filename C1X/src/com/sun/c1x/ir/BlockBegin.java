@@ -107,7 +107,6 @@ public class BlockBegin extends StateSplit {
         blockID = i;
     }
 
-
     /**
      * Gets the list of predecessors of this block.
      * @return the predecessor list
@@ -185,6 +184,7 @@ public class BlockBegin extends StateSplit {
     }
 
     public void setDepthFirstNumber(int depthFirstNumber) {
+        assert depthFirstNumber >= 0;
         this.depthFirstNumber = depthFirstNumber;
     }
 
@@ -342,6 +342,7 @@ public class BlockBegin extends StateSplit {
     public void removePredecessor(BlockBegin pred) {
         while (predecessors.remove(pred)) {
             // the block may appear multiple times in the list
+            // XXX: this is not very efficient, consider Util.removeAllFromList
         }
     }
 
@@ -562,6 +563,8 @@ public class BlockBegin extends StateSplit {
         StringBuilder builder = new StringBuilder();
         builder.append("block #");
         builder.append(blockID);
+        builder.append(" @ ");
+        builder.append(bci());
         builder.append(" [");
         boolean hasFlag = false;
         for (BlockFlag f : BlockFlag.values()) {

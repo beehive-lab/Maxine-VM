@@ -25,6 +25,7 @@ import com.sun.c1x.bytecode.BytecodeStream;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.C1XOptions;
 import com.sun.c1x.ci.CiConstantPool;
+import com.sun.c1x.ci.CiExceptionHandler;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -57,6 +58,9 @@ public class ScopeData {
     // expression stack depth at point where inline occurred
     int callerStackSize;
 
+    // Exception handler list
+    List<ExceptionHandler> exceptionHandlers;
+
     // The continuation point for the inline. Currently only used in
     // multi-block inlines, but eventually would like to use this for
     // all inlines for uniformity and simplicity; in this case would
@@ -84,7 +88,7 @@ public class ScopeData {
     // possible jsr-ret control structures. Recursive invocations of a
     // jsr are disallowed by the verifier. > 0 indicates parsing
     // of a jsr.
-    int jsrEntryBci;
+    final int jsrEntryBci;
     // We need to track the local variable in which the return address
     // was stored to ensure we can handle inlining the jsr, because we
     // don't handle arbitrary jsr/ret constructs.
@@ -93,10 +97,7 @@ public class ScopeData {
     // If we are parsing a jsr, the continuation point for rets
     BlockBegin jsrContinuation;
 
-    // Cloned exception handlers for jsr-related ScopeDatas
-    List<ExceptionHandler> jsrHandlers;
-
-    BlockBegin[] jsrDuplicatedBlocks; // blocks that have been duplicated for JSR inlining
+    final BlockBegin[] jsrDuplicatedBlocks; // blocks that have been duplicated for JSR inlining
 
     /**
      * Constructs a new ScopeData instance with the specified parent ScopeData.
@@ -112,6 +113,8 @@ public class ScopeData {
         this.blockMap = blockMap;
         this.stream = stream;
         this.constantPool = constantPool;
+        this.jsrEntryBci = -1;
+        this.jsrDuplicatedBlocks = null;
         if (parent != null) {
             maxInlineSize = (int) (C1XOptions.MaximumInlineRatio * parent.maxInlineSize());
             if (maxInlineSize < C1XOptions.MaximumTrivialSize) {
@@ -121,8 +124,64 @@ public class ScopeData {
         } else {
             maxInlineSize = C1XOptions.MaximumInlineSize;
         }
-        if (scope.exceptionHandlers() != null) {
+        List<CiExceptionHandler> handlers = scope.method.exceptionHandlers();
+        if (handlers != null && handlers.size() > 0) {
+            exceptionHandlers = new ArrayList<ExceptionHandler>(handlers.size());
+            for (CiExceptionHandler ch : handlers) {
+                ExceptionHandler h = new ExceptionHandler(ch);
+                h.setEntryBlock(blockAt(h.handlerBCI()));
+                exceptionHandlers.add(h);
+            }
             hasHandler = true;
+        }
+    }
+
+    /**
+     * Constructs a new ScopeData instance with the specified parent ScopeData. This constructor variant creates
+     * a scope data for parsing a JSR.
+     * @param parent the parent scope data
+     * @param scope the IR scope
+     * @param blockMap the block map for this scope
+     * @param stream the bytecode stream
+     * @param constantPool the constant pool
+     * @param jsrEntryBci the bytecode index of the entrypoint of the JSR
+     */
+    public ScopeData(ScopeData parent, IRScope scope, BlockMap blockMap, BytecodeStream stream, CiConstantPool constantPool, int jsrEntryBci) {
+        this.parent = parent;
+        this.scope = scope;
+        this.blockMap = blockMap;
+        this.stream = stream;
+        this.constantPool = constantPool;
+        assert jsrEntryBci > 0 : "jsr cannot jump to BCI 0";
+        assert parent != null : "jsr must have parent scope";
+        this.jsrEntryBci = jsrEntryBci;
+        this.jsrDuplicatedBlocks = new BlockBegin[scope.method.codeSize()];
+        this.jsrRetAddrLocal = -1;
+
+        maxInlineSize = (int) (C1XOptions.MaximumInlineRatio * parent.maxInlineSize());
+        if (maxInlineSize < C1XOptions.MaximumTrivialSize) {
+            maxInlineSize = C1XOptions.MaximumTrivialSize;
+        }
+        hasHandler = parent.hasHandler;
+        // duplicate the parent scope's exception handlers, if any
+        List<ExceptionHandler> handlers = parent.exceptionHandlers();
+        if (handlers != null && handlers.size() > 0) {
+            exceptionHandlers = new ArrayList<ExceptionHandler>(handlers.size());
+            for (ExceptionHandler ph : handlers) {
+                ExceptionHandler h = new ExceptionHandler(ph);
+                int handlerBci = h.handlerBCI();
+                if (handlerBci >= 0) {
+                    // need to duplicate the handler block because it is a "normal" handler
+                    h.setEntryBlock(blockAt(handlerBci));
+                } else {
+                    // don't duplicate the handler block because it is a synchronization handler
+                    // that was added by parsing/inlining a synchronized method
+                    assert ph.entryBlock().checkBlockFlag(BlockBegin.BlockFlag.DefaultExceptionHandler);
+                    h.setEntryBlock(ph.entryBlock());
+                }
+                exceptionHandlers.add(h);
+            }
+            assert hasHandler;
         }
     }
 
@@ -133,7 +192,7 @@ public class ScopeData {
      * @return the block starting at the specified bytecode index
      */
     public BlockBegin blockAt(int bci) {
-        if (parsingJsr()) {
+        if (jsrDuplicatedBlocks != null) {
             // all blocks in a JSR are duplicated on demand using an internal array,
             // including those for exception handlers in the scope of the method
             // containing the jsr (because those exception handlers may contain ret
@@ -143,7 +202,7 @@ public class ScopeData {
                 BlockBegin p = this.parent.blockAt(bci);
                 if (p != null) {
                     BlockBegin newBlock = new BlockBegin(p.bci());
-                    // TODO: get a new block ID for this block 
+                    // TODO: get a new block ID for this block
                     newBlock.setDepthFirstNumber(p.depthFirstNumber());
                     newBlock.copyBlockFlags(p);
                     jsrDuplicatedBlocks[bci] = newBlock;
@@ -226,16 +285,6 @@ public class ScopeData {
      */
     public int jsrEntryBCI() {
         return jsrEntryBci;
-    }
-
-    /**
-     * Sets the bytecode index for the JSR entry.
-     * @param bci the bytecode index of the JSR entry
-     */
-    public void setJsrEntryBCI(int bci) {
-        assert bci > 0 : "jsr cannot possibly jump to BCI 0";
-        jsrDuplicatedBlocks = new BlockBegin[scope.method.codeSize()];
-        jsrEntryBci = bci;
     }
 
     /**
@@ -329,39 +378,11 @@ public class ScopeData {
     }
 
     /**
-     * Sets up the exception handlers when parsing a JSR by copying the exception handlers
-     * from the surrounding scope.
-     */
-    public void setupJsrExceptionHandlers() {
-        assert parsingJsr();
-
-        List<ExceptionHandler> shandlers = scope.exceptionHandlers();
-        if (shandlers != null) {
-            jsrHandlers = new ArrayList<ExceptionHandler>(shandlers.size());
-            for (ExceptionHandler h : shandlers) {
-                ExceptionHandler n = new ExceptionHandler(h);
-                if (n.handlerBCI() != Instruction.SYNCHRONIZATION_ENTRY_BCI) {
-                    n.setEntryBlock(blockAt(h.handlerBCI()));
-                } else {
-                    assert n.entryBlock().checkBlockFlag(BlockBegin.BlockFlag.DefaultExceptionHandler);
-                }
-                jsrHandlers.add(n);
-            }
-        } else {
-            jsrHandlers = new ArrayList<ExceptionHandler>(0);
-        }
-    }
-
-    /**
      * Gets the list of exception handlers for this scope data.
      * @return the list of exception handlers
      */
     public List<ExceptionHandler> exceptionHandlers() {
-        if (jsrHandlers == null) {
-            assert !parsingJsr();
-            return scope.exceptionHandlers();
-        }
-        return jsrHandlers;
+        return exceptionHandlers;
     }
 
     /**
@@ -369,12 +390,11 @@ public class ScopeData {
      * @param handler the handler to add
      */
     public void addExceptionHandler(ExceptionHandler handler) {
-        if (jsrHandlers == null) {
-            assert !parsingJsr();
-            scope.addExceptionHandler(handler);
-        } else {
-            jsrHandlers.add(handler);
+        if (exceptionHandlers == null) {
+            exceptionHandlers = new ArrayList<ExceptionHandler>();
         }
+        assert !parsingJsr() : "jsr scope should already have all the handlers it needs";
+        exceptionHandlers.add(handler);
         hasHandler = true;
     }
 
@@ -409,7 +429,7 @@ public class ScopeData {
         // put the block at the end of the array
         workList[workListIndex++] = top;
         int dfn = top.depthFirstNumber();
-        assert dfn >= 0;
+        assert dfn >= 0 : top + " does not have a depth first number";
         int i = workListIndex - 2;
         // push top towards the beginning of the array
         for (; i >= 0; i--) {

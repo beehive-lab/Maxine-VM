@@ -46,7 +46,6 @@ public class IRScope {
     final List<IRScope> callees;
 
     ValueStack callerState;
-    List<ExceptionHandler> exceptionHandlers;
     int numberOfLocks;
     BlockBegin start;
 
@@ -111,25 +110,6 @@ public class IRScope {
      */
     public final BlockBegin start() {
         return start;
-    }
-
-    /**
-     * Gets the list of exception handlers for this scope.
-     * @return the list of exception handlers
-     */
-    public List<ExceptionHandler> exceptionHandlers() {
-        return exceptionHandlers;
-    }
-
-    /**
-     * Add an exception handler to this scope.
-     * @param handler the exception handler to add
-     */
-    public void addExceptionHandler(ExceptionHandler handler) {
-        if (exceptionHandlers == null) {
-            exceptionHandlers = new ArrayList<ExceptionHandler>();
-        }
-        exceptionHandlers.add(handler);
     }
 
     /**
@@ -214,7 +194,8 @@ public class IRScope {
             return;
         }
         IRScope curScope = this;
-        while (curScope != null && curScope.exceptionHandlers.size() > 0) {
+        // TODO: should this calculation be done in ScopeData (because of synchronized handler)?
+        while (curScope != null && curScope.method.exceptionHandlers().size() > 0) {
             curScope = curScope.caller;
         }
         lockStackSize = (curScope == null ? 0 :

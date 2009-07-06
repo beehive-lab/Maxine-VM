@@ -36,7 +36,7 @@ public enum Architecture {
     // ARM(4),
 
     /**
-     * Represents the natural size of words (typically registers and pointers) of this architecture.
+     * Represents the natural size of words (typically registers and pointers) of this architecture, in bytes.
      */
     public final int wordSize;
     public final String backend;
