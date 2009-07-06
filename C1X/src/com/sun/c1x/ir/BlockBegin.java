@@ -177,7 +177,7 @@ public class BlockBegin extends StateSplit {
     }
 
     public void setDepthFirstNumber(int depthFirstNumber) {
-        assert depthFirstNumber > 0;
+        assert depthFirstNumber >= 0;
         this.depthFirstNumber = depthFirstNumber;
     }
 

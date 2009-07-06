@@ -256,10 +256,11 @@ public class BlockMap {
         while (bci < code.length) {
             int opcode = Bytes.beU1(code, bci);
             switch (opcode) {
-                case Bytecodes.ATHROW:  // fall through
+                case Bytecodes.ATHROW:
                     if (exceptionMap != null) {
                         exceptionMap.setCanTrap(bci);
                     }
+                    // fall through
                 case Bytecodes.IRETURN: // fall through
                 case Bytecodes.LRETURN: // fall through
                 case Bytecodes.FRETURN: // fall through
