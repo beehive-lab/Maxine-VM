@@ -35,6 +35,17 @@ public class LIROp3 extends LIRInstruction {
     LIROperand opr2;
     LIROperand opr3;
 
+    /**
+     * Creates a new LIROp3 instruction. A LIROp3 instruction represents a LIR instruction
+     * that has three input operands.
+     *
+     * @param opcode the instruction's opcode
+     * @param opr1 the first input operand
+     * @param opr2 the second input operand
+     * @param opr3 the third input operand
+     * @param result the result operand
+     * @param info the debug information, used for deoptimization, associated to this instruction
+     */
     public LIROp3(LIROpcode opcode, LIROperand opr1, LIROperand opr2, LIROperand opr3, LIROperand result, CodeEmitInfo info) {
         super(opcode, result, info);
         this.opr1 = opr1;
@@ -44,14 +55,40 @@ public class LIROp3 extends LIRInstruction {
     }
 
     /**
+     * Gets the opr1 of this class.
+     *
+     * @return the opr1
+     */
+    public LIROperand opr1() {
+        return opr1;
+    }
+
+    /**
+     * Gets the opr2 of this class.
+     *
+     * @return the opr2
+     */
+    public LIROperand opr2() {
+        return opr2;
+    }
+
+    /**
+     * Gets the opr3 of this class.
+     *
+     * @return the opr3
+     */
+    public LIROperand opr3() {
+        return opr3;
+    }
+
+    /**
      * Emits assembly code for this instruction.
      *
      * @param masm the target assembler
      */
     @Override
     public void emitCode(LIRAssembler masm) {
-        // TODO Auto-generated method stub
-
+        masm.emitOp3(this);
     }
 
     /**

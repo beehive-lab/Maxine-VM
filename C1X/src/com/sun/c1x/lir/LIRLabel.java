@@ -40,7 +40,7 @@ public class LIRLabel extends LIROp0 {
      * @param label
      */
     public LIRLabel(Label label) {
-        super(LIROpcode.Label, LIROperandFactory.illegalOperand, (CodeEmitInfo) null);
+        super(LIROpcode.Label, LIROperandFactory.illegalOperand, null);
         this.label = label;
     }
 
@@ -60,7 +60,7 @@ public class LIRLabel extends LIROp0 {
      */
     @Override
     public void emitCode(LIRAssembler masm) {
-        // TODO: not yet implemented
+        masm.emitLabel(this);
     }
 
     /**
@@ -70,7 +70,6 @@ public class LIRLabel extends LIROp0 {
      */
     @Override
     public void printInstruction(LogStream out) {
-        super.printInstruction(out);
-        label.printInstruction(out);
+        out.printf("[label:0x%x]", label.loc());
     }
 }

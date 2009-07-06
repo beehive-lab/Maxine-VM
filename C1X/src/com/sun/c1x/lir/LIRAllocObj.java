@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.util.*;
+
 
 /**
  * The <code>LIRAllocObj</code> class definition.
@@ -33,8 +35,8 @@ public class LIRAllocObj extends LIROp1 {
     private LIROperand tmp2;
     private LIROperand tmp3;
     private LIROperand tmp4;
-    private int headerSize;
-    private int objectSize;
+    private int     hdrSize;
+    private int     objSize;
     private CodeStub stub;
     private boolean initCheck;
 
@@ -54,18 +56,28 @@ public class LIRAllocObj extends LIROp1 {
      * @param initCheck
      */
     public LIRAllocObj(LIROperand klass, LIROperand result, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, LIROperand tmp4,
-                    int headerSize, int objSize, CodeStub stub, boolean initCheck) {
+                    int hdrSize, int objSize, CodeStub stub, boolean initCheck) {
         super(LIROpcode.AllocObject, klass, result);
         this.tmp1 = tmp1;
         this.tmp2 = tmp2;
         this.tmp3 = tmp3;
         this.tmp4 = tmp4;
-        this.headerSize = headerSize;
-        this.objectSize = objSize;
+        this.hdrSize = hdrSize;
+        this.objSize = objSize;
         this.stub = stub;
         this.initCheck = initCheck;
     }
 
+    /**
+     * @return the operand
+     */
+    public LIROperand klass() {
+        return operand();
+    }
+
+    public LIROperand obj() {
+        return result();
+    }
     /**
      * @return the tmp1
      */
@@ -98,14 +110,21 @@ public class LIRAllocObj extends LIROp1 {
      * @return the hdrSize
      */
     public int headerSize() {
-        return headerSize;
+        return hdrSize;
     }
 
     /**
      * @return the objSize
      */
     public int obectSize() {
-        return objectSize;
+        return objSize;
+    }
+
+     /**
+     * @return the initCheck
+     */
+    public boolean isInitCheck() {
+        return initCheck;
     }
 
     /**
@@ -116,9 +135,37 @@ public class LIRAllocObj extends LIROp1 {
     }
 
     /**
-     * @return the initCheck
+     * Emits code for this instruction.
+     *
      */
-    public boolean isInitCheck() {
-        return initCheck;
+    @Override
+    public void emitCode(LIRAssembler masm) {
+        masm.emitAllocObj(this);
+    }
+
+     /**
+     * Prints this instruction.
+     *
+     * @param out the outputstream
+     */
+    @Override
+    public void printInstruction(LogStream out) {
+        klass().print(out);
+        out.print(" ");
+        obj().print(out);
+        out.print(" ");
+        tmp1().print(out);
+        out.print(" ");
+        tmp2().print(out);
+        out.print(" ");
+        tmp3().print(out);
+        out.print(" ");
+        tmp4().print(out);
+        out.print(" ");
+        out.printf("[hdr:%d]", headerSize());
+        out.print(" ");
+        out.printf("[obj:%d]", headerSize());
+        out.print(" ");
+        out.printf("[lbl:0x%x]", stub().entry());
     }
 }

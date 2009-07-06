@@ -48,7 +48,7 @@ public class ArrayLength extends AccessArray {
      * Gets the object representing an explicit null check for this instruction.
      * @return the explicit null check object
      */
-    public Object explicitNullCheck() {
+    public NullCheck explicitNullCheck() {
         return explicitNullCheck;
     }
 

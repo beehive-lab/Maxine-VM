@@ -83,4 +83,9 @@ public class UnsafePutRaw extends UnsafeRawOp {
     public void accept(InstructionVisitor v) {
         v.visitUnsafePutRaw(this);
     }
+
+    public int log2scale() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
 }

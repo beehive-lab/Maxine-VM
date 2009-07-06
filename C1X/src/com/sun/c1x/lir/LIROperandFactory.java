@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.value.*;
+
 
 /**
  * The <code>LIROperandFactory</code> class definition.
@@ -32,6 +34,26 @@ public class LIROperandFactory {
     public static LIROperand illegalOperand;
 
     public LIROperand singleCpu(int reg) {
+        return null;
+    }
+
+    public static LIROperand valueType(ValueType type) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public static LIROperand intConst(int increment) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public static LIROperand virtualRegister(int vreg, BasicType type) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public static LIRConstant oopConst(Object encoding) {
+        // TODO Auto-generated method stub
         return null;
     }
 

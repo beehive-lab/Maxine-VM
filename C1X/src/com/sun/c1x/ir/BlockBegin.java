@@ -23,6 +23,8 @@ package com.sun.c1x.ir;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.asm.*;
+import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
@@ -72,6 +74,11 @@ public class BlockBegin extends StateSplit {
     private BlockBegin dominator;
     private List<BlockBegin> exceptionHandlerBlocks;
     private List<ValueStack> exceptionHandlerStates;
+
+    // LIR fields
+    // TODO: initialize / move to LIRBlock?
+    private Label label;
+    private LIRList lir;
 
     /**
      * Constructs a new BlockBegin at the specified bytecode index.
@@ -274,7 +281,7 @@ public class BlockBegin extends StateSplit {
     }
 
     /**
-     * Iterate over this block's exception handlers, its successors, and itself, in that order.
+     * Iterate over this block's exception handlers, its  , and itself, in that order.
      * @param closure the closure to apply to each block
      */
     public void iteratePostOrder(BlockClosure closure) {
@@ -580,5 +587,45 @@ public class BlockBegin extends StateSplit {
             }
         }
         return builder.toString();
+    }
+
+    /**
+     * Get the number of successors.
+     * @return the number of successors
+     */
+    public int numberOfSux() {
+        return end.successors.size();
+    }
+
+    /**
+     * Get the successor at a certain position.
+     * @param i the position
+     * @return the successor
+     */
+    public BlockBegin suxAt(int i) {
+        return end.successors.get(i);
+    }
+
+    /**
+     * Get the number of predecessors.
+     * @return the number of predecessors
+     */
+    public int numberOfPreds() {
+        return predecessors.size();
+    }
+
+    /**
+     * @return the label associated with the block, used by the LIR
+     */
+    public Label label() {
+        return label;
+    }
+
+    public void setLir(LIRList lir) {
+        this.lir = lir;
+    }
+
+    public LIRList lir() {
+        return lir;
     }
 }

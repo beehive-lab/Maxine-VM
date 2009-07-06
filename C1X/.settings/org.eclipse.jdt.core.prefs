@@ -1,8 +1,7 @@
-<<<<<<< local
-#Thu Jun 18 11:24:05 PDT 2009
-=======
-#Mon Jun 22 22:31:28 PDT 2009
->>>>>>> other
+#Mon Jul 06 12:37:32 PDT 2009
+=\=\=\=\=\=\=
+<<<<<<<=local
+>>>>>>>=other
 eclipse.preferences.version=1
 org.eclipse.jdt.core.codeComplete.argumentPrefixes=
 org.eclipse.jdt.core.codeComplete.argumentSuffixes=
@@ -140,7 +139,7 @@ org.eclipse.jdt.core.formatter.comment.format_source_code=true
 org.eclipse.jdt.core.formatter.comment.indent_parameter_description=true
 org.eclipse.jdt.core.formatter.comment.indent_root_tags=true
 org.eclipse.jdt.core.formatter.comment.insert_new_line_before_root_tags=insert
-org.eclipse.jdt.core.formatter.comment.insert_new_line_for_parameter=do not insert
+org.eclipse.jdt.core.formatter.comment.insert_new_line_for_parameter=insert
 org.eclipse.jdt.core.formatter.comment.line_length=120
 org.eclipse.jdt.core.formatter.compact_else_if=true
 org.eclipse.jdt.core.formatter.continuation_indentation=4

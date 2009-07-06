@@ -168,4 +168,22 @@ public interface CiType {
      * @return the basic type
      */
     BasicType basicType();
+
+    /**
+     * The instance size of an object of this type.
+     * @return the instance size in bytes
+     */
+    int sizeHelper();
+
+    /**
+     * Determines whether always the slow path should be taken when creating new instances of this type.
+     * @return true if the slow path should always be taken, false otherwise
+     */
+    boolean layoutHelperNeedsSlowPath();
+
+    /**
+     * Returns the Java mirror class object representing this type.
+     * @return the java class object
+     */
+    Class<?> javaMirror();
 }

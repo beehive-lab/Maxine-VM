@@ -137,4 +137,13 @@ public abstract class BlockEnd extends StateSplit {
             stateBefore.valuesDo(closure);
         }
     }
+
+    /**
+     * Gets the successor at a specified index.
+     * @param index the index of the successor
+     * @return the successor
+     */
+    public BlockBegin suxAt(int index) {
+        return successors.get(index);
+    }
 }

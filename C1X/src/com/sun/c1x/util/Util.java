@@ -23,6 +23,7 @@ package com.sun.c1x.util;
 import java.util.*;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -54,6 +55,7 @@ public class Util {
 
     /**
      * Checks whether the specified integer is a power of two.
+     *
      * @param val the value to check
      * @return {@code true} if the value is a power of two; {@code false} otherwise
      */
@@ -63,6 +65,7 @@ public class Util {
 
     /**
      * Checks whether the specified long is a power of two.
+     *
      * @param val the value to check
      * @return {@code true} if the value is a power of two; {@code false} otherwise
      */
@@ -73,6 +76,7 @@ public class Util {
     /**
      * Computes the log (base 2) of the specified integer, rounding down.
      * (E.g {@code log2(8) = 3}, {@code log2(21) = 4})
+     *
      * @param val the value
      * @return the log base 2 of the value
      */
@@ -84,6 +88,7 @@ public class Util {
     /**
      * Computes the log (base 2) of the specified long, rounding down.
      * (E.g {@code log2(8) = 3}, {@code log2(21) = 4})
+     *
      * @param val the value
      * @return the log base 2 of the value
      */
@@ -123,7 +128,9 @@ public class Util {
     }
 
     /**
-     * Converts a given type to its Java programming language name. The following are examples of strings returned by this method:
+     * Converts a given type to its Java programming language name. The following are examples of strings returned by
+     * this method:
+     *
      * <pre>
      *     qualified == true:
      *         java.lang.Object
@@ -156,7 +163,9 @@ public class Util {
     }
 
     /**
-     * Converts a given type to its Java programming language name. The following are examples of strings returned by this method:
+     * Converts a given type to its Java programming language name. The following are examples of strings returned by
+     * this method:
+     *
      * <pre>
      *      java.lang.Object
      *      int
@@ -279,8 +288,8 @@ public class Util {
      *
      * @param format a format specification
      * @param field the field to be formatted
-     * @param basicTypes if {@code true} then the field's type is printed in the
-     *            {@linkplain BasicType#jniName JNI} form of its {@linkplain BasicType basic type}
+     * @param basicTypes if {@code true} then the field's type is printed in the {@linkplain BasicType#jniName JNI} form
+     *            of its {@linkplain BasicType basic type}
      * @return the result of formatting this field according to {@code format}
      * @throws IllegalFormatException if an illegal specifier is encountered in {@code format}
      */
@@ -335,6 +344,7 @@ public class Util {
 
     /**
      * Converts a Java source-language class name into the internal form.
+     *
      * @param className the class name
      * @return the internal name form of the class name
      */
@@ -344,6 +354,7 @@ public class Util {
 
     /**
      * Utility method to combine a base hash with the identity hash of one or more objects.
+     *
      * @param hash the base hash
      * @param x the object to add to the hash
      * @return the combined hash
@@ -355,6 +366,7 @@ public class Util {
 
     /**
      * Utility method to combine a base hash with the identity hash of one or more objects.
+     *
      * @param hash the base hash
      * @param x the first object to add to the hash
      * @param y the second object to add to the hash
@@ -367,6 +379,7 @@ public class Util {
 
     /**
      * Utility method to combine a base hash with the identity hash of one or more objects.
+     *
      * @param hash the base hash
      * @param x the first object to add to the hash
      * @param y the second object to add to the hash
@@ -380,6 +393,7 @@ public class Util {
 
     /**
      * Utility method to combine a base hash with the identity hash of one or more objects.
+     *
      * @param hash the base hash
      * @param x the first object to add to the hash
      * @param y the second object to add to the hash
@@ -418,5 +432,45 @@ public class Util {
         assert isPowerOf2(16);
         assert isPowerOf2(32);
         assert isPowerOf2(64);
+    }
+
+    /**
+     * Sets the element at a given position of a list and ensures that this position exists. If the list is current
+     * shorter than the position, intermediate positions are filled with a given value.
+     *
+     * @param list the list to put the element into
+     * @param pos the position at which to insert the element
+     * @param x the element that should be inserted
+     * @param filler the filler element that is used for the intermediate positions in case the list is shorter than pos
+     */
+    public static <T> void atPutGrow(List<T> list, int pos, T x, T filler) {
+        if (list.size() < pos + 1) {
+            while (list.size() < pos + 1) {
+                list.add(filler);
+            }
+            assert list.size() == pos + 1;
+        }
+
+        assert list.size() >= pos + 1;
+        list.set(pos, x);
+    }
+
+    public static int exactLog2(int c) {
+        assert isPowerOf2(c);
+        return log2(c);
+    }
+
+    public static boolean couldCatch(List<ExceptionHandler> exceptionHandlers, CiType throwKlass, boolean typeIsExact) {
+        // TODO Port implementation
+        return false;
+    }
+
+    /**
+     * Offset of the klass part (C1 HotSpot specific). Probably this method can be removed later on.
+     * @return the offset of the klass part
+     */
+    public static int klassPartOffsetInBytes() {
+        // TODO: Find proper implementation or remove
+        return 0;
     }
 }
