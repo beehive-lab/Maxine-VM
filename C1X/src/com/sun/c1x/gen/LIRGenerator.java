@@ -62,7 +62,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
     }
 
     private final C1XCompilation compilation;
-    private PhiResolver.PhiResolverState resolverState;
+    PhiResolver.PhiResolverState resolverState;
     private BlockBegin currentBlock;
     private int virtualRegisterNumber;
     private ArrayMap<Instruction> instructionForOperand;

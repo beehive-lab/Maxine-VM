@@ -23,7 +23,6 @@ package com.sun.c1x.util;
 import java.util.*;
 
 import com.sun.c1x.ci.*;
-import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
 
 /**
