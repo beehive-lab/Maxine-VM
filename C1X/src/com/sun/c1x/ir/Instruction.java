@@ -534,7 +534,7 @@ public abstract class Instruction {
     }
 
     /**
-     * Determines whether this instruction has 1 or more used.
+     * Determines whether this instruction has 1 or more uses.
      * @return true if the instruction is used somewhere, false otherwise
      */
     public boolean hasUses() {
