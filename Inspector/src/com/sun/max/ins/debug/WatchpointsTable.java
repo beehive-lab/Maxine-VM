@@ -94,11 +94,8 @@ public final class WatchpointsTable extends InspectorTable {
     public void updateFocusSelection() {
         final MaxWatchpoint watchpoint = inspection().focus().watchpoint();
         final int row = tableModel.findRow(watchpoint);
-        if (row < 0) {
-            clearSelection();
-        } else  if (row != getSelectedRow()) {
-            setRowSelectionInterval(row, row);
-        }
+
+        updateFocusSelection(row);
     }
 
     public void refresh(boolean force) {
@@ -108,20 +105,6 @@ public final class WatchpointsTable extends InspectorTable {
 
     public void redisplay() {
         redisplay(columns);
-    }
-
-    @Override
-    protected JTableHeader createDefaultTableHeader() {
-        // Custom table header with tooltips that describe the column data.
-        return new JTableHeader(columnModel) {
-            @Override
-            public String getToolTipText(MouseEvent mouseEvent) {
-                final Point p = mouseEvent.getPoint();
-                final int index = columnModel.getColumnIndexAtX(p.x);
-                final int modelIndex = columnModel.getColumn(index).getModelIndex();
-                return WatchpointsColumnKind.VALUES.get(modelIndex).toolTipText();
-            }
-        };
     }
 
     @Override
@@ -150,7 +133,7 @@ public final class WatchpointsTable extends InspectorTable {
 
         private void createColumn(WatchpointsColumnKind columnKind, TableCellRenderer renderer, TableCellEditor editor) {
             final int col = columnKind.ordinal();
-            columns[col] = new TableColumn(col, 0, renderer, null);
+            columns[col] = new TableColumn(col, 0, renderer, editor);
             columns[col].setHeaderValue(columnKind.label());
             columns[col].setMinWidth(columnKind.minWidth());
             if (viewPreferences.isVisible(columnKind)) {
