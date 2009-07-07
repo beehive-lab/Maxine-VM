@@ -185,7 +185,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             // Assign new location to Local instruction for this local
             Local local = ((Local) x.state().localAt(javaIndex));
             assert local != null : "Locals for incoming arguments must have been created";
-            assert t == local.type().basicType() : "check";
+            assert t == local.type().basicType : "check";
             local.setOperand(dest);
             instructionForOperand.put(dest.vregNumber(), local);
             javaIndex += t.size;
@@ -1102,7 +1102,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         LIROperand physReg = LIROperandFactory.illegalOperand;
         LIROperand result = LIROperandFactory.illegalOperand;
         if (!resultType.isVoid()) {
-            result = newRegister(resultType.basicType());
+            result = newRegister(resultType.basicType);
             physReg = resultRegisterFor(resultType);
         }
 
@@ -1245,7 +1245,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
     private LIROperand rlock(Instruction instr) {
         // Try to lock using register in hint
-        return newRegister(instr.type().basicType());
+        return newRegister(instr.type().basicType);
     }
 
     private LIROperand rlockResult(Instruction x) {
@@ -1297,7 +1297,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         LIRItem value = new LIRItem(x.argumentAt(0), this);
         LIROperand reg = rlockResult(x);
         value.loadItem();
-        LIROperand tmp = forceToSpill(value.result(), x.type().basicType());
+        LIROperand tmp = forceToSpill(value.result(), x.type().basicType);
         lir.move(tmp, reg);
     }
 
@@ -1623,7 +1623,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         LIROperand physReg = LIROperandFactory.illegalOperand;
         LIROperand result = LIROperandFactory.illegalOperand;
         if (!resultType.isVoid()) {
-            result = newRegister(resultType.basicType());
+            result = newRegister(resultType.basicType);
             physReg = resultRegisterFor(resultType);
         }
 
@@ -1659,7 +1659,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
     LIROperand callRuntime(Instruction arg1, Address entry, ValueType resultType, CodeEmitInfo info) {
         List<LIRItem> args = new ArrayList<LIRItem>(1);
         args.add(new LIRItem(arg1, this));
-        BasicType[] signature = new BasicType[] {arg1.type().basicType()};
+        BasicType[] signature = new BasicType[] {arg1.type().basicType};
         return callRuntimeWithItems(signature, args, entry, resultType, info);
     }
 
@@ -1669,7 +1669,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         args.add(new LIRItem(arg1, this));
         args.add(new LIRItem(arg2, this));
 
-        BasicType[] signature = new BasicType[] {arg1.type().basicType(), arg2.type().basicType()};
+        BasicType[] signature = new BasicType[] {arg1.type().basicType, arg2.type().basicType};
         return callRuntimeWithItems(signature, args, entry, resultType, info);
     }
 

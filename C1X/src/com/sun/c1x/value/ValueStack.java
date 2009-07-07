@@ -691,41 +691,41 @@ public class ValueStack {
     }
 
     private static boolean typeMismatch(Instruction x, Instruction y) {
-        return y == null || x.type().basicType() != y.type().basicType();
+        return y == null || x.type().basicType != y.type().basicType;
     }
 
     private static Instruction assertType(BasicType basicType, Instruction x) {
-        assert x != null && x.type().basicType() == basicType;
+        assert x != null && x.type().basicType == basicType;
         return x;
     }
 
     private static Instruction assertLong(Instruction x) {
-        assert x != null && x.type().basicType() == BasicType.Long;
+        assert x != null && x.type().basicType == BasicType.Long;
         return x;
     }
 
     private static Instruction assertJsr(Instruction x) {
-        assert x != null && x.type().basicType() == BasicType.Jsr;
+        assert x != null && x.type().basicType == BasicType.Jsr;
         return x;
     }
 
     private static Instruction assertInt(Instruction x) {
-        assert x != null && x.type().basicType() == BasicType.Int;
+        assert x != null && x.type().basicType == BasicType.Int;
         return x;
     }
 
     private static Instruction assertFloat(Instruction x) {
-        assert x != null && x.type().basicType() == BasicType.Float;
+        assert x != null && x.type().basicType == BasicType.Float;
         return x;
     }
 
     private static Instruction assertObject(Instruction x) {
-        assert x != null && x.type().basicType() == BasicType.Object;
+        assert x != null && x.type().basicType == BasicType.Object;
         return x;
     }
 
     private static Instruction assertDouble(Instruction x) {
-        assert x != null && x.type().basicType() == BasicType.Double;
+        assert x != null && x.type().basicType == BasicType.Double;
         return x;
     }
 

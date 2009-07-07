@@ -143,7 +143,8 @@ public class MaxCiType implements CiType {
      * @throws MaxCiUnresolved if the class is not resolved
      */
     public boolean isInstanceClass() {
-        return asClassActor("isInstanceClass()").isTupleClassActor();
+        final ClassActor classActor = asClassActor("isInstanceClass()");
+        return classActor.isTupleClassActor() || classActor.isHybridClassActor();
     }
 
     /**
