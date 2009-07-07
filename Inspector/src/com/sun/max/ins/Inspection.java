@@ -98,7 +98,7 @@ public final class Inspection {
         maxVM().addBreakpointObserver(new BreakpointObserver());
         maxVM().addWatchpointObserver(new WatchpointObserver());
 
-        inspectorMainFrame = new InspectorMainFrame(this, INSPECTOR_NAME, settings, inspectionActions);
+        inspectorMainFrame = new InspectorMainFrame(this, INSPECTOR_NAME, nameDisplay, settings, inspectionActions);
 
         MethodInspector.Manager.make(this);
         ObjectInspectorFactory.make(this);

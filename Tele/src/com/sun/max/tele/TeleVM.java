@@ -778,7 +778,14 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /**
-     * Throws an unchecked exception if a {@link Reference} is not valid.
+     * Checks that a {@link Reference} points to a heap object in the VM;
+     * throws an unchecked exception if not.  This is a low-level method
+     * that uses a debugging tag or (if no tags in image) a heuristic; it does
+     * not require access to the {@link TeleClassRegistry}.
+     *
+     * @param reference memory location in the VM
+     * @throws InvalidReferenceException when the location does <strong>not</strong> point
+     * at a valid heap object.
      */
     private void checkReference(Reference reference) throws InvalidReferenceException {
         if (!isValidOrigin(reference.toGrip().toOrigin())) {
@@ -789,7 +796,6 @@ public abstract class TeleVM implements MaxVM {
     public final Reference wordToReference(Word word) {
         return vmConfiguration.referenceScheme().fromGrip(gripScheme().fromWord(word));
     }
-
 
     /**
      * @param reference a {@link Reference} to memory in the VM.
@@ -803,9 +809,11 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /**
+     * Returns a local copy of the contents of a {@link String} object in the VM's heap.
+     *
      * @param stringReference A {@link String} object in the VM.
      * @return A local {@link String} representing the object's contents.
-     * @throws InvalidReferenceException
+     * @throws InvalidReferenceException if the argument does not point a valid heap object.
      */
     public final String getString(Reference stringReference)  throws InvalidReferenceException {
         final Reference valueReference = fields().String_value.readReference(stringReference);
@@ -855,12 +863,13 @@ public abstract class TeleVM implements MaxVM {
      * classpath, or if not found on the classpath, by copying the classfile
      * from the VM.
      *
-     * @param classActorReference a {@link ClassActor} in the VM.
+     * @param classActorReference  a {@link ClassActor} in the VM.
      * @return Local, equivalent {@link ClassActor}, possibly created by
      *         loading from the classpath, or if not found, by copying and
      *         loading the classfile from the VM.
+     * @throws InvalidReferenceException if the argument does not point to a valid heap object in the VM.
      */
-    public final ClassActor makeClassActor(Reference classActorReference) {
+    public final ClassActor makeClassActor(Reference classActorReference) throws InvalidReferenceException {
         final Reference utf8ConstantReference = fields().Actor_name.readReference(classActorReference);
         final Reference stringReference = fields().Utf8Constant_string.readReference(utf8ConstantReference);
         final String name = getString(stringReference);

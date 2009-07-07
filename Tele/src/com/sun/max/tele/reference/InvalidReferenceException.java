@@ -24,7 +24,8 @@ import com.sun.max.vm.reference.*;
 
 
 /**
- * An action on the {@link TeleVm} was attempted with an invalid {@link Reference}.
+ * Access to a heap object in the VM was attempted with a {@link Reference}
+ * that did not point to a valid object.
  *
  * @author Michael Van De Vanter
  */
@@ -43,7 +44,7 @@ public class InvalidReferenceException extends RuntimeException {
     @Override
     public String getMessage() {
         try {
-            return reference.toGrip().toOrigin().toHexString();
+            return "Reference " + reference.toGrip().toOrigin().toHexString() + " does not point at a valid heap object";
         } catch (Throwable t) {
             return "Error converting invalid reference to string: " + t;
         }
