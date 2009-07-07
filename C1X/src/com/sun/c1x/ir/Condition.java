@@ -83,7 +83,7 @@ public enum Condition {
      * <code>Boolean.FALSE</code> if the comparison is known to be false, <code>null</code> otherwise.
      */
     public Boolean foldCondition(ConstType lt, ConstType rt) {
-        switch (lt.basicType()) {
+        switch (lt.basicType) {
             case Int: {
                 int x = lt.asInt();
                 int y = rt.asInt();

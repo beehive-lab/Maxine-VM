@@ -321,7 +321,6 @@ public final class WatchpointsTable extends InspectorTable {
             super(inspection, 0);
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxWatchpoint watchpoint = (MaxWatchpoint) value;
             setValue(watchpoint.size().toInt());
@@ -406,7 +405,6 @@ public final class WatchpointsTable extends InspectorTable {
             super(inspection, "");
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxWatchpoint watchpoint = (MaxWatchpoint) value;
             setText(watchpoint.description());

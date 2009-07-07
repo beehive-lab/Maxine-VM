@@ -42,7 +42,7 @@ public class ClassType extends ValueType {
         super(BasicType.Object);
         this.type = type;
         if (type.isLoaded()) {
-            constant = new ConstType(BasicType.Object, type.javaClass(), true);
+            constant = new ConstType(BasicType.Object, type.javaClass());
         }
     }
 
