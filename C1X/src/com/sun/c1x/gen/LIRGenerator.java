@@ -76,7 +76,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
     public LIRGenerator(C1XCompilation compilation) {
         this.compilation = compilation;
-        this.virtualRegisterNumber = LIROperand.VirtualRegister.RegisterBase.value();
+        this.virtualRegisterNumber = LIROperand.VirtualRegister.RegisterBase.value;
         this.vregFlags = new BitMap2D(0, VregFlag.NumVregFlags.ordinal());
         init();
     }
@@ -951,7 +951,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         LIRAddress addr = null;
         if (indexOp.isConstant()) {
             assert log2scale == 0 : "must not have a scale";
-            addr = new LIRAddress(baseOp, indexOp.asJint(), dstType);
+            addr = new LIRAddress(baseOp, indexOp.asInt(), dstType);
         } else {
 
             if (compilation.target.arch.isX86()) {
@@ -1332,7 +1332,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             CodeEmitInfo info = stateFor(x);
             CodeStub stub = new RangeCheckStub(info, index.result(), true);
             if (index.result().isConstant()) {
-                cmpMemInt(LIRCondition.BelowEqual, buf.result(), compilation.runtime.javaNioBufferLimitOffset(), index.result().asJint(), info);
+                cmpMemInt(LIRCondition.BelowEqual, buf.result(), compilation.runtime.javaNioBufferLimitOffset(), index.result().asInt(), info);
                 lir.branch(LIRCondition.BelowEqual, BasicType.Int, stub);
             } else {
                 cmpRegMem(LIRCondition.AboveEqual, index.result(), buf.result(), compilation.runtime.javaNioBufferLimitOffset(), BasicType.Int, info);
@@ -1441,7 +1441,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             case Bytecodes.IMUL:
                 boolean didStrengthReduce = false;
                 if (right.isConstant()) {
-                    int c = right.asJint();
+                    int c = right.asInt();
                     if (Util.isPowerOf2(c)) {
                         // do not need tmp here
                         lir.shiftLeft(leftOp, Util.log2(c), resultOp);
@@ -1610,7 +1610,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
     void arrayRangeCheck(LIROperand array, LIROperand index, CodeEmitInfo nullCheckInfo, CodeEmitInfo rangeCheckInfo) {
         CodeStub stub = new RangeCheckStub(rangeCheckInfo, index);
         if (index.isConstant()) {
-            cmpMemInt(LIRCondition.BelowEqual, array, compilation.runtime.arrayLengthOffsetInBytes(), index.asJint(), nullCheckInfo);
+            cmpMemInt(LIRCondition.BelowEqual, array, compilation.runtime.arrayLengthOffsetInBytes(), index.asInt(), nullCheckInfo);
             lir.branch(LIRCondition.BelowEqual, BasicType.Int, stub); // forward branch
         } else {
             cmpRegMem(LIRCondition.AboveEqual, index, array, compilation.runtime.arrayLengthOffsetInBytes(), BasicType.Int, nullCheckInfo);
@@ -1947,7 +1947,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
 
     LIROperand newRegister(BasicType type) {
         int vreg = virtualRegisterNumber;
-        if (vreg >= LIROperand.VirtualRegister.MaxRegisters.value()) {
+        if (vreg >= LIROperand.VirtualRegister.MaxRegisters.value) {
             throw new Bailout("out of virtual registers");
         }
         virtualRegisterNumber++;

@@ -29,7 +29,7 @@ import com.sun.c1x.value.*;
  *
  * @author Marcelo Cintra
  */
-public class LIRConstant extends LIROperandPtr {
+public class LIRConstant extends LIROperand {
 
     private ConstType value;
 
@@ -104,6 +104,7 @@ public class LIRConstant extends LIROperandPtr {
      *
      * @return the int value of the constant, if it is an int
      */
+    @Override
     public int asInt() {
         assertType(this, BasicType.Int);
         return value.asInt();
@@ -114,6 +115,7 @@ public class LIRConstant extends LIROperandPtr {
      *
      * @return the long value of the constant, if it is a long
      */
+    @Override
     public long asLong() {
         assertType(this, BasicType.Long);
         return value.asLong();

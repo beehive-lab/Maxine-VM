@@ -29,7 +29,7 @@ import com.sun.c1x.value.*;
  *
  * @author Marcelo Cintra
  */
-public class LIRAddress extends LIROperandPtr {
+public class LIRAddress extends LIROperand {
 
     public enum Scale {
         Times1,

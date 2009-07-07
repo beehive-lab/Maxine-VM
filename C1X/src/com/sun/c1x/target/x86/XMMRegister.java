@@ -18,54 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
-
-import com.sun.c1x.target.sparc.*;
-import com.sun.c1x.target.x86.*;
-import com.sun.c1x.value.*;
+package com.sun.c1x.target.x86;
 
 
-public class FrameMap {
+/**
+ * The <code>XMMRegister</code> class definition.
+ *
+ * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
+ *
+ */
+public class XMMRegister {
 
-    public CallingConvention runtimeCallingConvention(BasicType[] signature) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public CallingConvention javaCallingConvention(BasicType[] signature, boolean b) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public CallingConvention incomingArguments() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    /**
-     * @param cpuRegnr
-     * @return
-     */
-    public static Register cpuRnr2Reg(int cpuRegnr) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    /**
-     * @param xmmRegnr
-     * @return
-     */
-    public static XMMRegister nr2XmmReg(int xmmRegnr) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    /**
-     * @param fpuRegnr
-     * @return
-     */
-    public static FloatRegister nr2FloatReg(int fpuRegnr) {
-        // TODO Auto-generated method stub
-        return null;
-    }
 }
