@@ -66,6 +66,7 @@ public final class FatalError extends Error {
      *
      * @param message a message describing the error condition. This value may be {@code null}.
      * @see #unexpected(String, Address, Throwable)
+     * @return never
      */
     public static FatalError unexpected(String message) {
         throw unexpected(message, Address.zero(), null);
@@ -79,6 +80,7 @@ public final class FatalError extends Error {
      * @param message a message describing the error condition. This value may be {@code null}.
      * @param throwable an exception given more detail on the cause of the error condition. This value may be {@code null}.
      * @see #unexpected(String, Address, Throwable)
+     * @return never
      */
     public static FatalError unexpected(String message, Throwable throwable) {
         throw unexpected(message, Address.zero(), throwable);
@@ -92,6 +94,7 @@ public final class FatalError extends Error {
      * @param message a message describing the trap. This value may be {@code null}.
      * @param nativeTrapAddress the address reported by the OS at which the trap occurred
      * @see #unexpected(String, Address, Throwable)
+     * @return never
      */
     public static FatalError unexpected(String message, Address nativeTrapAddress) {
         throw unexpected(message, nativeTrapAddress, null);
@@ -107,6 +110,7 @@ public final class FatalError extends Error {
      * @param throwable an exception given more detail on the cause of the error condition. This value may be {@code null}.
      * @param nativeTrapAddress if this value is not equal to {@link Address#zero()}, then it is the address reported by
      *            the OS at which a trap occurred in native code
+     * @return never
      */
     public static FatalError unexpected(String message, Address nativeTrapAddress, Throwable throwable) {
         if (MaxineVM.isPrototyping()) {
@@ -138,8 +142,7 @@ public final class FatalError extends Error {
             MaxineVM.native_exit(11);
         }
         MaxineVM.native_trap_exit(11, nativeTrapAddress);
-        final FatalError unreachable = UnsafeLoophole.cast(null);
-        throw unreachable;
+        throw null; // unreachable
     }
 
     /**
@@ -171,6 +174,7 @@ public final class FatalError extends Error {
      * This method never returns normally.
      *
      * @see #unexpected(String, Address, Throwable)
+     * @return never
      */
     public static FatalError unimplemented() {
         throw unexpected("Unimplemented", Address.zero(), null);
