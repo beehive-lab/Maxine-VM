@@ -92,8 +92,6 @@ public abstract class UnixAMD64EirABI extends AMD64EirABI {
                     if (iXMM < xmmParameterRegisters.length()) {
                         result[i] = xmmParameterRegisters.get(iXMM);
                         iXMM++;
-                    } else {
-                        DebugBreak.here();
                     }
                     break;
                 }

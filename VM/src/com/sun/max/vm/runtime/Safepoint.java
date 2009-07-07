@@ -158,17 +158,15 @@ public abstract class Safepoint {
      */
     public static void reset(Pointer vmThreadLocals) {
         if (UseThreadStateWordForGCMutatorSynchronization) {
-            final int state = STATE.getVariableWord(vmThreadLocals).asAddress().toInt();
+            final int state = MUTATOR_STATE.getVariableWord(vmThreadLocals).asAddress().toInt();
             if (state == THREAD_IN_GC_FROM_NATIVE) {
-                STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_NATIVE));
+                MUTATOR_STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_NATIVE));
             } else {
                 if (state != THREAD_IN_GC_FROM_JAVA) {
                     reportIllegalThreadState("While resetting safepoints", state);
                 }
-                STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_JAVA));
+                MUTATOR_STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_JAVA));
             }
-        } else {
-            SAFEPOINT_VENUE.setVariableReference(vmThreadLocals, Reference.fromJava(Safepoint.Venue.NATIVE));
         }
         SAFEPOINT_LATCH.setVariableWord(vmThreadLocals, SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals));
     }

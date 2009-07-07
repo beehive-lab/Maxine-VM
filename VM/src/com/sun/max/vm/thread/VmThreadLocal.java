@@ -145,11 +145,15 @@ public enum VmThreadLocal {
     ADJUSTED_CARDTABLE_BASE(Kind.WORD),
 
     /**
-     * The {@linkplain Safepoint.Venue value} indicating the type of code that a thread was executing when the last safepoint occurred.
+     * The state of this thread with respect to GC.
      */
-    SAFEPOINT_VENUE(Kind.REFERENCE),
+    MUTATOR_STATE(Kind.WORD),
 
-    STATE(Kind.WORD),
+    /**
+     * The state of GC. This is a boolean. It cannot be a global as reading a global compiles as the use of a
+     * reference literal (the static tuple) which cannot be safely accessed during GC.
+     */
+    GC_STATE(Kind.WORD),
 
     /**
      * The number of the trap (i.e. signal) that occurred.
@@ -204,7 +208,10 @@ public enum VmThreadLocal {
      * The address of the active stack slot with the lowest address that is covered by the
      * {@linkplain #STACK_REFERENCE_MAP stack reference map}. This value is set during stack reference map preparation
      * and then used by stack reference map scanning. That is, this value indicates how much of the stack represents
-     * live data at any given garbage collection point.
+     * live data at any given garbage collection point. The value is only non-zero for a Java thread that was stopped
+     * for GC <b>and</b> has partially prepared its stack reference map. That is, if the GC sees a zero value for a thread
+     * that has been stopped (with repect to object graph mutation), then it infers said thread is in native code and
+     * needs to have its <b>complete</b> stack reference map prepared on its behalf.
      */
     LOWEST_ACTIVE_STACK_SLOT_ADDRESS(Kind.WORD),
 
@@ -587,6 +594,8 @@ public enum VmThreadLocal {
         if (Heap.traceGCRootScanning()) {
             Log.unlock(lockDisabledSafepoints);
         }
+
+        LOWEST_ACTIVE_STACK_SLOT_ADDRESS.setVariableWord(vmThreadLocals, Address.zero());
     }
 
     public static Pointer vmThreadLocalsEnd(Pointer vmThreadLocals) {

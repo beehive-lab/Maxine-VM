@@ -56,7 +56,7 @@ public abstract class ConditionVariable {
      * {@code ConditionVariable} to wake-up.
      *
      * @param all notify all threads
-     * @return true if an error occured in native code; false otherwise
+     * @return true if an error occurred in native code; false otherwise
      */
     public abstract boolean threadNotify(boolean all);
 

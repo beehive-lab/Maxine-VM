@@ -111,7 +111,7 @@ public final class JniFunctionWrapper {
 
         if (Safepoint.UseThreadStateWordForGCMutatorSynchronization) {
             final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-            final Pointer statePointer = STATE.pointer(enabledVmThreadLocals);
+            final Pointer statePointer = MUTATOR_STATE.pointer(enabledVmThreadLocals);
             final int oldValue = Safepoint.cas(statePointer, THREAD_IN_JAVA, THREAD_IN_NATIVE);
             if (oldValue != THREAD_IN_JAVA) {
                 Safepoint.reportIllegalThreadState("JNI function call epilogue", oldValue);

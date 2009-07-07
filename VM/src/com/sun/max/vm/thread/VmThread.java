@@ -26,6 +26,8 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.lang.reflect.*;
 
+import sun.misc.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
@@ -43,7 +45,6 @@ import com.sun.max.vm.jni.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.object.host.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.VMRegister.*;
 import com.sun.max.vm.stack.*;
@@ -271,11 +272,6 @@ public class VmThread {
     @INLINE
     public final ConditionVariable waitingCondition() {
         return waitingCondition;
-    }
-
-    @INLINE
-    public final void setWaitingCondition(ConditionVariable waitingCondition) {
-        this.waitingCondition = waitingCondition;
     }
 
     /**
@@ -514,9 +510,6 @@ public class VmThread {
         NATIVE_THREAD.setConstantWord(enabledVmThreadLocals, nativeThread);
         JNI_ENV.setConstantWord(enabledVmThreadLocals, JniNativeInterface.pointer());
         VmThreadLocal.TAG.setConstantWord(enabledVmThreadLocals, TAG);
-        if (!Safepoint.UseThreadStateWordForGCMutatorSynchronization) {
-            SAFEPOINT_VENUE.setVariableReference(enabledVmThreadLocals, Reference.fromJava(Safepoint.Venue.NATIVE));
-        }
 
         // Add the VM thread locals to the active map
         final VmThread vmThread = VmThreadMap.ACTIVE.addVmThreadLocals(id, enabledVmThreadLocals);

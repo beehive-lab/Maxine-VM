@@ -26,108 +26,88 @@ void mutex_initialize(Mutex mutex) {
 #if log_MONITORS
     log_println("mutex_initialize(%p, %p)", thread_self(), mutex);
 #endif
-#   if os_SOLARIS
-	    if (mutex_init(mutex, LOCK_RECURSIVE | LOCK_ERRORCHECK, NULL) != 0) {
-	        c_ASSERT(false);
-	    }
-#   elif os_LINUX || os_DARWIN
-	    pthread_mutexattr_t mutex_attribute;
-	    if (pthread_mutexattr_init(&mutex_attribute) != 0) {
-	        c_ASSERT(false);
-	    }
-	    if (pthread_mutexattr_settype(&mutex_attribute, PTHREAD_MUTEX_RECURSIVE) != 0) {
-	        c_ASSERT(false);
-	    }
-	    if (pthread_mutex_init(mutex, &mutex_attribute) != 0) {
-	        c_ASSERT(false);
-	    }
-	    if (pthread_mutexattr_destroy(&mutex_attribute) != 0) {
-	        c_ASSERT(false);
-	    }
-#   elif os_GUESTVMXEN
-	    *mutex = guestvmXen_monitor_create();
+#if os_SOLARIS
+    if (mutex_init(mutex, LOCK_RECURSIVE | LOCK_ERRORCHECK, NULL) != 0) {
+        c_ASSERT(false);
+    }
+#elif os_LINUX || os_DARWIN
+    pthread_mutexattr_t mutex_attribute;
+    if (pthread_mutexattr_init(&mutex_attribute) != 0) {
+        c_ASSERT(false);
+    }
+    if (pthread_mutexattr_settype(&mutex_attribute, PTHREAD_MUTEX_RECURSIVE) != 0) {
+        c_ASSERT(false);
+    }
+    if (pthread_mutex_init(mutex, &mutex_attribute) != 0) {
+        c_ASSERT(false);
+    }
+    if (pthread_mutexattr_destroy(&mutex_attribute) != 0) {
+        c_ASSERT(false);
+    }
+#elif os_GUESTVMXEN
+    *mutex = guestvmXen_monitor_create();
 #   else
         c_UNIMPLEMENTED();
 #   endif
 }
 
+int mutex_enter_nolog(Mutex mutex) {
 #if os_SOLARIS
-
-    int mutex_enter(Mutex mutex) {
-#       if log_MONITORS
-            log_println("mutex_enter     (%p, %p)", thread_self(), mutex);
-#       endif
-        return mutex_lock(mutex);
-    }
-
-    int mutex_exit(Mutex mutex) {
-#       if log_MONITORS
-            log_println("mutex_exit     (%p, %p)", thread_self(), mutex);
-#       endif
-        return mutex_unlock(mutex);
-    }
-
-    void mutex_dispose(Mutex mutex) {
-#       if log_MONITORS
-            log_println("mutex_dispose   (%p, %p)", thread_self(), mutex);
-#       endif
-        if (mutex_destroy(mutex) != 0) {
-            c_ASSERT(false);
-        }
-    }
-
+    return mutex_lock(mutex);
 #elif os_LINUX || os_DARWIN
-
-	int mutex_enter(Mutex mutex) {
-#       if log_MONITORS
-            log_println("mutex_enter     (%p, %p)", thread_self(), mutex);
-#       endif
-		return pthread_mutex_lock(mutex);
-	}
-
-	int mutex_exit(Mutex mutex) {
-#       if log_MONITORS
-            log_println("mutex_exit     (%p, %p)", thread_self(), mutex);
-#       endif
-		return pthread_mutex_unlock(mutex);
-	}
-
-	void mutex_dispose(Mutex mutex) {
-#       if log_MONITORS
-            log_println("mutex_dispose   (%p, %p)", thread_self(), mutex);
-#       endif
-	    if (pthread_mutex_destroy(mutex) != 0) {
-	        c_ASSERT(false);
-	    }
-	}
-
+    return pthread_mutex_lock(mutex);
 #elif os_GUESTVMXEN
-
-	int mutex_enter(Mutex mutex) {
-#       if log_MONITORS
-            log_println("mutex_dispose   (%p, %p)", thread_self(), mutex);
-#       endif
-		if (guestvmXen_monitor_enter(*mutex) != 0) {
-			c_ASSERT(false);
-		}
-		return 0;
-	}
-
-	int mutex_exit(Mutex mutex) {
-#       if log_MONITORS
-            log_println("mutex_exit     (%p, %p)", thread_self(), mutex);
-#       endif
-		if (guestvmXen_monitor_exit(*mutex) != 0) {
-			c_ASSERT(false);
-		}
-		return 0;
-	}
-
-	Boolean mutex_isHeld(Mutex mutex) {
-#       if log_MONITORS
-            log_println("mutex_dispose   (%p, %p)", thread_self(), mutex);
-#       endif
-        return guestvmXen_holds_monitor(*mutex);
-	}
-
+    if (guestvmXen_monitor_enter(*mutex) != 0) {
+        c_ASSERT(false);
+    }
+    return 0;
+#else
+    c_UNIMPLEMENTED();
 #endif
+}
+
+int mutex_enter(Mutex mutex) {
+#if log_MONITORS
+    log_println("mutex_enter     (%p, %p)", thread_self(), mutex);
+#endif
+    return mutex_enter_nolog(mutex);
+}
+
+int mutex_exit_nolog(Mutex mutex) {
+#if os_SOLARIS
+    return mutex_unlock(mutex);
+#elif os_LINUX || os_DARWIN
+    return pthread_mutex_unlock(mutex);
+#elif os_GUESTVMXEN
+    if (guestvmXen_monitor_exit(*mutex) != 0) {
+        c_ASSERT(false);
+    }
+    return 0;
+#else
+    c_UNIMPLEMENTED();
+#endif
+}
+
+int mutex_exit(Mutex mutex) {
+#if log_MONITORS
+    log_println("mutex_exit     (%p, %p)", thread_self(), mutex);
+#endif
+    return mutex_exit_nolog(mutex);
+}
+
+void mutex_dispose(Mutex mutex) {
+#if log_MONITORS
+    log_println("mutex_dispose   (%p, %p)", thread_self(), mutex);
+#endif
+#if os_SOLARIS
+    if (mutex_destroy(mutex) != 0) {
+        c_ASSERT(false);
+    }
+#elif os_LINUX || os_DARWIN
+    if (pthread_mutex_destroy(mutex) != 0) {
+        c_ASSERT(false);
+    }
+#elif os_GUESTVMXEN
+    c_UNIMPLEMENTED();
+#endif
+}

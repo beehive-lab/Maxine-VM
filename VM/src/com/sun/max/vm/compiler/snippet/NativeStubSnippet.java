@@ -84,7 +84,7 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
                 LAST_JAVA_CALLER_INSTRUCTION_POINTER.setVariableWord(vmThreadLocals, VMRegister.getInstructionPointer());
 
                 final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-                final Pointer statePointer = STATE.pointer(enabledVmThreadLocals);
+                final Pointer statePointer = MUTATOR_STATE.pointer(enabledVmThreadLocals);
                 int oldValue = Safepoint.cas(statePointer, THREAD_IN_JAVA, THREAD_IN_NATIVE);
                 if (oldValue != THREAD_IN_JAVA) {
                     if (oldValue != THREAD_IN_JAVA_STOPPING_FOR_GC) {
@@ -96,8 +96,11 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
                     }
                 }
             } else {
-                MemoryBarrier.storeStore(); // The following store must be last:
                 LAST_JAVA_CALLER_INSTRUCTION_POINTER.setVariableWord(vmThreadLocals, VMRegister.getInstructionPointer());
+
+                MemoryBarrier.memopStore(); // The following store must be last:
+
+                MUTATOR_STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_NATIVE));
             }
             return vmThreadLocals;
         }
@@ -114,7 +117,7 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
         public static void nativeCallEpilogue(Pointer vmThreadLocals) {
             if (Safepoint.UseThreadStateWordForGCMutatorSynchronization) {
                 final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-                final Pointer statePointer = STATE.pointer(enabledVmThreadLocals);
+                final Pointer statePointer = MUTATOR_STATE.pointer(enabledVmThreadLocals);
 
                 if (Safepoint.cas(statePointer, THREAD_IN_GC_FROM_JAVA, THREAD_IN_JAVA) == THREAD_IN_GC_FROM_JAVA) {
                     // done!
@@ -129,7 +132,7 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
                 // Ensure that reading of the GC state variable sees the last write to it:
                 MemoryBarrier.storeLoad();
 
-                spinUntilGCFinished();
+                spinUntilGCFinished(vmThreadLocals);
 
                 // Set the current instruction pointer in TLS to zero to indicate the transition back into Java code
                 LAST_JAVA_CALLER_INSTRUCTION_POINTER.setVariableWord(vmThreadLocals, Word.zero());
@@ -141,10 +144,33 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
          */
         @INLINE
         @NO_SAFEPOINTS("Cannot take a trap while GC is running")
-        private static void spinUntilGCFinished() {
-            while (Safepoint.isTriggered()) {
-                // Spin loop that is free of safepoints and object accesses
-                SpecialBuiltin.pause();
+        private static void spinUntilGCFinished(Pointer vmThreadLocals) {
+            if (UseThreadStateWordForGCMutatorSynchronization) {
+                while (Safepoint.isTriggered()) {
+                    // Spin loop that is free of safepoints and object accesses
+                    SpecialBuiltin.pause();
+                }
+            } else {
+                while (true) {
+                    // Signal that we intend to go back into Java:
+                    MUTATOR_STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_JAVA));
+
+                    // Ensure that the GC sees the above state transition:
+                    MemoryBarrier.storeLoad();
+
+                    // Ask if GC is in progress:
+                    if (GC_STATE.getVariableWord(vmThreadLocals).isZero()) {
+                        // If GC was not in progress that the state transition above was valid (common path)
+                        break;
+                    }
+
+                    // GC is in progress (same one or a subsequent one) so above state transition is invalid
+                    // so undo it and spin until GC is finished and then retry transition
+                    MUTATOR_STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_NATIVE));
+                    while (!GC_STATE.getVariableWord(vmThreadLocals).isZero()) {
+                        // Spin without doing unnecessary stores
+                    }
+                }
             }
         }
 
