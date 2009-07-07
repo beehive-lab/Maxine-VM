@@ -563,13 +563,12 @@ public class ValueStack {
      */
     public ValueStack popScope() {
         IRScope callingScope = scope.caller;
-        int maxStack = maxStackSize() - scope.method.maxStackSize();
         assert callingScope != null;
-        assert maxStack >= 0;
-        ValueStack res = new ValueStack(callingScope, callingScope.method.maxLocals(), maxStack);
+        assert maxStackSize() >= scope.method.maxStackSize();
+        ValueStack res = new ValueStack(callingScope, callingScope.method.maxLocals(), maxStackSize());
         res.replaceStack(this);
         res.replaceLocks(this);
-        res.replaceLocals(callingScope.callerState());
+        res.replaceLocals(scope.callerState());
         return res;
     }
 
@@ -661,8 +660,8 @@ public class ValueStack {
     private void checkSize(ValueStack other) {
         if (other.stackIndex != stackIndex) {
             throw new Bailout("stack sizes do not match");
-        } else if (other.values.length != values.length) {
-            throw new Bailout("value sizes do not match");
+        } else if (other.maxLocals != maxLocals) {
+            throw new Bailout("local sizes do not match");
         }
     }
 
