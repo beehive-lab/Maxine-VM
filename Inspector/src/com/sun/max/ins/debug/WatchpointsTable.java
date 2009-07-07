@@ -102,29 +102,12 @@ public final class WatchpointsTable extends InspectorTable {
     }
 
     public void refresh(boolean force) {
-        if (maxVMState().newerThan(lastRefreshedState) || force) {
-            lastRefreshedState = maxVMState();
-            tableModel.refresh();
-            for (TableColumn column : columns) {
-                final Prober prober = (Prober) column.getCellRenderer();
-                if (prober != null) {
-                    prober.refresh(force);
-                }
-            }
-        }
-        invalidate();
-        repaint();
+        lastRefreshedState = refresh(force, lastRefreshedState, tableModel, columns);
+        tableModel.refresh();
     }
 
     public void redisplay() {
-        for (TableColumn column : columns) {
-            final Prober prober = (Prober) column.getCellRenderer();
-            if (prober != null) {
-                prober.redisplay();
-            }
-        }
-        invalidate();
-        repaint();
+        redisplay(columns);
     }
 
     @Override
@@ -145,15 +128,9 @@ public final class WatchpointsTable extends InspectorTable {
     public void valueChanged(ListSelectionEvent listSelectionEvent) {
         // Row selection changed, perhaps by user mouse click or navigation;
         // update user focus to follow the selection.
-        super.valueChanged(listSelectionEvent);
-        if (!listSelectionEvent.getValueIsAdjusting()) {
-            final int row = getSelectedRow();
-            if (row >= 0) {
-                final MaxWatchpoint watchpoint = (MaxWatchpoint) getValueAt(row, 0);
-                if (watchpoint != null) {
-                    focus().setWatchpoint(watchpoint);
-                }
-            }
+        final MaxWatchpoint watchpoint = (MaxWatchpoint) getChangedValueRow(listSelectionEvent);
+        if (watchpoint != null) {
+            focus().setWatchpoint(watchpoint);
         }
     }
 

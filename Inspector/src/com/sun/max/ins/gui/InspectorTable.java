@@ -23,6 +23,7 @@ package com.sun.max.ins.gui;
 import java.awt.*;
 
 import javax.swing.*;
+import javax.swing.event.*;
 import javax.swing.table.*;
 
 import com.sun.max.collect.*;
@@ -151,6 +152,47 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
      */
     public void updateFocusSelection() {
     }
+
+    public MaxVMState refresh(boolean force, MaxVMState lastRefreshedState, DefaultTableModel tableModel, TableColumn[] columns) {
+        MaxVMState maxVMState = maxVMState();
+        if (maxVMState.newerThan(lastRefreshedState) || force) {
+            for (TableColumn column : columns) {
+                final Prober prober = (Prober) column.getCellRenderer();
+                if (prober != null) {
+                    prober.refresh(force);
+                }
+            }
+        } else {
+            maxVMState = lastRefreshedState;
+        }
+        invalidate();
+        repaint();
+
+        return maxVMState;
+    }
+
+    public void redisplay(TableColumn[] columns) {
+        for (TableColumn column : columns) {
+            final Prober prober = (Prober) column.getCellRenderer();
+            if (prober != null) {
+                prober.redisplay();
+            }
+        }
+        invalidate();
+        repaint();
+    }
+
+    public Object getChangedValueRow(ListSelectionEvent listSelectionEvent) {
+        super.valueChanged(listSelectionEvent);
+        if (!listSelectionEvent.getValueIsAdjusting()) {
+            final int row = getSelectedRow();
+            if (row >= 0) {
+                return getValueAt(row, 0);
+            }
+        }
+        return null;
+    }
+
 
     /**
      * Scrolls the table to display the specified range (with a few rows before or after if possible).
