@@ -69,11 +69,8 @@ public final class BreakpointsTable extends InspectorTable {
     public void updateFocusSelection() {
         final TeleBreakpoint teleBreakpoint = inspection().focus().breakpoint();
         final int row = tableModel.findRow(teleBreakpoint);
-        if (row < 0) {
-            clearSelection();
-        } else  if (row != getSelectedRow()) {
-            setRowSelectionInterval(row, row);
-        }
+
+        updateFocusSelection(row);
     }
 
     public void refresh(boolean force) {
@@ -87,6 +84,7 @@ public final class BreakpointsTable extends InspectorTable {
 
     @Override
     public void valueChanged(ListSelectionEvent listSelectionEvent) {
+        // TODO: Add MaxBreakpoint interface and generalize this code (cf. WatchpointsTable)
         // Row selection changed, perhaps by user mouse click or navigation;
         // update user focus to follow the selection.
         super.valueChanged(listSelectionEvent);
@@ -100,20 +98,6 @@ public final class BreakpointsTable extends InspectorTable {
                 }
             }
         }
-    }
-
-    @Override
-    protected JTableHeader createDefaultTableHeader() {
-        // Custom table header with tooltips that describe the column data.
-        return new JTableHeader(columnModel) {
-            @Override
-            public String getToolTipText(MouseEvent mouseEvent) {
-                final Point p = mouseEvent.getPoint();
-                final int index = columnModel.getColumnIndexAtX(p.x);
-                final int modelIndex = columnModel.getColumn(index).getModelIndex();
-                return BreakpointsColumnKind.VALUES.get(modelIndex).toolTipText();
-            }
-        };
     }
 
     private final class BreakpointsColumnModel extends DefaultTableColumnModel {

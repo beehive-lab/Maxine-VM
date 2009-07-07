@@ -21,6 +21,7 @@
 package com.sun.max.ins.gui;
 
 import java.awt.*;
+import java.awt.event.*;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -28,6 +29,7 @@ import javax.swing.table.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
+import com.sun.max.ins.debug.*;
 import com.sun.max.tele.*;
 
 
@@ -93,6 +95,29 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         getTableHeader().setBackground(inspection.style().defaultBackgroundColor());
         getTableHeader().setFont(style().defaultTextFont());
     }
+
+    public void updateFocusSelection(int row) {
+        if (row < 0) {
+            clearSelection();
+        } else  if (row != getSelectedRow()) {
+            setRowSelectionInterval(row, row);
+        }
+    }
+
+    @Override
+    protected JTableHeader createDefaultTableHeader() {
+        // Custom table header with tooltips that describe the column data.
+        return new JTableHeader(columnModel) {
+            @Override
+            public String getToolTipText(MouseEvent mouseEvent) {
+                final Point p = mouseEvent.getPoint();
+                final int index = columnModel.getColumnIndexAtX(p.x);
+                final int modelIndex = columnModel.getColumn(index).getModelIndex();
+                return WatchpointsColumnKind.VALUES.get(modelIndex).toolTipText();
+            }
+        };
+    }
+
     public final Inspection inspection() {
         return inspection;
     }
