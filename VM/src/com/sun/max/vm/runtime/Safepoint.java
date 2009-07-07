@@ -58,7 +58,7 @@ import com.sun.max.vm.thread.*;
  */
 public abstract class Safepoint {
 
-    public static final boolean UseThreadStateWordForGCMutatorSynchronization = true;
+    public static final boolean UseThreadStateWordForGCMutatorSynchronization = false;
 
     public static final int cas(Pointer statePointer, int suspectedValue, int newValue) {
 //        Log.printVmThread(VmThread.current(), false);
