@@ -58,21 +58,21 @@ import com.sun.max.vm.thread.*;
  */
 public abstract class Safepoint {
 
-    public static final boolean UseThreadStateWordForGCMutatorSynchronization = false;
+    public static final boolean UseThreadStateWordForGCMutatorSynchronization = true;
 
     public static final int cas(Pointer statePointer, int suspectedValue, int newValue) {
-        Log.printVmThread(VmThread.current(), false);
-        Log.print(": ");
-        Log.print(suspectedValue);
-        Log.print(" -> ");
-        Log.println(newValue);
+//        Log.printVmThread(VmThread.current(), false);
+//        Log.print(": ");
+//        Log.print(suspectedValue);
+//        Log.print(" -> ");
+//        Log.println(newValue);
         final int result = statePointer.compareAndSwapInt(suspectedValue, newValue);
-        Log.printVmThread(VmThread.current(), false);
-        Log.print(": ");
-        Log.print(suspectedValue);
-        Log.print(" -> ");
-        Log.print(newValue);
-        Log.println(" done");
+//        Log.printVmThread(VmThread.current(), false);
+//        Log.print(": ");
+//        Log.print(suspectedValue);
+//        Log.print(" -> ");
+//        Log.print(newValue);
+//        Log.println(" done");
         return result;
     }
 
@@ -159,6 +159,7 @@ public abstract class Safepoint {
     public static void reset(Pointer vmThreadLocals) {
         if (UseThreadStateWordForGCMutatorSynchronization) {
             final int state = STATE.getVariableWord(vmThreadLocals).asAddress().toInt();
+
             if (state == THREAD_IN_GC_FROM_NATIVE) {
                 STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_NATIVE));
             } else {
@@ -167,6 +168,7 @@ public abstract class Safepoint {
                 }
                 STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_JAVA));
             }
+
         } else {
             SAFEPOINT_VENUE.setVariableReference(vmThreadLocals, Reference.fromJava(Safepoint.Venue.NATIVE));
         }

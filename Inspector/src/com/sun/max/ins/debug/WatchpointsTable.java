@@ -45,7 +45,7 @@ import com.sun.max.vm.value.*;
  */
 public final class WatchpointsTable extends InspectorTable {
 
-    private final WatchpointsTableModel model;
+    private final WatchpointsTableModel tableModel;
     private final WatchpointsColumnModel columnModel;
     private final TableColumn[] columns;
 
@@ -53,19 +53,13 @@ public final class WatchpointsTable extends InspectorTable {
 
     WatchpointsTable(Inspection inspection, WatchpointsViewPreferences viewPreferences) {
         super(inspection);
-        model = new WatchpointsTableModel();
+        tableModel = new WatchpointsTableModel();
         columns = new TableColumn[WatchpointsColumnKind.VALUES.length()];
         columnModel = new WatchpointsColumnModel(viewPreferences);
 
-        setModel(model);
-        setColumnModel(columnModel);
-        setShowHorizontalLines(style().defaultTableShowHorizontalLines());
-        setShowVerticalLines(style().defaultTableShowVerticalLines());
-        setIntercellSpacing(style().defaultTableIntercellSpacing());
-        setRowHeight(style().defaultTableRowHeight());
-        setRowSelectionAllowed(true);
-        setColumnSelectionAllowed(false);
-        setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        configure(tableModel, columnModel);
+
+        //TODO: generalize this
         addMouseListener(new TableCellMouseClickAdapter(inspection(), this) {
             @Override
             public void procedure(final MouseEvent mouseEvent) {
@@ -78,7 +72,7 @@ public final class WatchpointsTable extends InspectorTable {
                         final int modelIndex = getColumnModel().getColumn(columnIndex).getModelIndex();
                         if (modelIndex == WatchpointsColumnKind.DESCRIPTION.ordinal()) {
                             final InspectorMenu menu = new InspectorMenu();
-                            final MaxWatchpoint watchpoint = (MaxWatchpoint) model.getValueAt(hitRowIndex, modelIndex);
+                            final MaxWatchpoint watchpoint = (MaxWatchpoint) tableModel.getValueAt(hitRowIndex, modelIndex);
                             final TeleObject teleObject = watchpoint.getTeleObject();
                             if (teleObject != null) {
                                 menu.add(actions().inspectObject(teleObject, "Inspect Object"));
@@ -91,9 +85,6 @@ public final class WatchpointsTable extends InspectorTable {
             }
         }
         );
-        refresh(true);
-        JTableColumnResizer.adjustColumnPreferredWidths(this);
-        updateFocusSelection();
     }
 
     /**
@@ -102,7 +93,7 @@ public final class WatchpointsTable extends InspectorTable {
     @Override
     public void updateFocusSelection() {
         final MaxWatchpoint watchpoint = inspection().focus().watchpoint();
-        final int row = model.findRow(watchpoint);
+        final int row = tableModel.findRow(watchpoint);
         if (row < 0) {
             clearSelection();
         } else  if (row != getSelectedRow()) {
@@ -113,7 +104,7 @@ public final class WatchpointsTable extends InspectorTable {
     public void refresh(boolean force) {
         if (maxVMState().newerThan(lastRefreshedState) || force) {
             lastRefreshedState = maxVMState();
-            model.refresh();
+            tableModel.refresh();
             for (TableColumn column : columns) {
                 final Prober prober = (Prober) column.getCellRenderer();
                 if (prober != null) {
@@ -197,21 +188,24 @@ public final class WatchpointsTable extends InspectorTable {
      *
      * @author Michael Van De Vanter
      */
-    private final class WatchpointsTableModel extends AbstractTableModel {
+    private final class WatchpointsTableModel extends DefaultTableModel {
 
         void refresh() {
             fireTableDataChanged();
             updateFocusSelection();
         }
 
+        @Override
         public int getColumnCount() {
             return WatchpointsColumnKind.VALUES.length();
         }
 
+        @Override
         public int getRowCount() {
             return maxVM().watchpoints().length();
         }
 
+        @Override
         public Object getValueAt(int row, int col) {
             int count = 0;
             for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {

@@ -110,6 +110,9 @@ public class Object_new {
             for (int i = 0; i < nrAllocations; i++) {
                 final byte[] tmp = new byte[size];
                 tmp[0] = 1;
+                if (i%10000 == 0){
+                    System.out.println("Thread " + threadId + " allocCount: " + i);
+                }
             }
             try {
                 barrier2.waitForRelease();

@@ -58,6 +58,22 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         initialize();
     }
 
+    protected void configure(DefaultTableModel tableModel, DefaultTableColumnModel columnModel) {
+        setModel(tableModel);
+        setColumnModel(columnModel);
+        setShowHorizontalLines(style().defaultTableShowHorizontalLines());
+        setShowVerticalLines(style().defaultTableShowVerticalLines());
+        setIntercellSpacing(style().defaultTableIntercellSpacing());
+        setRowHeight(style().defaultTableRowHeight());
+        setRowSelectionAllowed(true);
+        setColumnSelectionAllowed(false);
+        setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        refresh(true);
+        JTableColumnResizer.adjustColumnPreferredWidths(this);
+        updateFocusSelection();
+    }
+
     /**
      * Creates a new {@JTable} for use in the {@link Inspection}.
      *
