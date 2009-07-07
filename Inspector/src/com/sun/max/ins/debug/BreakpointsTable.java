@@ -50,7 +50,7 @@ public final class BreakpointsTable extends InspectorTable {
     private BreakpointsColumnModel columnModel;
     private final TableColumn[] columns;
 
-    private MaxVMState lastStateRefreshed = null;
+    private MaxVMState lastRefreshedState = null;
 
     public BreakpointsTable(Inspection inspection, BreakpointsViewPreferences viewPreferences) {
         super(inspection);
@@ -77,25 +77,12 @@ public final class BreakpointsTable extends InspectorTable {
     }
 
     public void refresh(boolean force) {
-        if (maxVMState().newerThan(lastStateRefreshed) || force) {
-            lastStateRefreshed = maxVMState();
-            tableModel.refresh();
-            for (TableColumn column : columns) {
-                final Prober prober = (Prober) column.getCellRenderer();
-                if (prober != null) {
-                    prober.refresh(force);
-                }
-            }
-        }
+        lastRefreshedState = refresh(force, lastRefreshedState, tableModel, columns);
+        tableModel.refresh();
     }
 
     public void redisplay() {
-        for (TableColumn column : columns) {
-            final Prober prober = (Prober) column.getCellRenderer();
-            prober.redisplay();
-        }
-        invalidate();
-        repaint();
+        redisplay(columns);
     }
 
     @Override
