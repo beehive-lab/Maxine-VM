@@ -35,6 +35,7 @@ import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.value.*;
 
 
@@ -45,7 +46,7 @@ import com.sun.max.vm.value.*;
  */
 public final class WatchpointsTable extends InspectorTable {
 
-    private final WatchpointsTableModel model;
+    private final WatchpointsTableModel tableModel;
     private final WatchpointsColumnModel columnModel;
     private final TableColumn[] columns;
 
@@ -53,19 +54,13 @@ public final class WatchpointsTable extends InspectorTable {
 
     WatchpointsTable(Inspection inspection, WatchpointsViewPreferences viewPreferences) {
         super(inspection);
-        model = new WatchpointsTableModel();
+        tableModel = new WatchpointsTableModel();
         columns = new TableColumn[WatchpointsColumnKind.VALUES.length()];
         columnModel = new WatchpointsColumnModel(viewPreferences);
 
-        setModel(model);
-        setColumnModel(columnModel);
-        setShowHorizontalLines(style().defaultTableShowHorizontalLines());
-        setShowVerticalLines(style().defaultTableShowVerticalLines());
-        setIntercellSpacing(style().defaultTableIntercellSpacing());
-        setRowHeight(style().defaultTableRowHeight());
-        setRowSelectionAllowed(true);
-        setColumnSelectionAllowed(false);
-        setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        configure(tableModel, columnModel);
+
+        //TODO: generalize this
         addMouseListener(new TableCellMouseClickAdapter(inspection(), this) {
             @Override
             public void procedure(final MouseEvent mouseEvent) {
@@ -78,7 +73,7 @@ public final class WatchpointsTable extends InspectorTable {
                         final int modelIndex = getColumnModel().getColumn(columnIndex).getModelIndex();
                         if (modelIndex == WatchpointsColumnKind.DESCRIPTION.ordinal()) {
                             final InspectorMenu menu = new InspectorMenu();
-                            final MaxWatchpoint watchpoint = (MaxWatchpoint) model.getValueAt(hitRowIndex, modelIndex);
+                            final MaxWatchpoint watchpoint = (MaxWatchpoint) tableModel.getValueAt(hitRowIndex, modelIndex);
                             final TeleObject teleObject = watchpoint.getTeleObject();
                             if (teleObject != null) {
                                 menu.add(actions().inspectObject(teleObject, "Inspect Object"));
@@ -91,9 +86,6 @@ public final class WatchpointsTable extends InspectorTable {
             }
         }
         );
-        refresh(true);
-        JTableColumnResizer.adjustColumnPreferredWidths(this);
-        updateFocusSelection();
     }
 
     /**
@@ -102,71 +94,31 @@ public final class WatchpointsTable extends InspectorTable {
     @Override
     public void updateFocusSelection() {
         final MaxWatchpoint watchpoint = inspection().focus().watchpoint();
-        final int row = model.findRow(watchpoint);
-        if (row < 0) {
-            clearSelection();
-        } else  if (row != getSelectedRow()) {
-            setRowSelectionInterval(row, row);
-        }
+        final int row = tableModel.findRow(watchpoint);
+
+        updateFocusSelection(row);
     }
 
     public void refresh(boolean force) {
-        if (maxVMState().newerThan(lastRefreshedState) || force) {
-            lastRefreshedState = maxVMState();
-            model.refresh();
-            for (TableColumn column : columns) {
-                final Prober prober = (Prober) column.getCellRenderer();
-                if (prober != null) {
-                    prober.refresh(force);
-                }
-            }
-        }
-        invalidate();
-        repaint();
+        lastRefreshedState = refresh(force, lastRefreshedState, tableModel, columns);
+        tableModel.refresh();
     }
 
     public void redisplay() {
-        for (TableColumn column : columns) {
-            final Prober prober = (Prober) column.getCellRenderer();
-            if (prober != null) {
-                prober.redisplay();
-            }
-        }
-        invalidate();
-        repaint();
-    }
-
-    @Override
-    protected JTableHeader createDefaultTableHeader() {
-        // Custom table header with tooltips that describe the column data.
-        return new JTableHeader(columnModel) {
-            @Override
-            public String getToolTipText(MouseEvent mouseEvent) {
-                final Point p = mouseEvent.getPoint();
-                final int index = columnModel.getColumnIndexAtX(p.x);
-                final int modelIndex = columnModel.getColumn(index).getModelIndex();
-                return WatchpointsColumnKind.VALUES.get(modelIndex).toolTipText();
-            }
-        };
+        redisplay(columns);
     }
 
     @Override
     public void valueChanged(ListSelectionEvent listSelectionEvent) {
         // Row selection changed, perhaps by user mouse click or navigation;
         // update user focus to follow the selection.
-        super.valueChanged(listSelectionEvent);
-        if (!listSelectionEvent.getValueIsAdjusting()) {
-            final int row = getSelectedRow();
-            if (row >= 0) {
-                final MaxWatchpoint watchpoint = (MaxWatchpoint) getValueAt(row, 0);
-                if (watchpoint != null) {
-                    focus().setWatchpoint(watchpoint);
-                }
-            }
+        final MaxWatchpoint watchpoint = (MaxWatchpoint) getChangedValueRow(listSelectionEvent);
+        if (watchpoint != null) {
+            focus().setWatchpoint(watchpoint);
         }
     }
 
-    private final class WatchpointsColumnModel extends DefaultTableColumnModel {
+    private final class WatchpointsColumnModel extends InspectorTableColumnModel {
 
         private final WatchpointsViewPreferences viewPreferences;
 
@@ -178,17 +130,16 @@ public final class WatchpointsTable extends InspectorTable {
             createColumn(WatchpointsColumnKind.DESCRIPTION, new DescriptionCellRenderer(inspection()), null);
             createColumn(WatchpointsColumnKind.REGION, new RegionRenderer(inspection()), null);
             createColumn(WatchpointsColumnKind.READ, null, new DefaultCellEditor(new JCheckBox()));
+            createColumn(WatchpointsColumnKind.WRITE, null, new DefaultCellEditor(new JCheckBox()));
+            createColumn(WatchpointsColumnKind.EXEC, null, new DefaultCellEditor(new JCheckBox()));
         }
 
         private void createColumn(WatchpointsColumnKind columnKind, TableCellRenderer renderer, TableCellEditor editor) {
             final int col = columnKind.ordinal();
-            columns[col] = new TableColumn(col, 0, renderer, null);
-            columns[col].setHeaderValue(columnKind.label());
-            columns[col].setMinWidth(columnKind.minWidth());
+            columns[col] = createColumnInstance(columnKind, renderer, editor);
             if (viewPreferences.isVisible(columnKind)) {
                 addColumn(columns[col]);
             }
-            columns[col].setIdentifier(columnKind);
         }
     }
 
@@ -197,26 +148,35 @@ public final class WatchpointsTable extends InspectorTable {
      *
      * @author Michael Van De Vanter
      */
-    private final class WatchpointsTableModel extends AbstractTableModel {
+    private final class WatchpointsTableModel extends DefaultTableModel {
 
         void refresh() {
             fireTableDataChanged();
             updateFocusSelection();
         }
 
+        @Override
         public int getColumnCount() {
             return WatchpointsColumnKind.VALUES.length();
         }
 
+        @Override
         public int getRowCount() {
             return maxVM().watchpoints().length();
         }
 
+        @Override
         public Object getValueAt(int row, int col) {
             int count = 0;
             for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
                 if (WatchpointsColumnKind.VALUES.get(col) == WatchpointsColumnKind.READ) {
-                    return true;
+                    return watchpoint.isRead();
+                }
+                if (WatchpointsColumnKind.VALUES.get(col) == WatchpointsColumnKind.WRITE) {
+                    return watchpoint.isWrite();
+                }
+                if (WatchpointsColumnKind.VALUES.get(col) == WatchpointsColumnKind.EXEC) {
+                    return watchpoint.isExec();
                 }
                 if (count == row) {
                     return watchpoint;
@@ -226,10 +186,53 @@ public final class WatchpointsTable extends InspectorTable {
             return null;
         }
 
+        private MaxWatchpoint get(int row) {
+            int count = 0;
+            for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
+                if (count == row) {
+                    return watchpoint;
+                }
+                count++;
+            }
+            throw FatalError.unexpected("WatchpointsInspector.get(" + row + ") failed");
+        }
+
+        @Override
+        public void setValueAt(Object value, int row, int column) {
+            Boolean newState;
+            final MaxWatchpoint watchpoint = get(row);
+
+            switch (WatchpointsColumnKind.VALUES.get(column)) {
+                case READ:
+                    newState = (Boolean) value;
+                    if (watchpoint.setRead(newState)) {
+                        inspection().settings().save();
+                    }
+                    break;
+                case WRITE:
+                    newState = (Boolean) value;
+                    if (watchpoint.setWrite(newState)) {
+                        inspection().settings().save();
+                    }
+                    break;
+                case EXEC:
+                    newState = (Boolean) value;
+                    if (watchpoint.setExec(newState)) {
+                        inspection().settings().save();
+                    }
+                    break;
+                default:
+            }
+        }
+
         @Override
         public Class< ? > getColumnClass(int c) {
             switch (WatchpointsColumnKind.VALUES.get(c)) {
                 case READ:
+                    return Boolean.class;
+                case WRITE:
+                    return Boolean.class;
+                case EXEC:
                     return Boolean.class;
                 default:
                     return MaxWatchpoint.class;
