@@ -41,8 +41,4 @@ public abstract class OptimizedTargetMethod extends TargetMethod {
     public boolean areReferenceMapsFinalized() {
         return true;
     }
-
-    @Override
-    public void finalizeReferenceMaps() {
-    }
 }

@@ -22,9 +22,11 @@
 #include "log.h"
 #include "threads.h"
 
+#define THREAD_MUTEX_FORMAT "thread=%p, mutex=%p"
+
 void mutex_initialize(Mutex mutex) {
 #if log_MONITORS
-    log_println("mutex_initialize(%p, %p)", thread_self(), mutex);
+    log_println("mutex_initialize(" THREAD_MUTEX_FORMAT ")", thread_self(), mutex);
 #endif
 #if os_SOLARIS
     if (mutex_init(mutex, LOCK_RECURSIVE | LOCK_ERRORCHECK, NULL) != 0) {
@@ -68,7 +70,7 @@ int mutex_enter_nolog(Mutex mutex) {
 
 int mutex_enter(Mutex mutex) {
 #if log_MONITORS
-    log_println("mutex_enter     (%p, %p)", thread_self(), mutex);
+    log_println("mutex_enter     (" THREAD_MUTEX_FORMAT ")", thread_self(), mutex);
 #endif
     return mutex_enter_nolog(mutex);
 }
@@ -90,14 +92,14 @@ int mutex_exit_nolog(Mutex mutex) {
 
 int mutex_exit(Mutex mutex) {
 #if log_MONITORS
-    log_println("mutex_exit     (%p, %p)", thread_self(), mutex);
+    log_println("mutex_exit     (" THREAD_MUTEX_FORMAT ")", thread_self(), mutex);
 #endif
     return mutex_exit_nolog(mutex);
 }
 
 void mutex_dispose(Mutex mutex) {
 #if log_MONITORS
-    log_println("mutex_dispose   (%p, %p)", thread_self(), mutex);
+    log_println("mutex_dispose   (" THREAD_MUTEX_FORMAT ")", thread_self(), mutex);
 #endif
 #if os_SOLARIS
     if (mutex_destroy(mutex) != 0) {

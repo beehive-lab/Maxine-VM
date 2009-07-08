@@ -25,26 +25,23 @@ import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.optimize.*;
 
 /**
- * Wrapper for hard safepoint builtins.
- * These can not be optimized away.
+ * Wrapper for safepoint builtins.
+ * The optimizer may eliminate some of these as appropriate.
  *
  * @author Bernd Mathiske
  */
-public final class CirHardSafepointBuiltin extends CirSpecialBuiltin {
+public final class CirSafepointBuiltin extends CirSpecialBuiltin {
 
-    public CirHardSafepointBuiltin() {
-        super(SafepointBuiltin.HardSafepoint.BUILTIN);
+    public CirSafepointBuiltin() {
+        super(SafepointBuiltin.BUILTIN);
     }
 
     @Override
     public boolean isFoldable(CirOptimizer cirOptimizer, CirValue[] arguments) {
-        assert !cirOptimizer.cirMethod().classMethodActor().noSafepoints();
-        return false;
+        if (cirOptimizer.cirMethod().classMethodActor().noSafepoints()) {
+            // this method has been annotated with a directive to suppress safepoints
+            return true;
+        }
+        return false; //TODO: eliminate redundant soft safepoints - requires analysis
     }
-
-//    @Override
-//    public boolean needsJavaFrameDescriptor() {
-//        return true;
-//    }
-
 }

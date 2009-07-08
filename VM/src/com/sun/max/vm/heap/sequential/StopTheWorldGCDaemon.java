@@ -37,7 +37,6 @@ import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
@@ -169,7 +168,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
     /**
      * The procedure that is run on the GC thread to reset safepoints for a given thread.
      */
-    private final Safepoint.ResetSafepoints resetSafepoints = new Safepoint.ResetSafepoints();
+    private final GCResetSafepoints resetSafepoints = new GCResetSafepoints();
 
     static class WaitUntilNonMutating implements Pointer.Procedure {
         long stackReferenceMapPreparationTime;
@@ -209,7 +208,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                     }
                     final Pointer stackPointer = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
                     final Pointer framePointer = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals).asPointer();
-                    final VmThread vmThread = UnsafeLoophole.cast(VmThreadLocal.VM_THREAD.getConstantReference(vmThreadLocals));
+                    final VmThread vmThread = UnsafeLoophole.cast(VM_THREAD.getConstantReference(vmThreadLocals));
                     final StackReferenceMapPreparer stackReferenceMapPreparer = vmThread.stackReferenceMapPreparer();
                     stackReferenceMapPreparer.completeStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer);
                     stackReferenceMapPreparationTime += stackReferenceMapPreparer.preparationTime();
@@ -237,7 +236,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                     }
                     final Pointer stackPointer = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
                     final Pointer framePointer = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals).asPointer();
-                    final VmThread vmThread = UnsafeLoophole.cast(VmThreadLocal.VM_THREAD.getConstantReference(vmThreadLocals));
+                    final VmThread vmThread = UnsafeLoophole.cast(VM_THREAD.getConstantReference(vmThreadLocals));
                     final StackReferenceMapPreparer stackReferenceMapPreparer = vmThread.stackReferenceMapPreparer();
                     stackReferenceMapPreparer.completeStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer);
                     stackReferenceMapPreparationTime += stackReferenceMapPreparer.preparationTime();
@@ -349,7 +348,6 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
     private final GCRequest gcRequest = new GCRequest();
 
     public void execute() {
-       Monitor.traceMonitors = true;
         execute(gcRequest);
     }
 }
