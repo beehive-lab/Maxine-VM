@@ -103,8 +103,8 @@ public class LIRTypeCheck extends LIRInstruction {
      * @param profiledMethod
      * @param profiledBci
      */
-    public LIRTypeCheck(LIROpcode opcode, LIROperand object, LIROperand array, /*ciKlass klass,*/ LIROperand tmp1, LIROperand tmp2, LIROperand tmp3,
-                        CodeEmitInfo infoForException, CodeStub stub, CiMethod profiledMethod, int profiledBci) {
+    public LIRTypeCheck(LIROpcode opcode, LIROperand object, LIROperand array, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3,
+                        CodeEmitInfo infoForException, CiMethod profiledMethod, int profiledBci) {
         super(opcode, LIROperandFactory.illegalOperand, null);
         this.object = object;
         this.klass = null;

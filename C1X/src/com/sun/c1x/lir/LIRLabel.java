@@ -49,7 +49,7 @@ public class LIRLabel extends LIROp0 {
      *
      * @return the label
      */
-    public Label getLabel() {
+    public Label label() {
         return label;
     }
 

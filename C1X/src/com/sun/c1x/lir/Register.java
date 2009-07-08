@@ -30,4 +30,9 @@ package com.sun.c1x.lir;
  */
 public class Register {
 
+    public final int number;
+
+    public Register(int number) {
+        this.number = number;
+    }
 }

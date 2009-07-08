@@ -65,7 +65,13 @@ public enum CiRuntimeCall {
     OSRMigrationEnd,
     DTraceMethodEntry,
     JavaTimeMillis,
-    JavaTimeNanos
+    JavaTimeNanos,
+
+    // Unknown
+    TraceBlockEntry,
+    Lrem,
+    Ldiv,
+    Lmul
 
 
 }

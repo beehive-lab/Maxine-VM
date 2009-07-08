@@ -90,7 +90,7 @@ public class LIROperandFactory {
                               OperandMask.IsXmmMask.value);
     }
 
-    static LIROperand doubleXmmX86(int reg) {
+    public static LIROperand doubleXmmX86(int reg) {
         return new LIROperand((reg << OperandShift.Reg1Shift.value)  |
                               (reg  << OperandShift.Reg2Shift.value) |
                               OperandType.DoubleType.value           |
@@ -300,4 +300,21 @@ public class LIROperandFactory {
             return intConst(-1);
         }
     }
+
+        // TODO Auto-generated method stub
+    public static LIROperand intptrConst(Address counter) {
+        return null;
+    }
+
+    public static LIROperand doubleFpu(int i) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public static LIROperand longConst(int i) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    // TODO to be completed
 }

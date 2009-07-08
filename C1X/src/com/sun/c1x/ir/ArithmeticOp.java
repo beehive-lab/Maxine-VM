@@ -112,4 +112,9 @@ public class ArithmeticOp extends Op2 {
     public void accept(InstructionVisitor v) {
         v.visitArithmeticOp(this);
     }
+
+    public boolean isCommutative() {
+        // TODO Auto-generated method stub
+        return false;
+    }
 }

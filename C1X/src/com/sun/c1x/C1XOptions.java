@@ -128,4 +128,15 @@ public class C1XOptions {
     public static boolean GenerateBoundsChecks               = ____;
     public static boolean GenerateCompilerNullChecks         = ____;
     public static boolean UseTableRanges                     = ____;
+    public static boolean GenerateArrayStoreCheck            = TRUE;
+    public static boolean UseBiasedLocking                   = ____;
+    public static boolean ImplicitDiv0Checks                 = ____;
+    public static boolean PrintLIR                           = ____;
+
+    // Assembler settings
+    public static boolean CommentedAssembly                  = ____;
+    public static boolean PrintLIRWithAssembly               = ____;
+    public static boolean VerifyOopMaps                      = ____;
+    public static boolean VerifyOops                         = ____;
+    public static int     CodeEntryAlignment                 = 16;
 }

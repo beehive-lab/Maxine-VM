@@ -251,5 +251,21 @@ public class LIROp2 extends LIRInstruction {
         }
         result().print(out);
     }
+
+    public LIROperand inOpr1() {
+        return opr1();
+    }
+
+    public LIROperand inOpr2() {
+        return opr2();
+    }
+
+    public LIROperand resultOpr() {
+        return result();
+    }
+
+    public LIROperand tmpOpr() {
+        return tmp();
+    }
 }
 

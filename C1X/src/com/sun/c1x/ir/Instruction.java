@@ -549,4 +549,10 @@ public abstract class Instruction {
         // TODO Find a different way to solve this!
         return 1;
     }
+
+
+
+    public boolean isRoot() {
+        return isPinned() || useCount() > 1;
+    }
 }

@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.ci;
 
+import com.sun.c1x.lir.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -182,4 +183,19 @@ public interface CiRuntime {
      * @return the resolved type
      */
     CiType resolveType(String string);
+
+    int arrayBaseOffsetInBytes(BasicType type);
+
+    // C1 Ref: NativeCall.instructionSize
+    int nativeCallInstructionSize();
+
+    int sunMiscAtomicLongCSImplValueOffset();
+
+    Register callerSaveFpuRegAt(int i);
+
+    Object ciEnvUnloadedCiobjarrayklass();
+
+    CiType makeTypeArrayClass(BasicType elemType);
+
+    Object makeObjectArrayClass(CiType elementClass);
 }

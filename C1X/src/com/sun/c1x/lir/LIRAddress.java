@@ -36,6 +36,11 @@ public class LIRAddress extends LIROperand {
         Times2,
         Times4,
         Times8;
+
+        public static Scale fromInt(int shift) {
+            assert shift < Scale.values().length;
+            return Scale.values()[shift];
+        }
     }
 
     private LIROperand base;
@@ -64,6 +69,7 @@ public class LIRAddress extends LIROperand {
         this.type = type;
         //verify();
     }
+
 
     public LIROperand base() {
         return base;

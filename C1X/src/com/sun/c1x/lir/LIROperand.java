@@ -282,7 +282,7 @@ public class LIROperand {
         return OperandType.fromInt(value() & OperandMask.TypeMask.value);
     }
 
-    OperandType typeField() {
+    public OperandType typeField() {
         return isIllegal() ? OperandType.UnknownType : OperandType.fromInt((value() & OperandMask.TypeMask.value));
     }
 
@@ -732,5 +732,10 @@ public class LIROperand {
 
     public void printValueOn(LogStream out) {
         Util.shouldNotReachHere(); // TODO merged  from LIROprPtr
+    }
+
+    public int asJint() {
+        // TODO Auto-generated method stub
+        return asInt();
     }
 }

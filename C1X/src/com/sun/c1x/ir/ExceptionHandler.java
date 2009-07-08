@@ -21,7 +21,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.ci.*;
-import com.sun.c1x.lir.LIRInstruction;
+import com.sun.c1x.lir.*;
 
 import java.util.*;
 
@@ -36,7 +36,7 @@ public class ExceptionHandler {
 
     private final CiExceptionHandler handler;
     private BlockBegin entryBlock;
-    private List<LIRInstruction> entryCode;
+    private LIRList entryCode;
     private int entryPCO;
     private int phiOperand;
     private int scopeCount;
@@ -131,5 +131,14 @@ public class ExceptionHandler {
     public static boolean couldCatch(List<ExceptionHandler> exceptionHandlers, CiType throwKlass, boolean typeIsExact) {
         // TODO Port implementation
         return false;
+    }
+
+    public int lirOpId() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public LIRList entryCode() {
+        return entryCode;
     }
 }
