@@ -84,6 +84,6 @@ public final class StaticTuple {
             final StaticTuple s = (StaticTuple) staticTuple;
             return s.toString();
         }
-        return "staticTuple-" + ObjectAccess.readHub(staticTuple).classActor().simpleName();
+        return "staticTuple-" + ObjectAccess.readHub(staticTuple).classActor.simpleName();
     }
 }

@@ -156,7 +156,7 @@ public class SpecialReferenceManager {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Added ");
                 final Hub hub = UnsafeLoophole.cast(Layout.readHubReference(grip).toJava());
-                Log.print(hub.classActor().name.string);
+                Log.print(hub.classActor.name.string);
                 Log.println(" to list of discovered references");
                 Log.unlock(lockDisabledSafepoints);
             }

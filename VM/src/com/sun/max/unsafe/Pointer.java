@@ -1105,23 +1105,37 @@ public abstract class Pointer extends Address implements Accessor {
         setReference(0, value);
     }
 
-
+    /**
+     * @see Accessor#compareAndSwapInt(Offset, int, int)
+     */
     @BUILTIN(builtinClass = PointerAtomicBuiltin.CompareAndSwapIntAtLongOffset.class)
     protected native int compareAndSwapIntAtLongOffset(long offset, int suspectedValue, int newValue);
 
+    /**
+     * @see Accessor#compareAndSwapInt(Offset, int, int)
+     */
     @BUILTIN(builtinClass = PointerAtomicBuiltin.CompareAndSwapIntAtIntOffset.class)
     protected native int compareAndSwapIntAtIntOffset(int offset, int suspectedValue, int newValue);
 
+    /**
+     * @see Accessor#compareAndSwapInt(Offset, int, int)
+     */
     @INLINE
     public final int compareAndSwapInt(int offset, int suspectedValue, int newValue) {
         return compareAndSwapIntAtIntOffset(offset, suspectedValue, newValue);
     }
 
+    /**
+     * @see Accessor#compareAndSwapInt(Offset, int, int)
+     */
     @INLINE
     public final int compareAndSwapInt(int suspectedValue, int newValue) {
         return compareAndSwapInt(0, suspectedValue, newValue);
     }
 
+    /**
+     * @see Accessor#compareAndSwapInt(Offset, int, int)
+     */
     @INLINE
     public final int compareAndSwapInt(Offset offset, int suspectedValue, int newValue) {
         if (Word.width() == WordWidth.BITS_64) {
@@ -1130,23 +1144,37 @@ public abstract class Pointer extends Address implements Accessor {
         return compareAndSwapIntAtIntOffset(offset.toInt(), suspectedValue, newValue);
     }
 
-
+    /**
+     * @see Accessor#compareAndSwapInt(Offset, int, int)
+     */
     @BUILTIN(builtinClass = PointerAtomicBuiltin.CompareAndSwapWordAtLongOffset.class)
     protected native Word compareAndSwapWordAtLongOffset(long offset, Word suspectedValue, Word newValue);
 
+    /**
+     * @see Accessor#compareAndSwapInt(Offset, int, int)
+     */
     @BUILTIN(builtinClass = PointerAtomicBuiltin.CompareAndSwapWordAtIntOffset.class)
     protected native Word compareAndSwapWordAtIntOffset(int offset, Word suspectedValue, Word newValue);
 
+    /**
+     * @see Accessor#compareAndSwapInt(Offset, int, int)
+     */
     @INLINE
     public final Word compareAndSwapWord(int offset, Word suspectedValue, Word newValue) {
         return compareAndSwapWordAtIntOffset(offset, suspectedValue, newValue);
     }
 
+    /**
+     * @see Accessor#compareAndSwapInt(Offset, int, int)
+     */
     @INLINE
     public final Word compareAndSwapWord(Word suspectedValue, Word newValue) {
         return compareAndSwapWord(0, suspectedValue, newValue);
     }
 
+    /**
+     * @see Accessor#compareAndSwapInt(Offset, int, int)
+     */
     @INLINE
     public final Word compareAndSwapWord(Offset offset, Word suspectedValue, Word newValue) {
         if (Word.width() == WordWidth.BITS_64) {
@@ -1155,23 +1183,37 @@ public abstract class Pointer extends Address implements Accessor {
         return compareAndSwapWordAtIntOffset(offset.toInt(), suspectedValue, newValue);
     }
 
-
+    /**
+     * @see Accessor#compareAndSwapInt(Offset, int, int)
+     */
     @BUILTIN(builtinClass = PointerAtomicBuiltin.CompareAndSwapReferenceAtLongOffset.class)
     protected native Reference compareAndSwapReferenceAtLongOffset(long offset, Reference suspectedValue, Reference newValue);
 
+    /**
+     * @see Accessor#compareAndSwapInt(Offset, int, int)
+     */
     @BUILTIN(builtinClass = PointerAtomicBuiltin.CompareAndSwapReferenceAtIntOffset.class)
     protected native Reference compareAndSwapReferenceAtIntOffset(int offset, Reference suspectedValue, Reference newValue);
 
+    /**
+     * @see Accessor#compareAndSwapInt(Offset, int, int)
+     */
     @INLINE
     public final Reference compareAndSwapReference(int offset, Reference suspectedValue, Reference newValue) {
         return compareAndSwapReferenceAtIntOffset(offset, suspectedValue, newValue);
     }
 
+    /**
+     * @see Accessor#compareAndSwapInt(Offset, int, int)
+     */
     @INLINE
     public final Reference compareAndSwapReference(Reference suspectedValue, Reference newValue) {
         return compareAndSwapReference(0, suspectedValue, newValue);
     }
 
+    /**
+     * @see Accessor#compareAndSwapInt(Offset, int, int)
+     */
     @INLINE
     public final Reference compareAndSwapReference(Offset offset, Reference suspectedValue, Reference newValue) {
         if (Word.width() == WordWidth.BITS_64) {

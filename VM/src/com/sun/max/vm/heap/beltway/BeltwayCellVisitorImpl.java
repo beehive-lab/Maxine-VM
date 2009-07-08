@@ -78,8 +78,8 @@ public class BeltwayCellVisitorImpl implements BeltWayCellVisitor {
     }
 
     public static void visitOriginOffsets(Hub hub, Pointer origin, BeltWayPointerOffsetVisitor offsetVisitor, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        final int n = hub.referenceMapStartIndex() + hub.referenceMapLength();
-        for (int i = hub.referenceMapStartIndex(); i < n; i++) {
+        final int n = hub.referenceMapStartIndex + hub.referenceMapLength;
+        for (int i = hub.referenceMapStartIndex; i < n; i++) {
             final int offset = hub.getInt(i);
             offsetVisitor.visitPointerOffset(origin, offset, from, to);
         }
@@ -97,11 +97,11 @@ public class BeltwayCellVisitorImpl implements BeltWayCellVisitor {
             Layout.writeHubGrip(origin, newHubGrip);
         }
         final Hub hub = UnsafeLoophole.cast(newHubGrip.toJava());
-        final SpecificLayout specificLayout = hub.specificLayout();
+        final SpecificLayout specificLayout = hub.specificLayout;
 
         if (specificLayout.isTupleLayout()) {
             visitOriginOffsets(hub, origin, ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).pointerOffsetGripUpdater(), from, to);
-            return cell.plus(hub.tupleSize());
+            return cell.plus(hub.tupleSize);
         }
         if (specificLayout.isHybridLayout()) {
             visitOriginOffsets(hub, origin, ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).pointerOffsetGripUpdater(), from, to);

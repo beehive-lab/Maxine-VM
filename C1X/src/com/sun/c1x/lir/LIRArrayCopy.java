@@ -21,7 +21,6 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.util.*;
-import com.sun.c1x.ci.CiType;
 
 /**
  * The <code>LIRArrayCopy</code> class definition.
@@ -38,7 +37,7 @@ public class LIRArrayCopy extends LIRInstruction {
     private LIROperand dstPos;
     private LIROperand length;
     private LIROperand tmp;
-    private CiType expectedType;
+//    private CiType expectedType;
     private int arrayCopyFlags;
 
 

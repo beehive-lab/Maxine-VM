@@ -102,7 +102,7 @@ public abstract class HomArrayLayout<Value_Type extends Value<Value_Type>> exten
     private void visitElements(ObjectCellVisitor visitor, Object array) {
         final int length = Array.getLength(array);
         final Hub hub = HostObjectAccess.readHub(array);
-        final Kind elementKind = hub.classActor().componentClassActor().kind;
+        final Kind elementKind = hub.classActor.componentClassActor().kind;
         if (elementKind == Kind.REFERENCE) {
             for (int i = 0; i < length; i++) {
                 final Object object = Array.get(array, i);

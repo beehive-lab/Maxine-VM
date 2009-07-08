@@ -23,7 +23,6 @@ package com.sun.max.vm.jit.amd64;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -152,6 +151,14 @@ public class AMD64JitCompiler extends JitCompiler {
             case REFERENCE_MAP_PREPARING: {
                 break;
             }
+            case RAW_INSPECTING: {
+                final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
+                final int flags = RawStackFrameVisitor.Util.makeFlags(isTopFrame, true);
+                if (!stackFrameVisitor.visitFrame(targetMethod, instructionPointer, stackPointer, stackPointer, flags)) {
+                    return false;
+                }
+                break;
+            }
             case INSPECTING: {
                 final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
                 final StackFrame stackFrame = new AMD64OptimizedToJitAdapterFrame(stackFrameWalker.calleeStackFrame(), targetMethod, instructionPointer, stackPointer, stackPointer);
@@ -159,9 +166,6 @@ public class AMD64JitCompiler extends JitCompiler {
                     return false;
                 }
                 break;
-            }
-            default: {
-                ProgramError.unknownCase();
             }
         }
         final Pointer callerStackPointer = ripPointer.plus(Word.size()); // skip RIP word
@@ -344,6 +348,7 @@ public class AMD64JitCompiler extends JitCompiler {
                 walkFrameForExceptionHandling(stackFrameWalker, isTopFrame, targetMethod, context, framePointerState);
                 break;
             }
+            case RAW_INSPECTING:
             case INSPECTING: {
                 if (!walkFrameForInspecting(stackFrameWalker, isTopFrame, targetMethod, context, framePointerState)) {
                     return false;
@@ -360,10 +365,15 @@ public class AMD64JitCompiler extends JitCompiler {
     }
 
     private boolean walkFrameForInspecting(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, Object context, FRAME_POINTER_STATE framePointerState) {
-        final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
         final Pointer localVariablesBase = framePointerState.localVariablesBase(stackFrameWalker, targetMethod);
-        final StackFrame stackFrame = new AMD64JitStackFrame(stackFrameWalker.calleeStackFrame(), targetMethod, stackFrameWalker.instructionPointer(), stackFrameWalker.stackPointer(), localVariablesBase, localVariablesBase);
-        return stackFrameVisitor.visitFrame(stackFrame);
+        if (context instanceof StackFrameVisitor) {
+            final StackFrame stackFrame = new AMD64JitStackFrame(stackFrameWalker.calleeStackFrame(), targetMethod, stackFrameWalker.instructionPointer(), stackFrameWalker.stackPointer(), localVariablesBase, localVariablesBase);
+            final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
+            return stackFrameVisitor.visitFrame(stackFrame);
+        }
+        final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
+        final int flags = RawStackFrameVisitor.Util.makeFlags(isTopFrame, false);
+        return stackFrameVisitor.visitFrame(targetMethod, stackFrameWalker.instructionPointer(), stackFrameWalker.stackPointer(), localVariablesBase, flags);
     }
 
     private boolean walkFrameForReferenceMapPreparing(StackFrameWalker stackFrameWalker, TargetMethod targetMethod, Object context, FRAME_POINTER_STATE framePointerState) {

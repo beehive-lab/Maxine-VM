@@ -94,14 +94,14 @@ public final class ObjectPane extends InspectorScrollPane {
      */
     public static ObjectPane createITablePane(ObjectInspector objectInspector, TeleHub teleHub) {
         final Hub hub = teleHub.hub();
-        if (hub.iTableLength() == 0) {
+        if (hub.iTableLength == 0) {
             return null;
         }
-        final int iTableStartIndex = hub.iTableStartIndex();
+        final int iTableStartIndex = hub.iTableStartIndex;
         final InspectorTable table = new ArrayElementsTable(objectInspector, Kind.WORD,
                         objectInspector.inspection().maxVM().vmConfiguration().layoutScheme().wordArrayLayout.getElementOffsetFromOrigin(iTableStartIndex).toInt(),
                         iTableStartIndex,
-                        hub.iTableLength(),
+                        hub.iTableLength,
                         "I",
                         WordValueLabel.ValueMode.ITABLE_ENTRY);
         return new ObjectPane(objectInspector.inspection(), table);
@@ -111,7 +111,7 @@ public final class ObjectPane extends InspectorScrollPane {
      * @return a new {@link JScrollPane} displaying the "mTable" of a {@link TeleHub} object; null if the table is empty.
      */
     public static ObjectPane createMTablePane(ObjectInspector objectInspector, TeleHub teleHub) {
-        if (teleHub.hub().mTableLength() == 0) {
+        if (teleHub.hub().mTableLength == 0) {
             return null;
         }
         final MaxVM maxVM = objectInspector.inspection().maxVM();
@@ -129,7 +129,7 @@ public final class ObjectPane extends InspectorScrollPane {
      * @return a new {@link JScrollPane}  displaying the reference map of the {@link TeleHub}; null if the map is empty.
      */
     public static ObjectPane createRefMapPane(ObjectInspector objectInspector, TeleHub teleHub) {
-        if (teleHub.hub().referenceMapLength() == 0) {
+        if (teleHub.hub().referenceMapLength == 0) {
             return null;
         }
         final MaxVM maxVM = objectInspector.inspection().maxVM();

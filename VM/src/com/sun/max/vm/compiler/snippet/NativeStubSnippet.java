@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.snippet;
 
+import static com.sun.max.vm.runtime.Safepoint.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
@@ -79,8 +80,25 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
             final Pointer vmThreadLocals = VmThread.currentVmThreadLocals();
             LAST_JAVA_CALLER_FRAME_POINTER.setVariableWord(vmThreadLocals, VMRegister.getCpuFramePointer());
             LAST_JAVA_CALLER_STACK_POINTER.setVariableWord(vmThreadLocals, VMRegister.getCpuStackPointer());
-            MemoryBarrier.storeStore(); // The following store must be last:
-            LAST_JAVA_CALLER_INSTRUCTION_POINTER.setVariableWord(vmThreadLocals, VMRegister.getInstructionPointer());
+            if (Safepoint.UseThreadStateWordForGCMutatorSynchronization) {
+                LAST_JAVA_CALLER_INSTRUCTION_POINTER.setVariableWord(vmThreadLocals, VMRegister.getInstructionPointer());
+
+                final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+                final Pointer statePointer = STATE.pointer(enabledVmThreadLocals);
+                int oldValue = Safepoint.cas(statePointer, THREAD_IN_JAVA, THREAD_IN_NATIVE);
+                if (oldValue != THREAD_IN_JAVA) {
+                    if (oldValue != THREAD_IN_JAVA_STOPPING_FOR_GC) {
+                        Safepoint.reportIllegalThreadState("JNI call prologue", oldValue);
+                    }
+                    oldValue = Safepoint.cas(statePointer, THREAD_IN_JAVA_STOPPING_FOR_GC, THREAD_IN_GC_FROM_JAVA);
+                    if (oldValue != THREAD_IN_JAVA_STOPPING_FOR_GC) {
+                        Safepoint.reportIllegalThreadState("JNI call prologue", oldValue);
+                    }
+                }
+            } else {
+                MemoryBarrier.storeStore(); // The following store must be last:
+                LAST_JAVA_CALLER_INSTRUCTION_POINTER.setVariableWord(vmThreadLocals, VMRegister.getInstructionPointer());
+            }
             return vmThreadLocals;
         }
 
@@ -94,22 +112,36 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
         @SNIPPET
         @INLINE
         public static void nativeCallEpilogue(Pointer vmThreadLocals) {
-            // Ensure that reading of the GC state variable sees the last write to it:
-            MemoryBarrier.storeLoad();
+            if (Safepoint.UseThreadStateWordForGCMutatorSynchronization) {
+                final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+                final Pointer statePointer = STATE.pointer(enabledVmThreadLocals);
 
-            spinWhileSafepointsAreTriggered();
+                if (Safepoint.cas(statePointer, THREAD_IN_GC_FROM_JAVA, THREAD_IN_JAVA) == THREAD_IN_GC_FROM_JAVA) {
+                    // done!
+                } else {
+                    while (Safepoint.cas(statePointer, THREAD_IN_NATIVE, THREAD_IN_JAVA) != THREAD_IN_NATIVE) {
+                        // Spin loop that is free of safepoints and object accesses
+                        SpecialBuiltin.pause();
+                    }
+                }
+                LAST_JAVA_CALLER_INSTRUCTION_POINTER.setVariableWord(vmThreadLocals, Word.zero());
+            } else {
+                // Ensure that reading of the GC state variable sees the last write to it:
+                MemoryBarrier.storeLoad();
 
-            // Set the current instruction pointer in TLS to zero to indicate the transition back into Java code
-            LAST_JAVA_CALLER_INSTRUCTION_POINTER.setVariableWord(vmThreadLocals, Word.zero());
+                spinUntilGCFinished();
+
+                // Set the current instruction pointer in TLS to zero to indicate the transition back into Java code
+                LAST_JAVA_CALLER_INSTRUCTION_POINTER.setVariableWord(vmThreadLocals, Word.zero());
+            }
         }
 
         /**
-         * This methods spins in a busy loop while safepoints for the current thread are triggered which means a garbage
-         * collection is currently running.
+         * This methods spins in a busy loop while a garbage collection is currently running.
          */
         @INLINE
         @NO_SAFEPOINTS("Cannot take a trap while GC is running")
-        private static void spinWhileSafepointsAreTriggered() {
+        private static void spinUntilGCFinished() {
             while (Safepoint.isTriggered()) {
                 // Spin loop that is free of safepoints and object accesses
                 SpecialBuiltin.pause();

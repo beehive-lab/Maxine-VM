@@ -20,12 +20,15 @@
  */
 package com.sun.max.vm.jdk;
 
+import static com.sun.max.vm.stack.RawStackFrameVisitor.Util.*;
+
 import java.lang.reflect.*;
 import java.util.*;
 
 import sun.reflect.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -52,24 +55,22 @@ final class JDK_sun_reflect_Reflection {
      * This class implements a closure that records the method actor at a particular
      * position in the stack.
      */
-    private static class Context implements StackFrameVisitor {
+    private static class Context implements RawStackFrameVisitor {
         MethodActor result;
         int realFramesToSkip;
 
         Context(int realFramesToSkip) {
             this.realFramesToSkip = realFramesToSkip;
         }
-
-        public boolean visitFrame(StackFrame stackFrame) {
-            if (stackFrame.isTopFrame()) {
+        public boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, int flags) {
+            if (isTopFrame(flags)) {
                 // skip 'getCallerMethod()'
                 return true;
             }
-            if (stackFrame.isAdapter()) {
+            if (isAdapter(flags)) {
                 return true;
             }
             //final TargetMethod targetMethod = Code.codePointerToTargetMethod(stackFrame.instructionPointer());
-            final TargetMethod targetMethod = stackFrame.targetMethod();
             if (targetMethod == null) {
                 // native frame
                 realFramesToSkip--; // TODO: find out whether this is according to getCallerClass' intended "spec"
@@ -80,7 +81,7 @@ final class JDK_sun_reflect_Reflection {
                 return true;
             }
 
-            final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.instructionPointer);
+            final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(instructionPointer);
             if (bytecodeLocations == null) {
                 if (realFramesToSkip == 0) {
                     result = targetMethod.classMethodActor();

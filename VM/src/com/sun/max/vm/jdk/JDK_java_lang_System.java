@@ -290,7 +290,7 @@ public final class JDK_java_lang_System {
             throw new NullPointerException();
         }
         final Hub fromHub = ObjectAccess.readHub(fromArray);
-        final ClassActor fromArrayClassActor = fromHub.classActor();
+        final ClassActor fromArrayClassActor = fromHub.classActor;
         if (!fromArrayClassActor.isArrayClassActor()) {
             throw new ArrayStoreException();
         }
@@ -318,7 +318,7 @@ public final class JDK_java_lang_System {
             }
             arrayCopyForward(kind, fromArray, fromIndex, toArray, toIndex, length, null);
         } else {
-            final ClassActor toArrayClassActor = toHub.classActor();
+            final ClassActor toArrayClassActor = toHub.classActor;
             if (!toArrayClassActor.isArrayClassActor()) {
                 throw new ArrayStoreException();
             }

@@ -62,7 +62,7 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
     @INLINE
     public Size specificSize(Accessor accessor) {
         final Hub hub = UnsafeLoophole.cast(readHubReference(accessor).toJava());
-        return hub.tupleSize();
+        return hub.tupleSize;
     }
 
     private final int headerSize = 2 * Word.size();
@@ -148,7 +148,7 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
     @PROTOTYPE_ONLY
     void visitFields(ObjectCellVisitor visitor, Object tuple) {
         final Hub hub = HostObjectAccess.readHub(tuple);
-        ClassActor classActor = hub.classActor();
+        ClassActor classActor = hub.classActor;
         do {
             final FieldActor[] fieldActors = (hub instanceof StaticHub) ? classActor.localStaticFieldActors() : classActor.localInstanceFieldActors();
             for (FieldActor fieldActor : fieldActors) {

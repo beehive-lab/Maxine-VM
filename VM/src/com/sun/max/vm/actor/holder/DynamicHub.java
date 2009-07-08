@@ -40,12 +40,12 @@ public final class DynamicHub extends Hub {
 
     private void initializeMTable(BitSet superClassActorSerials, Iterable<InterfaceActor> allInterfaceActors, Mapping<MethodActor, VirtualMethodActor> methodLookup, int[] iToV) {
         // The first word of the iTable is where all unused mTable entries point:
-        int iTableIndex = iTableStartIndex();
+        int iTableIndex = iTableStartIndex;
         // We set it to zero so it does not match any class actor's serial (they start at 1):
         setWord(iTableIndex, Address.zero());
 
         // Initialize all mTable entries by making them point to the first iTable slot:
-        for (int mTableIndex = mTableStartIndex(); mTableIndex < mTableStartIndex() + mTableLength(); mTableIndex++) {
+        for (int mTableIndex = mTableStartIndex; mTableIndex < mTableStartIndex + mTableLength; mTableIndex++) {
             setInt(mTableIndex, iTableIndex);
         }
         iTableIndex++;
@@ -57,10 +57,10 @@ public final class DynamicHub extends Hub {
             assert getWord(iTableIndex).isZero();
             setWord(iTableIndex, Address.fromInt(interfaceActor.id));
             iTableIndex++;
-            if (classActor().isReferenceClassActor()) {
+            if (classActor.isReferenceClassActor()) {
                 for (InterfaceMethodActor interfaceMethodActor : interfaceActor.localInterfaceMethodActors()) {
                     final VirtualMethodActor dynamicMethodActor = methodLookup.get(interfaceMethodActor);
-                    iToV[iTableIndex - iTableStartIndex()] = dynamicMethodActor.vTableIndex();
+                    iToV[iTableIndex - iTableStartIndex] = dynamicMethodActor.vTableIndex();
                     iTableIndex++;
                 }
             }
@@ -77,7 +77,7 @@ public final class DynamicHub extends Hub {
 
     DynamicHub expand(BitSet superClassActorSerials, Iterable<InterfaceActor> allInterfaceActors, Mapping<MethodActor, VirtualMethodActor> methodLookup, int[] iToV, TupleReferenceMap referenceMap) {
         final DynamicHub hub = (DynamicHub) expand();
-        assert hub.mTableLength() > 0;
+        assert hub.mTableLength > 0;
         referenceMap.copyIntoHub(hub);
         hub.initializeMTable(superClassActorSerials, allInterfaceActors, methodLookup, iToV);
         return hub;
@@ -94,13 +94,13 @@ public final class DynamicHub extends Hub {
     }
 
     void initializeITable(Iterable<InterfaceActor> allInterfaceActors, Mapping<MethodActor, VirtualMethodActor> methodLookup) {
-        if (classActor().isReferenceClassActor()) {
+        if (classActor.isReferenceClassActor()) {
             for (InterfaceActor interfaceActor : allInterfaceActors) {
                 final int interfaceIndex = getITableIndex(interfaceActor.id);
                 for (InterfaceMethodActor interfaceMethodActor : interfaceActor.localInterfaceMethodActors()) {
                     final VirtualMethodActor dynamicMethodActor = methodLookup.get(interfaceMethodActor);
                     final int iTableIndex = interfaceIndex + interfaceMethodActor.iIndexInInterface();
-                    final int iIndex = iTableIndex - iTableStartIndex();
+                    final int iIndex = iTableIndex - iTableStartIndex;
                     assert getWord(iTableIndex).isZero();
                     setWord(iTableIndex, VMConfiguration.hostOrTarget().compilerScheme().createInitialITableEntry(iIndex, dynamicMethodActor));
                 }
@@ -110,7 +110,7 @@ public final class DynamicHub extends Hub {
 
     @Override
     public FieldActor findFieldActor(int offset) {
-        return classActor().findInstanceFieldActor(offset);
+        return classActor.findInstanceFieldActor(offset);
     }
 
 }

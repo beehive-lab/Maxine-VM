@@ -90,7 +90,7 @@ public final class ObjectAccess {
     @INLINE
     public static ClassActor readClassActor(Object object) {
         final Hub hub = UnsafeLoophole.cast(Reference.fromJava(object).readHubReference().toJava());
-        return hub.classActor();
+        return hub.classActor;
     }
 
     /**

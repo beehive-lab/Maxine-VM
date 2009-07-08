@@ -43,7 +43,8 @@ import com.sun.max.vm.runtime.*;
 public final class VmThreadMap {
 
     /**
-     * The global thread map of active threads in the VM.
+     * The global thread map of active threads in the VM. This object also serves the role
+     * of a global GC and thread creation lock.
      */
     public static final VmThreadMap ACTIVE = new VmThreadMap();
 

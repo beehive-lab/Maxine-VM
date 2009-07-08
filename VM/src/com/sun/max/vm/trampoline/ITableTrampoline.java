@@ -39,12 +39,12 @@ public class ITableTrampoline extends DynamicTrampoline {
     protected Address getMethodEntryPoint(Object receiver) {
         final int dispatchTableIndex = dispatchTableIndex();
         final Hub hub = ObjectAccess.readHub(receiver);
-        final VirtualMethodActor selectedCallee = hub.classActor().getVirtualMethodActorByIIndex(dispatchTableIndex);
+        final VirtualMethodActor selectedCallee = hub.classActor.getVirtualMethodActorByIIndex(dispatchTableIndex);
         if (selectedCallee.isAbstract()) {
             throw new AbstractMethodError();
         }
         final Address itableEntryPoint = CompilationScheme.Static.compile(selectedCallee, VTABLE_ENTRY_POINT, CompilationDirective.DEFAULT);
-        hub.setWord(hub.iTableStartIndex() + dispatchTableIndex, itableEntryPoint);
+        hub.setWord(hub.iTableStartIndex + dispatchTableIndex, itableEntryPoint);
         return itableEntryPoint;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,32 +18,24 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.actor.holder;
+package com.sun.c1x.target;
 
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.heap.*;
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.lir.LIRAssembler;
+import com.sun.c1x.lir.LIRGenerator;
 
 /**
- * @author Bernd Mathiske
+ * The <code>Backend</code> class represents a compiler backend for C1X.
+ *
+ * @author Ben L. Titzer
  */
-public class StaticHub extends Hub {
+public abstract class Backend {
+    public final Target target;
 
-    StaticHub(Size tupleSize, ClassActor classActor, TupleReferenceMap referenceMap) {
-        super(tupleSize, classActor, referenceMap);
+    protected Backend(Target target) {
+        this.target = target;
     }
 
-    /**
-     * Static Hub.
-     */
-    StaticHub expand(TupleReferenceMap referenceMap) {
-        final StaticHub hub = (StaticHub) expand();
-        referenceMap.copyIntoHub(hub);
-        return hub;
-    }
-
-    @Override
-    public FieldActor findFieldActor(int offset) {
-        return classActor.findStaticFieldActor(offset);
-    }
+    public abstract LIRGenerator newLIRGenerator(C1XCompilation compilation);
+    public abstract LIRAssembler newLIRAssembler(C1XCompilation compilation);
 }
