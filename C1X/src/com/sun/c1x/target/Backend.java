@@ -21,8 +21,8 @@
 package com.sun.c1x.target;
 
 import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.gen.*;
 import com.sun.c1x.lir.LIRAssembler;
-import com.sun.c1x.lir.LIRGenerator;
 
 /**
  * The <code>Backend</code> class represents a compiler backend for C1X.

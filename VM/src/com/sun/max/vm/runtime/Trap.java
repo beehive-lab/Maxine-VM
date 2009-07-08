@@ -255,9 +255,11 @@ public final class Trap {
                 // the state of the safepoint latch was TRIGGERED when the trap happened. reset it back to ENABLED.
                 final Pointer enabledVmThreadLocals = VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(disabledVmThreadLocals).asPointer();
                 safepoint.setSafepointLatch(trapState, enabledVmThreadLocals);
-                Safepoint.reset(enabledVmThreadLocals);
+
                 // reset the procedure to be null
                 VmThreadLocal.SAFEPOINT_PROCEDURE.setVariableReference(triggeredVmThreadLocals, null);
+
+                Safepoint.reset(enabledVmThreadLocals);
             }
         } else if (inJava(disabledVmThreadLocals)) {
             safepoint.setTrapNumber(trapState, Number.NULL_POINTER_EXCEPTION);

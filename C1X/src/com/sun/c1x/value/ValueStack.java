@@ -26,11 +26,11 @@ import com.sun.c1x.util.InstructionClosure;
 import com.sun.c1x.ci.CiMethod;
 import com.sun.c1x.Bailout;
 
-import java.util.ArrayList;
+import java.util.*;
 
 /**
- * The <code>ValueStack</code> class encapsulates the state of local variables
- * and the stack at a particular point in the abstract interpretation.
+ * The <code>ValueStack</code> class encapsulates the state of local variables and the stack at a particular point in
+ * the abstract interpretation.
  *
  * @author Ben L. Titzer
  */
@@ -51,8 +51,8 @@ public class ValueStack {
     }
 
     /**
-     * Copies the contents of this value stack so that further updates to
-     * either stack aren't reflected in the other.
+     * Copies the contents of this value stack so that further updates to either stack aren't reflected in the other.
+     *
      * @param withLocals indicates whether to copy the local state
      * @param withStack indicates whether to copy the stack state
      * @param withLocks indicates whether to copy the lock state
@@ -125,6 +125,7 @@ public class ValueStack {
 
     /**
      * Returns the inlining context associated with this value stack.
+     *
      * @return the inlining context
      */
     public final IRScope scope() {
@@ -133,6 +134,7 @@ public class ValueStack {
 
     /**
      * Returns whether this value stack is locked (i.e. is for an exception site).
+     *
      * @return <code>true</code> if this stack is locked
      */
     public final boolean isLockStack() {
@@ -141,6 +143,7 @@ public class ValueStack {
 
     /**
      * Returns the size of the local variables.
+     *
      * @return the size of the local variables
      */
     public final int localsSize() {
@@ -149,6 +152,7 @@ public class ValueStack {
 
     /**
      * Returns the size of the locks.
+     *
      * @return the size of the locks
      */
     public final int locksSize() {
@@ -157,6 +161,7 @@ public class ValueStack {
 
     /**
      * Returns the current size (height) of the stack.
+     *
      * @return the size of the stack
      */
     public final int stackSize() {
@@ -165,6 +170,7 @@ public class ValueStack {
 
     /**
      * Returns the maximum size of the stack.
+     *
      * @return the maximum size of the stack
      */
     public final int maxStackSize() {
@@ -173,6 +179,7 @@ public class ValueStack {
 
     /**
      * Checks whether the stack is empty.
+     *
      * @return <code>true</code> the stack is currently empty
      */
     public final boolean stackEmpty() {
@@ -181,6 +188,7 @@ public class ValueStack {
 
     /**
      * Checks whether there are any active locks.
+     *
      * @return <code>true</code> if there are <i>no</i> active locks
      */
     public final boolean noActiveLocks() {
@@ -188,8 +196,9 @@ public class ValueStack {
     }
 
     /**
-     * Invalidate the local variable at the specified index. If the specified index refers
-     * to a doubleword local, then invalid the high word as well.
+     * Invalidate the local variable at the specified index. If the specified index refers to a doubleword local, then
+     * invalid the high word as well.
+     *
      * @param i the index of the local to invalidate
      */
     public void invalidateLocal(int i) {
@@ -203,6 +212,7 @@ public class ValueStack {
 
     /**
      * Load the local variable at the specified index.
+     *
      * @param i the index of the local variable to load
      * @return the instruction that produced the specified local
      */
@@ -218,8 +228,9 @@ public class ValueStack {
     }
 
     /**
-     * Store the local variable at the specified index. If the value is a doubleword,
-     * then also overwrite the next local variable position.
+     * Store the local variable at the specified index. If the value is a doubleword, then also overwrite the next local
+     * variable position.
+     *
      * @param i the index at which to store
      * @param x the instruction which produces the value for the local
      */
@@ -243,8 +254,9 @@ public class ValueStack {
     }
 
     /**
-     * Replace the local variables in this value stack with the local variables from the
-     * specified value stack. This is used in inlining.
+     * Replace the local variables in this value stack with the local variables from the specified value stack. This is
+     * used in inlining.
+     *
      * @param with the value stack containing the new local variables
      */
     public void replaceLocals(ValueStack with) {
@@ -253,8 +265,8 @@ public class ValueStack {
     }
 
     /**
-     * Replace the stack in this value stack with the stack from the
-     * specified value stack. This is used in inlining.
+     * Replace the stack in this value stack with the stack from the specified value stack. This is used in inlining.
+     *
      * @param with the value stack containing the new local variables
      */
     public void replaceStack(ValueStack with) {
@@ -263,8 +275,8 @@ public class ValueStack {
     }
 
     /**
-     * Replace the locks in this value stack with the locks from the
-     * specified value stack. This is used in inlining.
+     * Replace the locks in this value stack with the locks from the specified value stack. This is used in inlining.
+     *
      * @param with the value stack containing the new local variables
      */
     public void replaceLocks(ValueStack with) {
@@ -277,6 +289,7 @@ public class ValueStack {
 
     /**
      * Get the value on the stack at the specified stack index.
+     *
      * @param i the index into the stack, with <code>0</code> being the bottom of the stack
      * @return the instruction at the specified position in the stack
      */
@@ -288,6 +301,7 @@ public class ValueStack {
 
     /**
      * Get the value in the local variable at the specified offset.
+     *
      * @param i the index into the locals
      * @return the instruction that produced the value for the specified local
      */
@@ -310,6 +324,7 @@ public class ValueStack {
 
     /**
      * Truncates this stack to the specified size.
+     *
      * @param size the size to truncate to
      */
     public void truncateStack(int size) {
@@ -318,6 +333,7 @@ public class ValueStack {
 
     /**
      * Pushes an instruction onto the stack with the expected type.
+     *
      * @param type the type expected for this instruction
      * @param x the instruction to push onto the stack
      */
@@ -330,6 +346,7 @@ public class ValueStack {
 
     /**
      * Pushes a value onto the stack without checking the type.
+     *
      * @param x the instruction to push onto the stack
      */
     public void xpush(Instruction x) {
@@ -339,6 +356,7 @@ public class ValueStack {
 
     /**
      * Pushes a value onto the stack and checks that it is an int.
+     *
      * @param x the instruction to push onto the stack
      */
     public void ipush(Instruction x) {
@@ -347,6 +365,7 @@ public class ValueStack {
 
     /**
      * Pushes a value onto the stack and checks that it is a float.
+     *
      * @param x the instruction to push onto the stack
      */
     public void fpush(Instruction x) {
@@ -355,6 +374,7 @@ public class ValueStack {
 
     /**
      * Pushes a value onto the stack and checks that it is an object.
+     *
      * @param x the instruction to push onto the stack
      */
     public void apush(Instruction x) {
@@ -363,6 +383,7 @@ public class ValueStack {
 
     /**
      * Pushes a value onto the stack and checks that it is a JSR return address.
+     *
      * @param x the instruction to push onto the stack
      */
     public void jpush(Instruction x) {
@@ -371,6 +392,7 @@ public class ValueStack {
 
     /**
      * Pushes a value onto the stack and checks that it is a long.
+     *
      * @param x the instruction to push onto the stack
      */
     public void lpush(Instruction x) {
@@ -380,6 +402,7 @@ public class ValueStack {
 
     /**
      * Pushes a value onto the stack and checks that it is a double.
+     *
      * @param x the instruction to push onto the stack
      */
     public void dpush(Instruction x) {
@@ -389,6 +412,7 @@ public class ValueStack {
 
     /**
      * Pops an instruction off the stack with the expected type.
+     *
      * @param basicType the tag of the expected type
      * @return the instruction on the top of the stack
      */
@@ -401,6 +425,7 @@ public class ValueStack {
 
     /**
      * Pops a value off of the stack without checking the type.
+     *
      * @return x the instruction popped off the stack
      */
     public Instruction xpop() {
@@ -410,6 +435,7 @@ public class ValueStack {
 
     /**
      * Pops a value off of the stack and checks that it is an int.
+     *
      * @return x the instruction popped off the stack
      */
     public Instruction ipop() {
@@ -418,6 +444,7 @@ public class ValueStack {
 
     /**
      * Pops a value off of the stack and checks that it is a float.
+     *
      * @return x the instruction popped off the stack
      */
     public Instruction fpop() {
@@ -426,6 +453,7 @@ public class ValueStack {
 
     /**
      * Pops a value off of the stack and checks that it is an object.
+     *
      * @return x the instruction popped off the stack
      */
     public Instruction apop() {
@@ -434,6 +462,7 @@ public class ValueStack {
 
     /**
      * Pops a value off of the stack and checks that it is a JSR return address.
+     *
      * @return x the instruction popped off the stack
      */
     public Instruction jpop() {
@@ -442,6 +471,7 @@ public class ValueStack {
 
     /**
      * Pops a value off of the stack and checks that it is a long.
+     *
      * @return x the instruction popped off the stack
      */
     public Instruction lpop() {
@@ -451,6 +481,7 @@ public class ValueStack {
 
     /**
      * Pops a value off of the stack and checks that it is a double.
+     *
      * @return x the instruction popped off the stack
      */
     public Instruction dpop() {
@@ -459,8 +490,8 @@ public class ValueStack {
     }
 
     /**
-     * Pop the specified number of slots off of this stack and return
-     * them as an array of instructions.
+     * Pop the specified number of slots off of this stack and return them as an array of instructions.
+     *
      * @param size the number of arguments off of the stack
      * @return an array containing the arguments off of the stack
      */
@@ -474,6 +505,7 @@ public class ValueStack {
 
     /**
      * Locks a new object within the specified IRScope.
+     *
      * @param scope the IRScope in which this locking operation occurs
      * @param obj the object being locked
      * @return the index of the lock within the lock stack
@@ -490,6 +522,7 @@ public class ValueStack {
 
     /**
      * Unlock the lock on the top of the stack.
+     *
      * @return the index of the lock just unlocked.
      */
     public int unlock() {
@@ -499,6 +532,7 @@ public class ValueStack {
 
     /**
      * Retrieves the lock at the specified index in the lock stack.
+     *
      * @param i the index into the lock stack
      * @return the instruction which produced the object at the specified location in the lock stack
      */
@@ -507,11 +541,10 @@ public class ValueStack {
     }
 
     /**
-     * Creates a new ValueStack corresponding to inlining the specified method into this point in
-     * this value stack.
+     * Creates a new ValueStack corresponding to inlining the specified method into this point in this value stack.
+     *
      * @param scope the IRScope representing the inlined method
-     * @return a new value stack representing the state at the beginning of inlining the specified
-     * method into this one
+     * @return a new value stack representing the state at the beginning of inlining the specified method into this one
      */
     public ValueStack pushScope(IRScope scope) {
         assert scope.caller == this.scope;
@@ -523,8 +556,9 @@ public class ValueStack {
     }
 
     /**
-     * Creates a new ValueStack corresponding to the state upon returning from this inlined method
-     * into the outer IRScope.
+     * Creates a new ValueStack corresponding to the state upon returning from this inlined method into the outer
+     * IRScope.
+     *
      * @return a new value stack representing the state at exit from this value stack
      */
     public ValueStack popScope() {
@@ -541,6 +575,7 @@ public class ValueStack {
 
     /**
      * Inserts a phi statement into the stack at the specified stack index.
+     *
      * @param block the block begin for which we are creating the phi
      * @param i the index into the stack for which to create a phi
      */
@@ -553,6 +588,7 @@ public class ValueStack {
 
     /**
      * Inserts a phi statement for the local at the specified index.
+     *
      * @param block the block begin for which we are creating the phi
      * @param i the index of the local variable for which to create the phi
      */
@@ -565,6 +601,7 @@ public class ValueStack {
 
     /**
      * Iterates over all the values in this value stack, including the stack, locals, and locks.
+     *
      * @param closure the closure to apply to each value
      */
     public void valuesDo(InstructionClosure closure) {
@@ -701,4 +738,28 @@ public class ValueStack {
         return x != null && x.type().isDoubleWord();
     }
 
+    /**
+     * This is a helper method for iterating over all phis in this value stack.
+     * @return an iterator over all phis
+     */
+    public Iterable<Phi> allPhis() {
+
+        final List<Phi> phis = new ArrayList<Phi>();
+
+        for (int i = 0; i < this.stackSize(); i++) {
+            final Instruction instr = this.stackAt(i);
+            if (instr instanceof Phi) {
+                phis.add((Phi) instr);
+            }
+        }
+
+        for (int i = 0; i < this.localsSize(); i++) {
+            final Instruction instr = this.localAt(i);
+            if (instr instanceof Phi) {
+                phis.add((Phi) instr);
+            }
+        }
+
+        return phis;
+    }
 }

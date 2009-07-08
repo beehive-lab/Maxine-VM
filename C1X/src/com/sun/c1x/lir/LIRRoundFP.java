@@ -31,27 +31,27 @@ import com.sun.c1x.util.*;
  */
 public class LIRRoundFP extends LIROp1 {
 
-    private LIROperand stackLockTmp;
+    private LIROperand tmp;
 
     /**
      * Creates a LIRRoundFP instruction.
      *
      * @param register the register holding the input for this instruction
-     * @param stackLockTemp stack lock temporary
+     * @param tmp stack lock temporary
      * @param result the resulting operand
      */
-    public LIRRoundFP(LIROperand register, LIROperand stackLockTemp, LIROperand result) {
+    public LIRRoundFP(LIROperand register, LIROperand tmp, LIROperand result) {
         super(LIROpcode.Roundfp, register, result);
-        this.stackLockTmp = stackLockTemp;
+        this.tmp = tmp;
     }
 
     /**
-     * Gets the stackLockTmp of this instruction.
+     * Gets the tmp operand of this instruction.
      *
      * @return the stackLockTmp
      */
-    public LIROperand tackLockTmp() {
-        return stackLockTmp;
+    public LIROperand tmp() {
+        return tmp;
     }
 
     /**
@@ -61,10 +61,9 @@ public class LIRRoundFP extends LIROp1 {
      */
     @Override
     public void printInstruction(LogStream out) {
-        super.printInstruction(out);
         opr.print(out);
         out.print(" ");
-        stackLockTmp.print(out);
+        tmp.print(out);
         out.print(" ");
         result.print(out);
         out.print(" ");

@@ -85,6 +85,7 @@ public class Intrinsic extends StateSplit {
      * Gets the lock stack for this instruction.
      * @return the lock stack
      */
+    @Override
     public ValueStack lockStack() {
         return lockStack;
     }
@@ -152,5 +153,13 @@ public class Intrinsic extends StateSplit {
     @Override
     public void accept(InstructionVisitor v) {
         v.visitIntrinsic(this);
+    }
+
+    public Instruction argumentAt(int i) {
+        return arguments[i];
+    }
+
+    public int numberOfArguments() {
+        return arguments.length;
     }
 }

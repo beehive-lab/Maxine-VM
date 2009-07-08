@@ -37,7 +37,27 @@ public class LIRDelay extends LIRInstruction {
     public LIRDelay(LIRInstruction operand, CodeEmitInfo info) {
         super(LIROpcode.DelaySlot, LIROperandFactory.illegalOperand, info);
         this.operand = operand;
-        assert operand.opcode == LIROpcode.Nop || C1XOptions.LIRFillDelaySlots == true : "Should be filling with nops";
+        assert operand.code == LIROpcode.Nop || C1XOptions.LIRFillDelaySlots : "Should be filling with nops";
+    }
+
+    /**
+     * Emit target assembly code for this instruction.
+     *
+     * @param masm the target assembler
+     */
+    @Override
+    public void emitCode(LIRAssembler masm) {
+        masm.emitDelay(this);
+    }
+
+    /**
+     * Prints this instruction.
+     *
+     * @param out the output log stream.
+     */
+    @Override
+    public void printInstruction(LogStream out) {
+        operand.printInstruction(out);
     }
 
     /**
@@ -50,23 +70,9 @@ public class LIRDelay extends LIRInstruction {
     }
 
     /**
-     * Emit target assembly code for this instruction.
-     *
-     * @param masm the target assembler
+     * @return the object with information for
      */
-    @Override
-    public void emitCode(LIRAssembler masm) {
-        // TODO Auto-generated method stub
-
-    }
-
-    /**
-     * Prints this instruction.
-     *
-     * @param out the output log stream.
-     */
-    @Override
-    public void printInstruction(LogStream out) {
-        operand.printInstruction(out);
+    public CodeEmitInfo callInfo() {
+        return info();
     }
 }

@@ -18,57 +18,41 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.gen;
 
 import java.util.*;
 
+import com.sun.c1x.lir.*;
 
 /**
- * The <code>LIRRTCall</code> class definition.
- *
+ * XXX: what does this really mean?
  * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
  *
  */
-public class LIRRuntimeCall extends LIRCall{
+class ResolveNode {
 
-    private LIROperand tmp;
+    final LIROperand operand;
+    final List<ResolveNode> destinations;
 
-    /**
-     * Creates a new LIRRTCall instruction.
-     *
-     * @param address
-     * @param tmp
-     * @param result
-     * @param arguments
-     * @param info
-     */
-    public LIRRuntimeCall(int address, LIROperand tmp, LIROperand result, ArrayList<LIRInstruction> arguments, CodeEmitInfo info) {
-        super(LIROpcode.RtCall, address, result, arguments, info);
-        this.tmp = tmp;
+    boolean assigned;
+    boolean visited;
+    boolean startNode;
+
+    ResolveNode(LIROperand operand) {
+        this.operand = operand;
+        destinations = new ArrayList<ResolveNode>();
     }
 
-    /**
-     * Gets the temporary operand associated to this call.
-     * @return the tmp
-     */
-    public LIROperand tmp() {
-        return tmp;
+    void append(ResolveNode dest) {
+        destinations.add(dest);
     }
 
-    /** Emits target assembly code for this instruction.
-    *
-    * @param masm the target assembler
-    */
-    @Override
-    public void emitCode(LIRAssembler masm) {
-        // TODO Not yet implemented.
+    ResolveNode destinationAt(int index) {
+        return destinations.get(index);
     }
 
-    /**
-     * Verifies this instruction.
-     */
-    @Override
-    public void verify() {
-        // TODO Not yet implemented.
+    int numDestinations() {
+        return destinations.size();
     }
 }

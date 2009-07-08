@@ -68,6 +68,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
         public void run(Pointer trapState) {
             if (Safepoint.UseThreadStateWordForGCMutatorSynchronization) {
                 final Pointer vmThreadLocals = Safepoint.getLatchRegister();
+
                 STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_JAVA_STOPPING_FOR_GC));
 
                 VmThreadLocal.prepareStackReferenceMapFromTrap(vmThreadLocals, trapState);
