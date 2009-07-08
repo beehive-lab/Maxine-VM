@@ -28,6 +28,7 @@ package com.sun.c1x.lir;
  *
  */
 public enum LIRCondition {
+    // XXX: this class can probably be folded into Instruction.Condition
     Equal,
     NotEqual,
     Less,

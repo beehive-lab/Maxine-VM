@@ -21,6 +21,7 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.asm.*;
+import com.sun.c1x.util.*;
 
 
 /**
@@ -39,7 +40,7 @@ public abstract class CodeStub {
      *
      * @return the entry
      */
-    public Label getEntry() {
+    public Label entry() {
         return entry;
     }
 
@@ -48,7 +49,55 @@ public abstract class CodeStub {
      *
      * @return the continuation
      */
-    public Label getContinuation() {
+    public Label continuation() {
         return continuation;
     }
+
+    /**
+     * Asserts that the code stub has bounded labels.
+     */
+    public void assertNoUnboundLabels() {
+        assert !entry.isUnbound() && !continuation.isUnbound() : "Code stub has an unbound label";
+    }
+
+    public abstract void emitCode(LIRAssembler e);
+
+    public abstract void printName(LogStream out);
+
+    public void visit(LIRVisitState v) {
+
+    }
+
+    /**
+     * Checks if this is an exception throw code stub.
+     *
+     * @return false
+     */
+    public boolean isExeptionThrow() {
+        return false;
+    }
+
+    /**
+     * Checks if this is a range check code stub.
+     *
+     * @return false
+     */
+    public boolean isRangeCheck() {
+        return false;
+    }
+
+    /**
+     * Checks if this is a divide by zero code stub.
+     *
+     * @return false
+     */
+    public boolean isDivideByZero() {
+        return false;
+    }
+
+    public CodeEmitInfo info() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
 }

@@ -168,4 +168,18 @@ public interface CiType {
      * @return the basic type
      */
     BasicType basicType();
+
+    /**
+     * The instance size of an object of this type.
+     * XXX: this is a dumb name
+     * @return the instance size in bytes
+     */
+    int sizeHelper();
+
+    /**
+     * Determines whether the slow path should always be taken when creating new instances of this type.
+     * XXX: this is a dumb name
+     * @return true if the slow path should always be taken, false otherwise
+     */
+    boolean layoutHelperNeedsSlowPath();
 }

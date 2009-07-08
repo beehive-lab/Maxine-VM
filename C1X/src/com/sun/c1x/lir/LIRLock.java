@@ -31,8 +31,8 @@ import com.sun.c1x.util.*;
  */
 public class LIRLock extends LIRInstruction{
 
-    private LIROperand header;
-    private LIROperand object;
+    private LIROperand hdr;
+    private LIROperand obj;
     private LIROperand lock;
     private LIROperand scratch;
     private CodeStub stub;
@@ -40,16 +40,16 @@ public class LIRLock extends LIRInstruction{
     /**
      * Creates a new LIRLock instruction.
      *
-     * @param header
-     * @param object
+     * @param hdr
+     * @param obj
      * @param lock
      * @param scratch
      * @param stub
      */
-    public LIRLock(LIROpcode opcode, LIROperand header, LIROperand object, LIROperand lock, LIROperand scratch, CodeStub stub, CodeEmitInfo info) {
+    public LIRLock(LIROpcode opcode, LIROperand hdr, LIROperand obj, LIROperand lock, LIROperand scratch, CodeStub stub, CodeEmitInfo info) {
         super(opcode, LIROperandFactory.illegalOperand, info);
-        this.header = header;
-        this.object = object;
+        this.hdr = hdr;
+        this.obj = obj;
         this.lock = lock;
         this.scratch = scratch;
         this.stub = stub;
@@ -60,8 +60,8 @@ public class LIRLock extends LIRInstruction{
      *
      * @return the header
      */
-    public LIROperand header() {
-        return header;
+    public LIROperand hdrOpr() {
+        return hdr;
     }
 
     /**
@@ -69,8 +69,8 @@ public class LIRLock extends LIRInstruction{
      *
      * @return the object
      */
-    public LIROperand object() {
-        return object;
+    public LIROperand objOpr() {
+        return obj;
     }
 
     /**
@@ -78,7 +78,7 @@ public class LIRLock extends LIRInstruction{
      *
      * @return the lock
      */
-    public LIROperand lock() {
+    public LIROperand lockOpr() {
         return lock;
     }
 
@@ -87,7 +87,7 @@ public class LIRLock extends LIRInstruction{
      *
      * @return the scratch
      */
-    public LIROperand scratch() {
+    public LIROperand scratchOpr() {
         return scratch;
     }
 
@@ -100,13 +100,15 @@ public class LIRLock extends LIRInstruction{
         return stub;
     }
 
-    /** Emits target assembly code for this instruction.
-    *
-    * @param masm the target assembler
-    */
+    /**
+     * Emits target assembly code for this instruction.
+     *
+     * @param masm the target assembler
+     *
+     */
     @Override
     public void emitCode(LIRAssembler masm) {
-        // TODO Not yet implemented.
+        masm.emitLock(this);
     }
 
     /**
@@ -116,15 +118,15 @@ public class LIRLock extends LIRInstruction{
      */
     @Override
     public void printInstruction(LogStream out) {
-        header.print(out);
+        hdr.print(out);
         out.print(" ");
-        object.print(out);
+        obj.print(out);
         out.print(" ");
         lock.print(out);
         if (scratch.isValid()) {
             scratch.print(out);
             out.print(" ");
         }
-        out.print("[lbl:0x" + stub.entry);
+        out.printf("[lbl:0x%x]", stub.entry());
     }
 }

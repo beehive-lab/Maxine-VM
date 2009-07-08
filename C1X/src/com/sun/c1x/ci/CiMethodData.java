@@ -30,4 +30,6 @@ public interface CiMethodData {
     int invocationCountOffset();
     int bciCountOffset(int bci);
     int branchTakenCountOffset(int bci);
+    int branchNotTakenCountOffset(int bci);
+    Object encoding();
 }

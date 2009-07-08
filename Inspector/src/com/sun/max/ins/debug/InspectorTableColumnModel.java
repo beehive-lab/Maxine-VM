@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,12 +18,28 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+
+package com.sun.max.ins.debug;
+
+import javax.swing.table.*;
+
 
 /**
- * The <code>LIRGenerator</code> class definition.
+ * Abstract Inspector column Table.
+ * @author Hannes Payer
  *
- * @author Ben L. Titzer
  */
-public class LIRGenerator {
+public abstract class InspectorTableColumnModel extends DefaultTableColumnModel {
+
+    protected TableColumn createColumnInstance(ColumnKind columnKind, TableCellRenderer renderer, TableCellEditor editor) {
+        final TableColumn tableColumn;
+        final int col = columnKind.ordinal();
+        tableColumn = new TableColumn(col, 0, renderer, editor);
+        tableColumn.setHeaderValue(columnKind.label());
+        tableColumn.setMinWidth(columnKind.minWidth());
+        tableColumn.setIdentifier(columnKind);
+
+        return tableColumn;
+    }
+
 }

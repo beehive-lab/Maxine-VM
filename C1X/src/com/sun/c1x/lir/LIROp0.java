@@ -37,7 +37,7 @@ public class LIROp0 extends LIRInstruction {
      * @param opcode the opcode of the new instruction
      */
     public LIROp0(LIROpcode opcode) {
-        this(opcode, LIROperandFactory.illegalOperand, (CodeEmitInfo) null);
+        this(opcode, LIROperandFactory.illegalOperand);
     }
 
     /**
@@ -58,7 +58,7 @@ public class LIROp0 extends LIRInstruction {
      * @param info used to emit debug information associated to this instruction
      */
     public LIROp0(LIROpcode opcode, LIROperand result, CodeEmitInfo info) {
-        super(opcode, LIROperandFactory.illegalOperand, null);
+        super(opcode, LIROperandFactory.illegalOperand, info);
         assert isInRange(opcode, LIROpcode.BeginOp0, LIROpcode.EndOp0) : "Opcode " + opcode + " is invalid for a LIROP0 instruction";
     }
 
@@ -68,7 +68,7 @@ public class LIROp0 extends LIRInstruction {
      */
     @Override
     public void emitCode(LIRAssembler masm) {
-        // TODO to be completed later
+        masm.emitOp0(this);
     }
 
     /**
@@ -79,5 +79,4 @@ public class LIROp0 extends LIRInstruction {
     public void printInstruction(LogStream out) {
         result().print(out);
     }
-
 }
