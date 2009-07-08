@@ -23,6 +23,8 @@ package com.sun.c1x.target;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
+import com.sun.c1x.lir.*;
+
 /**
  * The <code>Target</code> class represents the target of a compilation, including
  * the CPU architecture and other configuration information of the machine. Such
@@ -86,5 +88,35 @@ public class Target {
      */
     public boolean hasCompressedOops() {
         return referenceSize < arch.wordSize;
+    }
+
+    public Register jRarg0() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Register jRarg1() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Register jRarg2() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Register jRarg3() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Register jRarg4() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Register jRarg5() {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

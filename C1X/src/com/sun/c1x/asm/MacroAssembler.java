@@ -18,54 +18,77 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.asm;
 
-import java.util.*;
-
-import com.sun.c1x.*;
-import com.sun.c1x.ir.*;
+import com.sun.c1x.lir.*;
 import com.sun.c1x.value.*;
 
-
 /**
- * The <code>CodeEmitInfo</code> class definition.
  *
+ * @author Thomas Wuerthinger
  * @author Marcelo Cintra
  *
  */
-public class CodeEmitInfo {
+public class MacroAssembler {
 
-    public CodeEmitInfo(int bci, ValueStack state, List<ExceptionHandler> list) {
-        // TODO Auto-generated constructor stub
+    public CodeSection codeSection() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
-    public CodeEmitInfo(CodeEmitInfo info) {
-        // TODO Auto-generated constructor stub
+    public void blockComment(String st) {
+        // TODO Auto-generated method stub
+
     }
 
-    public CodeEmitInfo(CodeEmitInfo info, boolean b) {
-        // TODO Auto-generated constructor stub
-    }
-
-    public int bci() {
+    public int rspOffset() {
         // TODO Auto-generated method stub
         return 0;
     }
 
-    public List<ExceptionHandler> exceptionHandlers() {
+    public Address pc() {
         // TODO Auto-generated method stub
         return null;
     }
 
-    public IRScope scope() {
+    public void nop() {
+        // TODO Auto-generated method stub
+
+    }
+
+    public int offset() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public CodeBlob code() {
         // TODO Auto-generated method stub
         return null;
     }
 
-    public void recordDebugInfo(DebugInformationRecorder debugInfoRecorder, int pcOffset) {
+    public void bind(Label label) {
         // TODO Auto-generated method stub
 
     }
 
-    // TODO nothing for now
+    public void nullCheck(Register asRegister) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void buildFrame(int initialFrameSizeInBytes) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void verifiedEntry() {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void align(int codeEntryAlignment) {
+        // TODO Auto-generated method stub
+
+    }
+
 }

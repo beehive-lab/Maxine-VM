@@ -20,52 +20,28 @@
  */
 package com.sun.c1x.lir;
 
-import java.util.*;
+import com.sun.c1x.util.*;
 
-import com.sun.c1x.*;
-import com.sun.c1x.ir.*;
-import com.sun.c1x.value.*;
+public class DivByZeroStub extends CodeStub {
 
-
-/**
- * The <code>CodeEmitInfo</code> class definition.
- *
- * @author Marcelo Cintra
- *
- */
-public class CodeEmitInfo {
-
-    public CodeEmitInfo(int bci, ValueStack state, List<ExceptionHandler> list) {
+    public DivByZeroStub(CodeEmitInfo info) {
         // TODO Auto-generated constructor stub
     }
 
-    public CodeEmitInfo(CodeEmitInfo info) {
+    public DivByZeroStub(int pcOffset, CodeEmitInfo cinfo) {
         // TODO Auto-generated constructor stub
     }
 
-    public CodeEmitInfo(CodeEmitInfo info, boolean b) {
-        // TODO Auto-generated constructor stub
-    }
-
-    public int bci() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    public List<ExceptionHandler> exceptionHandlers() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public IRScope scope() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public void recordDebugInfo(DebugInformationRecorder debugInfoRecorder, int pcOffset) {
+    @Override
+    public void emitCode(LIRAssembler e) {
         // TODO Auto-generated method stub
 
     }
 
-    // TODO nothing for now
+    @Override
+    public void printName(LogStream out) {
+        // TODO Auto-generated method stub
+
+    }
+
 }

@@ -56,8 +56,9 @@ public abstract class CodeStub {
     /**
      * Asserts that the code stub has bounded labels.
      */
-    public void assertNoUnboundLabels() {
+    public boolean assertNoUnboundLabels() {
         assert !entry.isUnbound() && !continuation.isUnbound() : "Code stub has an unbound label";
+        return true;
     }
 
     public abstract void emitCode(LIRAssembler e);
@@ -99,5 +100,11 @@ public abstract class CodeStub {
         // TODO Auto-generated method stub
         return null;
     }
+
+    public String name() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
 
 }

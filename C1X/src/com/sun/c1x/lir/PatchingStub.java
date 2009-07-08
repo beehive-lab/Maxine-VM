@@ -20,52 +20,45 @@
  */
 package com.sun.c1x.lir;
 
-import java.util.*;
-
-import com.sun.c1x.*;
-import com.sun.c1x.ir.*;
+import com.sun.c1x.asm.*;
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 
-/**
- * The <code>CodeEmitInfo</code> class definition.
- *
- * @author Marcelo Cintra
- *
- */
-public class CodeEmitInfo {
+public class PatchingStub extends CodeStub {
 
-    public CodeEmitInfo(int bci, ValueStack state, List<ExceptionHandler> list) {
-        // TODO Auto-generated constructor stub
-    }
+    enum PatchID {
+        accessFieldId,
+        loadKlassId
+      };
 
-    public CodeEmitInfo(CodeEmitInfo info) {
-        // TODO Auto-generated constructor stub
-    }
 
-    public CodeEmitInfo(CodeEmitInfo info, boolean b) {
-        // TODO Auto-generated constructor stub
-    }
-
-    public int bci() {
+    @Override
+    public void emitCode(LIRAssembler e) {
         // TODO Auto-generated method stub
-        return 0;
+
     }
 
-    public List<ExceptionHandler> exceptionHandlers() {
+    @Override
+    public void printName(LogStream out) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public Address pcStart() {
         // TODO Auto-generated method stub
         return null;
     }
 
-    public IRScope scope() {
+    public void install(MacroAssembler masm, LIRPatchCode patchCode, Register obj, CodeEmitInfo info) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public PatchID id() {
         // TODO Auto-generated method stub
         return null;
     }
 
-    public void recordDebugInfo(DebugInformationRecorder debugInfoRecorder, int pcOffset) {
-        // TODO Auto-generated method stub
 
-    }
-
-    // TODO nothing for now
 }

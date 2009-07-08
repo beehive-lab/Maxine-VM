@@ -307,4 +307,24 @@ public class LIRConstant extends LIROperand {
                 out.print(type() + ":" + asDouble());
         }
     }
+
+    public boolean isOneFloat() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean isZeroFloat() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean isZeroDouble() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean isOneDouble() {
+        // TODO Auto-generated method stub
+        return false;
+    }
 }

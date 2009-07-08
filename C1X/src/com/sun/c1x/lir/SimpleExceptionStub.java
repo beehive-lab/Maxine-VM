@@ -20,75 +20,26 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.gen.LIRGenerator;
-import com.sun.c1x.ir.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.util.*;
 
 
-public class LIRItem {
+public class SimpleExceptionStub extends CodeStub {
 
-    public LIRItem(Instruction receiver, LIRGenerator lirGenerator) {
+    public SimpleExceptionStub(CiRuntimeCall throwincompatibleclasschangeerror, LIROperand illegalOperand, CodeEmitInfo infoForException) {
         // TODO Auto-generated constructor stub
     }
 
-    public LIRItem(LIRGenerator lirGenerator) {
-        // TODO Auto-generated constructor stub
-    }
-
-    public ValueType type() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public void loadItemForce(LIROperand loc) {
+    @Override
+    public void emitCode(LIRAssembler e) {
         // TODO Auto-generated method stub
 
     }
 
-    public void loadForStore(BasicType type) {
+    @Override
+    public void printName(LogStream out) {
         // TODO Auto-generated method stub
 
     }
-
-    public LIROperand result() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public void loadItem() {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void loadByteItem() {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void setInstruction(Instruction length) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public boolean isConstant() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    public void dontLoadItem() {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void loadNonconstant() {
-        // TODO Auto-generated method stub
-
-    }
-
-    public Instruction value() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
 
 }

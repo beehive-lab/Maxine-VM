@@ -18,54 +18,22 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.asm;
 
-import java.util.*;
-
-import com.sun.c1x.*;
-import com.sun.c1x.ir.*;
+import com.sun.c1x.asm.RelocInfo.*;
 import com.sun.c1x.value.*;
 
 
-/**
- * The <code>CodeEmitInfo</code> class definition.
- *
- * @author Marcelo Cintra
- *
- */
-public class CodeEmitInfo {
+public class CodeSection {
 
-    public CodeEmitInfo(int bci, ValueStack state, List<ExceptionHandler> list) {
-        // TODO Auto-generated constructor stub
-    }
-
-    public CodeEmitInfo(CodeEmitInfo info) {
-        // TODO Auto-generated constructor stub
-    }
-
-    public CodeEmitInfo(CodeEmitInfo info, boolean b) {
-        // TODO Auto-generated constructor stub
-    }
-
-    public int bci() {
+    public int remaining() {
         // TODO Auto-generated method stub
         return 0;
     }
 
-    public List<ExceptionHandler> exceptionHandlers() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public IRScope scope() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public void recordDebugInfo(DebugInformationRecorder debugInfoRecorder, int pcOffset) {
+    public void relocate(Address pc, Type polltype) {
         // TODO Auto-generated method stub
 
     }
 
-    // TODO nothing for now
 }

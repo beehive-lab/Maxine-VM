@@ -56,7 +56,7 @@ public class LIRAllocObj extends LIROp1 {
      * @param initCheck
      */
     public LIRAllocObj(LIROperand klass, LIROperand result, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, LIROperand tmp4,
-                    int hdrSize, int objSize, CodeStub stub, boolean initCheck) {
+                    int hdrSize, int objSize, boolean initCheck, CodeStub stub) {
         super(LIROpcode.AllocObject, klass, result);
         this.tmp1 = tmp1;
         this.tmp2 = tmp2;
