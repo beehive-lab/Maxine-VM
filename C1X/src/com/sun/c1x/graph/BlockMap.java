@@ -62,7 +62,7 @@ public class BlockMap {
             canTrap = new BitMap(code.length);
             isObjectInit = C1XOptions.RegisterFinalizersAtInit && C1XIntrinsic.getIntrinsic(method) == C1XIntrinsic.java_lang_Object$init;
             allHandlers = method.exceptionHandlers();
-            handlerMap = new ArrayMap<HashSet<BlockBegin>>(firstBlock, code.length / 5);
+            handlerMap = new ArrayMap<HashSet<BlockBegin>>(firstBlock, firstBlock + code.length / 5);
         }
 
         void setCanTrap(int bci) {

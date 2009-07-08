@@ -123,7 +123,7 @@ public final class BytecodeBreakpointMessage extends MaxineMessage<BytecodeBreak
                     TargetBreakpoint.make(jitTargetMethod.codeStart().plus(jitTargetMethod.targetCodePositionFor(bytecodePosition)));
                 }
             } else {
-                Deoptimizer.triggerDeoptimization(targetMethod);
+                // TODO: trigger deoptimization
             }
         }
     }

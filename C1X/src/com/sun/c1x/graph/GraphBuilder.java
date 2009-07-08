@@ -286,12 +286,12 @@ public class GraphBuilder {
     }
 
     void push(ValueType type, Instruction x) {
-        curState.push(type.basicType(), x);
+        curState.push(type.basicType, x);
     }
 
     void pushReturn(ValueType type, Instruction x) {
         if (!type.isVoid()) {
-            curState.push(type.basicType(), x);
+            curState.push(type.basicType, x);
         }
     }
 
@@ -316,7 +316,7 @@ public class GraphBuilder {
     }
 
     Instruction pop(ValueType type) {
-        return curState.pop(type.basicType());
+        return curState.pop(type.basicType);
     }
 
     void loadLocal(ValueType type, int index) {
@@ -1049,7 +1049,7 @@ public class GraphBuilder {
             // trim back stack to the caller's stack size
             curState.truncateStack(scopeData.callerStackSize());
             if (x != null) {
-                curState.push(x.type().basicType(), x);
+                curState.push(x.type().basicType, x);
             }
             Goto gotoCallee = new Goto(scopeData.continuation(), null, false);
 
@@ -1063,7 +1063,7 @@ public class GraphBuilder {
             // return value, if any, of the inlined method on operand stack.
             curState = scopeData.continuationState().copy();
             if (x != null) {
-                curState.push(x.type().basicType(), x);
+                curState.push(x.type().basicType, x);
             }
 
             // The current bci() is in the wrong scope, so use the bci() of
@@ -1788,7 +1788,7 @@ public class GraphBuilder {
                     get = appendConstant(ConstType.NULL_OBJECT);
                 } else {
                     Instruction oc = appendConstant(ConstType.forInt(offset));
-                    get = append(new UnsafeGetRaw(local.type().basicType(), e, oc, 0, true));
+                    get = append(new UnsafeGetRaw(local.type().basicType, e, oc, 0, true));
                 }
                 state.storeLocal(i, get);
             }

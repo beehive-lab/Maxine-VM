@@ -30,7 +30,7 @@ package com.sun.c1x.value;
  */
 public class ConstType extends ValueType {
 
-    public static final ConstType NULL_OBJECT = new ConstType(BasicType.Object, null, true);
+    public static final ConstType NULL_OBJECT = new ConstType(BasicType.Object, null);
     public static final ConstType INT_MINUS_1 = ConstType.forInt(-1);
     public static final ConstType INT_0 = ConstType.forInt(0);
     public static final ConstType INT_1 = ConstType.forInt(1);
@@ -47,19 +47,16 @@ public class ConstType extends ValueType {
     public static final ConstType DOUBLE_1 = ConstType.forDouble(1);
 
     private final Object value;
-    private final boolean isObject;
 
     /**
      * Create a new constant type represented by the specified object reference or boxed
      * primitive.
      * @param type the type of this constant
      * @param value the value of this constant
-     * @param isObject true if this constant is an object reference; false otherwise
      */
-    public ConstType(BasicType type, Object value, boolean isObject) {
+    public ConstType(BasicType type, Object value) {
         super(type);
         this.value = value;
-        this.isObject = isObject;
     }
 
     /**
@@ -76,8 +73,8 @@ public class ConstType extends ValueType {
      */
     @Override
     public String toString() {
-        final String val = isObject ? "object@" + System.identityHashCode(value) : value.toString();
-        return basicType().javaName + " = " + val;
+        final String val = isObject() ? "object@" + System.identityHashCode(value) : value.toString();
+        return basicType.javaName + " = " + val;
     }
 
     /**
@@ -104,13 +101,13 @@ public class ConstType extends ValueType {
         if (other instanceof ConstType) {
             ConstType cother = (ConstType) other;
             // must have equivalent tags to be equal
-            if (basicType() != cother.basicType()) {
+            if (basicType != cother.basicType) {
                 return false;
             }
             // use == for object references and .equals() for boxed types
             if (value == cother.value) {
                 return true;
-            } else if (!(isObject || cother.isObject) && value != null && value.equals(cother.value)) {
+            } else if (!isObject() && value != null && value.equals(cother.value)) {
                 return true;
             }
         }
@@ -122,7 +119,7 @@ public class ConstType extends ValueType {
      * @return the int value of this constant
      */
     public int asInt() {
-        if (!isObject) {
+        if (basicType != BasicType.Object) {
             if (value instanceof Integer) {
                 return (Integer) value;
             }
@@ -147,7 +144,7 @@ public class ConstType extends ValueType {
      * @return the long value of this constant
      */
     public long asLong() {
-        if (!isObject) {
+        if (basicType != BasicType.Object) {
             if (value instanceof Long) {
                 return (Long) value;
             }
@@ -175,7 +172,7 @@ public class ConstType extends ValueType {
      * @return the float value of this constant
      */
     public float asFloat() {
-        if (!isObject) {
+        if (basicType != BasicType.Object) {
             if (value instanceof Float) {
                 return (Float) value;
             }
@@ -188,7 +185,7 @@ public class ConstType extends ValueType {
      * @return the double value of this constant
      */
     public double asDouble() {
-        if (!isObject) {
+        if (basicType != BasicType.Object) {
             if (value instanceof Double) {
                 return (Double) value;
             }
@@ -204,7 +201,7 @@ public class ConstType extends ValueType {
      * @return the object which this constant represents
      */
     public Object asObject() {
-        if (isObject) {
+        if (basicType == BasicType.Object) {
             return value;
         }
         throw new Error("Invalid constant");
@@ -216,7 +213,7 @@ public class ConstType extends ValueType {
      */
     @Override
     public int hashCode() {
-        if (isObject) {
+        if (basicType == BasicType.Object) {
             return System.identityHashCode(value);
         }
         return value.hashCode();
@@ -238,7 +235,7 @@ public class ConstType extends ValueType {
      * @return <code>true</code> if the value is the default value for its type; <code>false</code> otherwise
      */
     public boolean isDefaultValue() {
-        switch (basicType()) {
+        switch (basicType) {
             case Int: return asInt() == 0;
             case Long: return asLong() == 0;
             case Float: return asFloat() == 0.0f; // TODO: be careful about -0.0
@@ -254,7 +251,7 @@ public class ConstType extends ValueType {
      * @return a value type representing the double
      */
     public static ConstType forDouble(double d) {
-        return new ConstType(BasicType.Double, d, false);
+        return new ConstType(BasicType.Double, d);
     }
 
     /**
@@ -263,7 +260,7 @@ public class ConstType extends ValueType {
      * @return a value type representing the float
      */
     public static ConstType forFloat(float f) {
-        return new ConstType(BasicType.Float, f, false);
+        return new ConstType(BasicType.Float, f);
     }
 
     /**
@@ -272,7 +269,7 @@ public class ConstType extends ValueType {
      * @return a value type representing the long
      */
     public static ConstType forLong(long i) {
-        return new ConstType(BasicType.Long, i, false);
+        return new ConstType(BasicType.Long, i);
     }
 
     /**
@@ -281,7 +278,7 @@ public class ConstType extends ValueType {
      * @return a value type representing the integer
      */
     public static ConstType forInt(int i) {
-        return new ConstType(BasicType.Int, i, false);
+        return new ConstType(BasicType.Int, i);
     }
 
     /**
@@ -290,7 +287,7 @@ public class ConstType extends ValueType {
      * @return a value type representing the byte
      */
     public static ConstType forByte(byte i) {
-        return new ConstType(BasicType.Int, i, false);
+        return new ConstType(BasicType.Int, i);
     }
 
     /**
@@ -299,7 +296,7 @@ public class ConstType extends ValueType {
      * @return a value type representing the boolean
      */
     public static ConstType forBoolean(boolean i) {
-        return new ConstType(BasicType.Int, i, false);
+        return new ConstType(BasicType.Int, i);
     }
 
     /**
@@ -308,7 +305,7 @@ public class ConstType extends ValueType {
      * @return a value type representing the char
      */
     public static ConstType forChar(char i) {
-        return new ConstType(BasicType.Int, i, false);
+        return new ConstType(BasicType.Int, i);
     }
 
     /**
@@ -317,7 +314,7 @@ public class ConstType extends ValueType {
      * @return a value type representing the short
      */
     public static ConstType forShort(short i) {
-        return new ConstType(BasicType.Int, i, false);
+        return new ConstType(BasicType.Int, i);
     }
 
     /**
@@ -326,7 +323,7 @@ public class ConstType extends ValueType {
      * @return a value type representing the address
      */
     public static ConstType forJsr(int i) {
-        return new ConstType(BasicType.Jsr, i, false);
+        return new ConstType(BasicType.Jsr, i);
     }
 
     /**
@@ -338,7 +335,7 @@ public class ConstType extends ValueType {
         if (o == null) {
             return NULL_OBJECT;
         }
-        return new ConstType(BasicType.Object, o, true);
+        return new ConstType(BasicType.Object, o);
     }
 
 }

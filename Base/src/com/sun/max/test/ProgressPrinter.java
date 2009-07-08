@@ -161,10 +161,20 @@ public class ProgressPrinter {
      * in the <i>quiet</i> mode.
      */
     public void report() {
-        output.print(passed);
-        output.print(" of ");
-        output.print(total);
-        output.println(" passed");
+        if (total > 0) {
+            final int failed = total - passed;
+            if (failed == 0) {
+                output.print(passed);
+                output.println(" passed");
+            } else {
+                output.print(passed);
+                output.print(" of ");
+                output.print(total);
+                output.print(" passed (");
+                output.print(total - passed);
+                output.println(" failed)");
+            }
+        }
         if (verbose < 2) {
             for (int i = 0; i < total; i++) {
                 if (failedTests[i] != null) {
