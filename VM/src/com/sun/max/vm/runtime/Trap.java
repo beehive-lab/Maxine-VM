@@ -261,8 +261,7 @@ public final class Trap {
         } else if (inJava(disabledVmThreadLocals)) {
             safepoint.setTrapNumber(trapState, Number.NULL_POINTER_EXCEPTION);
             // null pointer exception
-            final NullPointerException error = new NullPointerException();
-            raise(trapState, targetMethod, error, stackPointer, framePointer, instructionPointer);
+            raise(trapState, targetMethod, new NullPointerException(), stackPointer, framePointer, instructionPointer);
         } else {
             // segmentation fault happened in native code somewhere, die.
             MaxineVM.native_trap_exit(MaxineVM.HARD_EXIT_CODE, instructionPointer);
