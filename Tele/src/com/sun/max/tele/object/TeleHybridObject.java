@@ -21,6 +21,7 @@
 package com.sun.max.tele.object;
 
 import java.lang.reflect.*;
+import java.util.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -29,6 +30,8 @@ import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.layout.*;
+import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
@@ -42,6 +45,8 @@ import com.sun.max.vm.value.*;
   */
 public abstract class TeleHybridObject extends TeleObject {
 
+    private static final EnumSet<Layout.HeaderField> headerFields = EnumSet.of(HeaderField.HUB, HeaderField.MISC);
+
     protected TeleHybridObject(TeleVM teleVM, Reference reference) {
         super(teleVM, reference);
     }
@@ -49,6 +54,11 @@ public abstract class TeleHybridObject extends TeleObject {
     @Override
     public ObjectKind getObjectKind() {
         return ObjectKind.HYBRID;
+    }
+
+    @Override
+    public EnumSet<Layout.HeaderField> getHeaderFields() {
+        return headerFields;
     }
 
     @Override
