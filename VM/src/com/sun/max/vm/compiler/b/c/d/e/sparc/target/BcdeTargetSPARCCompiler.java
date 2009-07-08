@@ -202,6 +202,14 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
             case REFERENCE_MAP_PREPARING: {
                 break;
             }
+            case RAW_INSPECTING: {
+                final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
+                final int flags = RawStackFrameVisitor.Util.makeFlags(isTopFrame, true);
+                if (!stackFrameVisitor.visitFrame(targetMethod, instructionPointer, stackFrameWalker.framePointer(), stackPointer, flags)) {
+                    return false;
+                }
+                break;
+            }
             case INSPECTING: {
                 final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
                 final StackFrame stackFrame = new SPARCJitToOptimizedAdapterFrame(stackFrameWalker.calleeStackFrame(), targetMethod, instructionPointer, stackFrameWalker.framePointer(), stackPointer, adapterFrameSize);
@@ -209,9 +217,6 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                     return false;
                 }
                 break;
-            }
-            default: {
-                ProgramError.unknownCase();
             }
         }
         // Jit to Opt adapter frame exploit the use of register windows by optimized code to leave the frame pointer
@@ -328,6 +333,14 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                 unwindingContext.record(stackFrameWalker.stackPointer(), stackFrameWalker.framePointer());
                 break;
             }
+            case RAW_INSPECTING: {
+                final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
+                final int flags = RawStackFrameVisitor.Util.makeFlags(isTopFrame, false);
+                if (!stackFrameVisitor.visitFrame(targetMethod, instructionPointer, framePointer, stackPointer, flags)) {
+                    return false;
+                }
+                break;
+            }
             case INSPECTING: {
                 final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
                 if (!stackFrameVisitor.visitFrame(new SPARCJavaStackFrame(stackFrameWalker.calleeStackFrame(), targetMethod, instructionPointer, framePointer, stackPointer))) {
@@ -342,7 +355,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
         // the trampoline's return address is patched into the entry point of the method invoked via the trampoline.
         // In that case, we still need to get the caller address from the stack. Testing if we're in the top frame filters out these trampoline call.
         if (inCallerRegisterWindow && isTopFrame) {
-            if (purpose.equals(Purpose.INSPECTING)) {
+            if (purpose == Purpose.INSPECTING || purpose == Purpose.RAW_INSPECTING) {
                 // In that case, the return pointer can only be found in the FRAMELESS_CALL_INSTRUCTION_ADDRESS register.
                 callerInstructionPointer = stackFrameWalker.readFramelessCallAddressRegister(targetMethod.abi()).asPointer();
             } else {
@@ -363,7 +376,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
         final TargetMethod caller = stackFrameWalker.targetMethodFor(callerInstructionPointer);
         if (caller instanceof JitTargetMethod) {
             if (inCallerRegisterWindow) {
-                if (purpose.equals(Purpose.INSPECTING)) {
+                if (purpose == Purpose.INSPECTING || purpose == Purpose.RAW_INSPECTING) {
                     // FIXME: this is a gross hack to read the caller's frame pointer (it isn't in the standard frame pointer register.
                     // The stackFrameWalker doesn't provide an API to obtain the value of arbitrary register and we cannot use the
                     // VMRegister class here for it wouldn't work when inspecting. So the hack here consists of forcing the walker

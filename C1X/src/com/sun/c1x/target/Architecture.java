@@ -18,71 +18,56 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
-
-import com.sun.c1x.util.*;
-
+package com.sun.c1x.target;
 
 /**
- * The <code>ConversionStub</code> class definition.
+ * The <code>Architecture</code> class represents a CPU architecture that is supported by
+ * the backend of C1X.
  *
- * @author Marcelo Cintra
- *
+ * @author Ben L. Titzer
  */
-public class ConversionStub {
-
-    private final int opcode;
-    private LIROperand input;
-    private LIROperand result;
-
-    /**
-     * Constructs a new conversion stub.
-     *
-     * @param opcode
-     * @param input
-     * @param result
-     */
-    public ConversionStub(int opcode, LIROperand input, LIROperand result) {
-        super();
-        this.opcode = opcode;
-        this.input = input;
-        this.result = result;
-    }
+public enum Architecture {
+    IA32(4, "x86"),
+    AMD64(8, "x86"),
+    SPARC(4, "sparc"),
+    SPARCV9(8, "sparc");
+    // PPC(4),
+    // PPC64(8),
+    // ARM(4),
 
     /**
-     * Gets the bytecode of this conversion stub.
-     *
-     * @return the bytecode
+     * Represents the natural size of words (typically registers and pointers) of this architecture.
      */
-    public int bytecode() {
-        return opcode;
+    public final int wordSize;
+    public final String backend;
+
+    Architecture(int wordSize, String backend) {
+        this.wordSize = wordSize;
+        this.backend = backend;
     }
 
     /**
-     * @return the input
+     * Converts this architecture to a string.
+     * @return the string representation of this architecture
      */
-    public LIROperand input() {
-        return input;
+    @Override
+    public String toString() {
+        return name().toLowerCase();
     }
 
     /**
-     * @return the result
+     * Checks whether this is a 32-bit architecture.
+     * @return <code>true</code> if this architecture is 32-bit
      */
-    public LIROperand result() {
-        return result;
+    public boolean is32bit() {
+        return wordSize == 4;
     }
 
-    public void emitCode(LIRAssembler masm) {
-        // TODO to be completed later
-    }
-
-    public void visit(LIRVisitState visitor) {
-        visitor.doSlowCase();
-        visitor.doInput(input);
-        visitor.doOutput(result);
-    }
-
-    public void printName(LogStream out) {
-        out.print("ConversionStub");
+    /**
+     * Checks whether this is a 64-bit architecture.
+     * @return <code>true</code> if this architecture is 64-bit
+     */
+    public boolean is64bit() {
+        return wordSize == 8;
     }
 }

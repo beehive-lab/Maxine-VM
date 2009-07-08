@@ -169,6 +169,12 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
             case REFERENCE_MAP_PREPARING: {
                 break;
             }
+            case RAW_INSPECTING: {
+                final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
+                final int flags = RawStackFrameVisitor.Util.makeFlags(isTopFrame, true);
+                stackFrameVisitor.visitFrame(targetMethod, callerInstructionPointer, stackFrameWalker.framePointer(), stackPointer, flags);
+                break;
+            }
             case INSPECTING: {
                 final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
                 final StackFrame stackFrame = new AMD64JitToOptimizedAdapterFrame(stackFrameWalker.calleeStackFrame(), targetMethod, instructionPointer, stackFrameWalker.framePointer(), stackPointer, adapterFrameSize);
@@ -176,9 +182,6 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                     return false;
                 }
                 break;
-            }
-            default: {
-                ProgramError.unknownCase();
             }
         }
         stackFrameWalker.advance(callerInstructionPointer, ripPointer.plus(Word.size() /* skip RIP */), callerFramePointer);
@@ -310,6 +313,14 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                         Safepoint.enable();
                         unwind(throwable, catchAddress, stackPointer);
                     }
+                }
+                break;
+            }
+            case RAW_INSPECTING: {
+                final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
+                final int flags = RawStackFrameVisitor.Util.makeFlags(isTopFrame, false);
+                if (!stackFrameVisitor.visitFrame(targetMethod, instructionPointer, stackPointer, stackPointer, flags)) {
+                    return false;
                 }
                 break;
             }

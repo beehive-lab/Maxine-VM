@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.jdk;
 
+import static com.sun.max.vm.stack.RawStackFrameVisitor.Util.*;
+
 import java.security.*;
 import java.util.*;
 
@@ -28,12 +30,11 @@ import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.object.TupleAccess;
 
 /**
  * Method substitutions for the {@link java.security.AccessController} class.
@@ -116,28 +117,25 @@ final class JDK_java_security_AccessController {
      * This class implements a closure that gathers stack frames during a stack walk. TODO: this should be removed and
      * replaced with utilities in StackFrameWalker.
      */
-    private static class Context implements StackFrameVisitor {
+    private static class Context implements RawStackFrameVisitor {
         final AppendableSequence<ProtectionDomain> result = new LinkSequence<ProtectionDomain>();
-        boolean isTopFrame = true;
 
         Context() {
         }
 
-        public boolean visitFrame(StackFrame stackFrame) {
-            if (isTopFrame) {
+        public boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, int flags) {
+            if (isTopFrame(flags)) {
                 // skip 'getCallerMethod()'
-                isTopFrame = false;
                 return true;
             }
-            if (stackFrame.isAdapter()) {
+            if (isAdapter(flags)) {
                 return true;
             }
-            final TargetMethod targetMethod = Code.codePointerToTargetMethod(stackFrame.instructionPointer);
             if (targetMethod == null) {
                 // native frame
                 return true;
             }
-            final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.instructionPointer);
+            final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(instructionPointer);
             if (bytecodeLocations == null) {
                 final ProtectionDomain protectionDomain = targetMethod.classMethodActor().holder().protectionDomain();
                 if (protectionDomain != null) {

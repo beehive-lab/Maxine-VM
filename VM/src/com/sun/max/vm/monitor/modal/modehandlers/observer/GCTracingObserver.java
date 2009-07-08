@@ -43,7 +43,7 @@ public class GCTracingObserver implements MonitorObserver {
                 Log.println("Null Hub");
                 return;
             }
-            final ClassActor actor = hub.classActor();
+            final ClassActor actor = hub.classActor;
             if (actor == null) {
                 Log.println("Null ClassActor");
                 return;

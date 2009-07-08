@@ -102,7 +102,7 @@ public abstract class IrInterpreter<Method_Type extends IrMethod> {
         }
 
         final InterpreterObjectMirror mirror = new InterpreterObjectMirror(object);
-        final SpecificLayout specificLayout = mirror.classActor().dynamicHub().specificLayout();
+        final SpecificLayout specificLayout = mirror.classActor().dynamicHub().specificLayout;
 
         if (arguments.length == 2) {
             final int offset = arguments[1].toInt();
@@ -142,7 +142,7 @@ public abstract class IrInterpreter<Method_Type extends IrMethod> {
         }
 
         final InterpreterObjectMirror mirror = new InterpreterObjectMirror(object);
-        final SpecificLayout specificLayout = mirror.classActor().dynamicHub().specificLayout();
+        final SpecificLayout specificLayout = mirror.classActor().dynamicHub().specificLayout;
 
         if (arguments.length == 3) {
             final int offset = arguments[1].toInt();

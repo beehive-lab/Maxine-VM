@@ -22,55 +22,47 @@ package com.sun.max.vm.tele;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.memory.*;
+import com.sun.max.vm.actor.holder.*;
+
 
 /**
- * Makes critical state information about the object heap
+ * Makes critical state information about dynamically loaded classes
  * remotely inspectable.
  * Active only when VM is being inspected.
  *
- * @author Bernd Mathiske
+ * CAUTION:  When active, this implementation hold references to
+ * all dynamically loaded {@link ClassActor}s, and thus prevents class unloading.
+ *
  * @author Michael Van De Vanter
  */
-public final class TeleHeapInfo {
+public final class InspectableClassInfo {
 
-    private TeleHeapInfo() {
+    private InspectableClassInfo() {
     }
 
     @INSPECTED
-    private static MemoryRegion[] memoryRegions;
+    private static ClassActor[] classActors;
 
-    public static void registerMemoryRegions(MemoryRegion... memoryRegions) {
+    @INSPECTED
+    private static int classActorCount = 0;
+
+    /**
+     * Adds to the inspectable record of dynamically loaded classes.
+     */
+    public static void registerClassLoaded(ClassActor classActor) {
         if (MaxineMessenger.isVmInspected()) {
-            if (roots == null) {
-                roots = new Object[MAX_NUMBER_OF_ROOTS];
+            if (classActors == null) {
+                classActors = new ClassActor[100];
             }
-            TeleHeapInfo.memoryRegions = memoryRegions;
+            if (classActorCount == classActors.length) {
+                classActors = Arrays.extend(classActors, classActorCount * 2);
+            }
+            // The classActor needs to be set up before we increment _classActorCount
+            // otherwise we have a race condition where the Inspector might see
+            // a null classActor.
+            classActors[classActorCount] = classActor;
+            classActorCount++;
         }
     }
 
-    public static final int MAX_NUMBER_OF_ROOTS = Ints.M / 8;
-
-    @INSPECTED
-    private static Object[] roots = new Object[MAX_NUMBER_OF_ROOTS];
-
-    @INSPECTED
-    private static long rootEpoch;
-
-    @INSPECTED
-    private static long collectionEpoch;
-
-    /**
-     * For remote inspection:  records that a GC has begun.
-     */
-    public static void beforeGarbageCollection() {
-        collectionEpoch++;
-    }
-
-    /**
-     * For remote inspection:  records that a GC has concluded.
-     */
-    public static void afterGarbageCollection() {
-        rootEpoch = collectionEpoch;
-    }
 }

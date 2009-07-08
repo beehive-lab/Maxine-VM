@@ -107,10 +107,10 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
         final Pointer origin = Layout.cellToOrigin(cell);
         final Grip newHubGrip = Layout.readHubGrip(origin);
         final Hub hub = UnsafeLoophole.cast(newHubGrip.toJava());
-        final SpecificLayout specificLayout = hub.specificLayout();
+        final SpecificLayout specificLayout = hub.specificLayout;
         if (specificLayout.isTupleLayout()) {
             TupleReferenceMap.visitOriginOffsets(hub, origin, this);
-            return cell.plus(hub.tupleSize());
+            return cell.plus(hub.tupleSize);
         }
         if (specificLayout.isHybridLayout()) {
             TupleReferenceMap.visitOriginOffsets(hub, origin, this);

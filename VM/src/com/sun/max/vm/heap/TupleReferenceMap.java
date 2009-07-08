@@ -73,7 +73,7 @@ public class TupleReferenceMap {
     }
 
     public void copyIntoHub(Hub hub) {
-        int index = hub.referenceMapStartIndex();
+        int index = hub.referenceMapStartIndex;
         for (Integer offset : offsets) {
             hub.setInt(index, offset);
             index++;
@@ -81,8 +81,8 @@ public class TupleReferenceMap {
     }
 
     public static void visitOriginOffsets(Hub hub, Pointer origin, PointerOffsetVisitor offsetVisitor) {
-        final int n = hub.referenceMapStartIndex() + hub.referenceMapLength();
-        for (int i = hub.referenceMapStartIndex(); i < n; i++) {
+        final int n = hub.referenceMapStartIndex + hub.referenceMapLength;
+        for (int i = hub.referenceMapStartIndex; i < n; i++) {
             final int offset = hub.getInt(i);
             offsetVisitor.visitPointerOffset(origin, offset);
         }

@@ -48,7 +48,7 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
     @INLINE
     public Size specificSize(Accessor accessor) {
         final Hub hub = UnsafeLoophole.cast(readHubReference(accessor).toJava());
-        return hub.tupleSize();
+        return hub.tupleSize;
     }
 
     public OhmTupleLayout(GripScheme gripScheme) {
@@ -146,7 +146,7 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
     @PROTOTYPE_ONLY
     void visitFields(ObjectCellVisitor visitor, Object tuple) {
         final Hub hub = HostObjectAccess.readHub(tuple);
-        ClassActor classActor = hub.classActor();
+        ClassActor classActor = hub.classActor;
         if (hub instanceof StaticHub) {
             visitFields(visitor, tuple, classActor.localStaticFieldActors());
         } else {

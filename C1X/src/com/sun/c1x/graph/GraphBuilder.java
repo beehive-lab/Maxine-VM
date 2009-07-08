@@ -1458,7 +1458,7 @@ public class GraphBuilder {
 
     boolean checkInliningConditions(CiMethod target) {
         if (!C1XOptions.InlineMethods) {
-            return cannotInline(target, "all inlining is turned off");
+            return false; // all inlining is turned off
         }
         if (!target.isLoaded()) {
             return cannotInline(target, "method is not resolved");

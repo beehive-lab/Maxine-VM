@@ -54,7 +54,7 @@ public abstract class HotpathSnippet extends Snippet {
         @SNIPPET
         @INLINE
         public static void checkType(ClassActor classActor, Object object) throws NullPointerException {
-            if (ObjectAccess.readHub(object).classActor() != classActor) {
+            if (ObjectAccess.readHub(object).classActor != classActor) {
                 throw new ClassCastException();
             }
         }

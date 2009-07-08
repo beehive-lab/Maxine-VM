@@ -56,7 +56,7 @@ public class Cell {
     @INLINE
     @NO_SAFEPOINTS("avoid inconsistent object contents")
     public static Object plantArray(Pointer cell, DynamicHub hub, int length) {
-        final Size size = Layout.getArraySize(hub.classActor().componentClassActor().kind, length);
+        final Size size = Layout.getArraySize(hub.classActor.componentClassActor().kind, length);
         return plantArray(cell, size, hub, length);
     }
 
@@ -67,7 +67,7 @@ public class Cell {
     @NO_SAFEPOINTS("avoid inconsistent object contents")
     public static Object plantTuple(Pointer cell, Hub hub) {
         DebugHeap.writeCellTag(cell);
-        Memory.clear(cell, hub.tupleSize());
+        Memory.clear(cell, hub.tupleSize);
         final Pointer origin = Layout.tupleCellToOrigin(cell);
         Layout.writeHubReference(origin, Reference.fromJava(hub));
         return Reference.fromOrigin(origin).toJava();

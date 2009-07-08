@@ -71,8 +71,8 @@ public class VerifyActionImpl implements Verify {
     public void checkHub(Hub hub) {
         Hub h = hub;
         if (h instanceof StaticHub) {
-            final ClassActor classActor = hub.classActor();
-            checkClassActor(h.classActor());
+            final ClassActor classActor = hub.classActor;
+            checkClassActor(h.classActor);
             FatalError.check(classActor.staticHub() == h, "lost static hub");
             h = ObjectAccess.readHub(h);
         }
