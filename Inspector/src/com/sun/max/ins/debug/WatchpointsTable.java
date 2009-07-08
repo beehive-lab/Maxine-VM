@@ -30,7 +30,6 @@ import javax.swing.event.*;
 import javax.swing.table.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.debug.BreakpointsTable.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
