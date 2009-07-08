@@ -22,6 +22,7 @@ package com.sun.max.vm.compiler.c1x;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
+import com.sun.c1x.C1XOptions;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -324,7 +325,7 @@ public class MaxCiType implements CiType {
             case DOUBLE:
                 return BasicType.Double;
             case WORD:
-                return BasicType.Object; // TODO: this is not really an object!
+                return C1XOptions.SupportWordTypes ? BasicType.Word : BasicType.Object;
             case REFERENCE:
                 return BasicType.Object;
             case VOID:
