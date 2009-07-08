@@ -100,7 +100,7 @@ public final class BreakpointsTable extends InspectorTable {
         }
     }
 
-    private final class BreakpointsColumnModel extends DefaultTableColumnModel {
+    private final class BreakpointsColumnModel extends InspectorTableColumnModel  {
 
         private final BreakpointsViewPreferences viewPreferences;
 
@@ -116,13 +116,10 @@ public final class BreakpointsTable extends InspectorTable {
 
         private void createColumn(BreakpointsColumnKind columnKind, TableCellRenderer renderer, TableCellEditor editor) {
             final int col = columnKind.ordinal();
-            columns[col] = new TableColumn(col, 0, renderer, editor);
-            columns[col].setHeaderValue(columnKind.label());
-            columns[col].setMinWidth(columnKind.minWidth());
+            columns[col] = createColumnInstance(columnKind, renderer, editor);
             if (viewPreferences.isVisible(columnKind)) {
                 addColumn(columns[col]);
             }
-            columns[col].setIdentifier(columnKind);
         }
     }
 
