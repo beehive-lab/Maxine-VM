@@ -18,35 +18,74 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.stub;
 
 import com.sun.c1x.util.*;
+import com.sun.c1x.lir.*;
+
 
 /**
+ * The <code>ArrayCopyStub</code> class represents a code stub for array copy.
+ *
  * @author Marcelo Cintra
- * @author Thomas Wuerthinger
  *
  */
-public class RangeCheckStub extends CodeStub {
+public class ArrayCopyStub extends CodeStub {
 
-    public RangeCheckStub(CodeEmitInfo rangeCheckInfo, LIROperand index) {
-        // TODO Auto-generated constructor stub
+    private LIRArrayCopy arrayCopy;
+
+    /**
+     * Creates a new ArrayCopyStub.
+     *
+     * @param arrayCopy the LIR operation representing the array copy
+     */
+    public ArrayCopyStub(LIRArrayCopy arrayCopy) {
+        super();
+        this.arrayCopy = arrayCopy;
     }
 
-    public RangeCheckStub(CodeEmitInfo info, LIROperand index, boolean b) {
-        // TODO Auto-generated constructor stub
+    public LIROperand source() {
+        return arrayCopy.src();
+    }
+
+    public LIROperand sourcePos() {
+        return arrayCopy.srcPos();
+    }
+
+    public LIROperand dest() {
+        return arrayCopy.dst();
+    }
+
+    public LIROperand destPos() {
+        return arrayCopy.dstPos();
+    }
+
+    public LIROperand length() {
+        return arrayCopy.length();
+    }
+
+    public LIROperand tmp() {
+        return arrayCopy.tmp();
     }
 
     @Override
     public void emitCode(LIRAssembler e) {
-        // TODO Auto-generated method stub
+        // TODO: not implemented yet
+    }
 
+    @Override
+    public CodeEmitInfo info() {
+        return arrayCopy.info();
+    }
+
+    @Override
+    public void visit(LIRVisitState visitor) {
+        // don't pass in the code emit info since it's processed in the fast path
+        visitor.doSlowCase();
     }
 
     @Override
     public void printName(LogStream out) {
-        // TODO Auto-generated method stub
-
+        out.print("ArrayCopyStub");
     }
-
 }

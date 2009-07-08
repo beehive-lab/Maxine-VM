@@ -128,4 +128,6 @@ public class C1XOptions {
     public static boolean GenerateBoundsChecks               = ____;
     public static boolean GenerateCompilerNullChecks         = ____;
     public static boolean UseTableRanges                     = ____;
+    public static boolean Verbose                            = ____;
+    public static boolean LIRTracePeephole                   = ____;
 }

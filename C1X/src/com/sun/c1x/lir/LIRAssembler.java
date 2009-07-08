@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.stub.*;
+
 
 /**
  * The <code>LIRAssembler</code> class definition.

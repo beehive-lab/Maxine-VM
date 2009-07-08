@@ -26,6 +26,7 @@ import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
+import com.sun.c1x.stub.*;
 import com.sun.c1x.value.*;
 
 
@@ -65,12 +66,12 @@ public class LIRList {
 
     }
 
-    public void load(LIRAddress counter, LIROperand result) {
+    public void load(LIROperand counter, LIROperand result) {
         // TODO Auto-generated method stub
 
     }
 
-    public void store(LIROperand result, LIRAddress counter) {
+    public void store(LIROperand result, LIROperand counter) {
         // TODO Auto-generated method stub
 
     }
@@ -180,7 +181,7 @@ public class LIRList {
 
     }
 
-    public void move(LIRAddress lirAddress, LIROperand result, CodeEmitInfo info) {
+    public void move(LIROperand lirAddress, LIROperand result, CodeEmitInfo info) {
         // TODO Auto-generated method stub
 
     }
@@ -195,7 +196,7 @@ public class LIRList {
 
     }
 
-    public void store(LIROperand result, LIRAddress address, CodeEmitInfo info, LIRPatchCode patchCode) {
+    public void store(LIROperand result, LIROperand address, CodeEmitInfo info, LIRPatchCode patchCode) {
         // TODO Auto-generated method stub
 
     }
@@ -210,7 +211,7 @@ public class LIRList {
 
     }
 
-    public void load(LIRAddress address, LIROperand reg, CodeEmitInfo info, LIRPatchCode patchCode) {
+    public void load(LIROperand address, LIROperand reg, CodeEmitInfo info, LIRPatchCode patchCode) {
         // TODO Auto-generated method stub
 
     }
@@ -230,12 +231,12 @@ public class LIRList {
 
     }
 
-    public void unalignedMove(LIRAddress addr, LIROperand reg) {
+    public void unalignedMove(LIROperand addr, LIROperand reg) {
         // TODO Auto-generated method stub
 
     }
 
-    public void prefetch(LIRAddress addr, boolean isStore) {
+    public void prefetch(LIROperand addr, boolean isStore) {
         // TODO Auto-generated method stub
 
     }

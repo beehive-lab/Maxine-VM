@@ -18,27 +18,57 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.stub;
 
+import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 
 
-public class MonitorExitStub extends CodeStub {
+/**
+ * The <code>ImplicitNullCheckStub</code> class definition.
+ *
+ * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
+ *
+ */
+public class ImplicitNullCheckStub {
 
-    public MonitorExitStub(LIROperand lock, boolean usefastlocking, int monitorNo) {
-        // TODO Auto-generated constructor stub
+    private CodeEmitInfo info;
+    private int offset;
+
+    /**
+     * Creates a new instance of <code>ImplicitNullCheckStub</code>.
+     *
+     * @param offset the offset for this code stub
+     * @param info the debug information associated to this code stub
+     */
+    public ImplicitNullCheckStub(int offset, CodeEmitInfo info) {
+        this.offset = offset;
+        this.info = info;
     }
 
-    @Override
-    public void emitCode(LIRAssembler e) {
-        // TODO Auto-generated method stub
-
+    public CodeEmitInfo info() {
+        return info;
     }
 
-    @Override
+    /**
+     * Gets the offset of this class.
+     *
+     * @return the offset
+     */
+    public int offset() {
+        return offset;
+    }
+
+    public boolean isExceptionThrowStub() {
+        return true;
+    }
+
+    public void visit(LIRVisitState visitor) {
+        visitor.doSlowCase(info);
+    }
+
     public void printName(LogStream out) {
-        // TODO Auto-generated method stub
-
+        out.print("ImplicitNullCheckStub");
     }
-
 }

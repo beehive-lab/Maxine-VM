@@ -18,51 +18,54 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.stub;
+
+import com.sun.c1x.lir.*;
+import com.sun.c1x.util.*;
 
 
 /**
- * The <code>ArrayCopyStub</code> class represents a code stub for array copy.
+ * The <code>MonitorEnterStub</code> class definition.
  *
  * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
  *
  */
-public class ArrayCopyStub {
+public class MonitorEnterStub extends MonitorAccessStub {
 
-    private LIRArrayCopy arrayCopy;
+    private CodeEmitInfo info;
 
     /**
-     * Creates a new ArrayCopyStub.
+     * Creates a new instance of <code>MonitorEnterStub</code>.
      *
-     * @param arrayCopy the LIR operation representing the array copy
+     * @param objReg the operand with the object reference
+     * @param lockReg the lock register
+     * @param info the debug information for this code stub
      */
-    public ArrayCopyStub(LIRArrayCopy arrayCopy) {
-        super();
-        this.arrayCopy = arrayCopy;
+    public MonitorEnterStub(LIROperand objReg, LIROperand lockReg, CodeEmitInfo info) {
+        super(objReg, lockReg);
+        this.info = info;
     }
 
-    public LIROperand source() {
-        return arrayCopy.src();
+    @Override
+    public void emitCode(LIRAssembler e) {
+        // TODO: not implemented yet
     }
 
-    public LIROperand sourcePos() {
-        return arrayCopy.srcPos();
+    @Override
+    public CodeEmitInfo info() {
+        return info;
     }
 
-    public LIROperand dest() {
-        return arrayCopy.dst();
+    @Override
+    public void visit(LIRVisitState visitor) {
+        visitor.doInput(objReg);
+        visitor.doInput(lockReg);
+        visitor.doSlowCase(info);
     }
 
-    public LIROperand destPos() {
-        return arrayCopy.dstPos();
-    }
-
-    public LIROperand length() {
-        return arrayCopy.length();
-    }
-
-
-    public LIROperand tmp() {
-        return arrayCopy.tmp();
+    @Override
+    public void printName(LogStream out) {
+        out.print("MonitorEnterStub");
     }
 }

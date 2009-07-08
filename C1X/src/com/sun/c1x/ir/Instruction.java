@@ -100,6 +100,7 @@ public abstract class Instruction {
         id = nextID++;
         bci = BCI_NOT_APPENDED;
         valueType = type;
+        lirOperand = LIROperand.ILLEGAL;
     }
 
     /**
@@ -335,7 +336,7 @@ public abstract class Instruction {
      * @param operand the operand to associate with this instruction
      */
     public void setOperand(LIROperand operand) {
-        assert operand != LIROperandFactory.illegalOperand : "operand must exist";
+        assert operand != LIROperand.ILLEGAL : "operand must exist";
         lirOperand = operand;
     }
 
@@ -343,7 +344,7 @@ public abstract class Instruction {
      * Clears the LIR operand associated with this instruction.
      */
     public void clearOperand() {
-        lirOperand = LIROperandFactory.illegalOperand;
+        lirOperand = LIROperand.ILLEGAL;
     }
 
     /**
