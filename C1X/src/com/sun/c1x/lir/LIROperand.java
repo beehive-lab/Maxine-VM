@@ -68,7 +68,91 @@ public abstract class LIROperand {
     }
 
     public static LIROperand illegalOpr() {
+        /*
+<<<<<<< local
+        return LIROperandFactory.illegalOperand;
+    }
+
+    OperandType typeFieldValid() {
+        assert isRegister() || isStack() : "should not be called otherwise";
+        return OperandType.fromInt(value() & OperandMask.TypeMask.value);
+    }
+
+    public OperandType typeField() {
+        return isIllegal() ? OperandType.UnknownType : OperandType.fromInt((value() & OperandMask.TypeMask.value));
+    }
+
+    public static OperandSize sizeFor(BasicType t) {
+        switch (t) {
+            case Long:
+            case Double:
+                return OperandSize.DoubleSize;
+
+            case Float:
+            case Boolean:
+            case Char:
+            case Byte:
+            case Short:
+            case Int:
+            case Object:
+                return OperandSize.SingleSize;
+
+            default:
+                assert false : "Illegal Basic Type!";
+                return OperandSize.SingleSize;
+        }
+    }
+
+    private BasicType asBasicType(OperandType t) {
+        switch (t) {
+        case IntType:
+            return BasicType.Int;
+        case LongType:
+            return BasicType.Long;
+        case FloatType:   return BasicType.Float;
+        case DoubleType:  return BasicType.Double;
+        case ObjectType:  return BasicType.Object;
+        case UnknownType: // fall through
+        default:
+            Util.shouldNotReachHere();
+            return BasicType.Illegal;
+        }
+    }
+
+    void validateType() {
+        if (!isPointer() && !isIllegal()) {
+            switch (asBasicType(typeField())) {
+                case Long:
+                    assert (kindField() == OperandKind.CpuRegister || kindField() == OperandKind.StackValue) && sizeField() == OperandSize.DoubleSize : "must match";
+                    break;
+                case Float:
+                    assert (kindField() == OperandKind.CpuRegister || kindField() == OperandKind.StackValue) && sizeField() == OperandSize.SingleSize : "must match";
+                    break;
+                case Double:
+                    assert (kindField() == OperandKind.FpuRegister || kindField() == OperandKind.StackValue) && sizeField() == OperandSize.DoubleSize : "must match";
+                    break;
+                case Boolean:
+                case Char:
+                case Byte:
+                case Short:
+                case Int:
+                case Object:
+                    // case Array:
+                    assert (kindField() == OperandKind.CpuRegister || kindField() == OperandKind.StackValue) && sizeField() == OperandSize.SingleSize : "must match";
+                    break;
+
+                case Illegal:
+                    // XXX TKR also means unknown right now
+                    // assert isIllegal() : "must match";
+                    break;
+
+                default:
+                    Util.shouldNotReachHere();
+            }
+        }
+=======*/
         return ILLEGAL;
+//>>>>>>> other
     }
 
     public BasicType type() {
@@ -346,5 +430,10 @@ public abstract class LIROperand {
 
     public void printValueOn(LogStream out) {
         throw Util.unimplemented();
+    }
+
+    public int asJint() {
+        // TODO Auto-generated method stub
+        return asInt();
     }
 }

@@ -18,66 +18,25 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.stub;
-
-import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
-
+package com.sun.c1x.asm;
 
 /**
- * The <code>ImplicitNullCheckStub</code> class definition.
  *
- * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  *
  */
-public class ImplicitNullCheckStub extends CodeStub {
+public class CodeOffsets {
+    public enum Entries { Entry,
+        VerifiedEntry,
+        FrameComplete, // Offset in the code where the frame setup is (for forte stackwalks) is complete
+        OSREntry,
+        /*DtraceTrap = OSREntry,  // dtrace probes can never have an OSR entry so reuse it*/
+        Exceptions,     // Offset where exception handler lives
+        Deopt,          // Offset where deopt handler lives
+        maxEntries }
 
-    private CodeEmitInfo info;
-    private int offset;
-
-    /**
-     * Creates a new instance of <code>ImplicitNullCheckStub</code>.
-     *
-     * @param offset the offset for this code stub
-     * @param info the debug information associated to this code stub
-     */
-    public ImplicitNullCheckStub(int offset, CodeEmitInfo info) {
-        this.offset = offset;
-        this.info = info;
-    }
-
-    @Override
-    public CodeEmitInfo info() {
-        return info;
-    }
-
-    /**
-     * Gets the offset of this class.
-     *
-     * @return the offset
-     */
-    public int offset() {
-        return offset;
-    }
-
-    public boolean isExceptionThrowStub() {
-        return true;
-    }
-
-    @Override
-    public void visit(LIRVisitState visitor) {
-        visitor.doSlowCase(info);
-    }
-
-    @Override
-    public void printName(LogStream out) {
-        out.print("ImplicitNullCheckStub");
-    }
-
-    @Override
-    public void emitCode(LIRAssembler e) {
+    public void setValue(Entries osrentry, int offset) {
         // TODO Auto-generated method stub
 
-    }
+    };
 }

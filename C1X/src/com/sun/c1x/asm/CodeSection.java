@@ -18,66 +18,22 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.stub;
+package com.sun.c1x.asm;
 
-import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.asm.RelocInfo.*;
+import com.sun.c1x.value.*;
 
 
-/**
- * The <code>ImplicitNullCheckStub</code> class definition.
- *
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
- *
- */
-public class ImplicitNullCheckStub extends CodeStub {
+public class CodeSection {
 
-    private CodeEmitInfo info;
-    private int offset;
-
-    /**
-     * Creates a new instance of <code>ImplicitNullCheckStub</code>.
-     *
-     * @param offset the offset for this code stub
-     * @param info the debug information associated to this code stub
-     */
-    public ImplicitNullCheckStub(int offset, CodeEmitInfo info) {
-        this.offset = offset;
-        this.info = info;
+    public int remaining() {
+        // TODO Auto-generated method stub
+        return 0;
     }
 
-    @Override
-    public CodeEmitInfo info() {
-        return info;
-    }
-
-    /**
-     * Gets the offset of this class.
-     *
-     * @return the offset
-     */
-    public int offset() {
-        return offset;
-    }
-
-    public boolean isExceptionThrowStub() {
-        return true;
-    }
-
-    @Override
-    public void visit(LIRVisitState visitor) {
-        visitor.doSlowCase(info);
-    }
-
-    @Override
-    public void printName(LogStream out) {
-        out.print("ImplicitNullCheckStub");
-    }
-
-    @Override
-    public void emitCode(LIRAssembler e) {
+    public void relocate(Address pc, Type polltype) {
         // TODO Auto-generated method stub
 
     }
+
 }

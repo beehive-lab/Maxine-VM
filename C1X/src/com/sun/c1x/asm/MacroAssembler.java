@@ -18,66 +18,77 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.stub;
+package com.sun.c1x.asm;
 
 import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
-
+import com.sun.c1x.value.*;
 
 /**
- * The <code>ImplicitNullCheckStub</code> class definition.
  *
- * @author Marcelo Cintra
  * @author Thomas Wuerthinger
+ * @author Marcelo Cintra
  *
  */
-public class ImplicitNullCheckStub extends CodeStub {
+public class MacroAssembler {
 
-    private CodeEmitInfo info;
-    private int offset;
-
-    /**
-     * Creates a new instance of <code>ImplicitNullCheckStub</code>.
-     *
-     * @param offset the offset for this code stub
-     * @param info the debug information associated to this code stub
-     */
-    public ImplicitNullCheckStub(int offset, CodeEmitInfo info) {
-        this.offset = offset;
-        this.info = info;
+    public CodeSection codeSection() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
-    @Override
-    public CodeEmitInfo info() {
-        return info;
-    }
-
-    /**
-     * Gets the offset of this class.
-     *
-     * @return the offset
-     */
-    public int offset() {
-        return offset;
-    }
-
-    public boolean isExceptionThrowStub() {
-        return true;
-    }
-
-    @Override
-    public void visit(LIRVisitState visitor) {
-        visitor.doSlowCase(info);
-    }
-
-    @Override
-    public void printName(LogStream out) {
-        out.print("ImplicitNullCheckStub");
-    }
-
-    @Override
-    public void emitCode(LIRAssembler e) {
+    public void blockComment(String st) {
         // TODO Auto-generated method stub
 
     }
+
+    public int rspOffset() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public Address pc() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public void nop() {
+        // TODO Auto-generated method stub
+
+    }
+
+    public int offset() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public CodeBlob code() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public void bind(Label label) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void nullCheck(Register asRegister) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void buildFrame(int initialFrameSizeInBytes) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void verifiedEntry() {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void align(int codeEntryAlignment) {
+        // TODO Auto-generated method stub
+
+    }
+
 }

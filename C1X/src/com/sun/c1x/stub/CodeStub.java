@@ -116,4 +116,9 @@ public abstract class CodeStub {
 
     public abstract void printName(LogStream out);
 
+    public String name() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
 }

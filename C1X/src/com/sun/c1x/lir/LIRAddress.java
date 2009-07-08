@@ -35,7 +35,15 @@ import com.sun.c1x.value.*;
 public class LIRAddress extends LIROperand {
 
     public enum Scale {
-        Times1, Times2, Times4, Times8;
+        Times1,
+        Times2,
+        Times4,
+        Times8;
+
+        public static Scale fromInt(int shift) {
+            assert shift < Scale.values().length;
+            return Scale.values()[shift];
+        }
     }
 
     public final LIROperand base;
@@ -88,6 +96,22 @@ public class LIRAddress extends LIROperand {
         this.index = index;
         this.scale = scale;
         this.displacement = displacement;
+    }
+
+    public LIROperand base() {
+        return base;
+    }
+
+    public LIROperand index() {
+        return index;
+    }
+
+    public Scale scale() {
+        return scale;
+    }
+
+    public int displacement() {
+        return displacement;
     }
 
     /**

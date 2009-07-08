@@ -55,18 +55,18 @@ public abstract class LIRGenerator extends InstructionVisitor {
     };
 
     // Flags that can be set on vregs
-    enum VregFlag {
+    protected enum VregFlag {
         MustStartInMemory, // needs to be assigned a memory location at beginning, but may then be loaded in a register
         CalleeSaved, // must be in a callee saved register
         ByteReg, // must be in a byte register
         NumVregFlags
     }
 
-    private final C1XCompilation compilation;
+    protected final C1XCompilation compilation;
     PhiResolver.PhiResolverState resolverState;
     private BlockBegin currentBlock;
     private int virtualRegisterNumber;
-    private ArrayMap<Instruction> instructionForOperand;
+    ArrayMap<Instruction> instructionForOperand;
     // XXX: refactor this to use 3 one dimensional bitmaps
     private BitMap2D vregFlags; // flags which can be set on a per-vreg basis
 
@@ -80,6 +80,10 @@ public abstract class LIRGenerator extends InstructionVisitor {
         this.virtualRegisterNumber = LIRLocation.virtualRegisterBase();
         this.vregFlags = new BitMap2D(0, VregFlag.NumVregFlags.ordinal());
         init();
+    }
+
+    protected LIRList lir() {
+        return lir;
     }
 
     public void blockDo(BlockBegin block) {
@@ -533,7 +537,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
 
         LIROperand reg = rlockResult(x, fieldType);
-        LIROperand address;
+        LIRAddress address;
         if (needsPatching) {
             // we need to patch the offset in the instruction so don't allow
             // generateAddress to try to be smart about emitting the -1.
@@ -772,7 +776,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             lir.nullCheck(object.result(), new CodeEmitInfo(info));
         }
 
-        LIROperand address;
+        LIRAddress address;
         if (needsPatching) {
             // we need to patch the offset in the instruction so don't allow
             // generateAddress to try to be smart about emitting the -1.
@@ -1138,7 +1142,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         return result;
     }
 
-    private LIROperand forceToSpill(LIROperand value, BasicType t) {
+    LIROperand forceToSpill(LIROperand value, BasicType t) {
         assert t.size == value.type().size : "size mismatch";
         if (!value.isRegister()) {
             // force into a register
@@ -1156,19 +1160,19 @@ public abstract class LIRGenerator extends InstructionVisitor {
         return tmp;
     }
 
-    private FrameMap frameMap() {
+    protected FrameMap frameMap() {
         throw Util.unimplemented();
     }
 
-    private CodeStub getResolveOptVirtualCallStub() {
+    private Address getResolveOptVirtualCallStub() {
         throw Util.unimplemented();
     }
 
-    private CodeStub getResolveStaticCallStub() {
+    private Address getResolveStaticCallStub() {
         throw Util.unimplemented();
     }
 
-    private CodeStub getResolveVirtualCallStub() {
+    private Address getResolveVirtualCallStub() {
         throw Util.unimplemented();
     }
 
@@ -1240,16 +1244,16 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
     }
 
-    private LIROperand resultRegisterFor(ValueType type) {
+    protected LIROperand resultRegisterFor(ValueType type) {
         return resultRegisterFor(type, false);
     }
 
-    private LIROperand rlock(Instruction instr) {
+    protected LIROperand rlock(Instruction instr) {
         // Try to lock using register in hint
         return newRegister(instr.type().basicType());
     }
 
-    private LIROperand rlockResult(Instruction x) {
+    protected LIROperand rlockResult(Instruction x) {
         // does an rlock and sets result
         LIROperand reg = rlock(x);
         setResult(x, reg);
@@ -1273,7 +1277,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         return reg;
     }
 
-    private LIROperand roundItem(LIROperand opr) {
+    protected LIROperand roundItem(LIROperand opr) {
         assert opr.isRegister() : "why spill if item is not register?";
 
         if (C1XOptions.RoundFPResults && C1XOptions.SSEVersion < 1 && opr.isSingleFpu()) {
@@ -1402,7 +1406,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
         setNoResult(x);
 
-        LIROperand addr = generateAddress(src.result(), off.result(), 0, 0, BasicType.Byte);
+        LIRAddress addr = generateAddress(src.result(), off.result(), 0, 0, BasicType.Byte);
         lir.prefetch(addr, isStore);
 
     }
@@ -1488,19 +1492,19 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
     }
 
-    void arithmeticOpFpu(int code, LIROperand result, LIROperand left, LIROperand right, boolean isStrictfp, LIROperand tmp) {
+    protected void arithmeticOpFpu(int code, LIROperand result, LIROperand left, LIROperand right, boolean isStrictfp, LIROperand tmp) {
         arithmeticOp(code, result, left, right, isStrictfp, tmp, null);
     }
 
-    void arithmeticOpInt(int code, LIROperand result, LIROperand left, LIROperand right, LIROperand tmp) {
+    protected void arithmeticOpInt(int code, LIROperand result, LIROperand left, LIROperand right, LIROperand tmp) {
         arithmeticOp(code, result, left, right, false, tmp, null);
     }
 
-    void arithmeticOpLong(int code, LIROperand result, LIROperand left, LIROperand right, CodeEmitInfo info) {
+    protected void arithmeticOpLong(int code, LIROperand result, LIROperand left, LIROperand right, CodeEmitInfo info) {
         arithmeticOp(code, result, left, right, false, LIROperandFactory.illegalOperand, info);
     }
 
-    void arraycopyHelper(Intrinsic x, int[] flagsp, CiType[] expectedTypep) {
+    protected final void arraycopyHelper(Intrinsic x, int[] flagsp, CiType[] expectedTypep) {
         Instruction src = x.argumentAt(0);
         Instruction srcPos = x.argumentAt(1);
         Instruction dst = x.argumentAt(2);
@@ -1608,7 +1612,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         expectedTypep[0] = expectedType;
     }
 
-    void arrayRangeCheck(LIROperand array, LIROperand index, CodeEmitInfo nullCheckInfo, CodeEmitInfo rangeCheckInfo) {
+    protected void arrayRangeCheck(LIROperand array, LIROperand index, CodeEmitInfo nullCheckInfo, CodeEmitInfo rangeCheckInfo) {
         CodeStub stub = new RangeCheckStub(rangeCheckInfo, index);
         if (index.isConstant()) {
             cmpMemInt(LIRCondition.BelowEqual, array, compilation.runtime.arrayLengthOffsetInBytes(), index.asInt(), nullCheckInfo);
@@ -1754,7 +1758,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
     // increment a counter returning the incremented value
     LIROperand incrementAndReturnCounter(LIROperand base, int offset, int increment) {
-        LIROperand counter = new LIRAddress(base, offset, BasicType.Int);
+        LIRAddress counter = new LIRAddress(base, offset, BasicType.Int);
         LIROperand result = newRegister(BasicType.Int);
         lir.load(counter, result);
         lir.add(result, LIROperandFactory.intConst(increment), result);
@@ -1762,7 +1766,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         return result;
     }
 
-    void incrementBackedgeCounter(CodeEmitInfo info) {
+    protected void incrementBackedgeCounter(CodeEmitInfo info) {
         incrementInvocationCounter(info, true);
     }
 
@@ -1777,7 +1781,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         // _bs = Universe::heap()->barrier_set();
     }
 
-    void jobject2regWithPatching(LIROperand r, Object obj, CodeEmitInfo info) {
+    protected void jobject2regWithPatching(LIROperand r, Object obj, CodeEmitInfo info) {
         // TODO: Check if this is the correct implementation
         // no patching needed
         lir.oop2reg(obj, r);
@@ -1814,7 +1818,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         }
     }
 
-    void logicOp(int code, LIROperand resultOp, LIROperand leftOp, LIROperand rightOp) {
+    protected void logicOp(int code, LIROperand resultOp, LIROperand leftOp, LIROperand rightOp) {
         if (C1XOptions.TwoOperandLIRForm && leftOp != resultOp) {
             assert rightOp != resultOp : "malformed";
             lir.move(leftOp, resultOp);
@@ -1842,7 +1846,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         }
     }
 
-    void monitorEnter(LIROperand object, LIROperand lock, LIROperand hdr, LIROperand scratch, int monitorNo, CodeEmitInfo infoForException, CodeEmitInfo info) {
+    protected void monitorEnter(LIROperand object, LIROperand lock, LIROperand hdr, LIROperand scratch, int monitorNo, CodeEmitInfo infoForException, CodeEmitInfo info) {
         if (C1XOptions.GenerateSynchronizationCode) {
             // for slow path, use debug info for state after successful locking
             CodeStub slowPath = new MonitorEnterStub(object, lock, info);
@@ -1852,7 +1856,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         }
     }
 
-    void monitorExit(LIROperand object, LIROperand lock, LIROperand newHdr, int monitorNo) {
+    protected void monitorExit(LIROperand object, LIROperand lock, LIROperand newHdr, int monitorNo) {
         if (C1XOptions.GenerateSynchronizationCode) {
             // setup registers
             LIROperand hdr = lock;
@@ -1880,7 +1884,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         }
     }
 
-    void moveToPhi(ValueStack curState) {
+    protected void moveToPhi(ValueStack curState) {
         // Moves all stack values into their PHI position
         BlockBegin bb = currentBlock;
         if (bb.numberOfSux() == 1) {
@@ -1918,7 +1922,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         }
     }
 
-    void newInstance(LIROperand dst, CiType klass, LIROperand scratch1, LIROperand scratch2, LIROperand scratch3, LIROperand scratch4, LIROperand klassReg, CodeEmitInfo info) {
+    protected void newInstance(LIROperand dst, CiType klass, LIROperand scratch1, LIROperand scratch2, LIROperand scratch3, LIROperand scratch4, LIROperand klassReg, CodeEmitInfo info) {
         jobject2regWithPatching(klassReg, klass, info);
         // If klass is not loaded we do not know if the klass has finalizers:
         if (C1XOptions.UseFastNewInstance && klass.isLoaded() && !klass.layoutHelperNeedsSlowPath()) {
@@ -1936,7 +1940,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         }
     }
 
-    LIROperand newPointerRegister() {
+    protected final LIROperand newPointerRegister() {
         // returns a register suitable for doing pointer math
         // XXX: revisit this when there is a basic type for Pointers
         if (compilation.target.arch.is64bit()) {
@@ -1946,7 +1950,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         }
     }
 
-    LIROperand newRegister(BasicType type) {
+    public LIROperand newRegister(BasicType type) {
         int vreg = virtualRegisterNumber++;
         if (type == BasicType.Jsr) {
             type = BasicType.Int;
@@ -1970,18 +1974,18 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         return x.operand();
     }
 
-    void postBarrier(LIROperand addr, LIROperand newVal) {
+    protected void postBarrier(LIROperand addr, LIROperand newVal) {
     }
 
-    void preBarrier(LIROperand addrOpr, boolean patch, CodeEmitInfo info) {
+    protected void preBarrier(LIROperand addrOpr, boolean patch, CodeEmitInfo info) {
     }
 
-    void setNoResult(Instruction x) {
+    protected void setNoResult(Instruction x) {
         assert !x.hasUses() : "can't have use";
         x.clearOperand();
     }
 
-    void setResult(Instruction x, LIROperand opr) {
+    protected void setResult(Instruction x, LIROperand opr) {
         assert opr.isValid() : "must set to valid value";
         assert x.operand().isIllegal() : "operand should never change";
         assert !opr.isRegister() || opr.isVirtual() : "should never set result to a physical register";
@@ -1992,7 +1996,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         }
     }
 
-    void shiftOp(int code, LIROperand resultOp, LIROperand value, LIROperand count, LIROperand tmp) {
+    protected void shiftOp(int code, LIROperand resultOp, LIROperand value, LIROperand count, LIROperand tmp) {
         if (C1XOptions.TwoOperandLIRForm && value != resultOp) {
             assert count != resultOp : "malformed";
             lir.move(value, resultOp);
@@ -2018,15 +2022,15 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         }
     }
 
-    CodeEmitInfo stateFor(Instruction x) {
+    protected CodeEmitInfo stateFor(Instruction x) {
         return stateFor(x, x.lockStack());
     }
 
-    CodeEmitInfo stateFor(Instruction x, ValueStack state) {
+    protected CodeEmitInfo stateFor(Instruction x, ValueStack state) {
         return stateFor(x, state, false);
     }
 
-    CodeEmitInfo stateFor(Instruction x, ValueStack state, boolean ignoreXhandler) {
+    protected CodeEmitInfo stateFor(Instruction x, ValueStack state, boolean ignoreXhandler) {
 
         for (int index = 0; index < state.stackSize(); index++) {
             final Instruction value = state.stackAt(index);
@@ -2086,7 +2090,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
     }
 
     // This is called for each node in tree; the walk stops if a root is reached
-    void walk(Instruction instr) {
+    protected void walk(Instruction instr) {
         Instruction prev = compilation.setCurrentInstruction(instr);
         try {
             // stop walk when encounter a root
@@ -2133,7 +2137,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
      * @param type the basic type of the elements of the array
      * @return the LIRAddress representing the array element's location
      */
-    protected abstract LIROperand generateAddress(LIROperand base, LIROperand index, int shift, int disp, BasicType type);
+    protected abstract LIRAddress generateAddress(LIROperand base, LIROperand index, int shift, int disp, BasicType type);
 
     protected abstract void getObjectUnsafe(LIROperand dest, LIROperand src, LIROperand offset, BasicType type, boolean isVolatile);
 
@@ -2143,7 +2147,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
 
     protected abstract void incrementCounter(Address counter, int step);
 
-    protected abstract void incrementCounter(LIROperand counter, int step);
+    protected abstract void incrementCounter(LIRAddress counter, int step);
 
     protected abstract LIROperand osrBufferPointer();
 
@@ -2175,9 +2179,9 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
 
     protected abstract void visitMathIntrinsic(Intrinsic x);
 
-    protected abstract void volatileFieldLoad(LIROperand address, LIROperand result, CodeEmitInfo info);
+    protected abstract void volatileFieldLoad(LIRAddress address, LIROperand result, CodeEmitInfo info);
 
-    protected abstract void volatileFieldStore(LIROperand value, LIROperand address, CodeEmitInfo info);
+    protected abstract void volatileFieldStore(LIROperand value, LIRAddress address, CodeEmitInfo info);
 
     /**
      * Offset of the klass part (C1 HotSpot specific). Probably this method can be removed later on.
@@ -2212,7 +2216,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         return false;
     }
 
-    static LIRCondition lirCond(Condition cond) {
+    protected static LIRCondition lirCond(Condition cond) {
         LIRCondition l = null;
         switch (cond) {
             case eql:

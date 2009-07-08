@@ -23,6 +23,7 @@ package com.sun.max.vm.compiler.c1x;
 import java.util.*;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.lir.*;
 import com.sun.c1x.value.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -251,6 +252,48 @@ public class MaxCiRuntime implements CiRuntime {
 
     @Override
     public int vtableStartOffset() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public int arrayBaseOffsetInBytes(BasicType type) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public int nativeCallInstructionSize() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public Register callerSaveFpuRegAt(int i) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Object ciEnvUnloadedCiobjarrayklass() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Object makeObjectArrayClass(CiType elementClass) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public CiType makeTypeArrayClass(BasicType elemType) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public int sunMiscAtomicLongCSImplValueOffset() {
         // TODO Auto-generated method stub
         return 0;
     }

@@ -73,7 +73,7 @@ public class LIROperandFactory {
         return new LIRLocation(BasicType.Float, reg, LIRLocation.XMM);
     }
 
-    static LIROperand doubleXmmX86(int reg) {
+    public static LIROperand doubleXmmX86(int reg) {
         assert reg > 0;
         return new LIRLocation(BasicType.Double, reg, LIRLocation.XMM);
     }
@@ -170,4 +170,21 @@ public class LIROperandFactory {
             return intConst(-1);
         }
     }
+
+        // TODO Auto-generated method stub
+    public static LIROperand intptrConst(Address counter) {
+        return null;
+    }
+
+    public static LIROperand doubleFpu(int i) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public static LIROperand longConst(int i) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    // TODO to be completed
 }

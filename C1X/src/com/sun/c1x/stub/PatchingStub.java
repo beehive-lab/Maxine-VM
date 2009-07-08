@@ -20,6 +20,11 @@
  */
 package com.sun.c1x.stub;
 
+import com.sun.c1x.asm.*;
+import com.sun.c1x.lir.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
+
 
 /**
  * The <code>PatchingStub</code> class definition.
@@ -28,11 +33,40 @@ package com.sun.c1x.stub;
  * @author Thomas Wuerthinger
  *
  */
-public class PatchingStub {
-//    public enum PatchID {
-//          AccessFieldId,
-//          LoadKlassId
-//        }
+public class PatchingStub extends CodeStub {
+    public enum PatchID {
+          AccessFieldId,
+          LoadKlassId
+        }
+
+    @Override
+    public void emitCode(LIRAssembler e) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void printName(LogStream out) {
+        // TODO Auto-generated method stub
+
+    }
+
+
+    public PatchID id() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public void install(MacroAssembler masm, LIRPatchCode patchCode, Register obj, CodeEmitInfo info) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public Address pcStart() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
 //     public static final int PATCHINFOSIZE = 3;
 //
 //
@@ -105,4 +139,6 @@ public class PatchingStub {
 //      #ifndef PRODUCT
 //        virtual void printName(outputStream out)  { out.print("PatchingStub"); }
 //      #endif // PRODUCT
+
+
 }

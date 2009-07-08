@@ -18,77 +18,39 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x;
 
-import com.sun.c1x.gen.LIRGenerator;
-import com.sun.c1x.ir.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.ci.*;
 
+/**
+ * @author Thomas Wuerthinger
+ *
+ */
+public class DebugInformationRecorder {
 
-public class LIRItem {
-
-    public LIRItem(Instruction receiver, LIRGenerator lirGenerator) {
-        // TODO Auto-generated constructor stub
-    }
-
-    public LIRItem(LIRGenerator lirGenerator) {
-        // TODO Auto-generated constructor stub
-    }
-
-    public ValueType type() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public void loadItemForce(LIROperand loc) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void loadForStore(BasicType type) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public LIROperand result() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public void loadItem() {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void loadByteItem() {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void setInstruction(Instruction length) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public boolean isConstant() {
+    public boolean recordingNonSafepoints() {
         // TODO Auto-generated method stub
         return false;
     }
 
-    public void dontLoadItem() {
+    public int lastPcOffset() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public void addNonSafepoint(int pcOffset) {
         // TODO Auto-generated method stub
 
     }
 
-    public void loadNonconstant() {
+    public void describeScope(int pcOffset, CiMethod method, int[] sBci) {
         // TODO Auto-generated method stub
 
     }
 
-    public Instruction value() {
+    public void endNonSafepoint(int pcOffset) {
         // TODO Auto-generated method stub
-        return null;
-    }
 
+    }
 
 }
