@@ -18,35 +18,52 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.stub;
 
+import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 
+
 /**
+ * The <code>MonitorExitStub</code> class definition.
+ *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  *
  */
-public class RangeCheckStub extends CodeStub {
+public class MonitorExitStub extends MonitorAccessStub {
 
-    public RangeCheckStub(CodeEmitInfo rangeCheckInfo, LIROperand index) {
-        // TODO Auto-generated constructor stub
-    }
+    private boolean computeLock;
+    private int monitorIx;
 
-    public RangeCheckStub(CodeEmitInfo info, LIROperand index, boolean b) {
-        // TODO Auto-generated constructor stub
+    public MonitorExitStub(LIROperand lockReg, boolean computeLock, int monitorIx) {
+        super(LIROperandFactory.illegalOperand, lockReg);
+        this.computeLock = computeLock;
+        this.monitorIx = monitorIx;
     }
 
     @Override
     public void emitCode(LIRAssembler e) {
-        // TODO Auto-generated method stub
+        // TODO: Not implemented yet
+    }
 
+    // TODO: remove it later  - added only to eliminate warnings
+    public int getMonitorIX() {
+        return monitorIx;
+    }
+
+    @Override
+    public void visit(LIRVisitState visitor) {
+        assert objReg.isIllegal() : "unused";
+        if (computeLock) {
+            visitor.doTemp(lockReg);
+        } else {
+            visitor.doInput(lockReg);
+        }
     }
 
     @Override
     public void printName(LogStream out) {
-        // TODO Auto-generated method stub
-
+        out.print("MonitorExitStub");
     }
-
 }

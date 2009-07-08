@@ -22,7 +22,7 @@ package com.sun.c1x.lir;
 
 import java.io.*;
 import java.util.*;
-
+import com.sun.c1x.stub.*;
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.bytecode.*;
@@ -106,7 +106,7 @@ public abstract class LIRAssembler {
 
     private boolean check(PatchingStub patch, CodeEmitInfo info) {
         int code = info.scope().method.javaCodeAtBci(info.bci());
-        if (patch.id() == PatchingStub.PatchID.accessFieldId) {
+        if (patch.id() == PatchingStub.PatchID.AccessFieldId) {
             switch (code) {
                 case Bytecodes.PUTSTATIC:
                 case Bytecodes.GETSTATIC:
@@ -116,7 +116,7 @@ public abstract class LIRAssembler {
                 default:
                     Util.shouldNotReachHere();
             }
-        } else if (patch.id() == PatchingStub.PatchID.loadKlassId) {
+        } else if (patch.id() == PatchingStub.PatchID.LoadKlassId) {
             switch (code) {
                 case Bytecodes.PUTSTATIC:
                 case Bytecodes.GETSTATIC:

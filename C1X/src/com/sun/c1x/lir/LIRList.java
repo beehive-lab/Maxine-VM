@@ -27,6 +27,7 @@ import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
+import com.sun.c1x.stub.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -159,7 +160,7 @@ public class LIRList {
         append(new LIROp1(LIROpcode.Move, src, LIROperandFactory.address(dst), src.type(), LIRPatchCode.PatchNone, null, LIRInstruction.LIRMoveKind.Unaligned));
     }
 
-    void unalignedMove(LIROperand src, LIROperand dst) {
+    public void unalignedMove(LIROperand src, LIROperand dst) {
         append(new LIROp1(LIROpcode.Move, src, dst, dst.type(), LIRPatchCode.PatchNone, null, LIRInstruction.LIRMoveKind.Unaligned));
     }
 

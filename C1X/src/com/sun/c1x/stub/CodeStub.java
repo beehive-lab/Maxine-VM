@@ -18,22 +18,38 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.stub;
 
+import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
+import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 
 
 /**
- * The <code>CodeStub</code> class definition.
+ * The <code>CodeStub</code> class definition. CodeStubs are little 'out-of-line'
+ * pieces of code that usually handle slow cases of operations. All code stubs are
+ * collected and code is emitted at the end of the method.
  *
  * @author Marcelo Cintra
  *
  */
 public abstract class CodeStub {
 
-    protected Label entry;                                  // label at the stub entry point
-    protected Label continuation;
+    protected Label entry;            // label at the stub entry point
+    protected Label continuation;     // label where stub continues, if any
+
+    public CodeStub() {
+
+    }
+
+    /**
+     * Asserts that the code stub has bounded labels.
+     */
+    public boolean assertNoUnboundLabels() {
+        assert !entry.isUnbound() && !continuation.isUnbound() : "Code stub has an unbound label";
+        return true;
+    }
 
     /**
      * Returns the entry label for this code stub.
@@ -54,19 +70,11 @@ public abstract class CodeStub {
     }
 
     /**
-     * Asserts that the code stub has bounded labels.
+     *
+     * @return <code>null</code> to mean there is no CodeEmit info at this level
      */
-    public boolean assertNoUnboundLabels() {
-        assert !entry.isUnbound() && !continuation.isUnbound() : "Code stub has an unbound label";
-        return true;
-    }
-
-    public abstract void emitCode(LIRAssembler e);
-
-    public abstract void printName(LogStream out);
-
-    public void visit(LIRVisitState v) {
-
+    public CodeEmitInfo info() {
+        return null;
     }
 
     /**
@@ -96,15 +104,21 @@ public abstract class CodeStub {
         return false;
     }
 
-    public CodeEmitInfo info() {
-        // TODO Auto-generated method stub
-        return null;
+    public void visit(LIRVisitState v) {
+        if (C1XOptions.LIRTracePeephole && C1XOptions.Verbose) {
+            TTY.print("no visitor for ");
+            printName(TTY.out);
+            TTY.println();
+        }
     }
+
+    public abstract void emitCode(LIRAssembler e);
+
+    public abstract void printName(LogStream out);
 
     public String name() {
         // TODO Auto-generated method stub
         return null;
     }
-
 
 }

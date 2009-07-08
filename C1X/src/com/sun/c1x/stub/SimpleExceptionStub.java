@@ -18,30 +18,70 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.stub;
 
+import com.sun.c1x.ci.*;
+import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 
-public class DivByZeroStub extends CodeStub {
 
-    public DivByZeroStub(CodeEmitInfo info) {
-        // TODO Auto-generated constructor stub
-    }
+/**
+ * The <code>SimpleExceptionStub</code> class definition.
+ *
+ * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
+ *
+ */
+public class SimpleExceptionStub extends CodeStub {
 
-    public DivByZeroStub(int pcOffset, CodeEmitInfo cinfo) {
-        // TODO Auto-generated constructor stub
+    private LIROperand obj;
+    private CiRuntimeCall stub;
+    private CodeEmitInfo info;
+
+        /**
+     * @param obj
+     * @param stub
+     * @param info
+     */
+    public SimpleExceptionStub(LIROperand obj, CiRuntimeCall stub, CodeEmitInfo info) {
+        super();
+        this.obj = obj;
+        this.stub = stub;
+        this.info = info;
     }
 
     @Override
     public void emitCode(LIRAssembler e) {
-        // TODO Auto-generated method stub
+    }
 
+    @Override
+    public CodeEmitInfo info() {
+        return info;
+    }
+
+    /**
+     * Gets the stub of this class.
+     *
+     * @return the stub
+     */
+    public CiRuntimeCall getStub() {
+        return stub;
+    }
+
+    public boolean isExceptionThrowStub() {
+        return true;
+    }
+
+    @Override
+    public void visit(LIRVisitState visitor) {
+        if (obj.isValid()) {
+            visitor.doInput(obj);
+        }
+        visitor.doSlowCase(info);
     }
 
     @Override
     public void printName(LogStream out) {
-        // TODO Auto-generated method stub
-
+        out.print("SimpleExceptionStub");
     }
-
 }

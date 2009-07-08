@@ -18,20 +18,31 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.stub;
 
-import com.sun.c1x.asm.*;
+import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
 
+/**
+ * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
+ *
+ */
+public class RangeCheckStub extends CodeStub {
 
-public class PatchingStub extends CodeStub {
+    private CodeEmitInfo info;
+    private LIROperand index;
+    private boolean throwIndexOutOfBoundsException;
 
-    enum PatchID {
-        accessFieldId,
-        loadKlassId
-      };
+    public RangeCheckStub(CodeEmitInfo rangeCheckInfo, LIROperand index) {
+        this(rangeCheckInfo, index, false);
+    }
 
+    public RangeCheckStub(CodeEmitInfo info, LIROperand index, boolean throwIndexOutOfBoundsException) {
+        this.info = info;
+        this.index = index;
+        this.throwIndexOutOfBoundsException = throwIndexOutOfBoundsException;
+    }
 
     @Override
     public void emitCode(LIRAssembler e) {
@@ -40,25 +51,36 @@ public class PatchingStub extends CodeStub {
     }
 
     @Override
+    public CodeEmitInfo info() {
+        return info;
+    }
+
+    /**
+     * Gets the throwIndexOutOfBoundsException of this class.
+     *
+     * @return the throwIndexOutOfBoundsException
+     */
+    public boolean isThrowIndexOutOfBoundsException() {
+        return throwIndexOutOfBoundsException;
+    }
+
+    public boolean isExceptionThrowStub() {
+        return true;
+    }
+
+    public boolean isRangeCheckStub() {
+        return true;
+    }
+
+    @Override
+    public void visit(LIRVisitState visitor) {
+        visitor.doSlowCase(info);
+        visitor.doInput(index);
+    }
+
+    @Override
     public void printName(LogStream out) {
-        // TODO Auto-generated method stub
+        out.print("RangeCheckStub");
 
     }
-
-    public Address pcStart() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public void install(MacroAssembler masm, LIRPatchCode patchCode, Register obj, CodeEmitInfo info) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public PatchID id() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-
 }

@@ -20,242 +20,112 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.lir.LIROperand.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 
 /**
- * The <code>LIROperandFactory</code> class definition.
+ * The <code>LIROperandFactory</code> class is a factory for constructing LIROperand
+ * instances and provides numerous utility methods.
  *
  * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
  *
  */
 public class LIROperandFactory {
 
-    public static LIROperand illegalOperand;
+    public static final LIROperand illegalOperand = LIROperand.ILLEGAL;
 
     public static LIROperand singleCpu(int reg) {
-        return new LIROperand((reg  << OperandShift.Reg1Shift.value) |
-                              OperandType.IntType.value              |
-                              OperandKind.CpuRegister.value          |
-                              OperandSize.SingleSize.value);
+        assert reg > 0;
+        return new LIRLocation(BasicType.Int, reg);
     }
 
     public static LIROperand singleCpuOop(int reg) {
-        return new LIROperand((reg  << OperandShift.Reg1Shift.value) |
-                              OperandType.ObjectType.value           |
-                              OperandKind.CpuRegister.value          |
-                              OperandSize.SingleSize.value);
+        assert reg > 0;
+        return new LIRLocation(BasicType.Object, reg);
     }
 
     public static LIROperand doubleCpu(int reg1, int reg2) {
-      // LP64ONLY(assert reg1 == reg2 :  "must be identical"); TODO: Should we do this test or just remove it?
-      return new LIROperand((reg1 << OperandShift.Reg1Shift.value) |
-                            (reg2 << OperandShift.Reg2Shift.value) |
-                            OperandType.LongType.value             |
-                            OperandKind.CpuRegister.value          |
-                            OperandType.DoubleType.value);
+        assert reg1 > 0 && reg2 > 0;
+        return new LIRLocation(BasicType.Long, reg1, reg2, 0);
     }
 
     public static LIROperand singleFpu(int reg) {
-        return new  LIROperand((reg  << OperandShift.Reg1Shift.value) |
-                                OperandType.FloatType.value           |
-                                OperandKind.FpuRegister.value         |
-                                OperandSize.SingleSize.value);
+        assert reg > 0;
+        return new LIRLocation(BasicType.Float, reg);
     }
 
 
     public static LIROperand doubleFpuSparc(int reg1, int reg2) {
-        return new LIROperand((reg1 << OperandShift.Reg1Shift.value) |
-                              (reg2 << OperandShift.Reg2Shift.value) |
-                              OperandType.DoubleType.value           |
-                              OperandKind.FpuRegister.value          |
-                              OperandType.DoubleType.value);
+        assert reg1 > 0 && reg2 > 0;
+        return new LIRLocation(BasicType.Double, reg1, reg2, 0);
     }
 
     public static LIROperand doubleFpuX86(int reg) {
-        return new LIROperand((reg << OperandShift.Reg1Shift.value) |
-                              (reg << OperandShift.Reg2Shift.value) |
-                              OperandType.DoubleType.value          |
-                              OperandKind.FpuRegister.value         |
-                              OperandType.DoubleType.value);
+        assert reg > 0;
+        return new LIRLocation(BasicType.Double, reg);
     }
 
     public static LIROperand singleXmmX86(int reg) {
-        return new LIROperand((reg  << OperandShift.Reg1Shift.value) |
-                              OperandType.FloatType.value            |
-                              OperandKind.FpuRegister.value          |
-                              OperandSize.SingleSize.value           |
-                              OperandMask.IsXmmMask.value);
+        assert reg > 0;
+        return new LIRLocation(BasicType.Float, reg, LIRLocation.XMM);
     }
 
     public static LIROperand doubleXmmX86(int reg) {
-        return new LIROperand((reg << OperandShift.Reg1Shift.value)  |
-                              (reg  << OperandShift.Reg2Shift.value) |
-                              OperandType.DoubleType.value           |
-                              OperandKind.FpuRegister.value          |
-                              OperandType.DoubleType.value           |
-                              OperandMask.IsXmmMask.value);
+        assert reg > 0;
+        return new LIRLocation(BasicType.Double, reg, LIRLocation.XMM);
     }
 
     public static LIROperand virtualRegister(int index, BasicType type) {
-        LIROperand res;
-        switch (type) {
-            case Object: // fall through
-                // case Array:
-                res = new LIROperand((index << OperandShift.DataShift.value) |
-                                     OperandType.ObjectType.value            |
-                                     OperandKind.CpuRegister.value           |
-                                     OperandSize.SingleSize.value            |
-                                     OperandMask.VirtualMask.value);
-                break;
-
-            case Int:
-                res = new LIROperand((index << OperandShift.DataShift.value) |
-                                     OperandType.IntType.value               |
-                                     OperandKind.CpuRegister.value           |
-                                     OperandSize.SingleSize.value            |
-                                     OperandMask.VirtualMask.value);
-                break;
-
-            case Long:
-                res = new LIROperand((index << OperandShift.DataShift.value) |
-                                     OperandType.LongType.value              |
-                                     OperandKind.CpuRegister.value           |
-                                     OperandType.DoubleType.value            |
-                                     OperandMask.VirtualMask.value);
-                break;
-
-            case Float:
-                res = new LIROperand((index << OperandShift.DataShift.value) |
-                                     OperandType.FloatType.value             |
-                                     OperandKind.FpuRegister.value           |
-                                     OperandSize.SingleSize.value            |
-                                     OperandMask.VirtualMask.value);
-                break;
-
-            case Double:
-                res = new LIROperand((index << OperandShift.DataShift.value) |
-                                     OperandType.DoubleType.value            |
-                                     OperandKind.FpuRegister.value           |
-                                     OperandType.DoubleType.value            |
-                                     OperandMask.VirtualMask.value);
-                break;
-
-            default:
-                Util.shouldNotReachHere();
-                res = illegalOperand;
-        }
-
-        res.validateType();
-        assert res.vregNumber() == index : "conversion check";
-        assert index >= VirtualRegister.RegisterBase.value : "must start at vregBase";
-        assert index <= (Integer.MAX_VALUE >> OperandShift.DataShift.value) : "index is too big";
-
-        // old-style calculation; check if old and new method are equal
-        OperandType t = LIROperand.asOperandType(type);
-        LIROperand oldRes = new LIROperand((index << OperandShift.DataShift.value) |
-                                           t.value |
-                                           ((type == BasicType.Float || type == BasicType.Double) ? OperandKind.FpuRegister.value : OperandKind.CpuRegister.value) |
-                                           LIROperand.sizeFor(type).value |
-                                           OperandMask.VirtualMask.value);
-        assert res == oldRes : "old and new method not equal";
-        return res;
+        assert index >= LIRLocation.virtualRegisterBase() : "must start at vregBase";
+        return new LIRLocation(type, index);
     }
 
     // 'index' is computed by FrameMap.localStackPos(index); do not use other parameters as
     // the index is platform independent; a double stack useing indeces 2 and 3 has always
     // index 2.
     public static LIROperand stack(int index, BasicType type) {
-        LIROperand res;
-        switch (type) {
-            case Object: // fall through
-            //case Array:
-                res = new LIROperand((index << OperandShift.DataShift.value) |
-                                     OperandType.ObjectType.value            |
-                                     OperandKind.StackValue.value            |
-                                     OperandSize.SingleSize.value);
-                break;
-
-            case Int:
-                res = new LIROperand((index << OperandShift.DataShift.value) |
-                                     OperandType.IntType.value               |
-                                     OperandKind.StackValue.value            |
-                                     OperandSize.SingleSize.value);
-                break;
-
-            case Long:
-                res = new LIROperand((index << OperandShift.DataShift.value) |
-                                     OperandType.LongType.value              |
-                                     OperandKind.StackValue.value            |
-                                     OperandType.DoubleType.value);
-                break;
-
-            case Float:
-                res = new LIROperand((index << OperandShift.DataShift.value) |
-                                     OperandType.FloatType.value             |
-                                     OperandKind.StackValue.value            |
-                                     OperandSize.SingleSize.value);
-                break;
-
-            case Double:
-                res = new LIROperand((index << OperandShift.DataShift.value) |
-                                     OperandType.DoubleType.value            |
-                                     OperandKind.StackValue.value            |
-                                     OperandType.DoubleType.value);
-                break;
-
-            default:
-                Util.shouldNotReachHere();
-                res = illegalOperand;
-      }
-
-      assert index >= 0 :  "index must be positive";
-      assert index <= (Integer.MAX_VALUE >> OperandShift.DataShift.value) :  "index is too big";
-
-      LIROperand oldRes = new LIROperand((index << OperandShift.DataShift.value) |
-                                         OperandKind.StackValue.value            |
-                                         LIROperand.asOperandType(type).value    |
-                                         LIROperand.sizeFor(type).value);
-      assert res == oldRes :  "old and new method not equal";
-      return res;
+        assert index > 0;
+        return new LIRLocation(type, -index);
     }
 
     public static LIROperand intConst(int i) {
-        return new LIRConstant(i);
+        return new LIRConstant(ConstType.forInt(i));
     }
 
     public static LIROperand longConst(long l) {
-        return new LIRConstant(l);
+        return new LIRConstant(ConstType.forLong(l));
     }
 
     public static LIROperand floatConst(float f) {
-        return new LIRConstant(f);
+        return new LIRConstant(ConstType.forFloat(f));
     }
 
     public static LIROperand doubleConst(double d) {
-        return new LIRConstant(d);
+        return new LIRConstant(ConstType.forDouble(d));
     }
 
     public static LIROperand oopConst(Object o) {
-        return new LIRConstant(o);
+        return new LIRConstant(ConstType.forObject(o));
     }
 
-    public static LIROperand address(LIRAddress a) {
+    public static LIROperand address(LIROperand a) {
         return a;
     }
 
     public static LIROperand intPtrConst(long p) {
-        return new LIRConstant(p);
+        // TODO: address constants in ConstType
+        return new LIRConstant(ConstType.forLong(p));
     }
 
     public static LIROperand intptrConst(int v) {
-        return new LIRConstant((long) v);
+        return new LIRConstant(ConstType.forLong(v));
     }
 
     public static LIROperand illegal() {
-        return new LIROperand(-1);
+        return LIROperand.ILLEGAL;
     }
 
     public static LIROperand valueType(ValueType type) {

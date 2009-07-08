@@ -18,10 +18,10 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.stub;
 
 import com.sun.c1x.util.*;
-
+import com.sun.c1x.lir.*;
 
 /**
  * The <code>ArrayStoreExceptionStub</code> class definition.

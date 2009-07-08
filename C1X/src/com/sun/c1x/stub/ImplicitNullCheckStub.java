@@ -18,15 +18,61 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.stub;
 
+import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 
 
-public class NewObjectArrayStub extends CodeStub {
+/**
+ * The <code>ImplicitNullCheckStub</code> class definition.
+ *
+ * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
+ *
+ */
+public class ImplicitNullCheckStub extends CodeStub {
 
-    public NewObjectArrayStub(LIROperand klassReg, LIROperand len, LIROperand reg, CodeEmitInfo info) {
-        // TODO Auto-generated constructor stub
+    private CodeEmitInfo info;
+    private int offset;
+
+    /**
+     * Creates a new instance of <code>ImplicitNullCheckStub</code>.
+     *
+     * @param offset the offset for this code stub
+     * @param info the debug information associated to this code stub
+     */
+    public ImplicitNullCheckStub(int offset, CodeEmitInfo info) {
+        this.offset = offset;
+        this.info = info;
+    }
+
+    @Override
+    public CodeEmitInfo info() {
+        return info;
+    }
+
+    /**
+     * Gets the offset of this class.
+     *
+     * @return the offset
+     */
+    public int offset() {
+        return offset;
+    }
+
+    public boolean isExceptionThrowStub() {
+        return true;
+    }
+
+    @Override
+    public void visit(LIRVisitState visitor) {
+        visitor.doSlowCase(info);
+    }
+
+    @Override
+    public void printName(LogStream out) {
+        out.print("ImplicitNullCheckStub");
     }
 
     @Override
@@ -34,11 +80,4 @@ public class NewObjectArrayStub extends CodeStub {
         // TODO Auto-generated method stub
 
     }
-
-    @Override
-    public void printName(LogStream out) {
-        // TODO Auto-generated method stub
-
-    }
-
 }

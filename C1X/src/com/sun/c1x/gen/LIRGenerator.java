@@ -28,6 +28,7 @@ import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
@@ -76,7 +77,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
     public LIRGenerator(C1XCompilation compilation) {
         this.compilation = compilation;
-        this.virtualRegisterNumber = LIROperand.VirtualRegister.RegisterBase.value;
+        this.virtualRegisterNumber = LIRLocation.virtualRegisterBase();
         this.vregFlags = new BitMap2D(0, VregFlag.NumVregFlags.ordinal());
         init();
     }
@@ -216,7 +217,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
                 Local receiver = (Local) x.state().localAt(0);
                 obj = receiver.operand();
             }
-            assert obj.isValid() : "must be valid";
+            assert !obj.isIllegal() : "must be valid";
 
             if (method.isSynchronized() && C1XOptions.GenerateSynchronizationCode) {
                 LIROperand lock = newRegister(BasicType.Int);
@@ -596,7 +597,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
 
         // emit array address setup early so it schedules better
-        LIRAddress arrayAddr = emitArrayAddress(array.result(), index.result(), x.elementType(), false);
+        LIROperand arrayAddr = emitArrayAddress(array.result(), index.result(), x.elementType(), false);
 
         if (C1XOptions.GenerateBoundsChecks && needsRangeCheck) {
             if (useLength) {
@@ -952,7 +953,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         BasicType dstType = x.basicType();
         LIROperand indexOp = idx.result();
 
-        LIRAddress addr = null;
+        LIROperand addr = null;
         if (indexOp.isConstant()) {
             assert log2scale == 0 : "must not have a scale";
             addr = new LIRAddress(baseOp, indexOp.asInt(), dstType);
@@ -1062,7 +1063,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             lir.shiftLeft(indexOp, log2scale, indexOp);
         }
 
-        LIRAddress addr = new LIRAddress(baseOp, indexOp, x.basicType());
+        LIROperand addr = new LIRAddress(baseOp, indexOp, x.basicType());
         lir.move(value.result(), addr);
     }
 
@@ -1120,7 +1121,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             if (loc.isRegister()) {
                 arg.loadItemForce(loc);
             } else {
-                LIRAddress addr = loc.asAddressPtr();
+                LIROperand addr = loc.asAddressPtr();
                 arg.loadForStore(addr.type());
                 if (addr.type() == BasicType.Long || addr.type() == BasicType.Double) {
                     lir.unalignedMove(arg.result(), addr);
@@ -1233,9 +1234,9 @@ public abstract class LIRGenerator extends InstructionVisitor {
                 LIROperand dataOffsetReg = newRegister(BasicType.Int);
                 lir.cmove(lirCond(cond), LIROperandFactory.intConst(takenCountOffset), LIROperandFactory.intConst(notTakenCountOffset), dataOffsetReg);
                 LIROperand dataReg = newRegister(BasicType.Int);
-                LIRAddress dataAddr = new LIRAddress(mdReg, dataOffsetReg, BasicType.Int);
+                LIROperand dataAddr = new LIRAddress(mdReg, dataOffsetReg, BasicType.Int);
                 lir.move(dataAddr, dataReg);
-                LIRAddress fakeIncrValue = new LIRAddress(dataReg, 1, BasicType.Int);
+                LIROperand fakeIncrValue = new LIRAddress(dataReg, 1, BasicType.Int);
                 // Use leal instead of add to avoid destroying condition codes on x86
                 lir.leal(fakeIncrValue, dataReg);
                 lir.move(dataReg, dataAddr);
@@ -1283,7 +1284,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             LIROperand result = newRegister(BasicType.Float);
             setVregFlag(result, VregFlag.MustStartInMemory);
             assert opr.isRegister() : "only a register can be spilled";
-            assert opr.valueType().isFloat() : "rounding only for floats available";
+            assert opr.basicType == BasicType.Float : "rounding only for floats available";
             lir.roundfp(opr, LIROperandFactory.illegalOperand, result);
             return result;
         }
@@ -1640,7 +1641,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             if (loc.isRegister()) {
                 lir.move(arg, loc);
             } else {
-                LIRAddress addr = loc.asAddressPtr();
+                LIROperand addr = loc.asAddressPtr();
                 if (addr.type() == BasicType.Long || addr.type() == BasicType.Double) {
                     lir.unalignedMove(arg, addr);
                 } else {
@@ -1794,7 +1795,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
             if (loc.isRegister()) {
                 param.loadItemForce(loc);
             } else {
-                LIRAddress addr = loc.asAddressPtr();
+                LIROperand addr = loc.asAddressPtr();
                 param.loadForStore(addr.type());
                 if (addr.type() == BasicType.Long || addr.type() == BasicType.Double) {
                     lir.unalignedMove(param.result(), addr);
@@ -1950,11 +1951,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
     }
 
     public LIROperand newRegister(BasicType type) {
-        int vreg = virtualRegisterNumber;
-        if (vreg >= LIROperand.VirtualRegister.MaxRegisters.value) {
-            throw new Bailout("out of virtual registers");
-        }
-        virtualRegisterNumber++;
+        int vreg = virtualRegisterNumber++;
         if (type == BasicType.Jsr) {
             type = BasicType.Int;
         }
@@ -2120,7 +2117,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
 
     protected abstract void cmpRegMem(LIRCondition condition, LIROperand reg, LIROperand base, LIROperand disp, BasicType type, CodeEmitInfo info);
 
-    protected abstract LIRAddress emitArrayAddress(LIROperand arrayOpr, LIROperand indexOpr, BasicType type, boolean needsCardMark);
+    protected abstract LIROperand emitArrayAddress(LIROperand arrayOpr, LIROperand indexOpr, BasicType type, boolean needsCardMark);
 
     protected abstract LIROperand exceptionOopOpr();
 

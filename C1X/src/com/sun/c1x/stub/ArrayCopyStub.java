@@ -18,7 +18,10 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.stub;
+
+import com.sun.c1x.util.*;
+import com.sun.c1x.lir.*;
 
 
 /**
@@ -27,7 +30,7 @@ package com.sun.c1x.lir;
  * @author Marcelo Cintra
  *
  */
-public class ArrayCopyStub {
+public class ArrayCopyStub extends CodeStub {
 
     private LIRArrayCopy arrayCopy;
 
@@ -61,8 +64,28 @@ public class ArrayCopyStub {
         return arrayCopy.length();
     }
 
-
     public LIROperand tmp() {
         return arrayCopy.tmp();
+    }
+
+    @Override
+    public void emitCode(LIRAssembler e) {
+        // TODO: not implemented yet
+    }
+
+    @Override
+    public CodeEmitInfo info() {
+        return arrayCopy.info();
+    }
+
+    @Override
+    public void visit(LIRVisitState visitor) {
+        // don't pass in the code emit info since it's processed in the fast path
+        visitor.doSlowCase();
+    }
+
+    @Override
+    public void printName(LogStream out) {
+        out.print("ArrayCopyStub");
     }
 }

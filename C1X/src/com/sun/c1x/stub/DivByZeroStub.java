@@ -18,27 +18,72 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.stub;
 
+import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 
 
-public class NewTypeArrayStub extends CodeStub {
+/**
+ * The <code>DivByZeroStub</code> class definition.
+ *
+ * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
+ *
+ */
+public class DivByZeroStub extends CodeStub {
 
-    public NewTypeArrayStub(LIROperand klassReg, LIROperand len, LIROperand reg, CodeEmitInfo info) {
-        // TODO Auto-generated constructor stub
+    private CodeEmitInfo info;
+    private int offset;
+
+    public DivByZeroStub(CodeEmitInfo info) {
+        this(-1, info);
+    }
+
+    public DivByZeroStub(int offset, CodeEmitInfo info) {
+        this.info = info;
+        this.offset = offset;
     }
 
     @Override
     public void emitCode(LIRAssembler e) {
-        // TODO Auto-generated method stub
+        // TODO Not implemented yet
+    }
 
+    /**
+     * Gets the CodeEmitInfo of this class.
+     *
+     * @return the info
+     */
+    @Override
+    public CodeEmitInfo info() {
+        return info;
+    }
+
+    /**
+     * Gets the offset of this class.
+     *
+     * @return the offset
+     */
+    public int offset() {
+        return offset;
+    }
+
+    public boolean isExceptionThrowStub() {
+        return true;
+    }
+
+    public boolean isDivbyzeroStub() {
+        return true;
+    }
+
+    @Override
+    public void visit(LIRVisitState visitor) {
+        visitor.doSlowCase(info);
     }
 
     @Override
     public void printName(LogStream out) {
-        // TODO Auto-generated method stub
-
+        out.print("DivByZeroStub");
     }
-
 }

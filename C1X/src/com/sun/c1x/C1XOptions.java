@@ -132,6 +132,8 @@ public class C1XOptions {
     public static boolean UseBiasedLocking                   = ____;
     public static boolean ImplicitDiv0Checks                 = ____;
     public static boolean PrintLIR                           = ____;
+    public static boolean Verbose                            = ____;
+    public static boolean LIRTracePeephole                   = ____;
 
     // Assembler settings
     public static boolean CommentedAssembly                  = ____;

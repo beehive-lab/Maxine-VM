@@ -28,6 +28,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
@@ -125,7 +126,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     protected LIRAddress generateAddress(LIROperand base, LIROperand index, int shift, int disp, BasicType type) {
         assert base.isRegister() : "must be";
         if (index.isConstant()) {
-            return new LIRAddress(base, (index.asConstantPtr().valueType().asConstant().asInt() << shift) + disp, type);
+            return new LIRAddress(base, (index.asConstantPtr().asInt() << shift) + disp, type);
         } else {
             return new LIRAddress(base, index, LIRAddress.Scale.fromInt(shift), disp, type);
         }
@@ -147,7 +148,7 @@ public final class X86LIRGenerator extends LIRGenerator {
                     indexOpr = tmp;
                 }
             }
-            addr = new LIRAddress(arrayOpr, indexOpr, LIRAddress.scale(type), offsetInBytes, type);
+            addr = new LIRAddress(arrayOpr, indexOpr, LIRAddress.scale(type, compilation.target.arch.wordSize), offsetInBytes, type);
         }
         if (needsCardMark) {
             // This store will need a precise card mark, so go ahead and
@@ -1146,9 +1147,9 @@ public final class X86LIRGenerator extends LIRGenerator {
         CodeStub stub;
         if (x.isIncompatibleClassChangeCheck()) {
             assert patchingInfo == null : "can't patch this";
-            stub = new SimpleExceptionStub(CiRuntimeCall.ThrowIncompatibleClassChangeError, LIROperandFactory.illegalOperand, infoForException);
+            stub = new SimpleExceptionStub(LIROperandFactory.illegalOperand, CiRuntimeCall.ThrowIncompatibleClassChangeError, infoForException);
         } else {
-            stub = new SimpleExceptionStub(CiRuntimeCall.ThrowClassCastException, obj.result(), infoForException);
+            stub = new SimpleExceptionStub(obj.result(), CiRuntimeCall.ThrowClassCastException, infoForException);
         }
         LIROperand reg = rlockResult(x);
         lir().checkcast(reg, obj.result(), x.targetClass(), newRegister(BasicType.Object), newRegister(BasicType.Object),
@@ -1365,7 +1366,7 @@ public final class X86LIRGenerator extends LIRGenerator {
                 return LIROperandFactory.illegalOperand;
         }
 
-        assert opr.typeField() == LIROperand.asOperandType(type.basicType()) : "type mismatch";
+        assert opr.basicType == type.basicType() : "type mismatch";
         return opr;
     }
 
