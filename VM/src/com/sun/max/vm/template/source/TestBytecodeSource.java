@@ -34,6 +34,6 @@ public class TestBytecodeSource {
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.NOP)
     public static void safepoint() {
-        Safepoint.soft();
+        Safepoint.safepoint();
     }
 }

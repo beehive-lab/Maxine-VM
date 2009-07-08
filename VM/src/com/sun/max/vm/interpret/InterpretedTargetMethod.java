@@ -51,11 +51,6 @@ public abstract class InterpretedTargetMethod extends TargetMethod {
     }
 
     @Override
-    public void finalizeReferenceMaps() {
-        // TODO
-    }
-
-    @Override
     public void forwardTo(TargetMethod newTargetMethod) {
         // TODO
     }

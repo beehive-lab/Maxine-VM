@@ -56,5 +56,4 @@ public abstract class ClassVerifier extends Verifier {
      * Performs bytecode verification on a given method.
      */
     public abstract CodeAttribute verify(ClassMethodActor classMethodActor, CodeAttribute codeAttribute);
-
 }

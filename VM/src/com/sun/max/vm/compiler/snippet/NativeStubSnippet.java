@@ -77,11 +77,15 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
         @SNIPPET
         @INLINE
         public static Word nativeCallPrologue() {
-            final Pointer vmThreadLocals = VmThread.currentVmThreadLocals();
-            LAST_JAVA_CALLER_FRAME_POINTER.setVariableWord(vmThreadLocals, VMRegister.getCpuFramePointer());
-            LAST_JAVA_CALLER_STACK_POINTER.setVariableWord(vmThreadLocals, VMRegister.getCpuStackPointer());
+            return nativeCallPrologue0(VmThread.currentVmThreadLocals(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), VMRegister.getInstructionPointer());
+        }
+
+        @INLINE
+        public static Word nativeCallPrologue0(Pointer vmThreadLocals, Word stackPointer, Word framePointer, Word instructionPointer) {
+            LAST_JAVA_CALLER_FRAME_POINTER.setVariableWord(vmThreadLocals, framePointer);
+            LAST_JAVA_CALLER_STACK_POINTER.setVariableWord(vmThreadLocals, stackPointer);
             if (Safepoint.UseThreadStateWordForGCMutatorSynchronization) {
-                LAST_JAVA_CALLER_INSTRUCTION_POINTER.setVariableWord(vmThreadLocals, VMRegister.getInstructionPointer());
+                LAST_JAVA_CALLER_INSTRUCTION_POINTER.setVariableWord(vmThreadLocals, instructionPointer);
 
                 final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
                 final Pointer statePointer = MUTATOR_STATE.pointer(enabledVmThreadLocals);
@@ -96,7 +100,7 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
                     }
                 }
             } else {
-                LAST_JAVA_CALLER_INSTRUCTION_POINTER.setVariableWord(vmThreadLocals, VMRegister.getInstructionPointer());
+                LAST_JAVA_CALLER_INSTRUCTION_POINTER.setVariableWord(vmThreadLocals, instructionPointer);
 
                 MemoryBarrier.memopStore(); // The following store must be last:
 
@@ -129,9 +133,6 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
                 }
                 LAST_JAVA_CALLER_INSTRUCTION_POINTER.setVariableWord(vmThreadLocals, Word.zero());
             } else {
-                // Ensure that reading of the GC state variable sees the last write to it:
-                MemoryBarrier.storeLoad();
-
                 spinUntilGCFinished(vmThreadLocals);
 
                 // Set the current instruction pointer in TLS to zero to indicate the transition back into Java code
@@ -161,7 +162,7 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
                     // Ask if GC is in progress:
                     if (GC_STATE.getVariableWord(vmThreadLocals).isZero()) {
                         // If GC was not in progress that the state transition above was valid (common path)
-                        break;
+                        return;
                     }
 
                     // GC is in progress (same one or a subsequent one) so above state transition is invalid
@@ -169,6 +170,7 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
                     MUTATOR_STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_NATIVE));
                     while (!GC_STATE.getVariableWord(vmThreadLocals).isZero()) {
                         // Spin without doing unnecessary stores
+                        SpecialBuiltin.pause();
                     }
                 }
             }

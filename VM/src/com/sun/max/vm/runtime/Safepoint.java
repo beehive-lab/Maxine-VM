@@ -61,19 +61,7 @@ public abstract class Safepoint {
     public static final boolean UseThreadStateWordForGCMutatorSynchronization = false;
 
     public static final int cas(Pointer statePointer, int suspectedValue, int newValue) {
-        Log.printVmThread(VmThread.current(), false);
-        Log.print(": ");
-        Log.print(suspectedValue);
-        Log.print(" -> ");
-        Log.println(newValue);
-        final int result = statePointer.compareAndSwapInt(suspectedValue, newValue);
-        Log.printVmThread(VmThread.current(), false);
-        Log.print(": ");
-        Log.print(suspectedValue);
-        Log.print(" -> ");
-        Log.print(newValue);
-        Log.println(" done");
-        return result;
+        return statePointer.compareAndSwapInt(suspectedValue, newValue);
     }
 
     public static final int THREAD_IN_JAVA = 0;
@@ -208,28 +196,12 @@ public abstract class Safepoint {
         Safepoint.setLatchRegister(primordialVmThreadLocals);
     }
 
-    @INLINE
-    public static void soft() {
-        SafepointBuiltin.softSafepoint();
-    }
-
     /**
-     *  A "hard" safepoint must stay in place no matter what optimization level.
-     *  Furthermore, sufficient safepoint instructions and memory barriers must be emitted to guarantee stopping any traversal.
-     *  This ensures that execution cannot run away from monitor blocking, wait() and language transitions,
-     *  but can be caught and suspended right after any of those.
+     * Emits a safepoint at the call site.
      */
     @INLINE
-    public static void hard() {
-        // Ensure that all stores on this thread are globally visible before the safepoint trap:
-        MemoryBarrier.storeLoad();
-
-        SafepointBuiltin.hardSafepoint();
-        SafepointBuiltin.hardSafepoint();
-
-        // Ensure that subsequent loads and stores only happen once the safepoint trap has occurred
-        MemoryBarrier.loadStore();
-        MemoryBarrier.loadLoad();
+    public static void safepoint() {
+        SafepointBuiltin.safepointBuiltin();
     }
 
     public abstract Symbol latchRegister();

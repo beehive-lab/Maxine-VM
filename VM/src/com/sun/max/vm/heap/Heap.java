@@ -379,7 +379,7 @@ public final class Heap {
             Log.print("--GC requested by thread ");
             Log.printVmThread(VmThread.current(), false);
             Log.println("--");
-            Log.print("--Before GC--   used: ");
+            Log.print("--Before GC   used: ");
             Log.print(reportUsedSpace().toLong());
             Log.print(", free: ");
             Log.print(reportFreeSpace().toLong());
@@ -389,10 +389,10 @@ public final class Heap {
         final boolean freedEnough = heapScheme().collectGarbage(requestedFreeSpace);
         if (verbose()) {
             final boolean lockDisabledSafepoints = Log.lock();
-            Log.print("--GC done requested by thread ");
+            Log.print("--GC requested by thread ");
             Log.printVmThread(VmThread.current(), false);
-            Log.println();
-            Log.print("--After GC--   used: ");
+            Log.println(" done--");
+            Log.print("--After GC   used: ");
             Log.print(reportUsedSpace().toLong());
             Log.print(", free: ");
             Log.print(reportFreeSpace().toLong());
@@ -401,9 +401,9 @@ public final class Heap {
         }
         if (verbose()) {
             if (freedEnough == true) {
-                Log.println("--GC freed enough");
+                Log.println("--GC freed enough--");
             } else {
-                Log.println("--GC not freed enough");
+                Log.println("--GC did not freed enough--");
             }
         }
         return freedEnough;

@@ -43,7 +43,7 @@ public final class Monitor {
         return traceMonitors;
     }
 
-   public static boolean traceMonitors;
+    private static boolean traceMonitors;
 
     private static final VMBooleanXXOption traceMonitorsOption = register(new VMBooleanXXOption("-XX:-TraceMonitors", "") {
         @Override

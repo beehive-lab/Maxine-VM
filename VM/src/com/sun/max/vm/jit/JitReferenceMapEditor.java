@@ -48,6 +48,20 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
      */
     private final char[] blockStartBytecodePositions;
 
+    /**
+     * Shared non-null global object denoting absence of a valid {@code JitReferenceMapEditor} instance.
+     */
+    public static final JitReferenceMapEditor SENTINEL = new JitReferenceMapEditor();
+
+    private JitReferenceMapEditor() {
+        targetMethod = null;
+        stackFrameLayout = null;
+        blockFrames = null;
+        exceptionHandlerMap = null;
+        bytecodeStopsIterator = null;
+        blockStartBytecodePositions = null;
+    }
+
     public JitReferenceMapEditor(JitTargetMethod targetMethod, int numberOfBlocks, boolean[] blockStarts, BytecodeStopsIterator bytecodeStopsIterator, JitStackFrameLayout jitStackFrameLayout) {
         assert targetMethod.numberOfStopPositions() != 0;
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
