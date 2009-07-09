@@ -192,6 +192,10 @@ public interface HeapScheme extends VMScheme {
      */
     boolean increaseMemory(Size amount);
 
+    void disableAllocationForCurrentThread();
+
+    void enableAllocationForCurrentThread();
+
     @INLINE
     void writeBarrier(Reference from, Reference to);
 }

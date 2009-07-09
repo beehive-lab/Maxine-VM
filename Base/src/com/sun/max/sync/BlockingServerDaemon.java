@@ -65,7 +65,7 @@ public class BlockingServerDaemon extends Thread {
      * The server loop that will run any {@linkplain #execute(Runnable) scheduled} request.
      */
     @Override
-    public final void run() {
+    public void run() {
         while (true) {
             // Let the client thread continue as soon as we are waiting for requests again:
             synchronized (token) {
