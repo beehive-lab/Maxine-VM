@@ -577,9 +577,11 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     }
 
     public synchronized boolean collectGarbage(Size requestedFreeSpace) {
+        disableAllocationsGlobally();
         if (requestedFreeSpace.toInt() == 0 || immediateFreeSpace().lessThan(requestedFreeSpace)) {
             executeCollectorThread();
         }
+        enableAllocationsGlobally();
         if (immediateFreeSpace().greaterEqual(requestedFreeSpace)) {
             // check to see if we can reset safety zone
             if (inSafetyZone) {

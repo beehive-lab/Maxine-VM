@@ -510,6 +510,7 @@ public class VmThread {
 
         ALLOCATION_MARK.setVariableWord(Word.zero());
         ALLOCATION_TOP.setVariableWord(Word.zero());
+        ALLOCATION_SWITCH.setVariableWord(Word.allOnes());
 
         NATIVE_THREAD.setConstantWord(enabledVmThreadLocals, nativeThread);
         JNI_ENV.setConstantWord(enabledVmThreadLocals, JniNativeInterface.pointer());

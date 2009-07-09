@@ -81,6 +81,7 @@ public enum VmThreadLocal {
 
     ALLOCATION_MARK(Kind.WORD),
     ALLOCATION_TOP(Kind.WORD),
+    ALLOCATION_SWITCH(Kind.WORD),
 
 
     SAFEPOINT_EPOCH(Kind.WORD),
