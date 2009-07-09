@@ -20,18 +20,15 @@
  */
 package com.sun.max.vm.object.host;
 
+import static com.sun.max.unsafe.WithoutAccessCheck.*;
+
 import java.util.*;
 import java.util.concurrent.locks.*;
 
-import sun.misc.*;
-
 import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
 
 @PROTOTYPE_ONLY
 public final class HostMonitor {
-
-    protected static final Unsafe unsafe = (Unsafe) WithoutAccessCheck.getStaticField(Unsafe.class, "theUnsafe");
 
     private HostMonitor() {
     }

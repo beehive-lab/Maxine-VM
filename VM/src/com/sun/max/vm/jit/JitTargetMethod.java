@@ -23,10 +23,10 @@ package com.sun.max.vm.jit;
 import java.util.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.atomic.*;
 import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.bytecode.refmaps.*;
@@ -34,7 +34,6 @@ import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 
@@ -47,13 +46,12 @@ import com.sun.max.vm.stack.*;
  */
 public abstract class JitTargetMethod extends TargetMethod {
 
-    private Pointer referenceMapEditorPointer;
     private int adapterReturnPosition;
     private int optimizedCallerAdapterFrameCodeSize;
     @INSPECTED
     private BytecodeInfo[] bytecodeInfos;
     private int frameReferenceMapOffset;
-    private volatile JitReferenceMapEditor referenceMapEditor;
+    private final AtomicReference referenceMapEditor = new AtomicReference();
 
     /**
      * The preserves the stack frame layout object from {@link #referenceMapEditor} when the latter is cleared in {@link #finalizeReferenceMaps()}.
@@ -160,7 +158,7 @@ public abstract class JitTargetMethod extends TargetMethod {
      */
     @Override
     public final JitStackFrameLayout stackFrameLayout() {
-        final JitReferenceMapEditor refMapEditor = this.referenceMapEditor;
+        final JitReferenceMapEditor refMapEditor = (JitReferenceMapEditor) referenceMapEditor.get();
         if (refMapEditor != null) {
             return refMapEditor.stackFrameLayout();
         }
@@ -382,8 +380,8 @@ public abstract class JitTargetMethod extends TargetMethod {
         this.optimizedCallerAdapterFrameCodeSize = optimizedCallerAdapterFrameCodeSize;
         this.adapterReturnPosition = adapterReturnPosition;
         if (stopPositions != null) {
-            this.referenceMapEditor = new JitReferenceMapEditor(this, numberOfBlocks, blockStarts, bytecodeStopsIterator, jitStackFrameLayout);
-            referenceMapEditorPointer = ClassActor.fromJava(JitTargetMethod.class).findLocalInstanceFieldActor("referenceMapEditor").pointer(this);
+            final JitReferenceMapEditor referenceMapEditor = new JitReferenceMapEditor(this, numberOfBlocks, blockStarts, bytecodeStopsIterator, jitStackFrameLayout);
+            this.referenceMapEditor.set(referenceMapEditor);
             final ReferenceMapInterpreter interpreter = ReferenceMapInterpreter.from(referenceMapEditor.blockFrames());
             if (interpreter.performsAllocation() || MaxineVM.isPrototyping()) {
                 // if computing the reference map requires allocation or if prototyping,
@@ -404,18 +402,18 @@ public abstract class JitTargetMethod extends TargetMethod {
      */
     @NO_SAFEPOINTS("Cannot take a trap while GC is running")
     public void finalizeReferenceMaps() {
-        final JitReferenceMapEditor referenceMapEditor = this.referenceMapEditor;
+        final JitReferenceMapEditor referenceMapEditor = (JitReferenceMapEditor) this.referenceMapEditor.get();
         if (referenceMapEditor != null) {
-            final Reference result = referenceMapEditorPointer.compareAndSwapReference(Reference.fromJava(referenceMapEditor), Reference.fromJava(JitReferenceMapEditor.SENTINEL));
-            if (result.toJava() == JitReferenceMapEditor.SENTINEL) {
+            final Object result = this.referenceMapEditor.compareAndSwap(referenceMapEditor, JitReferenceMapEditor.SENTINEL);
+            if (result == JitReferenceMapEditor.SENTINEL) {
                 while (this.referenceMapEditor != null) {
                     // Spin loop that is free of safepoints and object accesses
                     SpecialBuiltin.pause();
                 }
-            } else if (!result.isZero()) {
+            } else if (result != null) {
                 referenceMapEditor.fillInMaps(bytecodeToTargetCodePositionMap);
                 stackFrameLayout = referenceMapEditor.stackFrameLayout();
-                this.referenceMapEditor = null;
+                this.referenceMapEditor.set(null);
             }
         }
     }

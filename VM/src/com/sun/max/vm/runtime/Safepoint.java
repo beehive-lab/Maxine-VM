@@ -60,8 +60,8 @@ public abstract class Safepoint {
 
     public static final boolean UseThreadStateWordForGCMutatorSynchronization = false;
 
-    public static final int cas(Pointer statePointer, int suspectedValue, int newValue) {
-        return statePointer.compareAndSwapInt(suspectedValue, newValue);
+    public static final int casMutatorState(Pointer enabledVmThreadLocals, int suspectedValue, int newValue) {
+        return enabledVmThreadLocals.compareAndSwapInt(MUTATOR_STATE.offset(), suspectedValue, newValue);
     }
 
     public static final int THREAD_IN_JAVA = 0;
@@ -242,9 +242,8 @@ public abstract class Safepoint {
     public static void runProcedure(Pointer vmThreadLocals, Procedure procedure) {
         // spin until the SAFEPOINT_PROCEDURE field is null
         final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-        final Pointer safepointProcedurePointer = SAFEPOINT_PROCEDURE.pointer(enabledVmThreadLocals);
         while (true) {
-            if (safepointProcedurePointer.compareAndSwapReference(null, Reference.fromJava(procedure)).isZero()) {
+            if (enabledVmThreadLocals.compareAndSwapReference(SAFEPOINT_PROCEDURE.offset(), null, Reference.fromJava(procedure)).isZero()) {
                 Safepoint.trigger(vmThreadLocals);
                 return;
             }

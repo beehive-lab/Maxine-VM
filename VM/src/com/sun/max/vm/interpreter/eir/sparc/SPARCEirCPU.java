@@ -159,6 +159,15 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
         // Configure VM thread locals as done in VmThread.run() and thread_runJava in threads.c
         vmThreadLocals = topSP.asPointer().roundedUpBy(2 * Word.size());
 
+        for (VmThreadLocal tl : VmThreadLocal.VALUES) {
+            if (tl.kind == Kind.WORD) {
+                stack.writeWord(vmThreadLocals.plusWords(tl.index()), Word.zero());
+            } else {
+                assert tl.kind == Kind.REFERENCE;
+                stack.write(vmThreadLocals.plusWords(tl.index()), ReferenceValue.NULL);
+            }
+        }
+
         stack.writeWord(vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINT_LATCH.index()), vmThreadLocals);
         stack.write(vmThreadLocals.plusWords(VmThreadLocal.VM_THREAD.index()), ReferenceValue.from(VmThread.current()));
 

@@ -70,6 +70,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
         public void run(Pointer trapState) {
             if (Safepoint.UseThreadStateWordForGCMutatorSynchronization) {
                 final Pointer vmThreadLocals = Safepoint.getLatchRegister();
+
                 MUTATOR_STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_JAVA_STOPPING_FOR_GC));
 
                 VmThreadLocal.prepareStackReferenceMapFromTrap(vmThreadLocals, trapState);
@@ -175,15 +176,14 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
         public void run(Pointer vmThreadLocals) {
             if (Safepoint.UseThreadStateWordForGCMutatorSynchronization) {
                 final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-                final Pointer statePointer = MUTATOR_STATE.pointer(enabledVmThreadLocals);
                 int currentState;
                 while (true) {
-                    if (statePointer.readInt(0) == THREAD_IN_GC_FROM_JAVA) {
+                    if (enabledVmThreadLocals.readInt(MUTATOR_STATE.offset()) == THREAD_IN_GC_FROM_JAVA) {
                         // Transitioned thread into GC
                         currentState = THREAD_IN_GC_FROM_JAVA;
                         break;
                     }
-                    if (Safepoint.cas(statePointer, THREAD_IN_NATIVE, THREAD_IN_GC_FROM_NATIVE) == THREAD_IN_NATIVE) {
+                    if (Safepoint.casMutatorState(enabledVmThreadLocals, THREAD_IN_NATIVE, THREAD_IN_GC_FROM_NATIVE) == THREAD_IN_NATIVE) {
                         // Transitioned thread into GC
                         currentState = THREAD_IN_GC_FROM_NATIVE;
                         break;
