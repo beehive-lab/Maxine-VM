@@ -131,4 +131,30 @@ public class GuestVMXenTeleDomain extends TeleProcess {
         final Word threadSpecificsList = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header().threadSpecificsListOffset));
         GuestVMXenDBChannel.gatherThreads(threads, domainId, threadSpecificsList.asAddress().toLong());
     }
+
+    @Override
+    public int maximumWatchpointCount() {
+        // not sure how many are supported; we'll try this
+        return Integer.MAX_VALUE;
+    }
+
+    @Override
+    protected boolean activateWatchpoint(TeleWatchpoint teleWatchpoint) {
+        return GuestVMXenDBChannel.activateWatchpoint(domainId, teleWatchpoint);
+    }
+
+    @Override
+    protected boolean deactivateWatchpoint(TeleWatchpoint teleWatchpoint) {
+        return GuestVMXenDBChannel.deactivateWatchpoint(domainId, teleWatchpoint);
+    }
+
+    @Override
+    protected long readWatchpointAddress() {
+        return GuestVMXenDBChannel.readWatchpointAddress(domainId);
+    }
+
+    @Override
+    protected int readWatchpointAccessCode() {
+        return GuestVMXenDBChannel.readWatchpointAccessCode(domainId);
+    }
 }

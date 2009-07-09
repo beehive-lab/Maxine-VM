@@ -62,7 +62,7 @@ public class BlockMap {
             canTrap = new BitMap(code.length);
             isObjectInit = C1XOptions.RegisterFinalizersAtInit && C1XIntrinsic.getIntrinsic(method) == C1XIntrinsic.java_lang_Object$init;
             allHandlers = method.exceptionHandlers();
-            handlerMap = new ArrayMap<HashSet<BlockBegin>>(firstBlock, code.length / 5);
+            handlerMap = new ArrayMap<HashSet<BlockBegin>>(firstBlock, firstBlock + code.length / 5);
         }
 
         void setCanTrap(int bci) {
@@ -73,11 +73,11 @@ public class BlockMap {
             if (canTrap.get(bci)) {
                 // XXX: replace with faster algorithm (sort exception handlers by start and end)
                 for (CiExceptionHandler h : allHandlers) {
-                    if (h.startBCI() <= bci && bci <= h.endBCI()) {
+                    if (h.startBCI() <= bci && bci < h.endBCI()) {
+                        addHandler(block, get(h.handlerBCI()));
                         if (h.isCatchAll()) {
                             break;
                         }
-                        addHandler(block, get(h.handlerBCI()));
                     }
                 }
             }
@@ -256,7 +256,11 @@ public class BlockMap {
         while (bci < code.length) {
             int opcode = Bytes.beU1(code, bci);
             switch (opcode) {
-                case Bytecodes.ATHROW:  // fall through
+                case Bytecodes.ATHROW:
+                    if (exceptionMap != null) {
+                        exceptionMap.setCanTrap(bci);
+                    }
+                    // fall through
                 case Bytecodes.IRETURN: // fall through
                 case Bytecodes.LRETURN: // fall through
                 case Bytecodes.FRETURN: // fall through

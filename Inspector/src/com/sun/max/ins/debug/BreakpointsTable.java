@@ -46,31 +46,20 @@ import com.sun.max.vm.runtime.*;
  */
 public final class BreakpointsTable extends InspectorTable {
 
-    private final BreakpointsTableModel model;
+    private final BreakpointsTableModel tableModel;
     private BreakpointsColumnModel columnModel;
     private final TableColumn[] columns;
 
-    private MaxVMState lastStateRefreshed = null;
+    private MaxVMState lastRefreshedState = null;
 
     public BreakpointsTable(Inspection inspection, BreakpointsViewPreferences viewPreferences) {
         super(inspection);
-        model = new BreakpointsTableModel();
+        tableModel = new BreakpointsTableModel();
         columns = new TableColumn[BreakpointsColumnKind.VALUES.length()];
         columnModel = new BreakpointsColumnModel(viewPreferences);
 
-        setModel(model);
-        setColumnModel(columnModel);
-        setShowHorizontalLines(style().defaultTableShowHorizontalLines());
-        setShowVerticalLines(style().defaultTableShowVerticalLines());
-        setIntercellSpacing(style().defaultTableIntercellSpacing());
-        setRowHeight(style().defaultTableRowHeight());
-        setRowSelectionAllowed(true);
-        setColumnSelectionAllowed(false);
-        setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        configure(tableModel, columnModel);
         addMouseListener(new BreakpointInspectorMouseClickAdapter(inspection()));
-        refresh(true);
-        JTableColumnResizer.adjustColumnPreferredWidths(this);
-        updateFocusSelection();
     }
 
     /**
@@ -79,45 +68,30 @@ public final class BreakpointsTable extends InspectorTable {
     @Override
     public void updateFocusSelection() {
         final TeleBreakpoint teleBreakpoint = inspection().focus().breakpoint();
-        final int row = model.findRow(teleBreakpoint);
-        if (row < 0) {
-            clearSelection();
-        } else  if (row != getSelectedRow()) {
-            setRowSelectionInterval(row, row);
-        }
+        final int row = tableModel.findRow(teleBreakpoint);
+
+        updateFocusSelection(row);
     }
 
     public void refresh(boolean force) {
-        if (maxVMState().newerThan(lastStateRefreshed) || force) {
-            lastStateRefreshed = maxVMState();
-            model.refresh();
-            for (TableColumn column : columns) {
-                final Prober prober = (Prober) column.getCellRenderer();
-                if (prober != null) {
-                    prober.refresh(force);
-                }
-            }
-        }
+        lastRefreshedState = refresh(force, lastRefreshedState, tableModel, columns);
+        tableModel.refresh();
     }
 
     public void redisplay() {
-        for (TableColumn column : columns) {
-            final Prober prober = (Prober) column.getCellRenderer();
-            prober.redisplay();
-        }
-        invalidate();
-        repaint();
+        redisplay(columns);
     }
 
     @Override
     public void valueChanged(ListSelectionEvent listSelectionEvent) {
+        // TODO: Add MaxBreakpoint interface and generalize this code (cf. WatchpointsTable)
         // Row selection changed, perhaps by user mouse click or navigation;
         // update user focus to follow the selection.
         super.valueChanged(listSelectionEvent);
         if (!listSelectionEvent.getValueIsAdjusting()) {
             final int row = getSelectedRow();
             if (row >= 0) {
-                final BreakpointData breakpointData = model.get(row);
+                final BreakpointData breakpointData = tableModel.get(row);
                 if (breakpointData != null) {
                     final TeleBreakpoint teleBreakpoint = breakpointData.teleBreakpoint();
                     focus().setBreakpoint(teleBreakpoint);
@@ -126,21 +100,7 @@ public final class BreakpointsTable extends InspectorTable {
         }
     }
 
-    @Override
-    protected JTableHeader createDefaultTableHeader() {
-        // Custom table header with tooltips that describe the column data.
-        return new JTableHeader(columnModel) {
-            @Override
-            public String getToolTipText(MouseEvent mouseEvent) {
-                final Point p = mouseEvent.getPoint();
-                final int index = columnModel.getColumnIndexAtX(p.x);
-                final int modelIndex = columnModel.getColumn(index).getModelIndex();
-                return BreakpointsColumnKind.VALUES.get(modelIndex).toolTipText();
-            }
-        };
-    }
-
-    private final class BreakpointsColumnModel extends DefaultTableColumnModel {
+    private final class BreakpointsColumnModel extends InspectorTableColumnModel  {
 
         private final BreakpointsViewPreferences viewPreferences;
 
@@ -156,13 +116,10 @@ public final class BreakpointsTable extends InspectorTable {
 
         private void createColumn(BreakpointsColumnKind columnKind, TableCellRenderer renderer, TableCellEditor editor) {
             final int col = columnKind.ordinal();
-            columns[col] = new TableColumn(col, 0, renderer, editor);
-            columns[col].setHeaderValue(columnKind.label());
-            columns[col].setMinWidth(columnKind.minWidth());
+            columns[col] = createColumnInstance(columnKind, renderer, editor);
             if (viewPreferences.isVisible(columnKind)) {
                 addColumn(columns[col]);
             }
-            columns[col].setIdentifier(columnKind);
         }
     }
 
@@ -372,7 +329,7 @@ public final class BreakpointsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final BreakpointData breakpointData = model.get(row);
+            final BreakpointData breakpointData = tableModel.get(row);
             setText(breakpointData.kindTag());
             setToolTipText(breakpointData.kindName() + ", Enabled=" + (breakpointData.enabled() ? "true" : "false"));
             if (row == getSelectionModel().getMinSelectionIndex()) {
@@ -391,7 +348,7 @@ public final class BreakpointsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final BreakpointData breakpointData = model.get(row);
+            final BreakpointData breakpointData = tableModel.get(row);
             setValue(breakpointData.shortName(), breakpointData.longName());
             if (row == getSelectionModel().getMinSelectionIndex()) {
                 setBackground(style().defaultCodeAlternateBackgroundColor());
@@ -409,7 +366,7 @@ public final class BreakpointsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final BreakpointData breakpointData = model.get(row);
+            final BreakpointData breakpointData = tableModel.get(row);
             setText(Integer.toString(breakpointData.location()));
             setToolTipText("Location: " + breakpointData.locationDescription());
             if (row == getSelectionModel().getMinSelectionIndex()) {
@@ -429,7 +386,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            setToolTipText(model.get(row).conditionStatus());
+            setToolTipText(tableModel.get(row).conditionStatus());
             final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             if (row == getSelectionModel().getMinSelectionIndex()) {
                 component.setBackground(style().defaultCodeAlternateBackgroundColor());
@@ -454,7 +411,7 @@ public final class BreakpointsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final BreakpointData breakpointData = model.get(row);
+            final BreakpointData breakpointData = tableModel.get(row);
             if (breakpointData.triggerThread() != null) {
                 setText(breakpointData.triggerThreadName());
                 setToolTipText("Thread \"" + breakpointData.triggerThreadName() + "\" stopped at this breakpoint");
@@ -535,7 +492,7 @@ public final class BreakpointsTable extends InspectorTable {
             if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
                 final Point p = mouseEvent.getPoint();
                 final int row = rowAtPoint(p);
-                final BreakpointData breakpointData = model.get(row);
+                final BreakpointData breakpointData = tableModel.get(row);
                 final InspectorMenu menu = getButton3Menu(breakpointData);
                 menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
             }

@@ -23,6 +23,7 @@ package com.sun.max.vm.compiler.c1x;
 import java.util.*;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.value.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -66,89 +67,6 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     /**
-     * Gets the OSR frame for a particular method at a particular bytecode index.
-     * @param method the compiler interface method
-     * @param bci the bytecode index
-     * @return the OSR frame
-     */
-    public CiOsrFrame getOsrFrame(CiMethod method, int bci) {
-        throw FatalError.unimplemented();
-    }
-
-    /**
-     * Checks whether the runtime requires inlining of the specified method.
-     * @param method the method to inline
-     * @return <code>true</code> if the method must be inlined; <code>false</code>
-     * to allow the compiler to use its own heuristics
-     */
-    public boolean mustInline(CiMethod method) {
-        return asClassMethodActor(method, "mustInline()").isInline();
-    }
-
-    /**
-     * Checks whether the runtime forbids inlining of the specified method.
-     * @param method the method to inline
-     * @return <code>true</code> if the runtime forbids inlining of the specified method;
-     * <code>false</code> to allow the compiler to use its own heuristics
-     */
-    public boolean mustNotInline(CiMethod method) {
-        return asClassMethodActor(method, "mustNotInline()").isNeverInline();
-    }
-
-    /**
-     * Checks whether the runtime forbids compilation of the specified method.
-     * @param method the method to compile
-     * @return <code>true</code> if the runtime forbids compilation of the specified method;
-     * <code>false</code> to allow the compiler to compile the method
-     */
-    public boolean mustNotCompile(CiMethod method) {
-        return false;
-    }
-
-    /**
-     * Performs an instanceof test on an object and a compiler interface type.
-     * @param object the object to test
-     * @param type the compiler interface type to test
-     * @return <code>true</code> if the object is an instance of the specified class
-     */
-    public boolean instanceOf(Object object, CiType type) {
-        return asClassActor(type, "instanceOf").isInstance(object);
-    }
-
-    /**
-     * Performs a checkcast operation on an object and a compiler interface type.
-     * @param object the object to cast
-     * @param type the compiler interface type to cast to
-     * @return the object if the cast fails
-     * @throws ClassCastException if the cast fails
-     */
-    public Object checkCast(Object object, CiType type) {
-        if (object == null || asClassActor(type, "instanceOf").isInstance(object)) {
-            return object;
-        }
-        throw new ClassCastException();
-    }
-
-    /**
-     * Allocates an object of the specified compiler interface type.
-     * @param type the type
-     * @return a non-initialized instance of the specified compiler interface type
-     */
-    public Object allocateObject(CiType type) {
-        throw FatalError.unimplemented();
-    }
-
-    /**
-     * Allocates an array with the specified element type.
-     * @param type the element type
-     * @param length the length of the array
-     * @return an initialized array with the specified length and element type
-     */
-    public Object allocateArray(CiType type, int length) {
-        throw FatalError.unimplemented();
-    }
-
-    /**
      * Resolves a compiler interface type by its name. Note that this
      * method should only be called for globally available classes (e.g. java.lang.*),
      * since it does not supply a constant pool.
@@ -181,6 +99,47 @@ public class MaxCiRuntime implements CiRuntime {
         return globalConstantPool.canonicalCiMethod(methodActor);
     }
 
+    /**
+     * Gets the OSR frame for a particular method at a particular bytecode index.
+     * @param method the compiler interface method
+     * @param bci the bytecode index
+     * @return the OSR frame
+     */
+    public CiOsrFrame getOsrFrame(CiMethod method, int bci) {
+        throw FatalError.unimplemented();
+    }
+
+    /**
+     * Checks whether the runtime requires inlining of the specified method.
+     * @param method the method to inline
+     * @return <code>true</code> if the method must be inlined; <code>false</code>
+     * to allow the compiler to use its own heuristics
+     */
+    public boolean mustInline(CiMethod method) {
+        return asClassMethodActor(method, "mustInline()").isInline();
+    }
+
+    /**
+     * Checks whether the runtime forbids inlining of the specified method.
+     * @param method the method to inline
+     * @return <code>true</code> if the runtime forbids inlining of the specified method;
+     * <code>false</code> to allow the compiler to use its own heuristics
+     */
+    public boolean mustNotInline(CiMethod method) {
+        final ClassMethodActor classMethodActor = asClassMethodActor(method, "mustNotInline()");
+        return classMethodActor.rawCodeAttribute() == null || classMethodActor.isNeverInline();
+    }
+
+    /**
+     * Checks whether the runtime forbids compilation of the specified method.
+     * @param method the method to compile
+     * @return <code>true</code> if the runtime forbids compilation of the specified method;
+     * <code>false</code> to allow the compiler to compile the method
+     */
+    public boolean mustNotCompile(CiMethod method) {
+        return false;
+    }
+
     ClassMethodActor asClassMethodActor(CiMethod method, String operation) {
         if (method instanceof MaxCiMethod) {
             return ((MaxCiMethod) method).asClassMethodActor(operation);
@@ -193,5 +152,90 @@ public class MaxCiRuntime implements CiRuntime {
             return ((MaxCiType) type).asClassActor(operation);
         }
         throw new MaxCiUnresolved("invalid CiType instance: " + type.getClass());
+    }
+
+    public int arrayLengthOffsetInBytes() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public boolean dtraceMethodProbes() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public Address getRuntimeEntry(CiRuntimeCall runtimeCall) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public int headerSize() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public boolean isMP() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public int javaNioBufferLimitOffset() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public boolean jvmtiCanPostExceptions() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public int klassJavaMirrorOffsetInBytes() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public int klassOffsetInBytes() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public boolean needsExplicitNullCheck(int offset) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public int threadExceptionOopOffset() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public int threadExceptionPcOffset() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public int threadObjOffset() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public Address throwCountAddress() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public int vtableEntryMethodOffsetInBytes() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public int vtableEntrySize() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public int vtableStartOffset() {
+        // TODO Auto-generated method stub
+        return 0;
     }
 }

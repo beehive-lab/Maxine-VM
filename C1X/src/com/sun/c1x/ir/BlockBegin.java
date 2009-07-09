@@ -23,6 +23,8 @@ package com.sun.c1x.ir;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.asm.*;
+import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
@@ -73,6 +75,11 @@ public class BlockBegin extends StateSplit {
     private List<BlockBegin> exceptionHandlerBlocks;
     private List<ValueStack> exceptionHandlerStates;
 
+    // LIR fields
+    // TODO: initialize / move to LIRBlock?
+    private Label label;
+    private LIRList lir;
+
     /**
      * Constructs a new BlockBegin at the specified bytecode index.
      * @param bci the bytecode index of the start
@@ -99,7 +106,6 @@ public class BlockBegin extends StateSplit {
     public void setBlockID(int i) {
         blockID = i;
     }
-
 
     /**
      * Gets the list of predecessors of this block.
@@ -178,6 +184,7 @@ public class BlockBegin extends StateSplit {
     }
 
     public void setDepthFirstNumber(int depthFirstNumber) {
+        assert depthFirstNumber >= 0;
         this.depthFirstNumber = depthFirstNumber;
     }
 
@@ -274,7 +281,7 @@ public class BlockBegin extends StateSplit {
     }
 
     /**
-     * Iterate over this block's exception handlers, its successors, and itself, in that order.
+     * Iterate over this block's exception handlers, its  , and itself, in that order.
      * @param closure the closure to apply to each block
      */
     public void iteratePostOrder(BlockClosure closure) {
@@ -335,6 +342,7 @@ public class BlockBegin extends StateSplit {
     public void removePredecessor(BlockBegin pred) {
         while (predecessors.remove(pred)) {
             // the block may appear multiple times in the list
+            // XXX: this is not very efficient, consider Util.removeAllFromList
         }
     }
 
@@ -555,6 +563,8 @@ public class BlockBegin extends StateSplit {
         StringBuilder builder = new StringBuilder();
         builder.append("block #");
         builder.append(blockID);
+        builder.append(" @ ");
+        builder.append(bci());
         builder.append(" [");
         boolean hasFlag = false;
         for (BlockFlag f : BlockFlag.values()) {
@@ -580,5 +590,45 @@ public class BlockBegin extends StateSplit {
             }
         }
         return builder.toString();
+    }
+
+    /**
+     * Get the number of successors.
+     * @return the number of successors
+     */
+    public int numberOfSux() {
+        return end.successors.size();
+    }
+
+    /**
+     * Get the successor at a certain position.
+     * @param i the position
+     * @return the successor
+     */
+    public BlockBegin suxAt(int i) {
+        return end.successors.get(i);
+    }
+
+    /**
+     * Get the number of predecessors.
+     * @return the number of predecessors
+     */
+    public int numberOfPreds() {
+        return predecessors.size();
+    }
+
+    /**
+     * @return the label associated with the block, used by the LIR
+     */
+    public Label label() {
+        return label;
+    }
+
+    public void setLir(LIRList lir) {
+        this.lir = lir;
+    }
+
+    public LIRList lir() {
+        return lir;
     }
 }

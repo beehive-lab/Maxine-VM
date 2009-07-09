@@ -47,7 +47,7 @@ public abstract class Reference implements Accessor {
     }
 
     @INLINE
-    public static final Reference fromGrip(Grip grip) {
+    public static Reference fromGrip(Grip grip) {
         return referenceScheme().fromGrip(grip);
     }
 
@@ -67,7 +67,7 @@ public abstract class Reference implements Accessor {
     }
 
     @INLINE
-    public static final Reference fromOrigin(Pointer origin) {
+    public static Reference fromOrigin(Pointer origin) {
         return fromGrip(gripScheme().fromOrigin(origin));
     }
 

@@ -28,13 +28,15 @@ import com.sun.max.collect.*;
  *
  * @author Michael Van De Vanter
  */
-public enum WatchpointsColumnKind {
+public enum WatchpointsColumnKind implements ColumnKind{
     START("Start", "Starting address", true, 20),
     SIZE("Size", "Size of watched region, in bytes", true, 6),
     END("End", "Ending address", false, 20),
     DESCRIPTION("Description", "Description of how watchpoint was created", true, 30),
     REGION("Region", "Memory region pointed to by value", false, 20),
-    READ("R", "Read?", true, 5) {
+    READ("R", "Read?", true, 5),
+    WRITE("W", "Write?", true, 5),
+    EXEC("X", "Execute?", true, 5){
         @Override
         public boolean canBeMadeInvisible() {
             return false;

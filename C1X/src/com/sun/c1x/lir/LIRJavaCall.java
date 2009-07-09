@@ -22,9 +22,10 @@ package com.sun.c1x.lir;
 
 import java.util.*;
 
+import com.sun.c1x.value.*;
+
 import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
-
 
 /**
  * The <code>LIRJavaCall</code> class definition.
@@ -48,19 +49,10 @@ public class LIRJavaCall extends LIRCall {
      * @param arguments
      * @param info
      */
-    public LIRJavaCall(LIROpcode opcode, CiMethod method, LIROperand receiver, LIROperand result, int address, ArrayList<LIRInstruction> arguments, CodeEmitInfo info) {
+    public LIRJavaCall(LIROpcode opcode, CiMethod method, LIROperand receiver, LIROperand result, Address address, List<LIROperand> arguments, CodeEmitInfo info) {
         super(opcode, address, result, arguments, info);
         this.method = method;
         this.receiver = receiver;
-    }
-
-    /**
-     * Gets the method of this java call.
-     *
-     * @return the method
-     */
-    public CiMethod method() {
-        return method;
     }
 
     /**
@@ -73,12 +65,21 @@ public class LIRJavaCall extends LIRCall {
     }
 
     /**
+     * Gets the method of this java call.
+     *
+     * @return the method
+     */
+    public CiMethod method() {
+        return method;
+    }
+
+    /**
      * Gets the virtual table offset for his java call.
      *
      * @return the virtual table offset for this call.
      */
-    public int vtableOffset() {
-        assert opcode == LIROpcode.VirtualCall : "Only have vtable for real virtual call";
+    public Address vtableOffset() {
+        assert code == LIROpcode.VirtualCall : "Only have vtable for real virtual call";
         return address();
     }
 
@@ -89,7 +90,7 @@ public class LIRJavaCall extends LIRCall {
      */
     @Override
     public void emitCode(LIRAssembler masm) {
-        // TODO Not yet implemented.
+        masm.emitJavaCall(this);
     }
 
     /**
@@ -99,7 +100,8 @@ public class LIRJavaCall extends LIRCall {
      */
     @Override
     public void printInstruction(LogStream out) {
-        super.printInstruction(out);
+        out.print("call: ");
+        out.printf("[addr: 0x%x]", address());
         if (receiver.isValid()) {
             out.print(" [recv: ");
             receiver.print(out);

@@ -26,7 +26,6 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.jit.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -176,19 +175,6 @@ public enum VmThreadLocal {
      * The value of the latch register when the last trap occurred.
      */
     TRAP_LATCH_REGISTER(Kind.WORD),
-
-    /**
-     * @see Deoptimizer.ReferenceOccurrences
-     */
-    DEOPTIMIZER_REFERENCE_OCCURRENCES(Kind.REFERENCE),
-
-    /**
-     * In case of {@link Deoptimizer.Situation#SAFEPOINT}, when deoptimization occurs, we remember the instruction
-     * where it was triggered via an illegal instruction trap. This is used in case there is a GC during deoptimization
-     * to enable the stack map preparer to find the register reference map to be applied to the register copies in the
-     * disabled thread local space. The latter is where the trap saved register values.
-     */
-    DEOPTIMIZER_INSTRUCTION_POINTER(Kind.WORD),
 
     /**
      * The address of the stack slot with the highest address that is covered by the {@linkplain #STACK_REFERENCE_MAP

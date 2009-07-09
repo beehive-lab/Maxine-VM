@@ -23,6 +23,7 @@ package com.sun.max.tele.debug.guestvm.xen;
 import java.nio.*;
 
 import com.sun.max.collect.*;
+import com.sun.max.memory.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
 
@@ -147,6 +148,22 @@ public final class GuestVMXenDBChannel {
         return nativeSuspend(threadId);
     }
 
+    public static synchronized boolean activateWatchpoint(int domainId, TeleWatchpoint teleWatchpoint) {
+        return nativeActivateWatchpoint(domainId, teleWatchpoint.start().toLong(), teleWatchpoint.size().toLong(), true, teleWatchpoint.isRead(), teleWatchpoint.isWrite(), teleWatchpoint.isExec());
+    }
+
+    public static synchronized boolean deactivateWatchpoint(int domainId, MemoryRegion memoryRegion) {
+        return nativeDeactivateWatchpoint(domainId, memoryRegion.start().toLong(), memoryRegion.size().toLong());
+    }
+
+    public static synchronized long readWatchpointAddress(int domainId) {
+        return nativeReadWatchpointAddress(domainId);
+    }
+
+    public static synchronized int readWatchpointAccessCode(int domainId) {
+        return nativeReadWatchpointAccessCode(domainId);
+    }
+
     private static native boolean nativeAttach(int domId);
     private static native long nativeGetBootHeapStart();
     private static native int nativeSetTransportDebugLevel(int level);
@@ -162,6 +179,10 @@ public final class GuestVMXenDBChannel {
     private static native int nativeSetInstructionPointer(int threadId, long ip);
     private static native boolean nativeSingleStep(int threadId);
     private static native boolean nativeSuspend(int threadId);
+    private static native boolean nativeActivateWatchpoint(int domainId, long start, long size, boolean after, boolean read, boolean write, boolean exec);
+    private static native boolean nativeDeactivateWatchpoint(int domainId, long start, long size);
+    private static native long nativeReadWatchpointAddress(int domainId);
+    private static native int nativeReadWatchpointAccessCode(int domainId);
 
     private static native boolean nativeReadRegisters(int threadId,
                     byte[] integerRegisters, int integerRegistersSize,

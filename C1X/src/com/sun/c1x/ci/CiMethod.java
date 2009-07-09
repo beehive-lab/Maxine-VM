@@ -176,7 +176,7 @@ public interface CiMethod {
     /**
      * Checks whether this method can be statically bound (i.e. it is final or private or static).
      * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return {@code true if this method can be statically bound)
+     * @return {@code true} if this method can be statically bound
      */
     boolean canBeStaticallyBound();
 

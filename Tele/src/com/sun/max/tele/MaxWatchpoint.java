@@ -46,12 +46,22 @@ public interface MaxWatchpoint extends MemoryRegion {
      */
 
     /**
-     * @return true while the watchpoint is active, even if not currently configured
-     * to trap anything; permanently false and forgotten once disposed.
-     *
-     * @see #dispose()
+     * Checks if watchpoint is set for reading.
+     * @return true while the watchpoint is activated for read access,
      */
-    boolean isActive();
+    boolean isRead();
+
+    /**
+     * Checks if watchpoint is set for writing.
+     * @return true while the watchpoint is activated for write access,
+     */
+    boolean isWrite();
+
+    /**
+     * Checks if watchpoint is set for executing.
+     * @return true while the watchpoint is activated for executing,
+     */
+    boolean isExec();
 
     /**
      * Removes the memory watchpoint from the VM, at which time it

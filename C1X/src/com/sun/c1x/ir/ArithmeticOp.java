@@ -55,6 +55,7 @@ public class ArithmeticOp extends Op2 {
      * Gets the lock stack for this instruction.
      * @return the lock stack
      */
+    @Override
     public ValueStack lockStack() {
         return lockStack;
     }

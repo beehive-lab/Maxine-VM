@@ -41,7 +41,7 @@ public class ValueType {
     public static final ValueType ILLEGAL_TYPE = new ValueType(BasicType.Illegal);
     public static final ValueType VOID_TYPE = new ValueType(BasicType.Void);
 
-    private final BasicType basicType;
+    public final BasicType basicType;
 
     /**
      * The base constructor for a value type accepts a basic type.
@@ -259,14 +259,6 @@ public class ValueType {
             case Jsr: return JSR_TYPE;
         }
         return ILLEGAL_TYPE;
-    }
-
-    /**
-     * Gets the basic type for this ValueType.
-     * @return the basic type
-     */
-    public BasicType basicType() {
-        return basicType;
     }
 
 }
