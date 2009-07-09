@@ -74,7 +74,7 @@ public class LIRConvert extends LIROp1 {
     public void emitCode(LIRAssembler masm) {
         masm.emitConvert(this);
         if (stub() != null) {
-            masm.emitStub(stub());
+            masm.emitCodeStub(stub());
         }
     }
 

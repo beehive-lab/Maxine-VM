@@ -60,7 +60,7 @@ public class LIRLabel extends LIROp0 {
      */
     @Override
     public void emitCode(LIRAssembler masm) {
-        masm.emitLabel(this);
+        masm.emitOpLabel(this);
     }
 
     /**

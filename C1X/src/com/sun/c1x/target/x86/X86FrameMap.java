@@ -134,6 +134,10 @@ public class X86FrameMap {
         return LIROperandFactory.singleCpu(reg.number);
     }
 
+    public static Register rscratch1(Architecture arch) {
+        return (arch.is32bit()) ? X86Register.noreg : X86Register.r10;
+    }
+
 
 
 

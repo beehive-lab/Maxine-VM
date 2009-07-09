@@ -68,4 +68,24 @@ public class FrameMap {
         // TODO Auto-generated method stub
         return null;
     }
+
+    public Address addressForSlot(int singleStackIx) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Address addressForSlot(int doubleStackIx, int i) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public int reservedArgumentAreaSize() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public Object addressForMonitorLock(int monitorNo) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

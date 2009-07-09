@@ -40,23 +40,23 @@ import com.sun.c1x.value.*;
  */
 public abstract class LIRAssembler {
 
-    private MacroAssembler masm;
+    private AbstractAssembler masm;
     private List<CodeStub> slowCaseStubs;
-    private C1XCompilation compilation;
+    protected C1XCompilation compilation;
     private FrameMap frameMap;
     private BlockBegin currentBlock;
 
     private Instruction pendingNonSafepoint;
     private int pendingNonSafepointOffset;
 
-    private C1XCompilation compilation() {
+    protected C1XCompilation compilation() {
         return compilation;
     }
 
     // Assert only:
-    private List<BlockBegin> branchTargetBlocks;
+    protected List<BlockBegin> branchTargetBlocks;
 
-    FrameMap frameMap() {
+    protected FrameMap frameMap() {
         return frameMap;
     }
 
@@ -78,15 +78,11 @@ public abstract class LIRAssembler {
         }
     }
 
-    MacroAssembler masm() {
-        return masm;
-    }
-
     CiMethod method() {
         return compilation().method();
     }
 
-    CodeOffsets offsets() {
+    protected CodeOffsets offsets() {
         return compilation.offsets();
     }
 
@@ -94,7 +90,7 @@ public abstract class LIRAssembler {
         addCallInfo(codeOffset(), info);
     }
 
-    void patchingEpilog(PatchingStub patch, LIRPatchCode patchCode, Register obj, CodeEmitInfo info) {
+    protected void patchingEpilog(PatchingStub patch, LIRPatchCode patchCode, Register obj, CodeEmitInfo info) {
         // we must have enough patching space so that call can be inserted
         while (masm.pc().asInt() - patch.pcStart().asInt() < compilation.runtime.nativeCallInstructionSize()) {
             masm.nop();
@@ -184,7 +180,7 @@ public abstract class LIRAssembler {
         return !method.isStatic();
     }
 
-    int codeOffset() {
+    protected int codeOffset() {
         return masm.offset();
     }
 
@@ -257,16 +253,17 @@ public abstract class LIRAssembler {
         }
 
         assert block.lir() != null : "must have LIR";
-        assert !compilation.target.arch.isX86() || masm.rspOffset() == 0 : "frame size should be fixed";
-
+        assert assertFrameSize();
         if (C1XOptions.CommentedAssembly) {
             String st = String.format(" block B%d [%d, %d]", block.blockID(), block.bci(), block.end().bci());
             masm.blockComment(st);
         }
 
         emitLirList(block.lir());
-        assert !compilation.target.arch.isX86() || masm.rspOffset() == 0 : "frame size should be fixed";
+        assert assertFrameSize();
     }
+
+    protected abstract boolean assertFrameSize();
 
     protected abstract void peephole(LIRList list);
 
@@ -321,7 +318,7 @@ public abstract class LIRAssembler {
         return true;
     }
 
-    void addDebugInfoForBranch(CodeEmitInfo info) {
+    protected void addDebugInfoForBranch(CodeEmitInfo info) {
         masm.codeSection().relocate(pc(), RelocInfo.Type.pollType);
         int pcOffset = codeOffset();
         flushDebugInfo(pcOffset);
@@ -427,7 +424,7 @@ public abstract class LIRAssembler {
         debugInfo.endNonSafepoint(pcOffset);
     }
 
-    void addDebugInfoForNullCheckHere(CodeEmitInfo cinfo) {
+    protected void addDebugInfoForNullCheckHere(CodeEmitInfo cinfo) {
         addDebugInfoForNullCheck(codeOffset(), cinfo);
     }
 
@@ -587,9 +584,9 @@ public abstract class LIRAssembler {
     // TODO:
     // BarrierSet bs;
 
-    protected abstract void leal(LIROperand inOpr, Object resultOpr);
+    protected abstract void leal(LIROperand inOpr, LIROperand resultOpr);
 
-    protected abstract void negate(LIROperand inOpr, Object resultOpr);
+    protected abstract void negate(LIROperand inOpr, LIROperand resultOpr);
 
     protected abstract void monitorAddress(int asInt, LIROperand result);
 
@@ -603,7 +600,7 @@ public abstract class LIRAssembler {
 
     protected abstract void fxch(int asJint);
 
-    protected abstract void safepointPoll(LIROperand inOpr, CodeEmitInfo info);
+    protected abstract int safepointPoll(LIROperand inOpr, CodeEmitInfo info);
 
     protected abstract void returnOp(LIROperand inOpr);
 
@@ -689,7 +686,7 @@ public abstract class LIRAssembler {
         }
     }
 
-    protected abstract void checkIcache();
+    protected abstract int checkIcache();
 
     protected abstract void getThread(LIROperand result);
 
@@ -709,7 +706,7 @@ public abstract class LIRAssembler {
 
     protected abstract void osrEntry();
 
-    void emitOp2(LIROp2 op) {
+    protected void emitOp2(LIROp2 op) {
         switch (op.code()) {
             case Cmp:
                 if (op.info() != null) {
@@ -917,8 +914,6 @@ public abstract class LIRAssembler {
 
     protected abstract void emitAllocArray(LIRAllocArray lirAllocArray);
 
-    protected abstract void emitJavaCall(LIRJavaCall lirJavaCall);
-
     protected abstract void emitRTCall(LIRRTCall lirrtCall);
 
     protected abstract void emitArrayCopy(LIRArrayCopy lirArrayCopy);
@@ -930,4 +925,6 @@ public abstract class LIRAssembler {
     protected abstract void emitCompareAndSwap(LIRCompareAndSwap lirCompareAndSwap);
 
     protected abstract void emitProfileCall(LIRProfileCall lirProfileCall);
+
+    public abstract void emitExceptionHandler();
 }

@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.value;
 
+import com.sun.c1x.lir.*;
+import com.sun.c1x.lir.LIRAddress.*;
 
 /**
  * The <code>Address</code> class definition.
@@ -29,6 +31,7 @@ package com.sun.c1x.value;
  *
  */
 public class Address {
+
     private long address;
 
     /**
@@ -41,6 +44,14 @@ public class Address {
         this.address = address;
     }
 
+    public Address(Register tmp, int i) {
+        // TODO Auto-generated constructor stub
+    }
+
+    public Address(Register base, Register index, Scale scale, int displacement) {
+        // TODO Auto-generated constructor stub
+    }
+
     /**
      * @return the long value which represents an internal address
      */
@@ -51,7 +62,8 @@ public class Address {
     /**
      * Sets the address.
      *
-     * @param address the new address
+     * @param address
+     *            the new address
      */
     public void setAddress(long address) {
         this.address = address;
@@ -60,5 +72,16 @@ public class Address {
     public int asInt() {
         // TODO Auto-generated method stub
         return 0;
+    }
+
+    public int disp() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public int sub(Address codeBegin) {
+        long result = address - codeBegin.address;
+        assert result == (int) result : "overflow";
+        return (int) result;
     }
 }

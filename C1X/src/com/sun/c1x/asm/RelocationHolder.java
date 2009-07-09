@@ -18,62 +18,9 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ci;
+package com.sun.c1x.asm;
 
-/**
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
- *
- */
-public enum CiRuntimeCall {
 
-    // C1Runtime
-    DtraceObjectAlloc,
-    UnwindException,
-    ForwardException,
-    ThrowRangeCheckFailed,
-    ThrowIndexException,
-    ThrowDiv0exception,
-    ThrowNullPointerException,
-    RegisterFinalizer,
-    NewInstance,
-    FastNewInstance,
-    FastNewInstanceInitCheck,
-    NewTypeArray,
-    NewObjectArray,
-    NewMultiArray,
-    HandleExceptionNofpu,
-    HandleException,
-    ThrowArrayStoreException,
-    ThrowClassCastException,
-    ThrowIncompatibleClassChangeError,
-    SlowSubtypeCheck,
-    Monitorenter,
-    MonitorenterNofpu,
-    Monitorexit,
-    MonitorexitNofpu,
-    AccessFieldPatching,
-    LoadKlassPatching,
-    JvmtiExceptionThrow,
-    G1preBarrierSlow,
-    G1postBarrierSlow,
-    Fpu2longStub,
-    CounterOverflow,
-    NumberOfIds,
-
-    // SharedRuntime
-    OSRMigrationEnd,
-    DTraceMethodEntry,
-    JavaTimeMillis,
-    JavaTimeNanos,
-
-    // Unknown
-    TraceBlockEntry,
-    Lrem,
-    Ldiv,
-    Lmul,
-    OopArrayCopy,
-    PrimitiveArrayCopy
-
+public class RelocationHolder {
 
 }

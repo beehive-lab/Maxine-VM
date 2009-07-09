@@ -188,11 +188,11 @@ public abstract class LIROperand {
         // TODO to be completed later
     }
 
-    boolean isFloatKind() {
+    public boolean isFloatKind() {
         return basicType == BasicType.Float || basicType == BasicType.Double;
     }
 
-    boolean isOop() {
+    public boolean isOop() {
         return basicType == BasicType.Object;
     }
 

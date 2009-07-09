@@ -141,4 +141,10 @@ public class C1XOptions {
     public static boolean VerifyOopMaps                      = ____;
     public static boolean VerifyOops                         = ____;
     public static int     CodeEntryAlignment                 = 16;
+    public static int     SafepointPollOffset                = 256; // x86 only?
+    public static int     ReadPrefetchInstr                  = 0;
+    public static int     AllocatePrefetchInstr              = 0;
+    public static boolean UseSlowPath                        = ____;
+    public static boolean UseFastNewObjectArray              = ____;
+    public static boolean UseFastNewTypeArray                = ____;
 }

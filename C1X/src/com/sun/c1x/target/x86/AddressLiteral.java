@@ -18,77 +18,21 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.asm;
+package com.sun.c1x.target.x86;
 
-import com.sun.c1x.lir.*;
+import com.sun.c1x.asm.RelocInfo.*;
 import com.sun.c1x.value.*;
 
-/**
- *
- * @author Thomas Wuerthinger
- * @author Marcelo Cintra
- *
- */
-public class MacroAssembler {
 
-    public CodeSection codeSection() {
+public class AddressLiteral {
+
+    public AddressLiteral(Address address, Type none) {
+        // TODO Auto-generated constructor stub
+    }
+
+    public Address addr() {
         // TODO Auto-generated method stub
         return null;
-    }
-
-    public void blockComment(String st) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public int rspOffset() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    public Address pc() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public void nop() {
-        // TODO Auto-generated method stub
-
-    }
-
-    public int offset() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    public CodeBlob code() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public void bind(Label label) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void nullCheck(Register asRegister) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void buildFrame(int initialFrameSizeInBytes) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void verifiedEntry() {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void align(int codeEntryAlignment) {
-        // TODO Auto-generated method stub
-
     }
 
 }
