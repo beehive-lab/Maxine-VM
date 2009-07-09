@@ -625,8 +625,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
     private boolean inSafetyZone; // set after we have thrown OutOfMemoryError and are using the safety zone
 
-    private static final VmThreadLocal ALLOCATION_TOP = new VmThreadLocal("ALLOCATION_TOP", Kind.WORD);
-    private static final VmThreadLocal ALLOCATION_MARK = new VmThreadLocal("ALLOCATION_MARK", Kind.WORD);
+    private static final VmThreadLocal TLAB_TOP = new VmThreadLocal("TLAB_TOP", Kind.WORD);
+    private static final VmThreadLocal TLAB_MARK = new VmThreadLocal("TLAB_MARK", Kind.WORD);
+    private static final VmThreadLocal TLAB_DISABLED = new VmThreadLocal("TLAB_DISABLED", Kind.WORD);
 
     /*
      * The OutOfMemoryError condition happens when we cannot satisfy a request after running a garbage collection and we
@@ -676,20 +677,20 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         final Pointer tlab = retryAllocate(tlabSize);
         final Pointer cell = allocateWithDebugTag(tlab); // TODO:check this
         final Pointer end = cell.plus(size);
-        ALLOCATION_TOP.setVariableWord(tlab.plus(tlabSize));
-        ALLOCATION_MARK.setVariableWord(end);
+        TLAB_TOP.setVariableWord(tlab.plus(tlabSize));
+        TLAB_MARK.setVariableWord(end);
         return cell;
     }
 
     @INLINE
     public Pointer allocate0(Size size) {
-        final Pointer oldAllocationMark = ALLOCATION_MARK.getVariableWord().asPointer();
+        final Pointer oldAllocationMark = TLAB_MARK.getVariableWord().asPointer();
         final Pointer cell = allocateWithDebugTag(oldAllocationMark);
         final Pointer end = cell.plus(size);
-        if (end.greaterThan(ALLOCATION_TOP.getVariableWord().asAddress())) {
+        if (end.greaterThan(TLAB_TOP.getVariableWord().asAddress())) {
             return retryAllocate0(size);
         }
-        ALLOCATION_MARK.setVariableWord(end);
+        TLAB_MARK.setVariableWord(end);
 
         return cell;
     }
@@ -713,6 +714,20 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         }
         return mark;
     }
+
+    @Override
+    public void disableAllocationForCurrentThread() {
+        if (TLAB_DISABLED.getVariableWord().equals(Word.zero())) {
+            FatalError.unexpected("Local allocation Switch already turned off.");
+        }
+        TLAB_DISABLED.setVariableWord(Word.zero());
+    }
+
+    @Override
+    public void enableAllocationForCurrentThread() {
+        TLAB_DISABLED.setVariableWord(Word.allOnes());
+    }
+
 
     @INLINE
     @NO_SAFEPOINTS("initialization must be atomic")

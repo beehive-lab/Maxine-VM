@@ -130,6 +130,12 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
         super.start();
     }
 
+    @Override
+    public void run() {
+        Heap.disabledAllocationForCurrentThread();
+        super.run();
+    }
+
     static final class IsNotGCOrCurrentThread implements Pointer.Predicate {
 
         public boolean evaluate(Pointer vmThreadLocals) {
