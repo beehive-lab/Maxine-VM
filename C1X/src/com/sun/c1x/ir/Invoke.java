@@ -161,7 +161,7 @@ public class Invoke extends StateSplit {
     public BasicType[] signature() {
         final BasicType[] result = new BasicType[this.arguments.length];
         for (int i = 0; i < arguments.length; i++) {
-            result[i] = arguments[i].type().basicType();
+            result[i] = arguments[i].type().basicType;
         }
         return result;
     }

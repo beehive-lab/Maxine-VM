@@ -149,17 +149,16 @@ public final class Trap {
                     break;
                 case STACK_FAULT:
                     // stack overflow
-                    final StackOverflowError error = new StackOverflowError();
-                    raise(trapState, targetMethod, error, stackPointer, framePointer, instructionPointer);
+                    raise(trapState, targetMethod, new StackOverflowError(), stackPointer, framePointer, instructionPointer);
                     break; // unreachable
                 case ILLEGAL_INSTRUCTION:
                     // deoptimization
-                    Deoptimizer.deoptimizeTopFrame();
+                    // TODO: deoptimization
+                    FatalError.unexpected("illegal instruction");
                     break;
                 case ARITHMETIC_EXCEPTION:
                     // integer divide by zero
-                    final ArithmeticException exception = new ArithmeticException();
-                    raise(trapState, targetMethod, exception, stackPointer, framePointer, instructionPointer);
+                    raise(trapState, targetMethod, new ArithmeticException(), stackPointer, framePointer, instructionPointer);
                     break; // unreachable
             }
         } else {
@@ -264,8 +263,7 @@ public final class Trap {
         } else if (inJava(disabledVmThreadLocals)) {
             safepoint.setTrapNumber(trapState, Number.NULL_POINTER_EXCEPTION);
             // null pointer exception
-            final NullPointerException error = new NullPointerException();
-            raise(trapState, targetMethod, error, stackPointer, framePointer, instructionPointer);
+            raise(trapState, targetMethod, new NullPointerException(), stackPointer, framePointer, instructionPointer);
         } else {
             // segmentation fault happened in native code somewhere, die.
             MaxineVM.native_trap_exit(MaxineVM.HARD_EXIT_CODE, instructionPointer);
