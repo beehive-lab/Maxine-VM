@@ -186,7 +186,7 @@ public final class ThreadLocalsTable extends InspectorTable {
         }
 
         public int getRowCount() {
-            return VmThreadLocal.NAMES.length();
+            return VmThreadLocal.values().length();
         }
 
         public Object getValueAt(int row, int col) {
@@ -299,7 +299,7 @@ public final class ThreadLocalsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(VmThreadLocal.NAMES.get(row));
+            setValue(VmThreadLocal.values().get(row).name);
             setToolTipText("+" + model.rowToOffset(row) + ", 0x" + model.rowToAddress(row).toHexString());
             return this;
         }
@@ -307,7 +307,7 @@ public final class ThreadLocalsTable extends InspectorTable {
 
     private final class ValueRenderer implements TableCellRenderer, Prober {
 
-        private InspectorLabel[] labels = new InspectorLabel[VmThreadLocal.NAMES.length()];
+        private InspectorLabel[] labels = new InspectorLabel[VmThreadLocal.values().length()];
 
         public void refresh(boolean force) {
             for (InspectorLabel label : labels) {
@@ -329,8 +329,8 @@ public final class ThreadLocalsTable extends InspectorTable {
 
             InspectorLabel label = labels[row];
             if (label == null) {
-                final String name = VmThreadLocal.NAMES.get(row);
-                final VmThreadLocal local = row < VmThreadLocal.VALUES.length() ? VmThreadLocal.VALUES.get(row) : null;
+                final String name = VmThreadLocal.values().get(row).name;
+                final VmThreadLocal local = row < VmThreadLocal.values().length() ? VmThreadLocal.values().get(row) : null;
                 final ValueMode valueMode = local != null && local.kind == Kind.REFERENCE ? ValueMode.REFERENCE : ValueMode.WORD;
                 label = new WordValueLabel(inspection(), valueMode, ThreadLocalsTable.this) {
                     @Override
@@ -354,7 +354,7 @@ public final class ThreadLocalsTable extends InspectorTable {
 
     private final class RegionRenderer implements TableCellRenderer, Prober {
 
-        private InspectorLabel[] labels = new InspectorLabel[VmThreadLocal.NAMES.length()];
+        private InspectorLabel[] labels = new InspectorLabel[VmThreadLocal.values().length()];
 
         public void refresh(boolean force) {
             for (InspectorLabel label : labels) {
@@ -375,7 +375,7 @@ public final class ThreadLocalsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
             InspectorLabel label = labels[row];
             if (label == null) {
-                final String name = VmThreadLocal.NAMES.get(row);
+                final String name = VmThreadLocal.values().get(row).name;
                 label = new MemoryRegionValueLabel(inspection()) {
                     @Override
                     public Value fetchValue() {

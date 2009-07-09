@@ -57,7 +57,7 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
         conditionFlags = new boolean[ConditionFlag.VALUES.length()];
 
         final EirStack stack = stack();
-        final Address topSP = stack.ceiling().minus(VmThreadLocal.THREAD_LOCAL_STORAGE_SIZE);
+        final Address topSP = stack.ceiling().minus(VmThreadLocal.threadLocalStorageSize().plus(Word.size()));
         stack.setSP(topSP);
         write(AMD64EirRegister.General.RSP, new WordValue(topSP));
 
@@ -72,20 +72,20 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
         // Configure VM thread locals as done in VmThread.run() and thread_runJava in threads.c
         vmThreadLocals = topSP.asPointer().roundedUpBy(2 * Word.size());
 
-        for (VmThreadLocal tl : VmThreadLocal.VALUES) {
-            if (tl.kind == Kind.WORD) {
-                stack.writeWord(vmThreadLocals.plusWords(tl.index()), Word.zero());
+        for (VmThreadLocal threadLocal : VmThreadLocal.values()) {
+            if (threadLocal.kind == Kind.WORD) {
+                stack.writeWord(vmThreadLocals.plusWords(threadLocal.index), Word.zero());
             } else {
-                assert tl.kind == Kind.REFERENCE;
-                stack.write(vmThreadLocals.plusWords(tl.index()), ReferenceValue.NULL);
+                assert threadLocal.kind == Kind.REFERENCE;
+                stack.write(vmThreadLocals.plusWords(threadLocal.index), ReferenceValue.NULL);
             }
         }
 
-        stack.writeWord(vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINT_LATCH.index()), vmThreadLocals);
-        stack.writeWord(vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index()), vmThreadLocals);
-        stack.writeWord(vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINTS_DISABLED_THREAD_LOCALS.index()), vmThreadLocals);
-        stack.writeWord(vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index()), Pointer.fromInt(-1));
-        stack.write(vmThreadLocals.plusWords(VmThreadLocal.VM_THREAD.index()), ReferenceValue.from(VmThread.current()));
+        stack.writeWord(vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINT_LATCH.index), vmThreadLocals);
+        stack.writeWord(vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index), vmThreadLocals);
+        stack.writeWord(vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINTS_DISABLED_THREAD_LOCALS.index), vmThreadLocals);
+        stack.writeWord(vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index), Pointer.fromInt(-1));
+        stack.write(vmThreadLocals.plusWords(VmThreadLocal.VM_THREAD.index), ReferenceValue.from(VmThread.current()));
 
         // Set up the latch register
         write(AMD64EirRegister.General.R14, new WordValue(vmThreadLocals));

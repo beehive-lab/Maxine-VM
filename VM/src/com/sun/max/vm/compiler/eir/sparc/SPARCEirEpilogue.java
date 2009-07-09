@@ -62,7 +62,7 @@ public final class SPARCEirEpilogue extends EirEpilogue<SPARCEirInstructionVisit
         final int trapStateOffset =  SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer();
         int offset = trapStateOffset;
         // Setup return address -- to enable stack walker
-        asm.ldx(latchRegister, VmThreadLocal.TRAP_INSTRUCTION_POINTER.offset(), returnAddressRegister);
+        asm.ldx(latchRegister, VmThreadLocal.TRAP_INSTRUCTION_POINTER.offset, returnAddressRegister);
 
         // restore all the general purpose registers not in the register windows
         for (GPR register : SPARCSafepoint.TRAP_SAVED_GLOBAL_SYMBOLIZER) {

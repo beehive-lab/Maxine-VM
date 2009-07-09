@@ -178,7 +178,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                 final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
                 int currentState;
                 while (true) {
-                    if (enabledVmThreadLocals.readInt(MUTATOR_STATE.offset()) == THREAD_IN_GC_FROM_JAVA) {
+                    if (enabledVmThreadLocals.readInt(MUTATOR_STATE.offset) == THREAD_IN_GC_FROM_JAVA) {
                         // Transitioned thread into GC
                         currentState = THREAD_IN_GC_FROM_JAVA;
                         break;

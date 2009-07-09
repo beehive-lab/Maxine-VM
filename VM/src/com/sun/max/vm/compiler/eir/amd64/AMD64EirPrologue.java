@@ -90,7 +90,7 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
         asm.subq(framePointer, endOfFrame - (2 * Word.size()));
 
         // We want to copy into the trap state the value of the latch register at the instruction that causes the trap.
-        asm.mov(scratchRegister, VmThreadLocal.TRAP_LATCH_REGISTER.offset(), latchRegister.indirect());
+        asm.mov(scratchRegister, VmThreadLocal.TRAP_LATCH_REGISTER.offset, latchRegister.indirect());
 
         // save all the general purpose registers
         int offset = originalFrameSize;
@@ -110,22 +110,22 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
         }
 
         // write the return address pointer at the end of the frame
-        asm.mov(scratchRegister, VmThreadLocal.TRAP_INSTRUCTION_POINTER.offset(), latchRegister.indirect());
+        asm.mov(scratchRegister, VmThreadLocal.TRAP_INSTRUCTION_POINTER.offset, latchRegister.indirect());
         asm.mov(frameSize, framePointer.indirect(), scratchRegister);
 
         // save the trap number
-        asm.mov(scratchRegister, VmThreadLocal.TRAP_NUMBER.offset(), latchRegister.indirect());
+        asm.mov(scratchRegister, VmThreadLocal.TRAP_NUMBER.offset, latchRegister.indirect());
         asm.mov(originalFrameSize + AMD64Safepoint.TRAP_NUMBER_OFFSET, framePointer.indirect(), scratchRegister);
 
         // now load the trap parameter information into registers from the vm thread locals
         final TargetABI targetABI = VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI();
         final IndexedSequence parameterRegisters = targetABI.integerIncomingParameterRegisters();
         // load the trap number into the first parameter register
-        asm.mov((AMD64GeneralRegister64) parameterRegisters.get(0), VmThreadLocal.TRAP_NUMBER.offset(), latchRegister.indirect());
+        asm.mov((AMD64GeneralRegister64) parameterRegisters.get(0), VmThreadLocal.TRAP_NUMBER.offset, latchRegister.indirect());
         // load the register state pointer into the second parameter register
         asm.lea((AMD64GeneralRegister64) parameterRegisters.get(1), originalFrameSize, framePointer.indirect());
         // load the fault address into the third parameter register
-        asm.mov((AMD64GeneralRegister64) parameterRegisters.get(2), VmThreadLocal.TRAP_FAULT_ADDRESS.offset(), latchRegister.indirect());
+        asm.mov((AMD64GeneralRegister64) parameterRegisters.get(2), VmThreadLocal.TRAP_FAULT_ADDRESS.offset, latchRegister.indirect());
     }
 
     @Override
