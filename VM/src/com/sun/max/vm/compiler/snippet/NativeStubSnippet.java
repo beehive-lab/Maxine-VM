@@ -88,13 +88,12 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
                 LAST_JAVA_CALLER_INSTRUCTION_POINTER.setVariableWord(vmThreadLocals, instructionPointer);
 
                 final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-                final Pointer statePointer = MUTATOR_STATE.pointer(enabledVmThreadLocals);
-                int oldValue = Safepoint.cas(statePointer, THREAD_IN_JAVA, THREAD_IN_NATIVE);
+                int oldValue = Safepoint.casMutatorState(enabledVmThreadLocals, THREAD_IN_JAVA, THREAD_IN_NATIVE);
                 if (oldValue != THREAD_IN_JAVA) {
                     if (oldValue != THREAD_IN_JAVA_STOPPING_FOR_GC) {
                         Safepoint.reportIllegalThreadState("JNI call prologue", oldValue);
                     }
-                    oldValue = Safepoint.cas(statePointer, THREAD_IN_JAVA_STOPPING_FOR_GC, THREAD_IN_GC_FROM_JAVA);
+                    oldValue = Safepoint.casMutatorState(enabledVmThreadLocals, THREAD_IN_JAVA_STOPPING_FOR_GC, THREAD_IN_GC_FROM_JAVA);
                     if (oldValue != THREAD_IN_JAVA_STOPPING_FOR_GC) {
                         Safepoint.reportIllegalThreadState("JNI call prologue", oldValue);
                     }
@@ -121,12 +120,10 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
         public static void nativeCallEpilogue(Pointer vmThreadLocals) {
             if (Safepoint.UseThreadStateWordForGCMutatorSynchronization) {
                 final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-                final Pointer statePointer = MUTATOR_STATE.pointer(enabledVmThreadLocals);
-
-                if (Safepoint.cas(statePointer, THREAD_IN_GC_FROM_JAVA, THREAD_IN_JAVA) == THREAD_IN_GC_FROM_JAVA) {
+                if (Safepoint.casMutatorState(enabledVmThreadLocals, THREAD_IN_GC_FROM_JAVA, THREAD_IN_JAVA) == THREAD_IN_GC_FROM_JAVA) {
                     // done!
                 } else {
-                    while (Safepoint.cas(statePointer, THREAD_IN_NATIVE, THREAD_IN_JAVA) != THREAD_IN_NATIVE) {
+                    while (Safepoint.casMutatorState(enabledVmThreadLocals, THREAD_IN_NATIVE, THREAD_IN_JAVA) != THREAD_IN_NATIVE) {
                         // Spin loop that is free of safepoints and object accesses
                         SpecialBuiltin.pause();
                     }

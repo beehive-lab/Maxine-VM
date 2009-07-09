@@ -206,6 +206,9 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
 
     @Override
     public String toString() {
+        if (this == SENTINEL) {
+            return "SENTINEL";
+        }
         return getClass().getSimpleName() + "[" + classMethodActor() + "]";
     }
 }

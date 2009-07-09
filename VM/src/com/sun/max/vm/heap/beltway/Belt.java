@@ -25,8 +25,8 @@ import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 
@@ -51,9 +51,7 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
      */
     private int framePercentageOfUsableMemory;
 
-    private Pointer markPointer;
-
-    private static final FieldActor markActor = ClassActor.fromJava(Belt.class).findFieldActor(SymbolTable.makeSymbol("mark"));
+    private static final int markOffset = ClassActor.fromJava(Belt.class).findFieldActor(SymbolTable.makeSymbol("mark")).offset();
 
     // The address and the pointer to the address
     // of the previous allocation mark
@@ -70,8 +68,6 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
         this.usableMemoryStart = beltStartAddress;
         this.framePercentageOfUsableMemory = framePercentageOfUsableMemory;
         this.mark = beltStartAddress;
-        this.markPointer = markActor.pointer(this);
-
     }
 
     public Belt() {
@@ -91,7 +87,6 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
 
     public final void resetAllocationMark() {
         mark = start();
-        markPointer = markActor.pointer(this);
     }
 
     @Override
@@ -142,7 +137,7 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
                 return Pointer.zero();
             }
         }
-        if (markPointer.compareAndSwapWord(oldAllocationMark, end) != oldAllocationMark) {
+        if (compareAndSwapMark(oldAllocationMark, end) != oldAllocationMark) {
             if (Heap.verbose()) {
                 Log.println("Conflict! retry-allocate");
             }
@@ -190,7 +185,7 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
                 return Pointer.zero();
             }
             oldAllocationMark = mark.asPointer();
-        } while (markPointer.compareAndSwapWord(oldAllocationMark, end) != oldAllocationMark);
+        } while (compareAndSwapMark(oldAllocationMark, end) != oldAllocationMark);
         return cell;
     }
 
@@ -217,7 +212,7 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
             if (!end.lessThan(BeltManager.getApplicationHeap().end())) {
                 return Pointer.zero();
             }
-            if (!(markPointer.compareAndSwapWord(oldAllocationMark, end) == oldAllocationMark)) {
+            if (!(compareAndSwapMark(oldAllocationMark, end) == oldAllocationMark)) {
                 if (Heap.verbose()) {
                     Log.println("Conflict - Retry allocate");
                 }
@@ -225,7 +220,7 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
             }
 
         } else {
-            if (!(markPointer.compareAndSwapWord(oldAllocationMark, end) == oldAllocationMark)) {
+            if (!(compareAndSwapMark(oldAllocationMark, end) == oldAllocationMark)) {
                 if (Heap.verbose()) {
                     Log.println("Conflict - Retry allocate");
                 }
@@ -233,6 +228,11 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
             }
         }
         return cell;
+    }
+
+    @INLINE
+    private Word compareAndSwapMark(Word expect, Word update) {
+        return Grip.fromJava(this).compareAndSwapWord(markOffset, expect, update);
     }
 
     @NEVER_INLINE
@@ -249,7 +249,7 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
             }
             end = cell.plus(size);
             oldAllocationMark = mark.asPointer();
-        } while (markPointer.compareAndSwapWord(oldAllocationMark, end) != oldAllocationMark);
+        } while (compareAndSwapMark(oldAllocationMark, end) != oldAllocationMark);
 
         return cell;
     }

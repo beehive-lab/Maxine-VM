@@ -72,6 +72,15 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
         // Configure VM thread locals as done in VmThread.run() and thread_runJava in threads.c
         vmThreadLocals = topSP.asPointer().roundedUpBy(2 * Word.size());
 
+        for (VmThreadLocal tl : VmThreadLocal.VALUES) {
+            if (tl.kind == Kind.WORD) {
+                stack.writeWord(vmThreadLocals.plusWords(tl.index()), Word.zero());
+            } else {
+                assert tl.kind == Kind.REFERENCE;
+                stack.write(vmThreadLocals.plusWords(tl.index()), ReferenceValue.NULL);
+            }
+        }
+
         stack.writeWord(vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINT_LATCH.index()), vmThreadLocals);
         stack.writeWord(vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index()), vmThreadLocals);
         stack.writeWord(vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINTS_DISABLED_THREAD_LOCALS.index()), vmThreadLocals);
