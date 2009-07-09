@@ -35,4 +35,9 @@ public class Register {
     public Register(int number) {
         this.number = number;
     }
+
+    public boolean isValid() {
+        // TODO Check if this implementation is correct?
+        return number >= 0;
+    }
 }

@@ -36,4 +36,24 @@ public class CodeSection {
 
     }
 
+    public void clearMark() {
+        // TODO Auto-generated method stub
+
+    }
+
+    public Address start() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Address limit() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Address end() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
 }

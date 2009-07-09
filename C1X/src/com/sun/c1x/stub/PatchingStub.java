@@ -39,6 +39,10 @@ public class PatchingStub extends CodeStub {
           LoadKlassId
         }
 
+    public PatchingStub(AbstractAssembler masm, PatchID loadklassid) {
+        // TODO Auto-generated constructor stub
+    }
+
     @Override
     public void emitCode(LIRAssembler e) {
         // TODO Auto-generated method stub
@@ -57,7 +61,7 @@ public class PatchingStub extends CodeStub {
         return null;
     }
 
-    public void install(MacroAssembler masm, LIRPatchCode patchCode, Register obj, CodeEmitInfo info) {
+    public void install(AbstractAssembler masm, LIRPatchCode patchCode, Register obj, CodeEmitInfo info) {
         // TODO Auto-generated method stub
 
     }

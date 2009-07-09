@@ -198,4 +198,10 @@ public interface CiRuntime {
     CiType makeTypeArrayClass(BasicType elemType);
 
     Object makeObjectArrayClass(CiType elementClass);
+
+    int arrayOopDescHeaderSize(BasicType type);
+
+    int arrayElementSize(BasicType type);
+
+    void vmExitOutOfMemory1(int i, String string, String name);
 }

@@ -18,62 +18,23 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ci;
+package com.sun.c1x.target.x86;
 
-/**
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
- *
- */
-public enum CiRuntimeCall {
+import com.sun.c1x.*;
+import com.sun.c1x.asm.*;
 
-    // C1Runtime
-    DtraceObjectAlloc,
-    UnwindException,
-    ForwardException,
-    ThrowRangeCheckFailed,
-    ThrowIndexException,
-    ThrowDiv0exception,
-    ThrowNullPointerException,
-    RegisterFinalizer,
-    NewInstance,
-    FastNewInstance,
-    FastNewInstanceInitCheck,
-    NewTypeArray,
-    NewObjectArray,
-    NewMultiArray,
-    HandleExceptionNofpu,
-    HandleException,
-    ThrowArrayStoreException,
-    ThrowClassCastException,
-    ThrowIncompatibleClassChangeError,
-    SlowSubtypeCheck,
-    Monitorenter,
-    MonitorenterNofpu,
-    Monitorexit,
-    MonitorexitNofpu,
-    AccessFieldPatching,
-    LoadKlassPatching,
-    JvmtiExceptionThrow,
-    G1preBarrierSlow,
-    G1postBarrierSlow,
-    Fpu2longStub,
-    CounterOverflow,
-    NumberOfIds,
 
-    // SharedRuntime
-    OSRMigrationEnd,
-    DTraceMethodEntry,
-    JavaTimeMillis,
-    JavaTimeNanos,
 
-    // Unknown
-    TraceBlockEntry,
-    Lrem,
-    Ldiv,
-    Lmul,
-    OopArrayCopy,
-    PrimitiveArrayCopy
+public abstract class X86MacroAssembler extends X86Assembler {
 
+    public X86MacroAssembler(C1XCompilation compilation, CodeBuffer code) {
+        super(compilation, code);
+        // TODO Auto-generated constructor stub
+    }
+
+    public void fpop() {
+        // TODO Auto-generated method stub
+
+    }
 
 }

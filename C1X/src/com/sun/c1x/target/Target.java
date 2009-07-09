@@ -119,4 +119,14 @@ public class Target {
         // TODO Auto-generated method stub
         return null;
     }
+
+    public boolean supportsSSE() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean supports3DNOW() {
+        // TODO Auto-generated method stub
+        return false;
+    }
 }

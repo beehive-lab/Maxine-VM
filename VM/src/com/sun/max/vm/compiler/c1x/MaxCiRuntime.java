@@ -297,4 +297,22 @@ public class MaxCiRuntime implements CiRuntime {
         // TODO Auto-generated method stub
         return 0;
     }
+
+    @Override
+    public int arrayElementSize(BasicType type) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public int arrayOopDescHeaderSize(BasicType type) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public void vmExitOutOfMemory1(int i, String string, String name) {
+        // TODO Auto-generated method stub
+
+    }
 }

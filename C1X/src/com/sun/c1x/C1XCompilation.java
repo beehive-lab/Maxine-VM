@@ -321,7 +321,7 @@ public class C1XCompilation {
         return null;
     }
 
-    public MacroAssembler masm() {
+    public AbstractAssembler masm() {
         // TODO Auto-generated method stub
         return null;
     }
@@ -332,6 +332,16 @@ public class C1XCompilation {
     }
 
     public DebugInformationRecorder debugInfoRecorder() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public boolean hasExceptionHandlers() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public BlockBegin osrEntry() {
         // TODO Auto-generated method stub
         return null;
     }
