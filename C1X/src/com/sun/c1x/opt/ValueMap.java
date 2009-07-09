@@ -218,7 +218,7 @@ public class ValueMap {
             }
         }
         if (instr instanceof LoadIndexed) {
-            if (all || instr.type().basicType() == basicType) {
+            if (all || instr.type().basicType == basicType) {
                 C1XMetrics.ValueMapKills++;
                 return true;
             }
@@ -235,7 +235,7 @@ public class ValueMap {
     }
 
     private void killArray(ValueType elementType) {
-        killMemory(false, null, elementType.basicType());
+        killMemory(false, null, elementType.basicType);
     }
 
     private CiField checkField(CiField field) {
