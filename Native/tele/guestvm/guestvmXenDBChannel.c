@@ -31,8 +31,10 @@
 
 extern void gather_and_trace_threads(void);
 
-static int trace = 0;  // set to non-zero to trace thread resumption/blocking
-static int terminated = 0;
+static int trace = 1;         // set to non-zero to trace thread resumption/blocking
+static int terminated = 0;    // target domain has terminated
+static struct db_thread *threads_at_rest = NULL;  // cache of threads on return from resume
+static int num_threads_at_rest;
 
 struct db_regs *checked_get_regs(char *f, int threadId) {
     struct db_regs *db_regs;
@@ -71,6 +73,7 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeReadRegisters(
 
     isa_CanonicalIntegerRegistersStruct canonicalIntegerRegisters;
     isa_CanonicalStateRegistersStruct canonicalStateRegisters;
+    isa_CanonicalFloatingPointRegistersStruct canonicalFloatingPointRegisters;
     struct db_regs *db_regs;
 
     if (integerRegistersLength > sizeof(canonicalIntegerRegisters)) {
@@ -83,6 +86,11 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeReadRegisters(
         return false;
     }
 
+    if (floatingPointRegistersLength > sizeof(canonicalFloatingPointRegisters)) {
+        log_println("buffer for floating point register data is too large");
+        return false;
+    }
+
     db_regs = checked_get_regs("nativeReadRegisters", threadId);
     if (db_regs == NULL) {
     	return false;
@@ -90,9 +98,11 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeReadRegisters(
 
 	isa_canonicalizeTeleIntegerRegisters(db_regs, &canonicalIntegerRegisters);
 	isa_canonicalizeTeleStateRegisters(db_regs, &canonicalStateRegisters);
+	isa_canonicalizeTeleFloatingPointRegisters(db_regs, &canonicalFloatingPointRegisters);
 
     (*env)->SetByteArrayRegion(env, integerRegisters, 0, integerRegistersLength, (void *) &canonicalIntegerRegisters);
     (*env)->SetByteArrayRegion(env, stateRegisters, 0, stateRegistersLength, (void *) &canonicalStateRegisters);
+    (*env)->SetByteArrayRegion(env, floatingPointRegisters, 0, floatingPointRegistersLength, (void *) &canonicalFloatingPointRegisters);
     return true;
 }
 
@@ -177,11 +187,6 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeDetach(JNIEnv 
     return db_detach();
 }
 
-void free_threads(struct db_thread *threads, int num)
-{
-    free(threads);
-}
-
 static ThreadState_t toThreadState(int state) {
     if (state & AUX1_FLAG) {
         return TS_MONITOR_WAIT;
@@ -195,6 +200,10 @@ static ThreadState_t toThreadState(int state) {
     if (state & SLEEP_FLAG) {
         return TS_SLEEPING;
     }
+    if (state & WATCH_FLAG) {
+    	return TS_WATCHPOINT;
+    }
+    // default
     return TS_SUSPENDED;
 }
 
@@ -209,7 +218,6 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeGatherThreads(
         ThreadSpecifics threadSpecifics = teleProcess_findThreadSpecifics(threadSpecificsListAddress, threads[i].stack, &threadSpecificsStruct);
         teleProcess_jniGatherThread(env, teleDomain, threadSeq, threads[i].id, toThreadState(threads[i].flags), db_regs->rip, threadSpecifics);
     }
-
     free(threads);
 
     return 0;
@@ -226,11 +234,11 @@ int is_th_state(struct db_thread *thread, int flag) {
 void trace_thread(struct db_thread *thread) {
     int state = thread->flags;
     if (trace) {
-        log_println("thread %d, ra %d, r %d, dying %d, rds %d, ds %d, mw %d, nw %d, jw %d, sl %d",
+        log_println("thread %d, ra %d, r %d, dying %d, rds %d, ds %d, mw %d, nw %d, jw %d, sl %d, wp %d",
             thread->id, is_state(state, RUNNABLE_FLAG), is_state(state, RUNNING_FLAG),
             is_state(state, DYING_FLAG), is_state(state, REQ_DEBUG_SUSPEND_FLAG),
             is_state(state, DEBUG_SUSPEND_FLAG), is_state(state, AUX1_FLAG),
-            is_state(state, AUX2_FLAG), is_state(state, JOIN_FLAG), is_state(state, SLEEP_FLAG));
+            is_state(state, AUX2_FLAG), is_state(state, JOIN_FLAG), is_state(state, SLEEP_FLAG), is_state(state, WATCH_FLAG));
     }
 }
 
@@ -256,19 +264,9 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeResume(JNIEnv 
     struct db_thread *threads;
     int num_threads, i;
 
-    /* Gather threads first (to figure out which ones to resume) */
-    if (trace) log_println("checking which threads to resume");
-    threads = gather_threads(&num_threads);
-    trace_threads(threads, num_threads);
-    for(i=0; i<num_threads; i++)
-    {
-        if (is_th_state(&threads[i], DEBUG_SUSPEND_FLAG))
-        {
-            if (trace) log_println("  resuming thread %d", threads[i].id);
-            resume(threads[i].id);
-        }
-    }
-    free(threads);
+    if (trace) log_println("resuming all runnable threads");
+    if (threads_at_rest != NULL) free(threads_at_rest);
+    resume_all();
     /* Poll waiting for the thread to block */
 again:
     if (trace) log_println("waiting for a thread to block");
@@ -299,17 +297,12 @@ out:
 // or a driver thread is woken by an interrupt.
 // However, those threads will debug_suspend themselves in that case.
 
-    for(i=0; i<num_threads; i++) {
-        int rc = 0;
-        if (!is_th_state(&threads[i], DEBUG_SUSPEND_FLAG)) {
-            if (trace) log_println("suspending %d", threads[i].id);
-            rc = suspend(threads[i].id);
-        }
-    }
+    if (trace) log_println("suspending all threads");
+    suspend_all();
     free(threads);
     threads = gather_threads(&num_threads);
     trace_threads(threads, num_threads);
-    free(threads);
+    threads_at_rest = threads;
     return 0;
 }
 
@@ -336,6 +329,56 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeWriteBytes(JNI
 JNIEXPORT jint JNICALL
 Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeMaxByteBufferSize(JNIEnv *env, jclass c) {
 	return multibytebuffersize();
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeActivateWatchpoint(JNIEnv *env, jclass c, jint domainId, jlong address, jlong size, jboolean after, jboolean read, jboolean write, jboolean exec) {
+    int kind = 0;
+    if (after) kind |= AFTER_W;
+    if (read) kind |= READ_W;
+    if (write) kind |= WRITE_W;
+    if (exec) kind |= EXEC_W;
+	if (!after) return false;
+    return activate_watchpoint(address, size, kind);
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeDeactivateWatchpoint(JNIEnv *env, jclass c, jint domainId, jlong address, jlong size) {
+	return deactivate_watchpoint(address, size);
+}
+
+static int get_wp_thread() {
+    int i;
+    for (i = 0; i < num_threads_at_rest; i++) {
+    	if (is_th_state(&threads_at_rest[i], WATCH_FLAG)) {
+    		return threads_at_rest[i].id;
+    	}
+    }
+    return -1;
+}
+
+JNIEXPORT jlong JNICALL
+Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeReadWatchpointAddress(JNIEnv *env, jclass c, jint domainId) {
+	int thread_id = get_wp_thread();
+	int kind;
+	if (thread_id < 0) {
+		log_println("readWatchpointAddress: no thread at watchpoint");
+		return 0;
+	}
+	return watchpoint_info(thread_id, &kind);
+}
+
+JNIEXPORT jint JNICALL
+Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeReadWatchpointAccessCode(JNIEnv *env, jclass c, jint domainId) {
+	int thread_id = get_wp_thread();
+	int kind;
+	if (thread_id < 0) {
+		log_println("readWatchpointAccessCode: no thread at watchpoint");
+		return 0;
+	}
+	watchpoint_info(thread_id, &kind);
+	return kind & ~AFTER_W;
+	
 }
 
 void teleProcess_initialize(void)

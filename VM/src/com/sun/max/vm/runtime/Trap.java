@@ -149,17 +149,16 @@ public final class Trap {
                     break;
                 case STACK_FAULT:
                     // stack overflow
-                    final StackOverflowError error = new StackOverflowError();
-                    raise(trapState, targetMethod, error, stackPointer, framePointer, instructionPointer);
+                    raise(trapState, targetMethod, new StackOverflowError(), stackPointer, framePointer, instructionPointer);
                     break; // unreachable
                 case ILLEGAL_INSTRUCTION:
                     // deoptimization
-                    Deoptimizer.deoptimizeTopFrame();
+                    // TODO: deoptimization
+                    FatalError.unexpected("illegal instruction");
                     break;
                 case ARITHMETIC_EXCEPTION:
                     // integer divide by zero
-                    final ArithmeticException exception = new ArithmeticException();
-                    raise(trapState, targetMethod, exception, stackPointer, framePointer, instructionPointer);
+                    raise(trapState, targetMethod, new ArithmeticException(), stackPointer, framePointer, instructionPointer);
                     break; // unreachable
             }
         } else {
@@ -255,15 +254,16 @@ public final class Trap {
                 // the state of the safepoint latch was TRIGGERED when the trap happened. reset it back to ENABLED.
                 final Pointer enabledVmThreadLocals = VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(disabledVmThreadLocals).asPointer();
                 safepoint.setSafepointLatch(trapState, enabledVmThreadLocals);
-                Safepoint.reset(enabledVmThreadLocals);
+
                 // reset the procedure to be null
                 VmThreadLocal.SAFEPOINT_PROCEDURE.setVariableReference(triggeredVmThreadLocals, null);
+
+                Safepoint.reset(enabledVmThreadLocals);
             }
         } else if (inJava(disabledVmThreadLocals)) {
             safepoint.setTrapNumber(trapState, Number.NULL_POINTER_EXCEPTION);
             // null pointer exception
-            final NullPointerException error = new NullPointerException();
-            raise(trapState, targetMethod, error, stackPointer, framePointer, instructionPointer);
+            raise(trapState, targetMethod, new NullPointerException(), stackPointer, framePointer, instructionPointer);
         } else {
             // segmentation fault happened in native code somewhere, die.
             FatalError.unexpected("Trap in native code", instructionPointer);

@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.ci;
 
+import com.sun.c1x.value.*;
+
 /**
  * The <code>CiRuntime</code> class provides the major interface between the compiler and the
  * runtime system, including access to constant pools, OSR frames, inlining requirements,
@@ -27,6 +29,7 @@ package com.sun.c1x.ci;
  * implementation of these methods into compiled code, typically as the slow path.
  *
  * @author Ben L. Titzer
+ * @author Thomas Wuerthinger
  */
 public interface CiRuntime {
     /**
@@ -68,13 +71,115 @@ public interface CiRuntime {
      */
     boolean mustNotCompile(CiMethod method);
 
-    // Hypothetical runtime calls:
+    /**
+     * Returns the address of a runtime call.
+     * @param runtimeCall identifies the runtime call whose address should be returned
+     * @return the address of the runtime call
+     */
+    Address getRuntimeEntry(CiRuntimeCall runtimeCall);
 
-    boolean instanceOf(Object object, CiType type);
-    Object checkCast(Object object, CiType type);
-    Object allocateObject(CiType type);
-    Object allocateArray(CiType type, int length);
-    CiType resolveType(String name);
-    CiType getType(Class<?> javaClass);
+    /**
+     * Byte offset of the array length of an array object.
+     * @return the byte offset of the array length
+     */
+    int arrayLengthOffsetInBytes();
 
+    /**
+     * The header size of an object in words.
+     * @return the header size in words
+     */
+    int headerSize();
+
+    /**
+     * Byte offset of the field of an object that contains the pointer to the internal class representation of the type of the object.
+     * @return the byte offset of the class field
+     */
+    int klassOffsetInBytes();
+
+    /**
+     * Byte offset of the field of the internal thread representation that contains the pointer to the thread exception object.
+     * @return the byte offset of the exception object field
+     */
+    int threadExceptionOopOffset();
+
+    /**
+     * Byte offset of the field of the internal thread representation that contains the exception pc.
+     * @return the byte offset of the exception pc
+     */
+    int threadExceptionPcOffset();
+
+    /**
+     * Byte offset of the field of the internal thread representation that contains the pointer to the Java thread object.
+     * @return the byte offset of the thread object field
+     */
+    int threadObjOffset();
+
+    /**
+     * Byte offset of the field of the internal class representation that contains the pointer to the Java class object.
+     * @return the byte offset of the class object field
+     */
+    int klassJavaMirrorOffsetInBytes();
+
+    /**
+     * Checks whether an explicit null check is needed with the given offset of accessing an object.
+     * If this the offset is low, then an implicit null check will work.
+     * @param offset the offset at which the object is accessed
+     * @return true if an explicit null check is needed, false otherwise
+     */
+    boolean needsExplicitNullCheck(int offset);
+
+    /**
+     * Checks whether we are on a multiprocessor system.
+     * @return true if we are on a multiprocessor system, false otherwise
+     */
+    boolean isMP();
+
+    /**
+     * Byte offset of the limit field of java.nio.Buffer.
+     * @return the byte offset of the limit field
+     */
+    int javaNioBufferLimitOffset();
+
+    /**
+     * Returns the address of the throw counter. This is used for counting the number of throws.
+     * @return the address of the throw counter
+     */
+    Address throwCountAddress();
+
+    /**
+     * Checks whether jvmti can post exceptions.
+     * @return true if jvmti can post exceptions, false otherwise.
+     */
+    boolean jvmtiCanPostExceptions();
+
+    /**
+     * Checks wheter the dtrace method runtime stub should be called at method entry.
+     * @return true if the runtime stub should be called, false otherwise
+     */
+    boolean dtraceMethodProbes();
+
+    /**
+     * Byte offset of the virtual method table of an internal class object.
+     * @return the virtual method table offset in bytes
+     */
+    int vtableStartOffset();
+
+    /**
+     * Byte size of a single virtual method table entry of an internal class object.
+     * @return the virtual method table entry
+     */
+    int vtableEntrySize();
+
+    /**
+     * Byte offset of the method field of a virtual method table entry.
+     * @return the method offset in bytes
+     */
+    int vtableEntryMethodOffsetInBytes();
+
+    /**
+     * Resolves a given identifier to a type.
+     * @param string the name of the type
+     * @return the resolved type
+     */
+    CiType resolveType(String string);
 }

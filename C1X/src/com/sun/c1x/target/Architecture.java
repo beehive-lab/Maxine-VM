@@ -36,7 +36,7 @@ public enum Architecture {
     // ARM(4),
 
     /**
-     * Represents the natural size of words (typically registers and pointers) of this architecture.
+     * Represents the natural size of words (typically registers and pointers) of this architecture, in bytes.
      */
     public final int wordSize;
     public final String backend;
@@ -69,5 +69,23 @@ public enum Architecture {
      */
     public boolean is64bit() {
         return wordSize == 8;
+    }
+
+    /**
+     * TODO: Get rid of this method. Platform specific code should be in subclasses.
+     * Checks whether the backend is x86.
+     * @return <code>true</code> if the backend of this architecture is x86
+     */
+    public boolean isX86() {
+        return backend.equals("x86");
+    }
+
+    /**
+     * TODO: Get rid of this method. Platform specific code should be in subclasses.
+     * Checks whether the backend is SPARC.
+     * @return <code>true</code> if the backend of this architecture is SPARC
+     */
+    public boolean isSPARC() {
+        return backend.equals("SPARC");
     }
 }

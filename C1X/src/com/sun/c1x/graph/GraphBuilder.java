@@ -286,12 +286,12 @@ public class GraphBuilder {
     }
 
     void push(ValueType type, Instruction x) {
-        curState.push(type.basicType(), x);
+        curState.push(type.basicType, x);
     }
 
     void pushReturn(ValueType type, Instruction x) {
         if (!type.isVoid()) {
-            curState.push(type.basicType(), x);
+            curState.push(type.basicType, x);
         }
     }
 
@@ -316,7 +316,7 @@ public class GraphBuilder {
     }
 
     Instruction pop(ValueType type) {
-        return curState.pop(type.basicType());
+        return curState.pop(type.basicType);
     }
 
     void loadLocal(ValueType type, int index) {
@@ -411,32 +411,35 @@ public class GraphBuilder {
             assert bci == Instruction.SYNCHRONIZATION_ENTRY_BCI || bci == curScopeData.stream.currentBCI() : "invalid bci";
 
             // join with all potential exception handlers
-            for (ExceptionHandler h : curScopeData.exceptionHandlers()) {
-                if (h.covers(bci)) {
-                    // if the handler covers this bytecode index, add it to the list
-                    if (addExceptionHandler(exceptionHandlers, h, curScopeData, s, scopeCount)) {
-                        return exceptionHandlers;
+            List<ExceptionHandler> handlers = curScopeData.exceptionHandlers();
+            if (handlers != null) {
+                for (ExceptionHandler h : handlers) {
+                    if (h.covers(bci)) {
+                        // if the handler covers this bytecode index, add it to the list
+                        if (addExceptionHandler(exceptionHandlers, h, curScopeData, s, scopeCount)) {
+                            // if the handler was a default handler, we are done
+                            return exceptionHandlers;
+                        }
                     }
                 }
-
-                // set up iteration for next time
-                // if parsing a JSR, do not grab exception handlers from the parent
-                // scopes for this method (already got them, and they need to be cloned)
-                if (curScopeData.parsingJsr()) {
-                    IRScope tmp = curScopeData.scope;
-                    while (curScopeData.parent != null && curScopeData.parent.scope == tmp) {
-                        curScopeData = curScopeData.parent;
-                    }
-                }
-                if (curScopeData.parent != null) {
-                    s = s.popScope();
-                }
-                bci = curScopeData.scope.callerBCI();
-                curScopeData = curScopeData.parent;
-                scopeCount++;
             }
+            // pop the scope to the next IRScope level
+            // if parsing a JSR, skip scopes until the next IRScope level
+            IRScope curScope = curScopeData.scope;
+            while (curScopeData.parent != null && curScopeData.parent.scope == curScope) {
+                curScopeData = curScopeData.parent;
+            }
+            if (curScopeData.parent == null) {
+                // no more levels, done
+                break;
+            }
+            // there is another level, pop
+            s = s.popScope();
+            bci = curScopeData.scope.callerBCI();
+            curScopeData = curScopeData.parent;
+            scopeCount++;
 
-        } while (curScopeData != null);
+        } while (true);
 
         return exceptionHandlers;
     }
@@ -1046,7 +1049,7 @@ public class GraphBuilder {
             // trim back stack to the caller's stack size
             curState.truncateStack(scopeData.callerStackSize());
             if (x != null) {
-                curState.push(x.type().basicType(), x);
+                curState.push(x.type().basicType, x);
             }
             Goto gotoCallee = new Goto(scopeData.continuation(), null, false);
 
@@ -1060,7 +1063,7 @@ public class GraphBuilder {
             // return value, if any, of the inlined method on operand stack.
             curState = scopeData.continuationState().copy();
             if (x != null) {
-                curState.push(x.type().basicType(), x);
+                curState.push(x.type().basicType, x);
             }
 
             // The current bci() is in the wrong scope, so use the bci() of
@@ -1342,10 +1345,7 @@ public class GraphBuilder {
     void pushScopeForJsr(BlockBegin jsrCont, int jsrStart) {
         BytecodeStream stream = new BytecodeStream(scope().method.code());
         CiConstantPool constantPool = scopeData.constantPool;
-        ScopeData data = new ScopeData(scopeData, scope(), scopeData.blockMap, stream, constantPool);
-        data.setJsrEntryBCI(jsrStart);
-        data.setJsrEntryReturnAddressLocal(-1);
-        data.setupJsrExceptionHandlers();
+        ScopeData data = new ScopeData(scopeData, scope(), scopeData.blockMap, stream, constantPool, jsrStart);
         data.setContinuation(jsrCont);
         if (scopeData.continuation() != null) {
             assert scopeData.continuationState() != null;
@@ -1788,7 +1788,7 @@ public class GraphBuilder {
                     get = appendConstant(ConstType.NULL_OBJECT);
                 } else {
                     Instruction oc = appendConstant(ConstType.forInt(offset));
-                    get = append(new UnsafeGetRaw(local.type().basicType(), e, oc, 0, true));
+                    get = append(new UnsafeGetRaw(local.type().basicType, e, oc, 0, true));
                 }
                 state.storeLocal(i, get);
             }

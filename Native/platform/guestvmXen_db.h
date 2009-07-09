@@ -34,9 +34,11 @@
 #define DEBUG_SUSPEND_FLAG      0x00000040     /* Thread was actually put to sleep because of REQ_DEBUG_SUSPEND */
 #define INTERRUPTED_FLAG        0x00000080     /* Thread was interrupted during last wait */
 #define JOIN_FLAG               0x00000200     /* Thread is waiting for joinee */
-#define AUX1_FLAG              0x00000400     /* monitor block */
-#define AUX2_FLAG              0x00000800    /* monitor wait */
-#define SLEEP_FLAG           0x00002000    /* sleeping */
+#define AUX1_FLAG               0x00000400     /* monitor block */
+#define AUX2_FLAG               0x00000800     /* monitor wait */
+#define SLEEP_FLAG              0x00001000     /* sleeping */
+#define APPSCHED_FLAG           0x00002000     /* application scheduler */
+#define WATCH_FLAG              0x00004000     /* at watchpoint */
 
 struct db_thread {
     int id;
@@ -92,6 +94,8 @@ uint16_t multibytebuffersize(void);
 struct db_thread* gather_threads(int *num);
 int suspend(uint16_t thread_id);
 int resume(uint16_t thread_id);
+int suspend_all(void);
+int resume_all(void);
 int single_step(uint16_t thread_id);
 struct db_regs* get_regs(uint16_t thread_id);
 struct thread_state* get_thread_state(uint16_t thread_id);
@@ -102,4 +106,13 @@ int get_thread_stack(uint16_t thread_id,
 uint64_t app_specific1(uint64_t arg);
 int db_debug(int level);
 void db_signoff(void);
+
+#define READ_W 1
+#define WRITE_W 2
+#define EXEC_W 4
+#define AFTER_W 8
+int activate_watchpoint(unsigned long address, unsigned long size, int kind);
+int deactivate_watchpoint(unsigned long address, unsigned long size);
+unsigned long watchpoint_info(uint16_t thread_id, int *kind);
+
 #endif /* __LIB_GUESTVMXEN_DB__ */

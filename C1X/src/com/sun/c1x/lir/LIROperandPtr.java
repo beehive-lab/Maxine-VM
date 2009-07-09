@@ -28,13 +28,13 @@ import com.sun.c1x.value.*;
  *
  * @author Marcelo Cintra
  */
-public abstract class LIROperandPtr {
+public abstract class LIROperandPtr extends LIROperand {
 
     boolean isReference() {
         return (type() == BasicType.Object);
     }
 
-    boolean isFloat() {
+    public boolean isFloat() {
         BasicType t = type();
         return (t == BasicType.Float) || (t == BasicType.Double);
     }
@@ -47,6 +47,5 @@ public abstract class LIROperandPtr {
         return null;
     }
 
-    public abstract BasicType type();
     public abstract void printValueOn(LogStream out);
 }

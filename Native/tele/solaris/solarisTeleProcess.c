@@ -285,7 +285,7 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeActivateWatchpoint(
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeDeactivateWatchpoint(JNIEnv *env, jlong processHandle, jlong address, jlong size) {
+Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeDeactivateWatchpoint(JNIEnv *env, jclass c, jlong processHandle, jlong address, jlong size) {
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
     prwatch_t w;
     w.pr_vaddr = address;

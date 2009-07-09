@@ -81,7 +81,7 @@ public final class TargetBundleLayout {
          * allocated.
          *
          * @param region an object used to do the allocation
-         * @param length the size of the cell to allocate
+         * @param len the size of the cell to allocate
          * @return the offset from the start of the target bundle of the allocate cell. If {@code size.isZero()}, then
          *         no space is allocated and {@link TargetBundleLayout#INVALID_OFFSET} is returned.
          */

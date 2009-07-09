@@ -87,9 +87,9 @@ public class BlockPrinter implements BlockClosure {
             i += value.type().size();
             if (value instanceof Phi) {
                 Phi phi = (Phi) value;
-                if (phi.lirOperand() != null) {
+                if (phi.operand() != null) {
                     out.print(" ");
-                    out.print(phi.lirOperand().toString());
+                    out.print(phi.operand().toString());
                 }
             }
           }
