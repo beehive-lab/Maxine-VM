@@ -22,6 +22,8 @@ package com.sun.max.vm.heap;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * Class to capture common methods for heap scheme implementations.
@@ -30,6 +32,11 @@ import com.sun.max.vm.*;
  */
 
 public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements HeapScheme {
+
+    /**
+     * Switch to turn off allocation globally.
+     */
+    protected boolean allocationSwitch = true;
 
     public HeapSchemeAdaptor(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -43,5 +50,26 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         return false;
     }
 
+    public void disableAllocationsGlobally() {
+        if (!allocationSwitch) {
+            FatalError.unexpected("Global allocation Switch already turned off.");
+        }
+        allocationSwitch = false;
+    }
+
+    public void enableAllocationsGlobally() {
+        allocationSwitch = true;
+    }
+
+    public void disableAllocationsLocally() {
+        if (VmThreadLocal.ALLOCATION_SWITCH.getVariableWord().equals(Word.zero())) {
+            FatalError.unexpected("Local allocation Switch already turned off.");
+        }
+        VmThreadLocal.ALLOCATION_SWITCH.setVariableWord(Word.zero());
+    }
+
+    public void enableAllocationsLocally() {
+        VmThreadLocal.ALLOCATION_SWITCH.setVariableWord(Word.allOnes());
+    }
 
 }
