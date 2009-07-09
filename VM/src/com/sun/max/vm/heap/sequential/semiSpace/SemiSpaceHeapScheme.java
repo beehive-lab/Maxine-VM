@@ -625,6 +625,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
     private boolean inSafetyZone; // set after we have thrown OutOfMemoryError and are using the safety zone
 
+    private static final VmThreadLocal ALLOCATION_TOP = new VmThreadLocal("ALLOCATION_TOP", Kind.WORD);
+    private static final VmThreadLocal ALLOCATION_MARK = new VmThreadLocal("ALLOCATION_MARK", Kind.WORD);
+
     /*
      * The OutOfMemoryError condition happens when we cannot satisfy a request after running a garbage collection and we
      * cannot grow the heap any further (i.e. we are at the limit set by -Xmx). In that case we raise _top to the actual end of
@@ -673,20 +676,20 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         final Pointer tlab = retryAllocate(tlabSize);
         final Pointer cell = allocateWithDebugTag(tlab); // TODO:check this
         final Pointer end = cell.plus(size);
-        VmThreadLocal.ALLOCATION_TOP.setVariableWord(tlab.plus(tlabSize));
-        VmThreadLocal.ALLOCATION_MARK.setVariableWord(end);
+        ALLOCATION_TOP.setVariableWord(tlab.plus(tlabSize));
+        ALLOCATION_MARK.setVariableWord(end);
         return cell;
     }
 
     @INLINE
     public Pointer allocate0(Size size) {
-        final Pointer oldAllocationMark = VmThreadLocal.ALLOCATION_MARK.getVariableWord().asPointer();
+        final Pointer oldAllocationMark = ALLOCATION_MARK.getVariableWord().asPointer();
         final Pointer cell = allocateWithDebugTag(oldAllocationMark);
         final Pointer end = cell.plus(size);
-        if (end.greaterThan(VmThreadLocal.ALLOCATION_TOP.getVariableWord().asAddress())) {
+        if (end.greaterThan(ALLOCATION_TOP.getVariableWord().asAddress())) {
             return retryAllocate0(size);
         }
-        VmThreadLocal.ALLOCATION_MARK.setVariableWord(end);
+        ALLOCATION_MARK.setVariableWord(end);
 
         return cell;
     }

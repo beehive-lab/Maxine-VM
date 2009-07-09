@@ -152,24 +152,24 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
         usesRegisterWindow = abi.targetABI().usesRegisterWindows();
 
         final EirStack stack = stack();
-        final Address topSP = stack.ceiling().minus(VmThreadLocal.THREAD_LOCAL_STORAGE_SIZE);
+        final Address topSP = stack.ceiling().minus(VmThreadLocal.threadLocalStorageSize().plus(Word.size()));
         stack.setSP(topSP);
         writeRegister(abi.stackPointer(), new WordValue(topSP));
 
         // Configure VM thread locals as done in VmThread.run() and thread_runJava in threads.c
         vmThreadLocals = topSP.asPointer().roundedUpBy(2 * Word.size());
 
-        for (VmThreadLocal tl : VmThreadLocal.VALUES) {
-            if (tl.kind == Kind.WORD) {
-                stack.writeWord(vmThreadLocals.plusWords(tl.index()), Word.zero());
+        for (VmThreadLocal threadLocal : VmThreadLocal.values()) {
+            if (threadLocal.kind == Kind.WORD) {
+                stack.writeWord(vmThreadLocals.plusWords(threadLocal.index), Word.zero());
             } else {
-                assert tl.kind == Kind.REFERENCE;
-                stack.write(vmThreadLocals.plusWords(tl.index()), ReferenceValue.NULL);
+                assert threadLocal.kind == Kind.REFERENCE;
+                stack.write(vmThreadLocals.plusWords(threadLocal.index), ReferenceValue.NULL);
             }
         }
 
-        stack.writeWord(vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINT_LATCH.index()), vmThreadLocals);
-        stack.write(vmThreadLocals.plusWords(VmThreadLocal.VM_THREAD.index()), ReferenceValue.from(VmThread.current()));
+        stack.writeWord(vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINT_LATCH.index), vmThreadLocals);
+        stack.write(vmThreadLocals.plusWords(VmThreadLocal.VM_THREAD.index), ReferenceValue.from(VmThread.current()));
 
         writeRegister(abi.safepointLatchRegister(), new WordValue(vmThreadLocals));
 

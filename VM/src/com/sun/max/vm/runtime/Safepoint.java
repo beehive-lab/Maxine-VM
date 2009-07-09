@@ -61,7 +61,7 @@ public abstract class Safepoint {
     public static final boolean UseThreadStateWordForGCMutatorSynchronization = false;
 
     public static final int casMutatorState(Pointer enabledVmThreadLocals, int suspectedValue, int newValue) {
-        return enabledVmThreadLocals.compareAndSwapInt(MUTATOR_STATE.offset(), suspectedValue, newValue);
+        return enabledVmThreadLocals.compareAndSwapInt(MUTATOR_STATE.offset, suspectedValue, newValue);
     }
 
     public static final int THREAD_IN_JAVA = 0;
@@ -88,7 +88,7 @@ public abstract class Safepoint {
         }
 
         public int offset() {
-            return key.offset();
+            return key.offset;
         }
     }
 
@@ -189,10 +189,10 @@ public abstract class Safepoint {
     }
 
     public static void initializePrimordial(Pointer primordialVmThreadLocals) {
-        primordialVmThreadLocals.setWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index(), primordialVmThreadLocals);
-        primordialVmThreadLocals.setWord(SAFEPOINTS_DISABLED_THREAD_LOCALS.index(), primordialVmThreadLocals);
-        primordialVmThreadLocals.setWord(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index(), primordialVmThreadLocals);
-        primordialVmThreadLocals.setWord(SAFEPOINT_LATCH.index(), primordialVmThreadLocals);
+        primordialVmThreadLocals.setWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index, primordialVmThreadLocals);
+        primordialVmThreadLocals.setWord(SAFEPOINTS_DISABLED_THREAD_LOCALS.index, primordialVmThreadLocals);
+        primordialVmThreadLocals.setWord(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index, primordialVmThreadLocals);
+        primordialVmThreadLocals.setWord(SAFEPOINT_LATCH.index, primordialVmThreadLocals);
         Safepoint.setLatchRegister(primordialVmThreadLocals);
     }
 
@@ -243,7 +243,7 @@ public abstract class Safepoint {
         // spin until the SAFEPOINT_PROCEDURE field is null
         final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
         while (true) {
-            if (enabledVmThreadLocals.compareAndSwapReference(SAFEPOINT_PROCEDURE.offset(), null, Reference.fromJava(procedure)).isZero()) {
+            if (enabledVmThreadLocals.compareAndSwapReference(SAFEPOINT_PROCEDURE.offset, null, Reference.fromJava(procedure)).isZero()) {
                 Safepoint.trigger(vmThreadLocals);
                 return;
             }

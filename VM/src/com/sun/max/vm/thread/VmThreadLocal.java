@@ -53,142 +53,160 @@ import com.sun.max.vm.type.*;
  *
  * The memory for the three TLS areas is located on the stack as described in the thread stack layout
  * diagram {@linkplain VmThread here}.
+ *
+ * @author Bernd Mathiske
+ * @author Doug Simon
  */
-public enum VmThreadLocal {
+public final class VmThreadLocal {
+
+    /**
+     * The kind of this variable.
+     */
+    public final Kind kind;
+
+    /**
+     * The name of this variable.
+     */
+    public final String name;
+
+    /**
+     * The index of this variable in the array returned by {@link #values()}.
+     */
+    public final int index;
+
+    /**
+     * The offset of this variable from the base of a thread locals.
+     */
+    public final int offset;
+
+    private static final AppendableIndexedSequence<VmThreadLocal> values = new ArrayListSequence<VmThreadLocal>();
+
+    @PROTOTYPE_ONLY
+    private static int valuesExposed = -1;
+
     /**
      * Must be first as needed by {@link Safepoint#initialize(Pointer)}.
      */
-    SAFEPOINT_LATCH(Kind.WORD),
+    public static final VmThreadLocal SAFEPOINT_LATCH = new VmThreadLocal("SAFEPOINT_LATCH", Kind.WORD);
 
     /**
      * The {@linkplain VmThread#currentVmThreadLocals() current} thread local storage when safepoints for the thread are
      * {@linkplain Safepoint#enable() enabled}.
      */
-    SAFEPOINTS_ENABLED_THREAD_LOCALS(Kind.WORD),
+    public static final VmThreadLocal SAFEPOINTS_ENABLED_THREAD_LOCALS = new VmThreadLocal("SAFEPOINTS_ENABLED_THREAD_LOCALS", Kind.WORD);
 
     /**
      * The {@linkplain VmThread#currentVmThreadLocals() current} thread local storage when safepoints for the thread are
      * {@linkplain Safepoint#disable() disabled}.
      */
-    SAFEPOINTS_DISABLED_THREAD_LOCALS(Kind.WORD),
+    public static final VmThreadLocal SAFEPOINTS_DISABLED_THREAD_LOCALS = new VmThreadLocal("SAFEPOINTS_DISABLED_THREAD_LOCALS", Kind.WORD);
 
     /**
      * The {@linkplain VmThread#currentVmThreadLocals() current} thread local storage when safepoints for the thread are
      * {@linkplain Safepoint#trigger(Pointer, Word, Word) triggered}.
      */
-    SAFEPOINTS_TRIGGERED_THREAD_LOCALS(Kind.WORD),
-
-    ALLOCATION_MARK(Kind.WORD),
-    ALLOCATION_TOP(Kind.WORD),
-
-
-    SAFEPOINT_EPOCH(Kind.WORD),
+    public static final VmThreadLocal SAFEPOINTS_TRIGGERED_THREAD_LOCALS = new VmThreadLocal("SAFEPOINTS_TRIGGERED_THREAD_LOCALS", Kind.WORD);
 
     /**
      * The procedure to run when a safepoint has been triggered.
      */
-    SAFEPOINT_PROCEDURE(Kind.REFERENCE),
+    public static final VmThreadLocal SAFEPOINT_PROCEDURE = new VmThreadLocal("SAFEPOINT_PROCEDURE", Kind.REFERENCE);
 
     /**
      * The identifier used to identify the thread in the {@linkplain VmThreadMap thread map}.
      *
      * @see VmThread#id()
      */
-    ID(Kind.WORD),
+    public static final VmThreadLocal ID = new VmThreadLocal("ID", Kind.WORD);
 
     /**
      * Reference to the {@link VmThread} associated with a set of thread locals.
      */
-    VM_THREAD(Kind.REFERENCE),
+    public static final VmThreadLocal VM_THREAD = new VmThreadLocal("VM_THREAD", Kind.REFERENCE);
 
     /**
      * Handle to the native threading library object for a thread (e.g. a pthread_t value).
      */
-    NATIVE_THREAD(Kind.WORD),
+    public static final VmThreadLocal NATIVE_THREAD = new VmThreadLocal("NATIVE_THREAD", Kind.WORD);
 
     /**
      * The address of the table of {@linkplain JniNativeInterface#pointer() JNI functions}.
      */
-    JNI_ENV(Kind.WORD),
+    public static final VmThreadLocal JNI_ENV = new VmThreadLocal("JNI_ENV", Kind.WORD);
 
-    LAST_JAVA_CALLER_STACK_POINTER(Kind.WORD),
-    LAST_JAVA_CALLER_FRAME_POINTER(Kind.WORD),
+    public static final VmThreadLocal LAST_JAVA_CALLER_STACK_POINTER = new VmThreadLocal("LAST_JAVA_CALLER_STACK_POINTER", Kind.WORD);
+    public static final VmThreadLocal LAST_JAVA_CALLER_FRAME_POINTER = new VmThreadLocal("LAST_JAVA_CALLER_FRAME_POINTER", Kind.WORD);
 
     /**
      * Records the instruction pointer in the Java frame for the call that transitioned to native code. If this value is
      * zero then, the thread is not in native code.
      */
-    LAST_JAVA_CALLER_INSTRUCTION_POINTER(Kind.WORD),
+    public static final VmThreadLocal LAST_JAVA_CALLER_INSTRUCTION_POINTER = new VmThreadLocal("LAST_JAVA_CALLER_INSTRUCTION_POINTER", Kind.WORD);
 
     /**
      * Records information for the last Java caller for {@link C_FUNCTION} calls.
      * This is only used by the Inspector for debugging
      */
-    LAST_JAVA_CALLER_STACK_POINTER_FOR_C(Kind.WORD),
+    public static final VmThreadLocal LAST_JAVA_CALLER_STACK_POINTER_FOR_C = new VmThreadLocal("LAST_JAVA_CALLER_STACK_POINTER_FOR_C", Kind.WORD);
 
     /**
      * Records information for the last Java caller for {@link C_FUNCTION} calls.
      * This is only used by the Inspector for debugging
      */
-    LAST_JAVA_CALLER_FRAME_POINTER_FOR_C(Kind.WORD),
+    public static final VmThreadLocal LAST_JAVA_CALLER_FRAME_POINTER_FOR_C = new VmThreadLocal("LAST_JAVA_CALLER_FRAME_POINTER_FOR_C", Kind.WORD);
 
     /**
      * Records information for the last Java caller for {@link C_FUNCTION} calls.
      * This is only used by the Inspector for debugging
      */
-    LAST_JAVA_CALLER_INSTRUCTION_POINTER_FOR_C(Kind.WORD),
-
-    /**
-     * Holds the biased card table address. Card table writes are usually done using *(cardTableBase + reference-heap a.
-     */
-    ADJUSTED_CARDTABLE_BASE(Kind.WORD),
+    public static final VmThreadLocal LAST_JAVA_CALLER_INSTRUCTION_POINTER_FOR_C = new VmThreadLocal("LAST_JAVA_CALLER_INSTRUCTION_POINTER_FOR_C", Kind.WORD);
 
     /**
      * The state of this thread with respect to GC.
      */
-    MUTATOR_STATE(Kind.WORD),
+    public static final VmThreadLocal MUTATOR_STATE = new VmThreadLocal("MUTATOR_STATE", Kind.WORD);
 
     /**
      * The state of GC. This is a boolean. It cannot be a global as reading a global compiles as the use of a
      * reference literal (the static tuple) which cannot be safely accessed during GC.
      */
-    GC_STATE(Kind.WORD),
+    public static final VmThreadLocal GC_STATE = new VmThreadLocal("GC_STATE", Kind.WORD);
 
     /**
      * The number of the trap (i.e. signal) that occurred.
      */
-    TRAP_NUMBER(Kind.WORD),
+    public static final VmThreadLocal TRAP_NUMBER = new VmThreadLocal("TRAP_NUMBER", Kind.WORD);
 
     /**
      * The value of the instruction pointer when the last trap occurred.
      * NOTE: like other trap information, this is ONLY VALID for a short time and should only be
      * used by the C trap handler and the prologue of the trap stub to pass information.
      */
-    TRAP_INSTRUCTION_POINTER(Kind.WORD),
+    public static final VmThreadLocal TRAP_INSTRUCTION_POINTER = new VmThreadLocal("TRAP_INSTRUCTION_POINTER", Kind.WORD);
 
     /**
      * The fault address causing the trap.
      */
-    TRAP_FAULT_ADDRESS(Kind.WORD),
+    public static final VmThreadLocal TRAP_FAULT_ADDRESS = new VmThreadLocal("TRAP_FAULT_ADDRESS", Kind.WORD);
 
     /**
      * The value of the latch register when the last trap occurred.
      */
-    TRAP_LATCH_REGISTER(Kind.WORD),
+    public static final VmThreadLocal TRAP_LATCH_REGISTER = new VmThreadLocal("TRAP_LATCH_REGISTER", Kind.WORD);
 
     /**
      * The address of the stack slot with the highest address that is covered by the {@linkplain #STACK_REFERENCE_MAP
      * stack reference map}. This value is set so that it covers all thread locals, and the thread's stack.
      * Once initialized, this value does not change for the lifetime of the thread.
      */
-    HIGHEST_STACK_SLOT_ADDRESS(Kind.WORD),
+    public static final VmThreadLocal HIGHEST_STACK_SLOT_ADDRESS = new VmThreadLocal("HIGHEST_STACK_SLOT_ADDRESS", Kind.WORD);
 
     /**
      * The address of the stack slot with the lowest address that is covered by the {@linkplain #STACK_REFERENCE_MAP
      * stack reference map}. This value is set so that it covers all thread locals. Once initialized, this value does
      * not change for the lifetime of the thread.
      */
-    LOWEST_STACK_SLOT_ADDRESS(Kind.WORD),
+    public static final VmThreadLocal LOWEST_STACK_SLOT_ADDRESS = new VmThreadLocal("LOWEST_STACK_SLOT_ADDRESS", Kind.WORD);
 
     /**
      * The address of the active stack slot with the lowest address that is covered by the
@@ -199,7 +217,7 @@ public enum VmThreadLocal {
      * that has been stopped (with repect to object graph mutation), then it infers said thread is in native code and
      * needs to have its <b>complete</b> stack reference map prepared on its behalf.
      */
-    LOWEST_ACTIVE_STACK_SLOT_ADDRESS(Kind.WORD),
+    public static final VmThreadLocal LOWEST_ACTIVE_STACK_SLOT_ADDRESS = new VmThreadLocal("LOWEST_ACTIVE_STACK_SLOT_ADDRESS", Kind.WORD);
 
     /**
      * The address of the stack reference map. This reference map has sufficient capacity to store a bit for each
@@ -207,75 +225,68 @@ public enum VmThreadLocal {
      * STACK_BOTTOM_FOR_REFERENCE_MAP]}. During any given garbage collection, the first bit in the reference map (i.e.
      * bit 0) denotes the address given by {@code STACK_TOP_FOR_REFERENCE_MAP}.
      */
-    STACK_REFERENCE_MAP(Kind.WORD),
+    public static final VmThreadLocal STACK_REFERENCE_MAP = new VmThreadLocal("STACK_REFERENCE_MAP", Kind.WORD);
 
     /**
      * Links for a doubly-linked list of all thread locals for active threads.
      */
-    FORWARD_LINK(Kind.WORD),
-    BACKWARD_LINK(Kind.WORD),
-
-    /**
-     * The last slot.
-     */
-    TAG(Kind.WORD);
-
-    public final Kind kind;
-
-    /**
-     * The size of the storage required for a copy of the thread locals defined by this enum.
-     * This value is guaranteed to be word-aligned
-     */
-    public static final Size THREAD_LOCAL_STORAGE_SIZE;
-
-    public static final IndexedSequence<VmThreadLocal> VALUES = new ArraySequence<VmThreadLocal>(values());
-
-    /**
-     * A sequence with an entry for each word in a VM thread locals storage area. The entry at index {@code i} denotes the name for
-     * the VM thread local whose {@linkplain #index() index} is also {@code i}.
-     */
-    public static final IndexedSequence<String> NAMES;
+    public static final VmThreadLocal FORWARD_LINK = new VmThreadLocal("FORWARD_LINK", Kind.WORD);
+    public static final VmThreadLocal BACKWARD_LINK = new VmThreadLocal("BACKWARD_LINK", Kind.WORD);
 
     static {
-        THREAD_LOCAL_STORAGE_SIZE = Size.fromInt(VALUES.length() * Word.size());
-        ProgramError.check(TAG.ordinal() == VALUES.length() - 1);
-        ProgramError.check(THREAD_LOCAL_STORAGE_SIZE.isWordAligned(), "THREAD_LOCAL_STORAGE_SIZE is not word-aligned");
-
+        ProgramError.check(SAFEPOINT_LATCH.index == 0);
         // The C code in trap.c relies on the following relationships:
-        ProgramError.check(TRAP_NUMBER.ordinal() + 1 == TRAP_INSTRUCTION_POINTER.ordinal());
-        ProgramError.check(TRAP_NUMBER.ordinal() + 2 == TRAP_FAULT_ADDRESS.ordinal());
-        ProgramError.check(TRAP_NUMBER.ordinal() + 3 == TRAP_LATCH_REGISTER.ordinal());
-
-        final String[] names = new String[THREAD_LOCAL_STORAGE_SIZE.toInt() / Word.size()];
-        for (VmThreadLocal vmThreadLocal : VALUES) {
-            names[vmThreadLocal.index()] = vmThreadLocal.name();
-        }
-        NAMES = new ArraySequence<String>(names);
-    }
-
-    VmThreadLocal(Kind kind) {
-        assert kind.width.numberOfBytes == Word.size();
-        this.kind = kind;
-    }
-
-    @FOLD
-    public final int index() {
-        return ordinal();
+        ProgramError.check(TRAP_NUMBER.index + 1 == TRAP_INSTRUCTION_POINTER.index);
+        ProgramError.check(TRAP_NUMBER.index + 2 == TRAP_FAULT_ADDRESS.index);
+        ProgramError.check(TRAP_NUMBER.index + 3 == TRAP_LATCH_REGISTER.index);
     }
 
     /**
-     * Gets the offset of this variable from the base of a thread locals.
-     *
-     * @return the offset of this variable from the base of a thread locals
+     * Gets the complete set of declared VM thread locals.
      */
-    @FOLD
-    public final int offset() {
-        return index() * Word.size();
+    public static IndexedSequence<VmThreadLocal> values() {
+        if (MaxineVM.isPrototyping()) {
+            return prototypeValues();
+        }
+        return values;
+    }
+
+    /**
+     * Helper method to ensure that neither {@link #values()} nor {@link #threadLocalStorageSize()} is called
+     * until all VM thread locals have been declared.
+     */
+    @PROTOTYPE_ONLY
+    private static IndexedSequence<VmThreadLocal> prototypeValues() {
+        final IndexedSequence<VmThreadLocal> values = VmThreadLocal.values;
+        if (valuesExposed == -1) {
+            valuesExposed = values.length();
+        } else {
+            FatalError.check(valuesExposed == values.length(), "VM thread local sequence exposed before initialization completed");
+        }
+        return values;
+    }
+
+    @PROTOTYPE_ONLY
+    public VmThreadLocal(String name, Kind kind) {
+        this.kind = kind;
+        this.name = name;
+        this.index = values.length();
+        this.offset = index * Word.size();
+        values.append(this);
+    }
+
+    /**
+     * Gets the size of the storage required for a copy of the defined thread locals.
+     * This value is guaranteed to be word-aligned
+     */
+    public static Size threadLocalStorageSize() {
+        final IndexedSequence<VmThreadLocal> values = MaxineVM.isPrototyping() ? prototypeValues() : VmThreadLocal.values;
+        return Size.fromInt(values.length() * Word.size());
     }
 
     @INLINE
     public static Pointer fromJniEnv(Pointer jniEnv) {
-        return jniEnv.minusWords(JNI_ENV.index());
+        return jniEnv.minusWords(JNI_ENV.index);
     }
 
     /**
@@ -285,7 +296,7 @@ public enum VmThreadLocal {
      */
     @INLINE
     public Pointer pointer(Pointer vmThreadLocals) {
-        return vmThreadLocals.plusWords(index());
+        return vmThreadLocals.plusWords(index);
     }
 
 
@@ -300,9 +311,9 @@ public enum VmThreadLocal {
      */
     @INLINE
     public void setConstantWord(Pointer vmThreadLocals, Word value) {
-        vmThreadLocals.getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index()).asPointer().setWord(index(), value);
-        vmThreadLocals.getWord(SAFEPOINTS_DISABLED_THREAD_LOCALS.index()).asPointer().setWord(index(), value);
-        vmThreadLocals.getWord(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index()).asPointer().setWord(index(), value);
+        vmThreadLocals.getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer().setWord(index, value);
+        vmThreadLocals.getWord(SAFEPOINTS_DISABLED_THREAD_LOCALS.index).asPointer().setWord(index, value);
+        vmThreadLocals.getWord(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index).asPointer().setWord(index, value);
     }
 
     /**
@@ -327,7 +338,7 @@ public enum VmThreadLocal {
      */
     @INLINE
     public Word getConstantWord(Pointer vmThreadLocals) {
-        return vmThreadLocals.getWord(index());
+        return vmThreadLocals.getWord(index);
     }
 
     /**
@@ -352,9 +363,9 @@ public enum VmThreadLocal {
      */
     @INLINE
     public void setConstantReference(Pointer vmThreadLocals, Reference value) {
-        vmThreadLocals.getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index()).asPointer().setReference(index(), value);
-        vmThreadLocals.getWord(SAFEPOINTS_DISABLED_THREAD_LOCALS.index()).asPointer().setReference(index(), value);
-        vmThreadLocals.getWord(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index()).asPointer().setReference(index(), value);
+        vmThreadLocals.getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer().setReference(index, value);
+        vmThreadLocals.getWord(SAFEPOINTS_DISABLED_THREAD_LOCALS.index).asPointer().setReference(index, value);
+        vmThreadLocals.getWord(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index).asPointer().setReference(index, value);
     }
 
     /**
@@ -367,7 +378,7 @@ public enum VmThreadLocal {
      */
     @INLINE
     public Reference getConstantReference(Pointer vmThreadLocals) {
-        return vmThreadLocals.getReference(index());
+        return vmThreadLocals.getReference(index);
     }
 
     /**
@@ -407,7 +418,7 @@ public enum VmThreadLocal {
      */
     @INLINE
     public void setVariableWord(Pointer vmThreadLocals, Word value) {
-        vmThreadLocals.getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index()).asPointer().setWord(index(), value);
+        vmThreadLocals.getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer().setWord(index, value);
     }
 
     /**
@@ -429,7 +440,7 @@ public enum VmThreadLocal {
      */
     @INLINE
     public Word getVariableWord(Pointer vmThreadLocals) {
-        return vmThreadLocals.getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index()).asPointer().getWord(index());
+        return vmThreadLocals.getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer().getWord(index);
     }
 
     /**
@@ -451,7 +462,7 @@ public enum VmThreadLocal {
      */
     @INLINE
     public void setVariableReference(Pointer vmThreadLocals, Reference value) {
-        vmThreadLocals.getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index()).asPointer().setReference(index(), value);
+        vmThreadLocals.getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer().setReference(index, value);
     }
 
     /**
@@ -463,7 +474,7 @@ public enum VmThreadLocal {
      */
     @INLINE
     public Reference getVariableReference(Pointer vmThreadLocals) {
-        return vmThreadLocals.getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index()).asPointer().getReference(index());
+        return vmThreadLocals.getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer().getReference(index);
     }
 
     /**
@@ -586,6 +597,11 @@ public enum VmThreadLocal {
 
     public static Pointer vmThreadLocalsEnd(Pointer vmThreadLocals) {
         final Pointer lowestSlot = LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
-        return lowestSlot.plus(THREAD_LOCAL_STORAGE_SIZE.times(3));
+        return lowestSlot.plus(threadLocalStorageSize().times(3));
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }
