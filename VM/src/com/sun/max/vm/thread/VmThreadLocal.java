@@ -162,13 +162,12 @@ public final class VmThreadLocal {
     public static final VmThreadLocal LAST_JAVA_CALLER_INSTRUCTION_POINTER_FOR_C = new VmThreadLocal("LAST_JAVA_CALLER_INSTRUCTION_POINTER_FOR_C", Kind.WORD);
 
     /**
-     * The state of this thread with respect to GC.
+     * The state of this thread with respect to GC. This will be one of the {@code THREAD_IN_...} constants defined in {@link Safepoint}.
      */
     public static final VmThreadLocal MUTATOR_STATE = new VmThreadLocal("MUTATOR_STATE", Kind.WORD);
 
     /**
-     * The state of GC. This is a boolean. It cannot be a global as reading a global compiles as the use of a
-     * reference literal (the static tuple) which cannot be safely accessed during GC.
+     * A boolean denoting whether a GC is in progress. A non-zero value means true, a zero value means false.
      */
     public static final VmThreadLocal GC_STATE = new VmThreadLocal("GC_STATE", Kind.WORD);
 

@@ -29,7 +29,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -238,16 +237,13 @@ public final class Heap {
         return VMConfiguration.hostOrTarget().heapScheme();
     }
 
-    /**
-     * Sets some thread local state causing any subsequent allocation performed on
-     * the current thread to result in a {@linkplain FatalError fatal error}.
-     */
     @INLINE
-    public static void disabledAllocationForCurrentThread() {
+    public static void disableAllocationForCurrentThread() {
         heapScheme().disableAllocationForCurrentThread();
     }
 
-    public static void enabledAllocationForCurrentThread() {
+    @INLINE
+    public static void enableAllocationForCurrentThread() {
         heapScheme().enableAllocationForCurrentThread();
     }
 

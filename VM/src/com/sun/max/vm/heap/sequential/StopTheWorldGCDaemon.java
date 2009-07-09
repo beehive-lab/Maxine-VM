@@ -84,6 +84,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                 if (!VmThreadLocal.inJava(vmThreadLocals)) {
                     FatalError.unexpected("Mutator thread trapped while in native code");
                 }
+                Heap.disableAllocationForCurrentThread();
                 if (!LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).isZero()) {
                     FatalError.unexpected("Stack reference map preparer should be cleared before GC");
                 }
@@ -95,6 +96,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                 if (!LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).isZero()) {
                     FatalError.unexpected("Stack reference map preparer should be cleared after GC");
                 }
+                Heap.enableAllocationForCurrentThread();
             }
         }
         @Override
@@ -132,7 +134,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
 
     @Override
     public void run() {
-        Heap.disabledAllocationForCurrentThread();
+        Heap.disableAllocationForCurrentThread();
         super.run();
     }
 

@@ -627,7 +627,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
     private static final VmThreadLocal TLAB_TOP = new VmThreadLocal("TLAB_TOP", Kind.WORD);
     private static final VmThreadLocal TLAB_MARK = new VmThreadLocal("TLAB_MARK", Kind.WORD);
-    private static final VmThreadLocal TLAB_DISABLED = new VmThreadLocal("TLAB_DISABLED", Kind.WORD);
+
+    private static final VmThreadLocal ALLOCATION_DISABLED = new VmThreadLocal("TLAB_DISABLED", Kind.WORD);
 
     /*
      * The OutOfMemoryError condition happens when we cannot satisfy a request after running a garbage collection and we
@@ -683,11 +684,19 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     }
 
     @INLINE
-    public Pointer allocate0(Size size) {
+    private Pointer allocate0(Size size) {
         final Pointer oldAllocationMark = TLAB_MARK.getVariableWord().asPointer();
         final Pointer cell = allocateWithDebugTag(oldAllocationMark);
         final Pointer end = cell.plus(size);
         if (end.greaterThan(TLAB_TOP.getVariableWord().asAddress())) {
+            if (!ALLOCATION_DISABLED.getConstantWord().isZero()) {
+                Log.print("Trying to allocate ");
+                Log.print(size.toLong());
+                Log.print(" bytes on thread ");
+                Log.printVmThread(VmThread.current(), false);
+                Log.println(" while allocation is disabled");
+                FatalError.unexpected("Trying to allocate while allocation is disabled");
+            }
             return retryAllocate0(size);
         }
         TLAB_MARK.setVariableWord(end);
@@ -696,7 +705,15 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     }
 
     @INLINE
-    public Pointer allocate(Size size) {
+    private Pointer allocate(Size size) {
+        if (!ALLOCATION_DISABLED.getConstantWord().isZero()) {
+            Log.print("Trying to allocate ");
+            Log.print(size.toLong());
+            Log.print(" bytes on thread ");
+            Log.printVmThread(VmThread.current(), false);
+            Log.println(" while allocation is disabled");
+            FatalError.unexpected("Trying to allocate while allocation is disabled");
+        }
         final Pointer oldAllocationMark = allocationMark().asPointer();
         Pointer cell = allocateWithDebugTag(oldAllocationMark);
         final Pointer end = cell.plus(size);
@@ -717,15 +734,20 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
     @Override
     public void disableAllocationForCurrentThread() {
-        if (TLAB_DISABLED.getVariableWord().equals(Word.zero())) {
-            FatalError.unexpected("Local allocation Switch already turned off.");
-        }
-        TLAB_DISABLED.setVariableWord(Word.zero());
+        final Pointer vmThreadLocals = VmThread.currentVmThreadLocals();
+        final Address value = ALLOCATION_DISABLED.getConstantWord(vmThreadLocals).asAddress();
+        ALLOCATION_DISABLED.setConstantWord(vmThreadLocals, value.plus(1));
+        TLAB_TOP.setVariableWord(vmThreadLocals, Address.zero());
     }
 
     @Override
     public void enableAllocationForCurrentThread() {
-        TLAB_DISABLED.setVariableWord(Word.allOnes());
+        final Pointer vmThreadLocals = VmThread.currentVmThreadLocals();
+        final Address value = ALLOCATION_DISABLED.getConstantWord(vmThreadLocals).asAddress();
+        if (value.isZero()) {
+            FatalError.unexpected("Unbalanced calls to disable/enable allocation for current thread");
+        }
+        ALLOCATION_DISABLED.setConstantWord(vmThreadLocals, value.minus(1));
     }
 
 
