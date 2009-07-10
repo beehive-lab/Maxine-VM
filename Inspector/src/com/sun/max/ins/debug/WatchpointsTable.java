@@ -171,23 +171,45 @@ public final class WatchpointsTable extends InspectorTable {
 
         @Override
         public Object getValueAt(int row, int col) {
-            int count = 0;
-            for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
-                if (WatchpointsColumnKind.VALUES.get(col) == WatchpointsColumnKind.READ) {
-                    return watchpoint.isRead();
-                }
-                if (WatchpointsColumnKind.VALUES.get(col) == WatchpointsColumnKind.WRITE) {
-                    return watchpoint.isWrite();
-                }
-                if (WatchpointsColumnKind.VALUES.get(col) == WatchpointsColumnKind.EXEC) {
-                    return watchpoint.isExec();
-                }
-                if (count == row) {
+            final MaxWatchpoint watchpoint = get(row);
+            switch (WatchpointsColumnKind.VALUES.get(col)) {
+                case START:
+                case SIZE:
+                case END:
+                case DESCRIPTION:
+                case REGION:
                     return watchpoint;
-                }
-                count++;
+                case READ:
+                    return watchpoint.isRead();
+                case WRITE:
+                    return watchpoint.isWrite();
+                case EXEC:
+                    return watchpoint.isExec();
+                case TRIGGERED_THREAD:
+                case ADDRESS_TRIGGERED:
+                case CODE_TRIGGERED:
+                    return watchpoint;
+                default:
+                    throw FatalError.unexpected("Unspected Watchpoint Data column");
             }
-            return null;
+
+//            int count = 0;
+//            for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
+//                if (WatchpointsColumnKind.VALUES.get(col) == WatchpointsColumnKind.READ) {
+//                    return watchpoint.isRead();
+//                }
+//                if (WatchpointsColumnKind.VALUES.get(col) == WatchpointsColumnKind.WRITE) {
+//                    return watchpoint.isWrite();
+//                }
+//                if (WatchpointsColumnKind.VALUES.get(col) == WatchpointsColumnKind.EXEC) {
+//                    return watchpoint.isExec();
+//                }
+//                if (count == row) {
+//                    return watchpoint;
+//                }
+//                count++;
+//            }
+            //return null;
         }
 
         private MaxWatchpoint get(int row) {
