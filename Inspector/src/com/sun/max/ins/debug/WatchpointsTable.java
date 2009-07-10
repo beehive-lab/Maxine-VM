@@ -43,6 +43,7 @@ import com.sun.max.vm.value.*;
  * A table specialized for displaying memory watchpoints in the VM.
  *
  * @author Michael Van De Vanter
+ * @author Hannes Payer
  */
 public final class WatchpointsTable extends InspectorTable {
 
@@ -132,6 +133,9 @@ public final class WatchpointsTable extends InspectorTable {
             createColumn(WatchpointsColumnKind.READ, null, new DefaultCellEditor(new JCheckBox()));
             createColumn(WatchpointsColumnKind.WRITE, null, new DefaultCellEditor(new JCheckBox()));
             createColumn(WatchpointsColumnKind.EXEC, null, new DefaultCellEditor(new JCheckBox()));
+            createColumn(WatchpointsColumnKind.TRIGGERED_THREAD, new TriggerThreadCellRenderer(inspection()), null);
+            createColumn(WatchpointsColumnKind.ADDRESS_TRIGGERED, new TriggerAddressCellRenderer(inspection()), null);
+            createColumn(WatchpointsColumnKind.CODE_TRIGGERED, new TriggerCodeCellRenderer(inspection()), null);
         }
 
         private void createColumn(WatchpointsColumnKind columnKind, TableCellRenderer renderer, TableCellEditor editor) {
@@ -438,4 +442,114 @@ public final class WatchpointsTable extends InspectorTable {
         }
     }
 
+    private final class TriggerThreadCellRenderer extends PlainLabel implements TableCellRenderer {
+
+        TriggerThreadCellRenderer(Inspection inspection) {
+            super(inspection, null);
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            final MaxWatchpoint watchpoint = tableModel.get(row);
+            final MaxWatchpoint triggeredWatchpoint = maxVM().findTriggeredWatchpoint();
+            final MaxThread watchpointThread;
+
+            if (triggeredWatchpoint == null) {
+                return this;
+            }
+
+            watchpointThread = maxVM().findTriggeredWatchpointThread();
+
+            if (triggeredWatchpoint.equals(watchpoint)) {
+                setText(inspection().nameDisplay().longName(watchpointThread));
+                setToolTipText("Thread \"" + inspection().nameDisplay().longName(watchpointThread) + "\" stopped at this watchpoint");
+            } else {
+                setText("");
+                setToolTipText("No Thread stopped at this watchpoint");
+            }
+
+            if (row == getSelectionModel().getMinSelectionIndex()) {
+                setBackground(style().defaultCodeAlternateBackgroundColor());
+            } else {
+                setBackground(style().defaultTextBackgroundColor());
+            }
+            return this;
+        }
+    }
+
+    private final class TriggerAddressCellRenderer extends PlainLabel implements TableCellRenderer {
+
+        TriggerAddressCellRenderer(Inspection inspection) {
+            super(inspection, null);
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            final MaxWatchpoint watchpoint = tableModel.get(row);
+            final MaxWatchpoint triggeredWatchpoint = maxVM().findTriggeredWatchpoint();
+
+            if (triggeredWatchpoint == null) {
+                return this;
+            }
+
+            if (triggeredWatchpoint.equals(watchpoint)) {
+                final String watchpointAddress;
+                watchpointAddress = maxVM().getTriggeredWatchpointAddress().toHexString();
+                setText(watchpointAddress);
+                setToolTipText("Access of memory location " + watchpointAddress + " triggered watchpoint");
+            } else {
+                setText("");
+                setToolTipText("No Thread stopped at this watchpoint");
+            }
+
+            if (row == getSelectionModel().getMinSelectionIndex()) {
+                setBackground(style().defaultCodeAlternateBackgroundColor());
+            } else {
+                setBackground(style().defaultTextBackgroundColor());
+            }
+            return this;
+        }
+    }
+
+    private final class TriggerCodeCellRenderer extends PlainLabel implements TableCellRenderer {
+
+        TriggerCodeCellRenderer(Inspection inspection) {
+            super(inspection, null);
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            final MaxWatchpoint watchpoint = tableModel.get(row);
+            final MaxWatchpoint triggeredWatchpoint = maxVM().findTriggeredWatchpoint();
+            final int watchpointCode;
+
+            if (triggeredWatchpoint == null) {
+                return this;
+            }
+
+            if (triggeredWatchpoint.equals(watchpoint)) {
+                String text;
+                watchpointCode = maxVM().getTriggeredWatchpointCode();
+
+                if (watchpointCode == 1) {
+                    text = "exec";
+                } else if (watchpointCode == 2) {
+                    text = "write";
+                } else {
+                    text = "read";
+                }
+                text += "(" + String.valueOf(watchpointCode) + ")";
+
+                setText(text);
+                setToolTipText("Access of memory location " + watchpointCode + " triggered watchpoint");
+            } else {
+                setText("");
+                setToolTipText("No Thread stopped at this watchpoint");
+            }
+
+            if (row == getSelectionModel().getMinSelectionIndex()) {
+                setBackground(style().defaultCodeAlternateBackgroundColor());
+            } else {
+                setBackground(style().defaultTextBackgroundColor());
+            }
+            return this;
+        }
+    }
 }
