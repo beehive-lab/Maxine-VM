@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.verifier;
 
-import com.sun.max.profile.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -43,7 +42,6 @@ public class TypeInferencingVerifier extends ClassVerifier {
 
     @Override
     public CodeAttribute verify(ClassMethodActor classMethodActor, CodeAttribute originalCodeAttribute) {
-        Metrics.increment("TypeInferencingVerifications");
 
         // The methods in class files whose version is greater than or equal to 50.0 are required to
         // have stack maps. This method is mostly like being verified with the type inferencing verifier

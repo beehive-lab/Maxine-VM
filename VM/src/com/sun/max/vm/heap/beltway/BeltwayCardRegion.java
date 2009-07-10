@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.heap.beltway;
 
-import static com.sun.max.vm.thread.VmThreadLocal.*;
-
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
@@ -207,7 +205,7 @@ public class BeltwayCardRegion {
 
     private static class SetLocals implements Procedure<VmThread> {
         public void run(VmThread thread) {
-            ADJUSTED_CARDTABLE_BASE.setConstantWord(thread.vmThreadLocals(), adjustedCardTable);
+            BeltwayHeapScheme.ADJUSTED_CARDTABLE_BASE.setConstantWord(thread.vmThreadLocals(), adjustedCardTable);
         }
     }
 
@@ -220,7 +218,7 @@ public class BeltwayCardRegion {
      */
     public static void switchToRegularCardTable(Pointer regularCardTable) {
         // copy cards from primordial card table to the newly created cardtable
-        final Pointer primordialCardTable = VmThreadLocal.ADJUSTED_CARDTABLE_BASE.getConstantWord(MaxineVM.primordialVmThreadLocals()).asPointer().plus(
+        final Pointer primordialCardTable = BeltwayHeapScheme.ADJUSTED_CARDTABLE_BASE.getConstantWord(MaxineVM.primordialVmThreadLocals()).asPointer().plus(
                         Heap.bootHeapRegion().start().unsignedShiftedRight(BeltwayCardRegion.CARD_SHIFT));
         final int primordialCardTableSize = Heap.bootHeapRegion().size().plus(Code.bootCodeRegion.size()).unsignedShiftedRight(CARD_SHIFT).toInt();
 

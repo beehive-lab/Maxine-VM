@@ -43,6 +43,7 @@ extern void mutex_dispose(Mutex mutex);
 extern int mutex_enter(Mutex mutex);
 extern int mutex_exit(Mutex mutex);
 
-extern Boolean mutex_isHeld(Mutex mutex);
+extern int mutex_enter_nolog(Mutex mutex);
+extern int mutex_exit_nolog(Mutex mutex);
 
 #endif /*__mutex_h__*/

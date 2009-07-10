@@ -414,12 +414,16 @@ public class C1XTest {
 
     private static void reportTiming() {
         if (timingOption.getValue()) {
+            long totalBytes = 0;
+            long totalInstrs = 0;
             double totalBcps = 0d;
             double totalIps = 0d;
             int count = 0;
             for (Timing timing : timings) {
                 final MethodActor method = timing.classMethodActor;
                 final long ns = timing.nanoSeconds;
+                totalBytes += timing.bytecodes();
+                totalInstrs += timing.instructions();
                 final double bcps = timing.bytecodesPerSecond();
                 final double ips = timing.instructionsPerSecond();
                 if (!averageOption.getValue()) {
@@ -434,7 +438,12 @@ public class C1XTest {
                 totalIps += ips;
                 count++;
             }
-            out.print("Average: ");
+
+            out.print("Total: ");
+            out.print(totalBytes + " bytes   ");
+            out.print(totalInstrs + " insts");
+            out.println();
+            out.print("Speed: ");
             out.print(Strings.fixedDouble(totalBcps / count, 2) + " bytes/s   ");
             out.print(Strings.fixedDouble(totalIps / count, 2) + " insts/s");
             out.println();
@@ -457,16 +466,16 @@ public class C1XTest {
         final String className = javaClass.getSimpleName();
         out.println(className + " {");
         for (final Field field : javaClass.getFields()) {
-            final String fieldName = Strings.padLengthWithSpaces(field.getName(), 35);
+            final String fieldName = "    " + Strings.padLengthWithSpaces(field.getName(), 35) + " = ";
             try {
                 if (field.getType() == int.class) {
-                    out.print("    " + fieldName + " = " + field.getInt(null) + "\n");
+                    out.print(fieldName + field.getInt(null) + "\n");
                 } else if (field.getType() == boolean.class) {
-                    out.print("    " + fieldName + " = " + field.getBoolean(null) + "\n");
+                    out.print(fieldName + field.getBoolean(null) + "\n");
                 } else if (field.getType() == float.class) {
-                    out.print("    " + fieldName + " = " + field.getFloat(null) + "\n");
+                    out.print(fieldName + field.getFloat(null) + "\n");
                 } else if (field.getType() == String.class) {
-                    out.print("    " + fieldName + " = " + field.get(null) + "\n");
+                    out.print(fieldName + "\"" + field.get(null) + "\"\n");
                 }
             } catch (IllegalAccessException e) {
                 // do nothing.
@@ -486,6 +495,14 @@ public class C1XTest {
             this.classMethodActor = classMethodActor;
             this.instructions = instructions;
             this.nanoSeconds = ns;
+        }
+
+        public long bytecodes() {
+            return classMethodActor.rawCodeAttribute().code().length;
+        }
+
+        public long instructions() {
+            return instructions;
         }
 
         public double bytecodesPerSecond() {

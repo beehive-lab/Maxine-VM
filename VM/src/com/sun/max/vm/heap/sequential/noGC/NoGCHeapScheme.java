@@ -21,6 +21,7 @@
 package com.sun.max.vm.heap.sequential.noGC;
 
 import com.sun.max.annotate.*;
+import com.sun.max.atomic.*;
 import com.sun.max.memory.*;
 import com.sun.max.profile.*;
 import com.sun.max.unsafe.*;
@@ -98,7 +99,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
         public void run() {
             if (Heap.verbose()) {
                 Log.print("-- no GC--   size: ");
-                Log.println(allocationMark.minus(space.start()).toInt());
+                Log.println(allocationMark().minus(space.start()).toInt());
             }
 
             verifyHeap();
@@ -161,7 +162,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
                 Log.println(" (ms)");
 
                 Log.print("--After GC--   bytes copied: ");
-                Log.print(allocationMark.minus(space.start()).toInt());
+                Log.print(allocationMark().minus(space.start()).toInt());
                 Log.println();
                 Log.unlock(lockDisabledSafepoints);
             }
@@ -176,27 +177,29 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
 
     private NoGCHeapMemoryRegion space = new NoGCHeapMemoryRegion("Heap-NoGC");
     private Address top;
-    private volatile Address allocationMark;
+    private AtomicWord allocationMark;
 
-    @CONSTANT_WHEN_NOT_ZERO
-    private Pointer allocationMarkPointer;
+    @INLINE
+    private Address allocationMark() {
+        return allocationMark.get().asAddress();
+    }
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        if (phase == MaxineVM.Phase.PRISTINE) {
+        if (MaxineVM.isPrototyping()) {
+            allocationMark = new AtomicWord();
+        } else if (phase == MaxineVM.Phase.PRISTINE) {
             final Size size = Heap.initialSize();
 
             space.setSize(size);
             space.setStart(Memory.allocate(size));
-            allocationMark = space.start();
+            allocationMark.set(space.start());
             top = space.end();
-
-            allocationMarkPointer = ClassActor.fromJava(NoGCHeapScheme.class).findLocalInstanceFieldActor("allocationMark").pointer(this);
 
             // From now on we can allocate
 
             // For debugging
-            space.setAllocationMark(allocationMark);
+            space.setAllocationMark(allocationMark());
 
             TeleHeapInfo.registerMemoryRegions(space);
         } else if (phase == MaxineVM.Phase.STARTING) {
@@ -209,7 +212,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     }
 
     private Size immediateFreeSpace() {
-        return top.minus(allocationMark).asSize();
+        return top.minus(allocationMark()).asSize();
     }
 
     private void checkCellTag(Pointer cell) {
@@ -255,7 +258,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     }
 
     public Size reportUsedSpace() {
-        return allocationMark.minus(space.start()).asSize();
+        return allocationMark().minus(space.start()).asSize();
     }
 
     private static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError(); // TODO: create a new one each time
@@ -269,18 +272,18 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     @NO_SAFEPOINTS("TODO")
     public Pointer allocate(Size size) {
         Pointer cell;
-        final Pointer oldAllocationMark = allocationMark.asPointer();
+        final Pointer oldAllocationMark = allocationMark().asPointer();
         if (VMConfiguration.hostOrTarget().debugging()) {
             cell = oldAllocationMark.plusWords(1);
         } else {
             cell = oldAllocationMark;
         }
         final Pointer end = cell.plus(size);
-        if (end.greaterThan(top) || allocationMarkPointer.compareAndSwapWord(oldAllocationMark, end) != oldAllocationMark) {
+        if (end.greaterThan(top) || allocationMark.compareAndSwap(oldAllocationMark, end) != oldAllocationMark) {
             return fail();
         }
         // For debugging
-        space.setAllocationMark(allocationMark);
+        space.setAllocationMark(end);
         return cell;
     }
 
@@ -404,7 +407,8 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
         }
         heapRootsVerifier.run();
         Pointer cell = space.start().asPointer();
-        while (cell.lessThan(allocationMark)) {
+        final Address end = allocationMark();
+        while (cell.lessThan(end)) {
             if (VMConfiguration.hostOrTarget().debugging()) {
                 cell = cell.plusWords(1);
                 checkCellTag(cell);
