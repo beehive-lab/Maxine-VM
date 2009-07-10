@@ -21,14 +21,13 @@
 package com.sun.max.vm.monitor.modal.sync;
 
 import com.sun.max.annotate.*;
+import com.sun.max.atomic.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.modehandlers.inflated.*;
 import com.sun.max.vm.monitor.modal.sync.JavaMonitorManager.*;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -41,12 +40,10 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
     private Object boundObject;
     protected volatile VmThread ownerThread;
     protected int recursionCount;
-    private Word displacedMiscWord;
+    private final AtomicWord displacedMiscWord = new AtomicWord();
 
     protected BindingProtection bindingProtection;
     private Word preGCLockWord;
-
-    private static final FieldActor displacedMiscWordFieldActor = FieldActor.findInstance(AbstractJavaMonitor.class, "displacedMiscWord");
 
     // Support for direct linked lists of JavaMonitors.
     private ManagedMonitor next;
@@ -74,22 +71,22 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
     }
 
     public final Word displacedMisc() {
-        return displacedMiscWord;
+        return displacedMiscWord.get();
     }
 
     public final void setDisplacedMisc(Word lockWord) {
-        displacedMiscWord = lockWord;
+        displacedMiscWord.set(lockWord);
     }
 
     public final Word compareAndSwapDisplacedMisc(Word suspectedValue, Word newValue) {
-        return Reference.fromJava(this).compareAndSwapWord(displacedMiscWordFieldActor.offset(), suspectedValue, newValue);
+        return displacedMiscWord.compareAndSwap(suspectedValue, newValue);
     }
 
     public void reset() {
         boundObject = null;
         ownerThread = null;
         recursionCount = 0;
-        displacedMiscWord = Word.zero();
+        displacedMiscWord.set(Word.zero());
         preGCLockWord = Word.zero();
         bindingProtection = BindingProtection.PRE_ACQUIRE;
     }

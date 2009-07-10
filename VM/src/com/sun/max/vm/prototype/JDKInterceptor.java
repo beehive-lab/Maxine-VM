@@ -61,7 +61,6 @@ public final class JDKInterceptor {
         "path.separator",
     };
 
-    private static final Unsafe unsafe = (Unsafe) WithoutAccessCheck.getStaticField(Unsafe.class, "theUnsafe");
     public static final Properties initialSystemProperties = buildInitialSystemProperties();
 
     /**
@@ -397,7 +396,7 @@ public final class JDKInterceptor {
                 // search the declared fields for a field with a matching offset
                 for (Field f : tclass.getDeclaredFields()) {
                     if ((f.getModifiers() & Modifier.STATIC) == 0) {
-                        final long fieldOffset = unsafe.objectFieldOffset(f);
+                        final long fieldOffset = WithoutAccessCheck.unsafe.objectFieldOffset(f);
                         if (fieldOffset == offset) {
                             return LongValue.from(FieldActor.fromJava(f).offset());
                         }

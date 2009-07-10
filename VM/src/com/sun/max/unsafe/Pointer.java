@@ -1129,14 +1129,6 @@ public abstract class Pointer extends Address implements Accessor {
      * @see Accessor#compareAndSwapInt(Offset, int, int)
      */
     @INLINE
-    public final int compareAndSwapInt(int suspectedValue, int newValue) {
-        return compareAndSwapInt(0, suspectedValue, newValue);
-    }
-
-    /**
-     * @see Accessor#compareAndSwapInt(Offset, int, int)
-     */
-    @INLINE
     public final int compareAndSwapInt(Offset offset, int suspectedValue, int newValue) {
         if (Word.width() == WordWidth.BITS_64) {
             return compareAndSwapIntAtLongOffset(offset.toLong(), suspectedValue, newValue);
@@ -1168,14 +1160,6 @@ public abstract class Pointer extends Address implements Accessor {
      * @see Accessor#compareAndSwapInt(Offset, int, int)
      */
     @INLINE
-    public final Word compareAndSwapWord(Word suspectedValue, Word newValue) {
-        return compareAndSwapWord(0, suspectedValue, newValue);
-    }
-
-    /**
-     * @see Accessor#compareAndSwapInt(Offset, int, int)
-     */
-    @INLINE
     public final Word compareAndSwapWord(Offset offset, Word suspectedValue, Word newValue) {
         if (Word.width() == WordWidth.BITS_64) {
             return compareAndSwapWordAtLongOffset(offset.toLong(), suspectedValue, newValue);
@@ -1201,14 +1185,6 @@ public abstract class Pointer extends Address implements Accessor {
     @INLINE
     public final Reference compareAndSwapReference(int offset, Reference suspectedValue, Reference newValue) {
         return compareAndSwapReferenceAtIntOffset(offset, suspectedValue, newValue);
-    }
-
-    /**
-     * @see Accessor#compareAndSwapInt(Offset, int, int)
-     */
-    @INLINE
-    public final Reference compareAndSwapReference(Reference suspectedValue, Reference newValue) {
-        return compareAndSwapReference(0, suspectedValue, newValue);
     }
 
     /**

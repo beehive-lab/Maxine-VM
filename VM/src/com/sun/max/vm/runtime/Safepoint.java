@@ -60,20 +60,8 @@ public abstract class Safepoint {
 
     public static final boolean UseThreadStateWordForGCMutatorSynchronization = false;
 
-    public static final int cas(Pointer statePointer, int suspectedValue, int newValue) {
-//        Log.printVmThread(VmThread.current(), false);
-//        Log.print(": ");
-//        Log.print(suspectedValue);
-//        Log.print(" -> ");
-//        Log.println(newValue);
-        final int result = statePointer.compareAndSwapInt(suspectedValue, newValue);
-//        Log.printVmThread(VmThread.current(), false);
-//        Log.print(": ");
-//        Log.print(suspectedValue);
-//        Log.print(" -> ");
-//        Log.print(newValue);
-//        Log.println(" done");
-        return result;
+    public static final int casMutatorState(Pointer enabledVmThreadLocals, int suspectedValue, int newValue) {
+        return enabledVmThreadLocals.compareAndSwapInt(MUTATOR_STATE.offset, suspectedValue, newValue);
     }
 
     public static final int THREAD_IN_JAVA = 0;
@@ -100,7 +88,7 @@ public abstract class Safepoint {
         }
 
         public int offset() {
-            return key.offset();
+            return key.offset;
         }
     }
 
@@ -158,19 +146,15 @@ public abstract class Safepoint {
      */
     public static void reset(Pointer vmThreadLocals) {
         if (UseThreadStateWordForGCMutatorSynchronization) {
-            final int state = STATE.getVariableWord(vmThreadLocals).asAddress().toInt();
-
+            final int state = MUTATOR_STATE.getVariableWord(vmThreadLocals).asAddress().toInt();
             if (state == THREAD_IN_GC_FROM_NATIVE) {
-                STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_NATIVE));
+                MUTATOR_STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_NATIVE));
             } else {
                 if (state != THREAD_IN_GC_FROM_JAVA) {
                     reportIllegalThreadState("While resetting safepoints", state);
                 }
-                STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_JAVA));
+                MUTATOR_STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_JAVA));
             }
-
-        } else {
-            SAFEPOINT_VENUE.setVariableReference(vmThreadLocals, Reference.fromJava(Safepoint.Venue.NATIVE));
         }
         SAFEPOINT_LATCH.setVariableWord(vmThreadLocals, SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals));
     }
@@ -205,35 +189,19 @@ public abstract class Safepoint {
     }
 
     public static void initializePrimordial(Pointer primordialVmThreadLocals) {
-        primordialVmThreadLocals.setWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index(), primordialVmThreadLocals);
-        primordialVmThreadLocals.setWord(SAFEPOINTS_DISABLED_THREAD_LOCALS.index(), primordialVmThreadLocals);
-        primordialVmThreadLocals.setWord(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index(), primordialVmThreadLocals);
-        primordialVmThreadLocals.setWord(SAFEPOINT_LATCH.index(), primordialVmThreadLocals);
+        primordialVmThreadLocals.setWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index, primordialVmThreadLocals);
+        primordialVmThreadLocals.setWord(SAFEPOINTS_DISABLED_THREAD_LOCALS.index, primordialVmThreadLocals);
+        primordialVmThreadLocals.setWord(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index, primordialVmThreadLocals);
+        primordialVmThreadLocals.setWord(SAFEPOINT_LATCH.index, primordialVmThreadLocals);
         Safepoint.setLatchRegister(primordialVmThreadLocals);
     }
 
-    @INLINE
-    public static void soft() {
-        SafepointBuiltin.softSafepoint();
-    }
-
     /**
-     *  A "hard" safepoint must stay in place no matter what optimization level.
-     *  Furthermore, sufficient safepoint instructions and memory barriers must be emitted to guarantee stopping any traversal.
-     *  This ensures that execution cannot run away from monitor blocking, wait() and language transitions,
-     *  but can be caught and suspended right after any of those.
+     * Emits a safepoint at the call site.
      */
     @INLINE
-    public static void hard() {
-        // Ensure that all stores on this thread are globally visible before the safepoint trap:
-        MemoryBarrier.storeLoad();
-
-        SafepointBuiltin.hardSafepoint();
-        SafepointBuiltin.hardSafepoint();
-
-        // Ensure that subsequent loads and stores only happen once the safepoint trap has occurred
-        MemoryBarrier.loadStore();
-        MemoryBarrier.loadLoad();
+    public static void safepoint() {
+        SafepointBuiltin.safepointBuiltin();
     }
 
     public abstract Symbol latchRegister();
@@ -274,9 +242,8 @@ public abstract class Safepoint {
     public static void runProcedure(Pointer vmThreadLocals, Procedure procedure) {
         // spin until the SAFEPOINT_PROCEDURE field is null
         final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-        final Pointer safepointProcedurePointer = SAFEPOINT_PROCEDURE.pointer(enabledVmThreadLocals);
         while (true) {
-            if (safepointProcedurePointer.compareAndSwapReference(null, Reference.fromJava(procedure)).isZero()) {
+            if (enabledVmThreadLocals.compareAndSwapReference(SAFEPOINT_PROCEDURE.offset, null, Reference.fromJava(procedure)).isZero()) {
                 Safepoint.trigger(vmThreadLocals);
                 return;
             }

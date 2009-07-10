@@ -18,27 +18,30 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.target;
+package com.sun.max.vm.compiler.cir.builtin;
 
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.stack.*;
+import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.compiler.cir.*;
+import com.sun.max.vm.compiler.cir.optimize.*;
 
 /**
+ * Wrapper for safepoint builtins.
+ * The optimizer may eliminate some of these as appropriate.
+ *
  * @author Bernd Mathiske
  */
-public abstract class OptimizedTargetMethod extends TargetMethod {
+public final class CirSafepointBuiltin extends CirSpecialBuiltin {
 
-    protected OptimizedTargetMethod(ClassMethodActor classMethodActor) {
-        super(classMethodActor);
+    public CirSafepointBuiltin() {
+        super(SafepointBuiltin.BUILTIN);
     }
 
     @Override
-    public JavaStackFrameLayout stackFrameLayout() {
-        return new OptoStackFrameLayout(frameSize());
-    }
-
-    @Override
-    public boolean areReferenceMapsFinalized() {
-        return true;
+    public boolean isFoldable(CirOptimizer cirOptimizer, CirValue[] arguments) {
+        if (cirOptimizer.cirMethod().classMethodActor().noSafepoints()) {
+            // this method has been annotated with a directive to suppress safepoints
+            return true;
+        }
+        return false; //TODO: eliminate redundant soft safepoints - requires analysis
     }
 }

@@ -30,7 +30,6 @@ import com.sun.max.vm.compiler.builtin.JavaBuiltin.*;
 import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.*;
 import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.*;
 import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.*;
-import com.sun.max.vm.compiler.builtin.SafepointBuiltin.*;
 import com.sun.max.vm.compiler.builtin.SpecialBuiltin.*;
 
 public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
@@ -646,11 +645,7 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitSpecialBuiltin(builtin, result, arguments);
     }
 
-    public void visitSoftSafepoint(SoftSafepoint builtin, IR_Type result, IR_Type[] arguments) {
-        visitSpecialBuiltin(builtin, result, arguments);
-    }
-
-    public void visitHardSafepoint(HardSafepoint builtin, IR_Type result, IR_Type[] arguments) {
+    public void visitSafepoint(SafepointBuiltin builtin, IR_Type result, IR_Type[] arguments) {
         visitSpecialBuiltin(builtin, result, arguments);
     }
 
