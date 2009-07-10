@@ -293,10 +293,12 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
 
     private static final String TRACE_INDENTATION_UNIT = "    ";
 
-    private String traceIndentation;
+    private static final String NO_INDENT = new String();
+
+    private String traceIndentation = NO_INDENT;
 
     private void indent() {
-        if (traceIndentation == null) {
+        if (traceIndentation == NO_INDENT) {
             traceIndentation = "";
         } else {
             traceIndentation += TRACE_INDENTATION_UNIT;
@@ -304,10 +306,12 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
     }
 
     private void outdent() {
-        if (traceIndentation != null && traceIndentation.length() >= TRACE_INDENTATION_UNIT.length()) {
-            traceIndentation = traceIndentation.substring(TRACE_INDENTATION_UNIT.length());
-        } else {
-            traceIndentation = null;
+        if (traceIndentation != NO_INDENT) {
+            if (traceIndentation.length() >= TRACE_INDENTATION_UNIT.length()) {
+                traceIndentation = traceIndentation.substring(TRACE_INDENTATION_UNIT.length());
+            } else {
+                traceIndentation = NO_INDENT;
+            }
         }
     }
 

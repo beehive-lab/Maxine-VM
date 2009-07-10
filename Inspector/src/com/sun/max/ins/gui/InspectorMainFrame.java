@@ -296,11 +296,8 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         frame.setLocation(getMiddle(frame));
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.ins.gui.InspectorGUI#moveToMiddleIfNotVisble(com.sun.max.ins.gui.Inspector)
-     */
     public void moveToMiddleIfNotVisble(Inspector inspector) {
-        if (!getContentPane().contains(inspector.component().getLocation())) {
+        if (!contains(inspector.component().getLocation())) {
             moveToMiddle(inspector);
         }
     }

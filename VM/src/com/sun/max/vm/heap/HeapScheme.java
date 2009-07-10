@@ -27,6 +27,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 public interface HeapScheme extends VMScheme {
@@ -191,6 +192,26 @@ public interface HeapScheme extends VMScheme {
      * @return true if can/will increase memory usage, false otherwise
      */
     boolean increaseMemory(Size amount);
+
+    /**
+     * Disables heap allocation on the current thread. This state is recursive. That is,
+     * allocation is only re-enabled once {@link #enableAllocationForCurrentThread()} is
+     * called the same number of times as this method has been called.
+     *
+     * It is a {@linkplain FatalError fatal error} if calls to this method and {@link #enableAllocationForCurrentThread()}
+     * are unbalanced.
+     */
+    void disableAllocationForCurrentThread();
+
+    /**
+     * Re-enables heap allocation on the current thread. This state is recursive. That is,
+     * allocation is only re-enabled once this method is
+     * called the same number of times as {@link #disableAllocationForCurrentThread()} has been called.
+     *
+     * It is a {@linkplain FatalError fatal error} if calls to this method and {@link #disableAllocationForCurrentThread()}
+     * are unbalanced.
+     */
+    void enableAllocationForCurrentThread();
 
     @INLINE
     void writeBarrier(Reference from, Reference to);

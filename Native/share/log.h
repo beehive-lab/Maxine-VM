@@ -33,8 +33,12 @@
 #include "word.h"
 #include "jni.h"
 
-extern void log_lock(void);
+/**
+ * Initializes the low-level VM logging facility.
+ */
+extern void log_initialize();
 
+extern void log_lock(void);
 extern void log_unlock(void);
 
 extern void log_print_int(int val);

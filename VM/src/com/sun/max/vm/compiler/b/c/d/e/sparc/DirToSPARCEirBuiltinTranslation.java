@@ -501,6 +501,9 @@ class DirToSPARCEirBuiltinTranslation extends DirToEirBuiltinTranslation {
                     case STORE_STORE:
                         operand = operand.or(MembarOperand.STORE_STORE);
                         break;
+                    case MEMOP_STORE:
+                        operand = operand.or(MembarOperand.STORE_STORE).or(MembarOperand.LOAD_STORE);
+                        break;
                     case STORE_LOAD:
                         operand = operand.or(MembarOperand.STORE_LOAD);
                         break;

@@ -452,12 +452,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      */
     public abstract boolean areReferenceMapsFinalized();
 
-    /**
-     * Ensures that the {@linkplain #referenceMaps() reference maps} for this target method are finalized. Only
-     * finalized reference maps are guaranteed to never change for the remaining lifetime of this target method.
-     */
-    public abstract void finalizeReferenceMaps();
-
     @INSPECTED
     private byte[] scalarLiteralBytes;
 

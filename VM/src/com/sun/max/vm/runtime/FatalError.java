@@ -126,7 +126,8 @@ public final class FatalError extends Error {
         ExitingGuard.guard = true;
 
         final boolean lockDisabledSafepoints = Log.lock();
-        Log.print("FATAL VM ERROR: ");
+        Log.printVmThread(VmThread.current(), false);
+        Log.print(": FATAL VM ERROR: ");
         Heap.setTraceAllocation(false);
         Throw.stackDump(message, VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer());
         if (throwable != null) {

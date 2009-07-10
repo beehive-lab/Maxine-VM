@@ -26,6 +26,8 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.lang.reflect.*;
 
+import sun.misc.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
@@ -43,7 +45,6 @@ import com.sun.max.vm.jni.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.object.host.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.VMRegister.*;
 import com.sun.max.vm.stack.*;
@@ -273,11 +274,6 @@ public class VmThread {
         return waitingCondition;
     }
 
-    @INLINE
-    public final void setWaitingCondition(ConditionVariable waitingCondition) {
-        this.waitingCondition = waitingCondition;
-    }
-
     /**
      * A link in a list of threads waiting on a monitor. If this field points to this thread, then the thread is not on
      * a list. If it is {@code null}, then this thread is at the end of a list. A thread can be on at most one list.
@@ -445,8 +441,6 @@ public class VmThread {
         return UnsafeLoophole.cast(VmThreadLocal.VM_THREAD.getConstantReference(vmThreadLocals).toJava());
     }
 
-    public static final Address TAG = Address.fromLong(0xbabacafecabafebaL);
-
     private static void executeRunnable(VmThread vmThread) throws Throwable {
         try {
             if (vmThread == mainVMThread) {
@@ -490,34 +484,26 @@ public class VmThread {
                     Pointer stackYellowZone,
                     Pointer stackEnd) {
         // Disable safepoints:
-        disabledVmThreadLocals.setWord(SAFEPOINT_LATCH.index(), disabledVmThreadLocals);
+        disabledVmThreadLocals.setWord(SAFEPOINT_LATCH.index, disabledVmThreadLocals);
         Safepoint.setLatchRegister(disabledVmThreadLocals);
 
-        enabledVmThreadLocals.setWord(SAFEPOINT_LATCH.index(), enabledVmThreadLocals);
+        enabledVmThreadLocals.setWord(SAFEPOINT_LATCH.index, enabledVmThreadLocals);
 
         // set up references to all three locals in all three locals
-        enabledVmThreadLocals.setWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index(), enabledVmThreadLocals);
-        enabledVmThreadLocals.setWord(SAFEPOINTS_DISABLED_THREAD_LOCALS.index(), disabledVmThreadLocals);
-        enabledVmThreadLocals.setWord(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index(), triggeredVmThreadLocals);
+        enabledVmThreadLocals.setWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index, enabledVmThreadLocals);
+        enabledVmThreadLocals.setWord(SAFEPOINTS_DISABLED_THREAD_LOCALS.index, disabledVmThreadLocals);
+        enabledVmThreadLocals.setWord(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index, triggeredVmThreadLocals);
 
-        disabledVmThreadLocals.setWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index(), enabledVmThreadLocals);
-        disabledVmThreadLocals.setWord(SAFEPOINTS_DISABLED_THREAD_LOCALS.index(), disabledVmThreadLocals);
-        disabledVmThreadLocals.setWord(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index(), triggeredVmThreadLocals);
+        disabledVmThreadLocals.setWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index, enabledVmThreadLocals);
+        disabledVmThreadLocals.setWord(SAFEPOINTS_DISABLED_THREAD_LOCALS.index, disabledVmThreadLocals);
+        disabledVmThreadLocals.setWord(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index, triggeredVmThreadLocals);
 
-        triggeredVmThreadLocals.setWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index(), enabledVmThreadLocals);
-        triggeredVmThreadLocals.setWord(SAFEPOINTS_DISABLED_THREAD_LOCALS.index(), disabledVmThreadLocals);
-        triggeredVmThreadLocals.setWord(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index(), triggeredVmThreadLocals);
-
-        ALLOCATION_MARK.setVariableWord(Word.zero());
-        ALLOCATION_TOP.setVariableWord(Word.zero());
-        ALLOCATION_SWITCH.setVariableWord(Word.allOnes());
+        triggeredVmThreadLocals.setWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index, enabledVmThreadLocals);
+        triggeredVmThreadLocals.setWord(SAFEPOINTS_DISABLED_THREAD_LOCALS.index, disabledVmThreadLocals);
+        triggeredVmThreadLocals.setWord(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index, triggeredVmThreadLocals);
 
         NATIVE_THREAD.setConstantWord(enabledVmThreadLocals, nativeThread);
         JNI_ENV.setConstantWord(enabledVmThreadLocals, JniNativeInterface.pointer());
-        VmThreadLocal.TAG.setConstantWord(enabledVmThreadLocals, TAG);
-        if (!Safepoint.UseThreadStateWordForGCMutatorSynchronization) {
-            SAFEPOINT_VENUE.setVariableReference(enabledVmThreadLocals, Reference.fromJava(Safepoint.Venue.NATIVE));
-        }
 
         // Add the VM thread locals to the active map
         final VmThread vmThread = VmThreadMap.ACTIVE.addVmThreadLocals(id, enabledVmThreadLocals);
@@ -581,8 +567,6 @@ public class VmThread {
             Log.print(", name=\"");
             Log.print(name);
             Log.println("\"]:");
-            Log.print("  Adjusted card table address: ");
-            Log.println(ADJUSTED_CARDTABLE_BASE.getConstantWord());
             Log.println("  Stack layout:");
             Address lastRegionStart = Address.zero();
             final int stackSize = stackEnd.minus(stackBase).toInt();
@@ -593,9 +577,9 @@ public class VmThread {
             lastRegionStart = traceStackRegion("Stack overflow guard (yellow zone)", stackBase, stackYellowZone, stackYellowZoneEnd, lastRegionStart, stackSize);
             lastRegionStart = traceStackRegion("Stack overflow guard (red zone)", stackBase, stackRedZone, stackYellowZone, lastRegionStart, stackSize);
             lastRegionStart = traceStackRegion("Reference map area", stackBase, refMapArea, stackRedZone, lastRegionStart, stackSize);
-            lastRegionStart = traceStackRegion("Thread locals (disabled)", stackBase, disabledVmThreadLocals, THREAD_LOCAL_STORAGE_SIZE.toInt(), lastRegionStart, stackSize);
-            lastRegionStart = traceStackRegion("Thread locals (enabled)", stackBase, enabledVmThreadLocals, THREAD_LOCAL_STORAGE_SIZE.toInt(), lastRegionStart, stackSize);
-            lastRegionStart = traceStackRegion("Thread locals (triggered)", stackBase, triggeredVmThreadLocals, THREAD_LOCAL_STORAGE_SIZE.toInt(), lastRegionStart, stackSize);
+            lastRegionStart = traceStackRegion("Thread locals (disabled)", stackBase, disabledVmThreadLocals, threadLocalStorageSize().toInt(), lastRegionStart, stackSize);
+            lastRegionStart = traceStackRegion("Thread locals (enabled)", stackBase, enabledVmThreadLocals, threadLocalStorageSize().toInt(), lastRegionStart, stackSize);
+            lastRegionStart = traceStackRegion("Thread locals (triggered)", stackBase, triggeredVmThreadLocals, threadLocalStorageSize().toInt(), lastRegionStart, stackSize);
             if (stackBase.lessThan(triggeredVmThreadLocals)) {
                 lastRegionStart = traceStackRegion("Unmapped page", stackBase, stackBase, triggeredVmThreadLocals, lastRegionStart, stackSize);
             }
@@ -738,7 +722,7 @@ public class VmThread {
     // JNI support
 
     public static VmThread fromJniEnv(Pointer jniEnv) {
-        final Pointer vmThreadLocals = jniEnv.minus(JNI_ENV.index() * Word.size());
+        final Pointer vmThreadLocals = jniEnv.minus(JNI_ENV.offset);
         return UnsafeLoophole.cast(VM_THREAD.getConstantReference(vmThreadLocals).toJava());
     }
 

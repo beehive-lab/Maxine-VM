@@ -405,9 +405,13 @@ public final class Log {
         if (!MaxineVM.isPrototyping()) {
             lockDisabledSafepoints = lock();
         }
-        print(vmThread.getName());
+        print(vmThread == null ? "<null thread>" : vmThread.getName());
         print("[id=");
-        print(vmThread.id());
+        if (vmThread == null) {
+            print("?");
+        } else {
+            print(vmThread.id());
+        }
         print("]", withNewline);
         if (!MaxineVM.isPrototyping()) {
             unlock(lockDisabledSafepoints);
