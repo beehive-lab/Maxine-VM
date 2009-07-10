@@ -41,23 +41,38 @@ public class TypeCheckingVerifier extends ClassVerifier {
             throw new IllegalArgumentException("Cannot perform type checking verification on class " + classActor.name + " with version number less than 50: " + classActor.majorVersion);
         }
     }
-
     @Override
     public synchronized void verify() {
         try {
             super.verify();
         } catch (VerifyError verifyError) {
             if (classActor.majorVersion == 50 && failOverToTypeInferencing.getValue()) {
-                final TypeInferencingVerifier typeInferencingVerifier = new TypeInferencingVerifier(classActor);
-                typeInferencingVerifier.verify();
+                failoverVerifier().verify();
             }
+            throw verifyError;
         }
+    }
+
+    TypeInferencingVerifier failoverVerifier;
+
+    private TypeInferencingVerifier failoverVerifier() {
+        if (failoverVerifier == null) {
+            failoverVerifier = new TypeInferencingVerifier(classActor);
+        }
+        return failoverVerifier;
     }
 
     @Override
     public synchronized CodeAttribute verify(ClassMethodActor classMethodActor, CodeAttribute codeAttribute) {
-        Metrics.increment("TypeCheckingVerifications");
-        new TypeCheckingMethodVerifier(this, classMethodActor, codeAttribute).verify();
-        return codeAttribute;
+        try {
+            new TypeCheckingMethodVerifier(this, classMethodActor, codeAttribute).verify();
+            return codeAttribute;
+        } catch (VerifyError verifyError) {
+            if (classActor.majorVersion == 50 && failOverToTypeInferencing.getValue()) {
+                return failoverVerifier().verify(classMethodActor, codeAttribute);
+            }
+            throw verifyError;
+        }
     }
+
 }
