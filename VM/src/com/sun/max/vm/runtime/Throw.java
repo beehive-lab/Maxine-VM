@@ -201,6 +201,22 @@ public final class Throw {
     }
 
     /**
+     * Dumps the entire stack of the current thread.
+     * <p>
+     * This stack dump is meant to be more primitive that the dump obtained by {@link Thread#dumpStack()} in that all
+     * the actual frames are dumped, not only the frames of application visible methods. In addition, there is no
+     * attempt to decode Java frame descriptors to show virtual frames (i.e. frames that would have existed if there was
+     * no inlining performed).
+     *
+     * @param message the message to print accompanying the stack trace
+     */
+    @NEVER_INLINE
+    public static void stackDump(String message) {
+        Log.println(message);
+        VmThread.current().stackDumpStackFrameWalker().inspect(VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), stackFrameDumper);
+    }
+
+    /**
      * Scans the stack between the specified addresses in search of potential code pointers.
      * <p>
      * This stack scanning is even more primitive than a stack dump, since it does not rely on

@@ -265,7 +265,7 @@ public final class StackReferenceMapPreparer {
     private static final VmThreadLocal[] vmThreadLocalGCRoots;
     static {
         final AppendableSequence<VmThreadLocal> referenceLocals = new ArrayListSequence<VmThreadLocal>();
-        for (VmThreadLocal local : VALUES) {
+        for (VmThreadLocal local : values()) {
             if (local.kind == Kind.REFERENCE) {
                 referenceLocals.append(local);
             }
@@ -325,15 +325,15 @@ public final class StackReferenceMapPreparer {
             if (slotAddress.greaterEqual(disabledVmThreadLocals)) {
                 Log.print(", name=");
                 final int vmThreadLocalIndex = slotAddress.minus(disabledVmThreadLocals).dividedBy(Word.size()).toInt();
-                Log.print(NAMES.get(vmThreadLocalIndex));
+                Log.print(values().get(vmThreadLocalIndex).name);
             } else if (slotAddress.greaterEqual(enabledVmThreadLocals)) {
                 Log.print(", name=");
                 final int vmThreadLocalIndex = slotAddress.minus(enabledVmThreadLocals).dividedBy(Word.size()).toInt();
-                Log.print(NAMES.get(vmThreadLocalIndex));
+                Log.print(values().get(vmThreadLocalIndex).name);
             } else if (slotAddress.greaterEqual(triggeredVmThreadLocals)) {
                 Log.print(", name=");
                 final int vmThreadLocalIndex = slotAddress.minus(triggeredVmThreadLocals).dividedBy(Word.size()).toInt();
-                Log.print(NAMES.get(vmThreadLocalIndex));
+                Log.print(values().get(vmThreadLocalIndex).name);
             }
         }
     }

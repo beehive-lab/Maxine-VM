@@ -309,6 +309,8 @@ int maxine(int argc, char *argv[], char *executablePath) {
     int exitCode = 0;
     int fd;
 
+    log_initialize();
+
 #if os_DARWIN
     _executablePath = executablePath;
 #endif

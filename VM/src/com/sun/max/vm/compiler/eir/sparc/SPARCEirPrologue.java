@@ -143,7 +143,7 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         int offset = trapStateOffset;
 
         // We want to copy into the trap state the value of the latch register at the instruction that causes the trap.
-        asm.ldx(latchRegister, VmThreadLocal.TRAP_LATCH_REGISTER.offset(), scratchRegister);
+        asm.ldx(latchRegister, VmThreadLocal.TRAP_LATCH_REGISTER.offset, scratchRegister);
 
         for (GPR register :  SPARCSafepoint.TRAP_SAVED_GLOBAL_SYMBOLIZER) {
             if (register == latchRegister) {
@@ -173,12 +173,12 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         final TargetABI targetABI = VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI();
 
         // Setup return address -- to enable stack walker
-        asm.ldx(latchRegister, VmThreadLocal.TRAP_INSTRUCTION_POINTER.offset(), GPR.I7);
+        asm.ldx(latchRegister, VmThreadLocal.TRAP_INSTRUCTION_POINTER.offset, GPR.I7);
         // Setup arguments for the trapStub
         final IndexedSequence parameterRegisters = targetABI.integerIncomingParameterRegisters();
-        asm.ldx(latchRegister, VmThreadLocal.TRAP_NUMBER.offset(), (GPR) parameterRegisters.get(0));
+        asm.ldx(latchRegister, VmThreadLocal.TRAP_NUMBER.offset, (GPR) parameterRegisters.get(0));
         asm.add(stackPointer, trapStateOffset, (GPR) parameterRegisters.get(1));
-        asm.ldx(latchRegister, VmThreadLocal.TRAP_FAULT_ADDRESS.offset(), (GPR) parameterRegisters.get(2));
+        asm.ldx(latchRegister, VmThreadLocal.TRAP_FAULT_ADDRESS.offset, (GPR) parameterRegisters.get(2));
 
         // Write trap number in corresponding trap state location
         asm.stx((GPR) parameterRegisters.get(0), stackPointer, offset);

@@ -91,7 +91,7 @@ public class SideTable {
     }
 
     public int compareAndSwapStart(int index) {
-        return compareAndSwapStart(sideTableStart.plus(index * CHUNK_SLOT_LENGTH));
+        return sideTableStart.asPointer().compareAndSwapInt(index * CHUNK_SLOT_LENGTH, START, SCAVENGED);
     }
 
     public void setStart(Address addr) {
@@ -100,10 +100,6 @@ public class SideTable {
 
     public void setCreating(Address addr) {
         addr.asPointer().setInt(CREATING);
-    }
-
-    public int compareAndSwapStart(Address addr) {
-        return addr.asPointer().compareAndSwapInt(START, SCAVENGED);
     }
 
     private void setMiddle(int index) {
@@ -115,11 +111,7 @@ public class SideTable {
     }
 
     private void setScavenged(int index) {
-        setScavenged(sideTableStart.plus(index * CHUNK_SLOT_LENGTH));
-    }
-
-    private void setScavenged(Address addr) {
-        addr.asPointer().compareAndSwapInt(START, SCAVENGED);
+        sideTableStart.asPointer().compareAndSwapInt(index * CHUNK_SLOT_LENGTH, START, SCAVENGED);
     }
 
     public static int chunkShift() {

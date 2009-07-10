@@ -56,6 +56,10 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
         this.cpuFramePointer = teleNativeThread.framePointer();
     }
 
+    /**
+     * Denotes an error that occurred while walking the stack for the purpose of inspecting the
+     * frames on the stack.
+     */
     public class ErrorStackFrame extends StackFrame {
         private final String errorMessage;
         ErrorStackFrame(StackFrame callee, StackFrameWalker walker, String errorMessage) {
@@ -96,6 +100,7 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
         try {
             frames(frames, cpuInstructionPointer, cpuStackPointer, cpuFramePointer);
         } catch (Throwable e) {
+            e.printStackTrace();
             final StackFrame parentFrame = frames.isEmpty() ? null : frames.last();
             frames.append(new ErrorStackFrame(parentFrame, this, e.toString()));
         }

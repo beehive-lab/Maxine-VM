@@ -266,7 +266,7 @@ public final class Trap {
             raise(trapState, targetMethod, new NullPointerException(), stackPointer, framePointer, instructionPointer);
         } else {
             // segmentation fault happened in native code somewhere, die.
-            MaxineVM.native_trap_exit(MaxineVM.HARD_EXIT_CODE, instructionPointer);
+            FatalError.unexpected("Trap in native code", instructionPointer);
         }
     }
 

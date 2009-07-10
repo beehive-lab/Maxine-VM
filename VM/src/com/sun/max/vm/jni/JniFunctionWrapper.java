@@ -22,17 +22,15 @@ package com.sun.max.vm.jni;
 
 
 import static com.sun.max.vm.compiler.builtin.MakeStackVariable.*;
-import static com.sun.max.vm.compiler.snippet.NativeStubSnippet.NativeCallPrologue.*;
-import static com.sun.max.vm.runtime.Safepoint.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.VMRegister.*;
@@ -103,20 +101,9 @@ public final class JniFunctionWrapper {
     @INLINE
     private static void jniWrapperEpilogue(final Pointer vmThreadLocals, final Word sp, final Word fp, final Word ip, final TargetMethod jniTargetMethod) {
         traceExit(jniTargetMethod);
-        MemoryBarrier.storeStore();
-        LAST_JAVA_CALLER_STACK_POINTER.setVariableWord(vmThreadLocals, sp);
-        LAST_JAVA_CALLER_FRAME_POINTER.setVariableWord(vmThreadLocals, fp);
-        MemoryBarrier.storeStore();
-        LAST_JAVA_CALLER_INSTRUCTION_POINTER.setVariableWord(vmThreadLocals, ip);
 
-        if (Safepoint.UseThreadStateWordForGCMutatorSynchronization) {
-            final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-            final Pointer statePointer = STATE.pointer(enabledVmThreadLocals);
-            final int oldValue = Safepoint.cas(statePointer, THREAD_IN_JAVA, THREAD_IN_NATIVE);
-            if (oldValue != THREAD_IN_JAVA) {
-                Safepoint.reportIllegalThreadState("JNI function call epilogue", oldValue);
-            }
-        }
+        // returning from a JNI upcall is similar to a entering a native method returning; reuse the native call prologue sequence
+        NativeCallPrologue.nativeCallPrologue0(vmThreadLocals, sp, fp, ip);
     }
 
     /**
