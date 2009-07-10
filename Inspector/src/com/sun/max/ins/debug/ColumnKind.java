@@ -18,27 +18,20 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.target;
 
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.stack.*;
+package com.sun.max.ins.debug;
 
 /**
- * @author Bernd Mathiske
+ * ColumnKind general interface.
+ * @author Hannes Payer
+ *
  */
-public abstract class OptimizedTargetMethod extends TargetMethod {
-
-    protected OptimizedTargetMethod(ClassMethodActor classMethodActor) {
-        super(classMethodActor);
-    }
-
-    @Override
-    public JavaStackFrameLayout stackFrameLayout() {
-        return new OptoStackFrameLayout(frameSize());
-    }
-
-    @Override
-    public boolean areReferenceMapsFinalized() {
-        return true;
-    }
+public interface ColumnKind {
+    String label();
+    String toolTipText();
+    String toString();
+    boolean canBeMadeInvisible();
+    boolean defaultVisibility();
+    int minWidth();
+    int ordinal();
 }

@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.verifier;
 
-import com.sun.max.profile.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -41,6 +40,7 @@ public class TypeCheckingVerifier extends ClassVerifier {
             throw new IllegalArgumentException("Cannot perform type checking verification on class " + classActor.name + " with version number less than 50: " + classActor.majorVersion);
         }
     }
+
     @Override
     public synchronized void verify() {
         try {
@@ -74,5 +74,4 @@ public class TypeCheckingVerifier extends ClassVerifier {
             throw verifyError;
         }
     }
-
 }

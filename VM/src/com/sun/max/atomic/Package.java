@@ -18,27 +18,17 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.target;
+package com.sun.max.atomic;
 
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.stack.*;
+import com.sun.max.*;
 
 /**
- * @author Bernd Mathiske
+ * @see MaxPackage
+ *
+ * @author Doug Simon
  */
-public abstract class OptimizedTargetMethod extends TargetMethod {
-
-    protected OptimizedTargetMethod(ClassMethodActor classMethodActor) {
-        super(classMethodActor);
-    }
-
-    @Override
-    public JavaStackFrameLayout stackFrameLayout() {
-        return new OptoStackFrameLayout(frameSize());
-    }
-
-    @Override
-    public boolean areReferenceMapsFinalized() {
-        return true;
+public class Package extends BasePackage {
+    public Package() {
+        super();
     }
 }

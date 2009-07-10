@@ -25,7 +25,6 @@ import java.nio.*;
 import javax.swing.*;
 
 import com.sun.max.collect.*;
-import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -145,8 +144,8 @@ public class GuestVMXenTeleDomain extends TeleProcess {
     }
 
     @Override
-    protected boolean deactivateWatchpoint(MemoryRegion memoryRegion) {
-        return GuestVMXenDBChannel.deactivateWatchpoint(domainId, memoryRegion);
+    protected boolean deactivateWatchpoint(TeleWatchpoint teleWatchpoint) {
+        return GuestVMXenDBChannel.deactivateWatchpoint(domainId, teleWatchpoint);
     }
 
     @Override

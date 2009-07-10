@@ -28,7 +28,7 @@ import com.sun.max.collect.*;
  *
  * @author Michael Van De Vanter
  */
-public enum BreakpointsColumnKind {
+public enum BreakpointsColumnKind implements ColumnKind{
     TAG ("Kind", "[T]arget, [B]ytecode, [S]ource", true, 20),
     ENABLED("En", "Enabled?", true, 5),
     METHOD("Method", "Method containing breakpoint", true, -1) {

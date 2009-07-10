@@ -218,7 +218,7 @@ public class MakeStackVariable extends SpecialBuiltin {
      *                guarantees that it will be allocated on the stack. Otherwise, a stack slot is allocated and
      *                initialized with {@code value}.
      * @param key
-     *                an object that can be used to access the value when inspecting the stack frame off the method
+     *                an object that can be used to access the value when inspecting the stack frame of the method
      *                containing this built-in call. This object must be a compile time constant. That is, it must be a
      *                {@code static} field that is either marked {@code final} or has {@link CONSTANT} or
      *                {@link CONSTANT_WHEN_NOT_ZERO} applied to its definition.

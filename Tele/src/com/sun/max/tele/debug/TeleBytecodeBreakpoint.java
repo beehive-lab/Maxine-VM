@@ -31,9 +31,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.actor.member.MethodKey.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.jit.*;
-import com.sun.max.vm.jit.amd64.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -74,39 +71,8 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         teleVM().messenger().requestBytecodeBreakpoint(key(), key().bytecodePosition);
     }
 
-    private Deoptimizer deoptimizer;
-
-    private Deoptimizer makeDeoptimizer() {
-        if (deoptimizer == null) {
-            switch (teleVM().vmConfiguration().platform().processorKind.instructionSet) {
-                case AMD64:
-                    deoptimizer = AMD64Deoptimizer.deoptimizer();
-                    break;
-                default:
-                    FatalError.unimplemented();
-            }
-        }
-        return deoptimizer;
-    }
-
     private void triggerDeoptimization(TeleTargetMethod teleTargetMethod) {
-        final int[] stopPositions = teleTargetMethod.getStopPositions();
-        int i;
-        for (i = 0; i < teleTargetMethod.getNumberOfDirectCalls(); i++) {
-            final Pointer callSite = teleTargetMethod.getCodeStart().plus(stopPositions[i]);
-            final Pointer patchAddress = callSite.plus(makeDeoptimizer().directCallSize());
-            teleVM().dataAccess().writeBytes(patchAddress, makeDeoptimizer().illegalInstruction());
-        }
-        for (; i < teleTargetMethod.getNumberOfIndirectCalls(); i++) {
-            final Pointer callSite = teleTargetMethod.getCodeStart().plus(stopPositions[i]);
-            final byte firstInstructionByte = teleVM().dataAccess().readByte(callSite);
-            final Pointer patchAddress = callSite.plus(makeDeoptimizer().indirectCallSize(firstInstructionByte));
-            teleVM().dataAccess().writeBytes(patchAddress, makeDeoptimizer().illegalInstruction());
-        }
-        for (; i < teleTargetMethod.getNumberOfSafepoints(); i++) {
-            final Pointer safepoint = teleTargetMethod.getCodeStart().plus(stopPositions[i]);
-            teleVM().dataAccess().writeBytes(safepoint, makeDeoptimizer().illegalInstruction());
-        }
+        // do nothing. completely broken.
     }
 
     /**

@@ -523,7 +523,7 @@ class CirToDirMethodTranslation {
         } else if (cirProcedure instanceof CirBuiltin) {
             final CirBuiltin cirBuiltin = (CirBuiltin) cirProcedure;
             final DirJavaFrameDescriptor dirJavaFrameDescriptor = cirToDirJavaFrameDescriptor(cirCall.javaFrameDescriptor());
-            if (cirBuiltin.builtin() == SafepointBuiltin.SoftSafepoint.BUILTIN || cirBuiltin.builtin() == SafepointBuiltin.HardSafepoint.BUILTIN) {
+            if (cirBuiltin.builtin() == SafepointBuiltin.BUILTIN) {
                 safepointGenerator.generateCall(translation, cirBuiltin, cirArguments, false, dirJavaFrameDescriptor);
             } else {
                 builtinCallGenerator.generateCall(translation, cirBuiltin, cirArguments, false, dirJavaFrameDescriptor);

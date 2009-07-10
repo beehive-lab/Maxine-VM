@@ -30,7 +30,6 @@ import com.sun.max.vm.monitor.modal.modehandlers.AbstractModeHandler.*;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased.BiasedLockRevocationHeuristics.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.object.host.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
@@ -84,18 +83,25 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         return decodeLockwordThreadID(biasedLockWord.getBiasOwnerID());
     }
 
-    private static Safepoint.Procedure safepointProcedure = new Safepoint.Procedure() {
+    /**
+     * The procedure that is run on the bias owning thread that has been stopped by a safepoint for the
+     * purpose of revoking the bias.
+     */
+    private static final class SuspendBiasedThread implements Safepoint.Procedure {
+
         public void run(Pointer trapState) {
             // Suspended bias-owner threads wait here while a revoker thread performs the revocation.
             synchronized (VmThreadMap.ACTIVE) {
             }
-            VmThreadLocal.SAFEPOINT_VENUE.setVariableReference(Reference.fromJava(Safepoint.Venue.NATIVE));
         }
+
         @Override
         public String toString() {
             return "BiasedLockModeHandler-BlockForBiasRevocation";
         }
-    };
+    }
+
+    private static SuspendBiasedThread suspend = new SuspendBiasedThread();
 
     protected ModalLockWord64 revokeBias(Object object) {
         final ModalLockWord64 lockWord = ModalLockWord64.from(ObjectAccess.readMisc(object));
@@ -127,7 +133,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                 ProgramError.unexpected("Attempted to revoke bias for still initializing thread.");
             }
             // Trigger safepoint for bias owner
-            Safepoint.runProcedure(vmThreadLocals, safepointProcedure);
+            Safepoint.runProcedure(vmThreadLocals, suspend);
             // Wait until bias owner is not mutating
             while (VmThreadLocal.inJava(vmThreadLocals)) {
                 try {
@@ -562,16 +568,22 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             return postRevokeLockWord;
         }
 
-        private final Pointer.Procedure triggerSafepoints = new Pointer.Procedure() {
+        /**
+         * The procedure that is run on the GC thread to trigger safepoints for a given thread.
+         */
+        final class TriggerSafepoints implements Pointer.Procedure {
+
             public void run(Pointer vmThreadLocals) {
                 if (vmThreadLocals.isZero()) {
                     // Thread is still starting up.
                     // Do not need to do anything, because it will try to lock 'VmThreadMap.ACTIVE' and thus block.
                 } else {
-                    Safepoint.runProcedure(vmThreadLocals, safepointProcedure);
+                    Safepoint.runProcedure(vmThreadLocals, suspend);
                 }
             }
-        };
+        }
+
+        private final TriggerSafepoints triggerSafepoints = new TriggerSafepoints();
 
         private final Safepoint.ResetSafepoints resetSafepoints = new Safepoint.ResetSafepoints();
 
