@@ -37,23 +37,14 @@ import com.sun.max.vm.value.*;
  */
 public abstract class EirMethodGeneration {
 
-    private final EirGenerator eirGenerator;
-
-    public EirGenerator eirGenerator() {
-        return eirGenerator;
-    }
-
-    private final EirABI abi;
-
-    public EirABI abi() {
-        return abi;
-    }
-
-    private final MemoryModel memoryModel;
-
-    public MemoryModel memoryModel() {
-        return memoryModel;
-    }
+    public final EirGenerator eirGenerator;
+    public final EirABI abi;
+    public final MemoryModel memoryModel;
+    public final EirLiteralPool literalPool = new EirLiteralPool();
+    /**
+     * Specifies if the generated code uses one shared epilogue for all return points.
+     */
+    public final boolean usesSharedEpilogue;
 
     protected abstract EirInstruction createJump(EirBlock eirBlock, EirBlock toBlock);
 
@@ -85,11 +76,12 @@ public abstract class EirMethodGeneration {
         return registerVariables[index];
     }
 
-    protected EirMethodGeneration(EirGenerator eirGenerator, EirABI abi, boolean isTemplate) {
+    protected EirMethodGeneration(EirGenerator eirGenerator, EirABI abi, boolean isTemplate, boolean usesSharedEpilogue) {
         this.eirGenerator = eirGenerator;
         this.abi = abi;
         this.memoryModel = eirGenerator.compilerScheme().vmConfiguration().platform().processorKind.processorModel.memoryModel();
         this.isTemplate = isTemplate;
+        this.usesSharedEpilogue = usesSharedEpilogue;
 
         this.integerRegisterRoleValues = new EirValue[VMRegister.Role.VALUES.length()];
         this.floatingPointRegisterRoleValues = new EirValue[VMRegister.Role.VALUES.length()];
@@ -148,12 +140,6 @@ public abstract class EirMethodGeneration {
         return eirBlock;
     }
 
-    private final EirLiteralPool literalPool = new EirLiteralPool();
-
-    public EirLiteralPool literalPool() {
-        return literalPool;
-    }
-
     /**
      * Slots in the frame of the method being generated. That is, the offsets of these slots are relative SP after it
      * has been adjusted upon entry to the method.
@@ -171,7 +157,7 @@ public abstract class EirMethodGeneration {
     }
 
     public EirStackSlot allocateSpillStackSlot() {
-        final EirStackSlot stackSlot = new EirStackSlot(EirStackSlot.Purpose.LOCAL, localStackSlots.length() * abi().stackSlotSize());
+        final EirStackSlot stackSlot = new EirStackSlot(EirStackSlot.Purpose.LOCAL, localStackSlots.length() * abi.stackSlotSize());
         localStackSlots.append(stackSlot);
         return stackSlot;
     }
@@ -184,29 +170,29 @@ public abstract class EirMethodGeneration {
      * Gets the size of the stack frame currently allocated used for local variables.
      */
     public int frameSize() {
-        return abi().frameSize(localStackSlots.length());
+        return abi.frameSize(localStackSlots.length());
     }
 
     public EirStackSlot localStackSlotFromIndex(int index) {
         if (index >= localStackSlots.length()) {
             // Fill in the missing stack slots
             for (int i = localStackSlots.length(); i <= index; i++) {
-                localStackSlots.append(new EirStackSlot(EirStackSlot.Purpose.LOCAL, i * abi().stackSlotSize()));
+                localStackSlots.append(new EirStackSlot(EirStackSlot.Purpose.LOCAL, i * abi.stackSlotSize()));
             }
         }
         return localStackSlots.get(index);
     }
 
     public EirStackSlot spillStackSlotFromOffset(int offset) {
-        return localStackSlotFromIndex(offset / abi().stackSlotSize());
+        return localStackSlotFromIndex(offset / abi.stackSlotSize());
     }
 
     private EirStackSlot canonicalizeStackSlot(EirStackSlot stackSlot, AppendableIndexedSequence<EirStackSlot> slots) {
-        final int index = stackSlot.offset() / abi().stackSlotSize();
+        final int index = stackSlot.offset() / abi.stackSlotSize();
         if (index >= slots.length()) {
             // Fill in the missing stack slots
             for (int i = slots.length(); i < index; i++) {
-                slots.append(new EirStackSlot(stackSlot.purpose(), i * abi().stackSlotSize()));
+                slots.append(new EirStackSlot(stackSlot.purpose(), i * abi.stackSlotSize()));
             }
             slots.append(stackSlot);
             return stackSlot;
@@ -278,7 +264,7 @@ public abstract class EirMethodGeneration {
     public EirVariable createEirVariable(Kind kind) {
         assert variablePool == null : "can't allocate EIR variables once a variable pool exists";
         final int serial = variables.length();
-        final EirVariable eirVariable = new EirVariable(eirGenerator().eirKind(kind), serial);
+        final EirVariable eirVariable = new EirVariable(eirGenerator.eirKind(kind), serial);
         variables.append(eirVariable);
         return eirVariable;
     }
@@ -361,6 +347,7 @@ public abstract class EirMethodGeneration {
     public abstract EirEpilogue createEpilogueAndReturn(EirBlock eirBlock);
 
     public EirBlock makeEpilogue() {
+        assert usesSharedEpilogue;
         if (eirEpilogue == null) {
             eirEpilogue = createEpilogueAndReturn(eirEpilogueBlock());
         }
@@ -597,7 +584,7 @@ public abstract class EirMethodGeneration {
             case METHOD:
                 break;
             case LITERAL:
-                return literalPool().makeLiteral(value);
+                return literalPool.makeLiteral(value);
             default:
                 break;
         }

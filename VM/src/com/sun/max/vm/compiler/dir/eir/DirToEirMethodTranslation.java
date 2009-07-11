@@ -47,40 +47,15 @@ import com.sun.max.vm.value.*;
  */
 public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
 
-    private final EirRegister[] calleeSavedEirRegisters;
-
-    public final EirRegister[] calleeSavedEirRegisters() {
-        return calleeSavedEirRegisters;
-    }
-
-    private final EirVariable[] calleeSavedEirVariables;
-
-    public final EirVariable[] calleeSavedEirVariables() {
-        return calleeSavedEirVariables;
-    }
+    public final EirRegister[] calleeSavedEirRegisters;
+    public final EirVariable[] calleeSavedEirVariables;
+    public final BitSet isCalleeSavedParameter = new BitSet();
+    public final EirLocation[] parameterEirLocations;
+    public final EirVariable[] eirParameters;
 
     private final EirVariable[] calleeRepositoryEirVariables;
 
-    private final BitSet isCalleeSavedParameter = new BitSet();
-
-    public final BitSet isCalleeSavedParameter() {
-        return isCalleeSavedParameter;
-    }
-
-    private final EirLocation[] parameterEirLocations;
-
-    public final EirLocation[] parameterEirLocations() {
-        return parameterEirLocations;
-    }
-
-    private final EirVariable[] eirParameters;
-
-    public final EirVariable[] eirParameters() {
-        return eirParameters;
-    }
-
     protected abstract EirPrologue createPrologue(EirBlock block);
-
 
     protected abstract EirInstruction createReturn(EirBlock eirBlock);
 
@@ -112,30 +87,23 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
         return eirEpilogue;
     }
 
-    private final boolean requiresEpilogue;
-
-    public boolean requiresEpilogue() {
-        return requiresEpilogue;
-    }
-
     protected DirToEirMethodTranslation(EirGenerator eirGenerator, EirMethod eirMethod, DirMethod dirMethod) {
-        super(eirGenerator, eirMethod.abi(), eirMethod.isTemplate());
-        this.requiresEpilogue = eirMethod.isTemplate() || eirMethod.isNative();
+        super(eirGenerator, eirMethod.abi(), eirMethod.isTemplate(), eirMethod.isTemplate() || eirMethod.isNative() || eirMethod.classMethodActor().isCFunction());
         this.eirMethod = eirMethod;
         this.dirMethod = dirMethod;
 
         // Location where translated method returns its result.
-        resultEirLocation = abi().getReturnLocation(eirMethod.classMethodActor().resultKind());
+        resultEirLocation = abi.getReturnLocation(eirMethod.classMethodActor().resultKind());
 
-        final EirRegister safepointLatchRegister = abi().safepointLatchRegister();
+        final EirRegister safepointLatchRegister = abi.safepointLatchRegister();
         final EirVariable safepointLatchVariable = makeRegisterVariable(safepointLatchRegister);
 
-        final EirVariable[] sharedEirVariables = new EirVariable[abi().registerPool().length()];
+        final EirVariable[] sharedEirVariables = new EirVariable[abi.registerPool().length()];
         sharedEirVariables[safepointLatchRegister.serial()] = safepointLatchVariable;
 
 
         final Kind[] parameterKinds = IrValue.Static.toKinds(dirMethod.parameters());
-        parameterEirLocations = abi().getParameterLocations(dirMethod.classMethodActor(), EirStackSlot.Purpose.PARAMETER, parameterKinds);
+        parameterEirLocations = abi.getParameterLocations(dirMethod.classMethodActor(), EirStackSlot.Purpose.PARAMETER, parameterKinds);
 
         eirParameters = new EirVariable[parameterEirLocations.length];
         for (int i = 0; i < parameterEirLocations.length; i++) {
@@ -148,16 +116,16 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
 
         if (eirMethod.isTrampoline()) {
             // Make all potential parameters of the trampoline's compilees callee-saved by the trampoline:
-            calleeSavedEirRegisters = new EirRegister[abi().integerParameterRegisters().length() + abi().floatingPointParameterRegisters().length()];
+            calleeSavedEirRegisters = new EirRegister[abi.integerParameterRegisters().length() + abi.floatingPointParameterRegisters().length()];
             int i = 0;
-            for (Object register : abi().integerParameterRegisters()) {
+            for (Object register : abi.integerParameterRegisters()) {
                 calleeSavedEirRegisters[i++] = (EirRegister) register;
             }
-            for (Object register : abi().floatingPointParameterRegisters()) {
+            for (Object register : abi.floatingPointParameterRegisters()) {
                 calleeSavedEirRegisters[i++] = (EirRegister) register;
             }
         } else {
-            final PoolSet<EirRegister> calleeSavedRegisters = StaticLoophole.cast(abi().calleeSavedRegisters());
+            final PoolSet<EirRegister> calleeSavedRegisters = StaticLoophole.cast(abi.calleeSavedRegisters());
             calleeSavedEirRegisters = com.sun.max.lang.Arrays.from(EirRegister.class, calleeSavedRegisters);
         }
 
@@ -183,8 +151,8 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
         }
 
         final Class<PoolSet<EirRegister>> type = null;
-        final PoolSet<EirRegister> callerSavedRegisters = StaticLoophole.cast(type, abi().callerSavedRegisters());
-        if (callerSavedRegisters.contains(abi().framePointer())) {
+        final PoolSet<EirRegister> callerSavedRegisters = StaticLoophole.cast(type, abi.callerSavedRegisters());
+        if (callerSavedRegisters.contains(abi.framePointer())) {
             prologue.addDefinition(framePointerVariable());
             addEpilogueUse(framePointerVariable());
         }
@@ -310,7 +278,7 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
         if (dirBlock instanceof DirCatchBlock) {
             final DirCatchBlock dirCatchBlock = (DirCatchBlock) dirBlock;
             final EirValue eirCatchParameter = dirToEirValue(dirCatchBlock.catchParameter());
-            eirBlock.appendInstruction(new EirCatch(eirBlock, eirCatchParameter, eirGenerator().catchParameterLocation()));
+            eirBlock.appendInstruction(new EirCatch(eirBlock, eirCatchParameter, eirGenerator.catchParameterLocation()));
         }
         for (DirInstruction dirInstruction : dirBlock.instructions()) {
             dirInstruction.acceptVisitor(instructionTranslation);

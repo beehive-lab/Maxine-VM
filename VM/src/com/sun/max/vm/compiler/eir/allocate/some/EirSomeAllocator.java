@@ -165,7 +165,7 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
                 removeInterferingRegisters(v, availableRegisters);
             } else if (v.location() instanceof EirStackSlot) {
                 final EirStackSlot stackSlot = (EirStackSlot) v.location();
-                final int stackSlotIndex = stackSlot.offset() / methodGeneration().abi().stackSlotSize();
+                final int stackSlotIndex = stackSlot.offset() / methodGeneration().abi.stackSlotSize();
                 stackSlots.set(stackSlotIndex);
             }
         }
@@ -444,7 +444,6 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
         }
         resettingTimer.stop();
 
-        methodGeneration().notifyBeforeTransformation(methodGeneration().variables(), Transformation.LIVE_RANGES);
         resetting2Timer.start();
         for (EirVariable variable : methodGeneration().variables()) {
             variable.resetInterferingVariables(emptyVariableSet);
@@ -488,7 +487,7 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
         coalesceVariables(rankedVariables);
         coalescingTimer.stop();
         assert assertPlausibleCorrectness();
-        if (methodGeneration().eirGenerator().compilerScheme().vmConfiguration().debugging()) {
+        if (methodGeneration().eirGenerator.compilerScheme().vmConfiguration().debugging()) {
             trimTimer.start();
             trim();
             trimTimer.stop();
