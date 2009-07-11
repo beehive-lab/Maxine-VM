@@ -309,8 +309,6 @@ public abstract class EirMethodGeneration {
         return new EirGuardpoint(eirBlock);
     }
 
-    protected abstract EirEpilogue createEpilogue(EirBlock eirBlock);
-
     // Used when one wants generated code to perform a jump at the end of
     // the generated code region instead of a return instruction. This is most
     // useful for generating templates of a JIT or an interpreter.
@@ -344,10 +342,9 @@ public abstract class EirMethodGeneration {
         eirEpilogue.addStackSlotUse(useValue);
     }
 
-    public abstract EirEpilogue createEpilogueAndReturn(EirBlock eirBlock);
+    protected abstract EirEpilogue createEpilogueAndReturn(EirBlock eirBlock);
 
     public EirBlock makeEpilogue() {
-        assert usesSharedEpilogue;
         if (eirEpilogue == null) {
             eirEpilogue = createEpilogueAndReturn(eirEpilogueBlock());
         }

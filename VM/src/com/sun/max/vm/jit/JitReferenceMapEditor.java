@@ -137,7 +137,7 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
     }
 
     public void fillInMaps(int[] bytecodeToTargetCodePositionMap) {
-        if (Heap.traceGCRootScanning()) {
+        if (Heap.traceRootScanning()) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("Finalizing JIT reference maps for ");
             Log.printMethodActor(classMethodActor(), true);
@@ -148,7 +148,7 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
         interpreter.finalizeFrames(this);
         interpreter.interpretReferenceSlots(this, this, bytecodeStopsIterator);
 
-        if (Heap.traceGCRootScanning()) {
+        if (Heap.traceRootScanning()) {
             final boolean lockDisabledSafepoints = Log.lock();
             bytecodeStopsIterator.reset();
             final CodeAttribute codeAttribute = targetMethod.classMethodActor().codeAttribute();

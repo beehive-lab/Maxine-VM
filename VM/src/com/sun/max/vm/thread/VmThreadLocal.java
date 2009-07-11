@@ -571,7 +571,7 @@ public final class VmThreadLocal {
         }
 
         boolean lockDisabledSafepoints = false;
-        if (Heap.traceGCRootScanning()) {
+        if (Heap.traceRootScanning()) {
             lockDisabledSafepoints = Log.lock(); // Note: as a side effect, this lock serializes stack reference map scanning
             Log.print("Scanning stack reference map for thread ");
             Log.printVmThread(vmThread, false);
@@ -587,7 +587,7 @@ public final class VmThreadLocal {
         StackReferenceMapPreparer.scanReferenceMapRange(vmThreadLocals, lowestSlot, vmThreadLocalsEnd(vmThreadLocals), wordPointerIndexVisitor);
         StackReferenceMapPreparer.scanReferenceMapRange(vmThreadLocals, lowestActiveSlot, highestSlot, wordPointerIndexVisitor);
 
-        if (Heap.traceGCRootScanning()) {
+        if (Heap.traceRootScanning()) {
             Log.unlock(lockDisabledSafepoints);
         }
 
