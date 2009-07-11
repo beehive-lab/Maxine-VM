@@ -2064,10 +2064,8 @@ public interface AMD64EirInstruction {
         /**
          * Creates an instruction that assigns the address of a stack slot to the destination register.
          *
-         * @param destination
-         *                the register in which the address is saved
-         * @param source
-         *                a value that will be allocated to a stack slot
+         * @param destination the register in which the address is saved
+         * @param source a value that will be allocated to a stack slot
          */
         public LEA_STACK_ADDRESS(EirBlock block, EirValue destination, EirValue source, StackVariable stackVariableKey) {
             super(block, destination, EirOperand.Effect.DEFINITION, G, source, EirOperand.Effect.USE, S);

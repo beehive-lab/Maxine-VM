@@ -53,7 +53,7 @@ public final class AMD64EirSomeAllocator extends EirSomeAllocator<AMD64EirRegist
 
     public AMD64EirSomeAllocator(EirMethodGeneration methodGeneration) {
         super(methodGeneration);
-        final AMD64EirABI abi = (AMD64EirABI) methodGeneration.abi();
+        final AMD64EirABI abi = (AMD64EirABI) methodGeneration.abi;
 
         allocatableIntegerRegisters = PoolSet.allOf(AMD64EirRegister.pool());
         allocatableIntegerRegisters.and(AMD64EirRegister.General.poolSet());

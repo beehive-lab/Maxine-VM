@@ -140,6 +140,9 @@ public class VMOption {
         if (suboptions.length == 0) {
             return parseValue(start.plus(prefix.length()));
         }
+        if (!parseValue(start.plus(prefix.length()))) {
+            return false;
+        }
         for (VMOption suboption : suboptions) {
             if (!suboption.parse(start)) {
                 return false;

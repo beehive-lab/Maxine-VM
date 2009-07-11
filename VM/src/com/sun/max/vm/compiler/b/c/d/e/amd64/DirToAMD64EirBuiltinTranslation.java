@@ -1340,7 +1340,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
         final DirConstant dirConstant = (DirConstant) dirArguments[0];
         final Class<PoolSet<MemoryBarrier>> type = null;
         final PoolSet<MemoryBarrier> memoryBarriers = StaticLoophole.cast(type, dirConstant.value().asObject());
-        if (methodTranslation().memoryModel().barriers.containsAll(memoryBarriers)) {
+        if (methodTranslation().memoryModel.barriers.containsAll(memoryBarriers)) {
             return;
         }
         if (memoryBarriers.length() == 1) {
