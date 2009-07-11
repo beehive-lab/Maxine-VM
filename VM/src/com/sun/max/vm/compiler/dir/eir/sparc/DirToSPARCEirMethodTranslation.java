@@ -77,15 +77,15 @@ public final class DirToSPARCEirMethodTranslation extends DirToEirMethodTranslat
     @Override
     protected EirPrologue createPrologue(EirBlock eirBlock) {
         return new SPARCEirPrologue(eirBlock, eirMethod(),
-                                    calleeSavedEirVariables(), calleeSavedEirRegisters(),
-                                    isCalleeSavedParameter(),
-                                    eirParameters(), parameterEirLocations());
+                                    calleeSavedEirVariables, calleeSavedEirRegisters,
+                                    isCalleeSavedParameter,
+                                    eirParameters, parameterEirLocations);
     }
 
     @Override
     protected EirEpilogue createEpilogue(EirBlock eirBlock) {
         return new SPARCEirEpilogue(eirBlock, eirMethod(),
-                                    calleeSavedEirVariables(), calleeSavedEirRegisters(),
+                                    calleeSavedEirVariables, calleeSavedEirRegisters,
                                     resultEirLocation());
     }
 

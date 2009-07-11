@@ -175,23 +175,4 @@ public final class DirToSPARCEirInstructionTranslation extends DirToEirInstructi
     public void visitJump(DirJump dirJump) {
         FatalError.unimplemented();
     }
-
-    @Override
-    public void visitReturn(DirReturn dirReturn) {
-        final DirValue dirValue = dirReturn.returnValue();
-
-        if (methodTranslation().requiresEpilogue()) {
-            addJump(methodTranslation().makeEpilogue());
-            if (dirValue.kind() != Kind.VOID) {
-                methodTranslation().addResultValue(methodTranslation().dirToEirValue(dirValue));
-            }
-        } else {
-            final EirEpilogue eirEpilogue = methodTranslation().createEpilogueAndReturn(eirBlock());
-            if (dirValue.kind() != Kind.VOID) {
-                final EirValue eirResultValue = methodTranslation().dirToEirValue(dirValue);
-                eirEpilogue.addResultValue(eirResultValue);
-            }
-        }
-    }
-
 }
