@@ -65,59 +65,15 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     private static final VMStringOption growPolicyOption =
         register(new VMStringOption("-XX:SemiSpaceGCGrowPolicy=", false, "Double", "Grow policy for heap (Linear|Double)."), MaxineVM.Phase.STARTING);
 
-    private final PointerIndexVisitor pointerIndexGripVerifier = new PointerIndexVisitor() {
-        @Override
-        public void visitPointerIndex(Pointer pointer, int wordIndex) {
-            DebugHeap.verifyGripAtIndex(pointer, wordIndex * Kind.REFERENCE.width.numberOfBytes, pointer.getGrip(wordIndex), toSpace);
-        }
-    };
+    private final PointerIndexGripVerifier pointerIndexGripVerifier = new PointerIndexGripVerifier();
 
-    private final PointerOffsetVisitor pointerOffsetGripVerifier = new PointerOffsetVisitor() {
-        public void visitPointerOffset(Pointer pointer, int offset) {
-            DebugHeap.verifyGripAtIndex(pointer, offset, pointer.readGrip(offset), toSpace);
-        }
-    };
+    private final PointerOffsetGripVerifier pointerOffsetGripVerifier = new PointerOffsetGripVerifier();
 
-    private final PointerIndexVisitor pointerIndexGripUpdater = new PointerIndexVisitor() {
-        @Override
-        public void visitPointerIndex(Pointer pointer, int wordIndex) {
-            final Grip oldGrip = pointer.getGrip(wordIndex);
-            final Grip newGrip = mapGrip(oldGrip);
-            if (newGrip != oldGrip) {
-                pointer.setGrip(wordIndex, newGrip);
-            }
-        }
-    };
+    private final PointerIndexGripUpdater pointerIndexGripUpdater = new PointerIndexGripUpdater();
 
-    private final PointerOffsetVisitor pointerOffsetGripUpdater = new PointerOffsetVisitor() {
-        public void visitPointerOffset(Pointer pointer, int offset) {
-            final Grip oldGrip = pointer.readGrip(offset);
-            final Grip newGrip = mapGrip(oldGrip);
-            if (newGrip != oldGrip) {
-                pointer.writeGrip(offset, newGrip);
-            }
-        }
-    };
+    private final PointerOffsetGripUpdater pointerOffsetGripUpdater = new PointerOffsetGripUpdater();
 
-    private final SpecialReferenceManager.GripForwarder gripForwarder = new SpecialReferenceManager.GripForwarder() {
-        public boolean isReachable(Grip grip) {
-            final Pointer origin = grip.toOrigin();
-            if (fromSpace.contains(origin)) {
-                final Grip forwardGrip = Layout.readForwardGrip(origin);
-                if (forwardGrip.isZero()) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        public Grip getForwardGrip(Grip grip) {
-            final Pointer origin = grip.toOrigin();
-            if (fromSpace.contains(origin)) {
-                return Layout.readForwardGrip(origin);
-            }
-            return grip;
-        }
-    };
+    private final GripForwarder gripForwarder = new GripForwarder();
 
     // The Sequential Heap Root Scanner is actually the "thread crawler" which will identify the
     // roots out of the threads' stacks. Here we create one for the actual scanning (_heapRootsScanner)
@@ -162,6 +118,66 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     private static void stopTimer(Timer timer) {
         if (Heap.traceGCTime()) {
             timer.stop();
+        }
+    }
+
+    private final class GripForwarder implements SpecialReferenceManager.GripForwarder {
+
+        public boolean isReachable(Grip grip) {
+            final Pointer origin = grip.toOrigin();
+            if (fromSpace.contains(origin)) {
+                final Grip forwardGrip = Layout.readForwardGrip(origin);
+                if (forwardGrip.isZero()) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public Grip getForwardGrip(Grip grip) {
+            final Pointer origin = grip.toOrigin();
+            if (fromSpace.contains(origin)) {
+                return Layout.readForwardGrip(origin);
+            }
+            return grip;
+        }
+    }
+
+    private final class PointerOffsetGripUpdater implements PointerOffsetVisitor {
+
+        public void visitPointerOffset(Pointer pointer, int offset) {
+            final Grip oldGrip = pointer.readGrip(offset);
+            final Grip newGrip = mapGrip(oldGrip);
+            if (newGrip != oldGrip) {
+                pointer.writeGrip(offset, newGrip);
+            }
+        }
+    }
+
+    private final class PointerIndexGripUpdater extends PointerIndexVisitor {
+
+        @Override
+        public void visitPointerIndex(Pointer pointer, int wordIndex) {
+            final Grip oldGrip = pointer.getGrip(wordIndex);
+            final Grip newGrip = mapGrip(oldGrip);
+            if (newGrip != oldGrip) {
+                pointer.setGrip(wordIndex, newGrip);
+            }
+        }
+    }
+
+    private final class PointerOffsetGripVerifier implements PointerOffsetVisitor {
+
+        public void visitPointerOffset(Pointer pointer, int offset) {
+            DebugHeap.verifyGripAtIndex(pointer, offset, pointer.readGrip(offset), toSpace);
+        }
+    }
+
+    private final class PointerIndexGripVerifier extends PointerIndexVisitor {
+
+        @Override
+        public void visitPointerIndex(Pointer pointer, int wordIndex) {
+            DebugHeap.verifyGripAtIndex(pointer, wordIndex * Kind.REFERENCE.width.numberOfBytes, pointer.getGrip(wordIndex), toSpace);
         }
     }
 
@@ -635,10 +651,10 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
     /*
      * The OutOfMemoryError condition happens when we cannot satisfy a request after running a garbage collection and we
-     * cannot grow the heap any further (i.e. we are at the limit set by -Xmx). In that case we raise _top to the actual end of
-     * the active space and set _inSafetyZone  to true. If this happens recursively we fast fail the VM via MaxineVM.native_exit.
+     * cannot grow the heap any further (i.e. we are at the limit set by -Xmx). In that case we raise 'top' to the actual end of
+     * the active space and set 'inSafetyZone' to true. If this happens recursively we fast fail the VM via MaxineVM.native_exit.
      * On the other hand if a subsequent GC manages to find enough space to allow the safety zone to be re-established
-     * we set _inSafetyZone = false.
+     * we set 'inSafetyZone' to false.
      */
 
     @NEVER_INLINE
@@ -670,45 +686,42 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         return cell;
     }
 
+    private static final long TLAB_SIZE = 64 * 1024;
+
     @NEVER_INLINE
-    public Pointer retryAllocate0(Size size) {
-        //final Pointer allocationMark = VmThreadLocal.ALLOCATION_MARK.getVariableWord().asPointer();
-        //final Pointer allocationTop = VmThreadLocal.ALLOCATION_TOP.getVariableWord().asPointer().minus(24);
-        //if (!allocationMark.equals(allocationTop)) {
-            //createArray(ClassActor.fromJava(Byte.class).dynamicHub(), ((allocationTop.minus(allocationMark)).minus(24)).toInt());
-        //}
-        final Size tlabSize = Size.fromLong(Math.max(size.toLong(), 64 * 1024));
+    public Pointer allocateTLAB(Size size) {
+        if (!ALLOCATION_DISABLED.getConstantWord().isZero()) {
+            Log.print("Trying to allocate ");
+            Log.print(size.toLong());
+            Log.print(" bytes on thread ");
+            Log.printVmThread(VmThread.current(), false);
+            Log.println(" while allocation is disabled");
+            FatalError.unexpected("Trying to allocate while allocation is disabled");
+        }
+        final Size tlabSize = Size.fromLong(Math.max(size.toLong(), TLAB_SIZE));
         final Pointer tlab = retryAllocate(tlabSize);
-        final Pointer cell = allocateWithDebugTag(tlab); // TODO:check this
+        final Pointer cell = allocateWithDebugTag(tlab);
         final Pointer end = cell.plus(size);
         TLAB_TOP.setVariableWord(tlab.plus(tlabSize));
         TLAB_MARK.setVariableWord(end);
         return cell;
     }
 
-    @INLINE
-    private Pointer allocate0(Size size) {
-        final Pointer oldAllocationMark = TLAB_MARK.getVariableWord().asPointer();
-        final Pointer cell = allocateWithDebugTag(oldAllocationMark);
-        final Pointer end = cell.plus(size);
-        if (end.greaterThan(TLAB_TOP.getVariableWord().asAddress())) {
-            if (!ALLOCATION_DISABLED.getConstantWord().isZero()) {
-                Log.print("Trying to allocate ");
-                Log.print(size.toLong());
-                Log.print(" bytes on thread ");
-                Log.printVmThread(VmThread.current(), false);
-                Log.println(" while allocation is disabled");
-                FatalError.unexpected("Trying to allocate while allocation is disabled");
-            }
-            return retryAllocate0(size);
-        }
-        TLAB_MARK.setVariableWord(end);
-
-        return cell;
-    }
+    private static final boolean UseTLABs = true;
 
     @INLINE
     private Pointer allocate(Size size) {
+        if (UseTLABs) {
+            final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
+            final Pointer oldAllocationMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
+            final Pointer cell = allocateWithDebugTag(oldAllocationMark);
+            final Pointer end = cell.plus(size);
+            if (end.greaterThan(enabledVmThreadLocals.getWord(TLAB_TOP.index).asAddress())) {
+                return allocateTLAB(size);
+            }
+            TLAB_MARK.setVariableWord(end);
+            return cell;
+        }
         if (!ALLOCATION_DISABLED.getConstantWord().isZero()) {
             Log.print("Trying to allocate ");
             Log.print(size.toLong());
