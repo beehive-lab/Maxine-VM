@@ -67,8 +67,10 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
         return createReturn(eirBlock);
     }
 
+    protected abstract EirEpilogue createEpilogue(EirBlock eirBlock);
+
     @Override
-    public EirEpilogue createEpilogueAndReturn(EirBlock eirBlock) {
+    protected EirEpilogue createEpilogueAndReturn(EirBlock eirBlock) {
         for (int i = 0; i < calleeSavedEirRegisters.length; i++) {
             eirBlock.appendInstruction(createAssignment(eirBlock, calleeSavedEirRegisters[i].kind(), calleeSavedEirVariables[i], calleeRepositoryEirVariables[i]));
         }
