@@ -431,6 +431,9 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
          */
         public MaxWatchpoint findTriggeredWatchpoint() {
             triggeredWatchpointAddress = Address.fromLong(teleProcess.readWatchpointAddress());
+            if (triggeredWatchpointAddress.equals(Word.zero())) {
+                return null;
+            }
             triggeredWatchpointCode = teleProcess.readWatchpointAccessCode();
 
             return findWatchpoint(triggeredWatchpointAddress);

@@ -487,7 +487,7 @@ class DirToSPARCEirBuiltinTranslation extends DirToEirBuiltinTranslation {
 
 
     private MembarOperand toMembarOperand(PoolSet<MemoryBarrier> memoryBarriers) {
-        final PoolSet<MemoryBarrier> memoryModelBarriers = methodTranslation().memoryModel().barriers;
+        final PoolSet<MemoryBarrier> memoryModelBarriers = methodTranslation().memoryModel.barriers;
         MembarOperand operand = MembarOperand.NO_MEMBAR;
         for (MemoryBarrier b : memoryBarriers) {
             if (!memoryModelBarriers.contains(b)) {
@@ -500,6 +500,9 @@ class DirToSPARCEirBuiltinTranslation extends DirToEirBuiltinTranslation {
                         break;
                     case STORE_STORE:
                         operand = operand.or(MembarOperand.STORE_STORE);
+                        break;
+                    case MEMOP_STORE:
+                        operand = operand.or(MembarOperand.STORE_STORE).or(MembarOperand.LOAD_STORE);
                         break;
                     case STORE_LOAD:
                         operand = operand.or(MembarOperand.STORE_LOAD);
@@ -523,7 +526,7 @@ class DirToSPARCEirBuiltinTranslation extends DirToEirBuiltinTranslation {
         final DirConstant dirConstant = (DirConstant) dirArguments[0];
         final Class<PoolSet<MemoryBarrier>> type = null;
         final PoolSet<MemoryBarrier> memoryBarriers = StaticLoophole.cast(type, dirConstant.value().asObject());
-        if (methodTranslation().memoryModel().barriers.containsAll(memoryBarriers)) {
+        if (methodTranslation().memoryModel.barriers.containsAll(memoryBarriers)) {
             return;
         }
         final MembarOperand membarOperand = toMembarOperand(memoryBarriers);

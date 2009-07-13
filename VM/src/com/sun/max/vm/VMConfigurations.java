@@ -100,9 +100,7 @@ public final class VMConfigurations {
     }
 
     public static VMConfiguration createStandard(BuildLevel buildLevel, Platform platform) {
-        return new VMConfiguration(buildLevel, platform, new com.sun.max.vm.grip.direct.Package(), defaultReferenceScheme(), new com.sun.max.vm.layout.ohm.Package(),
-                        defaultHeapPackage(), new com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package(), defaultCompilerPackage(platform), null, new com.sun.max.vm.interpret.empty.Package(), new com.sun.max.vm.trampoline.template.Package(),
-                        defaultTargetABIsPackage(platform), new com.sun.max.vm.run.java.Package());
+        return createStandard(buildLevel, platform, defaultCompilerPackage(platform));
     }
 
     public static VMConfiguration createStandard(BuildLevel buildLevel, Platform platform, VMPackage compilerPackage) {

@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.verifier;
 
-import com.sun.max.profile.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -48,16 +47,31 @@ public class TypeCheckingVerifier extends ClassVerifier {
             super.verify();
         } catch (VerifyError verifyError) {
             if (classActor.majorVersion == 50 && failOverToTypeInferencing.getValue()) {
-                final TypeInferencingVerifier typeInferencingVerifier = new TypeInferencingVerifier(classActor);
-                typeInferencingVerifier.verify();
+                failoverVerifier().verify();
             }
+            throw verifyError;
         }
+    }
+
+    TypeInferencingVerifier failoverVerifier;
+
+    private TypeInferencingVerifier failoverVerifier() {
+        if (failoverVerifier == null) {
+            failoverVerifier = new TypeInferencingVerifier(classActor);
+        }
+        return failoverVerifier;
     }
 
     @Override
     public synchronized CodeAttribute verify(ClassMethodActor classMethodActor, CodeAttribute codeAttribute) {
-        Metrics.increment("TypeCheckingVerifications");
-        new TypeCheckingMethodVerifier(this, classMethodActor, codeAttribute).verify();
-        return codeAttribute;
+        try {
+            new TypeCheckingMethodVerifier(this, classMethodActor, codeAttribute).verify();
+            return codeAttribute;
+        } catch (VerifyError verifyError) {
+            if (classActor.majorVersion == 50 && failOverToTypeInferencing.getValue()) {
+                return failoverVerifier().verify(classMethodActor, codeAttribute);
+            }
+            throw verifyError;
+        }
     }
 }

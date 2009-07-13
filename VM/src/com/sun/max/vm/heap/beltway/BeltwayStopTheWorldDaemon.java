@@ -27,7 +27,6 @@ import com.sun.max.sync.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
@@ -47,7 +46,6 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
             final Pointer vmThreadLocals = Safepoint.getLatchRegister();
 
             if (VmThreadLocal.inJava(vmThreadLocals)) {
-                VmThreadLocal.SAFEPOINT_VENUE.setVariableReference(vmThreadLocals, Reference.fromJava(Safepoint.Venue.JAVA));
                 VmThreadLocal.prepareStackReferenceMapFromTrap(vmThreadLocals, trapState);
             } else {
                 // GC may already be ongoing
@@ -56,7 +54,6 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
             synchronized (VmThreadMap.ACTIVE) {
                 // this is ok even though the GC does not get to scan this frame, because the object involved is in the boot image
             }
-            VmThreadLocal.SAFEPOINT_VENUE.setVariableReference(vmThreadLocals, Reference.fromJava(Safepoint.Venue.NATIVE));
         }
     };
 
@@ -104,7 +101,7 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
                 } catch (InterruptedException interruptedException) {
                 }
             }
-            if (VmThreadLocal.SAFEPOINT_VENUE.getVariableReference(vmThreadLocals).toJava() == Safepoint.Venue.NATIVE) {
+            if (LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).isZero()) {
                 // Since this thread is in native code it did not get an opportunity to prepare its stack maps,
                 // so we will take care of that for it now:
                 VmThreadLocal.prepareStackReferenceMap(vmThreadLocals);

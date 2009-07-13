@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.monitor.modal.sync;
 
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.thread.*;
 
@@ -185,8 +186,8 @@ class ProxyAcquirableJavaMonitor extends StandardJavaMonitor {
         Log.print(" ownerAcquired=");
         Log.print(ownerAcquired);
         Log.print(" proxyMutex=");
-        Log.print(proxyMutex.logId());
+        Log.print(Address.fromLong(proxyMutex.logId()));
         Log.print(" proxyCondVar=");
-        Log.print(proxyVar.logId());
+        Log.print(Address.fromLong(proxyVar.logId()));
     }
 }

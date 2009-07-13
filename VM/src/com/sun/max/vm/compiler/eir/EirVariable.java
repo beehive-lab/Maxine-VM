@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.compiler.eir;
 
+import java.util.*;
+
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -257,13 +259,27 @@ public final class EirVariable extends EirValue implements Comparable<EirVariabl
         aliasedVariables = null;
     }
 
-    @Override
-    public String toString() {
+    public String toString(boolean withAliases) {
         String s = kind.character + "$" + serial;
         if (location() != null) {
             s += "@" + location();
         }
+        if (withAliases && aliasedVariables != null) {
+            s += "[";
+            for (final Iterator<EirVariable> iterator = aliasedVariables.iterator(); iterator.hasNext();) {
+                s += iterator.next().toString(false);
+                if (iterator.hasNext()) {
+                    s += ", ";
+                }
+            }
+            s += "]";
+        }
         return s;
+    }
+
+    @Override
+    public String toString() {
+        return toString(true);
     }
 
     public Interval interval;

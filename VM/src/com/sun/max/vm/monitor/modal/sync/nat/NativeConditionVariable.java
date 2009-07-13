@@ -95,7 +95,7 @@ public final class NativeConditionVariable extends ConditionVariable {
     @Override
     public ConditionVariable init() {
         if (nativeRef.condition.isZero()) {
-            nativeRef.condition =  Memory.mustAllocate(size);
+            nativeRef.condition = Memory.mustAllocate(size);
             nativeConditionInitialize(nativeRef.condition);
         }
         return this;

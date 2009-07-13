@@ -23,6 +23,7 @@ package com.sun.max.vm.jit;
 import java.util.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.atomic.*;
 import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -31,6 +32,7 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.bytecode.refmaps.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -44,33 +46,18 @@ import com.sun.max.vm.stack.*;
  */
 public abstract class JitTargetMethod extends TargetMethod {
 
-    protected JitTargetMethod(ClassMethodActor classMethodActor) {
-        super(classMethodActor);
-    }
-
-    @Override
-    public DynamicCompilerScheme compilerScheme() {
-        return MaxineVM.hostOrTarget().configuration().jitScheme();
-    }
-
-    private int optimizedCallerAdapterFrameCodeSize;
-
-    /**
-     * The size of the adapter frame code found at the {@linkplain CallEntryPoint#OPTIMIZED_ENTRY_POINT entry point} for
-     * a call from a method compiled with the optimizing compiler.
-     */
-    public int optimizedCallerAdapterFrameCodeSize() {
-        return optimizedCallerAdapterFrameCodeSize;
-    }
-
     private int adapterReturnPosition;
+    private int optimizedCallerAdapterFrameCodeSize;
+    @INSPECTED
+    private BytecodeInfo[] bytecodeInfos;
+    private int frameReferenceMapOffset;
+    private final AtomicReference referenceMapEditor = new AtomicReference();
 
     /**
-     * @return the code position to which the JIT method returns in its optimized-to-JIT adapter code or -1 if there is no adapter.
+     * The preserves the stack frame layout object from {@link #referenceMapEditor} when the latter is cleared in {@link #finalizeReferenceMaps()}.
+     * The stack frame layout object is required by {@link StackReferenceMapPreparer#prepareTrampolineFrameForJITCaller}.
      */
-    public int adapterReturnPosition() {
-        return adapterReturnPosition;
-    }
+    private JitStackFrameLayout stackFrameLayout;
 
     /**
      * A bit map denoting which {@linkplain #directCallees() direct calls} in this target method correspond to calls
@@ -80,6 +67,41 @@ public abstract class JitTargetMethod extends TargetMethod {
      * associated with the JIT compiler.
      */
     private byte[] isDirectCallToRuntime;
+
+    /**
+     * An {@code int} array that encodes a mapping from bytecode positions to target code positions. A non-zero value
+     * {@code val} at index {@code i} in the array encodes that there is a bytecode instruction whose opcode is at index
+     * {@code i} in the bytecode array and whose target code position is {@code val}. Unless {@code i} is equal to the
+     * length of the bytecode array in which case {@code val} denotes the target code position one byte past the
+     * last target code byte emitted for the last bytecode instruction.
+     */
+    @INSPECTED
+    private int[] bytecodeToTargetCodePositionMap;
+
+
+    protected JitTargetMethod(ClassMethodActor classMethodActor) {
+        super(classMethodActor);
+    }
+
+    @Override
+    public DynamicCompilerScheme compilerScheme() {
+        return MaxineVM.hostOrTarget().configuration().jitScheme();
+    }
+
+    /**
+     * The size of the adapter frame code found at the {@linkplain CallEntryPoint#OPTIMIZED_ENTRY_POINT entry point} for
+     * a call from a method compiled with the optimizing compiler.
+     */
+    public int optimizedCallerAdapterFrameCodeSize() {
+        return optimizedCallerAdapterFrameCodeSize;
+    }
+
+    /**
+     * @return the code position to which the JIT method returns in its optimized-to-JIT adapter code or -1 if there is no adapter.
+     */
+    public int adapterReturnPosition() {
+        return adapterReturnPosition;
+    }
 
     public boolean isDirectCallToRuntime(int stopIndex) {
         return isDirectCallToRuntime != null && (stopIndex < numberOfDirectCalls()) && ByteArrayBitMap.isSet(isDirectCallToRuntime, 0, isDirectCallToRuntime.length, stopIndex);
@@ -98,16 +120,6 @@ public abstract class JitTargetMethod extends TargetMethod {
     protected boolean isDirectCalleeInPrologue(int directCalleeIndex) {
         return stopPosition(directCalleeIndex) < targetCodePositionFor(0);
     }
-
-    /**
-     * An {@code int} array that encodes a mapping from bytecode positions to target code positions. A non-zero value
-     * {@code val} at index {@code i} in the array encodes that there is a bytecode instruction whose opcode is at index
-     * {@code i} in the bytecode array and whose target code position is {@code val}. Unless {@code i} is equal to the
-     * length of the bytecode array in which case {@code val} denotes the target code position one byte past the
-     * last target code byte emitted for the last bytecode instruction.
-     */
-    @INSPECTED
-    private int[] bytecodeToTargetCodePositionMap;
 
     public int targetCodePositionFor(int bytecodePosition) {
         return bytecodeToTargetCodePositionMap[bytecodePosition];
@@ -146,7 +158,7 @@ public abstract class JitTargetMethod extends TargetMethod {
      */
     @Override
     public final JitStackFrameLayout stackFrameLayout() {
-        final JitReferenceMapEditor refMapEditor = this.referenceMapEditor;
+        final JitReferenceMapEditor refMapEditor = (JitReferenceMapEditor) referenceMapEditor.get();
         if (refMapEditor != null) {
             return refMapEditor.stackFrameLayout();
         }
@@ -313,11 +325,6 @@ public abstract class JitTargetMethod extends TargetMethod {
         return translations;
     }
 
-    @INSPECTED
-    private BytecodeInfo[] bytecodeInfos;
-
-    private int frameReferenceMapOffset;
-
     /**
      * @return references to the emitted templates or to byte codes in corresponding order to the above
      */
@@ -373,7 +380,8 @@ public abstract class JitTargetMethod extends TargetMethod {
         this.optimizedCallerAdapterFrameCodeSize = optimizedCallerAdapterFrameCodeSize;
         this.adapterReturnPosition = adapterReturnPosition;
         if (stopPositions != null) {
-            this.referenceMapEditor = new JitReferenceMapEditor(this, numberOfBlocks, blockStarts, bytecodeStopsIterator, jitStackFrameLayout);
+            final JitReferenceMapEditor referenceMapEditor = new JitReferenceMapEditor(this, numberOfBlocks, blockStarts, bytecodeStopsIterator, jitStackFrameLayout);
+            this.referenceMapEditor.set(referenceMapEditor);
             final ReferenceMapInterpreter interpreter = ReferenceMapInterpreter.from(referenceMapEditor.blockFrames());
             if (interpreter.performsAllocation() || MaxineVM.isPrototyping()) {
                 // if computing the reference map requires allocation or if prototyping,
@@ -383,12 +391,30 @@ public abstract class JitTargetMethod extends TargetMethod {
         }
     }
 
-    @Override
-    public synchronized void finalizeReferenceMaps() {
+    /**
+     * Ensures that the {@linkplain #referenceMaps() reference maps} for this JIT target method are finalized. Only
+     * finalized reference maps are guaranteed to never change for the remaining lifetime of this target method.
+     *
+     * Although this method may be called multiple threads, it cannot use standard synchronization as that may block
+     * one of the threads in native code on a mutex. This would incorrectly be interpreted by the GC as meaning
+     * the mutator thread has blocked for GC after taking a safepoint trap. To avoid blocking in native code,
+     * a spin loop is used instead.
+     */
+    @NO_SAFEPOINTS("Cannot take a trap while GC is running")
+    public void finalizeReferenceMaps() {
+        final JitReferenceMapEditor referenceMapEditor = (JitReferenceMapEditor) this.referenceMapEditor.get();
         if (referenceMapEditor != null) {
-            referenceMapEditor.fillInMaps(bytecodeToTargetCodePositionMap);
-            stackFrameLayout = referenceMapEditor.stackFrameLayout();
-            referenceMapEditor = null;
+            final Object result = this.referenceMapEditor.compareAndSwap(referenceMapEditor, JitReferenceMapEditor.SENTINEL);
+            if (result == JitReferenceMapEditor.SENTINEL) {
+                while (this.referenceMapEditor != null) {
+                    // Spin loop that is free of safepoints and object accesses
+                    SpecialBuiltin.pause();
+                }
+            } else if (result != null) {
+                referenceMapEditor.fillInMaps(bytecodeToTargetCodePositionMap);
+                stackFrameLayout = referenceMapEditor.stackFrameLayout();
+                this.referenceMapEditor.set(null);
+            }
         }
     }
 
@@ -396,14 +422,6 @@ public abstract class JitTargetMethod extends TargetMethod {
     public boolean areReferenceMapsFinalized() {
         return referenceMapEditor == null;
     }
-
-    private JitReferenceMapEditor referenceMapEditor;
-
-    /**
-     * The preserves the stack frame layout object from {@link #referenceMapEditor} when the latter is cleared in {@link #finalizeReferenceMaps()}.
-     * The stack frame layout object is required by {@link StackReferenceMapPreparer#prepareTrampolineFrameForJITCaller}.
-     */
-    private JitStackFrameLayout stackFrameLayout;
 
     @Override
     public boolean prepareFrameReferenceMap(StackReferenceMapPreparer stackReferenceMapPreparer, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {

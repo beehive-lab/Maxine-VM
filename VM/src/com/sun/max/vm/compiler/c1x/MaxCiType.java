@@ -143,7 +143,8 @@ public class MaxCiType implements CiType {
      * @throws MaxCiUnresolved if the class is not resolved
      */
     public boolean isInstanceClass() {
-        return asClassActor("isInstanceClass()").isTupleClassActor();
+        final ClassActor classActor = asClassActor("isInstanceClass()");
+        return classActor.isTupleClassActor() || classActor.isHybridClassActor();
     }
 
     /**
@@ -374,13 +375,11 @@ public class MaxCiType implements CiType {
         return typeDescriptor.toString() + " [unresolved]";
     }
 
-    @Override
     public boolean layoutHelperNeedsSlowPath() {
         // TODO Auto-generated method stub
         return false;
     }
 
-    @Override
     public int sizeHelper() {
         // TODO Auto-generated method stub
         return 0;

@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.heap.beltway;
 
-import static com.sun.max.vm.thread.VmThreadLocal.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
@@ -38,6 +36,7 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
 
 /**
  * @author Christos Kotselidis
@@ -218,6 +217,10 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     }
 
     private final BootHeapCellVisitor cellVisitor = new BootHeapCellVisitor();
+    /**
+     * Holds the biased card table address.
+     */
+    public static final VmThreadLocal ADJUSTED_CARDTABLE_BASE = new VmThreadLocal("ADJUSTED_CARDTABLE_BASE", Kind.WORD);
 
     public void scanBootHeap(RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         cellVisitor.from = from;
@@ -610,7 +613,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     }
 
     public void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
-        VmThreadLocal.ADJUSTED_CARDTABLE_BASE.setConstantWord(primordialVmThreadLocals, BeltwayCardRegion.adjustedCardTableBase(auxiliarySpace));
+        ADJUSTED_CARDTABLE_BASE.setConstantWord(primordialVmThreadLocals, BeltwayCardRegion.adjustedCardTableBase(auxiliarySpace));
     }
 
     private Size cardTableSize(Size coveredRegionSize) {

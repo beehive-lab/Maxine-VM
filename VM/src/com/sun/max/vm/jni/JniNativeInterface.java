@@ -50,8 +50,6 @@ import com.sun.max.vm.runtime.*;
  */
 public final class JniNativeInterface {
 
-    private static boolean verboseJNI;
-
     private JniNativeInterface() {
     }
 

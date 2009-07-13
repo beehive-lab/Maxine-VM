@@ -131,7 +131,7 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
 
         final Pointer refMap = referenceMap;
         final int referenceMapWords = Unsigned.idiv(referenceMapBytes.length, Word.size());
-        if (Heap.traceGCRootScanning()) {
+        if (Heap.traceRootScanning()) {
             Log.print("Scanning boot heap: start=");
             Log.print(start());
             Log.print(", end=");
@@ -143,7 +143,7 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
             verifyCells();
         }
 
-        if (Heap.traceGCRootScanning()) {
+        if (Heap.traceRootScanning()) {
             scanReferenceMap(pointerIndexVisitor, refMap, referenceMapWords, true);
         } else {
             scanReferenceMap(pointerIndexVisitor, refMap, referenceMapWords, false);

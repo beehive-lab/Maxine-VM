@@ -18,35 +18,17 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.cir.builtin;
+package com.sun.max.atomic;
 
-import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.cir.*;
-import com.sun.max.vm.compiler.cir.optimize.*;
+import com.sun.max.*;
 
 /**
- * Wrapper for soft safepoint builtins.
- * The optimizer may eliminate some of these as appropriate.
+ * @see MaxPackage
  *
- * @author Bernd Mathiske
+ * @author Doug Simon
  */
-public final class CirSoftSafepointBuiltin extends CirSpecialBuiltin {
-
-    public CirSoftSafepointBuiltin() {
-        super(SafepointBuiltin.SoftSafepoint.BUILTIN);
+public class Package extends BasePackage {
+    public Package() {
+        super();
     }
-
-    @Override
-    public boolean isFoldable(CirOptimizer cirOptimizer, CirValue[] arguments) {
-        if (cirOptimizer.cirMethod().classMethodActor().noSafepoints()) {
-            // this method has been annotated with a directive to suppress safepoints
-            return true;
-        }
-        return false; //TODO: eliminate redundant soft safepoints - requires analysis
-    }
-
-//    @Override
-//    public boolean needsJavaFrameDescriptor() {
-//        return true;
-//    }
 }
