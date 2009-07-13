@@ -96,6 +96,11 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     }
 
     @Override
+    public Size getFieldSize(FieldActor fieldActor) {
+        throw FatalError.unexpected("Maxine Array objects don't contain fields");
+    }
+
+    @Override
     public Value readFieldValue(FieldActor fieldActor) {
         throw FatalError.unexpected("Maxine Array objects don't contain fields");
     }

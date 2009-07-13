@@ -233,7 +233,7 @@ public final class ObjectFieldsTable extends InspectorTable {
          * @return the memory address of a specified row in the fields.
          */
         public Address rowToAddress(int row) {
-            return objectOrigin.plus(rowToOffset(row)).asAddress();
+            return teleObject.getFieldAddress(fieldActors[row]);
         }
 
         FieldActor rowToFieldActor(int row) {
