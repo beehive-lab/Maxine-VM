@@ -45,15 +45,15 @@ public final class DirToAMD64EirMethodTranslation extends DirToEirMethodTranslat
     @Override
     protected EirPrologue createPrologue(EirBlock eirBlock) {
         return new AMD64EirPrologue(eirBlock, eirMethod(),
-                                    calleeSavedEirVariables(), calleeSavedEirRegisters(),
-                                    isCalleeSavedParameter(),
-                                    eirParameters(), parameterEirLocations());
+                                    calleeSavedEirVariables, calleeSavedEirRegisters,
+                                    isCalleeSavedParameter,
+                                    eirParameters, parameterEirLocations);
     }
 
     @Override
     protected EirEpilogue createEpilogue(EirBlock eirBlock) {
         return new AMD64EirEpilogue(eirBlock, eirMethod(),
-                                    calleeSavedEirVariables(), calleeSavedEirRegisters(),
+                                    calleeSavedEirVariables, calleeSavedEirRegisters,
                                     resultEirLocation());
     }
 
