@@ -67,6 +67,11 @@ public class TeleTupleObject extends TeleObject {
     }
 
     @Override
+    public Size getFieldSize(FieldActor fieldActor) {
+        return Size.fromInt(fieldActor.kind.width.numberOfBytes);
+    }
+
+    @Override
     public Value readFieldValue(FieldActor fieldActor) {
         if (fieldActor.kind == Kind.REFERENCE) {
             return TeleReferenceValue.from(teleVM(), teleVM().wordToReference(reference().readWord(fieldActor.offset())));

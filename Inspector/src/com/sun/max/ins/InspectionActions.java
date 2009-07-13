@@ -46,6 +46,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.run.*;
 import com.sun.max.vm.thread.*;
@@ -2898,24 +2899,20 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Watch object header field";
         private final TeleObject teleObject;
-        private final Offset offset;
-        private final Size size;
-        private final String name;
+        private final HeaderField headerField;
 
-        SetHeaderWatchpointAction(TeleObject teleObject, Offset offset, Size size, String name, String title)  {
+        SetHeaderWatchpointAction(TeleObject teleObject, HeaderField headerField, String title)  {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
             this.teleObject = teleObject;
-            this.offset = offset;
-            this.size = size;
-            this.name = name;
+            this.headerField = headerField;
             refresh(true);
         }
 
         @Override
         protected void procedure() {
             try {
-                final String description = "Field \"" + name + "\" in header of " + inspection().nameDisplay().referenceLabelText(teleObject);
-                final MaxWatchpoint watchpoint = maxVM().setHeaderWatchpoint(description, teleObject, offset, size, name, true, true, true, true);
+                final String description = "Field \"" + headerField.name() + "\" in header of " + inspection().nameDisplay().referenceLabelText(teleObject);
+                final MaxWatchpoint watchpoint = maxVM().setHeaderWatchpoint(description, teleObject, headerField, true, true, true, true);
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {
@@ -2932,7 +2929,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         public void refresh(boolean force) {
             setEnabled(inspection().hasProcess()
                 && maxVM().watchpointsEnabled()
-                && maxVM().findWatchpoint(teleObject.getCurrentOrigin().plus(offset)) == null);
+                && maxVM().findWatchpoint(teleObject.getHeaderAddress(headerField)) == null);
         }
     }
 
@@ -2940,14 +2937,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * Creates an action that will create an object header field watchpoint.
      *
      * @param teleObject a heap object in the VM
-     * @param offset location of the header field, relative to the objects origin
-     * @param size the size in bytes of the field
-     * @param name the name of the header field
+     * @param headerField identification of an object header field
      * @param title a title for the action, use default name if null
      * @return an Action that will set an object header watchpoint
      */
-    public final InspectorAction setHeaderWatchpoint(TeleObject teleObject, Offset offset, Size size, String name, String title) {
-        return new SetHeaderWatchpointAction(teleObject, offset, size, name, title);
+    public final InspectorAction setHeaderWatchpoint(TeleObject teleObject, HeaderField headerField, String title) {
+        return new SetHeaderWatchpointAction(teleObject, headerField, title);
     }
 
 
@@ -2958,22 +2953,18 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Edit object header field watchpoint";
         private final TeleObject teleObject;
-        private final Offset offset;
-        private final Size size;
-        private final String name;
+        private final HeaderField headerField;
 
-        EditHeaderWatchpointAction(TeleObject teleObject, Offset offset, Size size, String name, String title) {
+        EditHeaderWatchpointAction(TeleObject teleObject, HeaderField headerField, String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
             this.teleObject = teleObject;
-            this.offset = offset;
-            this.size = size;
-            this.name = name;
+            this.headerField = headerField;
             refresh(true);
         }
 
         @Override
         protected void procedure() {
-            final MaxWatchpoint watchpoint = maxVM().findWatchpoint(teleObject.getCurrentOrigin().plus(offset));
+            final MaxWatchpoint watchpoint = maxVM().findWatchpoint(teleObject.getHeaderAddress(headerField));
             ProgramError.check(watchpoint != null, "Unable to locate field watchpoint for editing");
             gui().informationMessage("Watchpoint editing not implemented yet");
         }
@@ -2982,7 +2973,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         public void refresh(boolean force) {
             setEnabled(inspection().hasProcess()
                 && maxVM().watchpointsEnabled()
-                && maxVM().findWatchpoint(teleObject.getCurrentOrigin().plus(offset)) != null);
+                && maxVM().findWatchpoint(teleObject.getHeaderAddress(headerField)) != null);
         }
     }
 
@@ -2990,12 +2981,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * Creates an action that will allow interactive editing of an object header watchpoint's settings.
      *
      * @param teleObject a heap object in the VM
-     * @param fieldActor description of a field in the class type of the heap object
+     * @param headerField a header field in the object
      * @param string a title for the action, use default name if null
      * @return an Action that will allow interactive editing of an object field watchpoint's settings.
      */
-    public final InspectorAction editHeaderWatchpoint(TeleObject teleObject, Offset offset, Size size, String name, String title) {
-        return new EditHeaderWatchpointAction(teleObject, offset, size, name, title);
+    public final InspectorAction editHeaderWatchpoint(TeleObject teleObject, HeaderField headerField, String title) {
+        return new EditHeaderWatchpointAction(teleObject, headerField, title);
     }
 
     /**
@@ -3005,22 +2996,18 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Un-watch object header field";
         private final TeleObject teleObject;
-        private final Offset offset;
-        private final Size size;
-        private final String name;
+        private final HeaderField headerField;
 
-        RemoveHeaderWatchpointAction(TeleObject teleObject, Offset offset, Size size, String name, String title) {
+        RemoveHeaderWatchpointAction(TeleObject teleObject, HeaderField headerField, String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
             this.teleObject = teleObject;
-            this.offset = offset;
-            this.size = size;
-            this.name = name;
+            this.headerField = headerField;
             refresh(true);
         }
 
         @Override
         protected void procedure() {
-            final MaxWatchpoint watchpoint = maxVM().findWatchpoint(teleObject.getCurrentOrigin().plus(offset));
+            final MaxWatchpoint watchpoint = maxVM().findWatchpoint(teleObject.getHeaderAddress(headerField));
             ProgramError.check(watchpoint != null, "Unable to locate header field watchpoint for removal");
             if (watchpoint.dispose()) {
                 inspection().focus().setWatchpoint(null);
@@ -3033,7 +3020,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         public void refresh(boolean force) {
             setEnabled(inspection().hasProcess()
                 && maxVM().watchpointsEnabled()
-                && maxVM().findWatchpoint(teleObject.getCurrentOrigin().plus(offset)) != null);
+                && maxVM().findWatchpoint(teleObject.getHeaderAddress(headerField)) != null);
         }
     }
 
@@ -3041,12 +3028,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * Creates an action that will remove an object field watchpoint.
      *
      * @param teleObject a heap object in the VM
-     * @param fieldActor description of a field in the class type of the heap object
+     * @param headerField a field in the header of the object
      * @param string a title for the action, use default name if null
      * @return an Action that will remove a memory watchpoint at the address.
      */
-    public final InspectorAction removeHeaderWatchpoint(TeleObject teleObject, Offset offset, Size size, String name, String string) {
-        return new RemoveHeaderWatchpointAction(teleObject, offset, size, name, string);
+    public final InspectorAction removeHeaderWatchpoint(TeleObject teleObject, HeaderField headerField, String string) {
+        return new RemoveHeaderWatchpointAction(teleObject, headerField, string);
     }
 
 

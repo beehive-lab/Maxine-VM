@@ -105,12 +105,17 @@ public final class ObjectHeaderTable extends InspectorTable {
                         final int modelIndex = getColumnModel().getColumn(columnIndex).getModelIndex();
                         if (modelIndex == ObjectFieldColumnKind.TAG.ordinal()) {
                             final InspectorMenu menu = new InspectorMenu();
-                            final Offset offset = model.rowToOffset(hitRowIndex);
-                            final Size size = model.rowToSize(hitRowIndex);
-                            final String name = model.rowToName(hitRowIndex);
-                            menu.add(actions().setHeaderWatchpoint(teleObject, offset, size, name, "Watch this field's memory"));
-                            menu.add(actions().editHeaderWatchpoint(teleObject, offset, size, name, "Edit memory watchpoint"));
-                            menu.add(actions().removeHeaderWatchpoint(teleObject, offset, size, name, "Remove memory watchpoint"));
+                            final HeaderField headerField = headerFields.get(hitRowIndex);
+                            menu.add(actions().setHeaderWatchpoint(teleObject, headerField, "Watch this field's memory"));
+                            menu.add(actions().editHeaderWatchpoint(teleObject, headerField, "Edit memory watchpoint"));
+                            menu.add(actions().removeHeaderWatchpoint(teleObject, headerField, "Remove memory watchpoint"));
+
+//                            final Offset offset = model.rowToOffset(hitRowIndex);
+//                            final Size size = model.rowToSize(hitRowIndex);
+//                            final String name = model.rowToName(hitRowIndex);
+//                            menu.add(actions().setHeaderWatchpoint(teleObject, offset, size, name, "Watch this field's memory"));
+//                            menu.add(actions().editHeaderWatchpoint(teleObject, offset, size, name, "Edit memory watchpoint"));
+//                            menu.add(actions().removeHeaderWatchpoint(teleObject, offset, size, name, "Remove memory watchpoint"));
                             menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                         }
                     }
@@ -217,7 +222,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         }
 
         public Size rowToSize(int row) {
-            return Size.fromInt(rowToType(row).toKind().width.numberOfBytes);
+            return teleObject.getHeaderSize(headerFields.get(row));
         }
 
         public String rowToName(int row) {
