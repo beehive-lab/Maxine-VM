@@ -29,7 +29,6 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.b.c.*;
 import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.builtin.SafepointBuiltin.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.builtin.*;
 import com.sun.max.vm.compiler.cir.snippet.*;
@@ -387,7 +386,7 @@ public abstract class JavaOperator extends CirOperator {
         }
     }
 
-    public static final JavaOperator SAFEPOINT_OP = new JavaBuiltinOperator(SoftSafepoint.BUILTIN);
+    public static final JavaOperator SAFEPOINT_OP = new JavaBuiltinOperator(SafepointBuiltin.BUILTIN);
 
     public static final JavaOperator FLOAT_TO_INT = new JavaSnippetOperator(Snippet.ConvertFloatToInt.SNIPPET);
     public static final JavaOperator FLOAT_TO_LONG = new JavaSnippetOperator(Snippet.ConvertFloatToLong.SNIPPET);

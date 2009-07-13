@@ -26,10 +26,12 @@ import com.sun.max.vm.compiler.*;
 /**
  * @author Bernd Mathiske
  */
-public abstract class SafepointBuiltin extends SpecialBuiltin {
+public final class SafepointBuiltin extends SpecialBuiltin {
+
+    public static final SafepointBuiltin BUILTIN = new SafepointBuiltin();
 
     protected SafepointBuiltin() {
-        super(SafepointBuiltin.class);
+        super(null);
     }
 
     @Override
@@ -37,29 +39,13 @@ public abstract class SafepointBuiltin extends SpecialBuiltin {
         return Stoppable.SAFEPOINT;
     }
 
-    @BUILTIN(builtinClass = SoftSafepoint.class)
-    public static void softSafepoint() {
+    @Override
+    public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
+        assert arguments.length == 0;
+        visitor.visitSafepoint(this, result, arguments);
     }
 
-    public static final class SoftSafepoint extends SafepointBuiltin {
-        @Override
-        public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
-            assert arguments.length == 0;
-            visitor.visitSoftSafepoint(this, result, arguments);
-        }
-        public static final SoftSafepoint BUILTIN = new SoftSafepoint();
-    }
-
-    @BUILTIN(builtinClass = HardSafepoint.class)
-    public static void hardSafepoint() {
-    }
-
-    public static final class HardSafepoint extends SafepointBuiltin {
-        @Override
-        public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
-            assert arguments.length == 0;
-            visitor.visitHardSafepoint(this, result, arguments);
-        }
-        public static final HardSafepoint BUILTIN = new HardSafepoint();
+    @BUILTIN(builtinClass = SafepointBuiltin.class)
+    public static void safepointBuiltin() {
     }
 }

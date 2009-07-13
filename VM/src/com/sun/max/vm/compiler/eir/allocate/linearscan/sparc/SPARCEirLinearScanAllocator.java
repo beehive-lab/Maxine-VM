@@ -56,7 +56,7 @@ public final class SPARCEirLinearScanAllocator extends LinearScanRegisterAllocat
 
     public SPARCEirLinearScanAllocator(EirMethodGeneration methodGeneration) {
         super(methodGeneration);
-        final SPARCEirABI abi = (SPARCEirABI) methodGeneration.abi();
+        final SPARCEirABI abi = (SPARCEirABI) methodGeneration.abi;
 
         allocatableIntegerRegisters = PoolSet.allOf(SPARCEirRegister.pool());
         allocatableIntegerRegisters.and(SPARCEirRegister.GeneralPurpose.poolSet());

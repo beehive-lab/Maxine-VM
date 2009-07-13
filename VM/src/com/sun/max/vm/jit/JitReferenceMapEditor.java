@@ -48,6 +48,20 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
      */
     private final char[] blockStartBytecodePositions;
 
+    /**
+     * Shared non-null global object denoting absence of a valid {@code JitReferenceMapEditor} instance.
+     */
+    public static final JitReferenceMapEditor SENTINEL = new JitReferenceMapEditor();
+
+    private JitReferenceMapEditor() {
+        targetMethod = null;
+        stackFrameLayout = null;
+        blockFrames = null;
+        exceptionHandlerMap = null;
+        bytecodeStopsIterator = null;
+        blockStartBytecodePositions = null;
+    }
+
     public JitReferenceMapEditor(JitTargetMethod targetMethod, int numberOfBlocks, boolean[] blockStarts, BytecodeStopsIterator bytecodeStopsIterator, JitStackFrameLayout jitStackFrameLayout) {
         assert targetMethod.numberOfStopPositions() != 0;
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
@@ -123,7 +137,7 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
     }
 
     public void fillInMaps(int[] bytecodeToTargetCodePositionMap) {
-        if (Heap.traceGCRootScanning()) {
+        if (Heap.traceRootScanning()) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("Finalizing JIT reference maps for ");
             Log.printMethodActor(classMethodActor(), true);
@@ -134,7 +148,7 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
         interpreter.finalizeFrames(this);
         interpreter.interpretReferenceSlots(this, this, bytecodeStopsIterator);
 
-        if (Heap.traceGCRootScanning()) {
+        if (Heap.traceRootScanning()) {
             final boolean lockDisabledSafepoints = Log.lock();
             bytecodeStopsIterator.reset();
             final CodeAttribute codeAttribute = targetMethod.classMethodActor().codeAttribute();
@@ -192,6 +206,9 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
 
     @Override
     public String toString() {
+        if (this == SENTINEL) {
+            return "SENTINEL";
+        }
         return getClass().getSimpleName() + "[" + classMethodActor() + "]";
     }
 }

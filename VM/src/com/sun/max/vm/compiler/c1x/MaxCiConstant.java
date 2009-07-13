@@ -83,6 +83,10 @@ public class MaxCiConstant implements CiConstant {
             }
             return type.javaClass();
         }
+        if (value instanceof WordValue) {
+            // TODO: deal with word values somehow
+            return value.toLong();
+        }
         return value.asObject();
     }
 

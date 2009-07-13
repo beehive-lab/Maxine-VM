@@ -20,14 +20,11 @@
  */
 package com.sun.max.vm.compiler.ir.igv;
 
-import static com.sun.max.vm.VMOptions.*;
-
 import java.io.*;
 import java.util.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.ir.observer.*;
@@ -47,8 +44,6 @@ public class GraphIrObserver extends IrObserverAdapter {
      * Default output file name. Can be overwritten using the system property max.ir.igv.filename
      */
     public static final String DEFAULT_FILENAME = "graph.xml";
-
-    private static final VMStringOption graphFileNameOption = register(new VMStringOption("-XX:GraphFileName=", false, "graph.xml", "The name of the file for the graph"), MaxineVM.Phase.PRISTINE);
 
     private final GraphWriter.Document document = GraphWriter.createDocument();
     private final VariableMapping<IrMethod, GraphWriter.Group> groupMapping = new ChainedHashMapping<IrMethod, GraphWriter.Group>();
@@ -160,11 +155,7 @@ public class GraphIrObserver extends IrObserverAdapter {
      */
     @Override
     public void finish() {
-        String fileName = DEFAULT_FILENAME;
-        final String propertyFileName = graphFileNameOption.getValue();
-        if (propertyFileName != null) {
-            fileName = propertyFileName;
-        }
+        final String fileName = DEFAULT_FILENAME;
 
         try {
             final FileWriter fileWriter = new FileWriter(fileName);

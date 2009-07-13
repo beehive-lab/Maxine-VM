@@ -126,7 +126,8 @@ public class MaxCiRuntime implements CiRuntime {
      * <code>false</code> to allow the compiler to use its own heuristics
      */
     public boolean mustNotInline(CiMethod method) {
-        return asClassMethodActor(method, "mustNotInline()").isNeverInline();
+        final ClassMethodActor classMethodActor = asClassMethodActor(method, "mustNotInline()");
+        return classMethodActor.rawCodeAttribute() == null || classMethodActor.isNeverInline();
     }
 
     /**
@@ -153,103 +154,86 @@ public class MaxCiRuntime implements CiRuntime {
         throw new MaxCiUnresolved("invalid CiType instance: " + type.getClass());
     }
 
-    @Override
     public int arrayLengthOffsetInBytes() {
         // TODO Auto-generated method stub
         return 0;
     }
 
-    @Override
     public boolean dtraceMethodProbes() {
         // TODO Auto-generated method stub
         return false;
     }
 
-    @Override
     public Address getRuntimeEntry(CiRuntimeCall runtimeCall) {
         // TODO Auto-generated method stub
         return null;
     }
 
-    @Override
     public int headerSize() {
         // TODO Auto-generated method stub
         return 0;
     }
 
-    @Override
     public boolean isMP() {
         // TODO Auto-generated method stub
         return false;
     }
 
-    @Override
     public int javaNioBufferLimitOffset() {
         // TODO Auto-generated method stub
         return 0;
     }
 
-    @Override
     public boolean jvmtiCanPostExceptions() {
         // TODO Auto-generated method stub
         return false;
     }
 
-    @Override
     public int klassJavaMirrorOffsetInBytes() {
         // TODO Auto-generated method stub
         return 0;
     }
 
-    @Override
     public int klassOffsetInBytes() {
         // TODO Auto-generated method stub
         return 0;
     }
 
-    @Override
     public boolean needsExplicitNullCheck(int offset) {
         // TODO Auto-generated method stub
         return false;
     }
 
-    @Override
     public int threadExceptionOopOffset() {
         // TODO Auto-generated method stub
         return 0;
     }
 
-    @Override
     public int threadExceptionPcOffset() {
         // TODO Auto-generated method stub
         return 0;
     }
 
-    @Override
     public int threadObjOffset() {
         // TODO Auto-generated method stub
         return 0;
     }
 
-    @Override
     public Address throwCountAddress() {
         // TODO Auto-generated method stub
         return null;
     }
 
-    @Override
     public int vtableEntryMethodOffsetInBytes() {
         // TODO Auto-generated method stub
         return 0;
     }
 
-    @Override
     public int vtableEntrySize() {
         // TODO Auto-generated method stub
         return 0;
     }
 
-    @Override
     public int vtableStartOffset() {
         // TODO Auto-generated method stub
         return 0;

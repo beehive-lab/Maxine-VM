@@ -721,6 +721,12 @@ public interface MaxVM {
     int getTriggeredWatchpointCode();
 
     /**
+     * Returns thread that triggered watchpoint.
+     * @return
+     */
+    MaxThread findTriggeredWatchpointThread();
+
+    /**
      * All existing memory watchpoints set in the VM.
      * <br>
      * Immutable collection; membership is thread-safe; likely implemented as a copy.

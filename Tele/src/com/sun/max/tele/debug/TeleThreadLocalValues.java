@@ -37,14 +37,14 @@ import com.sun.max.vm.thread.*;
  */
 public class TeleThreadLocalValues {
 
-    private final Map<String, Long> values = new LinkedHashMap<String, Long>(VmThreadLocal.THREAD_LOCAL_STORAGE_SIZE.dividedBy(Word.size()).toInt());
+    private final Map<String, Long> values = new LinkedHashMap<String, Long>(VmThreadLocal.threadLocalStorageSize().dividedBy(Word.size()).toInt());
 
     private final Safepoint.State safepointState;
 
     public TeleThreadLocalValues(Safepoint.State safepointState, Pointer start) {
         assert !start.isZero();
-        for (String name : VmThreadLocal.NAMES) {
-            values.put(name, null);
+        for (VmThreadLocal threadLocal : VmThreadLocal.values()) {
+            values.put(threadLocal.name, null);
         }
         this.safepointState = safepointState;
         this.start = start;
@@ -52,13 +52,13 @@ public class TeleThreadLocalValues {
 
     public void refresh(DataAccess dataAccess) {
         int offset = 0;
-        for (String name : VmThreadLocal.NAMES) {
+        for (VmThreadLocal threadLocal : VmThreadLocal.values()) {
             if (offset != 0 || safepointState != State.TRIGGERED) {
                 try {
                     final Word value = dataAccess.readWord(start, offset);
-                    values.put(name, value.asAddress().toLong());
+                    values.put(threadLocal.name, value.asAddress().toLong());
                 } catch (DataIOError dataIOError) {
-                    ProgramError.unexpected("Could not read value of " + name + " from safepoints-" + safepointState.name().toLowerCase() + " VM thread locals");
+                    ProgramError.unexpected("Could not read value of " + threadLocal + " from safepoints-" + safepointState.name().toLowerCase() + " VM thread locals");
                 }
             }
             offset += Word.size();
@@ -87,8 +87,7 @@ public class TeleThreadLocalValues {
      * Gets the value of a given thread local variable.
      */
     public long get(VmThreadLocal threadLocalVariable) {
-        final String name = VmThreadLocal.NAMES.get(threadLocalVariable.index());
-        return values.get(name);
+        return values.get(threadLocalVariable.name);
     }
 
     /**
@@ -145,6 +144,6 @@ public class TeleThreadLocalValues {
         if (start.isZero()) {
             return Size.zero();
         }
-        return VmThreadLocal.THREAD_LOCAL_STORAGE_SIZE;
+        return VmThreadLocal.threadLocalStorageSize();
     }
 }

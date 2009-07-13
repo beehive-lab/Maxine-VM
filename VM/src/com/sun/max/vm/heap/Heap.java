@@ -123,7 +123,7 @@ public final class Heap {
      * Determines if information should be displayed about each garbage collection event.
      */
     public static boolean verbose() {
-        return verboseOption.isPresent() || Heap.traceGCRootScanning() || Heap.traceGCTime() || Heap.traceGC();
+        return verboseOption.isPresent() || traceGC || traceRootScanningOption.getValue() || Heap.traceGCTime() || traceGC;
     }
 
     private static boolean traceAllocation;
@@ -174,50 +174,47 @@ public final class Heap {
      * Determines if garbage collection root scanning should be traced.
      */
     @INLINE
-    public static boolean traceGCRootScanning() {
-        return traceGCRootScanning;
+    public static boolean traceRootScanning() {
+        return traceGC || traceRootScanningOption.getValue();
     }
 
     /**
-     * Determines if garbage collection timings should be printed.
+     * Determines if garbage collection timings should be collected and printed.
      */
     @INLINE
     public static boolean traceGCTime() {
-        return traceGCTime;
+        return traceGC || timeOption.getValue();
     }
 
     private static boolean traceGC;
-    private static boolean traceGCRootScanning;
-    private static boolean traceGCTime;
 
-    private static final VMOption traceGCOption = register(new VMOption("-XX:TraceGC", "Trace garbage collection activity.") {
+    private static final VMBooleanXXOption traceRootScanningOption = register(new VMBooleanXXOption("-XX:-TraceRootScanning",
+        "Trace garbage collection root scanning."), MaxineVM.Phase.STARTING);
+
+    private static final VMBooleanXXOption timeOption = register(new VMBooleanXXOption("-XX:-TimeGC",
+        "Time and print garbage collection activity."), MaxineVM.Phase.STARTING);
+
+    private static final class TraceGCOption extends VMBooleanXXOption {
+        TraceGCOption() {
+            super("-XX:-TraceGC", "Trace all garbage collection activity. Enabling this option also enables the " +
+                traceRootScanningOption + " and " + timeOption + " options.");
+        }
+
         @Override
         public boolean parseValue(Pointer optionValue) {
-            if (CString.equals(optionValue, "")) {
+            if (getValue()) {
                 traceGC = true;
-                traceGCRootScanning = true;
-                traceGCTime = true;
-            } else if (CString.equals(optionValue, ":RootScanning")) {
-                traceGCRootScanning = true;
-            } else if (CString.equals(optionValue, ":Time")) {
-                traceGCTime = true;
-            } else {
-                return false;
             }
             return true;
         }
-        @Override
-        public void printHelp() {
-            VMOptions.printHelpForOption("-XX:TraceGC[:RootScanning|:Time]", "", help);
-        }
-    }, MaxineVM.Phase.STARTING);
+    }
+
+    private static final VMBooleanXXOption traceGCOption = register(new TraceGCOption(), MaxineVM.Phase.STARTING);
 
     /**
-     * Returns whether the "-XX:DisableGC" option was specified.
+     * Returns whether the "-XX:+DisableGC" option was specified.
      *
-     * @return {@code true} if the user specified the "-XX:DisableGC" command line option; {@code false}
-     * otherwise
-     * @return
+     * @return {@code true} if the user specified the "-XX:+DisableGC" on the command line option; {@code false} otherwise
      */
     public static boolean gcDisabled() {
         return disableGCOption.getValue();
@@ -235,6 +232,16 @@ public final class Heap {
     @FOLD
     private static HeapScheme heapScheme() {
         return VMConfiguration.hostOrTarget().heapScheme();
+    }
+
+    @INLINE
+    public static void disableAllocationForCurrentThread() {
+        heapScheme().disableAllocationForCurrentThread();
+    }
+
+    @INLINE
+    public static void enableAllocationForCurrentThread() {
+        heapScheme().enableAllocationForCurrentThread();
     }
 
     /**
@@ -379,7 +386,7 @@ public final class Heap {
             Log.print("--GC requested by thread ");
             Log.printVmThread(VmThread.current(), false);
             Log.println("--");
-            Log.print("--Before GC--   used: ");
+            Log.print("--Before GC   used: ");
             Log.print(reportUsedSpace().toLong());
             Log.print(", free: ");
             Log.print(reportFreeSpace().toLong());
@@ -389,10 +396,10 @@ public final class Heap {
         final boolean freedEnough = heapScheme().collectGarbage(requestedFreeSpace);
         if (verbose()) {
             final boolean lockDisabledSafepoints = Log.lock();
-            Log.print("--GC done requested by thread ");
+            Log.print("--GC requested by thread ");
             Log.printVmThread(VmThread.current(), false);
-            Log.println();
-            Log.print("--After GC--   used: ");
+            Log.println(" done--");
+            Log.print("--After GC   used: ");
             Log.print(reportUsedSpace().toLong());
             Log.print(", free: ");
             Log.print(reportFreeSpace().toLong());
@@ -401,9 +408,9 @@ public final class Heap {
         }
         if (verbose()) {
             if (freedEnough == true) {
-                Log.println("--GC freed enough");
+                Log.println("--GC freed enough--");
             } else {
-                Log.println("--GC not freed enough");
+                Log.println("--GC did not freed enough--");
             }
         }
         return freedEnough;

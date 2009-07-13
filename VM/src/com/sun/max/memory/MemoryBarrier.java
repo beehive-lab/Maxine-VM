@@ -63,6 +63,11 @@ public enum MemoryBarrier implements PoolObject {
     STORE_LOAD,
 
     /**
+     * All stores and loads before subsequent loads will be serialized.
+     */
+    MEMOP_STORE,
+
+    /**
      * All stores before subsequent stores will be serialized.
      */
     STORE_STORE;
@@ -79,6 +84,9 @@ public enum MemoryBarrier implements PoolObject {
 
     private static final PoolSet<MemoryBarrier> loadLoad = PoolSet.of(VALUE_POOL, MemoryBarrier.LOAD_LOAD);
 
+    /**
+     * Ensures all preceding loads complete before any subsequent loads.
+     */
     @INLINE
     public static void loadLoad() {
         barMemory(loadLoad);
@@ -86,6 +94,9 @@ public enum MemoryBarrier implements PoolObject {
 
     private static final PoolSet<MemoryBarrier> loadStore = PoolSet.of(VALUE_POOL, MemoryBarrier.LOAD_STORE);
 
+    /**
+     * Ensures all preceding loads complete before any subsequent stores.
+     */
     @INLINE
     public static void loadStore() {
         barMemory(loadStore);
@@ -93,6 +104,9 @@ public enum MemoryBarrier implements PoolObject {
 
     private static final PoolSet<MemoryBarrier> storeLoad = PoolSet.of(VALUE_POOL, MemoryBarrier.STORE_LOAD);
 
+    /**
+     * Ensures all preceding stores complete before any subsequent loads.
+     */
     @INLINE
     public static void storeLoad() {
         barMemory(storeLoad);
@@ -100,16 +114,31 @@ public enum MemoryBarrier implements PoolObject {
 
     private static final PoolSet<MemoryBarrier> storeStore = PoolSet.of(VALUE_POOL, MemoryBarrier.STORE_STORE);
 
+    /**
+     * Ensures all preceding stores complete before any subsequent stores.
+     */
     @INLINE
     public static void storeStore() {
         barMemory(storeStore);
     }
 
+    private static final PoolSet<MemoryBarrier> memopStore = PoolSet.of(VALUE_POOL, MemoryBarrier.STORE_STORE, MemoryBarrier.LOAD_STORE);
+
+    /**
+     * Ensures all preceding stores and loads complete before any subsequent stores.
+     */
+    @INLINE
+    public static void memopStore() {
+        barMemory(memopStore);
+    }
+
     private static final PoolSet<MemoryBarrier> all = PoolSet.allOf(VALUE_POOL);
 
+    /**
+     * Ensures all preceding stores and loads complete before any subsequent stores and loads.
+     */
     @INLINE
     public static void all() {
         barMemory(all);
     }
-
 }
