@@ -236,15 +236,6 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
 
         public Factory(TeleVM teleVM) {
             this.teleVM = teleVM;
-            teleVM.addVMStateObserver(new TeleVMStateObserver() {
-
-                public void upate(MaxVMState maxVMState) {
-                    if (maxVMState.processState() == ProcessState.TERMINATED) {
-                        breakpoints.clear();
-                        announceStateChange();
-                    }
-                }
-            });
         }
 
         private final VariableMapping<Key, TeleBytecodeBreakpoint> breakpoints = HashMapping.createVariableEqualityMapping();
