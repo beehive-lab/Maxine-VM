@@ -25,27 +25,35 @@ import com.sun.max.annotate.*;
 import com.sun.max.util.timer.*;
 
 /**
- * A VM option that wraps a timer.
+ * A {@linkplain VMBooleanXXOption boolean VM} option that enables a timer.
  *
  * @author Doug Simon
  */
-public class TimerOption extends VMOption {
+public class TimerOption extends VMBooleanXXOption {
 
     protected final TimerMetric timerMetric;
     protected final String label;
 
+    /**
+     * Creates an option for timing some action.
+     *
+     * @param prefix the prefix by which the option is activated (e.g. "-XX:-TimeCompilation")
+     * @param label a description of action timed by this option (e.g. "Compilation")
+     * @param help describes the option's semantics
+     * @param timer the timer to use. This should be a multi-thread safe timer (e.g. {@link MultiThreadTimer}) if it
+     *            may be used by more than one thread.
+     */
     @PROTOTYPE_ONLY
-    public TimerOption(String label, String help, Timer timer) {
-        this("-XX:Time:" + label, label, help, new TimerMetric(timer));
+    public TimerOption(String prefix, String label, String help, Timer timer) {
+        this(prefix, label, help, new TimerMetric(timer));
     }
 
     /**
      * Creates an option for timing some action.
      *
-     * @param prefix the prefix by which the option is activated
+     * @param prefix the prefix by which the option is activated (e.g. "-XX:-TimeCompilation")
+     * @param label a description of action timed by this option (e.g. "Compilation")
      * @param help describes the option's semantics
-     * @param timerMetric the timer to use. This should be a multi-thread safe timer (e.g. {@link MultiThreadTimer}) if it
-     *            may be used by more than one thread.
      */
     @PROTOTYPE_ONLY
     public TimerOption(String prefix, String label, String help, TimerMetric timerMetric) {

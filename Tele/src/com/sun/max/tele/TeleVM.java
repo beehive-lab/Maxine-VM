@@ -40,6 +40,7 @@ import com.sun.max.program.Classpath.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleBytecodeBreakpoint.*;
+import com.sun.max.tele.debug.TeleNativeThread.*;
 import com.sun.max.tele.debug.TeleWatchpoint.*;
 import com.sun.max.tele.debug.darwin.*;
 import com.sun.max.tele.debug.guestvm.xen.*;
@@ -1197,6 +1198,15 @@ public abstract class TeleVM implements MaxVM {
      */
     public final int transportDebugLevel() {
         return teleProcess.transportDebugLevel();
+    }
+
+    public final MaxThread findTriggeredWatchpointThread() {
+        for (MaxThread thread : maxVMState().threads()) {
+            if (thread.state() == ThreadState.WATCHPOINT) {
+                return thread;
+            }
+        }
+        return null;
     }
 
     /**

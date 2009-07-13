@@ -106,7 +106,6 @@ public final class VMOptions {
     }, MaxineVM.Phase.STARTING);
 
     private static final VMOption verboseOption = register(new VMOption("-verbose ", "Enables all verbose options."), MaxineVM.Phase.PRISTINE);
-    private static final VMOption timeOption = register(new VMOption("-XX:Time ", "Enables all timing options."), MaxineVM.Phase.PRISTINE);
 
     private static final VMIntOption traceLevelOption = register(new VMIntOption("-XX:TraceLevel=", 0, "Enables tracing output at the specified level.") {
         @Override

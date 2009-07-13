@@ -113,7 +113,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
             clearTimer.start();
             clearTimer.stop();
 
-            if (Heap.traceGCRootScanning()) {
+            if (Heap.traceRootScanning()) {
                 Log.println("Scanning roots...");
             }
             rootScanTimer.start();

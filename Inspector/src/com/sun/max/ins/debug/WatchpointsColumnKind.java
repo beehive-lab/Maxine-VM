@@ -27,6 +27,7 @@ import com.sun.max.collect.*;
  * Defines the columns that can be displayed describing a watchpoint in the VM.
  *
  * @author Michael Van De Vanter
+ * @author Hannes Payer
  */
 public enum WatchpointsColumnKind implements ColumnKind{
     START("Start", "Starting address", true, 20),
@@ -36,12 +37,11 @@ public enum WatchpointsColumnKind implements ColumnKind{
     REGION("Region", "Memory region pointed to by value", false, 20),
     READ("R", "Read?", true, 5),
     WRITE("W", "Write?", true, 5),
-    EXEC("X", "Execute?", true, 5){
-        @Override
-        public boolean canBeMadeInvisible() {
-            return false;
-        }
-    };
+    EXEC("X", "Execute?", true, 5),
+    TRIGGERED_THREAD("Thread", "Name of thread currently stopped at breakpoint", true, 1),
+    ADDRESS_TRIGGERED("Address", "Address where watchpoint was triggered", true, 1),
+    CODE_TRIGGERED("Code", "Access type which triggered watchpoint", true, 1);
+
 
     private final String label;
     private final String toolTipText;
