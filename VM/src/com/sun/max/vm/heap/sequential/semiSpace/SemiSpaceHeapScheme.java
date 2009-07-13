@@ -165,9 +165,10 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         }
     }
 
-    // The heart of the collector.
-    // Performs the actual Garbage Collection
-    private final Runnable collect = new Runnable() {
+    /**
+     * Routine that performs the actual garbage collection.
+     */
+    private final class Collect implements Runnable {
         public void run() {
             try {
                 if (vmConfiguration().debugging()) {
@@ -186,7 +187,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 swapSemiSpaces(); // Swap semi-spaces. From--> To and To-->From
                 stopTimer(clearTimer);
 
-                if (Heap.traceGCRootScanning()) {
+                if (Heap.traceRootScanning()) {
                     Log.println("Scanning roots...");
                 }
                 startTimer(rootScanTimer);
@@ -261,7 +262,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 FatalError.unexpected("Exception during GC", throwable);
             }
         }
-    };
+    }
+
+    private final Collect collect = new Collect();
 
     @INLINE
     /**
@@ -485,13 +488,13 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     /**
      * This option exists only to measure the performance effect of using a reference map for the boot heap.
      */
-    private static final VMBooleanXXOption useBootHeapRefmap = register(new VMBooleanXXOption("-XX:-UseBootHeapRefmap", "Do not use the boot heap reference map when scanning the boot heap."), MaxineVM.Phase.STARTING);
+    private static final VMBooleanXXOption useBootHeapRefmap = register(new VMBooleanXXOption("-XX:+UseBootHeapRefmap", "Use the boot heap reference map when scanning the boot heap."), MaxineVM.Phase.STARTING);
 
     private void scanBootHeap() {
-        if (!useBootHeapRefmap.getValue()) {
-            Heap.bootHeapRegion().visitPointers(pointerIndexGripUpdater);
-        } else {
+        if (useBootHeapRefmap.getValue()) {
             Heap.bootHeapRegion().visitCells(this);
+        } else {
+            Heap.bootHeapRegion().visitPointers(pointerIndexGripUpdater);
         }
     }
 

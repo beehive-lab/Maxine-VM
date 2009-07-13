@@ -78,7 +78,9 @@ FILE *getFileStream() {
 
 void log_initialize(void) {
     mutex_initialize(&log_mutexStruct);
+#if !os_GUESTVMXEN
     getFileStream();
+#endif
 }
 
 void log_lock(void) {

@@ -31,7 +31,7 @@
 
 extern void gather_and_trace_threads(void);
 
-static int trace = 1;         // set to non-zero to trace thread resumption/blocking
+static int trace = 0;         // set to non-zero to trace thread resumption/blocking
 static int terminated = 0;    // target domain has terminated
 static struct db_thread *threads_at_rest = NULL;  // cache of threads on return from resume
 static int num_threads_at_rest;
@@ -378,7 +378,7 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeReadWatchpoint
 	}
 	watchpoint_info(thread_id, &kind);
 	return kind & ~AFTER_W;
-	
+
 }
 
 void teleProcess_initialize(void)

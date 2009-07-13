@@ -193,6 +193,14 @@ public final class JniFunctionWrapper {
         // start-prologue
         final Pointer vmThreadLocals = fromJniEnv(env);
         Safepoint.setLatchRegister(vmThreadLocals);
+
+        /*
+         * Pointer frameAnchor = alloca(3 * Word.size);
+         * frameAnchor.setWord(0, LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals));
+         * frameAnchor.setWord(1, LAST_JAVA_CALLER_FRAME_POINTER(vmThreadLocals));
+         * frameAnchor.setWord(2, LAST_JAVA_CALLER_INSTRUCTION_POINTER(vmThreadLocals));
+         */
+
         final Word sp = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals);
         final Word fp = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals);
         final Word ip = LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals);
