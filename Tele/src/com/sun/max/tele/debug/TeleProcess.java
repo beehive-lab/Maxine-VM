@@ -355,6 +355,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         processState = newState;
         if (newState == TERMINATED) {
             this.threadsDied.addAll(handleToThreadMap.values());
+            handleToThreadMap.clear();
         }
         for (TeleNativeThread thread : this.threadsDied) {
             thread.setDead();
