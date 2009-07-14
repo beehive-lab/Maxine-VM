@@ -141,8 +141,8 @@ public class SpecialReferenceManager {
         }
 
         if (MaxineMessenger.isVmInspected()) {
-            for (int i = 0; i < TeleHeapInfo.MAX_NUMBER_OF_ROOTS; i++) {
-                final Pointer rootPointer = TeleHeapInfo.roots.getWord(i).asPointer();
+            for (int i = 0; i < InspectableHeapInfo.MAX_NUMBER_OF_ROOTS; i++) {
+                final Pointer rootPointer = InspectableHeapInfo.roots.getWord(i).asPointer();
                 if (!rootPointer.isZero()) {
                     Log.println("Handle forwarding pointer " + i);
                     final Grip referent = Grip.fromOrigin(rootPointer);
