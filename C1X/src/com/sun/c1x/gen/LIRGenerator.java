@@ -26,6 +26,7 @@ import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
+import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.stub.*;
@@ -75,11 +76,13 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
     private List<LIROperand> regForConstants;
     private List<Instruction> unpinnedConstants;
     protected LIRList lir;
+    protected final IR ir;
 
     public LIRGenerator(C1XCompilation compilation) {
         this.compilation = compilation;
         this.virtualRegisterNumber = LIRLocation.virtualRegisterBase();
         this.vregFlags = new BitMap2D(0, VregFlag.NumVregFlags.ordinal());
+        this.ir = compilation.hir();
 
         instructionForOperand = new ArrayMap<Instruction>();
         constants = new ArrayList<LIRConstant>();
@@ -223,11 +226,12 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
             }
             assert !obj.isIllegal() : "must be valid";
 
+            // TODO: C1X generates this already => remove?
             if (method.isSynchronized() && C1XOptions.GenerateSynchronizationCode) {
                 LIROperand lock = newRegister(BasicType.Int);
                 lir.loadStackAddressMonitor(0, lock);
 
-                CodeEmitInfo info = new CodeEmitInfo(C1XCompilation.MethodCompilation.SynchronizationEntryBCI.value, currentBlock.scope().start().state(), null);
+                CodeEmitInfo info = new CodeEmitInfo(C1XCompilation.MethodCompilation.SynchronizationEntryBCI.value, compilation.hir().startBlock.state(), null);
                 CodeStub slowPath = new MonitorEnterStub(obj, lock, info);
 
                 // receiver is guaranteed non-null so don't need CodeEmitInfo
@@ -236,7 +240,7 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
         }
 
         // increment invocation counters if needed
-        incrementInvocationCounter(new CodeEmitInfo(0, currentBlock.scope().start().state(), null), false);
+        incrementInvocationCounter(new CodeEmitInfo(0, compilation.hir().startBlock.state(), null), false);
 
         // all blocks with a successor must end with an unconditional jump
         // to the successor even if they are consecutive
@@ -251,7 +255,7 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
             LIROperand reg = rlockResult(x);
             CodeEmitInfo info = stateFor(x, x.state());
             lir.oop2regPatch(null, reg, info);
-        } else if (compilation.useCount(x) > 1 && !canInlineAsConstant(x)) {
+        } else if (compilation.hir().useCount(x) > 1 && !canInlineAsConstant(x)) {
             if (!x.isPinned()) {
                 // unpinned constants are handled specially so that they can be
                 // put into registers when they are used multiple times within a
@@ -1754,7 +1758,7 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
 
             instr.accept(this);
 
-            assert !compilation.hasUses(instr) || instr.operand().isValid() || instr instanceof Constant || compilation.bailout() != null : "invalid item set";
+            assert !compilation.hir().hasUses(instr) || instr.operand().isValid() || instr instanceof Constant || compilation.bailout() != null : "invalid item set";
         } finally {
             compilation.setCurrentInstruction(prev);
         }
@@ -1985,7 +1989,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
     }
 
     protected void setNoResult(Instruction x) {
-        assert !compilation.hasUses(x) : "can't have use";
+        assert !compilation.hir().hasUses(x) : "can't have use";
         x.clearOperand();
     }
 

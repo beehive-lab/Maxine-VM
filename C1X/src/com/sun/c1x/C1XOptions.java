@@ -59,6 +59,7 @@ public class C1XOptions {
     public static boolean PrintIR                            = TRUE;
     public static boolean PrintCFGToFile                     = ____;
     public static boolean PrintMetrics                       = ____;
+    public static boolean PrintCFG                           = ____;
 
     // canonicalizer settings
     public static boolean CanonicalizeInstructions           = TRUE;

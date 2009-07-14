@@ -536,6 +536,6 @@ public abstract class Instruction {
 
 
     public boolean isRoot(C1XCompilation compilation) {
-        return isPinned() || compilation.useCount(this) > 1;
+        return isPinned() || compilation.hir().useCount(this) > 1;
     }
 }

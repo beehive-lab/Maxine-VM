@@ -30,7 +30,6 @@ import java.util.Arrays;
 import com.sun.c1x.*;
 import com.sun.c1x.target.Target;
 import com.sun.c1x.target.Architecture;
-import com.sun.c1x.util.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -175,18 +174,9 @@ public class C1XTest {
         // compile all the methods and report progress
         for (MethodActor methodActor : methods) {
             progress.begin(methodActor.toString());
-            final C1XCompilation compilation = compile(target, runtime, methodActor, printBailoutOption.getValue(), false);
-            if (compilation == null || compilation.startBlock() != null) {
+            final boolean result = compile(target, runtime, methodActor, printBailoutOption.getValue(), false);
+            if (result) {
                 progress.pass();
-
-                if (compilation != null && C1XOptions.PrintIR) {
-                    out.println(methodActor.format("IR for %H.%n(%p)"));
-                    final LogStream logOut = new LogStream(out);
-                    final InstructionPrinter ip = new InstructionPrinter(logOut, true);
-                    final BlockPrinter bp = new BlockPrinter(ip, false, false);
-                    compilation.startBlock().iteratePreOrder(bp);
-                }
-
             } else {
                 progress.fail("failed");
                 if (failFastOption.getValue()) {
@@ -214,28 +204,25 @@ public class C1XTest {
         }
     }
 
-    private static C1XCompilation compile(Target target, MaxCiRuntime runtime, MethodActor method, boolean printBailout, boolean warmup) {
+    private static boolean compile(Target target, MaxCiRuntime runtime, MethodActor method, boolean printBailout, boolean warmup) {
         // compile a single method
         if (isCompilable(method)) {
             final long startNs = System.nanoTime();
             final MaxCiTargetMethod targetMethod = targetOption.getValue() ? new MaxCiTargetMethod((ClassMethodActor) method) : null;
             final C1XCompilation compilation = new C1XCompilation(target, runtime, runtime.getCiMethod(method), targetMethod);
-            if (compilation.startBlock() == null) {
-                if (printBailout) {
-                    compilation.bailout().printStackTrace(out);
-                }
-            } else {
-                compilation.emitLIR();
-                compilation.emitCode();
+
+            if (!compilation.compile() && printBailout) {
+                compilation.bailout().printStackTrace(out);
+                return false;
             }
 
             if (!warmup) {
                 // record the time for successful compilations
                 recordTime(method, compilation.totalInstructions(), System.nanoTime() - startNs);
             }
-            return compilation;
+            return true;
         }
-        return null;
+        return true;
     }
 
     private static boolean isCompilable(MethodActor method) {
