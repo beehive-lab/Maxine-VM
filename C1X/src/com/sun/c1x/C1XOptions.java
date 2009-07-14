@@ -116,6 +116,10 @@ public class C1XOptions {
     public static float   BimorphicProfileRatio              = 0.90f;
     public static int     MaximumTypeSwitchInlining          = 10;
 
+    // Linear scan settings
+    public static boolean StressLinearScan                   = ____;
+    public static int     TraceLinearScanLevel               = 4;
+
     // LIR settings
     public static boolean PrintIRWithLIR                     = ____;
     public static boolean LIRTraceExecution                  = ____;

@@ -537,4 +537,11 @@ public class Util {
         // TODO Auto-generated method stub
         return 0;
     }
+
+    public static boolean traceLinearScan(int level, String string, Object...objects) {
+        if (C1XOptions.TraceLinearScanLevel >= level) {
+            TTY.println(String.format(string, objects));
+        }
+        return true;
+    }
 }

@@ -646,4 +646,16 @@ public class BlockBegin extends StateSplit {
         // TODO Auto-generated method stub
 
     }
+
+    public int numberOfExceptionHandlers() {
+        return exceptionHandlerBlocks.size();
+    }
+
+    public BlockBegin exceptionHandlerAt(int i) {
+        return exceptionHandlerBlocks.get(i);
+    }
+
+    public BlockBegin predAt(int j) {
+        return this.predecessors.get(j);
+    }
 }
