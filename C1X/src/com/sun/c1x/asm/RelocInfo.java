@@ -18,31 +18,33 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
-
-import com.sun.c1x.util.*;
+package com.sun.c1x.asm;
 
 /**
- * @author Marcelo Cintra
+ *
  * @author Thomas Wuerthinger
  *
  */
-public class MonitorEnterStub extends CodeStub {
+public class RelocInfo {
 
-    public MonitorEnterStub(LIROperand object, LIROperand lock, CodeEmitInfo info) {
-        // TODO Auto-generated constructor stub
-    }
-
-    @Override
-    public void emitCode(LIRAssembler e) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void printName(LogStream out) {
-        // TODO Auto-generated method stub
-
-    }
-
+    public enum Type {
+        none, // Used when no relocation should be generated
+        oopType, // embedded oop
+        virtualCallType, // a standard inline cache call for a virtual send
+        optVirtualCallType, // a virtual call that has been statically bound (i.e., no IC cache)
+        staticCallType, // a static send
+        staticStubType, // stub-entry for static send (takes care of interpreter case)
+        runtimeCallType, // call to fixed external routine
+        externalWordType, // reference to fixed external address
+        internalWordType, // reference within the current code blob
+        sectionWordType, // internal, but a cross-section reference
+        pollType, // polling instruction for safepoints
+        pollReturnType, // polling instruction for safepoints at return
+        breakpointType, // an initialization barrier or safepoint
+        yetUnusedType, // Still unused
+        yetUnusedType_2, // Still unused
+        dataPrefixTag
+        // tag for a prefix (carries data arguments)
+        // typeMask = 15 // A mask which selects only the above values
+    };
 }

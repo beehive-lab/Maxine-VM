@@ -18,26 +18,18 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.asm;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.target.x86.*;
 
+/**
+ *
+ * @author Thomas Wuerthinger
+ *
+ */
+public class ICache {
 
-public class NewInstanceStub extends CodeStub {
-
-    public NewInstanceStub(LIROperand klassReg, LIROperand dst, CiType klass, CodeEmitInfo info, CiRuntimeCall stubId) {
-        // TODO Auto-generated constructor stub
-    }
-
-    @Override
-    public void emitCode(LIRAssembler e) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void printName(LogStream out) {
+    public static void invalidateRange(Address addrAt, int offset) {
         // TODO Auto-generated method stub
 
     }

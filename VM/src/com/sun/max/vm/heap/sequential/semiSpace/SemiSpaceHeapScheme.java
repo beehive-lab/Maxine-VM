@@ -177,7 +177,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 }
 
                 ++numberOfGarbageCollectionInvocations;
-                TeleHeapInfo.beforeGarbageCollection();
+                InspectableHeapInfo.beforeGarbageCollection();
 
                 VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
@@ -234,7 +234,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                     verifyHeap("after GC");
                 }
 
-                TeleHeapInfo.afterGarbageCollection();
+                InspectableHeapInfo.afterGarbageCollection();
 
                 if (Heap.traceGCTime()) {
                     final boolean lockDisabledSafepoints = Log.lock();
@@ -328,7 +328,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
             // From now on we can allocate
 
-            TeleHeapInfo.registerMemoryRegions(toSpace, fromSpace);
+            InspectableHeapInfo.registerMemoryRegions(toSpace, fromSpace);
         } else if (phase == MaxineVM.Phase.STARTING) {
             final String growPolicy = growPolicyOption.getValue();
             if (growPolicy.equals("Double")) {

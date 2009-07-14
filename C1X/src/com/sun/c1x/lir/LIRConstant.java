@@ -29,53 +29,17 @@ import com.sun.c1x.value.*;
  *
  * @author Marcelo Cintra
  */
-public class LIRConstant extends LIROperandPtr {
+public class LIRConstant extends LIROperand {
 
-    private ConstType value;
-
-    /**
-     * Create a new integer constant.
-     *
-     * @param i integer value for the new constant
-     */
-    public LIRConstant(int i) {
-        value = ConstType.forInt(i);
-    }
+    public final ConstType value;
 
     /**
-     * Create a new long constant.
-     *
-     * @param l long value for the new constant
+     * Create a LIRConstant from a ConstType object.
+     * @param value the value
      */
-    public LIRConstant(long l) {
-        value = ConstType.forLong(l);
-    }
-
-    /**
-     * Create a new float constant.
-     *
-     * @param f float value for the new constant
-     */
-    public LIRConstant(float f) {
-        value = ConstType.forFloat(f);
-    }
-
-    /**
-     * Create a new double constant.
-     *
-     * @param d double value for the new constant
-     */
-    public LIRConstant(double d) {
-        value = ConstType.forDouble(d);
-    }
-
-    /**
-     * Create a new object reference constant.
-     *
-     * @param o object reference for the new constant
-     */
-    public LIRConstant(Object o) {
-        value = ConstType.forObject(o);
+    public LIRConstant(ConstType value) {
+        super(value.basicType);
+        this.value = value;
     }
 
     /**
@@ -104,6 +68,7 @@ public class LIRConstant extends LIROperandPtr {
      *
      * @return the int value of the constant, if it is an int
      */
+    @Override
     public int asInt() {
         assertType(this, BasicType.Int);
         return value.asInt();
@@ -114,6 +79,7 @@ public class LIRConstant extends LIROperandPtr {
      *
      * @return the long value of the constant, if it is a long
      */
+    @Override
     public long asLong() {
         assertType(this, BasicType.Long);
         return value.asLong();
@@ -175,7 +141,7 @@ public class LIRConstant extends LIROperandPtr {
      * @return the reference to the input constant if succeeded.
      */
     public static LIRConstant assertType(LIRConstant c, BasicType t) {
-        assert c.type() == t : "constant is wrong type";
+        assert c.type() == t : "constant has wrong type";
         return c;
     }
 
@@ -185,7 +151,7 @@ public class LIRConstant extends LIROperandPtr {
      * @return the reference to the input constant if succeeded.
      */
     public static LIRConstant assertType(LIRConstant c, BasicType t1, BasicType t2) {
-        assert c.type() == t1 || c.type() == t2 : "constant is wrong type";
+        assert c.type() == t1 || c.type() == t2 : "constant has wrong type";
         return c;
     }
 
@@ -304,5 +270,25 @@ public class LIRConstant extends LIROperandPtr {
             default:
                 out.print(type() + ":" + asDouble());
         }
+    }
+
+    public boolean isOneFloat() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean isZeroFloat() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean isZeroDouble() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean isOneDouble() {
+        // TODO Auto-generated method stub
+        return false;
     }
 }

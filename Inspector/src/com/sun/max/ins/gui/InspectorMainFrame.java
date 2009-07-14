@@ -52,13 +52,14 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     private static final String FRAME_WIDTH_KEY = "frameWidth";
 
     private final Inspection inspection;
+    private final InspectorNameDisplay nameDisplay;
     private final SaveSettingsListener saveSettingsListener;
     private final Cursor busyCursor = new Cursor(Cursor.WAIT_CURSOR);
     private final JDesktopPane desktopPane;
     private final JScrollPane scrollPane;
     private final InspectorMainMenuBar menuBar;
     private final InspectorMenu desktopMenu = new InspectorMenu();
-    private final InspectorLabel missingDataTableCellRenderer;
+    private final InspectorLabel unavailableDataTableCellRenderer;
 
     /**
      * Creates a new main window frame for the Maxine VM inspection session.
@@ -66,12 +67,14 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
      * @param inspection the inspection's main state: {@link Inspection#actions()} and
      * {@link Inspection#settings()} must already be initialized.
      * @param inspectorName the name to display on the window.
+     * @param nameDisplay TODO
      * @param settings settings manager for the session, already initialized
      * @param actions available for the session, already initialized
      */
-    public InspectorMainFrame(Inspection inspection, String inspectorName, InspectionSettings settings, InspectionActions actions) {
+    public InspectorMainFrame(Inspection inspection, String inspectorName, InspectorNameDisplay nameDisplay, InspectionSettings settings, InspectionActions actions) {
         super(inspectorName);
         this.inspection = inspection;
+        this.nameDisplay = nameDisplay;
 
         setDefaultLookAndFeelDecorated(true);
         InspectorFrame.TitleBarListener.initialize();
@@ -126,7 +129,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
                 }
             }
         });
-        missingDataTableCellRenderer = new MissingDataTableCellRenderer(inspection);
+        unavailableDataTableCellRenderer = new UnavailableDataTableCellRenderer(inspection);
         saveSettingsListener = new AbstractSaveSettingsListener(FRAME_SETTINGS_NAME) {
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
                 final Rectangle bounds = getBounds();
@@ -312,8 +315,8 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         return this;
     }
 
-    public InspectorLabel getMissingDataTableCellRenderer() {
-        return missingDataTableCellRenderer;
+    public InspectorLabel getUnavailableDataTableCellRenderer() {
+        return unavailableDataTableCellRenderer;
     }
 
     private Point getMiddle(Component component) {
@@ -400,11 +403,11 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         repaint();
     }
 
-    private final class MissingDataTableCellRenderer extends PlainLabel implements TableCellRenderer, TextSearchable, Prober {
-        MissingDataTableCellRenderer(Inspection inspection) {
+    private final class UnavailableDataTableCellRenderer extends PlainLabel implements TableCellRenderer, TextSearchable, Prober {
+        UnavailableDataTableCellRenderer(Inspection inspection) {
             super(inspection, null);
-            setText("<?>");
-            setToolTipText("No data available");
+            setText(nameDisplay.unavailableDataShortText());
+            setToolTipText(nameDisplay.unavailableDataLongText());
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {

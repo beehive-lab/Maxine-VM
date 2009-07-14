@@ -191,7 +191,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
     }
 
     protected final void setJavapResolvableToolTipText(String kind, String name) {
-        final String resolution = telePoolConstant == null ? inspection().nameDisplay().unavailableTeleData() :
+        final String resolution = telePoolConstant == null ? inspection().nameDisplay().unavailableDataLongText() :
             (isResolved() ? "Resolved" : "Unresolved");
         setToolTipText(toolTipPrefix + "#" + Integer.toString(index) + "; //" + kind + " " + name + " (" + resolution + ")");
     }

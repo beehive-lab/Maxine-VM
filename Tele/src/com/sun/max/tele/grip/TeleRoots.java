@@ -47,12 +47,12 @@ public final class TeleRoots extends AbstractTeleVMHolder{
     // static tuple of the class will not be relocated because it is in the boot image.
     private Pointer teleRootsPointer = Pointer.zero();
 
-    private final Address[] cachedRoots = new Address[TeleHeapInfo.MAX_NUMBER_OF_ROOTS];
+    private final Address[] cachedRoots = new Address[InspectableHeapInfo.MAX_NUMBER_OF_ROOTS];
     private final BitSet usedIndices = new BitSet();
 
     private RemoteTeleGrip teleRoots() {
         if (teleRootsPointer.isZero()) {
-            teleRootsPointer = teleVM().fields().TeleHeapInfo_roots.staticTupleReference(teleVM()).toOrigin().plus(teleVM().fields().TeleHeapInfo_roots.fieldActor().offset());
+            teleRootsPointer = teleVM().fields().InspectableHeapInfo_roots.staticTupleReference(teleVM()).toOrigin().plus(teleVM().fields().InspectableHeapInfo_roots.fieldActor().offset());
         }
         return teleGripScheme.createTemporaryRemoteTeleGrip(teleVM().dataAccess().readWord(teleRootsPointer).asAddress());
     }

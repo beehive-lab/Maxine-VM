@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.asm;
 
-
 /**
  * The <code>CodeBuffer</code> class definition.
  *
@@ -28,7 +27,64 @@ package com.sun.c1x.asm;
  *
  */
 public class CodeBuffer {
+
+    public enum Type {
+
+        // Here is the list of all possible sections, in order of ascending address.
+        SECT_INSTS, // Executable instructions.
+        SECT_STUBS, // Outbound trampolines for supporting call sites.
+        SECT_CONSTS; // Non-instruction data: Floats, jump tables, etc.
+
+        // TODO: implement
+        public final int value = 0;
+    };
+
     int codeSize;
+
+    public CodeSection insts() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public OopRecorder oopRecorder() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public String name() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public void decode() {
+        // TODO Auto-generated method stub
+
+    }
+
+    public BufferBlob blob() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public CodeSection stubs() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public CodeSection consts() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public void blockComment(int offset, char comment) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public static int locator(int offset, int sect) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
 
     // TODO to be implemented
 }

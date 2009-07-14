@@ -1290,7 +1290,7 @@ public final class ClassfileReader {
                 }
             }
 
-            TeleClassInfo.registerClassLoaded(classActor);
+            InspectableClassInfo.registerClassLoaded(classActor);
 
             return classActor;
         } finally {

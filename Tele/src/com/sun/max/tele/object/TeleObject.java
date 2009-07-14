@@ -31,6 +31,7 @@ import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -77,19 +78,21 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      */
     protected static final int COPY_TRACE_VALUE = 2;
 
+    private final TeleReference reference;
+    private final LayoutScheme layoutScheme;
+
     /**
      * The factory method {@link TeleObjectFactory#make(Reference)} ensures synchronized TeleObjects creation.
      */
     protected TeleObject(TeleVM teleVM, Reference reference) {
         super(teleVM);
         this.reference = (TeleReference) reference;
+        this.layoutScheme = teleVM.vmConfiguration().layoutScheme();
         oid = this.reference.makeOID();
     }
 
     protected void refresh(long processEpoch) {
     }
-
-    private final TeleReference reference;
 
     /**
      * @return canonical reference to this object in the {@link TeleVM}
@@ -159,6 +162,62 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     }
 
     /**
+     * @return enumeration of the fields in the header of this object
+     */
+    public abstract EnumSet<Layout.HeaderField> getHeaderFields();
+
+    /**
+     * @param headerField identifies a header field in the object layout
+     * @return the type of the header field
+     */
+    public final TypeDescriptor getHeaderType(Layout.HeaderField headerField) {
+        switch (headerField) {
+            case HUB:
+                return getTeleHub() == null ? null : JavaTypeDescriptor.forJavaClass(getTeleHub().hub().getClass());
+            case MISC:
+                return JavaTypeDescriptor.WORD;
+            case LENGTH:
+                return JavaTypeDescriptor.INT;
+            default:
+                ProgramError.unknownCase();
+        }
+        return null;
+    }
+
+    /**
+     * @param headerField identifies a header field in the object layout
+     * @return the size of the header field
+     */
+    public final Size getHeaderSize(Layout.HeaderField headerField) {
+        return Size.fromInt(getHeaderType(headerField).toKind().width.numberOfBytes);
+    }
+
+    /**
+     * @param headerField identifies a header field in the object layout
+     * @return the location of the header field relative to object origin
+     */
+    public final Offset getHeaderOffset(Layout.HeaderField headerField) {
+        switch(headerField) {
+            case HUB:
+            case MISC:
+                return layoutScheme.generalLayout.getOffsetFromOrigin(headerField);
+            case LENGTH:
+                return layoutScheme.arrayHeaderLayout.getOffsetFromOrigin(headerField);
+            default:
+                ProgramError.unknownCase();
+        }
+        return null;
+    }
+
+    /**
+     * @param headerField identifies a header field in the object layout
+     * @return the memory location of the header field in the object
+     */
+    public final Address getHeaderAddress(Layout.HeaderField headerField) {
+        return getCurrentOrigin().plus(getHeaderOffset(headerField));
+    }
+
+    /**
      * @return the local surrogate for the Hub of this object
      */
     public TeleHub getTeleHub() {
@@ -222,6 +281,12 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      * @return the current location in memory of the field in this object
      */
     public abstract Address getFieldAddress(FieldActor fieldActor);
+
+    /**
+     * @param fieldActor descriptor for a field in this class
+     * @return the memory size of the field
+     */
+    public abstract Size getFieldSize(FieldActor fieldActor);
 
     /**
      * @param fieldActor local {@link FieldActor}, part of the {@link ClassActor} for the type of this object, that

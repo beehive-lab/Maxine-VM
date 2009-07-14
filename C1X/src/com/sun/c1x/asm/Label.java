@@ -134,6 +134,31 @@ public class Label {
 
     }
 
+    public int locPos() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public int locSect() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public void printInstructions(AbstractAssembler abstractAssembler) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void patchInstructions(AbstractAssembler abstractAssembler) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void bindLoc(int locator) {
+        // TODO Auto-generated method stub
+
+    }
+
 //    class Label VALUE_OBJ_CLASS_SPEC {
 //        private:
 //         enum { PatchCacheSize = 4 };

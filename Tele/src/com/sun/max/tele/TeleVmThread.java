@@ -21,6 +21,7 @@
 package com.sun.max.tele;
 
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
@@ -60,7 +61,11 @@ public class TeleVmThread extends TeleTupleObject implements MaxVMThread {
                     // Assume strings in the {@link TeleVM} don't change, so we don't need to re-read
                     // if we've already seen the string (depends on canonical references).
                     this.nameReference = nameReference;
-                    name = teleVM().getString(this.nameReference);
+                    try {
+                        name = teleVM().getString(this.nameReference);
+                    } catch (InvalidReferenceException invalidReferenceExceptoin) {
+                        name = "?";
+                    }
                 }
             }
             lastRefreshedEpoch = teleVM().teleProcess().epoch();

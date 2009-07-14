@@ -101,18 +101,19 @@ public abstract class ObjectInspector extends Inspector {
         super.createFrame(menu);
         gui().setLocationRelativeToMouse(this, inspection().geometry().objectInspectorNewFrameDiagonalOffset());
         frame().menu().addSeparator();
-        frame().menu().add(new InspectorAction(inspection(), "Inspect Memory") {
+        frame().menu().add(new InspectorAction(inspection(), "Inspect object's memory") {
             @Override
             protected void procedure() {
                 MemoryInspector.create(inspection(), teleObject).highlight();
             }
         });
-        frame().menu().add(new InspectorAction(inspection(), "Inspect Memory Words") {
+        frame().menu().add(new InspectorAction(inspection(), "Inspect object's memory words") {
             @Override
             protected void procedure() {
                 MemoryWordInspector.create(inspection(), teleObject).highlight();
             }
         });
+        frame().menu().add(actions().setObjectWatchpoint(teleObject, "Watch object's memory"));
         frame().menu().addSeparator();
         frame().menu().add(actions().closeViews(otherObjectInspectorsPredicate, "Close other object inspectors"));
         frame().menu().add(actions().closeViews(allObjectInspectorsPredicate, "Close all object inspectors"));

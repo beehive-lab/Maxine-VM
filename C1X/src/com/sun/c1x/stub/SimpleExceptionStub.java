@@ -18,42 +18,70 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.value;
+package com.sun.c1x.stub;
+
+import com.sun.c1x.ci.*;
+import com.sun.c1x.lir.*;
+import com.sun.c1x.util.*;
 
 
 /**
- * The <code>Address</code> class definition.
+ * The <code>SimpleExceptionStub</code> class definition.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  *
  */
-public class Address {
-    private long address;
+public class SimpleExceptionStub extends CodeStub {
 
-    /**
-     * Constructs a new Address, which holds a runtime address.
-     *
-     * @param address
+    private LIROperand obj;
+    private CiRuntimeCall stub;
+    private CodeEmitInfo info;
+
+        /**
+     * @param obj
+     * @param stub
+     * @param info
      */
-    public Address(long address) {
+    public SimpleExceptionStub(LIROperand obj, CiRuntimeCall stub, CodeEmitInfo info) {
         super();
-        this.address = address;
+        this.obj = obj;
+        this.stub = stub;
+        this.info = info;
+    }
+
+    @Override
+    public void emitCode(LIRAssembler e) {
+    }
+
+    @Override
+    public CodeEmitInfo info() {
+        return info;
     }
 
     /**
-     * @return the long value which represents an internal address
-     */
-    public long address() {
-        return address;
-    }
-
-    /**
-     * Sets the address.
+     * Gets the stub of this class.
      *
-     * @param address the new address
+     * @return the stub
      */
-    public void setAddress(long address) {
-        this.address = address;
+    public CiRuntimeCall getStub() {
+        return stub;
+    }
+
+    public boolean isExceptionThrowStub() {
+        return true;
+    }
+
+    @Override
+    public void visit(LIRVisitState visitor) {
+        if (obj.isValid()) {
+            visitor.doInput(obj);
+        }
+        visitor.doSlowCase(info);
+    }
+
+    @Override
+    public void printName(LogStream out) {
+        out.print("SimpleExceptionStub");
     }
 }

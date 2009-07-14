@@ -39,11 +39,15 @@ public enum Architecture {
      * Represents the natural size of words (typically registers and pointers) of this architecture, in bytes.
      */
     public final int wordSize;
+    public final int bitsPerWord;
     public final String backend;
+    public final int loWordOffsetInBytes = 0; // TODO: init
+    public final int hiWordOffsetInBytes = 0; // TODO: init
 
     Architecture(int wordSize, String backend) {
         this.wordSize = wordSize;
         this.backend = backend;
+        this.bitsPerWord = (int) java.lang.Math.pow(2, wordSize);
     }
 
     /**
@@ -53,6 +57,10 @@ public enum Architecture {
     @Override
     public String toString() {
         return name().toLowerCase();
+    }
+
+    public int bitsPerWord() {
+        return bitsPerWord;
     }
 
     /**

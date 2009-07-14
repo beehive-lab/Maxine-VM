@@ -93,9 +93,12 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
                 }
             }
             tabbedPane.addChangeListener(new ChangeListener() {
-                // Do a refresh whenever there's a tab change, so that the newly exposed pane is sure to be current
+                // Refresh a newly exposed pane to be sure it is current
                 public void stateChanged(ChangeEvent event) {
-                    refreshView(true);
+                    final ThreadLocalsPanel threadLocalsPanel = (ThreadLocalsPanel) tabbedPane.getSelectedComponent();
+                    if (threadLocalsPanel != null) {
+                        threadLocalsPanel.refresh(true);
+                    }
                 }
             });
         }

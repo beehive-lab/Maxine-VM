@@ -64,7 +64,7 @@ public abstract class MemoryTagTableCellRenderer extends InspectorLabel implemen
             final TeleIntegerRegisters teleIntegerRegisters = thread.integerRegisters();
             if (teleIntegerRegisters == null) {
                 // Return a specialized renderer with its own content.
-                label = gui().getMissingDataTableCellRenderer();
+                label = gui().getUnavailableDataTableCellRenderer();
             } else {
                 final String registerNameList = teleIntegerRegisters.findAsNameList(address, address.plus(maxVM().wordSize()));
                 if (registerNameList.isEmpty()) {

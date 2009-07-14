@@ -119,6 +119,12 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceIntFieldAccess Hub_referenceMapLength = new TeleInstanceIntFieldAccess(Hub.class, "referenceMapLength");
     public final TeleInstanceIntFieldAccess Hub_referenceMapStartIndex = new TeleInstanceIntFieldAccess(Hub.class, "referenceMapStartIndex");
     public final TeleInstanceReferenceFieldAccess HybridClassActor_constantPool = new TeleInstanceReferenceFieldAccess(HybridClassActor.class, "constantPool", ConstantPool.class);
+    public final TeleStaticIntFieldAccess InspectableClassInfo_classActorCount = new TeleStaticIntFieldAccess(InspectableClassInfo.class, "classActorCount");
+    public final TeleStaticReferenceFieldAccess InspectableClassInfo_classActors = new TeleStaticReferenceFieldAccess(InspectableClassInfo.class, "classActors", ClassActor[].class);
+    public final TeleStaticLongFieldAccess InspectableHeapInfo_collectionEpoch = new TeleStaticLongFieldAccess(InspectableHeapInfo.class, "collectionEpoch");
+    public final TeleStaticReferenceFieldAccess InspectableHeapInfo_memoryRegions = new TeleStaticReferenceFieldAccess(InspectableHeapInfo.class, "memoryRegions", MemoryRegion[].class);
+    public final TeleStaticLongFieldAccess InspectableHeapInfo_rootEpoch = new TeleStaticLongFieldAccess(InspectableHeapInfo.class, "rootEpoch");
+    public final TeleStaticReferenceFieldAccess InspectableHeapInfo_roots = new TeleStaticReferenceFieldAccess(InspectableHeapInfo.class, "roots", Object[].class);
     public final TeleInstanceReferenceFieldAccess JitTargetMethod_bytecodeInfos = new TeleInstanceReferenceFieldAccess(JitTargetMethod.class, "bytecodeInfos", BytecodeInfo[].class);
     public final TeleInstanceReferenceFieldAccess JitTargetMethod_bytecodeToTargetCodePositionMap = new TeleInstanceReferenceFieldAccess(JitTargetMethod.class, "bytecodeToTargetCodePositionMap", int[].class);
     public final TeleInstanceCharFieldAccess Kind_character = new TeleInstanceCharFieldAccess(Kind.class, "character");
@@ -153,12 +159,6 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess TargetMethod_referenceLiterals = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "referenceLiterals", Object[].class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_scalarLiteralBytes = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "scalarLiteralBytes", byte[].class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_stopPositions = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "stopPositions", int[].class);
-    public final TeleStaticIntFieldAccess TeleClassInfo_classActorCount = new TeleStaticIntFieldAccess(TeleClassInfo.class, "classActorCount");
-    public final TeleStaticReferenceFieldAccess TeleClassInfo_classActors = new TeleStaticReferenceFieldAccess(TeleClassInfo.class, "classActors", ClassActor[].class);
-    public final TeleStaticLongFieldAccess TeleHeapInfo_collectionEpoch = new TeleStaticLongFieldAccess(TeleHeapInfo.class, "collectionEpoch");
-    public final TeleStaticReferenceFieldAccess TeleHeapInfo_memoryRegions = new TeleStaticReferenceFieldAccess(TeleHeapInfo.class, "memoryRegions", MemoryRegion[].class);
-    public final TeleStaticLongFieldAccess TeleHeapInfo_rootEpoch = new TeleStaticLongFieldAccess(TeleHeapInfo.class, "rootEpoch");
-    public final TeleStaticReferenceFieldAccess TeleHeapInfo_roots = new TeleStaticReferenceFieldAccess(TeleHeapInfo.class, "roots", Object[].class);
     public final TeleStaticIntFieldAccess Trace_level = new TeleStaticIntFieldAccess(Trace.class, "level");
     public final TeleStaticLongFieldAccess Trace_threshold = new TeleStaticLongFieldAccess(Trace.class, "threshold");
     public final TeleInstanceReferenceFieldAccess TupleClassActor_constantPool = new TeleInstanceReferenceFieldAccess(TupleClassActor.class, "constantPool", ConstantPool.class);
