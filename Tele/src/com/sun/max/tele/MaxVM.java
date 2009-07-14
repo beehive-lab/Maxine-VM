@@ -646,8 +646,7 @@ public interface MaxVM {
     /**
      * Creates a new memory watchpoint in the VM.
      * @param description text useful to a person, for example capturing the intent of the watchpoint
-     * @param start start of a memory region in the VM
-     * @param size size of the memory region in the VM
+     * @param memoryRegion a region a memory region in the VM
      * @param after trap after accessing memory field
      * @param read read access
      * @param write write access
@@ -657,7 +656,7 @@ public interface MaxVM {
      * @throws TooManyWatchpointsException
      * @throws DuplicateWatchpointException when the watchpoint overlaps in whole or part with an existing watchpoint
      */
-    MaxWatchpoint setRegionWatchpoint(String description, Address start, Size size, boolean after, boolean read, boolean write, boolean exec)
+    MaxWatchpoint setRegionWatchpoint(String description, MemoryRegion memoryRegion, boolean after, boolean read, boolean write, boolean exec)
         throws TooManyWatchpointsException, DuplicateWatchpointException;
 
     /**
@@ -713,10 +712,10 @@ public interface MaxVM {
         throws TooManyWatchpointsException, DuplicateWatchpointException;
 
     /**
-     * @param address a memory address in the VM
-     * @return the watchpoint whose memory region includes the address, null if none.
+     * @param memoryRegion an area of memory in the VM
+     * @return the watchpoint whose memory region overlaps, null if none.
      */
-    MaxWatchpoint findWatchpoint(Address address);
+    MaxWatchpoint findWatchpoint(MemoryRegion memoryRegion);
 
     /**
      * Find watchpoint which triggered a signal.

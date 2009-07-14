@@ -1135,11 +1135,11 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#setRegionWatchpoint(java.lang.String, com.sun.max.unsafe.Address, com.sun.max.unsafe.Size, boolean, boolean, boolean, boolean)
+     * @see com.sun.max.tele.MaxVM#setRegionWatchpoint(java.lang.String, com.sun.max.memory.MemoryRegion, boolean, boolean, boolean, boolean)
      */
-    public final MaxWatchpoint setRegionWatchpoint(String description, Address start, Size size, boolean after, boolean read, boolean write, boolean exec)
+    public final MaxWatchpoint setRegionWatchpoint(String description, MemoryRegion memoryRegion, boolean after, boolean read, boolean write, boolean exec)
         throws TooManyWatchpointsException, DuplicateWatchpointException {
-        return teleProcess.watchpointFactory().setRegionWatchpoint(description, start, size, after, read, write, exec);
+        return teleProcess.watchpointFactory().setRegionWatchpoint(description, memoryRegion, after, read, write, exec);
     }
 
     /* (non-Javadoc)
@@ -1191,10 +1191,10 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#findWatchpoint(com.sun.max.unsafe.Address)
+     * @see com.sun.max.tele.MaxVM#findWatchpoint(com.sun.max.memory.MemoryRegion)
      */
-    public final MaxWatchpoint findWatchpoint(Address address) {
-        return teleProcess.watchpointFactory().findWatchpoint(address);
+    public final MaxWatchpoint findWatchpoint(MemoryRegion memoryRegion) {
+        return teleProcess.watchpointFactory().findWatchpoint(memoryRegion);
     }
 
     /* (non-Javadoc)
