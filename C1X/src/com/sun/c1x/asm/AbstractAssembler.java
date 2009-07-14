@@ -79,7 +79,7 @@ public abstract class AbstractAssembler {
     public AbstractAssembler(C1XCompilation compilation, CodeBuffer code) {
         this.compilation = compilation;
         if (code == null) {
-            return;
+            throw Util.shouldNotReachHere();
         }
         CodeSection cs = code.insts();
         cs.clearMark(); // new assembler kills old mark

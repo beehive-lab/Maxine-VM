@@ -27,7 +27,7 @@ public class CodeSection {
 
     public int remaining() {
         // TODO Auto-generated method stub
-        return 0;
+        return Integer.MAX_VALUE;
     }
 
     public void relocate(Pointer pc, Type polltype) {
@@ -42,7 +42,7 @@ public class CodeSection {
 
     public Pointer start() {
         // TODO Auto-generated method stub
-        return null;
+        return new Pointer(0);
     }
 
     public Pointer limit() {
@@ -52,7 +52,7 @@ public class CodeSection {
 
     public Pointer end() {
         // TODO Auto-generated method stub
-        return null;
+        return new Pointer(0);
     }
 
     public boolean maybeExpandToEnsureRemaining(int requiredSpace) {

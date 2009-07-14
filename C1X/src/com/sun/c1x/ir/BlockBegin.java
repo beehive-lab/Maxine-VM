@@ -621,6 +621,9 @@ public class BlockBegin extends StateSplit {
      * @return the label associated with the block, used by the LIR
      */
     public Label label() {
+        if (label == null) {
+            label = new Label();
+        }
         return label;
     }
 

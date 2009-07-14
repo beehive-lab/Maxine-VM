@@ -137,6 +137,7 @@ public class LIRList {
     }
 
     public void branchDestination(Label lbl) {
+        assert lbl != null;
         append(new LIRLabel(lbl));
     }
 
@@ -577,8 +578,79 @@ public class LIRList {
         load(address, result, info, LIRPatchCode.PatchNone);
     }
 
-    public static void printLIR(List<BlockBegin> hir) {
-        // TODO Auto-generated method stub
+    public static void printBlock(BlockBegin x) {
+        // print block id
+        BlockEnd end = x.end();
+        TTY.print("B%d ", x.blockID());
 
+        // print flags
+        if (x.checkBlockFlag(BlockBegin.BlockFlag.StandardEntry)) {
+            TTY.print("std ");
+        }
+        if (x.checkBlockFlag(BlockBegin.BlockFlag.OsrEntry)) {
+            TTY.print("osr ");
+        }
+        if (x.checkBlockFlag(BlockBegin.BlockFlag.ExceptionEntry)) {
+            TTY.print("ex ");
+        }
+        if (x.checkBlockFlag(BlockBegin.BlockFlag.SubroutineEntry)) {
+            TTY.print("jsr ");
+        }
+        if (x.checkBlockFlag(BlockBegin.BlockFlag.BackwardBranchTarget)) {
+            TTY.print("bb ");
+        }
+        if (x.checkBlockFlag(BlockBegin.BlockFlag.LinearScanLoopHeader)) {
+            TTY.print("lh ");
+        }
+        if (x.checkBlockFlag(BlockBegin.BlockFlag.LinearScanLoopEnd)) {
+            TTY.print("le ");
+        }
+
+        // print block bci range
+        TTY.print("[%d, %d] ", x.bci(), (end == null ? -1 : end.bci()));
+
+        // print predecessors and successors
+        if (x.numberOfPreds() > 0) {
+            TTY.print("preds: ");
+            for (int i = 0; i < x.numberOfPreds(); i++) {
+                TTY.print("B%d ", x.predAt(i).blockID());
+            }
+        }
+
+        if (x.numberOfSux() > 0) {
+            TTY.print("sux: ");
+            for (int i = 0; i < x.numberOfSux(); i++) {
+                TTY.print("B%d ", x.suxAt(i).blockID());
+            }
+        }
+
+        // print exception handlers
+        if (x.numberOfExceptionHandlers() > 0) {
+            TTY.print("xhandler: ");
+            for (int i = 0; i < x.numberOfExceptionHandlers(); i++) {
+                TTY.print("B%d ", x.exceptionHandlerAt(i).blockID());
+            }
+        }
+
+        TTY.cr();
+    }
+
+    public static void printLIR(List<BlockBegin> blocks) {
+        TTY.println("LIR:");
+        int i;
+        for (i = 0; i < blocks.size(); i++) {
+          BlockBegin bb = blocks.get(i);
+          printBlock(bb);
+          TTY.print("IdInstruction_"); TTY.cr();
+          bb.lir().printInstructions();
+        }
+    }
+
+    private void printInstructions() {
+        for (int i = 0; i < operations.size(); i++) {
+            operations.get(i).printInstruction(TTY.out);
+            TTY.println();
+        }
+        TTY.cr();
     }
 }

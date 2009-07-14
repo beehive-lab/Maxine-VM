@@ -216,7 +216,7 @@ public abstract class LIRAssembler {
         }
     }
 
-    void emitCode(List<BlockBegin> hir) {
+    public void emitCode(List<BlockBegin> hir) {
         if (C1XOptions.PrintLIR) {
             LIRList.printLIR(hir);
         }
@@ -899,8 +899,6 @@ public abstract class LIRAssembler {
     protected abstract void emitLabel(LIRLabel lirLabel);
 
     protected abstract void emitBranch(LIRBranch lirBranch);
-
-    protected abstract void emitStub(CodeStub stub);
 
     protected abstract void emitConvert(LIRConvert lirConvert);
 

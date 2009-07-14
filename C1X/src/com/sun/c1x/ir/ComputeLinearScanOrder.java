@@ -98,7 +98,7 @@ public class ComputeLinearScanOrder {
     }
 
     // accessors for final result
-    List<BlockBegin> linearScanOrder() {
+    public List<BlockBegin> linearScanOrder() {
         return linearScanOrder;
     }
 
@@ -106,7 +106,7 @@ public class ComputeLinearScanOrder {
         return numLoops;
     }
 
-    ComputeLinearScanOrder(C1XCompilation compilation, BlockBegin startBlock) {
+    public ComputeLinearScanOrder(C1XCompilation compilation, BlockBegin startBlock) {
 
         maxBlockId = compilation.numberOfBlocks();
         visitedBlocks = new BitMap(maxBlockId);
@@ -547,7 +547,7 @@ public class ComputeLinearScanOrder {
     }
 
     void computeDominators() {
-        Util.traceLinearScan(3, "----- computing dominators (iterative computation reqired: %d)", iterativeDominators);
+        Util.traceLinearScan(3, "----- computing dominators (iterative computation reqired: %b)", iterativeDominators);
 
         // iterative computation of dominators is only required for methods with non-natural loops
         // and OSR-methods. For all other methods : the dominators computed when generating the
@@ -562,7 +562,7 @@ public class ComputeLinearScanOrder {
         assert !computeDominatorsIter() : "fix point not reached";
     }
 
-    void printBlocks() {
+    public void printBlocks() {
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.println("----- loop information:");
             for (int blockIdx = 0; blockIdx < linearScanOrder.size(); blockIdx++) {
