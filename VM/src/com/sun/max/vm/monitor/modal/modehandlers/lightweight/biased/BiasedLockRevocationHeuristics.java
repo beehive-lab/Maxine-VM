@@ -20,9 +20,7 @@
  */
 package com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased;
 
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.atomic.*;
 
 /**
  *
@@ -36,16 +34,14 @@ public class BiasedLockRevocationHeuristics {
     private static final int BULK_REVOCATION_THRESHOLD = 40;
     private static final int BULK_REBIAS_DECAY_TIME = 25000;
 
-    private int revocationCount = 0;
+    private final AtomicInteger revocationCount = new AtomicInteger();
     private long lastBulkRebiasTime = 0;
-
-    private static final FieldActor revocationCountFieldActor = FieldActor.findInstance(BiasedLockRevocationHeuristics.class, "revocationCount");
 
     public RevocationType notifyContentionRevocationRequest() {
 
         // This heuristic re-implements that used in HotSpot (as of 1.7)
 
-        int currentRevocationCount = revocationCount;
+        int currentRevocationCount = revocationCount.get();
         final long bulkRebiasTime = lastBulkRebiasTime;
         final long currentTime = System.currentTimeMillis();
         if (currentRevocationCount >= BULK_REBIAS_THRESHOLD &&
@@ -53,7 +49,7 @@ public class BiasedLockRevocationHeuristics {
             lastBulkRebiasTime != 0 &&
             currentTime - bulkRebiasTime > BULK_REBIAS_DECAY_TIME) {
             currentRevocationCount = 0;
-            revocationCount = 0;
+            revocationCount.set(0);
         }
 
         if (currentRevocationCount <= BULK_REVOCATION_THRESHOLD) {
@@ -73,13 +69,6 @@ public class BiasedLockRevocationHeuristics {
     }
 
     private int revocationCountAtomicInc() {
-        while (true) {
-            final Address oldRevocationCount = Address.fromUnsignedInt(revocationCount);
-            final Address newRevocationCount = oldRevocationCount.plus(1);
-            if (Reference.fromJava(this).compareAndSwapWord(revocationCountFieldActor.offset(), oldRevocationCount, newRevocationCount).equals(oldRevocationCount)) {
-                return newRevocationCount.toInt();
-            }
-
-        }
+        return revocationCount.getAndAdd(1) + 1;
     }
 }

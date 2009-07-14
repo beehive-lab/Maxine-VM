@@ -103,10 +103,10 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     protected boolean canInlineAsConstant(Instruction v) {
-        if (v.type().basicType() == BasicType.Long) {
+        if (v.type().basicType == BasicType.Long) {
             return false;
         }
-        return v.type().basicType() != BasicType.Object || (v.type().isConstant() && ((ConstType) v.type()).asObject() == null);
+        return v.type().basicType != BasicType.Object || (v.type().isConstant() && ((ConstType) v.type()).asObject() == null);
     }
 
     @Override
@@ -581,8 +581,8 @@ public final class X86LIRGenerator extends LIRGenerator {
             x.swapOperands();
         }
 
-        assert x.x().type().basicType() == x.type().basicType() && x.y().type().basicType() == x.type().basicType() : "wrong parameters";
-        switch (x.type().basicType()) {
+        assert x.x().type().basicType == x.type().basicType && x.y().type().basicType == x.type().basicType : "wrong parameters";
+        switch (x.type().basicType) {
             case Float:
             case Double:
                 visitArithmeticOpFPU(x);
@@ -603,7 +603,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIRItem value = new LIRItem(x.x(), this);
         LIRItem count = new LIRItem(x.y(), this);
 
-        boolean mustLoadCount = !count.isConstant() || x.type().basicType() == BasicType.Long;
+        boolean mustLoadCount = !count.isConstant() || x.type().basicType == BasicType.Long;
         if (mustLoadCount) {
             // count for long must be in register
             count.loadItemForce(shiftCountOpr());
@@ -700,8 +700,8 @@ public final class X86LIRGenerator extends LIRGenerator {
         // In 64bit the type can be long, sparc doesn't have this assert // assert(offset.type().tag() == intTag,
         // "invalid type");
 
-        assert cmp.type().basicType() == type.basicType() : "invalid type";
-        assert val.type().basicType() == type.basicType() : "invalid type";
+        assert cmp.type().basicType == type.basicType : "invalid type";
+        assert val.type().basicType == type.basicType : "invalid type";
 
         // get address of field
         obj.loadItem();
@@ -1344,7 +1344,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     @Override
     protected LIROperand resultRegisterFor(ValueType type, boolean callee) {
         LIROperand opr;
-        switch (type.basicType()) {
+        switch (type.basicType) {
             case Int:
                 opr = X86FrameMap.raxOpr;
                 break;
@@ -1366,7 +1366,7 @@ public final class X86LIRGenerator extends LIRGenerator {
                 return LIROperandFactory.illegalOperand;
         }
 
-        assert opr.basicType == type.basicType() : "type mismatch";
+        assert opr.basicType == type.basicType : "type mismatch";
         return opr;
     }
 

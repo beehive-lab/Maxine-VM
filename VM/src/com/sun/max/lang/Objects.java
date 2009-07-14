@@ -20,12 +20,11 @@
  */
 package com.sun.max.lang;
 
+import static com.sun.max.unsafe.WithoutAccessCheck.*;
+
 import java.lang.reflect.*;
 
-import sun.misc.*;
-
 import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
 
 /**
  * Basic generic utilities for objects.
@@ -38,8 +37,6 @@ public final class Objects {
     private Objects() {
     }
 
-    private static final Unsafe unsafe = (Unsafe) WithoutAccessCheck.getStaticField(Unsafe.class, "theUnsafe");
-
     /**
      * Compares two given objects for equality using {@link Object#equals(Object)}.
      *
@@ -48,7 +45,6 @@ public final class Objects {
     public static boolean equal(Object o1, Object o2) {
         return o1 == null ? o2 == null : o1.equals(o2);
     }
-
 
     /**
      * Copies the values of the instance fields in one object to another object.

@@ -206,7 +206,7 @@ class Compilation implements Future<TargetMethod> {
         private CompilerStats[] allCompilerStats;
 
         CompilationStatsOption() {
-            super("Compilation", "Time compilation.", new MultiThreadTimer(Clock.SYSTEM_MILLISECONDS));
+            super("-XX:-TimeCompilation", "Compilation", "Time compilation.", new MultiThreadTimer(Clock.SYSTEM_MILLISECONDS));
         }
 
         CompilerStats start(DynamicCompilerScheme compiler, ClassMethodActor classMethodActor) {

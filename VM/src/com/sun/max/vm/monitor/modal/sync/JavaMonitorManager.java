@@ -110,21 +110,21 @@ public class JavaMonitorManager {
             if (gcDeadlockDetection) {
                 prototypeBindStickyMonitor(MaxineVM.hostOrTarget().configuration().heapScheme(), new StandardJavaMonitor.HeapSchemeDeadlockDetectionJavaMonitor());
             }
-            int unBoundListImageQty = UNBOUNDLIST_IMAGE_QTY;
+            int unboundListImageQty = UNBOUNDLIST_IMAGE_QTY;
             final String  unBoundListImageQtyProperty = System.getProperty(UNBOUNDLIST_IMAGE_QTY_PROPERTY);
             if (unBoundListImageQtyProperty != null) {
-                unBoundListImageQty = Integer.parseInt(unBoundListImageQtyProperty);
+                unboundListImageQty = Integer.parseInt(unBoundListImageQtyProperty);
             }
             final String  unBoundListGrowQtyProperty = System.getProperty(UNBOUNDLIST_GROW_QTY_PROPERTY);
             if (unBoundListGrowQtyProperty != null) {
                 unboundListGrowQty = Integer.parseInt(unBoundListGrowQtyProperty);
             }
-            for (int i = 0; i < unBoundListImageQty; i++) {
+            for (int i = 0; i < unboundListImageQty; i++) {
                 final ManagedMonitor monitor = newManagedMonitor();
                 addToUnboundList(monitor);
                 prototypeAddToBindableMonitors(monitor);
             }
-            unboundMonitorsHwm = unBoundListImageQty;
+            unboundMonitorsHwm = unboundListImageQty;
         } else if (phase == MaxineVM.Phase.PRIMORDIAL) {
             NativeMutexFactory.initialize();
             NativeConditionVariableFactory.initialize();

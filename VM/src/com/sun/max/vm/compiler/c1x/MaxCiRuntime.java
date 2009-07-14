@@ -129,7 +129,8 @@ public class MaxCiRuntime implements CiRuntime {
      * <code>false</code> to allow the compiler to use its own heuristics
      */
     public boolean mustNotInline(CiMethod method) {
-        return asClassMethodActor(method, "mustNotInline()").isNeverInline();
+        final ClassMethodActor classMethodActor = asClassMethodActor(method, "mustNotInline()");
+        return classMethodActor.rawCodeAttribute() == null || classMethodActor.isNeverInline();
     }
 
     /**
@@ -156,12 +157,10 @@ public class MaxCiRuntime implements CiRuntime {
         throw new MaxCiUnresolved("invalid CiType instance: " + type.getClass());
     }
 
-    @Override
     public int arrayLengthOffsetInBytes() {
         throw Util.unimplemented();
     }
 
-    @Override
     public boolean dtraceMethodProbes() {
         throw Util.unimplemented();
     }

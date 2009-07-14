@@ -38,7 +38,7 @@ public abstract class LIROperand {
     /**
      * The illegal operand singleton instance.
      */
-    public static final LIROperand ILLEGAL = new LIRConstant(new ConstType(BasicType.Illegal, 0, false));
+    public static final LIROperand ILLEGAL = new LIRConstant(new ConstType(BasicType.Illegal, 0));
 
     /**
      * The basic type of this operand.

@@ -26,6 +26,7 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.table.*;
 
+import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.type.*;
@@ -33,7 +34,6 @@ import com.sun.max.ins.value.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
-import com.sun.max.tele.object.TeleObject.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.*;
@@ -47,19 +47,12 @@ import com.sun.max.vm.value.*;
  */
 public final class ObjectHeaderTable extends InspectorTable {
 
-    private static final int MAX_ROW_COUNT = 3;
-    private static final int HEADER_HUB_ROW = 0;
-    private static final int HEADER_MISC_ROW = 1;
-    private static final int HEADER_ARRAY_LENGTH_ROW = 2;
-
     private final ObjectInspector objectInspector;
     private final Inspection inspection;
     private final TeleObject teleObject;
+    private final IndexedSequence<Layout.HeaderField> headerFields;
     private Pointer objectOrigin;
     private TeleHub teleHub;
-    private final Offset hubReferenceOffset; // Property of the layout scheme; doesn't change
-    private final Offset miscWordOffset; // Property of the layout scheme; doesn't change
-    private final Offset arrayLengthOffset; // Property of the layout scheme; doesn't change
 
     private final ObjectHeaderTableModel model;
     private final ObjectHeaderTableColumnModel columnModel;
@@ -68,7 +61,7 @@ public final class ObjectHeaderTable extends InspectorTable {
     private MaxVMState lastRefreshedState = null;
 
     /**
-     * A {@link JTable} specialized to display Maxine object fields.
+     * A {@link JTable} specialized to display Maxine object header fields.
      *
      * @param objectInspector parent that contains this panel
      */
@@ -77,11 +70,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         this.objectInspector = objectInspector;
         this.inspection = objectInspector.inspection();
         this.teleObject = objectInspector.teleObject();
-        final LayoutScheme layoutScheme = maxVM().vmConfiguration().layoutScheme();
-        this.hubReferenceOffset = layoutScheme.generalLayout.getOffsetFromOrigin(HeaderField.HUB);
-        this.miscWordOffset = layoutScheme.generalLayout.getOffsetFromOrigin(HeaderField.MISC);
-        this.arrayLengthOffset = layoutScheme.arrayHeaderLayout.getOffsetFromOrigin(HeaderField.LENGTH);
-
+        headerFields = new ArrayListSequence<Layout.HeaderField>(teleObject.getHeaderFields());
         this.model = new ObjectHeaderTableModel();
         this.columns = new TableColumn[ObjectFieldColumnKind.VALUES.length()];
         this.columnModel = new ObjectHeaderTableColumnModel(objectInspector);
@@ -203,16 +192,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         }
 
         public int getRowCount() {
-            switch (teleObject.getObjectKind()) {
-                case TUPLE:
-                    return 2;
-                case ARRAY:
-                    return 3;
-                case HYBRID:
-                    return 3;
-            }
-            ProgramError.unexpected("unrecognized object kind");
-            return -1;
+            return teleObject.getHeaderFields().size();
         }
 
         public Object getValueAt(int row, int col) {
@@ -225,18 +205,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         }
 
         public Offset rowToOffset(int row) {
-            switch (row) {
-                case HEADER_HUB_ROW:
-                    return hubReferenceOffset;
-                case HEADER_MISC_ROW:
-                    return miscWordOffset;
-                case HEADER_ARRAY_LENGTH_ROW:
-                    return arrayLengthOffset;
-                default:
-                    ProgramError.unexpected();
-            }
-            // TODO (mlvdv) bogus returning -1, could be this naturally
-            return Offset.fromInt(-1);
+            return teleObject.getHeaderOffset(headerFields.get(row));
         }
 
         public Address rowToAddress(int row) {
@@ -244,17 +213,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         }
 
         public TypeDescriptor rowToType(int row) {
-            switch (row) {
-                case HEADER_HUB_ROW:
-                    return teleHub == null ? null : JavaTypeDescriptor.forJavaClass(teleHub.hub().getClass());
-                case HEADER_MISC_ROW:
-                    return JavaTypeDescriptor.WORD;
-                case HEADER_ARRAY_LENGTH_ROW:
-                    return JavaTypeDescriptor.INT;
-                default:
-                    ProgramError.unexpected();
-            }
-            return null;
+            return teleObject.getHeaderType(headerFields.get(row));
         }
 
         public Size rowToSize(int row) {
@@ -262,25 +221,16 @@ public final class ObjectHeaderTable extends InspectorTable {
         }
 
         public String rowToName(int row) {
-            switch (row) {
-                case HEADER_HUB_ROW:
-                    return HeaderField.HUB.toString();
-                case HEADER_MISC_ROW:
-                    return HeaderField.MISC.toString();
-                case HEADER_ARRAY_LENGTH_ROW:
-                    return HeaderField.LENGTH.toString();
-                default:
-                    ProgramError.unexpected();
-            }
-            return null;
+            return headerFields.get(row).toString();
         }
 
         /**
          * @return the memory watchpoint, if any, that is active at a row
          */
         public MaxWatchpoint rowToWatchpoint(int row) {
+            final Address address = rowToAddress(row);
             for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
-                if (watchpoint.contains(rowToAddress(row))) {
+                if (watchpoint.contains(address)) {
                     return watchpoint;
                 }
             }
@@ -288,12 +238,9 @@ public final class ObjectHeaderTable extends InspectorTable {
         }
 
         public int addressToRow(Address address) {
-            if (!address.isZero()) {
-                final int wordSize = maxVM().wordSize();
-                final Address endAddress = teleObject.getObjectKind() ==
-                    ObjectKind.TUPLE ? objectOrigin.plus(miscWordOffset.plus(wordSize)) : objectOrigin.plus(arrayLengthOffset.plus(wordSize));
-                if (address.greaterEqual(objectOrigin) && address.lessThan(endAddress)) {
-                    return address.minus(objectOrigin).dividedBy(wordSize).toInt();
+            for (int row = 0; row < headerFields.length(); row++) {
+                if (objectOrigin.plus(teleObject.getHeaderOffset(headerFields.get(row))).equals(address)) {
+                    return row;
                 }
             }
             return -1;
@@ -389,53 +336,56 @@ public final class ObjectHeaderTable extends InspectorTable {
 
     private final class ValueRenderer implements TableCellRenderer, Prober {
 
-        private InspectorLabel[] labels = new InspectorLabel[MAX_ROW_COUNT];
+        private InspectorLabel[] labels = new InspectorLabel[headerFields.length()];
 
         public ValueRenderer() {
 
-            // Hub
-            labels[HEADER_HUB_ROW] = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, ObjectHeaderTable.this) {
+            for (int row = 0; row < headerFields.length(); row++) {
+                // Create a label suitable for the kind of header field
+                switch(headerFields.get(row)) {
+                    case HUB:
+                        labels[row] = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, ObjectHeaderTable.this) {
 
-                @Override
-                public Value fetchValue() {
-                    if (teleHub != null) {
-                        return WordValue.from(teleHub.getCurrentOrigin());
-                    }
-                    return WordValue.ZERO;
-                }
-            };
+                            @Override
+                            public Value fetchValue() {
+                                return teleHub == null ? WordValue.ZERO : WordValue.from(teleHub.getCurrentOrigin());
+                            }
+                        };
+                        break;
+                    case MISC:
+                        labels[row] = new MiscWordLabel(inspection, teleObject);
+                        break;
+                    case LENGTH:
+                        switch (teleObject.getObjectKind()) {
+                            case ARRAY:
+                                final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject;
+                                labels[row] = new PrimitiveValueLabel(inspection, Kind.INT) {
 
-            // Misc word
-            labels[HEADER_MISC_ROW] = new MiscWordLabel(inspection, teleObject);
+                                    @Override
+                                    public Value fetchValue() {
+                                        return IntValue.from(teleArrayObject.getLength());
+                                    }
+                                };
+                                break;
+                            case HYBRID:
+                                final TeleHybridObject teleHybridObject = (TeleHybridObject) teleObject;
+                                labels[row] = new PrimitiveValueLabel(inspection, Kind.INT) {
 
-            // Array length (only for array and hybrid objects).
-            switch (teleObject.getObjectKind()) {
-                case ARRAY: {
-                    final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject;
-                    labels[HEADER_ARRAY_LENGTH_ROW] = new PrimitiveValueLabel(inspection, Kind.INT) {
-
-                        @Override
-                        public Value fetchValue() {
-                            return IntValue.from(teleArrayObject.getLength());
+                                    @Override
+                                    public Value fetchValue() {
+                                        return IntValue.from(teleHybridObject.readArrayLength());
+                                    }
+                                };
+                                break;
+                            case TUPLE:
+                                // No length header field
+                                break;
+                            default:
+                                ProgramError.unknownCase();
                         }
-                    };
-                    break;
-                }
-                case HYBRID: {
-                    final TeleHybridObject teleHybridObject = (TeleHybridObject) teleObject;
-                    labels[HEADER_ARRAY_LENGTH_ROW] = new PrimitiveValueLabel(inspection, Kind.INT) {
-
-                        @Override
-                        public Value fetchValue() {
-                            return IntValue.from(teleHybridObject.readArrayLength());
-                        }
-                    };
-                    break;
-                }
-                case TUPLE: {
-                    // Dummy; never used
-                    labels[HEADER_ARRAY_LENGTH_ROW] = new TextLabel(inspection, "");
-                    break;
+                        break;
+                    default:
+                        ProgramError.unknownCase();
                 }
             }
         }
@@ -486,7 +436,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            return row == HEADER_HUB_ROW ? regionLabel : dummyLabel;
+            return headerFields.get(row) == HeaderField.HUB ? regionLabel : dummyLabel;
         }
     }
 

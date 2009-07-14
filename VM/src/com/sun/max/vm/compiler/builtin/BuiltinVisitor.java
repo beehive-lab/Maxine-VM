@@ -26,7 +26,6 @@ import com.sun.max.vm.compiler.builtin.JavaBuiltin.*;
 import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.*;
 import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.*;
 import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.*;
-import com.sun.max.vm.compiler.builtin.SafepointBuiltin.*;
 import com.sun.max.vm.compiler.builtin.SpecialBuiltin.*;
 
 public interface BuiltinVisitor<IR_Type> {
@@ -193,8 +192,7 @@ public interface BuiltinVisitor<IR_Type> {
 
     void visitMakeStackVariable(MakeStackVariable builtin, IR_Type result, IR_Type[] arguments);
 
-    void visitSoftSafepoint(SoftSafepoint builtin, IR_Type result, IR_Type[] arguments);
-    void visitHardSafepoint(HardSafepoint builtin, IR_Type result, IR_Type[] arguments);
+    void visitSafepoint(SafepointBuiltin builtin, IR_Type result, IR_Type[] arguments);
 
     void visitFlushRegisterWindows(FlushRegisterWindows builtin, IR_Type result, IR_Type[] arguments);
 

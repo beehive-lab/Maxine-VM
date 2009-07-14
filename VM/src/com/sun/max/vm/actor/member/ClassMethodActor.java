@@ -106,7 +106,7 @@ public abstract class ClassMethodActor extends MethodActor {
     private static boolean traceJNI;
 
     static {
-        register(new VMBooleanXXOption("-XX:-TraceJNI", "Trace JNI activity for debugging purposes.") {
+        register(new VMBooleanXXOption("-XX:-TraceJNI", "Trace JNI calls.") {
             @Override
             public boolean parseValue(Pointer optionValue) {
                 traceJNI = getValue();

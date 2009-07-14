@@ -42,26 +42,7 @@ void log_assert(Boolean condition, char *conditionString, char *fileName, int li
     }
 }
 
-static jboolean _isLockInitialized = false;
-static mutex_Struct _mutex;
-
-void log_lock(void) {
-	if (!_isLockInitialized) {
-		mutex_initialize(&_mutex);
-		_isLockInitialized = true;
-	}
-	int result;
-	if ((result = mutex_enter(&_mutex)) != 0) {
-	    log_exit(-1, "Could not lock mutex: %s", strerror(result));
-	}
-}
-
-void log_unlock(void) {
-    int result;
-	if ((result = mutex_exit(&_mutex)) != 0) {
-        log_exit(-1, "Could not lock mutex: %s", strerror(result));
-	}
-}
+static mutex_Struct log_mutexStruct;
 
 #if !os_GUESTVMXEN
 FILE *getFileStream() {
@@ -94,6 +75,27 @@ FILE *getFileStream() {
     return fileStream;
 }
 #endif
+
+void log_initialize(void) {
+    mutex_initialize(&log_mutexStruct);
+#if !os_GUESTVMXEN
+    getFileStream();
+#endif
+}
+
+void log_lock(void) {
+	int result;
+	if ((result = mutex_enter_nolog(&log_mutexStruct)) != 0) {
+	    log_exit(-1, "Thread %p could not lock mutex %p: %s", thread_self(), &log_mutexStruct, strerror(result));
+	}
+}
+
+void log_unlock(void) {
+    int result;
+	if ((result = mutex_exit_nolog(&log_mutexStruct)) != 0) {
+        log_exit(-1, "Thread %p could not unlock mutex %p: %s", thread_self(), &log_mutexStruct, strerror(result));
+	}
+}
 
 void log_print_format(const char *format, ...) {
     va_list ap;

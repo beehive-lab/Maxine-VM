@@ -18,35 +18,28 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.cir.builtin;
 
-import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.cir.*;
-import com.sun.max.vm.compiler.cir.optimize.*;
+package com.sun.max.ins.debug;
+
+import javax.swing.table.*;
+
 
 /**
- * Wrapper for soft safepoint builtins.
- * The optimizer may eliminate some of these as appropriate.
+ * Abstract Inspector column Table.
+ * @author Hannes Payer
  *
- * @author Bernd Mathiske
  */
-public final class CirSoftSafepointBuiltin extends CirSpecialBuiltin {
+public abstract class InspectorTableColumnModel extends DefaultTableColumnModel {
 
-    public CirSoftSafepointBuiltin() {
-        super(SafepointBuiltin.SoftSafepoint.BUILTIN);
+    protected TableColumn createColumnInstance(ColumnKind columnKind, TableCellRenderer renderer, TableCellEditor editor) {
+        final TableColumn tableColumn;
+        final int col = columnKind.ordinal();
+        tableColumn = new TableColumn(col, 0, renderer, editor);
+        tableColumn.setHeaderValue(columnKind.label());
+        tableColumn.setMinWidth(columnKind.minWidth());
+        tableColumn.setIdentifier(columnKind);
+
+        return tableColumn;
     }
 
-    @Override
-    public boolean isFoldable(CirOptimizer cirOptimizer, CirValue[] arguments) {
-        if (cirOptimizer.cirMethod().classMethodActor().noSafepoints()) {
-            // this method has been annotated with a directive to suppress safepoints
-            return true;
-        }
-        return false; //TODO: eliminate redundant soft safepoints - requires analysis
-    }
-
-//    @Override
-//    public boolean needsJavaFrameDescriptor() {
-//        return true;
-//    }
 }

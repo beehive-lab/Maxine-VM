@@ -24,7 +24,6 @@ import java.io.*;
 import java.nio.*;
 
 import com.sun.max.collect.*;
-import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
@@ -189,8 +188,8 @@ public final class SolarisTeleProcess extends TeleProcess {
     }
 
     @Override
-    protected boolean deactivateWatchpoint(MemoryRegion memoryRegion) {
-        return nativeDeactivateWatchpoint(processHandle, memoryRegion.start().toLong(), memoryRegion.size().toLong());
+    protected boolean deactivateWatchpoint(TeleWatchpoint teleWatchpoint) {
+        return nativeDeactivateWatchpoint(processHandle, teleWatchpoint.start().toLong(), teleWatchpoint.size().toLong());
     }
 
     /**

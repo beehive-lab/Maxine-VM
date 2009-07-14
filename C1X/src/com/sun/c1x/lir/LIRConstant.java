@@ -38,7 +38,7 @@ public class LIRConstant extends LIROperand {
      * @param value the value
      */
     public LIRConstant(ConstType value) {
-        super(value.basicType());
+        super(value.basicType);
         this.value = value;
     }
 
@@ -50,7 +50,7 @@ public class LIRConstant extends LIROperand {
      */
     @Override
     public BasicType type() {
-        return value.basicType();
+        return value.basicType;
     }
 
     /**

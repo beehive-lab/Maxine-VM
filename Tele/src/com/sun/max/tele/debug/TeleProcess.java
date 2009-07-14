@@ -29,7 +29,6 @@ import java.util.concurrent.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.gui.*;
-import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -356,6 +355,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         processState = newState;
         if (newState == TERMINATED) {
             this.threadsDied.addAll(handleToThreadMap.values());
+            handleToThreadMap.clear();
         }
         for (TeleNativeThread thread : this.threadsDied) {
             thread.setDead();
@@ -626,7 +626,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         return false;
     }
 
-    protected boolean deactivateWatchpoint(MemoryRegion memoryRegion) {
+    protected boolean deactivateWatchpoint(TeleWatchpoint teleWatchpoint) {
         return false;
     }
 

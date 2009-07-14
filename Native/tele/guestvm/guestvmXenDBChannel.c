@@ -31,7 +31,7 @@
 
 extern void gather_and_trace_threads(void);
 
-static int trace = 1;         // set to non-zero to trace thread resumption/blocking
+static int trace = 0;         // set to non-zero to trace thread resumption/blocking
 static int terminated = 0;    // target domain has terminated
 static struct db_thread *threads_at_rest = NULL;  // cache of threads on return from resume
 static int num_threads_at_rest;
@@ -73,6 +73,7 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeReadRegisters(
 
     isa_CanonicalIntegerRegistersStruct canonicalIntegerRegisters;
     isa_CanonicalStateRegistersStruct canonicalStateRegisters;
+    isa_CanonicalFloatingPointRegistersStruct canonicalFloatingPointRegisters;
     struct db_regs *db_regs;
 
     if (integerRegistersLength > sizeof(canonicalIntegerRegisters)) {
@@ -85,6 +86,11 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeReadRegisters(
         return false;
     }
 
+    if (floatingPointRegistersLength > sizeof(canonicalFloatingPointRegisters)) {
+        log_println("buffer for floating point register data is too large");
+        return false;
+    }
+
     db_regs = checked_get_regs("nativeReadRegisters", threadId);
     if (db_regs == NULL) {
     	return false;
@@ -92,9 +98,11 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeReadRegisters(
 
 	isa_canonicalizeTeleIntegerRegisters(db_regs, &canonicalIntegerRegisters);
 	isa_canonicalizeTeleStateRegisters(db_regs, &canonicalStateRegisters);
+	isa_canonicalizeTeleFloatingPointRegisters(db_regs, &canonicalFloatingPointRegisters);
 
     (*env)->SetByteArrayRegion(env, integerRegisters, 0, integerRegistersLength, (void *) &canonicalIntegerRegisters);
     (*env)->SetByteArrayRegion(env, stateRegisters, 0, stateRegistersLength, (void *) &canonicalStateRegisters);
+    (*env)->SetByteArrayRegion(env, floatingPointRegisters, 0, floatingPointRegistersLength, (void *) &canonicalFloatingPointRegisters);
     return true;
 }
 
@@ -370,7 +378,7 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeReadWatchpoint
 	}
 	watchpoint_info(thread_id, &kind);
 	return kind & ~AFTER_W;
-	
+
 }
 
 void teleProcess_initialize(void)

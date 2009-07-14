@@ -474,7 +474,7 @@ public abstract class Instruction {
      * @return {@code true} if the instructions have the same basic type
      */
     public static boolean sameBasicType(Instruction i, Instruction other) {
-        return i.type().basicType() == other.type().basicType();
+        return i.type().basicType == other.type().basicType;
     }
 
     /**

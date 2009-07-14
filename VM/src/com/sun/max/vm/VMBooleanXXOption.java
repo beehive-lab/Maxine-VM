@@ -49,7 +49,7 @@ public class VMBooleanXXOption extends VMOption {
      */
     @PROTOTYPE_ONLY
     public VMBooleanXXOption(String prefix, String help) {
-        super(prefix, help);
+        super(prefix + " ", help);
         if (prefix.startsWith("-XX:+")) {
             inversePrefix = "-XX:-" + prefix.substring(5);
         } else if (prefix.startsWith("-XX:-")) {

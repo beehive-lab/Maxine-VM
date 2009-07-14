@@ -262,8 +262,8 @@ public class BootImage {
             cacheAlignment = vmConfiguration.platform().processorKind.dataModel.cacheAlignment;
             relocationScheme = RelocationScheme.DEFAULT.ordinal();
             pageSize = vmConfiguration.platform().pageSize;
-            vmThreadLocalsSize = VmThreadLocal.THREAD_LOCAL_STORAGE_SIZE.toInt();
-            vmThreadLocalsTrapNumberOffset = VmThreadLocal.TRAP_NUMBER.offset();
+            vmThreadLocalsSize = VmThreadLocal.threadLocalStorageSize().toInt();
+            vmThreadLocalsTrapNumberOffset = VmThreadLocal.TRAP_NUMBER.offset;
             vmRunMethodOffset = Static.getCriticalEntryPoint(getRunMethodActor(MaxineVM.class), CallEntryPoint.C_ENTRY_POINT).toInt();
             vmThreadRunMethodOffset = Static.getCriticalEntryPoint(getRunMethodActor(VmThread.class), CallEntryPoint.C_ENTRY_POINT).toInt();
             runSchemeRunMethodOffset = Static.getCriticalEntryPoint(getRunMethodActor(vmConfiguration.runScheme().getClass()), CallEntryPoint.OPTIMIZED_ENTRY_POINT).toInt();
@@ -274,7 +274,7 @@ public class BootImage {
             bootCodeSize = dataPrototype.codeData().length;
             codeCacheSize = CodeManager.CODE_CACHE_SIZE;
 
-            heapRegionsPointerOffset = staticFieldPointerOffset(dataPrototype, TeleHeapInfo.class, "memoryRegions");
+            heapRegionsPointerOffset = staticFieldPointerOffset(dataPrototype, InspectableHeapInfo.class, "memoryRegions");
             codeRegionsPointerOffset = staticFieldPointerOffset(dataPrototype, Code.class, "memoryRegions");
 
             auxiliarySpaceSize = vmConfiguration.heapScheme().auxiliarySpaceSize(bootHeapSize + bootCodeSize);

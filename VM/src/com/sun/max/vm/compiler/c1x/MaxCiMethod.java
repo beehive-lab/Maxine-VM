@@ -27,6 +27,7 @@ import com.sun.c1x.util.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.collect.Sequence;
 
 /**
  * The <code>MaxCiMethod</code> implements a compiler interface method. A method can
@@ -141,7 +142,12 @@ public class MaxCiMethod implements CiMethod {
      * @throws MaxCiUnresolved if the method is unresolved
      */
     public boolean hasExceptionHandlers() {
-        return asClassMethodActor("hasExceptionHandlers()").rawCodeAttribute().exceptionHandlerTable().length() > 0;
+        final CodeAttribute codeAttribute = asClassMethodActor("hasExceptionHandlers()").rawCodeAttribute();
+        if (codeAttribute != null) {
+            final Sequence<ExceptionHandlerEntry> handlerTable = codeAttribute.exceptionHandlerTable();
+            return handlerTable != null && handlerTable.length() > 0;
+        }
+        return false;
     }
 
     /**

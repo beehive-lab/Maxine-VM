@@ -37,11 +37,7 @@ import com.sun.max.vm.value.*;
  */
 public abstract class DirToEirInstructionTranslation implements DirVisitor {
 
-    private final DirToEirMethodTranslation methodTranslation;
-
-    public final DirToEirMethodTranslation methodTranslation() {
-        return methodTranslation;
-    }
+    public final DirToEirMethodTranslation methodTranslation;
 
     private EirBlock eirBlock;
 
@@ -142,7 +138,7 @@ public abstract class DirToEirInstructionTranslation implements DirVisitor {
     public void visitReturn(DirReturn dirReturn) {
         final DirValue dirValue = dirReturn.returnValue();
 
-        if (methodTranslation.requiresEpilogue()) {
+        if (methodTranslation.usesSharedEpilogue) {
             addJump(methodTranslation.makeEpilogue());
             if (dirValue.kind() != Kind.VOID) {
                 methodTranslation.addResultValue(methodTranslation.dirToEirValue(dirValue));
@@ -182,7 +178,7 @@ public abstract class DirToEirInstructionTranslation implements DirVisitor {
         addInstruction(new EirTry(eirBlock(), null));
         final MethodActor classMethodActor = NonFoldableSnippet.RaiseThrowable.SNIPPET.classMethodActor();
         final EirValue eirThrowable = methodTranslation.dirToEirValue(dirThrow.throwable());
-        generateCall(null, methodTranslation.eirGenerator().eirABIsScheme().javaABI(), null, null,
+        generateCall(null, methodTranslation.eirGenerator.eirABIsScheme().javaABI(), null, null,
                      makeRaiseThrowableEirValue(), classMethodActor.getParameterKinds(), eirThrowable);
         // No need for a JavaFrameDescriptor here.
         // Throw.raise() disables safepoints until the exception has been delivered to its dispatcher.
@@ -208,11 +204,11 @@ public abstract class DirToEirInstructionTranslation implements DirVisitor {
         EirABI abi;
         if (dirMethodCall.method() instanceof DirMethodValue) {
             final DirMethodValue dirMethodValue = (DirMethodValue) dirMethodCall.method();
-            abi = methodTranslation.eirGenerator().eirABIsScheme().getABIFor(dirMethodValue.classMethodActor());
+            abi = methodTranslation.eirGenerator.eirABIsScheme().getABIFor(dirMethodValue.classMethodActor());
         } else if (dirMethodCall.isNative()) {
-            abi = methodTranslation.eirGenerator().eirABIsScheme().nativeABI();
+            abi = methodTranslation.eirGenerator.eirABIsScheme().nativeABI();
         } else {
-            abi = methodTranslation.eirGenerator().eirABIsScheme().javaABI();
+            abi = methodTranslation.eirGenerator.eirABIsScheme().javaABI();
         }
 
         generateCall(dirMethodCall.javaFrameDescriptor(), abi, resultKind, eirResult, methodEirValue, argumentKinds, eirArguments);
@@ -234,15 +230,15 @@ public abstract class DirToEirInstructionTranslation implements DirVisitor {
     }
 
     public final void visitSafepoint(DirSafepoint dirSafepoint) {
-        final EirSafepoint instruction = methodTranslation().createSafepoint(eirBlock());
+        final EirSafepoint instruction = methodTranslation.createSafepoint(eirBlock());
         addInstruction(instruction);
-        instruction.setEirJavaFrameDescriptor(methodTranslation().dirToEirJavaFrameDescriptor(dirSafepoint.javaFrameDescriptor(), instruction));
+        instruction.setEirJavaFrameDescriptor(methodTranslation.dirToEirJavaFrameDescriptor(dirSafepoint.javaFrameDescriptor(), instruction));
     }
 
     public final void visitGuardpoint(DirGuardpoint dirGuardpoint) {
-        final EirGuardpoint instruction = methodTranslation().createGuardpoint(eirBlock());
+        final EirGuardpoint instruction = methodTranslation.createGuardpoint(eirBlock());
         addInstruction(instruction);
-        instruction.setEirJavaFrameDescriptor(methodTranslation().dirToEirJavaFrameDescriptor(dirGuardpoint.javaFrameDescriptor(), instruction));
+        instruction.setEirJavaFrameDescriptor(methodTranslation.dirToEirJavaFrameDescriptor(dirGuardpoint.javaFrameDescriptor(), instruction));
     }
 
 }

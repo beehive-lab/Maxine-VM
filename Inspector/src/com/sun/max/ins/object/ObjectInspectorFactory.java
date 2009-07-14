@@ -145,6 +145,7 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
                     } catch (IllegalAccessException e) {
                         throw ProgramError.unexpected();
                     } catch (InvocationTargetException e) {
+                        e.printStackTrace();
                         throw ProgramError.unexpected();
                     }
                     break;

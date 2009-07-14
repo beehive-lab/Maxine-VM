@@ -27,9 +27,12 @@
 
 #include "condition.h"
 
+#define THREAD_CONDVAR_MUTEX_FORMAT "thread=%p, condvar=%p, mutex=%p"
+#define THREAD_CONDVAR_FORMAT "thread=%p, condvar=%p"
+
 void condition_initialize(Condition condition) {
 #if log_MONITORS
-    log_println("condition_initialize(%p, %p)", thread_self(), condition);
+    log_println("condition_initialize(" THREAD_CONDVAR_FORMAT ")", thread_self(), condition);
 #endif
 #if os_SOLARIS
     if (cond_init(condition, NULL, NULL) != 0) {
@@ -48,7 +51,7 @@ void condition_initialize(Condition condition) {
 
 void condition_destroy(Condition condition) {
 #if log_MONITORS
-    log_println("condition_destroy   (%p, %p)", thread_self(), condition);
+    log_println("condition_destroy   (" THREAD_CONDVAR_FORMAT ")", thread_self(), condition);
 #endif
 #if os_SOLARIS
     if (cond_destroy(condition) != 0) {
@@ -77,14 +80,14 @@ void condition_destroy(Condition condition) {
  */
 Boolean condition_wait(Condition condition, Mutex mutex) {
 #if log_MONITORS
-    log_println("condition_wait      (%p, %p, %p)", thread_self(), condition, mutex);
+    log_println("condition_wait      (" THREAD_CONDVAR_MUTEX_FORMAT ")", thread_self(), condition, mutex);
 #endif
     int error;
 #if (os_DARWIN || os_LINUX)
     error = pthread_cond_wait(condition, mutex);
     if (error == EINTR) {
 #if log_MONITORS
-        log_println("condition_wait      (%p, %p, %p) interrupted", thread_self(), condition, mutex);
+        log_println("condition_wait      (" THREAD_CONDVAR_MUTEX_FORMAT ") interrupted", thread_self(), condition, mutex);
 #endif
         return false;
     }
@@ -92,7 +95,7 @@ Boolean condition_wait(Condition condition, Mutex mutex) {
     error = cond_wait(condition, mutex);
     if (error == EINTR) {
 #if log_MONITORS
-        log_println("condition_wait      (%p, %p, %p) interrupted", thread_self(), condition, mutex);
+        log_println("condition_wait      (" THREAD_CONDVAR_MUTEX_FORMAT ") interrupted", thread_self(), condition, mutex);
 #endif
         return false;
     }
@@ -103,11 +106,11 @@ Boolean condition_wait(Condition condition, Mutex mutex) {
     }
 #endif
     if (error != 0) {
-        log_println("condition_wait      (%p, %p, %p) unexpected error code %d [%s]", thread_self(), condition, mutex, error, strerror(error));
+        log_println("condition_wait      (" THREAD_CONDVAR_MUTEX_FORMAT ") unexpected error code %d [%s]", thread_self(), condition, mutex, error, strerror(error));
         return false;
     }
 #if log_MONITORS
-    log_println("condition_wait      (%p, %p, %p) finished", thread_self(), condition, mutex);
+    log_println("condition_wait      (" THREAD_CONDVAR_MUTEX_FORMAT ") finished", thread_self(), condition, mutex);
 #endif
     return true;
 }
@@ -156,7 +159,7 @@ Boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutM
         return condition_wait(condition, mutex);
     }
 #if log_MONITORS
-    log_println("condition_timedWait (%p, %p, %p, %d)", thread_self(), condition, mutex, timeoutMilliSeconds);
+    log_println("condition_timedWait (" THREAD_CONDVAR_MUTEX_FORMAT ", %d)", thread_self(), condition, mutex, timeoutMilliSeconds);
 #endif
 	int error;
 #if (os_DARWIN || os_LINUX)
@@ -168,13 +171,13 @@ Boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutM
 	error = pthread_cond_timedwait(condition, mutex, &abstime);
 	if (error == ETIMEDOUT) {
 #if log_MONITORS
-	    log_println("condition_timedWait (%p, %p, %p, %d) timed-out", thread_self(), condition, mutex, timeoutMilliSeconds);
+	    log_println("condition_timedWait (" THREAD_CONDVAR_MUTEX_FORMAT ", %d) timed-out", thread_self(), condition, mutex, timeoutMilliSeconds);
 #endif
 	    return true;
 	}
 	if (error == EINTR) {
 #if log_MONITORS
-	    log_println("condition_timedWait (%p, %p, %p, %d) interrupted", thread_self(), condition, mutex, timeoutMilliSeconds);
+	    log_println("condition_timedWait (" THREAD_CONDVAR_MUTEX_FORMAT ", %d) interrupted", thread_self(), condition, mutex, timeoutMilliSeconds);
 #endif
 	    return false;
 	}
@@ -185,13 +188,13 @@ Boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutM
 	error = cond_reltimedwait(condition, mutex, &reltime);
 	if (error == ETIME) {
 #if log_MONITORS
-	    log_println("condition_timedWait (%p, %p, %p, %d) timed-out", thread_self(), condition, mutex, timeoutMilliSeconds);
+	    log_println("condition_timedWait (" THREAD_CONDVAR_MUTEX_FORMAT ", %d) timed-out", thread_self(), condition, mutex, timeoutMilliSeconds);
 #endif
 	    return true;
 	}
 	if (error == EINTR) {
 #if log_MONITORS
-	    log_println("condition_timedWait (%p, %p, %p, %d) interrupted", thread_self(), condition, mutex, timeoutMilliSeconds);
+	    log_println("condition_timedWait (" THREAD_CONDVAR_MUTEX_FORMAT ", %d) interrupted", thread_self(), condition, mutex, timeoutMilliSeconds);
 #endif
 	    return false;
 	}
@@ -207,19 +210,19 @@ Boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutM
 #    error
 #endif
 	if (error != 0) {
-        log_println("condition_timedWait (%p, %p, %p, %d) unexpected error code %d [%s]",
+        log_println("condition_timedWait (" THREAD_CONDVAR_MUTEX_FORMAT ", %d) unexpected error code %d [%s]",
                         thread_self(), condition, mutex, timeoutMilliSeconds, error, strerror(error));
 	    return false;
     }
 #if log_MONITORS
-    log_println("condition_timedWait (%p, %p, %p, %d) finished", thread_self(), condition, mutex, timeoutMilliSeconds);
+    log_println("condition_timedWait (" THREAD_CONDVAR_MUTEX_FORMAT ", %d) finished", thread_self(), condition, mutex, timeoutMilliSeconds);
 #endif
 	return true;
 }
 
 Boolean condition_notify(Condition condition) {
 #if log_MONITORS
-    log_println("condition_notify    (%p, %p)", thread_self(), condition);
+    log_println("condition_notify    (" THREAD_CONDVAR_FORMAT ")", thread_self(), condition);
 #endif
 #if (os_DARWIN || os_LINUX)
     return pthread_cond_signal(condition) == 0;
@@ -234,7 +237,7 @@ Boolean condition_notify(Condition condition) {
 
 Boolean condition_notifyAll(Condition condition) {
 #if log_MONITORS
-    log_println("condition_notifyAll (%p, %p)", thread_self(), condition);
+    log_println("condition_notifyAll (" THREAD_CONDVAR_FORMAT ")", thread_self(), condition);
 #endif
 #if (os_DARWIN || os_LINUX)
     return pthread_cond_broadcast(condition) == 0;

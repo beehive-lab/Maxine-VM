@@ -79,7 +79,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
 
 
             beltwayHeapSchemeGen.getVerifier().verifyHeap(matureSpace.start(), matureSpace.getAllocationMark(), BeltManager.getApplicationHeap());
-            TeleHeapInfo.beforeGarbageCollection();
+            InspectableHeapInfo.beforeGarbageCollection();
             VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
             if (Heap.verbose()) {
@@ -212,7 +212,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
             edenSpace.resetAllocationMark();
             edenSpace.setEnd(toSpace.start());
             edenSpace.setExpandable(false);
-            TeleHeapInfo.afterGarbageCollection();
+            InspectableHeapInfo.afterGarbageCollection();
             if (Heap.verbose()) {
                 Log.print("Eden Space Start: ");
                 Log.println(edenSpace.start());
@@ -349,7 +349,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 Log.println("Verify Mature Space");
             }
             beltwayHeapSchemeGen.getVerifier().verifyHeap(matureSpace.start(), matureSpace.getAllocationMark(), BeltManager.getApplicationHeap());
-            TeleHeapInfo.afterGarbageCollection();
+            InspectableHeapInfo.afterGarbageCollection();
             if (Heap.verbose()) {
                 Log.print("Finished To Collection: ");
                 Log.println(toCollections);
@@ -386,7 +386,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 Log.println("To Space Snapshot");
             }
             toSpace.setAllocationMarkSnapshot();
-            TeleHeapInfo.beforeGarbageCollection();
+            InspectableHeapInfo.beforeGarbageCollection();
 
             VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
             if (Heap.verbose()) {
@@ -462,7 +462,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
             }
 
             beltwayHeapSchemeGen.getVerifier().verifyHeap(toSpace.start(), toSpace.getAllocationMark(), BeltManager.getApplicationHeap());
-            TeleHeapInfo.afterGarbageCollection();
+            InspectableHeapInfo.afterGarbageCollection();
             if (Heap.verbose()) {
                 Log.print("Finished Eden Collection: ");
                 Log.println(edenCollections);
