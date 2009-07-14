@@ -21,20 +21,13 @@
 package com.sun.c1x.asm;
 
 
-public class BufferBlob extends CodeBlob{
-
-    /**
-     * @param name
-     * @param cb
-     * @param headerSize
-     * @param size
-     * @param frameComplete
-     * @param frameSize
-     * @param oopMaps
-     */
-    public BufferBlob(char name, CodeBuffer cb, int headerSize, int size, int frameComplete, int frameSize, OopMapSet oopMaps) {
-        super(name, cb, headerSize, size, frameComplete, frameSize, oopMaps);
-        // TODO Auto-generated constructor stub
-    }
+/**
+ * The <code>CodeComments</code> class definition.
+ *
+ * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
+ *
+ */
+public class CodeComments {
 
 }
