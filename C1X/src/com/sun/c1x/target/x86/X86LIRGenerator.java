@@ -1,22 +1,19 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc. All rights reserved.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product that is
+ * described in this document. In particular, and without limitation, these intellectual property rights may include one
+ * or more of the U.S. patents listed at http://www.sun.com/patents and one or more additional patents or pending patent
+ * applications in the U.S. and in other countries.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun Microsystems, Inc. standard
+ * license agreement and applicable provisions of the FAR and its supplements.
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or registered
+ * trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks are used under license and
+ * are trademarks or registered trademarks of SPARC International, Inc. in the U.S. and other countries.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open Company, Ltd.
  */
 package com.sun.c1x.target.x86;
 
@@ -216,7 +213,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitStoreIndexed(StoreIndexed x) {
-        assert x.isRoot() : "";
+        assert x.isRoot(compilation) : "";
         boolean needsRangeCheck = true;
         boolean useLength = x.length() != null;
         boolean objStore = x.elementType() == BasicType.Jsr || x.elementType() == BasicType.Object;
@@ -290,7 +287,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitMonitorEnter(MonitorEnter x) {
-        assert x.isRoot() : "";
+        assert x.isRoot(compilation) : "";
         LIRItem obj = new LIRItem(x.object(), this);
         obj.loadItem();
 
@@ -316,7 +313,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitMonitorExit(MonitorExit x) {
-        assert x.isRoot() : "";
+        assert x.isRoot(compilation) : "";
 
         LIRItem obj = new LIRItem(x.object(), this);
         obj.dontLoadItem();
@@ -412,7 +409,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             // the check for division by zero destroys the right operand
             right.setDestroysRegister();
 
-            BasicType[] signature = new BasicType[] {BasicType.Long, BasicType.Long};
+            BasicType[] signature = new BasicType[] { BasicType.Long, BasicType.Long};
             CallingConvention cc = frameMap().runtimeCallingConvention(signature);
 
             // check for division by zero (destroys registers of right operand!)
@@ -577,7 +574,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     public void visitArithmeticOp(ArithmeticOp x) {
         // when an operand with use count 1 is the left operand, then it is
         // likely that no move for 2-operand-LIR-form is necessary
-        if (x.isCommutative() && !(x.y() instanceof Constant) && x.x().useCount() > x.y().useCount()) {
+        if (x.isCommutative() && !(x.y() instanceof Constant) && compilation.useCount(x.x()) > compilation.useCount(x.y())) {
             x.swapOperands();
         }
 
@@ -620,7 +617,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     public void visitLogicOp(LogicOp x) {
         // when an operand with use count 1 is the left operand, then it is
         // likely that no move for 2-operand-LIR-form is necessary
-        if (x.isCommutative() && (!(x.y() instanceof Constant)) && x.x().useCount() > x.y().useCount()) {
+        if (x.isCommutative() && (!(x.y() instanceof Constant)) && compilation.useCount(x.x()) > compilation.useCount(x.y())) {
             x.swapOperands();
         }
 

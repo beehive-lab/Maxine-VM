@@ -1,22 +1,19 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc. All rights reserved.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product that is
+ * described in this document. In particular, and without limitation, these intellectual property rights may include one
+ * or more of the U.S. patents listed at http://www.sun.com/patents and one or more additional patents or pending patent
+ * applications in the U.S. and in other countries.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun Microsystems, Inc. standard
+ * license agreement and applicable provisions of the FAR and its supplements.
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or registered
+ * trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks are used under license and
+ * are trademarks or registered trademarks of SPARC International, Inc. in the U.S. and other countries.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open Company, Ltd.
  */
 package com.sun.c1x;
 
@@ -24,6 +21,7 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.c1x.asm.*;
+import com.sun.c1x.gen.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.BlockMap;
 import com.sun.c1x.graph.GraphBuilder;
@@ -33,18 +31,15 @@ import com.sun.c1x.util.*;
 import com.sun.c1x.target.Target;
 
 /**
- * The <code>Compilation</code> class encapsulates global information about the compilation
- * of a particular method, including a reference to the runtime, statistics about the compiled code,
- * etc.
+ * The <code>Compilation</code> class encapsulates global information about the compilation of a particular method,
+ * including a reference to the runtime, statistics about the compiled code, etc.
  *
  * @author Ben L. Titzer
  */
 public class C1XCompilation {
 
     public enum MethodCompilation {
-        InvocationEntryBci(-1),
-        InvalidOSREntryBci(-2),
-        SynchronizationEntryBCI(-1);
+        InvocationEntryBci(-1), InvalidOSREntryBci(-2), SynchronizationEntryBCI(-1);
 
         public final int value;
 
@@ -70,6 +65,11 @@ public class C1XCompilation {
     int totalBlocks = 1;
     int totalInstructions;
     private Instruction currentInstruction;
+    private List<BlockBegin> orderedBlocks;
+
+    private FrameMap frameMap;
+    private AbstractAssembler assembler;
+    private Map<Instruction, Integer> useCounts;
 
     /**
      * Creates a new compilation for the specified method and runtime.
@@ -125,17 +125,26 @@ public class C1XCompilation {
                 if (C1XOptions.PrintCFGToFile && cfgPrinter != null) {
                     cfgPrinter.printCFG(start, "After Generation of HIR", true, false);
                 }
+
+                ComputeLinearScanOrder computeLinearScanOrder = new ComputeLinearScanOrder(this, start);
+                orderedBlocks = computeLinearScanOrder.linearScanOrder();
+                computeLinearScanOrder.printBlocks();
+
+                UseCountComputer useCountComputer = new UseCountComputer();
+                this.iterateLinearScanOrder(useCountComputer);
+                this.useCounts = useCountComputer.result();
             }
         } catch (Bailout b) {
             bailout = b;
-        } catch (Throwable t) {
+        } /*catch (Throwable t) {
             bailout = new Bailout("Unexpected exception while compiling: " + this.method(), t);
-        }
+        }*/
         return start;
     }
 
     /**
      * Gets the bailout condition if this compilation failed.
+     *
      * @return the bailout condition
      */
     public Bailout bailout() {
@@ -144,6 +153,7 @@ public class C1XCompilation {
 
     /**
      * Gets the root method being compiled.
+     *
      * @return the method being compiled
      */
     public CiMethod method() {
@@ -159,6 +169,7 @@ public class C1XCompilation {
 
     /**
      * Checks whether this compilation is for an on-stack replacement.
+     *
      * @return <code>true</code> if this compilation is for an on-stack replacement
      */
     public boolean isOsrCompilation() {
@@ -167,6 +178,7 @@ public class C1XCompilation {
 
     /**
      * Gets the bytecode index for on-stack replacement, if this compilation is for an OSR.
+     *
      * @return the bytecode index
      */
     public int osrBCI() {
@@ -175,6 +187,7 @@ public class C1XCompilation {
 
     /**
      * Gets the frame which describes the layout of the OSR interpreter frame for this method.
+     *
      * @return the OSR frame
      */
     public CiOsrFrame getOsrFrame() {
@@ -183,7 +196,9 @@ public class C1XCompilation {
 
     /**
      * Records an assumption made by this compilation that the specified type is a leaf class.
-     * @param type the type that is assumed to be a leaf class
+     *
+     * @param type
+     *            the type that is assumed to be a leaf class
      * @return <code>true</code> if the assumption was recorded and can be assumed; <code>false</code> otherwise
      */
     public boolean recordLeafTypeAssumption(CiType type) {
@@ -192,7 +207,9 @@ public class C1XCompilation {
 
     /**
      * Records an assumption made by this compilation that the specified method is a leaf method.
-     * @param method the method that is assumed to be a leaf method
+     *
+     * @param method
+     *            the method that is assumed to be a leaf method
      * @return <code>true</code> if the assumption was recorded and can be assumed; <code>false</code> otherwise
      */
     public boolean recordLeafMethodAssumption(CiMethod method) {
@@ -201,7 +218,9 @@ public class C1XCompilation {
 
     /**
      * Records an assumption that the specified type has no finalizable subclasses.
-     * @param receiverType the type that is assumed to have no finalizable subclasses
+     *
+     * @param receiverType
+     *            the type that is assumed to have no finalizable subclasses
      * @return <code>true</code> if the assumption was recorded and can be assumed; <code>false</code> otherwise
      */
     public boolean recordNoFinalizableSubclassAssumption(CiType receiverType) {
@@ -210,6 +229,7 @@ public class C1XCompilation {
 
     /**
      * Gets the <code>CiType</code> corresponding to <code>java.lang.Throwable</code>.
+     *
      * @return the compiler interface type for Throwable
      */
     public CiType throwableType() {
@@ -218,8 +238,11 @@ public class C1XCompilation {
 
     /**
      * Records an inlining decision not to inline an inlinable method.
-     * @param target the method that was not inlined
-     * @param reason a description of the reason why the method was not inlined
+     *
+     * @param target
+     *            the method that was not inlined
+     * @param reason
+     *            a description of the reason why the method was not inlined
      */
     public void recordInliningFailure(CiMethod target, String reason) {
         // TODO: record inlining failure
@@ -227,6 +250,7 @@ public class C1XCompilation {
 
     /**
      * Converts this compilation to a string.
+     *
      * @return a string representation of this compilation
      */
     @Override
@@ -239,8 +263,11 @@ public class C1XCompilation {
 
     /**
      * Builds the block map for the specified method.
-     * @param method the method for which to build the block map
-     * @param osrBCI the OSR bytecode index; <code>-1</code> if this is not an OSR
+     *
+     * @param method
+     *            the method for which to build the block map
+     * @param osrBCI
+     *            the OSR bytecode index; <code>-1</code> if this is not an OSR
      * @return the block map for the specified method
      */
     public BlockMap getBlockMap(CiMethod method, int osrBCI) {
@@ -269,6 +296,7 @@ public class C1XCompilation {
 
     /**
      * Returns the number of bytecodes inlined into the compilation.
+     *
      * @return the number of bytecodes
      */
     public int totalInstructions() {
@@ -281,7 +309,9 @@ public class C1XCompilation {
 
     /**
      * Updates the current instruction to a new value and returns the old one.
-     * @param instr the new current instruction
+     *
+     * @param instr
+     *            the new current instruction
      * @return the old current instruction
      */
     public Instruction setCurrentInstruction(Instruction instr) {
@@ -292,6 +322,7 @@ public class C1XCompilation {
 
     /**
      * Returns the current processed instruction. This method is used during HIR to LIR transformations.
+     *
      * @return the current instruction
      */
     public Instruction currentInstruction() {
@@ -300,12 +331,11 @@ public class C1XCompilation {
 
     /**
      * Returns the frame map of this compilation.
+     *
      * @return the frame map
      */
     public FrameMap frameMap() {
-        // TODO Return the frame map
-        Util.unimplemented();
-        return null;
+        return frameMap;
     }
 
     public void maybePrintCurrentInstruction() {
@@ -324,8 +354,7 @@ public class C1XCompilation {
     }
 
     public AbstractAssembler masm() {
-        // TODO Auto-generated method stub
-        return null;
+        return assembler;
     }
 
     public void addExceptionHandlersForPco(int pcOffset, List<ExceptionHandler> exceptionHandlers) {
@@ -335,7 +364,7 @@ public class C1XCompilation {
 
     public DebugInformationRecorder debugInfoRecorder() {
         // TODO Auto-generated method stub
-        return null;
+        return new DebugInformationRecorder();
     }
 
     public boolean hasExceptionHandlers() {
@@ -351,5 +380,51 @@ public class C1XCompilation {
     public boolean hasFpuCode() {
         // TODO Auto-generated method stub
         return false;
+    }
+
+    private void iterateLinearScanOrder(BlockClosure closure) {
+        assert orderedBlocks != null;
+        for (BlockBegin begin : this.orderedBlocks) {
+            closure.apply(begin);
+        }
+    }
+
+    public void emitLIR() {
+        frameMap = target.backend.newFrameMap(method, numberOfLocks(), maxStack());
+        final LIRGenerator lirGenerator = target.backend.newLIRGenerator(this);
+        this.iterateLinearScanOrder(lirGenerator);
+    }
+
+    public void emitCode() {
+        CodeBuffer tmp = new CodeBuffer();
+        assembler = target.backend.newAssembler(this, tmp);
+        final LIRAssembler lirAssembler = target.backend.newLIRAssembler(this);
+        lirAssembler.emitCode(this.orderedBlocks);
+    }
+
+    private int numberOfLocks() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    private int maxStack() {
+        // TODO Auto-generated method stub
+        return 10;
+    }
+
+    public int numberOfBlocks() {
+        return totalBlocks;
+    }
+
+    public int useCount(Instruction instr) {
+        if (!this.useCounts.containsKey(instr)) {
+            return 0;
+        } else {
+            return this.useCounts.get(instr);
+        }
+    }
+
+    public boolean hasUses(Instruction instr) {
+        return useCount(instr) > 0;
     }
 }

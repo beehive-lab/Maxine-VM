@@ -21,8 +21,10 @@
 package com.sun.c1x.target;
 
 import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.asm.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.gen.*;
-import com.sun.c1x.lir.LIRAssembler;
+import com.sun.c1x.lir.*;
 
 /**
  * The <code>Backend</code> class represents a compiler backend for C1X.
@@ -36,6 +38,8 @@ public abstract class Backend {
         this.target = target;
     }
 
+    public abstract FrameMap newFrameMap(CiMethod method, int numberOfLocks, int maxStack);
     public abstract LIRGenerator newLIRGenerator(C1XCompilation compilation);
     public abstract LIRAssembler newLIRAssembler(C1XCompilation compilation);
+    public abstract AbstractAssembler newAssembler(C1XCompilation c1xCompilation, CodeBuffer code);
 }
