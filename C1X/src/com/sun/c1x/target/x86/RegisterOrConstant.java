@@ -20,52 +20,48 @@
  */
 package com.sun.c1x.target.x86;
 
-import com.sun.c1x.asm.*;
-import com.sun.c1x.asm.RelocInfo.*;
+/**
+ *
+ * @author Thomas Wuerthinger
+ *
+ */
+public class RegisterOrConstant {
 
-
-public class AddressLiteral {
-
-    public Pointer target;
-
-    public AddressLiteral(Address address, Type none) {
+    public RegisterOrConstant(int i) {
         // TODO Auto-generated constructor stub
     }
 
-    public AddressLiteral(long l, Type polltype) {
+    public RegisterOrConstant(long l) {
         // TODO Auto-generated constructor stub
     }
 
-    public AddressLiteral(Address entry, RelocationHolder rh) {
+    public RegisterOrConstant(X86Register tmp) {
         // TODO Auto-generated constructor stub
     }
 
-    public AddressLiteral(long entry, RelocationHolder rh) {
-        // TODO Auto-generated constructor stub
-    }
-
-    public Address addr() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public Type reloc() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public boolean isLval() {
+    public boolean isConstant() {
         // TODO Auto-generated method stub
         return false;
     }
 
-    public Pointer target() {
-        // TODO Auto-generated method stub
-        return new Pointer(0);
-    }
-
-    public RelocationHolder rspec() {
+    public X86Register asRegister() {
         // TODO Auto-generated method stub
         return null;
     }
+
+    public int constantOrZero() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public boolean isRegister() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public int asConstant() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
 }

@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.target.sparc.*;
 import com.sun.c1x.target.x86.*;
 import com.sun.c1x.value.*;
 
@@ -55,7 +54,7 @@ public class FrameMap {
      * @param xmmRegnr
      * @return
      */
-    public static XMMRegister nr2XmmReg(int xmmRegnr) {
+    public static Register nr2XmmReg(int xmmRegnr) {
         // TODO Auto-generated method stub
         return null;
     }
@@ -64,7 +63,7 @@ public class FrameMap {
      * @param fpuRegnr
      * @return
      */
-    public static FloatRegister nr2FloatReg(int fpuRegnr) {
+    public static Register nr2FloatReg(int fpuRegnr) {
         // TODO Auto-generated method stub
         return null;
     }
@@ -84,8 +83,18 @@ public class FrameMap {
         return 0;
     }
 
-    public Object addressForMonitorLock(int monitorNo) {
+    public Address addressForMonitorLock(int monitorNo) {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    public Address addressForMonitorObject(int i) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public int framesize() {
+        // TODO Auto-generated method stub
+        return 0;
     }
 }

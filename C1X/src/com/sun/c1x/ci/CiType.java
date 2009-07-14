@@ -182,4 +182,10 @@ public interface CiType {
      * @return true if the slow path should always be taken, false otherwise
      */
     boolean layoutHelperNeedsSlowPath();
+
+    int superCheckOffset();
+
+    Object encoding();
+
+    boolean isArrayKlass();
 }

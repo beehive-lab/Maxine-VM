@@ -20,7 +20,34 @@
  */
 package com.sun.c1x.asm;
 
+import com.sun.c1x.asm.RelocInfo.*;
+
 
 public class RelocationHolder {
+
+    public Type type() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Relocation reloc() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public static RelocationHolder virtualCallRelocationSpec(Pointer pointer) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public static RelocationHolder staticStubRelocationSpec(Pointer callPc) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public static RelocationHolder specForImmediate() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
 }

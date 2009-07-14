@@ -18,54 +18,28 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.target.x86;
+package com.sun.c1x.asm;
 
-import com.sun.c1x.asm.*;
-import com.sun.c1x.asm.RelocInfo.*;
+/**
+ *
+ * @author Thomas Wuerthinger
+ *
+ */
+public class CodeCache {
 
-
-public class AddressLiteral {
-
-    public Pointer target;
-
-    public AddressLiteral(Address address, Type none) {
-        // TODO Auto-generated constructor stub
-    }
-
-    public AddressLiteral(long l, Type polltype) {
-        // TODO Auto-generated constructor stub
-    }
-
-    public AddressLiteral(Address entry, RelocationHolder rh) {
-        // TODO Auto-generated constructor stub
-    }
-
-    public AddressLiteral(long entry, RelocationHolder rh) {
-        // TODO Auto-generated constructor stub
-    }
-
-    public Address addr() {
+    public static CodeBlob findBlob(Pointer target) {
         // TODO Auto-generated method stub
         return null;
     }
 
-    public Type reloc() {
+    public static long lowBound() {
         // TODO Auto-generated method stub
-        return null;
+        return 0;
     }
 
-    public boolean isLval() {
+    public static long highBound() {
         // TODO Auto-generated method stub
-        return false;
+        return 0;
     }
 
-    public Pointer target() {
-        // TODO Auto-generated method stub
-        return new Pointer(0);
-    }
-
-    public RelocationHolder rspec() {
-        // TODO Auto-generated method stub
-        return null;
-    }
 }

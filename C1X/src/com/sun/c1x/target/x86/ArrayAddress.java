@@ -18,70 +18,32 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.value;
-
-import com.sun.c1x.lir.*;
-import com.sun.c1x.lir.LIRAddress.*;
+package com.sun.c1x.target.x86;
 
 /**
- * The <code>Address</code> class definition.
  *
- * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  *
  */
-public class Address {
+public class ArrayAddress extends Address {
 
-    private long address;
-
-    /**
-     * Constructs a new Address, which holds a runtime address.
-     *
-     * @param address
-     */
-    public Address(long address) {
-        super();
-        this.address = address;
-    }
-
-    public Address(Register tmp, int i) {
+    public ArrayAddress(int displacement) {
+        super(displacement);
         // TODO Auto-generated constructor stub
     }
 
-    public Address(Register base, Register index, Scale scale, int displacement) {
+    public ArrayAddress(ExternalAddress page, Address index) {
         // TODO Auto-generated constructor stub
     }
 
-    /**
-     * @return the long value which represents an internal address
-     */
-    public long address() {
-        return address;
-    }
-
-    /**
-     * Sets the address.
-     *
-     * @param address
-     *            the new address
-     */
-    public void setAddress(long address) {
-        this.address = address;
-    }
-
-    public int asInt() {
+    public AddressLiteral base() {
         // TODO Auto-generated method stub
-        return 0;
+        return null;
     }
 
-    public int disp() {
+    public Address index() {
         // TODO Auto-generated method stub
-        return 0;
+        return null;
     }
 
-    public int sub(Address codeBegin) {
-        long result = address - codeBegin.address;
-        assert result == (int) result : "overflow";
-        return (int) result;
-    }
 }

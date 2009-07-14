@@ -31,7 +31,7 @@ import com.sun.c1x.util.*;
  */
 public class X86FrameMap {
 
-    static final Register r15thread = X86Register.r15;
+    static final X86Register r15thread = X86Register.r15;
 
     static final LIROperand rsiOopOpr = asOopOpr(X86Register.rsi);
     static final LIROperand rdiOopOpr = asOopOpr(X86Register.rdi);
@@ -134,7 +134,7 @@ public class X86FrameMap {
         return LIROperandFactory.singleCpu(reg.number);
     }
 
-    public static Register rscratch1(Architecture arch) {
+    public static X86Register rscratch1(Architecture arch) {
         return (arch.is32bit()) ? X86Register.noreg : X86Register.r10;
     }
 

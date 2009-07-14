@@ -41,7 +41,7 @@ import com.sun.c1x.value.*;
 public abstract class LIRAssembler {
 
     private AbstractAssembler masm;
-    private List<CodeStub> slowCaseStubs;
+    protected List<CodeStub> slowCaseStubs;
     protected C1XCompilation compilation;
     private FrameMap frameMap;
     private BlockBegin currentBlock;
@@ -78,7 +78,7 @@ public abstract class LIRAssembler {
         }
     }
 
-    CiMethod method() {
+    protected CiMethod method() {
         return compilation().method();
     }
 
@@ -86,13 +86,13 @@ public abstract class LIRAssembler {
         return compilation.offsets();
     }
 
-    void addCallInfoHere(CodeEmitInfo info) {
+    protected void addCallInfoHere(CodeEmitInfo info) {
         addCallInfo(codeOffset(), info);
     }
 
     protected void patchingEpilog(PatchingStub patch, LIRPatchCode patchCode, Register obj, CodeEmitInfo info) {
         // we must have enough patching space so that call can be inserted
-        while (masm.pc().asInt() - patch.pcStart().asInt() < compilation.runtime.nativeCallInstructionSize()) {
+        while (masm.pc().value - patch.pcStart().value < compilation.runtime.nativeCallInstructionSize()) {
             masm.nop();
         }
         patch.install(masm, patchCode, obj, info);
@@ -155,7 +155,7 @@ public abstract class LIRAssembler {
         }
     }
 
-    void emitCodeStub(CodeStub stub) {
+    protected void emitCodeStub(CodeStub stub) {
         slowCaseStubs.add(stub);
     }
 
@@ -184,7 +184,7 @@ public abstract class LIRAssembler {
         return masm.offset();
     }
 
-    Address pc() {
+    protected Pointer pc() {
         return masm.pc();
     }
 
@@ -328,7 +328,7 @@ public abstract class LIRAssembler {
         }
     }
 
-    void addCallInfo(int pcOffset, CodeEmitInfo cinfo) {
+    protected void addCallInfo(int pcOffset, CodeEmitInfo cinfo) {
         flushDebugInfo(pcOffset);
         cinfo.recordDebugInfo(compilation().debugInfoRecorder(), pcOffset);
         if (cinfo.exceptionHandlers() != null) {
@@ -428,7 +428,7 @@ public abstract class LIRAssembler {
         addDebugInfoForNullCheck(codeOffset(), cinfo);
     }
 
-    void addDebugInfoForNullCheck(int pcOffset, CodeEmitInfo cinfo) {
+    protected void addDebugInfoForNullCheck(int pcOffset, CodeEmitInfo cinfo) {
         ImplicitNullCheckStub stub = new ImplicitNullCheckStub(pcOffset, cinfo);
         emitCodeStub(stub);
     }
@@ -437,7 +437,7 @@ public abstract class LIRAssembler {
         addDebugInfoForDiv0(codeOffset(), info);
     }
 
-    void addDebugInfoForDiv0(int pcOffset, CodeEmitInfo cinfo) {
+    protected void addDebugInfoForDiv0(int pcOffset, CodeEmitInfo cinfo) {
         DivByZeroStub stub = new DivByZeroStub(pcOffset, cinfo);
         emitCodeStub(stub);
     }
@@ -446,7 +446,7 @@ public abstract class LIRAssembler {
         rtCall(op.result(), op.address(), op.arguments(), op.tmp(), op.info());
     }
 
-    protected abstract void rtCall(LIROperand result, Address address, List<LIROperand> arguments, LIROperand tmp, CodeEmitInfo info);
+    protected abstract void rtCall(LIROperand result, long l, List<LIROperand> arguments, LIROperand tmp, CodeEmitInfo info);
 
     void emitCall(LIRJavaCall op) {
         verifyOopMap(op.info());
@@ -477,13 +477,13 @@ public abstract class LIRAssembler {
         }
     }
 
-    protected abstract void call(Address addr, RelocInfo.Type relocInfo, CodeEmitInfo info);
+    protected abstract void call(long addr, RelocInfo.Type relocInfo, CodeEmitInfo info);
 
     protected abstract void emitStaticCallStub();
 
-    protected abstract void vtableCall(Address vtableOffset, CodeEmitInfo info);
+    protected abstract void vtableCall(long l, CodeEmitInfo info);
 
-    protected abstract void icCall(Address addr, CodeEmitInfo info);
+    protected abstract void icCall(long addr, CodeEmitInfo info);
 
     protected abstract void alignCall(LIROpcode code);
 

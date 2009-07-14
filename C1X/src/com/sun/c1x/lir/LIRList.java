@@ -84,20 +84,20 @@ public class LIRList {
         return block;
     }
 
-    public void callOptVirtual(CiMethod method, LIROperand receiver, LIROperand result, Address dest, List<LIROperand> arguments, CodeEmitInfo info) {
+    public void callOptVirtual(CiMethod method, LIROperand receiver, LIROperand result, long dest, List<LIROperand> arguments, CodeEmitInfo info) {
         append(new LIRJavaCall(LIROpcode.VirtualCall, method, receiver, result, dest, arguments, info));
     }
 
-    public void callStatic(CiMethod method, LIROperand result, Address dest, List<LIROperand> arguments, CodeEmitInfo info) {
+    public void callStatic(CiMethod method, LIROperand result, long dest, List<LIROperand> arguments, CodeEmitInfo info) {
         append(new LIRJavaCall(LIROpcode.StaticCall, method, LIROperandFactory.illegalOperand, result, dest, arguments, info));
     }
 
-    public void callIcvirtual(CiMethod method, LIROperand receiver, LIROperand result, Address dest, List<LIROperand> arguments, CodeEmitInfo info) {
+    public void callIcvirtual(CiMethod method, LIROperand receiver, LIROperand result, long dest, List<LIROperand> arguments, CodeEmitInfo info) {
         append(new LIRJavaCall(LIROpcode.IcVirtualCall, method, receiver, result, dest, arguments, info));
     }
 
     public void callVirtual(CiMethod method, LIROperand receiver, LIROperand result, int vtableOffset, List<LIROperand> arguments, CodeEmitInfo info) {
-        append(new LIRJavaCall(LIROpcode.VirtualCall, method, receiver, result, new Address(vtableOffset), arguments, info));
+        append(new LIRJavaCall(LIROpcode.VirtualCall, method, receiver, result, vtableOffset, arguments, info));
     }
 
     public void getThread(LIROperand result) {
@@ -377,11 +377,11 @@ public class LIRList {
         append(new LIROp2(LIROpcode.Cmpl2i, left, right, dst));
     }
 
-    public void callRuntimeLeaf(Address routine, LIROperand tmp, LIROperand result, List<LIROperand> arguments) {
-        append(new LIRRTCall(routine, tmp, result, arguments));
+    public void callRuntimeLeaf(long entry, LIROperand tmp, LIROperand result, List<LIROperand> arguments) {
+        append(new LIRRTCall(entry, tmp, result, arguments));
     }
 
-    public void callRuntime(Address routine, LIROperand tmp, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info) {
+    public void callRuntime(long routine, LIROperand tmp, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info) {
         append(new LIRRTCall(routine, tmp, result, arguments, info));
     }
 

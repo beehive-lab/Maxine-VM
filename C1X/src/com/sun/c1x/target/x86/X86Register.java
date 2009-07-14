@@ -89,4 +89,30 @@ public final class X86Register extends Register {
         super(number);
 
     }
+
+    public int encoding() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public boolean hasByteRegister() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean isMMX() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean isXMM() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public static X86Register fromEncoding(int i) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

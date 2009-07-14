@@ -24,8 +24,6 @@ import java.util.*;
 
 import com.sun.c1x.util.*;
 
-import com.sun.c1x.value.*;
-
 /**
  * The <code>LIRRTCall</code> class definition.
  *
@@ -39,26 +37,26 @@ public class LIRRTCall extends LIRCall {
     /**
      * Creates a new LIRRTCall instruction.
      *
-     * @param address
+     * @param entry
      * @param tmp
      * @param result
      * @param arguments
      */
-    public LIRRTCall(Address address, LIROperand tmp, LIROperand result, List <LIROperand> arguments) {
-        this(address, tmp, result, arguments, null);
+    public LIRRTCall(long entry, LIROperand tmp, LIROperand result, List <LIROperand> arguments) {
+        this(entry, tmp, result, arguments, null);
     }
 
     /**
      * Creates a new LIRRTCall instruction.
      *
-     * @param address
+     * @param entry
      * @param tmp
      * @param result
      * @param arguments
      * @param info
      */
-    public LIRRTCall(Address address, LIROperand tmp, LIROperand result, List <LIROperand> arguments, CodeEmitInfo info) {
-        super(LIROpcode.RtCall, address, result, arguments, info);
+    public LIRRTCall(long entry, LIROperand tmp, LIROperand result, List <LIROperand> arguments, CodeEmitInfo info) {
+        super(LIROpcode.RtCall, entry, result, arguments, info);
         this.tmp = tmp;
     }
 

@@ -18,16 +18,20 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.target.x86;
+package com.sun.c1x.asm;
 
+import com.sun.c1x.target.x86.*;
 
 /**
- * The <code>XMMRegister</code> class definition.
  *
- * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  *
  */
-public class XMMRegister {
+public class ICache {
+
+    public static void invalidateRange(Address addrAt, int offset) {
+        // TODO Auto-generated method stub
+
+    }
 
 }
