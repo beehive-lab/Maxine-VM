@@ -18,35 +18,9 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.asm;
 
-import com.sun.c1x.util.*;
 
-/**
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
- *
- */
-public class RangeCheckStub extends CodeStub {
-
-    public RangeCheckStub(CodeEmitInfo rangeCheckInfo, LIROperand index) {
-        // TODO Auto-generated constructor stub
-    }
-
-    public RangeCheckStub(CodeEmitInfo info, LIROperand index, boolean b) {
-        // TODO Auto-generated constructor stub
-    }
-
-    @Override
-    public void emitCode(LIRAssembler e) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void printName(LogStream out) {
-        // TODO Auto-generated method stub
-
-    }
+public class OopRecorder {
 
 }

@@ -22,6 +22,7 @@ package com.sun.c1x.lir;
 
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ir.*;
+import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
@@ -89,7 +90,7 @@ public class LIRBranch extends LIRInstruction {
     /**
      * @return the condition
      */
-    LIRCondition cond() {
+    public LIRCondition cond() {
         return cond;
     }
 
@@ -100,15 +101,15 @@ public class LIRBranch extends LIRInstruction {
         return type;
     }
 
-    Label label() {
+    public Label label() {
         return label;
     }
 
-    BlockBegin block() {
+    public BlockBegin block() {
         return block;
     }
 
-    BlockBegin ublock() {
+    public BlockBegin ublock() {
         return ublock;
     }
 
@@ -158,7 +159,7 @@ public class LIRBranch extends LIRInstruction {
     public void emitCode(LIRAssembler masm) {
         masm.emitBranch(this);
         if (stub() != null) {
-            masm.emitStub(stub());
+            masm.emitCodeStub(stub());
         }
     }
 

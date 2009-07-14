@@ -33,6 +33,8 @@ import com.sun.c1x.value.*;
  */
 public class Util {
 
+    public static final int K = 1024;
+
     public static RuntimeException unimplemented() {
         throw new Error("unimplemented");
     }

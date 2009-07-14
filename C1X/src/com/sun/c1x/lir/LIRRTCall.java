@@ -81,7 +81,7 @@ public class LIRRTCall extends LIRCall {
      */
     @Override
     public void emitCode(LIRAssembler masm) {
-        masm.emitRTCall(this);
+        masm.emitRtcall(this);
     }
 
     /**

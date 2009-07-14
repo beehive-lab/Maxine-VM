@@ -90,7 +90,7 @@ public class LIRJavaCall extends LIRCall {
      */
     @Override
     public void emitCode(LIRAssembler masm) {
-        masm.emitJavaCall(this);
+        masm.emitCall(this);
     }
 
     /**
