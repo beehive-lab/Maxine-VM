@@ -52,9 +52,14 @@ public final class TeleRoots extends AbstractTeleVMHolder{
 
     private RemoteTeleGrip teleRoots() {
         if (teleRootsPointer.isZero()) {
-            teleRootsPointer = teleVM().fields().TeleHeapInfo_roots.staticTupleReference(teleVM()).toOrigin().plus(teleVM().fields().TeleHeapInfo_roots.fieldActor().offset());
+            teleRootsPointer = getTeleRootsPointer();
         }
         return teleGripScheme.createTemporaryRemoteTeleGrip(teleVM().dataAccess().readWord(teleRootsPointer).asAddress());
+    }
+
+    private Pointer getTeleRootsPointer() {
+        //return teleVM().fields().TeleHeapInfo_roots.staticTupleReference(teleVM()).toOrigin().plus(teleVM().fields().TeleHeapInfo_roots.fieldActor().offset());
+        return teleVM().fields().TeleHeapInfo_roots.readWord(teleVM()).asPointer();
     }
 
     /**
@@ -67,6 +72,7 @@ public final class TeleRoots extends AbstractTeleVMHolder{
         WordArray.set(cachedRoots, index, rawGrip);
         // Remote root table
         wordArrayLayout.setWord(teleRoots(), index, rawGrip);
+        //teleRoots().setWord(0, index, rawGrip);
         return index;
     }
 
@@ -77,6 +83,7 @@ public final class TeleRoots extends AbstractTeleVMHolder{
         WordArray.set(cachedRoots, index, Address.zero());
         usedIndices.clear(index);
         wordArrayLayout.setWord(teleRoots(), index, Word.zero());
+        //teleRoots().setWord(0, index, Word.zero());
     }
 
     /**
@@ -93,6 +100,7 @@ public final class TeleRoots extends AbstractTeleVMHolder{
         final int numberOfIndices = usedIndices.length();
         for (int i = 0; i < numberOfIndices; i++) {
             WordArray.set(cachedRoots, i, wordArrayLayout.getWord(teleRoots(), i).asAddress());
+            //WordArray.set(cachedRoots, i, teleRoots().getWord(0, i));
         }
     }
 

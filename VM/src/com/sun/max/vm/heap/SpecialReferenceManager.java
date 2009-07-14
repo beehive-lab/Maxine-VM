@@ -34,6 +34,7 @@ import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.tele.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -137,6 +138,23 @@ public class SpecialReferenceManager {
             // if there are pending special references, notify the reference handler thread.
             // (note that the GC must already hold the lock object)
             LOCK.notifyAll();
+        }
+
+        if (MaxineMessenger.isVmInspected()) {
+            for (int i = 0; i < TeleHeapInfo.MAX_NUMBER_OF_ROOTS; i++) {
+                final Pointer rootPointer = TeleHeapInfo.roots.getWord(i).asPointer();
+                if (!rootPointer.isZero()) {
+                    Log.println("Handle forwarding pointer " + i);
+                    final Grip referent = Grip.fromOrigin(rootPointer);
+                    if (gripForwarder.isReachable(referent)) {
+                        rootPointer.setWord(gripForwarder.getForwardGrip(referent).toOrigin());
+                        // TupleAccess.writeObject(ref, referentField.offset(), gripForwarder.getForwardGrip(referent));
+                    } else {
+                        rootPointer.setWord(Pointer.zero());
+                        // TupleAccess.writeObject(ref, referentField.offset(), null);
+                    }
+                }
+            }
         }
     }
 
