@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.ci;
 
+import com.sun.c1x.lir.*;
+import com.sun.c1x.target.x86.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -76,7 +78,7 @@ public interface CiRuntime {
      * @param runtimeCall identifies the runtime call whose address should be returned
      * @return the address of the runtime call
      */
-    Address getRuntimeEntry(CiRuntimeCall runtimeCall);
+    long getRuntimeEntry(CiRuntimeCall runtimeCall);
 
     /**
      * Byte offset of the array length of an array object.
@@ -182,4 +184,124 @@ public interface CiRuntime {
      * @return the resolved type
      */
     CiType resolveType(String string);
+
+    int arrayBaseOffsetInBytes(BasicType type);
+
+    // C1 Ref: NativeCall.instructionSize
+    int nativeCallInstructionSize();
+
+    int sunMiscAtomicLongCSImplValueOffset();
+
+    Register callerSaveFpuRegAt(int i);
+
+    Object ciEnvUnloadedCiobjarrayklass();
+
+    CiType makeTypeArrayClass(BasicType elemType);
+
+    Object makeObjectArrayClass(CiType elementClass);
+
+    int arrayOopDescHeaderSize(BasicType type);
+
+    int arrayElementSize(BasicType type);
+
+    void vmExitOutOfMemory1(int i, String string, String name);
+
+    int vmPageSize();
+
+    long getPollingPage();
+
+    Register javaCallingConventionReceiverRegister();
+
+    int interpreterFrameMonitorSize();
+
+    long basicObjectLockSize();
+
+    long basicObjectLockOffsetInBytes();
+
+    long basicObjectObjOffsetInBytes();
+
+    int getSerializePageShiftCount();
+
+    int basicLockDisplacedHeaderOffsetInBytes();
+
+    int initStateOffsetInBytes();
+
+    int instanceKlassFullyInitialized();
+
+    int elementKlassOffsetInBytes();
+
+    int methodDataNullSeenByteConstant();
+
+    int secondarySuperCacheOffsetInBytes();
+
+    long doubleSignmaskPoolAddress();
+
+    int nativeCallDisplacementOffset();
+
+    Object universeNonOopWord();
+
+    long floatSignflipPoolAddress();
+
+    long doubleSignflipPoolAddress();
+
+    int nativeMovConstRegInstructionSize();
+
+    Register getCRarg(int i);
+
+    Register getJRarg(int i);
+
+    int markOffsetInBytes();
+
+    Address argRegSaveAreaBytes();
+
+    int threadPendingExceptionOffset();
+
+    int threadVmResultOffset();
+
+    boolean universeSupportsInlineContigAlloc();
+
+    int threadTlabTopOffset();
+
+    int threadTlabEndOffset();
+
+    int threadTlabStartOffset();
+
+    int superCheckOffsetOffsetInBytes();
+
+    int secondarySupersOffsetInBytes();
+
+    int threadTlabSizeOffset();
+
+    int vtableLengthOffset();
+
+    int itableMethodEntryMethodOffset();
+
+    int itableOffsetEntrySize();
+
+    int itableInterfaceOffsetInBytes();
+
+    int itableOffsetOffsetInBytes();
+
+    long getMemorySerializePage();
+
+    int biasedLockMaskInPlace();
+
+    int biasedLockPattern();
+    int unlockedValue();
+
+    long biasedLockingFastPathEntryCountAddr();
+
+    int maxArrayAllocationLength();
+
+    int prototypeHeaderOffsetInBytes();
+
+    int markOopDescPrototype();
+
+    int klassPartOffsetInBytes();
+
+    int getMinObjAlignmentInBytesMask();
+
+    boolean dtraceAllocProbes();
+
+    int instanceOopDescBaseOffsetInBytes();
 }

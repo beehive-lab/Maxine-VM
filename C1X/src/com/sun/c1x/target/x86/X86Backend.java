@@ -45,7 +45,7 @@ public class X86Backend extends Backend {
      */
     @Override
     public LIRGenerator newLIRGenerator(C1XCompilation compilation) {
-        throw Util.unimplemented();
+        return new X86LIRGenerator(compilation);
     }
 
     /**

@@ -274,7 +274,7 @@ public class BootImage {
             bootCodeSize = dataPrototype.codeData().length;
             codeCacheSize = CodeManager.CODE_CACHE_SIZE;
 
-            heapRegionsPointerOffset = staticFieldPointerOffset(dataPrototype, TeleHeapInfo.class, "memoryRegions");
+            heapRegionsPointerOffset = staticFieldPointerOffset(dataPrototype, InspectableHeapInfo.class, "memoryRegions");
             codeRegionsPointerOffset = staticFieldPointerOffset(dataPrototype, Code.class, "memoryRegions");
 
             auxiliarySpaceSize = vmConfiguration.heapScheme().auxiliarySpaceSize(bootHeapSize + bootCodeSize);

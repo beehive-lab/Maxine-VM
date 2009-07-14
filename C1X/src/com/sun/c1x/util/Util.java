@@ -22,6 +22,7 @@ package com.sun.c1x.util;
 
 import java.util.*;
 
+import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
@@ -32,6 +33,8 @@ import com.sun.c1x.value.*;
  * @author Doug Simon
  */
 public class Util {
+
+    public static final int K = 1024;
 
     public static RuntimeException unimplemented() {
         throw new Error("unimplemented");
@@ -457,5 +460,81 @@ public class Util {
 
         assert list.size() >= pos + 1;
         list.set(pos, x);
+    }
+
+    public static void guarantee(boolean b, String string) {
+        if (!b) {
+            throw new Bailout(string);
+        }
+    }
+
+    public static int sizeofInt() {
+        return 4;
+    }
+
+    public static int convertToPointer32(Object obj) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+    public static int convertToPointer64(Object obj) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public static boolean is8bit(long l) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public static void warning(String string) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public static int safeToInt(long l) {
+        assert (int) l == l;
+        return (int) l;
+    }
+
+    public static int sizeofBoolean() {
+        return 1;
+    }
+
+    public static int toInt(boolean boolConst) {
+        if (boolConst) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    public static int sizeofOopDesc() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public static long stringToAddress(String b) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public static void needsCleanUp() {
+        // TODO Auto-generated method stub
+
+    }
+
+    public static int sizeofJdouble() {
+        // TODO Auto-generated method stub
+        return 8;
+    }
+
+    public static int heapWordsPerLong() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public static int bytesPerLong() {
+        // TODO Auto-generated method stub
+        return 0;
     }
 }

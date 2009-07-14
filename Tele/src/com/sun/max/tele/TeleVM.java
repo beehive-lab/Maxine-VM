@@ -63,6 +63,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
@@ -779,7 +780,14 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /**
-     * Throws an unchecked exception if a {@link Reference} is not valid.
+     * Checks that a {@link Reference} points to a heap object in the VM;
+     * throws an unchecked exception if not.  This is a low-level method
+     * that uses a debugging tag or (if no tags in image) a heuristic; it does
+     * not require access to the {@link TeleClassRegistry}.
+     *
+     * @param reference memory location in the VM
+     * @throws InvalidReferenceException when the location does <strong>not</strong> point
+     * at a valid heap object.
      */
     private void checkReference(Reference reference) throws InvalidReferenceException {
         if (!isValidOrigin(reference.toGrip().toOrigin())) {
@@ -790,7 +798,6 @@ public abstract class TeleVM implements MaxVM {
     public final Reference wordToReference(Word word) {
         return vmConfiguration.referenceScheme().fromGrip(gripScheme().fromWord(word));
     }
-
 
     /**
      * @param reference a {@link Reference} to memory in the VM.
@@ -804,9 +811,11 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /**
+     * Returns a local copy of the contents of a {@link String} object in the VM's heap.
+     *
      * @param stringReference A {@link String} object in the VM.
      * @return A local {@link String} representing the object's contents.
-     * @throws InvalidReferenceException
+     * @throws InvalidReferenceException if the argument does not point a valid heap object.
      */
     public final String getString(Reference stringReference)  throws InvalidReferenceException {
         final Reference valueReference = fields().String_value.readReference(stringReference);
@@ -856,12 +865,13 @@ public abstract class TeleVM implements MaxVM {
      * classpath, or if not found on the classpath, by copying the classfile
      * from the VM.
      *
-     * @param classActorReference a {@link ClassActor} in the VM.
+     * @param classActorReference  a {@link ClassActor} in the VM.
      * @return Local, equivalent {@link ClassActor}, possibly created by
      *         loading from the classpath, or if not found, by copying and
      *         loading the classfile from the VM.
+     * @throws InvalidReferenceException if the argument does not point to a valid heap object in the VM.
      */
-    public final ClassActor makeClassActor(Reference classActorReference) {
+    public final ClassActor makeClassActor(Reference classActorReference) throws InvalidReferenceException {
         final Reference utf8ConstantReference = fields().Actor_name.readReference(classActorReference);
         final Reference stringReference = fields().Utf8Constant_string.readReference(utf8ConstantReference);
         final String name = getString(stringReference);
@@ -1125,11 +1135,19 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#setRegionWatchpoint(java.lang.String, com.sun.max.unsafe.Address, com.sun.max.unsafe.Size, boolean, boolean, boolean, boolean)
+     * @see com.sun.max.tele.MaxVM#setRegionWatchpoint(java.lang.String, com.sun.max.memory.MemoryRegion, boolean, boolean, boolean, boolean)
      */
-    public final MaxWatchpoint setRegionWatchpoint(String description, Address start, Size size, boolean after, boolean read, boolean write, boolean exec)
+    public final MaxWatchpoint setRegionWatchpoint(String description, MemoryRegion memoryRegion, boolean after, boolean read, boolean write, boolean exec)
         throws TooManyWatchpointsException, DuplicateWatchpointException {
-        return teleProcess.watchpointFactory().setRegionWatchpoint(description, start, size, after, read, write, exec);
+        return teleProcess.watchpointFactory().setRegionWatchpoint(description, memoryRegion, after, read, write, exec);
+    }
+
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxVM#setObjectWatchpoint(java.lang.String, com.sun.max.tele.object.TeleObject, boolean, boolean, boolean, boolean)
+     */
+    public final MaxWatchpoint setObjectWatchpoint(String description, TeleObject teleObject, boolean after, boolean read, boolean write, boolean exec)
+        throws TooManyWatchpointsException, DuplicateWatchpointException {
+        return teleProcess.watchpointFactory().setObjectWatchpoint(description, teleObject, after, read, write, exec);
     }
 
     /* (non-Javadoc)
@@ -1141,11 +1159,11 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#setHeaderWatchpoint(java.lang.String, com.sun.max.tele.object.TeleObject, com.sun.max.unsafe.Offset, com.sun.max.unsafe.Size, java.lang.String, boolean, boolean, boolean, boolean)
+     * @see com.sun.max.tele.MaxVM#setHeaderWatchpoint(java.lang.String, com.sun.max.tele.object.TeleObject, com.sun.max.vm.layout.Layout.HeaderField, boolean, boolean, boolean, boolean)
      */
-    public final MaxWatchpoint setHeaderWatchpoint(String description, TeleObject teleObject, Offset offset, Size size, String name, boolean after, boolean read, boolean write, boolean exec)
+    public final MaxWatchpoint setHeaderWatchpoint(String description, TeleObject teleObject, HeaderField headerField, boolean after, boolean read, boolean write, boolean exec)
         throws TooManyWatchpointsException, DuplicateWatchpointException {
-        return teleProcess.watchpointFactory().setHeaderWatchpoint(description, teleObject, offset, size, name, after, read, write, exec);
+        return teleProcess.watchpointFactory().setHeaderWatchpoint(description, teleObject, headerField, after, read, write, exec);
     }
 
     /*
@@ -1173,10 +1191,10 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#findWatchpoint(com.sun.max.unsafe.Address)
+     * @see com.sun.max.tele.MaxVM#findWatchpoint(com.sun.max.memory.MemoryRegion)
      */
-    public final MaxWatchpoint findWatchpoint(Address address) {
-        return teleProcess.watchpointFactory().findWatchpoint(address);
+    public final MaxWatchpoint findWatchpoint(MemoryRegion memoryRegion) {
+        return teleProcess.watchpointFactory().findWatchpoint(memoryRegion);
     }
 
     /* (non-Javadoc)
@@ -1224,8 +1242,8 @@ public abstract class TeleVM implements MaxVM {
     private void refreshReferences() {
         Trace.begin(TRACE_VALUE, refreshReferencesTracer);
         final long startTimeMillis = System.currentTimeMillis();
-        final long teleRootEpoch = fields().TeleHeapInfo_rootEpoch.readLong(this);
-        final long teleCollectionEpoch = fields().TeleHeapInfo_collectionEpoch.readLong(this);
+        final long teleRootEpoch = fields().InspectableHeapInfo_rootEpoch.readLong(this);
+        final long teleCollectionEpoch = fields().InspectableHeapInfo_collectionEpoch.readLong(this);
         if (teleCollectionEpoch != teleRootEpoch) {
             // A GC is in progress, local cache is out of date by definition but can't update yet
             assert teleCollectionEpoch != cachedCollectionEpoch;

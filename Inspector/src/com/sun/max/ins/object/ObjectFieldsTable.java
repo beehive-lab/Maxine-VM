@@ -131,8 +131,10 @@ public final class ObjectFieldsTable extends InspectorTable {
                             final InspectorMenu menu = new InspectorMenu();
                             final FieldActor fieldActor = model.rowToFieldActor(hitRowIndex);
                             menu.add(actions().setFieldWatchpoint(teleObject, fieldActor, "Watch this field's memory"));
-                            menu.add(actions().editFieldWatchpoint(teleObject, fieldActor, "Edit memory watchpoint"));
-                            menu.add(actions().removeFieldWatchpoint(teleObject, fieldActor, "Remove memory watchpoint"));
+                            menu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));
+                            menu.add(actions().editWatchpoint(teleObject.getFieldAddress(fieldActor), teleObject.getFieldSize(fieldActor), "Edit memory watchpoint"));
+                            menu.add(actions().removeWatchpoint(teleObject.getFieldAddress(fieldActor), teleObject.getFieldSize(fieldActor), "Remove memory watchpoint"));
+
                             menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                         }
                     }
@@ -233,7 +235,7 @@ public final class ObjectFieldsTable extends InspectorTable {
          * @return the memory address of a specified row in the fields.
          */
         public Address rowToAddress(int row) {
-            return objectOrigin.plus(rowToOffset(row)).asAddress();
+            return teleObject.getFieldAddress(fieldActors[row]);
         }
 
         FieldActor rowToFieldActor(int row) {

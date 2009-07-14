@@ -151,10 +151,10 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
     public void refresh(long processEpoch) {
         Trace.begin(TRACE_VALUE, tracePrefix() + "refreshing");
         final long startTimeMillis = System.currentTimeMillis();
-        final Reference teleClassInfoStaticTupleReference = teleVM().fields().TeleClassInfo_classActorCount.staticTupleReference(teleVM());
-        final Pointer loadedClassCountPointer = teleClassInfoStaticTupleReference.toOrigin().plus(teleVM().fields().TeleClassInfo_classActorCount.fieldActor().offset());
+        final Reference teleClassInfoStaticTupleReference = teleVM().fields().InspectableClassInfo_classActorCount.staticTupleReference(teleVM());
+        final Pointer loadedClassCountPointer = teleClassInfoStaticTupleReference.toOrigin().plus(teleVM().fields().InspectableClassInfo_classActorCount.fieldActor().offset());
         final int remoteLoadedClassCount = teleVM().dataAccess().readInt(loadedClassCountPointer);
-        final Pointer loadedClassActorsPointer = teleClassInfoStaticTupleReference.toOrigin().plus(teleVM().fields().TeleClassInfo_classActors.fieldActor().offset());
+        final Pointer loadedClassActorsPointer = teleClassInfoStaticTupleReference.toOrigin().plus(teleVM().fields().InspectableClassInfo_classActors.fieldActor().offset());
         final Reference loadedClassActorsArrayReference = teleVM().wordToReference(teleVM().dataAccess().readWord(loadedClassActorsPointer));
         int index = dynamicallyLoadedClassCount;
         while (index < remoteLoadedClassCount) {

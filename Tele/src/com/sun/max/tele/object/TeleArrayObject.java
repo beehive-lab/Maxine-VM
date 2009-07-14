@@ -28,6 +28,8 @@ import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.layout.*;
+import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
@@ -43,6 +45,8 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
     private static final Logger LOGGER = Logger.getLogger(TeleArrayObject.class.getName());
 
+    private static final EnumSet<Layout.HeaderField> headerFields = EnumSet.of(HeaderField.HUB, HeaderField.MISC, HeaderField.LENGTH);
+
     private int length = -1;
 
     protected TeleArrayObject(TeleVM teleVM, Reference reference) {
@@ -52,6 +56,11 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     @Override
     public ObjectKind getObjectKind() {
         return ObjectKind.ARRAY;
+    }
+
+    @Override
+    public EnumSet<Layout.HeaderField> getHeaderFields() {
+        return headerFields;
     }
 
     /**
@@ -83,6 +92,11 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
     @Override
     public  Address getFieldAddress(FieldActor fieldActor) {
+        throw FatalError.unexpected("Maxine Array objects don't contain fields");
+    }
+
+    @Override
+    public Size getFieldSize(FieldActor fieldActor) {
         throw FatalError.unexpected("Maxine Array objects don't contain fields");
     }
 

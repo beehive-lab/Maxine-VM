@@ -21,7 +21,9 @@
 package com.sun.c1x;
 
 import java.io.*;
+import java.util.*;
 
+import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.CiMethod;
 import com.sun.c1x.ci.CiOsrFrame;
 import com.sun.c1x.ci.CiRuntime;
@@ -302,5 +304,50 @@ public class C1XCompilation {
         // TODO Return the frame map
         Util.unimplemented();
         return null;
+    }
+
+    public void maybePrintCurrentInstruction() {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void bailout(String msg) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public CodeOffsets offsets() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public AbstractAssembler masm() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public void addExceptionHandlersForPco(int pcOffset, List<ExceptionHandler> exceptionHandlers) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public DebugInformationRecorder debugInfoRecorder() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public boolean hasExceptionHandlers() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public BlockBegin osrEntry() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public boolean hasFpuCode() {
+        // TODO Auto-generated method stub
+        return false;
     }
 }

@@ -69,7 +69,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                 Log.println("Verify Mature Space: ");
             }
             beltwayHeapSchemeBA2.getVerifier().verifyHeap(beltwayHeapSchemeBA2.getMatureSpace().start(), beltwayHeapSchemeBA2.getMatureSpace().getAllocationMark(), BeltManager.getApplicationHeap());
-            TeleHeapInfo.beforeGarbageCollection();
+            InspectableHeapInfo.beforeGarbageCollection();
 
             VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
@@ -236,7 +236,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                 if (Heap.verbose()) {
                     Log.println("Reset Nursery Space Allocation Mark");
                 }
-                TeleHeapInfo.afterGarbageCollection();
+                InspectableHeapInfo.afterGarbageCollection();
                 VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
 
 
@@ -299,7 +299,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
             }
 
             beltwayHeapSchemeBA2.getVerifier().verifyHeap(beltwayHeapSchemeBA2.getNurserySpace().start(), beltwayHeapSchemeBA2.getNurserySpace().getAllocationMark(), BeltManager.getApplicationHeap());
-            TeleHeapInfo.beforeGarbageCollection();
+            InspectableHeapInfo.beforeGarbageCollection();
             VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
             if (Heap.verbose()) {
@@ -373,7 +373,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
             }
 
             beltwayHeapSchemeBA2.getVerifier().verifyHeap(beltwayHeapSchemeBA2.getMatureSpace().start(), beltwayHeapSchemeBA2.getMatureSpace().getAllocationMark(), BeltManager.getApplicationHeap());
-            TeleHeapInfo.afterGarbageCollection();
+            InspectableHeapInfo.afterGarbageCollection();
 
             if (Heap.verbose()) {
                 Log.print("Nursery Space Start: ");
