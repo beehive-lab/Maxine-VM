@@ -21,7 +21,6 @@
 package com.sun.c1x.lir;
 
 import java.util.*;
-import com.sun.c1x.value.*;
 
 /**
  * The <code>LIRCall</code> class definition.
@@ -32,18 +31,18 @@ import com.sun.c1x.value.*;
  */
 public abstract class LIRCall extends LIRInstruction {
 
-    protected Address addr;   // TODO not sure if we should create a new class for address
+    protected long addr;   // TODO not sure if we should create a new class for address
     protected List<LIROperand> arguments;
 
     /**
      * Creates a new LIRCall instruction.
      *
-     * @param address
+     * @param entry
      * @param arguments
      */
-    public LIRCall(LIROpcode opcode, Address address, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info) {
+    public LIRCall(LIROpcode opcode, long entry, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info) {
         super(opcode, result, info);
-        this.addr = address;
+        this.addr = entry;
         this.arguments = arguments;
     }
 
@@ -52,7 +51,7 @@ public abstract class LIRCall extends LIRInstruction {
      *
      * @return the address
      */
-    public Address address() {
+    public long address() {
         return addr;
     }
 

@@ -18,34 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.target.sparc;
 
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
 
 /**
- * The <code>LIROperand</code> class definition.
+ * The <code>FloatRegister</code> class definition.
  *
  * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
+ *
  */
-public abstract class LIROperandPtr extends LIROperand {
+public class FloatRegister {
 
-    boolean isReference() {
-        return (type() == BasicType.Object);
-    }
-
-    public boolean isFloat() {
-        BasicType t = type();
-        return (t == BasicType.Float) || (t == BasicType.Double);
-    }
-
-    public LIRConstant asConstant() {
-        return null;
-    }
-
-    public LIRAddress asAddress() {
-        return null;
-    }
-
-    public abstract void printValueOn(LogStream out);
 }

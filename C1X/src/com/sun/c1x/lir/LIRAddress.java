@@ -20,49 +20,82 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.target.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 
 /**
- * The <code>LIRAddress</code> class definition.
+ * The <code>LIRAddress</code> class represents an operand that is in
+ * memory. It includes a base address, and index, a scale and a displacement.
  *
  * @author Marcelo Cintra
+ * @author Ben L. Titzer
  */
-public class LIRAddress extends LIROperandPtr {
+public class LIRAddress extends LIROperand {
 
     public enum Scale {
         Times1,
         Times2,
         Times4,
         Times8;
+
+        public static Scale fromInt(int shift) {
+            assert shift < Scale.values().length;
+            return Scale.values()[shift];
+        }
     }
 
-    private LIROperand base;
-    private LIROperand index;
-    private Scale scale;
-    private int  displacement;
-    private BasicType type;
+    public final LIROperand base;
+    public final LIROperand index;
+    public final Scale scale;
+    public final int displacement;
 
-    public LIRAddress(LIROperand base, LIROperand index, BasicType type) {
+    /**
+     * Creates a new LIRAddress with the specified base address, index, and basic type.
+     *
+     * @param base the LIROperand representing the base address
+     * @param index the LIROperand representing the index
+     * @param basicType the basic type of the resulting operand
+     */
+    public LIRAddress(LIROperand base, LIROperand index, BasicType basicType) {
+        super(basicType);
         this.base = base;
         this.index = index;
-        this.type = type;
+        this.scale = Scale.Times1;
+        this.displacement = 0;
     }
 
-    public LIRAddress(LIROperand base, int displacement, BasicType type) {
+    /**
+     * Creates a new LIRAddress with the specified base address, displacement, and basic type.
+     *
+     * @param base the LIROperand representing the base address
+     * @param displacement the constant displacement from the base address
+     * @param basicType the basic type of the resulting operand
+     */
+    public LIRAddress(LIROperand base, int displacement, BasicType basicType) {
+        super(basicType);
         this.base = base;
+        this.index = LIROperand.ILLEGAL;
         this.displacement = displacement;
-        this.type = type;
+        this.scale = Scale.Times1;
     }
 
-    public LIRAddress(LIROperand base, LIROperand index, Scale scale, int displacement, BasicType type) {
+    /**
+     * Creates a new LIRAddress with the specified base address, index, and basic type.
+     *
+     * @param base the LIROperand representing the base address
+     * @param index the LIROperand representing the index
+     * @param scale the scaling factor for the index
+     * @param displacement the constant displacement from the base address
+     * @param basicType the basic type of the resulting operand
+     */
+    public LIRAddress(LIROperand base, LIROperand index, Scale scale, int displacement, BasicType basicType) {
+        super(basicType);
         this.base = base;
         this.index = index;
         this.scale = scale;
         this.displacement = displacement;
-        this.type = type;
-        //verify();
     }
 
     public LIROperand base() {
@@ -81,46 +114,80 @@ public class LIRAddress extends LIROperandPtr {
         return displacement;
     }
 
-    @Override
-    public BasicType type() {
-        return type;
-    }
-
+    /**
+     * The equals() for object comparisons.
+     *
+     * @return <code>true</code> if this address is equal to the other address
+     */
     @Override
     public boolean equals(Object other) {
         if (other instanceof LIRAddress) {
             LIRAddress otherAddress = (LIRAddress) other;
-            return base == otherAddress.base && index == otherAddress.index && displacement == otherAddress.displacement && scale() == otherAddress.scale;
+            return base == otherAddress.base && index == otherAddress.index && displacement == otherAddress.displacement && scale == otherAddress.scale;
         }
         return false;
     }
 
-   @Override
-   public void printValueOn(LogStream out) {
-       out.print("Base:" + base);
-       if (!index.isIllegal()) {
-           out.print(" Index:" + index);
-           switch (scale()) {
-               case Times1:
-                   break;
-               case Times2:
-                   out.print(" * 2");
-                   break;
-               case Times4:
-                   out.print(" * 4");
-                   break;
-               case Times8:
-                   out.print(" * 8");
-                   break;
-           }
-       }
-       out.print(" Disp: %d" + displacement);
-   }
+    /**
+     * Prints this operand on the specified output stream.
+     *
+     * @param out the output stream to print to
+     */
+    @Override
+    public void printValueOn(LogStream out) {
+        out.print("Base:" + base);
+        if (!index.isIllegal()) {
+            out.print(" Index:" + index);
+            switch (scale) {
+                case Times1:
+                    break;
+                case Times2:
+                    out.print(" * 2");
+                    break;
+                case Times4:
+                    out.print(" * 4");
+                    break;
+                case Times8:
+                    out.print(" * 8");
+                    break;
+            }
+        }
+        out.print(" Disp: %d" + displacement);
+    }
 
-   public void verify() {
-   }
+    /**
+     * Verifies the address is valid on the specified architecture.
+     * @param architecture the architecture to validate on
+     */
+    public void verify(Architecture architecture) {
+        if (architecture.isSPARC()) {
+            assert scale == Scale.Times1 : "Scaled addressing mode not available on SPARC and should not be used";
+            assert displacement == 0 || index.isIllegal() : "can't have both";
+        } else if (architecture.is64bit()) {
+            assert base.isCpuRegister() : "wrong base operand";
+            assert index.isIllegal() || index.isDoubleCpu() : "wrong index operand";
+            assert base.type() == BasicType.Object || base.type() == BasicType.Long : "wrong type for addresses";
+        } else {
+            assert base.isSingleCpu() : "wrong base operand";
+            assert index.isIllegal() || index.isSingleCpu() : "wrong index operand";
+            assert base.type() == BasicType.Object || base.type() == BasicType.Int : "wrong type for addresses";
+        }
+    }
 
-   public static Scale scale(BasicType type) {
-       return null;
-   }
+    /**
+     * Computes the scaling factor for the specified basic type.
+     * @param type the basic type
+     * @param oopSize the size of an oop on this architecture
+     * @return the scaling factor
+     */
+    public static Scale scale(BasicType type, int oopSize) {
+        switch (type.sizeInBytes(oopSize)) {
+            case 1: return Scale.Times1;
+            case 2: return Scale.Times2;
+            case 4: return Scale.Times4;
+            case 8: return Scale.Times8;
+            default:
+                throw Util.shouldNotReachHere();
+        }
+    }
 }

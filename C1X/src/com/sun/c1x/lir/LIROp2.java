@@ -227,7 +227,7 @@ public class LIROp2 extends LIRInstruction {
      */
     @Override
     public void emitCode(LIRAssembler masm) {
-        masm.emitLIROp2(this);
+        masm.emitOp2(this);
     }
 
     /**
@@ -250,6 +250,22 @@ public class LIROp2 extends LIRInstruction {
             out.print(" ");
         }
         result().print(out);
+    }
+
+    public LIROperand inOpr1() {
+        return opr1();
+    }
+
+    public LIROperand inOpr2() {
+        return opr2();
+    }
+
+    public LIROperand resultOpr() {
+        return result();
+    }
+
+    public LIROperand tmpOpr() {
+        return tmp();
     }
 }
 
