@@ -28,6 +28,7 @@ import com.sun.c1x.ci.CiMethod;
 import com.sun.c1x.ci.CiOsrFrame;
 import com.sun.c1x.ci.CiRuntime;
 import com.sun.c1x.ci.CiType;
+import com.sun.c1x.gen.*;
 import com.sun.c1x.graph.BlockMap;
 import com.sun.c1x.graph.GraphBuilder;
 import com.sun.c1x.ir.*;
@@ -349,5 +350,15 @@ public class C1XCompilation {
     public boolean hasFpuCode() {
         // TODO Auto-generated method stub
         return false;
+    }
+
+    public void emitLIR() {
+        final LIRGenerator lirGenerator = target.backend.newLIRGenerator(this);
+        final LIRAssembler lirAssembler = target.backend.newLIRAssembler(this);
+    }
+
+    public int numberOfBlocks() {
+        // TODO Auto-generated method stub
+        return 0;
     }
 }
