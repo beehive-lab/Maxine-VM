@@ -29,6 +29,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.stub.*;
+import com.sun.c1x.target.x86.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
@@ -1102,7 +1103,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
     }
 
-    private LIROperand callRuntimeWithItems(BasicType[] signature, List<LIRItem> args, Address entry, ValueType resultType, CodeEmitInfo info) {
+    private LIROperand callRuntimeWithItems(BasicType[] signature, List<LIRItem> args, long entry, ValueType resultType, CodeEmitInfo info) {
         // get a result register
         LIROperand physReg = LIROperandFactory.illegalOperand;
         LIROperand result = LIROperandFactory.illegalOperand;
@@ -1164,16 +1165,16 @@ public abstract class LIRGenerator extends InstructionVisitor {
         throw Util.unimplemented();
     }
 
-    private Address getResolveOptVirtualCallStub() {
-        throw Util.unimplemented();
+    private long getResolveOptVirtualCallStub() {
+        return compilation.runtime.getRuntimeEntry(CiRuntimeCall.ResolveOptVirtualCall);
     }
 
-    private Address getResolveStaticCallStub() {
-        throw Util.unimplemented();
+    private long getResolveStaticCallStub() {
+        return compilation.runtime.getRuntimeEntry(CiRuntimeCall.ResolveStaticCall);
     }
 
-    private Address getResolveVirtualCallStub() {
-        throw Util.unimplemented();
+    private long getResolveVirtualCallStub() {
+        return compilation.runtime.getRuntimeEntry(CiRuntimeCall.ResolveVirtualCall);
     }
 
     private LIROperand loadConstant(Constant x) {
@@ -1623,7 +1624,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
     }
 
-    LIROperand callRuntime(BasicType[] signature, List<LIROperand> args, Address entry, ValueType resultType, CodeEmitInfo info) {
+    LIROperand callRuntime(BasicType[] signature, List<LIROperand> args, long l, ValueType resultType, CodeEmitInfo info) {
         // get a result register
         LIROperand physReg = LIROperandFactory.illegalOperand;
         LIROperand result = LIROperandFactory.illegalOperand;
@@ -1651,9 +1652,9 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
 
         if (info != null) {
-            lir.callRuntime(entry, getThreadTemp(), physReg, cc.args(), info);
+            lir.callRuntime(l, getThreadTemp(), physReg, cc.args(), info);
         } else {
-            lir.callRuntimeLeaf(entry, getThreadTemp(), physReg, cc.args());
+            lir.callRuntimeLeaf(l, getThreadTemp(), physReg, cc.args());
         }
         if (result.isValid()) {
             lir.move(physReg, result);
@@ -1661,14 +1662,14 @@ public abstract class LIRGenerator extends InstructionVisitor {
         return result;
     }
 
-    LIROperand callRuntime(Instruction arg1, Address entry, ValueType resultType, CodeEmitInfo info) {
+    LIROperand callRuntime(Instruction arg1, long entry, ValueType resultType, CodeEmitInfo info) {
         List<LIRItem> args = new ArrayList<LIRItem>(1);
         args.add(new LIRItem(arg1, this));
         BasicType[] signature = new BasicType[] {arg1.type().basicType()};
         return callRuntimeWithItems(signature, args, entry, resultType, info);
     }
 
-    LIROperand callRuntime(Instruction arg1, Instruction arg2, Address entry, ValueType resultType, CodeEmitInfo info) {
+    LIROperand callRuntime(Instruction arg1, Instruction arg2, long entry, ValueType resultType, CodeEmitInfo info) {
 
         List<LIRItem> args = new ArrayList<LIRItem>();
         args.add(new LIRItem(arg1, this));

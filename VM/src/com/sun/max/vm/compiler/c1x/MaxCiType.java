@@ -21,6 +21,7 @@
 package com.sun.max.vm.compiler.c1x;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
@@ -376,14 +377,27 @@ public class MaxCiType implements CiType {
 
     @Override
     public boolean layoutHelperNeedsSlowPath() {
-        // TODO Auto-generated method stub
-        return false;
+        throw Util.unimplemented();
     }
 
     @Override
     public int sizeHelper() {
-        // TODO Auto-generated method stub
-        return 0;
+        throw Util.unimplemented();
+    }
+
+    @Override
+    public Object encoding() {
+        return this;
+    }
+
+    @Override
+    public boolean isArrayKlass() {
+        throw Util.unimplemented();
+    }
+
+    @Override
+    public int superCheckOffset() {
+        throw Util.unimplemented();
     }
 
 }

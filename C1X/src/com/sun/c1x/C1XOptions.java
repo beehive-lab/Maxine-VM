@@ -147,4 +147,23 @@ public class C1XOptions {
     public static boolean UseSlowPath                        = ____;
     public static boolean UseFastNewObjectArray              = ____;
     public static boolean UseFastNewTypeArray                = ____;
+    public static boolean UseStackBanging                    = TRUE;
+    public static int     StackShadowPages                   = 3;
+    public static int     Atomics                            = 0;
+    public static boolean UseNormalNop                       = TRUE;
+    public static boolean UseAddressNop                      = TRUE;
+    public static boolean ForceUnreachable                   = ____;
+    public static boolean PrintBiasedLockingStatistics       = ____;
+    public static boolean UseIncDec                          = ____;
+    public static boolean UseXmmLoadAndClearUpper            = ____;
+    public static boolean UseTLAB                            = ____;
+    public static boolean UseXmmRegToRegMoveAll              = ____;
+    public static boolean CMSIncrementalMode                 = ____;
+    public static boolean TLABStats                          = ____;
+    public static boolean GenerateAssertionCode              = ____;
+
+    // Profiling settings
+    public static boolean Tier1OptimizeVirtualCallProfiling  = ____;
+    public static boolean Tier1ProfileVirtualCalls           = ____;
+    public static int     TypeProfileWidth                   = 0;
 }

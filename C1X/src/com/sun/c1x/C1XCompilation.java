@@ -345,4 +345,9 @@ public class C1XCompilation {
         // TODO Auto-generated method stub
         return null;
     }
+
+    public boolean hasFpuCode() {
+        // TODO Auto-generated method stub
+        return false;
+    }
 }

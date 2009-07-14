@@ -21,7 +21,6 @@
 package com.sun.c1x.asm;
 
 import com.sun.c1x.asm.RelocInfo.*;
-import com.sun.c1x.value.*;
 
 
 public class CodeSection {
@@ -31,7 +30,7 @@ public class CodeSection {
         return 0;
     }
 
-    public void relocate(Address pc, Type polltype) {
+    public void relocate(Pointer pc, Type polltype) {
         // TODO Auto-generated method stub
 
     }
@@ -41,19 +40,64 @@ public class CodeSection {
 
     }
 
-    public Address start() {
+    public Pointer start() {
         // TODO Auto-generated method stub
         return null;
     }
 
-    public Address limit() {
+    public Pointer limit() {
         // TODO Auto-generated method stub
         return null;
     }
 
-    public Address end() {
+    public Pointer end() {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    public boolean maybeExpandToEnsureRemaining(int requiredSpace) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public void setEnd(Pointer codePos) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public CodeBuffer outer() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Pointer mark() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public void setMark() {
+        // TODO Auto-generated method stub
+
+    }
+
+    public Pointer target(Label l, Pointer pointer) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public int index() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public void relocate(Pointer pointer, RelocationHolder rspec, int format) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public boolean isAllocated() {
+        // TODO Auto-generated method stub
+        return false;
     }
 
 }

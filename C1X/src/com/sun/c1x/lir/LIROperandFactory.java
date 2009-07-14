@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.target.x86.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 

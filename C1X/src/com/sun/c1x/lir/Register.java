@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.lir;
 
-
 /**
  * The <code>Register</code> class definition.
  *
@@ -39,5 +38,26 @@ public class Register {
     public boolean isValid() {
         // TODO Check if this implementation is correct?
         return number >= 0;
+    }
+
+    public boolean hasByteRegister() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public static boolean assertDifferentRegisters(Register... reg) {
+
+        for (int i = 0; i < reg.length; i++) {
+            for (int j = 0; j < reg.length; j++) {
+                if (i != j) {
+                    if (reg[i] == reg[j]) {
+                        assert false : "Registers " + i + " and " + j + " are both " + reg[i];
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
     }
 }
