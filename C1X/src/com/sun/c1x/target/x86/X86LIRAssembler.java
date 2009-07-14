@@ -45,6 +45,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
     private final int exceptionHandlerSize;
     final int deoptHandlerSize;
     private final int wordSize;
+    private final int referenceSize;
     private final X86Register rscratch1;
 
 
@@ -55,6 +56,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
         masm = (X86MacroAssembler) compilation.masm();
 
         wordSize = compilation.target.arch.wordSize;
+        referenceSize = compilation.target.referenceSize;
         exceptionHandlerSize = 175;
         rscratch1 = X86FrameMap.rscratch1(compilation.target.arch);
         if (compilation.target.arch.is64bit()) {
@@ -3156,7 +3158,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
 
         assert defaultType.isArrayKlass() && defaultType.isLoaded() : "must be true at this point";
 
-        int elemSize = basicType.elementSizeInBytes(wordSize);
+        int elemSize = basicType.elementSizeInBytes(referenceSize, wordSize);
         int shiftAmount;
         Address.ScaleFactor scale;
 

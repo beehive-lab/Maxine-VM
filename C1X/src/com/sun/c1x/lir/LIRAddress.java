@@ -175,13 +175,12 @@ public class LIRAddress extends LIROperand {
     }
 
     /**
-     * Computes the scaling factor for the specified basic type.
-     * @param type the basic type
-     * @param oopSize the size of an oop on this architecture
+     * Computes the scaling factor for the specified size in bytes.
+     * @param size the size in bytes
      * @return the scaling factor
      */
-    public static Scale scale(BasicType type, int oopSize) {
-        switch (type.sizeInBytes(oopSize)) {
+    public static Scale scale(int size) {
+        switch (size) {
             case 1: return Scale.Times1;
             case 2: return Scale.Times2;
             case 4: return Scale.Times4;

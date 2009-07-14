@@ -62,25 +62,75 @@ import com.sun.max.vm.template.*;
  */
 public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMethod {
 
-    public static enum TargetMethodType {
-        JIT,
-        JIT_TRACED,
-        OPTIMIZED
-    }
+    public static final int REFERENCE_RETURN_FLAG = 0x80000000;
+    @PROTOTYPE_ONLY
+    public static boolean COLLECT_TARGET_METHOD_STATS;
 
     @INSPECTED
     private final ClassMethodActor classMethodActor;
+    @INSPECTED
+    private int[] catchRangePositions;
+    @INSPECTED
+    private int[] catchBlockPositions;
+    @INSPECTED
+    private byte[] compressedJavaFrameDescriptors;
+
+    /**
+     * If non-null, this array encodes a serialized array of {@link InlineDataDescriptor} objects.
+     */
+    @INSPECTED
+    private byte[] encodedInlineDataDescriptors;
+
+    /**
+     * The stop positions are encoded in the lower 31 bits of each element.
+     * The high bit indicates whether the stop is a call that returns a Reference.
+     *
+     * @see #stopPositions()
+     */
+    @INSPECTED
+    private int[] stopPositions;
+
+    @INSPECTED
+    private ClassMethodActor[] directCallees;
+
+    @INSPECTED
+    private int numberOfIndirectCalls;
+
+    @INSPECTED
+    private int numberOfSafepoints;
+
+    @INSPECTED
+    private byte[] scalarLiteralBytes;
+
+    @INSPECTED
+    private Object[] referenceLiterals;
+
+    @INSPECTED
+    private byte[] code;
+
+    @INSPECTED
+    private Pointer codeStart = Pointer.zero();
+
+    private int frameSize;
+
+    @INSPECTED
+    private int frameReferenceMapSize;
+
+    private byte[] referenceMaps;
+
+    @INSPECTED
+    private TargetABI abi;
+
+    public TargetMethod(ClassMethodActor classMethodActor) {
+        this.classMethodActor = classMethodActor;
+        setDescription("Target-" + name());
+    }
 
     public final ClassMethodActor classMethodActor() {
         return classMethodActor;
     }
 
     public abstract InstructionSet instructionSet();
-
-    public TargetMethod(ClassMethodActor classMethodActor) {
-        this.classMethodActor = classMethodActor;
-        setDescription("Target-" + name());
-    }
 
     public final String name() {
         return classMethodActor.name.toString();
@@ -93,11 +143,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     public final void cleanup() {
     }
 
-    /**
-     * @see #catchRangePositions()
-     */
-    @INSPECTED
-    private int[] catchRangePositions;
 
     /**
      * Gets the array of positions denoting which ranges of code are covered by an
@@ -144,24 +189,10 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     /**
      * @see #catchRangePositions()
      */
-    @INSPECTED
-    private int[] catchBlockPositions;
-
-    /**
-     * @see #catchRangePositions()
-     */
     public final int[] catchBlockPositions() {
         return catchBlockPositions;
     }
 
-    /**
-     * The stop positions are encoded in the lower 31 bits of each element.
-     * The high bit indicates whether the stop is a call that returns a Reference.
-     *
-     * @see #stopPosition()
-     */
-    @INSPECTED
-    private int[] stopPositions;
 
     /**
      * Gets the array recording the positions of the {@link StopType stops} in this target method.
@@ -197,8 +228,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     public final int stopPosition(int stopIndex) {
         return stopPositions[stopIndex] & ~REFERENCE_RETURN_FLAG;
     }
-
-    public static final int REFERENCE_RETURN_FLAG = 0x80000000;
 
     public final boolean isReferenceCall(int stopIndex) {
         return (stopPositions[stopIndex] & REFERENCE_RETURN_FLAG) != 0;
@@ -266,14 +295,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return new ByteArrayBitMap(referenceMaps, start, registerReferenceMapSize);
     }
 
-    @INSPECTED
-    private byte[] compressedJavaFrameDescriptors;
-
-    /**
-     * If non-null, this array encodes a serialized array of {@link InlineDataDescriptor} objects.
-     */
-    @INSPECTED
-    private byte[] encodedInlineDataDescriptors;
 
     /**
      * Gets the {@linkplain InlineDataDescriptor inline data descriptors} associated with this target method's code
@@ -370,9 +391,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return (directCallees == null) ? 0 : directCallees.length;
     }
 
-    @INSPECTED
-    private ClassMethodActor[] directCallees;
-
     /**
      * @return class method actors referenced by direct call instructions, matched to the stop positions array above by array index
      */
@@ -391,30 +409,13 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return abi().callEntryPoint();
     }
 
-    @INSPECTED
-    private int numberOfIndirectCalls;
-
     public final int numberOfIndirectCalls() {
         return numberOfIndirectCalls;
     }
 
-    @INSPECTED
-    private int numberOfSafepoints;
-
     public final int numberOfSafepoints() {
         return numberOfSafepoints;
     }
-
-    private int numberOfGuardpoints;
-
-    public int numberOfGuardpoints() {
-        return numberOfGuardpoints;
-    }
-
-    /**
-     * @see #referenceMaps()
-     */
-    private byte[] referenceMaps;
 
     /**
      * Gets the frame and register reference maps for this target method.
@@ -452,9 +453,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      */
     public abstract boolean areReferenceMapsFinalized();
 
-    @INSPECTED
-    private byte[] scalarLiteralBytes;
-
     /**
      * @return non-object data referenced by the machine code
      */
@@ -466,9 +464,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return (scalarLiteralBytes == null) ? 0 : scalarLiteralBytes.length;
     }
 
-    @INSPECTED
-    private Object[] referenceLiterals;
-
     /**
      * @return object references referenced by the machine code
      */
@@ -479,9 +474,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     public final int numberOfReferenceLiterals() {
         return (referenceLiterals == null) ? 0 : referenceLiterals.length;
     }
-
-    @INSPECTED
-    private byte[] code;
 
     /**
      * Gets the byte array containing the target-specific machine code of this target method.
@@ -499,9 +491,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * <p>
      * Needs {@linkplain DataPrototype#assignRelocationFlags() relocation}.
      */
-    @INSPECTED
-    private Pointer codeStart = Pointer.zero();
-
     public final Pointer codeStart() {
         return codeStart;
     }
@@ -510,8 +499,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     public final void setCodeStart(Pointer codeStart) {
         this.codeStart = codeStart;
     }
-
-    private int frameSize;
 
     /**
      * Gets the size (in bytes) of the stack frame used for the local variables in
@@ -522,9 +509,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     public final int frameSize() {
         return frameSize;
     }
-
-    @INSPECTED
-    private int frameReferenceMapSize;
 
     /**
      * Gets the size of a single frame reference map encoded in this method's {@linkplain #referenceMaps() reference maps}.
@@ -586,17 +570,8 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      */
     public abstract JavaStackFrameLayout stackFrameLayout();
 
-    @INSPECTED
-    private TargetABI abi;
-
     public final TargetABI abi() {
         return abi;
-    }
-
-    private int markerPosition = -1;
-
-    public int markerPosition() {
-        return markerPosition;
     }
 
     /**
@@ -607,55 +582,52 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     /**
      * Completes the definition of this target method as the result of compilation.
      *
-     * @param targetBundle an object describing the address of the objects allocated in a {@link CodeRegion} referenced
+     * @param targetBundle an object describing the address of the objects allocated in a {@link com.sun.max.vm.code.CodeRegion} referenced
      *            by this target method's fields
      * @param catchRangePositions describes the {@linkplain #catchRangePositions() code ranges} covered by exception
-     *            dispatchers
+*            dispatchers
      * @param catchBlockPositions the positions of the {@linkplain #catchBlockPositions() exception dispatchers}
      * @param stopPositions the positions in this target method at which the locations of object references are
-     *            precisely known
+*            precisely known
      * @param directCallees the positions in this target method of direct calls (e.g. calls to methods for which a
-     *            compiled version available)
+*            compiled version available)
      * @param numberOfIndirectCalls the positions in this target method of register indirect calls (e.g. late binding
-     *            calls, virtual/interface calls)
-     * @param numberOfSafepoints the number of {@linkplain Safepoint safepoint} positions in this target method
+*            calls, virtual/interface calls)
+     * @param numberOfSafepoints the number of {@linkplain com.sun.max.vm.runtime.Safepoint safepoint} positions in this target method
      * @param referenceMaps the set of bits maps, one per stop position, describing the locations of object references.
-     *            The format requirements of this data structure are explained {@linkplain #referenceMaps() here}.
+*            The format requirements of this data structure are explained {@linkplain #referenceMaps() here}.
      * @param scalarLiteralBytes a byte array encoding the scalar data accessed by this target via code relative offsets
      * @param referenceLiterals an object array encoding the object references accessed by this target via code relative
-     *            offsets
+*            offsets
      * @param codeOrCodeBuffer the compiled code, either as a byte array, or as a {@code CodeBuffer} object
      * @param frameSize the amount of stack allocated for an activation frame during a call to this target method
-     * @param abi
+     * @param abi the target ABI
      */
     public final void setGenerated(TargetBundle targetBundle,
-                            int[] catchRangePositions,
-                            int[] catchBlockPositions,
-                            int[] stopPositions,
-                            byte[] compressedJavaFrameDescriptors,
-                            ClassMethodActor[] directCallees,
-                            int numberOfIndirectCalls,
-                            int numberOfSafepoints,
-                            int numberOfGuardpoints,
-                            byte[] referenceMaps,
-                            byte[] scalarLiteralBytes,
-                            Object[] referenceLiterals,
-                            Object codeOrCodeBuffer,
-                            byte[] encodedInlineDataDescriptors,
-                            int frameSize,
-                            int frameReferenceMapSize,
-                            TargetABI abi,
-                            int markerPosition) {
+                                   int[] catchRangePositions,
+                                   int[] catchBlockPositions,
+                                   int[] stopPositions,
+                                   byte[] compressedJavaFrameDescriptors,
+                                   ClassMethodActor[] directCallees,
+                                   int numberOfIndirectCalls,
+                                   int numberOfSafepoints,
+                                   byte[] referenceMaps,
+                                   byte[] scalarLiteralBytes,
+                                   Object[] referenceLiterals,
+                                   Object codeOrCodeBuffer,
+                                   byte[] encodedInlineDataDescriptors,
+                                   int frameSize,
+                                   int frameReferenceMapSize,
+                                   TargetABI abi
+    ) {
         this.codeStart = targetBundle.firstElementPointer(ArrayField.code);
         this.frameSize = frameSize;
         this.frameReferenceMapSize = frameReferenceMapSize;
         this.numberOfIndirectCalls = numberOfIndirectCalls;
         this.numberOfSafepoints = numberOfSafepoints;
-        this.numberOfGuardpoints = numberOfGuardpoints;
         this.abi = abi;
         this.compressedJavaFrameDescriptors = compressedJavaFrameDescriptors;
         this.encodedInlineDataDescriptors = encodedInlineDataDescriptors;
-        this.markerPosition = markerPosition;
 
         assert checkReferenceMapSize(stopPositions, numberOfSafepoints, referenceMaps, frameReferenceMapSize);
 
@@ -684,7 +656,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         }
 
         // collect metrics about the size of target methods' constituent arrays
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isPrototyping() && COLLECT_TARGET_METHOD_STATS) {
             for (ArrayField field : ArrayField.VALUES) {
                 Metrics.accumulate("TargetMethod." + field, targetBundle.layout().cellSize(field).toInt());
             }
@@ -967,16 +939,15 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
                         duplicatedDirectCallees,
                         numberOfIndirectCalls(),
                         numberOfSafepoints(),
-                        numberOfGuardpoints(),
-                        referenceMaps() == null ? null : referenceMaps().clone(),
+                    referenceMaps() == null ? null : referenceMaps().clone(),
                         scalarLiteralBytes() == null ? null : scalarLiteralBytes().clone(),
                         duplicatedReferenceLiterals,
                         code().clone(),
                         encodedInlineDataDescriptors,
                         frameSize(),
                         frameReferenceMapSize(),
-                        abi(),
-                        markerPosition);
+                        abi()
+            );
         } else {
             duplicate.setGenerated(targetBundle,
                             catchRangePositions(),
@@ -986,16 +957,15 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
                             directCallees(),
                             numberOfIndirectCalls(),
                             numberOfSafepoints(),
-                            numberOfGuardpoints(),
-                            referenceMaps(),
+                    referenceMaps(),
                             scalarLiteralBytes(),
                             referenceLiterals(),
                             code(),
                             encodedInlineDataDescriptors,
                             frameSize(),
                             frameReferenceMapSize(),
-                            abi(),
-                            markerPosition);
+                            abi()
+            );
         }
         return duplicate;
     }

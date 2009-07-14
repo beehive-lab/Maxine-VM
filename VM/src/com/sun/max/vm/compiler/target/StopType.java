@@ -21,6 +21,7 @@
 package com.sun.max.vm.compiler.target;
 
 import com.sun.max.collect.*;
+import com.sun.max.vm.runtime.FatalError;
 
 /**
  * Categorization of stops. Stops are target code positions for which the locations of object references are precisely known.
@@ -91,7 +92,7 @@ public enum StopType {
 
         @Override
         public int numberOfStopPositions(TargetMethod targetMethod) {
-            return targetMethod.numberOfGuardpoints();
+            throw FatalError.unimplemented();
         }
     };
 
@@ -99,16 +100,25 @@ public enum StopType {
 
     /**
      * Gets the index of the {@code n}th stop of this type in the {@linkplain TargetMethod#stopPositions() stop positions array} of a target method.
+     * @param targetMethod the target method
+     * @param n the index into the stop positions
+     * @return the stop position index
+     * @throws IllegalArgumentException if the index is invalid
      */
     public abstract int stopPositionIndex(TargetMethod targetMethod, int n) throws IllegalArgumentException;
 
     /**
      * Gets the number of stops of this type in a given target method.
+     * @param targetMethod the target method
+     * @return the number of stops of this type in the method
      */
     public abstract int numberOfStopPositions(TargetMethod targetMethod);
 
     /**
      * Gets the position of the {@code n}th stop of this type in a given target method.
+     * @param targetMethod the target method
+     * @param n the index into the stop positions
+     * @return the position
      */
     public int stopPosition(TargetMethod targetMethod, int n) {
         return targetMethod.stopPosition(stopPositionIndex(targetMethod, n));

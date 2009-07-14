@@ -140,6 +140,15 @@ public class MaxCiType implements CiType {
     }
 
     /**
+     * Checks whether this compiler interface type is an array class.
+     * @return <code>true</code> if this class is an interface
+     * @throws MaxCiUnresolved if the class is not resolved
+     */
+    public boolean isArrayKlass() {
+        return asClassActor("isArrayClass()") instanceof ArrayClassActor;
+    }
+
+    /**
      * Checks whether this compiler interface type is an instance class.
      * @return <code>true</code> if this class is an instance class
      * @throws MaxCiUnresolved if the class is not resolved
@@ -385,17 +394,10 @@ public class MaxCiType implements CiType {
         throw Util.unimplemented();
     }
 
-    @Override
     public Object encoding() {
         return this;
     }
 
-    @Override
-    public boolean isArrayKlass() {
-        throw Util.unimplemented();
-    }
-
-    @Override
     public int superCheckOffset() {
         throw Util.unimplemented();
     }

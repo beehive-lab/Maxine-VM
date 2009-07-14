@@ -137,7 +137,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         int offsetInBytes = compilation.runtime.arrayBaseOffsetInBytes(type);
         LIRAddress addr;
         if (indexOpr.isConstant()) {
-            int elemSize = type.elementSizeInBytes(compilation.target.arch.wordSize);
+            int elemSize = type.elementSizeInBytes(compilation.target.referenceSize, compilation.target.arch.wordSize);
             addr = new LIRAddress(arrayOpr, offsetInBytes + indexOpr.asInt() * elemSize, type);
         } else {
 
@@ -148,7 +148,7 @@ public final class X86LIRGenerator extends LIRGenerator {
                     indexOpr = tmp;
                 }
             }
-            addr = new LIRAddress(arrayOpr, indexOpr, LIRAddress.scale(type, compilation.target.arch.wordSize), offsetInBytes, type);
+            addr = new LIRAddress(arrayOpr, indexOpr, LIRAddress.scale(compilation.target.sizeInBytes(type)), offsetInBytes, type);
         }
         if (needsCardMark) {
             // This store will need a precise card mark, so go ahead and

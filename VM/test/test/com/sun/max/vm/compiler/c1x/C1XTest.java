@@ -25,6 +25,7 @@ import static test.com.sun.max.vm.compiler.c1x.C1XTest.PatternType.*;
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.Arrays;
 
 import com.sun.c1x.*;
 import com.sun.c1x.target.Target;
@@ -65,6 +66,8 @@ public class C1XTest {
         "Compile class initializer (<clinit>) methods");
     private static final Option<Boolean> failFastOption = options.newBooleanOption("fail-fast", true,
         "Stop compilation upon the first bailout.");
+    private static final Option<Boolean> targetOption = options.newBooleanOption("target", false,
+        "Compile the method(s) all the way to target code.");
     private static final Option<Boolean> timingOption = options.newBooleanOption("timing", false,
         "Report compilation time for each successful compile.");
     private static final Option<Boolean> c1xOptionsOption = options.newBooleanOption("c1x-options", false,
@@ -215,7 +218,8 @@ public class C1XTest {
         // compile a single method
         if (isCompilable(method)) {
             final long startNs = System.nanoTime();
-            final C1XCompilation compilation = new C1XCompilation(target, runtime, runtime.getCiMethod(method));
+            final MaxCiTargetMethod targetMethod = targetOption.getValue() ? new MaxCiTargetMethod((ClassMethodActor) method) : null;
+            final C1XCompilation compilation = new C1XCompilation(target, runtime, runtime.getCiMethod(method), targetMethod);
             if (compilation.startBlock() == null) {
                 if (printBailout) {
                     compilation.bailout().printStackTrace(out);
@@ -364,9 +368,7 @@ public class C1XTest {
                                 methods.add(actor);
                             }
                         }
-                        for (MethodActor actor : classActor.localVirtualMethodActors()) {
-                            methods.add(actor);
-                        }
+                        methods.addAll(Arrays.asList(classActor.localVirtualMethodActors()));
                     } else {
                         // a method pattern was specified, find matching methods
                         final int parenIndex = argument.indexOf('(', colonIndex + 1);

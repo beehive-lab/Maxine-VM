@@ -110,7 +110,7 @@ public abstract class LIRAssembler {
                 case Bytecodes.GETFIELD:
                     break;
                 default:
-                    Util.shouldNotReachHere();
+                    throw Util.shouldNotReachHere();
             }
         } else if (patch.id() == PatchingStub.PatchID.LoadKlassId) {
             switch (code) {
@@ -125,10 +125,10 @@ public abstract class LIRAssembler {
                 case Bytecodes.LDC_W:
                     break;
                 default:
-                    Util.shouldNotReachHere();
+                    throw Util.shouldNotReachHere();
             }
         } else {
-            Util.shouldNotReachHere();
+            throw Util.shouldNotReachHere();
         }
 
         return true;
@@ -473,7 +473,7 @@ public abstract class LIRAssembler {
                 vtableCall(op.vtableOffset(), op.info());
                 break;
             default:
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
         }
     }
 
@@ -566,7 +566,7 @@ public abstract class LIRAssembler {
                     if (op.inOpr().isSingleCpu()) {
                         masm.nullCheck(op.inOpr().asRegister());
                     } else {
-                        Util.shouldNotReachHere();
+                        throw Util.shouldNotReachHere();
                     }
                 }
                 break;
@@ -576,8 +576,7 @@ public abstract class LIRAssembler {
                 break;
 
             default:
-                Util.shouldNotReachHere();
-                break;
+                throw Util.shouldNotReachHere();
         }
     }
 
@@ -623,8 +622,7 @@ public abstract class LIRAssembler {
                 break;
 
             case Label:
-                Util.shouldNotReachHere();
-                break;
+                throw Util.shouldNotReachHere();
 
             case BuildFrame:
                 buildFrame();
@@ -681,8 +679,7 @@ public abstract class LIRAssembler {
                 break;
 
             default:
-                Util.shouldNotReachHere();
-                break;
+                throw Util.shouldNotReachHere();
         }
     }
 
@@ -769,8 +766,7 @@ public abstract class LIRAssembler {
                 break;
 
             default:
-                Util.shouldNotReachHere();
-                break;
+                throw Util.shouldNotReachHere();
         }
     }
 
@@ -817,7 +813,7 @@ public abstract class LIRAssembler {
             } else if (dest.isAddress()) {
                 reg2mem(src, dest, type, patchCode, info, popFpuStack, unaligned);
             } else {
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
             }
 
         } else if (src.isStack()) {
@@ -827,7 +823,7 @@ public abstract class LIRAssembler {
             } else if (dest.isStack()) {
                 stack2stack(src, dest, type);
             } else {
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
             }
 
         } else if (src.isConstant()) {
@@ -840,14 +836,14 @@ public abstract class LIRAssembler {
                 assert patchCode == LIRPatchCode.PatchNone : "no patching allowed here";
                 const2mem(src, dest, type, info);
             } else {
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
             }
 
         } else if (src.isAddress()) {
             mem2reg(src, dest, type, patchCode, info, unaligned);
 
         } else {
-            Util.shouldNotReachHere();
+            throw Util.shouldNotReachHere();
         }
     }
 
