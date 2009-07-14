@@ -18,6 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+
 package com.sun.c1x.ir;
 
 import java.util.*;
@@ -106,9 +107,9 @@ public class ComputeLinearScanOrder {
         return numLoops;
     }
 
-    public ComputeLinearScanOrder(C1XCompilation compilation, BlockBegin startBlock) {
+    public ComputeLinearScanOrder(int maxBlockId, BlockBegin startBlock) {
 
-        maxBlockId = compilation.numberOfBlocks();
+        this.maxBlockId = maxBlockId;
         visitedBlocks = new BitMap(maxBlockId);
         activeBlocks = new BitMap(maxBlockId);
         dominatorBlocks = new BitMap(maxBlockId);

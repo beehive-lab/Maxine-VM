@@ -1,20 +1,24 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc. All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product that is
- * described in this document. In particular, and without limitation, these intellectual property rights may include one
- * or more of the U.S. patents listed at http://www.sun.com/patents and one or more additional patents or pending patent
- * applications in the U.S. and in other countries.
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun Microsystems, Inc. standard
- * license agreement and applicable provisions of the FAR and its supplements.
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or registered
- * trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks are used under license and
- * are trademarks or registered trademarks of SPARC International, Inc. in the U.S. and other countries.
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open Company, Ltd.
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
  */
+
 package com.sun.c1x;
 
 import java.io.*;
@@ -23,8 +27,7 @@ import java.util.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.ci.*;
-import com.sun.c1x.graph.BlockMap;
-import com.sun.c1x.graph.GraphBuilder;
+import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
@@ -54,7 +57,6 @@ public class C1XCompilation {
     public final CiTargetMethod targetMethod;
     final int osrBCI;
 
-    BlockBegin start;
     int maxSpills;
     boolean needsDebugInfo;
     boolean hasExceptionHandlers;
@@ -65,11 +67,11 @@ public class C1XCompilation {
     int totalBlocks = 1;
     int totalInstructions;
     private Instruction currentInstruction;
-    private List<BlockBegin> orderedBlocks;
 
     private FrameMap frameMap;
     private AbstractAssembler assembler;
-    private Map<Instruction, Integer> useCounts;
+
+    private IR hir;
 
     /**
      * Creates a new compilation for the specified method and runtime.
@@ -102,44 +104,8 @@ public class C1XCompilation {
         this.osrBCI = -1;
     }
 
-    /**
-     * Performs the compilation, producing the start block.
-     */
-    public BlockBegin startBlock() {
-        try {
-            if (start == null && bailout == null) {
-                CFGPrinter cfgPrinter = null;
-                if (C1XOptions.PrintCFGToFile) {
-                    OutputStream cfgFileStream = CFGPrinter.cfgFileStream();
-                    if (cfgFileStream != null) {
-                        cfgPrinter = new CFGPrinter(cfgFileStream);
-                        cfgPrinter.printCompilation(method());
-                    }
-                }
-
-                final IRScope topScope = new IRScope(this, null, 0, method, osrBCI);
-                final GraphBuilder builder = new GraphBuilder(this, topScope);
-                start = builder.start();
-                totalInstructions = builder.instructionCount();
-
-                if (C1XOptions.PrintCFGToFile && cfgPrinter != null) {
-                    cfgPrinter.printCFG(start, "After Generation of HIR", true, false);
-                }
-
-                ComputeLinearScanOrder computeLinearScanOrder = new ComputeLinearScanOrder(this, start);
-                orderedBlocks = computeLinearScanOrder.linearScanOrder();
-                computeLinearScanOrder.printBlocks();
-
-                UseCountComputer useCountComputer = new UseCountComputer();
-                this.iterateLinearScanOrder(useCountComputer);
-                this.useCounts = useCountComputer.result();
-            }
-        } catch (Bailout b) {
-            bailout = b;
-        } /*catch (Throwable t) {
-            bailout = new Bailout("Unexpected exception while compiling: " + this.method(), t);
-        }*/
-        return start;
+    public IR hir() {
+        return hir;
     }
 
     /**
@@ -382,24 +348,34 @@ public class C1XCompilation {
         return false;
     }
 
-    private void iterateLinearScanOrder(BlockClosure closure) {
-        assert orderedBlocks != null;
-        for (BlockBegin begin : this.orderedBlocks) {
-            closure.apply(begin);
+    public boolean compile() {
+        try {
+            hir = new IR(this);
+            hir.build();
+            emitLIR();
+            emitCode();
+        } catch (Bailout b) {
+            bailout = b;
+            return false;
+        } catch (Throwable t) {
+            bailout = new Bailout("Unexpected exception while compiling: " + this.method(), t);
+            return false;
         }
+
+        return true;
     }
 
-    public void emitLIR() {
+    private void emitLIR() {
         frameMap = target.backend.newFrameMap(method, numberOfLocks(), maxStack());
         final LIRGenerator lirGenerator = target.backend.newLIRGenerator(this);
-        this.iterateLinearScanOrder(lirGenerator);
+        hir.iterateLinearScanOrder(lirGenerator);
     }
 
-    public void emitCode() {
+    private void emitCode() {
         CodeBuffer tmp = new CodeBuffer();
         assembler = target.backend.newAssembler(this, tmp);
         final LIRAssembler lirAssembler = target.backend.newLIRAssembler(this);
-        lirAssembler.emitCode(this.orderedBlocks);
+        lirAssembler.emitCode(hir.linearScanOrder());
     }
 
     private int numberOfLocks() {
@@ -414,17 +390,5 @@ public class C1XCompilation {
 
     public int numberOfBlocks() {
         return totalBlocks;
-    }
-
-    public int useCount(Instruction instr) {
-        if (!this.useCounts.containsKey(instr)) {
-            return 0;
-        } else {
-            return this.useCounts.get(instr);
-        }
-    }
-
-    public boolean hasUses(Instruction instr) {
-        return useCount(instr) > 0;
     }
 }
