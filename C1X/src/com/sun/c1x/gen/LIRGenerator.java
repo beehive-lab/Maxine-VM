@@ -40,7 +40,7 @@ import com.sun.c1x.value.*;
  * @author Thomas Wuerthinger
  *
  */
-public abstract class LIRGenerator extends InstructionVisitor {
+public abstract class LIRGenerator extends InstructionVisitor implements BlockClosure {
 
     // the range of values in a lookupswitch or tableswitch statement
     private static final class SwitchRange {
@@ -80,6 +80,11 @@ public abstract class LIRGenerator extends InstructionVisitor {
         this.compilation = compilation;
         this.virtualRegisterNumber = LIRLocation.virtualRegisterBase();
         this.vregFlags = new BitMap2D(0, VregFlag.NumVregFlags.ordinal());
+
+        instructionForOperand = new ArrayMap<Instruction>();
+        constants = new ArrayList<LIRConstant>();
+        regForConstants = new ArrayList<LIROperand>();
+        unpinnedConstants = new ArrayList<Instruction>();
         init();
     }
 
@@ -87,9 +92,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         return lir;
     }
 
-    public void blockDo(BlockBegin block) {
-        // CHECKBAILOUT();
-
+    public void apply(BlockBegin block) {
         blockDoProlog(block);
         this.currentBlock = block;
 
@@ -248,7 +251,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             LIROperand reg = rlockResult(x);
             CodeEmitInfo info = stateFor(x, x.state());
             lir.oop2regPatch(null, reg, info);
-        } else if (x.useCount() > 1 && !canInlineAsConstant(x)) {
+        } else if (compilation.useCount(x) > 1 && !canInlineAsConstant(x)) {
             if (!x.isPinned()) {
                 // unpinned constants are handled specially so that they can be
                 // put into registers when they are used multiple times within a
@@ -1751,7 +1754,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
             instr.accept(this);
 
-            assert !instr.hasUses() || instr.operand().isValid() || instr instanceof Constant || compilation.bailout() != null : "invalid item set";
+            assert !compilation.hasUses(instr) || instr.operand().isValid() || instr instanceof Constant || compilation.bailout() != null : "invalid item set";
         } finally {
             compilation.setCurrentInstruction(prev);
         }
@@ -1982,7 +1985,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
     }
 
     protected void setNoResult(Instruction x) {
-        assert !x.hasUses() : "can't have use";
+        assert !compilation.hasUses(x) : "can't have use";
         x.clearOperand();
     }
 

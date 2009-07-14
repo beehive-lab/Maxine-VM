@@ -56,7 +56,7 @@ public class C1XOptions {
     public static boolean TestPatching                       = ____;
     public static boolean TestSlowPath                       = ____;
     public static boolean PrintInitialBlockList              = ____;
-    public static boolean PrintIR                            = ____;
+    public static boolean PrintIR                            = TRUE;
     public static boolean PrintCFGToFile                     = ____;
     public static boolean PrintMetrics                       = ____;
 
@@ -135,7 +135,7 @@ public class C1XOptions {
     public static boolean GenerateArrayStoreCheck            = TRUE;
     public static boolean UseBiasedLocking                   = ____;
     public static boolean ImplicitDiv0Checks                 = ____;
-    public static boolean PrintLIR                           = ____;
+    public static boolean PrintLIR                           = TRUE;
     public static boolean Verbose                            = ____;
     public static boolean LIRTracePeephole                   = ____;
 

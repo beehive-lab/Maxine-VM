@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.target.x86;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.target.*;
 import com.sun.c1x.util.*;
@@ -29,7 +30,7 @@ import com.sun.c1x.util.*;
  * @author Thomas Wuerthinger
  *
  */
-public class X86FrameMap {
+public class X86FrameMap extends FrameMap {
 
     static final X86Register r15thread = X86Register.r15;
 
@@ -48,6 +49,7 @@ public class X86FrameMap {
 
     private static final LIROperand rspOpr32 = asPointerOpr32(X86Register.rsp);
     private static final LIROperand rspOpr64 = asPointerOpr64(X86Register.rsp);
+
 
     static final LIROperand rspOpr(Architecture arch) {
         if (arch.is32bit()) {
@@ -138,7 +140,9 @@ public class X86FrameMap {
         return (arch.is32bit()) ? X86Register.noreg : X86Register.r10;
     }
 
-
+    public X86FrameMap(CiMethod method, int numberOfLocks, int maxStack) {
+        // TODO Auto-generated constructor stub
+    }
 
 
 }

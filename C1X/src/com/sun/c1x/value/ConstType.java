@@ -287,7 +287,7 @@ public class ConstType extends ValueType {
      * @return a value type representing the byte
      */
     public static ConstType forByte(byte i) {
-        return new ConstType(BasicType.Int, i);
+        return new ConstType(BasicType.Byte, i);
     }
 
     /**
@@ -296,7 +296,7 @@ public class ConstType extends ValueType {
      * @return a value type representing the boolean
      */
     public static ConstType forBoolean(boolean i) {
-        return new ConstType(BasicType.Int, i);
+        return new ConstType(BasicType.Boolean, i);
     }
 
     /**
@@ -305,7 +305,7 @@ public class ConstType extends ValueType {
      * @return a value type representing the char
      */
     public static ConstType forChar(char i) {
-        return new ConstType(BasicType.Int, i);
+        return new ConstType(BasicType.Char, i);
     }
 
     /**
@@ -314,7 +314,7 @@ public class ConstType extends ValueType {
      * @return a value type representing the short
      */
     public static ConstType forShort(short i) {
-        return new ConstType(BasicType.Int, i);
+        return new ConstType(BasicType.Short, i);
     }
 
     /**
@@ -337,5 +337,4 @@ public class ConstType extends ValueType {
         }
         return new ConstType(BasicType.Object, o);
     }
-
 }

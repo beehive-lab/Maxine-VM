@@ -27,8 +27,8 @@ package com.sun.c1x.util;
  */
 public class BitMap2D {
 
-    BitMap map;
-    int  bitsPerSlot;
+    private BitMap map;
+    private int  bitsPerSlot;
 
     private int bitIndex(int slotIndex, int bitWithinSlotIndex)  {
       return slotIndex * bitsPerSlot + bitWithinSlotIndex;
@@ -39,7 +39,8 @@ public class BitMap2D {
     }
 
     public BitMap2D(int sizeInSlots, int bitsPerSlot) {
-        Util.unimplemented();
+        map = new BitMap(sizeInSlots * bitsPerSlot);
+        this.bitsPerSlot = bitsPerSlot;
     }
 
     public int sizeInBits() {
@@ -48,7 +49,6 @@ public class BitMap2D {
 
     // Returns number of full slots that have been allocated
     public int sizeInSlots() {
-      // Round down
       return map.size() / bitsPerSlot;
     }
 
@@ -72,17 +72,25 @@ public class BitMap2D {
       map.clear(bitIndex(slotIndex, bitWithinSlotIndex));
     }
 
-    public void atPut(int slotIndex, int bitWithinSlotIndex, boolean value) {
-        Util.unimplemented();
-    }
-
     public void atPutGrow(int slotIndex, int bitWithinSlotIndex, boolean value) {
-      Util.unimplemented();
+       int size = sizeInSlots();
+       if (size <= slotIndex) {
+           while (size <= slotIndex) {
+               size *= 2;
+           }
+           BitMap newBitMap = new BitMap(size * bitsPerSlot);
+           newBitMap.setUnion(map);
+           map = newBitMap;
+       }
+
+       if (value) {
+           setBit(slotIndex, bitWithinSlotIndex);
+       } else {
+           clearBit(slotIndex, bitWithinSlotIndex);
+       }
     }
 
     public void clear() {
-        // TODO Auto-generated method stub
-        Util.unimplemented();
-
+        map.clearAll();
     }
 }

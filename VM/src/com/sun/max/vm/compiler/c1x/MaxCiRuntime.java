@@ -143,6 +143,39 @@ public class MaxCiRuntime implements CiRuntime {
         return false;
     }
 
+    @Override
+    public CiType makeTypeArrayClass(BasicType elemType) {
+        throw Util.unimplemented();
+    }
+
+    @Override
+    public Register getCRarg(int i) {
+        switch(i) {
+            case 0:
+                return X86Register.rdi;
+            case 1:
+                return X86Register.rsi;
+            case 2:
+                return X86Register.rdx;
+            case 3:
+                return X86Register.rcx;
+            case 4:
+                return X86Register.r8;
+            case 5:
+                return X86Register.r9;
+        }
+        Util.unimplemented();
+        throw Util.shouldNotReachHere();
+    }
+
+    @Override
+    public Register getJRarg(int i) {
+        if (i == 5) {
+            return getCRarg(0);
+        }
+        return getCRarg(i + 1);
+    }
+
     ClassMethodActor asClassMethodActor(CiMethod method, String operation) {
         if (method instanceof MaxCiMethod) {
             return ((MaxCiMethod) method).asClassMethodActor(operation);
@@ -202,7 +235,8 @@ public class MaxCiRuntime implements CiRuntime {
 
     @Override
     public boolean needsExplicitNullCheck(int offset) {
-        throw Util.unimplemented();
+        // TODO: Return false if implicit null check is possible for this offset!
+        return true;
     }
 
     @Override
@@ -262,11 +296,6 @@ public class MaxCiRuntime implements CiRuntime {
 
     @Override
     public Object makeObjectArrayClass(CiType elementClass) {
-        throw Util.unimplemented();
-    }
-
-    @Override
-    public CiType makeTypeArrayClass(BasicType elemType) {
         throw Util.unimplemented();
     }
 
@@ -340,15 +369,6 @@ public class MaxCiRuntime implements CiRuntime {
         throw Util.unimplemented();
     }
 
-    @Override
-    public Register getCRarg(int i) {
-        throw Util.unimplemented();
-    }
-
-    @Override
-    public Register getJRarg(int i) {
-        throw Util.unimplemented();
-    }
 
     @Override
     public long getPollingPage() {

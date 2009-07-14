@@ -31,7 +31,7 @@ import com.sun.c1x.value.*;
  * @author Thomas Wuerthinger
  *
  */
-public abstract class X86MacroAssembler extends X86Assembler {
+public class X86MacroAssembler extends X86Assembler {
 
     private final int fpuStateSizeInWords;
     private X86Register rscratch1;
@@ -4092,5 +4092,27 @@ public abstract class X86MacroAssembler extends X86Assembler {
         } else {
             notl(dst);
         }
+    }
+
+    @Override
+    protected void bangStackWithOffset(int bangOffset) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void nop() {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void nullCheck(Register reg) {
+        nullCheck((X86Register) reg, -1);
+    }
+
+    @Override
+    protected boolean pdCheckInstructionMark() {
+        return true;
     }
 }
