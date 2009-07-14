@@ -129,4 +129,79 @@ public class Target {
         // TODO Auto-generated method stub
         return false;
     }
+
+    public boolean supportsSSE2() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean supportsLzcnt() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean supportsCmov() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean supportsMmx() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean supportsSse42() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean supportsMMX() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean isIntel() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean isAmd() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean supportsPopcnt() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean supportsSse41() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean isP6() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean supportsCx8() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean isWin64() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean isWindows() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean isSolaris() {
+        // TODO Auto-generated method stub
+        return false;
+    }
 }

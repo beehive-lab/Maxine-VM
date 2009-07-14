@@ -427,7 +427,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             lir().cmp(LIRCondition.Equal, right.result(), LIROperandFactory.longConst(0));
             lir().branch(LIRCondition.Equal, BasicType.Long, new DivByZeroStub(info));
 
-            Address entry = null;
+            long entry;
             switch (x.opcode()) {
                 case Bytecodes.LREM:
                     entry = compilation.runtime.getRuntimeEntry(CiRuntimeCall.Lrem);
@@ -439,7 +439,7 @@ public final class X86LIRGenerator extends LIRGenerator {
                     entry = compilation.runtime.getRuntimeEntry(CiRuntimeCall.Lmul);
                     break;
                 default:
-                    Util.shouldNotReachHere();
+                    throw Util.shouldNotReachHere();
             }
 
             LIROperand result = rlockResult(x);

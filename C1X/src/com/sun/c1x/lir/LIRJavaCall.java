@@ -22,8 +22,6 @@ package com.sun.c1x.lir;
 
 import java.util.*;
 
-import com.sun.c1x.value.*;
-
 import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
 
@@ -49,7 +47,7 @@ public class LIRJavaCall extends LIRCall {
      * @param arguments
      * @param info
      */
-    public LIRJavaCall(LIROpcode opcode, CiMethod method, LIROperand receiver, LIROperand result, Address address, List<LIROperand> arguments, CodeEmitInfo info) {
+    public LIRJavaCall(LIROpcode opcode, CiMethod method, LIROperand receiver, LIROperand result, long address, List<LIROperand> arguments, CodeEmitInfo info) {
         super(opcode, address, result, arguments, info);
         this.method = method;
         this.receiver = receiver;
@@ -78,7 +76,7 @@ public class LIRJavaCall extends LIRCall {
      *
      * @return the virtual table offset for this call.
      */
-    public Address vtableOffset() {
+    public long vtableOffset() {
         assert code == LIROpcode.VirtualCall : "Only have vtable for real virtual call";
         return address();
     }

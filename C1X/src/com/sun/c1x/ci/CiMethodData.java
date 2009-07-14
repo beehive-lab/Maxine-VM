@@ -32,4 +32,9 @@ public interface CiMethodData {
     int branchTakenCountOffset(int bci);
     int branchNotTakenCountOffset(int bci);
     Object encoding();
+    int headerOffset(int bci);
+    int countOffset(int bci);
+    CiType receiver(int bci, int i);
+    int receiverCountOffset(int bci, int i);
+    int receiverOffset(int bci, int i);
 }

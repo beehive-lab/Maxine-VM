@@ -23,8 +23,6 @@ package com.sun.c1x.stub;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
-
 
 /**
  * The <code>PatchingStub</code> class definition.
@@ -66,7 +64,7 @@ public class PatchingStub extends CodeStub {
 
     }
 
-    public Address pcStart() {
+    public Pointer pcStart() {
         // TODO Auto-generated method stub
         return null;
     }

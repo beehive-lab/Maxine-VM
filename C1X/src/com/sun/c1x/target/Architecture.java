@@ -41,6 +41,8 @@ public enum Architecture {
     public final int wordSize;
     public final int bitsPerWord;
     public final String backend;
+    public final int loWordOffsetInBytes = 0; // TODO: init
+    public final int hiWordOffsetInBytes = 0; // TODO: init
 
     Architecture(int wordSize, String backend) {
         this.wordSize = wordSize;

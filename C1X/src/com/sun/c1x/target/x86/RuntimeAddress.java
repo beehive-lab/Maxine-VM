@@ -21,14 +21,11 @@
 package com.sun.c1x.target.x86;
 
 import com.sun.c1x.asm.*;
-import com.sun.c1x.value.*;
 
 
 public class RuntimeAddress extends AddressLiteral {
 
-    public RuntimeAddress(Address runtimeEntry) {
-        super(runtimeEntry, RelocInfo.Type.runtimeCallType);
+    public RuntimeAddress(long target) {
+        super(target, RelocInfo.Type.runtimeCallType);
     }
-
-
 }

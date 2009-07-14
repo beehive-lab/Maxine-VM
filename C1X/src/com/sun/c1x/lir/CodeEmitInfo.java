@@ -67,5 +67,10 @@ public class CodeEmitInfo {
 
     }
 
+    public void addRegisterOop(LIROperand exceptionOop) {
+        // TODO Auto-generated method stub
+
+    }
+
     // TODO nothing for now
 }
