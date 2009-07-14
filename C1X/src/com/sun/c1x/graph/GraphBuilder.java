@@ -1343,8 +1343,9 @@ public class GraphBuilder {
         BytecodeStream stream = new BytecodeStream(scope().method.code());
         CiConstantPool constantPool = scopeData.constantPool;
         ScopeData data = new ScopeData(scopeData, scope(), scopeData.blockMap, stream, constantPool, jsrStart);
-        data.setContinuation(jsrCont);
-        if (scopeData.continuation() != null) {
+        BlockBegin continuation = scopeData.continuation();
+        data.setContinuation(continuation);
+        if (continuation != null) {
             assert scopeData.continuationState() != null;
             data.setContinuationState(scopeData.continuationState().copy());
         }

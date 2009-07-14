@@ -132,9 +132,13 @@ public class C1XOptions {
     public static boolean UseTableRanges                     = ____;
 
     public static void setOptimizationLevel(int level) {
-        if (level <= 0) setOptimizationLevel0();
-        else if (level == 1) setOptimizationLevel1();
-        else setOptimizationLevel2();
+        if (level <= 0) {
+            setOptimizationLevel0();
+        } else if (level == 1) {
+            setOptimizationLevel1();
+        } else {
+            setOptimizationLevel2();
+        }
     }
 
     private static void setOptimizationLevel0() {

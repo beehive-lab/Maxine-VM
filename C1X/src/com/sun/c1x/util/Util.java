@@ -458,4 +458,8 @@ public class Util {
         assert list.size() >= pos + 1;
         list.set(pos, x);
     }
+
+    public static void breakpoint() {
+        // do nothing.
+    }
 }
