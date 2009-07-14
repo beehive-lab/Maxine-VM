@@ -156,7 +156,7 @@ class AMD64DtInterpretedTargetMethodGenerator implements InterpretedTargetMethod
         targetMethod.setSize(targetBundleLayout.bundleSize());
         Code.allocate(targetMethod);
         try {
-            targetMethod.setGenerated(new TargetBundle(targetBundleLayout, targetMethod.start()), null, null, null, null, null, 0, 0, 0, null, null, referenceLiterals, asm.toByteArray(), null, 0, 0, targetABI, -1);
+            targetMethod.setGenerated(new TargetBundle(targetBundleLayout, targetMethod.start()), null, null, null, null, null, 0, 0, null, null, referenceLiterals, asm.toByteArray(), null, 0, 0, targetABI);
         } catch (AssemblyException e) {
             ProgramError.unexpected(e);
         }

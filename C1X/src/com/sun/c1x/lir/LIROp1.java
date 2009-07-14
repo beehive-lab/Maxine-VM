@@ -138,15 +138,15 @@ public class LIROp1 extends LIRInstruction {
      * @param type the basic type of this instruction
      * @param patch the patching code for this instruction
      * @param info the object holding information needed to emit debug information
-     * @param kind the kind of move the instruction represents
+     * @param unaligned the kind of move the instruction represents
      */
-    public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, BasicType type, LIRPatchCode patch, CodeEmitInfo info, LIRMoveKind kind) {
+    public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, BasicType type, LIRPatchCode patch, CodeEmitInfo info, LIRMoveKind unaligned) {
         super(opcode, result, info);
         this.opr = opr;
         this.type = BasicType.Illegal;
         this.patch = patch;
         assert opcode == LIROpcode.Move : "The " + opcode + " is not valid on LIROp1. Opcode must be of type LIROpcode.Move";
-        setKind(kind);
+        setKind(unaligned);
     }
 
     /**
@@ -265,5 +265,13 @@ public class LIROp1 extends LIRInstruction {
                 assert opr.isRegister() || opr.isIllegal() : "Operand must be (register | illegal) in a LIROp1 return instruction.";
                 break;
         }
+    }
+
+    public LIROperand inOpr() {
+        return operand();
+    }
+
+    public LIROperand resultOpr() {
+        return result();
     }
 }

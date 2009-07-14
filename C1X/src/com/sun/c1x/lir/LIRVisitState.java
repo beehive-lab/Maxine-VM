@@ -145,4 +145,12 @@ public class LIRVisitState {
        // TODO to be completed later
    }
 
+    /**
+     * @param lockReg
+     */
+    public void doTemp(LIROperand lockReg) {
+        // TODO Auto-generated method stub
+
+    }
+
 }

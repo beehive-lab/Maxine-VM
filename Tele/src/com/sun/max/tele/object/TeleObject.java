@@ -167,7 +167,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     public abstract EnumSet<Layout.HeaderField> getHeaderFields();
 
     /**
-     * @param headerField  identifies a header field in the object layout
+     * @param headerField identifies a header field in the object layout
      * @return the type of the header field
      */
     public final TypeDescriptor getHeaderType(Layout.HeaderField headerField) {
@@ -186,6 +186,14 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
 
     /**
      * @param headerField identifies a header field in the object layout
+     * @return the size of the header field
+     */
+    public final Size getHeaderSize(Layout.HeaderField headerField) {
+        return Size.fromInt(getHeaderType(headerField).toKind().width.numberOfBytes);
+    }
+
+    /**
+     * @param headerField identifies a header field in the object layout
      * @return the location of the header field relative to object origin
      */
     public final Offset getHeaderOffset(Layout.HeaderField headerField) {
@@ -199,6 +207,14 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
                 ProgramError.unknownCase();
         }
         return null;
+    }
+
+    /**
+     * @param headerField identifies a header field in the object layout
+     * @return the memory location of the header field in the object
+     */
+    public final Address getHeaderAddress(Layout.HeaderField headerField) {
+        return getCurrentOrigin().plus(getHeaderOffset(headerField));
     }
 
     /**
@@ -265,6 +281,12 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      * @return the current location in memory of the field in this object
      */
     public abstract Address getFieldAddress(FieldActor fieldActor);
+
+    /**
+     * @param fieldActor descriptor for a field in this class
+     * @return the memory size of the field
+     */
+    public abstract Size getFieldSize(FieldActor fieldActor);
 
     /**
      * @param fieldActor local {@link FieldActor}, part of the {@link ClassActor} for the type of this object, that

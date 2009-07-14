@@ -352,6 +352,7 @@ public class MaxCiMethod implements CiMethod {
 
     /**
      * Converts this compiler interface method to a string.
+     * @return a string representation of this compiler interface method
      */
     @Override
     public String toString() {
@@ -359,5 +360,9 @@ public class MaxCiMethod implements CiMethod {
             return methodActor.toString();
         }
         return methodRef.toString() + " [unresolved]";
+    }
+
+    public int javaCodeAtBci(int bci) {
+        return code()[bci] & 0xff;
     }
 }

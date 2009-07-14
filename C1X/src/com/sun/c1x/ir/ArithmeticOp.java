@@ -22,6 +22,7 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.util.InstructionVisitor;
 import com.sun.c1x.util.InstructionClosure;
+import com.sun.c1x.util.Util;
 import com.sun.c1x.bytecode.Bytecodes;
 import com.sun.c1x.value.ValueStack;
 
@@ -48,6 +49,10 @@ public class ArithmeticOp extends Op2 {
         this.lockStack = lockStack;
         if (canTrap()) {
             pin();
+        }
+        // TODO: debug
+        if ((y.type().isConstant() || x.type().isConstant()) && opcode == Bytecodes.IAND) {
+            Util.breakpoint();
         }
     }
 
@@ -111,5 +116,10 @@ public class ArithmeticOp extends Op2 {
     @Override
     public void accept(InstructionVisitor v) {
         v.visitArithmeticOp(this);
+    }
+
+    public boolean isCommutative() {
+        // TODO Auto-generated method stub
+        return false;
     }
 }

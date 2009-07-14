@@ -18,81 +18,63 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.stub;
 
+import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 
 
 /**
- * The <code>ArrayStoreExceptionStub</code> class definition.
+ * The <code>NewObjectArrayStub</code> class definition.
  *
  * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
  *
  */
-public class ArrayStoreExceptionStub extends CodeStub {
+public class NewObjectArrayStub extends CodeStub {
 
+    private LIROperand klassReg;
+    private LIROperand length;
+    private LIROperand result;
     private CodeEmitInfo info;
 
     /**
+     * Creates a new instance of <code>NewObjectArrayStub</code>.
+     *
+     * @param klassReg
+     * @param length
+     * @param result
      * @param info
      */
-    public ArrayStoreExceptionStub(CodeEmitInfo info) {
+    public NewObjectArrayStub(LIROperand klassReg, LIROperand length, LIROperand result, CodeEmitInfo info) {
         super();
+        this.klassReg = klassReg;
+        this.length = length;
+        this.result = result;
         this.info = info;
     }
 
-    /**
-     * Gets the info of this class.
-     *
-     * @return the info
-     */
+    @Override
+    public void emitCode(LIRAssembler e) {
+
+    }
+
     @Override
     public CodeEmitInfo info() {
         return info;
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.c1x.lir.CodeStub#visit(com.sun.c1x.lir.LIRVisitState)
-     */
     @Override
     public void visit(LIRVisitState visitor) {
-        visitor.doSlowCase();
+        visitor.doSlowCase(info);
+        visitor.doInput(klassReg);
+        visitor.doInput(length);
+        assert result.isValid() : "must be valid";
+        visitor.doOutput(result);
     }
 
-    /**
-     * Emit the code stub for an array store exception.
-     *
-     * @param masm the target assembler
-     */
-    @Override
-    public void emitCode(LIRAssembler masm) {
-        // TODO Auto-generated method stub
-
-    }
-
-    /* (non-Javadoc)
-     * @see com.sun.c1x.lir.CodeStub#printName(com.sun.c1x.util.LogStream)
-     */
     @Override
     public void printName(LogStream out) {
-        out.print("ArrayStoreExceptionStub");
+        out.print("NewObjectArrayStub");
     }
-
-
-
-
-//    private:
-//        CodeEmitInfo* _info;
-//
-//       public:
-//        ArrayStoreExceptionStub(CodeEmitInfo* info);
-//        virtual void emit_code(LIR_Assembler* emit);
-//        virtual CodeEmitInfo* info() const             { return _info; }
-//        virtual bool is_exception_throw_stub() const   { return true; }
-//        virtual void visit(LIR_OpVisitState* visitor) {
-//          visitor->do_slow_case(_info);
-//        }
-//      #ifndef PRODUCT
-//        virtual void print_name(outputStream* out) const { out->print("ArrayStoreExceptionStub"); }
-//      #endif // PRODUCT
 }

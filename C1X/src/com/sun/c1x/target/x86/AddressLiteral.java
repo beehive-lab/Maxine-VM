@@ -18,51 +18,54 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.target.x86;
+
+import com.sun.c1x.asm.*;
+import com.sun.c1x.asm.RelocInfo.*;
 
 
-/**
- * The <code>ArrayCopyStub</code> class represents a code stub for array copy.
- *
- * @author Marcelo Cintra
- *
- */
-public class ArrayCopyStub {
+public class AddressLiteral {
 
-    private LIRArrayCopy arrayCopy;
+    public Pointer target;
 
-    /**
-     * Creates a new ArrayCopyStub.
-     *
-     * @param arrayCopy the LIR operation representing the array copy
-     */
-    public ArrayCopyStub(LIRArrayCopy arrayCopy) {
-        super();
-        this.arrayCopy = arrayCopy;
+    public AddressLiteral(Address address, Type none) {
+        // TODO Auto-generated constructor stub
     }
 
-    public LIROperand source() {
-        return arrayCopy.src();
+    public AddressLiteral(long l, Type polltype) {
+        // TODO Auto-generated constructor stub
     }
 
-    public LIROperand sourcePos() {
-        return arrayCopy.srcPos();
+    public AddressLiteral(Address entry, RelocationHolder rh) {
+        // TODO Auto-generated constructor stub
     }
 
-    public LIROperand dest() {
-        return arrayCopy.dst();
+    public AddressLiteral(long entry, RelocationHolder rh) {
+        // TODO Auto-generated constructor stub
     }
 
-    public LIROperand destPos() {
-        return arrayCopy.dstPos();
+    public Address addr() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
-    public LIROperand length() {
-        return arrayCopy.length();
+    public Type reloc() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
+    public boolean isLval() {
+        // TODO Auto-generated method stub
+        return false;
+    }
 
-    public LIROperand tmp() {
-        return arrayCopy.tmp();
+    public Pointer target() {
+        // TODO Auto-generated method stub
+        return new Pointer(0);
+    }
+
+    public RelocationHolder rspec() {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

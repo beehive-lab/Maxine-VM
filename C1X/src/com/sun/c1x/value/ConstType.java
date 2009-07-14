@@ -327,6 +327,18 @@ public class ConstType extends ValueType {
     }
 
     /**
+     * Utility method to create a value type for a word constant.
+     * @param i the number representing the word's value, either an {@link Integer} or a {@link Long}
+     * @return a value type representing the word
+     */
+    public static ConstType forWord(Number i) {
+        if (i instanceof Integer || i instanceof Long) {
+            return new ConstType(BasicType.Word, i); // only Integer and Long are allowed
+        }
+        throw new IllegalArgumentException("cannot create word ConstType for object of type " + i.getClass());
+    }
+
+    /**
      * Utility method to create a value type for an object constant.
      * @param o the object value for which to create the value type
      * @return a value type representing the object
