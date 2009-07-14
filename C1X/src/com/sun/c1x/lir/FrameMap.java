@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.target.sparc.*;
+import com.sun.c1x.target.x86.*;
 import com.sun.c1x.value.*;
 
 
@@ -40,4 +42,50 @@ public class FrameMap {
         return null;
     }
 
+    /**
+     * @param cpuRegnr
+     * @return
+     */
+    public static Register cpuRnr2Reg(int cpuRegnr) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    /**
+     * @param xmmRegnr
+     * @return
+     */
+    public static XMMRegister nr2XmmReg(int xmmRegnr) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    /**
+     * @param fpuRegnr
+     * @return
+     */
+    public static FloatRegister nr2FloatReg(int fpuRegnr) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Address addressForSlot(int singleStackIx) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Address addressForSlot(int doubleStackIx, int i) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public int reservedArgumentAreaSize() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public Object addressForMonitorLock(int monitorNo) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

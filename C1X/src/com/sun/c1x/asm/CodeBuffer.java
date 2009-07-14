@@ -30,5 +30,25 @@ package com.sun.c1x.asm;
 public class CodeBuffer {
     int codeSize;
 
+    public CodeSection insts() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public OopRecorder oopRecorder() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public String name() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public void decode() {
+        // TODO Auto-generated method stub
+
+    }
+
     // TODO to be implemented
 }

@@ -22,6 +22,7 @@ package com.sun.c1x.lir;
 
 import java.util.*;
 
+import com.sun.c1x.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
 
@@ -54,6 +55,16 @@ public class CodeEmitInfo {
     public List<ExceptionHandler> exceptionHandlers() {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    public IRScope scope() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public void recordDebugInfo(DebugInformationRecorder debugInfoRecorder, int pcOffset) {
+        // TODO Auto-generated method stub
+
     }
 
     // TODO nothing for now

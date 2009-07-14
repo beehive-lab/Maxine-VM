@@ -21,6 +21,7 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.bytecode.*;
+import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
 
 /**
@@ -73,7 +74,7 @@ public class LIRConvert extends LIROp1 {
     public void emitCode(LIRAssembler masm) {
         masm.emitConvert(this);
         if (stub() != null) {
-            masm.emitStub(stub());
+            masm.emitCodeStub(stub());
         }
     }
 

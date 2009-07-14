@@ -20,226 +20,70 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.ir.*;
+import com.sun.c1x.target.*;
+import com.sun.c1x.target.sparc.*;
+import com.sun.c1x.target.x86.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>LIROperand</code> class definition.
+ * The <code>LIROperand</code> class represents an operand, either
+ * a constant, an address calculation, a register, or a stack slot.
  *
  * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
  */
-public class LIROperand {
-    public static int BitsPerWord                            = 64;
-    // Number of register in the target machine
-    // TODO: need to think better about how to get this information
-    //       dinamically, according to the current hardware
-    public static int  NumberOfRegisters                     = 16;
 
-    public enum OperandKind {
-        PointerValue(0),
-        StackValue(1),
-        CpuRegister(3),
-        FpuRegister(5),
-        IllegalValue(7);
+public abstract class LIROperand {
 
-        private final int value;
+    /**
+     * The illegal operand singleton instance.
+     */
+    public static final LIROperand ILLEGAL = new LIRConstant(new ConstType(BasicType.Illegal, 0, false));
 
-        OperandKind(int value) {
-            this.value = value;
-        }
+    /**
+     * The basic type of this operand.
+     */
+    public final BasicType basicType;
 
-        public int value() {
-            return value;
-        }
-
-        public static OperandKind fromInt(int code) {
-            switch(code) {
-                case 0: return PointerValue;
-                case 1: return StackValue;
-                case 3: return CpuRegister;
-                case 5: return FpuRegister;
-                case 7: return IllegalValue;
-            }
-            throw new IllegalArgumentException("unknown  type code: " + code);
-        }
+    protected LIROperand(BasicType basicType) {
+        this.basicType = basicType;
     }
 
-    public enum OperandBits {
-        PointerBits(1),
-        KindBits(3),
-        TypeBits(4),
-        SizeBits(2),
-        DestroysBits(1),
-        VirtualBits(1),
-        IsXmmBits(1),
-        LastUseBits(1),
-        IsFpuStackOffsetBits(1),        // used in assertion checking on x86 for FPU stack slot allocation
-        NonDataBits(KindBits.value() + TypeBits.value() + SizeBits.value() + DestroysBits.value() + LastUseBits.value() + IsFpuStackOffsetBits.value() + VirtualBits.value() + IsXmmBits.value()),
-        DataBits (32 - IsXmmBits.value()),
-        RegBits(DataBits.value() / 2);      // for two registers in one value encoding
-
-        private final int value;
-
-        private OperandBits(int value) {
-          this.value = value;
-        }
-
-        public final int value() {
-          return value;
-        }
+    public boolean isValid() {
+        return this != ILLEGAL;
     }
 
-    public enum OperandShift {
-        KindShift(0),
-        TypeShift(KindShift.value() + OperandBits.KindBits.value),
-        SizeShift(TypeShift.value + OperandBits.TypeBits.value),
-        DestroysShift(SizeShift.value + OperandBits.SizeBits.value),
-        LastUseShift(DestroysShift.value + OperandBits.DestroysBits.value),
-        IsFpuStackOffsetShift(LastUseShift.value + OperandBits.LastUseBits.value),
-        VirtualShift(IsFpuStackOffsetShift.value + OperandBits.IsFpuStackOffsetBits.value),
-        IsXmmShift(VirtualShift.value + OperandBits.VirtualBits.value),
-        DataShift(IsXmmShift.value + OperandBits.IsXmmBits.value),
-        Reg1Shift(DataShift.value),
-        Reg2Shift(DataShift.value + OperandBits.RegBits.value);
-
-      private int value;
-      OperandShift(int value) {
-          this.value = value;
-      }
-
-      public final int value() {
-          return value;
-      }
-    }
-
-    enum OperandSize {
-        SingleSize(0),
-        DoubleSize(1);
-
-        private final int value;
-
-        private OperandSize(int n) {
-            value = n << OperandShift.SizeShift.value;
-        }
-
-        public final int value() {
-            return value;
-        }
-
-        public static OperandSize fromInt(int code) {
-            switch(code) {
-                case 0: return SingleSize;
-                case 1: return DoubleSize;
-            }
-            throw new IllegalArgumentException("unknown operand size code: " + code);
-        }
-
-    }
-
-    enum OperandMask {
-        KindMask(rightNBits(OperandBits.KindBits.value) << OperandShift.TypeShift.value),
-        TypeMask(rightNBits(OperandBits.TypeBits.value) << OperandShift.TypeShift.value),
-        SizeMask(rightNBits(OperandBits.SizeBits.value) << OperandShift.SizeShift.value),
-        LastUseMask(rightNBits(OperandBits.LastUseBits.value) << OperandShift.LastUseShift.value),
-        IsFpuStackOffsetMask(rightNBits(OperandBits.IsFpuStackOffsetBits.value) << OperandShift.IsFpuStackOffsetShift.value),
-        VirtualMask(rightNBits(OperandBits.VirtualBits.value) << OperandShift.VirtualShift.value),
-        IsXmmMask(rightNBits(OperandBits.IsXmmBits.value) << OperandShift.IsXmmShift.value),
-        PointerMask(rightNBits(OperandBits.PointerBits.value)),
-        LowerRegMask(rightNBits(OperandBits.RegBits.value)),
-        NoTypeMask((~(TypeMask.value | LastUseMask.value | IsFpuStackOffsetMask.value)));
-
-        final int value;
-        private OperandMask(int value) {
-            this.value = value;
-        }
-
-        static int rightNBits(int n) {
-            return nthBit(n) - 1;
-        }
-
-        static int nthBit(int n) {
-            return n >= BitsPerWord ? 0 : 1 << (n);
-        }
-
-        static int leftNBits(int n) {
-            return (rightNBits(n) << (n >= BitsPerWord ? 0 : (BitsPerWord - n)));
-        }
-
-        public final int value() {
-            return value;
-        }
-    }
-
-    public enum VirtualRegister {
-        RegisterBase(NumberOfRegisters),
-        MaxRegisters((1 << OperandBits.DataBits.value) - 1);
-
-        private final int value;
-        VirtualRegister(int value) {
-            this.value = value;
-        }
-        public int value() {
-            return value;
-        }
-    }
-
-    public enum OperandType {
-        UnknownType(0 << OperandShift.TypeShift.value), // means: not set (catch uninitialized types)
-        IntType(1 << OperandShift.TypeShift.value),
-        LongType(2 << OperandShift.TypeShift.value),
-        ObjectType(3 << OperandShift.TypeShift.value),
-        PointerType(4 << OperandShift.TypeShift.value),
-        FloatType(5 << OperandShift.TypeShift.value),
-        DoubleType(6 << OperandShift.TypeShift.value);
-
-        private final int value;
-
-        OperandType(int value) {
-            this.value = value;
-        }
-
-        public int value() {
-            return value;
-        }
-    }
-
-    private int value;
-
-    public int value() {
-        return value;
-    }
-
-    public boolean checkValueMask(int mask, int maskedValue) {
-        return (value & mask) == maskedValue;
-    }
-
-    public int data() {
-        return value >> OperandShift.DataShift.value;
+    public boolean isIllegal() {
+        return this == ILLEGAL;
     }
 
     public int lowerRegisterHalf() {
-        return data() & OperandMask.LowerRegMask.value;
+        throw Util.shouldNotReachHere();
     }
 
     public int higherRegisterHalf() {
-        return (data() >> OperandBits.RegBits.value) & OperandMask.LowerRegMask.value;
+        throw Util.shouldNotReachHere();
     }
 
-    public OperandKind kindField() {
-        return OperandKind.fromInt(value & OperandMask.KindMask.value);
+    public static LIROperand illegalOpr() {
+        /*
+<<<<<<< local
+        return LIROperandFactory.illegalOperand;
     }
 
-    public OperandSize sizeField() {
-        return OperandSize.fromInt(value & OperandMask.SizeMask.value);
+    OperandType typeFieldValid() {
+        assert isRegister() || isStack() : "should not be called otherwise";
+        return OperandType.fromInt(value() & OperandMask.TypeMask.value);
     }
 
-    public OperandType assertTypeField() {
-        assert true;
-        return null;
+    public OperandType typeField() {
+        return isIllegal() ? OperandType.UnknownType : OperandType.fromInt((value() & OperandMask.TypeMask.value));
     }
+
     public static OperandSize sizeFor(BasicType t) {
-        switch(t) {
+        switch (t) {
             case Long:
             case Double:
                 return OperandSize.DoubleSize;
@@ -259,81 +103,337 @@ public class LIROperand {
         }
     }
 
-    public boolean isPointer() {
-        return checkValueMask(OperandMask.PointerMask.value, OperandKind.PointerValue.value);
+    private BasicType asBasicType(OperandType t) {
+        switch (t) {
+        case IntType:
+            return BasicType.Int;
+        case LongType:
+            return BasicType.Long;
+        case FloatType:   return BasicType.Float;
+        case DoubleType:  return BasicType.Double;
+        case ObjectType:  return BasicType.Object;
+        case UnknownType: // fall through
+        default:
+            Util.shouldNotReachHere();
+            return BasicType.Illegal;
+        }
     }
 
-    public boolean isIllegal() {
-        return kindField() == OperandKind.IllegalValue;
+    void validateType() {
+        if (!isPointer() && !isIllegal()) {
+            switch (asBasicType(typeField())) {
+                case Long:
+                    assert (kindField() == OperandKind.CpuRegister || kindField() == OperandKind.StackValue) && sizeField() == OperandSize.DoubleSize : "must match";
+                    break;
+                case Float:
+                    assert (kindField() == OperandKind.CpuRegister || kindField() == OperandKind.StackValue) && sizeField() == OperandSize.SingleSize : "must match";
+                    break;
+                case Double:
+                    assert (kindField() == OperandKind.FpuRegister || kindField() == OperandKind.StackValue) && sizeField() == OperandSize.DoubleSize : "must match";
+                    break;
+                case Boolean:
+                case Char:
+                case Byte:
+                case Short:
+                case Int:
+                case Object:
+                    // case Array:
+                    assert (kindField() == OperandKind.CpuRegister || kindField() == OperandKind.StackValue) && sizeField() == OperandSize.SingleSize : "must match";
+                    break;
+
+                case Illegal:
+                    // XXX TKR also means unknown right now
+                    // assert isIllegal() : "must match";
+                    break;
+
+                default:
+                    Util.shouldNotReachHere();
+            }
+        }
+=======*/
+        return ILLEGAL;
+//>>>>>>> other
     }
 
-    public boolean isValid() {
-        return kindField() != OperandKind.IllegalValue;
+    public BasicType type() {
+        return basicType;
+    }
+
+    // checks whether types are same
+    boolean isSameType(LIROperand opr) {
+        return basicType == opr.basicType;
+    }
+
+    boolean isSameRegister(LIROperand opr) {
+        throw Util.shouldNotReachHere();
     }
 
     public boolean isRegister() {
-        return false; //isCpuRegister() || isFpuRegister();
+        return isCpuRegister() || isFpuRegister();
     }
 
     public boolean isVirtual() {
-        return false; // isVirtualCpu() || isVirtualFpu();
+        return isVirtualCpu() || isVirtualFpu();
     }
 
     public boolean isConstant() {
-        return isPointer() && false; //pointer()->asConstant() != null;
+        return this instanceof LIRConstant;
     }
 
     public boolean isAddress() {
-        return isPointer() && false; //&& pointer()->as_address() != NULL;
-    }
-
-    public boolean isFloatKind() {
-        return true; //isPointer ?
+        return this instanceof LIRAddress;
     }
 
     public void print(LogStream out) {
         // TODO to be completed later
     }
 
-    public int vregNumber() {
-        // TODO Auto-generated method stub
-        return 0;
+    public boolean isFloatKind() {
+        return basicType == BasicType.Float || basicType == BasicType.Double;
     }
 
-    public BasicType type() {
-        // TODO Auto-generated method stub
-        return null;
+    public boolean isOop() {
+        return basicType == BasicType.Object;
     }
 
-    public Constant asConstantPtr() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public boolean isSingleFpu() {
-        // TODO Auto-generated method stub
+    public boolean isStack() {
         return false;
     }
 
-    public LIROperandPtr valueType() {
-        // TODO Auto-generated method stub
-        return null;
+    public boolean isSingleStack() {
+        return false;
+    }
+
+    public boolean isDoubleStack() {
+        return false;
+    }
+
+    public boolean isCpuRegister() {
+        return false;
+    }
+
+    public boolean isVirtualCpu() {
+        return false;
+    }
+
+    public boolean isFixedCpu() {
+        return false;
+    }
+
+    public boolean isSingleCpu() {
+        return false;
+    }
+
+    public boolean isDoubleCpu() {
+        return false;
+    }
+
+    public boolean isFpuRegister() {
+        return false;
+    }
+
+    public boolean isVirtualFpu() {
+        return false;
+    }
+
+    public boolean isFixedFpu() {
+        return false;
+    }
+
+    public boolean isSingleFpu() {
+        return false;
+    }
+
+    public boolean isDoubleFpu() {
+        return false;
+    }
+
+    public boolean isXmmRegister() {
+        return false;
+    }
+
+    public boolean isSingleXmm() {
+        return false;
+    }
+
+    public boolean isDoubleXmm() {
+        return false;
+    }
+
+    public boolean isVirtualRegister() {
+        return false;
+    }
+
+    public boolean isOopRegister() {
+        return false;
+    }
+
+    public boolean isLastUse() {
+        return false;
+    }
+
+    public boolean isFpuStackOffset() {
+        return false;
+    }
+
+    public LIROperand makeLastUse() {
+        throw Util.shouldNotReachHere();
+    }
+
+    public LIROperand makeFpuStackOffset() {
+        throw Util.shouldNotReachHere();
+    }
+
+    public int singleStackIx() {
+        throw Util.shouldNotReachHere();
+    }
+
+    public int doubleStackIx() {
+        throw Util.shouldNotReachHere();
+    }
+
+    public int cpuRegnr() {
+        throw Util.shouldNotReachHere();
+    }
+
+    public int cpuRegnrLo() {
+        throw Util.shouldNotReachHere();
+    }
+
+    public int cpuRegnrHi() {
+        throw Util.shouldNotReachHere();
+    }
+
+    public int fpuRegnr() {
+        throw Util.shouldNotReachHere();
+    }
+
+    public int fpuRegnrLo() {
+        throw Util.shouldNotReachHere();
+    }
+
+    public int fpuRegnrHi() {
+        throw Util.shouldNotReachHere();
+    }
+
+    public int xmmRegnr() {
+        throw Util.shouldNotReachHere();
+    }
+
+    public int xmmRegnrLo() {
+        throw Util.shouldNotReachHere();
+    }
+
+    public int xmmRegnrHi() {
+        throw Util.shouldNotReachHere();
+    }
+
+    public int vregNumber() {
+        throw Util.shouldNotReachHere();
+    }
+
+    public LIRConstant asConstantPtr() {
+        return (LIRConstant) this;
     }
 
     public LIRAddress asAddressPtr() {
-        // TODO Auto-generated method stub
+        return (LIRAddress) this;
+    }
+
+    public Register asRegister() {
+        return FrameMap.cpuRnr2Reg(cpuRegnr());
+    }
+
+    public Register asRegisterLo() {
+        return FrameMap.cpuRnr2Reg(cpuRegnrLo());
+    }
+
+    public Register asRegisterHi() {
+        return FrameMap.cpuRnr2Reg(cpuRegnrHi());
+    }
+
+    public Register asPointerRegister(Architecture architecture) {
+        if (architecture.is64bit() && isDoubleCpu()) {
+            assert asRegisterLo() == asRegisterHi() : "should be a single register";
+            return asRegisterLo();
+        }
+        return asRegister();
+    }
+
+    // X86 specific
+
+    public XMMRegister asXmmFloatReg() {
+        return FrameMap.nr2XmmReg(xmmRegnr());
+    }
+
+    public XMMRegister asXmmDoubleReg() {
+        assert xmmRegnrLo() == xmmRegnrHi() : "assumed in calculation";
+        return FrameMap.nr2XmmReg(xmmRegnrLo());
+    }
+
+    // for compatibility with RInfo
+    public int fpu() {
+        return lowerRegisterHalf();
+    }
+
+    // SPARC specific
+    public FloatRegister asFloatReg() {
+        return FrameMap.nr2FloatReg(fpuRegnr());
+    }
+
+    public FloatRegister asDoubleReg() {
+        return FrameMap.nr2FloatReg(fpuRegnrHi());
+    }
+
+    public int asInt() {
+        return asConstantPtr().asInt();
+    }
+
+    public long asLong() {
+        return asConstantPtr().asLong();
+    }
+
+    public float asJfloat() {
+        return asConstantPtr().asFloat();
+    }
+
+    public double asJdouble() {
+        return asConstantPtr().asJdouble();
+    }
+
+    public Object asJobject() {
+        return asConstantPtr().asObject();
+    }
+
+    boolean isOopPointer() {
+        return type() == BasicType.Object;
+    }
+
+    boolean isFloat() {
+        BasicType t = type();
+        return (t == BasicType.Float) || (t == BasicType.Double);
+    }
+
+    public LIRConstant asConstant() {
+        if (this instanceof LIRConstant) {
+            return (LIRConstant) this;
+        }
         return null;
+    }
+
+    public LIRAddress asAddress() {
+        if (this instanceof LIRAddress) {
+            return (LIRAddress) this;
+        }
+        return null;
+    }
+
+    public void printValueOn(LogStream out) {
+        throw Util.unimplemented();
     }
 
     public int asJint() {
         // TODO Auto-generated method stub
-        return 0;
+        return asInt();
     }
-
-    public boolean isDoubleFpu() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    // TODO continue from  bool is_float_kind() const
 }

@@ -123,4 +123,9 @@ public class CheckCast extends TypeCheck {
         return false;
     }
 
+    public boolean isIncompatibleClassChangeCheck() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
 }

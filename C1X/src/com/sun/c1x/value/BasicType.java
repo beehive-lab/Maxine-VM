@@ -142,6 +142,15 @@ public enum BasicType {
     }
 
     /**
+     * Gets the element size of this basic type in bytes.
+     * @param oopSize the size of an object reference
+     * @return the size of this basic type in bytes
+     */
+    public int elementSizeInBytes(int oopSize) {
+        return sizeInBytes(oopSize);
+    }
+
+    /**
      * Gets the basic type of array elements for the array type code that appears
      * in a {@link com.sun.c1x.bytecode.Bytecodes#NEWARRAY newarray} bytecode.
      * @param code the array type code

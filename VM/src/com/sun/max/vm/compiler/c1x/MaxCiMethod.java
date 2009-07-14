@@ -360,4 +360,10 @@ public class MaxCiMethod implements CiMethod {
         }
         return methodRef.toString() + " [unresolved]";
     }
+
+    @Override
+    public int javaCodeAtBci(int bci) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
 }
