@@ -202,11 +202,9 @@ public class ValueStack {
      * @param i the index of the local to invalidate
      */
     public void invalidateLocal(int i) {
-        Instruction x = values[i];
-        if (isDoubleWord(x)) {
-            assertHigh(values[i + 1]);
-            values[i + 1] = null;
-        }
+        // note that for double word locals, the high slot should already be null
+        // unless the local is actually dead and the high slot is being reused;
+        // in either case, it is not necessary to null the high slot
         values[i] = null;
     }
 
