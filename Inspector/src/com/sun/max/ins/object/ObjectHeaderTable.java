@@ -107,15 +107,9 @@ public final class ObjectHeaderTable extends InspectorTable {
                             final InspectorMenu menu = new InspectorMenu();
                             final HeaderField headerField = headerFields.get(hitRowIndex);
                             menu.add(actions().setHeaderWatchpoint(teleObject, headerField, "Watch this field's memory"));
-                            menu.add(actions().editHeaderWatchpoint(teleObject, headerField, "Edit memory watchpoint"));
-                            menu.add(actions().removeHeaderWatchpoint(teleObject, headerField, "Remove memory watchpoint"));
-
-//                            final Offset offset = model.rowToOffset(hitRowIndex);
-//                            final Size size = model.rowToSize(hitRowIndex);
-//                            final String name = model.rowToName(hitRowIndex);
-//                            menu.add(actions().setHeaderWatchpoint(teleObject, offset, size, name, "Watch this field's memory"));
-//                            menu.add(actions().editHeaderWatchpoint(teleObject, offset, size, name, "Edit memory watchpoint"));
-//                            menu.add(actions().removeHeaderWatchpoint(teleObject, offset, size, name, "Remove memory watchpoint"));
+                            menu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));
+                            menu.add(actions().editWatchpoint(teleObject.getHeaderAddress(headerField), teleObject.getHeaderSize(headerField), "Edit memory watchpoint"));
+                            menu.add(actions().removeWatchpoint(teleObject.getHeaderAddress(headerField), teleObject.getHeaderSize(headerField), "Remove memory watchpoint"));
                             menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                         }
                     }

@@ -136,7 +136,7 @@ public final class ArrayElementsTable extends InspectorTable {
                             final InspectorMenu menu = new InspectorMenu();
                             final Address address = model.rowToAddress(hitRowIndex);
                             menu.add(actions().setWordWatchpoint(address, "Watch this memory word"));
-                            menu.add(actions().removeWordWatchpoint(address, "Un-watch this memory word"));
+                            menu.add(actions().removeWatchpoint(address, Size.fromInt(maxVM().wordSize()), "Un-watch this memory word"));
                             menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                         }
                     }
