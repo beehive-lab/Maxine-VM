@@ -147,10 +147,11 @@ public enum BasicType {
     /**
      * Gets the element size of this basic type in bytes.
      * @param oopSize the size of an object reference
+     * @param wordSize the size of a word
      * @return the size of this basic type in bytes
      */
-    public int elementSizeInBytes(int oopSize) {
-        return sizeInBytes(oopSize);
+    public int elementSizeInBytes(int oopSize, int wordSize) {
+        return sizeInBytes(oopSize, wordSize);
     }
 
     /**

@@ -192,6 +192,7 @@ public final class BinaryImageGenerator {
         final long start = System.currentTimeMillis();
         CompilerScheme compilerScheme = null;
         try {
+            TargetMethod.COLLECT_TARGET_METHOD_STATS = statsOption.getValue();
             final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
             Trace.addTo(options);
             options.parseArguments(programArguments);
