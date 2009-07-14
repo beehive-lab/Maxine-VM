@@ -179,7 +179,7 @@ public class C1XOptions {
             setOptimizationLevel2();
         }
     }
-    
+
     private static void setOptimizationLevel0() {
         // turn off all optimizations
         InlineMethods                      = ____;
