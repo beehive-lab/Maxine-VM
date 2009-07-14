@@ -21,11 +21,8 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.c1x.asm.*;
-import com.sun.c1x.ci.CiMethod;
-import com.sun.c1x.ci.CiOsrFrame;
-import com.sun.c1x.ci.CiRuntime;
-import com.sun.c1x.ci.CiType;
 import com.sun.c1x.gen.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.BlockMap;
 import com.sun.c1x.graph.GraphBuilder;
 import com.sun.c1x.ir.*;
@@ -54,6 +51,7 @@ public class C1XCompilation {
     public final Target target;
     public final CiRuntime runtime;
     public final CiMethod method;
+    public final CiTargetMethod targetMethod;
     final int osrBCI;
 
     BlockBegin start;
@@ -75,37 +73,32 @@ public class C1XCompilation {
 
     /**
      * Creates a new compilation for the specified method and runtime.
-     *
-     * @param target
-     *            the target of the compilation, including architecture information
-     * @param runtime
-     *            the runtime implementation
-     * @param method
-     *            the method to be compiled
-     * @param osrBCI
-     *            the bytecode index for on-stack replacement, if requested
+     * @param target the target of the compilation, including architecture information
+     * @param runtime the runtime implementation
+     * @param method the method to be compiled
+     * @param targetMethod the target method to accept the results
+     * @param osrBCI the bytecode index for on-stack replacement, if requested
      */
-    public C1XCompilation(Target target, CiRuntime runtime, CiMethod method, int osrBCI) {
+    public C1XCompilation(Target target, CiRuntime runtime, CiMethod method, CiTargetMethod targetMethod, int osrBCI) {
         this.target = target;
         this.runtime = runtime;
         this.method = method;
+        this.targetMethod = targetMethod;
         this.osrBCI = osrBCI;
     }
 
     /**
      * Creates a new compilation for the specified method and runtime.
-     *
-     * @param target
-     *            the target of the compilation, including architecture information
-     * @param runtime
-     *            the runtime implementation
-     * @param method
-     *            the method to be compiled
+     * @param target the target of the compilation, including architecture information
+     * @param runtime the runtime implementation
+     * @param method the method to be compiled
+     * @param targetMethod the target method
      */
-    public C1XCompilation(Target target, CiRuntime runtime, CiMethod method) {
+    public C1XCompilation(Target target, CiRuntime runtime, CiMethod method, CiTargetMethod targetMethod) {
         this.target = target;
         this.runtime = runtime;
         this.method = method;
+        this.targetMethod = targetMethod;
         this.osrBCI = -1;
     }
 

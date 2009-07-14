@@ -198,103 +198,83 @@ public class MaxCiRuntime implements CiRuntime {
         throw Util.unimplemented();
     }
 
-    @Override
     public long getRuntimeEntry(CiRuntimeCall runtimeCall) {
         throw Util.unimplemented();
     }
 
-    @Override
     public int headerSize() {
         throw Util.unimplemented();
     }
 
-    @Override
     public boolean isMP() {
         return true;
     }
 
-    @Override
     public int javaNioBufferLimitOffset() {
         throw Util.unimplemented();
     }
 
-    @Override
     public boolean jvmtiCanPostExceptions() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int klassJavaMirrorOffsetInBytes() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int klassOffsetInBytes() {
         throw Util.unimplemented();
     }
 
-    @Override
     public boolean needsExplicitNullCheck(int offset) {
         // TODO: Return false if implicit null check is possible for this offset!
         return true;
     }
 
-    @Override
     public int threadExceptionOopOffset() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int threadExceptionPcOffset() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int threadObjOffset() {
         throw Util.unimplemented();
     }
 
-    @Override
     public Address throwCountAddress() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int vtableEntryMethodOffsetInBytes() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int vtableEntrySize() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int vtableStartOffset() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int arrayBaseOffsetInBytes(BasicType type) {
         throw Util.unimplemented();
     }
 
-    @Override
     public int nativeCallInstructionSize() {
         throw Util.unimplemented();
     }
 
-    @Override
     public Register callerSaveFpuRegAt(int i) {
         throw Util.unimplemented();
     }
 
-    @Override
     public Object ciEnvUnloadedCiobjarrayklass() {
         throw Util.unimplemented();
     }
 
-    @Override
     public Object makeObjectArrayClass(CiType elementClass) {
         throw Util.unimplemented();
     }
@@ -304,259 +284,207 @@ public class MaxCiRuntime implements CiRuntime {
         throw Util.unimplemented();
     }
 
-    @Override
     public int arrayElementSize(BasicType type) {
-        throw Util.unimplemented();
+        throw Util.unimplemented(); // TODO: move usages to BasicType.elementSize
     }
 
-    @Override
     public int arrayOopDescHeaderSize(BasicType type) {
         throw Util.unimplemented();
     }
 
-    @Override
     public void vmExitOutOfMemory1(int i, String string, String name) {
         throw Util.unimplemented();
     }
 
-    @Override
     public int vmPageSize() {
         throw Util.unimplemented();
     }
 
-    @Override
     public Address argRegSaveAreaBytes() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int basicLockDisplacedHeaderOffsetInBytes() {
         throw Util.unimplemented();
     }
 
-    @Override
     public long basicObjectLockOffsetInBytes() {
         throw Util.unimplemented();
     }
 
-    @Override
     public long basicObjectLockSize() {
         throw Util.unimplemented();
     }
 
-    @Override
     public long basicObjectObjOffsetInBytes() {
         throw Util.unimplemented();
     }
 
-    @Override
     public long doubleSignflipPoolAddress() {
         throw Util.unimplemented();
     }
 
-    @Override
     public long doubleSignmaskPoolAddress() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int elementKlassOffsetInBytes() {
         throw Util.unimplemented();
     }
 
-    @Override
     public long floatSignflipPoolAddress() {
         throw Util.unimplemented();
     }
 
-
-    @Override
     public long getPollingPage() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int getSerializePageShiftCount() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int initStateOffsetInBytes() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int instanceKlassFullyInitialized() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int interpreterFrameMonitorSize() {
         throw Util.unimplemented();
     }
 
-    @Override
     public Register javaCallingConventionReceiverRegister() {
         // TODO Auto-generated method stub
         return null;
     }
 
-    @Override
     public int markOffsetInBytes() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int methodDataNullSeenByteConstant() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int nativeCallDisplacementOffset() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int nativeMovConstRegInstructionSize() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int secondarySuperCacheOffsetInBytes() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int secondarySupersOffsetInBytes() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int superCheckOffsetOffsetInBytes() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int threadPendingExceptionOffset() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int threadTlabEndOffset() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int threadTlabSizeOffset() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int threadTlabStartOffset() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int threadTlabTopOffset() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int threadVmResultOffset() {
         throw Util.unimplemented();
     }
 
-    @Override
     public Object universeNonOopWord() {
         throw Util.unimplemented();
     }
 
-    @Override
     public boolean universeSupportsInlineContigAlloc() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int biasedLockMaskInPlace() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int biasedLockPattern() {
         throw Util.unimplemented();
     }
 
-    @Override
     public long biasedLockingFastPathEntryCountAddr() {
         throw Util.unimplemented();
     }
 
-    @Override
     public boolean dtraceAllocProbes() {
         throw Util.unimplemented();
     }
 
-    @Override
     public long getMemorySerializePage() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int getMinObjAlignmentInBytesMask() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int instanceOopDescBaseOffsetInBytes() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int itableInterfaceOffsetInBytes() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int itableMethodEntryMethodOffset() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int itableOffsetEntrySize() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int itableOffsetOffsetInBytes() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int klassPartOffsetInBytes() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int markOopDescPrototype() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int maxArrayAllocationLength() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int prototypeHeaderOffsetInBytes() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int unlockedValue() {
         throw Util.unimplemented();
     }
 
-    @Override
     public int vtableLengthOffset() {
         throw Util.unimplemented();
     }

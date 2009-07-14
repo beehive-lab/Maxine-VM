@@ -168,7 +168,7 @@ public class MaxCiConstant implements CiConstant {
      */
     public BasicType basicType() {
         if (type != null) {
-            return BasicType.Object;
+            return BasicType.Object; // in the case of a MaxCiType
         }
         return MaxCiType.kindToBasicType(value.kind());
     }

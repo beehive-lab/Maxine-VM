@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,35 +18,10 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.lang;
-
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
 
 /**
- * A collection of static methods for doing unsigned arithmetic on Java primitive types
- * where the semantics of the arithmetics operations differ from the signed version.
- * In addition to providing unsigned arithmetic semantics for the programmer,
- * these methods also expose different optimization possibilities to the compiler as
- * well as allowing for them to be implemented as compiler builtins.
- *
- * @author Doug Simon
+ * This package contains the implementation of the compiler interface required by the C1X compiler,
+ * including adapting the Maxine VM's runtime data structures for use in C1X and also consuming
+ * the output from C1X compilations.
  */
-public class Unsigned {
-
-    /**
-     * Performs unsigned integer division.
-     */
-    @INLINE
-    public static int idiv(int dividend, int divisor) {
-        return Address.fromUnsignedInt(dividend).dividedBy(divisor).toInt();
-    }
-
-    /**
-     * Performs unsigned long division.
-     */
-    @INLINE
-    public static long ldiv(long dividend, long divisor) {
-        return Address.fromLong(dividend).dividedBy(Address.fromLong(divisor)).toLong();
-    }
-}
+package com.sun.max.vm.compiler.c1x;

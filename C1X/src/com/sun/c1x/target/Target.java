@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.target;
 
+import com.sun.c1x.value.BasicType;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
@@ -90,6 +92,14 @@ public class Target {
         return referenceSize < arch.wordSize;
     }
 
+    /**
+     * Gets the size in bytes of the specified basic type for this target.
+     * @param basicType the basic type for which to get the size
+     * @return the size in bytes of the basic type
+     */
+    public int sizeInBytes(BasicType basicType) {
+        return basicType.sizeInBytes(referenceSize, arch.wordSize);
+    }
     public Register jRarg0() {
         // TODO Auto-generated method stub
         return null;

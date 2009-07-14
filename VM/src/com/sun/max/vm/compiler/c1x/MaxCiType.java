@@ -23,6 +23,7 @@ package com.sun.max.vm.compiler.c1x;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.c1x.C1XOptions;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -136,6 +137,15 @@ public class MaxCiType implements CiType {
      */
     public boolean isInterface() {
         return asClassActor("isInterface()").isInterfaceActor();
+    }
+
+    /**
+     * Checks whether this compiler interface type is an array class.
+     * @return <code>true</code> if this class is an interface
+     * @throws MaxCiUnresolved if the class is not resolved
+     */
+    public boolean isArrayKlass() {
+        return asClassActor("isArrayClass()") instanceof ArrayClassActor;
     }
 
     /**
@@ -325,7 +335,7 @@ public class MaxCiType implements CiType {
             case DOUBLE:
                 return BasicType.Double;
             case WORD:
-                return BasicType.Object; // TODO: this is not really an object!
+                return C1XOptions.SupportWordTypes ? BasicType.Word : BasicType.Object;
             case REFERENCE:
                 return BasicType.Object;
             case VOID:
@@ -384,17 +394,10 @@ public class MaxCiType implements CiType {
         throw Util.unimplemented();
     }
 
-    @Override
     public Object encoding() {
         return this;
     }
 
-    @Override
-    public boolean isArrayKlass() {
-        throw Util.unimplemented();
-    }
-
-    @Override
     public int superCheckOffset() {
         throw Util.unimplemented();
     }
