@@ -74,7 +74,7 @@ public abstract class X86Assembler extends AbstractAssembler {
             }
             throw Util.shouldNotReachHere();
         }
-    };
+    }
 
     private static final Prefix[] lookup = new Prefix[256];
 
@@ -99,7 +99,7 @@ public abstract class X86Assembler extends AbstractAssembler {
             lookup[value] = this;
         }
 
-    };
+    }
 
     public static Prefix prefixFromInt(int i) {
         return lookup[i];
@@ -206,7 +206,7 @@ public abstract class X86Assembler extends AbstractAssembler {
     void emitArith(int op1, int op2, X86Register dst, Object obj) {
 
         if (compilation.target.arch.is64bit()) {
-            Util.shouldNotReachHere();
+            throw Util.shouldNotReachHere();
         }
         assert isByte(op1) && isByte(op2) : "wrong opcode";
         assert (op1 & 0x01) == 1 : "should be 32bit operation";
@@ -513,9 +513,7 @@ public abstract class X86Assembler extends AbstractAssembler {
          * WhichOperand.immOperand) : "instruction has only an imm field"; return ip;
          */
 
-        // TODO: implement this method!
-        Util.unimplemented();
-        return null;
+        throw Util.unimplemented();
     }
 
     Pointer locateNextInstruction(Pointer inst) {

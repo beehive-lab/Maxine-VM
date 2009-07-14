@@ -462,6 +462,9 @@ public class Util {
         list.set(pos, x);
     }
 
+    public static void breakpoint() {
+        // do nothing.
+    }
     public static void guarantee(boolean b, String string) {
         if (!b) {
             throw new Bailout(string);

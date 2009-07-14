@@ -71,6 +71,7 @@ public final class TargetBundleLayout {
         /**
          * Determines if space should be reserved for the array referenced by this field if the length of the array is
          * 0.
+         * @return whether space should be reserved
          */
         protected boolean allocateEmptyArray() {
             return false;
@@ -81,7 +82,7 @@ public final class TargetBundleLayout {
          * allocated.
          *
          * @param region an object used to do the allocation
-         * @param len the size of the cell to allocate
+         * @param size the size of the cell to allocate
          * @return the offset from the start of the target bundle of the allocate cell. If {@code size.isZero()}, then
          *         no space is allocated and {@link TargetBundleLayout#INVALID_OFFSET} is returned.
          */

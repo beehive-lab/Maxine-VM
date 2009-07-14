@@ -45,6 +45,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
     private final int exceptionHandlerSize;
     final int deoptHandlerSize;
     private final int wordSize;
+    private final int referenceSize;
     private final X86Register rscratch1;
 
 
@@ -55,6 +56,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
         masm = (X86MacroAssembler) compilation.masm();
 
         wordSize = compilation.target.arch.wordSize;
+        referenceSize = compilation.target.referenceSize;
         exceptionHandlerSize = 175;
         rscratch1 = X86FrameMap.rscratch1(compilation.target.arch);
         if (compilation.target.arch.is64bit()) {
@@ -129,11 +131,11 @@ public abstract class X86LIRAssembler extends LIRAssembler {
             } else if (constOpr.type() == BasicType.Int) {
                 lir().pushJint(constOpr.asJint());
             } else {
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
             }
 
         } else {
-            Util.shouldNotReachHere();
+            throw Util.shouldNotReachHere();
         }
     }
 
@@ -142,7 +144,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
         if (opr.isSingleCpu()) {
             lir().popReg((X86Register) opr.asRegister());
         } else {
-            Util.shouldNotReachHere();
+            throw Util.shouldNotReachHere();
         }
     }
 
@@ -434,7 +436,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
         if (info != null) {
             addDebugInfoForBranch(info);
         } else {
-            Util.shouldNotReachHere();
+            throw Util.shouldNotReachHere();
         }
 
         int offset = lir().offset();
@@ -541,7 +543,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
             }
 
             default:
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
         }
     }
 
@@ -591,7 +593,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                 break;
 
             default:
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
         }
     }
 
@@ -614,8 +616,8 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                     lir().movptr(asAddress(addr), NULLWORD);
                 } else {
                     if (isLiteralAddress(addr)) {
-                        Util.shouldNotReachHere();
                         lir().movoop(asAddress(addr, X86Register.noreg), c.asJobject());
+                        throw Util.shouldNotReachHere();
                     } else {
                         lir().movoop(asAddress(addr), c.asJobject());
                     }
@@ -627,8 +629,8 @@ public abstract class X86LIRAssembler extends LIRAssembler {
 
                 if (compilation.target.arch.is64bit()) {
                     if (isLiteralAddress(addr)) {
-                        Util.shouldNotReachHere();
                         lir().movptr(asAddress(addr, X86FrameMap.r15thread), c.asLongBits());
+                        throw Util.shouldNotReachHere();
                     } else {
                         lir().movptr(X86Register.r10, c.asLongBits());
                         nullCheckHere = codeOffset();
@@ -652,7 +654,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                 break;
 
             default:
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
         }
 
         if (info != null) {
@@ -752,7 +754,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
             assert src.isSingleFpu() || src.isDoubleFpu() : "must match";
             assert src.fpu() == dest.fpu() : "currently should be nothing to do";
         } else {
-            Util.shouldNotReachHere();
+            throw Util.shouldNotReachHere();
         }
     }
 
@@ -805,7 +807,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
             }
 
         } else {
-            Util.shouldNotReachHere();
+            throw Util.shouldNotReachHere();
         }
     }
 
@@ -920,7 +922,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                 break;
 
             default:
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
         }
 
         if (patchCode != LIRPatchCode.PatchNone) {
@@ -972,7 +974,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
             lir().fldD(srcAddr);
 
         } else {
-            Util.shouldNotReachHere();
+            throw Util.shouldNotReachHere();
         }
     }
 
@@ -999,7 +1001,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                 lir().popl(frameMap().addressForSlot(dest.doubleStackIx(), 0));
             }
         } else {
-            Util.shouldNotReachHere();
+            throw Util.shouldNotReachHere();
         }
     }
 
@@ -1165,7 +1167,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
             }
 
             default:
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
         }
 
         if (patch != null) {
@@ -1194,8 +1196,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                     lir().prefetcht2(fromAddr);
                     break;
                 default:
-                    Util.shouldNotReachHere();
-                    break;
+                    throw Util.shouldNotReachHere();
             }
         } else if (compilation.target.supports3DNOW()) {
             lir().prefetchr(fromAddr);
@@ -1222,8 +1223,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                     lir().prefetchw(fromAddr);
                     break;
                 default:
-                    Util.shouldNotReachHere();
-                    break;
+                    throw Util.shouldNotReachHere();
             }
         } else if (compilation.target.supports3DNOW()) {
             lir().prefetchw(fromAddr);
@@ -1238,8 +1238,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                 arithmeticIdiv(op.code(), op.opr1(), op.opr2(), op.opr3(), op.result(), op.info());
                 break;
             default:
-                Util.shouldNotReachHere();
-                break;
+                throw Util.shouldNotReachHere();
         }
     }
 
@@ -1289,7 +1288,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                         acond = X86Assembler.Condition.above;
                         break;
                     default:
-                        Util.shouldNotReachHere();
+                        throw Util.shouldNotReachHere();
                 }
             } else {
                 switch (op.cond()) {
@@ -1318,7 +1317,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                         acond = X86Assembler.Condition.aboveEqual;
                         break;
                     default:
-                        Util.shouldNotReachHere();
+                        throw Util.shouldNotReachHere();
                 }
             }
             lir().jcc(acond, (op.label()));
@@ -1430,7 +1429,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                 break;
 
             default:
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
         }
     }
 
@@ -1757,7 +1756,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
             lir().movptr(dst, 1);
             lir().bind(done);
         } else {
-            Util.shouldNotReachHere();
+            throw Util.shouldNotReachHere();
         }
     }
 
@@ -1808,7 +1807,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
             }
             lir().cmpxchgq((X86Register) newval, new Address(addr, 0));
         } else {
-            Util.shouldNotReachHere();
+            throw Util.shouldNotReachHere();
         }
     }
 
@@ -1860,7 +1859,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
         } else if (opr1.isConstant()) {
             const2reg(opr1, result, LIRPatchCode.PatchNone, null);
         } else {
-            Util.shouldNotReachHere();
+            throw Util.shouldNotReachHere();
         }
 
         if (compilation.target.supportsCmov() && !opr2.isConstant()) {
@@ -1883,7 +1882,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                     lir().cmovptr(ncond, (X86Register) result.asRegisterHi(), frameMap().addressForSlot(opr2.doubleStackIx(), compilation.target.arch.hiWordOffsetInBytes));
                 }
             } else {
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
             }
 
         } else {
@@ -1896,7 +1895,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
             } else if (opr2.isConstant()) {
                 const2reg(opr2, result, LIRPatchCode.PatchNone, null);
             } else {
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
             }
             lir().bind(skip);
         }
@@ -1924,7 +1923,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                         lir().imull(lreg, rreg);
                         break;
                     default:
-                        Util.shouldNotReachHere();
+                        throw Util.shouldNotReachHere();
                 }
 
             } else if (right.isStack()) {
@@ -1938,7 +1937,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                         lir().subl(lreg, raddr);
                         break;
                     default:
-                        Util.shouldNotReachHere();
+                        throw Util.shouldNotReachHere();
                 }
 
             } else if (right.isConstant()) {
@@ -1954,11 +1953,11 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                         break;
                     }
                     default:
-                        Util.shouldNotReachHere();
+                        throw Util.shouldNotReachHere();
                 }
 
             } else {
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
             }
 
         } else if (left.isDoubleCpu()) {
@@ -1998,7 +1997,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                         }
                         break;
                     default:
-                        Util.shouldNotReachHere();
+                        throw Util.shouldNotReachHere();
                 }
 
             } else if (right.isConstant()) {
@@ -2014,7 +2013,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                             lir().subptr(lregLo, X86Register.r10);
                             break;
                         default:
-                            Util.shouldNotReachHere();
+                            throw Util.shouldNotReachHere();
                     }
                 } else {
                     int cLo = right.asConstantPtr().asIntLo();
@@ -2029,12 +2028,12 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                             lir().sbbl(lregHi, cHi);
                             break;
                         default:
-                            Util.shouldNotReachHere();
+                            throw Util.shouldNotReachHere();
                     }
                 }
 
             } else {
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
             }
 
         } else if (left.isSingleXmm()) {
@@ -2061,7 +2060,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                         lir().divss(lreg, rreg);
                         break;
                     default:
-                        Util.shouldNotReachHere();
+                        throw Util.shouldNotReachHere();
                 }
             } else {
                 Address raddr;
@@ -2089,7 +2088,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                         lir().divss(lreg, raddr);
                         break;
                     default:
-                        Util.shouldNotReachHere();
+                        throw Util.shouldNotReachHere();
                 }
             }
 
@@ -2117,7 +2116,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                         lir().divsd(lreg, rreg);
                         break;
                     default:
-                        Util.shouldNotReachHere();
+                        throw Util.shouldNotReachHere();
                 }
             } else {
                 Address raddr;
@@ -2145,7 +2144,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                         lir().divsd(lreg, raddr);
                         break;
                     default:
-                        Util.shouldNotReachHere();
+                        throw Util.shouldNotReachHere();
                 }
             }
 
@@ -2187,7 +2186,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                         lir().fdivS(raddr);
                         break;
                     default:
-                        Util.shouldNotReachHere();
+                        throw Util.shouldNotReachHere();
                 }
             }
 
@@ -2233,7 +2232,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                         lir().fdivD(raddr);
                         break;
                     default:
-                        Util.shouldNotReachHere();
+                        throw Util.shouldNotReachHere();
                 }
             }
 
@@ -2265,7 +2264,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                         lir().subl(laddr, rreg);
                         break;
                     default:
-                        Util.shouldNotReachHere();
+                        throw Util.shouldNotReachHere();
                 }
             } else if (right.isConstant()) {
                 int c = right.asConstantPtr().asJint();
@@ -2279,14 +2278,14 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                         break;
                     }
                     default:
-                        Util.shouldNotReachHere();
+                        throw Util.shouldNotReachHere();
                 }
             } else {
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
             }
 
         } else {
-            Util.shouldNotReachHere();
+            throw Util.shouldNotReachHere();
         }
     }
 
@@ -2368,7 +2367,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                 break;
 
             default:
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
         }
     }
 
@@ -2389,7 +2388,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                     break;
                 // all other intrinsics are not available in the SSE instruction set, so FPU is used
                 default:
-                    Util.shouldNotReachHere();
+                    throw Util.shouldNotReachHere();
             }
 
         } else if (value.isDoubleFpu()) {
@@ -2421,10 +2420,10 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                     lir().trigfunc('t', op.fpuStackSize());
                     break;
                 default:
-                    Util.shouldNotReachHere();
+                    throw Util.shouldNotReachHere();
             }
         } else {
-            Util.shouldNotReachHere();
+            throw Util.shouldNotReachHere();
         }
     }
 
@@ -2447,7 +2446,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                         lir().xorl(reg, val);
                         break;
                     default:
-                        Util.shouldNotReachHere();
+                        throw Util.shouldNotReachHere();
                 }
             } else if (right.isStack()) {
                 // added support for stack operands
@@ -2463,7 +2462,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                         lir().xorl(reg, raddr);
                         break;
                     default:
-                        Util.shouldNotReachHere();
+                        throw Util.shouldNotReachHere();
                 }
             } else {
                 X86Register rright = (X86Register) right.asRegister();
@@ -2478,7 +2477,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                         lir().xorptr(reg, rright);
                         break;
                     default:
-                        Util.shouldNotReachHere();
+                        throw Util.shouldNotReachHere();
                 }
             }
             moveRegs(reg, (X86Register) dst.asRegister());
@@ -2499,7 +2498,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                             lir().xorq(lLo, rscratch1);
                             break;
                         default:
-                            Util.shouldNotReachHere();
+                            throw Util.shouldNotReachHere();
                     }
                 } else {
                     int rLo = right.asConstantPtr().asIntLo();
@@ -2518,7 +2517,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                             lir().xorl(lHi, rHi);
                             break;
                         default:
-                            Util.shouldNotReachHere();
+                            throw Util.shouldNotReachHere();
                     }
                 }
             } else {
@@ -2546,7 +2545,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                         }
                         break;
                     default:
-                        Util.shouldNotReachHere();
+                        throw Util.shouldNotReachHere();
                 }
             }
 
@@ -2607,7 +2606,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                 lir().increment(dreg, 1);
                 lir().bind(done);
             } else {
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
             }
         } else {
             X86Register rreg = (X86Register) right.asRegister();
@@ -2665,7 +2664,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                         }
                     }
                 } else {
-                    Util.shouldNotReachHere();
+                    throw Util.shouldNotReachHere();
                 }
                 // cpu register - address
             } else if (opr2.isAddress()) {
@@ -2674,7 +2673,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                 }
                 lir().cmpl(reg1, asAddress(opr2.asAddressPtr()));
             } else {
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
             }
 
         } else if (opr1.isDoubleCpu()) {
@@ -2703,7 +2702,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                     lir().orl(xhi, xlo);
                 }
             } else {
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
             }
 
         } else if (opr1.isSingleXmm()) {
@@ -2725,7 +2724,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                 }
                 lir().ucomiss(reg1, asAddress(opr2.asAddressPtr()));
             } else {
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
             }
 
         } else if (opr1.isDoubleXmm()) {
@@ -2747,7 +2746,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                 }
                 lir().ucomisd(reg1, asAddress(opr2.asAddress()));
             } else {
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
             }
 
         } else if (opr1.isSingleFpu() || opr1.isDoubleFpu()) {
@@ -2780,11 +2779,11 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                     lir().cmpoop(asAddress(addr), c.asJobject());
                 }
             } else {
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
             }
 
         } else {
-            Util.shouldNotReachHere();
+            throw Util.shouldNotReachHere();
         }
     }
 
@@ -2844,7 +2843,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                     break;
                 case VirtualCall: // currently, sparc-specific for niagara
                 default:
-                    Util.shouldNotReachHere();
+                    throw Util.shouldNotReachHere();
             }
             while (offset++ % wordSize != 0) {
                 lir().nop();
@@ -2870,7 +2869,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void vtableCall(long vtableOffset, CodeEmitInfo info) {
-        Util.shouldNotReachHere();
+        throw Util.shouldNotReachHere();
     }
 
     @Override
@@ -2979,7 +2978,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                         lir().shrptr(lo);
                         break;
                     default:
-                        Util.shouldNotReachHere();
+                        throw Util.shouldNotReachHere();
                 }
             } else {
 
@@ -2994,11 +2993,11 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                         lir().lshr(hi, lo, false);
                         break;
                     default:
-                        Util.shouldNotReachHere();
+                        throw Util.shouldNotReachHere();
                 }
             }
         } else {
-            Util.shouldNotReachHere();
+            throw Util.shouldNotReachHere();
         }
     }
 
@@ -3021,12 +3020,12 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                     lir().shrl(value, count);
                     break;
                 default:
-                    Util.shouldNotReachHere();
+                    throw Util.shouldNotReachHere();
             }
         } else if (dest.isDoubleCpu()) {
 
             if (!compilation.target.arch.is64bit()) {
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
             }
 
             // first move left into dest so that left is not destroyed by the shift
@@ -3045,10 +3044,10 @@ public abstract class X86LIRAssembler extends LIRAssembler {
                     lir().shrptr(value, count);
                     break;
                 default:
-                    Util.shouldNotReachHere();
+                    throw Util.shouldNotReachHere();
             }
         } else {
-            Util.shouldNotReachHere();
+            throw Util.shouldNotReachHere();
         }
     }
 
@@ -3159,7 +3158,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
 
         assert defaultType.isArrayKlass() && defaultType.isLoaded() : "must be true at this point";
 
-        int elemSize = basicType.elementSizeInBytes(wordSize);
+        int elemSize = basicType.elementSizeInBytes(referenceSize, wordSize);
         int shiftAmount;
         Address.ScaleFactor scale;
 
@@ -3311,7 +3310,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
             assert compilation.runtime.basicLockDisplacedHeaderOffsetInBytes() == 0 : "lockReg must point to the displaced header";
             lir().unlockObject(hdr, obj, lock, op.stub().entry());
         } else {
-            Util.shouldNotReachHere();
+            throw Util.shouldNotReachHere();
         }
         lir().bind(op.stub().continuation());
     }
@@ -3405,7 +3404,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitDelay(LIRDelay lirDelay) {
-        Util.shouldNotReachHere();
+        throw Util.shouldNotReachHere();
     }
 
     @Override
@@ -3461,7 +3460,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
             lir().fchs();
 
         } else {
-            Util.shouldNotReachHere();
+            throw Util.shouldNotReachHere();
         }
     }
 
@@ -3503,7 +3502,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
             } else if (dest.isAddress()) {
                 lir().movdbl(asAddress(dest.asAddressPtr()), asXmmDoubleReg(src));
             } else {
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
             }
 
         } else if (dest.isDoubleXmm()) {
@@ -3512,7 +3511,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
             } else if (src.isAddress()) {
                 lir().movdbl(asXmmDoubleReg(dest), asAddress(src.asAddressPtr()));
             } else {
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
             }
 
         } else if (src.isDoubleFpu()) {
@@ -3522,7 +3521,7 @@ public abstract class X86LIRAssembler extends LIRAssembler {
             } else if (dest.isAddress()) {
                 lir().fistpD(asAddress(dest.asAddressPtr()));
             } else {
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
             }
 
         } else if (dest.isDoubleFpu()) {
@@ -3532,10 +3531,10 @@ public abstract class X86LIRAssembler extends LIRAssembler {
             } else if (src.isAddress()) {
                 lir().fildD(asAddress(src.asAddressPtr()));
             } else {
-                Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere();
             }
         } else {
-            Util.shouldNotReachHere();
+            throw Util.shouldNotReachHere();
         }
     }
 

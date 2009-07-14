@@ -293,16 +293,15 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
                         packDirectCallees(directCalls),
                         emitter.indirectCallLabels().length(),
                         emitter.safepointLabels().length(),
-                        emitter.guardpoints().length(),
-                        packReferenceMaps(targetBundleLayout, emitter, frameReferenceMapSize, targetMethod.registerReferenceMapSize()),
+                packReferenceMaps(targetBundleLayout, emitter, frameReferenceMapSize, targetMethod.registerReferenceMapSize()),
                         scalarLiteralBytes,
                         referenceLiteralObjects,
                         code,
                         emitter.inlineDataRecorder().encodedDescriptors(),
                         eirMethod.frameSize(),
                         frameReferenceMapSize,
-                        eirMethod.abi().targetABI(),
-                        getMarkerPosition(emitter));
+                        eirMethod.abi().targetABI()
+        );
         assert TargetBundleLayout.from(targetMethod).bundleSize().equals(targetBundleLayout.bundleSize()) :
             "computed target bundle size differs from derived target bundle size for " + targetMethod.classMethodActor() +
             "\n    computed:\n" + targetBundleLayout +
