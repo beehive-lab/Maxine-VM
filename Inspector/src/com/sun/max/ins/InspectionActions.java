@@ -2728,6 +2728,70 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
+     * Action: create an object field watchpoint.
+     */
+    final class SetArrayElementWatchpointAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Watch array element";
+        private final TeleObject teleObject;
+        private final Kind elementKind;
+        private final int arrayOffsetFromOrigin;
+        private final int index;
+
+        private final MemoryRegion memoryRegion;
+
+        SetArrayElementWatchpointAction(TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            this.teleObject = teleObject;
+            this.elementKind = elementKind;
+            this.arrayOffsetFromOrigin = arrayOffsetFromOrigin;
+            this.index = index;
+            final Pointer address = teleObject.getCurrentOrigin().plus(arrayOffsetFromOrigin + (index * elementKind.width.numberOfBytes));
+            this.memoryRegion = new FixedMemoryRegion(address, Size.fromInt(elementKind.width.numberOfBytes), "");
+            refresh(true);
+        }
+
+        @Override
+        protected void procedure() {
+            try {
+                final String description = "Element [" + Integer.toString(index) + "] in " + inspection().nameDisplay().referenceLabelText(teleObject);
+                final MaxWatchpoint watchpoint = maxVM().setArrayElementWatchpoint(description, teleObject, elementKind, arrayOffsetFromOrigin, index, true, true, true, true);
+                if (watchpoint == null) {
+                    gui().errorMessage("Watchpoint creation failed");
+                } else {
+                    inspection().focus().setWatchpoint(watchpoint);
+                }
+            } catch (TooManyWatchpointsException tooManyWatchpointsException) {
+                gui().errorMessage(tooManyWatchpointsException.getMessage());
+            } catch (DuplicateWatchpointException duplicateWatchpointException) {
+                gui().errorMessage(duplicateWatchpointException.getMessage());
+            }
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(inspection().hasProcess()
+                && maxVM().watchpointsEnabled()
+                && maxVM().findWatchpoint(memoryRegion) == null);
+        }
+    }
+
+    /**
+     * Creates an action that will create an array element watchpoint.
+     *
+     * @param teleObject a heap object in the VM
+     * @param elementKind type category of the array elements
+     * @param arrayOffsetFromOrigin offset in bytes from the object origin of element 0
+     * @param index index into the array
+     * @param string a title for the action, use default name if null
+     * @return an Action that will set an array element watchpoint.
+     */
+    public final InspectorAction setArrayElementWatchpoint(TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, String string) {
+        return new SetArrayElementWatchpointAction(teleObject, elementKind, arrayOffsetFromOrigin, index, string);
+    }
+
+
+     /**
      * Action: create an object header field watchpoint.
      */
     final class SetHeaderWatchpointAction extends InspectorAction {

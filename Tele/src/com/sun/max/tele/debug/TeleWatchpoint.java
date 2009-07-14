@@ -30,6 +30,7 @@ import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.layout.Layout.*;
+import com.sun.max.vm.type.*;
 
 /**
  * @author Bernd Mathiske
@@ -222,6 +223,30 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
     }
 
     /**
+     *A watchpoint for the memory holding an array element.
+     */
+    private static final class TeleArrayElementWatchpoint extends TeleWatchpoint {
+
+        private final TeleObject teleObject;
+        private final int index;
+
+        public TeleArrayElementWatchpoint(Factory factory, String description, TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, boolean after, boolean read, boolean write, boolean exec) {
+            super(factory, description, teleObject.getCurrentOrigin().plus(arrayOffsetFromOrigin + (index * elementKind.width.numberOfBytes)), Size.fromInt(elementKind.width.numberOfBytes), after, read, write, exec);
+            this.teleObject = teleObject;
+            this.index = index;
+        }
+
+        public TeleObject getTeleObject() {
+            return teleObject;
+        }
+
+        @Override
+        public String toString() {
+            return "TeleArrayElementWatchpoint@" + super.toString();
+        }
+    }
+
+    /**
      *A watchpoint for the memory holding an object's header field; does not follow if object relocated.
      */
     private static final class TeleHeaderWatchpoint extends TeleWatchpoint {
@@ -347,6 +372,13 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
             throws TooManyWatchpointsException, DuplicateWatchpointException {
             final TeleWatchpoint teleWatchpoint =
                 new TeleFieldWatchpoint(this, description, teleObject, fieldActor, after, read, write, exec);
+            return addWatchpoint(teleWatchpoint);
+        }
+
+        public synchronized TeleWatchpoint setArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, boolean after, boolean read, boolean write, boolean exec)
+            throws TooManyWatchpointsException, DuplicateWatchpointException {
+            final TeleWatchpoint teleWatchpoint =
+                new TeleArrayElementWatchpoint(this, description, teleObject, elementKind, arrayOffsetFromOrigin, index, after, read, after, exec);
             return addWatchpoint(teleWatchpoint);
         }
 
