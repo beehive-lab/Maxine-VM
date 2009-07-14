@@ -77,6 +77,7 @@ public class C1XTest {
         "Show help message and exit.");
 
     static {
+        // add all the fields from C1XOptions as options
         for (final Field field : C1XOptions.class.getFields()) {
             if (Modifier.isStatic(field.getModifiers())) {
                 if (field.getType() == boolean.class) {
@@ -109,6 +110,13 @@ public class C1XTest {
                 }
             }
         }
+        // add a special option "c1x-optlevel" which adjusts the optimization level
+        options.addOption(new Option<Integer>("c1x-optlevel", -1, OptionTypes.INT_TYPE, "Set the overall optimization level of C1X (-1 to use default settings)") {
+            @Override
+            public void setValue(Integer value) {
+                C1XOptions.setOptimizationLevel(value);
+            }
+        }, Syntax.REQUIRES_EQUALS);
     }
 
     private static final List<Timing> timings = new ArrayList<Timing>();

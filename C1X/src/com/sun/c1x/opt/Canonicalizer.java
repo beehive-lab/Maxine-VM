@@ -306,8 +306,11 @@ public class Canonicalizer extends InstructionVisitor {
                         mask = mask << y;
                     }
                     // reduce to (e & mask)
-                    Instruction c = islong ? longInstr(mask) : intInstr((int) mask);
-                    return setCanonical(new ArithmeticOp(Bytecodes.IAND, s.x(), c, false, null));
+                    if (islong) {
+                        return setCanonical(new ArithmeticOp(Bytecodes.LAND, s.x(), longInstr(mask), false, null));
+                    } else {
+                        return setCanonical(new ArithmeticOp(Bytecodes.IAND, s.x(), intInstr((int) mask), false, null));
+                    }
                 }
             }
         }
