@@ -23,6 +23,8 @@ package com.sun.max.vm.tele;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 
 /**
  * Makes critical state information about the object heap
@@ -42,8 +44,8 @@ public final class TeleHeapInfo {
 
     public static void registerMemoryRegions(MemoryRegion... memoryRegions) {
         if (MaxineMessenger.isVmInspected()) {
-            if (roots == null) {
-                roots = new Object[MAX_NUMBER_OF_ROOTS];
+            if (roots.isZero()) {
+                roots = Memory.allocate(MAX_NUMBER_OF_ROOTS * Pointer.size());
             }
             TeleHeapInfo.memoryRegions = memoryRegions;
         }
@@ -51,8 +53,11 @@ public final class TeleHeapInfo {
 
     public static final int MAX_NUMBER_OF_ROOTS = Ints.M / 8;
 
+
+
     @INSPECTED
-    private static Object[] roots = new Object[MAX_NUMBER_OF_ROOTS];
+    public static Pointer roots = Pointer.zero();
+    //private static Object[] roots = new Object[MAX_NUMBER_OF_ROOTS];
 
     @INSPECTED
     private static long rootEpoch;

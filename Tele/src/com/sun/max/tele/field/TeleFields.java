@@ -158,7 +158,7 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleStaticLongFieldAccess TeleHeapInfo_collectionEpoch = new TeleStaticLongFieldAccess(TeleHeapInfo.class, "collectionEpoch");
     public final TeleStaticReferenceFieldAccess TeleHeapInfo_memoryRegions = new TeleStaticReferenceFieldAccess(TeleHeapInfo.class, "memoryRegions", MemoryRegion[].class);
     public final TeleStaticLongFieldAccess TeleHeapInfo_rootEpoch = new TeleStaticLongFieldAccess(TeleHeapInfo.class, "rootEpoch");
-    public final TeleStaticReferenceFieldAccess TeleHeapInfo_roots = new TeleStaticReferenceFieldAccess(TeleHeapInfo.class, "roots", Object[].class);
+    public final TeleStaticWordFieldAccess TeleHeapInfo_roots = new TeleStaticWordFieldAccess(TeleHeapInfo.class, "roots");
     public final TeleStaticIntFieldAccess Trace_level = new TeleStaticIntFieldAccess(Trace.class, "level");
     public final TeleStaticLongFieldAccess Trace_threshold = new TeleStaticLongFieldAccess(Trace.class, "threshold");
     public final TeleInstanceReferenceFieldAccess TupleClassActor_constantPool = new TeleInstanceReferenceFieldAccess(TupleClassActor.class, "constantPool", ConstantPool.class);
