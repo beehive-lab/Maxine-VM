@@ -144,7 +144,6 @@ public class SpecialReferenceManager {
             for (int i = 0; i < InspectableHeapInfo.MAX_NUMBER_OF_ROOTS; i++) {
                 final Pointer rootPointer = InspectableHeapInfo.roots.getWord(i).asPointer();
                 if (!rootPointer.isZero()) {
-                    Log.println("Handle forwarding pointer " + i);
                     final Grip referent = Grip.fromOrigin(rootPointer);
                     if (gripForwarder.isReachable(referent)) {
                         rootPointer.setWord(gripForwarder.getForwardGrip(referent).toOrigin());
