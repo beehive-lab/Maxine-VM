@@ -53,12 +53,14 @@ public class SequentialHeapRootsScanner {
         this.toSpace = toSpace;
     }
 
-    private final Pointer.Procedure vmThreadLocalsScanner = new Pointer.Procedure() {
+    final class VmThreadLocalsScanner implements Pointer.Procedure {
 
         public void run(Pointer vmThreadLocals) {
             VmThreadLocal.scanReferences(vmThreadLocals, pointerIndexVisitor);
         }
-    };
+    }
+
+    private final VmThreadLocalsScanner vmThreadLocalsScanner = new VmThreadLocalsScanner();
 
     /**
      * The run() method of the Sequential Heap Root Scanner performs two tasks. 1) For all ACTIVE threads in VMThreadMap

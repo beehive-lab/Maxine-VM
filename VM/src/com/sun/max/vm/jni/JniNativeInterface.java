@@ -170,7 +170,7 @@ public final class JniNativeInterface {
             pointer().setWord(i, functionPointer);
         }
         nativeInitializeJniInterface(pointer());
-        if (VMConfiguration.hostOrTarget().debugging()) {
+        if (MaxineVM.isDebug()) {
             checkInvariants();
         }
     }

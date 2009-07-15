@@ -266,6 +266,15 @@ public final class MaxineVM {
     }
 
     /**
+     * Determines if this is a {@link BuildLevel#DEBUG debug} build of the VM.
+     */
+    @UNSAFE
+    @FOLD
+    public static boolean isDebug() {
+        return VMConfiguration.hostOrTarget().debugging();
+    }
+
+    /**
      * Determines if a given constructor, field or method exists only for prototyping purposes and should not be part of
      * a generated target image.
      */
@@ -443,7 +452,7 @@ public final class MaxineVM {
         // This one field was not marked by the data prototype for relocation
         // to avoid confusion between "offset zero" and "null".
         // Fix it manually:
-        Heap.bootHeapRegion().setStart(bootHeapRegionStart);
+        Heap.bootHeapRegion.setStart(bootHeapRegionStart);
 
         Safepoint.initializePrimordial(vmThreadLocals);
 

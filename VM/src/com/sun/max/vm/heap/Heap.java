@@ -135,7 +135,7 @@ public final class Heap {
      */
     @INLINE
     public static boolean traceAllocation() {
-        if (!VMConfiguration.hostOrTarget().debugging()) {
+        if (!MaxineVM.isDebug()) {
             return false;
         }
         return traceAllocation;
@@ -151,7 +151,7 @@ public final class Heap {
     }
 
     static {
-        if (VMConfiguration.hostOrTarget().debugging()) {
+        if (MaxineVM.isDebug()) {
             register(new VMBooleanXXOption("-XX:-TraceAllocation", "Trace heap allocation.") {
                 @Override
                 public boolean parseValue(Pointer optionValue) {
@@ -221,12 +221,7 @@ public final class Heap {
     }
 
     @INSPECTED
-    private static final BootHeapRegion bootHeapRegion = new BootHeapRegion(Address.zero(), Size.fromInt(Integer.MAX_VALUE), "Heap-Boot");
-
-    @INLINE
-    public static BootHeapRegion bootHeapRegion() {
-        return bootHeapRegion;
-    }
+    public static final BootHeapRegion bootHeapRegion = new BootHeapRegion(Address.zero(), Size.fromInt(Integer.MAX_VALUE), "Heap-Boot");
 
     @UNSAFE
     @FOLD
@@ -271,14 +266,15 @@ public final class Heap {
     @NEVER_INLINE
     private static void traceCreateArray(DynamicHub hub, int length, final Object array) {
         final boolean lockDisabledSafepoints = Log.lock();
-        Log.print("Allocated array ");
+        Log.printVmThread(VmThread.current(), false);
+        Log.print(": Allocated array ");
         Log.print(hub.classActor.name.string);
         Log.print(" of length ");
         Log.print(length);
         Log.print(" at ");
         Log.print(Layout.originToCell(ObjectAccess.toOrigin(array)));
         Log.print(" [");
-        Log.print(Layout.size(Reference.fromJava(array)));
+        Log.print(Layout.size(Reference.fromJava(array)).toInt());
         Log.println(" bytes]");
         Log.unlock(lockDisabledSafepoints);
     }
@@ -295,7 +291,8 @@ public final class Heap {
     @NEVER_INLINE
     private static void traceCreateTuple(Hub hub, final Object object) {
         final boolean lockDisabledSafepoints = Log.lock();
-        Log.print("Allocated tuple ");
+        Log.printVmThread(VmThread.current(), false);
+        Log.print(": Allocated tuple ");
         Log.print(hub.classActor.name.string);
         Log.print(" at ");
         Log.print(Layout.originToCell(ObjectAccess.toOrigin(object)));
@@ -317,7 +314,8 @@ public final class Heap {
     @NEVER_INLINE
     private static void traceCreateHybrid(DynamicHub hub, final Object hybrid) {
         final boolean lockDisabledSafepoints = Log.lock();
-        Log.print("Allocated hybrid ");
+        Log.printVmThread(VmThread.current(), false);
+        Log.print(": Allocated hybrid ");
         Log.print(hub.classActor.name.string);
         Log.print(" at ");
         Log.print(Layout.originToCell(ObjectAccess.toOrigin(hybrid)));
@@ -339,7 +337,8 @@ public final class Heap {
     @NEVER_INLINE
     private static void traceExpandHybrid(Hybrid hybrid, final Hybrid expandedHybrid) {
         final boolean lockDisabledSafepoints = Log.lock();
-        Log.print("Allocated expanded hybrid ");
+        Log.printVmThread(VmThread.current(), false);
+        Log.print(": Allocated expanded hybrid ");
         final Hub hub = ObjectAccess.readHub(hybrid);
         Log.print(hub.classActor.name.string);
         Log.print(" at ");
@@ -362,7 +361,8 @@ public final class Heap {
     @NEVER_INLINE
     private static void traceClone(Object object, final Object clone) {
         final boolean lockDisabledSafepoints = Log.lock();
-        Log.print("Allocated cloned ");
+        Log.printVmThread(VmThread.current(), false);
+        Log.print(": Allocated cloned ");
         final Hub hub = ObjectAccess.readHub(object);
         Log.print(hub.classActor.name.string);
         Log.print(" at ");

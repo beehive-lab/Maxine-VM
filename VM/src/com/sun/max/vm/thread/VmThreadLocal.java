@@ -590,8 +590,6 @@ public final class VmThreadLocal {
         if (Heap.traceRootScanning()) {
             Log.unlock(lockDisabledSafepoints);
         }
-
-        LOWEST_ACTIVE_STACK_SLOT_ADDRESS.setVariableWord(vmThreadLocals, Address.zero());
     }
 
     public static Pointer vmThreadLocalsEnd(Pointer vmThreadLocals) {

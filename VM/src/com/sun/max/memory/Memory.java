@@ -114,34 +114,38 @@ public final class Memory {
     }
 
     @NO_SAFEPOINTS("speed")
-    public static void set(Pointer pointer, Size numberOfBytes, byte value) {
+    public static void setBytes(Pointer pointer, Size numberOfBytes, byte value) {
         for (Offset i = Offset.zero(); i.lessThan(numberOfBytes.asOffset()); i = i.plus(1)) {
             pointer.writeByte(i, value);
         }
     }
 
     @NO_SAFEPOINTS("speed")
-    public static void set(Pointer pointer, int numberOfWords, Word value) {
+    public static void setWords(Pointer pointer, int numberOfWords, Word value) {
         for (int i = 0; i < (numberOfWords * Word.size()); i += Word.size()) {
             pointer.writeWord(i, value);
         }
     }
 
     @NO_SAFEPOINTS("speed")
-    public static void clear(Pointer pointer, Size numberOfBytes) {
-        set(pointer, numberOfBytes.dividedBy(Word.size()).toInt(), Word.zero());
+    public static void clearBytes(Pointer pointer, Size numberOfBytes) {
+        if (numberOfBytes.isWordAligned()) {
+            setWords(pointer, numberOfBytes.dividedBy(Word.size()).toInt(), Word.zero());
+        } else {
+            setBytes(pointer, numberOfBytes, (byte) 0);
+        }
     }
 
     @NO_SAFEPOINTS("speed")
-    public static void set(Pointer pointer, int numberOfBytes, byte value) {
+    public static void setBytes(Pointer pointer, int numberOfBytes, byte value) {
         for (int i = 0; i < numberOfBytes; i++) {
             pointer.writeByte(i, value);
         }
     }
 
     @NO_SAFEPOINTS("speed")
-    public static void clear(Pointer pointer, int numberOfBytes) {
-        set(pointer, numberOfBytes, (byte) 0);
+    public static void clearBytes(Pointer pointer, int numberOfBytes) {
+        setBytes(pointer, numberOfBytes, (byte) 0);
     }
 
     @NO_SAFEPOINTS("speed")
