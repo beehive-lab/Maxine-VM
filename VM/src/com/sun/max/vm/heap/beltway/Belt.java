@@ -125,7 +125,7 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
         Pointer cell;
         final Pointer oldAllocationMark = mark.asPointer();
 
-        if (VMConfiguration.hostOrTarget().debugging()) {
+        if (MaxineVM.isDebug()) {
             cell = oldAllocationMark.plusWords(1);
         } else {
             cell = oldAllocationMark;
@@ -152,7 +152,7 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
         Pointer cell;
         final Pointer oldAllocationMark = mark.asPointer();
 
-        if (VMConfiguration.hostOrTarget().debugging()) {
+        if (MaxineVM.isDebug()) {
             cell = oldAllocationMark.plusWords(1);
         } else {
             cell = oldAllocationMark;
@@ -175,7 +175,7 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
         Address end;
         do {
             oldAllocationMark = mark.asPointer();
-            if (VMConfiguration.hostOrTarget().debugging()) {
+            if (MaxineVM.isDebug()) {
                 cell = oldAllocationMark.plusWords(1);
             } else {
                 cell = oldAllocationMark;
@@ -193,7 +193,7 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
     public final Pointer gcAllocate(Size size) {
         Pointer cell;
         final Pointer oldAllocationMark = mark.asPointer();
-        if (VMConfiguration.hostOrTarget().debugging()) {
+        if (MaxineVM.isDebug()) {
             cell = oldAllocationMark.plusWords(1);
         } else {
             cell = oldAllocationMark;
@@ -243,7 +243,7 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
         Address end;
         do {
             oldAllocationMark = mark.asPointer();
-            if (VMConfiguration.hostOrTarget().debugging()) {
+            if (MaxineVM.isDebug()) {
                 cell = oldAllocationMark.plusWords(1);
             } else {
                 cell = oldAllocationMark;
@@ -260,7 +260,7 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
         Pointer cell;
         final Pointer oldAllocationMark = mark.asPointer();
 
-        if (VMConfiguration.hostOrTarget().debugging()) {
+        if (MaxineVM.isDebug()) {
             cell = oldAllocationMark.plusWords(1);
         } else {
             cell = oldAllocationMark;

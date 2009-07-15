@@ -216,7 +216,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     }
 
     private void checkCellTag(Pointer cell) {
-        if (VMConfiguration.hostOrTarget().debugging()) {
+        if (MaxineVM.isDebug()) {
             if (!DebugHeap.isValidCellTag(cell.getWord(-1))) {
                 Log.print("cell: ");
                 Log.print(cell);
@@ -229,7 +229,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     }
 
     private void checkGripTag(Grip grip) {
-        if (VMConfiguration.hostOrTarget().debugging()) {
+        if (MaxineVM.isDebug()) {
             if (!grip.isZero()) {
                 checkCellTag(Layout.originToCell(grip.toOrigin()));
             }
@@ -273,7 +273,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     public Pointer allocate(Size size) {
         Pointer cell;
         final Pointer oldAllocationMark = allocationMark().asPointer();
-        if (VMConfiguration.hostOrTarget().debugging()) {
+        if (MaxineVM.isDebug()) {
             cell = oldAllocationMark.plusWords(1);
         } else {
             cell = oldAllocationMark;
@@ -350,7 +350,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
         }
         checkGripTag(grip);
         final Pointer origin = grip.toOrigin();
-        if (!(space.contains(origin) || Heap.bootHeapRegion().contains(origin) || Code.contains(origin))) {
+        if (!(space.contains(origin) || Heap.bootHeapRegion.contains(origin) || Code.contains(origin))) {
             Log.print("invalid grip: ");
             Log.print(origin.asAddress());
             Log.print(" @ ");
@@ -409,7 +409,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
         Pointer cell = space.start().asPointer();
         final Address end = allocationMark();
         while (cell.lessThan(end)) {
-            if (VMConfiguration.hostOrTarget().debugging()) {
+            if (MaxineVM.isDebug()) {
                 cell = cell.plusWords(1);
                 checkCellTag(cell);
             }

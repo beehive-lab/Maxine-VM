@@ -61,7 +61,7 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
     private void verifyCells() {
         Pointer cell = start().asPointer();
         while (cell.lessThan(mark)) {
-            if (VMConfiguration.hostOrTarget().debugging()) {
+            if (MaxineVM.isDebug()) {
                 cell = cell.plusWords(1);
                 if (!DebugHeap.isValidCellTag(cell.getWord(-1))) {
                     Log.print("CELL VISITOR ERROR: missing object tag @ ");
@@ -139,7 +139,7 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
             Log.print(", mutable references end=");
             Log.println(start().plus(referenceMapWords * Word.size()));
         }
-        if (VMConfiguration.hostOrTarget().debugging()) {
+        if (MaxineVM.isDebug()) {
             verifyCells();
         }
 
