@@ -28,7 +28,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.value.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
@@ -75,15 +74,14 @@ public final class ObjectPane extends InspectorScrollPane {
      * @return a new {@link JScrollPane} displaying the "vTable" of a {@link TeleHub}object; null if the table is empty.
      */
     public static ObjectPane createVTablePane(ObjectInspector objectInspector, TeleHub teleHub) {
-        final Hub hub = teleHub.hub();
-        if (hub.vTableLength() == 0) {
+        if (teleHub.vTableLength() == 0) {
             return null;
         }
-        final int vTableStartIndex = Hub.vTableStartIndex();
-        final InspectorTable table = new ArrayElementsTable(objectInspector, Kind.WORD,
-                        objectInspector.inspection().maxVM().vmConfiguration().layoutScheme().wordArrayLayout.getElementOffsetFromOrigin(vTableStartIndex).toInt(),
-                        vTableStartIndex,
-                        hub.vTableLength(),
+        final InspectorTable table = new ArrayElementsTable(objectInspector,
+                        teleHub.vTableKind(),
+                        teleHub.vTableOffset().toInt(),
+                        teleHub.vTableStartIndex(),
+                        teleHub.vTableLength(),
                         "V",
                         WordValueLabel.ValueMode.CALL_ENTRY_POINT);
         return new ObjectPane(objectInspector.inspection(), table);
@@ -93,15 +91,14 @@ public final class ObjectPane extends InspectorScrollPane {
      * @return a new {@link JScrollPane} displaying the "iTable" of a {@link TeleHub} object; null if the table is empty.
      */
     public static ObjectPane createITablePane(ObjectInspector objectInspector, TeleHub teleHub) {
-        final Hub hub = teleHub.hub();
-        if (hub.iTableLength == 0) {
+        if (teleHub.iTableLength() == 0) {
             return null;
         }
-        final int iTableStartIndex = hub.iTableStartIndex;
-        final InspectorTable table = new ArrayElementsTable(objectInspector, Kind.WORD,
-                        objectInspector.inspection().maxVM().vmConfiguration().layoutScheme().wordArrayLayout.getElementOffsetFromOrigin(iTableStartIndex).toInt(),
-                        iTableStartIndex,
-                        hub.iTableLength,
+        final InspectorTable table = new ArrayElementsTable(objectInspector,
+                        teleHub.iTableKind(),
+                        teleHub.iTableOffset().toInt(),
+                        teleHub.iTableStartIndex(),
+                        teleHub.iTableLength(),
                         "I",
                         WordValueLabel.ValueMode.ITABLE_ENTRY);
         return new ObjectPane(objectInspector.inspection(), table);
@@ -111,15 +108,14 @@ public final class ObjectPane extends InspectorScrollPane {
      * @return a new {@link JScrollPane} displaying the "mTable" of a {@link TeleHub} object; null if the table is empty.
      */
     public static ObjectPane createMTablePane(ObjectInspector objectInspector, TeleHub teleHub) {
-        if (teleHub.hub().mTableLength == 0) {
+        if (teleHub.mTableLength() == 0) {
             return null;
         }
-        final MaxVM maxVM = objectInspector.inspection().maxVM();
-        final int mTableStartIndex = maxVM.fields().Hub_mTableStartIndex.readInt(teleHub.reference());
-        final InspectorTable table = new ArrayElementsTable(objectInspector, Kind.INT,
-                        maxVM.vmConfiguration().layoutScheme().intArrayLayout.getElementOffsetFromOrigin(mTableStartIndex).toInt(),
-                        mTableStartIndex,
-                        maxVM.fields().Hub_mTableLength.readInt(teleHub.reference()),
+        final InspectorTable table = new ArrayElementsTable(objectInspector,
+                        teleHub.mTableKind(),
+                        teleHub.mTableOffset().toInt(),
+                        teleHub.mTableStartIndex(),
+                        teleHub.mTableLength(),
                         "M",
                         WordValueLabel.ValueMode.WORD);
         return new ObjectPane(objectInspector.inspection(), table);
@@ -132,12 +128,11 @@ public final class ObjectPane extends InspectorScrollPane {
         if (teleHub.hub().referenceMapLength == 0) {
             return null;
         }
-        final MaxVM maxVM = objectInspector.inspection().maxVM();
-        final int referenceMapStartIndex = maxVM.fields().Hub_referenceMapStartIndex.readInt(teleHub.reference());
-        final InspectorTable table = new ArrayElementsTable(objectInspector, Kind.INT,
-                        maxVM.vmConfiguration().layoutScheme().intArrayLayout.getElementOffsetFromOrigin(referenceMapStartIndex).toInt(),
-                        referenceMapStartIndex,
-                        maxVM.fields().Hub_referenceMapLength.readInt(teleHub.reference()),
+        final InspectorTable table = new ArrayElementsTable(objectInspector,
+                        teleHub.referenceMapKind(),
+                        teleHub.referenceMapOffset().toInt(),
+                        teleHub.referenceMapStartIndex(),
+                        teleHub.referenceMapLength(),
                         "R",
                         WordValueLabel.ValueMode.WORD);
         return new ObjectPane(objectInspector.inspection(), table);

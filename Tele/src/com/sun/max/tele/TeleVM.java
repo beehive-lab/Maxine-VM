@@ -904,8 +904,7 @@ public abstract class TeleVM implements MaxVM {
     public final Hub makeLocalHubForObject(Reference objectReference) throws InvalidReferenceException {
         checkReference(objectReference);
         final Reference hubReference = wordToReference(layoutScheme().generalLayout.readHubReferenceAsWord(objectReference));
-        final Reference classActorReference = fields().Hub_classActor.
-                readReference(hubReference);
+        final Reference classActorReference = fields().Hub_classActor.readReference(hubReference);
         final ClassActor objectClassActor = makeClassActor(classActorReference);
         final ClassActor hubClassActor = makeClassActorForTypeOf(hubReference);
         return (StaticHub.class.isAssignableFrom(hubClassActor.toJava())) ? objectClassActor.staticHub()
