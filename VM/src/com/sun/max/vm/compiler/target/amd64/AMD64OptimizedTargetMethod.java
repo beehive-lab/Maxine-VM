@@ -28,7 +28,7 @@ import com.sun.max.vm.compiler.target.*;
 /**
  * @author Bernd Mathiske
  */
-public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod implements AMD64TargetMethod {
+public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod {
 
     public AMD64OptimizedTargetMethod(ClassMethodActor classMethodActor) {
         super(classMethodActor);
@@ -41,16 +41,16 @@ public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod implements
 
     @Override
     public final int registerReferenceMapSize() {
-        return AMD64TargetMethod.Static.registerReferenceMapSize();
+        return AMD64TargetMethod.registerReferenceMapSize();
     }
 
     @Override
     public final void patchCallSite(int callOffset, Word callEntryPoint) {
-        AMD64TargetMethod.Static.patchCallSite(this, callOffset, callEntryPoint);
+        AMD64TargetMethod.patchCallSite(this, callOffset, callEntryPoint);
     }
 
     @Override
     public void forwardTo(TargetMethod newTargetMethod) {
-        AMD64TargetMethod.Static.forwardTo(this, newTargetMethod);
+        AMD64TargetMethod.forwardTo(this, newTargetMethod);
     }
 }
