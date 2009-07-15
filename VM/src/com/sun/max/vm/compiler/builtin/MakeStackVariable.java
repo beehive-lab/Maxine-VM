@@ -183,45 +183,17 @@ public class MakeStackVariable extends SpecialBuiltin {
     public static native Address makeStackVariable(Reference value);
 
     /**
-     * Forces the register allocator to put a given value on the stack (as opposed to in a register). The given key is
-     * only live (i.e. a stack frame inspector can rely on it to read the value of the stack variable) at certain points
-     * in the method. Specifically, it's valid only when either the address returned by the built-in is live or
-     * {@code value} is live. For example:
+     * Forces the register allocator to put a given value on the stack (as opposed to in a register). That stack slot is
+     * pinned for the remainder of the method (i.e. it will not be reused by the register allocator for another
+     * variable).
      *
-     * <pre>
-     *     1:    makeStackVariable(42, key1);
-     * </pre>
-     *
-     * In this code, {@code key1} is invalid immediately after the machine code sequence generated for line 1.
-     * <p>
-     * In this code sequence:
-     *
-     * <pre>
-     *     1:    long v = 42;
-     *     2:    makeStackVariable(v, key1);
-     *     3:    foo(v);
-     * </pre>
-     *
-     * {@code key1} is only guaranteed to be valid in line 3 (assuming there are no further uses of {@code v}).
-     * <p>
-     * In the following sequence, {@code key1} is valid in lines 3 and 4.
-     *
-     * <pre>
-     *     1:    long v = 42;
-     *     2:    Address vAlias = makeStackVariable(v, key1);
-     *     3:    foo(v);
-     *     4:    bar(vAlias);
-     * </pre>
-     *
-     * @param value
-     *                a value that is to be stack resident. If {@code value} is a lvalue, then the register allocator
-     *                guarantees that it will be allocated on the stack. Otherwise, a stack slot is allocated and
-     *                initialized with {@code value}.
-     * @param key
-     *                an object that can be used to access the value when inspecting the stack frame of the method
-     *                containing this built-in call. This object must be a compile time constant. That is, it must be a
-     *                {@code static} field that is either marked {@code final} or has {@link CONSTANT} or
-     *                {@link CONSTANT_WHEN_NOT_ZERO} applied to its definition.
+     * @param value a value that is to be stack resident. If {@code value} is a lvalue, then the register allocator
+     *            guarantees that it will be allocated on the stack. Otherwise, a stack slot is allocated and
+     *            initialized with {@code value}.
+     * @param key an object that can be used to access the value when inspecting the stack frame of the method
+     *            containing this built-in call. This object must be a compile time constant. That is, it must be a
+     *            {@code static} field that is either marked {@code final} or has {@link CONSTANT} or
+     *            {@link CONSTANT_WHEN_NOT_ZERO} applied to its definition.
      * @return the address of the stack slot where {@code value} resides
      */
     @BUILTIN(builtinClass = MakeStackVariable.class)
