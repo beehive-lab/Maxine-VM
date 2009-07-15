@@ -1159,6 +1159,14 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxVM#setArrayElementWatchpoint(java.lang.String, com.sun.max.tele.object.TeleObject, com.sun.max.vm.type.Kind, int, int, boolean, boolean, boolean, boolean)
+     */
+    public final MaxWatchpoint setArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, boolean after, boolean read, boolean write, boolean exec)
+        throws TooManyWatchpointsException, DuplicateWatchpointException {
+        return teleProcess.watchpointFactory().setArrayElementWatchpoint(description, teleObject, elementKind, arrayOffsetFromOrigin, index, after, read, after, exec);
+    }
+
+    /* (non-Javadoc)
      * @see com.sun.max.tele.MaxVM#setHeaderWatchpoint(java.lang.String, com.sun.max.tele.object.TeleObject, com.sun.max.vm.layout.Layout.HeaderField, boolean, boolean, boolean, boolean)
      */
     public final MaxWatchpoint setHeaderWatchpoint(String description, TeleObject teleObject, HeaderField headerField, boolean after, boolean read, boolean write, boolean exec)

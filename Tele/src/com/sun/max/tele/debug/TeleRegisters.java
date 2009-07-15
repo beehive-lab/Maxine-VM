@@ -26,6 +26,7 @@ import java.util.Arrays;
 import com.sun.max.collect.*;
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.lang.*;
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
@@ -88,6 +89,8 @@ public abstract class TeleRegisters {
      * @return a list of the registers in this set that point into the described area of memory in the VM.
      * Empty if region starts at zero.
      */
+    // TODO (mlvdv) remove
+    @Deprecated
     public Sequence<Symbol> find(Address startAddress, Address endAddress) {
         final AppendableSequence<Symbol> symbols = new ArrayListSequence<Symbol>(4);
         if (!startAddress.isZero()) {
@@ -102,12 +105,44 @@ public abstract class TeleRegisters {
     }
 
     /**
+     * @return a list of the registers in this set that point into the described area of memory in the VM..
+     */
+    public Sequence<Symbol> find(MemoryRegion memoryRegion) {
+        final AppendableSequence<Symbol> symbols = new ArrayListSequence<Symbol>(4);
+        if (memoryRegion != null) {
+            for (int index = 0; index < registerValues.length; index++) {
+                final Address address = registerValues[index];
+                if (memoryRegion.contains(address)) {
+                    symbols.append(symbolizer.fromValue(index));
+                }
+            }
+        }
+        return symbols;
+    }
+
+     /**
      * @return a comma-separated list of the register names in this set that
      * point into the described area of memory in the VM.
      */
     public String findAsNameList(Address startAddress, Address endAddress) {
         String nameList = "";
         for (Symbol registerSymbol : find(startAddress, endAddress)) {
+            if (nameList.length() > 0) {
+                nameList += ",";
+            }
+            nameList += registerSymbol.name();
+        }
+        return nameList;
+    }
+
+
+    /**
+     * @return a comma-separated list of the register names in this set that
+     * point into the described area of memory in the VM.
+     */
+    public String findAsNameList(MemoryRegion memoryRegion) {
+        String nameList = "";
+        for (Symbol registerSymbol : find(memoryRegion)) {
             if (nameList.length() > 0) {
                 nameList += ",";
             }
