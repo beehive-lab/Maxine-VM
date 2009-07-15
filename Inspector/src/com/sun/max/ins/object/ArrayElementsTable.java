@@ -29,6 +29,7 @@ import javax.swing.table.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
+import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -40,6 +41,10 @@ import com.sun.max.vm.value.*;
 /**
  * A table that displays Maxine array elements; for use in an instance of {@link ObjectInspector}.
  * Null array elements can be hidden from the display.
+ * This table is somewhat complex so that it can serve for both ordinary array elements
+ * as well as the various array subsets (tables) in hybrid objects (hubs).  They are distinguished
+ * by a string prefix appearing before any mention of elements, e.g. [3] for an ordinary
+ * array element and M[3] for an element of the MTable in a hub.
  *
  * @author Michael Van De Vanter
  */
@@ -72,16 +77,18 @@ public final class ArrayElementsTable extends InspectorTable {
 
     /**
      * A {@link JTable} specialized to display Maxine array elements.
+     * This table is somewhat complex so that it can serve for both ordinary array elements
+     * as well as the various array subsets (tables) in hybrid objects (hubs).
      *
      * @param objectInspector the parent of this component
      * @param elementKind the Maxine value "kind" of the array elements.
      * @param startOffset memory position relative to the object origin where the displayed array starts
-     * @param startIndex index into the displayed array where the display starts
+     * @param startIndex index into the array where the display starts
      * @param length number of elements to display
      * @param indexPrefix text to prepend to the displayed name(index) of each element.
      * @param wordValueMode how to display word values, based on their presumed use in the VM.
      */
-    ArrayElementsTable(final ObjectInspector objectInspector, final Kind elementKind, int startOffset, int startIndex, int length, String indexPrefix, WordValueLabel.ValueMode wordValueMode) {
+    ArrayElementsTable(final ObjectInspector objectInspector, final Kind elementKind, final int startOffset, int startIndex, int length, final String indexPrefix, WordValueLabel.ValueMode wordValueMode) {
         super(objectInspector.inspection());
         this.objectInspector = objectInspector;
         this.inspection = objectInspector.inspection();
@@ -132,15 +139,13 @@ public final class ArrayElementsTable extends InspectorTable {
                         final int hitRowIndex = rowAtPoint(p);
                         final int columnIndex = getColumnModel().getColumnIndexAtX(p.x);
                         final int modelIndex = getColumnModel().getColumn(columnIndex).getModelIndex();
-                        if (modelIndex == ObjectFieldColumnKind.TAG.ordinal()) {
+                        if (modelIndex == ObjectFieldColumnKind.TAG.ordinal() && hitRowIndex >= 0) {
                             final InspectorMenu menu = new InspectorMenu();
-
-
-                            menu.add(actions().setArrayElementWatchpoint(teleObject, elementKind, ArrayElementsTable.this.startOffset, model.rowToElementIndex(hitRowIndex), "Watch this array element"));
-
-                            final Address address = model.rowToAddress(hitRowIndex);
-
-                            menu.add(actions().removeWatchpoint(address, Size.fromInt(maxVM().wordSize()), "Un-watch this memory word"));
+                            menu.add(actions().setArrayElementWatchpoint(teleObject, elementKind, startOffset, model.rowToElementIndex(hitRowIndex), indexPrefix, "Watch this array element"));
+                            menu.add(actions().setObjectWatchpoint(teleObject, "Watch this array's memory"));
+                            final MemoryRegion memoryRegion = model.rowToMemoryRegion(hitRowIndex);
+                            menu.add(actions().editWatchpoint(memoryRegion, "Edit memory watchpoint"));
+                            menu.add(actions().removeWatchpoint(memoryRegion, "Remove memory watchpoint"));
                             menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                         }
                     }
@@ -277,6 +282,10 @@ public final class ArrayElementsTable extends InspectorTable {
             return objectOrigin.plus(rowToOffset(row)).asAddress();
         }
 
+        public MemoryRegion rowToMemoryRegion(int row) {
+            return new FixedMemoryRegion(rowToAddress(row), Size.fromInt(elementSize), "");
+        }
+
         /**
          * @return the memory watchpoint, if any, that is active at a row
          */
@@ -345,7 +354,7 @@ public final class ArrayElementsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            return getRenderer(model.rowToAddress(row), focus().thread(), model.rowToWatchpoint(row));
+            return getRenderer(model.rowToMemoryRegion(row), focus().thread(), model.rowToWatchpoint(row));
         }
     }
 
