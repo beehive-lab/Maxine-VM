@@ -75,6 +75,9 @@ public abstract class AddressInputField extends JTextField {
 
     public void attemptUpdate() {
         String text = getText().trim();
+        if (text.isEmpty()) {
+            return;
+        }
         if (radix == 16 && text.substring(0, 2).equalsIgnoreCase("0x")) {
             text = text.substring(2);
             setText(text);
