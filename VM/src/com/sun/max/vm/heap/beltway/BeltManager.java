@@ -40,21 +40,15 @@ public final class BeltManager {
     // The List of Belts used
     private static final List<Belt> belts = new ArrayList<Belt>();
 
-    private static Belt applicationHeap;
+    private Belt applicationHeap;
 
-    private static Belt tempBelt;
+    private Belt tempBelt;
 
-    static {
-        MaxineVM.usingTarget(new Runnable() {
-            public void run() {
-                applicationHeap = new Belt();
-                tempBelt = new Belt();
-            }
-        });
-    }
 
 
     public BeltManager() {
+        applicationHeap = new Belt();
+        tempBelt = new Belt();
     }
 
     @INLINE
@@ -178,7 +172,7 @@ public final class BeltManager {
     }
 
     @INLINE
-    public static Belt getApplicationHeap() {
+    public Belt getApplicationHeap() {
         applicationHeap.setStart(BeltwayConfiguration.getApplicationHeapStartAddress());
         applicationHeap.setEnd(BeltwayConfiguration.getApplicationHeapEndAddress());
         return applicationHeap;
