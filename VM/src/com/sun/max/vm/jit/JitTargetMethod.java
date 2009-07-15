@@ -405,7 +405,7 @@ public abstract class JitTargetMethod extends TargetMethod {
         if (referenceMapEditor != null) {
             final Object result = this.referenceMapEditor.compareAndSwap(referenceMapEditor, JitReferenceMapEditor.SENTINEL);
             if (result == JitReferenceMapEditor.SENTINEL) {
-                while (this.referenceMapEditor != null) {
+                while (this.referenceMapEditor.get() != null) {
                     // Spin loop that is free of safepoints and object accesses
                     SpecialBuiltin.pause();
                 }

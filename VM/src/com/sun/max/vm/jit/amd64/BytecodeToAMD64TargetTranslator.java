@@ -75,7 +75,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
 
     @Override
     protected int registerReferenceMapSize() {
-        return AMD64TargetMethod.Static.registerReferenceMapSize();
+        return AMD64TargetMethod.registerReferenceMapSize();
     }
 
     @Override
