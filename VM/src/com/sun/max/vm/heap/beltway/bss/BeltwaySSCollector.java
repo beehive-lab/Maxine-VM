@@ -32,33 +32,24 @@ import com.sun.max.vm.tele.*;
  * @author Christos Kotselidis
  */
 
-public class BeltwaySSCollector implements Runnable {
+public class BeltwaySSCollector extends BeltwayCollector {
 
-    // Dependency injection of the corresponding heap scheme
-    private static BeltwayHeapScheme beltwayHeapScheme;
     private static long collections;
-
-    public void setBeltwayHeapScheme(BeltwayHeapScheme beltwayHeapScheme) {
-        BeltwaySSCollector.beltwayHeapScheme = beltwayHeapScheme;
-    }
-
-    public HeapScheme getBeltwayHeapScheme() {
-        return beltwayHeapScheme;
-    }
 
     public BeltwaySSCollector() {
     }
 
+    @Override
     public void run() {
         collections++;
         if (Heap.verbose()) {
             Log.print("Collection: ");
             Log.println(collections);
         }
-        final BeltwayHeapSchemeBSS beltwayHeapSchemeBSS = (BeltwayHeapSchemeBSS) beltwayHeapScheme;
+        final BeltwayHeapSchemeBSS beltwayHeapSchemeBSS = (BeltwayHeapSchemeBSS) getBeltwayHeapScheme();
         if (Heap.verbose()) {
             Log.println("Verify Heap");
-            beltwayHeapScheme.getVerifier().verifyHeap(beltwayHeapSchemeBSS.getFromSpace().start(), beltwayHeapSchemeBSS.getFromSpace().getAllocationMark(), BeltManager.getApplicationHeap());
+            verifyBelt(beltwayHeapSchemeBSS.getFromSpace());
         }
 
         InspectableHeapInfo.beforeGarbageCollection();
@@ -110,7 +101,8 @@ public class BeltwaySSCollector implements Runnable {
         beltwayHeapSchemeBSS.wipeMemory(beltwayHeapSchemeBSS.getFromSpace());
 
         VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
-        beltwayHeapSchemeBSS.getVerifier().verifyHeap(beltwayHeapSchemeBSS.getToSpace().start(), beltwayHeapSchemeBSS.getToSpace().getAllocationMark(), BeltManager.getApplicationHeap());
+
+        verifyBelt(beltwayHeapSchemeBSS.getToSpace());
         InspectableHeapInfo.afterGarbageCollection();
 
         // Swap semi-spaces. From--> To and To-->From
