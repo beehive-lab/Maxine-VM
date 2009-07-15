@@ -86,6 +86,7 @@ public final class TeleRoots extends AbstractTeleVMHolder{
      * The remote location bits currently at a position in the Inspector root table.
      */
     Address getRawGrip(int index) {
+        //WordArray.set(cachedRoots, index, teleRoots().getWord(0, index).asAddress());
         return WordArray.get(cachedRoots, index);
     }
 
