@@ -40,7 +40,7 @@ long free_memory = -1;
 
 Address memory_allocate(Size size)
 {
-    return (Address) malloc((size_t) size);
+    return (Address) calloc(1, (size_t) size);
 }
 
 Address memory_reallocate(Address pointer, Size size)
