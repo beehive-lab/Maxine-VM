@@ -41,6 +41,9 @@ public class Return extends BlockEnd {
     public Return(Instruction result) {
         super(result == null ? ValueType.VOID_TYPE : result.type(), null, true);
         this.result = result;
+
+        // (tw) TODO: Check why this is necessary? Try method return a+b;
+        pin();
     }
 
     /**

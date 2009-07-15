@@ -20,21 +20,23 @@
  */
 package com.sun.c1x.asm;
 
+import com.sun.c1x.target.x86.*;
 
-public class BufferBlob extends CodeBlob{
 
-    /**
-     * @param name
-     * @param cb
-     * @param headerSize
-     * @param size
-     * @param frameComplete
-     * @param frameSize
-     * @param oopMaps
-     */
-    public BufferBlob(char name, CodeBuffer cb, int headerSize, int size, int frameComplete, int frameSize, OopMapSet oopMaps) {
-        super(name, cb, headerSize, size, frameComplete, frameSize, oopMaps);
-        // TODO Auto-generated constructor stub
+/**
+ * The <code>NativeMovConstReg</code> class definition.
+ *
+ * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
+ *
+ */
+public class NativeMovConstReg {
+
+    public static NativeMovConstReg nativeMoveConstRegAt(Address address) {
+        return null; // TODO Not implemented yet
     }
 
+    public static boolean isNativeMovConstRegAt(Pointer pointer) {
+        return true; // TODO Not implemented yet
+    }
 }

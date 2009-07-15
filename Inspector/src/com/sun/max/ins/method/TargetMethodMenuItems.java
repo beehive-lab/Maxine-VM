@@ -146,7 +146,7 @@ public final class TargetMethodMenuItems extends AbstractInspectionHolder implem
 
         @Override
         protected void procedure() {
-            MemoryWordInspector.create(inspection(), teleTargetMethod.targetCodeRegion().start(), teleTargetMethod.targetCodeRegion().size().toInt()).highlight();
+            MemoryWordInspector.create(inspection(), teleTargetMethod.targetCodeRegion()).highlight();
         }
     }
 

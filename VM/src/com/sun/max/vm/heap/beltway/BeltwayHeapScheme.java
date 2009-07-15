@@ -100,9 +100,9 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     private static final BeltwaySequentialHeapRootsScanner heapRootsScanner = new BeltwaySequentialHeapRootsScanner();
     public static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError();
 
-    protected static BeltwayConfiguration beltwayConfiguration = new BeltwayConfiguration();
-    protected static BeltManager beltManager = new BeltManager();
-    protected static BeltwayCollector beltCollector = new BeltwayCollector();
+    protected BeltwayConfiguration beltwayConfiguration;
+    protected BeltManager beltManager;
+    protected BeltwayCollector beltCollector;
     protected static BeltwayStopTheWorldDaemon collectorThread;
 
     public static boolean outOfMemory = false;
@@ -126,6 +126,9 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     @Override
     public void initialize(MaxineVM.Phase phase) {
         if (MaxineVM.isPrototyping()) {
+            beltwayConfiguration = new BeltwayConfiguration();
+            beltCollector = new BeltwayCollector();
+            beltManager = new BeltManager();
             beltManager.createBelts();
 
             for (int i = 0; i < BeltwayConfiguration.numberOfGCThreads; i++) {

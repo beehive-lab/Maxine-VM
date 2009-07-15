@@ -40,6 +40,10 @@ public class Register {
         return number >= 0;
     }
 
+    public boolean isNoReg() {
+        return number == -1;
+    }
+
     public boolean hasByteRegister() {
         // TODO Auto-generated method stub
         return false;

@@ -56,9 +56,10 @@ public class C1XOptions {
     public static boolean TestPatching                       = ____;
     public static boolean TestSlowPath                       = ____;
     public static boolean PrintInitialBlockList              = ____;
-    public static boolean PrintIR                            = ____;
+    public static boolean PrintIR                            = TRUE;
     public static boolean PrintCFGToFile                     = ____;
     public static boolean PrintMetrics                       = ____;
+    public static boolean PrintCFG                           = ____;
 
     // canonicalizer settings
     public static boolean CanonicalizeInstructions           = TRUE;
@@ -118,6 +119,10 @@ public class C1XOptions {
     public static float   BimorphicProfileRatio              = 0.90f;
     public static int     MaximumTypeSwitchInlining          = 10;
 
+    // Linear scan settings
+    public static boolean StressLinearScan                   = ____;
+    public static int     TraceLinearScanLevel               = 4;
+
     // LIR settings
     public static boolean PrintIRWithLIR                     = ____;
     public static boolean LIRTraceExecution                  = ____;
@@ -134,7 +139,7 @@ public class C1XOptions {
     public static boolean GenerateArrayStoreCheck            = TRUE;
     public static boolean UseBiasedLocking                   = ____;
     public static boolean ImplicitDiv0Checks                 = ____;
-    public static boolean PrintLIR                           = ____;
+    public static boolean PrintLIR                           = TRUE;
     public static boolean Verbose                            = ____;
     public static boolean LIRTracePeephole                   = ____;
 

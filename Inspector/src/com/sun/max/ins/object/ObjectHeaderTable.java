@@ -31,6 +31,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.value.*;
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -93,7 +94,7 @@ public final class ObjectHeaderTable extends InspectorTable {
                 if (selectedRow != -1 && selectedColumn != -1) {
                     // Left button selects a table cell; also cause an address selection at the row.
                     if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1) {
-                        inspection.focus().setAddress(model.rowToAddress(selectedRow));
+                        inspection.focus().setAddress(model.rowToMemoryRegion(selectedRow).start());
                     }
                 }
                 if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
@@ -103,13 +104,14 @@ public final class ObjectHeaderTable extends InspectorTable {
                         final int hitRowIndex = rowAtPoint(p);
                         final int columnIndex = getColumnModel().getColumnIndexAtX(p.x);
                         final int modelIndex = getColumnModel().getColumn(columnIndex).getModelIndex();
-                        if (modelIndex == ObjectFieldColumnKind.TAG.ordinal()) {
+                        if (modelIndex == ObjectFieldColumnKind.TAG.ordinal() && hitRowIndex >= 0) {
                             final InspectorMenu menu = new InspectorMenu();
                             final HeaderField headerField = headerFields.get(hitRowIndex);
                             menu.add(actions().setHeaderWatchpoint(teleObject, headerField, "Watch this field's memory"));
                             menu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));
-                            menu.add(actions().editWatchpoint(teleObject.getHeaderAddress(headerField), teleObject.getHeaderSize(headerField), "Edit memory watchpoint"));
-                            menu.add(actions().removeWatchpoint(teleObject.getHeaderAddress(headerField), teleObject.getHeaderSize(headerField), "Remove memory watchpoint"));
+                            final MemoryRegion headerFieldRegion = teleObject.getCurrentMemoryRegion(headerField);
+                            menu.add(actions().editWatchpoint(headerFieldRegion, "Edit memory watchpoint"));
+                            menu.add(actions().removeWatchpoint(headerFieldRegion, "Remove memory watchpoint"));
                             menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                         }
                     }
@@ -207,16 +209,12 @@ public final class ObjectHeaderTable extends InspectorTable {
             return teleObject.getHeaderOffset(headerFields.get(row));
         }
 
-        public Address rowToAddress(int row) {
-            return objectOrigin.plus(rowToOffset(row)).asAddress();
+        public MemoryRegion rowToMemoryRegion(int row) {
+            return teleObject.getCurrentMemoryRegion(headerFields.get(row));
         }
 
         public TypeDescriptor rowToType(int row) {
             return teleObject.getHeaderType(headerFields.get(row));
-        }
-
-        public Size rowToSize(int row) {
-            return teleObject.getHeaderSize(headerFields.get(row));
         }
 
         public String rowToName(int row) {
@@ -227,9 +225,9 @@ public final class ObjectHeaderTable extends InspectorTable {
          * @return the memory watchpoint, if any, that is active at a row
          */
         public MaxWatchpoint rowToWatchpoint(int row) {
-            final Address address = rowToAddress(row);
+            final MemoryRegion memoryRegion = rowToMemoryRegion(row);
             for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
-                if (watchpoint.contains(address)) {
+                if (watchpoint.overlaps(memoryRegion)) {
                     return watchpoint;
                 }
             }
@@ -281,7 +279,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            return getRenderer(model.rowToAddress(row), focus().thread(), model.rowToWatchpoint(row));
+            return getRenderer(model.rowToMemoryRegion(row), focus().thread(), model.rowToWatchpoint(row));
         }
     }
 

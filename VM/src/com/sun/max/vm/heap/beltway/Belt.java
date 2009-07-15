@@ -51,7 +51,7 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
      */
     private int framePercentageOfUsableMemory;
 
-    private static final int markOffset = ClassActor.fromJava(Belt.class).findFieldActor(SymbolTable.makeSymbol("mark")).offset();
+    private static final  int markOffset = ClassActor.fromJava(Belt.class).findFieldActor(SymbolTable.makeSymbol("mark")).offset();
 
     // The address and the pointer to the address
     // of the previous allocation mark
@@ -209,7 +209,8 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
                 // Allocation Overflow, throw outOfMemory exception
                 return Pointer.zero();
             }
-            if (!end.lessThan(BeltManager.getApplicationHeap().end())) {
+
+            if (!end.lessThan(((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).getBeltManager().getApplicationHeap().end())) {
                 return Pointer.zero();
             }
             if (!(compareAndSwapMark(oldAllocationMark, end) == oldAllocationMark)) {

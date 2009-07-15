@@ -91,7 +91,7 @@ public abstract class LIROperand {
     }
 
     public boolean isConstant() {
-        return this instanceof LIRConstant;
+        return this instanceof LIRConstant && !isIllegal();
     }
 
     public boolean isAddress() {
