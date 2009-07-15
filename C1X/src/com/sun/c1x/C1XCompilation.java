@@ -73,6 +73,9 @@ public class C1XCompilation {
 
     private IR hir;
 
+    private Instruction lastInstructionPrinted; // Debugging only
+    private CFGPrinter cfgPrinter;
+
     /**
      * Creates a new compilation for the specified method and runtime.
      * @param target the target of the compilation, including architecture information
@@ -305,8 +308,10 @@ public class C1XCompilation {
     }
 
     public void maybePrintCurrentInstruction() {
-        // TODO Auto-generated method stub
-
+        if (currentInstruction != null && lastInstructionPrinted != currentInstruction) {
+            lastInstructionPrinted = currentInstruction;
+            currentInstruction.printLine();
+        }
     }
 
     public void bailout(String msg) {
@@ -349,10 +354,28 @@ public class C1XCompilation {
     }
 
     public boolean compile() {
+
+        if (C1XOptions.PrintCompilation) {
+            TTY.println();
+            TTY.println("Compiling method: " + method.toString());
+        }
+
         try {
             hir = new IR(this);
             hir.build();
+
+            CFGPrinter printer = cfgPrinter();
+
+            if (C1XOptions.PrintCFGToFile && printer != null) {
+                printer.printCFG(hir.startBlock, "Before generation of LIR", true, false);
+            }
+
             emitLIR();
+
+            if (C1XOptions.PrintCFGToFile && printer != null) {
+                printer.printCFG(hir.startBlock, "After generation of LIR", false, true);
+            }
+
             emitCode();
         } catch (Bailout b) {
             bailout = b;
@@ -390,5 +413,17 @@ public class C1XCompilation {
 
     public int numberOfBlocks() {
         return totalBlocks;
+    }
+
+    public CFGPrinter cfgPrinter() {
+        if (C1XOptions.PrintCFGToFile && cfgPrinter == null) {
+            OutputStream cfgFileStream = CFGPrinter.cfgFileStream();
+            if (cfgFileStream != null) {
+                cfgPrinter = new CFGPrinter(cfgFileStream);
+                cfgPrinter.printCompilation(method);
+            }
+        }
+
+        return cfgPrinter;
     }
 }

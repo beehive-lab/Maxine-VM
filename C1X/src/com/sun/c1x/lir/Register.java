@@ -30,9 +30,11 @@ package com.sun.c1x.lir;
 public class Register {
 
     public final int number;
+    public final String name;
 
-    public Register(int number) {
+    public Register(int number, String name) {
         this.number = number;
+        this.name = name;
     }
 
     public boolean isValid() {
@@ -63,5 +65,9 @@ public class Register {
         }
 
         return true;
+    }
+
+    public String name() {
+        return name;
     }
 }

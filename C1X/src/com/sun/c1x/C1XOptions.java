@@ -60,6 +60,7 @@ public class C1XOptions {
     public static boolean PrintCFGToFile                     = ____;
     public static boolean PrintMetrics                       = ____;
     public static boolean PrintCFG                           = ____;
+    public static boolean PrintCompilation                   = TRUE;
 
     // canonicalizer settings
     public static boolean CanonicalizeInstructions           = TRUE;
@@ -124,7 +125,7 @@ public class C1XOptions {
     public static int     TraceLinearScanLevel               = 4;
 
     // LIR settings
-    public static boolean PrintIRWithLIR                     = ____;
+    public static boolean PrintIRWithLIR                     = TRUE;
     public static boolean LIRTraceExecution                  = ____;
     public static boolean TwoOperandLIRForm                  = ____;
     public static boolean PatchALot                          = ____;

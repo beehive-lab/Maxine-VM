@@ -276,7 +276,10 @@ public class CFGPrinter {
      */
     private void printLIR(BlockBegin block) {
         begin("LIR");
-        // TODO: Complete once LIR is implemented
+        for (int i = 0; i < block.lir().length(); i++) {
+            block.lir().at(i).printOn(out);
+            out.println(" <|@ ");
+        }
         end("LIR");
     }
 

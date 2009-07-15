@@ -387,11 +387,11 @@ public final class X86LIRGenerator extends LIRGenerator {
             LIROperand fpu0;
             LIROperand fpu1;
             if (x.opcode() == Bytecodes.FREM) {
-                fpu0 = LIROperandFactory.singleFpu(0);
-                fpu1 = LIROperandFactory.singleFpu(1);
+                fpu0 = LIROperandFactory.singleFpu(X86Register.fpu0);
+                fpu1 = LIROperandFactory.singleFpu(X86Register.fpu1);
             } else {
-                fpu0 = LIROperandFactory.doubleFpu(0);
-                fpu1 = LIROperandFactory.doubleFpu(1);
+                fpu0 = LIROperandFactory.doubleFpuX86(X86Register.fpu0);
+                fpu1 = LIROperandFactory.doubleFpuX86(X86Register.fpu1);
             }
             lir().move(right.result(), fpu1); // order of left and right operand is important!
             lir().move(left.result(), fpu0);
@@ -777,8 +777,8 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand calcResult = rlockResult(x);
 
         // sin and cos need two free fpu stack slots, so register two temporary operands
-        LIROperand tmp1 = LIROperandFactory.singleFpu(compilation.runtime.callerSaveFpuRegAt(0).number);
-        LIROperand tmp2 = LIROperandFactory.singleFpu(compilation.runtime.callerSaveFpuRegAt(1).number);
+        LIROperand tmp1 = LIROperandFactory.singleFpu(compilation.runtime.callerSaveFpuRegAt(0));
+        LIROperand tmp2 = LIROperandFactory.singleFpu(compilation.runtime.callerSaveFpuRegAt(1));
 
         if (useFpu) {
             LIROperand tmp = X86FrameMap.fpu0DoubleOpr;
@@ -786,8 +786,8 @@ public final class X86LIRGenerator extends LIRGenerator {
 
             calcInput = tmp;
             calcResult = tmp;
-            tmp1 = LIROperandFactory.singleFpu(compilation.runtime.callerSaveFpuRegAt(1).number);
-            tmp2 = LIROperandFactory.singleFpu(compilation.runtime.callerSaveFpuRegAt(2).number);
+            tmp1 = LIROperandFactory.singleFpu(compilation.runtime.callerSaveFpuRegAt(1));
+            tmp2 = LIROperandFactory.singleFpu(compilation.runtime.callerSaveFpuRegAt(2));
         }
 
         switch (x.intrinsic()) {
