@@ -1101,7 +1101,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             if (teleObject != null) {
-                MemoryWordInspector.create(inspection(), teleObject).highlight();
+                MemoryWordInspector.create(inspection(), teleObject.getCurrentMemoryRegion()).highlight();
             }
             if (address != null) {
                 MemoryWordInspector.create(inspection(), address).highlight();
@@ -2630,7 +2630,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         SetObjectWatchpointAction(TeleObject teleObject, String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
             this.teleObject = teleObject;
-            this.memoryRegion = new FixedMemoryRegion(teleObject.getCurrentCell(), teleObject.getCurrentSize(), "");
+            this.memoryRegion = teleObject.getCurrentMemoryRegion();
             refresh(true);
         }
 
@@ -2685,8 +2685,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             super(inspection(), title == null ? DEFAULT_TITLE : title);
             this.teleObject = teleObject;
             this.fieldActor = fieldActor;
-            this.memoryRegion = new FixedMemoryRegion(teleObject.getFieldAddress(fieldActor), teleObject.getFieldSize(fieldActor), "");
-            refresh(true);
+            this.memoryRegion = teleObject.getCurrentMemoryRegion(fieldActor);
         }
 
         @Override
@@ -2728,6 +2727,72 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
+     * Action: create an object field watchpoint.
+     */
+    final class SetArrayElementWatchpointAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Watch array element";
+        private final TeleObject teleObject;
+        private final Kind elementKind;
+        private final int arrayOffsetFromOrigin;
+        private final int index;
+        private final String indexPrefix;
+        private final MemoryRegion memoryRegion;
+
+        SetArrayElementWatchpointAction(TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, String indexPrefix, String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            this.teleObject = teleObject;
+            this.elementKind = elementKind;
+            this.arrayOffsetFromOrigin = arrayOffsetFromOrigin;
+            this.index = index;
+            this.indexPrefix = indexPrefix;
+            final Pointer address = teleObject.getCurrentOrigin().plus(arrayOffsetFromOrigin + (index * elementKind.width.numberOfBytes));
+            this.memoryRegion = new FixedMemoryRegion(address, Size.fromInt(elementKind.width.numberOfBytes), "");
+            refresh(true);
+        }
+
+        @Override
+        protected void procedure() {
+            try {
+                final String description = "Element " + indexPrefix + "[" + Integer.toString(index) + "] in " + inspection().nameDisplay().referenceLabelText(teleObject);
+                final MaxWatchpoint watchpoint = maxVM().setArrayElementWatchpoint(description, teleObject, elementKind, arrayOffsetFromOrigin, index, true, true, true, true);
+                if (watchpoint == null) {
+                    gui().errorMessage("Watchpoint creation failed");
+                } else {
+                    inspection().focus().setWatchpoint(watchpoint);
+                }
+            } catch (TooManyWatchpointsException tooManyWatchpointsException) {
+                gui().errorMessage(tooManyWatchpointsException.getMessage());
+            } catch (DuplicateWatchpointException duplicateWatchpointException) {
+                gui().errorMessage(duplicateWatchpointException.getMessage());
+            }
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(inspection().hasProcess()
+                && maxVM().watchpointsEnabled()
+                && maxVM().findWatchpoint(memoryRegion) == null);
+        }
+    }
+
+    /**
+     * Creates an action that will create an array element watchpoint.
+     *
+     * @param teleObject a heap object in the VM
+     * @param elementKind type category of the array elements
+     * @param arrayOffsetFromOrigin offset in bytes from the object origin of element 0
+     * @param index index into the array
+     * @param indexPrefix  text to prepend to the displayed name(index) of each element.
+     * @param string a title for the action, use default name if null
+     * @return an Action that will set an array element watchpoint.
+     */
+    public final InspectorAction setArrayElementWatchpoint(TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, String indexPrefix, String string) {
+        return new SetArrayElementWatchpointAction(teleObject, elementKind, arrayOffsetFromOrigin, index, indexPrefix, string);
+    }
+
+
+     /**
      * Action: create an object header field watchpoint.
      */
     final class SetHeaderWatchpointAction extends InspectorAction {
@@ -2741,7 +2806,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             super(inspection(), title == null ? DEFAULT_TITLE : title);
             this.teleObject = teleObject;
             this.headerField = headerField;
-            this.memoryRegion = new FixedMemoryRegion(teleObject.getHeaderAddress(headerField), teleObject.getHeaderSize(headerField), "");
+            this.memoryRegion = teleObject.getCurrentMemoryRegion(headerField);
             refresh(true);
         }
 
@@ -2815,13 +2880,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     /**
      * Creates an action that will allow interactive editing of a watchpoint's settings.
      *
-     * @param address start location of an area of memory
-     * @param size size of an area of memory
+     * @param memoryRegion area of memory
      * @param title a title for the action, use default name if null
-     * @return an Action that will allow interactive editing of an object field watchpoint's settings.
+     * @return an Action that will allow interactive editing of a watchpoint's settings, if present at memory location.
      */
-    public final InspectorAction editWatchpoint(Address address, Size size, String title) {
-        return new EditWatchpointAction(new FixedMemoryRegion(address, size, null), title);
+    public final InspectorAction editWatchpoint(MemoryRegion memoryRegion, String title) {
+        return new EditWatchpointAction(memoryRegion, title);
     }
 
 
@@ -2859,17 +2923,15 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Creates an action that will remove a memory watchpoint.
+     * Creates an action that will remove a watchpoint.
      *
-      * @param address start location of an area of memory
-     * @param size size of an area of memory
-     * @param tiele a title for the action, use default name if null
-     * @return an Action that will remove a memory watchpoint at the address.
+     * @param memoryRegion area of memory
+     * @param title a title for the action, use default name if null
+     * @return an Action that will remove a watchpoint, if present at memory location.
      */
-    public final InspectorAction removeWatchpoint(Address address, Size size, String title) {
-        return new RemoveWatchpointAction(new FixedMemoryRegion(address, size, null), title);
+    public final InspectorAction removeWatchpoint(MemoryRegion memoryRegion, String title) {
+        return new RemoveWatchpointAction(memoryRegion, title);
     }
-
 
 
     /**

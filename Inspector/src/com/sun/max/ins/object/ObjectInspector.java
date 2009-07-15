@@ -110,7 +110,7 @@ public abstract class ObjectInspector extends Inspector {
         frame().menu().add(new InspectorAction(inspection(), "Inspect object's memory words") {
             @Override
             protected void procedure() {
-                MemoryWordInspector.create(inspection(), teleObject).highlight();
+                MemoryWordInspector.create(inspection(), teleObject.getCurrentMemoryRegion()).highlight();
             }
         });
         frame().menu().add(actions().setObjectWatchpoint(teleObject, "Watch object's memory"));
