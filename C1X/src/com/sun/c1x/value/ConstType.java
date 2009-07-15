@@ -287,7 +287,7 @@ public class ConstType extends ValueType {
      * @return a value type representing the byte
      */
     public static ConstType forByte(byte i) {
-        return new ConstType(BasicType.Int, i);
+        return new ConstType(BasicType.Byte, i);
     }
 
     /**
@@ -296,7 +296,7 @@ public class ConstType extends ValueType {
      * @return a value type representing the boolean
      */
     public static ConstType forBoolean(boolean i) {
-        return new ConstType(BasicType.Int, i);
+        return new ConstType(BasicType.Boolean, i);
     }
 
     /**
@@ -305,7 +305,7 @@ public class ConstType extends ValueType {
      * @return a value type representing the char
      */
     public static ConstType forChar(char i) {
-        return new ConstType(BasicType.Int, i);
+        return new ConstType(BasicType.Char, i);
     }
 
     /**
@@ -314,7 +314,7 @@ public class ConstType extends ValueType {
      * @return a value type representing the short
      */
     public static ConstType forShort(short i) {
-        return new ConstType(BasicType.Int, i);
+        return new ConstType(BasicType.Short, i);
     }
 
     /**
@@ -324,6 +324,18 @@ public class ConstType extends ValueType {
      */
     public static ConstType forJsr(int i) {
         return new ConstType(BasicType.Jsr, i);
+    }
+
+    /**
+     * Utility method to create a value type for a word constant.
+     * @param i the number representing the word's value, either an {@link Integer} or a {@link Long}
+     * @return a value type representing the word
+     */
+    public static ConstType forWord(Number i) {
+        if (i instanceof Integer || i instanceof Long) {
+            return new ConstType(BasicType.Word, i); // only Integer and Long are allowed
+        }
+        throw new IllegalArgumentException("cannot create word ConstType for object of type " + i.getClass());
     }
 
     /**
@@ -337,5 +349,4 @@ public class ConstType extends ValueType {
         }
         return new ConstType(BasicType.Object, o);
     }
-
 }

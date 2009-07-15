@@ -18,23 +18,10 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.asm;
 
-
-public class BufferBlob extends CodeBlob{
-
-    /**
-     * @param name
-     * @param cb
-     * @param headerSize
-     * @param size
-     * @param frameComplete
-     * @param frameSize
-     * @param oopMaps
-     */
-    public BufferBlob(char name, CodeBuffer cb, int headerSize, int size, int frameComplete, int frameSize, OopMapSet oopMaps) {
-        super(name, cb, headerSize, size, frameComplete, frameSize, oopMaps);
-        // TODO Auto-generated constructor stub
-    }
-
-}
+/**
+ * This package contains the implementation of the compiler interface required by the C1X compiler,
+ * including adapting the Maxine VM's runtime data structures for use in C1X and also consuming
+ * the output from C1X compilations.
+ */
+package com.sun.max.vm.compiler.c1x;

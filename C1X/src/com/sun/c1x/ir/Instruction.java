@@ -534,26 +534,8 @@ public abstract class Instruction {
         return null;
     }
 
-    /**
-     * Determines whether this instruction has 1 or more uses.
-     * @return true if the instruction is used somewhere, false otherwise
-     */
-    public boolean hasUses() {
-        return useCount() > 0;
-    }
 
-    /**
-     * Gets the number of uses of this instruction.
-     * @return the number of uses
-     */
-    public int useCount() {
-        // TODO Find a different way to solve this!
-        return 1;
-    }
-
-
-
-    public boolean isRoot() {
-        return isPinned() || useCount() > 1;
+    public boolean isRoot(C1XCompilation compilation) {
+        return isPinned() || compilation.hir().useCount(this) > 1;
     }
 }

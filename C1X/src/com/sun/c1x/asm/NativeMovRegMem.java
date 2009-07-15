@@ -21,20 +21,25 @@
 package com.sun.c1x.asm;
 
 
-public class BufferBlob extends CodeBlob{
+/**
+ * The <code>NativeMovRegMem</code> class definition.
+ *
+ * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
+ *
+ */
+public class NativeMovRegMem {
+
+    public static NativeMovRegMem nativeMoveRegMemAt(Pointer pointer) {
+        return null; // TODO
+    }
 
     /**
-     * @param name
-     * @param cb
-     * @param headerSize
-     * @param size
-     * @param frameComplete
-     * @param frameSize
-     * @param oopMaps
+     * @param fieldOffset
      */
-    public BufferBlob(char name, CodeBuffer cb, int headerSize, int size, int frameComplete, int frameSize, OopMapSet oopMaps) {
-        super(name, cb, headerSize, size, frameComplete, frameSize, oopMaps);
-        // TODO Auto-generated constructor stub
+    public void setOffset(int fieldOffset) {
+        // TODO Auto-generated method stub
+
     }
 
 }

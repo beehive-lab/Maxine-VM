@@ -30,9 +30,9 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.object.*;
 import com.sun.max.ins.value.*;
+import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.value.*;
 
 
@@ -44,7 +44,7 @@ import com.sun.max.vm.value.*;
 public final class MemoryWordsTable extends InspectorTable {
 
     //private final ObjectInspector _objectInspector;
-    private final Address startAddress;
+    private final MemoryRegion memoryRegion;
     private final int wordCount;
     private final MemoryWordsTableModel model;
     private final MemoryWordsColumnModel columnModel;
@@ -53,15 +53,15 @@ public final class MemoryWordsTable extends InspectorTable {
     private MaxVMState lastRefreshedState = null;
 
     public MemoryWordsTable(final ObjectInspector objectInspector, TeleObject teleObject) {
-        this(objectInspector, teleObject.getCurrentOrigin(), teleObject.getCurrentSize().toInt());
+        this(objectInspector, teleObject.getCurrentMemoryRegion());
 
     }
 
-    public MemoryWordsTable(final ObjectInspector objectInspector, Address startAddress, int wordCount) {
+    public MemoryWordsTable(final ObjectInspector objectInspector, MemoryRegion memoryRegion) {
         super(objectInspector.inspection());
         //_objectInspector = objectInspector;
-        this.startAddress = startAddress.wordAligned();
-        this.wordCount = wordCount;
+        this.memoryRegion = memoryRegion;
+        this.wordCount = memoryRegion.size().dividedBy(maxVM().wordSize()).toInt();
 
         model = new MemoryWordsTableModel();
         columns = new TableColumn[MemoryWordsColumnKind.VALUES.length()];
@@ -203,11 +203,11 @@ public final class MemoryWordsTable extends InspectorTable {
     private final class AddressRenderer extends LocationLabel.AsAddressWithPosition implements TableCellRenderer {
 
         AddressRenderer(Inspection inspection) {
-              super(inspection, 0, startAddress);
+              super(inspection, 0, memoryRegion.start());
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(startAddress.plus(row * maxVM().wordSize()).toInt());
+            setValue(memoryRegion.start().plus(row * maxVM().wordSize()).toInt());
             return this;
         }
     }
@@ -215,7 +215,7 @@ public final class MemoryWordsTable extends InspectorTable {
     private final class PositionRenderer extends LocationLabel.AsPosition implements TableCellRenderer {
 
         public PositionRenderer(Inspection inspection) {
-            super(inspection, 0, startAddress);
+            super(inspection, 0, memoryRegion.start());
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
@@ -231,7 +231,7 @@ public final class MemoryWordsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
-            setValue(WordValue.from(maxVM().readWord(startAddress.plus(row * maxVM().wordSize()))));
+            setValue(WordValue.from(maxVM().readWord(memoryRegion.start().plus(row * maxVM().wordSize()))));
             return this;
         }
     }
@@ -243,7 +243,7 @@ public final class MemoryWordsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
-            setValue(WordValue.from(maxVM().readWord(startAddress.plus(row * maxVM().wordSize()))));
+            setValue(WordValue.from(maxVM().readWord(memoryRegion.start().plus(row * maxVM().wordSize()))));
             return this;
         }
     }

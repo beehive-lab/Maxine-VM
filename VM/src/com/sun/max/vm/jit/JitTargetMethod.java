@@ -363,16 +363,15 @@ public abstract class JitTargetMethod extends TargetMethod {
             directCallees,
             numberOfIndirectCalls,
             numberOfSafepoints,
-            0,
-            referenceMaps,
+                referenceMaps,
             scalarLiteralBytes,
             referenceLiterals,
             codeOrCodeBuffer,
             encodedInlineDataDescriptors,
             jitStackFrameLayout.frameSize(),
             jitStackFrameLayout.frameReferenceMapSize(),
-            abi,
-            -1);
+            abi
+        );
         this.isDirectCallToRuntime = isDirectRuntimeCall == null ? null : isDirectRuntimeCall.bytes();
         this.bytecodeToTargetCodePositionMap = bytecodeToTargetCodePositionMap;
         this.bytecodeInfos = bytecodeInfos;

@@ -18,23 +18,24 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.asm;
+package com.sun.max.vm.compiler.c1x;
 
+import com.sun.max.vm.*;
 
-public class BufferBlob extends CodeBlob{
-
-    /**
-     * @param name
-     * @param cb
-     * @param headerSize
-     * @param size
-     * @param frameComplete
-     * @param frameSize
-     * @param oopMaps
-     */
-    public BufferBlob(char name, CodeBuffer cb, int headerSize, int size, int frameComplete, int frameSize, OopMapSet oopMaps) {
-        super(name, cb, headerSize, size, frameComplete, frameSize, oopMaps);
-        // TODO Auto-generated constructor stub
+/**
+ * The package class that describes the C1X packages to the Maxine configurator.
+ * @see com.sun.max.MaxPackage
+ *
+ * @author Ben L. Titzer
+ */
+public class Package extends VMPackage {
+    public Package() {
+        super();
     }
 
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+        // TODO: currently C1X is not part of Maxine until there are Scheme implementations
+        return false;
+    }
 }

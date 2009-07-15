@@ -45,7 +45,7 @@ import com.sun.max.vm.value.*;
   */
 public abstract class TeleHybridObject extends TeleObject {
 
-    private static final EnumSet<Layout.HeaderField> headerFields = EnumSet.of(HeaderField.HUB, HeaderField.MISC);
+    private static final EnumSet<Layout.HeaderField> headerFields = EnumSet.of(HeaderField.HUB, HeaderField.MISC, HeaderField.LENGTH);
 
     protected TeleHybridObject(TeleVM teleVM, Reference reference) {
         super(teleVM, reference);
@@ -54,6 +54,11 @@ public abstract class TeleHybridObject extends TeleObject {
     @Override
     public ObjectKind getObjectKind() {
         return ObjectKind.HYBRID;
+    }
+
+    @Override
+    public Size objectSize() {
+        return teleVM().layoutScheme().hybridLayout.getArraySize(readArrayLength());
     }
 
     @Override
@@ -67,7 +72,7 @@ public abstract class TeleHybridObject extends TeleObject {
     }
 
     @Override
-    public Size getFieldSize(FieldActor fieldActor) {
+    protected Size getFieldSize(FieldActor fieldActor) {
         return Size.fromInt(fieldActor.kind.width.numberOfBytes);
     }
 

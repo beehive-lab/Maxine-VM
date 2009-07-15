@@ -462,6 +462,9 @@ public class Util {
         list.set(pos, x);
     }
 
+    public static void breakpoint() {
+        // do nothing.
+    }
     public static void guarantee(boolean b, String string) {
         if (!b) {
             throw new Bailout(string);
@@ -536,5 +539,12 @@ public class Util {
     public static int bytesPerLong() {
         // TODO Auto-generated method stub
         return 0;
+    }
+
+    public static boolean traceLinearScan(int level, String string, Object...objects) {
+        if (C1XOptions.TraceLinearScanLevel >= level) {
+            TTY.println(String.format(string, objects));
+        }
+        return true;
     }
 }

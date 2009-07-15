@@ -21,9 +21,11 @@
 package com.sun.c1x.ci;
 
 /**
- *
+ * This class is implemented by the C1X compiler to implement deoptimization of a compiled
+ * method at a particular code position when requested by the VM.
+ * 
  * @author Thomas Wuerthinger
- *
+ * @author Ben L. Titzer
  */
 public interface CiDeoptimizer {
     void deoptimize(int codePosition);

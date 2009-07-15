@@ -39,6 +39,8 @@ public final class CString {
 
     /**
      * Determines the length of a NULL terminated C string located in natively {@link Memory#allocate(int) allocated} memory.
+     * @param cString the string for which to get the length
+     * @return the length
      */
     public static Size length(Pointer cString) {
         Pointer p = cString;
@@ -53,7 +55,7 @@ public final class CString {
      *
      * @param cString the C string
      * @param length length of C string (@see length)
-     * @param _i index of byte to get
+     * @param index index of byte to get
      * @return -1 if the index is out of range or the byte at the index
      */
     public static int getByte(Pointer cString, Size length, Offset index) {
@@ -75,7 +77,7 @@ public final class CString {
 
     /**
      * Creates a NULL terminated C string (in natively allocated} memory) from a Java string.
-     * The returned C string must be deallocated by {@link Memory#deallocate()} when finished with.
+     * The returned C string must be deallocated by {@link Memory#deallocate(Address)} when finished with.
      */
     public static Pointer utf8FromJava(String string) {
         final byte[] utf8 = Utf8.stringToUtf8(string);
@@ -166,7 +168,7 @@ public final class CString {
      * maximum number of bytes written to the buffer is limited to the number of leading characters of {@code string}
      * that can be completely encoded in {@code bufferSize - 2} bytes.
      *
-     * @param string the String to write to the buffer
+     * @param chars the characters to write to the buffer
      * @param start the index of the character in {@code string} from which to start copying
      * @param buffer a pointer to the beginning of the buffer
      * @param bufferSize the size of the buffer
@@ -260,6 +262,7 @@ public final class CString {
      * the memory for the buffer is the responsibility of the caller.
      *
      * @param strings an array of Java strings
+     * @param appendNullDelimiter <code>true</code> if a null delimiter character '\0' should be appended
      * @return a native buffer than can be cast to the C type {@code char**} and used as the first argument to a C
      *         {@code main} function
      */

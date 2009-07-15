@@ -43,4 +43,12 @@ public class Pointer {
         return 0;
     }
 
+    /**
+     * @return
+     */
+    public long address() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
 }

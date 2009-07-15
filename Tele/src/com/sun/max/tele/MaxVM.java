@@ -695,6 +695,25 @@ public interface MaxVM {
         throws TooManyWatchpointsException, DuplicateWatchpointException;
 
     /**
+     * Creates a new memory watchpoint for an element of a VM heap object (array or hybrid).
+     *
+     * @param description text useful to a person, for example capturing the intent of the watchpoint
+     * @param teleObject a heap object in the VM
+     * @param elementKind type category of the array elements
+     * @param arrayOffsetFromOrigin location in bytes, relative to the object's origin, of array element 0
+     * @param index array index of element
+     * @param after trap after accessing element memory
+     * @param read read access
+     * @param write write access
+     * @param exec execution access
+     * @return a new memory watchpoint
+     * @throws TooManyWatchpointsException
+     * @throws DuplicateWatchpointException when the watchpoint overlaps in whole or part with an existing watchpoint
+     */
+    MaxWatchpoint setArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, boolean after, boolean read, boolean write, boolean exec)
+        throws TooManyWatchpointsException, DuplicateWatchpointException;
+
+    /**
      * Creates a new watchpoint that covers a field in an object's header in the VM.
      * @param description text useful to a person, for example capturing the intent of the watchpoint
      * @param teleObject a heap object in the VM

@@ -24,6 +24,7 @@ import com.sun.c1x.asm.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 
+
 /**
  * The <code>PatchingStub</code> class definition.
  *
@@ -32,13 +33,145 @@ import com.sun.c1x.util.*;
  *
  */
 public class PatchingStub extends CodeStub {
-    public enum PatchID {
-          AccessFieldId,
-          LoadKlassId
-        }
 
-    public PatchingStub(AbstractAssembler masm, PatchID loadklassid) {
-        // TODO Auto-generated constructor stub
+    public static final int PATCHINFOSIZE = 3;
+
+    public enum PatchID {
+        AccessFieldId, LoadKlassId
+    }
+
+    private PatchID id;
+    private Pointer pcStart;
+    private int bytesToCopy;
+    private Label patchedCodeEntry;
+    private Label patchSiteEntry;
+    private Label patchSiteContinuation;
+    private Register obj;
+    private CodeEmitInfo info;
+    private int oopIndex; // index of the patchable oop in nmethod oop table if needed
+    private static int patchInfoOffset;
+
+    public static int patchInfoOffset() {
+        return patchInfoOffset;
+    }
+
+    /**
+     * Constructs a new <code>PatchingStub</code>.
+     *
+     * @param masm
+     * @param id
+     */
+    public PatchingStub(AbstractAssembler masm, PatchID id) {
+        this(masm, id, -1);
+    }
+
+    /**
+     * Constructs a new <code>PatchingStub</code>.
+     *
+     * @param masm
+     * @param id
+     * @param oopIndex
+     */
+    public PatchingStub(AbstractAssembler masm, PatchID id, int oopIndex) {
+        this.id = id;
+        this.oopIndex = oopIndex;
+        info = null;
+        if (masm.compilation.runtime.isMP()) {
+            // force alignment of patch sites on MP hardware so we
+            // can guarantee atomic writes to the patch site.
+            alignPatchSite(masm);
+        }
+        pcStart = masm.pc();
+        masm.bind(patchSiteEntry);
+    }
+
+    public void install(AbstractAssembler masm, LIRPatchCode patchCode, Register obj, CodeEmitInfo info) {
+        this.info = info;
+        this.obj = obj;
+        masm.bind(patchSiteContinuation);
+        bytesToCopy = (int) (masm.pc().address() - pcStart.address());
+        if (id == PatchID.AccessFieldId) {
+            // embed a fixed offset to handle long patches which need to be offset by a word.
+            // the patching code will just add the field offset field to this offset so
+            // that we can reference either the high or low word of a double word field.
+            int fieldOffset = 0;
+            switch (patchCode) {
+                case PatchLow:
+                    fieldOffset = masm.compilation.target.arch.loWordOffsetInBytes;
+                    break;
+                case PatchHigh:
+                    fieldOffset = masm.compilation.target.arch.hiWordOffsetInBytes;
+                    break;
+                case PatchNormal:
+                    fieldOffset = 0;
+                    break;
+                default:
+                    Util.shouldNotReachHere();
+            }
+            NativeMovRegMem nMove = NativeMovRegMem.nativeMoveRegMemAt(pcStart());
+            nMove.setOffset(fieldOffset);
+        } else if (id == PatchID.LoadKlassId) {
+            assert !obj.isNoReg() : "must have register object for loadKlass";
+            // verify that we're pointing at a NativeMovConstReg
+            assert NativeMovConstReg.isNativeMovConstRegAt(pcStart());
+        } else {
+            Util.shouldNotReachHere();
+        }
+        assert bytesToCopy <= (masm.pc().address() - pcStart().address()) : "not enough bytes";
+    }
+
+    /**
+     * Gets the start pc of this code stub.
+     *
+     * @return the pcStart
+     */
+    public Pointer pcStart() {
+        return pcStart;
+    }
+
+    /**
+     * Gets the id of this code stub.
+     *
+     * @return the id
+     */
+    public PatchID id() {
+        return id;
+    }
+
+    /**
+     * Gets the patchedCodeEntry of this class.
+     *
+     * @return the patchedCodeEntry
+     */
+    public Label patchedCodeEntry() {
+        return patchedCodeEntry;
+    }
+
+    /**
+     * Gets the obj of this class.
+     *
+     * @return the obj
+     */
+    public Register obj() {
+        return obj;
+    }
+
+    /**
+     * Gets the oopIndex of this class.
+     *
+     * @return the oopIndex
+     */
+    public int oopIndex() {
+        return oopIndex;
+    }
+
+    @Override
+    public void visit(LIRVisitState visitor) {
+        visitor.doSlowCase(info);
+    }
+
+    private void alignPatchSite(AbstractAssembler masm) {
+        // TODO: Platform dependent. Only needed for x86
     }
 
     @Override
@@ -49,98 +182,7 @@ public class PatchingStub extends CodeStub {
 
     @Override
     public void printName(LogStream out) {
-        // TODO Auto-generated method stub
-
+        out.print("PatchingStub");
     }
-
-
-    public PatchID id() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public void install(AbstractAssembler masm, LIRPatchCode patchCode, Register obj, CodeEmitInfo info) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public Pointer pcStart() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-//     public static final int PATCHINFOSIZE = 3;
-//
-//
-//      private PatchID       id;
-//      private address       pcStart;
-//      private int           bytesToCopy;
-//      private Label         patchedCodeEntry;
-//      private Label         patchSiteEntry;
-//      private Label         patchSiteContinuation;
-//      private Register      obj;
-//      private CodeEmitInfo info;
-//      private int           oopIndex;  // index of the patchable oop in nmethod oop table if needed
-//      private static int    patchInfoOffset;
-//
-//      private void alignPatchSite(MacroAssembler masm);
-//
-//       public static int patchInfoOffset() { return patchInfoOffset; }
-//
-//       public PatchingStub(MacroAssembler masm, PatchID id, int oopIndex = -1):
-//            id(id)
-//          , info(null)
-//          , oopIndex(oopIndex) {
-//          if (os.isMP()) {
-//            // force alignment of patch sites on MP hardware so we
-//            // can guarantee atomic writes to the patch site.
-//            alignPatchSite(masm);
-//          }
-//          pcStart = masm.pc();
-//          masm.bind(patchSiteEntry);
-//        }
-//
-//        void install(MacroAssembler masm, LIRPatchCode patchCode, Register obj, CodeEmitInfo info) {
-//          info = info;
-//          obj = obj;
-//          masm.bind(patchSiteContinuation);
-//          bytesToCopy = masm.pc() - pcStart();
-//          if (id == PatchingStub.accessFieldId) {
-//            // embed a fixed offset to handle long patches which need to be offset by a word.
-//            // the patching code will just add the field offset field to this offset so
-//            // that we can refernce either the high or low word of a double word field.
-//            int fieldOffset = 0;
-//            switch (patchCode) {
-//            case lirPatchLow:         fieldOffset = loWordOffsetInBytes; break;
-//            case lirPatchHigh:        fieldOffset = hiWordOffsetInBytes; break;
-//            case lirPatchNormal:      fieldOffset = 0;                       break;
-//            default: Util.shouldNotReachHere();
-//            }
-//            NativeMovRegMem nMove = nativeMovRegMemAt(pcStart());
-//            nMove.setOffset(fieldOffset);
-//          } else if (id == loadKlassId) {
-//            assert obj != noreg :  "must have register object for loadKlass";
-//      #ifdef ASSERT
-//            // verify that we're pointing at a NativeMovConstReg
-//            nativeMovConstRegAt(pcStart());
-//      #endif
-//          } else {
-//            Util.shouldNotReachHere();
-//          }
-//          assert bytesToCopy <= (masm.pc() - pcStart()) :  "not enough bytes";
-//        }
-//
-//        address pcStart()                        { return pcStart; }
-//        PatchID id()                              { return id; }
-//
-//        virtual void emitCode(LIRAssembler e);
-//        virtual CodeEmitInfo info()              { return info; }
-//        virtual void visit(LIROpVisitState visitor) {
-//          visitor.doSlowCase(info);
-//        }
-//      #ifndef PRODUCT
-//        virtual void printName(outputStream out)  { out.print("PatchingStub"); }
-//      #endif // PRODUCT
-
 
 }
