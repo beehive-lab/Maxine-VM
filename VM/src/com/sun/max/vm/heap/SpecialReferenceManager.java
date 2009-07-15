@@ -140,18 +140,21 @@ public class SpecialReferenceManager {
             LOCK.notifyAll();
         }
 
+        // Special reference map of Inspector
         if (MaxineMessenger.isVmInspected()) {
-            for (int i = 0; i < InspectableHeapInfo.MAX_NUMBER_OF_ROOTS; i++) {
-                final Pointer rootPointer = InspectableHeapInfo.roots.getWord(i).asPointer();
-                if (!rootPointer.isZero()) {
-                    final Grip referent = Grip.fromOrigin(rootPointer);
-                    if (gripForwarder.isReachable(referent)) {
-                        rootPointer.setWord(gripForwarder.getForwardGrip(referent).toOrigin());
-                        // TupleAccess.writeObject(ref, referentField.offset(), gripForwarder.getForwardGrip(referent));
-                    } else {
-                        rootPointer.setWord(Pointer.zero());
-                        // TupleAccess.writeObject(ref, referentField.offset(), null);
-                    }
+            processInspectableWeakReferencesMemory(gripForwarder);
+        }
+    }
+
+    private static void processInspectableWeakReferencesMemory(GripForwarder gripForwarder) {
+        for (int i = 0; i < InspectableHeapInfo.MAX_NUMBER_OF_ROOTS; i++) {
+            final Pointer rootPointer = InspectableHeapInfo.roots.getWord(i).asPointer();
+            if (!rootPointer.isZero()) {
+                final Grip referent = Grip.fromOrigin(rootPointer);
+                if (gripForwarder.isReachable(referent)) {
+                    InspectableHeapInfo.roots.setWord(i, gripForwarder.getForwardGrip(referent).toOrigin());
+                } else {
+                    InspectableHeapInfo.roots.setWord(i, Pointer.zero());
                 }
             }
         }
