@@ -62,12 +62,17 @@ public class TeleTupleObject extends TeleObject {
     }
 
     @Override
+    public Size objectSize() {
+        return classActorForType().dynamicTupleSize();
+    }
+
+    @Override
     public Address getFieldAddress(FieldActor fieldActor) {
         return getCurrentOrigin().plus(fieldActor.offset());
     }
 
     @Override
-    public Size getFieldSize(FieldActor fieldActor) {
+    protected Size getFieldSize(FieldActor fieldActor) {
         return Size.fromInt(fieldActor.kind.width.numberOfBytes);
     }
 

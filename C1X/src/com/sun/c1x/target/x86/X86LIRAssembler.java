@@ -33,7 +33,7 @@ import com.sun.c1x.target.x86.Address.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
-public abstract class X86LIRAssembler extends LIRAssembler {
+public class X86LIRAssembler extends LIRAssembler {
 
     private static final long NULLWORD = 0;
     private static final X86Register ICKlass = X86Register.rax;
@@ -196,6 +196,11 @@ public abstract class X86LIRAssembler extends LIRAssembler {
 
     private LIROperand osrBufferPointer() {
         return X86FrameMap.asPointerOpr(receiverOpr().asRegister(), compilation.target.arch);
+    }
+
+    @Override
+    protected void emitLabel(LIRLabel op) {
+        masm.bind(op.label());
     }
 
     @Override
@@ -2873,6 +2878,11 @@ public abstract class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
+    protected void emitRTCall(LIRRTCall op) {
+      rtCall(op.result(), op.address(), op.arguments(), op.tmp(), op.info());
+    }
+
+    @Override
     protected void emitStaticCallStub() {
         Pointer callPc = lir().pc();
         Pointer stub = lir().startAStub(callStubSize);
@@ -3575,5 +3585,74 @@ public abstract class X86LIRAssembler extends LIRAssembler {
     @Override
     protected void peephole(LIRList list) {
         // Do nothing for now
+    }
+
+    @Override
+    protected void emitLIROp2(LIROp2 op) {
+        switch (op.code()) {
+            case Cmp:
+                if (op.info() != null) {
+                    assert op.inOpr1().isAddress() || op.inOpr2().isAddress() : "shouldn't be codeemitinfo for non-Pointer operands";
+                    addDebugInfoForNullCheckHere(op.info()); // exception possible
+                }
+                compOp(op.condition(), op.inOpr1(), op.inOpr2(), op);
+                break;
+
+            case Cmpl2i:
+            case Cmpfd2i:
+            case Ucmpfd2i:
+                compFl2i(op.code(), op.inOpr1(), op.inOpr2(), op.resultOpr(), op);
+                break;
+
+            case Cmove:
+                cmove(op.condition(), op.inOpr1(), op.inOpr2(), op.resultOpr());
+                break;
+
+            case Shl:
+            case Shr:
+            case Ushr:
+                if (op.inOpr2().isConstant()) {
+                    shiftOp(op.code(), op.inOpr1(), op.inOpr2().asConstantPtr().asJint(), op.resultOpr());
+                } else {
+                    shiftOp(op.code(), op.inOpr1(), op.inOpr2(), op.resultOpr(), op.tmpOpr());
+                }
+                break;
+
+            case Add:
+            case Sub:
+            case Mul:
+            case MulStrictFp:
+            case Div:
+            case DivStrictFp:
+            case Rem:
+                assert op.fpuPopCount() < 2 : "";
+                arithOp(op.code(), op.inOpr1(), op.inOpr2(), op.resultOpr(), op.info(), op.fpuPopCount() == 1);
+                break;
+
+            case Abs:
+            case Sqrt:
+            case Sin:
+            case Tan:
+            case Cos:
+            case Log:
+            case Log10:
+                intrinsicOp(op.code(), op.inOpr1(), op.inOpr2(), op.resultOpr(), op);
+                break;
+
+            case LogicAnd:
+            case LogicOr:
+            case LogicXor:
+                logicOp(op.code(), op.inOpr1(), op.inOpr2(), op.resultOpr());
+                break;
+
+            case Throw:
+            case Unwind:
+                throwOp(op.inOpr1(), op.inOpr2(), op.info(), op.code() == LIROpcode.Unwind);
+                break;
+
+            default:
+                Util.unimplemented();
+                break;
+        }
     }
 }

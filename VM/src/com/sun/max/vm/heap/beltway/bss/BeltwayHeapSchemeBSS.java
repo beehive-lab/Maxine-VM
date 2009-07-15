@@ -69,7 +69,7 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
             beltCollectorBSS.setBeltwayHeapScheme(this);
             beltCollector.setRunnable(beltCollectorBSS);
             heapVerifier.initialize(this);
-            heapVerifier.getRootsVerifier().setFromSpace(BeltManager.getApplicationHeap());
+            heapVerifier.getRootsVerifier().setFromSpace(beltManager.getApplicationHeap());
             heapVerifier.getRootsVerifier().setToSpace(getToSpace());
             HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "Scavenge");
         }

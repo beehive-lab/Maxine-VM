@@ -22,9 +22,10 @@ package com.sun.c1x.target.x86;
 
 import com.sun.c1x.target.Backend;
 import com.sun.c1x.target.Target;
+import com.sun.c1x.asm.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.gen.*;
-import com.sun.c1x.lir.LIRAssembler;
-import com.sun.c1x.util.Util;
+import com.sun.c1x.lir.*;
 import com.sun.c1x.C1XCompilation;
 
 /**
@@ -55,6 +56,15 @@ public class X86Backend extends Backend {
      */
     @Override
     public LIRAssembler newLIRAssembler(C1XCompilation compilation) {
-        throw Util.unimplemented();
+        return new X86LIRAssembler(compilation);
+    }
+
+    @Override
+    public FrameMap newFrameMap(CiMethod method, int numberOfLocks, int maxStack) {
+        return new X86FrameMap(method, numberOfLocks, maxStack);
+    }
+    @Override
+    public AbstractAssembler newAssembler(C1XCompilation compilation, CodeBuffer code) {
+        return new X86MacroAssembler(compilation, code);
     }
 }

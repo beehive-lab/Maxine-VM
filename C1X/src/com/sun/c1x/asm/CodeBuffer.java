@@ -40,10 +40,10 @@ public class CodeBuffer {
     };
 
     int codeSize;
+    private CodeSection instrSection = new CodeSection();
 
     public CodeSection insts() {
-        // TODO Auto-generated method stub
-        return null;
+        return instrSection;
     }
 
     public OopRecorder oopRecorder() {

@@ -40,6 +40,8 @@ import java.util.*;
  * @author Ben L. Titzer
  */
 public class GraphBuilder {
+
+    final IR ir;
     final C1XCompilation compilation;
 
     // for each instance of GraphBuilder
@@ -47,8 +49,6 @@ public class GraphBuilder {
     ValueMap localValueMap;                // map of values for local value numbering
     MemoryBuffer memoryMap;
     int instrCount;                        // for bailing out in pathological jsr/ret cases
-    BlockBegin startBlock;                 // the start block
-    BlockBegin osrEntryBlock;              // the osr entry block
     ValueStack initialState;               // The state for the start block
 
     BlockBegin curBlock;                   // the current block
@@ -57,13 +57,15 @@ public class GraphBuilder {
     Instruction lastInstr;                 // the last instruction added
     boolean skipBlock;                     // skip processing of the rest of this block
 
+
     /**
      * Creates a new instance and builds the graph for a the specified IRScope.
      * @param compilation the compilation
      * @param scope the top IRScope
      */
-    public GraphBuilder(C1XCompilation compilation, IRScope scope) {
+    public GraphBuilder(C1XCompilation compilation, IRScope scope, IR ir) {
         this.compilation = compilation;
+        this.ir = ir;
         if (C1XOptions.EliminateFieldAccess) {
             this.memoryMap = new MemoryBuffer();
         }
@@ -149,10 +151,10 @@ public class GraphBuilder {
             fillSyncHandler(lock, syncHandler, true);
         }
 
-        this.startBlock = setupStartBlock(osrBCI, start, osrEntryBlock, initialState);
+        ir.startBlock = setupStartBlock(osrBCI, start, ir.osrEntryBlock, initialState);
         // eliminate redundant phis
         if (C1XOptions.SimplifyPhis) {
-            new PhiSimplifier(this.startBlock);
+            new PhiSimplifier(ir.startBlock);
         }
 
         if (osrBCI >= 0) {
@@ -166,10 +168,6 @@ public class GraphBuilder {
 
     private CiExceptionHandler newDefaultExceptionHandler(CiMethod method) {
         return constantPool().newExceptionHandler(0, method.codeSize(), -1, 0);
-    }
-
-    public BlockBegin start() {
-        return startBlock;
     }
 
     void pushRootScope(IRScope scope, BlockMap blockMap, BlockBegin start) {
@@ -1752,22 +1750,22 @@ public class GraphBuilder {
         s.next(); // XXX: why go to next bytecode?
 
         // create a new block to contain the OSR setup code
-        osrEntryBlock = new BlockBegin(osrBCI);
-        osrEntryBlock.setBlockID(compilation.nextBlockNumber());
-        osrEntryBlock.setOsrEntry(true);
-        osrEntryBlock.setDepthFirstNumber(0);
+        ir.osrEntryBlock = new BlockBegin(osrBCI);
+        ir.osrEntryBlock.setBlockID(compilation.nextBlockNumber());
+        ir.osrEntryBlock.setOsrEntry(true);
+        ir.osrEntryBlock.setDepthFirstNumber(0);
 
         // get the target block of the OSR
         BlockBegin target = scopeData.blockAt(osrBCI);
         assert target != null && target.isOsrEntry();
 
         ValueStack state = target.state().copy();
-        osrEntryBlock.setState(state);
+        ir.osrEntryBlock.setState(state);
 
         killValueAndMemoryMaps();
-        curBlock = osrEntryBlock;
+        curBlock = ir.osrEntryBlock;
         curState = state.copy();
-        lastInstr = osrEntryBlock;
+        lastInstr = ir.osrEntryBlock;
 
         // create the entry instruction which represents the OSR state buffer
         // input from interpreter / JIT
@@ -1796,8 +1794,8 @@ public class GraphBuilder {
         state.clearLocals();
         Goto g = new Goto(target, state.copy(), false);
         append(g);
-        osrEntryBlock.setEnd(g);
-        target.merge(osrEntryBlock.end().state());
+        ir.osrEntryBlock.setEnd(g);
+        target.merge(ir.osrEntryBlock.end().state());
     }
 
     BlockEnd iterateBytecodesForBlock(int bci) {

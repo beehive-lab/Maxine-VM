@@ -18,6 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+
 package com.sun.c1x.target.x86;
 
 import java.util.*;
@@ -42,6 +43,8 @@ public final class X86LIRGenerator extends LIRGenerator {
     public X86LIRGenerator(C1XCompilation compilation) {
         super(compilation);
     }
+
+
 
     @Override
     protected LIROperand exceptionOopOpr() {
@@ -216,7 +219,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitStoreIndexed(StoreIndexed x) {
-        assert x.isRoot() : "";
+        assert x.isRoot(compilation) : "";
         boolean needsRangeCheck = true;
         boolean useLength = x.length() != null;
         boolean objStore = x.elementType() == BasicType.Jsr || x.elementType() == BasicType.Object;
@@ -290,7 +293,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitMonitorEnter(MonitorEnter x) {
-        assert x.isRoot() : "";
+        assert x.isRoot(compilation) : "";
         LIRItem obj = new LIRItem(x.object(), this);
         obj.loadItem();
 
@@ -316,7 +319,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitMonitorExit(MonitorExit x) {
-        assert x.isRoot() : "";
+        assert x.isRoot(compilation) : "";
 
         LIRItem obj = new LIRItem(x.object(), this);
         obj.dontLoadItem();
@@ -577,7 +580,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     public void visitArithmeticOp(ArithmeticOp x) {
         // when an operand with use count 1 is the left operand, then it is
         // likely that no move for 2-operand-LIR-form is necessary
-        if (x.isCommutative() && !(x.y() instanceof Constant) && x.x().useCount() > x.y().useCount()) {
+        if (x.isCommutative() && !(x.y() instanceof Constant) && ir.useCount(x.x()) > ir.useCount(x.y())) {
             x.swapOperands();
         }
 
@@ -620,7 +623,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     public void visitLogicOp(LogicOp x) {
         // when an operand with use count 1 is the left operand, then it is
         // likely that no move for 2-operand-LIR-form is necessary
-        if (x.isCommutative() && (!(x.y() instanceof Constant)) && x.x().useCount() > x.y().useCount()) {
+        if (x.isCommutative() && (!(x.y() instanceof Constant)) && ir.useCount(x.x()) > ir.useCount(x.y())) {
             x.swapOperands();
         }
 
