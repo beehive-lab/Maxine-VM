@@ -78,6 +78,16 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         this.exec = exec;
     }
 
+    private TeleWatchpoint(Factory factory, String description, MemoryRegion memoryRegion, boolean after, boolean read, boolean write, boolean exec) {
+        super(memoryRegion);
+        setDescription(description);
+        this.factory = factory;
+        this.after = after;
+        this.read = read;
+        this.write = write;
+        this.exec = exec;
+    }
+
     @Override
     public boolean equals(Object o) {
         // For the purposes of the collection, define ordering and equality in terms of start location only.
@@ -186,7 +196,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         private final TeleObject teleObject;
 
         public TeleObjectWatchpoint(Factory factory, String description, TeleObject teleObject, boolean after, boolean read, boolean write, boolean exec) {
-            super(factory, description, teleObject.getCurrentCell(), teleObject.getCurrentSize(), after, read, write, exec);
+            super(factory, description, teleObject.getCurrentMemoryRegion(), after, read, write, exec);
             this.teleObject = teleObject;
         }
 
@@ -208,7 +218,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         private final TeleObject teleObject;
 
         public TeleFieldWatchpoint(Factory factory, String description, TeleObject teleObject, FieldActor fieldActor, boolean after, boolean read, boolean write, boolean exec) {
-            super(factory, description, teleObject.getFieldAddress(fieldActor), teleObject.getFieldSize(fieldActor), after, read, write, exec);
+            super(factory, description, teleObject.getCurrentMemoryRegion(fieldActor), after, read, write, exec);
             this.teleObject = teleObject;
         }
 
@@ -255,7 +265,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         private final HeaderField headerField;
 
         public TeleHeaderWatchpoint(Factory factory, String description, TeleObject teleObject, HeaderField headerField, boolean after, boolean read, boolean write, boolean exec) {
-            super(factory, description, teleObject.getHeaderAddress(headerField), teleObject.getHeaderSize(headerField), after, read, write, exec);
+            super(factory, description, teleObject.getCurrentMemoryRegion(headerField), after, read, write, exec);
             this.teleObject = teleObject;
             this.headerField = headerField;
         }
@@ -375,6 +385,23 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
             return addWatchpoint(teleWatchpoint);
         }
 
+        /**
+         * Creates a new watchpoint that covers an element in an array in the VM.
+         *
+         * @param description text useful to a person, for example capturing the intent of the watchpoint
+         * @param teleObject a heap object in the VM that contains the array
+         * @param elementKind the type category of the array elements
+         * @param arrayOffsetFromOrigin location relative to the object's origin of element 0 in the array
+         * @param index index of the element to watch
+         * @param after before or after watchpoint
+         * @param read read watchpoint
+         * @param write write watchpoint
+         * @param exec execute watchpoint
+         *
+         * @return a new watchpoint, if successful
+         * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
+         * @throws DuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
+         */
         public synchronized TeleWatchpoint setArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, boolean after, boolean read, boolean write, boolean exec)
             throws TooManyWatchpointsException, DuplicateWatchpointException {
             final TeleWatchpoint teleWatchpoint =
@@ -384,6 +411,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
 
         /**
          * Creates a new watchpoint that covers a field in an object's header in the VM.
+         *
          * @param description text useful to a person, for example capturing the intent of the watchpoint
          * @param teleObject a heap object in the VM
          * @param headerField a field in the object's header

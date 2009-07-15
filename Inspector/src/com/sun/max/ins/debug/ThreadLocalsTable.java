@@ -31,6 +31,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.object.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
+import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
@@ -96,11 +97,12 @@ public final class ThreadLocalsTable extends InspectorTable {
                         final int hitRowIndex = rowAtPoint(p);
                         final int columnIndex = getColumnModel().getColumnIndexAtX(p.x);
                         final int modelIndex = getColumnModel().getColumn(columnIndex).getModelIndex();
-                        if (modelIndex == ObjectFieldColumnKind.TAG.ordinal()) {
+                        if (modelIndex == ObjectFieldColumnKind.TAG.ordinal() && hitRowIndex >= 0) {
                             final InspectorMenu menu = new InspectorMenu();
-                            final Address address = model.rowToAddress(hitRowIndex);
-                            menu.add(actions().setWordWatchpoint(address, "Watch this memory word"));
-                            menu.add(actions().removeWatchpoint(address, Size.fromInt(maxVM().wordSize()), "Un-watch this memory word"));
+                            final MemoryRegion memoryRegion = model.rowToMemoryRegion(hitRowIndex);
+                            menu.add(actions().setWordWatchpoint(memoryRegion.start(), "Watch this memory location"));
+                            menu.add(actions().editWatchpoint(memoryRegion, "Edit memory watchpoint"));
+                            menu.add(actions().removeWatchpoint(memoryRegion, "Remove memory watchpoint"));
                             menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                         }
                     }
@@ -177,7 +179,8 @@ public final class ThreadLocalsTable extends InspectorTable {
 
 /**
      * Models the name/value pairs in a VM thread locals.
-     * The value of each cell is the index of the name/value pair
+     * The value of each cell is the index of the name/value pair.
+     * The values are all one word in length.
      */
     private final class ThreadLocalsTableModel extends AbstractTableModel {
 
@@ -202,8 +205,8 @@ public final class ThreadLocalsTable extends InspectorTable {
             return row * maxVM().wordSize();
         }
 
-        public Address rowToAddress(int row) {
-            return values.start().plus(rowToOffset(row));
+        public MemoryRegion rowToMemoryRegion(int row) {
+            return new FixedMemoryRegion(values.start().plus(rowToOffset(row)), Size.fromInt(maxVM().wordSize()), "");
         }
 
 
@@ -212,7 +215,7 @@ public final class ThreadLocalsTable extends InspectorTable {
          */
         public MaxWatchpoint rowToWatchpoint(int row) {
             for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
-                if (watchpoint.contains(rowToAddress(row))) {
+                if (watchpoint.overlaps(rowToMemoryRegion(row))) {
                     return watchpoint;
                 }
             }
@@ -264,7 +267,7 @@ public final class ThreadLocalsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            return getRenderer(model.rowToAddress(row), thread, model.rowToWatchpoint(row));
+            return getRenderer(model.rowToMemoryRegion(row), thread, model.rowToWatchpoint(row));
         }
     }
 
@@ -300,7 +303,7 @@ public final class ThreadLocalsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             setValue(VmThreadLocal.values().get(row).name);
-            setToolTipText("+" + model.rowToOffset(row) + ", 0x" + model.rowToAddress(row).toHexString());
+            setToolTipText("+" + model.rowToOffset(row) + ", 0x" + model.rowToMemoryRegion(row).start().toHexString());
             return this;
         }
     }

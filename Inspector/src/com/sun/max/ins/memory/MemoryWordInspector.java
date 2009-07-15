@@ -34,10 +34,10 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.lang.*;
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.runtime.*;
@@ -358,7 +358,7 @@ public final class MemoryWordInspector extends Inspector {
     /**
      * Displays and highlights a new word inspector for a region of memory in the VM.
      */
-    public static MemoryWordInspector create(Inspection inspection, Address address, int numberOfWords) {
+    private static MemoryWordInspector create(Inspection inspection, Address address, int numberOfWords) {
         return new MemoryWordInspector(inspection, address, numberOfWords);
     }
 
@@ -370,12 +370,10 @@ public final class MemoryWordInspector extends Inspector {
     }
 
     /**
-     * Displays a new word inspector for a region of memory at the beginning of an object in the VM.
+     * Displays a new word inspector for a region of memory t in the VM.
      */
-    public static MemoryWordInspector create(Inspection inspection, TeleObject teleObject) {
-        final Pointer cell = teleObject.getCurrentCell();
-        final int size = teleObject.getCurrentSize().toInt();
-        return create(inspection, cell, size);
+    public static MemoryWordInspector create(Inspection inspection, MemoryRegion memoryRegion) {
+        return create(inspection, memoryRegion.start(), memoryRegion.size().dividedBy(inspection.maxVM().wordSize()).toInt());
     }
 
     @Override
