@@ -26,8 +26,11 @@ import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
+import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.stub.*;
+import com.sun.c1x.target.x86.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
@@ -38,7 +41,7 @@ import com.sun.c1x.value.*;
  * @author Thomas Wuerthinger
  *
  */
-public abstract class LIRGenerator extends InstructionVisitor {
+public abstract class LIRGenerator extends InstructionVisitor implements BlockClosure {
 
     // the range of values in a lookupswitch or tableswitch statement
     private static final class SwitchRange {
@@ -54,18 +57,18 @@ public abstract class LIRGenerator extends InstructionVisitor {
     };
 
     // Flags that can be set on vregs
-    enum VregFlag {
+    protected enum VregFlag {
         MustStartInMemory, // needs to be assigned a memory location at beginning, but may then be loaded in a register
         CalleeSaved, // must be in a callee saved register
         ByteReg, // must be in a byte register
         NumVregFlags
     }
 
-    private final C1XCompilation compilation;
+    protected final C1XCompilation compilation;
     PhiResolver.PhiResolverState resolverState;
     private BlockBegin currentBlock;
     private int virtualRegisterNumber;
-    private ArrayMap<Instruction> instructionForOperand;
+    ArrayMap<Instruction> instructionForOperand;
     // XXX: refactor this to use 3 one dimensional bitmaps
     private BitMap2D vregFlags; // flags which can be set on a per-vreg basis
 
@@ -73,17 +76,26 @@ public abstract class LIRGenerator extends InstructionVisitor {
     private List<LIROperand> regForConstants;
     private List<Instruction> unpinnedConstants;
     protected LIRList lir;
+    protected final IR ir;
 
     public LIRGenerator(C1XCompilation compilation) {
         this.compilation = compilation;
-        this.virtualRegisterNumber = LIROperand.VirtualRegister.RegisterBase.value();
+        this.virtualRegisterNumber = LIRLocation.virtualRegisterBase();
         this.vregFlags = new BitMap2D(0, VregFlag.NumVregFlags.ordinal());
+        this.ir = compilation.hir();
+
+        instructionForOperand = new ArrayMap<Instruction>();
+        constants = new ArrayList<LIRConstant>();
+        regForConstants = new ArrayList<LIROperand>();
+        unpinnedConstants = new ArrayList<Instruction>();
         init();
     }
 
-    public void blockDo(BlockBegin block) {
-        // CHECKBAILOUT();
+    protected LIRList lir() {
+        return lir;
+    }
 
+    public void apply(BlockBegin block) {
         blockDoProlog(block);
         this.currentBlock = block;
 
@@ -212,13 +224,14 @@ public abstract class LIRGenerator extends InstructionVisitor {
                 Local receiver = (Local) x.state().localAt(0);
                 obj = receiver.operand();
             }
-            assert obj.isValid() : "must be valid";
+            assert !obj.isIllegal() : "must be valid";
 
+            // TODO: C1X generates this already => remove?
             if (method.isSynchronized() && C1XOptions.GenerateSynchronizationCode) {
                 LIROperand lock = newRegister(BasicType.Int);
                 lir.loadStackAddressMonitor(0, lock);
 
-                CodeEmitInfo info = new CodeEmitInfo(C1XCompilation.MethodCompilation.SynchronizationEntryBCI.value, currentBlock.scope().start().state(), null);
+                CodeEmitInfo info = new CodeEmitInfo(C1XCompilation.MethodCompilation.SynchronizationEntryBCI.value, compilation.hir().startBlock.state(), null);
                 CodeStub slowPath = new MonitorEnterStub(obj, lock, info);
 
                 // receiver is guaranteed non-null so don't need CodeEmitInfo
@@ -227,7 +240,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
 
         // increment invocation counters if needed
-        incrementInvocationCounter(new CodeEmitInfo(0, currentBlock.scope().start().state(), null), false);
+        incrementInvocationCounter(new CodeEmitInfo(0, compilation.hir().startBlock.state(), null), false);
 
         // all blocks with a successor must end with an unconditional jump
         // to the successor even if they are consecutive
@@ -242,7 +255,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             LIROperand reg = rlockResult(x);
             CodeEmitInfo info = stateFor(x, x.state());
             lir.oop2regPatch(null, reg, info);
-        } else if (x.useCount() > 1 && !canInlineAsConstant(x)) {
+        } else if (compilation.hir().useCount(x) > 1 && !canInlineAsConstant(x)) {
             if (!x.isPinned()) {
                 // unpinned constants are handled specially so that they can be
                 // put into registers when they are used multiple times within a
@@ -592,7 +605,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
 
         // emit array address setup early so it schedules better
-        LIRAddress arrayAddr = emitArrayAddress(array.result(), index.result(), x.elementType(), false);
+        LIROperand arrayAddr = emitArrayAddress(array.result(), index.result(), x.elementType(), false);
 
         if (C1XOptions.GenerateBoundsChecks && needsRangeCheck) {
             if (useLength) {
@@ -948,10 +961,10 @@ public abstract class LIRGenerator extends InstructionVisitor {
         BasicType dstType = x.basicType();
         LIROperand indexOp = idx.result();
 
-        LIRAddress addr = null;
+        LIROperand addr = null;
         if (indexOp.isConstant()) {
             assert log2scale == 0 : "must not have a scale";
-            addr = new LIRAddress(baseOp, indexOp.asJint(), dstType);
+            addr = new LIRAddress(baseOp, indexOp.asInt(), dstType);
         } else {
 
             if (compilation.target.arch.isX86()) {
@@ -1058,7 +1071,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             lir.shiftLeft(indexOp, log2scale, indexOp);
         }
 
-        LIRAddress addr = new LIRAddress(baseOp, indexOp, x.basicType());
+        LIROperand addr = new LIRAddress(baseOp, indexOp, x.basicType());
         lir.move(value.result(), addr);
     }
 
@@ -1097,7 +1110,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
     }
 
-    private LIROperand callRuntimeWithItems(BasicType[] signature, List<LIRItem> args, Address entry, ValueType resultType, CodeEmitInfo info) {
+    private LIROperand callRuntimeWithItems(BasicType[] signature, List<LIRItem> args, long entry, ValueType resultType, CodeEmitInfo info) {
         // get a result register
         LIROperand physReg = LIROperandFactory.illegalOperand;
         LIROperand result = LIROperandFactory.illegalOperand;
@@ -1116,7 +1129,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             if (loc.isRegister()) {
                 arg.loadItemForce(loc);
             } else {
-                LIRAddress addr = loc.asAddressPtr();
+                LIROperand addr = loc.asAddressPtr();
                 arg.loadForStore(addr.type());
                 if (addr.type() == BasicType.Long || addr.type() == BasicType.Double) {
                     lir.unalignedMove(arg.result(), addr);
@@ -1137,7 +1150,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         return result;
     }
 
-    private LIROperand forceToSpill(LIROperand value, BasicType t) {
+    LIROperand forceToSpill(LIROperand value, BasicType t) {
         assert t.size == value.type().size : "size mismatch";
         if (!value.isRegister()) {
             // force into a register
@@ -1155,20 +1168,20 @@ public abstract class LIRGenerator extends InstructionVisitor {
         return tmp;
     }
 
-    private FrameMap frameMap() {
+    protected FrameMap frameMap() {
         throw Util.unimplemented();
     }
 
-    private CodeStub getResolveOptVirtualCallStub() {
-        throw Util.unimplemented();
+    private long getResolveOptVirtualCallStub() {
+        return compilation.runtime.getRuntimeEntry(CiRuntimeCall.ResolveOptVirtualCall);
     }
 
-    private CodeStub getResolveStaticCallStub() {
-        throw Util.unimplemented();
+    private long getResolveStaticCallStub() {
+        return compilation.runtime.getRuntimeEntry(CiRuntimeCall.ResolveStaticCall);
     }
 
-    private CodeStub getResolveVirtualCallStub() {
-        throw Util.unimplemented();
+    private long getResolveVirtualCallStub() {
+        return compilation.runtime.getRuntimeEntry(CiRuntimeCall.ResolveVirtualCall);
     }
 
     private LIROperand loadConstant(Constant x) {
@@ -1229,9 +1242,9 @@ public abstract class LIRGenerator extends InstructionVisitor {
                 LIROperand dataOffsetReg = newRegister(BasicType.Int);
                 lir.cmove(lirCond(cond), LIROperandFactory.intConst(takenCountOffset), LIROperandFactory.intConst(notTakenCountOffset), dataOffsetReg);
                 LIROperand dataReg = newRegister(BasicType.Int);
-                LIRAddress dataAddr = new LIRAddress(mdReg, dataOffsetReg, BasicType.Int);
+                LIROperand dataAddr = new LIRAddress(mdReg, dataOffsetReg, BasicType.Int);
                 lir.move(dataAddr, dataReg);
-                LIRAddress fakeIncrValue = new LIRAddress(dataReg, 1, BasicType.Int);
+                LIROperand fakeIncrValue = new LIRAddress(dataReg, 1, BasicType.Int);
                 // Use leal instead of add to avoid destroying condition codes on x86
                 lir.leal(fakeIncrValue, dataReg);
                 lir.move(dataReg, dataAddr);
@@ -1239,16 +1252,16 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
     }
 
-    private LIROperand resultRegisterFor(ValueType type) {
+    protected LIROperand resultRegisterFor(ValueType type) {
         return resultRegisterFor(type, false);
     }
 
-    private LIROperand rlock(Instruction instr) {
+    protected LIROperand rlock(Instruction instr) {
         // Try to lock using register in hint
         return newRegister(instr.type().basicType);
     }
 
-    private LIROperand rlockResult(Instruction x) {
+    protected LIROperand rlockResult(Instruction x) {
         // does an rlock and sets result
         LIROperand reg = rlock(x);
         setResult(x, reg);
@@ -1272,14 +1285,14 @@ public abstract class LIRGenerator extends InstructionVisitor {
         return reg;
     }
 
-    private LIROperand roundItem(LIROperand opr) {
+    protected LIROperand roundItem(LIROperand opr) {
         assert opr.isRegister() : "why spill if item is not register?";
 
         if (C1XOptions.RoundFPResults && C1XOptions.SSEVersion < 1 && opr.isSingleFpu()) {
             LIROperand result = newRegister(BasicType.Float);
             setVregFlag(result, VregFlag.MustStartInMemory);
             assert opr.isRegister() : "only a register can be spilled";
-            assert opr.valueType().isFloat() : "rounding only for floats available";
+            assert opr.basicType == BasicType.Float : "rounding only for floats available";
             lir.roundfp(opr, LIROperandFactory.illegalOperand, result);
             return result;
         }
@@ -1332,7 +1345,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             CodeEmitInfo info = stateFor(x);
             CodeStub stub = new RangeCheckStub(info, index.result(), true);
             if (index.result().isConstant()) {
-                cmpMemInt(LIRCondition.BelowEqual, buf.result(), compilation.runtime.javaNioBufferLimitOffset(), index.result().asJint(), info);
+                cmpMemInt(LIRCondition.BelowEqual, buf.result(), compilation.runtime.javaNioBufferLimitOffset(), index.result().asInt(), info);
                 lir.branch(LIRCondition.BelowEqual, BasicType.Int, stub);
             } else {
                 cmpRegMem(LIRCondition.AboveEqual, index.result(), buf.result(), compilation.runtime.javaNioBufferLimitOffset(), BasicType.Int, info);
@@ -1441,7 +1454,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             case Bytecodes.IMUL:
                 boolean didStrengthReduce = false;
                 if (right.isConstant()) {
-                    int c = right.asJint();
+                    int c = right.asInt();
                     if (Util.isPowerOf2(c)) {
                         // do not need tmp here
                         lir.shiftLeft(leftOp, Util.log2(c), resultOp);
@@ -1487,19 +1500,19 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
     }
 
-    void arithmeticOpFpu(int code, LIROperand result, LIROperand left, LIROperand right, boolean isStrictfp, LIROperand tmp) {
+    protected void arithmeticOpFpu(int code, LIROperand result, LIROperand left, LIROperand right, boolean isStrictfp, LIROperand tmp) {
         arithmeticOp(code, result, left, right, isStrictfp, tmp, null);
     }
 
-    void arithmeticOpInt(int code, LIROperand result, LIROperand left, LIROperand right, LIROperand tmp) {
+    protected void arithmeticOpInt(int code, LIROperand result, LIROperand left, LIROperand right, LIROperand tmp) {
         arithmeticOp(code, result, left, right, false, tmp, null);
     }
 
-    void arithmeticOpLong(int code, LIROperand result, LIROperand left, LIROperand right, CodeEmitInfo info) {
+    protected void arithmeticOpLong(int code, LIROperand result, LIROperand left, LIROperand right, CodeEmitInfo info) {
         arithmeticOp(code, result, left, right, false, LIROperandFactory.illegalOperand, info);
     }
 
-    void arraycopyHelper(Intrinsic x, int[] flagsp, CiType[] expectedTypep) {
+    protected final void arraycopyHelper(Intrinsic x, int[] flagsp, CiType[] expectedTypep) {
         Instruction src = x.argumentAt(0);
         Instruction srcPos = x.argumentAt(1);
         Instruction dst = x.argumentAt(2);
@@ -1607,10 +1620,10 @@ public abstract class LIRGenerator extends InstructionVisitor {
         expectedTypep[0] = expectedType;
     }
 
-    void arrayRangeCheck(LIROperand array, LIROperand index, CodeEmitInfo nullCheckInfo, CodeEmitInfo rangeCheckInfo) {
+    protected void arrayRangeCheck(LIROperand array, LIROperand index, CodeEmitInfo nullCheckInfo, CodeEmitInfo rangeCheckInfo) {
         CodeStub stub = new RangeCheckStub(rangeCheckInfo, index);
         if (index.isConstant()) {
-            cmpMemInt(LIRCondition.BelowEqual, array, compilation.runtime.arrayLengthOffsetInBytes(), index.asJint(), nullCheckInfo);
+            cmpMemInt(LIRCondition.BelowEqual, array, compilation.runtime.arrayLengthOffsetInBytes(), index.asInt(), nullCheckInfo);
             lir.branch(LIRCondition.BelowEqual, BasicType.Int, stub); // forward branch
         } else {
             cmpRegMem(LIRCondition.AboveEqual, index, array, compilation.runtime.arrayLengthOffsetInBytes(), BasicType.Int, nullCheckInfo);
@@ -1618,7 +1631,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
     }
 
-    LIROperand callRuntime(BasicType[] signature, List<LIROperand> args, Address entry, ValueType resultType, CodeEmitInfo info) {
+    LIROperand callRuntime(BasicType[] signature, List<LIROperand> args, long l, ValueType resultType, CodeEmitInfo info) {
         // get a result register
         LIROperand physReg = LIROperandFactory.illegalOperand;
         LIROperand result = LIROperandFactory.illegalOperand;
@@ -1636,7 +1649,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             if (loc.isRegister()) {
                 lir.move(arg, loc);
             } else {
-                LIRAddress addr = loc.asAddressPtr();
+                LIROperand addr = loc.asAddressPtr();
                 if (addr.type() == BasicType.Long || addr.type() == BasicType.Double) {
                     lir.unalignedMove(arg, addr);
                 } else {
@@ -1646,9 +1659,9 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
 
         if (info != null) {
-            lir.callRuntime(entry, getThreadTemp(), physReg, cc.args(), info);
+            lir.callRuntime(l, getThreadTemp(), physReg, cc.args(), info);
         } else {
-            lir.callRuntimeLeaf(entry, getThreadTemp(), physReg, cc.args());
+            lir.callRuntimeLeaf(l, getThreadTemp(), physReg, cc.args());
         }
         if (result.isValid()) {
             lir.move(physReg, result);
@@ -1656,14 +1669,14 @@ public abstract class LIRGenerator extends InstructionVisitor {
         return result;
     }
 
-    LIROperand callRuntime(Instruction arg1, Address entry, ValueType resultType, CodeEmitInfo info) {
+    LIROperand callRuntime(Instruction arg1, long entry, ValueType resultType, CodeEmitInfo info) {
         List<LIRItem> args = new ArrayList<LIRItem>(1);
         args.add(new LIRItem(arg1, this));
         BasicType[] signature = new BasicType[] {arg1.type().basicType};
         return callRuntimeWithItems(signature, args, entry, resultType, info);
     }
 
-    LIROperand callRuntime(Instruction arg1, Instruction arg2, Address entry, ValueType resultType, CodeEmitInfo info) {
+    LIROperand callRuntime(Instruction arg1, Instruction arg2, long entry, ValueType resultType, CodeEmitInfo info) {
 
         List<LIRItem> args = new ArrayList<LIRItem>();
         args.add(new LIRItem(arg1, this));
@@ -1745,7 +1758,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
             instr.accept(this);
 
-            assert !instr.hasUses() || instr.operand().isValid() || instr instanceof Constant || compilation.bailout() != null : "invalid item set";
+            assert !compilation.hir().hasUses(instr) || instr.operand().isValid() || instr instanceof Constant || compilation.bailout() != null : "invalid item set";
         } finally {
             compilation.setCurrentInstruction(prev);
         }
@@ -1761,7 +1774,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         return result;
     }
 
-    void incrementBackedgeCounter(CodeEmitInfo info) {
+    protected void incrementBackedgeCounter(CodeEmitInfo info) {
         incrementInvocationCounter(info, true);
     }
 
@@ -1776,7 +1789,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         // _bs = Universe::heap()->barrier_set();
     }
 
-    void jobject2regWithPatching(LIROperand r, Object obj, CodeEmitInfo info) {
+    protected void jobject2regWithPatching(LIROperand r, Object obj, CodeEmitInfo info) {
         // TODO: Check if this is the correct implementation
         // no patching needed
         lir.oop2reg(obj, r);
@@ -1790,7 +1803,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
             if (loc.isRegister()) {
                 param.loadItemForce(loc);
             } else {
-                LIRAddress addr = loc.asAddressPtr();
+                LIROperand addr = loc.asAddressPtr();
                 param.loadForStore(addr.type());
                 if (addr.type() == BasicType.Long || addr.type() == BasicType.Double) {
                     lir.unalignedMove(param.result(), addr);
@@ -1813,7 +1826,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         }
     }
 
-    void logicOp(int code, LIROperand resultOp, LIROperand leftOp, LIROperand rightOp) {
+    protected void logicOp(int code, LIROperand resultOp, LIROperand leftOp, LIROperand rightOp) {
         if (C1XOptions.TwoOperandLIRForm && leftOp != resultOp) {
             assert rightOp != resultOp : "malformed";
             lir.move(leftOp, resultOp);
@@ -1841,7 +1854,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         }
     }
 
-    void monitorEnter(LIROperand object, LIROperand lock, LIROperand hdr, LIROperand scratch, int monitorNo, CodeEmitInfo infoForException, CodeEmitInfo info) {
+    protected void monitorEnter(LIROperand object, LIROperand lock, LIROperand hdr, LIROperand scratch, int monitorNo, CodeEmitInfo infoForException, CodeEmitInfo info) {
         if (C1XOptions.GenerateSynchronizationCode) {
             // for slow path, use debug info for state after successful locking
             CodeStub slowPath = new MonitorEnterStub(object, lock, info);
@@ -1851,7 +1864,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         }
     }
 
-    void monitorExit(LIROperand object, LIROperand lock, LIROperand newHdr, int monitorNo) {
+    protected void monitorExit(LIROperand object, LIROperand lock, LIROperand newHdr, int monitorNo) {
         if (C1XOptions.GenerateSynchronizationCode) {
             // setup registers
             LIROperand hdr = lock;
@@ -1879,7 +1892,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         }
     }
 
-    void moveToPhi(ValueStack curState) {
+    protected void moveToPhi(ValueStack curState) {
         // Moves all stack values into their PHI position
         BlockBegin bb = currentBlock;
         if (bb.numberOfSux() == 1) {
@@ -1917,7 +1930,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         }
     }
 
-    void newInstance(LIROperand dst, CiType klass, LIROperand scratch1, LIROperand scratch2, LIROperand scratch3, LIROperand scratch4, LIROperand klassReg, CodeEmitInfo info) {
+    protected void newInstance(LIROperand dst, CiType klass, LIROperand scratch1, LIROperand scratch2, LIROperand scratch3, LIROperand scratch4, LIROperand klassReg, CodeEmitInfo info) {
         jobject2regWithPatching(klassReg, klass, info);
         // If klass is not loaded we do not know if the klass has finalizers:
         if (C1XOptions.UseFastNewInstance && klass.isLoaded() && !klass.layoutHelperNeedsSlowPath()) {
@@ -1935,7 +1948,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         }
     }
 
-    LIROperand newPointerRegister() {
+    protected final LIROperand newPointerRegister() {
         // returns a register suitable for doing pointer math
         // XXX: revisit this when there is a basic type for Pointers
         if (compilation.target.arch.is64bit()) {
@@ -1945,12 +1958,8 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         }
     }
 
-    LIROperand newRegister(BasicType type) {
-        int vreg = virtualRegisterNumber;
-        if (vreg >= LIROperand.VirtualRegister.MaxRegisters.value()) {
-            throw new Bailout("out of virtual registers");
-        }
-        virtualRegisterNumber++;
+    public LIROperand newRegister(BasicType type) {
+        int vreg = virtualRegisterNumber++;
         if (type == BasicType.Jsr) {
             type = BasicType.Int;
         }
@@ -1973,18 +1982,18 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         return x.operand();
     }
 
-    void postBarrier(LIROperand addr, LIROperand newVal) {
+    protected void postBarrier(LIROperand addr, LIROperand newVal) {
     }
 
-    void preBarrier(LIROperand addrOpr, boolean patch, CodeEmitInfo info) {
+    protected void preBarrier(LIROperand addrOpr, boolean patch, CodeEmitInfo info) {
     }
 
-    void setNoResult(Instruction x) {
-        assert !x.hasUses() : "can't have use";
+    protected void setNoResult(Instruction x) {
+        assert !compilation.hir().hasUses(x) : "can't have use";
         x.clearOperand();
     }
 
-    void setResult(Instruction x, LIROperand opr) {
+    protected void setResult(Instruction x, LIROperand opr) {
         assert opr.isValid() : "must set to valid value";
         assert x.operand().isIllegal() : "operand should never change";
         assert !opr.isRegister() || opr.isVirtual() : "should never set result to a physical register";
@@ -1995,7 +2004,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         }
     }
 
-    void shiftOp(int code, LIROperand resultOp, LIROperand value, LIROperand count, LIROperand tmp) {
+    protected void shiftOp(int code, LIROperand resultOp, LIROperand value, LIROperand count, LIROperand tmp) {
         if (C1XOptions.TwoOperandLIRForm && value != resultOp) {
             assert count != resultOp : "malformed";
             lir.move(value, resultOp);
@@ -2021,15 +2030,15 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         }
     }
 
-    CodeEmitInfo stateFor(Instruction x) {
+    protected CodeEmitInfo stateFor(Instruction x) {
         return stateFor(x, x.lockStack());
     }
 
-    CodeEmitInfo stateFor(Instruction x, ValueStack state) {
+    protected CodeEmitInfo stateFor(Instruction x, ValueStack state) {
         return stateFor(x, state, false);
     }
 
-    CodeEmitInfo stateFor(Instruction x, ValueStack state, boolean ignoreXhandler) {
+    protected CodeEmitInfo stateFor(Instruction x, ValueStack state, boolean ignoreXhandler) {
 
         for (int index = 0; index < state.stackSize(); index++) {
             final Instruction value = state.stackAt(index);
@@ -2089,7 +2098,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
     }
 
     // This is called for each node in tree; the walk stops if a root is reached
-    void walk(Instruction instr) {
+    protected void walk(Instruction instr) {
         Instruction prev = compilation.setCurrentInstruction(instr);
         try {
             // stop walk when encounter a root
@@ -2116,7 +2125,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
 
     protected abstract void cmpRegMem(LIRCondition condition, LIROperand reg, LIROperand base, LIROperand disp, BasicType type, CodeEmitInfo info);
 
-    protected abstract LIRAddress emitArrayAddress(LIROperand arrayOpr, LIROperand indexOpr, BasicType type, boolean needsCardMark);
+    protected abstract LIROperand emitArrayAddress(LIROperand arrayOpr, LIROperand indexOpr, BasicType type, boolean needsCardMark);
 
     protected abstract LIROperand exceptionOopOpr();
 
@@ -2215,7 +2224,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         return false;
     }
 
-    static LIRCondition lirCond(Condition cond) {
+    protected static LIRCondition lirCond(Condition cond) {
         LIRCondition l = null;
         switch (cond) {
             case eql:

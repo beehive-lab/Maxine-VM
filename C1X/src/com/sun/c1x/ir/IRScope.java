@@ -47,7 +47,6 @@ public class IRScope {
 
     ValueStack callerState;
     int numberOfLocks;
-    BlockBegin start;
 
     int lockStackSize;
 
@@ -104,13 +103,6 @@ public class IRScope {
         return caller == null;
     }
 
-    /**
-     * Gets the block corresponding to the start of this method.
-     * @return the block for the start of this method
-     */
-    public final BlockBegin start() {
-        return start;
-    }
 
     /**
      * Gets the phi bitmap for this IR scope. The phi bitmap stores
@@ -121,13 +113,6 @@ public class IRScope {
         return storesInLoops;
     }
 
-    /**
-     * Checks whether this IR scope is valid (i.e. it has had its start block computed).
-     * @return <code>true</code> if this IR scope is valid
-     */
-    public final boolean isValid() {
-        return start != null;
-    }
 
     /**
      * Add a called IRScope to this IRScope's list of callees.

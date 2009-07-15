@@ -39,6 +39,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
@@ -645,8 +646,7 @@ public interface MaxVM {
     /**
      * Creates a new memory watchpoint in the VM.
      * @param description text useful to a person, for example capturing the intent of the watchpoint
-     * @param start start of a memory region in the VM
-     * @param size size of the memory region in the VM
+     * @param memoryRegion a region a memory region in the VM
      * @param after trap after accessing memory field
      * @param read read access
      * @param write write access
@@ -656,7 +656,24 @@ public interface MaxVM {
      * @throws TooManyWatchpointsException
      * @throws DuplicateWatchpointException when the watchpoint overlaps in whole or part with an existing watchpoint
      */
-    MaxWatchpoint setRegionWatchpoint(String description, Address start, Size size, boolean after, boolean read, boolean write, boolean exec)
+    MaxWatchpoint setRegionWatchpoint(String description, MemoryRegion memoryRegion, boolean after, boolean read, boolean write, boolean exec)
+        throws TooManyWatchpointsException, DuplicateWatchpointException;
+
+    /**
+     * Creates a new memory watchpoint for a VM heap object.
+     *
+     * @param description text useful to a person, for example capturing the intent of the watchpoint
+     * @param teleObject a heap object in the VM
+     * @param after trap after accessing memory field
+     * @param read read access
+     * @param write write access
+     * @param exec execution access
+     *
+     * @return a new memory watchpoint
+     * @throws TooManyWatchpointsException
+     * @throws DuplicateWatchpointException when the watchpoint overlaps in whole or part with an existing watchpoint
+     */
+    MaxWatchpoint setObjectWatchpoint(String description, TeleObject teleObject, boolean after, boolean read, boolean write, boolean exec)
         throws TooManyWatchpointsException, DuplicateWatchpointException;
 
     /**
@@ -678,14 +695,31 @@ public interface MaxVM {
         throws TooManyWatchpointsException, DuplicateWatchpointException;
 
     /**
+     * Creates a new memory watchpoint for an element of a VM heap object (array or hybrid).
+     *
+     * @param description text useful to a person, for example capturing the intent of the watchpoint
+     * @param teleObject a heap object in the VM
+     * @param elementKind type category of the array elements
+     * @param arrayOffsetFromOrigin location in bytes, relative to the object's origin, of array element 0
+     * @param index array index of element
+     * @param after trap after accessing element memory
+     * @param read read access
+     * @param write write access
+     * @param exec execution access
+     * @return a new memory watchpoint
+     * @throws TooManyWatchpointsException
+     * @throws DuplicateWatchpointException when the watchpoint overlaps in whole or part with an existing watchpoint
+     */
+    MaxWatchpoint setArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, boolean after, boolean read, boolean write, boolean exec)
+        throws TooManyWatchpointsException, DuplicateWatchpointException;
+
+    /**
      * Creates a new watchpoint that covers a field in an object's header in the VM.
      * @param description text useful to a person, for example capturing the intent of the watchpoint
      * @param teleObject a heap object in the VM
-     * @param offset location of the header field, relative to the objects origin
-     * @param size the size in bytes of the field
-     * @param name the name of the header field
+     * @param headerField one of the object's header fields
      * @param after before or after watchpoint
-      * @param read read watchpoint
+     * @param read read watchpoint
      * @param write write watchpoint
      * @param exec execute watchpoint
      *
@@ -693,14 +727,14 @@ public interface MaxVM {
      * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
      * @throws DuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
      */
-    MaxWatchpoint setHeaderWatchpoint(String description, TeleObject teleObject, Offset offset, Size size, String name, boolean after, boolean read, boolean write, boolean exec)
+    MaxWatchpoint setHeaderWatchpoint(String description, TeleObject teleObject, HeaderField headerField, boolean after, boolean read, boolean write, boolean exec)
         throws TooManyWatchpointsException, DuplicateWatchpointException;
 
     /**
-     * @param address a memory address in the VM
-     * @return the watchpoint whose memory region includes the address, null if none.
+     * @param memoryRegion an area of memory in the VM
+     * @return the watchpoint whose memory region overlaps, null if none.
      */
-    MaxWatchpoint findWatchpoint(Address address);
+    MaxWatchpoint findWatchpoint(MemoryRegion memoryRegion);
 
     /**
      * Find watchpoint which triggered a signal.
@@ -719,6 +753,12 @@ public interface MaxVM {
      * @return
      */
     int getTriggeredWatchpointCode();
+
+    /**
+     * Returns thread that triggered watchpoint.
+     * @return
+     */
+    MaxThread findTriggeredWatchpointThread();
 
     /**
      * All existing memory watchpoints set in the VM.

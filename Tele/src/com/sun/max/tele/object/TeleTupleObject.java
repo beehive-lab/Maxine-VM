@@ -21,6 +21,7 @@
 package com.sun.max.tele.object;
 
 import java.lang.reflect.*;
+import java.util.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -30,6 +31,8 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.ir.*;
+import com.sun.max.vm.layout.*;
+import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -42,6 +45,8 @@ import com.sun.max.vm.value.*;
   */
 public class TeleTupleObject extends TeleObject {
 
+    private static final EnumSet<Layout.HeaderField> headerFields = EnumSet.of(HeaderField.HUB, HeaderField.MISC);
+
     protected TeleTupleObject(TeleVM teleVM, Reference reference) {
         super(teleVM, reference);
     }
@@ -52,8 +57,23 @@ public class TeleTupleObject extends TeleObject {
     }
 
     @Override
+    public EnumSet<Layout.HeaderField> getHeaderFields() {
+        return headerFields;
+    }
+
+    @Override
+    public Size objectSize() {
+        return classActorForType().dynamicTupleSize();
+    }
+
+    @Override
     public Address getFieldAddress(FieldActor fieldActor) {
         return getCurrentOrigin().plus(fieldActor.offset());
+    }
+
+    @Override
+    protected Size getFieldSize(FieldActor fieldActor) {
+        return Size.fromInt(fieldActor.kind.width.numberOfBytes);
     }
 
     @Override

@@ -29,6 +29,8 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.layout.Layout.*;
+import com.sun.max.vm.type.*;
 
 /**
  * @author Bernd Mathiske
@@ -68,6 +70,16 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
 
     private TeleWatchpoint(Factory factory, String description, Address start, Size size, boolean after, boolean read, boolean write, boolean exec) {
         super(start, size);
+        setDescription(description);
+        this.factory = factory;
+        this.after = after;
+        this.read = read;
+        this.write = write;
+        this.exec = exec;
+    }
+
+    private TeleWatchpoint(Factory factory, String description, MemoryRegion memoryRegion, boolean after, boolean read, boolean write, boolean exec) {
+        super(memoryRegion);
         setDescription(description);
         this.factory = factory;
         this.after = after;
@@ -161,8 +173,8 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
      */
     private static final class TeleRegionWatchpoint extends TeleWatchpoint {
 
-        public TeleRegionWatchpoint(Factory factory, String description, Address address, Size size, boolean after, boolean read, boolean write, boolean exec) {
-            super(factory, description, address, size, after, read, write, exec);
+        public TeleRegionWatchpoint(Factory factory, String description, MemoryRegion memoryRegion, boolean after, boolean read, boolean write, boolean exec) {
+            super(factory, description, memoryRegion.start(), memoryRegion.size(), after, read, write, exec);
         }
 
         public TeleObject getTeleObject() {
@@ -174,8 +186,28 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         public String toString() {
             return "TeleRegionWatchpoint" + super.toString();
         }
+    }
 
+    /**
+     * A watchpoint for a whole object.
+     */
+    private static final class TeleObjectWatchpoint extends TeleWatchpoint {
 
+        private final TeleObject teleObject;
+
+        public TeleObjectWatchpoint(Factory factory, String description, TeleObject teleObject, boolean after, boolean read, boolean write, boolean exec) {
+            super(factory, description, teleObject.getCurrentMemoryRegion(), after, read, write, exec);
+            this.teleObject = teleObject;
+        }
+
+        public TeleObject getTeleObject() {
+            return teleObject;
+        }
+
+        @Override
+        public String toString() {
+            return "TeleObjectWatchpoint@" + super.toString();
+        }
     }
 
     /**
@@ -186,7 +218,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         private final TeleObject teleObject;
 
         public TeleFieldWatchpoint(Factory factory, String description, TeleObject teleObject, FieldActor fieldActor, boolean after, boolean read, boolean write, boolean exec) {
-            super(factory, description, teleObject.getFieldAddress(fieldActor), Size.fromInt(fieldActor.kind.width.numberOfBytes), after, read, write, exec);
+            super(factory, description, teleObject.getCurrentMemoryRegion(fieldActor), after, read, write, exec);
             this.teleObject = teleObject;
         }
 
@@ -201,19 +233,41 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
     }
 
     /**
+     *A watchpoint for the memory holding an array element.
+     */
+    private static final class TeleArrayElementWatchpoint extends TeleWatchpoint {
+
+        private final TeleObject teleObject;
+        private final int index;
+
+        public TeleArrayElementWatchpoint(Factory factory, String description, TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, boolean after, boolean read, boolean write, boolean exec) {
+            super(factory, description, teleObject.getCurrentOrigin().plus(arrayOffsetFromOrigin + (index * elementKind.width.numberOfBytes)), Size.fromInt(elementKind.width.numberOfBytes), after, read, write, exec);
+            this.teleObject = teleObject;
+            this.index = index;
+        }
+
+        public TeleObject getTeleObject() {
+            return teleObject;
+        }
+
+        @Override
+        public String toString() {
+            return "TeleArrayElementWatchpoint@" + super.toString();
+        }
+    }
+
+    /**
      *A watchpoint for the memory holding an object's header field; does not follow if object relocated.
      */
     private static final class TeleHeaderWatchpoint extends TeleWatchpoint {
 
         private final TeleObject teleObject;
-        private final Offset offset;
-        private final String name;
+        private final HeaderField headerField;
 
-        public TeleHeaderWatchpoint(Factory factory, String description, TeleObject teleObject, Offset offset, Size size, String name, boolean after, boolean read, boolean write, boolean exec) {
-            super(factory, description, teleObject.getCurrentOrigin().plus(offset), size, after, read, write, exec);
+        public TeleHeaderWatchpoint(Factory factory, String description, TeleObject teleObject, HeaderField headerField, boolean after, boolean read, boolean write, boolean exec) {
+            super(factory, description, teleObject.getCurrentMemoryRegion(headerField), after, read, write, exec);
             this.teleObject = teleObject;
-            this.offset = offset;
-            this.name = name;
+            this.headerField = headerField;
         }
 
         public TeleObject getTeleObject() {
@@ -273,8 +327,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         /**
          * Creates a new watchpoint that covers a given memory region in the VM.
          * @param description text useful to a person, for example capturing the intent of the watchpoint
-         * @param address start of the memory region
-         * @param size size of the memory region
+         * @param memoryRegion the region of memory in the VM to be watched.
          * @param after before or after watchpoint
          * @param read read watchpoint
          * @param write write watchpoint
@@ -284,10 +337,30 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
          * @throws DuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
          */
-        public synchronized TeleWatchpoint setRegionWatchpoint(String description, Address address, Size size, boolean after, boolean read, boolean write, boolean exec)
+        public synchronized TeleWatchpoint setRegionWatchpoint(String description, MemoryRegion memoryRegion, boolean after, boolean read, boolean write, boolean exec)
             throws TooManyWatchpointsException, DuplicateWatchpointException {
             final TeleWatchpoint teleWatchpoint =
-                new TeleRegionWatchpoint(this, description, address, size, after, read, write, exec);
+                new TeleRegionWatchpoint(this, description, memoryRegion, after, read, write, exec);
+            return addWatchpoint(teleWatchpoint);
+        }
+
+        /**
+         * Creates a new watchpoint that covers an entire heap object's memory in the VM.
+         * @param description text useful to a person, for example capturing the intent of the watchpoint
+         * @param teleObject a heap object in the VM
+         * @param after before or after watchpoint
+         * @param read read watchpoint
+         * @param write write watchpoint
+         * @param exec execute watchpoint
+         *
+         * @return a new watchpoint, if successful
+         * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
+         * @throws DuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
+         */
+        public synchronized TeleWatchpoint setObjectWatchpoint(String description, TeleObject teleObject, boolean after, boolean read, boolean write, boolean exec)
+            throws TooManyWatchpointsException, DuplicateWatchpointException {
+            final TeleWatchpoint teleWatchpoint =
+                new TeleObjectWatchpoint(this, description, teleObject, after, read, write, exec);
             return addWatchpoint(teleWatchpoint);
         }
 
@@ -313,14 +386,15 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         }
 
         /**
-         * Creates a new watchpoint that covers a field in an object's header in the VM.
+         * Creates a new watchpoint that covers an element in an array in the VM.
+         *
          * @param description text useful to a person, for example capturing the intent of the watchpoint
-         * @param teleObject a heap object in the VM
-         * @param offset location of the header field, relative to the objects origin
-         * @param size the size in bytes of the field
-         * @param name the name of the header field
+         * @param teleObject a heap object in the VM that contains the array
+         * @param elementKind the type category of the array elements
+         * @param arrayOffsetFromOrigin location relative to the object's origin of element 0 in the array
+         * @param index index of the element to watch
          * @param after before or after watchpoint
-          * @param read read watchpoint
+         * @param read read watchpoint
          * @param write write watchpoint
          * @param exec execute watchpoint
          *
@@ -328,10 +402,32 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
          * @throws DuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
          */
-        public synchronized TeleWatchpoint setHeaderWatchpoint(String description, TeleObject teleObject, Offset offset, Size size, String name, boolean after, boolean read, boolean write, boolean exec)
+        public synchronized TeleWatchpoint setArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, boolean after, boolean read, boolean write, boolean exec)
             throws TooManyWatchpointsException, DuplicateWatchpointException {
             final TeleWatchpoint teleWatchpoint =
-                new TeleHeaderWatchpoint(this, description, teleObject, offset, size, name, after, read, write, exec);
+                new TeleArrayElementWatchpoint(this, description, teleObject, elementKind, arrayOffsetFromOrigin, index, after, read, after, exec);
+            return addWatchpoint(teleWatchpoint);
+        }
+
+        /**
+         * Creates a new watchpoint that covers a field in an object's header in the VM.
+         *
+         * @param description text useful to a person, for example capturing the intent of the watchpoint
+         * @param teleObject a heap object in the VM
+         * @param headerField a field in the object's header
+         * @param after before or after watchpoint
+         * @param read read watchpoint
+         * @param write write watchpoint
+         * @param exec execute watchpoint
+         *
+         * @return a new watchpoint, if successful
+         * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
+         * @throws DuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
+         */
+        public synchronized TeleWatchpoint setHeaderWatchpoint(String description, TeleObject teleObject, HeaderField headerField, boolean after, boolean read, boolean write, boolean exec)
+            throws TooManyWatchpointsException, DuplicateWatchpointException {
+            final TeleWatchpoint teleWatchpoint =
+                new TeleHeaderWatchpoint(this, description, teleObject, headerField, after, read, write, exec);
             return addWatchpoint(teleWatchpoint);
         }
 
@@ -431,6 +527,9 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
          */
         public MaxWatchpoint findTriggeredWatchpoint() {
             triggeredWatchpointAddress = Address.fromLong(teleProcess.readWatchpointAddress());
+            if (triggeredWatchpointAddress.equals(Word.zero())) {
+                return null;
+            }
             triggeredWatchpointCode = teleProcess.readWatchpointAccessCode();
 
             return findWatchpoint(triggeredWatchpointAddress);
@@ -463,6 +562,23 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         public MaxWatchpoint findWatchpoint(Address address) {
             for (MaxWatchpoint maxWatchpoint : watchpointsCache) {
                 if (maxWatchpoint.contains(address)) {
+                    return maxWatchpoint;
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Find an existing watchpoint set in the VM.
+         * <br>
+         * thread-safe
+         *
+         * @param memoryRegion a memory region in the VM
+         * @return the watchpoint whose memory region overlaps the specified region, null if none.
+         */
+        public MaxWatchpoint findWatchpoint(MemoryRegion memoryRegion) {
+            for (MaxWatchpoint maxWatchpoint : watchpointsCache) {
+                if (maxWatchpoint.overlaps(memoryRegion)) {
                     return maxWatchpoint;
                 }
             }

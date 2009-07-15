@@ -23,6 +23,9 @@ package com.sun.max.vm.compiler.c1x;
 import java.util.*;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.lir.*;
+import com.sun.c1x.target.x86.*;
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -140,6 +143,39 @@ public class MaxCiRuntime implements CiRuntime {
         return false;
     }
 
+    @Override
+    public CiType makeTypeArrayClass(BasicType elemType) {
+        throw Util.unimplemented();
+    }
+
+    @Override
+    public Register getCRarg(int i) {
+        switch(i) {
+            case 0:
+                return X86Register.rdi;
+            case 1:
+                return X86Register.rsi;
+            case 2:
+                return X86Register.rdx;
+            case 3:
+                return X86Register.rcx;
+            case 4:
+                return X86Register.r8;
+            case 5:
+                return X86Register.r9;
+        }
+        Util.unimplemented();
+        throw Util.shouldNotReachHere();
+    }
+
+    @Override
+    public Register getJRarg(int i) {
+        if (i == 5) {
+            return getCRarg(0);
+        }
+        return getCRarg(i + 1);
+    }
+
     ClassMethodActor asClassMethodActor(CiMethod method, String operation) {
         if (method instanceof MaxCiMethod) {
             return ((MaxCiMethod) method).asClassMethodActor(operation);
@@ -155,87 +191,301 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public int arrayLengthOffsetInBytes() {
-        // TODO Auto-generated method stub
-        return 0;
+        throw Util.unimplemented();
     }
 
     public boolean dtraceMethodProbes() {
-        // TODO Auto-generated method stub
-        return false;
+        throw Util.unimplemented();
     }
 
-    public Address getRuntimeEntry(CiRuntimeCall runtimeCall) {
-        // TODO Auto-generated method stub
-        return null;
+    public long getRuntimeEntry(CiRuntimeCall runtimeCall) {
+        throw Util.unimplemented();
     }
 
     public int headerSize() {
-        // TODO Auto-generated method stub
-        return 0;
+        throw Util.unimplemented();
     }
 
     public boolean isMP() {
-        // TODO Auto-generated method stub
-        return false;
+        return true;
     }
 
     public int javaNioBufferLimitOffset() {
-        // TODO Auto-generated method stub
-        return 0;
+        throw Util.unimplemented();
     }
 
     public boolean jvmtiCanPostExceptions() {
-        // TODO Auto-generated method stub
-        return false;
+        throw Util.unimplemented();
     }
 
     public int klassJavaMirrorOffsetInBytes() {
-        // TODO Auto-generated method stub
-        return 0;
+        throw Util.unimplemented();
     }
 
     public int klassOffsetInBytes() {
-        // TODO Auto-generated method stub
-        return 0;
+        throw Util.unimplemented();
     }
 
     public boolean needsExplicitNullCheck(int offset) {
-        // TODO Auto-generated method stub
-        return false;
+        // TODO: Return false if implicit null check is possible for this offset!
+        return true;
     }
 
     public int threadExceptionOopOffset() {
-        // TODO Auto-generated method stub
-        return 0;
+        throw Util.unimplemented();
     }
 
     public int threadExceptionPcOffset() {
-        // TODO Auto-generated method stub
-        return 0;
+        throw Util.unimplemented();
     }
 
     public int threadObjOffset() {
-        // TODO Auto-generated method stub
-        return 0;
+        throw Util.unimplemented();
     }
 
     public Address throwCountAddress() {
+        throw Util.unimplemented();
+    }
+
+    public int vtableEntryMethodOffsetInBytes() {
+        throw Util.unimplemented();
+    }
+
+    public int vtableEntrySize() {
+        throw Util.unimplemented();
+    }
+
+    public int vtableStartOffset() {
+        throw Util.unimplemented();
+    }
+
+    public int arrayBaseOffsetInBytes(BasicType type) {
+        throw Util.unimplemented();
+    }
+
+    public int nativeCallInstructionSize() {
+        throw Util.unimplemented();
+    }
+
+    public Register callerSaveFpuRegAt(int i) {
+        throw Util.unimplemented();
+    }
+
+    public Object ciEnvUnloadedCiobjarrayklass() {
+        throw Util.unimplemented();
+    }
+
+    public Object makeObjectArrayClass(CiType elementClass) {
+        throw Util.unimplemented();
+    }
+
+    @Override
+    public int sunMiscAtomicLongCSImplValueOffset() {
+        throw Util.unimplemented();
+    }
+
+    public int arrayElementSize(BasicType type) {
+        throw Util.unimplemented(); // TODO: move usages to BasicType.elementSize
+    }
+
+    public int arrayOopDescHeaderSize(BasicType type) {
+        throw Util.unimplemented();
+    }
+
+    public void vmExitOutOfMemory1(int i, String string, String name) {
+        throw Util.unimplemented();
+    }
+
+    public int vmPageSize() {
+        throw Util.unimplemented();
+    }
+
+    public Address argRegSaveAreaBytes() {
+        throw Util.unimplemented();
+    }
+
+    public int basicLockDisplacedHeaderOffsetInBytes() {
+        throw Util.unimplemented();
+    }
+
+    public long basicObjectLockOffsetInBytes() {
+        throw Util.unimplemented();
+    }
+
+    public long basicObjectLockSize() {
+        throw Util.unimplemented();
+    }
+
+    public long basicObjectObjOffsetInBytes() {
+        throw Util.unimplemented();
+    }
+
+    public long doubleSignflipPoolAddress() {
+        throw Util.unimplemented();
+    }
+
+    public long doubleSignmaskPoolAddress() {
+        throw Util.unimplemented();
+    }
+
+    public int elementKlassOffsetInBytes() {
+        throw Util.unimplemented();
+    }
+
+    public long floatSignflipPoolAddress() {
+        throw Util.unimplemented();
+    }
+
+    public long getPollingPage() {
+        throw Util.unimplemented();
+    }
+
+    public int getSerializePageShiftCount() {
+        throw Util.unimplemented();
+    }
+
+    public int initStateOffsetInBytes() {
+        throw Util.unimplemented();
+    }
+
+    public int instanceKlassFullyInitialized() {
+        throw Util.unimplemented();
+    }
+
+    public int interpreterFrameMonitorSize() {
+        throw Util.unimplemented();
+    }
+
+    public Register javaCallingConventionReceiverRegister() {
         // TODO Auto-generated method stub
         return null;
     }
 
-    public int vtableEntryMethodOffsetInBytes() {
-        // TODO Auto-generated method stub
-        return 0;
+    public int markOffsetInBytes() {
+        throw Util.unimplemented();
     }
 
-    public int vtableEntrySize() {
-        // TODO Auto-generated method stub
-        return 0;
+    public int methodDataNullSeenByteConstant() {
+        throw Util.unimplemented();
     }
 
-    public int vtableStartOffset() {
-        // TODO Auto-generated method stub
-        return 0;
+    public int nativeCallDisplacementOffset() {
+        throw Util.unimplemented();
+    }
+
+    public int nativeMovConstRegInstructionSize() {
+        throw Util.unimplemented();
+    }
+
+    public int secondarySuperCacheOffsetInBytes() {
+        throw Util.unimplemented();
+    }
+
+    public int secondarySupersOffsetInBytes() {
+        throw Util.unimplemented();
+    }
+
+    public int superCheckOffsetOffsetInBytes() {
+        throw Util.unimplemented();
+    }
+
+    public int threadPendingExceptionOffset() {
+        throw Util.unimplemented();
+    }
+
+    public int threadTlabEndOffset() {
+        throw Util.unimplemented();
+    }
+
+    public int threadTlabSizeOffset() {
+        throw Util.unimplemented();
+    }
+
+    public int threadTlabStartOffset() {
+        throw Util.unimplemented();
+    }
+
+    public int threadTlabTopOffset() {
+        throw Util.unimplemented();
+    }
+
+    public int threadVmResultOffset() {
+        throw Util.unimplemented();
+    }
+
+    public Object universeNonOopWord() {
+        throw Util.unimplemented();
+    }
+
+    public boolean universeSupportsInlineContigAlloc() {
+        throw Util.unimplemented();
+    }
+
+    public int biasedLockMaskInPlace() {
+        throw Util.unimplemented();
+    }
+
+    public int biasedLockPattern() {
+        throw Util.unimplemented();
+    }
+
+    public long biasedLockingFastPathEntryCountAddr() {
+        throw Util.unimplemented();
+    }
+
+    public boolean dtraceAllocProbes() {
+        throw Util.unimplemented();
+    }
+
+    public long getMemorySerializePage() {
+        throw Util.unimplemented();
+    }
+
+    public int getMinObjAlignmentInBytesMask() {
+        throw Util.unimplemented();
+    }
+
+    public int instanceOopDescBaseOffsetInBytes() {
+        throw Util.unimplemented();
+    }
+
+    public int itableInterfaceOffsetInBytes() {
+        throw Util.unimplemented();
+    }
+
+    public int itableMethodEntryMethodOffset() {
+        throw Util.unimplemented();
+    }
+
+    public int itableOffsetEntrySize() {
+        throw Util.unimplemented();
+    }
+
+    public int itableOffsetOffsetInBytes() {
+        throw Util.unimplemented();
+    }
+
+    public int klassPartOffsetInBytes() {
+        throw Util.unimplemented();
+    }
+
+    public int markOopDescPrototype() {
+        throw Util.unimplemented();
+    }
+
+    public int maxArrayAllocationLength() {
+        throw Util.unimplemented();
+    }
+
+    public int prototypeHeaderOffsetInBytes() {
+        throw Util.unimplemented();
+    }
+
+    public int unlockedValue() {
+        throw Util.unimplemented();
+    }
+
+    public int vtableLengthOffset() {
+        throw Util.unimplemented();
     }
 }

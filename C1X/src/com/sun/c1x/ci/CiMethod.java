@@ -186,4 +186,6 @@ public interface CiMethod {
      * @return the list of exception handlers
      */
     List<CiExceptionHandler> exceptionHandlers();
+
+    int javaCodeAtBci(int bci);
 }

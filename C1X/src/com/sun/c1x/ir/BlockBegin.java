@@ -621,6 +621,9 @@ public class BlockBegin extends StateSplit {
      * @return the label associated with the block, used by the LIR
      */
     public Label label() {
+        if (label == null) {
+            label = new Label();
+        }
         return label;
     }
 
@@ -630,5 +633,32 @@ public class BlockBegin extends StateSplit {
 
     public LIRList lir() {
         return lir;
+    }
+
+    public int exceptionHandlerPco() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public void setExceptionHandlerPco(int codeOffset) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void print(InstructionPrinter ip) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public int numberOfExceptionHandlers() {
+        return exceptionHandlerBlocks.size();
+    }
+
+    public BlockBegin exceptionHandlerAt(int i) {
+        return exceptionHandlerBlocks.get(i);
+    }
+
+    public BlockBegin predAt(int j) {
+        return this.predecessors.get(j);
     }
 }

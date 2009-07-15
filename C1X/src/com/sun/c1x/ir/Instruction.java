@@ -100,6 +100,7 @@ public abstract class Instruction {
         id = nextID++;
         bci = BCI_NOT_APPENDED;
         valueType = type;
+        lirOperand = LIROperand.ILLEGAL;
     }
 
     /**
@@ -335,7 +336,7 @@ public abstract class Instruction {
      * @param operand the operand to associate with this instruction
      */
     public void setOperand(LIROperand operand) {
-        assert operand != LIROperandFactory.illegalOperand : "operand must exist";
+        assert operand != LIROperand.ILLEGAL : "operand must exist";
         lirOperand = operand;
     }
 
@@ -343,7 +344,7 @@ public abstract class Instruction {
      * Clears the LIR operand associated with this instruction.
      */
     public void clearOperand() {
-        lirOperand = LIROperandFactory.illegalOperand;
+        lirOperand = LIROperand.ILLEGAL;
     }
 
     /**
@@ -533,20 +534,8 @@ public abstract class Instruction {
         return null;
     }
 
-    /**
-     * Determines whether this instruction has 1 or more uses.
-     * @return true if the instruction is used somewhere, false otherwise
-     */
-    public boolean hasUses() {
-        return useCount() > 0;
-    }
 
-    /**
-     * Gets the number of uses of this instruction.
-     * @return the number of uses
-     */
-    public int useCount() {
-        // TODO Find a different way to solve this!
-        return 1;
+    public boolean isRoot(C1XCompilation compilation) {
+        return isPinned() || compilation.hir().useCount(this) > 1;
     }
 }

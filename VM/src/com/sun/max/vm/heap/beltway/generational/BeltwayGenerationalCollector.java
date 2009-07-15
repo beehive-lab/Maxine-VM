@@ -31,20 +31,10 @@ import com.sun.max.vm.tele.*;
 
 public class BeltwayGenerationalCollector extends BeltwayCollector {
 
-    // /Dependency injection of the corresponding heap scheme
-    private static HeapScheme beltwayHeapScheme;
-
     public static long edenCollections = 0;
     public static long majorCollections = 0;
     public static long toCollections = 0;
 
-    public void setBeltwayHeapScheme(HeapScheme beltwayHeapScheme) {
-        BeltwayGenerationalCollector.beltwayHeapScheme = beltwayHeapScheme;
-    }
-
-    public HeapScheme getBeltwayHeapScheme() {
-        return beltwayHeapScheme;
-    }
 
     public BeltwayGenerationalCollector() {
 
@@ -62,7 +52,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 Log.print("Major Collection: ");
                 Log.println(majorCollections);
             }
-            final BeltwayHeapSchemeGenerational beltwayHeapSchemeGen = (BeltwayHeapSchemeGenerational) beltwayHeapScheme;
+            final BeltwayHeapSchemeGenerational beltwayHeapSchemeGen = (BeltwayHeapSchemeGenerational) getBeltwayHeapScheme();
             final Belt matureSpace = beltwayHeapSchemeGen.getMatureSpace();
             final Belt toSpace = beltwayHeapSchemeGen.getToSpace();
             final Belt edenSpace = beltwayHeapSchemeGen.getEdenSpace();
@@ -77,9 +67,8 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 Log.println("Verify Mature Space ");
             }
 
-
-            beltwayHeapSchemeGen.getVerifier().verifyHeap(matureSpace.start(), matureSpace.getAllocationMark(), BeltManager.getApplicationHeap());
-            TeleHeapInfo.beforeGarbageCollection();
+            verifyBelt(matureSpace);
+            InspectableHeapInfo.beforeGarbageCollection();
             VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
             if (Heap.verbose()) {
@@ -212,7 +201,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
             edenSpace.resetAllocationMark();
             edenSpace.setEnd(toSpace.start());
             edenSpace.setExpandable(false);
-            TeleHeapInfo.afterGarbageCollection();
+            InspectableHeapInfo.afterGarbageCollection();
             if (Heap.verbose()) {
                 Log.print("Eden Space Start: ");
                 Log.println(edenSpace.start());
@@ -260,7 +249,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 Log.print("To Collection: ");
                 Log.println(toCollections);
             }
-            final BeltwayHeapSchemeGenerational beltwayHeapSchemeGen = (BeltwayHeapSchemeGenerational) beltwayHeapScheme;
+            final BeltwayHeapSchemeGenerational beltwayHeapSchemeGen = (BeltwayHeapSchemeGenerational) getBeltwayHeapScheme();
             final Belt matureSpace = beltwayHeapSchemeGen.getMatureSpace();
             final Belt toSpace = beltwayHeapSchemeGen.getToSpace();
 
@@ -273,8 +262,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 Log.println(toSpace.end());
                 Log.println("Verify To Space: ");
             }
-
-            beltwayHeapSchemeGen.getVerifier().verifyHeap(toSpace.start(), toSpace.getAllocationMark(), BeltManager.getApplicationHeap());
+            verifyBelt(toSpace);
             if (Heap.verbose()) {
                 Log.println(" Mature Snapshot ");
             }
@@ -348,8 +336,8 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 Log.println(matureSpace.end());
                 Log.println("Verify Mature Space");
             }
-            beltwayHeapSchemeGen.getVerifier().verifyHeap(matureSpace.start(), matureSpace.getAllocationMark(), BeltManager.getApplicationHeap());
-            TeleHeapInfo.afterGarbageCollection();
+            verifyBelt(matureSpace);
+            InspectableHeapInfo.afterGarbageCollection();
             if (Heap.verbose()) {
                 Log.print("Finished To Collection: ");
                 Log.println(toCollections);
@@ -365,7 +353,8 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 Log.print("Eden Collection: ");
                 Log.println(edenCollections);
             }
-            final BeltwayHeapSchemeGenerational beltwayHeapSchemeGen = (BeltwayHeapSchemeGenerational) beltwayHeapScheme;
+
+            final BeltwayHeapSchemeGenerational beltwayHeapSchemeGen = (BeltwayHeapSchemeGenerational) getBeltwayHeapScheme();
 
             final Belt matureSpace = beltwayHeapSchemeGen.getMatureSpace();
             final Belt toSpace = beltwayHeapSchemeGen.getToSpace();
@@ -380,13 +369,13 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 Log.println(edenSpace.end());
                 Log.println("Verify Eden: ");
             }
-            beltwayHeapSchemeGen.getVerifier().verifyHeap(edenSpace.start(), edenSpace.getAllocationMark(), BeltManager.getApplicationHeap());
+            verifyBelt(edenSpace);
 
             if (Heap.verbose()) {
                 Log.println("To Space Snapshot");
             }
             toSpace.setAllocationMarkSnapshot();
-            TeleHeapInfo.beforeGarbageCollection();
+            InspectableHeapInfo.beforeGarbageCollection();
 
             VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
             if (Heap.verbose()) {
@@ -461,8 +450,8 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 Log.println("Verfiy To Space: ");
             }
 
-            beltwayHeapSchemeGen.getVerifier().verifyHeap(toSpace.start(), toSpace.getAllocationMark(), BeltManager.getApplicationHeap());
-            TeleHeapInfo.afterGarbageCollection();
+            verifyBelt(toSpace);
+            InspectableHeapInfo.afterGarbageCollection();
             if (Heap.verbose()) {
                 Log.print("Finished Eden Collection: ");
                 Log.println(edenCollections);

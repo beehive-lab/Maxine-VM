@@ -18,31 +18,54 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.stub;
 
+import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 
+
 /**
+ * The <code>MonitorEnterStub</code> class definition.
+ *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  *
  */
-public class MonitorEnterStub extends CodeStub {
+public class MonitorEnterStub extends MonitorAccessStub {
 
-    public MonitorEnterStub(LIROperand object, LIROperand lock, CodeEmitInfo info) {
-        // TODO Auto-generated constructor stub
+    private CodeEmitInfo info;
+
+    /**
+     * Creates a new instance of <code>MonitorEnterStub</code>.
+     *
+     * @param objReg the operand with the object reference
+     * @param lockReg the lock register
+     * @param info the debug information for this code stub
+     */
+    public MonitorEnterStub(LIROperand objReg, LIROperand lockReg, CodeEmitInfo info) {
+        super(objReg, lockReg);
+        this.info = info;
     }
 
     @Override
     public void emitCode(LIRAssembler e) {
-        // TODO Auto-generated method stub
+        // TODO: not implemented yet
+    }
 
+    @Override
+    public CodeEmitInfo info() {
+        return info;
+    }
+
+    @Override
+    public void visit(LIRVisitState visitor) {
+        visitor.doInput(objReg);
+        visitor.doInput(lockReg);
+        visitor.doSlowCase(info);
     }
 
     @Override
     public void printName(LogStream out) {
-        // TODO Auto-generated method stub
-
+        out.print("MonitorEnterStub");
     }
-
 }

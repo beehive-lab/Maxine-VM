@@ -41,6 +41,7 @@ public class LIRLabel extends LIROp0 {
      */
     public LIRLabel(Label label) {
         super(LIROpcode.Label, LIROperandFactory.illegalOperand, null);
+        assert label != null;
         this.label = label;
     }
 
@@ -49,7 +50,7 @@ public class LIRLabel extends LIROp0 {
      *
      * @return the label
      */
-    public Label getLabel() {
+    public Label label() {
         return label;
     }
 
@@ -60,7 +61,7 @@ public class LIRLabel extends LIROp0 {
      */
     @Override
     public void emitCode(LIRAssembler masm) {
-        masm.emitLabel(this);
+        masm.emitOpLabel(this);
     }
 
     /**

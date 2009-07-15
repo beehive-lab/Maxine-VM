@@ -56,9 +56,10 @@ public class C1XOptions {
     public static boolean TestPatching                       = ____;
     public static boolean TestSlowPath                       = ____;
     public static boolean PrintInitialBlockList              = ____;
-    public static boolean PrintIR                            = ____;
+    public static boolean PrintIR                            = TRUE;
     public static boolean PrintCFGToFile                     = ____;
     public static boolean PrintMetrics                       = ____;
+    public static boolean PrintCFG                           = ____;
 
     // canonicalizer settings
     public static boolean CanonicalizeInstructions           = TRUE;
@@ -78,6 +79,7 @@ public class C1XOptions {
     public static boolean AlwaysCSEArrayLength               = ____;
 
     // profiling settings
+    public static boolean Profile                            = ____;
     public static boolean ProfileBranches                    = ____;
     public static boolean ProfileCalls                       = ____;
     public static boolean ProfileCheckcasts                  = ____;
@@ -98,6 +100,7 @@ public class C1XOptions {
 
     // miscellaneous settings
     public static boolean SupportObjectConstants             = TRUE;
+    public static boolean SupportWordTypes                   = ____;
     public static boolean UseInlineCaches                    = ____;
     public static boolean RegisterFinalizersAtInit           = TRUE;
 
@@ -116,6 +119,10 @@ public class C1XOptions {
     public static float   BimorphicProfileRatio              = 0.90f;
     public static int     MaximumTypeSwitchInlining          = 10;
 
+    // Linear scan settings
+    public static boolean StressLinearScan                   = ____;
+    public static int     TraceLinearScanLevel               = 4;
+
     // LIR settings
     public static boolean PrintIRWithLIR                     = ____;
     public static boolean LIRTraceExecution                  = ____;
@@ -128,4 +135,128 @@ public class C1XOptions {
     public static boolean GenerateBoundsChecks               = ____;
     public static boolean GenerateCompilerNullChecks         = ____;
     public static boolean UseTableRanges                     = ____;
+
+    public static boolean GenerateArrayStoreCheck            = TRUE;
+    public static boolean UseBiasedLocking                   = ____;
+    public static boolean ImplicitDiv0Checks                 = ____;
+    public static boolean PrintLIR                           = TRUE;
+    public static boolean Verbose                            = ____;
+    public static boolean LIRTracePeephole                   = ____;
+
+    // Assembler settings
+    public static boolean CommentedAssembly                  = ____;
+    public static boolean PrintLIRWithAssembly               = ____;
+    public static boolean VerifyOopMaps                      = ____;
+    public static boolean VerifyOops                         = ____;
+    public static int     CodeEntryAlignment                 = 16;
+    public static int     SafepointPollOffset                = 256; // x86 only?
+    public static int     ReadPrefetchInstr                  = 0;
+    public static int     AllocatePrefetchInstr              = 0;
+    public static boolean UseSlowPath                        = ____;
+    public static boolean UseFastNewObjectArray              = ____;
+    public static boolean UseFastNewTypeArray                = ____;
+    public static boolean UseStackBanging                    = TRUE;
+    public static int     StackShadowPages                   = 3;
+    public static int     Atomics                            = 0;
+    public static boolean UseNormalNop                       = TRUE;
+    public static boolean UseAddressNop                      = TRUE;
+    public static boolean ForceUnreachable                   = ____;
+    public static boolean PrintBiasedLockingStatistics       = ____;
+    public static boolean UseIncDec                          = ____;
+    public static boolean UseXmmLoadAndClearUpper            = ____;
+    public static boolean UseTLAB                            = ____;
+    public static boolean UseXmmRegToRegMoveAll              = ____;
+    public static boolean CMSIncrementalMode                 = ____;
+    public static boolean TLABStats                          = ____;
+    public static boolean GenerateAssertionCode              = ____;
+
+    // Profiling settings
+    public static boolean Tier1OptimizeVirtualCallProfiling  = ____;
+    public static boolean Tier1ProfileVirtualCalls           = ____;
+    public static int     TypeProfileWidth                   = 0;
+
+    public static void setOptimizationLevel(int level) {
+        if (level <= 0) {
+            setOptimizationLevel0();
+        } else if (level == 1) {
+            setOptimizationLevel1();
+        } else {
+            setOptimizationLevel2();
+        }
+    }
+
+    private static void setOptimizationLevel0() {
+        // turn off all optimizations
+        InlineMethods                      = ____;
+        CanonicalizeInstructions           = ____;
+        UseLocalValueNumbering             = ____;
+        EliminateFieldAccess               = ____;
+        AlwaysCSEArrayLength               = ____;
+
+        MergeEquivalentConstants           = ____;
+        ComputeStoresInLoops               = ____;
+        SimplifyPhis                       = ____;
+
+        DoGlobalValueNumbering             = ____;
+        DoArrayBoundsCheckElimination      = ____;
+        DistinguishExceptionHandlerCode    = ____;
+        DoNullCheckElimination             = ____;
+        DoProfileGuidedInlining            = ____;
+        DoTypeFlowAnalysis                 = ____;
+    }
+
+    private static void setOptimizationLevel1() {
+        // turn on basic inlining and local optimizations
+        InlineMethods                      = TRUE; // inlining heuristics may need to be adjusted
+        CanonicalizeInstructions           = TRUE;
+        UseLocalValueNumbering             = TRUE;
+        EliminateFieldAccess               = TRUE;
+        AlwaysCSEArrayLength               = ____;
+
+        // turn on state merging optimizations
+        MergeEquivalentConstants           = TRUE;
+        ComputeStoresInLoops               = TRUE;
+        SimplifyPhis                       = TRUE;
+
+        // turn on speculative optimizations
+        UseCHA                             = TRUE;
+        UseDeopt                           = TRUE;
+        UseCHALeafMethods                  = TRUE;
+
+        // turn off global optimizations, except null check elimination
+        DoGlobalValueNumbering             = ____;
+        DoArrayBoundsCheckElimination      = ____;
+        DistinguishExceptionHandlerCode    = ____;
+        DoNullCheckElimination             = TRUE;
+        DoProfileGuidedInlining            = ____;
+        DoTypeFlowAnalysis                 = ____;
+    }
+
+    private static void setOptimizationLevel2() {
+        // turn on basic inlining and local optimizations
+        InlineMethods                      = TRUE;
+        CanonicalizeInstructions           = TRUE;
+        UseLocalValueNumbering             = TRUE;
+        EliminateFieldAccess               = TRUE;
+        AlwaysCSEArrayLength               = TRUE;
+
+        // turn on state merging optimizations
+        MergeEquivalentConstants           = TRUE;
+        ComputeStoresInLoops               = TRUE;
+        SimplifyPhis                       = TRUE;
+
+        // turn on speculative optimizations
+        UseCHA                             = TRUE;
+        UseDeopt                           = TRUE;
+        UseCHALeafMethods                  = TRUE;
+
+        // turn on global optimizations
+        DoGlobalValueNumbering             = TRUE;
+        DoArrayBoundsCheckElimination      = TRUE;
+        DistinguishExceptionHandlerCode    = TRUE;
+        DoNullCheckElimination             = TRUE;
+        DoProfileGuidedInlining            = TRUE;
+        DoTypeFlowAnalysis                 = TRUE;
+        DetectCascadingInstanceOf          = TRUE;
+    }
 }

@@ -31,6 +31,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.value.*;
+import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -117,7 +118,7 @@ public final class ObjectFieldsTable extends InspectorTable {
                 if (selectedRow != -1 && selectedColumn != -1) {
                     // Left button selects a table cell; also cause an address selection at the row.
                     if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1) {
-                        inspection.focus().setAddress(model.rowToAddress(selectedRow));
+                        inspection.focus().setAddress(model.rowToMemoryRegion(selectedRow).start());
                     }
                 }
                 if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
@@ -127,12 +128,14 @@ public final class ObjectFieldsTable extends InspectorTable {
                         final int hitRowIndex = rowAtPoint(p);
                         final int columnIndex = getColumnModel().getColumnIndexAtX(p.x);
                         final int modelIndex = getColumnModel().getColumn(columnIndex).getModelIndex();
-                        if (modelIndex == ObjectFieldColumnKind.TAG.ordinal()) {
+                        if (modelIndex == ObjectFieldColumnKind.TAG.ordinal() && hitRowIndex >= 0) {
                             final InspectorMenu menu = new InspectorMenu();
                             final FieldActor fieldActor = model.rowToFieldActor(hitRowIndex);
                             menu.add(actions().setFieldWatchpoint(teleObject, fieldActor, "Watch this field's memory"));
-                            menu.add(actions().editFieldWatchpoint(teleObject, fieldActor, "Edit memory watchpoint"));
-                            menu.add(actions().removeFieldWatchpoint(teleObject, fieldActor, "Remove memory watchpoint"));
+                            menu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));
+                            menu.add(actions().editWatchpoint(teleObject.getCurrentMemoryRegion(fieldActor), "Edit memory watchpoint"));
+                            menu.add(actions().removeWatchpoint(teleObject.getCurrentMemoryRegion(fieldActor), "Remove memory watchpoint"));
+
                             menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                         }
                     }
@@ -230,10 +233,10 @@ public final class ObjectFieldsTable extends InspectorTable {
         }
 
         /**
-         * @return the memory address of a specified row in the fields.
+         * @return the memory region of a specified row in the fields.
          */
-        public Address rowToAddress(int row) {
-            return objectOrigin.plus(rowToOffset(row)).asAddress();
+        public MemoryRegion rowToMemoryRegion(int row) {
+            return teleObject.getCurrentMemoryRegion(fieldActors[row]);
         }
 
         FieldActor rowToFieldActor(int row) {
@@ -253,7 +256,7 @@ public final class ObjectFieldsTable extends InspectorTable {
          */
         public MaxWatchpoint rowToWatchpoint(int row) {
             for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
-                if (watchpoint.contains(rowToAddress(row))) {
+                if (watchpoint.overlaps(rowToMemoryRegion(row))) {
                     return watchpoint;
                 }
             }
@@ -314,7 +317,7 @@ public final class ObjectFieldsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            return getRenderer(model.rowToAddress(row), focus().thread(), model.rowToWatchpoint(row));
+            return getRenderer(model.rowToMemoryRegion(row), focus().thread(), model.rowToWatchpoint(row));
         }
 
     }

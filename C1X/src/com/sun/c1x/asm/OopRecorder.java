@@ -18,42 +18,9 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.value;
+package com.sun.c1x.asm;
 
 
-/**
- * The <code>Address</code> class definition.
- *
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
- *
- */
-public class Address {
-    private long address;
+public class OopRecorder {
 
-    /**
-     * Constructs a new Address, which holds a runtime address.
-     *
-     * @param address
-     */
-    public Address(long address) {
-        super();
-        this.address = address;
-    }
-
-    /**
-     * @return the long value which represents an internal address
-     */
-    public long address() {
-        return address;
-    }
-
-    /**
-     * Sets the address.
-     *
-     * @param address the new address
-     */
-    public void setAddress(long address) {
-        this.address = address;
-    }
 }

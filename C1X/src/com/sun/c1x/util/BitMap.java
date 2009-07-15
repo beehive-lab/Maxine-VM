@@ -118,8 +118,8 @@ public class BitMap {
      */
     public void setUnion(BitMap other) {
         low32 |= other.low32;
-        if (extra32 != null) {
-            for (int i = 0; i < extra32.length; i++) {
+        if (extra32 != null && other.extra32 != null) {
+            for (int i = 0; i < extra32.length && i < other.extra32.length; i++) {
                 extra32[i] |= other.extra32[i];
             }
         }

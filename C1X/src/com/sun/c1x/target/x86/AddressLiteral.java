@@ -18,27 +18,54 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.target.x86;
 
-import com.sun.c1x.util.*;
+import com.sun.c1x.asm.*;
+import com.sun.c1x.asm.RelocInfo.*;
 
 
-public class MonitorExitStub extends CodeStub {
+public class AddressLiteral {
 
-    public MonitorExitStub(LIROperand lock, boolean usefastlocking, int monitorNo) {
+    public Pointer target;
+
+    public AddressLiteral(Address address, Type none) {
         // TODO Auto-generated constructor stub
     }
 
-    @Override
-    public void emitCode(LIRAssembler e) {
-        // TODO Auto-generated method stub
-
+    public AddressLiteral(long l, Type polltype) {
+        // TODO Auto-generated constructor stub
     }
 
-    @Override
-    public void printName(LogStream out) {
-        // TODO Auto-generated method stub
-
+    public AddressLiteral(Address entry, RelocationHolder rh) {
+        // TODO Auto-generated constructor stub
     }
 
+    public AddressLiteral(long entry, RelocationHolder rh) {
+        // TODO Auto-generated constructor stub
+    }
+
+    public Address addr() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Type reloc() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public boolean isLval() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public Pointer target() {
+        // TODO Auto-generated method stub
+        return new Pointer(0);
+    }
+
+    public RelocationHolder rspec() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

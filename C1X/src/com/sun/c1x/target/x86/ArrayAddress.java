@@ -18,77 +18,32 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.target.x86;
 
-import com.sun.c1x.gen.LIRGenerator;
-import com.sun.c1x.ir.*;
-import com.sun.c1x.value.*;
+/**
+ *
+ * @author Thomas Wuerthinger
+ *
+ */
+public class ArrayAddress extends Address {
 
-
-public class LIRItem {
-
-    public LIRItem(Instruction receiver, LIRGenerator lirGenerator) {
+    public ArrayAddress(int displacement) {
+        super(displacement);
         // TODO Auto-generated constructor stub
     }
 
-    public LIRItem(LIRGenerator lirGenerator) {
+    public ArrayAddress(ExternalAddress page, Address index) {
         // TODO Auto-generated constructor stub
     }
 
-    public ValueType type() {
+    public AddressLiteral base() {
         // TODO Auto-generated method stub
         return null;
     }
 
-    public void loadItemForce(LIROperand loc) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void loadForStore(BasicType type) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public LIROperand result() {
+    public Address index() {
         // TODO Auto-generated method stub
         return null;
     }
-
-    public void loadItem() {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void loadByteItem() {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void setInstruction(Instruction length) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public boolean isConstant() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    public void dontLoadItem() {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void loadNonconstant() {
-        // TODO Auto-generated method stub
-
-    }
-
-    public Instruction value() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
 
 }

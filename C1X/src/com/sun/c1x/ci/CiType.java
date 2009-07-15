@@ -93,6 +93,13 @@ public interface CiType {
     boolean isInstanceClass();
 
     /**
+     * Checks whether this type is an array class.
+     * NOTE THIS OPERATION IS ONLY AVAILABLE ON RESOLVED TYPES.
+     * @return {@code true} if this type is an array class
+     */
+    boolean isArrayKlass();
+
+    /**
      * Checks whether this type is an array of non-primitive elements.
      * @return {@code true} if this type is an array of non-primitive elements
      */
@@ -182,4 +189,8 @@ public interface CiType {
      * @return true if the slow path should always be taken, false otherwise
      */
     boolean layoutHelperNeedsSlowPath();
+
+    int superCheckOffset();
+
+    Object encoding();
 }

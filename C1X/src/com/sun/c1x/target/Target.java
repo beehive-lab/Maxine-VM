@@ -20,8 +20,12 @@
  */
 package com.sun.c1x.target;
 
+import com.sun.c1x.value.BasicType;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+
+import com.sun.c1x.lir.*;
 
 /**
  * The <code>Target</code> class represents the target of a compilation, including
@@ -86,5 +90,128 @@ public class Target {
      */
     public boolean hasCompressedOops() {
         return referenceSize < arch.wordSize;
+    }
+
+    /**
+     * Gets the size in bytes of the specified basic type for this target.
+     * @param basicType the basic type for which to get the size
+     * @return the size in bytes of the basic type
+     */
+    public int sizeInBytes(BasicType basicType) {
+        return basicType.sizeInBytes(referenceSize, arch.wordSize);
+    }
+    public Register jRarg0() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Register jRarg1() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Register jRarg2() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Register jRarg3() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Register jRarg4() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Register jRarg5() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public boolean supportsSSE() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean supports3DNOW() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean supportsSSE2() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean supportsLzcnt() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean supportsCmov() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean supportsMmx() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean supportsSse42() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean supportsMMX() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean isIntel() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean isAmd() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean supportsPopcnt() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean supportsSse41() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean isP6() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean supportsCx8() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean isWin64() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean isWindows() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean isSolaris() {
+        // TODO Auto-generated method stub
+        return false;
     }
 }

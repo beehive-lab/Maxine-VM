@@ -25,11 +25,11 @@ import static test.com.sun.max.vm.compiler.c1x.C1XTest.PatternType.*;
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.Arrays;
 
 import com.sun.c1x.*;
 import com.sun.c1x.target.Target;
 import com.sun.c1x.target.Architecture;
-import com.sun.c1x.util.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -65,6 +65,8 @@ public class C1XTest {
         "Compile class initializer (<clinit>) methods");
     private static final Option<Boolean> failFastOption = options.newBooleanOption("fail-fast", true,
         "Stop compilation upon the first bailout.");
+    private static final Option<Boolean> targetOption = options.newBooleanOption("target", false,
+        "Compile the method(s) all the way to target code.");
     private static final Option<Boolean> timingOption = options.newBooleanOption("timing", false,
         "Report compilation time for each successful compile.");
     private static final Option<Boolean> c1xOptionsOption = options.newBooleanOption("c1x-options", false,
@@ -77,6 +79,7 @@ public class C1XTest {
         "Show help message and exit.");
 
     static {
+        // add all the fields from C1XOptions as options
         for (final Field field : C1XOptions.class.getFields()) {
             if (Modifier.isStatic(field.getModifiers())) {
                 if (field.getType() == boolean.class) {
@@ -109,6 +112,13 @@ public class C1XTest {
                 }
             }
         }
+        // add a special option "c1x-optlevel" which adjusts the optimization level
+        options.addOption(new Option<Integer>("c1x-optlevel", -1, OptionTypes.INT_TYPE, "Set the overall optimization level of C1X (-1 to use default settings)") {
+            @Override
+            public void setValue(Integer value) {
+                C1XOptions.setOptimizationLevel(value);
+            }
+        }, Syntax.REQUIRES_EQUALS);
     }
 
     private static final List<Timing> timings = new ArrayList<Timing>();
@@ -164,18 +174,9 @@ public class C1XTest {
         // compile all the methods and report progress
         for (MethodActor methodActor : methods) {
             progress.begin(methodActor.toString());
-            final C1XCompilation compilation = compile(target, runtime, methodActor, printBailoutOption.getValue(), false);
-            if (compilation == null || compilation.startBlock() != null) {
+            final boolean result = compile(target, runtime, methodActor, printBailoutOption.getValue(), false);
+            if (result) {
                 progress.pass();
-
-                if (compilation != null && C1XOptions.PrintIR) {
-                    out.println(methodActor.format("IR for %H.%n(%p)"));
-                    final LogStream logOut = new LogStream(out);
-                    final InstructionPrinter ip = new InstructionPrinter(logOut, true);
-                    final BlockPrinter bp = new BlockPrinter(ip, false, false);
-                    compilation.startBlock().iteratePreOrder(bp);
-                }
-
             } else {
                 progress.fail("failed");
                 if (failFastOption.getValue()) {
@@ -203,23 +204,25 @@ public class C1XTest {
         }
     }
 
-    private static C1XCompilation compile(Target target, MaxCiRuntime runtime, MethodActor method, boolean printBailout, boolean warmup) {
+    private static boolean compile(Target target, MaxCiRuntime runtime, MethodActor method, boolean printBailout, boolean warmup) {
         // compile a single method
         if (isCompilable(method)) {
             final long startNs = System.nanoTime();
-            final C1XCompilation compilation = new C1XCompilation(target, runtime, runtime.getCiMethod(method));
-            if (compilation.startBlock() == null) {
-                if (printBailout) {
-                    compilation.bailout().printStackTrace(out);
-                }
+            final MaxCiTargetMethod targetMethod = targetOption.getValue() ? new MaxCiTargetMethod((ClassMethodActor) method) : null;
+            final C1XCompilation compilation = new C1XCompilation(target, runtime, runtime.getCiMethod(method), targetMethod);
+
+            if (!compilation.compile() && printBailout) {
+                compilation.bailout().printStackTrace(out);
+                return false;
             }
+
             if (!warmup) {
                 // record the time for successful compilations
                 recordTime(method, compilation.totalInstructions(), System.nanoTime() - startNs);
             }
-            return compilation;
+            return true;
         }
-        return null;
+        return true;
     }
 
     private static boolean isCompilable(MethodActor method) {
@@ -356,9 +359,7 @@ public class C1XTest {
                                 methods.add(actor);
                             }
                         }
-                        for (MethodActor actor : classActor.localVirtualMethodActors()) {
-                            methods.add(actor);
-                        }
+                        methods.addAll(Arrays.asList(classActor.localVirtualMethodActors()));
                     } else {
                         // a method pattern was specified, find matching methods
                         final int parenIndex = argument.indexOf('(', colonIndex + 1);
@@ -414,16 +415,12 @@ public class C1XTest {
 
     private static void reportTiming() {
         if (timingOption.getValue()) {
-            long totalBytes = 0;
-            long totalInstrs = 0;
             double totalBcps = 0d;
             double totalIps = 0d;
             int count = 0;
             for (Timing timing : timings) {
                 final MethodActor method = timing.classMethodActor;
                 final long ns = timing.nanoSeconds;
-                totalBytes += timing.bytecodes();
-                totalInstrs += timing.instructions();
                 final double bcps = timing.bytecodesPerSecond();
                 final double ips = timing.instructionsPerSecond();
                 if (!averageOption.getValue()) {
@@ -438,12 +435,7 @@ public class C1XTest {
                 totalIps += ips;
                 count++;
             }
-
-            out.print("Total: ");
-            out.print(totalBytes + " bytes   ");
-            out.print(totalInstrs + " insts");
-            out.println();
-            out.print("Speed: ");
+            out.print("Average: ");
             out.print(Strings.fixedDouble(totalBcps / count, 2) + " bytes/s   ");
             out.print(Strings.fixedDouble(totalIps / count, 2) + " insts/s");
             out.println();
@@ -466,16 +458,16 @@ public class C1XTest {
         final String className = javaClass.getSimpleName();
         out.println(className + " {");
         for (final Field field : javaClass.getFields()) {
-            final String fieldName = "    " + Strings.padLengthWithSpaces(field.getName(), 35) + " = ";
+            final String fieldName = Strings.padLengthWithSpaces(field.getName(), 35);
             try {
                 if (field.getType() == int.class) {
-                    out.print(fieldName + field.getInt(null) + "\n");
+                    out.print("    " + fieldName + " = " + field.getInt(null) + "\n");
                 } else if (field.getType() == boolean.class) {
-                    out.print(fieldName + field.getBoolean(null) + "\n");
+                    out.print("    " + fieldName + " = " + field.getBoolean(null) + "\n");
                 } else if (field.getType() == float.class) {
-                    out.print(fieldName + field.getFloat(null) + "\n");
+                    out.print("    " + fieldName + " = " + field.getFloat(null) + "\n");
                 } else if (field.getType() == String.class) {
-                    out.print(fieldName + "\"" + field.get(null) + "\"\n");
+                    out.print("    " + fieldName + " = " + field.get(null) + "\n");
                 }
             } catch (IllegalAccessException e) {
                 // do nothing.
@@ -495,14 +487,6 @@ public class C1XTest {
             this.classMethodActor = classMethodActor;
             this.instructions = instructions;
             this.nanoSeconds = ns;
-        }
-
-        public long bytecodes() {
-            return classMethodActor.rawCodeAttribute().code().length;
-        }
-
-        public long instructions() {
-            return instructions;
         }
 
         public double bytecodesPerSecond() {

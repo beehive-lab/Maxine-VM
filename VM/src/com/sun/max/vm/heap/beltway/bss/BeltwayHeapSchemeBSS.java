@@ -62,14 +62,14 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
             sideTable.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize).plus(cardRegion.cardTableSize()).roundedUpBy(
                             Platform.target().pageSize));
             BeltwayCardRegion.switchToRegularCardTable(cardRegion.cardTableBase().asPointer());
-            TeleHeapInfo.registerMemoryRegions(getToSpace(), getFromSpace());
+            InspectableHeapInfo.registerMemoryRegions(getToSpace(), getFromSpace());
         } else if (phase == MaxineVM.Phase.STARTING) {
             collectorThread = new BeltwayStopTheWorldDaemon("GC", beltCollector);
         } else if (phase == MaxineVM.Phase.RUNNING) {
             beltCollectorBSS.setBeltwayHeapScheme(this);
             beltCollector.setRunnable(beltCollectorBSS);
             heapVerifier.initialize(this);
-            heapVerifier.getRootsVerifier().setFromSpace(BeltManager.getApplicationHeap());
+            heapVerifier.getRootsVerifier().setFromSpace(beltManager.getApplicationHeap());
             heapVerifier.getRootsVerifier().setToSpace(getToSpace());
             HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "Scavenge");
         }

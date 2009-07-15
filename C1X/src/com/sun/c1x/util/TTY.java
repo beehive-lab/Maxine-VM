@@ -137,4 +137,16 @@ public class TTY {
     public static void println(float f) {
         out.println(f);
     }
+
+    public static void print(String string, Object... args) {
+        out.print(String.format(string, args));
+    }
+
+    public static void println(String string, Object... args) {
+        out.println(String.format(string, args));
+    }
+
+    public static void cr() {
+        println();
+    }
 }

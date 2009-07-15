@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.target;
 
+import com.sun.c1x.util.*;
+
 /**
  * The <code>Architecture</code> class represents a CPU architecture that is supported by
  * the backend of C1X.
@@ -27,23 +29,47 @@ package com.sun.c1x.target;
  * @author Ben L. Titzer
  */
 public enum Architecture {
-    IA32(4, "x86"),
-    AMD64(8, "x86"),
-    SPARC(4, "sparc"),
-    SPARCV9(8, "sparc");
+    IA32(4, "x86", BitOrdering.LittleEndian),
+    AMD64(8, "x86", BitOrdering.LittleEndian),
+    SPARC(4, "sparc", BitOrdering.BigEndian),
+    SPARCV9(8, "sparc", BitOrdering.BigEndian);
     // PPC(4),
     // PPC64(8),
     // ARM(4),
 
+    public enum BitOrdering{
+        LittleEndian,
+        BigEndian
+    }
     /**
      * Represents the natural size of words (typically registers and pointers) of this architecture, in bytes.
      */
     public final int wordSize;
+    public final int bitsPerWord;
     public final String backend;
 
-    Architecture(int wordSize, String backend) {
+    public final int loWordOffsetInBytes;
+    public final int hiWordOffsetInBytes;
+
+
+    Architecture(int wordSize, String backend, BitOrdering bitOrdering) {
         this.wordSize = wordSize;
         this.backend = backend;
+        this.bitsPerWord = (int) java.lang.Math.pow(2, wordSize);
+        switch (bitOrdering) {
+            case LittleEndian:
+                loWordOffsetInBytes = 0;
+                hiWordOffsetInBytes = wordSize;
+                break;
+            case BigEndian:
+                loWordOffsetInBytes = wordSize;
+                hiWordOffsetInBytes = 0;
+                break;
+            default:
+                Util.shouldNotReachHere();
+                loWordOffsetInBytes = 0;
+                hiWordOffsetInBytes = wordSize;
+        }
     }
 
     /**
@@ -53,6 +79,10 @@ public enum Architecture {
     @Override
     public String toString() {
         return name().toLowerCase();
+    }
+
+    public int bitsPerWord() {
+        return bitsPerWord;
     }
 
     /**

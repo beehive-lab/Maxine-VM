@@ -18,51 +18,23 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.asm;
 
 
-/**
- * The <code>ArrayCopyStub</code> class represents a code stub for array copy.
- *
- * @author Marcelo Cintra
- *
- */
-public class ArrayCopyStub {
-
-    private LIRArrayCopy arrayCopy;
+public class BufferBlob extends CodeBlob{
 
     /**
-     * Creates a new ArrayCopyStub.
-     *
-     * @param arrayCopy the LIR operation representing the array copy
+     * @param name
+     * @param cb
+     * @param headerSize
+     * @param size
+     * @param frameComplete
+     * @param frameSize
+     * @param oopMaps
      */
-    public ArrayCopyStub(LIRArrayCopy arrayCopy) {
-        super();
-        this.arrayCopy = arrayCopy;
+    public BufferBlob(char name, CodeBuffer cb, int headerSize, int size, int frameComplete, int frameSize, OopMapSet oopMaps) {
+        super(name, cb, headerSize, size, frameComplete, frameSize, oopMaps);
+        // TODO Auto-generated constructor stub
     }
 
-    public LIROperand source() {
-        return arrayCopy.src();
-    }
-
-    public LIROperand sourcePos() {
-        return arrayCopy.srcPos();
-    }
-
-    public LIROperand dest() {
-        return arrayCopy.dst();
-    }
-
-    public LIROperand destPos() {
-        return arrayCopy.dstPos();
-    }
-
-    public LIROperand length() {
-        return arrayCopy.length();
-    }
-
-
-    public LIROperand tmp() {
-        return arrayCopy.tmp();
-    }
 }

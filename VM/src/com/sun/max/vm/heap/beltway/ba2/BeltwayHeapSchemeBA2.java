@@ -65,14 +65,14 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
             adjustedCardTableAddress = BeltwayCardRegion.adjustedCardTableBase(cardRegion.cardTableBase().asPointer());
             beltManager.swapBelts(getMatureSpace(), getNurserySpace());
             getMatureSpace().setExpandable(true);
-            TeleHeapInfo.registerMemoryRegions(getNurserySpace(), getMatureSpace());
+            InspectableHeapInfo.registerMemoryRegions(getNurserySpace(), getMatureSpace());
         } else if (phase == MaxineVM.Phase.STARTING) {
             collectorThread = new BeltwayStopTheWorldDaemon("GC", beltCollector);
         } else if (phase == MaxineVM.Phase.RUNNING) {
             beltCollectorBA2.setBeltwayHeapScheme(this);
             beltCollector.setRunnable(beltCollectorBA2);
             heapVerifier.initialize(this);
-            heapVerifier.getRootsVerifier().setFromSpace(BeltManager.getApplicationHeap());
+            heapVerifier.getRootsVerifier().setFromSpace(beltManager.getApplicationHeap());
             heapVerifier.getRootsVerifier().setToSpace(getMatureSpace());
             if (Heap.verbose()) {
                 HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "NurserySpaceGC", "MatureSpaceGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "CardScan", "Scavenge");

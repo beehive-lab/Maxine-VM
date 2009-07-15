@@ -98,7 +98,7 @@ public final class Inspection {
         maxVM().addBreakpointObserver(new BreakpointObserver());
         maxVM().addWatchpointObserver(new WatchpointObserver());
 
-        inspectorMainFrame = new InspectorMainFrame(this, INSPECTOR_NAME, settings, inspectionActions);
+        inspectorMainFrame = new InspectorMainFrame(this, INSPECTOR_NAME, nameDisplay, settings, inspectionActions);
 
         MethodInspector.Manager.make(this);
         ObjectInspectorFactory.make(this);
@@ -527,12 +527,14 @@ public final class Inspection {
     }
 
     /**
-     * Saves any persistent state, then shuts down VM process and inspection.
+     * Saves any persistent state, then shuts down VM process if needed and inspection.
      */
     public void quit() {
         settings().quit();
         try {
-            maxVM().terminate();
+            if (maxVMState().processState() != TERMINATED) {
+                maxVM().terminate();
+            }
         } catch (Exception exception) {
             ProgramWarning.message("error during VM termination: " + exception);
         } finally {

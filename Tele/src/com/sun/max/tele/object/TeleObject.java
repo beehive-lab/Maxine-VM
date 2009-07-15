@@ -25,12 +25,14 @@ import java.util.*;
 
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.lang.*;
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -72,10 +74,16 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
          */
         HYBRID;
     }
+
     /**
      * Controls tracing for object copying.
      */
     protected static final int COPY_TRACE_VALUE = 2;
+
+    private final TeleReference reference;
+    private final LayoutScheme layoutScheme;
+    private final long oid;
+    private TeleHub teleHub = null;
 
     /**
      * The factory method {@link TeleObjectFactory#make(Reference)} ensures synchronized TeleObjects creation.
@@ -83,13 +91,12 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     protected TeleObject(TeleVM teleVM, Reference reference) {
         super(teleVM);
         this.reference = (TeleReference) reference;
+        this.layoutScheme = teleVM.vmConfiguration().layoutScheme();
         oid = this.reference.makeOID();
     }
 
     protected void refresh(long processEpoch) {
     }
-
-    private final TeleReference reference;
 
     /**
      * @return canonical reference to this object in the {@link TeleVM}
@@ -99,34 +106,9 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     }
 
     /**
-     * @return current absolute location of the beginning of the object's memory allocation in the {@link TeleVM},
-     * subject to relocation by GC.
-     */
-    public Pointer getCurrentCell() {
-        return teleVM().referenceToCell(reference);
-    }
-
-    /**
-     * @return the current size of memory allocated for the object in the {@link TeleVM}.
-     */
-    public Size getCurrentSize() {
-        return classActorForType().dynamicTupleSize();
-    }
-
-    /**
-     * @return current absolute location of the object's origin (not necessarily beginning of memory)
-     *  in the {@link TeleVM}, subject to relocation by GC
-     */
-    public Pointer getCurrentOrigin() {
-        return reference.toOrigin();
-    }
-
-    /**
      * @return to which of the Maxine heap object representations does this surrogate refer?
      */
     public abstract ObjectKind getObjectKind();
-
-    private final long oid;
 
     /**
      * @return a number that uniquely identifies this object in the {@link TeleVM} for the duration of the inspection
@@ -134,13 +116,6 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     public long getOID() {
         return oid;
     }
-
-    @Override
-    public String toString() {
-        return getClass().toString() + "<" + oid + ">";
-    }
-
-    private TeleHub teleHub = null;
 
     /**
      * @return a short string describing the role played by this object if it is of special interest in the Maxine
@@ -156,24 +131,6 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      */
     public String maxineTerseRole() {
         return maxineRole();
-    }
-
-    /**
-     * @return the local surrogate for the Hub of this object
-     */
-    public TeleHub getTeleHub() {
-        if (teleHub == null) {
-            final Reference hubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(reference));
-            teleHub = (TeleHub) teleVM().makeTeleObject(hubReference);
-        }
-        return teleHub;
-    }
-
-    /**
-     * @return the "misc" word from the header of this object in the teleVM
-     */
-    public Word getMiscWord() {
-        return teleVM().layoutScheme().generalLayout.readMisc(reference);
     }
 
     /**
@@ -197,6 +154,94 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     }
 
     /**
+     * @return current memory region occupied by this object in the VM, subject to relocation by GC.
+     */
+    public final MemoryRegion getCurrentMemoryRegion() {
+        return new FixedMemoryRegion(teleVM().referenceToCell(reference), objectSize(), "");
+    }
+
+    /**
+     * @return the size of the memory occupied by this object in the VM.
+     */
+    protected abstract Size objectSize();
+
+    /**
+     * @return current absolute location of the object's origin (not necessarily beginning of memory)
+     *  in the {@link TeleVM}, subject to relocation by GC
+     */
+    public Pointer getCurrentOrigin() {
+        return reference.toOrigin();
+    }
+
+    /**
+     * @return enumeration of the fields in the header of this object
+     */
+    public abstract EnumSet<Layout.HeaderField> getHeaderFields();
+
+    /**
+     * @param headerField
+     * @return current memory region occupied by a header field in this object in the VM, subject to change by GC
+     */
+    public final MemoryRegion getCurrentMemoryRegion(Layout.HeaderField headerField) {
+        final Pointer start = getCurrentOrigin().plus(getHeaderOffset(headerField));
+        final Size size = Size.fromInt(getHeaderType(headerField).toKind().width.numberOfBytes);
+        return new FixedMemoryRegion(start, size, "");
+    }
+
+    /**
+     * @param headerField identifies a header field in the object layout
+     * @return the type of the header field
+     */
+    public final TypeDescriptor getHeaderType(Layout.HeaderField headerField) {
+        switch (headerField) {
+            case HUB:
+                return getTeleHub() == null ? null : JavaTypeDescriptor.forJavaClass(getTeleHub().hub().getClass());
+            case MISC:
+                return JavaTypeDescriptor.WORD;
+            case LENGTH:
+                return JavaTypeDescriptor.INT;
+            default:
+                ProgramError.unknownCase();
+        }
+        return null;
+    }
+
+    /**
+     * @param headerField identifies a header field in the object layout
+     * @return the location of the header field relative to object origin
+     */
+    public final Offset getHeaderOffset(Layout.HeaderField headerField) {
+        switch(headerField) {
+            case HUB:
+            case MISC:
+                return layoutScheme.generalLayout.getOffsetFromOrigin(headerField);
+            case LENGTH:
+                return layoutScheme.arrayHeaderLayout.getOffsetFromOrigin(headerField);
+            default:
+                ProgramError.unknownCase();
+        }
+        return null;
+    }
+
+    /**
+     * @return the local surrogate for the Hub of this object
+     */
+    public TeleHub getTeleHub() {
+        if (teleHub == null) {
+            final Reference hubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(reference));
+            teleHub = (TeleHub) teleVM().makeTeleObject(hubReference);
+        }
+        return teleHub;
+    }
+
+    /**
+     * @return the "misc" word from the header of this object in the teleVM
+     */
+    public Word getMiscWord() {
+        return teleVM().layoutScheme().generalLayout.readMisc(reference);
+    }
+
+    /**
      *  Gets the fields for either a tuple or hybrid object, returns empty set for arrays.
      *  Returns static fields in the special case of a {@link StaticTuple} object.
      */
@@ -204,6 +249,16 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
         final Set<FieldActor> instanceFieldActors = new HashSet<FieldActor>();
         collectInstanceFieldActors(classActorForType(), instanceFieldActors);
         return instanceFieldActors;
+    }
+
+    /**
+     * @param fieldActor
+     * @return current memory region occupied by a field in this object in the VM
+     */
+    public final MemoryRegion getCurrentMemoryRegion(FieldActor fieldActor) {
+        final Pointer start = getCurrentOrigin().plus(fieldActor.offset());
+        final Size size = getFieldSize(fieldActor);
+        return new FixedMemoryRegion(start, size, "");
     }
 
     private void collectInstanceFieldActors(ClassActor classActor, Set<FieldActor> instanceFieldActors) {
@@ -222,6 +277,12 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      * @return the current location in memory of the field in this object
      */
     public abstract Address getFieldAddress(FieldActor fieldActor);
+
+    /**
+     * @param fieldActor descriptor for a field in this class
+     * @return the memory size of the field
+     */
+    protected abstract Size getFieldSize(FieldActor fieldActor);
 
     /**
      * @param fieldActor local {@link FieldActor}, part of the {@link ClassActor} for the type of this object, that
@@ -401,6 +462,11 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
         } finally {
             Trace.end(COPY_TRACE_VALUE, classMessage);
         }
+    }
+
+    @Override
+    public String toString() {
+        return getClass().toString() + "<" + oid + ">";
     }
 
     public Reference getReference() {

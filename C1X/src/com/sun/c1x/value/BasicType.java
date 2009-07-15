@@ -36,6 +36,7 @@ public enum BasicType {
     Double('d', "double", "jdouble", 2),
     Long('l', "long", "jlong", 2),
     Object('a', "object", "jobject", 1),
+    Word('w', "word", null, 1),
     Void('v', "void", "void", 0),
     Jsr('r', "jsr", null, 1),
     Illegal(' ', "illegal", null, -1);
@@ -124,9 +125,10 @@ public enum BasicType {
     /**
      * Gets the size of this basic type in bytes.
      * @param oopSize the size of an object reference
+     * @param wordSize the size of a word in bytes
      * @return the size of this basic type in bytes
      */
-    public int sizeInBytes(int oopSize) {
+    public int sizeInBytes(int oopSize, int wordSize) {
         switch (this) {
             case Boolean: return 1;
             case Byte: return 1;
@@ -137,8 +139,19 @@ public enum BasicType {
             case Float: return 4;
             case Double: return 8;
             case Object: return oopSize;
+            case Word: return wordSize;
         }
         throw new IllegalArgumentException("invalid BasicType " + this + " for .sizeInBytes()");
+    }
+
+    /**
+     * Gets the element size of this basic type in bytes.
+     * @param oopSize the size of an object reference
+     * @param wordSize the size of a word
+     * @return the size of this basic type in bytes
+     */
+    public int elementSizeInBytes(int oopSize, int wordSize) {
+        return sizeInBytes(oopSize, wordSize);
     }
 
     /**
