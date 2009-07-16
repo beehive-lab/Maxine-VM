@@ -80,7 +80,10 @@ public abstract class MemoryTagTableCellRenderer extends InspectorLabel implemen
             toolTipText += "  " + watchpoint.toString();
             label.setText(labelText);
             label.setToolTipText(toolTipText);
-            return label.getBorderWrappedPanel(style().debugEnabledTargetBreakpointTagBorder());
+            if (watchpoint.isEnabled()) {
+                return label.getBorderWrappedPanel(style().debugEnabledTargetBreakpointTagBorder());
+            }
+            return label.getBorderWrappedPanel(style().debugDisabledTargetBreakpointTagBorder());
         }
         label.setText(labelText);
         label.setToolTipText(toolTipText);

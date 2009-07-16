@@ -147,11 +147,8 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         return factory.resetWatchpoint(this);
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxWatchpoint#isActive()
-     */
-    public boolean isActive() {
-        return active;
+    public boolean isEnabled() {
+        return active && (read || write || exec);
     }
 
     /* (non-Javadoc)
@@ -322,7 +319,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         // Keep the set ordered by start address only, implemented by the comparator and equals().
         // An additional constraint imposed by this factory is that no regions overlap,
         // either in part or whole, with others in the set.
-        private TreeSet<TeleWatchpoint> watchpoints = new TreeSet<TeleWatchpoint>(this);
+        private final TreeSet<TeleWatchpoint> watchpoints = new TreeSet<TeleWatchpoint>(this);
 
         // A thread-safe, immutable collection of the current watchpoint list.
         // This list will be read many, many more times than it will change.

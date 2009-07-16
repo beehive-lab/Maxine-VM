@@ -32,18 +32,6 @@ import com.sun.max.tele.object.*;
  */
 public interface MaxWatchpoint extends MemoryRegion {
 
-    /*
-     * We probably need to expose the booleans isRead, isWrite, and isExec
-     * eventually, isActive should be equivalent to isRead || is Write || isExec,
-     * and this means that the Factory can have a watchpoint that is disabled,
-     * as with breakpoints.
-     *
-     * I've renamed remove() to dispose(), which causes the factory to disable
-     * it completely and permanently, and then forget about it.  Being disabled
-     * this way is orthogonal to the three flag settings;  invariant is that watchpoints
-     * are either in the Factory's list or they are permanently disabled.
-     * mlvdv 7/1/09
-     */
 
     /**
      * Checks if watchpoint is set for reading.
@@ -62,6 +50,11 @@ public interface MaxWatchpoint extends MemoryRegion {
      * @return true while the watchpoint is activated for executing,
      */
     boolean isExec();
+
+    /**
+     * @return true if any of the possible activations are true.
+     */
+    boolean isEnabled();
 
     /**
      * Removes the memory watchpoint from the VM, at which time it
