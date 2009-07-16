@@ -28,9 +28,11 @@ import com.sun.max.io.*;
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.lang.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.field.*;
+import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.type.*;
 import com.sun.max.tele.value.*;
@@ -72,10 +74,14 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
                         && teleVM.containsInCode(address)) {
             // Not a known java target method, and not some other kind of known target code, but in a code region
             // See if the code manager in the VM knows about it.
-            final Reference targetMethodReference = teleVM.methods().Code_codePointerToTargetMethod.interpret(new WordValue(address)).asReference();
-            // Possible that the address points to an unallocated area of a code region.
-            if (targetMethodReference != null && !targetMethodReference.isZero()) {
-                teleTargetMethod = (TeleTargetMethod) teleVM.makeTeleObject(targetMethodReference);  // Constructor will add to register.
+            try {
+                final Reference targetMethodReference = teleVM.methods().Code_codePointerToTargetMethod.interpret(new WordValue(address)).asReference();
+                // Possible that the address points to an unallocated area of a code region.
+                if (targetMethodReference != null && !targetMethodReference.isZero()) {
+                    teleTargetMethod = (TeleTargetMethod) teleVM.makeTeleObject(targetMethodReference);  // Constructor will add to register.
+                }
+            } catch (TeleInterpreterException e) {
+                throw ProgramError.unexpected(e);
             }
         }
         return teleTargetMethod;
@@ -88,15 +94,19 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
         final AppendableSequence<TeleTargetMethod> result = new LinkSequence<TeleTargetMethod>();
         final DefaultMethodKey defaultMethodKey = new DefaultMethodKey(methodKey.holder(), methodKey.name(), methodKey.signature());
         // The interpreter will be unhappy passing in arguments whose dynamic types are alien (non-VM) classes, so create one for the key.
-        final Reference targetMethodArrayReference = teleVM.methods().Code_methodKeyToTargetMethods.interpret(TeleReferenceValue.from(defaultMethodKey)).asReference();
-        final TeleArrayObject teleTargetMethodArrayObject = (TeleArrayObject) teleVM.makeTeleObject(targetMethodArrayReference);
-        if (teleTargetMethodArrayObject != null) {
-            for (Reference targetMethodReference : (Reference []) teleTargetMethodArrayObject.shallowCopy()) {
-                final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) teleVM.makeTeleObject(targetMethodReference);
-                result.append(teleTargetMethod);
+        try {
+            final Reference targetMethodArrayReference = teleVM.methods().Code_methodKeyToTargetMethods.interpret(TeleReferenceValue.from(defaultMethodKey)).asReference();
+            final TeleArrayObject teleTargetMethodArrayObject = (TeleArrayObject) teleVM.makeTeleObject(targetMethodArrayReference);
+            if (teleTargetMethodArrayObject != null) {
+                for (Reference targetMethodReference : (Reference []) teleTargetMethodArrayObject.shallowCopy()) {
+                    final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) teleVM.makeTeleObject(targetMethodReference);
+                    result.append(teleTargetMethod);
+                }
             }
+            return result;
+        } catch (TeleInterpreterException e) {
+            throw ProgramError.unexpected(e);
         }
-        return result;
     }
 
     private final TargetCodeRegion targetCodeRegion;

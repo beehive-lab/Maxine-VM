@@ -103,7 +103,7 @@ public class RuntimeMemoryRegion implements MemoryRegion {
     }
 
     public void clear() {
-        Memory.clear(start().asPointer(), size());
+        Memory.clearBytes(start().asPointer(), size());
     }
 
     @Override
