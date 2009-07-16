@@ -47,7 +47,6 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
     private final AtomicWord scavenged = new AtomicWord();
 
     public TLAB() {
-        super();
         mark = start();
     }
 

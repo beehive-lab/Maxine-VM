@@ -53,11 +53,24 @@ import com.sun.max.vm.type.*;
  */
 public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements HeapScheme, CellVisitor {
 
+    /**
+     * A VM option for specifying how heap memory is to be allocated.
+     */
     private static final VMBooleanXXOption virtualAllocOption =
         register(new VMBooleanXXOption("-XX:+SemiSpaceUseVirtualMemory", "Allocate memory for GC using mmap instead of malloc."), MaxineVM.Phase.PRISTINE);
-    private static final int DEFAULT_SAFETY_ZONE_SIZE = 6144;  // empirically determined to be sufficient for simple VM termination after OutOfMemory condition
+
+    /**
+     * A VM option for specifying amount of memory to be reserved for allocating and raising an
+     * OutOfMemoryError when insufficient memory is available to satisfy an {@linkplain #allocate(Size)
+     * allocation} request.
+     *
+     * @see #safetyZoneSize
+     */
     private static final VMIntOption safetyZoneSizeOption =
-        register(new VMIntOption("-XX:SemiSpaceGCSafetyZoneSize=", DEFAULT_SAFETY_ZONE_SIZE, "Safety zone size in bytes."), MaxineVM.Phase.PRISTINE);
+        register(new VMIntOption("-XX:SemiSpaceGCSafetyZoneSize=", 6144,
+            "Memory reserved to throw OutOfMemoryError. If using TLABs, then the actual memory reserved " +
+            "is the maximum of this option's value and the size of a TLAB."), MaxineVM.Phase.PRISTINE);
+
     private static final VMStringOption growPolicyOption =
         register(new VMStringOption("-XX:SemiSpaceGCGrowPolicy=", false, "Double", "Grow policy for heap (Linear|Double)."), MaxineVM.Phase.STARTING);
 
@@ -65,9 +78,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     private final PointerOffsetGripUpdater pointerOffsetGripUpdater = new PointerOffsetGripUpdater();
     private final GripForwarder gripForwarder = new GripForwarder();
 
-    // The Sequential Heap Root Scanner is actually the "thread crawler" which will identify the
-    // roots out of the threads' stacks. Here we create one for the actual scanning (heapRootsScanner)
-    // and one for the verification (heapRootsVerifier)
+    /**
+     * The procedure that will identify all the GC roots except those in the boot heap and code regions.
+     */
     private final SequentialHeapRootsScanner heapRootsScanner = new SequentialHeapRootsScanner(pointerIndexGripUpdater);
 
     /**
@@ -98,16 +111,32 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
     private StopTheWorldGCDaemon collectorThread;
 
-    private SemiSpaceMemoryRegion fromSpace = new SemiSpaceMemoryRegion("Heap-From");
-    private SemiSpaceMemoryRegion toSpace = new SemiSpaceMemoryRegion("Heap-To");
-    private SemiSpaceMemoryRegion growFromSpace = new SemiSpaceMemoryRegion("Heap-From-Grow");  // used while growing the heap
-    private SemiSpaceMemoryRegion growToSpace = new SemiSpaceMemoryRegion("Heap-To-Grow");          // used while growing the heap
-    private static int safetyZoneSize = DEFAULT_SAFETY_ZONE_SIZE;  // space reserved to allow throw OutOfMemory to complete
+    private final SemiSpaceMemoryRegion fromSpace = new SemiSpaceMemoryRegion("Heap-From");
+    private final SemiSpaceMemoryRegion toSpace = new SemiSpaceMemoryRegion("Heap-To");
+
+    /**
+     * Used when {@linkplain #grow(GrowPolicy) growing} the heap.
+     */
+    private final SemiSpaceMemoryRegion growFromSpace = new SemiSpaceMemoryRegion("Heap-From-Grow");
+
+    /**
+     * Used when {@linkplain #grow(GrowPolicy) growing} the heap.
+     */
+    private final SemiSpaceMemoryRegion growToSpace = new SemiSpaceMemoryRegion("Heap-To-Grow");
+
+    /**
+     * The amount of memory reserved for allocating and raising an OutOfMemoryError when insufficient
+     * memory is available to satisfy an {@linkplain #allocate(Size) allocation} request.
+     *
+     * @see #safetyZoneSizeOption
+     */
+    private int safetyZoneSize;
+
     private GrowPolicy growPolicy;
     private LinearGrowPolicy increaseGrowPolicy;
 
     /**
-     * The global allocation limit (less safety zone).
+     * The global allocation limit (minus the {@linkplain #safetyZoneSize safety zone}).
      */
     private Address top;
 
@@ -115,6 +144,10 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      * The global allocation mark.
      */
     private AtomicWord allocationMark;
+
+    /**
+     * Flags if TLABs are being used for allocation.
+     */
     private boolean useTLAB;
 
     private final ResetTLAB resetTLAB = new ResetTLAB();
@@ -167,22 +200,23 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         } else if (phase == MaxineVM.Phase.PRISTINE) {
             final Size size = Heap.initialSize().dividedBy(2);
 
-            safetyZoneSize = safetyZoneSizeOption.getValue();
             if (allocateSpace(fromSpace, size).isZero() || allocateSpace(toSpace, size).isZero()) {
                 Log.print("Could not allocate object heap of size ");
                 Log.print(size.toLong());
                 Log.println();
-                FatalError.crash("Insufficient memory to initialize SemiSpaceHeapScheme");
+                FatalError.unexpected("Insufficient memory to initialize SemiSpaceHeapScheme");
             }
 
-            allocationMark.set(toSpace.start());
-            top = toSpace.end().minus(safetyZoneSize);
             useTLAB = useTLABOption.getValue();
-
             tlabSize = tlabSizeOption.getValue();
             if (tlabSize.lessThan(0)) {
                 FatalError.unexpected("Specified TLAB size is too small");
             }
+            safetyZoneSize = Math.max(safetyZoneSizeOption.getValue(), tlabSize.toInt());
+
+            allocationMark.set(toSpace.start());
+            top = toSpace.end().minus(safetyZoneSize);
+
 
             // From now on we can allocate
 
@@ -191,7 +225,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             final String growPolicy = growPolicyOption.getValue();
             if (growPolicy.equals("Double")) {
                 this.growPolicy = new DoubleGrowPolicy();
-            } else if (growPolicy.startsWith("Linear")) {
+            } else if (growPolicy.equals("Linear")) {
                 this.growPolicy = new LinearGrowPolicy(growPolicy);
             } else {
                 Log.print("Unknown heap growth policy, using default policy");
@@ -590,7 +624,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
     /**
      * Grow the semispaces to be of larger size.
-     * @param preGc true if prior to executing collector thread to copy _toSpace  to (grown) _fromSpace
+     *
+     * @param preGc true if prior to executing collector thread to copy {@link #toSpace} to (grown) {@link #fromSpace}
      * @return true iff both spaces can be grown
      */
     private boolean growSpaces(boolean preGc, GrowPolicy growPolicy) {
@@ -623,7 +658,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 }
                 return false;
             }
-            // return memory in _fromSpace
+            // return memory in 'fromSpace'
             deallocateSpace(fromSpace);
             copySpaceState(growFromSpace, fromSpace);
         } else {
@@ -709,14 +744,14 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     private boolean inSafetyZone; // set after we have thrown OutOfMemoryError and are using the safety zone
 
     /**
-     * The top of the current thread-local allocation buffer. This will remain zero if TLAB are not
+     * The top of the current thread-local allocation buffer. This will remain zero if TLABs are not
      * {@linkplain #useTLABOption enabled}.
      */
     private static final VmThreadLocal TLAB_TOP = new VmThreadLocal("TLAB_TOP", Kind.WORD);
 
     /**
-     * The allocation mark of the current thread-local allocation buffer. This will remain zero if TLAB are not
-     * {@linkplain #useTLABOption enabled}.
+     * The allocation mark of the current thread-local allocation buffer. This will remain zero if TLABs
+     * are not {@linkplain #useTLABOption enabled}.
      */
     private static final VmThreadLocal TLAB_MARK = new VmThreadLocal("TLAB_MARK", Kind.WORD);
 
@@ -836,6 +871,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                         top = top.plus(safetyZoneSize);
                         inSafetyZone = true;
                         // This new will now be ok
+                        if (Heap.verbose()) {
+                            Log.println("Throwing OutOfMemoryError");
+                        }
                         throw new OutOfMemoryError();
                     }
                 }
@@ -1123,9 +1161,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         // do nothing.
     }
 
-    /*
-     * This class encapsulates the policy for how to grow the heap.
-     *
+    /**
+     * The policy for how to grow the heap.
      */
     private abstract class GrowPolicy {
         /**
