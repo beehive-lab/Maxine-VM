@@ -296,7 +296,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         private final TeleThreadLocalValues teleThreadLocalValues;
 
         public TeleVmThreadLocalWatchpoint(Factory factory, String description, TeleThreadLocalValues teleThreadLocalValues, int index, boolean after, boolean read, boolean write, boolean exec) {
-            super(factory, description,  after, read, write, exec);
+            super(factory, description,  teleThreadLocalValues.getMemoryRegion(index), after, read, write, exec);
             this.teleThreadLocalValues = teleThreadLocalValues;
         }
 
@@ -455,6 +455,28 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
             throws TooManyWatchpointsException, DuplicateWatchpointException {
             final TeleWatchpoint teleWatchpoint =
                 new TeleHeaderWatchpoint(this, description, teleObject, headerField, after, read, write, exec);
+            return addWatchpoint(teleWatchpoint);
+        }
+
+        /**
+         * Creates a new watchpoint that covers a thread local variable in the VM.
+         *
+         * @param description text useful to a person, for example capturing the intent of the watchpoint
+         * @param teleThreadLocalValues a set of thread local values
+         * @param index identifies the particular thread local variable
+         * @param after before or after watchpoint
+         * @param read read watchpoint
+         * @param write write watchpoint
+         * @param exec execute watchpoint
+         *
+         * @return a new watchpoint, if successful
+         * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
+         * @throws DuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
+         */
+        public synchronized TeleWatchpoint setVmThreadLocalWatchpoint(String description, TeleThreadLocalValues teleThreadLocalValues, int index, boolean after, boolean read, boolean write, boolean exec)
+            throws TooManyWatchpointsException, DuplicateWatchpointException {
+            final TeleWatchpoint teleWatchpoint =
+                new TeleVmThreadLocalWatchpoint(this, description, teleThreadLocalValues, index, after, read, write, exec);
             return addWatchpoint(teleWatchpoint);
         }
 

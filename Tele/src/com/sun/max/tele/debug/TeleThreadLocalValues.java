@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.Safepoint.*;
@@ -84,6 +85,13 @@ public final class TeleThreadLocalValues extends FixedMemoryRegion {
             }
             offset += Word.size();
         }
+    }
+
+    /**
+     * @return the thread which which these {@linkplain VmThreadLocal thread local variables} are associated.
+     */
+    public MaxThread getMaxThread() {
+        return teleNativeThread;
     }
 
     /**
