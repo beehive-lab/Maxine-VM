@@ -100,21 +100,21 @@ public final class VmThreadLocal {
      * {@linkplain Safepoint#enable() enabled}.
      */
     public static final VmThreadLocal SAFEPOINTS_ENABLED_THREAD_LOCALS
-        = new VmThreadLocal("SAFEPOINTS_ENABLED_THREAD_LOCALS", Kind.WORD, "->TLS used when safepoints enabled");
+        = new VmThreadLocal("SAFEPOINTS_ENABLED_THREAD_LOCALS", Kind.WORD, "points to TLS used when safepoints enabled");
 
     /**
      * The {@linkplain VmThread#currentVmThreadLocals() current} thread local storage when safepoints for the thread are
      * {@linkplain Safepoint#disable() disabled}.
      */
     public static final VmThreadLocal SAFEPOINTS_DISABLED_THREAD_LOCALS
-        = new VmThreadLocal("SAFEPOINTS_DISABLED_THREAD_LOCALS", Kind.WORD, "->TLS used when safepoints disabled");
+        = new VmThreadLocal("SAFEPOINTS_DISABLED_THREAD_LOCALS", Kind.WORD, "points to TLS used when safepoints disabled");
 
     /**
      * The {@linkplain VmThread#currentVmThreadLocals() current} thread local storage when safepoints for the thread are
      * {@linkplain Safepoint#trigger(Pointer, Word, Word) triggered}.
      */
     public static final VmThreadLocal SAFEPOINTS_TRIGGERED_THREAD_LOCALS
-        = new VmThreadLocal("SAFEPOINTS_TRIGGERED_THREAD_LOCALS", Kind.WORD, "->TLS used when safepoints triggered");
+        = new VmThreadLocal("SAFEPOINTS_TRIGGERED_THREAD_LOCALS", Kind.WORD, "points to TLS used when safepoints triggered");
 
     /**
      * The procedure to run when a safepoint has been triggered.
@@ -142,7 +142,7 @@ public final class VmThreadLocal {
     /**
      * The address of the table of {@linkplain JniNativeInterface#pointer() JNI functions}.
      */
-    public static final VmThreadLocal JNI_ENV = new VmThreadLocal("JNI_ENV", Kind.WORD, "->table of JNI functions");
+    public static final VmThreadLocal JNI_ENV = new VmThreadLocal("JNI_ENV", Kind.WORD, "points to table of JNI functions");
 
     public static final VmThreadLocal LAST_JAVA_CALLER_STACK_POINTER = new VmThreadLocal("LAST_JAVA_CALLER_STACK_POINTER", Kind.WORD, "");
     public static final VmThreadLocal LAST_JAVA_CALLER_FRAME_POINTER = new VmThreadLocal("LAST_JAVA_CALLER_FRAME_POINTER", Kind.WORD, "");
@@ -216,7 +216,7 @@ public final class VmThreadLocal {
      * Once initialized, this value does not change for the lifetime of the thread.
      */
     public static final VmThreadLocal HIGHEST_STACK_SLOT_ADDRESS
-        = new VmThreadLocal("HIGHEST_STACK_SLOT_ADDRESS", Kind.WORD, "->stack slot with highest address covered by stack reference map");
+        = new VmThreadLocal("HIGHEST_STACK_SLOT_ADDRESS", Kind.WORD, "points to stack slot with highest address covered by stack reference map");
 
     /**
      * The address of the stack slot with the lowest address that is covered by the {@linkplain #STACK_REFERENCE_MAP
@@ -224,7 +224,7 @@ public final class VmThreadLocal {
      * not change for the lifetime of the thread.
      */
     public static final VmThreadLocal LOWEST_STACK_SLOT_ADDRESS
-        = new VmThreadLocal("LOWEST_STACK_SLOT_ADDRESS", Kind.WORD, "->stack slot with lowest address covered by stack reference map");
+        = new VmThreadLocal("LOWEST_STACK_SLOT_ADDRESS", Kind.WORD, "points to stack slot with lowest address covered by stack reference map");
 
     /**
      * The address of the active stack slot with the lowest address that is covered by the
@@ -236,7 +236,7 @@ public final class VmThreadLocal {
      * needs to have its <b>complete</b> stack reference map prepared on its behalf.
      */
     public static final VmThreadLocal LOWEST_ACTIVE_STACK_SLOT_ADDRESS
-        = new VmThreadLocal("LOWEST_ACTIVE_STACK_SLOT_ADDRESS", Kind.WORD, "->active stack slot with lowest address covered by stack reference map");
+        = new VmThreadLocal("LOWEST_ACTIVE_STACK_SLOT_ADDRESS", Kind.WORD, "points to active stack slot with lowest address covered by stack reference map");
 
     /**
      * The address of the stack reference map. This reference map has sufficient capacity to store a bit for each
@@ -245,13 +245,13 @@ public final class VmThreadLocal {
      * bit 0) denotes the address given by {@code STACK_TOP_FOR_REFERENCE_MAP}.
      */
     public static final VmThreadLocal STACK_REFERENCE_MAP
-        = new VmThreadLocal("STACK_REFERENCE_MAP", Kind.WORD, "->stack reference map");
+        = new VmThreadLocal("STACK_REFERENCE_MAP", Kind.WORD, "points to stack reference map");
 
     /**
      * Links for a doubly-linked list of all thread locals for active threads.
      */
-    public static final VmThreadLocal FORWARD_LINK = new VmThreadLocal("FORWARD_LINK", Kind.WORD, "->next thread locals in list of all active");
-    public static final VmThreadLocal BACKWARD_LINK = new VmThreadLocal("BACKWARD_LINK", Kind.WORD, "->previous thread locals in list of all active");
+    public static final VmThreadLocal FORWARD_LINK = new VmThreadLocal("FORWARD_LINK", Kind.WORD, "points to next thread locals in list of all active");
+    public static final VmThreadLocal BACKWARD_LINK = new VmThreadLocal("BACKWARD_LINK", Kind.WORD, "points to previous thread locals in list of all active");
 
     static {
         ProgramError.check(SAFEPOINT_LATCH.index == 0);
