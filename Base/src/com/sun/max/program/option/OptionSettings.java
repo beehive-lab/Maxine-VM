@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,43 +18,28 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.jit.amd64;
+package com.sun.max.program.option;
 
-import com.sun.max.asm.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.compiler.target.amd64.*;
-import com.sun.max.vm.jit.*;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
 /**
- * @author Bernd Mathiske
- * @author Laurent Daynes
- * @author Doug Simon
+ * An annotation that can be applied to a static field to set its name as option and its help text.
+ *
+ * @author Ben L. Titzer
  */
-public class AMD64JitTargetMethod extends JitTargetMethod {
+@Retention(RetentionPolicy.RUNTIME)
+public @interface OptionSettings {
 
-    public AMD64JitTargetMethod(ClassMethodActor classMethodActor) {
-        super(classMethodActor);
-    }
+    /**
+     * The name of this option, if different from the name of the field.
+     * @return the name of this option
+     */
+    String name() default "";
 
-    @Override
-    public InstructionSet instructionSet() {
-        return InstructionSet.AMD64;
-    }
-
-    @Override
-    public final int registerReferenceMapSize() {
-        return AMD64TargetMethod.registerReferenceMapSize();
-    }
-
-    @Override
-    public final void patchCallSite(int callOffset, Word callEntryPoint) {
-        AMD64TargetMethod.patchCallSite(this, callOffset, callEntryPoint);
-    }
-
-    @Override
-    public void forwardTo(TargetMethod newTargetMethod) {
-        AMD64TargetMethod.forwardTo(this, newTargetMethod);
-    }
+    /**
+     * The help text of this option.
+     * @return the help text
+     */
+    String help() default "";
 }
