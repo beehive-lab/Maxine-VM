@@ -628,10 +628,13 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
     private boolean inSafetyZone; // set after we have thrown OutOfMemoryError and are using the safety zone
 
-    private static final VmThreadLocal TLAB_TOP = new VmThreadLocal("TLAB_TOP", Kind.WORD);
-    private static final VmThreadLocal TLAB_MARK = new VmThreadLocal("TLAB_MARK", Kind.WORD);
+    private static final VmThreadLocal TLAB_TOP
+        = new VmThreadLocal("TLAB_TOP", Kind.WORD, "SemiSpace: top of TLAB area");
+    private static final VmThreadLocal TLAB_MARK
+        = new VmThreadLocal("TLAB_MARK", Kind.WORD, "SemiSpace: TLAB allocation mark");
 
-    private static final VmThreadLocal ALLOCATION_DISABLED = new VmThreadLocal("TLAB_DISABLED", Kind.WORD);
+    private static final VmThreadLocal ALLOCATION_DISABLED
+        = new VmThreadLocal("TLAB_DISABLED", Kind.WORD, "SemiSpace: non-zero if TLAB allocation currently disabled");
 
     /*
      * The OutOfMemoryError condition happens when we cannot satisfy a request after running a garbage collection and we

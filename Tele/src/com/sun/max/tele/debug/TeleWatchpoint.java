@@ -30,6 +30,7 @@ import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.layout.Layout.*;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -286,13 +287,17 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         }
     }
 
+    /**
+     * A watchpoint for the memory holding a {@linkplain VmThreadLocal thread local variable}.
+     * @see VmThreadLocal
+     */
     private static final class TeleVmThreadLocalWatchpoint extends TeleWatchpoint {
 
-        private final TeleNativeThread teleNativeThread;
+        private final TeleThreadLocalValues teleThreadLocalValues;
 
-        public TeleVmThreadLocalWatchpoint(Factory factory, String description, TeleNativeThread teleNativeThread, TeleThreadLocalValues teleThreadLocalValues, int index, boolean after, boolean read, boolean write, boolean exec) {
+        public TeleVmThreadLocalWatchpoint(Factory factory, String description, TeleThreadLocalValues teleThreadLocalValues, int index, boolean after, boolean read, boolean write, boolean exec) {
             super(factory, description,  after, read, write, exec);
-            this.teleNativeThread = teleNativeThread;
+            this.teleThreadLocalValues = teleThreadLocalValues;
         }
 
 

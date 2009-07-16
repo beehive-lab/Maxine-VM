@@ -218,6 +218,10 @@ public final class ThreadLocalsTable extends InspectorTable {
             return threadLocalValues.getVmThreadLocal(row).kind;
         }
 
+        public String rowToDescription(int row) {
+            return threadLocalValues.getVmThreadLocal(row).description;
+        }
+
         /**
          * @return the memory watchpoint, if any, that is active at a row
          */
@@ -307,7 +311,7 @@ public final class ThreadLocalsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             setValue(model.rowToName(row));
-            setToolTipText("+" + model.rowToOffset(row) + ", 0x" + model.rowToMemoryRegion(row).start().toHexString());
+            setToolTipText(model.rowToDescription(row));
             return this;
         }
     }

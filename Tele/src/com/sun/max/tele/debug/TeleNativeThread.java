@@ -296,7 +296,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
                     // should only happen once going from 0 to a non-zero value.
                     final TeleThreadLocalValues teleVMThreadLocalValues = teleVmThreadLocals.get(safepointState);
                     if (teleVMThreadLocalValues == null || !teleVMThreadLocalValues.start().equals(vmThreadLocalsPointer)) {
-                        teleVmThreadLocals.put(safepointState, new TeleThreadLocalValues(teleVM(), safepointState, vmThreadLocalsPointer));
+                        teleVmThreadLocals.put(safepointState, new TeleThreadLocalValues(this, safepointState, vmThreadLocalsPointer));
                     }
                 }
             }
