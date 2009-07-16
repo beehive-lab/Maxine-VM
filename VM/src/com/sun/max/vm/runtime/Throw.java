@@ -287,4 +287,14 @@ public final class Throw {
         throw new NullPointerException();
     }
 
+    /**
+     * Raises an {@code NegativeArraySizeException}. This is out-of-line to reduce the amount
+     * of code inlined on the fast path for an array allocation.
+     *
+     * @param length the negative array length
+     */
+    @NEVER_INLINE
+    public static void negativeArraySizeException(int length) {
+        throw new NegativeArraySizeException(String.valueOf(length));
+    }
 }

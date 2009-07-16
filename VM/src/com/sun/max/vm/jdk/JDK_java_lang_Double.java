@@ -33,7 +33,7 @@ import com.sun.max.unsafe.*;
 public class JDK_java_lang_Double {
 
     @SUBSTITUTE
-    public static long doubleToLongBits(double d) {
+    public static long doubleToRawLongBits(double d) {
         return UnsafeLoophole.doubleToLong(d);
     }
 

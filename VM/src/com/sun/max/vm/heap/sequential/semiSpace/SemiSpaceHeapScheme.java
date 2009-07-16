@@ -21,6 +21,7 @@
 package com.sun.max.vm.heap.sequential.semiSpace;
 
 import static com.sun.max.vm.VMOptions.*;
+import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
@@ -45,97 +46,116 @@ import com.sun.max.vm.type.*;
 /**
  * A simple semi-space scavenger heap, mainly for testing.
  *
- * No, we do NOT share code with other implementations here,
- * even if this means duplication of effort.
- * This code base is supposed to remain stable,
- * as a reliable fallback position.
- * Refactoring of whatever other fancy memory management library
- * must not damage the functionality here.
- *
  * @author Bernd Mathiske
  * @author Sunil Soman
+ * @author Doug Simon
+ * @author Hannes Payer
  */
 public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements HeapScheme, CellVisitor {
 
+    /**
+     * A VM option for specifying how heap memory is to be allocated.
+     */
     private static final VMBooleanXXOption virtualAllocOption =
-        register(new VMBooleanXXOption("-XX:-SemiSpaceUseVirtualMemory", "Allocate memory for GC using mmap instead of malloc."), MaxineVM.Phase.PRISTINE);
-    private static final int DEFAULT_SAFETY_ZONE_SIZE = 6144;  // empirically determined to be sufficient for simple VM termination after OutOfMemory condition
+        register(new VMBooleanXXOption("-XX:+SemiSpaceUseVirtualMemory", "Allocate memory for GC using mmap instead of malloc."), MaxineVM.Phase.PRISTINE);
+
+    /**
+     * A VM option for specifying amount of memory to be reserved for allocating and raising an
+     * OutOfMemoryError when insufficient memory is available to satisfy an {@linkplain #allocate(Size)
+     * allocation} request.
+     *
+     * @see #safetyZoneSize
+     */
     private static final VMIntOption safetyZoneSizeOption =
-        register(new VMIntOption("-XX:SemiSpaceGCSafetyZoneSize", DEFAULT_SAFETY_ZONE_SIZE, "Safety zone size in bytes."), MaxineVM.Phase.PRISTINE);
+        register(new VMIntOption("-XX:SemiSpaceGCSafetyZoneSize=", 6144,
+            "Memory reserved to throw OutOfMemoryError. If using TLABs, then the actual memory reserved " +
+            "is the maximum of this option's value and the size of a TLAB."), MaxineVM.Phase.PRISTINE);
+
     private static final VMStringOption growPolicyOption =
         register(new VMStringOption("-XX:SemiSpaceGCGrowPolicy=", false, "Double", "Grow policy for heap (Linear|Double)."), MaxineVM.Phase.STARTING);
 
-    private final PointerIndexVisitor pointerIndexGripVerifier = new PointerIndexVisitor() {
-        @Override
-        public void visitPointerIndex(Pointer pointer, int wordIndex) {
-            DebugHeap.verifyGripAtIndex(pointer, wordIndex * Kind.REFERENCE.width.numberOfBytes, pointer.getGrip(wordIndex), toSpace);
-        }
-    };
+    private final PointerIndexGripUpdater pointerIndexGripUpdater = new PointerIndexGripUpdater();
+    private final PointerOffsetGripUpdater pointerOffsetGripUpdater = new PointerOffsetGripUpdater();
+    private final GripForwarder gripForwarder = new GripForwarder();
 
-    private final PointerOffsetVisitor pointerOffsetGripVerifier = new PointerOffsetVisitor() {
-        public void visitPointerOffset(Pointer pointer, int offset) {
-            DebugHeap.verifyGripAtIndex(pointer, offset, pointer.readGrip(offset), toSpace);
-        }
-    };
-
-    private final PointerIndexVisitor pointerIndexGripUpdater = new PointerIndexVisitor() {
-        @Override
-        public void visitPointerIndex(Pointer pointer, int wordIndex) {
-            final Grip oldGrip = pointer.getGrip(wordIndex);
-            final Grip newGrip = mapGrip(oldGrip);
-            if (newGrip != oldGrip) {
-                pointer.setGrip(wordIndex, newGrip);
-            }
-        }
-    };
-
-    private final PointerOffsetVisitor pointerOffsetGripUpdater = new PointerOffsetVisitor() {
-        public void visitPointerOffset(Pointer pointer, int offset) {
-            final Grip oldGrip = pointer.readGrip(offset);
-            final Grip newGrip = mapGrip(oldGrip);
-            if (newGrip != oldGrip) {
-                pointer.writeGrip(offset, newGrip);
-            }
-        }
-    };
-
-    private final SpecialReferenceManager.GripForwarder gripForwarder = new SpecialReferenceManager.GripForwarder() {
-        public boolean isReachable(Grip grip) {
-            final Pointer origin = grip.toOrigin();
-            if (fromSpace.contains(origin)) {
-                final Grip forwardGrip = Layout.readForwardGrip(origin);
-                if (forwardGrip.isZero()) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        public Grip getForwardGrip(Grip grip) {
-            final Pointer origin = grip.toOrigin();
-            if (fromSpace.contains(origin)) {
-                return Layout.readForwardGrip(origin);
-            }
-            return grip;
-        }
-    };
-
-    // The Sequential Heap Root Scanner is actually the "thread crawler" which will identify the
-    // roots out of the threads' stacks. Here we create one for the actual scanning (_heapRootsScanner)
-    // and one for the verification (_heapRootsVerifier)
+    /**
+     * The procedure that will identify all the GC roots except those in the boot heap and code regions.
+     */
     private final SequentialHeapRootsScanner heapRootsScanner = new SequentialHeapRootsScanner(pointerIndexGripUpdater);
-    private final SequentialHeapRootsScanner heapRootsVerifier = new SequentialHeapRootsScanner(pointerIndexGripVerifier);
+
+    /**
+     * Procedure used to verify a grip denoted by a base address and offset.
+     * This field is null in a {@linkplain VMConfiguration#debugging() non-debug} VM.
+     */
+    private PointerOffsetGripVerifier pointerOffsetGripVerifier;
+
+    /**
+     * Procedure used to verify a grip denoted by a base address and a word-scaled index.
+     * This field is null in a {@linkplain VMConfiguration#debugging() non-debug} VM.
+     */
+    private PointerIndexGripVerifier pointerIndexGripVerifier;
+
+    /**
+     * Procedure used to verify heap well-formedness.
+     * This field is null in a {@linkplain VMConfiguration#debugging() non-debug} VM.
+     */
+    private SequentialHeapRootsScanner heapRootsVerifier;
+
+    /**
+     * The overhead of a byte array used to pad a TLAB in a {@linkplain VMConfiguration#debugging() debug} VM
+     * for the purpose of making the heap appear as a contiguous set of objects.
+     * This value is equal to the size of a byte array object header plus a word for the debug tag.
+     * This field is 0 in a {@linkplain VMConfiguration#debugging() non-debug} VM.
+     */
+    private int tlabPadObjectOverhead;
 
     private StopTheWorldGCDaemon collectorThread;
 
-    private SemiSpaceMemoryRegion fromSpace = new SemiSpaceMemoryRegion("Heap-From");
-    private SemiSpaceMemoryRegion toSpace = new SemiSpaceMemoryRegion("Heap-To");
-    private SemiSpaceMemoryRegion growFromSpace = new SemiSpaceMemoryRegion("Heap-From-Grow");  // used while growing the heap
-    private SemiSpaceMemoryRegion growToSpace = new SemiSpaceMemoryRegion("Heap-To-Grow");          // used while growing the heap
-    private static int safetyZoneSize = DEFAULT_SAFETY_ZONE_SIZE;  // space reserved to allow throw OutOfMemory to complete
+    private final SemiSpaceMemoryRegion fromSpace = new SemiSpaceMemoryRegion("Heap-From");
+    private final SemiSpaceMemoryRegion toSpace = new SemiSpaceMemoryRegion("Heap-To");
+
+    /**
+     * Used when {@linkplain #grow(GrowPolicy) growing} the heap.
+     */
+    private final SemiSpaceMemoryRegion growFromSpace = new SemiSpaceMemoryRegion("Heap-From-Grow");
+
+    /**
+     * Used when {@linkplain #grow(GrowPolicy) growing} the heap.
+     */
+    private final SemiSpaceMemoryRegion growToSpace = new SemiSpaceMemoryRegion("Heap-To-Grow");
+
+    /**
+     * The amount of memory reserved for allocating and raising an OutOfMemoryError when insufficient
+     * memory is available to satisfy an {@linkplain #allocate(Size) allocation} request.
+     *
+     * @see #safetyZoneSizeOption
+     */
+    private int safetyZoneSize;
+
     private GrowPolicy growPolicy;
     private LinearGrowPolicy increaseGrowPolicy;
-    private Address top;                                         // top of allocatable space (less safety zone)
-    private AtomicWord allocationMark;                           // current allocation point
+
+    /**
+     * The global allocation limit (minus the {@linkplain #safetyZoneSize safety zone}).
+     */
+    private Address top;
+
+    /**
+     * The global allocation mark.
+     */
+    private AtomicWord allocationMark;
+
+    /**
+     * Flags if TLABs are being used for allocation.
+     */
+    private boolean useTLAB;
+
+    private final ResetTLAB resetTLAB = new ResetTLAB();
+
+    /**
+     * The size of a TLAB.
+     */
+    private Size tlabSize;
 
     // Create timing facilities.
     private final TimerMetric clearTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
@@ -147,6 +167,74 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     private final TimerMetric weakRefTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
 
     private int numberOfGarbageCollectionInvocations;
+
+    /**
+     * A VM option for disabling use of TLABs.
+     */
+    private static final VMBooleanXXOption useTLABOption = register(new VMBooleanXXOption("-XX:+UseTLAB",
+        "Use thread-local object allocation."), MaxineVM.Phase.PRISTINE);
+
+    /**
+     * A VM option for specifying the size of a TLAB.
+     */
+    private static final VMSizeOption tlabSizeOption = register(new VMSizeOption("-XX:TLABSize=", Size.K.times(64),
+        "The size of thread-local allocation buffers."), MaxineVM.Phase.PRISTINE);
+
+    public SemiSpaceHeapScheme(VMConfiguration vmConfiguration) {
+        super(vmConfiguration);
+    }
+
+    @Override
+    public void initialize(MaxineVM.Phase phase) {
+        if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isDebug()) {
+                final int debugTagSize = Word.size();
+                pointerOffsetGripVerifier = new PointerOffsetGripVerifier();
+                pointerIndexGripVerifier = new PointerIndexGripVerifier();
+                heapRootsVerifier = new SequentialHeapRootsScanner(pointerIndexGripVerifier);
+                tlabPadObjectOverhead = PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub().specificLayout.headerSize() + debugTagSize;
+            }
+
+            allocationMark = new AtomicWord();
+
+        } else if (phase == MaxineVM.Phase.PRISTINE) {
+            final Size size = Heap.initialSize().dividedBy(2);
+
+            if (allocateSpace(fromSpace, size).isZero() || allocateSpace(toSpace, size).isZero()) {
+                Log.print("Could not allocate object heap of size ");
+                Log.print(size.toLong());
+                Log.println();
+                FatalError.unexpected("Insufficient memory to initialize SemiSpaceHeapScheme");
+            }
+
+            useTLAB = useTLABOption.getValue();
+            tlabSize = tlabSizeOption.getValue();
+            if (tlabSize.lessThan(0)) {
+                FatalError.unexpected("Specified TLAB size is too small");
+            }
+            safetyZoneSize = Math.max(safetyZoneSizeOption.getValue(), tlabSize.toInt());
+
+            allocationMark.set(toSpace.start());
+            top = toSpace.end().minus(safetyZoneSize);
+
+
+            // From now on we can allocate
+
+            InspectableHeapInfo.registerMemoryRegions(toSpace, fromSpace);
+        } else if (phase == MaxineVM.Phase.STARTING) {
+            final String growPolicy = growPolicyOption.getValue();
+            if (growPolicy.equals("Double")) {
+                this.growPolicy = new DoubleGrowPolicy();
+            } else if (growPolicy.equals("Linear")) {
+                this.growPolicy = new LinearGrowPolicy(growPolicy);
+            } else {
+                Log.print("Unknown heap growth policy, using default policy");
+                this.growPolicy = new DoubleGrowPolicy();
+            }
+            increaseGrowPolicy = new LinearGrowPolicy();
+            collectorThread = new StopTheWorldGCDaemon("GC", collect);
+        }
+    }
 
     @INLINE
     private Address allocationMark() {
@@ -165,12 +253,73 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         }
     }
 
+    private final class GripForwarder implements SpecialReferenceManager.GripForwarder {
+
+        public boolean isReachable(Grip grip) {
+            final Pointer origin = grip.toOrigin();
+            if (fromSpace.contains(origin)) {
+                final Grip forwardGrip = Layout.readForwardGrip(origin);
+                if (forwardGrip.isZero()) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public Grip getForwardGrip(Grip grip) {
+            final Pointer origin = grip.toOrigin();
+            if (fromSpace.contains(origin)) {
+                return Layout.readForwardGrip(origin);
+            }
+            return grip;
+        }
+    }
+
+    private final class PointerOffsetGripUpdater implements PointerOffsetVisitor {
+
+        public void visitPointerOffset(Pointer pointer, int offset) {
+            final Grip oldGrip = pointer.readGrip(offset);
+            final Grip newGrip = mapGrip(oldGrip);
+            if (newGrip != oldGrip) {
+                pointer.writeGrip(offset, newGrip);
+            }
+        }
+    }
+
+    private final class PointerIndexGripUpdater extends PointerIndexVisitor {
+
+        @Override
+        public void visitPointerIndex(Pointer pointer, int wordIndex) {
+            final Grip oldGrip = pointer.getGrip(wordIndex);
+            final Grip newGrip = mapGrip(oldGrip);
+            if (newGrip != oldGrip) {
+                pointer.setGrip(wordIndex, newGrip);
+            }
+        }
+    }
+
+    private final class PointerOffsetGripVerifier implements PointerOffsetVisitor {
+
+        public void visitPointerOffset(Pointer pointer, int offset) {
+            DebugHeap.verifyGripAtIndex(pointer, offset, pointer.readGrip(offset), toSpace);
+        }
+    }
+
+    private final class PointerIndexGripVerifier extends PointerIndexVisitor {
+
+        @Override
+        public void visitPointerIndex(Pointer pointer, int wordIndex) {
+            DebugHeap.verifyGripAtIndex(pointer, wordIndex * Kind.REFERENCE.width.numberOfBytes, pointer.getGrip(wordIndex), toSpace);
+        }
+    }
+
     /**
      * Routine that performs the actual garbage collection.
      */
     private final class Collect implements Runnable {
         public void run() {
             try {
+                VmThreadMap.ACTIVE.forAllVmThreadLocals(null, resetTLAB);
                 if (vmConfiguration().debugging()) {
                     // Pre-verification of the heap.
                     verifyHeap("before GC");
@@ -307,47 +456,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         to.setSize(from.size());
     }
 
-
-    @Override
-    public void initialize(MaxineVM.Phase phase) {
-        if (MaxineVM.isPrototyping()) {
-            allocationMark = new AtomicWord();
-        } else if (phase == MaxineVM.Phase.PRISTINE) {
-            final Size size = Heap.initialSize().dividedBy(2);
-
-            safetyZoneSize = safetyZoneSizeOption.getValue();
-            if (allocateSpace(fromSpace, size).isZero() || allocateSpace(toSpace, size).isZero()) {
-                Log.print("Could not allocate object heap of size ");
-                Log.print(size.toLong());
-                Log.println();
-                FatalError.crash("Insufficient memory to initialize SemiSpaceHeapScheme");
-            }
-
-            allocationMark.set(toSpace.start());
-            top = toSpace.end().minus(safetyZoneSize);
-
-            // From now on we can allocate
-
-            InspectableHeapInfo.registerMemoryRegions(toSpace, fromSpace);
-        } else if (phase == MaxineVM.Phase.STARTING) {
-            final String growPolicy = growPolicyOption.getValue();
-            if (growPolicy.equals("Double")) {
-                this.growPolicy = new DoubleGrowPolicy();
-            } else if (growPolicy.startsWith("Linear")) {
-                this.growPolicy = new LinearGrowPolicy(growPolicy);
-            } else {
-                Log.print("Unknown heap growth policy, using default policy");
-                this.growPolicy = new DoubleGrowPolicy();
-            }
-            increaseGrowPolicy = new LinearGrowPolicy();
-            collectorThread = new StopTheWorldGCDaemon("GC", collect);
-        }
-    }
-
-    public SemiSpaceHeapScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
-    }
-
     private void swapSemiSpaces() {
         final Address oldFromSpaceStart = fromSpace.start();
         final Size oldFromSpaceSize = fromSpace.size();
@@ -394,8 +502,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
     private Grip mapGrip(Grip grip) {
         final Pointer fromOrigin = grip.toOrigin();
-        if (VMConfiguration.hostOrTarget().debugging()) {
-            if (!(grip.isZero() || fromSpace.contains(fromOrigin) || toSpace.contains(fromOrigin) || Heap.bootHeapRegion().contains(fromOrigin) || Code.contains(fromOrigin))) {
+        if (MaxineVM.isDebug()) {
+            if (!(grip.isZero() || fromSpace.contains(fromOrigin) || toSpace.contains(fromOrigin) || Heap.bootHeapRegion.contains(fromOrigin) || Code.contains(fromOrigin))) {
                 Log.print("invalid grip: ");
                 Log.print(grip.toOrigin().asAddress());
                 Log.println();
@@ -411,7 +519,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             final Pointer fromCell = Layout.originToCell(fromOrigin);
             final Size size = Layout.size(fromOrigin);
             final Pointer toCell = gcAllocate(size);
-            if (VMConfiguration.hostOrTarget().debugging()) {
+            if (MaxineVM.isDebug()) {
                 DebugHeap.writeCellTag(toCell);
             }
 
@@ -481,6 +589,12 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         Pointer cell = toSpace.start().asPointer();
         while (cell.lessThan(allocationMark())) {
             cell = DebugHeap.checkDebugCellTag(cell);
+            if (Heap.traceGC()) {
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.print("Visiting cell in to space ");
+                Log.println(cell);
+                Log.unlock(lockDisabledSafepoints);
+            }
             cell = visitCell(cell);
         }
     }
@@ -492,9 +606,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
     private void scanBootHeap() {
         if (useBootHeapRefmap.getValue()) {
-            Heap.bootHeapRegion().visitCells(this);
+            Heap.bootHeapRegion.visitCells(this);
         } else {
-            Heap.bootHeapRegion().visitPointers(pointerIndexGripUpdater);
+            Heap.bootHeapRegion.visitPointers(pointerIndexGripUpdater);
         }
     }
 
@@ -510,7 +624,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
     /**
      * Grow the semispaces to be of larger size.
-     * @param preGc true if prior to executing collector thread to copy _toSpace  to (grown) _fromSpace
+     *
+     * @param preGc true if prior to executing collector thread to copy {@link #toSpace} to (grown) {@link #fromSpace}
      * @return true iff both spaces can be grown
      */
     private boolean growSpaces(boolean preGc, GrowPolicy growPolicy) {
@@ -543,7 +658,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 }
                 return false;
             }
-            // return memory in _fromSpace
+            // return memory in 'fromSpace'
             deallocateSpace(fromSpace);
             copySpaceState(growFromSpace, fromSpace);
         } else {
@@ -618,7 +733,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
     private Pointer gcAllocate(Size size) {
         Pointer cell = allocationMark().asPointer();
-        if (VMConfiguration.hostOrTarget().debugging()) {
+        if (MaxineVM.isDebug()) {
             cell = cell.plusWords(1);
         }
         allocationMark.set(cell.plus(size));
@@ -628,90 +743,57 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
     private boolean inSafetyZone; // set after we have thrown OutOfMemoryError and are using the safety zone
 
-    private static final VmThreadLocal TLAB_TOP
-        = new VmThreadLocal("TLAB_TOP", Kind.WORD, "SemiSpace: top of TLAB area");
-    private static final VmThreadLocal TLAB_MARK
-        = new VmThreadLocal("TLAB_MARK", Kind.WORD, "SemiSpace: TLAB allocation mark");
-
-    private static final VmThreadLocal ALLOCATION_DISABLED
-        = new VmThreadLocal("TLAB_DISABLED", Kind.WORD, "SemiSpace: non-zero if TLAB allocation currently disabled");
-
-    /*
-     * The OutOfMemoryError condition happens when we cannot satisfy a request after running a garbage collection and we
-     * cannot grow the heap any further (i.e. we are at the limit set by -Xmx). In that case we raise _top to the actual end of
-     * the active space and set _inSafetyZone  to true. If this happens recursively we fast fail the VM via MaxineVM.native_exit.
-     * On the other hand if a subsequent GC manages to find enough space to allow the safety zone to be re-established
-     * we set _inSafetyZone = false.
+    /**
+     * The top of the current thread-local allocation buffer. This will remain zero if TLABs are not
+     * {@linkplain #useTLABOption enabled}.
      */
+    private static final VmThreadLocal TLAB_TOP
+        = new VmThreadLocal("TLAB_TOP", Kind.WORD, "SemiSpace: top of current TLAB, zero if not used");
 
-    @NEVER_INLINE
-    private Pointer retryAllocate(Size size) {
-        Pointer oldAllocationMark;
-        Pointer cell;
-        Address end;
-        do {
-            oldAllocationMark = allocationMark().asPointer();
-            cell = allocateWithDebugTag(oldAllocationMark);
-            end = cell.plus(size);
-            while (end.greaterThan(top)) {
-                if (!Heap.collectGarbage(size)) {
-                    if (inSafetyZone) {
-                        FatalError.crash("out of memory again after throwing OutOfMemoryError");
-                    } else {
-                        // Use the safety region to do the throw
-                        top = top.plus(safetyZoneSize);
-                        inSafetyZone = true;
-                        // This new will now be ok
-                        throw new OutOfMemoryError();
-                    }
-                }
-                oldAllocationMark = allocationMark().asPointer();
-                cell = allocateWithDebugTag(oldAllocationMark);
-                end = cell.plus(size);
-            }
-        } while (allocationMark.compareAndSwap(oldAllocationMark, end) != oldAllocationMark);
-        return cell;
-    }
+    /**
+     * The allocation mark of the current thread-local allocation buffer. This will remain zero if TLABs
+     * are not {@linkplain #useTLABOption enabled}.
+     */
+    private static final VmThreadLocal TLAB_MARK
+        = new VmThreadLocal("TLAB_MARK", Kind.WORD, "SemiSpace: allocation mark of current TLAB, zero if not used");
 
-    @NEVER_INLINE
-    public Pointer retryAllocate0(Size size) {
-        //final Pointer allocationMark = VmThreadLocal.ALLOCATION_MARK.getVariableWord().asPointer();
-        //final Pointer allocationTop = VmThreadLocal.ALLOCATION_TOP.getVariableWord().asPointer().minus(24);
-        //if (!allocationMark.equals(allocationTop)) {
-            //createArray(ClassActor.fromJava(Byte.class).dynamicHub(), ((allocationTop.minus(allocationMark)).minus(24)).toInt());
-        //}
-        final Size tlabSize = Size.fromLong(Math.max(size.toLong(), 64 * 1024));
-        final Pointer tlab = retryAllocate(tlabSize);
-        final Pointer cell = allocateWithDebugTag(tlab); // TODO:check this
-        final Pointer end = cell.plus(size);
-        TLAB_TOP.setVariableWord(tlab.plus(tlabSize));
-        TLAB_MARK.setVariableWord(end);
-        return cell;
-    }
+    /**
+     * Thread-local used to disable allocation per thread.
+     */
+    private static final VmThreadLocal ALLOCATION_DISABLED
+        = new VmThreadLocal("TLAB_DISABLED", Kind.WORD, "SemiSpace: disables per thread allocation if non-zero");
 
-    @INLINE
-    private Pointer allocate0(Size size) {
-        final Pointer oldAllocationMark = TLAB_MARK.getVariableWord().asPointer();
-        final Pointer cell = allocateWithDebugTag(oldAllocationMark);
-        final Pointer end = cell.plus(size);
-        if (end.greaterThan(TLAB_TOP.getVariableWord().asAddress())) {
-            if (!ALLOCATION_DISABLED.getConstantWord().isZero()) {
-                Log.print("Trying to allocate ");
-                Log.print(size.toLong());
-                Log.print(" bytes on thread ");
-                Log.printVmThread(VmThread.current(), false);
-                Log.println(" while allocation is disabled");
-                FatalError.unexpected("Trying to allocate while allocation is disabled");
-            }
-            return retryAllocate0(size);
-        }
-        TLAB_MARK.setVariableWord(end);
-
-        return cell;
-    }
-
+    /**
+     * The fast, inline path for allocation.
+     *
+     * @param size the size of memory chunk to be allocated
+     * @return an allocated chunk of memory {@code size} bytes in size
+     * @throws OutOfMemoryError if the allocation request cannot be satified
+     */
     @INLINE
     private Pointer allocate(Size size) {
+        final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
+        final Pointer oldAllocationMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
+        final Pointer cell = adjustForDebugTag(oldAllocationMark);
+        final Pointer end = cell.plus(size);
+        if (end.greaterThan(enabledVmThreadLocals.getWord(TLAB_TOP.index).asAddress())) {
+            // This path will always be taken if TLAB allocation is not enabled
+            return allocateSlowPath(size);
+        }
+        enabledVmThreadLocals.setWord(TLAB_MARK.index, end);
+        return cell;
+    }
+
+    /**
+     * The slow path for allocation. This will always be taken when not using TLABs which is fine as the cost of the
+     * compare-and-swap on {@link #allocationMark} will dominate.
+     *
+     * @param size the requested allocation size
+     * @return the address of the allocated cell. Space for the {@linkplain DebugHeap#writeCellTag(Pointer) debug tag}
+     *         will have been reserved immediately before the allocated cell.
+     */
+    @NEVER_INLINE
+    private Pointer allocateSlowPath(Size size) {
         if (!ALLOCATION_DISABLED.getConstantWord().isZero()) {
             Log.print("Trying to allocate ");
             Log.print(size.toLong());
@@ -720,19 +802,166 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             Log.println(" while allocation is disabled");
             FatalError.unexpected("Trying to allocate while allocation is disabled");
         }
-        final Pointer oldAllocationMark = allocationMark().asPointer();
-        Pointer cell = allocateWithDebugTag(oldAllocationMark);
-        final Pointer end = cell.plus(size);
-        if (end.greaterThan(top) || allocationMark.compareAndSwap(oldAllocationMark, end) != oldAllocationMark) {
-            cell = retryAllocate(size);
+        if (useTLAB) {
+            if (size.plus(MaxineVM.isDebug() ? Word.size() : 0).plus(tlabPadObjectOverhead).greaterEqual(tlabSize)) {
+                // Allocate large objects (i.e. those that won't fit in a TLAB) directly on the heap.
+                // This means the next allocation will also take the slow path.
+                return retryAllocate(size, false);
+            }
+
+            final Size tlabSize = this.tlabSize;
+            final Pointer tlab = retryAllocate(tlabSize, true);
+            final Pointer tlabTop;
+            final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
+            if (MaxineVM.isDebug()) {
+                padTLAB(enabledVmThreadLocals);
+                tlabTop = tlab.plus(tlabSize.minus(tlabPadObjectOverhead));
+            } else {
+                tlabTop = tlab.plus(tlabSize);
+            }
+            final Pointer cell = adjustForDebugTag(tlab);
+            enabledVmThreadLocals.setWord(TLAB_TOP.index, tlabTop);
+            enabledVmThreadLocals.setWord(TLAB_MARK.index, cell.plus(size));
+            if (Heap.traceAllocation() || Heap.traceGC()) {
+                final boolean lockDisabledSafepoints = Log.lock();
+                final VmThread vmThread = UnsafeLoophole.cast(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
+                Log.printVmThread(vmThread, false);
+                Log.print(": Allocated TLAB at ");
+                Log.print(tlab);
+                Log.print(" [TOP=");
+                Log.print(tlabTop);
+                Log.print(", end=");
+                Log.print(tlab.plus(tlabSize));
+                Log.print(", size=");
+                Log.print(tlabSize.toInt());
+                Log.println("]");
+                Log.unlock(lockDisabledSafepoints);
+            }
+            return cell;
         }
-        toSpace.setAllocationMark(allocationMark());
+        return retryAllocate(size, false);
+    }
+
+    /**
+     * Allocates a cell from the global heap, using compare-and-swap to resolve any thread race condition.
+     *
+     * If allocation fails in this routine, then a garbage collection is performed. If a collection
+     * does not free up enough space to satisfy the allocation request, then the heap is expanded.
+     * If there is still not enough space after heap expansion, a {@link OutOfMemoryError} is thrown.
+     */
+    @NEVER_INLINE
+    private Pointer retryAllocate(Size size, boolean tlab) {
+        Pointer oldAllocationMark;
+        Pointer cell;
+        Address end;
+        do {
+            oldAllocationMark = allocationMark().asPointer();
+            cell = tlab ? oldAllocationMark : adjustForDebugTag(oldAllocationMark);
+            end = cell.plus(size);
+            while (end.greaterThan(top)) {
+                if (!Heap.collectGarbage(size)) {
+                    /*
+                     * The OutOfMemoryError condition happens when we cannot satisfy a request after running a garbage collection and we
+                     * cannot grow the heap any further (i.e. we are at the limit set by -Xmx). In that case we raise 'top' to the actual end of
+                     * the active space and set 'inSafetyZone' to true. If this happens recursively we fast fail the VM via MaxineVM.native_exit.
+                     * On the other hand if a subsequent GC manages to find enough space to allow the safety zone to be re-established
+                     * we set 'inSafetyZone' to false.
+                     */
+                    if (inSafetyZone) {
+                        FatalError.unexpected("Out of memory again after throwing OutOfMemoryError");
+                    } else {
+                        // Use the safety region to do the throw
+                        top = top.plus(safetyZoneSize);
+                        inSafetyZone = true;
+                        // This new will now be ok
+                        if (Heap.verbose()) {
+                            Log.println("Throwing OutOfMemoryError");
+                        }
+                        throw new OutOfMemoryError();
+                    }
+                }
+                oldAllocationMark = allocationMark().asPointer();
+                cell = tlab ? oldAllocationMark : adjustForDebugTag(oldAllocationMark);
+                end = cell.plus(size);
+            }
+        } while (allocationMark.compareAndSwap(oldAllocationMark, end) != oldAllocationMark);
         return cell;
     }
 
+    /**
+     * Plants a byte array in the unused portion of a thread's TLAB. This is required if
+     * {@linkplain DebugHeap#verifyRegion(Pointer, Address, MemoryRegion, PointerOffsetVisitor) verification} of the
+     * heap will be performed.
+     *
+     * @param enabledVmThreadLocals the pointer to the safepoint-enabled VM thread locals for the thread whose TLAB is
+     *            to be padded
+     */
+    static void padTLAB(Pointer enabledVmThreadLocals) {
+        final Pointer tlabTop = enabledVmThreadLocals.getWord(TLAB_TOP.index).asPointer();
+        if (!tlabTop.isZero()) {
+            final Pointer tlabMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
+            final int tlabPadByteArrayLength = tlabTop.minus(tlabMark).asSize().toInt();
+            final Pointer tlabPadByteArrayCell = adjustForDebugTag(tlabMark);
+            final Size tlabPadByteArrayCellSize = Layout.getArraySize(Kind.BYTE, tlabPadByteArrayLength);
+            Cell.plantArray(tlabPadByteArrayCell, tlabPadByteArrayCellSize, PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub(), tlabPadByteArrayLength);
+            if (Heap.traceAllocation() || Heap.traceGC()) {
+                final boolean lockDisabledSafepoints = Log.lock();
+                final VmThread vmThread = UnsafeLoophole.cast(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
+                Log.printVmThread(vmThread, false);
+                Log.print(": Placed TLAB byte array pad object at ");
+                Log.print(tlabPadByteArrayCell);
+                Log.print(" [array length=");
+                Log.print(tlabPadByteArrayLength);
+                Log.print(", cell size=");
+                Log.print(tlabPadByteArrayCellSize.toInt());
+                Log.print(", end=");
+                Log.print(tlabPadByteArrayCell.plus(tlabPadByteArrayCellSize));
+                Log.println("]");
+                Log.unlock(lockDisabledSafepoints);
+            }
+        }
+    }
+
+    /**
+     * A procedure for resetting the TLAB of a thread.
+     */
+    static class ResetTLAB implements Pointer.Procedure {
+
+        @Override
+        public void run(Pointer vmThreadLocals) {
+            final Pointer enabledVmThreadLocals = vmThreadLocals.getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
+            if (Heap.traceAllocation() || Heap.traceGC()) {
+                final Pointer tlabTop = enabledVmThreadLocals.getWord(TLAB_TOP.index).asPointer();
+                final Pointer tlabMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
+                final VmThread vmThread = UnsafeLoophole.cast(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.printVmThread(vmThread, false);
+                Log.print(": Resetting TLAB [TOP=");
+                Log.print(tlabTop);
+                Log.print(", MARK=");
+                Log.print(tlabMark);
+                Log.println("]");
+                Log.unlock(lockDisabledSafepoints);
+            }
+            if (MaxineVM.isDebug()) {
+                // Make the heap look like a contiguous set of objects by padding TLABs with byte arrays.
+                padTLAB(enabledVmThreadLocals);
+            }
+            enabledVmThreadLocals.setWord(TLAB_TOP.index, Address.zero());
+            enabledVmThreadLocals.setWord(TLAB_MARK.index, Address.zero());
+        }
+    }
+
+    /**
+     * Increments a given allocation mark to reserve space for a {@linkplain DebugHeap#writeCellTag(Pointer) debug tag} if
+     * this is a {@linkplain MaxineVM#isDebug() debug} VM.
+     *
+     * @param mark an address at which a cell will be allocated
+     * @return the given allocation address increment by 1 word if necessary
+     */
     @INLINE
-    private Pointer allocateWithDebugTag(Pointer mark) {
-        if (VMConfiguration.hostOrTarget().debugging()) {
+    private static Pointer adjustForDebugTag(Pointer mark) {
+        if (MaxineVM.isDebug()) {
             return mark.plusWords(1);
         }
         return mark;
@@ -743,6 +972,11 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         final Pointer vmThreadLocals = VmThread.currentVmThreadLocals();
         final Address value = ALLOCATION_DISABLED.getConstantWord(vmThreadLocals).asAddress();
         ALLOCATION_DISABLED.setConstantWord(vmThreadLocals, value.plus(1));
+        if (MaxineVM.isDebug()) {
+            // Need to pad the current TLAB in case a GC occurs while allocation is disabled on the current thread.
+            final Pointer enabledVmThreadLocals = vmThreadLocals.getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
+            padTLAB(enabledVmThreadLocals);
+        }
         TLAB_TOP.setVariableWord(vmThreadLocals, Address.zero());
     }
 
@@ -820,9 +1054,16 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             Log.println(when);
         }
         heapRootsVerifier.run();
+        if (Heap.traceGC()) {
+            Log.print("Verifying region [");
+            Log.print(toSpace.start());
+            Log.print(" .. ");
+            Log.print(allocationMark());
+            Log.println(")");
+        }
         DebugHeap.verifyRegion(toSpace.start().asPointer(), allocationMark(), toSpace, pointerOffsetGripVerifier);
         if (Heap.traceGC()) {
-            Log.print("Verifying heap");
+            Log.print("Verifying heap ");
             Log.print(when);
             Log.println(": DONE");
         }
@@ -923,9 +1164,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         // do nothing.
     }
 
-    /*
-     * This class encapsulates the policy for how to grow the heap.
-     *
+    /**
+     * The policy for how to grow the heap.
      */
     private abstract class GrowPolicy {
         /**
