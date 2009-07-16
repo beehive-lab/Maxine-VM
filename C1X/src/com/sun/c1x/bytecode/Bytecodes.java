@@ -740,4 +740,13 @@ public class Bytecodes {
         length[opcode] = (byte) format.length();
         Bytecodes.flags[opcode] = (byte) flags;
     }
+
+    /**
+     * Checks if it is a valid bytecode.
+     * @param code the code to be checked
+     * @return
+     */
+    public static boolean isDefined(int code) {
+        return 0 <= code && code < NUM_JAVA_CODES && names[code] != null;
+    }
 }

@@ -18,48 +18,25 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ci;
+package com.sun.c1x.lir;
+
 
 /**
- * The <code>CiExceptionHandler</code> interface represents an exception
- * handler.
+ * The <code>VMRegImplementation</code> class definition.
  *
- * @author Ben L. Titzer
+ * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
+ *
  */
-public interface CiExceptionHandler {
-    /**
-     * Gets the start bytecode index of the protected range of this handler.
-     * @return the start bytecode index
-     */
-    int startBCI();
+public class VMRegImplementation {
 
     /**
-     * Gets the end bytecode index of the protected range of this handler.
-     * @return the end bytecode index
-     */
-    int endBCI();
-
-    /**
-     * Gets the bytecode index of the handler block of this handler.
-     * @return the handler block bytecode index
-     */
-    int handlerBCI();
-
-    /**
-     * Gets the index into the constant pool representing the type of exceptions
-     * caught by this handler.
-     * @return the constant pool index of the catch type
-     */
-    int catchClassIndex();
-
-    /**
-     * Checks whether this handler catches all exceptions.
-     * @return {@code true} if this handler catches all exceptions
-     */
-    boolean isCatchAll();
-
-    /**
+     * @param offset
      * @return
      */
-    CiType catchKlass();
+    public static VMReg asVMReg(int offset) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
 }

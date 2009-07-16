@@ -18,48 +18,55 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ci;
+package com.sun.c1x.lir;
+
+import com.sun.c1x.lir.ScopeValue.*;
 
 /**
- * The <code>CiExceptionHandler</code> interface represents an exception
- * handler.
+ * The <code>DebugInfoReadStream</code> class definition.
  *
- * @author Ben L. Titzer
+ * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
+ *
  */
-public interface CiExceptionHandler {
-    /**
-     * Gets the start bytecode index of the protected range of this handler.
-     * @return the start bytecode index
-     */
-    int startBCI();
+public class DebugInfoReadStream extends CompressedReadStream {
+
+    // TODO: Not finished!
 
     /**
-     * Gets the end bytecode index of the protected range of this handler.
-     * @return the end bytecode index
+     * @param buffer
      */
-    int endBCI();
+    public DebugInfoReadStream(byte[] buffer) {
+        super(buffer);
 
-    /**
-     * Gets the bytecode index of the handler block of this handler.
-     * @return the handler block bytecode index
-     */
-    int handlerBCI();
+    }
 
-    /**
-     * Gets the index into the constant pool representing the type of exceptions
-     * caught by this handler.
-     * @return the constant pool index of the catch type
-     */
-    int catchClassIndex();
-
-    /**
-     * Checks whether this handler catches all exceptions.
-     * @return {@code true} if this handler catches all exceptions
-     */
-    boolean isCatchAll();
+    public ScopeValueCode readScopeValueCode() {
+        return ScopeValueCode.fromInt(readInt());
+    }
 
     /**
      * @return
      */
-    CiType catchKlass();
+    public ScopeValue readObjectValue() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    /**
+     * @return
+     */
+    public ScopeValue getCachedObject() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    /**
+     * @return
+     */
+    public Object readOop() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
 }

@@ -650,6 +650,14 @@ public class BlockBegin extends StateSplit {
 
     }
 
+    /**
+     * @param exceptionentry
+     * @return
+     */
+    public boolean isSet(BlockFlag flag) {
+        return (blockFlags & flag.mask()) != 0;
+    }
+
     public int numberOfExceptionHandlers() {
         return exceptionHandlerBlocks.size();
     }

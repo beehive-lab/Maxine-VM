@@ -18,48 +18,67 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ci;
+package com.sun.c1x.lir;
+
+import com.sun.c1x.util.*;
+
 
 /**
- * The <code>CiExceptionHandler</code> interface represents an exception
- * handler.
+ * The <code>ConstantIntValue</code> class definition.
  *
- * @author Ben L. Titzer
+ * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
+ *
  */
-public interface CiExceptionHandler {
-    /**
-     * Gets the start bytecode index of the protected range of this handler.
-     * @return the start bytecode index
-     */
-    int startBCI();
+public class ConstantIntValue extends ScopeValue {
+
+    private int value;
+
+    ConstantIntValue(int value) {
+        this.value = value;
+    }
 
     /**
-     * Gets the end bytecode index of the protected range of this handler.
-     * @return the end bytecode index
+     * @param stream
      */
-    int endBCI();
+    public ConstantIntValue(DebugInfoReadStream stream) {
+        value = stream.readInt();
+    }
+
+    int value() {
+        return value;
+    }
+
+    @Override
+    public boolean isConstantInt() {
+        return true;
+    }
+
+    @Override
+    public boolean equals(ScopeValue other) {
+        return false;
+    }
 
     /**
-     * Gets the bytecode index of the handler block of this handler.
-     * @return the handler block bytecode index
+     * Writes this value in a debug stream.
+     *
+     * @param stream the debug info stream used for writing
      */
-    int handlerBCI();
+    @Override
+    public void writeOn(DebugInfoWriteStream stream) {
+        stream.writeInt(ScopeValueCode.ConstantIntCode.ordinal());
+        stream.writeInt(value);
+    }
 
     /**
-     * Gets the index into the constant pool representing the type of exceptions
-     * caught by this handler.
-     * @return the constant pool index of the catch type
+     * Prints this scope value into a logstream.
+     *
+     * @param out the output logstream
+     *
      */
-    int catchClassIndex();
+    @Override
+    public void printOn(LogStream out) {
+        out.printf("%d", value());
+    }
 
-    /**
-     * Checks whether this handler catches all exceptions.
-     * @return {@code true} if this handler catches all exceptions
-     */
-    boolean isCatchAll();
-
-    /**
-     * @return
-     */
-    CiType catchKlass();
 }

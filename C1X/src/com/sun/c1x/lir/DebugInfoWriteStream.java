@@ -18,48 +18,36 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ci;
+package com.sun.c1x.lir;
+
+import com.sun.c1x.*;
 
 /**
- * The <code>CiExceptionHandler</code> interface represents an exception
- * handler.
+ * The <code>DebugInfoWriteStream</code> class definition.
  *
- * @author Ben L. Titzer
+ * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
+ *
  */
-public interface CiExceptionHandler {
-    /**
-     * Gets the start bytecode index of the protected range of this handler.
-     * @return the start bytecode index
-     */
-    int startBCI();
+public class DebugInfoWriteStream extends CompressedWriteStream {
 
-    /**
-     * Gets the end bytecode index of the protected range of this handler.
-     * @return the end bytecode index
-     */
-    int endBCI();
+    private DebugInformationRecorder recorder;
 
-    /**
-     * Gets the bytecode index of the handler block of this handler.
-     * @return the handler block bytecode index
-     */
-    int handlerBCI();
+    public DebugInformationRecorder recorder() {
+        return recorder;
+    }
 
-    /**
-     * Gets the index into the constant pool representing the type of exceptions
-     * caught by this handler.
-     * @return the constant pool index of the catch type
-     */
-    int catchClassIndex();
+    public DebugInfoWriteStream(DebugInformationRecorder recorder, int initialSize) {
+        super(initialSize);
+        this.recorder = recorder;
+    }
 
-    /**
-     * Checks whether this handler catches all exceptions.
-     * @return {@code true} if this handler catches all exceptions
-     */
-    boolean isCatchAll();
+    public void writeHandle(Object h) {
+        writeInt(recorder.oopRecorder().findIndex(h));
+    }
 
-    /**
-     * @return
-     */
-    CiType catchKlass();
+    public void writeBci(int bci) {
+        writeInt(bci - C1XOptions.InvocationEntryBci);
+    }
+
 }

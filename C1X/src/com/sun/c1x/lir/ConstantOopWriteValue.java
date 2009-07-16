@@ -18,48 +18,46 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ci;
+package com.sun.c1x.lir;
+
+import com.sun.c1x.lir.ScopeValue.*;
+import com.sun.c1x.util.*;
 
 /**
- * The <code>CiExceptionHandler</code> interface represents an exception
- * handler.
+ * The <code>ConstantOopWriteValue</code> class definition.
  *
- * @author Ben L. Titzer
+ * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
+ *
  */
-public interface CiExceptionHandler {
-    /**
-     * Gets the start bytecode index of the protected range of this handler.
-     * @return the start bytecode index
-     */
-    int startBCI();
+public class ConstantOopWriteValue {
 
-    /**
-     * Gets the end bytecode index of the protected range of this handler.
-     * @return the end bytecode index
-     */
-    int endBCI();
+    private Object value;
 
-    /**
-     * Gets the bytecode index of the handler block of this handler.
-     * @return the handler block bytecode index
-     */
-    int handlerBCI();
+    public ConstantOopWriteValue(Object value) {
+        this.value = value;
+    }
 
-    /**
-     * Gets the index into the constant pool representing the type of exceptions
-     * caught by this handler.
-     * @return the constant pool index of the catch type
-     */
-    int catchClassIndex();
+    public Object value() {
+        return value;
+    }
 
-    /**
-     * Checks whether this handler catches all exceptions.
-     * @return {@code true} if this handler catches all exceptions
-     */
-    boolean isCatchAll();
+    public boolean isConstantOop() {
+        return true;
+    }
 
-    /**
-     * @return
-     */
-    CiType catchKlass();
+    public boolean equals(ScopeValue other) {
+        return false;
+    }
+
+    // Serialization of debugging information
+    public void writeOn(DebugInfoWriteStream stream) {
+        stream.writeInt(ScopeValueCode.ConstantOopCode.ordinal());
+        stream.writeHandle(value);
+    }
+
+    // Printing
+    public void printOn(LogStream out) {
+        out.print(value.toString());
+    }
 }

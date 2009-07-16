@@ -18,48 +18,51 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ci;
+package com.sun.c1x.lir;
+
+import com.sun.c1x.util.*;
 
 /**
- * The <code>CiExceptionHandler</code> interface represents an exception
- * handler.
+ * The <code>ConstantOopReadValue</code> class definition.
  *
- * @author Ben L. Titzer
+ * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
+ *
  */
-public interface CiExceptionHandler {
-    /**
-     * Gets the start bytecode index of the protected range of this handler.
-     * @return the start bytecode index
-     */
-    int startBCI();
+public class ConstantOopReadValue extends ScopeValue {
+
+    private Object value;
 
     /**
-     * Gets the end bytecode index of the protected range of this handler.
-     * @return the end bytecode index
+     * @param stream
      */
-    int endBCI();
+    public ConstantOopReadValue(DebugInfoReadStream stream) {
+        value = stream.readOop();
+    }
 
-    /**
-     * Gets the bytecode index of the handler block of this handler.
-     * @return the handler block bytecode index
-     */
-    int handlerBCI();
+    public Object value() {
+        return value;
+    }
 
-    /**
-     * Gets the index into the constant pool representing the type of exceptions
-     * caught by this handler.
-     * @return the constant pool index of the catch type
-     */
-    int catchClassIndex();
+    @Override
+    public boolean isConstantOop() {
+        return true;
+    }
 
-    /**
-     * Checks whether this handler catches all exceptions.
-     * @return {@code true} if this handler catches all exceptions
-     */
-    boolean isCatchAll();
+    @Override
+    public boolean equals(ScopeValue other) {
+        return false;
+    }
 
-    /**
-     * @return
-     */
-    CiType catchKlass();
+    // Serialization of debugging information
+
+    @Override
+    public void writeOn(DebugInfoWriteStream stream) {
+        Util.shouldNotReachHere();
+    }
+
+    @Override
+    public void printOn(LogStream out) {
+        out.print(value.toString());
+    }
 }

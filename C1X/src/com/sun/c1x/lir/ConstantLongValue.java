@@ -18,39 +18,55 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x;
+package com.sun.c1x.lir;
 
-import com.sun.c1x.ci.*;
+import com.sun.c1x.util.*;
+
 
 /**
+ * The <code>ConstantLongValue</code> class definition.
+ *
+ * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  *
  */
-public class DebugInformationRecorder {
+public class ConstantLongValue extends ScopeValue {
 
-    public boolean recordingNonSafepoints() {
-        // TODO Auto-generated method stub
+    private long value;
+
+    public ConstantLongValue(long value) {
+        this.value = value;
+    }
+
+    /**
+     * @param stream
+     */
+    public ConstantLongValue(DebugInfoReadStream stream) {
+        value = stream.readLong();
+    }
+
+    public long value() {
+        return value;
+    }
+
+    @Override
+    public boolean isConstantLong() {
+        return true;
+    }
+
+    @Override
+    public boolean equals(ScopeValue other) {
         return false;
     }
 
-    public int lastPcOffset() {
-        // TODO Auto-generated method stub
-        return 0;
+    @Override
+    public void writeOn(DebugInfoWriteStream stream) {
+        stream.writeInt(ScopeValueCode.ConstantLongCode.ordinal());
+        stream.writeLong(value());
     }
 
-    public void addNonSafepoint(int pcOffset) {
-        // TODO Auto-generated method stub
-
+    @Override
+    public void printOn(LogStream out) {
+        out.printf("%d", value());
     }
-
-    public void describeScope(int pcOffset, CiMethod method, int[] sBci) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void endNonSafepoint(int pcOffset) {
-        // TODO Auto-generated method stub
-
-    }
-
 }

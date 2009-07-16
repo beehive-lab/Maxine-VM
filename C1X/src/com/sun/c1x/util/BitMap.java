@@ -139,4 +139,15 @@ public class BitMap {
         }
         return i;
     }
+
+    /**
+     * Sets the bits for a given range [start, end] on this bitmap.
+     * @param start the first bit of the range
+     * @param end the last bit of the range
+     */
+    public void setRange(int start, int end) {
+        while (start <= end) {
+            set(start++);
+        }
+    }
 }

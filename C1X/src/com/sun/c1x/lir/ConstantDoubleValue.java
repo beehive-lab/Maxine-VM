@@ -18,48 +18,52 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ci;
+package com.sun.c1x.lir;
+
+import com.sun.c1x.util.*;
 
 /**
- * The <code>CiExceptionHandler</code> interface represents an exception
- * handler.
+ * The <code>ConstantDoubleValue</code> class definition.
  *
- * @author Ben L. Titzer
+ * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
+ *
  */
-public interface CiExceptionHandler {
-    /**
-     * Gets the start bytecode index of the protected range of this handler.
-     * @return the start bytecode index
-     */
-    int startBCI();
+public class ConstantDoubleValue extends ScopeValue {
 
-    /**
-     * Gets the end bytecode index of the protected range of this handler.
-     * @return the end bytecode index
-     */
-    int endBCI();
+    private double value;
 
-    /**
-     * Gets the bytecode index of the handler block of this handler.
-     * @return the handler block bytecode index
-     */
-    int handlerBCI();
+    public ConstantDoubleValue(double value) {
+        this.value = value;
+    }
 
-    /**
-     * Gets the index into the constant pool representing the type of exceptions
-     * caught by this handler.
-     * @return the constant pool index of the catch type
-     */
-    int catchClassIndex();
+    // Serialization of debugging information
+    public ConstantDoubleValue(DebugInfoReadStream stream) {
+        value = stream.readDouble();
+    }
 
-    /**
-     * Checks whether this handler catches all exceptions.
-     * @return {@code true} if this handler catches all exceptions
-     */
-    boolean isCatchAll();
+    public double value() {
+        return value;
+    }
 
-    /**
-     * @return
-     */
-    CiType catchKlass();
+    @Override
+    public boolean isConstantDouble() {
+        return true;
+    }
+
+    @Override
+    public boolean equals(ScopeValue other) {
+        return false;
+    }
+
+    @Override
+    public void writeOn(DebugInfoWriteStream stream) {
+        stream.writeInt(ScopeValueCode.ConstantDoubleCode.ordinal());
+        stream.writeDouble(value);
+    }
+
+    @Override
+    public void printOn(LogStream out) {
+        out.printf("%f", value);
+    }
 }

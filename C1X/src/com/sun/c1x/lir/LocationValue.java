@@ -18,48 +18,60 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ci;
+package com.sun.c1x.lir;
+
+import com.sun.c1x.util.*;
+
 
 /**
- * The <code>CiExceptionHandler</code> interface represents an exception
- * handler.
+ * The <code>LocationValue</code> class definition.
  *
- * @author Ben L. Titzer
+ * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
+ *
  */
-public interface CiExceptionHandler {
-    /**
-     * Gets the start bytecode index of the protected range of this handler.
-     * @return the start bytecode index
-     */
-    int startBCI();
+public class LocationValue extends ScopeValue {
+
+    private  Location  location;
+
+    public LocationValue(Location location) {
+        this.location = location;
+    }
 
     /**
-     * Gets the end bytecode index of the protected range of this handler.
-     * @return the end bytecode index
+     * @param stream
      */
-    int endBCI();
+    public LocationValue(DebugInfoReadStream stream) {
+        this.location = new Location(stream);
+    }
 
     /**
-     * Gets the bytecode index of the handler block of this handler.
-     * @return the handler block bytecode index
+     * Serialization of debugging information.
+     *
+     * @param stream
+     *            the stream
      */
-    int handlerBCI();
+    @Override
+    public void writeOn(DebugInfoWriteStream stream) {
+        stream.writeInt(ScopeValueCode.LocationCode.ordinal());
+        location().writeOn(stream);
+    }
 
     /**
-     * Gets the index into the constant pool representing the type of exceptions
-     * caught by this handler.
-     * @return the constant pool index of the catch type
+     * @return true to indicate that this is a variable location
      */
-    int catchClassIndex();
+    @Override
+    public boolean isLocation() {
+        return true;
+    }
 
-    /**
-     * Checks whether this handler catches all exceptions.
-     * @return {@code true} if this handler catches all exceptions
-     */
-    boolean isCatchAll();
+    Location location() {
+        return location;
+    }
 
-    /**
-     * @return
-     */
-    CiType catchKlass();
+    // Printing
+    @Override
+    public void printOn(LogStream out) {
+        location().printOn(out);
+    }
 }
