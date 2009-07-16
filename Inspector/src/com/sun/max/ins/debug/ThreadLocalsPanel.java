@@ -89,16 +89,16 @@ public final class ThreadLocalsPanel extends InspectorPanel {
 
         private final AppendableSequence<InspectorLabel> labels = new LinkSequence<InspectorLabel>();
 
-        public ThreadLocalsHeaderPanel(Inspection inspection, TeleThreadLocalValues values) {
+        public ThreadLocalsHeaderPanel(Inspection inspection, TeleThreadLocalValues threadLocalValues) {
             super(inspection);
             addInspectorLabel(new TextLabel(inspection, "start: "));
-            addInspectorLabel(new WordValueLabel(inspection, ValueMode.WORD, values.start(), this));
+            addInspectorLabel(new WordValueLabel(inspection, ValueMode.WORD, threadLocalValues.start(), this));
             add(Box.createHorizontalGlue());
             addInspectorLabel(new TextLabel(inspection, "end: "));
-            addInspectorLabel(new WordValueLabel(inspection, ValueMode.WORD, values.end(), this));
+            addInspectorLabel(new WordValueLabel(inspection, ValueMode.WORD, threadLocalValues.end(), this));
             add(Box.createHorizontalGlue());
             addInspectorLabel(new TextLabel(inspection, "size: "));
-            addInspectorLabel(new DataLabel.IntAsDecimal(inspection, values.size().toInt()));
+            addInspectorLabel(new DataLabel.IntAsDecimal(inspection, threadLocalValues.size().toInt()));
         }
 
         private void addInspectorLabel(InspectorLabel label) {

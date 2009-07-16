@@ -24,7 +24,9 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.util.*;
 
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.Safepoint.*;
@@ -35,13 +37,14 @@ import com.sun.max.vm.thread.*;
  *
  * @author Doug Simon
  */
-public class TeleThreadLocalValues {
+public final class TeleThreadLocalValues extends AbstractTeleVMHolder {
 
     private final Map<String, Long> values = new LinkedHashMap<String, Long>(VmThreadLocal.threadLocalStorageSize().dividedBy(Word.size()).toInt());
 
     private final Safepoint.State safepointState;
 
-    public TeleThreadLocalValues(Safepoint.State safepointState, Pointer start) {
+    public TeleThreadLocalValues(TeleVM teleVM, Safepoint.State safepointState, Pointer start) {
+        super(teleVM);
         assert !start.isZero();
         for (VmThreadLocal threadLocal : VmThreadLocal.values()) {
             values.put(threadLocal.name, null);
@@ -65,6 +68,34 @@ public class TeleThreadLocalValues {
         }
     }
 
+    public int valueCount() {
+        return VmThreadLocal.values().length();
+    }
+
+    public VmThreadLocal getVmThreadLocal(int index) {
+        return VmThreadLocal.values().get(index);
+    }
+
+    public VmThreadLocal findVmThreadLocal(Address address) {
+        if (!address.isZero()) {
+            if (address.greaterEqual(start()) && address.lessThan(end())) {
+                final int index = address.minus(start()).dividedBy(teleVM().wordSize()).toInt();
+                return getVmThreadLocal(index);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @param index index of a thread local value
+     * @return the memory occupied by the thread local variable in this set of values
+     * @see VmThreadLocal#values()
+     */
+    public MemoryRegion getMemoryRegion(int index) {
+        final VmThreadLocal vmThreadLocal = VmThreadLocal.values().get(index);
+        return new FixedMemoryRegion(start.plus(vmThreadLocal.offset), Size.fromInt(teleVM().wordSize()), "");
+    }
+
     public Safepoint.State safepointState() {
         return safepointState;
     }
@@ -80,7 +111,7 @@ public class TeleThreadLocalValues {
      * Gets the value of a named thread local variable as a word.
      */
     public Word getWord(String name) {
-        return Address.fromLong(get(name));
+        return Address.fromLong(getValue(name));
     }
 
     /**
@@ -103,7 +134,7 @@ public class TeleThreadLocalValues {
     /**
      * Gets the value of a named thread local variable.
      */
-    public long get(String name) {
+    public long getValue(String name) {
         assert values.containsKey(name) : "Unknown VM thread local: " + name;
         return values.get(name);
     }
