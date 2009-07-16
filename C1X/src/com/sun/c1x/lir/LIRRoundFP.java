@@ -31,7 +31,7 @@ import com.sun.c1x.util.*;
  */
 public class LIRRoundFP extends LIROp1 {
 
-    private LIROperand tmp;
+    LIROperand tmp;
 
     /**
      * Creates a LIRRoundFP instruction.

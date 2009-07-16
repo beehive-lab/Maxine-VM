@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.lir.ScopeValue.*;
 import com.sun.c1x.util.*;
 
 /**
@@ -30,7 +29,7 @@ import com.sun.c1x.util.*;
  * @author Thomas Wuerthinger
  *
  */
-public class ConstantOopWriteValue {
+public class ConstantOopWriteValue extends ScopeValue {
 
     private Object value;
 
@@ -42,21 +41,25 @@ public class ConstantOopWriteValue {
         return value;
     }
 
+    @Override
     public boolean isConstantOop() {
         return true;
     }
 
+    @Override
     public boolean equals(ScopeValue other) {
         return false;
     }
 
     // Serialization of debugging information
+    @Override
     public void writeOn(DebugInfoWriteStream stream) {
         stream.writeInt(ScopeValueCode.ConstantOopCode.ordinal());
         stream.writeHandle(value);
     }
 
     // Printing
+    @Override
     public void printOn(LogStream out) {
         out.print(value.toString());
     }

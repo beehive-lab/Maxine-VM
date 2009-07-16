@@ -65,7 +65,7 @@ public class LocationValue extends ScopeValue {
         return true;
     }
 
-    Location location() {
+    public Location location() {
         return location;
     }
 

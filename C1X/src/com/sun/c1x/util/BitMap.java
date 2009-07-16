@@ -140,6 +140,10 @@ public class BitMap {
         return i;
     }
 
+    public void setFrom(BitMap liveOut) {
+        // TODO Auto-generated method stub
+    }
+
     /**
      * Sets the bits for a given range [start, end] on this bitmap.
      * @param start the first bit of the range
@@ -149,5 +153,20 @@ public class BitMap {
         while (start <= end) {
             set(start++);
         }
+    }
+
+    public void setDifference(BitMap liveKill) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public boolean isSame(BitMap liveOut) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public int getNextOneOffset(int i, int size) {
+        // TODO Auto-generated method stub
+        return 0;
     }
 }

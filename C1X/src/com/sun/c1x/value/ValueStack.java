@@ -759,4 +759,9 @@ public class ValueStack {
 
         return phis;
     }
+
+    public Iterable<Instruction> allStateValues() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

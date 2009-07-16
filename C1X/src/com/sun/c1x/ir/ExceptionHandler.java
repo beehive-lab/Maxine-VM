@@ -141,4 +141,14 @@ public class ExceptionHandler {
     public LIRList entryCode() {
         return entryCode;
     }
+
+    public void setLirOpId(int throwingOpId) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void setEntryCode(LIRList entryCode2) {
+        // TODO Auto-generated method stub
+
+    }
 }

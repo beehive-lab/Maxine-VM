@@ -109,7 +109,7 @@ public class Location {
     }
 
     // Register location Factory
-    static Location newRegLoc(LocationType t, VMReg reg) {
+    public static Location newRegLoc(LocationType t, VMReg reg) {
         return new Location(Where.InRegister, t, reg.value());
     }
 
@@ -140,6 +140,10 @@ public class Location {
         where = Where.fromInt((value & LocationMask.WhereMask.value) >> LocationMask.WhereShift.value);
         type = LocationType.fromInt((value & LocationMask.TypeMask.value) >> LocationMask.TypeShift.value);
         offset = (value & LocationMask.OffsetMask.value) >> LocationMask.OffsetShift.value;
+    }
+
+    public Location() {
+        // TODO Auto-generated constructor stub
     }
 
     /**

@@ -547,4 +547,14 @@ public class Util {
         }
         return true;
     }
+
+    public static int roundTo(int numVirtualRegs, int bitsPerWord) {
+        return ((numVirtualRegs + bitsPerWord - 1) / bitsPerWord) * bitsPerWord;
+    }
+
+    public static void truncate(List<?> instructions, int length) {
+        while (instructions.size() > length) {
+            instructions.remove(instructions.size() - 1);
+        }
+    }
 }

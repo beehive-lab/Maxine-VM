@@ -36,10 +36,10 @@ import com.sun.c1x.value.*;
  */
 public class CodeEmitInfo {
 
-    private IRScopeDebugInfo scopeDebugInfo;
+    public IRScopeDebugInfo scopeDebugInfo;
     private IRScope scope;
     private List<ExceptionHandler> exceptionHandlers;
-    private OopMap oopMap;
+    public OopMap oopMap;
     private ValueStack stack; // used by deoptimization (contains also monitors
     private int bci;
     private CodeEmitInfo next;
@@ -152,8 +152,8 @@ public class CodeEmitInfo {
         return id;
     }
 
+    // TODO nothing for now
     public void setId(int id) {
         this.id = id;
     }
-
 }

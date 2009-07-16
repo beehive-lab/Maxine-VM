@@ -24,6 +24,7 @@ package com.sun.c1x;
 import java.io.*;
 import java.util.*;
 
+import com.sun.c1x.alloc.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.ci.*;
@@ -72,6 +73,9 @@ public class C1XCompilation {
     private AbstractAssembler assembler;
 
     private IR hir;
+
+    private Instruction lastInstructionPrinted; // Debugging only
+    private CFGPrinter cfgPrinter;
 
     /**
      * Creates a new compilation for the specified method and runtime.
@@ -305,8 +309,10 @@ public class C1XCompilation {
     }
 
     public void maybePrintCurrentInstruction() {
-        // TODO Auto-generated method stub
-
+        if (currentInstruction != null && lastInstructionPrinted != currentInstruction) {
+            lastInstructionPrinted = currentInstruction;
+            currentInstruction.printLine();
+        }
     }
 
     public void bailout(String msg) {
@@ -349,10 +355,28 @@ public class C1XCompilation {
     }
 
     public boolean compile() {
+
+        if (C1XOptions.PrintCompilation) {
+            TTY.println();
+            TTY.println("Compiling method: " + method.toString());
+        }
+
         try {
             hir = new IR(this);
             hir.build();
+
+            CFGPrinter printer = cfgPrinter();
+
+            if (C1XOptions.PrintCFGToFile && printer != null) {
+                printer.printCFG(hir.startBlock, "Before generation of LIR", true, false);
+            }
+
             emitLIR();
+
+            if (C1XOptions.PrintCFGToFile && printer != null) {
+                printer.printCFG(hir.startBlock, "After generation of LIR", false, true);
+            }
+
             emitCode();
         } catch (Bailout b) {
             bailout = b;
@@ -369,6 +393,9 @@ public class C1XCompilation {
         frameMap = target.backend.newFrameMap(method, numberOfLocks(), maxStack());
         final LIRGenerator lirGenerator = target.backend.newLIRGenerator(this);
         hir.iterateLinearScanOrder(lirGenerator);
+
+        final RegisterAllocator registerAllocator = new LinearScan(this, hir, lirGenerator, frameMap());
+        registerAllocator.allocate();
     }
 
     private void emitCode() {
@@ -390,5 +417,27 @@ public class C1XCompilation {
 
     public int numberOfBlocks() {
         return totalBlocks;
+    }
+
+    public CFGPrinter cfgPrinter() {
+        if (C1XOptions.PrintCFGToFile && cfgPrinter == null) {
+            OutputStream cfgFileStream = CFGPrinter.cfgFileStream();
+            if (cfgFileStream != null) {
+                cfgPrinter = new CFGPrinter(cfgFileStream);
+                cfgPrinter.printCompilation(method);
+            }
+        }
+
+        return cfgPrinter;
+    }
+
+    public void setHasFpuCode(boolean localHasFpuRegisters) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public boolean needsDebugInformation() {
+        // TODO Auto-generated method stub
+        return false;
     }
 }

@@ -46,4 +46,14 @@ public class VMReg {
         return null;
     }
 
+    public boolean isValid() {
+        // TODO Auto-generated method stub
+        return true;
+    }
+
+    public VMReg next() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
 }

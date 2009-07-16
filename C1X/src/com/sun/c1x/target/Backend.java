@@ -42,4 +42,8 @@ public abstract class Backend {
     public abstract LIRGenerator newLIRGenerator(C1XCompilation compilation);
     public abstract LIRAssembler newLIRAssembler(C1XCompilation compilation);
     public abstract AbstractAssembler newAssembler(C1XCompilation c1xCompilation, CodeBuffer code);
+
+    public abstract int nofCpuRegs();
+    public abstract int nofFpuRegs();
+    public abstract int nofXmmRegs();
 }

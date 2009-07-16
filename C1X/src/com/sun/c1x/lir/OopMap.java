@@ -29,5 +29,14 @@ package com.sun.c1x.lir;
  *
  */
 public class OopMap {
+
+    public OopMap(int frameSize, int argCount) {
+        // TODO Auto-generated constructor stub
+    }
     //TODO: Not yet implemented
+
+    public void setOop(VMReg name) {
+        // TODO Auto-generated method stub
+
+    }
 }

@@ -75,8 +75,8 @@ public class X86FrameMap extends FrameMap {
     static final LIROperand r14oopOpr = asOopOpr(X86Register.r14);
 
 
-    private static final LIROperand long0Opr32 = LIROperandFactory.doubleCpu(X86Register.rax.number, X86Register.rdx.number);
-    private static final LIROperand long0Opr64 = LIROperandFactory.doubleCpu(X86Register.rax.number, X86Register.rax.number);
+    private static final LIROperand long0Opr32 = LIROperandFactory.doubleCpu(X86Register.rax, X86Register.rdx);
+    private static final LIROperand long0Opr64 = LIROperandFactory.doubleCpu(X86Register.rax, X86Register.rax);
 
     static final LIROperand long0Opr(Architecture arch) {
         if (arch.is32bit()) {
@@ -88,8 +88,8 @@ public class X86FrameMap extends FrameMap {
         }
     }
 
-    private static final LIROperand long1Opr32 = LIROperandFactory.doubleCpu(X86Register.rbx.number, X86Register.rcx.number);
-    private static final LIROperand long1Opr64 = LIROperandFactory.doubleCpu(X86Register.rbx.number, X86Register.rbx.number);
+    private static final LIROperand long1Opr32 = LIROperandFactory.doubleCpu(X86Register.rbx, X86Register.rcx);
+    private static final LIROperand long1Opr64 = LIROperandFactory.doubleCpu(X86Register.rbx, X86Register.rbx);
     static final LIROperand long1Opr(Architecture arch) {
         if (arch.is32bit()) {
             return long1Opr32;
@@ -100,14 +100,14 @@ public class X86FrameMap extends FrameMap {
         }
     }
 
-    static final LIROperand fpu0FloatOpr   = LIROperandFactory.singleFpu(X86Register.fpu0.number);
-    static final LIROperand fpu0DoubleOpr   = LIROperandFactory.doubleFpu(X86Register.fpu0.number);
+    static final LIROperand fpu0FloatOpr   = LIROperandFactory.singleFpu(X86Register.fpu0);
+    static final LIROperand fpu0DoubleOpr   = LIROperandFactory.doubleFpuX86(X86Register.fpu0);
 
-    static final LIROperand xmm0floatOpr = LIROperandFactory.singleXmmX86(X86Register.xmm0.number);
-    static final LIROperand xmm0doubleOpr = LIROperandFactory.doubleXmmX86(X86Register.xmm0.number);
+    static final LIROperand xmm0floatOpr = LIROperandFactory.singleXmmX86(X86Register.xmm0);
+    static final LIROperand xmm0doubleOpr = LIROperandFactory.doubleXmmX86(X86Register.xmm0);
 
     static LIROperand asOopOpr(Register reg) {
-        return LIROperandFactory.singleCpuOop(reg.number);
+        return LIROperandFactory.singleCpuOop(reg);
     }
 
     private static LIROperand asPointerOpr32(Register reg) {
@@ -115,7 +115,7 @@ public class X86FrameMap extends FrameMap {
     }
 
     private static LIROperand asLongOpr(Register reg) {
-        return LIROperandFactory.doubleCpu(reg.number, reg.number);
+        return LIROperandFactory.doubleCpu(reg, reg);
     }
 
     private static LIROperand asPointerOpr64(Register reg) {
@@ -133,7 +133,7 @@ public class X86FrameMap extends FrameMap {
     }
 
     static LIROperand asOpr(Register reg) {
-        return LIROperandFactory.singleCpu(reg.number);
+        return LIROperandFactory.singleCpu(reg);
     }
 
     public static X86Register rscratch1(Architecture arch) {

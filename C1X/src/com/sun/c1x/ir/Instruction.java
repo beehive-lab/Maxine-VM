@@ -538,4 +538,9 @@ public abstract class Instruction {
     public boolean isRoot(C1XCompilation compilation) {
         return isPinned() || compilation.hir().useCount(this) > 1;
     }
+
+    public void printLine() {
+        InstructionPrinter ip = new InstructionPrinter(TTY.out, true);
+        ip.printInstructionListing(this);
+    }
 }

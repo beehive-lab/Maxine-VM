@@ -38,7 +38,7 @@ public abstract class LIRInstruction {
     protected LIROperand result; // the result operand for this instruction
     protected LIROpcode code; // the opcode of this instruction
     protected LIRMoveKind flags; // flag that indicate the kind of move
-    private CodeEmitInfo info; // used to emit debug information
+    CodeEmitInfo info; // used to emit debug information
     private int id; // value id for register allocation
     private int fpuPopCount;
     private Instruction source; // for debugging
@@ -209,7 +209,8 @@ public abstract class LIRInstruction {
             st.printf(" [bci:%d]", info().bci());
         }
     }
-    public void verify() {
+    public boolean verify() {
+        return true;
     }
 
     /**

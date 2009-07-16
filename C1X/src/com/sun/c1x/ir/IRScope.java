@@ -206,4 +206,9 @@ public class IRScope {
     public CiMethod method() {
         return method;
     }
+
+    public IRScope caller() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

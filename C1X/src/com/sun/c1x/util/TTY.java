@@ -149,4 +149,9 @@ public class TTY {
     public static void cr() {
         println();
     }
+
+    public static void fillTo(int i) {
+        // TODO Auto-generated method stub
+
+    }
 }

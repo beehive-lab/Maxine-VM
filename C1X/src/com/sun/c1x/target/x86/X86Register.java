@@ -31,63 +31,60 @@ import com.sun.c1x.lir.*;
 public final class X86Register extends Register {
 
     // Invalid register
-    public static final X86Register noreg = new X86Register(-1);
+    public static final X86Register noreg = new X86Register(-1, "noreg");
 
     // Registers for 32 bit and 64 bit architecture
-    public static final X86Register rax = new X86Register(1);
-    public static final X86Register rcx = new X86Register(2);
-    public static final X86Register rdx = new X86Register(3);
-    public static final X86Register rbx = new X86Register(4);
-    public static final X86Register rsp = new X86Register(5);
-    public static final X86Register rbp = new X86Register(6);
-    public static final X86Register rsi = new X86Register(7);
-    public static final X86Register rdi = new X86Register(8);
+    public static final X86Register rax = new X86Register(1, "rax");
+    public static final X86Register rcx = new X86Register(2, "rcx");
+    public static final X86Register rdx = new X86Register(3, "rdx");
+    public static final X86Register rbx = new X86Register(4, "rbx");
+    public static final X86Register rsp = new X86Register(5, "rsp");
+    public static final X86Register rbp = new X86Register(6, "rbp");
+    public static final X86Register rsi = new X86Register(7, "rsi");
+    public static final X86Register rdi = new X86Register(8, "rdi");
 
     // CPU registers only on 64 bit architecture
-    public static final X86Register r8 = new X86Register(9);
-    public static final X86Register r9 = new X86Register(10);
-    public static final X86Register r10 = new X86Register(11);
-    public static final X86Register r11 = new X86Register(12);
-    public static final X86Register r12 = new X86Register(13);
-    public static final X86Register r13 = new X86Register(14);
-    public static final X86Register r14 = new X86Register(15);
-    public static final X86Register r15 = new X86Register(16);
+    public static final X86Register r8 = new X86Register(9, "r8");
+    public static final X86Register r9 = new X86Register(10, "r9");
+    public static final X86Register r10 = new X86Register(11, "r10");
+    public static final X86Register r11 = new X86Register(12, "r11");
+    public static final X86Register r12 = new X86Register(13, "r12");
+    public static final X86Register r13 = new X86Register(14, "r13");
+    public static final X86Register r14 = new X86Register(15, "r14");
+    public static final X86Register r15 = new X86Register(16, "r15");
 
     // Floating point registers
-    public static final X86Register fpu0 = new X86Register(17);
-    public static final X86Register fpu1 = new X86Register(18);
-    public static final X86Register fpu2 = new X86Register(19);
-    public static final X86Register fpu3 = new X86Register(20);
-    public static final X86Register fpu4 = new X86Register(21);
-    public static final X86Register fpu5 = new X86Register(22);
-    public static final X86Register fpu6 = new X86Register(23);
-    public static final X86Register fpu7 = new X86Register(24);
+    public static final X86Register fpu0 = new X86Register(17, "fpu0");
+    public static final X86Register fpu1 = new X86Register(18, "fpu1");
+    public static final X86Register fpu2 = new X86Register(19, "fpu2");
+    public static final X86Register fpu3 = new X86Register(20, "fpu3");
+    public static final X86Register fpu4 = new X86Register(21, "fpu4");
+    public static final X86Register fpu5 = new X86Register(22, "fpu5");
+    public static final X86Register fpu6 = new X86Register(23, "fpu6");
+    public static final X86Register fpu7 = new X86Register(24, "fpu7");
 
     // XMM registers
-    public static final X86Register xmm0 = new X86Register(25);
-    public static final X86Register xmm1 = new X86Register(26);
-    public static final X86Register xmm2 = new X86Register(27);
-    public static final X86Register xmm3 = new X86Register(28);
-    public static final X86Register xmm4 = new X86Register(29);
-    public static final X86Register xmm5 = new X86Register(30);
-    public static final X86Register xmm6 = new X86Register(31);
-    public static final X86Register xmm7 = new X86Register(32);
+    public static final X86Register xmm0 = new X86Register(25, "xmm0");
+    public static final X86Register xmm1 = new X86Register(26, "xmm1");
+    public static final X86Register xmm2 = new X86Register(27, "xmm2");
+    public static final X86Register xmm3 = new X86Register(28, "xmm3");
+    public static final X86Register xmm4 = new X86Register(29, "xmm4");
+    public static final X86Register xmm5 = new X86Register(30, "xmm5");
+    public static final X86Register xmm6 = new X86Register(31, "xmm6");
+    public static final X86Register xmm7 = new X86Register(32, "xmm7");
 
     // XMM registers only on 64 bit architecture
-    public static final X86Register xmm8 = new X86Register(33);
-    public static final X86Register xmm9 = new X86Register(34);
-    public static final X86Register xmm10 = new X86Register(35);
-    public static final X86Register xmm11 = new X86Register(36);
-    public static final X86Register xmm12 = new X86Register(37);
-    public static final X86Register xmm13 = new X86Register(38);
-    public static final X86Register xmm14 = new X86Register(39);
-    public static final X86Register xmm15 = new X86Register(40);
+    public static final X86Register xmm8 = new X86Register(33, "xmm8");
+    public static final X86Register xmm9 = new X86Register(34, "xmm9");
+    public static final X86Register xmm10 = new X86Register(35, "xmm10");
+    public static final X86Register xmm11 = new X86Register(36, "xmm11");
+    public static final X86Register xmm12 = new X86Register(37, "xmm12");
+    public static final X86Register xmm13 = new X86Register(38, "xmm13");
+    public static final X86Register xmm14 = new X86Register(39, "xmm14");
+    public static final X86Register xmm15 = new X86Register(40, "xmm15");
 
-    // XMM registers
-
-    private X86Register(int number) {
-        super(number);
-
+    private X86Register(int number, String name) {
+        super(number, name);
     }
 
     public int encoding() {
