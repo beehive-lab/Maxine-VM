@@ -57,6 +57,7 @@ public final class TeleRoots extends AbstractTeleVMHolder{
         return teleGripScheme.createTemporaryRemoteTeleGrip(teleVM().dataAccess().readWord(teleRootsPointer).asAddress());
     }
 
+
     /**
      * Register a VM location in the VM's Inspector root table.
      */
@@ -66,7 +67,8 @@ public final class TeleRoots extends AbstractTeleVMHolder{
         // Local copy of root table
         WordArray.set(cachedRoots, index, rawGrip);
         // Remote root table
-        wordArrayLayout.setWord(teleRoots(), index, rawGrip);
+        //wordArrayLayout.setWord(teleRoots(), index, rawGrip);
+        teleRoots().setWord(0, index, rawGrip);
         return index;
     }
 
@@ -76,13 +78,15 @@ public final class TeleRoots extends AbstractTeleVMHolder{
     void unregister(int index) {
         WordArray.set(cachedRoots, index, Address.zero());
         usedIndices.clear(index);
-        wordArrayLayout.setWord(teleRoots(), index, Word.zero());
+        //wordArrayLayout.setWord(teleRoots(), index, Word.zero());
+        teleRoots().setWord(0, index, Word.zero());
     }
 
     /**
      * The remote location bits currently at a position in the Inspector root table.
      */
     Address getRawGrip(int index) {
+        //WordArray.set(cachedRoots, index, teleRoots().getWord(0, index).asAddress());
         return WordArray.get(cachedRoots, index);
     }
 
@@ -92,7 +96,8 @@ public final class TeleRoots extends AbstractTeleVMHolder{
     void refresh() {
         final int numberOfIndices = usedIndices.length();
         for (int i = 0; i < numberOfIndices; i++) {
-            WordArray.set(cachedRoots, i, wordArrayLayout.getWord(teleRoots(), i).asAddress());
+            //WordArray.set(cachedRoots, i, wordArrayLayout.getWord(teleRoots(), i).asAddress());
+            WordArray.set(cachedRoots, i, teleRoots().getWord(0, i).asAddress());
         }
     }
 
