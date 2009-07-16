@@ -46,8 +46,8 @@ public enum Architecture {
      */
     public final int wordSize;
     public final int bitsPerWord;
+    public final int logBytesPerInt;
     public final String backend;
-
     public final int loWordOffsetInBytes;
     public final int hiWordOffsetInBytes;
 
@@ -56,6 +56,7 @@ public enum Architecture {
         this.wordSize = wordSize;
         this.backend = backend;
         this.bitsPerWord = (int) java.lang.Math.pow(2, wordSize);
+        this.logBytesPerInt = (int) (java.lang.Math.log(wordSize) / java.lang.Math.log(2));
         switch (bitOrdering) {
             case LittleEndian:
                 loWordOffsetInBytes = 0;

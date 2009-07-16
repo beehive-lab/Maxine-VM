@@ -29,10 +29,10 @@ package com.sun.c1x.lir;
  */
 public class Register {
 
-    public final static int vregBase = 50;
+    public static final int vregBase = 50;
     public final int number;
     public final String name;
-    public final static Register anyReg = new Register(-1, "any");
+    public static final Register anyReg = new Register(-1, "any");
 
     protected Register(int number, String name) {
         this.number = number;
@@ -81,5 +81,10 @@ public class Register {
     public boolean isXmm() {
         // TODO Auto-generated method stub
         return false;
+    }
+
+    public VMReg asVMReg() {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

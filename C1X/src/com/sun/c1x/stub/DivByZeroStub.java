@@ -69,6 +69,7 @@ public class DivByZeroStub extends CodeStub {
         return offset;
     }
 
+    @Override
     public boolean isExceptionThrowStub() {
         return true;
     }

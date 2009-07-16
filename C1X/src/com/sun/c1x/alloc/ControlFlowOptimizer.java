@@ -1,3 +1,23 @@
+/*
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ *
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ *
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
+ */
 package com.sun.c1x.alloc;
 
 import java.util.*;
@@ -6,17 +26,22 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 
-public class ControlFlowOptimizer {
+/**
+ *
+ * @author Thomas Wuerthinger
+ *
+ */
+public final class ControlFlowOptimizer {
 
     List<BlockBegin> originalPreds;
 
-    private final static int ShortLoopSize = 5;
+    private static final int ShortLoopSize = 5;
 
     private ControlFlowOptimizer() {
         originalPreds = new ArrayList<BlockBegin>(4);
     }
 
-    public void optimize(List<BlockBegin> code) {
+    public static void optimize(List<BlockBegin> code) {
         ControlFlowOptimizer optimizer = new ControlFlowOptimizer();
 
         // push the OSR entry block to the end so that we're not jumping over it.
@@ -165,7 +190,7 @@ public class ControlFlowOptimizer {
             }
             oldPos++;
         }
-        code.truncate(newPos);
+        Util.truncate(code, newPos);
 
         assert verify(code);
     }
@@ -190,22 +215,22 @@ public class ControlFlowOptimizer {
                         Util.traceLinearScan(3, "Deleting unconditional branch at end of block B%d", block.blockID());
 
                         // delete last branch instruction
-                        instructions.truncate(instructions.size() - 1);
+                        Util.truncate(instructions, instructions.size() - 1);
 
                     } else {
-                        LIRInstruction prevOp = instructions.at(instructions.size() - 2);
+                        LIRInstruction prevOp = instructions.get(instructions.size() - 2);
                         if (prevOp.code() == LIROpcode.Branch || prevOp.code() == LIROpcode.CondFloatBranch) {
                             assert prevOp instanceof LIRBranch : "branch must be of type LIRBranch";
                             LIRBranch prevBranch = (LIRBranch) prevOp;
 
-                            if (prevBranch.block() == code.at(i + 1) && prevBranch.info() == null) {
+                            if (prevBranch.block() == code.get(i + 1) && prevBranch.info() == null) {
 
                                 Util.traceLinearScan(3, "Negating conditional branch and deleting unconditional branch at end of block B%d", block.blockID());
 
                                 // eliminate a conditional branch to the immediate successor
                                 prevBranch.changeBlock(lastBranch.block());
                                 prevBranch.negateCondition();
-                                instructions.truncate(instructions.size() - 1);
+                                Util.truncate(instructions, instructions.size() - 1);
                             }
                         }
                     }
@@ -240,7 +265,7 @@ public class ControlFlowOptimizer {
                 for (int j = block.numberOfPreds() - 1; j >= 0; j--) {
                     BlockBegin pred = block.predAt(j);
                     List<LIRInstruction> predInstructions = pred.lir().instructionsList();
-                    LIRInstruction predLastOp = predInstructions.last();
+                    LIRInstruction predLastOp = predInstructions.get(predInstructions.size() - 1);
 
                     if (predLastOp.code() == LIROpcode.Branch) {
                         assert predLastOp instanceof LIRBranch : "branch must be LIRBranch";

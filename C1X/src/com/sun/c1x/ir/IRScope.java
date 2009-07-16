@@ -192,4 +192,23 @@ public class IRScope {
         assert lockStackSize >= 0;
         return lockStackSize;
     }
+
+    /**
+     * @return
+     */
+    public C1XCompilation compilation() {
+        return compilation;
+    }
+
+    /**
+     * @return
+     */
+    public CiMethod method() {
+        return method;
+    }
+
+    public IRScope caller() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

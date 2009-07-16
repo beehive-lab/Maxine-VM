@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.lir.Location.*;
 import com.sun.c1x.target.x86.*;
 import com.sun.c1x.value.*;
 
@@ -112,5 +113,55 @@ public class FrameMap {
     public boolean finalizeFrame(int maxSpills) {
         // TODO Auto-generated method stub
         return false;
+    }
+
+    public VMReg regname(LIROperand opr) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public boolean isCallerSaveRegister(LIROperand res) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public int oopMapArgCount() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public VMReg slotRegname(int i) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public VMReg monitorObjectRegname(int i) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public boolean locationForMonitorObject(int monitorIndex, Location[] loc) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean locationForMonitorLock(int monitorIndex, Location[] loc) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean locationsForSlot(int name, LocationType locType, Location[] loc) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean locationsForSlot(int doubleStackIx, LocationType locType, Location[] loc1, Object object) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public VMReg fpuRegname(int fpuRegnrHi) {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

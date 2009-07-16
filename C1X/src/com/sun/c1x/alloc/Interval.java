@@ -1,3 +1,23 @@
+/*
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ *
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ *
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
+ */
 package com.sun.c1x.alloc;
 
 import java.util.*;
@@ -6,6 +26,11 @@ import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
+/**
+ *
+ * @author Thomas Wuerthinger
+ *
+ */
 public class Interval {
 
     enum IntervalUseKind {
@@ -176,10 +201,6 @@ public class Interval {
         assignedRegHi = regHi;
     }
 
-    Interval registerHint() {
-        return regsiterHint(true);
-    }
-
     void setRegisterHint(Interval i) {
         registerHint = i;
     }
@@ -332,7 +353,7 @@ public class Interval {
         this.assignedRegHi = LinearScan.getAnyreg();
         this.cachedTo = -1;
         this.cachedOpr = LIROperandFactory.illegalOperand;
-        this.cachedVmReg = VMRegImpl.Bad();
+        this.cachedVmReg = null; // TODO: Check if to use VMReg.Bad
         this.canonicalSpillSlot = -1;
         this.insertMoveWhenActivated = false;
         this.registerHint = null;
@@ -382,7 +403,7 @@ public class Interval {
         return true;
     }
 
-    Interval registerHint(boolean searchSplitChild) {
+    Interval registerHint(boolean searchSplitChild, LinearScan allocator) {
         if (!searchSplitChild) {
             return registerHint;
         }
@@ -398,7 +419,7 @@ public class Interval {
                 for (int i = 0; i < len; i++) {
                     Interval cur = registerHint.splitChildren.get(i);
 
-                    if (cur.assignedReg() >= 0 && cur.assignedReg() < LinearScan.nofRegs) {
+                    if (cur.assignedReg() >= 0 && cur.assignedReg() < allocator.nofRegs) {
                         return cur;
                     }
                 }
@@ -409,7 +430,7 @@ public class Interval {
         return null;
     }
 
-    Interval splitChildAtOpId(int opId, LIRVisitState.OperandMode mode) {
+    Interval splitChildAtOpId(int opId, LIRVisitState.OperandMode mode, LinearScan allocator) {
         assert isSplitParent() : "can only be called for split parents";
         assert opId >= 0 : "invalid opId (method can not be called for spill moves)";
 
@@ -439,18 +460,18 @@ public class Interval {
                 }
             }
 
+            assert result != null : "no matching interval found";
             for (i = 0; i < len; i++) {
                 Interval tmp = splitChildren.get(i);
                 if (tmp != result && tmp.from() <= opId && opId < tmp.to() + toOffset) {
                     TTY.println(String.format("two valid result intervals found for opId %d: %d and %d", opId, result.regNum(), tmp.regNum()));
-                    result.print(TTY.out);
-                    tmp.print(TTY.out);
+                    result.print(TTY.out, allocator);
+                    tmp.print(TTY.out, allocator);
                     assert false : "two valid result intervals found";
                 }
             }
         }
 
-        assert result != null : "no matching interval found";
         assert result.covers(opId, mode) : "opId not covered by interval";
 
         return result;
@@ -501,7 +522,7 @@ public class Interval {
 
     // Note: use positions are sorted descending . first use has highest index
     int firstUsage(IntervalUseKind minUseKind) {
-        assert LinearScan.isVirtualInterval(this) : "cannot access use positions for fixed intervals";
+        assert isVirtualInterval() : "cannot access use positions for fixed intervals";
 
         for (int i = usePosAndKinds.size() - 2; i >= 0; i -= 2) {
             if (usePosAndKinds.get(i + 1) >= minUseKind.ordinal()) {
@@ -512,10 +533,10 @@ public class Interval {
     }
 
     int nextUsage(IntervalUseKind minUseKind, int from) {
-        assert LinearScan.isVirtualInterval(this) : "cannot access use positions for fixed intervals";
+        assert isVirtualInterval() : "cannot access use positions for fixed intervals";
 
-        for (int i = usePosAndKinds.length() - 2; i >= 0; i -= 2) {
-            if (usePosAndKinds.get(i) >= from && usePosAndKinds.get(i + 1) >= minUseKind) {
+        for (int i = usePosAndKinds.size() - 2; i >= 0; i -= 2) {
+            if (usePosAndKinds.get(i) >= from && usePosAndKinds.get(i + 1) >= minUseKind.ordinal()) {
                 return usePosAndKinds.get(i);
             }
         }
@@ -523,10 +544,10 @@ public class Interval {
     }
 
     int nextUsageExact(IntervalUseKind exactUseKind, int from) {
-        assert LinearScan.isVirtualInterval(this) : "cannot access use positions for fixed intervals";
+        assert isVirtualInterval() : "cannot access use positions for fixed intervals";
 
-        for (int i = usePosAndKinds.length() - 2; i >= 0; i -= 2) {
-            if (usePosAndKinds.get(i) >= from && usePosAndKinds.get(i + 1) == exactUseKind) {
+        for (int i = usePosAndKinds.size() - 2; i >= 0; i -= 2) {
+            if (usePosAndKinds.get(i) >= from && usePosAndKinds.get(i + 1) == exactUseKind.ordinal()) {
                 return usePosAndKinds.get(i);
             }
         }
@@ -534,7 +555,7 @@ public class Interval {
     }
 
     int previousUsage(IntervalUseKind minUseKind, int from) {
-        assert LinearScan.isVirtualInterval(this) : "cannot access use positions for fixed intervals";
+        assert isVirtualInterval() : "cannot access use positions for fixed intervals";
 
         int prev = 0;
         for (int i = usePosAndKinds.size() - 2; i >= 0; i -= 2) {
@@ -557,7 +578,7 @@ public class Interval {
             assert usePosAndKinds.size() % 2 == 0 : "must be";
             for (int i = 0; i < usePosAndKinds.size(); i += 2) {
                 assert pos <= usePosAndKinds.get(i) : "already added a use-position with lower position";
-                assert usePosAndKinds.get(i + 1) >= firstValidKind && usePosAndKinds.get(i + 1) <= lastValidKind : "invalid use kind";
+                assert usePosAndKinds.get(i + 1) >= 0 && usePosAndKinds.get(i + 1) < IntervalUseKind.values().length : "invalid use kind";
                 if (i > 0) {
                     assert usePosAndKinds.get(i) < usePosAndKinds.get(i - 2) : "not sorted descending";
                 }
@@ -623,7 +644,7 @@ public class Interval {
     //
     // Note: The new interval has no valid regNum
     Interval split(int splitPos) {
-        assert LinearScan.isVirtualInterval(this) : "cannot split fixed intervals";
+        assert isVirtualInterval() : "cannot split fixed intervals";
 
         // allocate new interval
         Interval result = newSplitChild();
@@ -673,11 +694,11 @@ public class Interval {
 
         for (i = 0; i < usePosAndKinds.size(); i += 2) {
             assert usePosAndKinds.get(i) < splitPos : "must be";
-            assert usePosAndKinds.get(i + 1) >= firstValidKind && usePosAndKinds.at(i + 1) <= lastValidKind : "invalid use kind";
+            assert usePosAndKinds.get(i + 1) >= 0 && usePosAndKinds.get(i + 1) < IntervalUseKind.values().length : "invalid use kind";
         }
         for (i = 0; i < result.usePosAndKinds.size(); i += 2) {
             assert result.usePosAndKinds.get(i) >= splitPos : "must be";
-            assert result.usePosAndKinds.get(i + 1) >= firstValidKind && result.usePosAndKinds.get(i + 1) <= lastValidKind : "invalid use kind";
+            assert result.usePosAndKinds.get(i + 1) >= 0 && result.usePosAndKinds.get(i + 1) < IntervalUseKind.values().length : "invalid use kind";
         }
 
         return result;
@@ -764,26 +785,26 @@ public class Interval {
         return false;
     }
 
-    public void print(LogStream out) {
+    public void print(LogStream out, LinearScan allocator) {
 
         String typeName;
         LIROperand opr = LIROperandFactory.illegal();
         if (regNum() < Register.vregBase) {
             typeName = "fixed";
             // need a temporary operand for fixed intervals because type() cannot be called
-            if (assignedReg() >= pdFirstCpuReg && assignedReg() <= pdLastCpuReg) {
-                opr = LIROperandFactory.singleCpu(assignedReg());
-            } else if (assignedReg() >= pdFirstFpuReg && assignedReg() <= pdLastFpuReg) {
-                opr = LIROperandFactory.singleFpu(assignedReg() - pdFirstFpuReg);
-            } else if (assignedReg() >= pdFirstXmmReg && assignedReg() <= pdLastXmmReg) {
-                opr = LIROperandFactory.singleXmm(assignedReg() - pdFirstXmmReg);
+            if (allocator.isCpu(assignedReg())) {
+                opr = LIROperandFactory.singleCpu(allocator.toRegister(assignedReg()));
+            } else if (allocator.isFpu(assignedReg())) {
+                opr = LIROperandFactory.singleFpu(allocator.toRegister(assignedReg()));
+            } else if (allocator.isXmm(assignedReg())) {
+                opr = LIROperandFactory.singleXmmX86(allocator.toRegister(assignedReg()));
             } else {
                 Util.shouldNotReachHere();
             }
         } else {
             typeName = type().name();
             if (assignedReg() != -1) {
-                opr = LinearScan.calcOperandForInterval(this);
+                opr = allocator.calcOperandForInterval(this);
             }
         }
 
@@ -793,7 +814,7 @@ public class Interval {
             opr.print(out);
             out.print("\" ");
         }
-        out.printf("%d %d ", splitParent().regNum(), (registerHint(false) != null ? registerHint(false).regNum() : -1));
+        out.printf("%d %d ", splitParent().regNum(), (registerHint(false, allocator) != null ? registerHint(false, allocator).regNum() : -1));
 
         // print ranges
         Range cur = first;
@@ -807,7 +828,6 @@ public class Interval {
         int prev = 0;
         assert usePosAndKinds.size() % 2 == 0 : "must be";
         for (int i = usePosAndKinds.size() - 2; i >= 0; i -= 2) {
-            assert usePosAndKinds.get(i + 1) >= firstValidKind && usePosAndKinds.get(i + 1) <= lastValidKind : "invalid use kind";
             assert prev < usePosAndKinds.get(i) : "use positions not sorted";
 
             out.printf("%d %s ", usePosAndKinds.get(i), IntervalUseKind.values()[usePosAndKinds.get(i + 1)].toString());

@@ -140,7 +140,7 @@ public class LIRLocation extends LIROperand {
     }
 
     @Override
-    boolean isSameRegister(LIROperand opr) {
+    public boolean isSameRegister(LIROperand opr) {
         throw Util.shouldNotReachHere();
     }
 

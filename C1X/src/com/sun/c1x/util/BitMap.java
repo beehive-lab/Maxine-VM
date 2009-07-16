@@ -142,7 +142,17 @@ public class BitMap {
 
     public void setFrom(BitMap liveOut) {
         // TODO Auto-generated method stub
+    }
 
+    /**
+     * Sets the bits for a given range [start, end] on this bitmap.
+     * @param start the first bit of the range
+     * @param end the last bit of the range
+     */
+    public void setRange(int start, int end) {
+        while (start <= end) {
+            set(start++);
+        }
     }
 
     public void setDifference(BitMap liveKill) {

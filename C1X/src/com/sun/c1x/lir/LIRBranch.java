@@ -113,7 +113,7 @@ public class LIRBranch extends LIRInstruction {
         return ublock;
     }
 
-    CodeStub stub() {
+    public CodeStub stub() {
         return stub;
     }
 

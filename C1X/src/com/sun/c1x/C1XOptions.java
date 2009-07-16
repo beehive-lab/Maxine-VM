@@ -176,6 +176,8 @@ public class C1XOptions {
     public static boolean Tier1OptimizeVirtualCallProfiling  = ____;
     public static boolean Tier1ProfileVirtualCalls           = ____;
     public static int     TypeProfileWidth                   = 0;
+    public static boolean TestCompressedStreamEnabled        = ____;
+    public static final int InvocationEntryBci = -1;
 
     public static void setOptimizationLevel(int level) {
         if (level <= 0) {

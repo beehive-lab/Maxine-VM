@@ -67,4 +67,19 @@ public class X86Backend extends Backend {
     public AbstractAssembler newAssembler(C1XCompilation compilation, CodeBuffer code) {
         return new X86MacroAssembler(compilation, code);
     }
+    @Override
+    public int nofCpuRegs() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+    @Override
+    public int nofFpuRegs() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+    @Override
+    public int nofXmmRegs() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
 }

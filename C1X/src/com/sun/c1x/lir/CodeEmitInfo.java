@@ -23,9 +23,10 @@ package com.sun.c1x.lir;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.bytecode.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
-
 
 /**
  * The <code>CodeEmitInfo</code> class definition.
@@ -36,48 +37,123 @@ import com.sun.c1x.value.*;
 public class CodeEmitInfo {
 
     public IRScopeDebugInfo scopeDebugInfo;
-
-    public CodeEmitInfo(int bci, ValueStack state, List<ExceptionHandler> list) {
-        // TODO Auto-generated constructor stub
-    }
+    private IRScope scope;
+    private List<ExceptionHandler> exceptionHandlers;
+    public OopMap oopMap;
+    private ValueStack stack; // used by deoptimization (contains also monitors
+    private int bci;
+    private CodeEmitInfo next;
+    private int id;
 
     public CodeEmitInfo(CodeEmitInfo info) {
-        // TODO Auto-generated constructor stub
+        this(info, false);
     }
 
-    public CodeEmitInfo(CodeEmitInfo info, boolean b) {
-        // TODO Auto-generated constructor stub
+    // use scope from ValueStack
+    public CodeEmitInfo(int bci, ValueStack stack, List<ExceptionHandler> exceptionHandlers) {
+        this.scope = stack.scope();
+        this.bci = bci;
+        this.scopeDebugInfo = null;
+        this.oopMap = null;
+        this.stack = stack;
+        this.exceptionHandlers = exceptionHandlers;
+        this.next = null;
+        this.id = -1;
+        assert this.stack != null : "must be non null";
+        assert bci == C1XOptions.InvocationEntryBci || Bytecodes.isDefined(scope().method().javaCodeAtBci(bci)) : "make sure bci points at a real bytecode";
     }
 
-    public int bci() {
-        // TODO Auto-generated method stub
-        return 0;
+    // used by natives
+    public CodeEmitInfo(IRScope scope, int bci) {
+        this.scope = scope;
+        this.bci = bci;
+        this.oopMap = null;
+        this.scopeDebugInfo = null;
+        this.stack = null;
+        this.exceptionHandlers = null;
+        this.next = null;
+        this.id = -1;
     }
 
-    public List<ExceptionHandler> exceptionHandlers() {
-        // TODO Auto-generated method stub
-        return null;
+    // make a copy
+    public CodeEmitInfo(CodeEmitInfo info, boolean lockStackOnly) {
+        this.scope = info.scope;
+        this.exceptionHandlers = null;
+        this.bci = info.bci;
+        this.scopeDebugInfo = null;
+        this.oopMap = null;
+
+        if (lockStackOnly) {
+            if (info.stack != null) {
+                stack = info.stack.copyLocks();
+            } else {
+                stack = null;
+            }
+        } else {
+            stack = info.stack;
+        }
+
+        // deep copy of exception handlers
+        if (info.exceptionHandlers != null) {
+            exceptionHandlers = new ArrayList<ExceptionHandler>();
+            exceptionHandlers.addAll(info.exceptionHandlers);
+        }
+    }
+
+    /**
+     * Gets the scopeDebugInfo of this class.
+     *
+     * @return the scopeDebugInfo
+     */
+    public IRScopeDebugInfo scopeDebugInfo() {
+        return scopeDebugInfo;
+    }
+
+    // accessors
+    public OopMap oopMap() {
+        return oopMap;
     }
 
     public IRScope scope() {
-        // TODO Auto-generated method stub
-        return null;
+        return scope;
     }
 
-    public void recordDebugInfo(DebugInformationRecorder debugInfoRecorder, int pcOffset) {
-        // TODO Auto-generated method stub
-
+    public CiMethod method() {
+        return scope.method();
     }
 
-    public void addRegisterOop(LIROperand exceptionOop) {
-        // TODO Auto-generated method stub
-
+    public List<ExceptionHandler> exceptionHandlers() {
+        return exceptionHandlers;
     }
 
     public ValueStack stack() {
-        // TODO Auto-generated method stub
-        return null;
+        return stack;
+    }
+
+    public int bci() {
+        return bci;
+    }
+
+    public void addRegisterOop(LIROperand opr) {
+    }
+
+    public void recordDebugInfo(DebugInformationRecorder recorder, int pcOffset) {
+    }
+
+    public CodeEmitInfo next() {
+        return next;
+    }
+
+    public void setNext(CodeEmitInfo next) {
+        this.next = next;
+    }
+
+    public int id() {
+        return id;
     }
 
     // TODO nothing for now
+    public void setId(int id) {
+        this.id = id;
+    }
 }

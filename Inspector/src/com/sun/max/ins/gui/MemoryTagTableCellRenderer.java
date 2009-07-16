@@ -25,14 +25,14 @@ import java.awt.*;
 import javax.swing.table.*;
 
 import com.sun.max.ins.*;
+import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.unsafe.*;
 
 
 /**
- * A renderer suitable for a table "Tag" cell in an Inspector display where each row corresponds to a memory location.
- * Displays text identifying registers, if any, that point at this location; displays a special border if there is a
+ * A renderer suitable for a table "Tag" cell in an Inspector display where each row corresponds to a memory regin.
+ * Displays text identifying registers, if any, that point into this region; displays a special border if there is a
  * watchpoint at the location.
  *
  * @author Michael Van De Vanter
@@ -44,18 +44,18 @@ public abstract class MemoryTagTableCellRenderer extends InspectorLabel implemen
     }
 
     /**
-     * Returns a cell render suitable for the "Tag" cell in an Inspector display whre each row corresponds
-     * to a register location.  The text and tooltip text of this label/renderer to display informative strings
+     * Returns a cell render suitable for the "Tag" cell in an Inspector display where each row corresponds
+     * to a memory region.  The text and tooltip text of this label/renderer to display informative strings
      * if one or more integer registers in the specified thread point at this location.
      * The text is empty if no registers point at this location.
      * <br>
      *
-     * @param address a memory location in the VM
+     * @param memoryRegion a memory location in the VM
      * @param thread the thread from which to read registers
      * @param watchpoint the watchpoint at this location, null if none.
      * @return a component for displaying the cell
      */
-    public Component getRenderer(Address address, MaxThread thread, MaxWatchpoint watchpoint) {
+    public Component getRenderer(MemoryRegion memoryRegion, MaxThread thread, MaxWatchpoint watchpoint) {
         InspectorLabel label = this;
         String labelText = "";
         String toolTipText = "";
@@ -66,7 +66,7 @@ public abstract class MemoryTagTableCellRenderer extends InspectorLabel implemen
                 // Return a specialized renderer with its own content.
                 label = gui().getUnavailableDataTableCellRenderer();
             } else {
-                final String registerNameList = teleIntegerRegisters.findAsNameList(address, address.plus(maxVM().wordSize()));
+                final String registerNameList = teleIntegerRegisters.findAsNameList(memoryRegion);
                 if (registerNameList.isEmpty()) {
                     label.setForeground(style().memoryDefaultTagTextColor());
                 } else {

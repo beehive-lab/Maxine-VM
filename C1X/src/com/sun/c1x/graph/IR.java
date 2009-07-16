@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.graph;
 
-import java.io.*;
 import java.util.*;
 
 import com.sun.c1x.*;
@@ -178,7 +177,7 @@ public class IR {
         startBlock.iteratePreOrder(bp);
     }
 
-    private boolean verify() {
+    public boolean verify() {
         return true;
     }
 

@@ -1,3 +1,23 @@
+/*
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ *
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ *
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
+ */
 package com.sun.c1x.alloc;
 
 import java.util.*;
@@ -10,6 +30,11 @@ import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
+/**
+ *
+ * @author Thomas Wuerthinger
+ *
+ */
 public class LinearScanWalker extends IntervalWalker {
 
     int firstReg; // the reg. number of the first phys. register
@@ -19,6 +44,8 @@ public class LinearScanWalker extends IntervalWalker {
 
     int[] usePos = new int[allocator.nofRegs];
     int[] blockPos = new int[allocator.nofRegs];
+
+    @SuppressWarnings("unchecked")
     List<Interval>[] spillIntervals = new List[allocator.nofRegs];
 
     MoveResolver moveResolver; // for ordering spill moves
@@ -351,7 +378,7 @@ public class LinearScanWalker extends IntervalWalker {
     void splitBeforeUsage(Interval it, int minSplitPos, int maxSplitPos) {
         Util.traceLinearScan(2, "----- splitting interval: ");
         if (C1XOptions.TraceLinearScanLevel >= 4) {
-            it.print(TTY.out);
+            it.print(TTY.out, allocator);
         }
         Util.traceLinearScan(2, "      between %d and %d", minSplitPos, maxSplitPos);
 
@@ -395,9 +422,9 @@ public class LinearScanWalker extends IntervalWalker {
         Util.traceLinearScan(2, "      split interval in two parts (insertMoveWhenActivated: %d)", moveNecessary);
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.print("      ");
-            it.print(TTY.out);
+            it.print(TTY.out, allocator);
             TTY.print("      ");
-            splitPart.print(TTY.out);
+            splitPart.print(TTY.out, allocator);
         }
     }
 
@@ -413,7 +440,7 @@ public class LinearScanWalker extends IntervalWalker {
 
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.print("----- splitting and spilling interval: ");
-            it.print(TTY.out);
+            it.print(TTY.out, allocator);
             TTY.println("      between %d and %d", minSplitPos, maxSplitPos);
         }
 
@@ -484,9 +511,9 @@ public class LinearScanWalker extends IntervalWalker {
             if (C1XOptions.TraceLinearScanLevel >= 2) {
                 TTY.println("      split interval in two parts");
                 TTY.print("      ");
-                it.print(TTY.out);
+                it.print(TTY.out, allocator);
                 TTY.print("      ");
-                spilledPart.print(TTY.out);
+                spilledPart.print(TTY.out, allocator);
             }
         }
     }
@@ -595,7 +622,7 @@ public class LinearScanWalker extends IntervalWalker {
     boolean allocFreeReg(Interval cur) {
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.print("trying to find free register for ");
-            cur.print(TTY.out);
+            cur.print(TTY.out, allocator);
         }
 
         initUseLists(true);
@@ -611,12 +638,14 @@ public class LinearScanWalker extends IntervalWalker {
         // only intervals overlapping with cur are processed, non-overlapping invervals can be ignored safely
         Util.traceLinearScan(4, "      state of registers:");
         if (C1XOptions.TraceLinearScanLevel >= 4) {
-            for (int i = firstReg; i <= lastReg; i++)
+            for (int i = firstReg; i <= lastReg; i++) {
                 TTY.println("      reg %d: usePos: %d", i, usePos[i]);
+            }
         }
 
-        int hintReg, hintRegHi;
-        Interval registerHint = cur.registerHint();
+        int hintReg;
+        int hintRegHi;
+        Interval registerHint = cur.registerHint(true, allocator);
         if (registerHint != null) {
             hintReg = registerHint.assignedReg();
             hintRegHi = registerHint.assignedRegHi();
@@ -627,7 +656,7 @@ public class LinearScanWalker extends IntervalWalker {
             }
             if (C1XOptions.TraceLinearScanLevel >= 4) {
                 TTY.print("      hint registers %d, %d from interval ", hintReg, hintRegHi);
-                registerHint.print(TTY.out);
+                registerHint.print(TTY.out, allocator);
             }
 
         } else {
@@ -761,7 +790,7 @@ public class LinearScanWalker extends IntervalWalker {
     // Split an Interval and spill it to memory so that cur can be placed in a register
     void allocLockedReg(Interval cur) {
       if (C1XOptions.TraceLinearScanLevel >= 2) {
-          TTY.print("need to split and spill to get register for "); cur.print(TTY.out);
+          TTY.print("need to split and spill to get register for "); cur.print(TTY.out, allocator);
       }
 
       // collect current usage of registers
@@ -905,8 +934,8 @@ public class LinearScanWalker extends IntervalWalker {
         assert 0 <= firstReg && firstReg < allocator.nofRegs : "out of range";
         assert 0 <= lastReg && lastReg < allocator.nofRegs : "out of range";
     }
-
     // TODO: Platform specific!
+
     private boolean pdInitRegsForAlloc(Interval cur) {
         assert compilation.target.arch.isX86();
         if (allocator().gen().isVregFlagSet(cur.regNum(), LIRGenerator.VregFlag.ByteReg)) {
@@ -942,7 +971,7 @@ public class LinearScanWalker extends IntervalWalker {
             return;
         }
 
-        Interval registerHint = cur.registerHint(false);
+        Interval registerHint = cur.registerHint(false, allocator);
         if (registerHint == null) {
             // cur is not the target of a move : otherwise registerHint would be set
             return;
@@ -967,8 +996,8 @@ public class LinearScanWalker extends IntervalWalker {
             return;
         }
 
-        Interval beginHint = registerHint.splitChildAtOpId(beginPos, LIRVisitState.OperandMode.InputMode);
-        Interval endHint = registerHint.splitChildAtOpId(endPos, LIRVisitState.OperandMode.OutputMode);
+        Interval beginHint = registerHint.splitChildAtOpId(beginPos, LIRVisitState.OperandMode.InputMode, allocator);
+        Interval endHint = registerHint.splitChildAtOpId(endPos, LIRVisitState.OperandMode.OutputMode, allocator);
         if (beginHint == endHint || beginHint.to() != beginPos || endHint.from() != endPos) {
             // registerHint must be split : otherwise the re-writing of use positions does not work
             return;
@@ -1000,7 +1029,7 @@ public class LinearScanWalker extends IntervalWalker {
 
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.print("+++++ activating interval ");
-            cur.print(TTY.out);
+            cur.print(TTY.out, allocator);
         }
 
         if (C1XOptions.TraceLinearScanLevel >= 4) {
@@ -1058,5 +1087,10 @@ public class LinearScanWalker extends IntervalWalker {
         cur.makeCurrentSplitChild();
 
         return result; // true = interval is moved to active list
+    }
+
+    public void finishAllocation() {
+        // must be called when all intervals are allocated
+        moveResolver.resolveAndAppendMoves();
     }
 }

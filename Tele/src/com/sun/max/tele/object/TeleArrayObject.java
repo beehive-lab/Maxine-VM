@@ -78,6 +78,11 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     }
 
     @Override
+    protected Size objectSize() {
+        return teleVM().layoutScheme().arrayHeaderLayout.getArraySize(componentKind(), length);
+    }
+
+    @Override
     public Set<FieldActor> getFieldActors() {
         return new HashSet<FieldActor>();
     }
@@ -96,7 +101,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     }
 
     @Override
-    public Size getFieldSize(FieldActor fieldActor) {
+    protected Size getFieldSize(FieldActor fieldActor) {
         throw FatalError.unexpected("Maxine Array objects don't contain fields");
     }
 

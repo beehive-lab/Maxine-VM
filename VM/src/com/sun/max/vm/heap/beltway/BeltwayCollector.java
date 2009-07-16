@@ -20,41 +20,39 @@
  */
 package com.sun.max.vm.heap.beltway;
 
-import com.sun.max.vm.heap.*;
-
-
 /**
- * This class defines a specialised over the generic Collector Runnable which performs "an action" over a "a space".
+ * This class defines a specialized over the generic Collector Runnable which performs "an action" over a "a space".
  *
  * @author Christos Kotselidis
  */
 
-public class BeltwayCollector implements Collector {
+public class BeltwayCollector implements Runnable {
 
-    protected static Runnable gcImpl;
-    protected static TLAB lastAllocatedTLAB;
+    protected Runnable gcImpl;
 
-    public BeltwayCollector(Runnable gcImpl) {
-        BeltwayCollector.gcImpl = gcImpl;
-    }
+    private BeltwayHeapScheme beltwayHeapScheme;
 
     public BeltwayCollector() {
     }
 
-    public void setLastAllocatedTLAB(TLAB tlab) {
-        lastAllocatedTLAB = tlab;
-    }
-
-    public TLAB getLastAllocatedTLAB() {
-        return lastAllocatedTLAB;
-    }
-
     public void setRunnable(Runnable gcImpl) {
-        BeltwayCollector.gcImpl = gcImpl;
+        this.gcImpl = gcImpl;
     }
 
     public void run() {
         gcImpl.run();
+    }
+
+    public void setBeltwayHeapScheme(BeltwayHeapScheme beltwayHeapScheme) {
+        this.beltwayHeapScheme = beltwayHeapScheme;
+    }
+
+    public BeltwayHeapScheme getBeltwayHeapScheme() {
+        return beltwayHeapScheme;
+    }
+
+    protected void verifyBelt(Belt belt) {
+        beltwayHeapScheme.getVerifier().verifyHeap(belt.start(), belt.getAllocationMark(), beltwayHeapScheme.getBeltManager().getApplicationHeap());
     }
 
 }

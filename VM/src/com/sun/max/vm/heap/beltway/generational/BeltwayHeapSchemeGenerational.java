@@ -76,7 +76,7 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
             beltCollectorGenerational.setBeltwayHeapScheme(this);
             beltCollector.setRunnable(beltCollectorGenerational);
             heapVerifier.initialize(this);
-            heapVerifier.getRootsVerifier().setFromSpace(BeltManager.getApplicationHeap());
+            heapVerifier.getRootsVerifier().setFromSpace(beltManager.getApplicationHeap());
             heapVerifier.getRootsVerifier().setToSpace(getMatureSpace());
             if (Heap.verbose()) {
                 HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "EdenGC", "ToSpaceGC", "MatureSpaceGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "CardScan", "Scavenge");

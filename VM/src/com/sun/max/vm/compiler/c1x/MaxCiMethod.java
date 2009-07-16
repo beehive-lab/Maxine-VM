@@ -365,4 +365,10 @@ public class MaxCiMethod implements CiMethod {
     public int javaCodeAtBci(int bci) {
         return code()[bci] & 0xff;
     }
+
+    @Override
+    public int argSize() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
 }

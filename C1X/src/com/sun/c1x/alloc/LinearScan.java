@@ -1,18 +1,43 @@
+/*
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ *
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ *
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
+ */
 package com.sun.c1x.alloc;
 
 import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.alloc.Interval.*;
+import com.sun.c1x.bytecode.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.ir.BlockBegin.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.target.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
+/**
+ *
+ * @author Thomas Wuerthinger
+ *
+ */
 public class LinearScan extends RegisterAllocator {
 
     private final int nofCpuRegs;
@@ -141,7 +166,6 @@ public class LinearScan extends RegisterAllocator {
     boolean isPrecoloredInterval(Interval i) {
         return i.regNum() < nofRegs;
     }
-
 
     IntervalClosure isPrecoloredCpuInterval = new IntervalClosure() {
 
@@ -501,11 +525,8 @@ public class LinearScan extends RegisterAllocator {
         // collect all intervals that must be stored after their definion.
         // the list is sorted by Interval.spillDefinitionPos
         Interval interval;
-        Interval tempList;
         Interval[] result = createUnhandledLists(mustStoreAtDefinition, null);
         interval = result[0];
-        tempList = result[1];
-
         if (C1XOptions.DetailedAsserts) {
             Interval prev = null;
             Interval temp = interval;
@@ -522,11 +543,13 @@ public class LinearScan extends RegisterAllocator {
 
                 Util.traceLinearScan(4, "interval %d (from %d to %d) must be stored at %d", temp.regNum(), temp.from(), temp.to(), temp.spillDefinitionPos());
 
+                // TODO: Check if this is correct?!
+                prev = temp;
                 temp = temp.next();
             }
         }
 
-        LIRInsertionBuffer insertionBuffer;
+        LIRInsertionBuffer insertionBuffer = new LIRInsertionBuffer();
         int numBlocks = blockCount();
         for (int i = 0; i < numBlocks; i++) {
             BlockBegin block = blockAt(i);
@@ -591,11 +614,7 @@ public class LinearScan extends RegisterAllocator {
     // Compute depth-first and linear scan block orders, and number LIRInstruction nodes for linear scan.
 
     void numberInstructions() {
-        {
-            // dummy-timer to measure the cost of the timer itself
-            // (this time is then subtracted from all other timers to get the real value)
-            // TIMELINEARSCAN(timerDoNothing);
-        }
+
         // TIMELINEARSCAN(timerNumberInstructions);
 
         // Assign IDs to LIR nodes and build a mapping, lirOps, from ID to LIRInstruction node.
@@ -671,7 +690,7 @@ public class LinearScan extends RegisterAllocator {
         int liveSize = liveSetSize();
         boolean localHasFpuRegisters = false;
         int localNumCalls = 0;
-        LIRVisitState visitor;
+        LIRVisitState visitor = new LIRVisitState();
 
         BitMap2D localIntervalInLoop = new BitMap2D(numVirtualRegs, numLoops());
         localIntervalInLoop.clear();
@@ -711,7 +730,9 @@ public class LinearScan extends RegisterAllocator {
                 }
 
                 // iterate input operands of instruction
-                int k, n, reg;
+                int k;
+                int n;
+                int reg;
                 n = visitor.oprCount(LIRVisitState.OperandMode.InputMode);
                 for (k = 0; k < n; k++) {
                     LIROperand opr = visitor.oprAt(LIRVisitState.OperandMode.InputMode, k);
@@ -979,7 +1000,10 @@ public class LinearScan extends RegisterAllocator {
     void addUse(Instruction value, int from, int to, IntervalUseKind useKind) {
         assert !value.type().isIllegal() : "if this value is used by the interpreter it shouldn't be of indeterminate type";
         LIROperand opr = value.operand();
-        Constant con = (Constant) value;
+        Constant con = null;
+        if (value instanceof Constant) {
+            con = (Constant) value;
+        }
 
         if ((con == null || con.isPinned()) && opr.isRegister()) {
             assert regNum(opr) == opr.vregNumber() && !isValidRegNum(regNumHi(opr)) : "invalid optimization below";
@@ -1312,13 +1336,13 @@ public class LinearScan extends RegisterAllocator {
             LIROp1 move = (LIROp1) op;
 
             if (move.resultOpr().isDoubleCpu() && move.inOpr().isPointer()) {
-                LIRAddress Pointer = move.inOpr().asAddressPtr();
-                if (Pointer != null) {
-                    if (Pointer.base().isValid()) {
-                        addTemp(Pointer.base(), op.id(), IntervalUseKind.noUse);
+                final LIRAddress pointer = move.inOpr().asAddressPtr();
+                if (pointer != null) {
+                    if (pointer.base().isValid()) {
+                        addTemp(pointer.base(), op.id(), IntervalUseKind.noUse);
                     }
-                    if (Pointer.index().isValid()) {
-                        addTemp(Pointer.index(), op.id(), IntervalUseKind.noUse);
+                    if (pointer.index().isValid()) {
+                        addTemp(pointer.index(), op.id(), IntervalUseKind.noUse);
                     }
                 }
             }
@@ -1364,136 +1388,133 @@ public class LinearScan extends RegisterAllocator {
     }
 
     void buildIntervals() {
-   //TIMELINEARSCAN(timerBuildIntervals);
+        // TIMELINEARSCAN(timerBuildIntervals);
 
-   // initialize interval list with expected number of intervals
-   // (32 is added to have some space for split children without having to resize the list)
-   intervals = new ArrayList<Interval>(numVirtualRegs() + 32);
-   // initialize all slots that are used by buildIntervals
-   Util.atPutGrow(intervals, numVirtualRegs() - 1, null, null);
+        // initialize interval list with expected number of intervals
+        // (32 is added to have some space for split children without having to resize the list)
+        intervals = new ArrayList<Interval>(numVirtualRegs() + 32);
+        // initialize all slots that are used by buildIntervals
+        Util.atPutGrow(intervals, numVirtualRegs() - 1, null, null);
 
-   // create a list with all caller-save registers (cpu, fpu, xmm)
-   // when an instruction is a call, a temp range is created for all these registers
-   int numCallerSaveRegisters = 0;
-   int[] callerSaveRegisters = new int[nofRegs];
-   int z = 0;
-   for (Register r : frameMap.callerSavedRegisters()) {
-       callerSaveRegisters[z++] = r.number;
-   }
+        // create a list with all caller-save registers (cpu, fpu, xmm)
+        // when an instruction is a call, a temp range is created for all these registers
+        int numCallerSaveRegisters = 0;
+        int[] callerSaveRegisters = new int[nofRegs];
+        int z = 0;
+        for (Register r : frameMap.callerSavedRegisters()) {
+            callerSaveRegisters[z++] = r.number;
+        }
 
+        // TODO: Check if the order of the registers (cpu, fpu, xmm) is important there!
 
-   // TODO: Check if the order of the registers (cpu, fpu, xmm) is important there!
+        LIRVisitState visitor = new LIRVisitState();
 
-   LIRVisitState visitor = new LIRVisitState();
+        // iterate all blocks in reverse order
+        for (int i = blockCount() - 1; i >= 0; i--) {
+            BlockBegin block = blockAt(i);
+            List<LIRInstruction> instructions = block.lir().instructionsList();
+            int blockFrom = block.firstLirInstructionId();
+            int blockTo = block.lastLirInstructionId();
 
-   // iterate all blocks in reverse order
-   for (int i = blockCount() - 1; i >= 0; i--) {
-     BlockBegin block = blockAt(i);
-     List<LIRInstruction> instructions = block.lir().instructionsList();
-     int         blockFrom =   block.firstLirInstructionId();
-     int         blockTo =     block.lastLirInstructionId();
+            assert blockFrom == instructions.get(0).id() : "must be";
+            assert blockTo == instructions.get(instructions.size() - 1).id() : "must be";
 
-     assert blockFrom == instructions.get(0).id() :  "must be";
-     assert blockTo   == instructions.get(instructions.size() - 1).id() :  "must be";
+            // Update intervals for registers live at the end of this block;
+            BitMap live = block.liveOut();
+            int size = live.size();
+            for (int number = live.getNextOneOffset(0, size); number < size; number = live.getNextOneOffset(number + 1, size)) {
+                assert live.get(number) : "should not stop here otherwise";
+                assert number >= Register.vregBase : "fixed intervals must not be live on block bounds";
+                Util.traceLinearScan(2, "live in %d to %d", number, blockTo + 2);
 
-     // Update intervals for registers live at the end of this block;
-     BitMap live = block.liveOut();
-     int size = (int)live.size();
-     for (int number = (int)live.getNextOneOffset(0, size); number < size; number = (int)live.getNextOneOffset(number + 1, size)) {
-       assert live.get(number) :  "should not stop here otherwise";
-       assert number >= Register.vregBase :  "fixed intervals must not be live on block bounds";
-       Util.traceLinearScan(2, "live in %d to %d", number, blockTo + 2);
+                addUse(number, blockFrom, blockTo + 2, IntervalUseKind.noUse, BasicType.Illegal);
 
-       addUse(number, blockFrom, blockTo + 2, IntervalUseKind.noUse, BasicType.Illegal);
+                // add special use positions for loop-end blocks when the
+                // interval is used anywhere inside this loop. It's possible
+                // that the block was part of a non-natural loop, so it might
+                // have an invalid loop index.
+                if (block.checkBlockFlag(BlockBegin.BlockFlag.LinearScanLoopEnd) && block.loopIndex() != -1 && isIntervalInLoop(number, block.loopIndex())) {
+                    intervalAt(number).addUsePos(blockTo + 1, IntervalUseKind.loopEndMarker);
+                }
+            }
 
-       // add special use positions for loop-end blocks when the
-       // interval is used anywhere inside this loop.  It's possible
-       // that the block was part of a non-natural loop, so it might
-       // have an invalid loop index.
-       if (block.checkBlockFlag(BlockBegin.BlockFlag.LinearScanLoopEnd) &&
-           block.loopIndex() != -1 &&
-           isIntervalInLoop(number, block.loopIndex())) {
-         intervalAt(number).addUsePos(blockTo + 1, IntervalUseKind.loopEndMarker);
-       }
-     }
+            // iterate all instructions of the block in reverse order.
+            // skip the first instruction because it is always a label
+            // definitions of intervals are processed before uses
+            assert visitor.noOperands(instructions.get(0)) : "first operation must always be a label";
+            for (int j = instructions.size() - 1; j >= 1; j--) {
+                LIRInstruction op = instructions.get(j);
+                int opId = op.id();
 
-     // iterate all instructions of the block in reverse order.
-     // skip the first instruction because it is always a label
-     // definitions of intervals are processed before uses
-     assert visitor.noOperands(instructions.get(0)) :  "first operation must always be a label";
-     for (int j = instructions.size() - 1; j >= 1; j--) {
-       LIRInstruction op = instructions.get(j);
-       int opId = op.id();
+                // visit operation to collect all operands
+                visitor.visit(op);
 
-       // visit operation to collect all operands
-       visitor.visit(op);
+                // add a temp range for each register if operation destroys caller-save registers
+                if (visitor.hasCall()) {
+                    for (int k = 0; k < numCallerSaveRegisters; k++) {
+                        addTemp(callerSaveRegisters[k], opId, IntervalUseKind.noUse, BasicType.Illegal);
+                    }
+                    Util.traceLinearScan(4, "operation destroys all caller-save registers");
+                }
 
-       // add a temp range for each register if operation destroys caller-save registers
-       if (visitor.hasCall()) {
-         for (int k = 0; k < numCallerSaveRegisters; k++) {
-           addTemp(callerSaveRegisters[k], opId, IntervalUseKind.noUse, BasicType.Illegal);
-         }
-         Util.traceLinearScan(4, "operation destroys all caller-save registers");
-       }
+                // Add any platform dependent temps
+                pdAddTemps(op);
 
-       // Add any platform dependent temps
-       pdAddTemps(op);
+                // visit definitions (output and temp operands)
+                int k;
+                int n;
+                n = visitor.oprCount(LIRVisitState.OperandMode.OutputMode);
+                for (k = 0; k < n; k++) {
+                    LIROperand opr = visitor.oprAt(LIRVisitState.OperandMode.OutputMode, k);
+                    assert opr.isRegister() : "visitor should only return register operands";
+                    addDef(opr, opId, useKindOfOutputOperand(op, opr));
+                }
 
-       // visit definitions (output and temp operands)
-       int k, n;
-       n = visitor.oprCount(LIRVisitState.OperandMode.OutputMode);
-       for (k = 0; k < n; k++) {
-         LIROperand opr = visitor.oprAt(LIRVisitState.OperandMode.OutputMode, k);
-         assert opr.isRegister() :  "visitor should only return register operands";
-         addDef(opr, opId, useKindOfOutputOperand(op, opr));
-       }
+                n = visitor.oprCount(LIRVisitState.OperandMode.TempMode);
+                for (k = 0; k < n; k++) {
+                    LIROperand opr = visitor.oprAt(LIRVisitState.OperandMode.TempMode, k);
+                    assert opr.isRegister() : "visitor should only return register operands";
+                    addTemp(opr, opId, IntervalUseKind.mustHaveRegister);
+                }
 
-       n = visitor.oprCount(LIRVisitState.OperandMode.TempMode);
-       for (k = 0; k < n; k++) {
-         LIROperand opr = visitor.oprAt(LIRVisitState.OperandMode.TempMode, k);
-         assert opr.isRegister() :  "visitor should only return register operands";
-         addTemp(opr, opId, IntervalUseKind.mustHaveRegister);
-       }
+                // visit uses (input operands)
+                n = visitor.oprCount(LIRVisitState.OperandMode.InputMode);
+                for (k = 0; k < n; k++) {
+                    LIROperand opr = visitor.oprAt(LIRVisitState.OperandMode.InputMode, k);
+                    assert opr.isRegister() : "visitor should only return register operands";
+                    addUse(opr, blockFrom, opId, useKindOfInputOperand(op, opr));
+                }
 
-       // visit uses (input operands)
-       n = visitor.oprCount(LIRVisitState.OperandMode.InputMode);
-       for (k = 0; k < n; k++) {
-         LIROperand opr = visitor.oprAt(LIRVisitState.OperandMode.InputMode, k);
-         assert opr.isRegister() :  "visitor should only return register operands";
-         addUse(opr, blockFrom, opId, useKindOfInputOperand(op, opr));
-       }
+                // Add uses of live locals from interpreter's point of view for proper
+                // debug information generation
+                // Treat these operands as temp values (if the life range is extended
+                // to a call site, the value would be in a register at the call otherwise)
+                n = visitor.infoCount();
+                for (k = 0; k < n; k++) {
+                    CodeEmitInfo info = visitor.infoAt(k);
+                    ValueStack stack = info.stack();
+                    for (Instruction value : stack.allStateValues()) {
+                        addUse(value, blockFrom, opId + 1, IntervalUseKind.noUse);
+                    }
+                }
 
-       // Add uses of live locals from interpreter's point of view for proper
-       // debug information generation
-       // Treat these operands as temp values (if the life range is extended
-       // to a call site, the value would be in a register at the call otherwise)
-       n = visitor.infoCount();
-       for (k = 0; k < n; k++) {
-         CodeEmitInfo info = visitor.infoAt(k);
-         ValueStack stack = info.stack();
-         for (Instruction value : stack.allStateValues()) {
-           addUse(value, blockFrom, opId + 1, IntervalUseKind.noUse);
-         }
-       }
+                // special steps for some instructions (especially moves)
+                handleMethodArguments(op);
+                handleDoublewordMoves(op);
+                addRegisterHints(op);
 
-       // special steps for some instructions (especially moves)
-       handleMethodArguments(op);
-       handleDoublewordMoves(op);
-       addRegisterHints(op);
+            } // end of instruction iteration
+        } // end of block iteration
 
-     } // end of instruction iteration
-   } // end of block iteration
-
-
-   // add the range [0, 1[ to all fixed intervals
-   // . the register allocator need not handle unhandled fixed intervals
-   for (int n = 0; n < nofRegs; n++) {
-     Interval interval = intervalAt(n);
-     if (interval != null) {
-       interval.addRange(0, 1);
-     }
-   }
- }
+        // add the range [0, 1[ to all fixed intervals
+        // . the register allocator need not handle unhandled fixed intervals
+        for (int n = 0; n < nofRegs; n++) {
+            Interval interval = intervalAt(n);
+            if (interval != null) {
+                interval.addRange(0, 1);
+            }
+        }
+    }
 
     // * Phase 5: actual register allocation
 
@@ -1550,7 +1571,8 @@ public class LinearScan extends RegisterAllocator {
 
     boolean isSorted(Interval[] intervals) {
         int from = -1;
-        int i, j;
+        int i;
+        int j;
         for (i = 0; i < intervals.length; i++) {
             Interval it = intervals[i];
             if (it != null) {
@@ -1611,8 +1633,9 @@ public class LinearScan extends RegisterAllocator {
         int n = sortedIntervals.length;
         for (int i = 0; i < n; i++) {
             v = sortedIntervals[i];
-            if (v == null)
+            if (v == null) {
                 continue;
+            }
 
             if (isList1.apply(v)) {
                 list1 = addToList(list1, list1Prev, v);
@@ -1623,16 +1646,19 @@ public class LinearScan extends RegisterAllocator {
             }
         }
 
-        if (list1Prev != null)
+        if (list1Prev != null) {
             list1Prev.setNext(Interval.end());
-        if (list2Prev != null)
+        }
+        if (list2Prev != null) {
             list2Prev.setNext(Interval.end());
+        }
 
         assert list1Prev == null || list1Prev.next() == Interval.end() : "linear list ends not with sentinel";
         assert list2Prev == null || list2Prev.next() == Interval.end() : "linear list ends not with sentinel";
 
         result[0] = list1;
         result[1] = list2;
+        return result;
     }
 
     void sortIntervalsBeforeAllocation() {
@@ -1680,44 +1706,66 @@ public class LinearScan extends RegisterAllocator {
     }
 
     void sortIntervalsAfterAllocation() {
-   //TIMELINEARSCAN(timerSortIntervalsAfter);
+        // TIMELINEARSCAN(timerSortIntervalsAfter);
 
-   Interval[] oldList      = sortedIntervals;
-   List<Interval>  newList      = newIntervalsFromAllocation;
-   int oldLen = oldList.length
-   int newLen = newList.size();
+        Interval[] oldList = sortedIntervals;
+        List<Interval> newList = newIntervalsFromAllocation;
+        int oldLen = oldList.length;
+        int newLen = newList.size();
 
-   if (newLen == 0) {
-     // no intervals have been added during allocation, so sorted list is already up to date
-     return;
-   }
+        if (newLen == 0) {
+            // no intervals have been added during allocation, so sorted list is already up to date
+            return;
+        }
 
-   // conventional sort-algorithm for new intervals
-   newList.sort(intervalCmp);
+        // conventional sort-algorithm for new intervals
+        Collections.sort(newList, intervalCmp);
 
-   // merge old and new list (both already sorted) into one combined list
-   Interval[] combinedList = new Interval[oldLen + newLen];
-   int oldIdx = 0;
-   int newIdx = 0;
+        // merge old and new list (both already sorted) into one combined list
+        Interval[] combinedList = new Interval[oldLen + newLen];
+        int oldIdx = 0;
+        int newIdx = 0;
 
-   while (oldIdx + newIdx < oldLen + newLen) {
-     if (newIdx >= newLen || (oldIdx < oldLen && oldList[oldIdx].from() <= newList.get(newIdx).from())) {
-       combinedList[oldIdx + newIdx] = oldList[oldIdx];
-       oldIdx++;
-     } else {
-       combinedList[oldIdx + newIdx] = newList.get(newIdx);
-       newIdx++;
-     }
-   }
+        while (oldIdx + newIdx < oldLen + newLen) {
+            if (newIdx >= newLen || (oldIdx < oldLen && oldList[oldIdx].from() <= newList.get(newIdx).from())) {
+                combinedList[oldIdx + newIdx] = oldList[oldIdx];
+                oldIdx++;
+            } else {
+                combinedList[oldIdx + newIdx] = newList.get(newIdx);
+                newIdx++;
+            }
+        }
 
-   sortedIntervals = combinedList;
- }
+        sortedIntervals = combinedList;
+    }
+
+    private final Comparator<Interval> intervalCmp = new Comparator<Interval>() {
+
+        @Override
+        public int compare(Interval a, Interval b) {
+            if (a != null) {
+                if (b != null) {
+                    return a.from() - b.from();
+                } else {
+                    return -1;
+                }
+            } else {
+                if (b != null) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+        }
+    };
 
     void allocateRegisters() {
         // TIMELINEARSCAN(timerAllocateRegisters);
 
-        Interval precoloredCpuIntervals, notPrecoloredCpuIntervals;
-        Interval precoloredFpuIntervals, notPrecoloredFpuIntervals;
+        Interval precoloredCpuIntervals;
+        Interval notPrecoloredCpuIntervals;
+        Interval precoloredFpuIntervals = null;
+        Interval notPrecoloredFpuIntervals = null;
 
         Interval[] result = createUnhandledLists(isPrecoloredCpuInterval, isVirtualCpuInterval);
         precoloredCpuIntervals = result[0];
@@ -1754,13 +1802,13 @@ public class LinearScan extends RegisterAllocator {
     // wrapper for Interval.splitChildAtOpId that performs a bailout in product mode
     // instead of returning null
     Interval splitChildAtOpId(Interval interval, int opId, LIRVisitState.OperandMode mode) {
-        Interval result = interval.splitChildAtOpId(opId, mode);
+        Interval result = interval.splitChildAtOpId(opId, mode, this);
         if (result != null) {
             return result;
         }
 
         assert false : "must find an interval :  but do a clean bailout in product mode";
-        result = new Interval(LIROprDesc.vregBase);
+        result = new Interval(Register.vregBase);
         result.assignReg(0);
         result.setType(BasicType.Int);
         throw new Bailout("LinearScan: interval is null");
@@ -1795,7 +1843,7 @@ public class LinearScan extends RegisterAllocator {
         BitMap liveAtEdge = toBlock.liveIn();
 
         // visit all registers where the liveAtEdge bit is set
-        for (int r = (int) liveAtEdge.getNextOneOffset(0, size); r < size; r = (int) liveAtEdge.getNextOneOffset(r + 1, size)) {
+        for (int r = liveAtEdge.getNextOneOffset(0, size); r < size; r = liveAtEdge.getNextOneOffset(r + 1, size)) {
             assert r < numRegs : "live information set for not exisiting interval";
             assert fromBlock.liveOut().get(r) && toBlock.liveIn().get(r) : "interval not live at this edge";
 
@@ -1814,8 +1862,9 @@ public class LinearScan extends RegisterAllocator {
             Util.traceLinearScan(4, "inserting moves at end of fromBlock B%d", fromBlock.blockID());
 
             List<LIRInstruction> instructions = fromBlock.lir().instructionsList();
-            LIROpBranch branch = instructions.last().asOpBranch();
-            if (branch != null) {
+            LIRInstruction instr = instructions.get(instructions.size() - 1);
+            if (instr instanceof LIRBranch) {
+                LIRBranch branch = (LIRBranch) instr;
                 // insert moves before branch
                 assert branch.cond() == LIRCondition.Always : "block does not end with an unconditional jump";
                 moveResolver.setInsertPosition(fromBlock.lir(), instructions.size() - 2);
@@ -1919,7 +1968,7 @@ public class LinearScan extends RegisterAllocator {
         int reg = interval.assignedReg();
         int regHi = interval.assignedRegHi();
 
-        if ((reg < nofRegs && interval.alwaysInMemory()) || (useFpuStackAllocation() && reg >= pdFirstFpuReg && reg <= pdLastFpuReg)) {
+        if ((reg < nofRegs && interval.alwaysInMemory()) || (useFpuStackAllocation() && isFpu(reg))) {
             // the interval is split to get a short range that is located on the stack
             // in the following two cases:
             // * the interval started in memory (e.g. method parameter), but is currently in a register
@@ -1955,12 +2004,12 @@ public class LinearScan extends RegisterAllocator {
     }
 
     void resolveExceptionEntry(BlockBegin block, MoveResolver moveResolver) {
-        assert block.isSet(BlockBegin.exceptionEntryFlag) : "should not call otherwise";
-        DEBUGONLY(moveResolver.checkEmpty());
+        assert block.checkBlockFlag(BlockBegin.BlockFlag.ExceptionEntry) : "should not call otherwise";
+        assert moveResolver.checkEmpty();
 
         // visit all registers where the liveIn bit is set
         int size = liveSetSize();
-        for (int r = (int) block.liveIn().getNextOneOffset(0, size); r < size; r = (int) block.liveIn().getNextOneOffset(r + 1, size)) {
+        for (int r = block.liveIn().getNextOneOffset(0, size); r < size; r = block.liveIn().getNextOneOffset(r + 1, size)) {
             resolveExceptionEntry(block, r, moveResolver);
         }
 
@@ -2025,7 +2074,7 @@ public class LinearScan extends RegisterAllocator {
         }
     }
 
-    void resolveExceptionEdge(XHandler handler, int throwingOpId, MoveResolver moveResolver) {
+    void resolveExceptionEdge(ExceptionHandler handler, int throwingOpId, MoveResolver moveResolver) {
         Util.traceLinearScan(4, "resolving exception handler B%d: throwingOpId=%d", handler.entryBlock().blockID(), throwingOpId);
 
         assert moveResolver.checkEmpty();
@@ -2036,7 +2085,7 @@ public class LinearScan extends RegisterAllocator {
         // visit all registers where the liveIn bit is set
         BlockBegin block = handler.entryBlock();
         int size = liveSetSize();
-        for (int r = (int) block.liveIn().getNextOneOffset(0, size); r < size; r = (int) block.liveIn().getNextOneOffset(r + 1, size)) {
+        for (int r = block.liveIn().getNextOneOffset(0, size); r < size; r = block.liveIn().getNextOneOffset(r + 1, size)) {
             resolveExceptionEdge(handler, throwingOpId, r, null, moveResolver);
         }
 
@@ -2056,7 +2105,7 @@ public class LinearScan extends RegisterAllocator {
 
     void resolveExceptionHandlers() {
         MoveResolver moveResolver = new MoveResolver(this);
-        LIRVisitState visitor;
+        LIRVisitState visitor = new LIRVisitState();
         int numBlocks = blockCount();
 
         int i;
@@ -2070,12 +2119,12 @@ public class LinearScan extends RegisterAllocator {
         for (i = 0; i < numBlocks; i++) {
             BlockBegin block = blockAt(i);
             LIRList ops = block.lir();
-            int numOps = ops.size();
+            int numOps = ops.length();
 
             // iterate all instructions of the block. skip the first because it is always a label
-            assert visitor.noOperands(ops.get(0)) : "first operation must always be a label";
+            assert visitor.noOperands(ops.at(0)) : "first operation must always be a label";
             for (int j = 1; j < numOps; j++) {
-                LIRInstruction op = ops.get(j);
+                LIRInstruction op = ops.at(j);
                 int opId = op.id();
 
                 if (opId != -1 && hasInfo(opId)) {
@@ -2177,7 +2226,7 @@ public class LinearScan extends RegisterAllocator {
                     if (C1XOptions.SSEVersion >= 1 && compilation.target.arch.isX86()) {
                         assert isXmm(assignedReg) : "no xmm register";
                         assert interval.assignedRegHi() == getAnyreg() : "must not have hi register";
-                        return LIROperandFactory.singleXmm(toRegister(assignedReg));
+                        return LIROperandFactory.singleXmmX86(toRegister(assignedReg));
                     }
 
                     assert isFpu(assignedReg) : "no fpu register";
@@ -2189,7 +2238,7 @@ public class LinearScan extends RegisterAllocator {
                     if (C1XOptions.SSEVersion >= 2 && compilation.target.arch.isX86()) {
                         assert isXmm(assignedReg) : "no xmm register";
                         assert interval.assignedRegHi() == getAnyreg() : "must not have hi register (double xmm values are stored in one register)";
-                        return LIROperandFactory.doubleXmm(toRegister(assignedReg));
+                        return LIROperandFactory.doubleXmmX86(toRegister(assignedReg));
                     }
 
                     LIROperand result;
@@ -2201,7 +2250,7 @@ public class LinearScan extends RegisterAllocator {
                     } else {
                         assert isFpu(assignedReg) : "no fpu register";
                         assert interval.assignedRegHi() == getAnyreg() : "must not have hi register (double fpu values are stored in one register on Intel)";
-                        result = LIROperandFactory.doubleFpu86(assignedReg);
+                        result = LIROperandFactory.doubleFpuX86(toRegister(assignedReg));
                     }
                     return result;
                 }
@@ -2214,20 +2263,20 @@ public class LinearScan extends RegisterAllocator {
         }
     }
 
-    private boolean isFpu(int assignedReg) {
+    boolean isFpu(int assignedReg) {
         return assignedReg >= compilation.target.pdFirstFpuReg().number && assignedReg <= compilation.target.pdLastFpuReg().number;
     }
 
-    private boolean isXmm(int assignedReg) {
+    boolean isXmm(int assignedReg) {
         return assignedReg >= compilation.target.pdFirstXmmReg().number && assignedReg <= compilation.target.pdLastXmmReg().number;
     }
 
-    private Register toRegister(int assignedReg) {
+    Register toRegister(int assignedReg) {
         // TODO Auto-generated method stub
         return null;
     }
 
-    private boolean isCpu(int assignedReg) {
+    boolean isCpu(int assignedReg) {
         // TODO Auto-generated method stub
         return assignedReg >= compilation.target.pdFirstCpuReg().number && assignedReg <= compilation.target.pdLastCpuReg().number;
     }
@@ -2250,8 +2299,9 @@ public class LinearScan extends RegisterAllocator {
                     // check if spill moves could have been appended at the end of this block, but
                     // before the branch instruction. So the split child information for this branch would
                     // be incorrect.
-                    LIROpBranch branch = block.lir().instructionsList().last().asOpBranch();
-                    if (branch != null) {
+                    LIRInstruction instr = block.lir().instructionsList().get(block.lir().instructionsList().size() - 1);
+                    if (instr instanceof LIRBranch) {
+                        LIRBranch branch = (LIRBranch) instr;
                         if (block.liveOut().get(opr.vregNumber())) {
                             assert branch.cond() == LIRCondition.Always : "block does not end with an unconditional jump";
                             assert false : "can't get split child for the last branch of a block because the information would be incorrect (moves are inserted before the branch in resolveDataFlow)";
@@ -2281,14 +2331,14 @@ public class LinearScan extends RegisterAllocator {
             }
         }
 
-        assert !gen().isVregFlagSet(opr.vregNumber(), LIRGenerator.calleeSaved) || !FrameMap.isCallerSaveRegister(res) : "bad allocation";
+        assert !gen().isVregFlagSet(opr.vregNumber(), LIRGenerator.VregFlag.CalleeSaved) || !frameMap.isCallerSaveRegister(res) : "bad allocation";
 
         return res;
     }
 
     // some methods used to check correctness of debug information
 
-    void assertNoRegisterValues(List<ScopeValue> values) {
+    void assertNoRegisterValuesScope(List<ScopeValue> values) {
         if (values == null) {
             return;
         }
@@ -2298,12 +2348,12 @@ public class LinearScan extends RegisterAllocator {
 
             if (value.isLocation()) {
                 Location location = ((LocationValue) value).location();
-                assert location.where() == Location.onStack : "value is in register";
+                assert location.where() == Location.Where.OnStack : "value is in register";
             }
         }
     }
 
-    void assertNoRegisterValues(List<MonitorValue> values) {
+    void assertNoRegisterValuesMonitor(List<MonitorValue> values) {
         if (values == null) {
             return;
         }
@@ -2313,9 +2363,9 @@ public class LinearScan extends RegisterAllocator {
 
             if (value.owner().isLocation()) {
                 Location location = ((LocationValue) value.owner()).location();
-                assert location.where() == Location.onStack : "owner is in register";
+                assert location.where() == Location.Where.OnStack : "owner is in register";
             }
-            assert value.basicLock().where() == Location.onStack : "basicLock is in register";
+            assert value.basicLock().where() == Location.Where.OnStack : "basicLock is in register";
         }
     }
 
@@ -2326,7 +2376,7 @@ public class LinearScan extends RegisterAllocator {
     void assertEqual(ScopeValue v1, ScopeValue v2) {
         if (v1.isLocation()) {
             assert v2.isLocation() : "";
-            assert qual(((LocationValue) v1).location(), ((LocationValue) v2).location());
+            assertEqual(((LocationValue) v1).location(), ((LocationValue) v2).location());
         } else if (v1.isConstantInt()) {
             assert v2.isConstantInt() : "";
             assert ((ConstantIntValue) v1).value() == ((ConstantIntValue) v2).value() : "";
@@ -2345,8 +2395,8 @@ public class LinearScan extends RegisterAllocator {
     }
 
     void assertEqual(MonitorValue m1, MonitorValue m2) {
-        assert qual(m1.owner(), m2.owner());
-        assert qual(m1.basicLock(), m2.basicLock());
+        assertEqual(m1.owner(), m2.owner());
+        assertEqual(m1.basicLock(), m2.basicLock());
     }
 
     void assertEqual(IRScopeDebugInfo d1, IRScopeDebugInfo d2) {
@@ -2357,7 +2407,7 @@ public class LinearScan extends RegisterAllocator {
             assert d1.locals() != null && d2.locals() != null : "not equal";
             assert d1.locals().size() == d2.locals().size() : "not equal";
             for (int i = 0; i < d1.locals().size(); i++) {
-                assert qual(d1.locals().get(i), d2.locals().get(i));
+                assertEqual(d1.locals().get(i), d2.locals().get(i));
             }
         } else {
             assert d1.locals() == null && d2.locals() == null : "not equal";
@@ -2367,7 +2417,7 @@ public class LinearScan extends RegisterAllocator {
             assert d1.expressions() != null && d2.expressions() != null : "not equal";
             assert d1.expressions().size() == d2.expressions().size() : "not equal";
             for (int i = 0; i < d1.expressions().size(); i++) {
-                assert qual(d1.expressions().get(i), d2.expressions().get(i));
+                assertEqual(d1.expressions().get(i), d2.expressions().get(i));
             }
         } else {
             assert d1.expressions() == null && d2.expressions() == null : "not equal";
@@ -2377,7 +2427,7 @@ public class LinearScan extends RegisterAllocator {
             assert d1.monitors() != null && d2.monitors() != null : "not equal";
             assert d1.monitors().size() == d2.monitors().size() : "not equal";
             for (int i = 0; i < d1.monitors().size(); i++) {
-                assert qual(d1.monitors().get(i), d2.monitors().get(i));
+                assertEqual(d1.monitors().get(i), d2.monitors().get(i));
             }
         } else {
             assert d1.monitors() == null && d2.monitors() == null : "not equal";
@@ -2385,33 +2435,35 @@ public class LinearScan extends RegisterAllocator {
 
         if (d1.caller() != null) {
             assert d1.caller() != null && d2.caller() != null : "not equal";
-            assert qual(d1.caller(), d2.caller());
+            assertEqual(d1.caller(), d2.caller());
         } else {
             assert d1.caller() == null && d2.caller() == null : "not equal";
         }
     }
 
     boolean checkStackDepth(CodeEmitInfo info, int stackEnd) {
-        if (info.bci() != SynchronizationEntryBCI && !info.scope().method().isNative()) {
-            Bytecodes.Code code = info.scope().method().javaCodeAtBci(info.bci());
+        if (info.bci() != C1XCompilation.MethodCompilation.SynchronizationEntryBCI.value && !info.scope().method().isNative()) {
+            int code = info.scope().method().javaCodeAtBci(info.bci());
             switch (code) {
-                case Bytecodes.ifnull: // fall through
-                case Bytecodes.ifnonnull: // fall through
-                case Bytecodes.ifeq: // fall through
-                case Bytecodes.ifne: // fall through
-                case Bytecodes.iflt: // fall through
-                case Bytecodes.ifge: // fall through
-                case Bytecodes.ifgt: // fall through
-                case Bytecodes.ifle: // fall through
-                case Bytecodes.ifIcmpeq: // fall through
-                case Bytecodes.ifIcmpne: // fall through
-                case Bytecodes.ifIcmplt: // fall through
-                case Bytecodes.ifIcmpge: // fall through
-                case Bytecodes.ifIcmpgt: // fall through
-                case Bytecodes.ifIcmple: // fall through
-                case Bytecodes.ifAcmpeq: // fall through
-                case Bytecodes.ifAcmpne:
-                    assert stackEnd >= -Bytecodes.depth(code) : "must have non-empty expression stack at if bytecode";
+                case Bytecodes.IFNULL: // fall through
+                case Bytecodes.IFNONNULL: // fall through
+                case Bytecodes.IFEQ: // fall through
+                case Bytecodes.IFNE: // fall through
+                case Bytecodes.IFLT: // fall through
+                case Bytecodes.IFGE: // fall through
+                case Bytecodes.IFGT: // fall through
+                case Bytecodes.IFLE: // fall through
+                case Bytecodes.IF_ICMPEQ: // fall through
+                case Bytecodes.IF_ICMPNE: // fall through
+                case Bytecodes.IF_ICMPLT: // fall through
+                case Bytecodes.IF_ICMPGE: // fall through
+                case Bytecodes.IF_ICMPGT: // fall through
+                case Bytecodes.IF_ICMPLE: // fall through
+                case Bytecodes.IF_ACMPEQ: // fall through
+                case Bytecodes.IF_ACMPNE:
+                    // TODO: Check if this assertion can be enabled
+                    // assert stackEnd >= -Bytecodes.depth(code) :
+                    // "must have non-empty expression stack at if bytecode";
                     break;
             }
         }
@@ -2432,7 +2484,7 @@ public class LinearScan extends RegisterAllocator {
         // to ensure a walking until the last instruction id, add a dummy interval
         // with a high operation id
         nonOopIntervals = new Interval(getAnyreg());
-        nonOopIntervals.addRange(Integer.MAX_INTEGER - 2, Integer.MAX_INTEGER - 1);
+        nonOopIntervals.addRange(Integer.MAX_VALUE - 2, Integer.MAX_VALUE - 1);
 
         return new IntervalWalker(this, oopIntervals, nonOopIntervals);
     }
@@ -2453,19 +2505,18 @@ public class LinearScan extends RegisterAllocator {
         boolean isPatchInfo = false;
         if (op.code() == LIROpcode.Move) {
             assert !isCallSite : "move must not be a call site";
-            assert op.asOp1() != null : "move must be LIROp1";
             LIROp1 move = (LIROp1) op;
 
             isPatchInfo = move.patchCode() != LIRPatchCode.PatchNone;
         }
 
         // Iterate through active intervals
-        for (Interval interval = iw.activeFirst(fixedKind); interval != Interval.end(); interval = interval.next()) {
+        for (Interval interval = iw.activeFirst(IntervalKind.fixedKind); interval != Interval.end(); interval = interval.next()) {
             int assignedReg = interval.assignedReg();
 
             assert interval.currentFrom() <= op.id() && op.id() <= interval.currentTo() : "interval should not be active otherwise";
             assert interval.assignedRegHi() == getAnyreg() : "oop must be single word";
-            assert interval.regNum() >= LIROprDesc.vregBase : "fixed interval found";
+            assert interval.regNum() >= Register.vregBase : "fixed interval found";
 
             // Check if this range covers the instruction. Intervals that
             // start or end at the current operation are not included in the
@@ -2503,6 +2554,11 @@ public class LinearScan extends RegisterAllocator {
         return map;
     }
 
+    private boolean isCallerSave(int assignedReg) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
     void computeOopMap(IntervalWalker iw, LIRVisitState visitor, LIRInstruction op) {
         assert visitor.infoCount() > 0 : "no oop map needed";
 
@@ -2535,17 +2591,19 @@ public class LinearScan extends RegisterAllocator {
     }
 
     // frequently used constants
-    ConstantOopWriteValue oopNullScopeValue = ConstantOopWriteValue(null);
-    ConstantIntValue intM1ScopeValue = ConstantIntValue(-1);
-    ConstantIntValue int0ScopeValue = ConstantIntValue(0);
-    ConstantIntValue int1ScopeValue = ConstantIntValue(1);
-    ConstantIntValue int2ScopeValue = ConstantIntValue(2);
-    LocationValue illegalValue = LocationValue(Location());
+    ConstantOopWriteValue oopNullScopeValue = new ConstantOopWriteValue(null);
+    ConstantIntValue intM1ScopeValue = new ConstantIntValue(-1);
+    ConstantIntValue int0ScopeValue = new ConstantIntValue(0);
+    ConstantIntValue int1ScopeValue = new ConstantIntValue(1);
+    ConstantIntValue int2ScopeValue = new ConstantIntValue(2);
+    LocationValue illegalValue = new LocationValue(new Location());
+    private ScopeValue[] scopeValueCache;
+    private FpuStackAllocator fpuStackAllocator;
 
     void initComputeDebugInfo() {
         // cache for frequently used scope values
         // (cpu registers and stack slots)
-        scopeValueCache = ScopeValueArray((nofCpuRegs + frameMap().argcount() + maxSpills()) * 2, null);
+        scopeValueCache = new ScopeValue[(nofCpuRegs + frameMap().argcount() + maxSpills()) * 2];
     }
 
     MonitorValue locationForMonitorIndex(int monitorIndex) {
@@ -2562,7 +2620,7 @@ public class LinearScan extends RegisterAllocator {
         return new MonitorValue(objectScopeValue, loc[0]);
     }
 
-    LocationValue locationForName(int name, Location.Type locType) {
+    LocationValue locationForName(int name, Location.LocationType locType) {
         Location[] loc = new Location[1];
         if (!frameMap().locationsForSlot(name, locType, loc)) {
             bailout("too large frame");
@@ -2570,96 +2628,106 @@ public class LinearScan extends RegisterAllocator {
         return new LocationValue(loc[0]);
     }
 
-    int appendScopeValueForConstant(LIROperand opr, GrowableArray<ScopeValue> scopeValues) {
-   assert opr.isConstant() :  "should not be called otherwise";
+    int appendScopeValueForConstant(LIROperand opr, List<ScopeValue> scopeValues) {
+        assert opr.isConstant() : "should not be called otherwise";
 
-   LIRConst c = opr.asConstantPtr();
-   BasicType t = c.type();
-   switch (t) {
-     case BasicType.Object: {
-       Object value = c.asJobject();
-       if (value == null) {
-         scopeValues.append(&oopNullScopeValue);
-       } else {
-         scopeValues.append(new ConstantOopWriteValue(c.asJobject()));
-       }
-       return 1;
-     }
+        LIRConstant c = opr.asConstantPtr();
+        BasicType t = c.type();
+        switch (t) {
+            case Object: {
+                Object value = c.asJobject();
+                if (value == null) {
+                    scopeValues.add(oopNullScopeValue);
+                } else {
+                    scopeValues.add(new ConstantOopWriteValue(c.asJobject()));
+                }
+                return 1;
+            }
 
-     case BasicType.Int: // fall through
-     case BasicType.Float: {
-       int value = c.asJintBits();
-       switch (value) {
-         case -1: scopeValues.append(&intM1ScopeValue); break;
-         case 0:  scopeValues.append(&int0ScopeValue); break;
-         case 1:  scopeValues.append(&int1ScopeValue); break;
-         case 2:  scopeValues.append(&int2ScopeValue); break;
-         default: scopeValues.append(new ConstantIntValue(c.asJintBits())); break;
-       }
-       return 1;
-     }
+            case Int: // fall through
+            case Float: {
+                int value = c.asIntBits();
+                switch (value) {
+                    case -1:
+                        scopeValues.add(intM1ScopeValue);
+                        break;
+                    case 0:
+                        scopeValues.add(int0ScopeValue);
+                        break;
+                    case 1:
+                        scopeValues.add(int1ScopeValue);
+                        break;
+                    case 2:
+                        scopeValues.add(int2ScopeValue);
+                        break;
+                    default:
+                        scopeValues.add(new ConstantIntValue(c.asIntBits()));
+                        break;
+                }
+                return 1;
+            }
 
-     case BasicType.Long: // fall through
-     case BasicType.Double: {
-       if (hiWordOffsetInBytes > loWordOffsetInBytes) {
-         scopeValues.append(new ConstantIntValue(c.asJintHiBits()));
-         scopeValues.append(new ConstantIntValue(c.asJintLoBits()));
-       } else {
-         scopeValues.append(new ConstantIntValue(c.asJintLoBits()));
-         scopeValues.append(new ConstantIntValue(c.asJintHiBits()));
-       }
+            case Long: // fall through
+            case Double: {
+                if (compilation.target.arch.hiWordOffsetInBytes > compilation.target.arch.loWordOffsetInBytes) {
+                    scopeValues.add(new ConstantIntValue(c.asIntHiBits()));
+                    scopeValues.add(new ConstantIntValue(c.asIntLoBits()));
+                } else {
+                    scopeValues.add(new ConstantIntValue(c.asIntLoBits()));
+                    scopeValues.add(new ConstantIntValue(c.asIntHiBits()));
+                }
 
-       return 2;
-     }
+                return 2;
+            }
 
-     default:
-       Util.shouldNotReachHere();
-       return -1;
-   }
- }
+            default:
+                Util.shouldNotReachHere();
+                return -1;
+        }
+    }
 
-    int appendScopeValueForOperand(LIROperand opr, GrowableArray<ScopeValue> scopeValues) {
+    int appendScopeValueForOperand(LIROperand opr, List<ScopeValue> scopeValues) {
         if (opr.isSingleStack()) {
             int stackIdx = opr.singleStackIx();
             boolean isOop = opr.isOopRegister();
             int cacheIdx = (stackIdx + nofCpuRegs) * 2 + (isOop ? 1 : 0);
 
-            ScopeValue sv = scopeValueCache.get(cacheIdx);
+            ScopeValue sv = scopeValueCache[cacheIdx];
             if (sv == null) {
-                Location.Type locType = isOop ? Location.oop : Location.normal;
+                Location.LocationType locType = isOop ? Location.LocationType.Oop : Location.LocationType.Normal;
                 sv = locationForName(stackIdx, locType);
-                scopeValueCache.atPut(cacheIdx, sv);
+                scopeValueCache[cacheIdx] = sv;
             }
 
             // check if cached value is correct
-            assertEqual(sv, locationForName(stackIdx, isOop ? Location.oop : Location.normal));
+            assertEqual(sv, locationForName(stackIdx, isOop ? Location.LocationType.Oop : Location.LocationType.Normal));
 
-            scopeValues.append(sv);
+            scopeValues.add(sv);
             return 1;
 
         } else if (opr.isSingleCpu()) {
             boolean isOop = opr.isOopRegister();
             int cacheIdx = opr.cpuRegnr() * 2 + (isOop ? 1 : 0);
 
-            ScopeValue sv = scopeValueCache.get(cacheIdx);
+            ScopeValue sv = scopeValueCache[cacheIdx];
             if (sv == null) {
-                Location.Type locType = isOop ? Location.oop : Location.normal;
+                Location.LocationType locType = isOop ? Location.LocationType.Oop : Location.LocationType.Normal;
                 VMReg rname = frameMap().regname(opr);
                 sv = new LocationValue(Location.newRegLoc(locType, rname));
-                scopeValueCache.atPut(cacheIdx, sv);
+                scopeValueCache[cacheIdx] = sv;
             }
 
             // check if cached value is correct
-            assertEqual(sv, new LocationValue(Location.newRegLoc(isOop ? Location.oop : Location.normal, frameMap().regname(opr))));
+            assertEqual(sv, new LocationValue(Location.newRegLoc(isOop ? Location.LocationType.Oop : Location.LocationType.Normal, frameMap().regname(opr))));
 
-            scopeValues.append(sv);
+            scopeValues.add(sv);
             return 1;
 
         } else if (opr.isSingleXmm() && compilation.target.arch.isX86()) {
-            VMReg rname = opr.asXmmFloatReg().asVMReg();
-            LocationValue sv = new LocationValue(Location.newRegLoc(Location.normal, rname));
+            VMReg rname = opr.asRegister().asVMReg();
+            LocationValue sv = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rname));
 
-            scopeValues.append(sv);
+            scopeValues.add(sv);
             return 1;
 
         } else if (opr.isSingleFpu()) {
@@ -2673,11 +2741,11 @@ public class LinearScan extends RegisterAllocator {
                 opr = fpuStackAllocator.toFpuStack(opr);
             }
 
-            Location.Type locType = floatSavedAsDouble ? Location.floatInDbl : Location.normal;
+            Location.LocationType locType = floatSavedAsDouble() ? Location.LocationType.FloatInDbl : Location.LocationType.Normal;
             VMReg rname = frameMap().fpuRegname(opr.fpuRegnr());
             LocationValue sv = new LocationValue(Location.newRegLoc(locType, rname));
 
-            scopeValues.append(sv);
+            scopeValues.add(sv);
             return 1;
 
         } else {
@@ -2690,7 +2758,7 @@ public class LinearScan extends RegisterAllocator {
 
                 if (compilation.target.arch.is64bit()) {
                     Location[] loc1 = new Location[1];
-                    Location.Type locType = opr.type() == BasicType.Long ? Location.lng : Location.dbl;
+                    Location.LocationType locType = opr.type() == BasicType.Long ? Location.LocationType.Long : Location.LocationType.Double;
                     if (!frameMap().locationsForSlot(opr.doubleStackIx(), locType, loc1, null)) {
                         bailout("too large frame");
                     }
@@ -2700,7 +2768,7 @@ public class LinearScan extends RegisterAllocator {
                 } else {
                     Location[] loc1 = new Location[1];
                     Location[] loc2 = new Location[1];
-                    if (!frameMap().locationsForSlot(opr.doubleStackIx(), Location.normal, loc1, loc2)) {
+                    if (!frameMap().locationsForSlot(opr.doubleStackIx(), Location.LocationType.Normal, loc1, loc2)) {
                         bailout("too large frame");
                     }
                     first = new LocationValue(loc1[0]);
@@ -2711,31 +2779,31 @@ public class LinearScan extends RegisterAllocator {
 
                 if (compilation.target.arch.is64bit()) {
                     VMReg rnameFirst = opr.asRegisterLo().asVMReg();
-                    first = new LocationValue(Location.newRegLoc(Location.lng, rnameFirst));
+                    first = new LocationValue(Location.newRegLoc(Location.LocationType.Long, rnameFirst));
                     second = int0ScopeValue;
                 } else {
                     VMReg rnameFirst = opr.asRegisterLo().asVMReg();
                     VMReg rnameSecond = opr.asRegisterHi().asVMReg();
 
-                    if (hiWordOffsetInBytes < loWordOffsetInBytes) {
+                    if (compilation.target.arch.hiWordOffsetInBytes < compilation.target.arch.loWordOffsetInBytes) {
                         // lo/hi and swapped relative to first and second, so swap them
                         VMReg tmp = rnameFirst;
                         rnameFirst = rnameSecond;
                         rnameSecond = tmp;
                     }
 
-                    first = new LocationValue(Location.newRegLoc(Location.normal, rnameFirst));
-                    second = new LocationValue(Location.newRegLoc(Location.normal, rnameSecond));
+                    first = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rnameFirst));
+                    second = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rnameSecond));
                 }
 
             } else if (opr.isDoubleXmm() && compilation.target.arch.isX86()) {
                 assert opr.fpuRegnrLo() == opr.fpuRegnrHi() : "assumed in calculation";
-                VMReg rnameFirst = opr.asXmmDoubleReg().asVMReg();
-                first = new LocationValue(Location.newRegLoc(Location.normal, rnameFirst));
+                VMReg rnameFirst = opr.asRegister().asVMReg();
+                first = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rnameFirst));
                 // %%% This is probably a waste but we'll keep things as they were for now
                 if (true) {
                     VMReg rnameSecond = rnameFirst.next();
-                    second = new LocationValue(Location.newRegLoc(Location.normal, rnameSecond));
+                    second = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rnameSecond));
                 }
 
             } else if (opr.isDoubleFpu()) {
@@ -2761,11 +2829,11 @@ public class LinearScan extends RegisterAllocator {
 
                 VMReg rnameFirst = frameMap().fpuRegname(opr.fpuRegnrHi());
 
-                first = new LocationValue(Location.newRegLoc(Location.normal, rnameFirst));
+                first = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rnameFirst));
                 // %%% This is probably a waste but we'll keep things as they were for now
                 if (true) {
                     VMReg rnameSecond = rnameFirst.next();
-                    second = new LocationValue(Location.newRegLoc(Location.normal, rnameSecond));
+                    second = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rnameSecond));
                 }
 
             } else {
@@ -2781,16 +2849,23 @@ public class LinearScan extends RegisterAllocator {
             // grow downwards in all implementations.
             // (If, on some machine, the interpreter's Java locals or stack
             // were to grow upwards, the embedded doubles would be word-swapped.)
-            scopeValues.append(second);
-            scopeValues.append(first);
+            scopeValues.add(second);
+            scopeValues.add(first);
             return 2;
         }
+    }
+
+    private boolean floatSavedAsDouble() {
+        return compilation.target.arch.isX86();
     }
 
     int appendScopeValue(int opId, Instruction value, List<ScopeValue> scopeValues) {
         if (value != null) {
             LIROperand opr = value.operand();
-            Constant con = value.asConstant();
+            Constant con = null;
+            if (value instanceof Constant) {
+                con = (Constant) value;
+            }
 
             assert con == null || opr.isVirtual() || opr.isConstant() || opr.isIllegal() : "asumption: Constant instructions have only constant operands (or illegal if constant is optimized away)";
             assert con != null || opr.isVirtual() : "asumption: non-Constant instructions have only virtual operands";
@@ -2804,8 +2879,6 @@ public class LinearScan extends RegisterAllocator {
             assert opr.isVirtual() || opr.isConstant() : "other cases not allowed here";
 
             if (opr.isVirtual()) {
-                LIRVisitState.OprMode mode = LIRVisitState.OperandMode.InputMode;
-
                 BlockBegin block = blockOfOpWithId(opId);
                 if (block.numberOfSux() == 1 && opId == block.lastLirInstructionId()) {
                     // generating debug information for the last instruction of a block.
@@ -2813,10 +2886,10 @@ public class LinearScan extends RegisterAllocator {
                     // and so the wrong operand would be returned (spill moves at block boundaries are not
                     // considered in the live ranges of intervals)
                     // Solution: use the first opId of the branch target block instead.
-                    if (block.lir().instructionsList().last().asOpBranch() != null) {
+                    final LIRInstruction instr = block.lir().instructionsList().get(block.lir().instructionsList().size() - 1);
+                    if (instr instanceof LIRBranch) {
                         if (block.liveOut().get(opr.vregNumber())) {
                             opId = block.suxAt(0).firstLirInstructionId();
-                            mode = LIRVisitState.OperandMode.OutputMode;
                         }
                     }
                 }
@@ -2831,28 +2904,29 @@ public class LinearScan extends RegisterAllocator {
                 return appendScopeValueForOperand(opr, scopeValues);
 
             } else {
-                assert value.asConstant() != null : "all other instructions have only virtual operands";
+                assert value instanceof Constant : "all other instructions have only virtual operands";
                 assert opr.isConstant() : "operand must be constant";
 
                 return appendScopeValueForConstant(opr, scopeValues);
             }
         } else {
             // append a dummy value because real value not needed
-            scopeValues.append(illegalValue);
+            scopeValues.add(illegalValue);
             return 1;
         }
     }
 
     IRScopeDebugInfo computeDebugInfoForScope(int opId, IRScope curScope, ValueStack curState, ValueStack innermostState, int curBci, int stackEnd, int locksEnd) {
         IRScopeDebugInfo callerDebugInfo = null;
-        int stackBegin, locksBegin;
+        int stackBegin;
+        int locksBegin;
 
         ValueStack callerState = curScope.callerState();
         if (callerState != null) {
             // process recursively to compute outermost scope first
             stackBegin = callerState.stackSize();
             locksBegin = callerState.locksSize();
-            callerDebugInfo = computeDebugInfoForScope(opId, curScope.caller(), callerState, innermostState, curScope.callerBci(), stackBegin, locksBegin);
+            callerDebugInfo = computeDebugInfoForScope(opId, curScope.caller(), callerState, innermostState, curScope.callerBCI(), stackBegin, locksBegin);
         } else {
             stackBegin = 0;
             locksBegin = 0;
@@ -2861,20 +2935,20 @@ public class LinearScan extends RegisterAllocator {
         // initialize these to null.
         // If we don't need deopt info or there are no locals, expressions or monitors,
         // then these get recorded as no information and avoids the allocation of 0 length arrays.
-        GrowableArray<ScopeValue> locals = null;
-        GrowableArray<ScopeValue> expressions = null;
-        GrowableArray<MonitorValue> monitors = null;
+        List<ScopeValue> locals = null;
+        List<ScopeValue> expressions = null;
+        List<MonitorValue> monitors = null;
 
         // describe local variable values
         int nofLocals = curScope.method().maxLocals();
         if (nofLocals > 0) {
-            locals = new GrowableArray<ScopeValue>(nofLocals);
+            locals = new ArrayList<ScopeValue>(nofLocals);
 
             int pos = 0;
             while (pos < nofLocals) {
                 assert pos < curState.localsSize() : "why not?";
 
-                Value local = curState.localAt(pos);
+                Instruction local = curState.localAt(pos);
                 pos += appendScopeValue(opId, local, locals);
 
                 assert locals.size() == pos : "must match";
@@ -2895,11 +2969,11 @@ public class LinearScan extends RegisterAllocator {
 
         int nofStack = stackEnd - stackBegin;
         if (nofStack > 0) {
-            expressions = new GrowableArray<ScopeValue>(nofStack);
+            expressions = new ArrayList<ScopeValue>(nofStack);
 
             int pos = stackBegin;
             while (pos < stackEnd) {
-                Value expression = innermostState.stackAtInc(pos);
+                Instruction expression = innermostState.stackAt(pos);
                 appendScopeValue(opId, expression, expressions);
 
                 assert expressions.size() + stackBegin == pos : "must match";
@@ -2910,9 +2984,9 @@ public class LinearScan extends RegisterAllocator {
         assert locksBegin <= locksEnd : "error in scope iteration";
         int nofLocks = locksEnd - locksBegin;
         if (nofLocks > 0) {
-            monitors = new GrowableArray<MonitorValue>(nofLocks);
+            monitors = new ArrayList<MonitorValue>(nofLocks);
             for (int i = locksBegin; i < locksEnd; i++) {
-                monitors.append(locationForMonitorIndex(i));
+                monitors.add(locationForMonitorIndex(i));
             }
         }
 
@@ -2945,7 +3019,7 @@ public class LinearScan extends RegisterAllocator {
     }
 
     void assignRegNum(List<LIRInstruction> instructions, IntervalWalker iw) {
-        LIRVisitState visitor;
+        LIRVisitState visitor = new LIRVisitState();
         int numInst = instructions.size();
         boolean hasDead = false;
 
@@ -3093,28 +3167,24 @@ public class LinearScan extends RegisterAllocator {
         // TODO: Check if we want to do statistics!
         // LinearScanStatistic.compute(this, statAfterAsign);
 
-        { // TIMELINEARSCAN(timerAllocateFpuStack);
-
-            if (useFpuStackAllocation()) {
-                allocateFpuStack(); // Only has effect on Intel
-                printLir(2, "LIR after FPU stack allocation:", true);
-            }
+        if (useFpuStackAllocation()) {
+            allocateFpuStack(); // Only has effect on Intel
+            printLir(2, "LIR after FPU stack allocation:", true);
         }
-
-        { // TIMELINEARSCAN(timerOptimizeLir);
-
-            EdgeMoveOptimizer.optimize(ir().code());
-            ControlFlowOptimizer.optimize(ir().code());
-            // check that cfg is still correct after optimizations
-            ir().verify();
-        }
-
+        EdgeMoveOptimizer.optimize(ir().linearScanOrder());
+        ControlFlowOptimizer.optimize(ir().linearScanOrder());
+        // check that cfg is still correct after optimizations
+        assert ir().verify();
         printLir(1, "Before Code Generation", false);
         // NOTPRODUCT(LinearScanStatistic.compute(this, statFinal));
         // NOTPRODUCT(totalTimer.endMethod(this));
     }
 
     // * Printing functions
+
+    private void allocateFpuStack() {
+        Util.unimplemented();
+    }
 
     void printTimers(double total) {
         // totalTimer.print(total);
@@ -3126,8 +3196,9 @@ public class LinearScan extends RegisterAllocator {
 
     void printBitmap(BitMap b) {
         for (int i = 0; i < b.size(); i++) {
-            if (b.get(i))
+            if (b.get(i)) {
                 TTY.print("%d ", i);
+            }
         }
         TTY.cr();
     }
@@ -3141,7 +3212,7 @@ public class LinearScan extends RegisterAllocator {
             for (i = 0; i < intervalCount(); i++) {
                 Interval interval = intervalAt(i);
                 if (interval != null) {
-                    interval.print(TTY.out);
+                    interval.print(TTY.out, this);
                 }
             }
 
@@ -3156,7 +3227,7 @@ public class LinearScan extends RegisterAllocator {
         }
 
         if (C1XOptions.PrintCFGToFile) {
-            compilation.cfgPrinter().printIntervals(intervals, label);
+            compilation.cfgPrinter().printIntervals(this, intervals, label);
         }
     }
 
@@ -3176,7 +3247,7 @@ public class LinearScan extends RegisterAllocator {
     // * verification functions for allocation
     // (check that all intervals have a correct register and that no registers are overwritten)
 
-    void verify() {
+    boolean verify() {
         Util.traceLinearScan(2, " verifying intervals *");
         verifyIntervals();
 
@@ -3190,6 +3261,8 @@ public class LinearScan extends RegisterAllocator {
         verifyRegisters();
 
         Util.traceLinearScan(2, " no errors found *");
+
+        return true;
     }
 
     private void verifyRegisters() {
@@ -3203,49 +3276,50 @@ public class LinearScan extends RegisterAllocator {
 
         for (int i = 0; i < len; i++) {
             Interval i1 = intervalAt(i);
-            if (i1 == null)
+            if (i1 == null) {
                 continue;
+            }
 
             i1.checkSplitChildren();
 
             if (i1.regNum() != i) {
                 TTY.println("Interval %d is on position %d in list", i1.regNum(), i);
-                i1.print(TTY.out);
+                i1.print(TTY.out, this);
                 TTY.cr();
                 hasError = true;
             }
 
-            if (i1.regNum() >= LIROprDesc.vregBase && i1.type() == BasicType.Illegal) {
+            if (i1.regNum() >= Register.vregBase && i1.type() == BasicType.Illegal) {
                 TTY.println("Interval %d has no type assigned", i1.regNum());
-                i1.print();
+                i1.print(TTY.out, this);
                 TTY.cr();
                 hasError = true;
             }
 
             if (i1.assignedReg() == getAnyreg()) {
                 TTY.println("Interval %d has no register assigned", i1.regNum());
-                i1.print();
+                i1.print(TTY.out, this);
                 TTY.cr();
                 hasError = true;
             }
 
             if (i1.assignedReg() == i1.assignedRegHi()) {
                 TTY.println("Interval %d: low and high register equal", i1.regNum());
-                i1.print();
+                i1.print(TTY.out, this);
                 TTY.cr();
                 hasError = true;
             }
 
             if (!isProcessedRegNum(i1.assignedReg())) {
                 TTY.println("Can not have an Interval for an ignored register");
-                i1.print();
+                i1.print(TTY.out, this);
                 TTY.cr();
                 hasError = true;
             }
 
             if (i1.first() == Range.end()) {
                 TTY.println("Interval %d has no Range", i1.regNum());
-                i1.print();
+                i1.print(TTY.out, this);
                 TTY.cr();
                 hasError = true;
             }
@@ -3253,7 +3327,7 @@ public class LinearScan extends RegisterAllocator {
             for (Range r = i1.first(); r != Range.end(); r = r.next()) {
                 if (r.from() >= r.to()) {
                     TTY.println("Interval %d has zero length range", i1.regNum());
-                    i1.print();
+                    i1.print(TTY.out, this);
                     TTY.cr();
                     hasError = true;
                 }
@@ -3261,15 +3335,18 @@ public class LinearScan extends RegisterAllocator {
 
             for (int j = i + 1; j < len; j++) {
                 Interval i2 = intervalAt(j);
-                if (i2 == null)
+                if (i2 == null) {
                     continue;
+                }
 
                 // special intervals that are created in MoveResolver
                 // . ignore them because the range information has no meaning there
-                if (i1.from() == 1 && i1.to() == 2)
+                if (i1.from() == 1 && i1.to() == 2) {
                     continue;
-                if (i2.from() == 1 && i2.to() == 2)
+                }
+                if (i2.from() == 1 && i2.to() == 2) {
                     continue;
+                }
 
                 int r1 = i1.assignedReg();
                 int r1Hi = i1.assignedRegHi();
@@ -3277,9 +3354,9 @@ public class LinearScan extends RegisterAllocator {
                 int r2Hi = i2.assignedRegHi();
                 if (i1.intersects(i2) && (r1 == r2 || r1 == r2Hi || (r1Hi != getAnyreg() && (r1Hi == r2 || r1Hi == r2Hi)))) {
                     TTY.println("Intervals %d and %d overlap and have the same register assigned", i1.regNum(), i2.regNum());
-                    i1.print();
+                    i1.print(TTY.out, this);
                     TTY.cr();
-                    i2.print();
+                    i2.print(TTY.out, this);
                     TTY.cr();
                     hasError = true;
                 }
@@ -3298,10 +3375,10 @@ public class LinearScan extends RegisterAllocator {
         // to ensure a walking until the last instruction id, add a dummy interval
         // with a high operation id
         otherIntervals = new Interval(getAnyreg());
-        otherIntervals.addRange(Integer.MAX_INTEGER - 2, Integer.MAX_INTEGER - 1);
+        otherIntervals.addRange(Integer.MAX_VALUE - 2, Integer.MAX_VALUE - 1);
         IntervalWalker iw = new IntervalWalker(this, fixedIntervals, otherIntervals);
 
-        LIRVisitState visitor;
+        LIRVisitState visitor = new LIRVisitState();
         for (int i = 0; i < blockCount(); i++) {
             BlockBegin block = blockAt(i);
 
@@ -3320,7 +3397,10 @@ public class LinearScan extends RegisterAllocator {
                         LIROp1 move = (LIROp1) op;
                         checkLive = (move.patchCode() == LIRPatchCode.PatchNone);
                     }
-                    LIROpBranch branch = op.asOpBranch();
+                    LIRBranch branch = null;
+                    if (op instanceof LIRBranch) {
+                        branch = (LIRBranch) op;
+                    }
                     if (branch != null && branch.stub() != null && branch.stub().isExceptionThrowStub()) {
                         // Don't bother checking the stub in this case since the
                         // exception stub will never return to normal control flow.
@@ -3330,7 +3410,7 @@ public class LinearScan extends RegisterAllocator {
                     // Make sure none of the fixed registers is live across an
                     // oopmap since we can't handle that correctly.
                     if (checkLive) {
-                        for (Interval interval = iw.activeFirst(fixedKind); interval != Interval.end(); interval = interval.next()) {
+                        for (Interval interval = iw.activeFirst(IntervalKind.fixedKind); interval != Interval.end(); interval = interval.next()) {
                             if (interval.currentTo() > op.id() + 1) {
                                 // This interval is live out of this op so make sure
                                 // that this interval represents some value that's
@@ -3370,9 +3450,9 @@ public class LinearScan extends RegisterAllocator {
                             if (opr.isFixedCpu() && opr.isOop()) {
                                 // operand is a non-virtual cpu register and contains an oop
                                 if (C1XOptions.TraceLinearScanLevel >= 4) {
-                                    op.printOn(TTY);
+                                    op.printOn(TTY.out);
                                     TTY.print("checking operand ");
-                                    opr.print();
+                                    opr.print(TTY.out);
                                     TTY.println();
                                 }
 
@@ -3397,7 +3477,6 @@ public class LinearScan extends RegisterAllocator {
     }
 
     void verifyConstants() {
-        int numRegs = numVirtualRegs();
         int size = liveSetSize();
         int numBlocks = blockCount();
 
@@ -3406,7 +3485,7 @@ public class LinearScan extends RegisterAllocator {
             BitMap liveAtEdge = block.liveIn();
 
             // visit all registers where the liveAtEdge bit is set
-            for (int r = (int) liveAtEdge.getNextOneOffset(0, size); r < size; r = (int) liveAtEdge.getNextOneOffset(r + 1, size)) {
+            for (int r = liveAtEdge.getNextOneOffset(0, size); r < size; r = liveAtEdge.getNextOneOffset(r + 1, size)) {
                 Util.traceLinearScan(4, "checking interval %d of block B%d", r, block.blockID());
 
                 Instruction value = gen().instructionForVreg(r);
@@ -3420,19 +3499,28 @@ public class LinearScan extends RegisterAllocator {
         }
     }
 
-
     public int numberOfSpillSlots(BasicType type) {
         switch (type) {
-            case Boolean: return 1;
-            case Byte: return 1;
-            case Char: return 1;
-            case Short: return 1;
-            case Int: return 1;
-            case Long: return 2;
-            case Float: return 1;
-            case Double: return 2;
-            case Object: return (compilation.target.arch.is64bit()) ? 2 : 1;
-            case Word: return (compilation.target.arch.is64bit()) ? 2 : 1;
+            case Boolean:
+                return 1;
+            case Byte:
+                return 1;
+            case Char:
+                return 1;
+            case Short:
+                return 1;
+            case Int:
+                return 1;
+            case Long:
+                return 2;
+            case Float:
+                return 1;
+            case Double:
+                return 2;
+            case Object:
+                return (compilation.target.arch.is64bit()) ? 2 : 1;
+            case Word:
+                return (compilation.target.arch.is64bit()) ? 2 : 1;
         }
         throw new IllegalArgumentException("invalid BasicType " + this + " for .sizeInBytes()");
     }

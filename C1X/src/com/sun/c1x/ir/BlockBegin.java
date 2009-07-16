@@ -654,6 +654,14 @@ public class BlockBegin extends StateSplit {
 
     }
 
+    /**
+     * @param exceptionentry
+     * @return
+     */
+    public boolean isSet(BlockFlag flag) {
+        return (blockFlags & flag.mask()) != 0;
+    }
+
     public int numberOfExceptionHandlers() {
         return exceptionHandlerBlocks.size();
     }
@@ -729,6 +737,16 @@ public class BlockBegin extends StateSplit {
     public BitMap liveOut() {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    public boolean isPredecessor(BlockBegin block) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public void substituteSux(BlockBegin block, BlockBegin newTarget) {
+        // TODO Auto-generated method stub
+
     }
 
 }
