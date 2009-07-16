@@ -29,10 +29,12 @@ package com.sun.c1x.lir;
  */
 public class Register {
 
+    public final static int vregBase = 50;
     public final int number;
     public final String name;
+    public final static Register anyReg = new Register(-1, "any");
 
-    public Register(int number, String name) {
+    protected Register(int number, String name) {
         this.number = number;
         this.name = name;
     }
@@ -69,5 +71,15 @@ public class Register {
 
     public String name() {
         return name;
+    }
+
+    public boolean isFpu() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean isXmm() {
+        // TODO Auto-generated method stub
+        return false;
     }
 }

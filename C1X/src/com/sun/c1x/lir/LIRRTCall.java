@@ -32,7 +32,7 @@ import com.sun.c1x.util.*;
  */
 public class LIRRTCall extends LIRCall {
 
-    private LIROperand tmp;
+    LIROperand tmp;
 
     /**
      * Creates a new LIRRTCall instruction.

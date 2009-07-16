@@ -214,4 +214,43 @@ public class Target {
         // TODO Auto-generated method stub
         return false;
     }
+
+    public Register pdFirstFpuReg() {
+        return null;
+    }
+
+    public Register pdLastFpuReg() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Register pdFirstCpuReg() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Register pdLastCpuReg() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+        // TODO Auto-generated method stub
+    public Register pdFirstByteReg() {
+        return null;
+    }
+
+    public Register pdLastByteReg() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Register pdFirstXmmReg() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Register pdLastXmmReg() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

@@ -78,7 +78,7 @@ public abstract class LIROperand {
         return basicType == opr.basicType;
     }
 
-    boolean isSameRegister(LIROperand opr) {
+    public boolean isSameRegister(LIROperand opr) {
         throw Util.shouldNotReachHere();
     }
 
@@ -152,7 +152,7 @@ public abstract class LIROperand {
         return out.toString();
     }
 
-    private boolean isPointer() {
+    public boolean isPointer() {
         // TODO to be removed
         return !(this instanceof LIRLocation);
     }
@@ -381,5 +381,16 @@ public abstract class LIROperand {
     public int asJint() {
         // TODO Auto-generated method stub
         return asInt();
+    }
+
+    public BasicType typeRegister() {
+        assert this.isRegister();
+        return type();
+    }
+
+    public void assignPhysicalRegister(LIROperand colorLirOpr) {
+        // TODO Auto-generated method stub
+        // Assign a physical register from the given LIROperand
+
     }
 }

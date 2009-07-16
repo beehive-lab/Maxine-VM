@@ -1,28 +1,26 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc. All rights reserved.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product that is
+ * described in this document. In particular, and without limitation, these intellectual property rights may include one
+ * or more of the U.S. patents listed at http://www.sun.com/patents and one or more additional patents or pending patent
+ * applications in the U.S. and in other countries.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun Microsystems, Inc. standard
+ * license agreement and applicable provisions of the FAR and its supplements.
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or registered
+ * trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks are used under license and
+ * are trademarks or registered trademarks of SPARC International, Inc. in the U.S. and other countries.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open Company, Ltd.
  */
 package com.sun.c1x.lir;
 
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.alloc.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
@@ -639,10 +637,11 @@ public class LIRList {
         TTY.println("LIR:");
         int i;
         for (i = 0; i < blocks.size(); i++) {
-          BlockBegin bb = blocks.get(i);
-          printBlock(bb);
-          TTY.print("IdInstruction_"); TTY.cr();
-          bb.lir().printInstructions();
+            BlockBegin bb = blocks.get(i);
+            printBlock(bb);
+            TTY.print("IdInstruction_");
+            TTY.cr();
+            bb.lir().printInstructions();
         }
     }
 
@@ -652,5 +651,35 @@ public class LIRList {
             TTY.println();
         }
         TTY.cr();
+    }
+
+    public void append(LIRInsertionBuffer buffer) {
+        assert this == buffer.lirList() : "wrong lir list";
+        int n = operations.size();
+
+        if (buffer.numberOfOps() > 0) {
+            // increase size of instructions list
+            for (int i = 0; i < buffer.numberOfOps(); i++) {
+                operations.add(null);
+            }
+            // insert ops from buffer into instructions list
+            int opIndex = buffer.numberOfOps() - 1;
+            int ipIndex = buffer.numberOfInsertionPoints() - 1;
+            int fromIndex = n - 1;
+            int toIndex = operations.size() - 1;
+            for (; ipIndex >= 0; ipIndex--) {
+                int index = buffer.indexAt(ipIndex);
+                // make room after insertion point
+                while (index < fromIndex) {
+                    operations.set(toIndex--, operations.get(fromIndex--));
+                }
+                // insert ops from buffer
+                for (int i = buffer.countAt(ipIndex); i > 0; i--) {
+                    operations.set(toIndex--, buffer.opAt(opIndex--));
+                }
+            }
+        }
+
+        buffer.finish();
     }
 }

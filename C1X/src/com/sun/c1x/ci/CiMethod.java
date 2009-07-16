@@ -188,4 +188,6 @@ public interface CiMethod {
     List<CiExceptionHandler> exceptionHandlers();
 
     int javaCodeAtBci(int bci);
+
+    int argSize();
 }

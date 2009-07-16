@@ -24,6 +24,7 @@ package com.sun.c1x;
 import java.io.*;
 import java.util.*;
 
+import com.sun.c1x.alloc.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.ci.*;
@@ -392,6 +393,9 @@ public class C1XCompilation {
         frameMap = target.backend.newFrameMap(method, numberOfLocks(), maxStack());
         final LIRGenerator lirGenerator = target.backend.newLIRGenerator(this);
         hir.iterateLinearScanOrder(lirGenerator);
+
+        final RegisterAllocator registerAllocator = new LinearScan(this, hir, lirGenerator, frameMap());
+        registerAllocator.allocate();
     }
 
     private void emitCode() {
@@ -425,5 +429,15 @@ public class C1XCompilation {
         }
 
         return cfgPrinter;
+    }
+
+    public void setHasFpuCode(boolean localHasFpuRegisters) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public boolean needsDebugInformation() {
+        // TODO Auto-generated method stub
+        return false;
     }
 }

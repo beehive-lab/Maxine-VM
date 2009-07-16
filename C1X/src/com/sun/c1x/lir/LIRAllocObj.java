@@ -32,13 +32,13 @@ import com.sun.c1x.util.*;
  */
 public class LIRAllocObj extends LIROp1 {
 
-    private LIROperand tmp1;
-    private LIROperand tmp2;
-    private LIROperand tmp3;
-    private LIROperand tmp4;
+    LIROperand tmp1;
+    LIROperand tmp2;
+    LIROperand tmp3;
+    LIROperand tmp4;
     private int     hdrSize;
     private int     objSize;
-    private CodeStub stub;
+    CodeStub stub;
     private boolean initCheck;
 
 

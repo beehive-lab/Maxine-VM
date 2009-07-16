@@ -182,4 +182,13 @@ public class IR {
         return true;
     }
 
+    public int numLoops() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public BlockBegin start() {
+        return startBlock;
+    }
+
 }

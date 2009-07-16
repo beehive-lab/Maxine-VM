@@ -25,6 +25,7 @@ import static com.sun.c1x.ir.Instruction.*;
 import java.io.*;
 import java.util.*;
 
+import com.sun.c1x.alloc.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
@@ -347,5 +348,18 @@ public class CFGPrinter {
             }
         });
         end("cfg");
+    }
+
+    public void printIntervals(List<Interval> intervals, String name) {
+        begin("intervals");
+        out.print(String.format("name \"%s\"", name));
+
+        for (int i = 0; i < intervals.size(); i++) {
+          if (intervals.get(i) != null) {
+            intervals.get(i).print(out);
+          }
+        }
+
+        end("intervals");
     }
 }

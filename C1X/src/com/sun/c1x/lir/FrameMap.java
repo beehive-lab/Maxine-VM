@@ -98,4 +98,19 @@ public class FrameMap {
         // TODO Auto-generated method stub
         return 0;
     }
+
+    public int argcount() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public Register[] callerSavedRegisters() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public boolean finalizeFrame(int maxSpills) {
+        // TODO Auto-generated method stub
+        return false;
+    }
 }
