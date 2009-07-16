@@ -22,7 +22,6 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.util.InstructionVisitor;
 import com.sun.c1x.util.InstructionClosure;
-import com.sun.c1x.util.Util;
 import com.sun.c1x.bytecode.Bytecodes;
 import com.sun.c1x.value.ValueStack;
 
