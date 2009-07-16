@@ -124,7 +124,7 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleStaticLongFieldAccess InspectableHeapInfo_collectionEpoch = new TeleStaticLongFieldAccess(InspectableHeapInfo.class, "collectionEpoch");
     public final TeleStaticReferenceFieldAccess InspectableHeapInfo_memoryRegions = new TeleStaticReferenceFieldAccess(InspectableHeapInfo.class, "memoryRegions", MemoryRegion[].class);
     public final TeleStaticLongFieldAccess InspectableHeapInfo_rootEpoch = new TeleStaticLongFieldAccess(InspectableHeapInfo.class, "rootEpoch");
-    public final TeleStaticReferenceFieldAccess InspectableHeapInfo_roots = new TeleStaticReferenceFieldAccess(InspectableHeapInfo.class, "roots", Object[].class);
+    public final TeleStaticWordFieldAccess InspectableHeapInfo_roots = new TeleStaticWordFieldAccess(InspectableHeapInfo.class, "roots");
     public final TeleInstanceReferenceFieldAccess JitTargetMethod_bytecodeInfos = new TeleInstanceReferenceFieldAccess(JitTargetMethod.class, "bytecodeInfos", BytecodeInfo[].class);
     public final TeleInstanceReferenceFieldAccess JitTargetMethod_bytecodeToTargetCodePositionMap = new TeleInstanceReferenceFieldAccess(JitTargetMethod.class, "bytecodeToTargetCodePositionMap", int[].class);
     public final TeleInstanceCharFieldAccess Kind_character = new TeleInstanceCharFieldAccess(Kind.class, "character");
