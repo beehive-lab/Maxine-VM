@@ -47,7 +47,7 @@ public class VerifyActionImpl implements Verify {
     }
 
     public void checkCellTag(Pointer cell) {
-        if (VMConfiguration.hostOrTarget().debugging()) {
+        if (MaxineVM.isDebug()) {
             if (!DebugHeap.isValidCellTag(cell.getWord(-1))) {
                 Log.print("Error: ");
                 Log.println(cell);
@@ -61,7 +61,7 @@ public class VerifyActionImpl implements Verify {
     }
 
     public void checkGripTag(Grip grip) {
-        if (VMConfiguration.hostOrTarget().debugging()) {
+        if (MaxineVM.isDebug()) {
             if (!grip.isZero()) {
                 checkCellTag(Layout.originToCell(grip.toOrigin()));
             }
@@ -92,7 +92,7 @@ public class VerifyActionImpl implements Verify {
 
         final Pointer origin = grip.toOrigin();
         checkGripTag(grip);
-        if (!(from.contains(origin) || Heap.bootHeapRegion().contains(origin) || Code.contains(origin))) {
+        if (!(from.contains(origin) || Heap.bootHeapRegion.contains(origin) || Code.contains(origin))) {
             Log.print("Invalid grip: ");
             Log.print(origin);
             FatalError.unexpected("invalid grip");

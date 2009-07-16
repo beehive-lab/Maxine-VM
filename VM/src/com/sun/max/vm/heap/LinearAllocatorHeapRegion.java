@@ -95,7 +95,7 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
     public void visitCells(CellVisitor cellVisitor) {
         Pointer cell = start().asPointer();
         while (cell.lessThan(mark)) {
-            if (VMConfiguration.hostOrTarget().debugging()) {
+            if (MaxineVM.isDebug()) {
                 cell = cell.plusWords(1);
                 if (!DebugHeap.isValidCellTag(cell.getWord(-1))) {
                     Log.print("CELL VISITOR ERROR: missing object tag @ ");

@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele;
 
+import java.util.*;
+
 import com.sun.max.collect.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
@@ -111,8 +113,18 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
                 if (teleHeapRegions.length != heapRegionReferences.length) {
                     teleHeapRegions = new TeleRuntimeMemoryRegion[heapRegionReferences.length];
                 }
+                int next = 0;
                 for (int i = 0; i < heapRegionReferences.length; i++) {
-                    teleHeapRegions[i] = (TeleRuntimeMemoryRegion) teleVM().makeTeleObject(heapRegionReferences[i]);
+                    final TeleRuntimeMemoryRegion region = (TeleRuntimeMemoryRegion) teleVM().makeTeleObject(heapRegionReferences[i]);
+                    if (region != null) {
+                        teleHeapRegions[next++] = region;
+                    } else {
+                        // This can happen when inspecting VM startup
+                    }
+                }
+                // Remove any null memory regions from the list.
+                if (next != teleHeapRegions.length) {
+                    teleHeapRegions = Arrays.copyOf(teleHeapRegions, next);
                 }
             }
             updatingHeapMemoryRegions = false;

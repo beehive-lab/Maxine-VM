@@ -55,8 +55,14 @@ public abstract class AddressInputDialog extends InspectorDialog {
         }
     }
 
-    public boolean isValidInput(Address address) {
-        return true;
+    /**
+     * Validates a given address.
+     *
+     * @param address an address to validate
+     * @return {@code null} is {@code address} is valid, an error message if not
+     */
+    public String validateInput(Address address) {
+        return null;
     }
 
     public AddressInputDialog(Inspection inspection, Address initialAddress) {
@@ -80,9 +86,12 @@ public abstract class AddressInputDialog extends InspectorDialog {
         addressInputField = new AddressInputField.Hex(inspection, initialAddress) {
             @Override
             public void update(Address address) {
-                if (isValidInput(address)) {
+                final String errorMessage = validateInput(address);
+                if (errorMessage == null) {
                     dispose();
                     entered(address);
+                } else {
+                    JOptionPane.showMessageDialog(dialogPanel, errorMessage, "Invalid Address", JOptionPane.ERROR_MESSAGE);
                 }
             }
         };

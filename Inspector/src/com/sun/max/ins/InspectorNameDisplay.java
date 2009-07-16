@@ -459,20 +459,25 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      */
     public String referenceToolTipText(TeleObject teleObject) {
         if (teleObject != null) {
-            Class teleObjectClass = teleObject.getClass();
-            while (teleObjectClass != null) {
-                final ReferenceRenderer objectReferenceRenderer = referenceRenderers.get(teleObjectClass);
-                if (objectReferenceRenderer != null) {
-                    try {
-                        return objectReferenceRenderer.referenceToolTipText(teleObject);
-                    } catch (RuntimeException e) {
-                        e.printStackTrace();
-                        return "(Unexpected " + e.getClass().getName() + " when getting tooltip)";
+            try {
+                Class teleObjectClass = teleObject.getClass();
+                while (teleObjectClass != null) {
+                    final ReferenceRenderer objectReferenceRenderer = referenceRenderers.get(teleObjectClass);
+                    if (objectReferenceRenderer != null) {
+                        try {
+                            return objectReferenceRenderer.referenceToolTipText(teleObject);
+                        } catch (RuntimeException e) {
+                            e.printStackTrace();
+                            return "(Unexpected " + e.getClass().getName() + " when getting tooltip)";
+                        }
                     }
+                    teleObjectClass = teleObjectClass.getSuperclass();
                 }
-                teleObjectClass = teleObjectClass.getSuperclass();
+                ProgramError.unexpected("InspectorNameDisplay failed to find renderer for teleObject = " + teleObject);
+            } catch (Throwable e) {
+                e.printStackTrace(Trace.stream());
+                return "<html><b><font color=\"red\">" + e + "</font></b><br>See log for complete stack trace.";
             }
-            ProgramError.unexpected("InspectorNameDisplay failed to find renderer for teleObject = " + teleObject);
         }
         return null;
     }

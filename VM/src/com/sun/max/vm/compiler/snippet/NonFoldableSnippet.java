@@ -74,7 +74,7 @@ public abstract class NonFoldableSnippet extends Snippet {
     @INLINE
     static Object createArray(ClassActor arrayClassActor, int length) {
         if (length < 0) {
-            throw new NegativeArraySizeException();
+            Throw.negativeArraySizeException(length);
         }
         if (MaxineVM.isPrototyping()) {
             return Array.newInstance(arrayClassActor.componentClassActor().toJava(), length);

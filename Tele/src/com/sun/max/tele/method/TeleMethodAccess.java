@@ -83,14 +83,10 @@ public abstract class TeleMethodAccess extends AbstractTeleVMHolder {
      *
      * @param arguments
      * @return return value from the method
+     * @throws TeleInterpreterException if an uncaught exception occurs during execution of the method
      */
-    public Value interpret(Value... arguments) {
-        try {
-            ProgramError.check(methodActor instanceof ClassMethodActor, "cannot interpret interface method");
-            return TeleInterpreter.execute(teleVM(), (ClassMethodActor) methodActor, arguments);
-        } catch (TeleInterpreterException teleInterpreterException) {
-            ProgramError.unexpected("method interpretation failed", teleInterpreterException);
-            return null;
-        }
+    public Value interpret(Value... arguments) throws TeleInterpreterException {
+        ProgramError.check(methodActor instanceof ClassMethodActor, "cannot interpret interface method");
+        return TeleInterpreter.execute(teleVM(), (ClassMethodActor) methodActor, arguments);
     }
 }

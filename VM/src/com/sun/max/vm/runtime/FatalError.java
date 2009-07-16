@@ -25,13 +25,15 @@ import com.sun.max.program.*;
 import com.sun.max.program.ProgramError.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.thread.*;
 
 /**
  * A collection of static methods for reporting errors indicating some fatal condition
  * that should cause a hard exit of the VM. All errors reported by use of {@link ProgramError}
  * are rerouted to use this class.
+ *
+ * None of the methods in this class perform any synchronization or heap allocation
+ * and they should never cause recursive error reporting.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
@@ -64,6 +66,8 @@ public final class FatalError extends Error {
      *
      * This method never returns normally.
      *
+     * This method does not perform any synchronization or heap allocation.
+     *
      * @param message a message describing the error condition. This value may be {@code null}.
      * @see #unexpected(String, Address, Throwable)
      * @return never
@@ -76,6 +80,8 @@ public final class FatalError extends Error {
      * Reports the occurrence of some error condition.
      *
      * This method never returns normally.
+     *
+     * This method does not perform any synchronization or heap allocation.
      *
      * @param message a message describing the error condition. This value may be {@code null}.
      * @param throwable an exception given more detail on the cause of the error condition. This value may be {@code null}.
@@ -90,6 +96,8 @@ public final class FatalError extends Error {
      * Reports the occurrence of a trap that occurred while executing native code.
      *
      * This method never returns normally.
+     *
+     * This method does not perform any synchronization or heap allocation.
      *
      * @param message a message describing the trap. This value may be {@code null}.
      * @param nativeTrapAddress the address reported by the OS at which the trap occurred
@@ -106,6 +114,8 @@ public final class FatalError extends Error {
      *
      * This method never returns normally.
      *
+     * This method does not perform any synchronization or heap allocation.
+     *
      * @param message a message describing the trap. This value may be {@code null}.
      * @param throwable an exception given more detail on the cause of the error condition. This value may be {@code null}.
      * @param nativeTrapAddress if this value is not equal to {@link Address#zero()}, then it is the address reported by
@@ -117,6 +127,7 @@ public final class FatalError extends Error {
             throw new FatalError(message, throwable);
         }
 
+        Safepoint.disable();
         breakpoint();
 
         if (ExitingGuard.guard) {
@@ -128,7 +139,6 @@ public final class FatalError extends Error {
         final boolean lockDisabledSafepoints = Log.lock();
         Log.printVmThread(VmThread.current(), false);
         Log.print(": FATAL VM ERROR: ");
-        Heap.setTraceAllocation(false);
         Throw.stackDump(message, VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer());
         if (throwable != null) {
             Log.print("Caused by: ");
@@ -173,6 +183,8 @@ public final class FatalError extends Error {
      * Reports that an unimplemented piece of VM functionality was encountered.
      *
      * This method never returns normally.
+     *
+     * This method does not perform any synchronization or heap allocation.
      *
      * @see #unexpected(String, Address, Throwable)
      * @return never

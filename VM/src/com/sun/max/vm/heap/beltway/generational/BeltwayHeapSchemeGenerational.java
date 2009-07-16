@@ -64,9 +64,9 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
             if (Heap.verbose()) {
                 beltManager.printBeltsInfo();
             }
-            final Size coveredRegionSize = beltManager.getEnd().minus(Heap.bootHeapRegion().start()).asSize();
-            cardRegion.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize));
-            sideTable.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize).plus(cardRegion.cardTableSize()).roundedUpBy(
+            final Size coveredRegionSize = beltManager.getEnd().minus(Heap.bootHeapRegion.start()).asSize();
+            cardRegion.initialize(Heap.bootHeapRegion.start(), coveredRegionSize, Heap.bootHeapRegion.start().plus(coveredRegionSize));
+            sideTable.initialize(Heap.bootHeapRegion.start(), coveredRegionSize, Heap.bootHeapRegion.start().plus(coveredRegionSize).plus(cardRegion.cardTableSize()).roundedUpBy(
                             Platform.target().pageSize));
             BeltwayCardRegion.switchToRegularCardTable(cardRegion.cardTableBase().asPointer());
             InspectableHeapInfo.registerMemoryRegions(getEdenSpace(), getToSpace(), getMatureSpace());
@@ -160,7 +160,7 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
 
     @Override
     public boolean contains(Address address) {
-        return address.greaterEqual(Heap.bootHeapRegion().start()) & address.lessEqual(getMatureSpace().end());
+        return address.greaterEqual(Heap.bootHeapRegion.start()) & address.lessEqual(getMatureSpace().end());
     }
 
     @INLINE(override = true)
