@@ -223,7 +223,8 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     /**
      * Holds the biased card table address.
      */
-    public static final VmThreadLocal ADJUSTED_CARDTABLE_BASE = new VmThreadLocal("ADJUSTED_CARDTABLE_BASE", Kind.WORD);
+    public static final VmThreadLocal ADJUSTED_CARDTABLE_BASE
+        = new VmThreadLocal("ADJUSTED_CARDTABLE_BASE", Kind.WORD, "Beltway: ->biased card table");
 
     public void scanBootHeap(RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         cellVisitor.from = from;
