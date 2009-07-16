@@ -830,7 +830,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                      * we set 'inSafetyZone' to false.
                      */
                     if (inSafetyZone) {
-                        FatalError.crash("out of memory again after throwing OutOfMemoryError");
+                        FatalError.unexpected("Out of memory again after throwing OutOfMemoryError");
                     } else {
                         // Use the safety region to do the throw
                         top = top.plus(safetyZoneSize);
