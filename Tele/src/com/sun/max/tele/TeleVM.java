@@ -1173,6 +1173,11 @@ public abstract class TeleVM implements MaxVM {
         return teleProcess.watchpointFactory().setHeaderWatchpoint(description, teleObject, headerField, after, read, write, exec);
     }
 
+    public final MaxWatchpoint  setVmThreadLocalWatchpoint(String description, TeleThreadLocalValues teleThreadLocalValues, int index, boolean after, boolean read, boolean write, boolean exec)
+        throws TooManyWatchpointsException, DuplicateWatchpointException {
+        return teleProcess.watchpointFactory().setVmThreadLocalWatchpoint(description, teleThreadLocalValues, index, after, read, write, exec);
+    }
+
     /*
      * (non-Javadoc)
      * @see com.sun.max.tele.MaxVM#triggeredWatchpointAddress()
