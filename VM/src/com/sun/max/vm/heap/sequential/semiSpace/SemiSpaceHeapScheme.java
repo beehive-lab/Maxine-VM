@@ -924,7 +924,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      */
     static class ResetTLAB implements Pointer.Procedure {
 
-        @Override
         public void run(Pointer vmThreadLocals) {
             final Pointer enabledVmThreadLocals = vmThreadLocals.getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
             if (Heap.traceAllocation() || Heap.traceGC()) {
