@@ -24,6 +24,8 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.util.Arrays;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -36,7 +38,6 @@ import com.sun.max.program.option.gui.*;
  * @author Ben L. Titzer
  */
 public class OptionSet {
-
     /**
      * The {@code Syntax} enum allows different options to be parsed differently,
      * depending on their usage.
@@ -109,21 +110,23 @@ public class OptionSet {
      * tool. For each option in this set that has been explicitly set this method will prepend an appropriate option
      * string of appropriate syntactic form (e.g. "-name=value") to the array of arguments passed.
      *
-     * @param args
-     *            the arguments array to which to prepend the option arguments
      * @return a new array of program arguments that includes these options
      */
     public String[] asArguments() {
-        final String[] newArgs = Arrays.copyOf(arguments, arguments.length + optionValues.size());
+        String[] newArgs = Arrays.copyOf(arguments, arguments.length + optionValues.size());
         int i = 0;
         for (String name : optionValues.keySet()) {
             final String value = optionValues.get(name);
-            if (optionSyntax.get(name) == Syntax.REQUIRES_BLANK) {
+            final Syntax syntax = optionSyntax.get(name);
+            if (syntax == Syntax.REQUIRES_BLANK) {
                 newArgs[i++] = "-" + name;
+            } else if (syntax == Syntax.CONSUMES_NEXT) {
+                newArgs = Arrays.copyOf(newArgs, newArgs.length + 1);
+                newArgs[i++] = "-" + name;
+                newArgs[i++] = value;
             } else {
                 newArgs[i++] = "-" + name + "=" + value;
             }
-            // TODO: deal with options that consume next!
         }
         return newArgs;
     }
@@ -132,6 +135,7 @@ public class OptionSet {
      * Gets an option set derived from this option set that contains all the unrecognized options that have been loaded
      * or parsed into this option set. The returned option set also includes a copy of the
      * {@linkplain #getArguments() non-option arguments} from this option set.
+     * @return a new option set encapsulating all the arguments and options
      */
     public OptionSet getArgumentsAndUnrecognizedOptions() {
         final OptionSet argumentsAndUnrecognizedOptions = new OptionSet(true);
@@ -148,6 +152,8 @@ public class OptionSet {
      * Handles an Option.Error raised while loading or parsing values into this option set.
      * <p>
      * This default implementation is to print a usage message and the call {@link System#exit(int)}.
+     * @param error the error that occurred
+     * @param optionName the name of the option being parsed
      */
     protected void handleErrorDuringParseOrLoad(Option.Error error, String optionName) {
         System.out.println("Error parsing option -" + optionName + ": " + error.getMessage());
@@ -176,7 +182,7 @@ public class OptionSet {
                 final Syntax syntax = optionSyntax.get(optionName);
                 // check the syntax of this option
                 try {
-                    checkSyntax(optionName, syntax, value, i, args);
+                    checkSyntax(optionName, syntax, value);
                     if (syntax == Syntax.CONSUMES_NEXT) {
                         value = args[++i];
                     }
@@ -215,6 +221,7 @@ public class OptionSet {
 
     /**
      * Determines if this option set allows parsing or loading of unrecognized options.
+     * @return {@code true} if this option set allows unrecognized options
      */
     public boolean allowsUnrecognizedOptions() {
         return allowUnrecognizedOptions;
@@ -247,7 +254,6 @@ public class OptionSet {
      * into the systems properties
      */
     public void storeSystemProperties(String prefix) {
-        // TODO: store all options, or only explicitly set ones?
         for (Map.Entry<String, String> entry : optionValues.entrySet()) {
             System.setProperty(prefix + entry.getKey(), entry.getValue());
         }
@@ -306,6 +312,8 @@ public class OptionSet {
      * @return this option set
      * @throws java.io.IOException
      *             if there is a problem opening or reading the file
+     * @throws Option.Error
+     *             if there is a problem parsing an option
      */
     public OptionSet loadFile(String fname, boolean loadall) throws IOException, Option.Error {
         final Properties defs = new Properties();
@@ -337,7 +345,7 @@ public class OptionSet {
         return this;
     }
 
-    protected void checkSyntax(String optname, Syntax syntax, String value, int cntr, String[] args) {
+    protected void checkSyntax(String optname, Syntax syntax, String value) {
         if (syntax == Syntax.REQUIRES_BLANK && value != null) {
             throw new Option.Error("syntax error: \"-" + optname + "\" required");
         }
@@ -365,6 +373,7 @@ public class OptionSet {
 
     /**
      * Adds the options of an {@link OptionSet} to this set.
+     * @param optionSet the set of options to add
      */
     public void addOptions(OptionSet optionSet) {
         for (Option<?> option : optionSet.getOptions()) {
@@ -395,7 +404,7 @@ public class OptionSet {
         final String name = option.getName();
         final Option existingOption = optionMap.put(name, option);
         if (existingOption != null) {
-            ProgramError.unexpected("Cannot register more than one option under the same name: " + option.getName());
+            throw ProgramError.unexpected("Cannot register more than one option under the same name: " + option.getName());
         }
         optionSyntax.put(name, syntax);
         return option;
@@ -417,7 +426,7 @@ public class OptionSet {
      * pair will simply be remembered.
      *
      * @param name the name of the option
-     * @param val  the new value of the option as a string
+     * @param value  the new value of the option as a string
      * @throws Option.Error if {@code name} denotes an unrecognized option and this
      */
     public void setValue(String name, String value) {
@@ -501,8 +510,11 @@ public class OptionSet {
             } else {
                 stream.println();
             }
-            stream.print(Strings.formatParagraphs(opt.getHelp(), 8, 0, width));
-            stream.println();
+            final String help = opt.getHelp();
+            if (help.length() > 0) {
+                stream.print(Strings.formatParagraphs(help, 8, 0, width));
+                stream.println();
+            }
             stream.println();
         }
     }
@@ -517,6 +529,72 @@ public class OptionSet {
         return optionSyntax.get(option.getName()).getUsage(option);
     }
 
+    /**
+     * This method adds all public static fields with appropriate types to the
+     * option set with the specified prefix.
+     * @param javaClass the java class containing the fields
+     * @param prefix the prefix to add to the options
+     */
+    public void addFieldOptions(Class<?> javaClass, String prefix) {
+        for (final Field field : javaClass.getDeclaredFields()) {
+            if (Modifier.isStatic(field.getModifiers())) {
+                field.setAccessible(true);
+                OptionSettings settings = field.getAnnotation(OptionSettings.class);
+                String help;
+                String name;
+                if (settings != null) {
+                    help = settings.help();
+                    name = settings.name().isEmpty() ? field.getName().replace('_', '-') : settings.name();
+                } else {
+                    help = "";
+                    name = field.getName().replace('_', '-');
+                }
+                addFieldOption(prefix + name, field, help);
+            }
+        }
+    }
+
+    /**
+     * Adds a new option whose value is stored in the specified reflection field.
+     * @param name the name of the option
+     * @param field the field to store the value
+     * @param help the help text for the option
+     * @return a new option that will modify the field when parsed
+     */
+    public Option<?> addFieldOption(String name, Field field, String help) {
+        final Class<?> fieldType = field.getType();
+        final Object defaultValue;
+        try {
+            defaultValue = field.get(null);
+        } catch (IllegalAccessException e) {
+            return null;
+        }
+        if (fieldType == boolean.class) {
+            return addOption(new FieldOption<Boolean>(name, field, (Boolean) defaultValue, OptionTypes.BOOLEAN_TYPE, help));
+        } else if (fieldType == int.class) {
+            return addOption(new FieldOption<Integer>(name, field, (Integer) defaultValue, OptionTypes.INT_TYPE, help));
+        } else if (fieldType == float.class) {
+            return addOption(new FieldOption<Float>(name, field, (Float) defaultValue, OptionTypes.FLOAT_TYPE, help));
+        } else if (fieldType == long.class) {
+            return addOption(new FieldOption<Long>(name, field, (Long) defaultValue, OptionTypes.LONG_TYPE, help));
+        } else if (fieldType == double.class) {
+            return addOption(new FieldOption<Double>(name, field, (Double) defaultValue, OptionTypes.DOUBLE_TYPE, help));
+        } else if (fieldType == String.class) {
+            return addOption(new FieldOption<String>(name, field, (String) defaultValue, OptionTypes.STRING_TYPE, help));
+        } else if (fieldType == File.class) {
+            return addOption(new FieldOption<File>(name, field, (File) defaultValue, OptionTypes.FILE_TYPE, help));
+        } else if (fieldType.isEnum()) {
+            final Class<? extends Enum> enumClass = StaticLoophole.cast(fieldType);
+            return addOption(makeEnumOptionType(name, field, defaultValue, enumClass, help));
+        }
+        return null;
+    }
+
+    private <T extends Enum<T>> FieldOption<T> makeEnumOptionType(String name, Field field, Object defaultValue, Class<T> enumClass, String help) {
+        final OptionTypes.EnumType<T> optionType = new OptionTypes.EnumType<T>(enumClass);
+        final T defaultV = StaticLoophole.cast(defaultValue);
+        return new FieldOption<T>(name, field, defaultV, optionType, help);
+    }
 
     public Option<String> newStringOption(String name, String defaultValue, String help) {
         return addOption(new Option<String>(name, defaultValue, OptionTypes.STRING_TYPE, help));
@@ -546,9 +624,7 @@ public class OptionSet {
         List<String> list = null;
         if (defaultValue != null) {
             list = new ArrayList<String>(defaultValue.length);
-            for (String s : defaultValue) {
-                list.add(s);
-            }
+            list.addAll(Arrays.asList(defaultValue));
         }
         return addOption(new Option<List<String>>(name, list, OptionTypes.COMMA_SEPARATED_STRING_LIST_TYPE, help));
     }
@@ -575,25 +651,17 @@ public class OptionSet {
         return addOption(new Option<URL>(name, defaultValue, OptionTypes.URL_TYPE, help));
     }
 
-    /**
-     * @author Thomas Wuerthinger
-     * @return An option whose value is an instance of the specified class.
-     */
     public <Instance_Type> Option<Instance_Type> newInstanceOption(String name, Class<Instance_Type> klass, Instance_Type defaultValue, String help) {
         return addOption(new Option<Instance_Type>(name, defaultValue, OptionTypes.createInstanceOptionType(klass), help));
     }
 
-    /**
-     * @author Thomas Wuerthinger
-     * @return An option whose values are instances of the specified classes.
-     */
     public <Instance_Type> Option<List<Instance_Type>> newListInstanceOption(String name, String defaultValue, Class<Instance_Type> klass, char separator, String help) {
         final OptionTypes.ListType<Instance_Type> type = OptionTypes.createInstanceListOptionType(klass, separator);
         return addOption(new Option<List<Instance_Type>>(name, (defaultValue == null) ? null : type.parseValue(defaultValue), type, help));
     }
 
     public Option<Boolean> newBooleanOption(String name, Boolean defaultValue, String help) {
-        if (defaultValue != null && defaultValue == false) {
+        if (defaultValue != null && !defaultValue) {
             return addOption(new Option<Boolean>(name, defaultValue, OptionTypes.BOOLEAN_TYPE, help), Syntax.EQUALS_OR_BLANK);
         }
         return addOption(new Option<Boolean>(name, defaultValue, OptionTypes.BOOLEAN_TYPE, help));
@@ -604,7 +672,7 @@ public class OptionSet {
     }
 
     public <Object_Type> Option<Object_Type> newOption(String name, Object_Type defaultValue, Option.Type<Object_Type> type, Syntax syntax, String help) {
-        return addOption(new Option<Object_Type>(name, defaultValue, type, help));
+        return addOption(new Option<Object_Type>(name, defaultValue, type, help), syntax);
     }
 
     public <Enum_Type extends Enum<Enum_Type>> Option<Enum_Type> newEnumOption(String name, Enum_Type defaultValue, Class<Enum_Type> enumClass, String help) {
@@ -632,5 +700,12 @@ public class OptionSet {
 
     public Option<File> newConfigOption(String name, File defaultFile, String help) {
         return addOption(new Option<File>(name, defaultFile, new OptionTypes.ConfigFile(this), help));
+    }
+
+    public static String[] parseArgumentsForClass(String[] args, Class javaClass) {
+        OptionSet options = new OptionSet(false);
+        options.addFieldOptions(javaClass, "");
+        options.parseArguments(args);
+        return options.getArguments();
     }
 }

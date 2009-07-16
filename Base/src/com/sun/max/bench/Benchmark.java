@@ -34,30 +34,29 @@ import com.sun.max.program.option.*;
  */
 public class Benchmark {
 
-    private static final OptionSet optionSet = new OptionSet(false);
+    static class Options {
+        @OptionSettings(help = "the number of runs to execute")
+        private static int runs = 1;
 
-    private static final Option<Integer> runCount = optionSet.newIntegerOption("runs", 1,
-                    "This option specifies the number of times to run the benchmark.");
-    private static final Option<Integer> verbose = optionSet.newIntegerOption("verbose", 0,
-                    "Specifies the verbosity level of the benchmarking harness.");
-    private static final Option<Boolean> discardWarmupRun = optionSet.newBooleanOption("discard-warmup", false,
-                    "This option specifies whether the first run (the warmup run) will be discarded.");
-    private static final Option<Boolean> discardMinAndMax = optionSet.newBooleanOption("discard-min-max", false,
-                    "This option specifies whether the framework will discard the minimum and maximum runs.");
-    private static final Option<Boolean> simpleName = optionSet.newBooleanOption("simple-name", true,
-                    "This option causes the simple name of each benchmark class to be reported, as opposed "
-                    + "to the fully qualified Java class name.");
-    private static final Option<Boolean> globalMetrics = optionSet.newBooleanOption("global-metrics", false,
-                    "This option enables reporting of all global metrics gathered by the system during the benchmarks.");
+        @OptionSettings(help = "the verbosity level")
+        private static int verbose = 0;
+
+        @OptionSettings(help = "discard the first (warmup) run")
+        private static boolean discard_warmup = false;
+
+        @OptionSettings(help = "discard the minimum and maximum runs")
+        private static boolean discard_minmax = false;
+
+        @OptionSettings(help = "print out the simple name of benchmark classes")
+        private static boolean simple_name = true;
+    }
 
     public static void main(String[] a) {
-        String[] args = a;
+        String[] args = OptionSet.parseArgumentsForClass(a, Benchmark.Options.class);
         long loadTime = System.nanoTime();
-        optionSet.parseArguments(args);
-        args = optionSet.getArguments();
         final Runnable[] benchmarks = getBenchmarks(args);
         loadTime = System.nanoTime() - loadTime;
-        runBenchmarks(benchmarks, runCount.getValue());
+        runBenchmarks(benchmarks, Options.runs);
         Metrics.report(System.out, "Loadtime", "0", "benchmarks", Strings.fixedDouble(loadTime / 1000000000.0d, 9), "seconds");
     }
 
@@ -72,8 +71,8 @@ public class Benchmark {
     private static void report(Runnable benchmark, long[] nanos) {
         int minIndex = -1;
         int maxIndex = -1;
-        final int start = discardWarmupRun.getValue() ? 1 : 0;
-        if (discardMinAndMax.getValue()) {
+        final int start = Options.discard_warmup ? 1 : 0;
+        if (Options.discard_minmax) {
             for (int i = start; i < nanos.length; i++) {
                 if (minIndex < 0 || nanos[i] < nanos[minIndex]) {
                     minIndex = i;
@@ -99,12 +98,6 @@ public class Benchmark {
         outputRun(benchmark, "average", total / (double) count, true);
     }
 
-    private static void printJustified(String s, int width) {
-        System.out.print(s);
-        final int diff = width - s.length();
-        System.out.print(Strings.space(diff));
-    }
-
     private static void outputRun(Runnable benchmark, String run, double nanos, boolean averaged) {
         final String benchName = getBenchmarkName(benchmark);
         final String runTime = averaged ? "Runtime" : "Runtime*";
@@ -112,7 +105,7 @@ public class Benchmark {
     }
 
     private static String getBenchmarkName(Runnable benchmark) {
-        String name = simpleName.getValue() ? benchmark.getClass().getSimpleName() : benchmark.getClass().getName();
+        String name = Options.simple_name ? benchmark.getClass().getSimpleName() : benchmark.getClass().getName();
         try {
             if (benchmark.getClass().getMethod("toString").getDeclaringClass() == benchmark.getClass()) {
                 // the class defines its own "toString()" method
@@ -131,7 +124,7 @@ public class Benchmark {
     private static long[] runBenchmark(Runnable runnable, int count) {
         final long[] runNanos = new long[count];
         for (int i = 0; i < count; i++) {
-            if (verbose.getValue() > 0) {
+            if (Options.verbose > 0) {
                 System.out.println("Running " + getBenchmarkName(runnable) + " (run " + i + ")...");
             }
             final long start = System.nanoTime();
