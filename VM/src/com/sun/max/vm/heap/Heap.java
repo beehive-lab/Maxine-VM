@@ -378,8 +378,6 @@ public final class Heap {
         return heapScheme().contains(address);
     }
 
-    private static boolean collecting;
-
     public static boolean collectGarbage(Size requestedFreeSpace) {
         if (verbose()) {
             final boolean lockDisabledSafepoints = Log.lock();
@@ -404,14 +402,12 @@ public final class Heap {
             Log.print(", free: ");
             Log.print(reportFreeSpace().toLong());
             Log.println("--");
-            Log.unlock(lockDisabledSafepoints);
-        }
-        if (verbose()) {
-            if (freedEnough == true) {
+            if (freedEnough) {
                 Log.println("--GC freed enough--");
             } else {
                 Log.println("--GC did not free enough--");
             }
+            Log.unlock(lockDisabledSafepoints);
         }
         return freedEnough;
     }

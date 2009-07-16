@@ -139,7 +139,7 @@ public class VmThread {
     private int id;
     private int parkState;
 
-    private  TLAB tlab = new TLAB();
+    private TLAB tlab = new TLAB();
 
     private Address guardPage = Address.zero();
 
