@@ -24,12 +24,17 @@ import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * Scans all GC roots in the VM sequentially.
+ * Scans all GC roots in the VM sequentially. The GC roots scanned by the {@link #run()}
+ * method of this object are the references on the stacks of all active mutator threads as well as
+ * any references {@linkplain MonitorScheme#scanReferences(PointerIndexVisitor) held}
+ * by the monitor scheme in use.
  *
  * @author Bernd Mathiske
+ * @author Doug Simon
  */
 public class SequentialHeapRootsScanner {
 
@@ -53,21 +58,15 @@ public class SequentialHeapRootsScanner {
         this.toSpace = toSpace;
     }
 
-    private final Pointer.Procedure vmThreadLocalsScanner = new Pointer.Procedure() {
+    final class VmThreadLocalsScanner implements Pointer.Procedure {
 
         public void run(Pointer vmThreadLocals) {
             VmThreadLocal.scanReferences(vmThreadLocals, pointerIndexVisitor);
         }
-    };
+    }
 
-    /**
-     * The run() method of the Sequential Heap Root Scanner performs two tasks. 1) For all ACTIVE threads in VMThreadMap
-     * (holds the active threads of the VM) execute the _vmThreadLocalsScanner.run() which scans all the roots objects. 2)
-     * Scans the references of the monitor scheme used. The run() method of the Sequential Heap Root Scanner performs
-     * two tasks. 1) For all ACTIVE threads in VMThreadMap (holds the active threads of the VM) execute the
-     * _vmThreadLocalsScanner.run() which scans all the roots objects. 2) Scans the references of the monitor scheme
-     * used.
-     */
+    private final VmThreadLocalsScanner vmThreadLocalsScanner = new VmThreadLocalsScanner();
+
     public void run() {
         VmThreadMap.ACTIVE.forAllVmThreadLocals(null, vmThreadLocalsScanner);
         VMConfiguration.hostOrTarget().monitorScheme().scanReferences(pointerIndexVisitor);

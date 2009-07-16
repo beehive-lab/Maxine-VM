@@ -38,7 +38,7 @@ public class ParallelCopyActionImpl implements Action {
 
     public Grip doAction(Grip origin, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         final Pointer fromOrigin = origin.toOrigin();
-        if (VMConfiguration.hostOrTarget().debugging()) {
+        if (MaxineVM.isDebug()) {
             if (!VMConfiguration.hostOrTarget().heapScheme().contains(fromOrigin)) {
                 Log.print("invalid grip: ");
                 Log.println(origin.toOrigin().asAddress());
@@ -56,7 +56,7 @@ public class ParallelCopyActionImpl implements Action {
             final Pointer fromCell = Layout.originToCell(fromOrigin);
             final Size size = Layout.size(fromOrigin);
             final Pointer toCell = ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).gcAllocate(to, size);
-            if (VMConfiguration.hostOrTarget().debugging()) {
+            if (MaxineVM.isDebug()) {
                 DebugHeap.writeCellTag(toCell);
             }
             Memory.copyBytes(fromCell, toCell, size);
