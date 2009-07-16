@@ -57,9 +57,9 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
             if (Heap.verbose()) {
                 beltManager.printBeltsInfo();
             }
-            final Size coveredRegionSize = beltManager.getEnd().minus(Heap.bootHeapRegion().start()).asSize();
-            cardRegion.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize));
-            sideTable.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize).plus(cardRegion.cardTableSize()).roundedUpBy(
+            final Size coveredRegionSize = beltManager.getEnd().minus(Heap.bootHeapRegion.start()).asSize();
+            cardRegion.initialize(Heap.bootHeapRegion.start(), coveredRegionSize, Heap.bootHeapRegion.start().plus(coveredRegionSize));
+            sideTable.initialize(Heap.bootHeapRegion.start(), coveredRegionSize, Heap.bootHeapRegion.start().plus(coveredRegionSize).plus(cardRegion.cardTableSize()).roundedUpBy(
                             Platform.target().pageSize));
             BeltwayCardRegion.switchToRegularCardTable(cardRegion.cardTableBase().asPointer());
             adjustedCardTableAddress = BeltwayCardRegion.adjustedCardTableBase(cardRegion.cardTableBase().asPointer());
@@ -150,7 +150,7 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
 
     @Override
     public boolean contains(Address address) {
-        return address.greaterEqual(Heap.bootHeapRegion().start()) && address.lessEqual(getNurserySpace().end());
+        return address.greaterEqual(Heap.bootHeapRegion.start()) && address.lessEqual(getNurserySpace().end());
     }
 
     public boolean checkOverlappingBelts(Belt from, Belt to) {

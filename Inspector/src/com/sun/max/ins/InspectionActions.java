@@ -1526,8 +1526,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             new AddressInputDialog(inspection(), maxVM().bootImageStart(), "View method code containing target code address...", "View Code") {
 
                 @Override
-                public boolean isValidInput(Address address) {
-                    return maxVM().makeTeleTargetMethod(address) != null;
+                public String validateInput(Address address) {
+                    if (maxVM().makeTeleTargetMethod(address) != null) {
+                        return null;
+                    }
+                    return "There is no method containing the address " + address.toHexString();
                 }
 
                 @Override
@@ -1565,8 +1568,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             new AddressInputDialog(inspection(), maxVM().bootImageStart(), "View runtime stub code containing target code address...", "View Code") {
 
                 @Override
-                public boolean isValidInput(Address address) {
-                    return maxVM().makeTeleRuntimeStub(address) != null;
+                public String validateInput(Address address) {
+                    if (maxVM().makeTeleRuntimeStub(address) != null) {
+                        return null;
+                    }
+                    return "There is no runtime stub containing the address " + address.toHexString();
                 }
 
                 @Override

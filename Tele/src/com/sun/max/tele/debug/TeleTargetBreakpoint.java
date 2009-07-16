@@ -24,8 +24,10 @@ import java.util.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.BreakpointCondition.*;
+import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
@@ -286,12 +288,16 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
         }
 
         private byte[] recoverOriginalCodeForBreakpoint(Address instructionPointer) {
-            final Value result = teleVM.methods().TargetBreakpoint_findOriginalCode.interpret(LongValue.from(instructionPointer.toLong()));
-            final Reference reference = result.asReference();
-            if (reference.isZero()) {
-                return null;
+            try {
+                final Value result = teleVM.methods().TargetBreakpoint_findOriginalCode.interpret(LongValue.from(instructionPointer.toLong()));
+                final Reference reference = result.asReference();
+                if (reference.isZero()) {
+                    return null;
+                }
+                return (byte[]) reference.toJava();
+            } catch (TeleInterpreterException e) {
+                throw ProgramError.unexpected(e);
             }
-            return (byte[]) reference.toJava();
         }
 
         /**

@@ -127,7 +127,7 @@ public final class VmThreadLocal {
      *
      * @see VmThread#id()
      */
-    public static final VmThreadLocal ID = new VmThreadLocal("ID", Kind.WORD, "ID of VM thread holding these locals");
+    public static final VmThreadLocal ID = new VmThreadLocal("ID", Kind.WORD, "Native ID of VM thread holding these locals");
 
     /**
      * Reference to the {@link VmThread} associated with a set of thread locals.
@@ -619,8 +619,6 @@ public final class VmThreadLocal {
         if (Heap.traceRootScanning()) {
             Log.unlock(lockDisabledSafepoints);
         }
-
-        LOWEST_ACTIVE_STACK_SLOT_ADDRESS.setVariableWord(vmThreadLocals, Address.zero());
     }
 
     public static Pointer vmThreadLocalsEnd(Pointer vmThreadLocals) {

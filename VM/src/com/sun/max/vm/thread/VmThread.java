@@ -139,7 +139,7 @@ public class VmThread {
     private int id;
     private int parkState;
 
-    private  TLAB tlab = new TLAB();
+    private TLAB tlab = new TLAB();
 
     private Address guardPage = Address.zero();
 
@@ -566,7 +566,9 @@ public class VmThread {
             Log.print(id);
             Log.print(", name=\"");
             Log.print(name);
-            Log.println("\"]:");
+            Log.print("\", native id=");
+            Log.print(NATIVE_THREAD.getConstantWord(vmThreadLocals));
+            Log.println("]:");
             Log.println("  Stack layout:");
             Address lastRegionStart = Address.zero();
             final int stackSize = stackEnd.minus(stackBase).toInt();

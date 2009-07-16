@@ -344,7 +344,7 @@ public abstract class CompilerTest_regressions<Method_Type extends IrMethod> ext
     }
 
     public void test_Memory_clear() {
-        final ClassMethodActor methodActor = getClassMethodActor(Memory.class, "clear", SignatureDescriptor.create(void.class, Pointer.class, Size.class));
+        final ClassMethodActor methodActor = getClassMethodActor(Memory.class, "clearBytes", SignatureDescriptor.create(void.class, Pointer.class, Size.class));
         compileMethod(methodActor);
     }
 
