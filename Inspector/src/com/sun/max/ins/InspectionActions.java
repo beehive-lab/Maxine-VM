@@ -2584,7 +2584,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private void setWatchpoint(MemoryRegion memoryRegion, String description) {
 
             try {
-                final MaxWatchpoint watchpoint = maxVM().setRegionWatchpoint(description, memoryRegion, true, true, true, true);
+                final MaxWatchpoint watchpoint = maxVM().setRegionWatchpoint(description, memoryRegion, true, true, true, true, true);
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {
@@ -2644,7 +2644,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             try {
                 final String description = "Object " + inspection().nameDisplay().referenceLabelText(teleObject);
-                final MaxWatchpoint watchpoint = maxVM().setObjectWatchpoint(description, teleObject, true, true, true, true);
+                final MaxWatchpoint watchpoint = maxVM().setObjectWatchpoint(description, teleObject, true, true, true, true, true);
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {
@@ -2698,7 +2698,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             try {
                 final String description = "Field \"" + fieldActor.name.toString() + "\" in " + inspection().nameDisplay().referenceLabelText(teleObject);
-                final MaxWatchpoint watchpoint = maxVM().setFieldWatchpoint(description, teleObject, fieldActor, true, true, true, true);
+                final MaxWatchpoint watchpoint = maxVM().setFieldWatchpoint(description, teleObject, fieldActor, true, true, true, true, true);
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {
@@ -2761,7 +2761,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             try {
                 final String description = "Element " + indexPrefix + "[" + Integer.toString(index) + "] in " + inspection().nameDisplay().referenceLabelText(teleObject);
-                final MaxWatchpoint watchpoint = maxVM().setArrayElementWatchpoint(description, teleObject, elementKind, arrayOffsetFromOrigin, index, true, true, true, true);
+                final MaxWatchpoint watchpoint = maxVM().setArrayElementWatchpoint(description, teleObject, elementKind, arrayOffsetFromOrigin, index, true, true, true, true, true);
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {
@@ -2820,7 +2820,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             try {
                 final String description = "Field \"" + headerField.name() + "\" in header of " + inspection().nameDisplay().referenceLabelText(teleObject);
-                final MaxWatchpoint watchpoint = maxVM().setHeaderWatchpoint(description, teleObject, headerField, true, true, true, true);
+                final MaxWatchpoint watchpoint = maxVM().setHeaderWatchpoint(description, teleObject, headerField, true, true, true, true, true);
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {

@@ -38,6 +38,7 @@ public enum WatchpointsColumnKind implements ColumnKind{
     READ("R", "Read?", true, 5),
     WRITE("W", "Write?", true, 5),
     EXEC("X", "Execute?", true, 5),
+    GC("GC", "Active during GC?", true, 5),
     TRIGGERED_THREAD("Thread", "Name of thread currently stopped at breakpoint", true, 1),
     ADDRESS_TRIGGERED("Address", "Address where watchpoint was triggered", true, 1),
     CODE_TRIGGERED("Code", "Access type which triggered watchpoint", true, 1);
