@@ -160,6 +160,13 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         return  factory.removeWatchpoint(this);
     }
 
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxWatchpoint#getTeleObject()
+     */
+    public TeleObject getTeleObject() {
+        return null;
+    }
+
     protected void updateTeleWatchpointCache(TeleProcess teleProcess) {
         if (teleWatchpointCache == null || teleWatchpointCache.length != size.toInt()) {
             teleWatchpointCache = new byte[size.toInt()];
@@ -175,11 +182,6 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
 
         public TeleRegionWatchpoint(Factory factory, String description, MemoryRegion memoryRegion, boolean after, boolean read, boolean write, boolean exec) {
             super(factory, description, memoryRegion.start(), memoryRegion.size(), after, read, write, exec);
-        }
-
-        public TeleObject getTeleObject() {
-            // This watchpoint is not associated with a heap object in the VM.
-            return null;
         }
 
         @Override
@@ -200,6 +202,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
             this.teleObject = teleObject;
         }
 
+        @Override
         public TeleObject getTeleObject() {
             return teleObject;
         }
@@ -211,7 +214,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
     }
 
     /**
-     *A watchpoint for the memory holding an object's field; does not follow if object relocated.
+     * A watchpoint for the memory holding an object's field.
      */
     private static final class TeleFieldWatchpoint extends TeleWatchpoint {
 
@@ -222,6 +225,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
             this.teleObject = teleObject;
         }
 
+        @Override
         public TeleObject getTeleObject() {
             return teleObject;
         }
@@ -246,6 +250,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
             this.index = index;
         }
 
+        @Override
         public TeleObject getTeleObject() {
             return teleObject;
         }
@@ -257,7 +262,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
     }
 
     /**
-     *A watchpoint for the memory holding an object's header field; does not follow if object relocated.
+     * A watchpoint for the memory holding an object's header field.
      */
     private static final class TeleHeaderWatchpoint extends TeleWatchpoint {
 
@@ -270,6 +275,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
             this.headerField = headerField;
         }
 
+        @Override
         public TeleObject getTeleObject() {
             return teleObject;
         }
@@ -277,6 +283,22 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         @Override
         public String toString() {
             return "TeleHeaderWatchpoint@" + super.toString();
+        }
+    }
+
+    private static final class TeleVmThreadLocalWatchpoint extends TeleWatchpoint {
+
+        private final TeleNativeThread teleNativeThread;
+
+        public TeleVmThreadLocalWatchpoint(Factory factory, String description, TeleNativeThread teleNativeThread, TeleThreadLocalValues teleThreadLocalValues, int index, boolean after, boolean read, boolean write, boolean exec) {
+            super(factory, description,  after, read, write, exec);
+            this.teleNativeThread = teleNativeThread;
+        }
+
+
+        @Override
+        public String toString() {
+            return "TeleVmThreadWatchpoint@" + super.toString();
         }
     }
 

@@ -48,7 +48,7 @@ import com.sun.max.vm.value.*;
   */
 public final class ThreadLocalsTable extends InspectorTable {
 
-    private final TeleThreadLocalValues values;
+    private final TeleThreadLocalValues threadLocalValues;
     private final ThreadLocalsViewPreferences preferences;
     private final MaxThread thread;
 
@@ -61,10 +61,10 @@ public final class ThreadLocalsTable extends InspectorTable {
     /**
      * A {@link JTable} specialized to display Maxine thread local fields.
      */
-    public ThreadLocalsTable(Inspection inspection, MaxThread thread, TeleThreadLocalValues values, ThreadLocalsViewPreferences preferences) {
+    public ThreadLocalsTable(Inspection inspection, MaxThread thread, TeleThreadLocalValues threadLocalValues, ThreadLocalsViewPreferences preferences) {
         super(inspection);
         this.thread = thread;
-        this.values = values;
+        this.threadLocalValues = threadLocalValues;
         this.preferences = preferences;
         this.model = new ThreadLocalsTableModel();
         this.columns = new TableColumn[ThreadLocalsColumnKind.VALUES.length()];
@@ -86,7 +86,8 @@ public final class ThreadLocalsTable extends InspectorTable {
                 if (selectedRow != -1 && selectedColumn != -1) {
                     // Left button selects a table cell; also cause an address selection at the row.
                     if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1) {
-                        final Address address = ThreadLocalsTable.this.values.start().plus(selectedRow * maxVM().wordSize());
+                        //final Address address = ThreadLocalsTable.this.threadLocalValues.start().plus(selectedRow * maxVM().wordSize());
+                        final Address address = model.rowToMemoryRegion(selectedRow).start();
                         setAddressFocus(address);
                     }
                 }
@@ -189,7 +190,7 @@ public final class ThreadLocalsTable extends InspectorTable {
         }
 
         public int getRowCount() {
-            return VmThreadLocal.values().length();
+            return threadLocalValues.valueCount();
         }
 
         public Object getValueAt(int row, int col) {
@@ -202,13 +203,20 @@ public final class ThreadLocalsTable extends InspectorTable {
         }
 
         public int rowToOffset(int row) {
-            return row * maxVM().wordSize();
+            return threadLocalValues.getVmThreadLocal(row).offset;
         }
 
         public MemoryRegion rowToMemoryRegion(int row) {
-            return new FixedMemoryRegion(values.start().plus(rowToOffset(row)), Size.fromInt(maxVM().wordSize()), "");
+            return threadLocalValues.getMemoryRegion(row);
         }
 
+        public String rowToName(int row) {
+            return threadLocalValues.getVmThreadLocal(row).name;
+        }
+
+        public Kind rowToKind(int row) {
+            return threadLocalValues.getVmThreadLocal(row).kind;
+        }
 
         /**
          * @return the memory watchpoint, if any, that is active at a row
@@ -223,12 +231,8 @@ public final class ThreadLocalsTable extends InspectorTable {
         }
 
         public int addressToRow(Address address) {
-            if (!address.isZero()) {
-                if (address.greaterEqual(values.start()) && address.lessThan(values.end())) {
-                    return address.minus(values.start()).dividedBy(maxVM().wordSize()).toInt();
-                }
-            }
-            return -1;
+            final VmThreadLocal vmThreadLocal = threadLocalValues.findVmThreadLocal(address);
+            return vmThreadLocal == null ? -1 : vmThreadLocal.index;
         }
     }
 
@@ -278,7 +282,7 @@ public final class ThreadLocalsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(model.rowToOffset(row), values.start());
+            setValue(model.rowToOffset(row), threadLocalValues.start());
             return this;
         }
     }
@@ -290,7 +294,7 @@ public final class ThreadLocalsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(model.rowToOffset(row), values.start());
+            setValue(model.rowToOffset(row), threadLocalValues.start());
             return this;
         }
     }
@@ -302,7 +306,7 @@ public final class ThreadLocalsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(VmThreadLocal.values().get(row).name);
+            setValue(model.rowToName(row));
             setToolTipText("+" + model.rowToOffset(row) + ", 0x" + model.rowToMemoryRegion(row).start().toHexString());
             return this;
         }
@@ -310,7 +314,7 @@ public final class ThreadLocalsTable extends InspectorTable {
 
     private final class ValueRenderer implements TableCellRenderer, Prober {
 
-        private InspectorLabel[] labels = new InspectorLabel[VmThreadLocal.values().length()];
+        private InspectorLabel[] labels = new InspectorLabel[model.getRowCount()];
 
         public void refresh(boolean force) {
             for (InspectorLabel label : labels) {
@@ -332,14 +336,13 @@ public final class ThreadLocalsTable extends InspectorTable {
 
             InspectorLabel label = labels[row];
             if (label == null) {
-                final String name = VmThreadLocal.values().get(row).name;
-                final VmThreadLocal local = row < VmThreadLocal.values().length() ? VmThreadLocal.values().get(row) : null;
-                final ValueMode valueMode = local != null && local.kind == Kind.REFERENCE ? ValueMode.REFERENCE : ValueMode.WORD;
+                final String name = model.rowToName(row);
+                final ValueMode valueMode = model.rowToKind(row) == Kind.REFERENCE ? ValueMode.REFERENCE : ValueMode.WORD;
                 label = new WordValueLabel(inspection(), valueMode, ThreadLocalsTable.this) {
                     @Override
                     public Value fetchValue() {
-                        if (values.isValid(name)) {
-                            return new WordValue(Address.fromLong(values.get(name)));
+                        if (threadLocalValues.isValid(name)) {
+                            return new WordValue(Address.fromLong(threadLocalValues.getValue(name)));
                         }
                         return VoidValue.VOID;
                     }
@@ -357,7 +360,7 @@ public final class ThreadLocalsTable extends InspectorTable {
 
     private final class RegionRenderer implements TableCellRenderer, Prober {
 
-        private InspectorLabel[] labels = new InspectorLabel[VmThreadLocal.values().length()];
+        private InspectorLabel[] labels = new InspectorLabel[model.getRowCount()];
 
         public void refresh(boolean force) {
             for (InspectorLabel label : labels) {
@@ -378,12 +381,12 @@ public final class ThreadLocalsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
             InspectorLabel label = labels[row];
             if (label == null) {
-                final String name = VmThreadLocal.values().get(row).name;
+                final String name = model.rowToName(row);
                 label = new MemoryRegionValueLabel(inspection()) {
                     @Override
                     public Value fetchValue() {
-                        if (values.isValid(name)) {
-                            return new WordValue(Address.fromLong(values.get(name)));
+                        if (threadLocalValues.isValid(name)) {
+                            return new WordValue(Address.fromLong(threadLocalValues.getValue(name)));
                         }
                         return new WordValue(Address.zero());
                     }
