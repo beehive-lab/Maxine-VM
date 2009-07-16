@@ -24,38 +24,60 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.util.*;
 
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.Safepoint.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * The values of the {@linkplain VmThreadLocal thread local variables} for a {@linkplain TeleNativeThread thread}.
+ * Access to the {@linkplain VmThreadLocal thread local variables} related to a particular
+ * {@linkplain SafePoint.State safepoint state} for {@linkplain TeleNativeThread thread} in the VM.
+ * The variables are stored in a region of VM memory local to the thread that does not move.
+ * Variables are word sized, stored in index-order, and are accessible by either name or index.
+ * If the region starts at {@link Address#zero()} then the {@linkplain VmThreadLocal thread local variables}
+ * are assumed to be invalid.
+ * <br>
+ * This class maintains a <strong>cache</strong> of the values of the variables, which it rereads from
+ * VM memory every time {@link #refresh(DataAccess)} is called.
+ *
+ * @see VmThreadLocal
  *
  * @author Doug Simon
+ * @author Michael Van De Vanter
  */
-public class TeleThreadLocalValues {
+public final class TeleThreadLocalValues extends FixedMemoryRegion {
 
     private final Map<String, Long> values = new LinkedHashMap<String, Long>(VmThreadLocal.threadLocalStorageSize().dividedBy(Word.size()).toInt());
-
+    private final TeleNativeThread teleNativeThread;
     private final Safepoint.State safepointState;
 
-    public TeleThreadLocalValues(Safepoint.State safepointState, Pointer start) {
+    /**
+     * @param teleNativeThread the thread in the VM with which these {@linkplain VmThreadLocal thread local variables} are associated.
+     * @param safepointState the particular state with which these {@linkplain VmThreadLocal thread local variables} are associated.
+     * @param start memory location in the VM where the variables are stored, {@link Address#zero()} if the variables are invalid.
+     */
+    public TeleThreadLocalValues(TeleNativeThread teleNativeThread, Safepoint.State safepointState, Pointer start) {
+        super(start, start.isZero() ? Size.zero() : VmThreadLocal.threadLocalStorageSize(), "Thread local variables for: ");
+        this.teleNativeThread = teleNativeThread;
         assert !start.isZero();
         for (VmThreadLocal threadLocal : VmThreadLocal.values()) {
             values.put(threadLocal.name, null);
         }
         this.safepointState = safepointState;
-        this.start = start;
     }
 
+    /**
+     * Reads and caches all values for this set of {@linkplain VmThreadLocal thread local variables} in the VM.
+     */
     public void refresh(DataAccess dataAccess) {
         int offset = 0;
         for (VmThreadLocal threadLocal : VmThreadLocal.values()) {
             if (offset != 0 || safepointState != State.TRIGGERED) {
                 try {
-                    final Word value = dataAccess.readWord(start, offset);
+                    final Word value = dataAccess.readWord(start(), offset);
                     values.put(threadLocal.name, value.asAddress().toLong());
                 } catch (DataIOError dataIOError) {
                     ProgramError.unexpected("Could not read value of " + threadLocal + " from safepoints-" + safepointState.name().toLowerCase() + " VM thread locals");
@@ -65,34 +87,80 @@ public class TeleThreadLocalValues {
         }
     }
 
+    /**
+     * @return the thread which which these {@linkplain VmThreadLocal thread local variables} are associated.
+     */
+    public MaxThread getMaxThread() {
+        return teleNativeThread;
+    }
+
+    /**
+     * @return the number of {@linkplain VmThreadLocal thread local variables}
+     */
+    public int valueCount() {
+        return VmThreadLocal.values().length();
+    }
+
+    /**
+     * @return the {@linkplain VmThreadLocal thread local variable} at a specified index.
+     */
+    public VmThreadLocal getVmThreadLocal(int index) {
+        assert index >= 0 && index < valueCount();
+        return VmThreadLocal.values().get(index);
+    }
+
+    /**
+     * @return the {@linkplain VmThreadLocal thread local variable} in this set that is stored at a particular memory location in the VM, null if none.
+     */
+    public VmThreadLocal findVmThreadLocal(Address address) {
+        if (!address.isZero()) {
+            if (address.greaterEqual(start()) && address.lessThan(end())) {
+                final int index = address.minus(start()).dividedBy(teleNativeThread.teleVM().wordSize()).toInt();
+                return getVmThreadLocal(index);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @return the memory occupied by  the {@linkplain VmThreadLocal thread local variable} at a specified index.
+     */
+    public MemoryRegion getMemoryRegion(int index) {
+        final VmThreadLocal vmThreadLocal = getVmThreadLocal(index);
+        return new FixedMemoryRegion(start().plus(vmThreadLocal.offset), Size.fromInt(teleNativeThread.teleVM().wordSize()), "");
+    }
+
+    /**
+     * @return the {@linkplain SafePoint.State safepoint state} with which this set of  {@linkplain VmThreadLocal thread local variables} is associated.
+     */
     public Safepoint.State safepointState() {
         return safepointState;
     }
 
     /**
-     * Gets the value of a given thread local variable as a word.
+     * @return the value of a {@linkplain VmThreadLocal thread local variable} as a word.
      */
     public Word getWord(VmThreadLocal threadLocalVariable) {
         return Address.fromLong(get(threadLocalVariable));
     }
 
     /**
-     * Gets the value of a named thread local variable as a word.
+     * Gets the value of a named {@linkplain VmThreadLocal thread local variable} as a word.
      */
     public Word getWord(String name) {
-        return Address.fromLong(get(name));
+        return Address.fromLong(getValue(name));
     }
 
     /**
-     * Gets the value of a given thread local variable.
+     * @return  the value of a {@linkplain VmThreadLocal thread local variable} .
      */
     public long get(VmThreadLocal threadLocalVariable) {
         return values.get(threadLocalVariable.name);
     }
 
     /**
-     * Determines if a given name denotes a VM thread local slot that has a valid value.
-     * A VM thread local slot will not have a valid value if the value denoted by {@code name}
+     * Determines if a given name denotes a {@linkplain VmThreadLocal thread local variable}  that has a valid value.
+     * A VM thread local varible will not have a valid value if the value denoted by {@code name}
      * is in mprotected memory (e.g. the safepoint latch in the safepoints-triggered VM thread locals).
      */
     public boolean isValid(String name) {
@@ -101,9 +169,9 @@ public class TeleThreadLocalValues {
     }
 
     /**
-     * Gets the value of a named thread local variable.
+     * Gets the value of a named {@linkplain VmThreadLocal thread local variable} .
      */
-    public long get(String name) {
+    public long getValue(String name) {
         assert values.containsKey(name) : "Unknown VM thread local: " + name;
         return values.get(name);
     }
@@ -117,33 +185,4 @@ public class TeleThreadLocalValues {
         return values.toString();
     }
 
-    private final Address start;
-
-    /**
-     * Gets the base of address of the VM thread locals represented by this object.
-     *
-     * @return {@link Address#zero()} if the VM thread locals represented by this object are invalid
-     */
-    public Address start() {
-        return start;
-    }
-
-    /**
-     * Gets the end of address of the VM thread locals represented by this object.
-     *
-     * @return {@link Address#zero()} if the VM thread locals represented by this object are invalid
-     */
-    public Address end() {
-        if (start.isZero()) {
-            return start;
-        }
-        return start.plus(size());
-    }
-
-    public Size size() {
-        if (start.isZero()) {
-            return Size.zero();
-        }
-        return VmThreadLocal.threadLocalStorageSize();
-    }
 }

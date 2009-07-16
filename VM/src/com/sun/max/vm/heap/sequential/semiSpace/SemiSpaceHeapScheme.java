@@ -747,18 +747,21 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      * The top of the current thread-local allocation buffer. This will remain zero if TLABs are not
      * {@linkplain #useTLABOption enabled}.
      */
-    private static final VmThreadLocal TLAB_TOP = new VmThreadLocal("TLAB_TOP", Kind.WORD);
+    private static final VmThreadLocal TLAB_TOP
+        = new VmThreadLocal("TLAB_TOP", Kind.WORD, "SemiSpace: top of current TLAB, zero if not used");
 
     /**
      * The allocation mark of the current thread-local allocation buffer. This will remain zero if TLABs
      * are not {@linkplain #useTLABOption enabled}.
      */
-    private static final VmThreadLocal TLAB_MARK = new VmThreadLocal("TLAB_MARK", Kind.WORD);
+    private static final VmThreadLocal TLAB_MARK
+        = new VmThreadLocal("TLAB_MARK", Kind.WORD, "SemiSpace: allocation mark of current TLAB, zero if not used");
 
     /**
      * Thread-local used to disable allocation per thread.
      */
-    private static final VmThreadLocal ALLOCATION_DISABLED = new VmThreadLocal("TLAB_DISABLED", Kind.WORD);
+    private static final VmThreadLocal ALLOCATION_DISABLED
+        = new VmThreadLocal("TLAB_DISABLED", Kind.WORD, "SemiSpace: disables per thread allocation if non-zero");
 
     /**
      * The fast, inline path for allocation.
