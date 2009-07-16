@@ -35,6 +35,8 @@ import com.sun.c1x.value.*;
  */
 public class CodeEmitInfo {
 
+    public IRScopeDebugInfo scopeDebugInfo;
+
     public CodeEmitInfo(int bci, ValueStack state, List<ExceptionHandler> list) {
         // TODO Auto-generated constructor stub
     }
@@ -70,6 +72,11 @@ public class CodeEmitInfo {
     public void addRegisterOop(LIROperand exceptionOop) {
         // TODO Auto-generated method stub
 
+    }
+
+    public ValueStack stack() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     // TODO nothing for now

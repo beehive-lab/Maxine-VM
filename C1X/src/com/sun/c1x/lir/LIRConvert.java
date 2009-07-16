@@ -33,7 +33,7 @@ import com.sun.c1x.util.*;
 public class LIRConvert extends LIROp1 {
 
     private int bytecode;
-    private ConversionStub stub;
+    ConversionStub stub;
 
     /**
      * Constructs a new instruction LIRConvert for a given operand.

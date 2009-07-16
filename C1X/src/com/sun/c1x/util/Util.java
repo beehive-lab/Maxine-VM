@@ -24,6 +24,7 @@ import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
+import com.sun.c1x.lir.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -546,5 +547,15 @@ public class Util {
             TTY.println(String.format(string, objects));
         }
         return true;
+    }
+
+    public static int roundTo(int numVirtualRegs, int bitsPerWord) {
+        return ((numVirtualRegs + bitsPerWord - 1) / bitsPerWord) * bitsPerWord;
+    }
+
+    public static void truncate(List<?> instructions, int length) {
+        while (instructions.size() > length) {
+            instructions.remove(instructions.size() - 1);
+        }
     }
 }

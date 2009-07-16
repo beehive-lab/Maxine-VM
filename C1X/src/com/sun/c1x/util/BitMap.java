@@ -139,4 +139,24 @@ public class BitMap {
         }
         return i;
     }
+
+    public void setFrom(BitMap liveOut) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void setDifference(BitMap liveKill) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public boolean isSame(BitMap liveOut) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public int getNextOneOffset(int i, int size) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
 }

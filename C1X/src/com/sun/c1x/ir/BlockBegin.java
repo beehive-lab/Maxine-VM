@@ -80,6 +80,10 @@ public class BlockBegin extends StateSplit {
     private Label label;
     private LIRList lir;
 
+    private int firstLirInstructionId;
+
+    private int lastLirInstructionId;
+
     /**
      * Constructs a new BlockBegin at the specified bytecode index.
      * @param bci the bytecode index of the start
@@ -661,4 +665,70 @@ public class BlockBegin extends StateSplit {
     public BlockBegin predAt(int j) {
         return this.predecessors.get(j);
     }
+
+    public int firstLirInstructionId() {
+        return firstLirInstructionId;
+    }
+
+
+    public void setFirstLirInstructionId(int firstLirInstructionId) {
+        this.firstLirInstructionId = firstLirInstructionId;
+    }
+
+
+
+    public int lastLirInstructionId() {
+        return lastLirInstructionId;
+    }
+
+
+    public void setLastLirInstructionId(int lastLirInstructionId) {
+        this.lastLirInstructionId = lastLirInstructionId;
+    }
+
+    public Iterable<Phi> phis() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public void setLiveGen(BitMap liveGen) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void setLiveKill(BitMap liveKill) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void setLiveIn(BitMap bitMap) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void setLiveOut(BitMap bitMap) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public BitMap liveGen() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public BitMap liveKill() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public BitMap liveIn() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public BitMap liveOut() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
 }
