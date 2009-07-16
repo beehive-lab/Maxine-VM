@@ -33,10 +33,12 @@ import java.lang.reflect.Field;
  */
 public class FieldOption<Value_Type> extends Option<Value_Type> {
 
+    protected final Object object;
     protected final Field field;
 
-    public FieldOption(String name, Field field, Value_Type defaultValue, Type<Value_Type> type, String help) {
+    public FieldOption(String name, Object object, Field field, Value_Type defaultValue, Type<Value_Type> type, String help) {
         super(name, defaultValue, type, help);
+        this.object = object;
         this.field = field;
     }
 
@@ -48,7 +50,7 @@ public class FieldOption<Value_Type> extends Option<Value_Type> {
     @Override
     public Value_Type getValue() {
         try {
-            return StaticLoophole.cast(field.get(null));
+            return StaticLoophole.cast(field.get(object));
         } catch (IllegalAccessException e) {
             throw ProgramError.unexpected(e);
         }
@@ -62,7 +64,7 @@ public class FieldOption<Value_Type> extends Option<Value_Type> {
     @Override
     public void setValue(Value_Type value) {
         try {
-            field.set(null, value);
+            field.set(object, value);
         } catch (Exception e) {
             throw ProgramError.unexpected("Error updating the value of " + field, e);
         }

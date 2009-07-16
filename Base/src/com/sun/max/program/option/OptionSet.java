@@ -539,7 +539,7 @@ public class OptionSet {
         for (final Field field : javaClass.getDeclaredFields()) {
             if (Modifier.isStatic(field.getModifiers())) {
                 field.setAccessible(true);
-                OptionSettings settings = field.getAnnotation(OptionSettings.class);
+                final OptionSettings settings = field.getAnnotation(OptionSettings.class);
                 String help;
                 String name;
                 if (settings != null) {
@@ -549,7 +549,7 @@ public class OptionSet {
                     help = "";
                     name = field.getName().replace('_', '-');
                 }
-                addFieldOption(prefix + name, field, help);
+                addFieldOption(prefix + name, null, field, help);
             }
         }
     }
@@ -557,11 +557,11 @@ public class OptionSet {
     /**
      * Adds a new option whose value is stored in the specified reflection field.
      * @param name the name of the option
+     * @param object the object containing the field (if the field is not static)
      * @param field the field to store the value
-     * @param help the help text for the option
-     * @return a new option that will modify the field when parsed
+     * @param help the help text for the option   @return a new option that will modify the field when parsed
      */
-    public Option<?> addFieldOption(String name, Field field, String help) {
+    public Option<?> addFieldOption(String name, Object object, Field field, String help) {
         final Class<?> fieldType = field.getType();
         final Object defaultValue;
         try {
@@ -570,30 +570,30 @@ public class OptionSet {
             return null;
         }
         if (fieldType == boolean.class) {
-            return addOption(new FieldOption<Boolean>(name, field, (Boolean) defaultValue, OptionTypes.BOOLEAN_TYPE, help));
+            return addOption(new FieldOption<Boolean>(name, object, field, (Boolean) defaultValue, OptionTypes.BOOLEAN_TYPE, help));
         } else if (fieldType == int.class) {
-            return addOption(new FieldOption<Integer>(name, field, (Integer) defaultValue, OptionTypes.INT_TYPE, help));
+            return addOption(new FieldOption<Integer>(name, object, field, (Integer) defaultValue, OptionTypes.INT_TYPE, help));
         } else if (fieldType == float.class) {
-            return addOption(new FieldOption<Float>(name, field, (Float) defaultValue, OptionTypes.FLOAT_TYPE, help));
+            return addOption(new FieldOption<Float>(name, object, field, (Float) defaultValue, OptionTypes.FLOAT_TYPE, help));
         } else if (fieldType == long.class) {
-            return addOption(new FieldOption<Long>(name, field, (Long) defaultValue, OptionTypes.LONG_TYPE, help));
+            return addOption(new FieldOption<Long>(name, object, field, (Long) defaultValue, OptionTypes.LONG_TYPE, help));
         } else if (fieldType == double.class) {
-            return addOption(new FieldOption<Double>(name, field, (Double) defaultValue, OptionTypes.DOUBLE_TYPE, help));
+            return addOption(new FieldOption<Double>(name, object, field, (Double) defaultValue, OptionTypes.DOUBLE_TYPE, help));
         } else if (fieldType == String.class) {
-            return addOption(new FieldOption<String>(name, field, (String) defaultValue, OptionTypes.STRING_TYPE, help));
+            return addOption(new FieldOption<String>(name, object, field, (String) defaultValue, OptionTypes.STRING_TYPE, help));
         } else if (fieldType == File.class) {
-            return addOption(new FieldOption<File>(name, field, (File) defaultValue, OptionTypes.FILE_TYPE, help));
+            return addOption(new FieldOption<File>(name, object, field, (File) defaultValue, OptionTypes.FILE_TYPE, help));
         } else if (fieldType.isEnum()) {
             final Class<? extends Enum> enumClass = StaticLoophole.cast(fieldType);
-            return addOption(makeEnumOptionType(name, field, defaultValue, enumClass, help));
+            return addOption(makeEnumFieldOption(name, object, field, defaultValue, enumClass, help));
         }
         return null;
     }
 
-    private <T extends Enum<T>> FieldOption<T> makeEnumOptionType(String name, Field field, Object defaultValue, Class<T> enumClass, String help) {
+    private <T extends Enum<T>> FieldOption<T> makeEnumFieldOption(String name, Object object, Field field, Object defaultValue, Class<T> enumClass, String help) {
         final OptionTypes.EnumType<T> optionType = new OptionTypes.EnumType<T>(enumClass);
         final T defaultV = StaticLoophole.cast(defaultValue);
-        return new FieldOption<T>(name, field, defaultV, optionType, help);
+        return new FieldOption<T>(name, object, field, defaultV, optionType, help);
     }
 
     public Option<String> newStringOption(String name, String defaultValue, String help) {
@@ -703,7 +703,7 @@ public class OptionSet {
     }
 
     public static String[] parseArgumentsForClass(String[] args, Class javaClass) {
-        OptionSet options = new OptionSet(false);
+        final OptionSet options = new OptionSet(false);
         options.addFieldOptions(javaClass, "");
         options.parseArguments(args);
         return options.getArguments();

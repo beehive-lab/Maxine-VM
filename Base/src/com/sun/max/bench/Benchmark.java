@@ -52,7 +52,7 @@ public class Benchmark {
     }
 
     public static void main(String[] a) {
-        String[] args = OptionSet.parseArgumentsForClass(a, Benchmark.Options.class);
+        final String[] args = OptionSet.parseArgumentsForClass(a, Benchmark.Options.class);
         long loadTime = System.nanoTime();
         final Runnable[] benchmarks = getBenchmarks(args);
         loadTime = System.nanoTime() - loadTime;
