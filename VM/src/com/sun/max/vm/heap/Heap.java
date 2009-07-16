@@ -410,7 +410,7 @@ public final class Heap {
             if (freedEnough == true) {
                 Log.println("--GC freed enough--");
             } else {
-                Log.println("--GC did not freed enough--");
+                Log.println("--GC did not free enough--");
             }
         }
         return freedEnough;
