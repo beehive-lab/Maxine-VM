@@ -109,6 +109,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      */
     private int tlabPadObjectOverhead;
 
+    private final Collect collect = new Collect();
+
     private StopTheWorldGCDaemon collectorThread;
 
     private final SemiSpaceMemoryRegion fromSpace = new SemiSpaceMemoryRegion("Heap-From");
@@ -233,6 +235,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             }
             increaseGrowPolicy = new LinearGrowPolicy();
             collectorThread = new StopTheWorldGCDaemon("GC", collect);
+            collectorThread.start();
         }
     }
 
@@ -412,8 +415,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             }
         }
     }
-
-    private final Collect collect = new Collect();
 
     @INLINE
     /**

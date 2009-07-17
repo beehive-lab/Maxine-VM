@@ -39,27 +39,27 @@ public class BlockingServerDaemon extends Thread {
     /**
      * The lock object used to synchronize client/server interaction.
      */
-    private final Object token = new Object();
+    protected final Object token = new Object();
 
     public BlockingServerDaemon(String name) {
         super(name);
+        setDaemon(true);
+    }
 
-        synchronized (this) {
-            setDaemon(true);
-
-            synchronized (token) {
-                start();
-                try {
-                    // Block clients until the server is waiting for requests:
-                    token.wait();
-                } catch (InterruptedException interruptedException) {
-                    ProgramError.unexpected();
-                }
+    @Override
+    public final void start() {
+        synchronized (token) {
+            super.start();
+            try {
+                // Block clients until the server is waiting for requests:
+                token.wait();
+            } catch (InterruptedException interruptedException) {
+                ProgramError.unexpected();
             }
         }
     }
 
-    private Runnable procedure;
+    private Runnable request;
 
     /**
      * The server loop that will run any {@linkplain #execute(Runnable) scheduled} request.
@@ -67,7 +67,8 @@ public class BlockingServerDaemon extends Thread {
     @Override
     public void run() {
         while (true) {
-            // Let the client thread continue as soon as we are waiting for requests again:
+            // Let the client thread that started this server thread continue
+            // as soon as we are waiting for requests again:
             synchronized (token) {
                 token.notify();
                 try {
@@ -75,7 +76,7 @@ public class BlockingServerDaemon extends Thread {
                 } catch (InterruptedException interruptedException) {
                     ProgramError.unexpected();
                 }
-                procedure.run();
+                request.run();
             }
         }
     }
@@ -84,11 +85,11 @@ public class BlockingServerDaemon extends Thread {
      * Schedules a given procedure to be run on the server thread. The client calling this method is
      * blocked until the given procedure has been executed.
      *
-     * @param proc a procedure to be executed on the server thread
+     * @param request a procedure to be executed on the server thread
      */
-    public synchronized void execute(Runnable proc) {
-        this.procedure = proc;
+    public void execute(Runnable request) {
         synchronized (token) {
+            this.request = request;
 
             // Make the server run one loop round:
             token.notify();

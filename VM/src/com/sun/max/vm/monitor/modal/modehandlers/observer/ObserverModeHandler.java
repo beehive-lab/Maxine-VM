@@ -52,7 +52,7 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
     @Override
     public void initialize(MaxineVM.Phase phase) {
         if (MaxineVM.isPrototyping()) {
-            JavaMonitorManager.prototypeBindStickyMonitor(this);
+            JavaMonitorManager.bindStickyMonitor(this);
         }
     }
 

@@ -135,9 +135,9 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
             beltManager.createBelts();
 
             for (int i = 0; i < BeltwayConfiguration.numberOfGCThreads; i++) {
-                JavaMonitorManager.prototypeBindStickyMonitor(BeltwayCollectorThread.tokens[i], new StandardJavaMonitor());
+                JavaMonitorManager.bindStickyMonitor(BeltwayCollectorThread.tokens[i], new StandardJavaMonitor());
             }
-            JavaMonitorManager.prototypeBindStickyMonitor(BeltwayCollectorThread.callerToken, new StandardJavaMonitor());
+            JavaMonitorManager.bindStickyMonitor(BeltwayCollectorThread.callerToken, new StandardJavaMonitor());
         } else if (phase == MaxineVM.Phase.PRISTINE) {
             final Size heapSize = calculateHeapSize();
             final Address address = allocateMemory(heapSize);
@@ -154,6 +154,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
             BeltwayCardRegion.switchToRegularCardTable(cardRegion.cardTableBase().asPointer());
         } else if (phase == MaxineVM.Phase.STARTING) {
             collectorThread = new BeltwayStopTheWorldDaemon("GC", beltCollector);
+            collectorThread.start();
         } else if (phase == MaxineVM.Phase.RUNNING) {
             if (BeltwayConfiguration.parallelScavenging) {
                 createGCThreads();

@@ -561,6 +561,7 @@ public class OptionSet {
      * @param field the field to store the value
      * @param help the help text for the option   @return a new option that will modify the field when parsed
      */
+    @SuppressWarnings("unchecked")
     public Option<?> addFieldOption(String name, Object object, Field field, String help) {
         final Class<?> fieldType = field.getType();
         final Object defaultValue;
