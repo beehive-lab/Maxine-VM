@@ -62,7 +62,7 @@ public abstract class JitTargetMethod extends TargetMethod {
     /**
      * A bit map denoting which {@linkplain #directCallees() direct calls} in this target method correspond to calls
      * into the runtime derived from the constituent templates. These calls are
-     * {@linkplain #linkDirectCalls(DynamicCompilerScheme) linked} using the entry point associated with the compiler
+     * {@linkplain #linkDirectCalls() linked} using the entry point associated with the compiler
      * used to compile the runtime (i.e the opto compiler). All other direct calls are linked using the call entry point
      * associated with the JIT compiler.
      */

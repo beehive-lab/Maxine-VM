@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.ValueType;
-import com.sun.c1x.util.InstructionVisitor;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>Base</code> instruction represents the entry block of the procedure that has
@@ -44,6 +44,8 @@ public class Base extends BlockEnd {
             successors.add(osrEntry);
         }
         successors.add(standardEntry);
+        // TODO: Check why we need this?!
+        this.pin();
     }
 
     /**

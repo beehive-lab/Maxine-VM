@@ -34,7 +34,7 @@ import com.sun.c1x.util.*;
 public class LIRJavaCall extends LIRCall {
 
     private CiMethod method;
-    private LIROperand receiver;
+    LIROperand receiver;
 
     /**
      * Creates a new LIRJavaCall instruction.

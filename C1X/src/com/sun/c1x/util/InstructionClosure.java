@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.util;
 
-import com.sun.c1x.ir.Instruction;
+import com.sun.c1x.ir.*;
 
 /**
  * The <code>InstructionClosure</code> interface represents a first-class

@@ -78,7 +78,7 @@ public abstract class LIROperand {
         return basicType == opr.basicType;
     }
 
-    boolean isSameRegister(LIROperand opr) {
+    public boolean isSameRegister(LIROperand opr) {
         throw Util.shouldNotReachHere();
     }
 
@@ -99,7 +99,62 @@ public abstract class LIROperand {
     }
 
     public void print(LogStream out) {
-        // TODO to be completed later
+        out.print(this.toString());
+    }
+
+    public String valueToString() {
+        throw Util.shouldNotReachHere();
+    }
+
+    @Override
+    public String toString() {
+
+        if (isIllegal()) {
+            return "";
+        }
+
+        final StringBuffer out = new StringBuffer();
+        out.append("[");
+        if (isPointer()) {
+            out.append(valueToString());
+        } else if (isSingleStack()) {
+            out.append("stack:" + singleStackIx());
+        } else if (isDoubleStack()) {
+            out.append("dblStack:" + doubleStackIx());
+        } else if (isVirtual()) {
+            out.append("R" + vregNumber());
+        } else if (isSingleCpu()) {
+            out.append(asRegister().name());
+        } else if (isDoubleCpu()) {
+            out.append(asRegisterHi().name());
+            out.append(asRegisterLo().name());
+        } else if (isSingleXmm()) {
+            out.append(asRegister().name());
+        } else if (isDoubleXmm()) {
+            out.append(asRegister().name());
+        } else if (isSingleFpu()) {
+            out.append(asRegister().name());
+        } else if (isDoubleFpu()) {
+            out.append(asRegister().name());
+
+        } else if (isIllegal()) {
+            out.append("-");
+        } else {
+            out.append("Unknown Operand");
+        }
+        if (!isIllegal()) {
+            out.append(String.format("|%c", this.type().basicChar));
+        }
+        if (isRegister() && isLastUse()) {
+            out.append("(lastUse)");
+        }
+        out.append("]");
+        return out.toString();
+    }
+
+    public boolean isPointer() {
+        // TODO to be removed
+        return !(this instanceof LIRLocation);
     }
 
     public boolean isFloatKind() {
@@ -255,15 +310,15 @@ public abstract class LIROperand {
     }
 
     public Register asRegister() {
-        return FrameMap.cpuRnr2Reg(cpuRegnr());
+        throw Util.shouldNotReachHere();
     }
 
     public Register asRegisterLo() {
-        return FrameMap.cpuRnr2Reg(cpuRegnrLo());
+        throw Util.shouldNotReachHere();
     }
 
     public Register asRegisterHi() {
-        return FrameMap.cpuRnr2Reg(cpuRegnrHi());
+        throw Util.shouldNotReachHere();
     }
 
     public Register asPointerRegister(Architecture architecture) {
@@ -274,29 +329,10 @@ public abstract class LIROperand {
         return asRegister();
     }
 
-    // X86 specific
-
-    public Register asXmmFloatReg() {
-        return FrameMap.nr2XmmReg(xmmRegnr());
-    }
-
-    public Register asXmmDoubleReg() {
-        assert xmmRegnrLo() == xmmRegnrHi() : "assumed in calculation";
-        return FrameMap.nr2XmmReg(xmmRegnrLo());
-    }
 
     // for compatibility with RInfo
     public int fpu() {
         return lowerRegisterHalf();
-    }
-
-    // SPARC specific
-    public Register asFloatReg() {
-        return FrameMap.nr2FloatReg(fpuRegnr());
-    }
-
-    public Register asDoubleReg() {
-        return FrameMap.nr2FloatReg(fpuRegnrHi());
     }
 
     public int asInt() {
@@ -342,12 +378,18 @@ public abstract class LIROperand {
         return null;
     }
 
-    public void printValueOn(LogStream out) {
-        throw Util.unimplemented();
-    }
-
     public int asJint() {
         // TODO Auto-generated method stub
         return asInt();
+    }
+
+    public BasicType typeRegister() {
+        assert this.isRegister();
+        return type();
+    }
+
+    public void assignPhysicalRegister(LIROperand colorLirOpr) {
+        Util.shouldNotReachHere();
+        // TODO Auto-generated method stub
     }
 }

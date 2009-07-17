@@ -38,5 +38,5 @@ public class CodeOffsets {
     public void setValue(Entries osrentry, int offset) {
         // TODO Auto-generated method stub
 
-    };
+    }
 }

@@ -34,9 +34,9 @@ public class LIRProfileCall extends LIRInstruction {
 
     private CiMethod profiledMethod;
     private int profiledBci;
-    private LIROperand mdo;
-    private LIROperand recv;
-    private LIROperand tmp1;
+    LIROperand mdo;
+    LIROperand recv;
+    LIROperand tmp1;
     private CiType knownHolder;
 
     /**

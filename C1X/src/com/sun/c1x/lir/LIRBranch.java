@@ -38,7 +38,7 @@ public class LIRBranch extends LIRInstruction {
     private Label label;
     private BlockBegin block;  // if this is a branch to a block, this is the block
     private BlockBegin ublock; // if this is a float-branch, this is the unordered block
-    private CodeStub stub;     // if this is a branch to a stub, this is the stub
+    CodeStub stub;     // if this is a branch to a stub, this is the stub
 
     /**
      * Creates a new LIRBranch instruction.
@@ -81,6 +81,7 @@ public class LIRBranch extends LIRInstruction {
 
     public LIRBranch(LIRCondition cond, BasicType type, BlockBegin block, BlockBegin ublock) {
         super(LIROpcode.Branch, LIROperandFactory.illegalOperand, null);
+        this.cond = cond;
         this.type = type;
         this.label = block.label();
         this.block = block;
@@ -113,11 +114,11 @@ public class LIRBranch extends LIRInstruction {
         return ublock;
     }
 
-    CodeStub stub() {
+    public CodeStub stub() {
         return stub;
     }
 
-    void changeBlock(BlockBegin b) {
+    public void changeBlock(BlockBegin b) {
         assert block != null : "must have old block";
         assert block.label() == label() : "must be equal";
 
@@ -125,12 +126,12 @@ public class LIRBranch extends LIRInstruction {
         this.label = b.label();
     }
 
-    void changeUblock(BlockBegin b) {
+    public void changeUblock(BlockBegin b) {
         assert ublock != null : "must have old block";
         this.ublock = b;
     }
 
-    void negateCondition() {
+    public void negateCondition() {
         switch (this.cond) {
             case AboveEqual:
                 cond = LIRCondition.NotEqual;

@@ -248,7 +248,7 @@ public class Util {
                         qualified = true;
                         // fall through
                     case 'p': {
-                        for (int i = 0; i < sig.arguments(); i++) {
+                        for (int i = 0; i < sig.argumentCount(false); i++) {
                             if (i != 0) {
                                 sb.append(", ");
                             }
@@ -546,5 +546,15 @@ public class Util {
             TTY.println(String.format(string, objects));
         }
         return true;
+    }
+
+    public static int roundTo(int numVirtualRegs, int v) {
+        return ((numVirtualRegs + v - 1) / v) * v;
+    }
+
+    public static void truncate(List<?> instructions, int length) {
+        while (instructions.size() > length) {
+            instructions.remove(instructions.size() - 1);
+        }
     }
 }

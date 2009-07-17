@@ -27,6 +27,10 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 
 /**
+ * The side table keeps track of where the first object begins in each increment.
+ * This helps scanning the reference of a single increment when used in generational context with an imprecise
+ * write barrier (e.g., card table).
+ *
  * @author Christos Kotselidis
  */
 public class SideTable {
@@ -37,28 +41,22 @@ public class SideTable {
     public static final int CREATING = 3;
 
     public static final int CHUNK_SHIFT = 9;
+    private static final Size CHUNK_SIZE = Size.fromInt(1 << CHUNK_SHIFT);
     public static final int CHUNK_SLOT_LENGTH = VMConfiguration.hostOrTarget().wordWidth().numberOfBytes;
 
     private static final boolean debug = false;
 
-    private static Size chunkSize = Size.fromInt(1 << CHUNK_SHIFT);
 
     // Memory region occupied by the SideTable
     private RuntimeMemoryRegion region = new RuntimeMemoryRegion(Size.zero(), Size.zero());
     public static Address sideTableStart; // SideTable Table start
     public static Address sideTableCoveredRegionStart; // SideTable Region(s) start
-    public long numberOfChunks;
     public Size sideTableSize;
     public Address biasedSideTableBase;
 
     @INLINE
     public static final int getChunkIndexFromHeapAddress(Address address) {
         return address.minus(sideTableCoveredRegionStart).unsignedShiftedRight(CHUNK_SHIFT).toInt();
-    }
-
-    @INLINE
-    public static final int getAddressShiftLength() {
-        return CHUNK_SHIFT;
     }
 
     @INLINE
@@ -69,7 +67,7 @@ public class SideTable {
 
     @INLINE
     public final Address getHeapAddressFromChunkIndex(int cardIndex) {
-        return sideTableCoveredRegionStart.plus(cardIndex * chunkSize().toInt());
+        return sideTableCoveredRegionStart.plus(cardIndex * CHUNK_SIZE.toInt());
     }
 
     @INLINE
@@ -118,10 +116,6 @@ public class SideTable {
         return CHUNK_SHIFT;
     }
 
-    public static Size chunkSize() {
-        return chunkSize;
-    }
-
     @INLINE
     public static final Address sideTableBase() {
         return sideTableStart;
@@ -137,14 +131,14 @@ public class SideTable {
         return sideTableCoveredRegionStart;
     }
 
-    // Initialisation of card Regions. Explanation
+    // Initialization of card Regions. Explanation
     public void initialize(Address start, Size size, Address sideTableStart) {
         sideTableCoveredRegionStart = start;
         region.setStart(start);
         region.setSize(size);
         SideTable.sideTableStart = sideTableStart;
-        // calculate the integral number of chunks required
-        numberOfChunks = (size.toLong() % chunkSize().toLong() == 0) ? size.toLong() / chunkSize().toLong() : size.toLong() / chunkSize().toLong() + 1;
+        // calculate the integral number of chunks in the specified size.
+        final long numberOfChunks = size.roundedUpBy(CHUNK_SIZE.toInt()).toLong() /  CHUNK_SIZE.toLong();
         sideTableSize = Size.fromLong(numberOfChunks * CHUNK_SLOT_LENGTH);
 
         if (Heap.verbose()) {
@@ -155,7 +149,7 @@ public class SideTable {
             Log.print("Sidetable.initialize: Sidetable start ");
             Log.println(sideTableStart);
             Log.print("Sidetable.initialize: Sidetable chunk size ");
-            Log.println(chunkSize());
+            Log.println(CHUNK_SIZE);
             Log.print("Sidetable.initialize: Sidetable size ");
             Log.println(sideTableSize.toLong());
             Log.print("Sidetable.initialize: sideTable end ");

@@ -20,12 +20,11 @@
  */
 package com.sun.c1x.graph;
 
-import com.sun.c1x.ir.*;
-import com.sun.c1x.ci.CiField;
-import com.sun.c1x.value.ValueType;
+import java.util.*;
 
-import java.util.HashMap;
-import java.util.IdentityHashMap;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>MemoryBuffer</code> is an abstract representation of memory that is used redundant load and

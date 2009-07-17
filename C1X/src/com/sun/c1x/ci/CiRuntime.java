@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ci;
 
-import com.sun.c1x.lir.*;
+import com.sun.c1x.target.*;
 import com.sun.c1x.target.x86.*;
 import com.sun.c1x.value.*;
 
@@ -194,12 +194,6 @@ public interface CiRuntime {
 
     Register callerSaveFpuRegAt(int i);
 
-    Object ciEnvUnloadedCiobjarrayklass();
-
-    CiType makeTypeArrayClass(BasicType elemType);
-
-    Object makeObjectArrayClass(CiType elementClass);
-
     int arrayOopDescHeaderSize(BasicType type);
 
     int arrayElementSize(BasicType type);
@@ -304,4 +298,12 @@ public interface CiRuntime {
     boolean dtraceAllocProbes();
 
     int instanceOopDescBaseOffsetInBytes();
+
+    Register[] getAllocatableRegisters();
+
+    int outPreserveStackSlots();
+
+    int javaCallingConvention(CiMethod method, CiLocation[] result, boolean outgoing);
+
+    Register[] callerSavedRegisters();
 }

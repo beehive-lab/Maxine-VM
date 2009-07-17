@@ -41,8 +41,14 @@ public final class TargetBundleLayout {
      * Constants denoting the arrays referenced by fields in {@link TargetMethod} that are colocated in a target bundle.
      */
     public enum ArrayField {
-        catchRangePositions, catchBlockPositions, stopPositions, directCallees, referenceMaps, scalarLiteralBytes, referenceLiterals, code {
-
+        catchRangePositions,
+        catchBlockPositions,
+        stopPositions,
+        directCallees,
+        referenceMaps,
+        scalarLiteralBytes,
+        referenceLiterals,
+        code {
             @Override
             protected boolean allocateEmptyArray() {
                 return true;
@@ -51,7 +57,7 @@ public final class TargetBundleLayout {
 
         public static final IndexedSequence<ArrayField> VALUES = new ArraySequence<ArrayField>(values());
 
-        final ArrayLayout arrayLayout;
+        public final ArrayLayout arrayLayout;
 
         ArrayField() {
             final LayoutScheme layoutScheme = VMConfiguration.hostOrTarget().layoutScheme();
@@ -59,13 +65,6 @@ public final class TargetBundleLayout {
             final TypeDescriptor fieldType = JavaTypeDescriptor.forJavaClass(Classes.getDeclaredField(TargetMethod.class, fieldName).getType());
             assert JavaTypeDescriptor.isArray(fieldType);
             arrayLayout = fieldType.componentTypeDescriptor().toKind().arrayLayout(layoutScheme);
-        }
-
-        /**
-         * Gets the layout describing the array referenced by this field.
-         */
-        public ArrayLayout layout() {
-            return arrayLayout;
         }
 
         /**
@@ -106,7 +105,12 @@ public final class TargetBundleLayout {
         void update(int length, TargetBundleLayout targetBundleLayout, LinearAllocatorHeapRegion region) {
             final int ordinal = ordinal();
             targetBundleLayout.lengths[ordinal] = length;
-            final Size cellSize = length == 0 && !allocateEmptyArray() ? Size.zero() : arrayLayout.getArraySize(length);
+            final Size cellSize;
+            if (allocateEmptyArray() || length != 0) {
+                cellSize = arrayLayout.getArraySize(length);
+            } else {
+                cellSize = Size.zero();
+            }
             WordArray.set(targetBundleLayout.cellSizes, ordinal, cellSize);
             WordArray.set(targetBundleLayout.cellOffsets, ordinal, allocate(region, cellSize));
         }
@@ -122,8 +126,15 @@ public final class TargetBundleLayout {
     final Offset[] cellOffsets;
     private Size bundleSize;
 
-    public TargetBundleLayout(int numberOfCatchRanges, int numberOfDirectCalls, int numberOfIndirectCalls, int numberOfSafepoints, int numberOfScalarLiteralBytes, int numberOfReferenceLiterals,
-                    int numberOfCodeBytes, int frameReferenceMapSize, int registerReferenceMapSize) {
+    public TargetBundleLayout(int numberOfCatchRanges,
+                              int numberOfDirectCalls,
+                              int numberOfIndirectCalls,
+                              int numberOfSafepoints,
+                              int numberOfScalarLiteralBytes,
+                              int numberOfReferenceLiterals,
+                              int numberOfCodeBytes,
+                              int frameReferenceMapSize,
+                              int registerReferenceMapSize) {
 
         final LinearAllocatorHeapRegion region = new LinearAllocatorHeapRegion(Address.zero(), Size.fromLong(Long.MAX_VALUE), "TargetBundle");
 
@@ -213,6 +224,8 @@ public final class TargetBundleLayout {
 
     /**
      * Gets the array length based on which size of the cell reserved for a given field was calculated.
+     * @param field the array field
+     * @return the length
      */
     public int length(ArrayField field) {
         return lengths[field.ordinal()];
@@ -220,6 +233,7 @@ public final class TargetBundleLayout {
 
     /**
      * Gets the total size of this target bundle.
+     * @return the size of the entire bundle
      */
     public Size bundleSize() {
         return bundleSize;
@@ -261,7 +275,7 @@ public final class TargetBundleLayout {
                                 firstElementOffset(field).toInt(), length(field), cellSize.toInt(), field.arrayLayout.elementKind() + "[]"));
             }
         }
-        sb.append("bundle size=" + bundleSize().toInt());
+        sb.append("bundle size=").append(bundleSize().toInt());
         return sb.toString();
     }
 
@@ -269,9 +283,14 @@ public final class TargetBundleLayout {
      * Creates an object describing the layout of the target bundle associated with a given target method.
      */
     public static TargetBundleLayout from(TargetMethod targetMethod) {
-        final TargetBundleLayout sizeLayout = new TargetBundleLayout(targetMethod.numberOfCatchRanges(), targetMethod.numberOfDirectCalls(), targetMethod.numberOfIndirectCalls(),
-                        targetMethod.numberOfSafepoints(), targetMethod.numberOfScalarLiteralBytes(), targetMethod.numberOfReferenceLiterals(), targetMethod.codeLength(), targetMethod.frameReferenceMapSize(),
-                        targetMethod.registerReferenceMapSize());
-        return sizeLayout;
+        return new TargetBundleLayout(targetMethod.numberOfCatchRanges(),
+                targetMethod.numberOfDirectCalls(),
+                targetMethod.numberOfIndirectCalls(),
+                targetMethod.numberOfSafepoints(),
+                targetMethod.numberOfScalarLiteralBytes(),
+                targetMethod.numberOfReferenceLiterals(),
+                targetMethod.codeLength(),
+                targetMethod.frameReferenceMapSize(),
+                targetMethod.registerReferenceMapSize());
     }
 }

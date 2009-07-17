@@ -20,17 +20,15 @@
  */
 package com.sun.c1x.graph;
 
+import java.util.*;
+
 import com.sun.c1x.*;
 import com.sun.c1x.bytecode.*;
-import com.sun.c1x.opt.Canonicalizer;
-import com.sun.c1x.opt.ValueMap;
-import com.sun.c1x.opt.PhiSimplifier;
 import com.sun.c1x.ci.*;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.value.*;
 import com.sun.c1x.ir.*;
-
-import java.util.*;
+import com.sun.c1x.opt.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>GraphBuilder</code> class parses the bytecode of a method and builds the IR graph.
@@ -106,7 +104,7 @@ public class GraphBuilder {
             if (C1XOptions.InlineIntrinsics) {
                 // try to inline an Intrinsic node
                 boolean isStatic = method.isStatic();
-                int argsSize = method.signatureType().argumentSize(!isStatic);
+                int argsSize = method.signatureType().argumentSlots(!isStatic);
                 Instruction[] args = new Instruction[argsSize];
                 for (int i = 0; i < args.length; i++) {
                     args[i] = curState.localAt(i);
@@ -848,7 +846,7 @@ public class GraphBuilder {
     }
 
     void invokeStatic(CiMethod target) {
-        Instruction[] args = curState.popArguments(target.signatureType().argumentSize(false));
+        Instruction[] args = curState.popArguments(target.signatureType().argumentSlots(false));
         if (!tryOptimizeCall(target, args, true)) {
             if (!tryInline(target, args, null)) {
                 profileInvocation(target);
@@ -858,7 +856,7 @@ public class GraphBuilder {
     }
 
     void invokeInterface(CiMethod target) {
-        Instruction[] args = curState.popArguments(target.signatureType().argumentSize(true));
+        Instruction[] args = curState.popArguments(target.signatureType().argumentSlots(true));
         if (!tryOptimizeCall(target, args, false)) {
             // XXX: attempt devirtualization / deinterfacification of INVOKEINTERFACE
             profileCall(args[0], null);
@@ -867,7 +865,7 @@ public class GraphBuilder {
     }
 
     void invokeVirtual(CiMethod target) {
-        Instruction[] args = curState.popArguments(target.signatureType().argumentSize(true));
+        Instruction[] args = curState.popArguments(target.signatureType().argumentSlots(true));
         if (!tryOptimizeCall(target, args, false)) {
             Instruction receiver = args[0];
             // attempt to devirtualize the call
@@ -911,7 +909,7 @@ public class GraphBuilder {
     }
 
     void invokeSpecial(CiMethod target, CiType knownHolder) {
-        invokeDirect(target, curState.popArguments(target.signatureType().argumentSize(true)), knownHolder);
+        invokeDirect(target, curState.popArguments(target.signatureType().argumentSlots(true)), knownHolder);
     }
 
     private void invokeDirect(CiMethod target, Instruction[] args, CiType knownHolder) {
@@ -973,11 +971,11 @@ public class GraphBuilder {
     }
 
     Instruction getReceiver(CiMethod target) {
-        return curState.stackAt(curState.stackSize() - target.signatureType().argumentSize(false) - 1);
+        return curState.stackAt(curState.stackSize() - target.signatureType().argumentSlots(false) - 1);
     }
 
     Instruction[] popArguments(CiMethod target) {
-        return curState.popArguments(target.signatureType().argumentSize(false));
+        return curState.popArguments(target.signatureType().argumentSlots(false));
     }
 
     void callRegisterFinalizer() {
@@ -1379,7 +1377,7 @@ public class GraphBuilder {
             index = 1;
         }
         CiSignature sig = method.signatureType();
-        int max = sig.arguments();
+        int max = sig.argumentCount(false);
         for (int i = 0; i < max; i++) {
             CiType type = sig.argumentTypeAt(i);
             ValueType vt = ValueType.fromBasicType(type.basicType());
