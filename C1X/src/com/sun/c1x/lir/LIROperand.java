@@ -389,8 +389,7 @@ public abstract class LIROperand {
     }
 
     public void assignPhysicalRegister(LIROperand colorLirOpr) {
+        Util.shouldNotReachHere();
         // TODO Auto-generated method stub
-        // Assign a physical register from the given LIROperand
-
     }
 }

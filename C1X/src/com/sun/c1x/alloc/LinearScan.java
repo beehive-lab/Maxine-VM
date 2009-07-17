@@ -1143,7 +1143,7 @@ public class LinearScan extends RegisterAllocator {
     }
 
     boolean isProcessedRegNum(int reg) {
-        return reg >= 0 && reg < registerMapping.length && registerMapping[reg] != null;
+        return reg > Register.vregBase || (reg >= 0 && reg < registerMapping.length && registerMapping[reg] != null);
     }
 
     void addDef(int regNum, int defPos, IntervalUseKind useKind, BasicType type) {
@@ -2229,7 +2229,7 @@ public class LinearScan extends RegisterAllocator {
             interval.setCachedOpr(opr);
         }
 
-        assert opr == calcOperandForInterval(interval) : "wrong cached value";
+        assert opr.equals(calcOperandForInterval(interval)) : "wrong cached value";
         return opr;
     }
 

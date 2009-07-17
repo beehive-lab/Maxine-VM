@@ -228,6 +228,7 @@ public class IntervalWalker {
                     } else {
                         prevprev.next = next;
                     }
+                    prev = next;
                     if (cur.currentAtEnd()) {
                         // move to handled state (not maintained as a list)
                         cur.setState(IntervalState.handledState);
