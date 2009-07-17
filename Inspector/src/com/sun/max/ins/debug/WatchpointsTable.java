@@ -190,7 +190,7 @@ public final class WatchpointsTable extends InspectorTable {
                 case EXEC:
                     return watchpoint.isExec();
                 case GC:
-                    return watchpoint.isGC();
+                    return watchpoint.enableDuringGC();
                 default:
                     throw FatalError.unexpected("Unspected Watchpoint Data column");
             }
@@ -251,7 +251,7 @@ public final class WatchpointsTable extends InspectorTable {
                     break;
                 case GC:
                     newState = (Boolean) value;
-                    watchpoint.setGC(newState);
+                    watchpoint.setEnableDuringGC(newState);
                     inspection().settings().save();
                     break;
                 default:

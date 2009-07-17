@@ -58,8 +58,4 @@ public interface CiExceptionHandler {
      */
     boolean isCatchAll();
 
-    /**
-     * @return
-     */
-    CiType catchKlass();
 }
