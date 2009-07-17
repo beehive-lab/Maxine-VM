@@ -818,6 +818,7 @@ public abstract class TeleVM implements MaxVM {
      * @throws InvalidReferenceException if the argument does not point a valid heap object.
      */
     public final String getString(Reference stringReference)  throws InvalidReferenceException {
+        checkReference(stringReference);
         final Reference valueReference = fields().String_value.readReference(stringReference);
         checkReference(valueReference);
         int offset = fields().String_offset.readInt(stringReference);
@@ -872,7 +873,9 @@ public abstract class TeleVM implements MaxVM {
      * @throws InvalidReferenceException if the argument does not point to a valid heap object in the VM.
      */
     public final ClassActor makeClassActor(Reference classActorReference) throws InvalidReferenceException {
+        checkReference(classActorReference);
         final Reference utf8ConstantReference = fields().Actor_name.readReference(classActorReference);
+        checkReference(utf8ConstantReference);
         final Reference stringReference = fields().Utf8Constant_string.readReference(utf8ConstantReference);
         final String name = getString(stringReference);
         try {
