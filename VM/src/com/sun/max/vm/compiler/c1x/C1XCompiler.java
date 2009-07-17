@@ -42,7 +42,6 @@ import com.sun.max.annotate.PROTOTYPE_ONLY;
 import com.sun.max.PackageLoader;
 import com.sun.max.asm.InstructionSet;
 import com.sun.max.util.Symbol;
-import com.sun.max.platform.ProcessorModel;
 import com.sun.max.collect.AppendableSequence;
 import com.sun.max.collect.Sequence;
 import com.sun.max.unsafe.Word;
@@ -52,7 +51,6 @@ import com.sun.c1x.target.Architecture;
 import com.sun.c1x.target.Register;
 import com.sun.c1x.C1XCompilation;
 import com.sun.c1x.ci.CiMethod;
-import com.sun.c1x.ci.CiTargetMethod;
 
 import java.util.*;
 
