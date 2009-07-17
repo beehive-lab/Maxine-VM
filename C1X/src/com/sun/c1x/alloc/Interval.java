@@ -23,6 +23,7 @@ package com.sun.c1x.alloc;
 import java.util.*;
 
 import com.sun.c1x.lir.*;
+import com.sun.c1x.target.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
@@ -50,8 +51,7 @@ public class Interval {
 
     enum IntervalKind {
         fixedKind, // interval pre-colored by LIR_Generator
-        anyKind, // no register/memory allocated by LIR_Generator
-        nofKinds;
+        anyKind; // no register/memory allocated by LIR_Generator
     }
 
     // during linear scan an interval is in one of four states in
@@ -151,7 +151,7 @@ public class Interval {
     }
 
     void setType(BasicType type) {
-        assert regNum < Register.vregBase || type == BasicType.Illegal || this.type == type : "overwriting existing type";
+        assert regNum < Register.vregBase || this.type == BasicType.Illegal || this.type == type : "overwriting existing type";
         this.type = type;
     }
 
@@ -361,6 +361,7 @@ public class Interval {
         this.spillDefinitionPos = -1;
         splitParent = this;
         currentSplitChild = this;
+        splitChildren = new ArrayList<Interval>(4);
     }
 
     int calcTo() {
@@ -836,10 +837,5 @@ public class Interval {
 
         out.printf(" \"%s\"", spillState().toString());
         out.println();
-    }
-
-    public boolean isFixed() {
-        // TODO Auto-generated method stub
-        return false;
     }
 }

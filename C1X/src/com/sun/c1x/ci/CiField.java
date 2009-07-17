@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ci;
 
-import com.sun.c1x.value.BasicType;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>CiField</code> interface represents a reference to a field, including both

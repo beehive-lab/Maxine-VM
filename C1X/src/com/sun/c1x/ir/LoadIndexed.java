@@ -20,11 +20,9 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.CiType;
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.BasicType;
-import com.sun.c1x.util.InstructionVisitor;
-import com.sun.c1x.util.Util;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>LoadIndexed</code> instruction represents a read from an element of an array.

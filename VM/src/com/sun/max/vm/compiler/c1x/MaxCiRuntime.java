@@ -23,7 +23,7 @@ package com.sun.max.vm.compiler.c1x;
 import java.util.*;
 
 import com.sun.c1x.ci.*;
-import com.sun.c1x.lir.*;
+import com.sun.c1x.target.*;
 import com.sun.c1x.target.x86.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
@@ -195,7 +195,8 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public boolean dtraceMethodProbes() {
-        throw Util.unimplemented();
+        // TODO: currently save to return false
+        return false;
     }
 
     public long getRuntimeEntry(CiRuntimeCall runtimeCall) {
@@ -487,5 +488,86 @@ public class MaxCiRuntime implements CiRuntime {
 
     public int vtableLengthOffset() {
         throw Util.unimplemented();
+    }
+
+    @Override
+    public Register[] getAllocatableRegisters() {
+        final List<Register> result = new ArrayList<Register>();
+        result.addAll(Arrays.asList(X86Register.cpuRegisters64));
+        result.addAll(Arrays.asList(X86Register.fpuRegisters));
+        result.addAll(Arrays.asList(X86Register.xmmRegisters64));
+        return result.toArray(new Register[result.size()]);
+    }
+
+    @Override
+    public int javaCallingConvention(CiMethod method, CiLocation[] result, boolean outgoing) {
+
+        int iGeneral = 0;
+        int iXMM = 0;
+        final CiSignature signature = method.signatureType();
+
+
+        final int argumentCount = signature.argumentCount(!method.isStatic());
+
+
+        for (int i = 0; i < argumentCount; i++) {
+
+            final BasicType kind;
+            if (i == 0 && !method.isStatic()) {
+                kind = BasicType.Object;
+            } else {
+                kind = signature.argumentBasicTypeAt(i);
+            }
+
+            switch (kind) {
+                case Byte:
+                case Boolean:
+                case Short:
+                case Char:
+                case Int:
+                case Long:
+                case Word:
+                case Object: {
+                    if (iGeneral < X86Register.cpuRegisters.length) {
+                        result[i] = new CiLocation(X86Register.cpuRegisters[iGeneral++]);
+                    }
+                    break;
+                }
+                case Float:
+                case Double: {
+                    if (iXMM < X86Register.xmmRegisters.length) {
+                        result[i] = new CiLocation(X86Register.xmmRegisters[iXMM++]);
+                    }
+                    break;
+                }
+                case Void:
+                    result[i] = null;
+                    break;
+
+                default:
+                    throw Util.shouldNotReachHere();
+            }
+        }
+
+        for (int i = 0; i < result.length; i++) {
+            if (result[i] == null) {
+                throw Util.shouldNotReachHere();
+                // Currently cannot return stack slot
+            }
+        }
+
+        // Return preserved stack size
+        return 0;
+    }
+
+    @Override
+    public int outPreserveStackSlots() {
+        // This is probably correct for now.
+        return 0;
+    }
+
+    @Override
+    public Register[] callerSavedRegisters() {
+        return getAllocatableRegisters();
     }
 }

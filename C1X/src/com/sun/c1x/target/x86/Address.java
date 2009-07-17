@@ -22,7 +22,6 @@ package com.sun.c1x.target.x86;
 
 import com.sun.c1x.asm.*;
 import com.sun.c1x.asm.RelocInfo.*;
-import com.sun.c1x.lir.*;
 import com.sun.c1x.lir.LIRAddress.*;
 import com.sun.c1x.target.*;
 

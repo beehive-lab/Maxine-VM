@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.target.*;
 import com.sun.c1x.util.*;
 
 
@@ -104,8 +103,8 @@ public class Location {
       };
 
     // Stack location Factory. Offset is 4-byte aligned; remove low bits
-    static Location newStkLoc(LocationType t, int offset) {
-        return new Location(Where.OnStack, t, offset >> Architecture.AMD64.logBytesPerInt); // TODO : Need to get the logBytesPerInt from the target statically
+    static Location newStkLoc(LocationType t, int offset, int logBytesPerInt) {
+        return new Location(Where.OnStack, t, offset >> logBytesPerInt); // TODO : Need to get the logBytesPerInt from the target statically
     }
 
     // Register location Factory
@@ -193,9 +192,9 @@ public class Location {
         return where == Where.OnStack;
     }
 
-    public int stackOffset() {
+    public int stackOffset(int logBytesPerInt) {
         assert where == Where.OnStack : "wrong Where";
-        return offset << Architecture.AMD64.logBytesPerInt;
+        return offset << logBytesPerInt;
     }
 
     public int registerNumber() {
@@ -208,7 +207,7 @@ public class Location {
         return VMRegImplementation.asVMReg(offset);
     }
 
-    public void printOn(LogStream out) {
+    public void printOn(LogStream out, int logBytesPerInt) {
         if (type == LocationType.Invalid) {
             // product of Location.invalidLoc() or Location.Location().
             switch (where) {
@@ -223,7 +222,7 @@ public class Location {
         }
         switch (where()) {
             case OnStack:
-                out.printf("stack[%d]", stackOffset());
+                out.printf("stack[%d]", stackOffset(logBytesPerInt));
                 break;
             case InRegister:
                 out.printf("reg %s [%d]", reg().name(), registerNumber());
@@ -270,8 +269,8 @@ public class Location {
         stream.writeInt(packLocationInfo());
     }
 
-    public boolean legalOffsetInBytes(int offsetInBytes) {
-        if ((offsetInBytes % Architecture.AMD64.wordSize) != 0) {
+    public boolean legalOffsetInBytes(int offsetInBytes, int wordSize) {
+        if ((offsetInBytes % wordSize) != 0) {
             return false;
         }
         return true;

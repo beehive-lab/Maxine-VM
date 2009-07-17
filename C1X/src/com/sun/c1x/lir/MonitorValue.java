@@ -77,7 +77,7 @@ public class MonitorValue extends ScopeValue {
         out.print("monitor{");
         owner.printOn(out);
         out.print(",");
-        basicLock.printOn(out);
+        basicLock.printOn(out, 8); // TODO: !!!! resolve to logBytesPerInt
         out.print("}");
         if (eliminated) {
             out.print(" (eliminated)");

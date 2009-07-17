@@ -20,12 +20,7 @@
  */
 package com.sun.c1x.target;
 
-import com.sun.c1x.value.BasicType;
-
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-
-import com.sun.c1x.lir.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>Target</code> class represents the target of a compilation, including
@@ -43,34 +38,18 @@ public class Target {
     public int stackAlignment;
     public int cacheAlignment;
     public int heapAlignment;
+    public final Register[] allocatableRegisters;
+    public final Register[] callerSavedRegisters;
 
-    public Target(Architecture arch) {
+    public Target(Architecture arch, Register[] allocatableRegisters, Register[] callerSavedRegisters) {
         this.arch = arch;
         referenceSize = arch.wordSize;
         stackAlignment = arch.wordSize;
         cacheAlignment = arch.wordSize;
         heapAlignment = arch.wordSize;
-        backend = makeBackend(arch);
-    }
-
-    private Backend makeBackend(Architecture arch) {
-        // load and instantiate the backend via reflection
-        String className = "com.sun.c1x.target." + arch.backend + "." + arch.backend.toUpperCase() + "Backend";
-        try {
-            Class<?> javaClass = Class.forName(className);
-            Constructor<?> constructor = javaClass.getDeclaredConstructor(Target.class);
-            return (Backend) constructor.newInstance(this);
-        } catch (InstantiationException e) {
-            throw new Error("could not instantiate backend class: " + className);
-        } catch (IllegalAccessException e) {
-            throw new Error("could not access backend class: " + className);
-        } catch (ClassNotFoundException e) {
-            throw new Error("could not find backend class: " + className);
-        } catch (NoSuchMethodException e) {
-            throw new Error("could not find backend class constructor: " + className);
-        } catch (InvocationTargetException e) {
-            throw new Error("backend constructor threw an exception: " + e, e.getTargetException());
-        }
+        backend = arch.getBackend(this);
+        this.callerSavedRegisters = callerSavedRegisters;
+        this.allocatableRegisters = allocatableRegisters;
     }
 
     /**
@@ -99,35 +78,6 @@ public class Target {
      */
     public int sizeInBytes(BasicType basicType) {
         return basicType.sizeInBytes(referenceSize, arch.wordSize);
-    }
-    public Register jRarg0() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public Register jRarg1() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public Register jRarg2() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public Register jRarg3() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public Register jRarg4() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public Register jRarg5() {
-        // TODO Auto-generated method stub
-        return null;
     }
 
     public boolean supportsSSE() {
@@ -213,44 +163,5 @@ public class Target {
     public boolean isSolaris() {
         // TODO Auto-generated method stub
         return false;
-    }
-
-    public Register pdFirstFpuReg() {
-        return null;
-    }
-
-    public Register pdLastFpuReg() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public Register pdFirstCpuReg() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public Register pdLastCpuReg() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-        // TODO Auto-generated method stub
-    public Register pdFirstByteReg() {
-        return null;
-    }
-
-    public Register pdLastByteReg() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public Register pdFirstXmmReg() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public Register pdLastXmmReg() {
-        // TODO Auto-generated method stub
-        return null;
     }
 }

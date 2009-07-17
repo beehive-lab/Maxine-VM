@@ -25,12 +25,16 @@ package com.sun.c1x.util;
  * a range of integers (0-n).
  *
  * @author Ben L. Titzer
+ * @author Thomas Wuerthinger
  */
 public class BitMap {
 
+    private static final int BitsPerWord = 32;
+    private static final int LogBitsPerWord = Util.log2(BitsPerWord);
+
     private final int length;
-    private int low32;
-    private int[] extra32;
+    private int low;
+    private int[] extra;
 
     /**
      * Construct a new bit map with the specified length.
@@ -38,8 +42,8 @@ public class BitMap {
      */
     public BitMap(int length) {
         this.length = length;
-        if (length > 32) {
-            extra32 = new int[length >> 5];
+        if (length > BitsPerWord) {
+            extra = new int[length >> LogBitsPerWord];
         }
     }
 
@@ -48,13 +52,21 @@ public class BitMap {
      * @param i the index of the bit to set
      */
     public void set(int i) {
-        if (checkIndex(i) < 32) {
-            low32 |= 1 << i;
+        if (checkIndex(i) < BitsPerWord) {
+            low |= 1 << i;
         } else {
-            int pos = (i >> 5) - 1;
-            int index = i & 31;
-            extra32[pos] |= 1 << index;
+            int pos = wordIndex(i);
+            int index = bitInWord(i);
+            extra[pos] |= 1 << index;
         }
+    }
+
+    private int bitInWord(int i) {
+        return i & (BitsPerWord - 1);
+    }
+
+    private int wordIndex(int i) {
+        return (i >> LogBitsPerWord) - 1;
     }
 
     /**
@@ -62,12 +74,12 @@ public class BitMap {
      * @param i the index of the bit to clear
      */
     public void clear(int i) {
-        if (checkIndex(i) < 32) {
-            low32 &= ~(1 << i);
+        if (checkIndex(i) < BitsPerWord) {
+            low &= ~(1 << i);
         } else {
-            int pos = (i >> 5) - 1;
-            int index = i & 31;
-            extra32[pos] &= ~(1 << index);
+            int pos = wordIndex(i);
+            int index = bitInWord(i);
+            extra[pos] &= ~(1 << index);
         }
     }
 
@@ -75,10 +87,10 @@ public class BitMap {
      * Sets all the bits in this bitmap.
      */
     public void setAll() {
-        low32 = -1;
-        if (extra32 != null) {
-            for (int i = 0; i < extra32.length; i++) {
-                extra32[i] = -1;
+        low = -1;
+        if (extra != null) {
+            for (int i = 0; i < extra.length; i++) {
+                extra[i] = -1;
             }
         }
     }
@@ -87,46 +99,50 @@ public class BitMap {
      * Clears all the bits in this bitmap.
      */
     public void clearAll() {
-        low32 = 0;
-        if (extra32 != null) {
-            for (int i = 0; i < extra32.length; i++) {
-                extra32[i] = 0;
+        low = 0;
+        if (extra != null) {
+            for (int i = 0; i < extra.length; i++) {
+                extra[i] = 0;
             }
         }
     }
 
     /**
      * Gets the value of the bit at the specified index.
-     * @param i the index of the bit to get
+     *
+     * @param i
+     *            the index of the bit to get
      * @return <code>true</code> if the bit at the specified position is <code>1</code>
      */
     public boolean get(int i) {
-        if (checkIndex(i) < 32) {
-            return ((low32 >> i) & 1) != 0;
+        if (checkIndex(i) < BitsPerWord) {
+            return ((low >> i) & 1) != 0;
         }
-        int pos = (i >> 5) - 1;
-        int index = i & 31;
-        int bits = extra32[pos];
+        int pos = wordIndex(i);
+        int index = bitInWord(i);
+        int bits = extra[pos];
         return ((bits >> index) & 1) != 0;
     }
 
     /**
-     * Performs the union operation on this bitmap with the specified bitmap.
-     * That is, all bits set in either of the two bitmaps will be set in
-     * this bitmap following this operation.
-     * @param other the other bitmap for the union operation
+     * Performs the union operation on this bitmap with the specified bitmap. That is, all bits set in either of the two
+     * bitmaps will be set in this bitmap following this operation.
+     *
+     * @param other
+     *            the other bitmap for the union operation
      */
     public void setUnion(BitMap other) {
-        low32 |= other.low32;
-        if (extra32 != null && other.extra32 != null) {
-            for (int i = 0; i < extra32.length && i < other.extra32.length; i++) {
-                extra32[i] |= other.extra32[i];
+        low |= other.low;
+        if (extra != null && other.extra != null) {
+            for (int i = 0; i < extra.length && i < other.extra.length; i++) {
+                extra[i] |= other.extra[i];
             }
         }
     }
 
     /**
      * Gets the size of this bitmap in bits.
+     *
      * @return the size of this bitmap
      */
     public int size() {
@@ -140,14 +156,24 @@ public class BitMap {
         return i;
     }
 
-    public void setFrom(BitMap liveOut) {
-        // TODO Auto-generated method stub
+    public void setFrom(BitMap other) {
+        assert this.length == other.length : "must have same size";
+
+        low = other.low;
+        if (extra != null) {
+            for (int i = 0; i < extra.length; i++) {
+                extra[i] = other.extra[i];
+            }
+        }
     }
 
     /**
      * Sets the bits for a given range [start, end] on this bitmap.
-     * @param start the first bit of the range
-     * @param end the last bit of the range
+     *
+     * @param start
+     *            the first bit of the range
+     * @param end
+     *            the last bit of the range
      */
     public void setRange(int start, int end) {
         while (start <= end) {
@@ -156,17 +182,92 @@ public class BitMap {
     }
 
     public void setDifference(BitMap liveKill) {
-        // TODO Auto-generated method stub
+        assert this.length == liveKill.length : "must have same size";
 
+        low &= ~liveKill.low;
+        if (extra != null) {
+            for (int i = 0; i < extra.length; i++) {
+                extra[i] &= ~liveKill.extra[i];
+            }
+        }
     }
 
     public boolean isSame(BitMap liveOut) {
-        // TODO Auto-generated method stub
-        return false;
+        if (this.length != liveOut.length || this.low != liveOut.low) {
+            return false;
+        }
+
+        if (extra != null) {
+            for (int i = 0; i < extra.length; i++) {
+                if (extra[i] != liveOut.extra[i]) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
-    public int getNextOneOffset(int i, int size) {
-        // TODO Auto-generated method stub
-        return 0;
+    public int getNextOneOffset(int lOffset, int rOffset) {
+        assert lOffset <= size() : "BitMap index out of bounds";
+        assert rOffset <= size() : "BitMap index out of bounds";
+        assert lOffset <= rOffset : "lOffset > rOffset ?";
+
+        if (lOffset == rOffset) {
+            return lOffset;
+        }
+        int index = wordIndex(lOffset);
+        int rIndex = wordIndex(rOffset - 1) + 1;
+        int resOffset = lOffset;
+
+        // check bits including and to the left_ of offset's position
+        int pos = bitInWord(resOffset);
+        int res = map(index) >> pos;
+        if (res != 0) {
+            // find the position of the 1-bit
+            for (; (res & 1) == 0; resOffset++) {
+                res = res >> 1;
+            }
+            assert resOffset >= lOffset && resOffset < rOffset : "just checking";
+            return Math.min(resOffset, rOffset);
+        }
+        // skip over all word length 0-bit runs
+        for (index++; index < rIndex; index++) {
+            res = map(index);
+            if (res != 0) {
+                // found a 1, return the offset
+                for (resOffset = bitIndex(index); (res & 1) == 0; resOffset++) {
+                    res = res >> 1;
+                }
+                assert (res & 1) == 1 : "tautology; see loop condition";
+                assert resOffset >= lOffset : "just checking";
+                return Math.min(resOffset, rOffset);
+            }
+        }
+        return rOffset;
+    }
+
+    private int bitIndex(int index) {
+        return (index + 1) << LogBitsPerWord;
+    }
+
+    private int map(int index) {
+        if (index == -1) {
+            return low;
+        }
+        return extra[index];
+    }
+
+    @Override
+    public String toString() {
+        StringBuffer res = new StringBuffer();
+        res.append("[");
+        for (int i = 0; i < this.length; i++) {
+            if (this.get(i)) {
+                res.append(i + " ");
+            }
+        }
+        res.append("]");
+        return res.toString();
     }
 }

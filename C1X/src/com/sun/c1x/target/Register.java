@@ -18,7 +18,9 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.target;
+
+import com.sun.c1x.lir.*;
 
 /**
  * The <code>Register</code> class definition.
@@ -30,13 +32,39 @@ package com.sun.c1x.lir;
 public class Register {
 
     public static final int vregBase = 50;
+
     public final int number;
     public final String name;
+    private final int flags;
     public static final Register anyReg = new Register(-1, "any");
 
-    protected Register(int number, String name) {
+    public enum RegisterFlag {
+        Cpu,
+        Byte,
+        Fpu,
+        Xmm;
+
+        public int mask() {
+            return 1 << (ordinal() + 1);
+        }
+    }
+
+    protected Register(int number, String name, RegisterFlag... flags) {
         this.number = number;
         this.name = name;
+        this.flags = createMask(flags);
+    }
+
+    private int createMask(RegisterFlag... flags) {
+        int result = 0;
+        for (RegisterFlag f : flags) {
+            result |= f.mask();
+        }
+        return result;
+    }
+
+    private boolean checkFlag(RegisterFlag f) {
+        return (flags & f.mask()) != 0;
     }
 
     public boolean isValid() {
@@ -74,17 +102,23 @@ public class Register {
     }
 
     public boolean isFpu() {
-        // TODO Auto-generated method stub
-        return false;
+        return checkFlag(RegisterFlag.Fpu);
     }
 
     public boolean isXmm() {
-        // TODO Auto-generated method stub
-        return false;
+        return checkFlag(RegisterFlag.Xmm);
     }
 
     public VMReg asVMReg() {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    public boolean isCpu() {
+        return checkFlag(RegisterFlag.Cpu);
+    }
+
+    public boolean isByte() {
+        return checkFlag(RegisterFlag.Byte);
     }
 }

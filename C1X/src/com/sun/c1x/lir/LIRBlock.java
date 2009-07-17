@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.util.BitMap;
+import com.sun.c1x.util.*;
 
 /**
  * The <code>LIRBlock</code> class definition.
@@ -29,14 +29,14 @@ import com.sun.c1x.util.BitMap;
  */
 public class LIRBlock {
 
-    BitMap liveIn;
-    BitMap liveOut;
-    BitMap liveGen;
-    BitMap liveKill;
+    public BitMap liveIn;
+    public BitMap liveOut;
+    public BitMap liveGen;
+    public BitMap liveKill;
 
-    BitMap fpuRegisterUsage;
-    int[] fpuStackState;
-    int firstLirInstructionID;
-    int lastLirInstructionID;
-    int exceptionHandlerPCO;
+    public BitMap fpuRegisterUsage;
+    public int[] fpuStackState;
+    public int firstLirInstructionID;
+    public int lastLirInstructionID;
+    public int exceptionHandlerPCO;
 }

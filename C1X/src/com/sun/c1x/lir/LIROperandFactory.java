@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.ci.*;
+import com.sun.c1x.target.*;
 import com.sun.c1x.target.x86.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
@@ -173,6 +175,14 @@ public class LIROperandFactory {
     public static LIROperand longConst(int i) {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    public static LIROperand registerPairToOperand(CiLocation pair) {
+        if (pair.second == null) {
+            return singleCpu(pair.first);
+        } else {
+            return doubleCpu(pair.first, pair.second);
+        }
     }
 
     // TODO to be completed

@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.util.InstructionClosure;
-import com.sun.c1x.value.BasicType;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>UnsafeObjectOp</code> class is the base of all unsafe object instructions.

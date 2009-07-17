@@ -20,12 +20,11 @@
  */
 package com.sun.c1x;
 
-import com.sun.c1x.ci.CiMethod;
-import com.sun.c1x.ci.CiType;
-import com.sun.c1x.util.Util;
+import java.lang.reflect.*;
+import java.util.*;
 
-import java.util.HashMap;
-import java.lang.reflect.Method;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.util.*;
 
 /**
  * The <code>C1XIntrinsic</code> class represents an intrinsic, i.e. a library method that

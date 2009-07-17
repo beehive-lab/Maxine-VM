@@ -18,44 +18,33 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.opt;
+package com.sun.c1x;
+
+import java.util.*;
 
 import com.sun.c1x.ir.*;
-import com.sun.c1x.util.*;
 
 /**
- * The <code>SubstitutionResolver</code> iterates over the instructions of a program and replaces
- * the occurrence of each instruction with its substitution, if it has one.
  *
- * @author Ben L. Titzer
+ * @author Thomas Wuerthinger
+ *
  */
-public class SubstitutionResolver implements BlockClosure, InstructionClosure {
+public class ExceptionInfo {
 
-    /**
-     * Creates a new SubstitutionResolver and applies it to each instruction
-     * in the IR graph, starting from the specified block.
-     * @param block the block from which to start substitution
-     */
-    public SubstitutionResolver(BlockBegin block) {
-        block.iteratePreOrder(this);
+    private int pco;
+    private List<ExceptionHandler> exceptionHandlers;
+
+    public ExceptionInfo(int pcOffset, List<ExceptionHandler> exceptionHandlers) {
+        this.pco = pcOffset;
+        this.exceptionHandlers = exceptionHandlers;
     }
 
-    public void apply(BlockBegin block) {
-        Instruction last = null;
-        for (Instruction n = block; n != null; n = last.next()) {
-            n.allValuesDo(this);
-            if (n.subst() != n && last != null) {
-                last.setNext(n.next(), n.next().bci());
-            } else {
-                last = n;
-            }
-        }
+    public int pco() {
+        return pco;
     }
 
-    public Instruction apply(Instruction i) {
-        if (i != null) {
-            return i.subst();
-        }
-        return i;
+    public List<ExceptionHandler> exceptionHandlers() {
+        return exceptionHandlers;
     }
+
 }

@@ -60,7 +60,7 @@ public class CodeEmitInfo {
         this.next = null;
         this.id = -1;
         assert this.stack != null : "must be non null";
-        assert bci == C1XOptions.InvocationEntryBci || Bytecodes.isDefined(scope().method().javaCodeAtBci(bci)) : "make sure bci points at a real bytecode";
+        assert bci == C1XOptions.InvocationEntryBci || Bytecodes.isDefined(scope().method.javaCodeAtBci(bci)) : "make sure bci points at a real bytecode";
     }
 
     // used by natives
@@ -119,7 +119,7 @@ public class CodeEmitInfo {
     }
 
     public CiMethod method() {
-        return scope.method();
+        return scope.method;
     }
 
     public List<ExceptionHandler> exceptionHandlers() {

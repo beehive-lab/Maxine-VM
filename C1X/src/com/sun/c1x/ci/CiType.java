@@ -21,7 +21,7 @@
 package com.sun.c1x.ci;
 
 import com.sun.c1x.util.*;
-import com.sun.c1x.value.BasicType;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>CiType</code> interface represents a resolved or unresolved type in the compiler

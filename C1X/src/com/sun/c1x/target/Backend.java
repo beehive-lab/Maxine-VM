@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.target;
 
-import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.gen.*;
@@ -38,12 +38,8 @@ public abstract class Backend {
         this.target = target;
     }
 
-    public abstract FrameMap newFrameMap(CiMethod method, int numberOfLocks, int maxStack);
+    public abstract FrameMap newFrameMap(C1XCompilation compilation, CiMethod method, int numberOfLocks, int maxStack);
     public abstract LIRGenerator newLIRGenerator(C1XCompilation compilation);
     public abstract LIRAssembler newLIRAssembler(C1XCompilation compilation);
     public abstract AbstractAssembler newAssembler(C1XCompilation c1xCompilation, CodeBuffer code);
-
-    public abstract int nofCpuRegs();
-    public abstract int nofFpuRegs();
-    public abstract int nofXmmRegs();
 }
