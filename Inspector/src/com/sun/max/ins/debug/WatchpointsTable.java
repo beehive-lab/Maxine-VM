@@ -551,29 +551,15 @@ public final class WatchpointsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxWatchpoint watchpoint = tableModel.get(row);
             final MaxWatchpoint triggeredWatchpoint = maxVM().findTriggeredWatchpoint();
-            final int watchpointCode;
 
             if (triggeredWatchpoint == null) {
                 return this;
             }
 
             if (triggeredWatchpoint.equals(watchpoint)) {
-                String text;
-                watchpointCode = maxVM().getTriggeredWatchpointCode();
-
-                if (watchpointCode == 5) {
-                    text = "exec";
-                } else if (watchpointCode == 4) {
-                    text = "write";
-                } else if (watchpointCode == 3) {
-                    text = "read";
-                } else {
-                    text = "unknown";
-                }
-                text += "(" + String.valueOf(watchpointCode) + ")";
-
-                setText(text);
-                setToolTipText("Access of memory location " + watchpointCode + " triggered watchpoint");
+                final String watchpointCode = maxVM().getTriggeredWatchpointCode();
+                setText(watchpointCode);
+                setToolTipText(watchpointCode + " access of memory location triggered watchpoint");
             } else {
                 setText("");
                 setToolTipText("No Thread stopped at this watchpoint");

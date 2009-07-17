@@ -385,7 +385,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         private int relocatableWatchpointsCounter = 0;
 
         private Address triggeredWatchpointAddress;
-        private int triggeredWatchpointCode;
+        private String triggeredWatchpointCode;
 
         public Factory(TeleProcess teleProcess) {
             this.teleProcess = teleProcess;
@@ -714,7 +714,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
          * Returns the code of the triggered watchpoint.
          * @return
          */
-        public int getTriggeredWatchpointCode() {
+        public String getTriggeredWatchpointCode() {
             return triggeredWatchpointCode;
         }
 

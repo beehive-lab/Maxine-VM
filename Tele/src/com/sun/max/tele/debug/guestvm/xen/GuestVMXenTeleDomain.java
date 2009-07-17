@@ -154,7 +154,15 @@ public class GuestVMXenTeleDomain extends TeleProcess {
     }
 
     @Override
-    protected int readWatchpointAccessCode() {
-        return GuestVMXenDBChannel.readWatchpointAccessCode(domainId);
+    protected String readWatchpointAccessCode() {
+        int code = GuestVMXenDBChannel.readWatchpointAccessCode(domainId);
+        if (code == 1) {
+            return "read";
+        } else if (code == 2) {
+            return "write";
+        } else if (code == 4) {
+            return "exec";
+        }
+        return "n/a";
     }
 }

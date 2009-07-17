@@ -774,7 +774,7 @@ public interface MaxVM {
      * Returns the code of the triggered watchpoint.
      * @return
      */
-    int getTriggeredWatchpointCode();
+    String getTriggeredWatchpointCode();
 
     /**
      * Returns thread that triggered watchpoint.

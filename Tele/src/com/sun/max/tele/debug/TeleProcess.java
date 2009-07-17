@@ -667,7 +667,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         return 0;
     }
 
-    protected int readWatchpointAccessCode() {
-        return 0;
+    protected String readWatchpointAccessCode() {
+        return "";
     }
 }
