@@ -40,7 +40,6 @@ import com.sun.max.program.Classpath.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleBytecodeBreakpoint.*;
-import com.sun.max.tele.debug.TeleNativeThread.*;
 import com.sun.max.tele.debug.TeleWatchpoint.*;
 import com.sun.max.tele.debug.darwin.*;
 import com.sun.max.tele.debug.guestvm.xen.*;
@@ -530,11 +529,20 @@ public abstract class TeleVM implements MaxVM {
     public void notifyStateChange(ProcessState processState,
                     long epoch,
                     TeleNativeThread singleStepThread,
-                    Sequence<TeleNativeThread> breakpointThreads,
                     Collection<TeleNativeThread> threads,
                     Sequence<TeleNativeThread> threadsStarted,
-                    Sequence<TeleNativeThread> threadsDied) {
-        this.teleVMState = new TeleVMState(processState, epoch, singleStepThread, breakpointThreads, threads, threadsStarted, threadsDied, isInGC, teleVMState);
+                    Sequence<TeleNativeThread> threadsDied,
+                    Sequence<TeleNativeThread> breakpointThreads, TeleWatchpointEvent teleWatchpointEvent) {
+        this.teleVMState = new TeleVMState(processState,
+            epoch,
+            threads,
+            singleStepThread,
+            threadsStarted,
+            threadsDied,
+            breakpointThreads,
+            teleWatchpointEvent,
+            isInGC,
+            teleVMState);
         final Sequence<TeleVMStateObserver> observers;
         synchronized (this.observers) {
             observers = this.observers.clone();
@@ -1181,30 +1189,6 @@ public abstract class TeleVM implements MaxVM {
         return teleProcess.watchpointFactory().setVmThreadLocalWatchpoint(description, teleThreadLocalValues, index, after, read, write, exec);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#triggeredWatchpointAddress()
-     */
-    public final Address getTriggeredWatchpointAddress() {
-        return teleProcess.watchpointFactory().getTriggeredWatchpointAddress();
-    }
-
-    /*
-     * (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#getTriggeredWatchpointCode()
-     */
-    public final int getTriggeredWatchpointCode() {
-        return teleProcess.watchpointFactory().getTriggeredWatchpointCode();
-    }
-
-    /*
-     * (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#findTriggeredWatchpoint()
-     */
-    public final MaxWatchpoint findTriggeredWatchpoint() {
-        return teleProcess.watchpointFactory().findTriggeredWatchpoint();
-    }
-
     /* (non-Javadoc)
      * @see com.sun.max.tele.MaxVM#findWatchpoint(com.sun.max.memory.MemoryRegion)
      */
@@ -1231,15 +1215,6 @@ public abstract class TeleVM implements MaxVM {
      */
     public final int transportDebugLevel() {
         return teleProcess.transportDebugLevel();
-    }
-
-    public final MaxThread findTriggeredWatchpointThread() {
-        for (MaxThread thread : maxVMState().threads()) {
-            if (thread.state() == ThreadState.WATCHPOINT) {
-                return thread;
-            }
-        }
-        return null;
     }
 
     /**

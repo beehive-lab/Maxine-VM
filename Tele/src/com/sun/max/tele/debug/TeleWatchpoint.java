@@ -568,36 +568,6 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         }
 
         /**
-         * Finds the watchpoint which triggered a signal.
-         * @return triggered watchpoint
-         */
-        public MaxWatchpoint findTriggeredWatchpoint() {
-            triggeredWatchpointAddress = Address.fromLong(teleProcess.readWatchpointAddress());
-            if (triggeredWatchpointAddress.equals(Word.zero())) {
-                return null;
-            }
-            triggeredWatchpointCode = teleProcess.readWatchpointAccessCode();
-
-            return findWatchpoint(triggeredWatchpointAddress);
-        }
-
-        /**
-         * Returns the address which triggered the watchpoint.
-         * @return
-         */
-        public Address getTriggeredWatchpointAddress() {
-            return triggeredWatchpointAddress;
-        }
-
-        /**
-         * Returns the code of the triggered watchpoint.
-         * @return
-         */
-        public int getTriggeredWatchpointCode() {
-            return triggeredWatchpointCode;
-        }
-
-        /**
          * Find an existing watchpoint set in the VM.
          * <br>
          * thread-safe
