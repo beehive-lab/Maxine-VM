@@ -64,6 +64,7 @@ public class RangeCheckStub extends CodeStub {
         return throwIndexOutOfBoundsException;
     }
 
+    @Override
     public boolean isExceptionThrowStub() {
         return true;
     }

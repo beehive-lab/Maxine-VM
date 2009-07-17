@@ -23,11 +23,12 @@ package com.sun.c1x.lir;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.alloc.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.util.*;
 import com.sun.c1x.stub.*;
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -41,6 +42,10 @@ public class LIRList {
     private List<LIRInstruction> operations;
     private final C1XCompilation compilation;
     private final BlockBegin block;
+
+    public LIRList(C1XCompilation compilation) {
+        this(compilation, null);
+    }
 
     public LIRList(C1XCompilation compilation, BlockBegin block) {
         this.compilation = compilation;
@@ -639,10 +644,11 @@ public class LIRList {
         TTY.println("LIR:");
         int i;
         for (i = 0; i < blocks.size(); i++) {
-          BlockBegin bb = blocks.get(i);
-          printBlock(bb);
-          TTY.print("IdInstruction_"); TTY.cr();
-          bb.lir().printInstructions();
+            BlockBegin bb = blocks.get(i);
+            printBlock(bb);
+            TTY.print("IdInstruction_");
+            TTY.cr();
+            bb.lir().printInstructions();
         }
     }
 
@@ -652,5 +658,40 @@ public class LIRList {
             TTY.println();
         }
         TTY.cr();
+    }
+
+    public void append(LIRInsertionBuffer buffer) {
+        assert this == buffer.lirList() : "wrong lir list";
+        int n = operations.size();
+
+        if (buffer.numberOfOps() > 0) {
+            // increase size of instructions list
+            for (int i = 0; i < buffer.numberOfOps(); i++) {
+                operations.add(null);
+            }
+            // insert ops from buffer into instructions list
+            int opIndex = buffer.numberOfOps() - 1;
+            int ipIndex = buffer.numberOfInsertionPoints() - 1;
+            int fromIndex = n - 1;
+            int toIndex = operations.size() - 1;
+            for (; ipIndex >= 0; ipIndex--) {
+                int index = buffer.indexAt(ipIndex);
+                // make room after insertion point
+                while (index < fromIndex) {
+                    operations.set(toIndex--, operations.get(fromIndex--));
+                }
+                // insert ops from buffer
+                for (int i = buffer.countAt(ipIndex); i > 0; i--) {
+                    operations.set(toIndex--, buffer.opAt(opIndex--));
+                }
+            }
+        }
+
+        buffer.finish();
+    }
+
+    public void insertBefore(int i, LIRInstruction op) {
+        // TODO Auto-generated method stub
+
     }
 }

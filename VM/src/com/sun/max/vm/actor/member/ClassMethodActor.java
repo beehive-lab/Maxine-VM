@@ -49,8 +49,31 @@ import com.sun.org.apache.bcel.internal.generic.*;
  */
 public abstract class ClassMethodActor extends MethodActor {
 
+    private static boolean traceJNI;
+
+    static {
+        register(new VMBooleanXXOption("-XX:-TraceJNI", "Trace JNI calls.") {
+            @Override
+            public boolean parseValue(Pointer optionValue) {
+                traceJNI = getValue();
+                return true;
+            }
+        }, MaxineVM.Phase.STARTING);
+    }
+
     @INSPECTED
     private CodeAttribute codeAttribute;
+
+    @INSPECTED
+    private MethodState methodState;
+
+    private ClassMethodActor compilee;
+
+    /**
+     * The object representing the linkage of this native method actor to a native machine code address.
+     * This value is {@code null} if this method is not {@linkplain #isNative() native}
+     */
+    public final NativeFunction nativeFunction;
 
     public ClassMethodActor(Utf8Constant name, SignatureDescriptor descriptor, int flags, CodeAttribute codeAttribute) {
         super(name, descriptor, flags);
@@ -65,12 +88,10 @@ public abstract class ClassMethodActor extends MethodActor {
         return descriptor().computeNumberOfSlots() + ((isStatic()) ? 0 : 1);
     }
 
-    @INSPECTED
-    private MethodState methodState;
-
     /**
      * Gets the {@link MethodState} object that encapsulates the current runtime compilation state of the method.
      * The object, once set, does not change, although its contents do.
+     * @return the method state for this method
      */
     @INLINE
     public final MethodState methodState() {
@@ -87,32 +108,13 @@ public abstract class ClassMethodActor extends MethodActor {
         methodState = null;
     }
 
-    private ClassMethodActor compilee;
-
-    /**
-     * The object representing the linkage of this native method actor to a native machine code address.
-     * This value is {@code null} if this method is not {@linkplain #isNative() native}
-     */
-    public final NativeFunction nativeFunction;
-
     /**
      * Determines if JNI activity should be traced at a level useful for debugging.
+     * @return {@code true} if JNI should be traced
      */
     @INLINE
     public static boolean traceJNI() {
         return traceJNI;
-    }
-
-    private static boolean traceJNI;
-
-    static {
-        register(new VMBooleanXXOption("-XX:-TraceJNI", "Trace JNI calls.") {
-            @Override
-            public boolean parseValue(Pointer optionValue) {
-                traceJNI = getValue();
-                return true;
-            }
-        }, MaxineVM.Phase.STARTING);
     }
 
     public boolean isDeclaredNeverInline() {
@@ -146,6 +148,7 @@ public abstract class ClassMethodActor extends MethodActor {
      * later as a result of substitution or preprocessing.
      *
      * Note: This method must not be synchronized as it is called by a GC thread during stack walking.
+     * @return the raw code attribute
      */
     public final CodeAttribute rawCodeAttribute() {
         return codeAttribute;
@@ -153,6 +156,7 @@ public abstract class ClassMethodActor extends MethodActor {
 
     /**
      * Gets the bytecode that is to be compiled and/or executed for this actor.
+     * @return the code attribute
      */
     public final synchronized CodeAttribute codeAttribute() {
         // Ensure that any prerequisite substitution of the code to be compiled/executed is performed first
@@ -221,6 +225,7 @@ public abstract class ClassMethodActor extends MethodActor {
      * position in this method.
      *
      * @param bytecodePosition a bytecode position in this method's {@linkplain #codeAttribute() code}
+     * @return the stack trace element
      */
     public StackTraceElement toStackTraceElement(int bytecodePosition) {
         final ClassActor holder = holder();
@@ -229,7 +234,7 @@ public abstract class ClassMethodActor extends MethodActor {
 
     /**
      * Gets the source line number corresponding to a given bytecode position in this method.
-     *
+     * @param bytecodePosition the byte code position
      * @return -1 if a source line number is not available
      */
     public int sourceLineNumber(int bytecodePosition) {
@@ -237,17 +242,10 @@ public abstract class ClassMethodActor extends MethodActor {
     }
 
     /**
-     * Gets the source file name of this method's holder.
-     *
-     * @return null if a source file name is not available
-     */
-    public String sourceFileName() {
-        return holder().sourceFileName;
-    }
-
-    /**
      * Determines if a given bytecode sequence contains either of the instructions ({@link JSR} or {@link RET}) used
      * to implement bytecode subroutines.
+     * @param code the byte array of code
+     * @return {@link true} if the code contains subroutines
      */
     private static boolean containsSubroutines(byte[] code) {
         final BytecodeVisitor visitor = new BytecodeAdapter() {
@@ -261,10 +259,7 @@ public abstract class ClassMethodActor extends MethodActor {
         };
         final BytecodeScanner scanner = new BytecodeScanner(visitor);
         scanner.scan(new BytecodeBlock(code));
-        if (scanner.wasStopped()) {
-            return true;
-        }
-        return false;
+        return scanner.wasStopped();
     }
 
     /**

@@ -134,25 +134,27 @@ public class LIRAddress extends LIROperand {
      * @param out the output stream to print to
      */
     @Override
-    public void printValueOn(LogStream out) {
-        out.print("Base:" + base);
+    public String valueToString() {
+        final StringBuffer out = new StringBuffer();
+        out.append("Base:" + base);
         if (!index.isIllegal()) {
-            out.print(" Index:" + index);
+            out.append(" Index:" + index);
             switch (scale) {
                 case Times1:
                     break;
                 case Times2:
-                    out.print(" * 2");
+                    out.append(" * 2");
                     break;
                 case Times4:
-                    out.print(" * 4");
+                    out.append(" * 4");
                     break;
                 case Times8:
-                    out.print(" * 8");
+                    out.append(" * 8");
                     break;
             }
         }
-        out.print(" Disp: %d" + displacement);
+        out.append(" Disp: %d" + displacement);
+        return out.toString();
     }
 
     /**

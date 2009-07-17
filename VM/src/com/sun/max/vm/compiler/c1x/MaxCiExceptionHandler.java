@@ -88,5 +88,4 @@ public class MaxCiExceptionHandler implements CiExceptionHandler {
     public boolean isCatchAll() {
         return classCPI == 0;
     }
-
 }

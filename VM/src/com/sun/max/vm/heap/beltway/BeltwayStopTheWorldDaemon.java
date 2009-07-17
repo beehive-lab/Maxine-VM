@@ -62,7 +62,6 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
     public BeltwayStopTheWorldDaemon(String name, Runnable procedure) {
         super(name);
         this.procedure = procedure;
-
     }
 
     private final Pointer.Procedure triggerSafepoint = new Pointer.Procedure() {

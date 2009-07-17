@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.util;
 
-import com.sun.c1x.ir.BlockBegin;
+import com.sun.c1x.ir.*;
 
 /**
  * The <code>BlockClosure</code> interface represents a closure for iterating over blocks.

@@ -60,7 +60,7 @@ public abstract class Safepoint {
 
     public static final boolean UseThreadStateWordForGCMutatorSynchronization = false;
 
-    public static final int casMutatorState(Pointer enabledVmThreadLocals, int suspectedValue, int newValue) {
+    public static int casMutatorState(Pointer enabledVmThreadLocals, int suspectedValue, int newValue) {
         return enabledVmThreadLocals.compareAndSwapInt(MUTATOR_STATE.offset, suspectedValue, newValue);
     }
 
@@ -240,7 +240,8 @@ public abstract class Safepoint {
      * queued to be run on that thread, but the procedure may not actually have run yet.
      * Note also that this method will spin
      * if that thread is already executing or is scheduled to execute another procedure.
-     *
+     * 
+     * @param vmThreadLocals the thread locals on which to push the procedure
      * @param procedure the procedure to run on this thread
      */
     public static void runProcedure(Pointer vmThreadLocals, Procedure procedure) {
