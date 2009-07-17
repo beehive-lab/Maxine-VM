@@ -48,10 +48,6 @@ public class ArithmeticOp extends Op2 {
         if (canTrap()) {
             pin();
         }
-        // TODO: debug
-        if ((y.type().isConstant() || x.type().isConstant()) && opcode == Bytecodes.IAND) {
-            Util.breakpoint();
-        }
     }
 
     /**

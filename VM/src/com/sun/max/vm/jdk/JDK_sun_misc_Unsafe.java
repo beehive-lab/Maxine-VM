@@ -544,7 +544,7 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public void setMemory(long address, long bytes, byte value) {
-        Memory.set(Pointer.fromLong(address), Size.fromLong(bytes), value);
+        Memory.setBytes(Pointer.fromLong(address), Size.fromLong(bytes), value);
     }
 
     /**

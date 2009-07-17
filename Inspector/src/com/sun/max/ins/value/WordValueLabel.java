@@ -36,11 +36,11 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.value.*;
 
 /**
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
- *
  * A textual label for a word of machine data from the VM,
  * with multiple display modes and user interaction affordances.
+ *
+ * @author Bernd Mathiske
+ * @author Michael Van De Vanter
  */
 public class WordValueLabel extends ValueLabel {
 
@@ -237,7 +237,7 @@ public class WordValueLabel extends ValueLabel {
     private MaxThread thread;
 
     @Override
-    public void setValue(Value newValue) {
+    public final void setValue(Value newValue) {
         teleObject = null;
         teleClassActor = null;
         teleTargetMethod = null;
@@ -282,6 +282,8 @@ public class WordValueLabel extends ValueLabel {
                         // If we don't catch this the views will not be updated at all.
                         teleObject = null;
                         displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
+                        setToolTipText("<html><b>" + throwable + "</b><br>See log for complete stack trace.");
+                        throwable.printStackTrace(Trace.stream());
                     }
                 } else {
                     final Address address = newValue.toWord().asAddress();
@@ -292,24 +294,31 @@ public class WordValueLabel extends ValueLabel {
                         if (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE) {
                             displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
                         } else {
-                            teleTargetMethod = maxVM().makeTeleTargetMethod(newValue.toWord().asAddress());
-                            if (teleTargetMethod != null) {
-                                final Address codeStart = teleTargetMethod.getCodeStart();
-                                final Word jitEntryPoint = codeStart.plus(CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart());
-                                final Word optimizedEntryPoint = codeStart.plus(CallEntryPoint.OPTIMIZED_ENTRY_POINT.offsetFromCodeStart());
-                                if (newValue.toWord().equals(optimizedEntryPoint) || newValue.toWord().equals(jitEntryPoint)) {
-                                    displayMode = (valueMode == ValueMode.CALL_ENTRY_POINT) ? DisplayMode.CALL_ENTRY_POINT_TEXT : DisplayMode.CALL_ENTRY_POINT;
-                                } else {
-                                    displayMode = (valueMode == ValueMode.CALL_RETURN_POINT) ? DisplayMode.CALL_RETURN_POINT : DisplayMode.CALL_RETURN_POINT;
+                            try {
+                                teleTargetMethod = maxVM().makeTeleTargetMethod(newValue.toWord().asAddress());
+                                if (teleTargetMethod != null) {
+                                    final Address codeStart = teleTargetMethod.getCodeStart();
+                                    final Word jitEntryPoint = codeStart.plus(CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart());
+                                    final Word optimizedEntryPoint = codeStart.plus(CallEntryPoint.OPTIMIZED_ENTRY_POINT.offsetFromCodeStart());
+                                    if (newValue.toWord().equals(optimizedEntryPoint) || newValue.toWord().equals(jitEntryPoint)) {
+                                        displayMode = (valueMode == ValueMode.CALL_ENTRY_POINT) ? DisplayMode.CALL_ENTRY_POINT_TEXT : DisplayMode.CALL_ENTRY_POINT;
+                                    } else {
+                                        displayMode = (valueMode == ValueMode.CALL_RETURN_POINT) ? DisplayMode.CALL_RETURN_POINT : DisplayMode.CALL_RETURN_POINT;
+                                    }
+                                } else if (valueMode == ValueMode.ITABLE_ENTRY) {
+                                    final TeleClassActor teleClassActor = maxVM().findTeleClassActor(newValue.asWord().asAddress().toInt());
+                                    if (teleClassActor != null) {
+                                        this.teleClassActor = teleClassActor;
+                                        displayMode = DisplayMode.CLASS_ACTOR;
+                                    } else {
+                                        displayMode = DisplayMode.CLASS_ACTOR_ID;
+                                    }
                                 }
-                            } else if (valueMode == ValueMode.ITABLE_ENTRY) {
-                                final TeleClassActor teleClassActor = maxVM().findTeleClassActor(newValue.asWord().asAddress().toInt());
-                                if (teleClassActor != null) {
-                                    this.teleClassActor = teleClassActor;
-                                    displayMode = DisplayMode.CLASS_ACTOR;
-                                } else {
-                                    displayMode = DisplayMode.CLASS_ACTOR_ID;
-                                }
+                            } catch (Throwable throwable) {
+                                // If we don't catch this the views will not be updated at all.
+                                displayMode = DisplayMode.INVALID;
+                                setToolTipText("<html><b>" + throwable + "</b><br>See log for complete stack trace.");
+                                throwable.printStackTrace(Trace.stream());
                             }
                         }
                     }

@@ -40,6 +40,10 @@ import com.sun.max.vm.value.*;
 /**
  * Inspector's canonical surrogate for an object implemented as a {@link Hybrid} in the tele VM,
  * one of the three kinds of low level Maxine heap implementation objects.
+ * A {@link Hybrid} object has both fields, as in a tuple, and array elements; it cannot be expressed
+ * as an ordinary Java type.
+ * It is allocated as if it were an array of words, with length specified in the header as with Java arrays.
+ * The detailed breakdown of the object's structure is expressed in the subclass {@link TeleHub}.
  *
  * @author Michael Van De Vanter
   */
@@ -58,6 +62,8 @@ public abstract class TeleHybridObject extends TeleObject {
 
     @Override
     public Size objectSize() {
+        // A hybrid object is sized as if it were all one big array, even though the memory will
+        // be used differently in different parts.
         return teleVM().layoutScheme().hybridLayout.getArraySize(readArrayLength());
     }
 
@@ -87,7 +93,7 @@ public abstract class TeleHybridObject extends TeleObject {
     /**
      * @return length of the word array part of this hybrid in the tele VM
      */
-    public int readWordArrayLength() {
+    private int readWordArrayLength() {
         return teleVM().layoutScheme().wordArrayLayout.readLength(reference());
     }
 

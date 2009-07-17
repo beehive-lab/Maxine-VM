@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,27 +18,28 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.jdk;
+package com.sun.max.program.option;
 
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
 /**
- * The {@code JDK_java_lang_Double} class implements substitutions
- * that intrinsify some double operations.
+ * An annotation that can be applied to a static field to set its name as option and its help text.
  *
  * @author Ben L. Titzer
  */
-@METHOD_SUBSTITUTIONS(Double.class)
-public class JDK_java_lang_Double {
+@Retention(RetentionPolicy.RUNTIME)
+public @interface OptionSettings {
 
-    @SUBSTITUTE
-    public static long doubleToRawLongBits(double d) {
-        return UnsafeLoophole.doubleToLong(d);
-    }
+    /**
+     * The name of this option, if different from the name of the field.
+     * @return the name of this option
+     */
+    String name() default "";
 
-    @SUBSTITUTE
-    public static double longBitsToDouble(long l) {
-        return UnsafeLoophole.longToDouble(l);
-    }
+    /**
+     * The help text of this option.
+     * @return the help text
+     */
+    String help() default "";
 }

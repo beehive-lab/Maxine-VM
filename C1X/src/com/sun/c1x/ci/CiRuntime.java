@@ -194,12 +194,6 @@ public interface CiRuntime {
 
     Register callerSaveFpuRegAt(int i);
 
-    Object ciEnvUnloadedCiobjarrayklass();
-
-    CiType makeTypeArrayClass(BasicType elemType);
-
-    Object makeObjectArrayClass(CiType elementClass);
-
     int arrayOopDescHeaderSize(BasicType type);
 
     int arrayElementSize(BasicType type);

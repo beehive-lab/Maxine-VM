@@ -23,8 +23,10 @@ package com.sun.max.tele.object;
 import com.sun.max.collect.*;
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.*;
@@ -61,9 +63,13 @@ public class TeleRuntimeStub extends TeleRuntimeMemoryRegion implements TeleTarg
                         && teleVM.containsInCode(address)) {
             // Not a known runtime stub, and not some other kind of known target code, but in a code region
             // See if the code manager in the VM knows about it.
-            final Reference runtimeStubReference =  teleVM.methods().Code_codePointerToRuntimeStub.interpret(new WordValue(address)).asReference();
-            if (runtimeStubReference != null && !runtimeStubReference.isZero()) {
-                teleRuntimeStub = (TeleRuntimeStub) teleVM.makeTeleObject(runtimeStubReference);
+            try {
+                final Reference runtimeStubReference =  teleVM.methods().Code_codePointerToRuntimeStub.interpret(new WordValue(address)).asReference();
+                if (runtimeStubReference != null && !runtimeStubReference.isZero()) {
+                    teleRuntimeStub = (TeleRuntimeStub) teleVM.makeTeleObject(runtimeStubReference);
+                }
+            } catch (TeleInterpreterException e) {
+                throw ProgramError.unexpected(e);
             }
         }
         return teleRuntimeStub;

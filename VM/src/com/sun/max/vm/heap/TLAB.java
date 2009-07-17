@@ -47,7 +47,6 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
     private final AtomicWord scavenged = new AtomicWord();
 
     public TLAB() {
-        super();
         mark = start();
     }
 
@@ -72,7 +71,7 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
         setStart(newAddress);
         setSize(BeltwayHeapSchemeConfiguration.TLAB_SIZE);
         mark = newAddress;
-        if (VMConfiguration.hostOrTarget().debugging()) {
+        if (MaxineVM.isDebug()) {
             endAllocationMark = end().asPointer().minusWords(4);
         } else {
             endAllocationMark = end().asPointer().minusWords(3);
@@ -88,7 +87,7 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
         setSize(size);
         mark = allocationMark;
         previousAllocationMark = allocationMark;
-        if (VMConfiguration.hostOrTarget().debugging()) {
+        if (MaxineVM.isDebug()) {
             endAllocationMark = end().asPointer().minusWords(4);
         } else {
             endAllocationMark = end().asPointer().minusWords(3);
@@ -165,7 +164,7 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
     public final Pointer allocate(Size size) {
         Pointer cell;
         final Pointer oldAllocationMark = mark.asPointer();
-        if (VMConfiguration.hostOrTarget().debugging()) {
+        if (MaxineVM.isDebug()) {
             cell = oldAllocationMark.plusWords(1);
         } else {
             cell = oldAllocationMark;

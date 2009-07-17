@@ -143,13 +143,8 @@ public class MaxCiRuntime implements CiRuntime {
         return false;
     }
 
-    @Override
-    public CiType makeTypeArrayClass(BasicType elemType) {
-        throw Util.unimplemented();
-    }
-
-    @Override
     public Register getCRarg(int i) {
+        // TODO: move this out of the compiler interface
         switch(i) {
             case 0:
                 return X86Register.rdi;
@@ -168,8 +163,8 @@ public class MaxCiRuntime implements CiRuntime {
         throw Util.shouldNotReachHere();
     }
 
-    @Override
     public Register getJRarg(int i) {
+        // TODO: move this out of the compiler interface
         if (i == 5) {
             return getCRarg(0);
         }
@@ -272,15 +267,6 @@ public class MaxCiRuntime implements CiRuntime {
         throw Util.unimplemented();
     }
 
-    public Object ciEnvUnloadedCiobjarrayklass() {
-        throw Util.unimplemented();
-    }
-
-    public Object makeObjectArrayClass(CiType elementClass) {
-        throw Util.unimplemented();
-    }
-
-    @Override
     public int sunMiscAtomicLongCSImplValueOffset() {
         throw Util.unimplemented();
     }

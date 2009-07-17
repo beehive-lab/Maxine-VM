@@ -100,7 +100,7 @@ public class PreferenceDialog extends InspectorDialog {
         hubLabelPanel.add(new TextLabel(inspection, "Hubs"), BorderLayout.WEST);
         prefPanel.add(hubLabelPanel);
 
-        final JPanel hubInspectorPanel = HubInspector.globalPreferencesPanel(inspection);
+        final JPanel hubInspectorPanel = HubInspectorPreferences.globalPreferencesPanel(inspection);
         hubInspectorPanel.setBorder(border);
         prefPanel.add(hubInspectorPanel);
 

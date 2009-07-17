@@ -1036,7 +1036,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand len = length.result();
         BasicType elemType = x.elementType();
 
-        lir().oop2reg(compilation.runtime.makeTypeArrayClass(elemType), klassReg);
+        lir().oop2reg(elemType.primitiveArrayClass(), klassReg);
 
         CodeStub slowPath = new NewTypeArrayStub(klassReg, len, reg, info);
         lir().allocateArray(reg, len, tmp1, tmp2, tmp3, tmp4, elemType, klassReg, slowPath);
@@ -1069,10 +1069,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand len = length.result();
 
         CodeStub slowPath = new NewObjectArrayStub(klassReg, len, reg, info);
-        Object obj = compilation.runtime.makeObjectArrayClass(x.elementClass());
-        if (obj == compilation.runtime.ciEnvUnloadedCiobjarrayklass()) {
-            throw new Bailout("encountered unloadedCiobjarrayklass due to out of memory error");
-        }
+        Object obj = x.elementClass().arrayOf();
         jobject2regWithPatching(klassReg, obj, patchingInfo);
         lir().allocateArray(reg, len, tmp1, tmp2, tmp3, tmp4, BasicType.Object, klassReg, slowPath);
 

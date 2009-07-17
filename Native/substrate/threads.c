@@ -564,7 +564,7 @@ Java_com_sun_max_vm_thread_VmThread_nativeSetPriority(JNIEnv *env, jclass c, Add
 #if os_SOLARIS
     int result = thr_setprio(nativeThread, priority);
     if (result != 0) {
-        log_println("nativeSetPriority %d failed!", priority);
+        log_println("thread %p: nativeSetPriority %d failed [%s]", thread_current(), priority, strerror(result));
     }
 #elif os_GUESTVMXEN
     guestvmXen_set_priority((void *) nativeThread, priority);

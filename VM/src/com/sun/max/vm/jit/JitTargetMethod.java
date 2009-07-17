@@ -62,7 +62,7 @@ public abstract class JitTargetMethod extends TargetMethod {
     /**
      * A bit map denoting which {@linkplain #directCallees() direct calls} in this target method correspond to calls
      * into the runtime derived from the constituent templates. These calls are
-     * {@linkplain #linkDirectCalls(DynamicCompilerScheme) linked} using the entry point associated with the compiler
+     * {@linkplain #linkDirectCalls() linked} using the entry point associated with the compiler
      * used to compile the runtime (i.e the opto compiler). All other direct calls are linked using the call entry point
      * associated with the JIT compiler.
      */
@@ -398,15 +398,17 @@ public abstract class JitTargetMethod extends TargetMethod {
      * one of the threads in native code on a mutex. This would incorrectly be interpreted by the GC as meaning
      * the mutator thread has blocked for GC after taking a safepoint trap. To avoid blocking in native code,
      * a spin loop is used instead.
+     *
+     * If this method is called while preparing the stack reference map for a thread that has taken a safepoint
+     * for GC, then safepoints are currently disabled and so there is no need to use the {@link NO_SAFEPOINTS}
+     * annotation on this method.
      */
-    @NO_SAFEPOINTS("Cannot take a trap while GC is running")
     public void finalizeReferenceMaps() {
         final JitReferenceMapEditor referenceMapEditor = (JitReferenceMapEditor) this.referenceMapEditor.get();
         if (referenceMapEditor != null) {
             final Object result = this.referenceMapEditor.compareAndSwap(referenceMapEditor, JitReferenceMapEditor.SENTINEL);
             if (result == JitReferenceMapEditor.SENTINEL) {
-                while (this.referenceMapEditor != null) {
-                    // Spin loop that is free of safepoints and object accesses
+                while (this.referenceMapEditor.get() != null) {
                     SpecialBuiltin.pause();
                 }
             } else if (result != null) {
