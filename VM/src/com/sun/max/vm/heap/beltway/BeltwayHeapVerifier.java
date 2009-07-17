@@ -37,11 +37,11 @@ public class BeltwayHeapVerifier {
 
     private static Belt belt;
 
-    private static BeltwaySequentialHeapRootsScanner heapRootsVerifier = new BeltwaySequentialHeapRootsScanner();
+    private final BeltwaySequentialHeapRootsScanner heapRootsVerifier;
     private static Verify cellVerifier = new VerifyActionImpl();
 
     public BeltwayHeapVerifier() {
-
+        heapRootsVerifier = new BeltwaySequentialHeapRootsScanner();
     }
 
     public void initialize(BeltwayHeapScheme heapScheme) {
