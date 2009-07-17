@@ -56,7 +56,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
     private boolean read;
     private boolean write;
     private boolean exec;
-    private boolean enableDuringGC;
+    private boolean isEnabledDuringGC;
 
     // temporary stored old configuration during gc
     private boolean oldAfter;
@@ -72,11 +72,11 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
      * @see RuntimeMemoryRegion#setStart(Address)
      * @see RuntimeMemoryRegion#setSize(Size)
      */
-    private TeleWatchpoint(Factory factory, String description, boolean after, boolean read, boolean write, boolean exec, boolean enableDuringGC) {
-        this(factory, description, Address.zero(), Size.zero(), after, read, write, exec, enableDuringGC);
+    private TeleWatchpoint(Factory factory, String description, boolean after, boolean read, boolean write, boolean exec, boolean isEnabledDuringGC) {
+        this(factory, description, Address.zero(), Size.zero(), after, read, write, exec, isEnabledDuringGC);
     }
 
-    private TeleWatchpoint(Factory factory, String description, Address start, Size size, boolean after, boolean read, boolean write, boolean exec, boolean enableDuringGC) {
+    private TeleWatchpoint(Factory factory, String description, Address start, Size size, boolean after, boolean read, boolean write, boolean exec, boolean isEnabledDuringGC) {
         super(start, size);
         setDescription(description);
         this.factory = factory;
@@ -84,13 +84,13 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         this.read = read;
         this.write = write;
         this.exec = exec;
-        this.enableDuringGC = enableDuringGC;
+        this.isEnabledDuringGC = isEnabledDuringGC;
         if (factory.watchpointsDisabledDuringGC) {
             disableWatchpointSetting();
         }
     }
 
-    private TeleWatchpoint(Factory factory, String description, MemoryRegion memoryRegion, boolean after, boolean read, boolean write, boolean exec, boolean enableDuringGC) {
+    private TeleWatchpoint(Factory factory, String description, MemoryRegion memoryRegion, boolean after, boolean read, boolean write, boolean exec, boolean isEnabledDuringGC) {
         super(memoryRegion);
         setDescription(description);
         this.factory = factory;
@@ -98,7 +98,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         this.read = read;
         this.write = write;
         this.exec = exec;
-        this.enableDuringGC = enableDuringGC;
+        this.isEnabledDuringGC = isEnabledDuringGC;
         if (factory.watchpointsDisabledDuringGC) {
             disableWatchpointSetting();
         }
@@ -162,13 +162,13 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         return factory.resetWatchpoint(this);
     }
 
-    public boolean enableDuringGC() {
-        return enableDuringGC;
+    public boolean isEnabledDuringGC() {
+        return isEnabledDuringGC;
     }
 
-    public void setEnableDuringGC(boolean gc) {
+    public void setEnabledDuringGC(boolean isEnabledDuringGC) {
         ProgramError.check(active, "Attempt to set flag on disabled watchpoint");
-        this.enableDuringGC = gc;
+        this.isEnabledDuringGC = isEnabledDuringGC;
         if (factory.watchpointsDisabledDuringGC) {
             disable();
         }
@@ -666,7 +666,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         public void disableWatchpointsDuringGC() {
             if (!watchpointsDisabledDuringGC) {
                 for (MaxWatchpoint maxWatchpoint : watchpointsCache) {
-                    if (!maxWatchpoint.enableDuringGC()) {
+                    if (!maxWatchpoint.isEnabledDuringGC()) {
                         maxWatchpoint.disable();
                     }
                 }
@@ -677,7 +677,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         public void reenableWatchpointsAfterGC() {
             if (watchpointsDisabledDuringGC) {
                 for (MaxWatchpoint maxWatchpoint : watchpointsCache) {
-                    if (!maxWatchpoint.enableDuringGC()) {
+                    if (!maxWatchpoint.isEnabledDuringGC()) {
                         maxWatchpoint.reenable();
                     }
                 }

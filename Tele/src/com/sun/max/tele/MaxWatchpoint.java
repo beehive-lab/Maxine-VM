@@ -55,7 +55,7 @@ public interface MaxWatchpoint extends MemoryRegion {
      * Checks if this watchpoint is set during garbage collection.
      * @return true if this watchpoint is active during GC
      */
-    boolean enableDuringGC();
+    boolean isEnabledDuringGC();
 
     /**
      * @return true if any of the possible activations are true.
@@ -97,7 +97,7 @@ public interface MaxWatchpoint extends MemoryRegion {
      * @param gc whether the watchpoint is active during garbage collection
      * @return whether set succeeded.
      */
-    void setEnableDuringGC(boolean gc);
+    void setEnabledDuringGC(boolean gc);
 
     /**
      * @return a heap object in the VM with which the watchpoint is associated, null if none.
