@@ -2878,7 +2878,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 final String description = "Thread local \"" + vmThreadLocal.name
                     + "\" (" + inspection().nameDisplay().shortName(teleThreadLocalValues.getMaxThread()) + ","
                     + teleThreadLocalValues.safepointState().toString() + ")";
-                final MaxWatchpoint watchpoint = maxVM().setVmThreadLocalWatchpoint(description, teleThreadLocalValues, index, true, true, true, true);
+                final MaxWatchpoint watchpoint = maxVM().setVmThreadLocalWatchpoint(description, teleThreadLocalValues, index, true, true, true, true, true);
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {

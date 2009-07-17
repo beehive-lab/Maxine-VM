@@ -29,7 +29,6 @@ import java.util.concurrent.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.gui.*;
-import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
