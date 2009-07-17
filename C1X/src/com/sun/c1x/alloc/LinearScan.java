@@ -87,7 +87,7 @@ public class LinearScan extends RegisterAllocator {
         this.newIntervalsFromAllocation = new ArrayList<Interval>();
         this.cachedBlocks = new ArrayList<BlockBegin>(ir.linearScanOrder());
 
-        initializeRegisters(compilation.runtime.getAllocatableRegisters());
+        initializeRegisters(compilation.target.allocatableRegisters);
 
         vregBase = nofRegs;
 
@@ -1459,7 +1459,7 @@ public class LinearScan extends RegisterAllocator {
         int numCallerSaveRegisters = 0;
         int[] callerSaveRegisters = new int[nofRegs];
         int z = 0;
-        for (Register r : compilation.runtime.callerSavedRegisters()) {
+        for (Register r : compilation.target.callerSavedRegisters) {
             callerSaveRegisters[z++] = r.number;
         }
 
@@ -1799,7 +1799,6 @@ public class LinearScan extends RegisterAllocator {
 
     private final Comparator<Interval> intervalCmp = new Comparator<Interval>() {
 
-        @Override
         public int compare(Interval a, Interval b) {
             if (a != null) {
                 if (b != null) {
