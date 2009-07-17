@@ -52,7 +52,7 @@ public class Address {
     public int disp;
     public ScaleFactor scale;
     public X86Register index;
-    public RelocationHolder rspec;;
+    public RelocationHolder rspec;
 
     public Address() {
     }

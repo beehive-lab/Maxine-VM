@@ -40,6 +40,7 @@ public class ExceptionHandler {
     private int entryPCO;
     private int phiOperand;
     private int scopeCount;
+    private int lirOpId;
 
     public ExceptionHandler(CiExceptionHandler handler) {
         this.handler = handler;
@@ -55,6 +56,7 @@ public class ExceptionHandler {
         this.entryPCO = other.entryPCO;
         this.phiOperand = other.phiOperand;
         this.scopeCount = other.scopeCount;
+        this.lirOpId = other.lirOpId;
     }
 
     /**
@@ -134,8 +136,7 @@ public class ExceptionHandler {
     }
 
     public int lirOpId() {
-        // TODO Auto-generated method stub
-        return 0;
+        return lirOpId;
     }
 
     public LIRList entryCode() {
@@ -143,12 +144,11 @@ public class ExceptionHandler {
     }
 
     public void setLirOpId(int throwingOpId) {
-        // TODO Auto-generated method stub
-
+        lirOpId = throwingOpId;
     }
 
-    public void setEntryCode(LIRList entryCode2) {
-        // TODO Auto-generated method stub
+    public void setEntryCode(LIRList entryCode) {
+        this.entryCode = entryCode;
 
     }
 }
