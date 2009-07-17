@@ -33,6 +33,7 @@ import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.TeleNativeThread.*;
+import com.sun.max.tele.debug.TeleWatchpoint.*;
 import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
@@ -105,6 +106,32 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         }
 
         /**
+         * Handles a special triggered watchpoint.
+         * @return true if it is a transparent watchpoint (resume).
+         * @throws TooManyWatchpointsException
+         * @throws DuplicateWatchpointException
+         */
+        private boolean handleWatchpoint() {
+            final MaxWatchpoint watchpoint = teleVM().findTriggeredWatchpoint();
+            final Pointer gcEnd = teleVM().fields().InspectableHeapInfo_rootEpoch.staticTupleReference(teleVM()).toOrigin().plus(teleVM().fields().InspectableHeapInfo_rootEpoch.fieldActor().offset());
+            if (watchpoint != null) {
+                if (gcEnd.toLong() == readWatchpointAddress()) {
+                    // End of GC; TODO: handle relocatable watchpoints (stop-the-world case)
+                    watchpointFactory().reenableWatchpointsAfterGC();
+                    return true;
+                } else if (teleVM().isInGC()) {
+                    // We are in GC. Turn Watchpoints off for all objects that are not intersted.
+                    watchpointFactory().disableWatchpointsDuringGC();
+                    if (!watchpoint.isGC()) {
+                        return true;
+                    }
+                }
+                // else if check for special object handle watchpoint
+            }
+            return false;
+        }
+
+        /**
          * Waits until the tele process has stopped after it has been issued an execution request. The request's
          * post-execution action is then performed.
          * Finally, any threads waiting for an execution request to complete are notified.
@@ -132,31 +159,37 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                     final Sequence<TeleTargetBreakpoint> deactivatedBreakpoints = targetBreakpointFactory().deactivateAll();
                     Trace.line(TRACE_VALUE, tracePrefix() + "Execution stopped: " + request);
 
-                    for (TeleNativeThread thread : threads()) {
-                        final TeleTargetBreakpoint breakpoint = thread.breakpoint();
-                        if (breakpoint != null) {
-                            // Check conditional breakpoint:
-                            if (breakpoint.condition() != null && !breakpoint.condition().evaluate(TeleProcess.this, thread)) {
-                                try {
-                                    // Evade the breakpoint
-                                    thread.evadeBreakpoint();
 
-                                    // Re-activate all the de-activated breakpoints
-                                    for (TeleTargetBreakpoint bp : deactivatedBreakpoints) {
-                                        bp.activate();
+                    if (handleWatchpoint()) {
+                        TeleProcess.this.resume();
+                        continuing = true;
+                    } else {
+                        for (TeleNativeThread thread : threads()) {
+                            final TeleTargetBreakpoint breakpoint = thread.breakpoint();
+                            if (breakpoint != null) {
+                                // Check conditional breakpoint:
+                                if (breakpoint.condition() != null && !breakpoint.condition().evaluate(TeleProcess.this, thread)) {
+                                    try {
+                                        // Evade the breakpoint
+                                        thread.evadeBreakpoint();
+
+                                        // Re-activate all the de-activated breakpoints
+                                        for (TeleTargetBreakpoint bp : deactivatedBreakpoints) {
+                                            bp.activate();
+                                        }
+
+                                        //updateState(RUNNING);
+                                        Trace.line(TRACE_VALUE, tracePrefix() + "continuing after hitting unsatisfied conditional breakpoint");
+                                        TeleProcess.this.resume();
+                                        continuing = true;
+                                    } catch (OSExecutionRequestException executionRequestException) {
+                                        Trace.line(TRACE_VALUE, tracePrefix() + "process terminated while attempting to step over unsatisfied conditional breakpoint");
+                                        updateState(TERMINATED, EMPTY_THREAD_SEQUENCE);
+                                        return;
                                     }
-
-                                    //updateState(RUNNING);
-                                    Trace.line(TRACE_VALUE, tracePrefix() + "continuing after hitting unsatisfied conditional breakpoint");
-                                    TeleProcess.this.resume();
-                                    continuing = true;
-                                } catch (OSExecutionRequestException executionRequestException) {
-                                    Trace.line(TRACE_VALUE, tracePrefix() + "process terminated while attempting to step over unsatisfied conditional breakpoint");
-                                    updateState(TERMINATED, EMPTY_THREAD_SEQUENCE);
-                                    return;
+                                } else {
+                                    breakpointThreads.append(thread);
                                 }
-                            } else {
-                                breakpointThreads.append(thread);
                             }
                         }
                     }
