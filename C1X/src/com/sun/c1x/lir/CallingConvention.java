@@ -22,8 +22,6 @@ package com.sun.c1x.lir;
 
 import java.util.*;
 
-import com.sun.c1x.util.*;
-
 /**
  * This class represents a calling convention instance for a particular method invocation and describes
  * the ABI for outgoing arguments and the return value, both runtime calls and Java calls.
@@ -34,12 +32,20 @@ import com.sun.c1x.util.*;
  */
 public class CallingConvention {
 
+    private List<LIROperand> arguments;
+    private int reservedStackSlots;
+
+    public CallingConvention(List<LIROperand> arguments, int reservedStackSlots) {
+        this.arguments = arguments;
+        this.reservedStackSlots = reservedStackSlots;
+    }
+
     /**
      * Returns the number of arguments.
      * @return the number of arguments
      */
     public int length() {
-        throw Util.unimplemented();
+        return arguments.size();
     }
 
     /**
@@ -48,7 +54,7 @@ public class CallingConvention {
      * @return the LIROperand representing the argument
      */
     public LIROperand at(int i) {
-        throw Util.unimplemented();
+        return arguments.get(i);
     }
 
     /**
@@ -56,7 +62,16 @@ public class CallingConvention {
      * @return the list of arguments
      */
     public List<LIROperand> args() {
-        throw Util.unimplemented();
+        return arguments;
+    }
+
+    public int reservedStackSlots() {
+        return reservedStackSlots;
+    }
+
+    public void setArg(int i, LIROperand stack) {
+        arguments.set(i, stack);
+
     }
 
 }

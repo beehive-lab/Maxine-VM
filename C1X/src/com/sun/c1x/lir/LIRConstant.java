@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 
@@ -244,34 +243,6 @@ public class LIRConstant extends LIROperand {
         return asDouble() == 1.0;
       }
 
-    /**
-     * Prints the constant value to the LogStream.
-     *
-     * @param out the ouput LogStream
-     */
-    @Override
-    public void printValueOn(LogStream out) {
-        switch(type()) {
-            case Int:
-                out.print("int:" + asInt());
-                break;
-            case Long:
-                out.print("long:" + asLong());
-                break;
-            case Float:
-                out.print("float:" + asFloat());
-                break;
-            case Double:
-                out.print("double:" + asDouble());
-                break;
-            case Object:
-                out.print("object:0x" + asObject());
-                break;
-            default:
-                out.print(type() + ":" + asDouble());
-        }
-    }
-
     public boolean isOneFloat() {
         // TODO Auto-generated method stub
         return false;
@@ -293,7 +264,20 @@ public class LIRConstant extends LIROperand {
     }
 
     @Override
-    public String toString() {
-        return value.toString();
+    public String valueToString() {
+        switch (type()) {
+            case Int:
+                return String.format("int:%d", asJint());
+            case Long:
+                return String.format("lng:%lld", asLong());
+            case Float:
+                return String.format("flt:%f", asJfloat());
+            case Double:
+                return String.format("dbl:%f", asJdouble());
+            case Object:
+                return String.format("obj:0x%x", asJobject());
+            default:
+                return String.format("%3d:0x%x", type(), asJdouble());
+        }
     }
 }

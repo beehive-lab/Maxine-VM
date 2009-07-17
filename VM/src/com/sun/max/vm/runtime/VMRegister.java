@@ -235,7 +235,7 @@ public final class VMRegister {
 
     @INLINE
     public static Pointer getFramelessCallAddressRegister() {
-        if (callAddressRegisterExists()) {
+        if (framelessCallAddressRegisterExists()) {
             return SpecialBuiltin.getIntegerRegister(Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS);
         }
         throw ProgramError.unexpected("There is no frameless call address register in this target ABI");

@@ -2584,7 +2584,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private void setWatchpoint(MemoryRegion memoryRegion, String description) {
 
             try {
-                final MaxWatchpoint watchpoint = maxVM().setRegionWatchpoint(description, memoryRegion, true, true, true, true);
+                final MaxWatchpoint watchpoint = maxVM().setRegionWatchpoint(description, memoryRegion, true, true, true, true, true);
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {
@@ -2644,7 +2644,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             try {
                 final String description = "Object " + inspection().nameDisplay().referenceLabelText(teleObject);
-                final MaxWatchpoint watchpoint = maxVM().setObjectWatchpoint(description, teleObject, true, true, true, true);
+                final MaxWatchpoint watchpoint = maxVM().setObjectWatchpoint(description, teleObject, true, true, true, true, true);
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {
@@ -2698,7 +2698,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             try {
                 final String description = "Field \"" + fieldActor.name.toString() + "\" in " + inspection().nameDisplay().referenceLabelText(teleObject);
-                final MaxWatchpoint watchpoint = maxVM().setFieldWatchpoint(description, teleObject, fieldActor, true, true, true, true);
+                final MaxWatchpoint watchpoint = maxVM().setFieldWatchpoint(description, teleObject, fieldActor, true, true, true, true, true);
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {
@@ -2761,7 +2761,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             try {
                 final String description = "Element " + indexPrefix + "[" + Integer.toString(index) + "] in " + inspection().nameDisplay().referenceLabelText(teleObject);
-                final MaxWatchpoint watchpoint = maxVM().setArrayElementWatchpoint(description, teleObject, elementKind, arrayOffsetFromOrigin, index, true, true, true, true);
+                final MaxWatchpoint watchpoint = maxVM().setArrayElementWatchpoint(description, teleObject, elementKind, arrayOffsetFromOrigin, index, true, true, true, true, true);
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {
@@ -2820,7 +2820,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             try {
                 final String description = "Field \"" + headerField.name() + "\" in header of " + inspection().nameDisplay().referenceLabelText(teleObject);
-                final MaxWatchpoint watchpoint = maxVM().setHeaderWatchpoint(description, teleObject, headerField, true, true, true, true);
+                final MaxWatchpoint watchpoint = maxVM().setHeaderWatchpoint(description, teleObject, headerField, true, true, true, true, true);
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {
@@ -2851,6 +2851,64 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public final InspectorAction setHeaderWatchpoint(TeleObject teleObject, HeaderField headerField, String title) {
         return new SetHeaderWatchpointAction(teleObject, headerField, title);
+    }
+
+
+    /**
+     * Action: create an object field watchpoint.
+     */
+    final class SetThreadLocalWatchpointAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Watch thread local variable";
+        private final TeleThreadLocalValues teleThreadLocalValues;
+        private final int index;
+        private final MemoryRegion memoryRegion;
+
+        SetThreadLocalWatchpointAction(TeleThreadLocalValues teleThreadLocalValues, int index, String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            this.teleThreadLocalValues = teleThreadLocalValues;
+            this.index = index;
+            this.memoryRegion = teleThreadLocalValues.getMemoryRegion(index);
+        }
+
+        @Override
+        protected void procedure() {
+            try {
+                final VmThreadLocal vmThreadLocal = teleThreadLocalValues.getVmThreadLocal(index);
+                final String description = "Thread local \"" + vmThreadLocal.name
+                    + "\" (" + inspection().nameDisplay().shortName(teleThreadLocalValues.getMaxThread()) + ","
+                    + teleThreadLocalValues.safepointState().toString() + ")";
+                final MaxWatchpoint watchpoint = maxVM().setVmThreadLocalWatchpoint(description, teleThreadLocalValues, index, true, true, true, true, true);
+                if (watchpoint == null) {
+                    gui().errorMessage("Watchpoint creation failed");
+                } else {
+                    inspection().focus().setWatchpoint(watchpoint);
+                }
+            } catch (TooManyWatchpointsException tooManyWatchpointsException) {
+                gui().errorMessage(tooManyWatchpointsException.getMessage());
+            } catch (DuplicateWatchpointException duplicateWatchpointException) {
+                gui().errorMessage(duplicateWatchpointException.getMessage());
+            }
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(inspection().hasProcess()
+                && maxVM().watchpointsEnabled()
+                && maxVM().findWatchpoint(memoryRegion) == null);
+        }
+    }
+
+    /**
+     * Creates an action that will create a thread local variable watchpoint.
+     *
+     * @param teleThreadLocalValues the set of thread local variables containing the variable
+     * @param index index of the variable to watch
+     * @param string a title for the action, use default name if null
+     * @return an action that will create a thread local variable watchpoint
+     */
+    public final InspectorAction setThreadLocalWatchpoint(TeleThreadLocalValues teleThreadLocalValues, int index, String string) {
+        return new SetThreadLocalWatchpointAction(teleThreadLocalValues, index, string);
     }
 
 

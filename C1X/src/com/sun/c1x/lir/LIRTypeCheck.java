@@ -33,12 +33,12 @@ import com.sun.c1x.util.*;
  */
 public class LIRTypeCheck extends LIRInstruction {
 
-    private LIROperand object;
-    private LIROperand array;
+    LIROperand object;
+    LIROperand array;
     private CiType klass;
-    private LIROperand tmp1;
-    private LIROperand tmp2;
-    private LIROperand tmp3;
+    LIROperand tmp1;
+    LIROperand tmp2;
+    LIROperand tmp3;
     private boolean fastCheck;
     CodeEmitInfo infoForPatch;
     CodeEmitInfo infoForException;

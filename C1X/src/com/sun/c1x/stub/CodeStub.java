@@ -82,7 +82,7 @@ public abstract class CodeStub {
      *
      * @return false
      */
-    public boolean isExeptionThrow() {
+    public boolean isExceptionThrowStub() {
         return false;
     }
 

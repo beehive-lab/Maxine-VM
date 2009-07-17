@@ -32,9 +32,9 @@ public class BeltwayHeapSchemeConfiguration {
     protected static Address applicationHeapStartAddress;
     protected static Size applicationHeapMaxSize;
 
-    public static final Size TLAB_SIZE = BeltwayCardRegion.cardSize().times(512).asSize();
-    public static final Size GC_TLAB_SIZE = BeltwayCardRegion.cardSize().times(1).asSize();
-    public static final int ALIGNMENT = BeltwayCardRegion.cardSize().toInt();
+    public static final Size TLAB_SIZE = BeltwayCardRegion.CARD_SIZE.times(512).asSize();
+    public static final Size GC_TLAB_SIZE = BeltwayCardRegion.CARD_SIZE;
+    public static final int ALIGNMENT = BeltwayCardRegion.CARD_SIZE.toInt();
 
     public BeltwayHeapSchemeConfiguration(Address applicationHeapStartAddress, Size applicationHeapMaxSize) {
         BeltwayHeapSchemeConfiguration.applicationHeapStartAddress = applicationHeapStartAddress;

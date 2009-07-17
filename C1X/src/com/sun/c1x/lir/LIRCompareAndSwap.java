@@ -31,11 +31,11 @@ import com.sun.c1x.util.*;
  */
 public class LIRCompareAndSwap extends LIRInstruction {
 
-    private LIROperand addr;
-    private LIROperand cmpValue;
-    private LIROperand newValue;
-    private LIROperand tmp1;
-    private LIROperand tmp2;
+    LIROperand addr;
+    LIROperand cmpValue;
+    LIROperand newValue;
+    LIROperand tmp1;
+    LIROperand tmp2;
 
 
     /**

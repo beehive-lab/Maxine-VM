@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.bytecode;
 
-import com.sun.c1x.util.Bytes;
+import com.sun.c1x.util.*;
 
 /**
  * The <code>CiBytecodeStream</code> class implements a utility that makes iterating over

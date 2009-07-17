@@ -74,7 +74,23 @@ public enum CiRuntimeCall {
     Lmul,
     OopArrayCopy,
     PrimitiveArrayCopy,
-    FpuCntrlWrd_24, FpuCntrlWrdStd, Breakpoint, FpuCntrlWrdTrunc, AddrFpuSubnormalBias1, AddrFpuSubnormalBias2, ArrayCopy, ResolveOptVirtualCall, ResolveStaticCall, ResolveVirtualCall, VerifyOopSubroutine, IcMiss, Debug, Warning, dsin, dcos, dtan
+    FpuCntrlWrd_24,
+    FpuCntrlWrdStd,
+    Breakpoint,
+    FpuCntrlWrdTrunc,
+    AddrFpuSubnormalBias1,
+    AddrFpuSubnormalBias2,
+    ArrayCopy,
+    ResolveOptVirtualCall,
+    ResolveStaticCall,
+    ResolveVirtualCall,
+    VerifyOopSubroutine,
+    IcMiss,
+    Debug,
+    Warning,
+    dsin,
+    dcos,
+    dtan
 
 
 }

@@ -23,6 +23,7 @@ package com.sun.max.vm.heap.beltway;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -123,6 +124,8 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
         super(vmConfiguration);
     }
 
+    protected abstract int [] defaultBeltHeapPercentage();
+
     @Override
     public void initialize(MaxineVM.Phase phase) {
         if (MaxineVM.isPrototyping()) {
@@ -135,6 +138,23 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
                 JavaMonitorManager.bindStickyMonitor(BeltwayCollectorThread.tokens[i], new StandardJavaMonitor());
             }
             JavaMonitorManager.bindStickyMonitor(BeltwayCollectorThread.callerToken, new StandardJavaMonitor());
+        } else if (phase == MaxineVM.Phase.PRISTINE) {
+            final Size heapSize = calculateHeapSize();
+            final Address address = allocateMemory(heapSize);
+            final int [] defaultBeltHeapPercentage = defaultBeltHeapPercentage();
+            beltwayConfiguration.initializeBeltWayConfiguration(address, heapSize,  defaultBeltHeapPercentage.length, defaultBeltHeapPercentage);
+            beltManager.initializeBelts();
+            if (Heap.verbose()) {
+                beltManager.printBeltsInfo();
+            }
+            final Size coveredRegionSize = beltManager.getEnd().minus(Heap.bootHeapRegion.start()).asSize();
+            cardRegion.initialize(Heap.bootHeapRegion.start(), coveredRegionSize, Heap.bootHeapRegion.start().plus(coveredRegionSize));
+            sideTable.initialize(Heap.bootHeapRegion.start(), coveredRegionSize, Heap.bootHeapRegion.start().plus(coveredRegionSize).plus(cardRegion.cardTableSize()).roundedUpBy(
+                            Platform.target().pageSize));
+            BeltwayCardRegion.switchToRegularCardTable(cardRegion.cardTableBase().asPointer());
+        } else if (phase == MaxineVM.Phase.STARTING) {
+            collectorThread = new BeltwayStopTheWorldDaemon("GC", beltCollector);
+            collectorThread.start();
         } else if (phase == MaxineVM.Phase.RUNNING) {
             if (BeltwayConfiguration.parallelScavenging) {
                 createGCThreads();
@@ -145,12 +165,13 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     @INLINE
     protected final Address allocateMemory(Size size) {
         final Address endOfCodeRegion = Code.bootCodeRegion.end();
-        if (VirtualMemory.allocatePageAlignedAtFixedAddress(endOfCodeRegion, size, VirtualMemory.Type.HEAP)) {
-            return endOfCodeRegion;
+        final Address tlabAlignedEndOfCodeRegion = endOfCodeRegion.roundedUpBy(BeltwayConfiguration.TLAB_SIZE.toInt());
+        assert tlabAlignedEndOfCodeRegion.isAligned(Platform.target().pageSize);
+        if (VirtualMemory.allocatePageAlignedAtFixedAddress(tlabAlignedEndOfCodeRegion, size, VirtualMemory.Type.HEAP)) {
+            return tlabAlignedEndOfCodeRegion;
         }
         FatalError.unexpected("Error! Could not map fix the requested memory size");
         return Address.zero();
-
     }
 
     @INLINE
@@ -178,7 +199,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
         if (Heap.maxSize().greaterThan(size)) {
             size = Heap.maxSize();
         }
-        return size.roundedUpBy(BeltwayHeapSchemeConfiguration.ALIGNMENT).asSize();
+        return size.roundedUpBy(BeltwayHeapSchemeConfiguration.TLAB_SIZE.toInt()).asSize();
     }
 
     public void wipeMemory(Belt belt) {
@@ -223,7 +244,8 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     /**
      * Holds the biased card table address.
      */
-    public static final VmThreadLocal ADJUSTED_CARDTABLE_BASE = new VmThreadLocal("ADJUSTED_CARDTABLE_BASE", Kind.WORD);
+    public static final VmThreadLocal ADJUSTED_CARDTABLE_BASE
+        = new VmThreadLocal("ADJUSTED_CARDTABLE_BASE", Kind.WORD, "Beltway: ->biased card table");
 
     public void scanBootHeap(RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         cellVisitor.from = from;

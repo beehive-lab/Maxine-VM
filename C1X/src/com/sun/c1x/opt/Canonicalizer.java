@@ -20,21 +20,15 @@
  */
 package com.sun.c1x.opt;
 
-import com.sun.c1x.ir.*;
-import com.sun.c1x.value.*;
-import com.sun.c1x.bytecode.Bytecodes;
-import com.sun.c1x.util.InstructionVisitor;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.C1XIntrinsic;
-import com.sun.c1x.C1XMetrics;
-import com.sun.c1x.ci.*;
+import java.lang.reflect.*;
+import java.util.*;
 
-import java.util.List;
-import java.util.LinkedList;
-import java.util.ArrayList;
-import java.lang.reflect.Method;
-import java.lang.reflect.InvocationTargetException;
+import com.sun.c1x.*;
+import com.sun.c1x.bytecode.*;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>Canonicalizer</code> reduces instructions to a canonical form by folding constants,

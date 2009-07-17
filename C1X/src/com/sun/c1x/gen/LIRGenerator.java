@@ -57,7 +57,7 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
     };
 
     // Flags that can be set on vregs
-    protected enum VregFlag {
+    public enum VregFlag {
         MustStartInMemory, // needs to be assigned a memory location at beginning, but may then be loaded in a register
         CalleeSaved, // must be in a callee saved register
         ByteReg, // must be in a byte register
@@ -2247,6 +2247,10 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
                 break;
         }
         return l;
+    }
+
+    public int maxVirtualRegisterNumber() {
+        return virtualRegisterNumber;
     }
 
 }

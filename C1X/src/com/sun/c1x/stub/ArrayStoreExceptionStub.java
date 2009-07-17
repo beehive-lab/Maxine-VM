@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.stub;
 
-import com.sun.c1x.util.*;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.util.*;
 
 /**
  * The <code>ArrayStoreExceptionStub</code> class definition.

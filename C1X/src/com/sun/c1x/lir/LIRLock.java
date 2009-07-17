@@ -32,11 +32,11 @@ import com.sun.c1x.util.*;
  */
 public class LIRLock extends LIRInstruction{
 
-    private LIROperand hdr;
-    private LIROperand obj;
-    private LIROperand lock;
-    private LIROperand scratch;
-    private CodeStub stub;
+    LIROperand hdr;
+    LIROperand obj;
+    LIROperand lock;
+    LIROperand scratch;
+    CodeStub stub;
 
     /**
      * Creates a new LIRLock instruction.

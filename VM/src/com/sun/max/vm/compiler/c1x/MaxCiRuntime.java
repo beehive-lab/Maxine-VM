@@ -23,8 +23,9 @@ package com.sun.max.vm.compiler.c1x;
 import java.util.*;
 
 import com.sun.c1x.ci.*;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.target.x86.*;
+import com.sun.c1x.target.*;
+import com.sun.c1x.target.x86.X86Register;
+import com.sun.c1x.target.x86.Address;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.max.vm.actor.holder.*;
@@ -143,13 +144,8 @@ public class MaxCiRuntime implements CiRuntime {
         return false;
     }
 
-    @Override
-    public CiType makeTypeArrayClass(BasicType elemType) {
-        throw Util.unimplemented();
-    }
-
-    @Override
     public Register getCRarg(int i) {
+        // TODO: move this out of the compiler interface
         switch(i) {
             case 0:
                 return X86Register.rdi;
@@ -168,8 +164,8 @@ public class MaxCiRuntime implements CiRuntime {
         throw Util.shouldNotReachHere();
     }
 
-    @Override
     public Register getJRarg(int i) {
+        // TODO: move this out of the compiler interface
         if (i == 5) {
             return getCRarg(0);
         }
@@ -195,7 +191,8 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public boolean dtraceMethodProbes() {
-        throw Util.unimplemented();
+        // TODO: currently save to return false
+        return false;
     }
 
     public long getRuntimeEntry(CiRuntimeCall runtimeCall) {
@@ -271,15 +268,6 @@ public class MaxCiRuntime implements CiRuntime {
         throw Util.unimplemented();
     }
 
-    public Object ciEnvUnloadedCiobjarrayklass() {
-        throw Util.unimplemented();
-    }
-
-    public Object makeObjectArrayClass(CiType elementClass) {
-        throw Util.unimplemented();
-    }
-
-    @Override
     public int sunMiscAtomicLongCSImplValueOffset() {
         throw Util.unimplemented();
     }
@@ -488,4 +476,70 @@ public class MaxCiRuntime implements CiRuntime {
     public int vtableLengthOffset() {
         throw Util.unimplemented();
     }
+
+    public int javaCallingConvention(CiMethod method, CiLocation[] result, boolean outgoing) {
+
+        int iGeneral = 0;
+        int iXMM = 0;
+        final CiSignature signature = method.signatureType();
+
+
+        final int argumentCount = signature.argumentCount(!method.isStatic());
+
+
+        for (int i = 0; i < argumentCount; i++) {
+
+            final BasicType kind;
+            if (i == 0 && !method.isStatic()) {
+                kind = BasicType.Object;
+            } else {
+                kind = signature.argumentBasicTypeAt(i);
+            }
+
+            switch (kind) {
+                case Byte:
+                case Boolean:
+                case Short:
+                case Char:
+                case Int:
+                case Long:
+                case Word:
+                case Object: {
+                    if (iGeneral < X86Register.cpuRegisters.length) {
+                        result[i] = new CiLocation(X86Register.cpuRegisters[iGeneral++]);
+                    }
+                    break;
+                }
+                case Float:
+                case Double: {
+                    if (iXMM < X86Register.xmmRegisters.length) {
+                        result[i] = new CiLocation(X86Register.xmmRegisters[iXMM++]);
+                    }
+                    break;
+                }
+                case Void:
+                    result[i] = null;
+                    break;
+
+                default:
+                    throw Util.shouldNotReachHere();
+            }
+        }
+
+        for (int i = 0; i < result.length; i++) {
+            if (result[i] == null) {
+                throw Util.shouldNotReachHere();
+                // Currently cannot return stack slot
+            }
+        }
+
+        // Return preserved stack size
+        return 0;
+    }
+
+    public int outPreserveStackSlots() {
+        // This is probably correct for now.
+        return 0;
+    }
+
 }

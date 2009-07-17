@@ -57,4 +57,5 @@ public interface CiExceptionHandler {
      * @return {@code true} if this handler catches all exceptions
      */
     boolean isCatchAll();
+
 }

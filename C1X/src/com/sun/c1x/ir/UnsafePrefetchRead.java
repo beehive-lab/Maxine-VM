@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.util.InstructionVisitor;
+import com.sun.c1x.util.*;
 
 /**
  * The <code>UnsafePrefetchRead</code> instruction represents a prefetch operation on an object field.

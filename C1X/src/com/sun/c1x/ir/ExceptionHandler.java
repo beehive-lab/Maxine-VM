@@ -20,10 +20,10 @@
  */
 package com.sun.c1x.ir;
 
+import java.util.*;
+
 import com.sun.c1x.ci.*;
 import com.sun.c1x.lir.*;
-
-import java.util.*;
 
 /**
  * The <code>ExceptionHandler</code> class represents an exception handler for a Java bytecode method.
@@ -40,6 +40,7 @@ public class ExceptionHandler {
     private int entryPCO;
     private int phiOperand;
     private int scopeCount;
+    private int lirOpId;
 
     public ExceptionHandler(CiExceptionHandler handler) {
         this.handler = handler;
@@ -55,6 +56,7 @@ public class ExceptionHandler {
         this.entryPCO = other.entryPCO;
         this.phiOperand = other.phiOperand;
         this.scopeCount = other.scopeCount;
+        this.lirOpId = other.lirOpId;
     }
 
     /**
@@ -134,11 +136,19 @@ public class ExceptionHandler {
     }
 
     public int lirOpId() {
-        // TODO Auto-generated method stub
-        return 0;
+        return lirOpId;
     }
 
     public LIRList entryCode() {
         return entryCode;
+    }
+
+    public void setLirOpId(int throwingOpId) {
+        lirOpId = throwingOpId;
+    }
+
+    public void setEntryCode(LIRList entryCode) {
+        this.entryCode = entryCode;
+
     }
 }

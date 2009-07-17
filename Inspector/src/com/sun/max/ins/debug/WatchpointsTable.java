@@ -133,6 +133,7 @@ public final class WatchpointsTable extends InspectorTable {
             createColumn(WatchpointsColumnKind.READ, null, new DefaultCellEditor(new JCheckBox()));
             createColumn(WatchpointsColumnKind.WRITE, null, new DefaultCellEditor(new JCheckBox()));
             createColumn(WatchpointsColumnKind.EXEC, null, new DefaultCellEditor(new JCheckBox()));
+            createColumn(WatchpointsColumnKind.GC, null, new DefaultCellEditor(new JCheckBox()));
             createColumn(WatchpointsColumnKind.TRIGGERED_THREAD, new TriggerThreadCellRenderer(inspection()), null);
             createColumn(WatchpointsColumnKind.ADDRESS_TRIGGERED, new TriggerAddressCellRenderer(inspection()), null);
             createColumn(WatchpointsColumnKind.CODE_TRIGGERED, new TriggerCodeCellRenderer(inspection()), null);
@@ -178,6 +179,9 @@ public final class WatchpointsTable extends InspectorTable {
                 case END:
                 case DESCRIPTION:
                 case REGION:
+                case TRIGGERED_THREAD:
+                case ADDRESS_TRIGGERED:
+                case CODE_TRIGGERED:
                     return watchpoint;
                 case READ:
                     return watchpoint.isRead();
@@ -185,10 +189,8 @@ public final class WatchpointsTable extends InspectorTable {
                     return watchpoint.isWrite();
                 case EXEC:
                     return watchpoint.isExec();
-                case TRIGGERED_THREAD:
-                case ADDRESS_TRIGGERED:
-                case CODE_TRIGGERED:
-                    return watchpoint;
+                case GC:
+                    return watchpoint.isGC();
                 default:
                     throw FatalError.unexpected("Unspected Watchpoint Data column");
             }
@@ -247,6 +249,11 @@ public final class WatchpointsTable extends InspectorTable {
                         inspection().settings().save();
                     }
                     break;
+                case GC:
+                    newState = (Boolean) value;
+                    watchpoint.setGC(newState);
+                    inspection().settings().save();
+                    break;
                 default:
             }
         }
@@ -259,6 +266,8 @@ public final class WatchpointsTable extends InspectorTable {
                 case WRITE:
                     return Boolean.class;
                 case EXEC:
+                    return Boolean.class;
+                case GC:
                     return Boolean.class;
                 default:
                     return MaxWatchpoint.class;
@@ -552,12 +561,14 @@ public final class WatchpointsTable extends InspectorTable {
                 String text;
                 watchpointCode = maxVM().getTriggeredWatchpointCode();
 
-                if (watchpointCode == 1) {
+                if (watchpointCode == 5) {
                     text = "exec";
-                } else if (watchpointCode == 2) {
+                } else if (watchpointCode == 4) {
                     text = "write";
-                } else {
+                } else if (watchpointCode == 3) {
                     text = "read";
+                } else {
+                    text = "unknown";
                 }
                 text += "(" + String.valueOf(watchpointCode) + ")";
 

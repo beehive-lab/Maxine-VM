@@ -25,6 +25,7 @@ import static com.sun.c1x.ir.Instruction.*;
 import java.io.*;
 import java.util.*;
 
+import com.sun.c1x.alloc.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
@@ -276,7 +277,10 @@ public class CFGPrinter {
      */
     private void printLIR(BlockBegin block) {
         begin("LIR");
-        // TODO: Complete once LIR is implemented
+        for (int i = 0; i < block.lir().length(); i++) {
+            block.lir().at(i).printOn(out);
+            out.println(" <|@ ");
+        }
         end("LIR");
     }
 
@@ -344,5 +348,18 @@ public class CFGPrinter {
             }
         });
         end("cfg");
+    }
+
+    public void printIntervals(LinearScan allocator, List<Interval> intervals, String name) {
+        begin("intervals");
+        out.print(String.format("name \"%s\"", name));
+
+        for (int i = 0; i < intervals.size(); i++) {
+          if (intervals.get(i) != null) {
+            intervals.get(i).print(out, allocator);
+          }
+        }
+
+        end("intervals");
     }
 }

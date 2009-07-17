@@ -80,38 +80,7 @@ public class C1XTest {
 
     static {
         // add all the fields from C1XOptions as options
-        for (final Field field : C1XOptions.class.getFields()) {
-            if (Modifier.isStatic(field.getModifiers())) {
-                if (field.getType() == boolean.class) {
-                    final String name = field.getName();
-                    try {
-                        final boolean defaultValue = field.getBoolean(null);
-                        options.addOption(new Option<Boolean>("XX:+" + name, defaultValue, OptionTypes.BOOLEAN_TYPE, "Enable the " + name + " option.") {
-                            @Override
-                            public void setValue(Boolean value) {
-                                try {
-                                    field.setBoolean(null, true);
-                                } catch (Exception e) {
-                                    ProgramError.unexpected("Error updating the value of " + field, e);
-                                }
-                            }
-                        }, Syntax.EQUALS_OR_BLANK);
-                        options.addOption(new Option<Boolean>("XX:-" + name, !defaultValue, OptionTypes.BOOLEAN_TYPE, "Disable the " + name + " option.") {
-                            @Override
-                            public void setValue(Boolean value) {
-                                try {
-                                    field.setBoolean(null, false);
-                                } catch (Exception e) {
-                                    ProgramError.unexpected("Error updating the value of " + field, e);
-                                }
-                            }
-                        }, Syntax.EQUALS_OR_BLANK);
-                    } catch (Exception e) {
-                        ProgramError.unexpected("Error reading the value of " + field, e);
-                    }
-                }
-            }
-        }
+        options.addFieldOptions(C1XOptions.class, "XX:-");
         // add a special option "c1x-optlevel" which adjusts the optimization level
         options.addOption(new Option<Integer>("c1x-optlevel", -1, OptionTypes.INT_TYPE, "Set the overall optimization level of C1X (-1 to use default settings)") {
             @Override
@@ -500,6 +469,7 @@ public class C1XTest {
 
     private static Target createTarget() {
         // TODO: configure architecture according to host platform
-        return new Target(Architecture.AMD64);
+        final Architecture arch = Architecture.findArchitecture("amd64");
+        return new Target(arch, arch.registers, arch.registers);
     }
 }
