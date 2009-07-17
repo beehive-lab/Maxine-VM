@@ -21,7 +21,6 @@
 package com.sun.max.vm.heap.beltway.generational;
 
 import com.sun.max.annotate.*;
-import com.sun.max.platform.*;
 import com.sun.max.profile.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -43,7 +42,12 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
      * Each entry in the array correspond to the percentage of heap taken by the corresponding belt
      * (e.g., belt 0, i.e., the eden, is allocated 10 % percent of the heap.
      */
-    private static final   int [] DEFAULT_BELT_HEAP_PERCENTAGE = new int[] {10, 40, 50};
+    private static final  int [] DEFAULT_BELT_HEAP_PERCENTAGE = new int[] {10, 40, 50};
+
+    @Override
+    protected int [] defaultBeltHeapPercentage() {
+        return DEFAULT_BELT_HEAP_PERCENTAGE;
+    }
 
     protected static BeltwayGenerationalCollector beltCollectorGenerational = new BeltwayGenerationalCollector();
 
@@ -55,23 +59,7 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (phase == MaxineVM.Phase.PRISTINE) {
-            final Size heapSize = calculateHeapSize();
-            final Address address = allocateMemory(heapSize);
-            beltwayConfiguration.initializeBeltWayConfiguration(address.roundedUpBy(BeltwayConfiguration.TLAB_SIZE.toInt()),
-                heapSize.roundedUpBy(BeltwayConfiguration.TLAB_SIZE.toInt()).asSize(), DEFAULT_BELT_HEAP_PERCENTAGE.length,
-                DEFAULT_BELT_HEAP_PERCENTAGE);
-            beltManager.initializeBelts();
-            if (Heap.verbose()) {
-                beltManager.printBeltsInfo();
-            }
-            final Size coveredRegionSize = beltManager.getEnd().minus(Heap.bootHeapRegion().start()).asSize();
-            cardRegion.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize));
-            sideTable.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize).plus(cardRegion.cardTableSize()).roundedUpBy(
-                            Platform.target().pageSize));
-            BeltwayCardRegion.switchToRegularCardTable(cardRegion.cardTableBase().asPointer());
             InspectableHeapInfo.registerMemoryRegions(getEdenSpace(), getToSpace(), getMatureSpace());
-        } else if (phase == MaxineVM.Phase.STARTING) {
-            collectorThread = new BeltwayStopTheWorldDaemon("GC", beltCollector);
         } else if (phase == MaxineVM.Phase.RUNNING) {
             beltCollectorGenerational.setBeltwayHeapScheme(this);
             beltCollector.setRunnable(beltCollectorGenerational);

@@ -38,10 +38,14 @@ public class BeltwayCardRegion {
     public static final byte CLEAN = (byte) 0xff;
 
     public static final int CARD_SHIFT = 9;
+    /*
+     * Size in bytes of a single entry in the card table.
+     */
     public static final int CARD_SLOT_LENGTH = 1;
+    public static final Size CARD_SIZE = Size.fromInt(1 << CARD_SHIFT);
+
     private static final boolean debug = false;
     private static Pointer adjustedCardTable = Pointer.zero();
-    private static Size cardSize = Size.fromInt(1 << CARD_SHIFT);
 
     // Memory region occupied by the CardTable
     private RuntimeMemoryRegion region = new RuntimeMemoryRegion(Size.zero(), Size.zero());
@@ -52,10 +56,6 @@ public class BeltwayCardRegion {
 
     public final int getCardIndexFromHeapAddress(Address address) {
         return address.minus(coveredRegionStart).unsignedShiftedRight(CARD_SHIFT).toInt();
-    }
-
-    public static final int getAddressShiftLength() {
-        return CARD_SHIFT;
     }
 
     public static Pointer getAdjustedCardTable() {
@@ -91,7 +91,7 @@ public class BeltwayCardRegion {
     }
 
     public static Size cardSize() {
-        return cardSize;
+        return CARD_SIZE;
     }
 
     public final Address cardTableBase() {
