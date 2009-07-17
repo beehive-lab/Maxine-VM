@@ -500,6 +500,7 @@ public class C1XTest {
 
     private static Target createTarget() {
         // TODO: configure architecture according to host platform
-        return new Target(Architecture.AMD64);
+        final Architecture arch = Architecture.findArchitecture("amd64");
+        return new Target(arch, arch.registers, arch.registers);
     }
 }

@@ -2250,8 +2250,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
     }
 
     public int maxVirtualRegisterNumber() {
-        // TODO Auto-generated method stub
-        return 0;
+        return virtualRegisterNumber;
     }
 
 }

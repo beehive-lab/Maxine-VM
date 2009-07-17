@@ -21,6 +21,7 @@
 package com.sun.c1x.alloc;
 
 import com.sun.c1x.lir.*;
+import com.sun.c1x.util.*;
 
 /**
  *
@@ -30,8 +31,7 @@ import com.sun.c1x.lir.*;
 public class FpuStackAllocator {
 
     public LIROperand toFpuStack(LIROperand opr) {
-        // TODO Auto-generated method stub
-        return null;
+        throw Util.unimplemented();
     }
 
 }

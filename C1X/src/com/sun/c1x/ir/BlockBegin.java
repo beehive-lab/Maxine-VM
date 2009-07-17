@@ -80,9 +80,7 @@ public class BlockBegin extends StateSplit {
     private Label label;
     private LIRList lir;
 
-    private int firstLirInstructionId;
-
-    private int lastLirInstructionId;
+    private final LIRBlock lirBlock;
 
     /**
      * Constructs a new BlockBegin at the specified bytecode index.
@@ -97,6 +95,7 @@ public class BlockBegin extends StateSplit {
         exceptionHandlerBlocks = new ArrayList<BlockBegin>(0);
         exceptionHandlerStates = new ArrayList<ValueStack>(0);
         setBCI(bci);
+        lirBlock = new LIRBlock();
     }
 
     /**
@@ -675,23 +674,23 @@ public class BlockBegin extends StateSplit {
     }
 
     public int firstLirInstructionId() {
-        return firstLirInstructionId;
+        return lirBlock.firstLirInstructionID;
     }
 
 
     public void setFirstLirInstructionId(int firstLirInstructionId) {
-        this.firstLirInstructionId = firstLirInstructionId;
+        lirBlock.firstLirInstructionID = firstLirInstructionId;
     }
 
 
 
     public int lastLirInstructionId() {
-        return lastLirInstructionId;
+        return lirBlock.lastLirInstructionID;
     }
 
 
     public void setLastLirInstructionId(int lastLirInstructionId) {
-        this.lastLirInstructionId = lastLirInstructionId;
+        lirBlock.lastLirInstructionID = lastLirInstructionId;
     }
 
     public Iterable<Phi> phis() {
@@ -700,53 +699,43 @@ public class BlockBegin extends StateSplit {
     }
 
     public void setLiveGen(BitMap liveGen) {
-        // TODO Auto-generated method stub
-
+        lirBlock.liveGen = liveGen;
     }
 
     public void setLiveKill(BitMap liveKill) {
-        // TODO Auto-generated method stub
-
+        lirBlock.liveKill = liveKill;
     }
 
-    public void setLiveIn(BitMap bitMap) {
-        // TODO Auto-generated method stub
-
+    public void setLiveIn(BitMap liveIn) {
+        lirBlock.liveIn = liveIn;
     }
 
-    public void setLiveOut(BitMap bitMap) {
-        // TODO Auto-generated method stub
-
+    public void setLiveOut(BitMap liveOut) {
+        lirBlock.liveOut = liveOut;
     }
 
     public BitMap liveGen() {
-        // TODO Auto-generated method stub
-        return null;
+        return lirBlock.liveGen;
     }
 
     public BitMap liveKill() {
-        // TODO Auto-generated method stub
-        return null;
+        return lirBlock.liveKill;
     }
 
     public BitMap liveIn() {
-        // TODO Auto-generated method stub
-        return null;
+        return lirBlock.liveIn;
     }
 
     public BitMap liveOut() {
-        // TODO Auto-generated method stub
-        return null;
+        return lirBlock.liveOut;
     }
 
     public boolean isPredecessor(BlockBegin block) {
-        // TODO Auto-generated method stub
-        return false;
+        return this.predecessors.contains(block);
     }
 
     public void substituteSux(BlockBegin block, BlockBegin newTarget) {
-        // TODO Auto-generated method stub
-
+        end.substituteSuccessor(block, newTarget);
     }
 
 }

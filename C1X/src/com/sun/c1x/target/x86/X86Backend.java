@@ -20,13 +20,12 @@
  */
 package com.sun.c1x.target.x86;
 
-import com.sun.c1x.target.Backend;
-import com.sun.c1x.target.Target;
+import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.target.*;
 
 /**
  * The <code>X86Backend</code> class represents the backend for the x86 architectures,
@@ -60,26 +59,11 @@ public class X86Backend extends Backend {
     }
 
     @Override
-    public FrameMap newFrameMap(CiMethod method, int numberOfLocks, int maxStack) {
-        return new X86FrameMap(method, numberOfLocks, maxStack);
+    public FrameMap newFrameMap(C1XCompilation compilation, CiMethod method, int numberOfLocks, int maxStack) {
+        return new X86FrameMap(compilation, method, numberOfLocks, maxStack);
     }
     @Override
     public AbstractAssembler newAssembler(C1XCompilation compilation, CodeBuffer code) {
         return new X86MacroAssembler(compilation, code);
-    }
-    @Override
-    public int nofCpuRegs() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-    @Override
-    public int nofFpuRegs() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-    @Override
-    public int nofXmmRegs() {
-        // TODO Auto-generated method stub
-        return 0;
     }
 }

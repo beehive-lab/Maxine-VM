@@ -924,11 +924,11 @@ public class LinearScanWalker extends IntervalWalker {
         if (pdInitRegsForAlloc(cur)) {
             // the appropriate register range was selected.
         } else if (type == BasicType.Float || type == BasicType.Double) {
-            firstReg = compilation.target.pdFirstFpuReg().number;
-            lastReg = compilation.target.pdLastFpuReg().number;
+            firstReg = allocator.pdFirstFpuReg;
+            lastReg = allocator.pdLastFpuReg;
         } else {
-            firstReg = compilation.target.pdFirstCpuReg().number;
-            lastReg = compilation.target.pdLastCpuReg().number;
+            firstReg = allocator.pdFirstCpuReg;
+            lastReg = allocator.pdLastCpuReg;
         }
 
         assert 0 <= firstReg && firstReg < allocator.nofRegs : "out of range";
@@ -940,12 +940,12 @@ public class LinearScanWalker extends IntervalWalker {
         assert compilation.target.arch.isX86();
         if (allocator().gen().isVregFlagSet(cur.regNum(), LIRGenerator.VregFlag.ByteReg)) {
             assert cur.type() != BasicType.Float && cur.type() != BasicType.Double : "cpu regs only";
-            firstReg = compilation.target.pdFirstByteReg().number;
-            lastReg = compilation.target.pdLastByteReg().number;
+            firstReg = allocator.pdFirstByteReg;
+            lastReg = allocator.pdLastByteReg;
             return true;
         } else if ((C1XOptions.SSEVersion >= 1 && cur.type() == BasicType.Float) || (C1XOptions.SSEVersion >= 2 && cur.type() == BasicType.Double)) {
-            firstReg = compilation.target.pdFirstXmmReg().number;
-            lastReg = compilation.target.pdLastXmmReg().number;
+            firstReg = allocator.pdFirstXmmReg;
+            lastReg = allocator.pdLastXmmReg;
             return true;
         }
 
@@ -1033,7 +1033,7 @@ public class LinearScanWalker extends IntervalWalker {
         }
 
         if (C1XOptions.TraceLinearScanLevel >= 4) {
-            TTY.println("      splitParent: %d, insertMoveWhenActivated: %d", cur.splitParent().regNum(), cur.insertMoveWhenActivated());
+            TTY.println("      splitParent: %d, insertMoveWhenActivated: %b", cur.splitParent().regNum(), cur.insertMoveWhenActivated());
         }
 
         if (cur.assignedReg() >= allocator.nofRegs) {

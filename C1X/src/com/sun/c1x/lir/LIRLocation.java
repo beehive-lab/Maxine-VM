@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.target.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
@@ -276,11 +277,72 @@ public class LIRLocation extends LIROperand {
         return this.location2;
     }
 
+    @Override
+    public boolean isVirtualRegister() {
+        return index != 0 && !this.isStack();
+    }
+
+
+    @Override
+    public int cpuRegnr() {
+        assert this.isCpuRegister() && !this.isVirtualRegister();
+        return location1.number;
+    }
+
+    @Override
+    public int cpuRegnrLo() {
+        assert this.isCpuRegister() && !this.isVirtualRegister();
+        return location1.number;
+    }
+
+    @Override
+    public int cpuRegnrHi() {
+        assert this.isCpuRegister() && !this.isVirtualRegister();
+        return location2.number;
+    }
+
+    @Override
+    public int fpuRegnr() {
+        assert this.isFpuRegister() && !this.isVirtualRegister();
+        return location1.number;
+    }
+
+    @Override
+    public int fpuRegnrLo() {
+        assert this.isFpuRegister() && !this.isVirtualRegister();
+        return location1.number;
+    }
+
+    @Override
+    public int fpuRegnrHi() {
+        assert this.isFpuRegister() && !this.isVirtualRegister();
+        return location2.number;
+    }
+
+    @Override
+    public int xmmRegnr() {
+        assert this.isXmmRegister() && !this.isVirtualRegister();
+        return location1.number;
+    }
+
+    @Override
+    public int xmmRegnrLo() {
+        assert this.isXmmRegister() && !this.isVirtualRegister();
+        return location1.number;
+    }
+
+    @Override
+    public int xmmRegnrHi() {
+        assert this.isXmmRegister() && !this.isVirtualRegister();
+        return location2.number;
+    }
+
+
     /**
      * @return the minimum virtual register value
      */
     public static int virtualRegisterBase() {
-        return 1;
+        return Register.vregBase;
     }
 
     /**

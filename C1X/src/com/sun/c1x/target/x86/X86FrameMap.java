@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.target.x86;
 
+import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.target.*;
@@ -140,8 +141,8 @@ public class X86FrameMap extends FrameMap {
         return (arch.is32bit()) ? X86Register.noreg : X86Register.r10;
     }
 
-    public X86FrameMap(CiMethod method, int numberOfLocks, int maxStack) {
-        // TODO Auto-generated constructor stub
+    public X86FrameMap(C1XCompilation compilation, CiMethod method, int numberOfLocks, int maxStack) {
+        super(compilation, method, numberOfLocks, maxStack);
     }
 
 

@@ -18,44 +18,49 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.opt;
+package com.sun.c1x.ci;
 
-import com.sun.c1x.ir.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.target.*;
 
 /**
- * The <code>SubstitutionResolver</code> iterates over the instructions of a program and replaces
- * the occurrence of each instruction with its substitution, if it has one.
  *
- * @author Ben L. Titzer
+ * @author Thomas Wuerthinger
+ *
  */
-public class SubstitutionResolver implements BlockClosure, InstructionClosure {
+public final class CiLocation {
 
-    /**
-     * Creates a new SubstitutionResolver and applies it to each instruction
-     * in the IR graph, starting from the specified block.
-     * @param block the block from which to start substitution
-     */
-    public SubstitutionResolver(BlockBegin block) {
-        block.iteratePreOrder(this);
+    public final Register first;
+    public final Register second;
+    public final int stackOffset;
+
+    public CiLocation(Register register) {
+        first = register;
+        second = null;
+        stackOffset = 0;
     }
 
-    public void apply(BlockBegin block) {
-        Instruction last = null;
-        for (Instruction n = block; n != null; n = last.next()) {
-            n.allValuesDo(this);
-            if (n.subst() != n && last != null) {
-                last.setNext(n.next(), n.next().bci());
-            } else {
-                last = n;
-            }
-        }
+    public CiLocation(Register first, Register second) {
+        this.first = first;
+        this.second = second;
+        stackOffset = 0;
     }
 
-    public Instruction apply(Instruction i) {
-        if (i != null) {
-            return i.subst();
-        }
-        return i;
+    public CiLocation(int stackOffset) {
+        assert stackOffset > 0;
+        this.first = null;
+        this.second = null;
+        this.stackOffset = stackOffset;
+    }
+
+    public boolean isSingleRegister() {
+        return second == null && first != null;
+    }
+
+    public boolean isDoubleRegister() {
+        return second != null;
+    }
+
+    public boolean isStackOffset() {
+        return stackOffset > 0;
     }
 }

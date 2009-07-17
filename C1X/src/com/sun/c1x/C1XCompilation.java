@@ -26,13 +26,13 @@ import java.util.*;
 
 import com.sun.c1x.alloc.*;
 import com.sun.c1x.asm.*;
-import com.sun.c1x.gen.*;
 import com.sun.c1x.ci.*;
+import com.sun.c1x.gen.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.target.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.target.Target;
 
 /**
  * The <code>Compilation</code> class encapsulates global information about the compilation of a particular method,
@@ -61,7 +61,7 @@ public class C1XCompilation {
     int maxSpills;
     boolean needsDebugInfo;
     boolean hasExceptionHandlers;
-    boolean hasFpuCode;
+    private boolean hasFpuCode;
     boolean hasUnsafeAccess;
     Bailout bailout;
 
@@ -76,6 +76,9 @@ public class C1XCompilation {
 
     private Instruction lastInstructionPrinted; // Debugging only
     private CFGPrinter cfgPrinter;
+
+    private CodeOffsets codeOffsets = new CodeOffsets();
+    private List<ExceptionInfo> exceptionInfoList = new ArrayList<ExceptionInfo>();
 
     /**
      * Creates a new compilation for the specified method and runtime.
@@ -315,14 +318,8 @@ public class C1XCompilation {
         }
     }
 
-    public void bailout(String msg) {
-        // TODO Auto-generated method stub
-
-    }
-
     public CodeOffsets offsets() {
-        // TODO Auto-generated method stub
-        return null;
+        return codeOffsets;
     }
 
     public AbstractAssembler masm() {
@@ -330,28 +327,32 @@ public class C1XCompilation {
     }
 
     public void addExceptionHandlersForPco(int pcOffset, List<ExceptionHandler> exceptionHandlers) {
-        // TODO Auto-generated method stub
 
+        if (C1XOptions.PrintExceptionHandlers && C1XOptions.Verbose) {
+            TTY.println("  added exception scope for pco %d", pcOffset);
+          }
+        exceptionInfoList.add(new ExceptionInfo(pcOffset, exceptionHandlers));
     }
 
     public DebugInformationRecorder debugInfoRecorder() {
-        // TODO Auto-generated method stub
+        // TODO: Implement correctly, for now return skeleton class for code to work
         return new DebugInformationRecorder();
     }
 
     public boolean hasExceptionHandlers() {
-        // TODO Auto-generated method stub
-        return false;
+        return hasExceptionHandlers;
     }
 
     public BlockBegin osrEntry() {
-        // TODO Auto-generated method stub
-        return null;
+        throw Util.unimplemented();
     }
 
     public boolean hasFpuCode() {
-        // TODO Auto-generated method stub
-        return false;
+        return hasFpuCode;
+    }
+
+    public void setHasFpuCode(boolean hasFpuCode) {
+        this.hasFpuCode = hasFpuCode;
     }
 
     public boolean compile() {
@@ -390,7 +391,7 @@ public class C1XCompilation {
     }
 
     private void emitLIR() {
-        frameMap = target.backend.newFrameMap(method, numberOfLocks(), maxStack());
+        frameMap = target.backend.newFrameMap(this, method, hir.topScope.numberOfLocks(), hir.topScope.maxStack());
         final LIRGenerator lirGenerator = target.backend.newLIRGenerator(this);
         hir.iterateLinearScanOrder(lirGenerator);
 
@@ -403,16 +404,6 @@ public class C1XCompilation {
         assembler = target.backend.newAssembler(this, tmp);
         final LIRAssembler lirAssembler = target.backend.newLIRAssembler(this);
         lirAssembler.emitCode(hir.linearScanOrder());
-    }
-
-    private int numberOfLocks() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    private int maxStack() {
-        // TODO Auto-generated method stub
-        return 10;
     }
 
     public int numberOfBlocks() {
@@ -431,13 +422,8 @@ public class C1XCompilation {
         return cfgPrinter;
     }
 
-    public void setHasFpuCode(boolean localHasFpuRegisters) {
-        // TODO Auto-generated method stub
-
-    }
-
     public boolean needsDebugInformation() {
-        // TODO Auto-generated method stub
+        // TODO Check what to return here, for now do not collect debug information
         return false;
     }
 }

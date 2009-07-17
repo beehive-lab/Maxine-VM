@@ -27,8 +27,8 @@ import com.sun.c1x.alloc.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.util.*;
 import com.sun.c1x.stub.*;
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**

@@ -853,13 +853,13 @@ public final class X86LIRGenerator extends LIRGenerator {
             // of the C convention we can process the java args trivially into C
             // args without worry of overwriting during the xfer
 
-            src.loadItemForce(X86FrameMap.asOopOpr(compilation.target.jRarg0()));
-            srcPos.loadItemForce(X86FrameMap.asOpr(compilation.target.jRarg1()));
-            dst.loadItemForce(X86FrameMap.asOopOpr(compilation.target.jRarg2()));
-            dstPos.loadItemForce(X86FrameMap.asOpr(compilation.target.jRarg3()));
-            length.loadItemForce(X86FrameMap.asOpr(compilation.target.jRarg4()));
+            src.loadItemForce(X86FrameMap.asOopOpr(compilation.runtime.getJRarg(0)));
+            srcPos.loadItemForce(X86FrameMap.asOpr(compilation.runtime.getJRarg(1)));
+            dst.loadItemForce(X86FrameMap.asOopOpr(compilation.runtime.getJRarg(2)));
+            dstPos.loadItemForce(X86FrameMap.asOpr(compilation.runtime.getJRarg(3)));
+            length.loadItemForce(X86FrameMap.asOpr(compilation.runtime.getJRarg(4)));
 
-            tmp = X86FrameMap.asOpr(compilation.target.jRarg5());
+            tmp = X86FrameMap.asOpr(compilation.runtime.getJRarg(5));
         }
 
         setNoResult(x);

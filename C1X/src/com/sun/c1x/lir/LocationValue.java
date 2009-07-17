@@ -72,6 +72,6 @@ public class LocationValue extends ScopeValue {
     // Printing
     @Override
     public void printOn(LogStream out) {
-        location().printOn(out);
+        location().printOn(out, 8); // TODO: !!!! resolve this to logBytesPerInt
     }
 }

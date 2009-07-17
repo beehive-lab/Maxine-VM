@@ -28,16 +28,9 @@ import com.sun.c1x.util.*;
  *
  * @author Ben L. Titzer
  */
-public enum Architecture {
-    IA32(4, "x86", BitOrdering.LittleEndian),
-    AMD64(8, "x86", BitOrdering.LittleEndian),
-    SPARC(4, "sparc", BitOrdering.BigEndian),
-    SPARCV9(8, "sparc", BitOrdering.BigEndian);
-    // PPC(4),
-    // PPC64(8),
-    // ARM(4),
+public abstract class Architecture {
 
-    public enum BitOrdering{
+    public static enum BitOrdering{
         LittleEndian,
         BigEndian
     }
@@ -50,13 +43,32 @@ public enum Architecture {
     public final String backend;
     public final int loWordOffsetInBytes;
     public final int hiWordOffsetInBytes;
+    public final int stackBias = 0;
+    public final Register[] registers;
+    public final String name;
 
+    public static final Architecture findArchitecture(String name) {
+        // load and instantiate the backend via reflection
+        String className = "com.sun.c1x.target." + name.toUpperCase();
+        try {
+            Class<?> javaClass = Class.forName(className);
+            return (Architecture) javaClass.newInstance();
+        } catch (InstantiationException e) {
+            throw new Error("could not instantiate architecture class: " + className);
+        } catch (IllegalAccessException e) {
+            throw new Error("could not access architecture class: " + className);
+        } catch (ClassNotFoundException e) {
+            throw new Error("could not find architecture class: " + className);
+        }
+    }
 
-    Architecture(int wordSize, String backend, BitOrdering bitOrdering) {
+    protected Architecture(String name, int wordSize, String backend, BitOrdering bitOrdering, Register[] registers) {
+        this.name = name;
+        this.registers = registers;
         this.wordSize = wordSize;
         this.backend = backend;
-        this.bitsPerWord = (int) java.lang.Math.pow(2, wordSize);
-        this.logBytesPerInt = (int) (java.lang.Math.log(wordSize) / java.lang.Math.log(2));
+        this.bitsPerWord = wordSize * 8;
+        this.logBytesPerInt = (int) (java.lang.Math.log(wordSize));
         switch (bitOrdering) {
             case LittleEndian:
                 loWordOffsetInBytes = 0;
@@ -73,13 +85,15 @@ public enum Architecture {
         }
     }
 
+    public abstract Backend getBackend(Target target);
+
     /**
      * Converts this architecture to a string.
      * @return the string representation of this architecture
      */
     @Override
     public String toString() {
-        return name().toLowerCase();
+        return name.toLowerCase();
     }
 
     public int bitsPerWord() {

@@ -34,12 +34,12 @@ public class IntervalWalker {
     C1XCompilation compilation;
     LinearScan allocator;
 
-    Interval[] unhandledFirst = new Interval[Interval.IntervalKind.nofKinds.ordinal()]; // sorted list of intervals, not
+    Interval[] unhandledFirst = new Interval[Interval.IntervalKind.values().length]; // sorted list of intervals, not
                                                                                         // life before the current
                                                                                         // position
-    Interval[] activeFirst = new Interval[Interval.IntervalKind.nofKinds.ordinal()]; // sorted list of intervals, life
+    Interval[] activeFirst = new Interval[Interval.IntervalKind.values().length]; // sorted list of intervals, life
                                                                                      // at the current position
-    Interval[] inactiveFirst = new Interval[Interval.IntervalKind.nofKinds.ordinal()]; // sorted list of intervals,
+    Interval[] inactiveFirst = new Interval[Interval.IntervalKind.values().length]; // sorted list of intervals,
                                                                                        // intervals in a life time hole
                                                                                        // at the current position
 
