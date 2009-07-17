@@ -50,7 +50,7 @@ public class FieldOption<Value_Type> extends Option<Value_Type> {
     @Override
     public Value_Type getValue() {
         try {
-            return StaticLoophole.cast(field.get(object));
+            return StaticLoophole.<Value_Type>cast(field.get(object));
         } catch (IllegalAccessException e) {
             throw ProgramError.unexpected(e);
         }
