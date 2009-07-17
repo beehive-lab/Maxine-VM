@@ -30,19 +30,19 @@ import com.sun.max.collect.*;
  * @author Hannes Payer
  */
 public enum WatchpointsColumnKind implements ColumnKind{
+
     START("Start", "Starting address", true, 20),
     SIZE("Size", "Size of watched region, in bytes", true, 6),
     END("End", "Ending address", false, 20),
     DESCRIPTION("Description", "Description of how watchpoint was created", true, 30),
     REGION("Region", "Memory region pointed to by value", false, 20),
-    READ("R", "Read?", true, 5),
-    WRITE("W", "Write?", true, 5),
-    EXEC("X", "Execute?", true, 5),
+    READ("R", "Should watchpoint trap when location is read?", true, 5),
+    WRITE("W", "Should watchpoint trap when location is written?", true, 5),
+    EXEC("X", "Should watchpoint trap when location is executed?", true, 5),
     GC("GC", "Active during GC?", true, 5),
     TRIGGERED_THREAD("Thread", "Name of thread currently stopped at breakpoint", true, 1),
     ADDRESS_TRIGGERED("Address", "Address where watchpoint was triggered", true, 1),
     CODE_TRIGGERED("Code", "Access type which triggered watchpoint", true, 1);
-
 
     private final String label;
     private final String toolTipText;

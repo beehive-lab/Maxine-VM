@@ -161,7 +161,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     }
 
     /**
-     * @return the size of the memory occupied by this object in the VM.
+     * @return the size of the memory occupied by this object in the VM, including header.
      */
     protected abstract Size objectSize();
 
