@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ci;
 
-import com.sun.c1x.value.BasicType;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>CiConstant</code> interface represents a constant that can be referred to

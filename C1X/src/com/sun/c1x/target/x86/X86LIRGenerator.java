@@ -387,11 +387,11 @@ public final class X86LIRGenerator extends LIRGenerator {
             LIROperand fpu0;
             LIROperand fpu1;
             if (x.opcode() == Bytecodes.FREM) {
-                fpu0 = LIROperandFactory.singleFpu(0);
-                fpu1 = LIROperandFactory.singleFpu(1);
+                fpu0 = LIROperandFactory.singleFpu(X86Register.fpu0);
+                fpu1 = LIROperandFactory.singleFpu(X86Register.fpu1);
             } else {
-                fpu0 = LIROperandFactory.doubleFpu(0);
-                fpu1 = LIROperandFactory.doubleFpu(1);
+                fpu0 = LIROperandFactory.doubleFpuX86(X86Register.fpu0);
+                fpu1 = LIROperandFactory.doubleFpuX86(X86Register.fpu1);
             }
             lir().move(right.result(), fpu1); // order of left and right operand is important!
             lir().move(left.result(), fpu0);
@@ -777,8 +777,8 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand calcResult = rlockResult(x);
 
         // sin and cos need two free fpu stack slots, so register two temporary operands
-        LIROperand tmp1 = LIROperandFactory.singleFpu(compilation.runtime.callerSaveFpuRegAt(0).number);
-        LIROperand tmp2 = LIROperandFactory.singleFpu(compilation.runtime.callerSaveFpuRegAt(1).number);
+        LIROperand tmp1 = LIROperandFactory.singleFpu(compilation.runtime.callerSaveFpuRegAt(0));
+        LIROperand tmp2 = LIROperandFactory.singleFpu(compilation.runtime.callerSaveFpuRegAt(1));
 
         if (useFpu) {
             LIROperand tmp = X86FrameMap.fpu0DoubleOpr;
@@ -786,8 +786,8 @@ public final class X86LIRGenerator extends LIRGenerator {
 
             calcInput = tmp;
             calcResult = tmp;
-            tmp1 = LIROperandFactory.singleFpu(compilation.runtime.callerSaveFpuRegAt(1).number);
-            tmp2 = LIROperandFactory.singleFpu(compilation.runtime.callerSaveFpuRegAt(2).number);
+            tmp1 = LIROperandFactory.singleFpu(compilation.runtime.callerSaveFpuRegAt(1));
+            tmp2 = LIROperandFactory.singleFpu(compilation.runtime.callerSaveFpuRegAt(2));
         }
 
         switch (x.intrinsic()) {
@@ -853,13 +853,13 @@ public final class X86LIRGenerator extends LIRGenerator {
             // of the C convention we can process the java args trivially into C
             // args without worry of overwriting during the xfer
 
-            src.loadItemForce(X86FrameMap.asOopOpr(compilation.target.jRarg0()));
-            srcPos.loadItemForce(X86FrameMap.asOpr(compilation.target.jRarg1()));
-            dst.loadItemForce(X86FrameMap.asOopOpr(compilation.target.jRarg2()));
-            dstPos.loadItemForce(X86FrameMap.asOpr(compilation.target.jRarg3()));
-            length.loadItemForce(X86FrameMap.asOpr(compilation.target.jRarg4()));
+            src.loadItemForce(X86FrameMap.asOopOpr(compilation.runtime.getJRarg(0)));
+            srcPos.loadItemForce(X86FrameMap.asOpr(compilation.runtime.getJRarg(1)));
+            dst.loadItemForce(X86FrameMap.asOopOpr(compilation.runtime.getJRarg(2)));
+            dstPos.loadItemForce(X86FrameMap.asOpr(compilation.runtime.getJRarg(3)));
+            length.loadItemForce(X86FrameMap.asOpr(compilation.runtime.getJRarg(4)));
 
-            tmp = X86FrameMap.asOpr(compilation.target.jRarg5());
+            tmp = X86FrameMap.asOpr(compilation.runtime.getJRarg(5));
         }
 
         setNoResult(x);
@@ -1036,7 +1036,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand len = length.result();
         BasicType elemType = x.elementType();
 
-        lir().oop2reg(compilation.runtime.makeTypeArrayClass(elemType), klassReg);
+        lir().oop2reg(elemType.primitiveArrayClass(), klassReg);
 
         CodeStub slowPath = new NewTypeArrayStub(klassReg, len, reg, info);
         lir().allocateArray(reg, len, tmp1, tmp2, tmp3, tmp4, elemType, klassReg, slowPath);
@@ -1069,10 +1069,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand len = length.result();
 
         CodeStub slowPath = new NewObjectArrayStub(klassReg, len, reg, info);
-        Object obj = compilation.runtime.makeObjectArrayClass(x.elementClass());
-        if (obj == compilation.runtime.ciEnvUnloadedCiobjarrayklass()) {
-            throw new Bailout("encountered unloadedCiobjarrayklass due to out of memory error");
-        }
+        Object obj = x.elementClass().arrayOf();
         jobject2regWithPatching(klassReg, obj, patchingInfo);
         lir().allocateArray(reg, len, tmp1, tmp2, tmp3, tmp4, BasicType.Object, klassReg, slowPath);
 

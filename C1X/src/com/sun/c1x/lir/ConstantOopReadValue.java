@@ -20,48 +20,49 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.util.*;
+
 /**
- * The <code>Register</code> class definition.
+ * The <code>ConstantOopReadValue</code> class definition.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  *
  */
-public class Register {
+public class ConstantOopReadValue extends ScopeValue {
 
-    public final int number;
+    private Object value;
 
-    public Register(int number) {
-        this.number = number;
+    /**
+     * @param stream
+     */
+    public ConstantOopReadValue(DebugInfoReadStream stream) {
+        value = stream.readOop();
     }
 
-    public boolean isValid() {
-        // TODO Check if this implementation is correct?
-        return number >= 0;
+    public Object value() {
+        return value;
     }
 
-    public boolean isNoReg() {
-        return number == -1;
+    @Override
+    public boolean isConstantOop() {
+        return true;
     }
 
-    public boolean hasByteRegister() {
-        // TODO Auto-generated method stub
+    @Override
+    public boolean equals(ScopeValue other) {
         return false;
     }
 
-    public static boolean assertDifferentRegisters(Register... reg) {
+    // Serialization of debugging information
 
-        for (int i = 0; i < reg.length; i++) {
-            for (int j = 0; j < reg.length; j++) {
-                if (i != j) {
-                    if (reg[i] == reg[j]) {
-                        assert false : "Registers " + i + " and " + j + " are both " + reg[i];
-                        return false;
-                    }
-                }
-            }
-        }
+    @Override
+    public void writeOn(DebugInfoWriteStream stream) {
+        Util.shouldNotReachHere();
+    }
 
-        return true;
+    @Override
+    public void printOn(LogStream out) {
+        out.print(value.toString());
     }
 }

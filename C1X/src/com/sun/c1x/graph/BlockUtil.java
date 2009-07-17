@@ -20,13 +20,11 @@
  */
 package com.sun.c1x.graph;
 
-import com.sun.c1x.ir.BlockBegin;
-import com.sun.c1x.ir.Goto;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.value.ValueStack;
+import java.util.*;
 
-import java.util.List;
-import java.util.Iterator;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>BlockUtil</code> class contains a number of utilities for manipulating a CFG of basic blocks.

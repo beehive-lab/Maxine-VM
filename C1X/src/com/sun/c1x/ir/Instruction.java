@@ -479,7 +479,7 @@ public abstract class Instruction {
 
     /**
      * Formats a given instruction as value is a {@linkplain ValueStack frame state}. If the instruction is a phi defined at a given
-     * block, its {@linkplain Phi#lirOperand() operands} are appended to the returned string.
+     * block, its {@linkplain Phi#operand() operands} are appended to the returned string.
      *
      * @param index the index of the value in the frame state
      * @param value the frame state value
@@ -537,5 +537,10 @@ public abstract class Instruction {
 
     public boolean isRoot(C1XCompilation compilation) {
         return isPinned() || compilation.hir().useCount(this) > 1;
+    }
+
+    public void printLine() {
+        InstructionPrinter ip = new InstructionPrinter(TTY.out, true);
+        ip.printInstructionListing(this);
     }
 }

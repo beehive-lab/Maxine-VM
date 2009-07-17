@@ -29,6 +29,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.stub.*;
+import com.sun.c1x.target.*;
 import com.sun.c1x.target.x86.Address.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
@@ -508,9 +509,9 @@ public class X86LIRAssembler extends LIRAssembler {
             case Float: {
                 if (dest.isSingleXmm()) {
                     if (c.isZeroFloat()) {
-                        lir().xorps((X86Register) dest.asXmmFloatReg(), (X86Register) dest.asXmmFloatReg());
+                        lir().xorps(asXmmFloatReg(dest), asXmmFloatReg(dest));
                     } else {
-                        lir().movflt((X86Register) dest.asXmmFloatReg(), new InternalAddress(floatConstant(c.asJfloat()).value));
+                        lir().movflt(asXmmFloatReg(dest), new InternalAddress(floatConstant(c.asJfloat()).value));
                     }
                 } else {
                     assert dest.isSingleFpu() : "must be";
@@ -529,9 +530,9 @@ public class X86LIRAssembler extends LIRAssembler {
             case Double: {
                 if (dest.isDoubleXmm()) {
                     if (c.isZeroDouble()) {
-                        lir().xorpd((X86Register) dest.asXmmDoubleReg(), (X86Register) dest.asXmmDoubleReg());
+                        lir().xorpd(asXmmDoubleReg(dest), asXmmDoubleReg(dest));
                     } else {
-                        lir().movdbl((X86Register) dest.asXmmDoubleReg(), new InternalAddress(doubleConstant(c.asJdouble()).value));
+                        lir().movdbl(asXmmDoubleReg(dest), new InternalAddress(doubleConstant(c.asJdouble()).value));
                     }
                 } else {
                     assert dest.isDoubleFpu() : "must be";
@@ -734,25 +735,25 @@ public class X86LIRAssembler extends LIRAssembler {
             // special moves from fpu-register to xmm-register
             // necessary for method results
         } else if (src.isSingleXmm() && !dest.isSingleXmm()) {
-            lir().movflt(new Address(X86Register.rsp, 0), (X86Register) src.asXmmFloatReg());
+            lir().movflt(new Address(X86Register.rsp, 0), asXmmFloatReg(src));
             lir().fldS(new Address(X86Register.rsp, 0));
         } else if (src.isDoubleXmm() && !dest.isDoubleXmm()) {
-            lir().movdbl(new Address(X86Register.rsp, 0), (X86Register) src.asXmmDoubleReg());
+            lir().movdbl(new Address(X86Register.rsp, 0), asXmmDoubleReg(src));
             lir().fldD(new Address(X86Register.rsp, 0));
         } else if (dest.isSingleXmm() && !src.isSingleXmm()) {
             lir().fstpS(new Address(X86Register.rsp, 0));
-            lir().movflt((X86Register) dest.asXmmFloatReg(), new Address(X86Register.rsp, 0));
+            lir().movflt(asXmmFloatReg(dest), new Address(X86Register.rsp, 0));
         } else if (dest.isDoubleXmm() && !src.isDoubleXmm()) {
             lir().fstpD(new Address(X86Register.rsp, 0));
-            lir().movdbl((X86Register) dest.asXmmDoubleReg(), new Address(X86Register.rsp, 0));
+            lir().movdbl(asXmmDoubleReg(dest), new Address(X86Register.rsp, 0));
 
             // move between xmm-registers
         } else if (dest.isSingleXmm()) {
             assert src.isSingleXmm() : "must match";
-            lir().movflt((X86Register) dest.asXmmFloatReg(), (X86Register) src.asXmmFloatReg());
+            lir().movflt(asXmmFloatReg(dest), asXmmFloatReg(src));
         } else if (dest.isDoubleXmm()) {
             assert src.isDoubleXmm() : "must match";
-            lir().movdbl((X86Register) dest.asXmmDoubleReg(), (X86Register) src.asXmmDoubleReg());
+            lir().movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(src));
 
             // move between fpu-registers (no instruction necessary because of fpu-stack)
         } else if (dest.isSingleFpu() || dest.isDoubleFpu()) {
@@ -787,11 +788,11 @@ public class X86LIRAssembler extends LIRAssembler {
 
         } else if (src.isSingleXmm()) {
             Address dstAddr = frameMap().addressForSlot(dest.singleStackIx());
-            lir().movflt(dstAddr, (X86Register) src.asXmmFloatReg());
+            lir().movflt(dstAddr, asXmmFloatReg(src));
 
         } else if (src.isDoubleXmm()) {
             Address dstAddr = frameMap().addressForSlot(dest.doubleStackIx());
-            lir().movdbl(dstAddr, (X86Register) src.asXmmDoubleReg());
+            lir().movdbl(dstAddr, asXmmDoubleReg(src));
 
         } else if (src.isSingleFpu()) {
             assert src.fpuRegnr() == 0 : "argument must be on TOS";
@@ -936,7 +937,8 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     private static X86Register asXmmFloatReg(LIROperand src) {
-        return (X86Register) src.asXmmFloatReg();
+        assert src.isXmmRegister();
+        return (X86Register) src.asRegister();
     }
 
     @Override
@@ -1379,9 +1381,9 @@ public class X86LIRAssembler extends LIRAssembler {
             case Bytecodes.I2F:
             case Bytecodes.I2D:
                 if (dest.isSingleXmm()) {
-                    lir().cvtsi2ssl((X86Register) dest.asXmmFloatReg(), (X86Register) src.asRegister());
+                    lir().cvtsi2ssl(asXmmFloatReg(dest), (X86Register) src.asRegister());
                 } else if (dest.isDoubleXmm()) {
-                    lir().cvtsi2sdl((X86Register) dest.asXmmDoubleReg(), (X86Register) src.asRegister());
+                    lir().cvtsi2sdl(asXmmDoubleReg(dest), (X86Register) src.asRegister());
                 } else {
                     assert dest.fpu() == 0 : "result must be on TOS";
                     lir().movl(new Address(X86Register.rsp, 0), (X86Register) src.asRegister());
@@ -1870,7 +1872,7 @@ public class X86LIRAssembler extends LIRAssembler {
         if (compilation.target.supportsCmov() && !opr2.isConstant()) {
             // optimized version that does not require a branch
             if (opr2.isSingleCpu()) {
-                assert opr2.cpuRegnr() != result.cpuRegnr() : "opr2 already overwritten by previous move";
+                assert opr2.asRegister() != result.asRegister() : "opr2 already overwritten by previous move";
                 lir().cmov(ncond, (X86Register) result.asRegister(), (X86Register) opr2.asRegister());
             } else if (opr2.isDoubleCpu()) {
                 assert opr2.cpuRegnrLo() != result.cpuRegnrLo() && opr2.cpuRegnrLo() != result.cpuRegnrHi() : "opr2 already overwritten by previous move";
@@ -1911,7 +1913,7 @@ public class X86LIRAssembler extends LIRAssembler {
         assert info == null : "should never be used :  idiv/irem and ldiv/lrem not handled by this method";
 
         if (left.isSingleCpu()) {
-            assert left == dest : "left and dest must be equal";
+            assert left.equals(dest) : "left and dest must be equal";
             X86Register lreg = (X86Register) left.asRegister();
 
             if (right.isSingleCpu()) {
@@ -2382,14 +2384,14 @@ public class X86LIRAssembler extends LIRAssembler {
         if (value.isDoubleXmm()) {
             switch (code) {
                 case Abs:
-                    if (dest.asXmmDoubleReg() != value.asXmmDoubleReg()) {
-                        lir().movdbl((X86Register) dest.asXmmDoubleReg(), (X86Register) value.asXmmDoubleReg());
+                    if (asXmmDoubleReg(dest) != asXmmDoubleReg(value)) {
+                        lir().movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(value));
                     }
-                    lir().andpd((X86Register) dest.asXmmDoubleReg(), new ExternalAddress(compilation.runtime.doubleSignmaskPoolAddress()));
+                    lir().andpd(asXmmDoubleReg(dest), new ExternalAddress(compilation.runtime.doubleSignmaskPoolAddress()));
                     break;
 
                 case Sqrt:
-                    lir().sqrtsd((X86Register) dest.asXmmDoubleReg(), (X86Register) value.asXmmDoubleReg());
+                    lir().sqrtsd(asXmmDoubleReg(dest), asXmmDoubleReg(value));
                     break;
                 // all other intrinsics are not available in the SSE instruction set, so FPU is used
                 default:
@@ -3453,13 +3455,13 @@ public class X86LIRAssembler extends LIRAssembler {
             }
 
         } else if (dest.isSingleXmm()) {
-            if (left.asXmmFloatReg() != dest.asXmmFloatReg()) {
+            if (asXmmFloatReg(left) != asXmmFloatReg(dest)) {
                 lir().movflt(asXmmFloatReg(dest), asXmmFloatReg(left));
             }
             lir().xorps(asXmmFloatReg(dest), new ExternalAddress(compilation.runtime.floatSignflipPoolAddress()));
 
         } else if (dest.isDoubleXmm()) {
-            if (left.asXmmDoubleReg() != dest.asXmmDoubleReg()) {
+            if (asXmmDoubleReg(left) != asXmmDoubleReg(dest)) {
                 lir().movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(left));
             }
             lir().xorpd(asXmmDoubleReg(dest), new ExternalAddress(compilation.runtime.doubleSignflipPoolAddress()));
@@ -3549,7 +3551,9 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     private X86Register asXmmDoubleReg(LIROperand dest) {
-        return (X86Register) dest.asXmmDoubleReg();
+        assert dest.isXmmRegister();
+        assert dest.isDoubleXmm();
+        return (X86Register) dest.asRegister();
     }
 
     @Override

@@ -91,7 +91,7 @@ public abstract class Op2 extends Instruction {
     @Override
     public void inputValuesDo(InstructionClosure closure) {
         x = closure.apply(x);
-        x = closure.apply(y);
+        y = closure.apply(y);
     }
 
     @Override

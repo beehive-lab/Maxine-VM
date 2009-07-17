@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.value;
 
-import com.sun.c1x.ci.CiType;
+import com.sun.c1x.ci.*;
 
 /**
  * The <code>ClassType</code> class represents an abstract value corresponding to a class

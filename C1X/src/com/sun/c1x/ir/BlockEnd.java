@@ -20,13 +20,10 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.util.Util;
-import com.sun.c1x.util.InstructionClosure;
-import com.sun.c1x.value.ValueType;
-import com.sun.c1x.value.ValueStack;
+import java.util.*;
 
-import java.util.List;
-import java.util.ArrayList;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>BlockEnd</code> instruction is a base class for all instructions that end a basic

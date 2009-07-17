@@ -32,6 +32,4 @@ public class InvalidProcessRequestException extends Exception {
         super(message);
     }
 
-
-
 }

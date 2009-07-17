@@ -778,7 +778,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
             writer.println("Scalars:");
             writer.indent();
             for (int i = 0; i < scalarLiteralBytes.length; i++) {
-                final Pointer pointer = targetBundle.cell(ArrayField.scalarLiteralBytes).plus(ArrayField.scalarLiteralBytes.layout().getElementOffsetInCell(i));
+                final Pointer pointer = targetBundle.cell(ArrayField.scalarLiteralBytes).plus(ArrayField.scalarLiteralBytes.arrayLayout.getElementOffsetInCell(i));
                 writer.println("[" + pointer.toString() + "] 0x" + Integer.toHexString(scalarLiteralBytes[i] & 0xFF) + "  " + scalarLiteralBytes[i]);
             }
             writer.outdent();
@@ -795,7 +795,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
             writer.println("References: ");
             writer.indent();
             for (int i = 0; i < referenceLiterals.length; i++) {
-                final Pointer pointer = targetBundle.cell(ArrayField.referenceLiterals).plus(ArrayField.referenceLiterals.layout().getElementOffsetInCell(i));
+                final Pointer pointer = targetBundle.cell(ArrayField.referenceLiterals).plus(ArrayField.referenceLiterals.arrayLayout.getElementOffsetInCell(i));
                 writer.println("[" + pointer.toString() + "] " + referenceLiterals[i]);
             }
             writer.outdent();
@@ -907,7 +907,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         final Pointer[] pointers = new Pointer[literals.length];
         final TargetBundle targetBundle = TargetBundle.from(this);
         for (int i = 0; i < literals.length; i++) {
-            WordArray.set(pointers, i, targetBundle.cell(ArrayField.referenceLiterals).plus(ArrayField.referenceLiterals.layout().getElementOffsetInCell(i)));
+            WordArray.set(pointers, i, targetBundle.cell(ArrayField.referenceLiterals).plus(ArrayField.referenceLiterals.arrayLayout.getElementOffsetInCell(i)));
         }
         return pointers;
     }
