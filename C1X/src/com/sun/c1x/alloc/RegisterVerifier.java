@@ -128,7 +128,7 @@ public class RegisterVerifier {
                 if (inputState.get(i) != null) {
                     TTY.print(" %4d", inputState.get(i).regNum());
                 } else {
-                    TTY.print("   lir().");
+                    TTY.print("   __");
                 }
             }
             TTY.cr();

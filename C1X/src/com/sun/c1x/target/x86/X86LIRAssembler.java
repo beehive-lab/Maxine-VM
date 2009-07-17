@@ -1913,7 +1913,7 @@ public class X86LIRAssembler extends LIRAssembler {
         assert info == null : "should never be used :  idiv/irem and ldiv/lrem not handled by this method";
 
         if (left.isSingleCpu()) {
-            assert left == dest : "left and dest must be equal";
+            assert left.equals(dest) : "left and dest must be equal";
             X86Register lreg = (X86Register) left.asRegister();
 
             if (right.isSingleCpu()) {

@@ -36,17 +36,7 @@ import com.sun.c1x.util.*;
 public class LIRVisitState {
 
     public enum OperandMode {
-        InputMode(0), FirstMode(0), TempMode(1), OutputMode(2), NumModes(3), InvalidMode(-1);
-
-        private final int value;
-
-        OperandMode(int value) {
-            this.value = value;
-        }
-
-        public int value() {
-            return value;
-        }
+        InputMode, TempMode, OutputMode;
     }
 
     public static final int MAXNUMBEROFOPERANDS = 14;
@@ -64,8 +54,8 @@ public class LIRVisitState {
     private boolean hasSlowCase;
 
     public LIRVisitState() {
-        oprsLen = new int[OperandMode.NumModes.value];
-        oprsNew = new LIROperand[OperandMode.NumModes.value][MAXNUMBEROFOPERANDS];
+        oprsLen = new int[OperandMode.values().length];
+        oprsNew = new LIROperand[OperandMode.values().length][MAXNUMBEROFOPERANDS];
         infoNew = new CodeEmitInfo[MAXNUMBEROFINFOS];
         reset();
     }
@@ -78,9 +68,7 @@ public class LIRVisitState {
         operand = null;
         hasCall = false;
         hasSlowCase = false;
-        oprsLen[OperandMode.InputMode.value] = 0;
-        oprsLen[OperandMode.TempMode.value] = 0;
-        oprsLen[OperandMode.OutputMode.value] = 0;
+        Arrays.fill(oprsLen, 0);
         infoLen = 0;
     }
 
@@ -733,8 +721,8 @@ public class LIRVisitState {
         assert opr.isValid() : "should not call this otherwise";
 
         if (opr.isRegister()) {
-            assert oprsLen[mode.value] < MAXNUMBEROFOPERANDS : "array overflow";
-            oprsNew[mode.value][oprsLen[mode.value]++] = opr;
+            assert oprsLen[mode.ordinal()] < MAXNUMBEROFOPERANDS : "array overflow";
+            oprsNew[mode.ordinal()][oprsLen[mode.ordinal()]++] = opr;
 
         } else if (opr.isPointer()) {
             final LIRAddress pointer = opr.asAddressPtr();
@@ -743,13 +731,13 @@ public class LIRVisitState {
                 // both are always input operands!
                 if (pointer.base.isValid()) {
                     assert pointer.base.isRegister() : "must be";
-                    assert oprsLen[OperandMode.InputMode.value] < MAXNUMBEROFOPERANDS : "array overflow";
-                    oprsNew[OperandMode.InputMode.value][oprsLen[OperandMode.InputMode.value]++] = pointer.base;
+                    assert oprsLen[OperandMode.InputMode.ordinal()] < MAXNUMBEROFOPERANDS : "array overflow";
+                    oprsNew[OperandMode.InputMode.ordinal()][oprsLen[OperandMode.InputMode.ordinal()]++] = pointer.base;
                 }
                 if (pointer.index.isValid()) {
                     assert pointer.index.isRegister() : "must be";
-                    assert oprsLen[OperandMode.InputMode.value] < MAXNUMBEROFOPERANDS : "array overflow";
-                    oprsNew[OperandMode.InputMode.value][oprsLen[OperandMode.InputMode.value]++] = pointer.index;
+                    assert oprsLen[OperandMode.InputMode.ordinal()] < MAXNUMBEROFOPERANDS : "array overflow";
+                    oprsNew[OperandMode.InputMode.ordinal()][oprsLen[OperandMode.InputMode.ordinal()]++] = pointer.index;
                 }
 
             } else {
@@ -767,12 +755,12 @@ public class LIRVisitState {
     }
 
     public int oprCount(OperandMode mode) {
-        return oprsLen[mode.value];
+        return oprsLen[mode.ordinal()];
     }
 
     public LIROperand oprAt(OperandMode mode, int index) {
-        assert index >= 0 && index < oprsLen[mode.value] : "index out of bound";
-        return oprsNew[mode.value][index];
+        assert index >= 0 && index < oprsLen[mode.ordinal()] : "index out of bound";
+        return oprsNew[mode.ordinal()][index];
     }
 
     public int infoCount() {

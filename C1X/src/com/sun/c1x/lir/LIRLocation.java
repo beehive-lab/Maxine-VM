@@ -39,10 +39,10 @@ public class LIRLocation extends LIROperand {
     public static final int LAST_USE = 1;
     public static final int DESTROY = 2;
 
-    public final Register location1;
-    public final Register location2;
-    public final int index;
-    public final int flags;
+    public Register location1;
+    public Register location2;
+    public int index;
+    public int flags;
 
     /**
      * Creates a new LIRLocation representing a CPU register.
@@ -142,7 +142,12 @@ public class LIRLocation extends LIROperand {
 
     @Override
     public boolean isSameRegister(LIROperand opr) {
-        throw Util.shouldNotReachHere();
+        assert this.isRegister();
+        if (!(opr instanceof LIRLocation)) {
+            return false;
+        }
+        LIRLocation other = (LIRLocation) opr;
+        return this.location1 == other.location1 && this.location2 == other.location2;
     }
 
     @Override
@@ -352,4 +357,15 @@ public class LIRLocation extends LIROperand {
         return (basicType == BasicType.Float || basicType == BasicType.Double);
     }
 
+    @Override
+    public void assignPhysicalRegister(LIROperand other) {
+        assert other.isRegister() && (other instanceof LIRLocation);
+
+        final LIRLocation otherLocation = (LIRLocation) other;
+        this.flags = otherLocation.flags;
+        this.location1 = otherLocation.location1;
+        this.location2 = otherLocation.location2;
+        this.index = otherLocation.index;
+        assert this.equals(otherLocation);
+    }
 }
