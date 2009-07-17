@@ -334,10 +334,9 @@ public class MaxCiTargetMethod implements CiTargetMethod {
         if (method != null) {
             final MaxCiMethod maxMethod = (MaxCiMethod) method;
             return maxMethod.asClassMethodActor("directCall()");
-        } else {
-            // TODO: get the class method actor associated with the runtime call
-            return null;
         }
+
+        return null;
     }
 
     private void setBits(ByteArrayBitMap bitMap, boolean[] stackMap) {
