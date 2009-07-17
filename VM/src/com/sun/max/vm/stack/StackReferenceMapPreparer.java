@@ -138,7 +138,7 @@ public final class StackReferenceMapPreparer {
         // Inform subsequent reference map scanning (see VmThreadLocal.scanReferences()) of the stack range covered:
         LOWEST_ACTIVE_STACK_SLOT_ADDRESS.setVariableWord(vmThreadLocals, stackPointer);
 
-        final VmThread vmThread = UnsafeLoophole.cast(VM_THREAD.getConstantReference(vmThreadLocals));
+        final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
         if (this != vmThread.stackReferenceMapPreparer()) {
             FatalError.unexpected("Cannot use stack reference map preparer of another thread");
         }
@@ -212,8 +212,7 @@ public final class StackReferenceMapPreparer {
         // Inform subsequent reference map scanning (see VmThreadLocal.scanReferences()) of the stack range covered:
         LOWEST_ACTIVE_STACK_SLOT_ADDRESS.setVariableWord(vmThreadLocals, stackPointer);
 
-        final VmThread vmThread = UnsafeLoophole.cast(VM_THREAD.getConstantReference(vmThreadLocals));
-
+        final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
         if (this != vmThread.stackReferenceMapPreparer()) {
             FatalError.unexpected("Cannot use stack reference map preparer of another thread");
         }

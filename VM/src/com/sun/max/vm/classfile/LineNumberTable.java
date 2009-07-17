@@ -75,10 +75,10 @@ public final class LineNumberTable {
         if (encodedEntries.length == 0) {
             return this;
         }
-        final char[] relocEncodedEntries = new char[this.encodedEntries.length];
+        final char[] relocEncodedEntries = new char[encodedEntries.length];
         for (int i = 0; i < relocEncodedEntries.length; i += 2) {
-            relocEncodedEntries[i] = (char) relocator.relocate(relocEncodedEntries[i]);
-            relocEncodedEntries[i + 1] = relocEncodedEntries[i + 1];
+            relocEncodedEntries[i] = (char) relocator.relocate(encodedEntries[i]);
+            relocEncodedEntries[i + 1] = encodedEntries[i + 1];
         }
         return new LineNumberTable(relocEncodedEntries);
     }
