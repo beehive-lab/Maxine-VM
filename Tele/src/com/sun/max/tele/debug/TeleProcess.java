@@ -123,7 +123,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                     watchpointFactory().reenableWatchpointsAfterGC();
                     return true;
                 } else if (teleVM().isInGC()) {
-                    // check if watchpoint has gc enabled turned on, if yes give user control
+                    // check if watchpoint is gc enabled, if yes give user control
                     // if not do not give control back to the user
                     // disable all other watchpoints
                     // set watchpoint end on gc

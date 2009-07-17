@@ -919,8 +919,7 @@ public abstract class TeleVM implements MaxVM {
     public final Hub makeLocalHubForObject(Reference objectReference) throws InvalidReferenceException {
         checkReference(objectReference);
         final Reference hubReference = wordToReference(layoutScheme().generalLayout.readHubReferenceAsWord(objectReference));
-        final Reference classActorReference = fields().Hub_classActor.
-                readReference(hubReference);
+        final Reference classActorReference = fields().Hub_classActor.readReference(hubReference);
         final ClassActor objectClassActor = makeClassActor(classActorReference);
         final ClassActor hubClassActor = makeClassActorForTypeOf(hubReference);
         return (StaticHub.class.isAssignableFrom(hubClassActor.toJava())) ? objectClassActor.staticHub()
@@ -1187,6 +1186,11 @@ public abstract class TeleVM implements MaxVM {
     public final MaxWatchpoint setHeaderWatchpoint(String description, TeleObject teleObject, HeaderField headerField, boolean after, boolean read, boolean write, boolean exec, boolean gc)
         throws TooManyWatchpointsException, DuplicateWatchpointException {
         return teleProcess.watchpointFactory().setHeaderWatchpoint(description, teleObject, headerField, after, read, write, exec, gc);
+    }
+
+    public final MaxWatchpoint  setVmThreadLocalWatchpoint(String description, TeleThreadLocalValues teleThreadLocalValues, int index, boolean after, boolean read, boolean write, boolean exec)
+        throws TooManyWatchpointsException, DuplicateWatchpointException {
+        return teleProcess.watchpointFactory().setVmThreadLocalWatchpoint(description, teleThreadLocalValues, index, after, read, write, exec);
     }
 
     /*
