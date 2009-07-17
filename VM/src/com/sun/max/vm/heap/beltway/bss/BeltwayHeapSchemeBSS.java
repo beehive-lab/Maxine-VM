@@ -101,7 +101,7 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
 
     @Override
     public boolean contains(Address address) {
-        return address.greaterEqual(Heap.bootHeapRegion().start()) && address.lessEqual(BeltwayConfiguration.getApplicationHeapEndAddress());
+        return address.greaterEqual(Heap.bootHeapRegion.start()) && address.lessEqual(BeltwayConfiguration.getApplicationHeapEndAddress());
     }
 
     @INLINE(override = true)

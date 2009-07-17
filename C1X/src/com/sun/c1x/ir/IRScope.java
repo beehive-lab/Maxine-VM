@@ -20,14 +20,12 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.CiMethod;
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.util.BitMap;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.C1XCompilation;
+import java.util.*;
 
-import java.util.List;
-import java.util.ArrayList;
+import com.sun.c1x.*;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>IRScope</code> class represents an inlining context in the compilation
@@ -173,6 +171,9 @@ public class IRScope {
         return scope.callerBCI;
     }
 
+    /**
+     * Computes the size of the lock stack and saves it in a field of this scope.
+     */
     public final void computeLockStackSize() {
         if (!C1XOptions.InlineMethodsWithExceptionHandlers) {
             lockStackSize = 0;
@@ -183,13 +184,30 @@ public class IRScope {
         while (curScope != null && curScope.method.exceptionHandlers().size() > 0) {
             curScope = curScope.caller;
         }
-        lockStackSize = (curScope == null ? 0 :
-                          (curScope.callerState() == null ? 0 :
-                           curScope.callerState().stackSize()));
+        lockStackSize = (curScope == null ? 0 : (curScope.callerState() == null ? 0 : curScope.callerState().stackSize()));
     }
 
+    /**
+     * Gets the lock stack size. The method {@link computeLockStackSize()} has to be called for this value to be valid.
+     * @return the lock stack size.
+     */
     public int lockStackSize() {
         assert lockStackSize >= 0;
         return lockStackSize;
+    }
+
+    /**
+     * Gets the maximum stack size of this scope including the max stack size of its callees.
+     * @return the maximum stack size
+     */
+    public int maxStack() {
+        int myMax = method.maxStackSize();
+        int calleeMax = 0;
+        for (int i = 0; i < numberOfCallees(); i++) {
+            for (IRScope callee : callees) {
+                calleeMax = Math.max(calleeMax, callee.maxStack());
+            }
+        }
+        return myMax + calleeMax;
     }
 }

@@ -92,6 +92,10 @@ public class ArrayMap<T> {
         return Util.uncheckedCast(type, map[index]);
     }
 
+    public int length() {
+        return map.length;
+    }
+
     private void growBackward(int i, T value) {
         int nlow = i - EXTRA;
         Object[] nmap = new Object[low - nlow + map.length];

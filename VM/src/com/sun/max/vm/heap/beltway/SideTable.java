@@ -167,12 +167,12 @@ public class SideTable {
 
         if (Heap.verbose()) {
             Log.print("--boot address shift");
-            Log.println(Heap.bootHeapRegion().start().unsignedShiftedRight(chunkShift()));
+            Log.println(Heap.bootHeapRegion.start().unsignedShiftedRight(chunkShift()));
             Log.print("--sidetable start");
             Log.println(sideTableStart);
         }
 
-        biasedSideTableBase = sideTableStart.minus(Heap.bootHeapRegion().start().unsignedShiftedRight(chunkShift()));
+        biasedSideTableBase = sideTableStart.minus(Heap.bootHeapRegion.start().unsignedShiftedRight(chunkShift()));
         clearAllChunkSlots();
     }
 

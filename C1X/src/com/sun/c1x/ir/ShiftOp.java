@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.util.InstructionVisitor;
+import com.sun.c1x.util.*;
 
 /**
  * The <code>ShiftOp</code> class represents shift operations.

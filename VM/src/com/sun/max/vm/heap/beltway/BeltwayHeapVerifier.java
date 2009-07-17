@@ -71,7 +71,7 @@ public class BeltwayHeapVerifier {
         }
         Pointer cell = regionStartAddress.asPointer();
         while (cell.lessThan(allocationMark)) {
-            if (VMConfiguration.hostOrTarget().debugging()) {
+            if (MaxineVM.isDebug()) {
                 cell = cell.plusWords(1);
                 cellVerifier.checkCellTag(cell);
             }

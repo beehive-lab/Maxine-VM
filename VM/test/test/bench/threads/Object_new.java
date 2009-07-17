@@ -59,6 +59,7 @@ public class Object_new {
     protected static int nrThreads;
     protected static int allocSize;
     protected static int nrAllocs;
+    protected static boolean trace = System.getProperty("trace") != null;
 
     public static void main(String[] args) {
         if (args.length != 3) {
@@ -79,12 +80,12 @@ public class Object_new {
         long start = 0;
         try {
             barrier1.waitForRelease();
-            start = System.nanoTime();
+            start = System.currentTimeMillis();
             barrier2.waitForRelease();
         } catch (InterruptedException e) { }
 
-        final long benchtime = System.nanoTime() - start;
-        System.out.println(benchtime + " ns");
+        final long benchtime = System.currentTimeMillis() - start;
+        System.out.println(benchtime + " ms");
 
         /*System.out.println("Simple Allocator Benchmark Result (nr threads: " + nrThreads +
                             "; size: " + allocSize + "; nr allocs: " + nrAllocs +
@@ -95,7 +96,6 @@ public class Object_new {
         private int size;
         private int nrAllocations;
         private int threadId;
-        //public int tmp;
 
         public AllocationThread(int size, int nrAllocations, int threadId) {
             this.size = size;
@@ -107,17 +107,24 @@ public class Object_new {
             try {
                 barrier1.waitForRelease();
             } catch (InterruptedException e) { }
-            for (int i = 0; i < nrAllocations; i++) {
-                final byte[] tmp = new byte[size];
-                tmp[0] = 1;
-                if (i % 10000 == 0) {
-                    System.out.println("Thread " + threadId + " allocCount: " + i);
+            if (trace) {
+                for (int i = 0; i < nrAllocations; i++) {
+                    final byte[] tmp = new byte[size];
+                    tmp[0] = 1;
+                    if (i % 10000 == 0) {
+                        System.out.println("Thread " + threadId + " allocCount: " + i);
+                    }
+                }
+            } else {
+                for (int i = 0; i < nrAllocations; i++) {
+                    final byte[] tmp = new byte[size];
+                    tmp[0] = 1;
                 }
             }
+            System.out.println("Thread " + threadId + " done");
             try {
                 barrier2.waitForRelease();
             } catch (InterruptedException e) { }
-            System.out.println("Thread " + threadId + " done");
         }
     }
 }

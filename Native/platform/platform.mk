@@ -90,7 +90,7 @@ ifeq ($(TARGETOS),SunOS)
         ISA := amd64
         ARCH := amd64
         ARCH_FLAG := "-m64"
-        OTHER_CFLAGS := -Kpic %none
+        OTHER_CFLAGS := -Kpic
     else
         ifeq ($a,sparcv9)
             ISA := sparc
@@ -179,7 +179,7 @@ ifeq ($(OS),solaris)
     endif
     ifneq "$(findstring def, $(origin CFLAGS))" ""
         # origin of CFLAGS is either undefined or default, so set it here
-        CFLAGS = -g -xc99 -errwarn -errtags -errfmt=error $(KPIG_FLAG) $(ARCH_FLAG) -D$(ISA) -DSOLARIS -D$(TARGET) $(OTHER_CFLAGS)
+        CFLAGS = -g -xc99 -errwarn -errtags -errfmt=error $(KPIC_FLAG) $(ARCH_FLAG) -D$(ISA) -DSOLARIS -D$(TARGET) $(OTHER_CFLAGS)
     endif
     C_DEPENDENCIES_FLAGS = -xM1 -DSOLARIS -D$(ISA) -D$(TARGET) 
     LINK_MAIN = $(CC) $(ARCH_FLAG) -lc -lthread -ldl -o $(MAIN)

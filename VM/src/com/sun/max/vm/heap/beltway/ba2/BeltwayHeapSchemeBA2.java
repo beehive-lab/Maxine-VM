@@ -138,7 +138,7 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
 
     @Override
     public boolean contains(Address address) {
-        return address.greaterEqual(Heap.bootHeapRegion().start()) && address.lessEqual(getNurserySpace().end());
+        return address.greaterEqual(Heap.bootHeapRegion.start()) && address.lessEqual(getNurserySpace().end());
     }
 
     public boolean checkOverlappingBelts(Belt from, Belt to) {

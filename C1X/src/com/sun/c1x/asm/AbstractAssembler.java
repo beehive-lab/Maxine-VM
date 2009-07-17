@@ -21,7 +21,7 @@
 package com.sun.c1x.asm;
 
 import com.sun.c1x.*;
-import com.sun.c1x.lir.*;
+import com.sun.c1x.target.*;
 import com.sun.c1x.target.x86.*;
 import com.sun.c1x.util.*;
 
@@ -253,7 +253,9 @@ public abstract class AbstractAssembler {
 // *(unsigned char)codePos = (unsigned char)x;
 // codePos += sizeof(unsigned char);
         // sync();
-        throw Util.unimplemented();
+
+        TTY.println("Emitting byte: %2x", x);
+        //throw Util.unimplemented();
     }
 
     protected void emitWord(int x) {
@@ -261,7 +263,7 @@ public abstract class AbstractAssembler {
 // *(short)codePos = (short)x;
 // codePos += sizeof(short);
 // sync();
-        throw Util.unimplemented();
+        TTY.println("Emitting word: %x", x);
     }
 
     protected void emitLong(long x) {
@@ -274,7 +276,7 @@ public abstract class AbstractAssembler {
 // *(jint)codePos = x;
 // codePos += sizeof(jint);
 // sync();
-        throw Util.unimplemented();
+        TTY.println("Emitting long: %x", x);
     }
 
     protected void emitLong64(long x) {

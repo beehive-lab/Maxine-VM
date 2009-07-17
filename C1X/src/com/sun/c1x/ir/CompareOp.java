@@ -20,10 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.util.InstructionVisitor;
-import com.sun.c1x.util.InstructionClosure;
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>CompareOp</code> instruction represents comparisons such as equals, not equal, etc.

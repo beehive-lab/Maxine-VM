@@ -147,9 +147,9 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
             if (Heap.verbose()) {
                 beltManager.printBeltsInfo();
             }
-            final Size coveredRegionSize = beltManager.getEnd().minus(Heap.bootHeapRegion().start()).asSize();
-            cardRegion.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize));
-            sideTable.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize).plus(cardRegion.cardTableSize()).roundedUpBy(
+            final Size coveredRegionSize = beltManager.getEnd().minus(Heap.bootHeapRegion.start()).asSize();
+            cardRegion.initialize(Heap.bootHeapRegion.start(), coveredRegionSize, Heap.bootHeapRegion.start().plus(coveredRegionSize));
+            sideTable.initialize(Heap.bootHeapRegion.start(), coveredRegionSize, Heap.bootHeapRegion.start().plus(coveredRegionSize).plus(cardRegion.cardTableSize()).roundedUpBy(
                             Platform.target().pageSize));
             BeltwayCardRegion.switchToRegularCardTable(cardRegion.cardTableBase().asPointer());
         } else if (phase == MaxineVM.Phase.STARTING) {
@@ -243,16 +243,17 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     /**
      * Holds the biased card table address.
      */
-    public static final VmThreadLocal ADJUSTED_CARDTABLE_BASE = new VmThreadLocal("ADJUSTED_CARDTABLE_BASE", Kind.WORD);
+    public static final VmThreadLocal ADJUSTED_CARDTABLE_BASE
+        = new VmThreadLocal("ADJUSTED_CARDTABLE_BASE", Kind.WORD, "Beltway: ->biased card table");
 
     public void scanBootHeap(RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         cellVisitor.from = from;
         cellVisitor.to = to;
-        Heap.bootHeapRegion().visitCells(cellVisitor);
+        Heap.bootHeapRegion.visitCells(cellVisitor);
     }
 
     public void printCardTable() {
-        final int startCardIndex = cardRegion.getCardIndexFromHeapAddress(Heap.bootHeapRegion().start());
+        final int startCardIndex = cardRegion.getCardIndexFromHeapAddress(Heap.bootHeapRegion.start());
         final int endCardIndex = cardRegion.getCardIndexFromHeapAddress(beltManager.getEnd());
         for (int i = startCardIndex; i < endCardIndex; i++) {
             if (cardRegion.isCardMarked(i)) {
@@ -518,7 +519,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     public final Pointer allocateTLAB(Belt belt, Size size) {
         Pointer pointer = heapAllocate(belt, size);
         if (pointer != Pointer.zero()) {
-            if (VMConfiguration.hostOrTarget().debugging()) {
+            if (MaxineVM.isDebug()) {
                 // Subtract one word as it will be overwritten by the debug word of the TLAB descriptor
                 pointer = pointer.minusWords(1);
             }
@@ -533,7 +534,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     public final Pointer gcAllocateTLAB(RuntimeMemoryRegion gcRegion, Size size) {
         Pointer pointer = gcSynchAllocate(gcRegion, size);
         if (!pointer.isZero()) {
-            if (VMConfiguration.hostOrTarget().debugging()) {
+            if (MaxineVM.isDebug()) {
                 // Subtract one word as it will be overwritten by the debug word of the TLAB descriptor
                 pointer = pointer.minusWords(1);
             }

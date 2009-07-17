@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.ConstType;
+import com.sun.c1x.value.*;
 
 /**
  * Condition codes used in conditionals.

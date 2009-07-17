@@ -24,14 +24,15 @@ package com.sun.c1x;
 import java.io.*;
 import java.util.*;
 
+import com.sun.c1x.alloc.*;
 import com.sun.c1x.asm.*;
-import com.sun.c1x.gen.*;
 import com.sun.c1x.ci.*;
+import com.sun.c1x.gen.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.target.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.target.Target;
 
 /**
  * The <code>Compilation</code> class encapsulates global information about the compilation of a particular method,
@@ -60,7 +61,7 @@ public class C1XCompilation {
     int maxSpills;
     boolean needsDebugInfo;
     boolean hasExceptionHandlers;
-    boolean hasFpuCode;
+    private boolean hasFpuCode;
     boolean hasUnsafeAccess;
     Bailout bailout;
 
@@ -72,6 +73,12 @@ public class C1XCompilation {
     private AbstractAssembler assembler;
 
     private IR hir;
+
+    private Instruction lastInstructionPrinted; // Debugging only
+    private CFGPrinter cfgPrinter;
+
+    private CodeOffsets codeOffsets = new CodeOffsets();
+    private List<ExceptionInfo> exceptionInfoList = new ArrayList<ExceptionInfo>();
 
     /**
      * Creates a new compilation for the specified method and runtime.
@@ -305,18 +312,14 @@ public class C1XCompilation {
     }
 
     public void maybePrintCurrentInstruction() {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void bailout(String msg) {
-        // TODO Auto-generated method stub
-
+        if (currentInstruction != null && lastInstructionPrinted != currentInstruction) {
+            lastInstructionPrinted = currentInstruction;
+            currentInstruction.printLine();
+        }
     }
 
     public CodeOffsets offsets() {
-        // TODO Auto-generated method stub
-        return null;
+        return codeOffsets;
     }
 
     public AbstractAssembler masm() {
@@ -324,35 +327,57 @@ public class C1XCompilation {
     }
 
     public void addExceptionHandlersForPco(int pcOffset, List<ExceptionHandler> exceptionHandlers) {
-        // TODO Auto-generated method stub
 
+        if (C1XOptions.PrintExceptionHandlers && C1XOptions.Verbose) {
+            TTY.println("  added exception scope for pco %d", pcOffset);
+          }
+        exceptionInfoList.add(new ExceptionInfo(pcOffset, exceptionHandlers));
     }
 
     public DebugInformationRecorder debugInfoRecorder() {
-        // TODO Auto-generated method stub
+        // TODO: Implement correctly, for now return skeleton class for code to work
         return new DebugInformationRecorder();
     }
 
     public boolean hasExceptionHandlers() {
-        // TODO Auto-generated method stub
-        return false;
+        return hasExceptionHandlers;
     }
 
     public BlockBegin osrEntry() {
-        // TODO Auto-generated method stub
-        return null;
+        throw Util.unimplemented();
     }
 
     public boolean hasFpuCode() {
-        // TODO Auto-generated method stub
-        return false;
+        return hasFpuCode;
+    }
+
+    public void setHasFpuCode(boolean hasFpuCode) {
+        this.hasFpuCode = hasFpuCode;
     }
 
     public boolean compile() {
+
+        if (C1XOptions.PrintCompilation) {
+            TTY.println();
+            TTY.println("Compiling method: " + method.toString());
+        }
+
         try {
             hir = new IR(this);
             hir.build();
+
+            CFGPrinter printer = cfgPrinter();
+
+            if (C1XOptions.PrintCFGToFile && printer != null) {
+                printer.printCFG(hir.startBlock, "Before generation of LIR", true, false);
+            }
+
             emitLIR();
+
+            if (C1XOptions.PrintCFGToFile && printer != null) {
+                printer.printCFG(hir.startBlock, "After generation of LIR", false, true);
+            }
+
             emitCode();
         } catch (Bailout b) {
             bailout = b;
@@ -366,9 +391,12 @@ public class C1XCompilation {
     }
 
     private void emitLIR() {
-        frameMap = target.backend.newFrameMap(method, numberOfLocks(), maxStack());
+        frameMap = target.backend.newFrameMap(this, method, hir.topScope.numberOfLocks(), hir.topScope.maxStack());
         final LIRGenerator lirGenerator = target.backend.newLIRGenerator(this);
         hir.iterateLinearScanOrder(lirGenerator);
+
+        final RegisterAllocator registerAllocator = new LinearScan(this, hir, lirGenerator, frameMap());
+        registerAllocator.allocate();
     }
 
     private void emitCode() {
@@ -378,17 +406,24 @@ public class C1XCompilation {
         lirAssembler.emitCode(hir.linearScanOrder());
     }
 
-    private int numberOfLocks() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    private int maxStack() {
-        // TODO Auto-generated method stub
-        return 10;
-    }
-
     public int numberOfBlocks() {
         return totalBlocks;
+    }
+
+    public CFGPrinter cfgPrinter() {
+        if (C1XOptions.PrintCFGToFile && cfgPrinter == null) {
+            OutputStream cfgFileStream = CFGPrinter.cfgFileStream();
+            if (cfgFileStream != null) {
+                cfgPrinter = new CFGPrinter(cfgFileStream);
+                cfgPrinter.printCompilation(method);
+            }
+        }
+
+        return cfgPrinter;
+    }
+
+    public boolean needsDebugInformation() {
+        // TODO Check what to return here, for now do not collect debug information
+        return false;
     }
 }

@@ -34,6 +34,12 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
+/**
+ * A collection of routines useful for placing and operating on special
+ * tags in an object heap in aid of debugging a garbage collector.
+ *
+ * @author Doug Simon
+ */
 public final class DebugHeap {
 
     private DebugHeap() {
@@ -41,9 +47,13 @@ public final class DebugHeap {
 
     public static final int UNINITIALIZED = 0xdeadbeef;
 
-    public static final long LONG_OBJECT_TAG = 0xccccddddddddeeeeL;
+    private static final long LONG_OBJECT_TAG = 0xccccddddddddeeeeL;
 
-    public static final int INT_OBJECT_TAG = 0xcccceeee;
+    private static final int INT_OBJECT_TAG = 0xcccceeee;
+
+    public static byte[] tagBytes(DataModel dataModel) {
+        return dataModel.wordWidth == WordWidth.BITS_64 ? dataModel.toBytes(DebugHeap.LONG_OBJECT_TAG) : dataModel.toBytes(DebugHeap.INT_OBJECT_TAG);
+    }
 
     public static boolean isValidCellTag(Word word) {
         if (Word.width() == WordWidth.BITS_64) {
@@ -56,7 +66,7 @@ public final class DebugHeap {
 
     @INLINE
     public static void writeCellTag(Pointer cell) {
-        if (VMConfiguration.hostOrTarget().debugging()) {
+        if (MaxineVM.isDebug()) {
             if (Word.width() == WordWidth.BITS_64) {
                 cell.setLong(-1, DebugHeap.LONG_OBJECT_TAG);
             } else {
@@ -67,7 +77,7 @@ public final class DebugHeap {
 
     @INLINE
     public static Pointer checkDebugCellTag(RuntimeMemoryRegion from, Pointer cell) {
-        if (VMConfiguration.hostOrTarget().debugging()) {
+        if (MaxineVM.isDebug()) {
             if (!isValidCellTag(cell.getWord(0))) {
                 Log.print("Invalid object tag @ ");
                 Log.print(cell);
@@ -93,7 +103,7 @@ public final class DebugHeap {
     }
 
     public static void checkGripTag(Grip grip) {
-        if (VMConfiguration.hostOrTarget().debugging()) {
+        if (MaxineVM.isDebug()) {
             if (!grip.isZero()) {
                 final Pointer origin = grip.toOrigin();
                 final Pointer cell = origin.minusWords(1);
@@ -104,20 +114,30 @@ public final class DebugHeap {
 
     @INLINE
     public static Pointer checkDebugCellTag(Pointer cell) {
-        if (VMConfiguration.hostOrTarget().debugging()) {
+        if (MaxineVM.isDebug()) {
             checkCellTag(cell, cell.getWord(0));
             return cell.plusWords(1);
         }
         return cell;
     }
 
+    /**
+     * Verifies that a reference value denoted by a given base pointer and scaled index points into
+     * a known object address space.
+     *
+     * @param address the base pointer of a reference
+     * @param index the offset in words from {@code address} of the reference to be verified
+     * @param grip the reference to be verified
+     * @param space the address space in which valid objects can be found apart from the boot
+     *            {@linkplain Heap#bootHeapRegion heap} and {@linkplain Code#bootCodeRegion code} regions.
+     */
     public static void verifyGripAtIndex(Address address, int index, Grip grip, MemoryRegion space) {
         if (grip.isZero()) {
             return;
         }
         checkGripTag(grip);
         final Pointer origin = grip.toOrigin();
-        if (!(space.contains(origin) || Heap.bootHeapRegion().contains(origin) || Code.contains(origin))) {
+        if (!(space.contains(origin) || Heap.bootHeapRegion.contains(origin) || Code.contains(origin))) {
             Log.print("invalid grip: ");
             Log.print(origin.asAddress());
             Log.print(" @ ");
@@ -132,7 +152,7 @@ public final class DebugHeap {
     public static Hub checkHub(Pointer origin, MemoryRegion space) {
         final Grip hubGrip = Layout.readHubGrip(origin);
         FatalError.check(!hubGrip.isZero(), "null hub");
-        verifyGripAtIndex(origin, 0, hubGrip, space); // zero is not strictly correctly here
+        verifyGripAtIndex(origin, 0, hubGrip, space); // zero is not strictly correct here
         final Hub hub = UnsafeLoophole.cast(hubGrip.toJava());
 
         Hub h = hub;
@@ -149,7 +169,24 @@ public final class DebugHeap {
         return hub;
     }
 
-    public static Pointer verifyRegion(Pointer start, final Address end, final MemoryRegion space, PointerOffsetVisitor verifier) {
+    /**
+     * Verifies that a given memory region consists of a contiguous objects is well formed.
+     * The memory region is well formed if:
+     *
+     * a. It starts with an object preceded by a debug tag word.
+     * b. Each object in the region is immediately succeeded by another object with the preceding debug tag.
+     * c. Each reference embedded in an object points to an address in the given memory region, the boot
+     *    {@linkplain Heap#bootHeapRegion heap} or {@linkplain Code#bootCodeRegion code} region.
+     *
+     * @param start the start of the memory region to verify
+     * @param end the end of memory region
+     * @param space the address space in which valid objects can be found apart from the boot
+     *            {@linkplain Heap#bootHeapRegion heap} and {@linkplain Code#bootCodeRegion code} regions.
+     * @param verifier a {@link PointerOffsetVisitor} instance that will call
+     *            {@link #verifyGripAtIndex(Address, int, Grip, MemoryRegion)} for a reference value denoted by a base
+     *            pointer and offset
+     */
+    public static void verifyRegion(Pointer start, final Address end, final MemoryRegion space, PointerOffsetVisitor verifier) {
         Pointer cell = start;
         while (cell.lessThan(end)) {
             cell = checkDebugCellTag(cell);
@@ -185,7 +222,6 @@ public final class DebugHeap {
                 cell = cell.plus(Layout.size(origin));
             }
         }
-        return cell;
     }
 
 }

@@ -68,6 +68,7 @@ public class SimpleExceptionStub extends CodeStub {
         return stub;
     }
 
+    @Override
     public boolean isExceptionThrowStub() {
         return true;
     }

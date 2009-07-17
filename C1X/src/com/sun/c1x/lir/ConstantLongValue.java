@@ -20,48 +20,53 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.util.*;
+
+
 /**
- * The <code>Register</code> class definition.
+ * The <code>ConstantLongValue</code> class definition.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  *
  */
-public class Register {
+public class ConstantLongValue extends ScopeValue {
 
-    public final int number;
+    private long value;
 
-    public Register(int number) {
-        this.number = number;
+    public ConstantLongValue(long value) {
+        this.value = value;
     }
 
-    public boolean isValid() {
-        // TODO Check if this implementation is correct?
-        return number >= 0;
+    /**
+     * @param stream
+     */
+    public ConstantLongValue(DebugInfoReadStream stream) {
+        value = stream.readLong();
     }
 
-    public boolean isNoReg() {
-        return number == -1;
+    public long value() {
+        return value;
     }
 
-    public boolean hasByteRegister() {
-        // TODO Auto-generated method stub
+    @Override
+    public boolean isConstantLong() {
+        return true;
+    }
+
+    @Override
+    public boolean equals(ScopeValue other) {
         return false;
     }
 
-    public static boolean assertDifferentRegisters(Register... reg) {
+    @Override
+    public void writeOn(DebugInfoWriteStream stream) {
+        stream.writeInt(ScopeValueCode.ConstantLongCode.ordinal());
+        stream.writeLong(value());
+    }
 
-        for (int i = 0; i < reg.length; i++) {
-            for (int j = 0; j < reg.length; j++) {
-                if (i != j) {
-                    if (reg[i] == reg[j]) {
-                        assert false : "Registers " + i + " and " + j + " are both " + reg[i];
-                        return false;
-                    }
-                }
-            }
-        }
-
-        return true;
+    @Override
+    public void printOn(LogStream out) {
+        out.printf("%d", value());
     }
 }

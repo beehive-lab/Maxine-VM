@@ -33,12 +33,12 @@ import com.sun.c1x.util.*;
 public class LIRArrayCopy extends LIRInstruction {
 
     private ArrayCopyStub stub;
-    private LIROperand src;
-    private LIROperand srcPos;
-    private LIROperand dst;
-    private LIROperand dstPos;
-    private LIROperand length;
-    private LIROperand tmp;
+    LIROperand src;
+    LIROperand srcPos;
+    LIROperand dst;
+    LIROperand dstPos;
+    LIROperand length;
+    LIROperand tmp;
     private CiType expectedType;
     private int arrayCopyFlags;
 

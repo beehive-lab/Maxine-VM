@@ -51,10 +51,11 @@ public class MaxCiSignature implements CiSignature {
 
     /**
      * Gets the number of arguments in this signature (not including receiver).
+     *
      * @return the number of arguments
      */
-    public int arguments() {
-        return descriptor.numberOfParameters();
+    public int argumentCount(boolean receiver) {
+        return descriptor.numberOfParameters() + (receiver ? 1 : 0);
     }
 
     /**
@@ -132,7 +133,7 @@ public class MaxCiSignature implements CiSignature {
      * @param withReceiver <code>true</code> if a receiver argument should be added; <code>false</code> otherwise
      * @return the size in slots of the arguments to this signature
      */
-    public int argumentSize(boolean withReceiver) {
+    public int argumentSlots(boolean withReceiver) {
         // XXX: cache the argument size
         return descriptor.computeNumberOfSlots() + (withReceiver ? 1 : 0);
     }

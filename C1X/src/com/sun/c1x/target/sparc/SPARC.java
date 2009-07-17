@@ -18,18 +18,25 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.asm;
+package com.sun.c1x.target.sparc;
 
-import java.util.*;
+import com.sun.c1x.target.*;
+import com.sun.c1x.util.*;
 
-import com.sun.c1x.ir.*;
+/**
+ *
+ * @author Thomas Wuerthinger
+ *
+ */
+public class SPARC extends Architecture {
 
+    protected SPARC(String name, int wordSize, Register[] registers) {
+        super(name, wordSize, "sparc", BitOrdering.BigEndian, registers);
+    }
 
-public class ExceptionInfo {
-
-    public List<ExceptionHandler> exceptionHandlers() {
-        // TODO Auto-generated method stub
-        return null;
+    @Override
+    public Backend getBackend(Target target) {
+        throw Util.unimplemented();
     }
 
 }

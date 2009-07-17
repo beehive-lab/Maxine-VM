@@ -148,7 +148,7 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
 
     @Override
     public boolean contains(Address address) {
-        return address.greaterEqual(Heap.bootHeapRegion().start()) & address.lessEqual(getMatureSpace().end());
+        return address.greaterEqual(Heap.bootHeapRegion.start()) & address.lessEqual(getMatureSpace().end());
     }
 
     @INLINE(override = true)

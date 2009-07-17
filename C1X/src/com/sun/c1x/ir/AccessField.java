@@ -20,11 +20,10 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.CiField;
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.util.InstructionClosure;
+import com.sun.c1x.*;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>AccessField</code> class is the base class of all instructions that access

@@ -253,7 +253,7 @@ public class LIROp1 extends LIRInstruction {
     }
 
     @Override
-    public void verify() {
+    public boolean verify() {
         switch (code) {
             case Move:
                 assert opr.isValid() && result.isValid() : "Operand and result must be valid in a LIROp1 move instruction.";
@@ -265,6 +265,7 @@ public class LIROp1 extends LIRInstruction {
                 assert opr.isRegister() || opr.isIllegal() : "Operand must be (register | illegal) in a LIROp1 return instruction.";
                 break;
         }
+        return true;
     }
 
     public LIROperand inOpr() {

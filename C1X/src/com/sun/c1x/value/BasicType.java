@@ -193,4 +193,23 @@ public enum BasicType {
         }
         throw new IllegalArgumentException("unknown primitive or void type character: " + ch);
     }
+
+    /**
+     * Gets the array class which has elements of this basic type. This method
+     * is only defined for primtive types.
+     * @return the Java class which represents arrays of this basic type
+     */
+    public Class<?> primitiveArrayClass() {
+        switch (this) {
+            case Boolean: return boolean[].class;
+            case Char:    return char[].class;
+            case Float:   return float[].class;
+            case Double:  return double[].class;
+            case Byte:    return byte[].class;
+            case Short:   return short[].class;
+            case Int:     return int[].class;
+            case Long:    return long[].class;
+        }
+        throw new IllegalArgumentException("not a primitive basic type");
+    }
 }

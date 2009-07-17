@@ -50,6 +50,8 @@ import com.sun.max.vm.type.*;
  *
  * @author Bernd Mathiske
  * @author Ben L. Titzer
+ * @author Doug Simon
+ * @author Paul Caprioli
  */
 public class StopTheWorldGCDaemon extends BlockingServerDaemon {
 
@@ -59,7 +61,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
      * The procedure that is run on a mutator thread that has been stopped by a safepoint for the
      * purpose of performing a stop-the-world garbage collection.
      */
-    static final class Suspend implements Safepoint.Procedure {
+    static final class AfterSafepoint implements Safepoint.Procedure {
 
         /**
          * Stops the current mutator thread for a garbage collection. Just before stopping, the
@@ -105,7 +107,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
         }
     }
 
-    private static Suspend suspendProcedure = new Suspend();
+    private static AfterSafepoint afterSafepoint = new AfterSafepoint();
 
     /**
      * The procedure supplied by the {@link HeapScheme} that implements the GC algorithm.
@@ -146,9 +148,11 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
     }
 
     /**
-     * The procedure that is run on the GC thread to trigger safepoints for a given thread.
+     * The procedure that is run on the GC thread to stop a mutator thread. This means triggering safepoints for a
+     * mutator thread as well as changing the {@linkplain VmThreadLocal#GC_STATE thread local} denoting that
+     * a GC is now in progress.
      */
-    final class TriggerSafepoints implements Pointer.Procedure {
+    final class StopMutator implements Pointer.Procedure {
 
         /**
          * Triggers safepoints for the thread associated with the given thread locals.
@@ -159,25 +163,30 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                 // Do not need to do anything, because it will try to lock 'VmThreadMap.ACTIVE' and thus block.
             } else {
                 GC_STATE.setVariableWord(vmThreadLocals, Address.fromInt(1));
-                Safepoint.runProcedure(vmThreadLocals, suspendProcedure);
+                Safepoint.runProcedure(vmThreadLocals, afterSafepoint);
             }
         }
     }
 
-    private final TriggerSafepoints triggerSafepoints = new TriggerSafepoints();
+    private final StopMutator stopMutator = new StopMutator();
 
-    private final class GCResetSafepoints extends Safepoint.ResetSafepoints {
+    /**
+     * The procedure that is run on the GC thread to reset the GC relevant state of a mutator thread
+     * once GC is complete.
+     */
+    private final class ResetMutator extends Safepoint.ResetSafepoints {
         @Override
         public void run(Pointer vmThreadLocals) {
             GC_STATE.setVariableWord(vmThreadLocals, Address.zero());
+
+            // Indicates that the stack reference map for the thread is once-again unprepared.
+            LOWEST_ACTIVE_STACK_SLOT_ADDRESS.setVariableWord(vmThreadLocals, Address.zero());
+
             super.run(vmThreadLocals);
         }
     }
 
-    /**
-     * The procedure that is run on the GC thread to reset safepoints for a given thread.
-     */
-    private final GCResetSafepoints resetSafepoints = new GCResetSafepoints();
+    private final ResetMutator resetMutator = new ResetMutator();
 
     static class WaitUntilNonMutating implements Pointer.Procedure {
         long stackReferenceMapPreparationTime;
@@ -224,7 +233,8 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
             } else {
                 while (MUTATOR_STATE.getVariableWord(vmThreadLocals).asAddress().toInt() == THREAD_IN_JAVA) {
                     try {
-                        // Wait for safepoint to fire
+                        // Wait for thread to be in native code, either as a result of a safepoint or because
+                        // that's where it was when its GC_STATE flag was set to true.
                         sleep(1);
                     } catch (InterruptedException interruptedException) {
                     }
@@ -271,7 +281,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                         Log.println("GCDaemon: Triggering safepoints for all mutators");
                     }
 
-                    VmThreadMap.ACTIVE.forAllVmThreadLocals(isNotGCOrCurrentThread, triggerSafepoints);
+                    VmThreadMap.ACTIVE.forAllVmThreadLocals(isNotGCOrCurrentThread, stopMutator);
 
                     // Ensures the GC_STATE variable is visible for each thread before the GC thread reads
                     // the MUTATOR_STATE variable for each thread.
@@ -296,7 +306,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                         Log.println("GCDaemon: Resetting mutators");
                     }
 
-                    VmThreadMap.ACTIVE.forAllVmThreadLocals(isNotGCOrCurrentThread, resetSafepoints);
+                    VmThreadMap.ACTIVE.forAllVmThreadLocals(isNotGCOrCurrentThread, resetMutator);
                     if (Heap.traceGCTime()) {
                         final boolean lockDisabledSafepoints = Log.lock();
                         Log.print("Stack reference map preparation time: ");

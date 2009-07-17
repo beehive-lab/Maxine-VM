@@ -188,9 +188,9 @@ public final class DataPrototype extends Prototype {
      */
     private void preventNullConfusion() {
         final Object object = new Object();
-        final Address cell = Heap.bootHeapRegion().allocateCell(HostObjectAccess.getSize(object));
+        final Address cell = Heap.bootHeapRegion.allocateCell(HostObjectAccess.getSize(object));
         assignHeapCell(object, cell);
-        nonZeroBootHeapStart = Heap.bootHeapRegion().getAllocationMark();
+        nonZeroBootHeapStart = Heap.bootHeapRegion.getAllocationMark();
     }
 
     /**
@@ -228,7 +228,7 @@ public final class DataPrototype extends Prototype {
      */
     private void assignHeapCells() {
         preventNullConfusion();
-        final BootHeapRegion heapRegion = Heap.bootHeapRegion();
+        final BootHeapRegion heapRegion = Heap.bootHeapRegion;
 
         assignHeapCells(heapRegion, true);
         assignHeapCells(heapRegion, false);
@@ -798,7 +798,7 @@ public final class DataPrototype extends Prototype {
     private int createData(final IndexedSequence<Object> objects, MemoryRegionVisitor memoryRegionVisitor) {
         final String regionName = memoryRegionVisitor.name;
         Trace.begin(1, "createData: " + regionName);
-        final byte[] tagBytes = dataModel.wordWidth == WordWidth.BITS_64 ? dataModel.toBytes(DebugHeap.LONG_OBJECT_TAG) : dataModel.toBytes(DebugHeap.INT_OBJECT_TAG);
+        final byte[] tagBytes = DebugHeap.tagBytes(dataModel);
 
         final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(numberOfProcessors);
         final CompletionService<Integer> completionService = new ExecutorCompletionService<Integer>(executor);
@@ -904,7 +904,7 @@ public final class DataPrototype extends Prototype {
      */
     private void adjustMemoryRegions() {
         Trace.begin(1, "adjustMemoryRegions");
-        final LinearAllocatorHeapRegion heap = Heap.bootHeapRegion();
+        final LinearAllocatorHeapRegion heap = Heap.bootHeapRegion;
         final LinearAllocatorHeapRegion code = Code.bootCodeRegion;
 
         final Address codeStart = heap.end().roundedUpBy(pageSize);
@@ -1103,7 +1103,7 @@ public final class DataPrototype extends Prototype {
         setRelocationFlag(objectToCell.get(Code.bootCodeRegion).plus(startFieldOffset));
 
         final int markFieldOffset = getInstanceFieldOffsetInTupleCell(LinearAllocatorHeapRegion.class, mark, JavaTypeDescriptor.forJavaClass(Address.class));
-        setRelocationFlag(objectToCell.get(Heap.bootHeapRegion()).plus(markFieldOffset));
+        setRelocationFlag(objectToCell.get(Heap.bootHeapRegion).plus(markFieldOffset));
         setRelocationFlag(objectToCell.get(Code.bootCodeRegion).plus(markFieldOffset));
 
         Trace.end(1, "assignRelocationFlags");
@@ -1141,11 +1141,11 @@ public final class DataPrototype extends Prototype {
         adjustMemoryRegions();
 
         MaxineVM.target().setPhase(MaxineVM.Phase.PRIMORDIAL);
-        heapDataWriter = new ByteArrayMemoryRegionWriter(Heap.bootHeapRegion(), "heap");
+        heapDataWriter = new ByteArrayMemoryRegionWriter(Heap.bootHeapRegion, "heap");
         codeDataWriter = new ByteArrayMemoryRegionWriter(Code.bootCodeRegion, "code");
 
         int numberOfBytes = createData(heapObjects, heapDataWriter);
-        final int bootHeapRegionSize = Heap.bootHeapRegion().size().toInt();
+        final int bootHeapRegionSize = Heap.bootHeapRegion.size().toInt();
         ProgramWarning.check(numberOfBytes == bootHeapRegionSize, "numberOfBytes != bootHeapRegionSize");
 
         numberOfBytes = createData(codeObjects, codeDataWriter);
@@ -1161,10 +1161,10 @@ public final class DataPrototype extends Prototype {
             try {
                 final PrintStream mapPrintStream = new PrintStream(new FileOutputStream(mapFile));
                 mapPrintStream.println("start heap");
-                createData(heapObjects, new MemoryRegionMapWriter(Heap.bootHeapRegion(), Code.bootCodeRegion, "heap", mapPrintStream));
+                createData(heapObjects, new MemoryRegionMapWriter(Heap.bootHeapRegion, Code.bootCodeRegion, "heap", mapPrintStream));
                 mapPrintStream.println("end heap");
                 mapPrintStream.println("start code");
-                createData(codeObjects, new MemoryRegionMapWriter(Code.bootCodeRegion, Heap.bootHeapRegion(), "code", mapPrintStream));
+                createData(codeObjects, new MemoryRegionMapWriter(Code.bootCodeRegion, Heap.bootHeapRegion, "code", mapPrintStream));
                 mapPrintStream.println("end code");
                 mapPrintStream.close();
             } catch (IOException e) {
