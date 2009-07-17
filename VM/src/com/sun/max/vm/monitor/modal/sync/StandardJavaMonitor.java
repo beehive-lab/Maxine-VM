@@ -23,7 +23,6 @@ package com.sun.max.vm.monitor.modal.sync;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
@@ -211,66 +210,5 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
             waiter = waiter.nextWaitingThread();
         }
         Log.print("}");
-    }
-
-    /**
-     * Specialised JavaMonitor intended to be bound to the
-     * VMThreadMap.ACTIVE object at image build time.
-     *
-     * MonitorEnter semantics are slightly modified to
-     * halt a meta-circular regression arising from thread termination clean-up.
-     * See VmThread.beTerminated().
-     *
-     * @author Simon Wilkinson
-     */
-    static class VMThreadMapJavaMonitor extends StandardJavaMonitor {
-
-        @Override
-        public void monitorEnter() {
-            final VmThread currentThread = VmThread.current();
-            if (currentThread.state() == Thread.State.TERMINATED) {
-                if (ownerThread != currentThread) {
-                    mutex.lock();
-                    ownerThread = currentThread;
-                    recursionCount = 1;
-                } else {
-                    recursionCount++;
-                }
-            } else {
-                super.monitorEnter();
-            }
-        }
-    }
-
-    /**
-     * Specialised JavaMonitor intended to be bound to the HeapScheme object at image build time.
-     *
-     * This monitor checks for the GC thread attempting to acquire the HeapScheme lock, which is
-     * deadlock prone.
-     *
-     * @author Simon Wilkinson
-     */
-    static class HeapSchemeDeadlockDetectionJavaMonitor extends StandardJavaMonitor {
-
-        @Override
-        public void monitorEnter() {
-            final VmThread currentThread = VmThread.current();
-            if (currentThread.isGCThread()) {
-                if (currentThread.waitingCondition() == null) {
-                    // This is the GC thread creating its private waiting condition variable
-                    // at VM boot time so no deadlock risk.
-                } else {
-                    heapSchemeDeadlock();
-                }
-            }
-            super.monitorEnter();
-        }
-
-        private void heapSchemeDeadlock() throws FatalError {
-            Log.println("WARNING : GC thread is going for the HeapScheme lock. Trying to allocate?");
-            Log.println("WARNING : Eliding HeapScheme lock for GC thread and attempting stack trace...");
-            DebugBreak.here();
-            throw FatalError.unexpected("GC thread is attempting to allocate. Attempting stack trace.");
-        }
     }
 }

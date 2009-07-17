@@ -72,6 +72,7 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
             InspectableHeapInfo.registerMemoryRegions(getEdenSpace(), getToSpace(), getMatureSpace());
         } else if (phase == MaxineVM.Phase.STARTING) {
             collectorThread = new BeltwayStopTheWorldDaemon("GC", beltCollector);
+            collectorThread.start();
         } else if (phase == MaxineVM.Phase.RUNNING) {
             beltCollectorGenerational.setBeltwayHeapScheme(this);
             beltCollector.setRunnable(beltCollectorGenerational);

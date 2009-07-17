@@ -107,12 +107,14 @@ public class Object_new {
             try {
                 barrier1.waitForRelease();
             } catch (InterruptedException e) { }
-            if (trace) {
+            // Only have one thread report progress. It should be fairly
+            // representative of over all progress.
+            if (trace && threadId == 0) {
                 for (int i = 0; i < nrAllocations; i++) {
                     final byte[] tmp = new byte[size];
                     tmp[0] = 1;
                     if (i % 10000 == 0) {
-                        System.out.println("Thread " + threadId + " allocCount: " + i);
+                        System.out.println(i);
                     }
                 }
             } else {

@@ -214,6 +214,9 @@ public final class HostObjectAccess {
             return replace == NULL ? null : replace;
         }
         if (object instanceof Thread || object instanceof ThreadGroup) {
+            if (MaxineVM.isMaxineClass(ClassActor.fromJava(object.getClass()))) {
+                ProgramError.unexpected("Instance of thread class " + object.getClass().getName() + " will be null in the image");
+            }
             return null;
         }
         return object;

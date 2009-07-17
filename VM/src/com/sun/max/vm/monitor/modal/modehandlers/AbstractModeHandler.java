@@ -24,6 +24,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.modal.schemes.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -65,7 +66,7 @@ public abstract class AbstractModeHandler implements ModeHandler {
     @INLINE
     protected final void nullCheck(Object object) {
         if (EXPLICIT_NULL_CHECKS && object == null) {
-            throw new NullPointerException();
+            Throw.nullPointerException();
         }
     }
 
