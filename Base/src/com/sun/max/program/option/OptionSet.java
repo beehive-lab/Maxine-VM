@@ -592,7 +592,7 @@ public class OptionSet {
 
     private <T extends Enum<T>> FieldOption<T> makeEnumFieldOption(String name, Object object, Field field, Object defaultValue, Class<T> enumClass, String help) {
         final OptionTypes.EnumType<T> optionType = new OptionTypes.EnumType<T>(enumClass);
-        final T defaultV = StaticLoophole.cast(defaultValue);
+        final T defaultV = StaticLoophole.<T>cast(defaultValue);
         return new FieldOption<T>(name, object, field, defaultV, optionType, help);
     }
 
