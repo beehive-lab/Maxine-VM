@@ -190,28 +190,10 @@ public final class WatchpointsTable extends InspectorTable {
                 case EXEC:
                     return watchpoint.isExec();
                 case GC:
-                    return watchpoint.enableDuringGC();
+                    return watchpoint.isEnabledDuringGC();
                 default:
                     throw FatalError.unexpected("Unspected Watchpoint Data column");
             }
-
-//            int count = 0;
-//            for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
-//                if (WatchpointsColumnKind.VALUES.get(col) == WatchpointsColumnKind.READ) {
-//                    return watchpoint.isRead();
-//                }
-//                if (WatchpointsColumnKind.VALUES.get(col) == WatchpointsColumnKind.WRITE) {
-//                    return watchpoint.isWrite();
-//                }
-//                if (WatchpointsColumnKind.VALUES.get(col) == WatchpointsColumnKind.EXEC) {
-//                    return watchpoint.isExec();
-//                }
-//                if (count == row) {
-//                    return watchpoint;
-//                }
-//                count++;
-//            }
-            //return null;
         }
 
         private MaxWatchpoint get(int row) {
@@ -251,7 +233,7 @@ public final class WatchpointsTable extends InspectorTable {
                     break;
                 case GC:
                     newState = (Boolean) value;
-                    watchpoint.setEnableDuringGC(newState);
+                    watchpoint.setEnabledDuringGC(newState);
                     inspection().settings().save();
                     break;
                 default:

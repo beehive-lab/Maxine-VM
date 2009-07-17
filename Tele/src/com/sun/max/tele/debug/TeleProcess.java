@@ -119,7 +119,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             } else if (teleVM().isInGC()) {
                 // The VM is in GC. Turn Watchpoints off for all objects that are not interested in GC related triggers.
                 watchpointFactory().disableWatchpointsDuringGC();
-                if (!watchpoint.enableDuringGC()) {
+                if (!watchpoint.isEnabledDuringGC()) {
                     return true;
                 }
                 // else if check for special object handle watchpoint
