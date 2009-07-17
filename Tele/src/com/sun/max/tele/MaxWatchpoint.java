@@ -64,6 +64,12 @@ public interface MaxWatchpoint extends MemoryRegion {
     boolean isExec();
 
     /**
+     * Checks if this watchpoint is set during garbage collection.
+     * @return
+     */
+    boolean isGC();
+
+    /**
      * Removes the memory watchpoint from the VM, at which time it
      * becomes permanently inactive.
      *
@@ -94,8 +100,25 @@ public interface MaxWatchpoint extends MemoryRegion {
     boolean setExec(boolean exec);
 
     /**
+     * Set gc flag for this watchpoint.
+     * @param gc whether the watchpoint is active during garbage collection
+     * @return whether set succeeded.
+     */
+    void setGC(boolean gc);
+
+    /**
      * @return a heap object in the VM with which the watchpoint is associated, null if none.
      */
     TeleObject getTeleObject();
+
+    /**
+     * Disable watchpoint and temporary store old configuration.
+     */
+    boolean disable();
+
+    /**
+     * Reenable watchpoint with old tomporary stored configuration.
+     */
+    boolean reenable();
 
 }

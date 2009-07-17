@@ -298,11 +298,8 @@ public interface CiRuntime {
 
     int instanceOopDescBaseOffsetInBytes();
 
-    Register[] getAllocatableRegisters();
-
     int outPreserveStackSlots();
 
     int javaCallingConvention(CiMethod method, CiLocation[] result, boolean outgoing);
 
-    Register[] callerSavedRegisters();
 }
