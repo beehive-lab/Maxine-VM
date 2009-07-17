@@ -347,8 +347,8 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
 
         private final TeleThreadLocalValues teleThreadLocalValues;
 
-        public TeleVmThreadLocalWatchpoint(Factory factory, String description, TeleThreadLocalValues teleThreadLocalValues, int index, boolean after, boolean read, boolean write, boolean exec) {
-            super(factory, description,  teleThreadLocalValues.getMemoryRegion(index), after, read, write, exec);
+        public TeleVmThreadLocalWatchpoint(Factory factory, String description, TeleThreadLocalValues teleThreadLocalValues, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc) {
+            super(factory, description,  teleThreadLocalValues.getMemoryRegion(index), after, read, write, exec, gc);
             this.teleThreadLocalValues = teleThreadLocalValues;
         }
 
@@ -552,10 +552,10 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
          * @throws DuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
          */
-        public synchronized TeleWatchpoint setVmThreadLocalWatchpoint(String description, TeleThreadLocalValues teleThreadLocalValues, int index, boolean after, boolean read, boolean write, boolean exec)
+        public synchronized TeleWatchpoint setVmThreadLocalWatchpoint(String description, TeleThreadLocalValues teleThreadLocalValues, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc)
             throws TooManyWatchpointsException, DuplicateWatchpointException {
             final TeleWatchpoint teleWatchpoint =
-                new TeleVmThreadLocalWatchpoint(this, description, teleThreadLocalValues, index, after, read, write, exec);
+                new TeleVmThreadLocalWatchpoint(this, description, teleThreadLocalValues, index, after, read, write, exec, gc);
             return addWatchpoint(teleWatchpoint);
         }
 
@@ -636,7 +636,8 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
 
                     if (teleWatchpoint.getTeleObject() != null) {
                         if (relocatableWatchpointsCounter == 1) {
-                            final Pointer endOfGCField = teleProcess.teleVM().fields().InspectableHeapInfo_rootEpoch.staticTupleReference(teleProcess.teleVM()).toOrigin().plus(teleProcess.teleVM().fields().InspectableHeapInfo_rootEpoch.fieldActor().offset());
+                            final Pointer endOfGCField = teleProcess.teleVM().fields().InspectableHeapInfo_rootEpoch.staticTupleReference(teleProcess.teleVM()).
+                                                            toOrigin().plus(teleProcess.teleVM().fields().InspectableHeapInfo_rootEpoch.fieldActor().offset());
                             final TeleWatchpoint endOfGCWatchpoint = (TeleWatchpoint) findWatchpoint(endOfGCField);
                             removeWatchpoint(endOfGCWatchpoint);
                             relocatableWatchpointsCounter = 0;

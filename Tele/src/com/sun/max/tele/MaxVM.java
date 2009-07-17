@@ -749,7 +749,7 @@ public interface MaxVM {
      * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
      * @throws DuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
      */
-    MaxWatchpoint setVmThreadLocalWatchpoint(String description, TeleThreadLocalValues teleThreadLocalValues, int index, boolean after, boolean read, boolean write, boolean exec)
+    MaxWatchpoint setVmThreadLocalWatchpoint(String description, TeleThreadLocalValues teleThreadLocalValues, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc)
         throws TooManyWatchpointsException, DuplicateWatchpointException;
 
     /**
