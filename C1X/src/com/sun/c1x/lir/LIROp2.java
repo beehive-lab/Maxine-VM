@@ -49,13 +49,13 @@ public class LIROp2 extends LIRInstruction {
      * @param info the object holding information needed to emit debug information
      */
     public LIROp2(LIROpcode opcode, LIRCondition condition, LIROperand opr1, LIROperand opr2, CodeEmitInfo info) {
-        super(opcode, LIROperandFactory.illegalOperand, info);
+        super(opcode, LIROperandFactory.IllegalOperand, info);
         this.opr1 = opr1;
         this.opr2 = opr2;
         this.type = BasicType.Illegal;
         this.condition = condition;
         this.fpuStackSize = 0;
-        this.tmp = LIROperandFactory.illegalOperand;
+        this.tmp = LIROperandFactory.IllegalOperand;
         assert opcode == LIROpcode.Cmp : "Instruction opcode should be of type LIROpcode.Cmp";
     }
 
@@ -75,7 +75,7 @@ public class LIROp2 extends LIRInstruction {
         this.type = BasicType.Illegal;
         this.condition = condition;
         this.fpuStackSize = 0;
-        this.tmp = LIROperandFactory.illegalOperand;
+        this.tmp = LIROperandFactory.IllegalOperand;
         assert opcode == LIROpcode.Cmove : "Instruction opcode should be of type LIROpcode.Cmove";
     }
 
@@ -96,7 +96,7 @@ public class LIROp2 extends LIRInstruction {
         this.type = type;
         this.condition = LIRCondition.Unknown;
         this.fpuStackSize = 0;
-        this.tmp = LIROperandFactory.illegalOperand;
+        this.tmp = LIROperandFactory.IllegalOperand;
         assert opcode != LIROpcode.Cmp && isInRange(opcode, LIROpcode.BeginOp2, LIROpcode.EndOp2) : "The " + opcode + " is not a valid LIROp2 opcode";
     }
 
@@ -133,7 +133,7 @@ public class LIROp2 extends LIRInstruction {
      * @param opr2 the instruction's second operand
      */
     public LIROp2(LIROpcode opcode, LIROperand opr1, LIROperand opr2) {
-        this(opcode, opr1, opr2, LIROperandFactory.illegalOperand);
+        this(opcode, opr1, opr2, LIROperandFactory.IllegalOperand);
     }
 
     /**

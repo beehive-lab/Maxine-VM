@@ -236,7 +236,7 @@ public class MoveResolver {
             // the lastUse flag is an optimization for FPU stack allocation. When the same
             // input interval is used in more than one move, then it is too difficult to determine
             // if this move is really the last use.
-            fromOpr = fromOpr.makeLastUse();
+            allocator.makeLastUse(fromOpr);
         }
         insertionBuffer.move(insertIdx, fromOpr, toOpr);
 
@@ -377,7 +377,7 @@ public class MoveResolver {
                         toInterval.assignedReg(), toInterval.assignedRegHi());
 
         mappingFrom.add(fromInterval);
-        mappingFromOpr.add(LIROperandFactory.illegalOperand);
+        mappingFromOpr.add(LIROperandFactory.IllegalOperand);
         mappingTo.add(toInterval);
     }
 

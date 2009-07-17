@@ -112,7 +112,7 @@ public class PatchingStub extends CodeStub {
             NativeMovRegMem nMove = NativeMovRegMem.nativeMoveRegMemAt(pcStart());
             nMove.setOffset(fieldOffset);
         } else if (id == PatchID.LoadKlassId) {
-            assert !obj.isNoReg() : "must have register object for loadKlass";
+            assert obj.isValid() : "must have register object for loadKlass";
             // verify that we're pointing at a NativeMovConstReg
             assert NativeMovConstReg.isNativeMovConstRegAt(pcStart());
         } else {

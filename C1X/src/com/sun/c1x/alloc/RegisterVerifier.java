@@ -255,7 +255,7 @@ public class RegisterVerifier {
 
                     // When an operand is marked with isLastUse, then the fpu stack allocator
                     // removes the register from the fpu stack . the register contains no value
-                    if (opr.isLastUse()) {
+                    if (allocator.isLastUse(opr)) {
                         statePut(inputState, interval.assignedReg(), null);
                         statePut(inputState, interval.assignedRegHi(), null);
                     }

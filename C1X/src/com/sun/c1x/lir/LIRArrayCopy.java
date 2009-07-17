@@ -69,7 +69,7 @@ public class LIRArrayCopy extends LIRInstruction {
      * @param tmp
      */
     public LIRArrayCopy(LIROperand src, LIROperand srcPos, LIROperand dst, LIROperand dstPos, LIROperand length, LIROperand tmp, CiType expectedType, int arrayCopyFlags, CodeEmitInfo info) {
-        super(LIROpcode.ArrayCopy, LIROperandFactory.illegalOperand, info);
+        super(LIROpcode.ArrayCopy, LIROperandFactory.IllegalOperand, info);
         this.src = src;
         this.srcPos = srcPos;
         this.dst = dst;

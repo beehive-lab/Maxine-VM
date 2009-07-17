@@ -35,14 +35,9 @@ import com.sun.c1x.value.*;
  */
 public class LIRLocation extends LIROperand {
 
-    public static final int XMM = 0;
-    public static final int LAST_USE = 1;
-    public static final int DESTROY = 2;
-
     public Register location1;
     public Register location2;
     public int index;
-    public int flags;
 
     /**
      * Creates a new LIRLocation representing a CPU register.
@@ -54,25 +49,13 @@ public class LIRLocation extends LIROperand {
      * @param flags
      *            the flags of this location
      */
-    public LIRLocation(BasicType basicType, Register number, int flags) {
+    public LIRLocation(BasicType basicType, Register number) {
         super(basicType);
         this.location1 = number;
         this.location2 = number;
-        this.flags = flags;
         index = 0;
     }
 
-    /**
-     * Creates a new LIRLocation representing a CPU register.
-     *
-     * @param basicType
-     *            the basic type of the location
-     * @param number
-     *            the register
-     */
-    public LIRLocation(BasicType basicType, Register number) {
-        this(basicType, number, 0);
-    }
 
     /**
      * Creates a new LIRLocation representing either a virtual register or a stack location, negative indices represent stack locations.
@@ -84,10 +67,9 @@ public class LIRLocation extends LIROperand {
      */
     public LIRLocation(BasicType basicType, int number) {
         super(basicType);
-        this.location1 = null;
-        this.location2 = null;
+        this.location1 = Register.noreg;
+        this.location2 = Register.noreg;
         this.index = number;
-        this.flags = 0;
     }
 
     /**
@@ -99,27 +81,24 @@ public class LIRLocation extends LIROperand {
      *            the number of the location
      * @param location2
      *            the number of the second location
-     * @param flags
-     *            the flags for the location
      */
-    public LIRLocation(BasicType basicType, Register location1, Register location2, int flags) {
+    public LIRLocation(BasicType basicType, Register location1, Register location2) {
         super(basicType);
         this.location1 = location1;
         this.location2 = location2;
-        this.flags = flags;
         index = 0;
     }
 
     @Override
     public int hashCode() {
-        return location1.number + location2.number + index + flags;
+        return location1.number + location2.number + index;
     }
 
     @Override
     public boolean equals(Object o) {
         if (o instanceof LIRLocation) {
             LIRLocation l = (LIRLocation) o;
-            return l.basicType == basicType && l.location1 == location1 && l.location2 == location2 && l.index == index &&  l.flags == flags;
+            return l.basicType == basicType && l.location1 == location1 && l.location2 == location2 && l.index == index;
         }
         return false;
     }
@@ -212,17 +191,17 @@ public class LIRLocation extends LIROperand {
 
     @Override
     public boolean isXmmRegister() {
-        return !isStack() && (flags & XMM) != 0;
+        return !isStack() && location1.isXMM();
     }
 
     @Override
     public boolean isSingleXmm() {
-        return !isStack() && (flags & XMM) != 0 && basicType.sizeInSlots() == 1;
+        return !isStack() && location1.isXMM() && basicType.sizeInSlots() == 1;
     }
 
     @Override
     public boolean isDoubleXmm() {
-        return !isStack() && (flags & XMM) != 0 && basicType.sizeInSlots() == 2;
+        return !isStack() && location1.isXMM() && basicType.sizeInSlots() == 2;
     }
 
     @Override
@@ -230,22 +209,11 @@ public class LIRLocation extends LIROperand {
         return isCpuRegister() && basicType == BasicType.Object;
     }
 
-    @Override
-    public boolean isLastUse() {
-        assert isRegister() : "only works for registers";
-        return (flags & LAST_USE) != 0;
-    }
 
     @Override
     public boolean isFpuStackOffset() {
         assert isRegister() : "only works for registers";
         throw Util.unimplemented();
-    }
-
-    @Override
-    public LIROperand makeLastUse() {
-        assert isRegister() : "only works for registers";
-        return new LIRLocation(basicType, location1, location2, flags | LAST_USE);
     }
 
     @Override
@@ -324,24 +292,6 @@ public class LIRLocation extends LIROperand {
         return location2.number;
     }
 
-    @Override
-    public int xmmRegnr() {
-        assert this.isXmmRegister() && !this.isVirtualRegister();
-        return location1.number;
-    }
-
-    @Override
-    public int xmmRegnrLo() {
-        assert this.isXmmRegister() && !this.isVirtualRegister();
-        return location1.number;
-    }
-
-    @Override
-    public int xmmRegnrHi() {
-        assert this.isXmmRegister() && !this.isVirtualRegister();
-        return location2.number;
-    }
-
 
     /**
      * @return the minimum virtual register value
@@ -357,12 +307,9 @@ public class LIRLocation extends LIROperand {
         return (basicType == BasicType.Float || basicType == BasicType.Double);
     }
 
-    @Override
-    public void assignPhysicalRegister(LIROperand other) {
-        assert other.isRegister() && (other instanceof LIRLocation);
-
-        final LIRLocation otherLocation = (LIRLocation) other;
-        this.flags = otherLocation.flags;
+    public void changeTo(LIROperand newValues) {
+        assert newValues.isRegister() && (newValues instanceof LIRLocation);
+        final LIRLocation otherLocation = (LIRLocation) newValues;
         this.location1 = otherLocation.location1;
         this.location2 = otherLocation.location2;
         this.index = otherLocation.index;

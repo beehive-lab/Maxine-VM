@@ -352,7 +352,7 @@ public class Interval {
         this.assignedReg = LinearScan.getAnyreg();
         this.assignedRegHi = LinearScan.getAnyreg();
         this.cachedTo = -1;
-        this.cachedOpr = LIROperandFactory.illegalOperand;
+        this.cachedOpr = LIROperandFactory.IllegalOperand;
         this.cachedVmReg = null; // TODO: Check if to use VMReg.Bad
         this.canonicalSpillSlot = -1;
         this.insertMoveWhenActivated = false;
@@ -794,11 +794,11 @@ public class Interval {
             typeName = "fixed";
             // need a temporary operand for fixed intervals because type() cannot be called
             if (allocator.isCpu(assignedReg())) {
-                opr = LIROperandFactory.singleCpu(allocator.toRegister(assignedReg()));
+                opr = LIROperandFactory.singleLocation(BasicType.Int, allocator.toRegister(assignedReg()));
             } else if (allocator.isFpu(assignedReg())) {
-                opr = LIROperandFactory.singleFpu(allocator.toRegister(assignedReg()));
+                opr = LIROperandFactory.singleLocation(BasicType.Float, allocator.toRegister(assignedReg()));
             } else if (allocator.isXmm(assignedReg())) {
-                opr = LIROperandFactory.singleXmmX86(allocator.toRegister(assignedReg()));
+                opr = LIROperandFactory.singleLocation(BasicType.Float, allocator.toRegister(assignedReg()));
             } else {
                 Util.shouldNotReachHere();
             }

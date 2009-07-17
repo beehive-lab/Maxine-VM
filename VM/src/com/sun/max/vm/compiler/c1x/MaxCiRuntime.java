@@ -239,7 +239,7 @@ public class MaxCiRuntime implements CiRuntime {
         throw Util.unimplemented();
     }
 
-    public Address throwCountAddress() {
+    public long throwCountAddress() {
         throw Util.unimplemented();
     }
 
@@ -287,7 +287,7 @@ public class MaxCiRuntime implements CiRuntime {
         throw Util.unimplemented();
     }
 
-    public Address argRegSaveAreaBytes() {
+    public int argRegSaveAreaBytes() {
         throw Util.unimplemented();
     }
 

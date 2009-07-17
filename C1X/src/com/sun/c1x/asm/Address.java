@@ -18,9 +18,8 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.target.x86;
+package com.sun.c1x.asm;
 
-import com.sun.c1x.asm.*;
 import com.sun.c1x.asm.RelocInfo.*;
 import com.sun.c1x.lir.LIRAddress.*;
 import com.sun.c1x.target.*;
@@ -48,32 +47,17 @@ public class Address {
         }
     }
 
-    public X86Register base;
+    public Register base;
     public int disp;
     public ScaleFactor scale;
-    public X86Register index;
+    public Register index;
     public RelocationHolder rspec;;
 
     public Address() {
     }
 
-    public Address(X86Register base, X86Register index, Scale scale, int displacement) {
-        // TODO Auto-generated constructor stub
-    }
-
-    public Address(X86Register rsp, int i) {
-        // TODO Auto-generated constructor stub
-    }
 
     public Address(int displacement) {
-        // TODO Auto-generated constructor stub
-    }
-
-    public Address(X86Register base2, long addrOffset) {
-        // TODO Auto-generated constructor stub
-    }
-
-    public Address(Register base2, int displacement) {
         // TODO Auto-generated constructor stub
     }
 
@@ -81,11 +65,7 @@ public class Address {
         // TODO Auto-generated constructor stub
     }
 
-    public Address(Register base2, long addrOffset) {
-        // TODO Auto-generated constructor stub
-    }
-
-    public Address(X86Register noreg, X86Register tmp, ScaleFactor times1) {
+    public Address(Register noreg, Register tmp, ScaleFactor times1) {
         // TODO Auto-generated constructor stub
     }
 
@@ -93,7 +73,7 @@ public class Address {
         // TODO Auto-generated constructor stub
     }
 
-    public Address(X86Register base2, X86Register index2, ScaleFactor scale2, int displacement) {
+    public Address(Register base2, Register index2, ScaleFactor scale2, int displacement) {
         // TODO Auto-generated constructor stub
     }
 
@@ -101,17 +81,27 @@ public class Address {
         // TODO Auto-generated constructor stub
     }
 
-    public Address(X86Register subKlass, RegisterOrConstant superCheckOffset, ScaleFactor times1, int displacement) {
+    public Address(Register subKlass, RegisterOrConstant superCheckOffset, ScaleFactor times1, int displacement) {
         // TODO Auto-generated constructor stub
     }
 
-    public Address(X86Register arrSize, X86Register len, int scaleFactor) {
+    public Address(Register arrSize, Register len, int scaleFactor) {
         // TODO Auto-generated constructor stub
     }
 
     public Address(long l, Pointer target, Type reloc) {
         // TODO Auto-generated constructor stub
     }
+
+    public Address(Register rsp, int i) {
+        // TODO Auto-generated constructor stub
+    }
+
+
+    public Address(Register base2, long addrOffset) {
+        // TODO Auto-generated constructor stub
+    }
+
 
     public int asInt() {
         // TODO Auto-generated method stub

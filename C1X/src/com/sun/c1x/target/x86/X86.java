@@ -31,7 +31,7 @@ public class X86 extends Architecture {
 
     public static final X86 AMD64X86 = new X86("AMD64", 8, X86Register.allRegisters64);
 
-    public X86(String name, int wordSize, X86Register[] registers) {
+    public X86(String name, int wordSize, Register[] registers) {
         super(name, wordSize, "x86", BitOrdering.LittleEndian, registers);
     }
 

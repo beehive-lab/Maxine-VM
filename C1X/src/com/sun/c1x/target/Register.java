@@ -31,28 +31,29 @@ import com.sun.c1x.lir.*;
  */
 public class Register {
 
+    // Invalid register
+    public static final Register noreg = new Register(-1, "noreg");
+
     public static final int vregBase = 50;
 
     public final int number;
     public final String name;
+    public final int encoding;
     private final int flags;
-    public static final Register anyReg = new Register(-1, "any");
 
     public enum RegisterFlag {
-        Cpu,
-        Byte,
-        Fpu,
-        Xmm;
+        CPU, Byte, FPU, XMM, MMX;
 
         public int mask() {
             return 1 << (ordinal() + 1);
         }
     }
 
-    protected Register(int number, String name, RegisterFlag... flags) {
+    public Register(int number, String name, RegisterFlag... flags) {
         this.number = number;
         this.name = name;
         this.flags = createMask(flags);
+        this.encoding = number;
     }
 
     private int createMask(RegisterFlag... flags) {
@@ -68,17 +69,32 @@ public class Register {
     }
 
     public boolean isValid() {
-        // TODO Check if this implementation is correct?
         return number >= 0;
     }
 
-    public boolean isNoReg() {
-        return number == -1;
+    public boolean isFpu() {
+        return checkFlag(RegisterFlag.FPU);
     }
 
-    public boolean hasByteRegister() {
+    public boolean isXMM() {
+        return checkFlag(RegisterFlag.XMM);
+    }
+
+    public VMReg asVMReg() {
         // TODO Auto-generated method stub
-        return false;
+        return null;
+    }
+
+    public boolean isCpu() {
+        return checkFlag(RegisterFlag.CPU);
+    }
+
+    public boolean isByte() {
+        return checkFlag(RegisterFlag.Byte);
+    }
+
+    public boolean isMMX() {
+        return checkFlag(RegisterFlag.MMX);
     }
 
     public static boolean assertDifferentRegisters(Register... reg) {
@@ -97,28 +113,4 @@ public class Register {
         return true;
     }
 
-    public String name() {
-        return name;
-    }
-
-    public boolean isFpu() {
-        return checkFlag(RegisterFlag.Fpu);
-    }
-
-    public boolean isXmm() {
-        return checkFlag(RegisterFlag.Xmm);
-    }
-
-    public VMReg asVMReg() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public boolean isCpu() {
-        return checkFlag(RegisterFlag.Cpu);
-    }
-
-    public boolean isByte() {
-        return checkFlag(RegisterFlag.Byte);
-    }
 }

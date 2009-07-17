@@ -124,18 +124,18 @@ public abstract class LIROperand {
         } else if (isVirtual()) {
             out.append("R" + vregNumber());
         } else if (isSingleCpu()) {
-            out.append(asRegister().name());
+            out.append(asRegister().name);
         } else if (isDoubleCpu()) {
-            out.append(asRegisterHi().name());
-            out.append(asRegisterLo().name());
+            out.append(asRegisterHi().name);
+            out.append(asRegisterLo().name);
         } else if (isSingleXmm()) {
-            out.append(asRegister().name());
+            out.append(asRegister().name);
         } else if (isDoubleXmm()) {
-            out.append(asRegister().name());
+            out.append(asRegister().name);
         } else if (isSingleFpu()) {
-            out.append(asRegister().name());
+            out.append(asRegister().name);
         } else if (isDoubleFpu()) {
-            out.append(asRegister().name());
+            out.append(asRegister().name);
 
         } else if (isIllegal()) {
             out.append("-");
@@ -144,9 +144,6 @@ public abstract class LIROperand {
         }
         if (!isIllegal()) {
             out.append(String.format("|%c", this.type().basicChar));
-        }
-        if (isRegister() && isLastUse()) {
-            out.append("(lastUse)");
         }
         out.append("]");
         return out.toString();
@@ -285,18 +282,6 @@ public abstract class LIROperand {
         throw Util.shouldNotReachHere();
     }
 
-    public int xmmRegnr() {
-        throw Util.shouldNotReachHere();
-    }
-
-    public int xmmRegnrLo() {
-        throw Util.shouldNotReachHere();
-    }
-
-    public int xmmRegnrHi() {
-        throw Util.shouldNotReachHere();
-    }
-
     public int vregNumber() {
         throw Util.shouldNotReachHere();
     }
@@ -376,11 +361,6 @@ public abstract class LIROperand {
             return (LIRAddress) this;
         }
         return null;
-    }
-
-    public int asJint() {
-        // TODO Auto-generated method stub
-        return asInt();
     }
 
     public BasicType typeRegister() {

@@ -267,7 +267,7 @@ public class LIRConstant extends LIROperand {
     public String valueToString() {
         switch (type()) {
             case Int:
-                return String.format("int:%d", asJint());
+                return String.format("int:%d", asInt());
             case Long:
                 return String.format("lng:%lld", asLong());
             case Float:

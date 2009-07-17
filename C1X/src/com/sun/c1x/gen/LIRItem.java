@@ -49,17 +49,17 @@ public class LIRItem {
 
     public void setInstruction(Instruction value) {
         this.value = value;
-        this.result = LIROperandFactory.illegalOperand;
+        this.result = LIROperandFactory.IllegalOperand;
         if (value != null) {
             gen.walk(value);
             result = value.operand();
         }
-        newResult = LIROperandFactory.illegalOperand;
+        newResult = LIROperandFactory.IllegalOperand;
     }
 
     public LIRItem(LIRGenerator gen) {
         this.gen = gen;
-        result = LIROperandFactory.illegalOperand;
+        result = LIROperandFactory.IllegalOperand;
         setInstruction(null);
     }
 

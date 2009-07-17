@@ -23,10 +23,10 @@ package com.sun.c1x.lir;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.lir.Location.*;
 import com.sun.c1x.target.*;
-import com.sun.c1x.target.x86.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -163,7 +163,7 @@ public class FrameMap {
 
     private LIROperand mapToOpr(BasicType t, CiLocation pair, boolean outgoing) {
         // TODO Auto-generated method stub
-        return LIROperandFactory.registerPairToOperand(pair);
+        return LIROperandFactory.registerPairToOperand(t, pair);
     }
 
     public CallingConvention incomingArguments() {

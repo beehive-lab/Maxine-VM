@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.target.x86;
 
+import com.sun.c1x.asm.*;
+
 /**
  *
  * @author Thomas Wuerthinger

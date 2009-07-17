@@ -18,7 +18,9 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.target.x86;
+package com.sun.c1x.asm;
+
+import com.sun.c1x.target.*;
 
 /**
  *
@@ -35,7 +37,7 @@ public class RegisterOrConstant {
         // TODO Auto-generated constructor stub
     }
 
-    public RegisterOrConstant(X86Register tmp) {
+    public RegisterOrConstant(Register tmp) {
         // TODO Auto-generated constructor stub
     }
 
@@ -44,7 +46,7 @@ public class RegisterOrConstant {
         return false;
     }
 
-    public X86Register asRegister() {
+    public Register asRegister() {
         // TODO Auto-generated method stub
         return null;
     }
