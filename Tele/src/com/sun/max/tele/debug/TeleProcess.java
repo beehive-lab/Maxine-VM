@@ -116,16 +116,11 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             final Pointer gcEnd = teleVM().fields().InspectableHeapInfo_rootEpoch.staticTupleReference(teleVM()).toOrigin().plus(teleVM().fields().InspectableHeapInfo_rootEpoch.fieldActor().offset());
             if (watchpoint != null) {
                 if (gcEnd.toLong() == readWatchpointAddress()) {
-                    // end of gc
-                    // turn on watchpoints
-                    // handle relocatable watchpoints
+                    // End of GC; TODO: handle relocatable watchpoints (stop-the-world case)
                     watchpointFactory().reenableWatchpointsAfterGC();
                     return true;
                 } else if (teleVM().isInGC()) {
-                    // check if watchpoint is gc enabled, if yes give user control
-                    // if not do not give control back to the user
-                    // disable all other watchpoints
-                    // set watchpoint end on gc
+                    // We are in GC. Turn Watchpoints off for all objects that are not intersted.
                     watchpointFactory().disableWatchpointsDuringGC();
                     if (!watchpoint.isGC()) {
                         return true;
@@ -134,21 +129,6 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                 // else if check for special object handle watchpoint
             }
             return false;
-            /*if (watchpoint != null) {
-                // if watchpoint is a "beginning of gc" watchpoint => deactivate watchpoints when not interested in gc
-                // if watchpoint is an "end of gc" watchpoint => activate all watchpoints & update object and field watchpoints
-                final Pointer gcStart = teleVM().fields().InspectableHeapInfo_collectionEpoch.staticTupleReference(teleVM()).toOrigin().plus(teleVM().fields().InspectableHeapInfo_collectionEpoch.fieldActor().offset());
-                final Pointer gcEnd = teleVM().fields().InspectableHeapInfo_rootEpoch.staticTupleReference(teleVM()).toOrigin().plus(teleVM().fields().InspectableHeapInfo_rootEpoch.fieldActor().offset());
-                if (gcStart.toLong() == readWatchpointAddress()) {
-                    System.out.println("BEFORE GC WATCHPOINT TRIGGERED " + readWatchpointAddress());
-                    watchpointFactory().disableWatchpointsDuringGC();
-                    return true;
-                } else if (gcEnd.toLong() == readWatchpointAddress()) {
-                    System.out.println("AFTER GC WATCHPOINT TRIGGERED " + readWatchpointAddress());
-                    watchpointFactory().reenableWatchpointsAfterGC();
-                    return true;
-                }
-            }*/
         }
 
         /**
