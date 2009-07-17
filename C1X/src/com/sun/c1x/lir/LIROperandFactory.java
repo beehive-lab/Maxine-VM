@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.ci.*;
+import com.sun.c1x.target.*;
 import com.sun.c1x.target.x86.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
@@ -38,44 +40,36 @@ public class LIROperandFactory {
 
     public static final LIROperand illegalOperand = LIROperand.ILLEGAL;
 
-    public static LIROperand singleCpu(int reg) {
-        assert reg > 0;
+    public static LIROperand singleCpu(Register reg) {
         return new LIRLocation(BasicType.Int, reg);
     }
 
-    public static LIROperand singleCpuOop(int reg) {
-        assert reg > 0;
+    public static LIROperand singleCpuOop(Register reg) {
         return new LIRLocation(BasicType.Object, reg);
     }
 
-    public static LIROperand doubleCpu(int reg1, int reg2) {
-        assert reg1 > 0 && reg2 > 0;
+    public static LIROperand doubleCpu(Register reg1, Register reg2) {
         return new LIRLocation(BasicType.Long, reg1, reg2, 0);
     }
 
-    public static LIROperand singleFpu(int reg) {
-        assert reg > 0;
+    public static LIROperand singleFpu(Register reg) {
         return new LIRLocation(BasicType.Float, reg);
     }
 
 
-    public static LIROperand doubleFpuSparc(int reg1, int reg2) {
-        assert reg1 > 0 && reg2 > 0;
+    public static LIROperand doubleFpuSparc(Register reg1, Register reg2) {
         return new LIRLocation(BasicType.Double, reg1, reg2, 0);
     }
 
-    public static LIROperand doubleFpuX86(int reg) {
-        assert reg > 0;
+    public static LIROperand doubleFpuX86(Register reg) {
         return new LIRLocation(BasicType.Double, reg);
     }
 
-    public static LIROperand singleXmmX86(int reg) {
-        assert reg > 0;
+    public static LIROperand singleXmmX86(Register reg) {
         return new LIRLocation(BasicType.Float, reg, LIRLocation.XMM);
     }
 
-    public static LIROperand doubleXmmX86(int reg) {
-        assert reg > 0;
+    public static LIROperand doubleXmmX86(Register reg) {
         return new LIRLocation(BasicType.Double, reg, LIRLocation.XMM);
     }
 
@@ -177,14 +171,18 @@ public class LIROperandFactory {
         return null;
     }
 
-    public static LIROperand doubleFpu(int i) {
-        // TODO Auto-generated method stub
-        return null;
-    }
 
     public static LIROperand longConst(int i) {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    public static LIROperand registerPairToOperand(CiLocation pair) {
+        if (pair.second == null) {
+            return singleCpu(pair.first);
+        } else {
+            return doubleCpu(pair.first, pair.second);
+        }
     }
 
     // TODO to be completed

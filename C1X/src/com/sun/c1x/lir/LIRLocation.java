@@ -20,13 +20,13 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.target.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
-
 /**
- * The <code>LIRLocation</code> class represents a LIROperand that is
- * either a stack slot or a CPU register. LIRLocation objects are immutable.
+ * The <code>LIRLocation</code> class represents a LIROperand that is either a stack slot or a CPU register. LIRLocation
+ * objects are immutable.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
@@ -39,82 +39,115 @@ public class LIRLocation extends LIROperand {
     public static final int LAST_USE = 1;
     public static final int DESTROY = 2;
 
-    public final int location1;
-    public final int location2;
-    public final int flags;
+    public Register location1;
+    public Register location2;
+    public int index;
+    public int flags;
 
     /**
-     * Creates a new LIRLocation representing either a stack value or a CPU register.
-     * @param basicType the basic type of the location
-     * @param number the number of the location, with negative numbers representing values on the stack
-     * @param flags the flags of this location
+     * Creates a new LIRLocation representing a CPU register.
+     *
+     * @param basicType
+     *            the basic type of the location
+     * @param number
+     *            the register
+     * @param flags
+     *            the flags of this location
      */
-    public LIRLocation(BasicType basicType, int number, int flags) {
+    public LIRLocation(BasicType basicType, Register number, int flags) {
         super(basicType);
         this.location1 = number;
         this.location2 = number;
         this.flags = flags;
+        index = 0;
     }
 
     /**
-     * Creates a new LIRLocation representing either a stack value or a CPU register.
-     * @param basicType the basic type of the location
-     * @param number the number of the location, with negative numbers representing values on the stack
+     * Creates a new LIRLocation representing a CPU register.
+     *
+     * @param basicType
+     *            the basic type of the location
+     * @param number
+     *            the register
+     */
+    public LIRLocation(BasicType basicType, Register number) {
+        this(basicType, number, 0);
+    }
+
+    /**
+     * Creates a new LIRLocation representing either a virtual register or a stack location, negative indices represent stack locations.
+     *
+     * @param basicType
+     *            the basic type of the location
+     * @param number
+     *            the virtual register index or the stack location index if negative
      */
     public LIRLocation(BasicType basicType, int number) {
         super(basicType);
-        this.location1 = number;
-        this.location2 = number;
+        this.location1 = null;
+        this.location2 = null;
+        this.index = number;
         this.flags = 0;
     }
 
     /**
      * Creates a new LIRLocation representing either a stack value or a CPU register.
-     * @param basicType the basic type of the location
-     * @param location1 the number of the location
-     * @param location2 the number of the second location
-     * @param flags the flags for the location
+     *
+     * @param basicType
+     *            the basic type of the location
+     * @param location1
+     *            the number of the location
+     * @param location2
+     *            the number of the second location
+     * @param flags
+     *            the flags for the location
      */
-    public LIRLocation(BasicType basicType, int location1, int location2, int flags) {
+    public LIRLocation(BasicType basicType, Register location1, Register location2, int flags) {
         super(basicType);
         this.location1 = location1;
         this.location2 = location2;
         this.flags = flags;
+        index = 0;
     }
 
     @Override
     public int hashCode() {
-        return location1 + location2 + flags;
+        return location1.number + location2.number + index + flags;
     }
 
     @Override
     public boolean equals(Object o) {
         if (o instanceof LIRLocation) {
             LIRLocation l = (LIRLocation) o;
-            return l.basicType == basicType && l.location1 == location1 && l.location2 == location2 && l.flags == flags;
+            return l.basicType == basicType && l.location1 == location1 && l.location2 == location2 && l.index == index &&  l.flags == flags;
         }
         return false;
     }
 
     @Override
     public boolean isStack() {
-        return location1 < 0;
+        return index < 0;
     }
 
     @Override
     public int vregNumber() {
-        assert location1 >= virtualRegisterBase();
-        return location1;
+        assert index >= virtualRegisterBase();
+        return index;
     }
 
     public int pregNumber() {
-        assert location1 < virtualRegisterBase() && location1 >= 0;
-        return location1;
+        assert index < virtualRegisterBase() && index >= 0;
+        return index;
     }
 
     @Override
-    boolean isSameRegister(LIROperand opr) {
-        throw Util.shouldNotReachHere();
+    public boolean isSameRegister(LIROperand opr) {
+        assert this.isRegister();
+        if (!(opr instanceof LIRLocation)) {
+            return false;
+        }
+        LIRLocation other = (LIRLocation) opr;
+        return this.location1 == other.location1 && this.location2 == other.location2;
     }
 
     @Override
@@ -134,12 +167,12 @@ public class LIRLocation extends LIROperand {
 
     @Override
     public boolean isVirtualCpu() {
-        return !isStack() && location1 >= virtualRegisterBase();
+        return !isStack() && index >= virtualRegisterBase();
     }
 
     @Override
     public boolean isFixedCpu() {
-        return !isStack() && location1 < virtualRegisterBase();
+        return !isStack() && index < virtualRegisterBase();
     }
 
     @Override
@@ -224,74 +257,97 @@ public class LIRLocation extends LIROperand {
     @Override
     public int singleStackIx() {
         assert isSingleStack() && !isVirtual() : "type check";
-        return location1;
+        return index;
     }
 
     @Override
     public int doubleStackIx() {
         assert isDoubleStack() && !isVirtual() : "type check";
-        return location1;
+        return index;
     }
 
     @Override
+    public Register asRegister() {
+        assert location1 == location2;
+        return this.location1;
+    }
+
+    @Override
+    public Register asRegisterLo() {
+        return this.location1;
+    }
+
+    @Override
+    public Register asRegisterHi() {
+        return this.location2;
+    }
+
+    @Override
+    public boolean isVirtualRegister() {
+        return index != 0 && !this.isStack();
+    }
+
+
+    @Override
     public int cpuRegnr() {
-        assert isSingleCpu() && !isVirtual() : "type check";
-        return location1;
+        assert this.isCpuRegister() && !this.isVirtualRegister();
+        return location1.number;
     }
 
     @Override
     public int cpuRegnrLo() {
-        assert isDoubleCpu() && !isVirtual() : "type check";
-        return location1;
+        assert this.isCpuRegister() && !this.isVirtualRegister();
+        return location1.number;
     }
 
     @Override
     public int cpuRegnrHi() {
-        assert isDoubleCpu() && !isVirtual() : "type check";
-        return location2;
+        assert this.isCpuRegister() && !this.isVirtualRegister();
+        return location2.number;
     }
 
     @Override
     public int fpuRegnr() {
-        assert isSingleFpu() && !isVirtual() : "type check";
-        return location1;
+        assert this.isFpuRegister() && !this.isVirtualRegister();
+        return location1.number;
     }
 
     @Override
     public int fpuRegnrLo() {
-        assert isDoubleFpu() && !isVirtual() : "type check";
-        return location1;
+        assert this.isFpuRegister() && !this.isVirtualRegister();
+        return location1.number;
     }
 
     @Override
     public int fpuRegnrHi() {
-        assert isDoubleFpu() && !isVirtual() : "type check";
-        return location2;
+        assert this.isFpuRegister() && !this.isVirtualRegister();
+        return location2.number;
     }
 
     @Override
     public int xmmRegnr() {
-        assert isSingleXmm() && !isVirtual() : "type check";
-        return location1;
+        assert this.isXmmRegister() && !this.isVirtualRegister();
+        return location1.number;
     }
 
     @Override
     public int xmmRegnrLo() {
-        assert isDoubleXmm() && !isVirtual() : "type check";
-        return location1;
+        assert this.isXmmRegister() && !this.isVirtualRegister();
+        return location1.number;
     }
 
     @Override
     public int xmmRegnrHi() {
-        assert isDoubleXmm() && !isVirtual() : "type check";
-        return location2;
+        assert this.isXmmRegister() && !this.isVirtualRegister();
+        return location2.number;
     }
+
 
     /**
      * @return the minimum virtual register value
      */
     public static int virtualRegisterBase() {
-        return 10000; // 10000 registers should be enough for anybody
+        return Register.vregBase;
     }
 
     /**
@@ -301,5 +357,15 @@ public class LIRLocation extends LIROperand {
         return (basicType == BasicType.Float || basicType == BasicType.Double);
     }
 
+    @Override
+    public void assignPhysicalRegister(LIROperand other) {
+        assert other.isRegister() && (other instanceof LIRLocation);
 
+        final LIRLocation otherLocation = (LIRLocation) other;
+        this.flags = otherLocation.flags;
+        this.location1 = otherLocation.location1;
+        this.location2 = otherLocation.location2;
+        this.index = otherLocation.index;
+        assert this.equals(otherLocation);
+    }
 }

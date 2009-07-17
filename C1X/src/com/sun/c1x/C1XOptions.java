@@ -60,6 +60,8 @@ public class C1XOptions {
     public static boolean PrintCFGToFile                     = ____;
     public static boolean PrintMetrics                       = ____;
     public static boolean PrintCFG                           = ____;
+    public static boolean PrintCompilation                   = TRUE;
+    public static boolean PrintExceptionHandlers             = ____;
 
     // canonicalizer settings
     public static boolean CanonicalizeInstructions           = TRUE;
@@ -124,7 +126,7 @@ public class C1XOptions {
     public static int     TraceLinearScanLevel               = 4;
 
     // LIR settings
-    public static boolean PrintIRWithLIR                     = ____;
+    public static boolean PrintIRWithLIR                     = TRUE;
     public static boolean LIRTraceExecution                  = ____;
     public static boolean TwoOperandLIRForm                  = ____;
     public static boolean PatchALot                          = ____;
@@ -135,6 +137,7 @@ public class C1XOptions {
     public static boolean GenerateBoundsChecks               = ____;
     public static boolean GenerateCompilerNullChecks         = ____;
     public static boolean UseTableRanges                     = ____;
+    public static boolean DetailedAsserts                    = TRUE;
 
     public static boolean GenerateArrayStoreCheck            = TRUE;
     public static boolean UseBiasedLocking                   = ____;
@@ -174,6 +177,8 @@ public class C1XOptions {
     public static boolean Tier1OptimizeVirtualCallProfiling  = ____;
     public static boolean Tier1ProfileVirtualCalls           = ____;
     public static int     TypeProfileWidth                   = 0;
+    public static boolean TestCompressedStreamEnabled        = ____;
+    public static final int InvocationEntryBci = -1;
 
     public static void setOptimizationLevel(int level) {
         if (level <= 0) {

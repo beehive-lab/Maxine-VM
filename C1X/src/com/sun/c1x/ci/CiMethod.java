@@ -20,9 +20,9 @@
  */
 package com.sun.c1x.ci;
 
-import com.sun.c1x.util.BitMap;
+import java.util.*;
 
-import java.util.List;
+import com.sun.c1x.util.*;
 
 /**
  * The <code>CiMethod</code> interface represents resolved and unresolved methods.

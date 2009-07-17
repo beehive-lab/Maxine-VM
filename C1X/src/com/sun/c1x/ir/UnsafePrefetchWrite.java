@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.util.InstructionVisitor;
+import com.sun.c1x.util.*;
 
 /**
  * The <code>UnsafePrefetchWrite</code> instruction represents a prefetch write.

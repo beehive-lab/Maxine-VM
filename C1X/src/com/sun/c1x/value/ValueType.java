@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.value;
 
-import com.sun.c1x.util.Util;
+import com.sun.c1x.util.*;
 
 /**
  * The <code>ValueType</code> class represents the type of a value in the IR.

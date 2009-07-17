@@ -80,7 +80,7 @@ public class BytecodeLocation {
      * @return {@code null} if a source file name is not available
      */
     public String sourceFileName() {
-        return classMethodActor().sourceFileName();
+        return classMethodActor().holder().sourceFileName;
     }
 
     /**

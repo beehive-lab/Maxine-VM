@@ -20,9 +20,8 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
-import com.sun.c1x.util.InstructionVisitor;
-import com.sun.c1x.util.InstructionClosure;
 
 /**
  * The <code>Constant</code> instruction represents a constant such as an integer value,

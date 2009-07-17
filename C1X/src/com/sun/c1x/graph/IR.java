@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.graph;
 
-import java.io.*;
 import java.util.*;
 
 import com.sun.c1x.*;
@@ -95,14 +94,7 @@ public class IR {
 
     public void build() {
 
-        CFGPrinter cfgPrinter = null;
-        if (C1XOptions.PrintCFGToFile) {
-            OutputStream cfgFileStream = CFGPrinter.cfgFileStream();
-            if (cfgFileStream != null) {
-                cfgPrinter = new CFGPrinter(cfgFileStream);
-                cfgPrinter.printCompilation(compilation.method);
-            }
-        }
+        CFGPrinter cfgPrinter = compilation.cfgPrinter();
 
         topScope = new IRScope(compilation, null, -1, compilation.method, compilation.osrBCI());
 
@@ -171,7 +163,7 @@ public class IR {
             ip.printInstruction(block); TTY.println();
           } else {
 
-              BlockPrinter blockPrinter = new BlockPrinter(ip, cfgOnly, liveOnly);
+              BlockPrinter blockPrinter = new BlockPrinter(this, ip, cfgOnly, liveOnly);
               blockPrinter.printBlock(block, liveOnly);
           }
         }
@@ -181,12 +173,21 @@ public class IR {
     private void print(boolean cfgOnly) {
         TTY.println("IR for " + compilation.method);
         final InstructionPrinter ip = new InstructionPrinter(TTY.out, true);
-        final BlockPrinter bp = new BlockPrinter(ip, cfgOnly, false);
+        final BlockPrinter bp = new BlockPrinter(this, ip, cfgOnly, false);
         startBlock.iteratePreOrder(bp);
     }
 
-    private boolean verify() {
+    public boolean verify() {
         return true;
+    }
+
+    public int numLoops() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public BlockBegin start() {
+        return startBlock;
     }
 
 }

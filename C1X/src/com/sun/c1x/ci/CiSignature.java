@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ci;
 
-import com.sun.c1x.value.BasicType;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>CiSignature</code> class represents a method signature.
@@ -30,9 +30,10 @@ import com.sun.c1x.value.BasicType;
 public interface CiSignature {
     /**
      * Gets the number of arguments to this signature, not including a receiver object.
+     * @param receiver true if there is a receiver, false otherwise
      * @return the number of arguments
      */
-    int arguments();
+    int argumentCount(boolean receiver);
 
     /**
      * Gets the argument type at the specified position.
@@ -71,5 +72,5 @@ public interface CiSignature {
      * @param withReceiver {@code true} if to add a slot for a receiver object; {@code false} not to include the receiver
      * @return the size of the arguments in slots
      */
-    int argumentSize(boolean withReceiver);
+    int argumentSlots(boolean withReceiver);
 }

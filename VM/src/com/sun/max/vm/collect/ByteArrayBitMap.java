@@ -37,12 +37,12 @@ public final class ByteArrayBitMap implements Cloneable {
     private byte[] bytes;
 
     /**
-     * The offset in {@link _bytes} at which this bit map's bits start.
+     * The offset in {@link #bytes} at which this bit map's bits start.
      */
     private int offset;
 
     /**
-     * The number of bytes in {@link _bytes} reserved for this bit map's bits start.
+     * The number of bytes in {@link #bytes} reserved for this bit map's bits start.
      */
     private int size;
 
@@ -153,6 +153,10 @@ public final class ByteArrayBitMap implements Cloneable {
         this.offset = offset;
     }
 
+    public void setIndex(int index) {
+        setOffset(index * size);
+    }
+
     public void setSize(int size) {
         this.size = size;
     }
@@ -162,8 +166,7 @@ public final class ByteArrayBitMap implements Cloneable {
      * {@linkplain #offset() offset} is updated to {@code this.size() + this.offset()}.
      */
     public void next() {
-        final int newOffset = offset + size;
-        offset = newOffset;
+        offset = offset + size;
     }
 
     /**

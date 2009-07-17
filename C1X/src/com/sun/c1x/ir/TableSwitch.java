@@ -20,10 +20,10 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.util.InstructionVisitor;
-import com.sun.c1x.value.ValueStack;
+import java.util.*;
 
-import java.util.List;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>TableSwitch</code> instruction represents a table switch.
