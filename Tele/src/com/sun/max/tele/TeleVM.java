@@ -780,15 +780,17 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public void initGarbageCollectorDebugging() throws TooManyWatchpointsException, DuplicateWatchpointException {
-        final Pointer gcStart = fields().InspectableHeapInfo_collectionEpoch.staticTupleReference(this).toOrigin().plus(fields().InspectableHeapInfo_collectionEpoch.fieldActor().offset());
-        final Pointer gcEnd = fields().InspectableHeapInfo_rootEpoch.staticTupleReference(this).toOrigin().plus(fields().InspectableHeapInfo_rootEpoch.fieldActor().offset());
-        try {
-            setRegionWatchpoint("GC Start", new FixedMemoryRegion(gcStart, Size.fromInt(wordSize()), ""), true, false, true, false, true);
-            setRegionWatchpoint("GC End", new FixedMemoryRegion(gcEnd, Size.fromInt(wordSize()), ""), true, false, true, false, true);
-        } catch (TooManyWatchpointsException e) {
-            throw e;
-        } catch (DuplicateWatchpointException e) {
-            throw e;
+        if (false) {
+            final Pointer gcStart = fields().InspectableHeapInfo_collectionEpoch.staticTupleReference(this).toOrigin().plus(fields().InspectableHeapInfo_collectionEpoch.fieldActor().offset());
+            final Pointer gcEnd = fields().InspectableHeapInfo_rootEpoch.staticTupleReference(this).toOrigin().plus(fields().InspectableHeapInfo_rootEpoch.fieldActor().offset());
+            try {
+                setRegionWatchpoint("GC Start", new FixedMemoryRegion(gcStart, Size.fromInt(wordSize()), ""), true, false, true, false, true);
+                setRegionWatchpoint("GC End", new FixedMemoryRegion(gcEnd, Size.fromInt(wordSize()), ""), true, false, true, false, true);
+            } catch (TooManyWatchpointsException e) {
+                throw e;
+            } catch (DuplicateWatchpointException e) {
+                throw e;
+            }
         }
     }
 

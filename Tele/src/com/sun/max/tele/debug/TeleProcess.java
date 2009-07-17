@@ -29,10 +29,12 @@ import java.util.concurrent.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.gui.*;
+import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.TeleNativeThread.*;
+import com.sun.max.tele.debug.TeleWatchpoint.*;
 import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
@@ -104,9 +106,36 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             setDaemon(true);
         }
 
+        /**
+         * Handles a special triggered watchpoint.
+         * @return true if it is a transparent watchpoint (resume).
+         * @throws TooManyWatchpointsException
+         * @throws DuplicateWatchpointException
+         */
         private boolean handleWatchpoint() {
             final MaxWatchpoint watchpoint = teleVM().findTriggeredWatchpoint();
+            final Pointer gcEnd = teleVM().fields().InspectableHeapInfo_rootEpoch.staticTupleReference(teleVM()).toOrigin().plus(teleVM().fields().InspectableHeapInfo_rootEpoch.fieldActor().offset());
             if (watchpoint != null) {
+                if (gcEnd.toLong() == readWatchpointAddress()) {
+                    // end of gc
+                    // turn on watchpoints
+                    // handle relocatable watchpoints
+                    watchpointFactory().reenableWatchpointsAfterGC();
+                    return true;
+                } else if (teleVM().isInGC()) {
+                    // check if watchpoint has gc enabled turned on, if yes give user control
+                    // if not do not give control back to the user
+                    // disable all other watchpoints
+                    // set watchpoint end on gc
+                    watchpointFactory().disableWatchpointsDuringGC();
+                    if (!watchpoint.isGC()) {
+                        return true;
+                    }
+                }
+                // else if check for special object handle watchpoint
+            }
+            return false;
+            /*if (watchpoint != null) {
                 // if watchpoint is a "beginning of gc" watchpoint => deactivate watchpoints when not interested in gc
                 // if watchpoint is an "end of gc" watchpoint => activate all watchpoints & update object and field watchpoints
                 final Pointer gcStart = teleVM().fields().InspectableHeapInfo_collectionEpoch.staticTupleReference(teleVM()).toOrigin().plus(teleVM().fields().InspectableHeapInfo_collectionEpoch.fieldActor().offset());
@@ -120,8 +149,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                     watchpointFactory().reenableWatchpointsAfterGC();
                     return true;
                 }
-            }
-            return false;
+            }*/
         }
 
         /**
@@ -151,6 +179,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                     refreshThreads();
                     final Sequence<TeleTargetBreakpoint> deactivatedBreakpoints = targetBreakpointFactory().deactivateAll();
                     Trace.line(TRACE_VALUE, tracePrefix() + "Execution stopped: " + request);
+
 
                     if (handleWatchpoint()) {
                         TeleProcess.this.resume();
