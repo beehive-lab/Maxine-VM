@@ -474,23 +474,15 @@ public final class WatchpointsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxWatchpoint watchpoint = tableModel.get(row);
-            final MaxWatchpoint triggeredWatchpoint = maxVM().findTriggeredWatchpoint();
-            final MaxThread watchpointThread;
-
-            if (triggeredWatchpoint == null) {
-                return this;
-            }
-
-            watchpointThread = maxVM().findTriggeredWatchpointThread();
-
-            if (triggeredWatchpoint.equals(watchpoint)) {
-                setText(inspection().nameDisplay().longName(watchpointThread));
-                setToolTipText("Thread \"" + inspection().nameDisplay().longName(watchpointThread) + "\" stopped at this watchpoint");
+            final MaxWatchpointEvent watchpointEvent = maxVM().maxVMState().watchpointEvent();
+            if (watchpointEvent != null && watchpointEvent.maxWatchpoint() == watchpoint) {
+                final MaxVMThread maxVMThread = watchpointEvent.maxVMThread();
+                setText(inspection().nameDisplay().longName(maxVMThread));
+                setToolTipText("Thread \"" + inspection().nameDisplay().longName(maxVMThread) + "\" stopped at this watchpoint");
             } else {
                 setText("");
                 setToolTipText("No Thread stopped at this watchpoint");
             }
-
             if (row == getSelectionModel().getMinSelectionIndex()) {
                 setBackground(style().defaultCodeAlternateBackgroundColor());
             } else {
@@ -508,17 +500,11 @@ public final class WatchpointsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxWatchpoint watchpoint = tableModel.get(row);
-            final MaxWatchpoint triggeredWatchpoint = maxVM().findTriggeredWatchpoint();
-
-            if (triggeredWatchpoint == null) {
-                return this;
-            }
-
-            if (triggeredWatchpoint.equals(watchpoint)) {
-                final String watchpointAddress;
-                watchpointAddress = maxVM().getTriggeredWatchpointAddress().toHexString();
-                setText(watchpointAddress);
-                setToolTipText("Access of memory location " + watchpointAddress + " triggered watchpoint");
+            final MaxWatchpointEvent watchpointEvent = maxVM().maxVMState().watchpointEvent();
+            if (watchpointEvent != null && watchpointEvent.maxWatchpoint() == watchpoint) {
+                final String addressText = watchpointEvent.address().toHexString();
+                setText(addressText);
+                setToolTipText("Access of memory location " + addressText + " triggered watchpoint");
             } else {
                 setText("");
                 setToolTipText("No Thread stopped at this watchpoint");
@@ -541,33 +527,27 @@ public final class WatchpointsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxWatchpoint watchpoint = tableModel.get(row);
-            final MaxWatchpoint triggeredWatchpoint = maxVM().findTriggeredWatchpoint();
-            final int watchpointCode;
-
-            if (triggeredWatchpoint == null) {
-                return this;
-            }
-
-            if (triggeredWatchpoint.equals(watchpoint)) {
+            final MaxWatchpointEvent watchpointEvent = maxVM().maxVMState().watchpointEvent();
+            if (watchpointEvent != null && watchpointEvent.maxWatchpoint() == watchpoint) {
+                final int watchpointCode = watchpointEvent.eventCode();
                 String text;
-                watchpointCode = maxVM().getTriggeredWatchpointCode();
-
-                if (watchpointCode == 1) {
-                    text = "exec";
-                } else if (watchpointCode == 2) {
-                    text = "write";
-                } else {
-                    text = "read";
+                switch(watchpointCode) {
+                    case 1:
+                        text = "exec";
+                        break;
+                    case 2:
+                        text = "write";
+                        break;
+                    default:
+                        text = "read";
                 }
                 text += "(" + String.valueOf(watchpointCode) + ")";
-
                 setText(text);
                 setToolTipText("Access of memory location " + watchpointCode + " triggered watchpoint");
             } else {
                 setText("");
                 setToolTipText("No Thread stopped at this watchpoint");
             }
-
             if (row == getSelectionModel().getMinSelectionIndex()) {
                 setBackground(style().defaultCodeAlternateBackgroundColor());
             } else {

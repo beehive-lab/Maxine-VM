@@ -117,13 +117,14 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             try {
                 boolean continuing;
                 final AppendableSequence<TeleNativeThread> breakpointThreads = new LinkSequence<TeleNativeThread>();
+                TeleWatchpointEvent teleWatchpointEvent = null;
                 do {
 
                     continuing = false;
                     final boolean ok = waitUntilStopped();
                     if (!ok) {
                         Trace.end(TRACE_VALUE, tracePrefix() + "waiting for execution to stop: " + request + " (PROCESS TERMINATED)");
-                        updateState(TERMINATED, EMPTY_THREAD_SEQUENCE);
+                        updateState(TERMINATED);
                         return;
                     }
 
@@ -152,12 +153,17 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                                     continuing = true;
                                 } catch (OSExecutionRequestException executionRequestException) {
                                     Trace.line(TRACE_VALUE, tracePrefix() + "process terminated while attempting to step over unsatisfied conditional breakpoint");
-                                    updateState(TERMINATED, EMPTY_THREAD_SEQUENCE);
+                                    updateState(TERMINATED);
                                     return;
                                 }
                             } else {
                                 breakpointThreads.append(thread);
                             }
+                        } else if (thread.state() == ThreadState.WATCHPOINT) {
+                            final Address triggeredWatchpointAddress = Address.fromLong(readWatchpointAddress());
+                            final MaxWatchpoint triggeredWatchpoint = watchpointFactory().findWatchpoint(triggeredWatchpointAddress);
+                            final int triggeredWatchpointCode = readWatchpointAccessCode();
+                            teleWatchpointEvent = new TeleWatchpointEvent(triggeredWatchpoint, thread, triggeredWatchpointAddress, triggeredWatchpointCode);
                         }
                     }
                 } while (continuing);
@@ -165,7 +171,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                 Trace.begin(TRACE_VALUE, tracePrefix() + "firing execution post-request action: " + request);
                 request.notifyProcessStopped();
                 Trace.end(TRACE_VALUE, tracePrefix() + "firing execution post-request action: " + request);
-                updateState(STOPPED, breakpointThreads);
+                updateState(STOPPED, breakpointThreads, teleWatchpointEvent);
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
                 ThrowableDialog.showLater(throwable, null, tracePrefix() + "Uncaught exception while processing " + request);
@@ -221,7 +227,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                 try {
                     lastSingleStepThread = null;
                     Trace.begin(TRACE_VALUE, tracePrefix() + "executing request: " + request);
-                    updateState(RUNNING, EMPTY_THREAD_SEQUENCE);
+                    updateState(RUNNING);
                     request.execute();
                     Trace.end(TRACE_VALUE, tracePrefix() + "executing request: " + request);
                 } catch (OSExecutionRequestException executionRequestException) {
@@ -348,10 +354,10 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
 //        assert teleNativeThread.breakpoint() != null;
 //        final Sequence<TeleNativeThread> breakpointThreads = new ArrayListSequence<TeleNativeThread>(teleNativeThread);
 //        updateState(_processState, breakpointThreads);
-        updateState(processState, EMPTY_THREAD_SEQUENCE);
+        updateState(processState);
     }
 
-    private void updateState(ProcessState newState, Sequence<TeleNativeThread> breakpointThreads) {
+    private void updateState(ProcessState newState, Sequence<TeleNativeThread> breakpointThreads, TeleWatchpointEvent teleWatchpointEvent) {
         processState = newState;
         if (newState == TERMINATED) {
             this.threadsDied.addAll(handleToThreadMap.values());
@@ -367,7 +373,11 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             this.threadsDied.isEmpty() ? EMPTY_THREAD_SEQUENCE : new ArrayListSequence<TeleNativeThread>(this.threadsDied);
         this.threadsStarted.clear();
         this.threadsDied.clear();
-        teleVM().notifyStateChange(processState, epoch, lastSingleStepThread, breakpointThreads, handleToThreadMap.values(), threadsStarted, threadsDied);
+        teleVM().notifyStateChange(processState, epoch, lastSingleStepThread, handleToThreadMap.values(), threadsStarted, threadsDied, breakpointThreads, teleWatchpointEvent);
+    }
+
+    private void updateState(ProcessState newState) {
+        updateState(newState, EMPTY_THREAD_SEQUENCE, null);
     }
 
     /**
