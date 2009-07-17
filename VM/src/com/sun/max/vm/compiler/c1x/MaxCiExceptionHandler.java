@@ -88,11 +88,4 @@ public class MaxCiExceptionHandler implements CiExceptionHandler {
     public boolean isCatchAll() {
         return classCPI == 0;
     }
-
-    @Override
-    public CiType catchKlass() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
 }
