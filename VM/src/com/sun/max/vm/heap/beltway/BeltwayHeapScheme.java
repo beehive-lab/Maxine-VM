@@ -132,9 +132,9 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
             beltManager.createBelts();
 
             for (int i = 0; i < BeltwayConfiguration.numberOfGCThreads; i++) {
-                JavaMonitorManager.prototypeBindStickyMonitor(BeltwayCollectorThread.tokens[i], new StandardJavaMonitor());
+                JavaMonitorManager.bindStickyMonitor(BeltwayCollectorThread.tokens[i], new StandardJavaMonitor());
             }
-            JavaMonitorManager.prototypeBindStickyMonitor(BeltwayCollectorThread.callerToken, new StandardJavaMonitor());
+            JavaMonitorManager.bindStickyMonitor(BeltwayCollectorThread.callerToken, new StandardJavaMonitor());
         } else if (phase == MaxineVM.Phase.RUNNING) {
             if (BeltwayConfiguration.parallelScavenging) {
                 createGCThreads();

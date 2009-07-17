@@ -65,20 +65,6 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
 
     }
 
-    @Override
-    public void start() {
-        // If the _waitUntilNonMutating Procedure tries to link nativeSleep in response to a safepoint request
-        // from System.gc(), then we have a deadlock. (As the thread calling System.gc() gets a lock on the
-        // Heap scheme, which prevents the GC thread from allocating the MethodActor for nativeSleep).
-        // So we link it here.
-        try {
-            sleep(1);
-        } catch (InterruptedException interruptedException) {
-        }
-
-        super.start();
-    }
-
     private final Pointer.Procedure triggerSafepoint = new Pointer.Procedure() {
         public void run(Pointer vmThreadLocals) {
             if (vmThreadLocals.isZero()) {

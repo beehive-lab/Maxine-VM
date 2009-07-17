@@ -65,6 +65,7 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
             InspectableHeapInfo.registerMemoryRegions(getToSpace(), getFromSpace());
         } else if (phase == MaxineVM.Phase.STARTING) {
             collectorThread = new BeltwayStopTheWorldDaemon("GC", beltCollector);
+            collectorThread.start();
         } else if (phase == MaxineVM.Phase.RUNNING) {
             beltCollectorBSS.setBeltwayHeapScheme(this);
             beltCollector.setRunnable(beltCollectorBSS);

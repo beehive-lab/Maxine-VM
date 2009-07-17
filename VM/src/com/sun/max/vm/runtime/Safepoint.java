@@ -109,12 +109,16 @@ public abstract class Safepoint {
     protected Safepoint() {
     }
 
+    /**
+     * Gets the current value of the safepoint latch register.
+     */
     @INLINE
     public static Pointer getLatchRegister() {
         return VMRegister.getSafepointLatchRegister();
     }
 
     /**
+     * Updates the current value of the safepoint latch register.
      *
      * @param vmThreadLocals a pointer to a copy of the thread locals from which the base of the safepoints-enabled
      *            thread locals can be obtained
@@ -229,7 +233,7 @@ public abstract class Safepoint {
     }
 
     /**
-     * Runs a given procedure on the thread corresponding to the specified {@code VmThread} instance,
+     * Runs a given procedure on the thread denoted by {@code vmThreadLocals},
      * when that thread is at a safepoint and safepoints are disabled.
      * This method allows the VM to stop a thread at a safepoint and then run the specified procedure (e.g. garbage collection
      * or biased monitor revocation). Note that this method returns when the procedure is successfully
@@ -276,7 +280,7 @@ public abstract class Safepoint {
     }
 
     /**
-     * A procedure that resets safepoints for a given thread.
+     * A procedure that resets safepoints for a given thread and {@linkplain Safepoint#cancelProcedure(Pointer) cancels} the safepoint procedure.
      */
     public static class ResetSafepoints implements Pointer.Procedure {
         /**
