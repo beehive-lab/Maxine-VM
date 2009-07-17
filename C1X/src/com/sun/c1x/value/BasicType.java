@@ -199,7 +199,7 @@ public enum BasicType {
      * is only defined for primtive types.
      * @return the Java class which represents arrays of this basic type
      */
-    public Class primitiveArrayClass() {
+    public Class<?> primitiveArrayClass() {
         switch (this) {
             case Boolean: return boolean[].class;
             case Char:    return char[].class;
