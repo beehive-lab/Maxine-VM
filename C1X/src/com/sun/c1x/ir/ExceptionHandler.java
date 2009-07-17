@@ -20,10 +20,10 @@
  */
 package com.sun.c1x.ir;
 
+import java.util.*;
+
 import com.sun.c1x.ci.*;
 import com.sun.c1x.lir.*;
-
-import java.util.*;
 
 /**
  * The <code>ExceptionHandler</code> class represents an exception handler for a Java bytecode method.
@@ -140,5 +140,15 @@ public class ExceptionHandler {
 
     public LIRList entryCode() {
         return entryCode;
+    }
+
+    public void setLirOpId(int throwingOpId) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void setEntryCode(LIRList entryCode2) {
+        // TODO Auto-generated method stub
+
     }
 }

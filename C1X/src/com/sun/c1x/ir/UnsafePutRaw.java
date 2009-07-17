@@ -20,9 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.util.InstructionClosure;
-import com.sun.c1x.util.InstructionVisitor;
-import com.sun.c1x.value.BasicType;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>UnsafePutRaw</code> instruction represents an unsafe store operation.

@@ -23,4 +23,13 @@ package com.sun.c1x.asm;
 
 public class OopRecorder {
 
+    /**
+     * @param h
+     * @return
+     */
+    public int findIndex(Object h) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
 }
