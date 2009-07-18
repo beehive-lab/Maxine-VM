@@ -254,7 +254,7 @@ public class FrameMap {
         return true;
     }
 
-    public VMReg regname(LIROperand opr) {
+    public CiLocation regname(LIROperand opr) {
         // TODO Auto-generated method stub
         return null;
     }
@@ -269,12 +269,12 @@ public class FrameMap {
         return 0;
     }
 
-    public VMReg slotRegname(int i) {
+    public CiLocation slotRegname(int i) {
         // TODO Auto-generated method stub
         return null;
     }
 
-    public VMReg monitorObjectRegname(int i) {
+    public CiLocation monitorObjectRegname(int i) {
         // TODO Auto-generated method stub
         return null;
     }
@@ -299,7 +299,7 @@ public class FrameMap {
         return false;
     }
 
-    public VMReg fpuRegname(int fpuRegnrHi) {
+    public CiLocation fpuRegname(int fpuRegnrHi) {
         // TODO Auto-generated method stub
         return null;
     }
