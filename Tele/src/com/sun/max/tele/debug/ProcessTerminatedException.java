@@ -22,13 +22,13 @@ package com.sun.max.tele.debug;
 
 
 /**
- * This exception is thrown when a debugging request is issued at some inappropriate state.
+ * Thrown when the VM process has terminated.
  *
- * @author Aritra Bandyopadhyay
+ * @author Michael Van De Vanter
  */
-public class InvalidProcessRequestException extends Exception {
+public class ProcessTerminatedException extends Exception {
 
-    public InvalidProcessRequestException(String message) {
+    public ProcessTerminatedException(String message) {
         super(message);
     }
 

@@ -759,30 +759,6 @@ public interface MaxVM {
     MaxWatchpoint findWatchpoint(MemoryRegion memoryRegion);
 
     /**
-     * Find watchpoint which triggered a signal.
-     * @return watchpoint which triggered a signal
-     */
-    MaxWatchpoint findTriggeredWatchpoint();
-
-    /**
-     * Returns the address which triggered the watchpoint.
-     * @return
-     */
-    Address getTriggeredWatchpointAddress();
-
-    /**
-     * Returns the code of the triggered watchpoint.
-     * @return
-     */
-    int getTriggeredWatchpointCode();
-
-    /**
-     * Returns thread that triggered watchpoint.
-     * @return
-     */
-    MaxThread findTriggeredWatchpointThread();
-
-    /**
      * All existing memory watchpoints set in the VM.
      * <br>
      * Immutable collection; membership is thread-safe; likely implemented as a copy.

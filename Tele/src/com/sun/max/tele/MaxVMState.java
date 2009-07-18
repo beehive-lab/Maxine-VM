@@ -95,18 +95,6 @@ public interface MaxVMState  {
     MaxThread singleStepThread();
 
     /**
-     * When the VM stops, the threads, if any, that are currently at a breakpoint.
-     * <br>
-     * <b>Note</b>: the internal state of a thread identified here is not necessarily immutable,
-     * for example a thread reported here (which is live at this state transition)
-     * may have died by the time a reader examines this state transition.
-     *
-     * @return threads currently stopped at a breakpoint, empty if none.
-     * @see #threads()
-     */
-    Sequence<MaxThread> breakpointThreads();
-
-    /**
      * @return threads created since the previous state in the history; empty if none.
      * Creation of a new thread is announced in exactly one state;
      * it can be assumed to be live until a state in which it is announced
@@ -136,6 +124,25 @@ public interface MaxVMState  {
      *  @see #threadsStarted()
      */
     Sequence<MaxThread> threadsDied();
+
+    /**
+     * When the VM stops, the threads, if any, that are currently at a breakpoint.
+     * <br>
+     * <b>Note</b>: the internal state of a thread identified here is not necessarily immutable,
+     * for example a thread reported here (which is live at this state transition)
+     * may have died by the time a reader examines this state transition.
+     *
+     * @return threads currently stopped at a breakpoint, empty if none.
+     * @see #threads()
+     */
+    Sequence<MaxThread> breakpointThreads();
+
+    /**
+     * When the VM has stopped because a thread hit a memory watchpoint,
+     * contains a description of the event; null otherwise.
+     * @return description of a thread currently at a memory watchpoint; null if none.
+     */
+    MaxWatchpointEvent watchpointEvent();
 
     /**
      * Is the VM in the midst of a Garbage Collection at this state transition?

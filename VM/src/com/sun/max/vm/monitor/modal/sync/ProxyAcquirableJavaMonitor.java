@@ -26,71 +26,69 @@ import com.sun.max.vm.thread.*;
 
 /**
  * An extension of {@link StandardJavaMonitor} to allow proxy acquirability. That is,
- * it allows a thread to acquire a StandardJavaMonitor on behalf of another thread.
+ * it allows a thread to acquire a monitor on behalf of another thread.
  *
  * For example, if we consider a thin-locking scheme:
  *
- * If Thread t1 has thin locked Object obj, and Thread t2 wants it too,
- * then we must inflate the lock.
+ * If thread {@code t1} has thin locked object {@code obj}, and thread {@code t2} wants it too,
+ * then the lock must be inflated. The desired state after inflation is:
+ * <ul>
+ * <li>{@code t1} owns {@code m} ({@code obj}'s monitor) and the native
+ * mutex associated with {@code m} is owned by {@code t1}'s native thread.</li>
+ * <li>{@code t2} is blocked on {@code m} and {@code t2}'s native thread
+ * is blocked on {@code m}'s native mutex.</li>
+ * </ul>
  *
- * So the state we want after the inflation is:
- *
- * - t1 owns obj.JavaMonitor (which implies that obj.JavaMonitor's native
- * mutex is owned by t1's nativeThread.)
- *
- * - t2 is blocked on obj.JavaMonitor (which implies that t2's nativeThread
- * is blocked on obj.JavaMonitor's native mutex).
- *
- * If t2 is the thread that performs the inflation, i.e. it removes a
- * JavaMonitor from the free list, and CAS's it into obj's lockword, then
- * how do we fix-up the native state to match the logical Java state?
- *
- * ProxyAcquirableMonitor allows this sort of thing to happen. I.e. it
- * allows a monitor (both the java and native components) to be acquired on
+ * If {@code t2} is the thread that performs the inflation, i.e. it removes a
+ * monitor from the free list, and CAS's it into {@code obj}'s lockword, then
+ * the native state needs to be modified to match the logical Java state.
+ * <p>
+ * {@link ProxyAcquirableJavaMonitor} allows this sort of thing to happen. That is, it
+ * allows a monitor (both the Java and native components) to be acquired on
  * behalf another thread).
+ * <p>
+ * Taking the above example, {@code t2} takes a {@code ProxyAcquirableJavaMonitor}, {@code m},
+ * from the free list, and sets {@code m.ownerThread} to {@code t1}, {@code m.recursionCount} to
+ * current lock count in {@code obj}'s thin lock and {@code m.ownerAcquired} to false. The
+ * Java-side state is now correct, but the native-side still requires fixing;
+ * {@code m.ownerAcquired} only gets set to true when the native-side
+ * is fixed. Never-the-less, {@code t2} can now CAS's {@code obj}'s lockword to point to {@code m}
+ * and the lock is now inflated, so it just calls {@link #monitorEnter()} on {@code m}.
  *
- * So taking the above example, t2 takes a ProxyAcquirableJavaMonitor, m,
- * from the free list, and sets m._ownerThread to t1, m._rcount to
- * obj.ThinLock's current lock count, and m._ownerAcquired to false. The
- * Java-side state is correct, but the native-side looks nothing like what
- * we want; so m._ownerAcquired only gets set to true when the native-side
- * is setup. Never-the-less, t2 can now CAS's obj's lockword to point to m,
- * and the lock is now inflated, so it just calls m.monitorEnter() as normal.
- *
- * Looking at ProxyAcquirableJavaMonitor monitor operations, they are
+ * Looking at {@code ProxyAcquirableJavaMonitor} monitor operations, they are
  * arranged thus:
  * <pre>
  *    public void monitorEnter() {
- *        if (!_ownerAcquired) {
+ *        if (!ownerAcquired) {
  *            ownerAcquire();
  *        }
  *        super.monitorEnter();
  *    }
  * </pre>
- * So until the native side is correct, all threads, including t1, t2 or
- * anybody else that wants to do something with the monitor gets diverted to
- * ownerAcquire().
- * This is guarded by _proxyMutex, which is a single native mutex
- * shared by all ProxyAcquirableJavaMonitors. When t2 calls ownerAcquire(),
+ * This ensures that until the native side is correct, all threads, including {@code t1}, {@code t2} or
+ * anybody else that wants to do something with the monitor gets diverted to {@link #ownerAcquire()}.
+ * This is guarded by {@link #proxyMutex}, a global native mutex.
+ * When {@code t2} calls {@link #ownerAcquire()},
  * it grabs this lock, checks if the native state is setup; if not it
- * checks to see if it is the owner (java-side) of the monitor, it is not,
- * so it blocks on native condition variable (again, shared by all
- * ProxyAcquirableJavaMonitors), and releases _proxyMutex.
- *
- * The first time t1 touches the lock after the inflation it calls
- * ownerAcquire(). It is the Java-side owner of the monitor, so it acquires
- * the real native _mutex of the monitor (not the shared one, but
- * obj.JavaMonitor's); at this point the native-side is correct, so it sets
- * _ownerAcquired to true, and notifies the native condition variable (the
- * shared one) which t2 is waiting on. It then releases the shared native
- * _proxyMutex. At this point t2 will compete to get the shared _proxyMutex
- * and come off the shared waiting queue. Note although threads from other
- * ProxyAcquirableJavaMonitors will be woken up, they all check the local
- * _ownerAcquired field to see if it's their ProxyAcquirableJavaMonitor
+ * checks to see if it is the owner (Java-side) of the monitor, it is not,
+ * so it blocks on {@link #proxyVar}, a global native condition variable,
+ * and releases {@code proxyMutex}.
+ * <p>
+ * The first time {@code t1} touches the lock after the inflation it calls
+ * {@code ownerAcquire()}. It finds it is the Java-side owner of the monitor
+ * and acquires the native mutex of the monitor (not the shared one, but
+ * the one associated with {@code m}. At this point the native-side is correct, so
+ * {@code m.ownerAcquired} is set to true, and {@code proxyVar} is notified (waking up
+ * {@code t2} as a result). Thread {@code t1} then releases {@code proxyMutex}.
+ * At this point {@code t2} will compete for {@code proxyMutex}
+ * and come off the associated wait queue. Note although threads from other
+ * {@code ProxyAcquirableJavaMonitor}s will also be woken up, they all check the
+ * {@code ownerAcquired} field to see if it's their {@code ProxyAcquirableJavaMonitor}
  * which has been setup natively.
+ * <p>
+ * The above protocol thus guarantees both the Java and native state of a proxy acquirable
+ * are eventual correct.
  *
- * So we are guaranteed to eventually get to both the Java and native state
- * that we require.
  * @author Simon Wilkinson
  */
 class ProxyAcquirableJavaMonitor extends StandardJavaMonitor {

@@ -18,18 +18,36 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug;
+package com.sun.max.tele;
+
+import com.sun.max.unsafe.*;
 
 
 /**
- * This exception is thrown when a debugging request is issued at some inappropriate state.
+ * An immutable (thread-safe) record of a thread in the VM triggering a memory watchpoint.
  *
- * @author Aritra Bandyopadhyay
- */
-public class InvalidProcessRequestException extends Exception {
+ * @author Michael Van De Vanter
+  */
+public interface MaxWatchpointEvent {
 
-    public InvalidProcessRequestException(String message) {
-        super(message);
-    }
+    /**
+     * @return the watchpoint that triggered the event.
+     */
+    MaxWatchpoint maxWatchpoint();
+
+    /**
+     * @return the thread that triggered the watchpoint.
+     */
+    MaxVMThread maxVMThread();
+
+    /**
+     * @return the memory location where the watchpoint was triggered.
+     */
+    Address address();
+
+    /**
+     * @return code that identifies the kind of memory action that triggered the watchpoint.
+     */
+    int eventCode();
 
 }

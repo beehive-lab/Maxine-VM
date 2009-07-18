@@ -385,8 +385,6 @@ public class VmThread {
     @C_FUNCTION
     protected static native Word nativeThreadCreate(int id, Size stackSize, int priority);
 
-    private static final CriticalNativeMethod nonJniNativeSleep = new CriticalNativeMethod(VmThread.class, "nonJniNativeSleep");
-
     /**
      * Initializes the VM thread system and starts the main Java thread.
      */
@@ -585,6 +583,7 @@ public class VmThread {
             if (stackBase.lessThan(triggeredVmThreadLocals)) {
                 lastRegionStart = traceStackRegion("Unmapped page", stackBase, stackBase, triggeredVmThreadLocals, lastRegionStart, stackSize);
             }
+            Log.printVmThreadLocals(vmThreadLocals, true);
             Log.unlock(lockDisabledSafepoints);
         }
     }
@@ -710,6 +709,7 @@ public class VmThread {
 
     // Access to thread local variables
 
+
     // Only used by the EIR interpreter(s)
     @PROTOTYPE_ONLY
     public void setVmThreadLocals(Address address) {
@@ -725,6 +725,10 @@ public class VmThread {
 
     public static VmThread fromJniEnv(Pointer jniEnv) {
         final Pointer vmThreadLocals = jniEnv.minus(JNI_ENV.offset);
+        return fromVmThreadLocals(vmThreadLocals);
+    }
+
+    public static VmThread fromVmThreadLocals(final Pointer vmThreadLocals) {
         return UnsafeLoophole.cast(VM_THREAD.getConstantReference(vmThreadLocals).toJava());
     }
 
@@ -833,14 +837,17 @@ public class VmThread {
     /**
      * This exists for the benefit of the primordial thread.
      *
-     * @see VmThreadMap#findAnyNonDaemon()  The primordial thread cannot (currently) safely call JNI functions because it
-     *      is not a "real" Java thread. This is a workaround - obviously it would be better to find a way to relax this
-     *      restriction.
+     * The primordial thread cannot (currently) safely call JNI functions because it is not a "real" Java thread. This
+     * is a workaround - obviously it would be better to find a way to relax this restriction.
+     *
      * @param numberOfMilliSeconds
      */
     static void nonJniSleep(long numberOfMilliSeconds) {
         nonJniNativeSleep(numberOfMilliSeconds);
     }
+
+    private static final CriticalNativeMethod nonJniNativeSleep = new CriticalNativeMethod(VmThread.class, "nonJniNativeSleep");
+    private static final CriticalNativeMethod nativeSleep = new CriticalNativeMethod(VmThread.class, "nativeSleep");
 
     @C_FUNCTION
     private static native void nonJniNativeSleep(long numberOfMilliSeconds);

@@ -27,6 +27,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.VMRegister.*;
 
 /**
  * @author Bernd Mathiske
@@ -46,9 +47,20 @@ public abstract class SpecialBuiltin extends Builtin {
         return false;
     }
 
+    /**
+     * Gets the value of a given floating point register. This should only be called for register roles
+     * that can denote floating point registers such as {@link Role#ABI_SCRATCH}, {@link Role#ABI_RESULT}
+     * and {@link Role#ABI_RETURN}.
+     *
+     * @param r specifies the register to read
+     * @return the value of the register specified by {@code r}
+     */
     @BUILTIN(builtinClass = SpecialBuiltin.GetFloatingPointRegister.class)
     public static native Pointer getFloatingPointRegister(VMRegister.Role r);
 
+    /**
+     * @see SpecialBuiltin#getFloatingPointRegister(Role)
+     */
     public static class GetFloatingPointRegister extends SpecialBuiltin {
 
         @Override
@@ -60,9 +72,18 @@ public abstract class SpecialBuiltin extends Builtin {
         public static final GetFloatingPointRegister BUILTIN = new GetFloatingPointRegister();
     }
 
+    /**
+     * Gets the value of a given integer register.
+     *
+     * @param r specifies the register to read
+     * @return the value of the register specified by {@code r}
+     */
     @BUILTIN(builtinClass = SpecialBuiltin.GetIntegerRegister.class)
     public static native Pointer getIntegerRegister(VMRegister.Role r);
 
+    /**
+     * @see SpecialBuiltin#getIntegerRegister(com.sun.max.vm.runtime.VMRegister.Role)
+     */
     public static class GetIntegerRegister extends SpecialBuiltin {
 
         @Override
@@ -74,9 +95,18 @@ public abstract class SpecialBuiltin extends Builtin {
         public static final GetIntegerRegister BUILTIN = new GetIntegerRegister();
     }
 
+    /**
+     * Writes a given value to a specified integer register.
+     *
+     * @param r specifies the register to update
+     * @param the value to write to the register specified by {@code r}
+     */
     @BUILTIN(builtinClass = SpecialBuiltin.SetIntegerRegister.class)
     public static native Pointer setIntegerRegister(VMRegister.Role r, Word value);
 
+    /**
+     * @see SpecialBuiltin#setIntegerRegister(Role, Word)
+     */
     public static class SetIntegerRegister extends SpecialBuiltin {
 
         @Override
@@ -88,9 +118,19 @@ public abstract class SpecialBuiltin extends Builtin {
         public static final SetIntegerRegister BUILTIN = new SetIntegerRegister();
     }
 
+    /**
+     * Adjusts the value of a given integer register. The value of the register
+     * adjusted by adding {@code numberOrWords * Word.size()} to its current value.
+     *
+     * @param registerRole the register whose value will be updated
+     * @param numberOfWords the adjustment amount specified in words
+     */
     @BUILTIN(builtinClass = SpecialBuiltin.AddWordsToIntegerRegister.class)
     public static native void addWordsToIntegerRegister(VMRegister.Role registerRole, int numberOfWords);
 
+    /**
+     * @see SpecialBuiltin#addWordsToIntegerRegister(com.sun.max.vm.runtime.VMRegister.Role, int)
+     */
     public static class AddWordsToIntegerRegister extends SpecialBuiltin {
 
         @Override
@@ -102,9 +142,17 @@ public abstract class SpecialBuiltin extends Builtin {
         public static final AddWordsToIntegerRegister BUILTIN = new AddWordsToIntegerRegister();
     }
 
+    /**
+     * Gets the current value of the instruction pointer on the current thread.
+     *
+     * @return the address of the first instruction generated for this builtin
+     */
     @BUILTIN(builtinClass = SpecialBuiltin.GetInstructionPointer.class)
     public static native Pointer getInstructionPointer();
 
+    /**
+     * @see SpecialBuiltin#getInstructionPointer()
+     */
     public static class GetInstructionPointer extends SpecialBuiltin {
 
         @Override
