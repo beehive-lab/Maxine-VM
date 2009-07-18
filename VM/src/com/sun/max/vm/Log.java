@@ -20,9 +20,12 @@
  */
 package com.sun.max.vm;
 
+import static com.sun.max.vm.thread.VmThreadLocal.*;
+
 import java.io.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.collect.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.program.ProgramWarning.*;
@@ -261,6 +264,34 @@ public final class Log {
         out.println(word);
     }
 
+    /**
+     * Equivalent to calling {@link LogPrintStream#printFieldActor(FieldActor, boolean)} on {@link #out}.
+     */
+    public static void printFieldActor(FieldActor fieldActor, boolean withNewline) {
+        out.printFieldActor(fieldActor, withNewline);
+    }
+
+    /**
+     * Equivalent to calling {@link LogPrintStream#printMethodActor(MethodActor, boolean)} on {@link #out}.
+     */
+    public static void printMethodActor(MethodActor methodActor, boolean withNewline) {
+        out.printMethodActor(methodActor, withNewline);
+    }
+
+    /**
+     * Equivalent to calling {@link LogPrintStream#printVmThread(VmThread, boolean)} on {@link #out}.
+     */
+    public static void printVmThread(VmThread vmThread, boolean withNewline) {
+        out.printVmThread(vmThread, withNewline);
+    }
+
+    /**
+     * Equivalent to calling {@link LogPrintStream#printVmThreadLocals(Pointer, boolean)} on {@link #out}.
+     */
+    public static void printVmThreadLocals(Pointer vmThreadLocals, boolean all) {
+        out.printVmThreadLocals(vmThreadLocals, all);
+    }
+
     private static final class LogOutputStream extends OutputStream {
         /**
          * Only a {@linkplain Log#os singleton} instance of this class exists.
@@ -323,98 +354,6 @@ public final class Log {
                 }
                 Log.unlock(lockDisabledSafepoints);
             }
-        }
-    }
-
-    /**
-     * Convenience routine for printing a FieldActor to a given LogPrintStream. The output is of the form:
-     *
-     * <pre>
-     *     &lt;name&gt;:&lt;descriptor&gt; in &lt;holder&gt;
-     * </pre>
-     *
-     * For example, the output for {@link System#err} is:
-     *
-     * <pre>
-     * &quot;err:Ljava/io/PrintStream; in java.lang.System&quot;
-     * </pre>
-     * @param fieldActor the field actor to print
-     * @param withNewline specifies if a newline should be appended to the stream after the field actor
-     */
-    public static void printFieldActor(FieldActor fieldActor, boolean withNewline) {
-        boolean lockDisabledSafepoints = false;
-        if (!MaxineVM.isPrototyping()) {
-            lockDisabledSafepoints = lock();
-        }
-        print(fieldActor.name.string);
-        print(":");
-        print(fieldActor.descriptor().string);
-        print(" in ");
-        print(fieldActor.holder().name.string, withNewline);
-        if (!MaxineVM.isPrototyping()) {
-            unlock(lockDisabledSafepoints);
-        }
-    }
-
-    /**
-     * Convenience routine for printing a MethodActor to a given LogPrintStream. The output is of the form:
-     *
-     * <pre>
-     *     &lt;name&gt;&lt;descriptor&gt; in &lt;holder&gt;
-     * </pre>
-     *
-     * For example, the output for {@link Runnable#run()} is:
-     *
-     * <pre>
-     * &quot;run()V in java.lang.Runnable&quot;
-     * </pre>
-     * @param methodActor the method actor to print
-     * @param withNewline specifies if a newline should be appended to the stream after the method actor
-     */
-    public static void printMethodActor(MethodActor methodActor, boolean withNewline) {
-        boolean lockDisabledSafepoints = false;
-        if (!MaxineVM.isPrototyping()) {
-            lockDisabledSafepoints = lock();
-        }
-        print(methodActor.name.string);
-        print(methodActor.descriptor().string);
-        print(" in ");
-        print(methodActor.holder().name.string, withNewline);
-        if (!MaxineVM.isPrototyping()) {
-            unlock(lockDisabledSafepoints);
-        }
-    }
-
-    /**
-     * Convenience routine for printing a {@link VmThread} to a given LogPrintStream. The output is of the form:
-     *
-     * <pre>
-     *     &lt;name&gt;[&lt;id&gt;]
-     * </pre>
-     *
-     * For example, the output for the main thread of execution may be:
-     *
-     * <pre>
-     * &quot;main[id=1]&quot;
-     * </pre>
-     * @param vmThread the thread to print
-     * @param withNewline specifies if a newline should be appended to the stream after the thread
-     */
-    public static void printVmThread(VmThread vmThread, boolean withNewline) {
-        boolean lockDisabledSafepoints = false;
-        if (!MaxineVM.isPrototyping()) {
-            lockDisabledSafepoints = lock();
-        }
-        print(vmThread == null ? "<null thread>" : vmThread.getName());
-        print("[id=");
-        if (vmThread == null) {
-            print("?");
-        } else {
-            print(vmThread.id());
-        }
-        print("]", withNewline);
-        if (!MaxineVM.isPrototyping()) {
-            unlock(lockDisabledSafepoints);
         }
     }
 
@@ -700,6 +639,145 @@ public final class Log {
             while (i < ch.length) {
                 i = CString.writePartialUtf8(ch, i, buffer, bufferSize);
                 log_print_buffer(buffer);
+            }
+        }
+        /**
+         * Convenience routine for printing a {@link FieldActor} to this stream. The output is of the form:
+         *
+         * <pre>
+         *     &lt;name&gt;:&lt;descriptor&gt; in &lt;holder&gt;
+         * </pre>
+         *
+         * For example, the output for {@link System#err} is:
+         *
+         * <pre>
+         * &quot;err:Ljava/io/PrintStream; in java.lang.System&quot;
+         * </pre>
+         * @param fieldActor the field actor to print
+         * @param withNewline specifies if a newline should be appended to the stream after the field actor
+         */
+        public void printFieldActor(FieldActor fieldActor, boolean withNewline) {
+            boolean lockDisabledSafepoints = false;
+            if (!MaxineVM.isPrototyping()) {
+                lockDisabledSafepoints = lock();
+            }
+            print(fieldActor.name.string);
+            print(":");
+            print(fieldActor.descriptor().string);
+            print(" in ");
+            print(fieldActor.holder().name.string, withNewline);
+            if (!MaxineVM.isPrototyping()) {
+                unlock(lockDisabledSafepoints);
+            }
+        }
+
+        /**
+         * Convenience routine for printing a {@link MethodActor} to this stream. The output is of the form:
+         *
+         * <pre>
+         *     &lt;name&gt;&lt;descriptor&gt; in &lt;holder&gt;
+         * </pre>
+         *
+         * For example, the output for {@link Runnable#run()} is:
+         *
+         * <pre>
+         * &quot;run()V in java.lang.Runnable&quot;
+         * </pre>
+         * @param methodActor the method actor to print
+         * @param withNewline specifies if a newline should be appended to the stream after the method actor
+         */
+        public void printMethodActor(MethodActor methodActor, boolean withNewline) {
+            boolean lockDisabledSafepoints = false;
+            if (!MaxineVM.isPrototyping()) {
+                lockDisabledSafepoints = lock();
+            }
+            print(methodActor.name.string);
+            print(methodActor.descriptor().string);
+            print(" in ");
+            print(methodActor.holder().name.string, withNewline);
+            if (!MaxineVM.isPrototyping()) {
+                unlock(lockDisabledSafepoints);
+            }
+        }
+
+        /**
+         * Convenience routine for printing a {@link VmThread} to this stream. The output is of the form:
+         *
+         * <pre>
+         *     &lt;name&gt;[&lt;id&gt;]
+         * </pre>
+         *
+         * For example, the output for the main thread of execution may be:
+         *
+         * <pre>
+         * &quot;main[id=1]&quot;
+         * </pre>
+         * @param vmThread the thread to print
+         * @param withNewline specifies if a newline should be appended to the stream after the thread
+         */
+        public void printVmThread(VmThread vmThread, boolean withNewline) {
+            boolean lockDisabledSafepoints = false;
+            if (!MaxineVM.isPrototyping()) {
+                lockDisabledSafepoints = lock();
+            }
+            print(vmThread == null ? "<null thread>" : vmThread.getName());
+            print("[id=");
+            if (vmThread == null) {
+                print("?");
+            } else {
+                print(vmThread.id());
+            }
+            print("]", withNewline);
+            if (!MaxineVM.isPrototyping()) {
+                unlock(lockDisabledSafepoints);
+            }
+        }
+
+        /**
+         * Convenience routine for printing {@linkplain VmThreadLocal VM thread locals} to this stream.
+         *
+         * @param vmThreadLocals a pointer to VM thread locals
+         * @param all specifies if all 3 {@linkplain VmThreadLocal TLS} areas are to be printed
+         */
+        public void printVmThreadLocals(Pointer vmThreadLocals, boolean all) {
+            boolean lockDisabledSafepoints = false;
+            if (!MaxineVM.isPrototyping()) {
+                lockDisabledSafepoints = lock();
+            }
+            if (!all) {
+                final IndexedSequence<VmThreadLocal> values = VmThreadLocal.values();
+                for (int i = 0; i != values.length(); i++) {
+                    final VmThreadLocal vmThreadLocal = values.get(i);
+                    for (int j = 0; j < 45 - vmThreadLocal.name.length(); j++) {
+                        print(' ');
+                    }
+                    print(vmThreadLocal.name);
+                    print(": ");
+                    vmThreadLocal.log(this, vmThreadLocals, false);
+                    println();
+                }
+            } else {
+                final IndexedSequence<VmThreadLocal> values = VmThreadLocal.values();
+                final Pointer enabled = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+                final Pointer disabled = SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+                final Pointer triggered = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+                for (int i = 0; i != values.length(); i++) {
+                    final VmThreadLocal vmThreadLocal = values.get(i);
+                    for (int j = 0; j < 45 - vmThreadLocal.name.length(); j++) {
+                        print(' ');
+                    }
+                    print(vmThreadLocal.name);
+                    print(": {E} ");
+                    vmThreadLocal.log(this, enabled, false);
+                    print("  {D} ");
+                    vmThreadLocal.log(this, disabled, false);
+                    print("  {T} ");
+                    vmThreadLocal.log(this, triggered, false);
+                    println();
+                }
+            }
+            if (!MaxineVM.isPrototyping()) {
+                unlock(lockDisabledSafepoints);
             }
         }
     }

@@ -47,6 +47,7 @@ public class BlockingServerDaemonTest extends TestCase {
         Trace.begin(2, "test_blockingServerDaemon");
         final MutableInnerClassGlobal<Integer> counter = new MutableInnerClassGlobal<Integer>(0);
         final BlockingServerDaemon server = new BlockingServerDaemon("test_blockingServerDaemon");
+        server.start();
         final int numberOfThreads = 100;
         final int numberOfRequests = 10;
         final Thread[] threads = new Thread[numberOfThreads];
