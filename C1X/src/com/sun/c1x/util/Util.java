@@ -527,7 +527,6 @@ public class Util {
     }
 
     public static int sizeofJdouble() {
-        // TODO Auto-generated method stub
         return 8;
     }
 
@@ -556,5 +555,9 @@ public class Util {
         while (instructions.size() > length) {
             instructions.remove(instructions.size() - 1);
         }
+    }
+
+    public static int sizeofDouble() {
+        return 8;
     }
 }

@@ -302,4 +302,6 @@ public interface CiRuntime {
 
     int javaCallingConvention(CiMethod method, CiLocation[] result, boolean outgoing);
 
+    int sizeofBasicObjectLock();
+
 }

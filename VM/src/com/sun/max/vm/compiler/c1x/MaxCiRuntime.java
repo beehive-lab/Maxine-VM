@@ -24,13 +24,14 @@ import java.util.*;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.target.*;
-import com.sun.c1x.target.x86.X86Register;
-import com.sun.c1x.target.x86.Address;
+import com.sun.c1x.target.x86.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.layout.*;
+import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
@@ -220,12 +221,12 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public int klassOffsetInBytes() {
-        throw Util.unimplemented();
+        return Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt();
     }
 
     public boolean needsExplicitNullCheck(int offset) {
         // TODO: Return false if implicit null check is possible for this offset!
-        return true;
+        return offset > 0xbad;
     }
 
     public int threadExceptionOopOffset() {
@@ -345,8 +346,7 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public Register javaCallingConventionReceiverRegister() {
-        // TODO Auto-generated method stub
-        return null;
+        return X86Register.rax;
     }
 
     public int markOffsetInBytes() {
@@ -539,6 +539,12 @@ public class MaxCiRuntime implements CiRuntime {
 
     public int outPreserveStackSlots() {
         // This is probably correct for now.
+        return 0;
+    }
+
+    @Override
+    public int sizeofBasicObjectLock() {
+        // TODO Auto-generated method stub
         return 0;
     }
 

@@ -132,7 +132,7 @@ public abstract class X86Assembler extends AbstractAssembler {
     // make this go away someday
     void emitData(int data, RelocInfo.Type rtype, int format) {
         if (rtype == RelocInfo.Type.none) {
-            emitLong(data);
+            emitInt(data);
         } else {
             emitData(data, Relocation.specSimple(rtype), format);
         }
@@ -153,7 +153,7 @@ public abstract class X86Assembler extends AbstractAssembler {
                 codeSection().relocate(instMark(), rspec, format);
             }
         }
-        emitLong(data);
+        emitInt(data);
     }
 
     static int encode(Register r) {
@@ -185,7 +185,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         } else {
             emitByte(op1);
             emitByte(op2 | encode(dst));
-            emitLong(imm32);
+            emitInt(imm32);
         }
     }
 
@@ -200,7 +200,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         } else {
             emitByte(op1);
             emitOperand(rm, adr, 4);
-            emitLong(imm32);
+            emitInt(imm32);
         }
     }
 
@@ -325,7 +325,7 @@ public abstract class X86Assembler extends AbstractAssembler {
                 emitByte(scale.value << 6 | indexenc | 0x05);
                 emitData(disp, rspec, WhichOperand.disp32operand);
             } else if (rtype != RelocInfo.Type.none) {
-                // [disp] (64bit) RIP-RELATIVE (32bit) abs
+                // [disp] (64bit) RIP-RELATemitOperandIVE (32bit) abs
                 // [00 000 101] disp32
 
                 emitByte(0x05 | regenc);
@@ -546,7 +546,7 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     void emitOperand32(Register reg, Address adr) {
         assert reg.encoding < 8 : "no extended registers";
-        assert !adr.baseNeedsRex() && !adr.indexNeedsRex() : "no extended registers";
+        assert !needsRex(adr.base) && !needsRex(adr.index) : "no extended registers";
         emitOperand(reg, adr.base, adr.index, adr.scale, adr.disp, adr.rspec, 0);
     }
 
@@ -560,7 +560,7 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     void emitOperand(Address adr, Register reg) {
         assert reg.isXMM();
-        assert !adr.baseNeedsRex() && !adr.indexNeedsRex() : "no extended registers";
+        assert !needsRex(adr.base) && !needsRex(adr.index) : "no extended registers";
         emitOperand(reg, adr.base, adr.index, adr.scale, adr.disp, adr.rspec, 0);
     }
 
@@ -658,7 +658,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0x0F);
         emitByte(0x1F);
         emitByte(0x80); // emitRm(cbuf, 0x2, EAXEnc, EAXEnc);
-        emitLong(0); // 32-bits offset (4 bytes)
+        emitInt(0); // 32-bits offset (4 bytes)
     }
 
     void addrNop8() {
@@ -667,7 +667,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0x1F);
         emitByte(0x84); // emitRm(cbuf, 0x2, EAXEnc, 0x4);
         emitByte(0x00); // emitRm(cbuf, 0x0, EAXEnc, EAXEnc);
-        emitLong(0); // 32-bits offset (4 bytes)
+        emitInt(0); // 32-bits offset (4 bytes)
     }
 
     void addsd(Register dst, Register src) {
@@ -800,7 +800,7 @@ public abstract class X86Assembler extends AbstractAssembler {
             this.setInstMark();
             try {
                 // 1110 1000 #32-bit disp
-                l.addPatchAt(code(), locator());
+                l.addPatchAt(locator());
 
                 emitByte(0xE8);
                 emitData(0, rtype, operand);
@@ -890,7 +890,7 @@ public abstract class X86Assembler extends AbstractAssembler {
             prefix(dst);
             emitByte(0x81);
             emitOperand(X86Register.rdi, dst, 4);
-            emitLong(imm32);
+            emitInt(imm32);
         } finally {
             this.clearInstMark();
         }
@@ -917,14 +917,18 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
+    private boolean needsRex(Register r) {
+        return r != Register.noreg && r.encoding >= 8;
+    }
+
     void cmpw(Address dst, int imm16) {
         this.setInstMark();
         try {
-            assert !dst.baseNeedsRex() && !dst.indexNeedsRex() : "no extended registers";
+            assert !needsRex(dst.base) && !needsRex(dst.index) : "no extended registers";
             emitByte(0x66);
             emitByte(0x81);
             emitOperand(X86Register.rdi, dst, 2);
-            emitWord(imm16);
+            emitShort(imm16);
         } finally {
             this.clearInstMark();
         }
@@ -1164,7 +1168,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         } else {
             emitByte(0x69);
             emitByte(0xC0 | encode);
-            emitLong(value);
+            emitInt(value);
         }
     }
 
@@ -1205,17 +1209,17 @@ public abstract class X86Assembler extends AbstractAssembler {
                     assert isSimm32(offs - longSize) : "must be 32bit offset (call4)";
                     emitByte(0x0F);
                     emitByte(0x80 | cc.value);
-                    emitLong(offs - longSize);
+                    emitInt((int) (offs - longSize));
                 }
             } else {
                 // Note: could eliminate cond. jumps to this jump if condition
                 // is the same however, seems to be rather unlikely case.
                 // Note: use jccb() if label to be bound is very close to get
                 // an 8-bit displacement
-                l.addPatchAt(code(), locator());
+                l.addPatchAt(locator());
                 emitByte(0x0F);
                 emitByte(0x80 | cc.value);
-                emitLong(0);
+                emitInt(0);
             }
         } finally {
             this.clearInstMark();
@@ -1234,7 +1238,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         } else {
             this.setInstMark();
             try {
-                l.addPatchAt(code(), locator());
+                l.addPatchAt(locator());
                 emitByte(0x70 | cc.value);
                 emitByte(0);
             } finally {
@@ -1265,10 +1269,10 @@ public abstract class X86Assembler extends AbstractAssembler {
                 long offs = entry.value - codePos.value;
                 if (rtype == RelocInfo.Type.none && Util.is8bit(offs - shortSize)) {
                     emitByte(0xEB);
-                    emitByte((offs - shortSize) & 0xFF);
+                    emitByte((int) ((offs - shortSize) & 0xFF));
                 } else {
                     emitByte(0xE9);
-                    emitLong(offs - longSize);
+                    emitInt((int) (offs - longSize));
                 }
             } finally {
                 this.clearInstMark();
@@ -1281,9 +1285,9 @@ public abstract class X86Assembler extends AbstractAssembler {
             this.setInstMark();
             try {
                 relocate(rtype);
-                l.addPatchAt(code(), locator());
+                l.addPatchAt(locator());
                 emitByte(0xE9);
-                emitLong(0);
+                emitInt(0);
             } finally {
                 this.clearInstMark();
             }
@@ -1317,11 +1321,11 @@ public abstract class X86Assembler extends AbstractAssembler {
             assert Util.is8bit((entry.value - codePos.value) + shortSize) : "Dispacement too large for a short jmp";
             long offs = entry.value - codePos.value;
             emitByte(0xEB);
-            emitByte((offs - shortSize) & 0xFF);
+            emitByte((int) ((offs - shortSize) & 0xFF));
         } else {
             this.setInstMark();
             try {
-                l.addPatchAt(code(), locator());
+                l.addPatchAt(locator());
                 emitByte(0xEB);
                 emitByte(0);
             } finally {
@@ -1596,7 +1600,7 @@ public abstract class X86Assembler extends AbstractAssembler {
     void movl(Register dst, int imm32) {
         int encode = prefixAndEncode(dst.encoding);
         emitByte(0xB8 | encode);
-        emitLong(imm32);
+        emitInt(imm32);
     }
 
     void movl(Register dst, Register src) {
@@ -1623,7 +1627,7 @@ public abstract class X86Assembler extends AbstractAssembler {
             prefix(dst);
             emitByte(0xC7);
             emitOperand(X86Register.rax, dst, 4);
-            emitLong(imm32);
+            emitInt(imm32);
         } finally {
             this.clearInstMark();
         }
@@ -1874,7 +1878,7 @@ public abstract class X86Assembler extends AbstractAssembler {
             prefix(dst);
             emitByte(0xC7);
             emitOperand(X86Register.rax, dst, 2);
-            emitWord(imm16);
+            emitShort(imm16);
         } finally {
             this.clearInstMark();
         }
@@ -2018,6 +2022,11 @@ public abstract class X86Assembler extends AbstractAssembler {
         int encode = prefixAndEncode(dst.encoding);
         emitByte(0xF7);
         emitByte(0xD8 | encode);
+    }
+
+    @Override
+    public void nop() {
+        nop(1);
     }
 
     void nop(int i) {
@@ -2321,7 +2330,7 @@ public abstract class X86Assembler extends AbstractAssembler {
             prefix(dst);
             emitByte(0x81);
             emitOperand(X86Register.rcx, dst, 4);
-            emitLong(imm32);
+            emitInt(imm32);
         } finally {
             this.clearInstMark();
         }
@@ -2629,7 +2638,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         // in 64bits we push 64bits onto the stack but only
         // take a 32bit immediate
         emitByte(0x68);
-        emitLong(imm32);
+        emitInt(imm32);
     }
 
     void push(Register src) {
@@ -2744,7 +2753,7 @@ public abstract class X86Assembler extends AbstractAssembler {
             emitByte(0xC3);
         } else {
             emitByte(0xC2);
-            emitWord(imm16);
+            emitShort(imm16);
         }
     }
 
@@ -2889,7 +2898,7 @@ public abstract class X86Assembler extends AbstractAssembler {
             } else {
                 emitByte(0x81);
                 emitOperand(X86Register.rbp, dst, 4);
-                emitLong(imm32);
+                emitInt(imm32);
             }
         } finally {
             this.clearInstMark();
@@ -2998,7 +3007,7 @@ public abstract class X86Assembler extends AbstractAssembler {
             emitByte(0xF7);
             emitByte(0xC0 | encode);
         }
-        emitLong(imm32);
+        emitInt(imm32);
     }
 
     void testl(Register dst, Register src) {
@@ -3961,16 +3970,16 @@ public abstract class X86Assembler extends AbstractAssembler {
         // This would have to change if we ever save/restore shared code
         // to be more pessimistic.
 
-        disp = adr.target.value - (CodeCache.lowBound() + Util.sizeofInt());
+        disp = adr.target - (CodeCache.lowBound() + Util.sizeofInt());
         if (!isSimm32(disp)) {
             return false;
         }
-        disp = adr.target.value - (CodeCache.highBound() + Util.sizeofInt());
+        disp = adr.target - (CodeCache.highBound() + Util.sizeofInt());
         if (!isSimm32(disp)) {
             return false;
         }
 
-        disp = adr.target.value - (codePos.value + Util.sizeofInt());
+        disp = adr.target - (codePos.value + Util.sizeofInt());
 
         // Because rip relative is a disp + addressOfNextInstruction and we
         // don't know the value of addressOfNextInstruction we apply a fudge factor
@@ -3990,7 +3999,7 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     void emitData64(long data, RelocInfo.Type rtype, int format) {
         if (rtype != RelocInfo.Type.none) {
-            emitLong64(data);
+            emitLong(data);
             emitData64(data, Relocation.specSimple(rtype), format);
         }
     }
@@ -4003,7 +4012,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         // embedded words. Instead, relocate to the enclosing instruction.
         codeSection().relocate(instMark(), rspec, format);
         assert checkRelocation(rspec, format);
-        emitLong64(data);
+        emitLong(data);
     }
 
     int prefixAndEncode(int regEnc) {
@@ -4081,28 +4090,28 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     void prefix(Address adr) {
-        if (adr.baseNeedsRex()) {
-            if (adr.indexNeedsRex()) {
+        if (needsRex(adr.base)) {
+            if (needsRex(adr.index)) {
                 prefix(Prefix.REXXB);
             } else {
                 prefix(Prefix.REXB);
             }
         } else {
-            if (adr.indexNeedsRex()) {
+            if (needsRex(adr.index)) {
                 prefix(Prefix.REXX);
             }
         }
     }
 
     void prefixq(Address adr) {
-        if (adr.baseNeedsRex()) {
-            if (adr.indexNeedsRex()) {
+        if (needsRex(adr.base)) {
+            if (needsRex(adr.index)) {
                 prefix(Prefix.REXWXB);
             } else {
                 prefix(Prefix.REXWB);
             }
         } else {
-            if (adr.indexNeedsRex()) {
+            if (needsRex(adr.index)) {
                 prefix(Prefix.REXWX);
             } else {
                 prefix(Prefix.REXW);
@@ -4112,28 +4121,28 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     void prefix(Address adr, Register reg) {
         if (reg.encoding < 8) {
-            if (adr.baseNeedsRex()) {
-                if (adr.indexNeedsRex()) {
+            if (needsRex(adr.base)) {
+                if (needsRex(adr.index)) {
                     prefix(Prefix.REXXB);
                 } else {
                     prefix(Prefix.REXB);
                 }
             } else {
-                if (adr.indexNeedsRex()) {
+                if (needsRex(adr.index)) {
                     prefix(Prefix.REXX);
                 } else if (reg.encoding >= 4) {
                     prefix(Prefix.REX);
                 }
             }
         } else {
-            if (adr.baseNeedsRex()) {
-                if (adr.indexNeedsRex()) {
+            if (needsRex(adr.base)) {
+                if (needsRex(adr.index)) {
                     prefix(Prefix.REXRXB);
                 } else {
                     prefix(Prefix.REXRB);
                 }
             } else {
-                if (adr.indexNeedsRex()) {
+                if (needsRex(adr.index)) {
                     prefix(Prefix.REXRX);
                 } else {
                     prefix(Prefix.REXR);
@@ -4144,28 +4153,28 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     void prefixq(Address adr, Register src) {
         if (src.encoding < 8) {
-            if (adr.baseNeedsRex()) {
-                if (adr.indexNeedsRex()) {
+            if (needsRex(adr.base)) {
+                if (needsRex(adr.index)) {
                     prefix(Prefix.REXWXB);
                 } else {
                     prefix(Prefix.REXWB);
                 }
             } else {
-                if (adr.indexNeedsRex()) {
+                if (needsRex(adr.index)) {
                     prefix(Prefix.REXWX);
                 } else {
                     prefix(Prefix.REXW);
                 }
             }
         } else {
-            if (adr.baseNeedsRex()) {
-                if (adr.indexNeedsRex()) {
+            if (needsRex(adr.base)) {
+                if (needsRex(adr.index)) {
                     prefix(Prefix.REXWRXB);
                 } else {
                     prefix(Prefix.REXWRB);
                 }
             } else {
-                if (adr.indexNeedsRex()) {
+                if (needsRex(adr.index)) {
                     prefix(Prefix.REXWRX);
                 } else {
                     prefix(Prefix.REXWR);
@@ -4316,7 +4325,7 @@ public abstract class X86Assembler extends AbstractAssembler {
             prefixq(dst);
             emitByte(0x81);
             emitOperand(X86Register.rdi, dst, 4);
-            emitLong(imm32);
+            emitInt(imm32);
         } finally {
             this.clearInstMark();
         }
@@ -4462,7 +4471,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         } else {
             emitByte(0x69);
             emitByte(0xC0 | encode);
-            emitLong(value);
+            emitInt(value);
         }
     }
 
@@ -4502,7 +4511,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         try {
             int encode = prefixqAndEncode(dst.encoding);
             emitByte(0xB8 | encode);
-            emitLong64(imm64);
+            emitLong(imm64);
         } finally {
             this.clearInstMark();
         }
@@ -4632,7 +4641,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         try {
             int encode = prefixqAndEncode(dst.encoding);
             emitByte(0xC7 | encode);
-            emitLong(imm32);
+            emitInt(imm32);
         } finally {
             this.clearInstMark();
         }
@@ -4649,7 +4658,7 @@ public abstract class X86Assembler extends AbstractAssembler {
             prefixq(dst);
             emitByte(0xC7);
             emitOperand(X86Register.rax, dst, 4);
-            emitLong(imm32);
+            emitInt(imm32);
         } finally {
             this.clearInstMark();
         }
@@ -4747,7 +4756,7 @@ public abstract class X86Assembler extends AbstractAssembler {
             prefixq(dst);
             emitByte(0x81);
             emitOperand(X86Register.rcx, dst, 4);
-            emitLong(imm32);
+            emitInt(imm32);
         } finally {
             this.clearInstMark();
         }
@@ -4941,7 +4950,7 @@ public abstract class X86Assembler extends AbstractAssembler {
             } else {
                 emitByte(0x81);
                 emitOperand(X86Register.rbp, dst, 4);
-                emitLong(imm32);
+                emitInt(imm32);
             }
         } finally {
             this.clearInstMark();
@@ -4993,7 +5002,7 @@ public abstract class X86Assembler extends AbstractAssembler {
             emitByte(0xF7);
             emitByte(0xC0 | encode);
         }
-        emitLong(imm32);
+        emitInt(imm32);
     }
 
     void testq(Register dst, Register src) {

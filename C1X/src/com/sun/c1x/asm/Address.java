@@ -20,9 +20,8 @@
  */
 package com.sun.c1x.asm;
 
-import com.sun.c1x.asm.RelocInfo.*;
-import com.sun.c1x.lir.LIRAddress.*;
 import com.sun.c1x.target.*;
+import com.sun.c1x.util.*;
 
 /**
  * The <code>Address</code> class definition.
@@ -34,7 +33,7 @@ import com.sun.c1x.target.*;
 public class Address {
 
     public enum ScaleFactor {
-        noScale(-1), times1(0), times2(1), times4(2), times8(3), timesPtr64(3), timesPtr32(2);
+        noScale(-1), times1(0), times2(1), times4(2), times8(3);
 
         public final int value;
 
@@ -43,88 +42,87 @@ public class Address {
         }
 
         public static ScaleFactor timesPtr(Architecture arch) {
-            return (arch.is32bit()) ? timesPtr32 : timesPtr64;
+            return (arch.is32bit()) ? times8 : times4;
+        }
+
+        public static ScaleFactor fromInt(int v) {
+            for (ScaleFactor f : values()) {
+                if (f.value == v) {
+                    return f;
+                }
+            }
+
+            return null;
         }
     }
 
-    public Register base;
-    public int disp;
-    public ScaleFactor scale;
-    public Register index;
-    public RelocationHolder rspec;;
+    public final Register base;
+    public final int disp;
+    public final ScaleFactor scale;
+    public final Register index;
+    public final RelocationHolder rspec;
 
     public Address() {
+        this(Register.noreg, 0);
     }
 
-
-    public Address(int displacement) {
-        // TODO Auto-generated constructor stub
+    public Address(Register base, int displacement) {
+        this(base, Register.noreg, ScaleFactor.noScale, displacement);
     }
 
-    public Address(Register base2, Register index2, Scale scale2, int displacement) {
-        // TODO Auto-generated constructor stub
+    public Address(Register base, Register index, ScaleFactor scale) {
+        this(base, index, scale, 0);
     }
 
-    public Address(Register noreg, Register tmp, ScaleFactor times1) {
-        // TODO Auto-generated constructor stub
+    public Address(Register base, Register index, ScaleFactor scale, int displacement) {
+        this.base = base;
+        this.index = index;
+        this.scale = scale;
+        this.disp = displacement;
+        this.rspec = RelocationHolder.none;
+        assert base != null && index != null && scale != null;
     }
 
-    public Address(long minLong) {
-        // TODO Auto-generated constructor stub
+    public Address(Register base, RegisterOrConstant index, ScaleFactor scale, int displacement) {
+        this(base, index.registerOrNoReg(), scale, displacement);
+        assert !this.index.isValid() == (scale == ScaleFactor.noScale) : "inconsistent Pointer";
     }
 
-    public Address(Register base2, Register index2, ScaleFactor scale2, int displacement) {
-        // TODO Auto-generated constructor stub
+    public Address(int displacement, Pointer loc, RelocInfo.Type reloc) {
+
+        base = Register.noreg;
+        index = Register.noreg;
+        scale = ScaleFactor.noScale;
+        this.disp = displacement;
+        switch (reloc) {
+            case externalWordType:
+                rspec = Relocation.specExternalWord(loc);
+                break;
+            case internalWordType:
+                rspec = Relocation.specInternalWord(loc);
+                break;
+            case runtimeCallType:
+                // HMM
+                rspec = Relocation.specRuntimeCall();
+                break;
+            case pollType:
+                // fall through
+            case pollReturnType:
+                rspec = Relocation.specSimple(loc);
+                break;
+            case none:
+                rspec = null;
+                break;
+            default:
+                throw Util.shouldNotReachHere();
+        }
     }
 
-    public Address(int i, long target, Type reloc) {
-        // TODO Auto-generated constructor stub
+    public Address(Register base, long displacement) {
+        this(base, Util.safeToInt(displacement));
     }
 
-    public Address(Register subKlass, RegisterOrConstant superCheckOffset, ScaleFactor times1, int displacement) {
-        // TODO Auto-generated constructor stub
-    }
-
-    public Address(Register arrSize, Register len, int scaleFactor) {
-        // TODO Auto-generated constructor stub
-    }
-
-    public Address(long l, Pointer target, Type reloc) {
-        // TODO Auto-generated constructor stub
-    }
-
-    public Address(Register rsp, int i) {
-        // TODO Auto-generated constructor stub
-    }
-
-
-    public Address(Register base2, long addrOffset) {
-        // TODO Auto-generated constructor stub
-    }
-
-
-    public int asInt() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    public int disp() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    public boolean baseNeedsRex() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    public boolean indexNeedsRex() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    public boolean uses(Register asRegister) {
-        // TODO Auto-generated method stub
-        return false;
+    public boolean uses(Register r) {
+        return base == r || index == r;
     }
 }

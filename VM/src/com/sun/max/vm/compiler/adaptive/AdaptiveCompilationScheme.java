@@ -29,6 +29,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.instrument.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.prototype.*;
@@ -404,7 +405,10 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             // unless forced to use the JIT (e.g. for testing purposes)
             if (CompiledPrototype.jitCompile(classMethodActor)) {
                 return jitCompiler;
+            } else if (CompiledPrototype.c1xCompile(classMethodActor)) {
+                return new C1XCompiler(vmConfiguration());
             }
+
             return prototypeCompiler;
         }
 
