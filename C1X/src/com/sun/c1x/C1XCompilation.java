@@ -404,6 +404,22 @@ public class C1XCompilation {
         assembler = target.backend.newAssembler(this, tmp);
         final LIRAssembler lirAssembler = target.backend.newLIRAssembler(this);
         lirAssembler.emitCode(hir.linearScanOrder());
+
+
+        // generate code or slow cases
+        lirAssembler.emitSlowCaseStubs();
+
+        // generate exception adapters
+        lirAssembler.emitExceptionEntries(exceptionInfoList);
+
+        // generate code for exception handler
+        // TODO: Check if we need this
+        //lirAssembler.emitExceptionHandler();
+
+        lirAssembler.emitDeoptHandler();
+
+
+        assembler.installTargetMethod();
     }
 
     public int numberOfBlocks() {

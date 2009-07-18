@@ -436,4 +436,18 @@ public class MaxCiTargetMethod implements CiTargetMethod {
         }
     }
 
+
+    @Override
+    public void recordCodeReferenceInData(int codePosition, int dataPosition, boolean relative) {
+        // TODO Auto-generated method stub
+
+    }
+
+
+    @Override
+    public void recordDataReferenceInCode(int codePosition, int dataPosition, boolean relative) {
+        // TODO Auto-generated method stub
+
+    }
+
 }

@@ -27,6 +27,7 @@ import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.lir.Location.*;
 import com.sun.c1x.target.*;
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -36,6 +37,7 @@ import com.sun.c1x.value.*;
  */
 public class FrameMap {
 
+    public static final int spillSlotSizeInBytes = 4;
     int framesize;
     int argcount;
     int numMonitors;
@@ -196,8 +198,11 @@ public class FrameMap {
     }
 
     public int framesize() {
-        // TODO Auto-generated method stub
-        return 0;
+        assert framesize != -1 :  "hasn't been calculated";
+
+        //return framesize;
+        // TODO: calc frame size
+        return 64;
     }
 
     public int argcount() {
@@ -210,8 +215,42 @@ public class FrameMap {
         return null;
     }
 
-    public boolean finalizeFrame(int maxSpills) {
-        // TODO Complete this, for now just return true
+    public boolean finalizeFrame(int nofSlots) {
+        assert nofSlots >= 0 :  "must be positive";
+        assert numSpills == -1 :  "can only be set once";
+        numSpills = nofSlots;
+        assert framesize == -1 :  "should only be calculated once";
+
+
+        // TODO:  Add offset of deopt orig pc
+        framesize =  Util.roundTo(spOffsetForMonitorBase(0) +
+                               numMonitors * compilation.runtime.sizeofBasicObjectLock() +
+
+                               compilation.target.arch.framePadding,
+                               compilation.target.stackAlignment) / 4;
+
+        for (int i = 0; i < incomingArguments.length(); i++) {
+          LIROperand opr = incomingArguments.at(i);
+          if (opr.isStack()) {
+            argumentLocations[i] += framesizeInBytes();
+          }
+        }
+        // make sure it's expressible on the platform
+        return validateFrame();
+    }
+
+    private int spOffsetForMonitorBase(int index) {
+        int endOfSpills = Util.roundTo(compilation.target.firstAvailableSpInFrame + reservedArgumentAreaSize, Util.sizeofDouble()) +
+        numSpills * spillSlotSizeInBytes;
+      int offset = Util.roundTo(endOfSpills, compilation.target.arch.wordSize) + index * compilation.runtime.sizeofBasicObjectLock();
+      return offset;
+    }
+
+    private int framesizeInBytes() {
+        return framesize * 4;
+    }
+
+    private boolean validateFrame() {
         return true;
     }
 
