@@ -22,50 +22,82 @@ package com.sun.c1x.target.x86;
 
 import com.sun.c1x.asm.*;
 import com.sun.c1x.asm.RelocInfo.*;
+import com.sun.c1x.util.*;
 
 
 public class AddressLiteral {
 
-    public Pointer target;
+    public final long target;
+    public final RelocationHolder rspec;
+    public final boolean isLval;
 
-    public AddressLiteral(Address address, Type none) {
-        // TODO Auto-generated constructor stub
+    public AddressLiteral(long address, Type relocationType) {
+        isLval = false;
+        this.target = address;
+        switch (relocationType) {
+        case oopType:
+          // Oops are a special case. Normally they would be their own section
+          // but in cases like icBuffer they are literals in the code stream that
+          // we don't have a section for. We use none so that we get a literal Pointer
+          // which is always patchable.
+            // TODO: Check what to do with loops
+          rspec = null;
+           break;
+        case externalWordType:
+          rspec = Relocation.specExternalWord(new Pointer(address));
+          break;
+        case internalWordType:
+          rspec = Relocation.specInternalWord(new Pointer(address));
+          break;
+        case optVirtualCallType:
+          rspec = Relocation.specOptVirtualCallRelocation(address);
+          break;
+        case staticCallType:
+          rspec = Relocation.specStaticCallRelocation(address);
+          break;
+        case runtimeCallType:
+          rspec = Relocation.specRuntimeCall();
+          break;
+        case pollType:
+        case pollReturnType:
+          rspec = Relocation.specSimple(relocationType);
+          break;
+        case none:
+            rspec = null;
+          break;
+        default:
+          throw Util.shouldNotReachHere();
+        }
     }
 
-    public AddressLiteral(long l, Type polltype) {
-        // TODO Auto-generated constructor stub
+    public AddressLiteral(long address, RelocationHolder rspec) {
+        this(address, rspec, false);
     }
 
-    public AddressLiteral(Address entry, RelocationHolder rh) {
-        // TODO Auto-generated constructor stub
+    public AddressLiteral(long address, RelocationHolder rspec, boolean isLval) {
+        this.target = address;
+        this.rspec = rspec;
+        this.isLval = isLval;
     }
 
-    public AddressLiteral(long entry, RelocationHolder rh) {
-        // TODO Auto-generated constructor stub
-    }
-
-    public Address addr() {
+    public AddressLiteral addr() {
         // TODO Auto-generated method stub
-        return null;
+        return new AddressLiteral(target, rspec, true);
     }
 
     public Type reloc() {
-        // TODO Auto-generated method stub
-        return null;
+        return (rspec == null) ? RelocInfo.Type.none : rspec.type();
     }
 
     public boolean isLval() {
-        // TODO Auto-generated method stub
-        return false;
+        return isLval;
     }
 
     public Pointer target() {
-        // TODO Auto-generated method stub
-        return new Pointer(0);
+        return new Pointer(target);
     }
 
     public RelocationHolder rspec() {
-        // TODO Auto-generated method stub
-        return null;
+        return rspec;
     }
 }

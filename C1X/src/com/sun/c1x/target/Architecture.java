@@ -46,6 +46,8 @@ public abstract class Architecture {
     public final int stackBias = 0;
     public final Register[] registers;
     public final String name;
+    public final BitOrdering bitOrdering;
+    public final int framePadding;
 
     public static final Architecture findArchitecture(String name) {
         // load and instantiate the backend via reflection
@@ -62,13 +64,15 @@ public abstract class Architecture {
         }
     }
 
-    protected Architecture(String name, int wordSize, String backend, BitOrdering bitOrdering, Register[] registers) {
+    protected Architecture(String name, int wordSize, String backend, BitOrdering bitOrdering, Register[] registers, final int framePadding) {
         this.name = name;
         this.registers = registers;
         this.wordSize = wordSize;
         this.backend = backend;
         this.bitsPerWord = wordSize * 8;
         this.logBytesPerInt = (int) (java.lang.Math.log(wordSize));
+        this.bitOrdering = bitOrdering;
+        this.framePadding = framePadding;
         switch (bitOrdering) {
             case LittleEndian:
                 loWordOffsetInBytes = 0;

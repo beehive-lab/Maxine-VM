@@ -72,6 +72,9 @@ public class CompiledPrototype extends Prototype {
     private static final GrowableDeterministicSet<MethodActor> unlinkedMethods = new LinkedIdentityHashSet<MethodActor>();
     private static final GrowableDeterministicSet<ClassActor> unlinkedClasses = new LinkedIdentityHashSet<ClassActor>();
 
+    private static final GrowableDeterministicSet<ClassActor> c1xCompiledClasses = new LinkedIdentityHashSet<ClassActor>();
+    private static final GrowableDeterministicSet<MethodActor> c1xCompiledMethods = new LinkedIdentityHashSet<MethodActor>();
+
     private final VariableMapping<MethodActor, Link> methodActors = new ChainedHashMapping<MethodActor, Link>();
     private final LinkedList<MethodActor> worklist = new LinkedList<MethodActor>();
 
@@ -426,9 +429,22 @@ public class CompiledPrototype extends Prototype {
         jitCompiledClasses.add(ClassActor.fromJava(javaClass));
     }
 
+    public static void registerC1XClass(Class javaClass) {
+        c1xCompiledClasses.add(ClassActor.fromJava(javaClass));
+    }
+
     public static void registerJitMethod(MethodActor methodActor) {
         jitCompiledMethods.add(methodActor);
     }
+
+    public static boolean c1xCompile(ClassMethodActor classMethodActor) {
+        return c1xCompiledMethods.contains(classMethodActor) || c1xCompiledClasses.contains(classMethodActor.holder());
+    }
+
+    public static void registerC1XMethod(MethodActor methodActor) {
+        c1xCompiledMethods.add(methodActor);
+    }
+
 
     private static AppendableSequence<MethodActor> imageInvocationStubMethodActors = new LinkSequence<MethodActor>();
     private static AppendableSequence<MethodActor> imageConstructorStubMethodActors = new LinkSequence<MethodActor>();

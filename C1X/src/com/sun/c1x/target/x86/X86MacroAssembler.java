@@ -440,7 +440,8 @@ public class X86MacroAssembler extends X86Assembler {
             lea(rscratch1, entry.base());
             Address dispatch = entry.index();
             assert dispatch.base == Register.noreg : "must be";
-            dispatch.base = rscratch1;
+            assert dispatch.rspec == null : "otherwise the copy is not made correctly!";
+            dispatch = new Address(rscratch1, dispatch.index, dispatch.scale, dispatch.disp);
             jmp(dispatch);
         } else {
             throw Util.shouldNotReachHere();
@@ -856,7 +857,7 @@ public class X86MacroAssembler extends X86Assembler {
         // jmp/call are displacements others are absolute
         assert !adr.isLval() : "must be rval";
         assert reachable(adr) : "must be";
-        return new Address(adr.target().value - pc().value, adr.target(), adr.reloc());
+        return new Address(Util.safeToInt(adr.target().value - pc().value), adr.target(), adr.reloc());
 
     }
 
@@ -2137,7 +2138,7 @@ public class X86MacroAssembler extends X86Assembler {
                     // 0000 1111 1000 tttn #32-bit disp
                     emitByte(0x0F);
                     emitByte(0x80 | cc.value);
-                    emitLong(offs - longSize);
+                    emitInt(offs - longSize);
                 }
             } finally {
                 this.clearInstMark();
@@ -2492,19 +2493,19 @@ public class X86MacroAssembler extends X86Assembler {
         // TODO: Reset last Java frame!
         throw Util.unimplemented();
 
-//        // determine javaThread register
-//        if (!javaThread.isValid()) {
-//            javaThread = X86Register.rdi;
-//            getThread(javaThread);
-//        }
-//        // we must set sp to zero to clear frame
-//        movptr(new Address(javaThread, JavaThread.lastJavaSpOffset()), NULLWORD);
-//        if (clearFp) {
-//            movptr(new Address(javaThread, JavaThread.lastJavaFpOffset()), NULLWORD);
-//        }
+// // determine javaThread register
+// if (!javaThread.isValid()) {
+// javaThread = X86Register.rdi;
+// getThread(javaThread);
+// }
+// // we must set sp to zero to clear frame
+// movptr(new Address(javaThread, JavaThread.lastJavaSpOffset()), NULLWORD);
+// if (clearFp) {
+// movptr(new Address(javaThread, JavaThread.lastJavaFpOffset()), NULLWORD);
+// }
 //
-//        if (clearPc)
-//            movptr(new Address(javaThread, JavaThread.lastJavaPcOffset()), NULLWORD);
+// if (clearPc)
+// movptr(new Address(javaThread, JavaThread.lastJavaPcOffset()), NULLWORD);
 
     }
 
@@ -2555,29 +2556,30 @@ public class X86MacroAssembler extends X86Assembler {
         // TODO: Set last Java frame!
         throw Util.unimplemented();
 //
-//        // determine javaThread register
-//        if (!javaThread.isValid()) {
-//            javaThread = X86Register.rdi;
-//            getThread(javaThread);
-//        }
-//        // determine lastJavaSp register
-//        if (!lastJavaSp.isValid()) {
-//            lastJavaSp = X86Register.rsp;
-//        }
+// // determine javaThread register
+// if (!javaThread.isValid()) {
+// javaThread = X86Register.rdi;
+// getThread(javaThread);
+// }
+// // determine lastJavaSp register
+// if (!lastJavaSp.isValid()) {
+// lastJavaSp = X86Register.rsp;
+// }
 //
-//        // lastJavaFp is optional
+// // lastJavaFp is optional
 //
-//        if (lastJavaFp.isValid()) {
-//            movptr(new Address(javaThread, JavaThread.lastJavaFpOffset()), lastJavaFp);
-//        }
+// if (lastJavaFp.isValid()) {
+// movptr(new Address(javaThread, JavaThread.lastJavaFpOffset()), lastJavaFp);
+// }
 //
-//        // lastJavaPc is optional
+// // lastJavaPc is optional
 //
-//        if (lastJavaPc != null) {
-//            lea(new Address(javaThread, JavaThread.frameAnchorOffset() + JavaFrameAnchor.lastJavaPcOffset()), InternalAddress(lastJavaPc));
+// if (lastJavaPc != null) {
+// lea(new Address(javaThread, JavaThread.frameAnchorOffset() + JavaFrameAnchor.lastJavaPcOffset()),
+        // InternalAddress(lastJavaPc));
 //
-//        }
-//        movptr(new Address(javaThread, JavaThread.lastJavaSpOffset()), lastJavaSp);
+// }
+// movptr(new Address(javaThread, JavaThread.lastJavaSpOffset()), lastJavaSp);
     }
 
     void getThread(Register javaThread) {
@@ -2635,43 +2637,43 @@ public class X86MacroAssembler extends X86Assembler {
         // TODO: Store check
         throw Util.unimplemented();
 //
-//        BarrierSet bs = Universe.heap().barrierSet();
-//        assert bs.kind() == BarrierSet.CardTableModRef : "Wrong barrier set kind";
-//        shrptr(obj, CardTableModRefBS.cardShift);
+// BarrierSet bs = Universe.heap().barrierSet();
+// assert bs.kind() == BarrierSet.CardTableModRef : "Wrong barrier set kind";
+// shrptr(obj, CardTableModRefBS.cardShift);
     }
 
     void storeCheckPart2(Register obj) {
         // TODO: Store check
 //
-//        BarrierSet bs = Universe.heap().barrierSet();
-//        assert bs.kind() == BarrierSet.CardTableModRef : "Wrong barrier set kind";
-//        CardTableModRefBS ct = (CardTableModRefBS) bs;
-//        assert sizeof(ct.byteMapBase) == sizeof(jbyte) : "adjust this code";
+// BarrierSet bs = Universe.heap().barrierSet();
+// assert bs.kind() == BarrierSet.CardTableModRef : "Wrong barrier set kind";
+// CardTableModRefBS ct = (CardTableModRefBS) bs;
+// assert sizeof(ct.byteMapBase) == sizeof(jbyte) : "adjust this code";
 //
-//        // The calculation for byteMapBase is as follows:
-//        // byteMapBase = byteMap - (uintptrT(lowBound) >> cardShift);
-//        // So this essentially converts an Address to a displacement and
-//        // it will never need to be relocated. On 64bit however the value may be too
-//        // large for a 32bit displacement
+// // The calculation for byteMapBase is as follows:
+// // byteMapBase = byteMap - (uintptrT(lowBound) >> cardShift);
+// // So this essentially converts an Address to a displacement and
+// // it will never need to be relocated. On 64bit however the value may be too
+// // large for a 32bit displacement
 //
-//        intptrT disp = (intptrT) ct.byteMapBase;
-//        if (isSimm32(disp)) {
-//            Address cardtable = new Address(X86Register.noreg, obj, Address.times1, disp);
-//            movb(cardtable, 0);
-//        } else {
-//            // By doing it as an ExternalAddress disp could be converted to a rip-relative
-//            // displacement and done in a single instruction given favorable mapping and
-//            // a smarter version of asAddress. Worst case it is two instructions which
-//            // is no worse off then loading disp into a register and doing as a simple
-//            // Address() as above.
-//            // We can't do as ExternalAddress as the only style since if disp == 0 we'll
-//            // assert since null isn't acceptable in a reloci (see 6644928). In any case
-//            // in some cases we'll get a single instruction version.
+// intptrT disp = (intptrT) ct.byteMapBase;
+// if (isSimm32(disp)) {
+// Address cardtable = new Address(X86Register.noreg, obj, Address.times1, disp);
+// movb(cardtable, 0);
+// } else {
+// // By doing it as an ExternalAddress disp could be converted to a rip-relative
+// // displacement and done in a single instruction given favorable mapping and
+// // a smarter version of asAddress. Worst case it is two instructions which
+// // is no worse off then loading disp into a register and doing as a simple
+// // Address() as above.
+// // We can't do as ExternalAddress as the only style since if disp == 0 we'll
+// // assert since null isn't acceptable in a reloci (see 6644928). In any case
+// // in some cases we'll get a single instruction version.
 //
-//            ExternalAddress cardtable = new ExternalAddress((Address) disp);
-//            Address index = new Address(X86Register.noreg, obj, Address.times1);
-//            movb(asAddress(new ArrayAddress(cardtable, index)), 0);
-//        }
+// ExternalAddress cardtable = new ExternalAddress((Address) disp);
+// Address index = new Address(X86Register.noreg, obj, Address.times1);
+// movb(asAddress(new ArrayAddress(cardtable, index)), 0);
+// }
     }
 
     void subptr(Register dst, int imm32) {
@@ -2765,104 +2767,104 @@ public class X86MacroAssembler extends X86Assembler {
         // TODO: Tlab refill
         throw Util.unimplemented();
 //
-//        Register top = X86Register.rax;
-//        Register t1 = X86Register.rcx;
-//        Register t2 = X86Register.rsi;
-//        Register threadReg = (compilation.target.arch.is64bit()) ? X86FrameMap.r15thread : X86Register.rdi;
-//        assert Register.assertDifferentRegisters(top, threadReg, t1, t2, /* preserve: */X86Register.rbx, X86Register.rdx);
-//        Label doRefill = new Label();
-//        Label discardTlab = new Label();
+// Register top = X86Register.rax;
+// Register t1 = X86Register.rcx;
+// Register t2 = X86Register.rsi;
+// Register threadReg = (compilation.target.arch.is64bit()) ? X86FrameMap.r15thread : X86Register.rdi;
+// assert Register.assertDifferentRegisters(top, threadReg, t1, t2, /* preserve: */X86Register.rbx, X86Register.rdx);
+// Label doRefill = new Label();
+// Label discardTlab = new Label();
 //
-//        if (C1XOptions.CMSIncrementalMode || !compilation.runtime.universeSupportsInlineContigAlloc()) {
-//            // No allocation in the shared eden.
-//            jmp(slowCase);
-//        }
+// if (C1XOptions.CMSIncrementalMode || !compilation.runtime.universeSupportsInlineContigAlloc()) {
+// // No allocation in the shared eden.
+// jmp(slowCase);
+// }
 //
-//        if (!compilation.target.arch.is64bit()) {
-//            getThread(threadReg);
-//        }
+// if (!compilation.target.arch.is64bit()) {
+// getThread(threadReg);
+// }
 //
-//        movptr(top, new Address(threadReg, compilation.runtime.threadTlabTopOffset()));
-//        movptr(t1, new Address(threadReg, compilation.runtime.threadTlabEndOffset()));
+// movptr(top, new Address(threadReg, compilation.runtime.threadTlabTopOffset()));
+// movptr(t1, new Address(threadReg, compilation.runtime.threadTlabEndOffset()));
 //
-//        // calculate amount of free space
-//        subptr(t1, top);
-//        shrptr(t1, Util.log2(wordSize));
+// // calculate amount of free space
+// subptr(t1, top);
+// shrptr(t1, Util.log2(wordSize));
 //
-//        // Retain tlab and allocate object in shared space if
-//        // the amount free in the tlab is too large to discard.
-//        cmpptr(t1, new Address(threadReg, inBytes(JavaThread.tlabRefillWasteLimitOffset())));
-//        jcc(X86Assembler.Condition.lessEqual, discardTlab);
+// // Retain tlab and allocate object in shared space if
+// // the amount free in the tlab is too large to discard.
+// cmpptr(t1, new Address(threadReg, inBytes(JavaThread.tlabRefillWasteLimitOffset())));
+// jcc(X86Assembler.Condition.lessEqual, discardTlab);
 //
-//        // Retain
-//        // %%% yuck as movptr...
-//        movptr(t2, (int) ThreadLocalAllocBuffer.refillWasteLimitIncrement());
-//        addptr(new Address(threadReg, inBytes(JavaThread.tlabRefillWasteLimitOffset())), t2);
-//        if (C1XOptions.TLABStats) {
-//            // increment number of slowAllocations
-//            addl(new Address(threadReg, inBytes(JavaThread.tlabSlowAllocationsOffset())), 1);
-//        }
-//        jmp(tryEden);
+// // Retain
+// // %%% yuck as movptr...
+// movptr(t2, (int) ThreadLocalAllocBuffer.refillWasteLimitIncrement());
+// addptr(new Address(threadReg, inBytes(JavaThread.tlabRefillWasteLimitOffset())), t2);
+// if (C1XOptions.TLABStats) {
+// // increment number of slowAllocations
+// addl(new Address(threadReg, inBytes(JavaThread.tlabSlowAllocationsOffset())), 1);
+// }
+// jmp(tryEden);
 //
-//        bind(discardTlab);
-//        if (C1XOptions.TLABStats) {
-//            // increment number of refills
-//            addl(new Address(threadReg, inBytes(JavaThread.tlabNumberOfRefillsOffset())), 1);
-//            // accumulate wastage -- t1 is amount free in tlab
-//            addl(new Address(threadReg, inBytes(JavaThread.tlabFastRefillWasteOffset())), t1);
-//        }
+// bind(discardTlab);
+// if (C1XOptions.TLABStats) {
+// // increment number of refills
+// addl(new Address(threadReg, inBytes(JavaThread.tlabNumberOfRefillsOffset())), 1);
+// // accumulate wastage -- t1 is amount free in tlab
+// addl(new Address(threadReg, inBytes(JavaThread.tlabFastRefillWasteOffset())), t1);
+// }
 //
-//        // if tlab is currently allocated (top or end != null) then
-//        // fill [top : end + alignmentReserve with array object
-//        testptr(top, top);
-//        jcc(X86Assembler.Condition.zero, doRefill);
+// // if tlab is currently allocated (top or end != null) then
+// // fill [top : end + alignmentReserve with array object
+// testptr(top, top);
+// jcc(X86Assembler.Condition.zero, doRefill);
 //
-//        // set up the mark word
-//        movptr(new Address(top, oopDesc.markOffsetInBytes()), (intptrT) markOopDesc.prototype().copySetHash(0x2));
-//        // set the length to the remaining space
-//        subptr(t1, typeArrayOopDesc.headerSize(BasicType.Int));
-//        addptr(t1, (int) ThreadLocalAllocBuffer.alignmentReserve());
-//        shlptr(t1, log2Intptr(wordSize / Util.sizeofInt()));
-//        movptr(new Address(top, compilation.runtime.arrayLengthOffsetInBytes()), t1);
-//        // set klass to intArrayKlass
-//        // dubious reloc why not an oop reloc?
-//        movptr(t1, new ExternalAddress((Address) Universe.intArrayKlassObjAddr()));
-//        // store klass last. concurrent gcs assumes klass length is valid if
-//        // klass field is not null.
-//        storeKlass(top, t1);
+// // set up the mark word
+// movptr(new Address(top, oopDesc.markOffsetInBytes()), (intptrT) markOopDesc.prototype().copySetHash(0x2));
+// // set the length to the remaining space
+// subptr(t1, typeArrayOopDesc.headerSize(BasicType.Int));
+// addptr(t1, (int) ThreadLocalAllocBuffer.alignmentReserve());
+// shlptr(t1, log2Intptr(wordSize / Util.sizeofInt()));
+// movptr(new Address(top, compilation.runtime.arrayLengthOffsetInBytes()), t1);
+// // set klass to intArrayKlass
+// // dubious reloc why not an oop reloc?
+// movptr(t1, new ExternalAddress((Address) Universe.intArrayKlassObjAddr()));
+// // store klass last. concurrent gcs assumes klass length is valid if
+// // klass field is not null.
+// storeKlass(top, t1);
 //
-//        // refill the tlab with an eden allocation
-//        bind(doRefill);
-//        movptr(t1, new Address(threadReg, compilation.runtime.threadTlabSizeOffset()));
-//        shlptr(t1, Util.log2(wordSize));
-//        // add objectSize ??
-//        edenAllocate(top, t1, 0, t2, slowCase);
+// // refill the tlab with an eden allocation
+// bind(doRefill);
+// movptr(t1, new Address(threadReg, compilation.runtime.threadTlabSizeOffset()));
+// shlptr(t1, Util.log2(wordSize));
+// // add objectSize ??
+// edenAllocate(top, t1, 0, t2, slowCase);
 //
-//        // Check that t1 was preserved in edenAllocate.
-//        boolean assertEnabled = false;
-//        assert assertEnabled = true;
-//        if (assertEnabled && C1XOptions.UseTLAB) {
-//            Label ok = new Label();
-//            Register tsize = X86Register.rsi;
-//            assert Register.assertDifferentRegisters(tsize, threadReg, t1);
-//            push(tsize);
-//            movptr(tsize, new Address(threadReg, compilation.runtime.threadTlabSizeOffset()));
-//            shlptr(tsize, Util.log2(wordSize));
-//            cmpptr(t1, tsize);
-//            jcc(X86Assembler.Condition.equal, ok);
-//            stop("assert(t1 != tlab size)");
-//            Util.shouldNotReachHere();
+// // Check that t1 was preserved in edenAllocate.
+// boolean assertEnabled = false;
+// assert assertEnabled = true;
+// if (assertEnabled && C1XOptions.UseTLAB) {
+// Label ok = new Label();
+// Register tsize = X86Register.rsi;
+// assert Register.assertDifferentRegisters(tsize, threadReg, t1);
+// push(tsize);
+// movptr(tsize, new Address(threadReg, compilation.runtime.threadTlabSizeOffset()));
+// shlptr(tsize, Util.log2(wordSize));
+// cmpptr(t1, tsize);
+// jcc(X86Assembler.Condition.equal, ok);
+// stop("assert(t1 != tlab size)");
+// Util.shouldNotReachHere();
 //
-//            bind(ok);
-//            pop(tsize);
-//        }
-//        movptr(new Address(threadReg, compilation.runtime.threadTlabStartOffset()), top);
-//        movptr(new Address(threadReg, compilation.runtime.threadTlabTopOffset()), top);
-//        addptr(top, t1);
-//        subptr(top, (int) ThreadLocalAllocBuffer.alignmentReserveInBytes();
-//        movptr(new Address(threadReg, compilation.runtime.threadTlabEndOffset()), top);
-//        verifyTlab();
-//        jmp(retry);
+// bind(ok);
+// pop(tsize);
+// }
+// movptr(new Address(threadReg, compilation.runtime.threadTlabStartOffset()), top);
+// movptr(new Address(threadReg, compilation.runtime.threadTlabTopOffset()), top);
+// addptr(top, t1);
+// subptr(top, (int) ThreadLocalAllocBuffer.alignmentReserveInBytes();
+// movptr(new Address(threadReg, compilation.runtime.threadTlabEndOffset()), top);
+// verifyTlab();
+// jmp(retry);
     }
 
     static double pi4 = 0.7853981633974483;
@@ -3408,9 +3410,9 @@ public class X86MacroAssembler extends X86Assembler {
     void checkMethodHandleType(Register mtypeReg, Register mhReg, Register tempReg, Label wrongMethodType) {
         // TODO: What to do with method handles?
         throw Util.unimplemented();
-//        // compare method type against that of the receiver
-//        cmpptr(mtypeReg, new Address(mhReg, delayedValue(javaDynMethodHandle.typeOffsetInBytes, tempReg)));
-//        jcc(X86Assembler.Condition.notEqual, wrongMethodType);
+// // compare method type against that of the receiver
+// cmpptr(mtypeReg, new Address(mhReg, delayedValue(javaDynMethodHandle.typeOffsetInBytes, tempReg)));
+// jcc(X86Assembler.Condition.notEqual, wrongMethodType);
     }
 
     // A method handle has a "vmslots" field which gives the size of its
@@ -3420,16 +3422,16 @@ public class X86MacroAssembler extends X86Assembler {
     void loadMethodHandleVmslots(Register vmslotsReg, Register mhReg, Register tempReg) {
         // TODO: What to do with method handles?
         throw Util.unimplemented();
-//        // load mh.type.form.vmslots
-//        if (javaDynMethodHandle.vmslotsOffsetInBytes() != 0) {
-//            // hoist vmslots into every mh to avoid dependent load chain
-//            movl(vmslotsReg, new Address(mhReg, delayedValue(javaDynMethodHandle.vmslotsOffsetInBytes, tempReg)));
-//        } else {
-//            Register temp2Reg = vmslotsReg;
-//            movptr(temp2Reg, new Address(mhReg, delayedValue(javaDynMethodHandle.typeOffsetInBytes, tempReg)));
-//            movptr(temp2Reg, new Address(temp2Reg, delayedValue(javaDynMethodType.formOffsetInBytes, tempReg)));
-//            movl(vmslotsReg, new Address(temp2Reg, delayedValue(javaDynMethodTypeForm.vmslotsOffsetInBytes, tempReg)));
-//        }
+// // load mh.type.form.vmslots
+// if (javaDynMethodHandle.vmslotsOffsetInBytes() != 0) {
+// // hoist vmslots into every mh to avoid dependent load chain
+// movl(vmslotsReg, new Address(mhReg, delayedValue(javaDynMethodHandle.vmslotsOffsetInBytes, tempReg)));
+// } else {
+// Register temp2Reg = vmslotsReg;
+// movptr(temp2Reg, new Address(mhReg, delayedValue(javaDynMethodHandle.typeOffsetInBytes, tempReg)));
+// movptr(temp2Reg, new Address(temp2Reg, delayedValue(javaDynMethodType.formOffsetInBytes, tempReg)));
+// movl(vmslotsReg, new Address(temp2Reg, delayedValue(javaDynMethodTypeForm.vmslotsOffsetInBytes, tempReg)));
+// }
     }
 
     // registers on entry:
@@ -3439,17 +3441,17 @@ public class X86MacroAssembler extends X86Assembler {
     void jumpToMethodHandleEntry(Register mhReg, Register tempReg) {
         // TODO: What to do with method handles?
         throw Util.unimplemented();
-//        assert mhReg == X86Register.rcx : "caller must put MH object in X86Register.rcx";
-//        assert Register.assertDifferentRegisters(mhReg, tempReg);
+// assert mhReg == X86Register.rcx : "caller must put MH object in X86Register.rcx";
+// assert Register.assertDifferentRegisters(mhReg, tempReg);
 //
-//        // pick out the interpreted side of the handler
-//        movptr(tempReg, new Address(mhReg, delayedValue(javaDynMethodHandle.vmentryOffsetInBytes, tempReg)));
+// // pick out the interpreted side of the handler
+// movptr(tempReg, new Address(mhReg, delayedValue(javaDynMethodHandle.vmentryOffsetInBytes, tempReg)));
 //
-//        // off we go...
-//        jmp(new Address(tempReg, MethodHandleEntry.fromInterpretedEntryOffsetInBytes()));
+// // off we go...
+// jmp(new Address(tempReg, MethodHandleEntry.fromInterpretedEntryOffsetInBytes()));
 //
-//        // for the various stubs which take control at this point :
-//        // see MethodHandles.generateMethodHandleStub
+// // for the various stubs which take control at this point :
+// // see MethodHandles.generateMethodHandleStub
     }
 
     void verifyOopAddr(Address addr, String s) {
@@ -3823,7 +3825,7 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    void allocateArray(Register obj, Register len, Register t1, Register t2, int headerSize, int scaleFactor, Register klass, Label slowCase) {
+    void allocateArray(Register obj, Register len, Register t1, Register t2, int headerSize, Address.ScaleFactor scaleFactor, Register klass, Label slowCase) {
         assert obj == X86Register.rax : "obj must be in X86Register.rax :  for cmpxchg";
         assert Register.assertDifferentRegisters(obj, len, t1, t2, klass);
 
@@ -3858,11 +3860,11 @@ public class X86MacroAssembler extends X86Assembler {
 
     // Defines obj, preserves varSizeInBytes
     void tryAllocate(Register obj, Register varSizeInBytes, int conSizeInBytes, Register t1, Register t2, Label slowCase) {
-      if (C1XOptions.UseTLAB) {
-        tlabAllocate(obj, varSizeInBytes, conSizeInBytes, t1, t2, slowCase);
-      } else {
-        edenAllocate(obj, varSizeInBytes, conSizeInBytes, t1, slowCase);
-      }
+        if (C1XOptions.UseTLAB) {
+            tlabAllocate(obj, varSizeInBytes, conSizeInBytes, t1, t2, slowCase);
+        } else {
+            edenAllocate(obj, varSizeInBytes, conSizeInBytes, t1, slowCase);
+        }
     }
 
     void initializeHeader(Register obj, Register klass, Register len, Register t1, Register t2) {
@@ -3936,7 +3938,6 @@ public class X86MacroAssembler extends X86Assembler {
         // done
         bind(done);
     }
-
 
     void allocateObject(Register obj, Register t1, Register t2, int headerSize, int objectSize, Register klass, Label slowCase) {
         assert obj == X86Register.rax : "obj must be in X86Register.rax :  for cmpxchg";
@@ -4095,15 +4096,10 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     @Override
-    protected void bangStackWithOffset(int bangOffset) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void nop() {
-        // TODO Auto-generated method stub
-
+    protected void bangStackWithOffset(int offset) {
+        // stack grows down, caller passes positive offset
+        assert offset > 0 :  "must bang with negative offset";
+        movl(new Address(X86Register.rsp, (-offset)), X86Register.rax);
     }
 
     @Override
@@ -4114,5 +4110,23 @@ public class X86MacroAssembler extends X86Assembler {
     @Override
     protected boolean pdCheckInstructionMark() {
         return true;
+    }
+
+    @Override
+    public void buildFrame(int frameSizeInBytes) {
+     // Make sure there is enough stack space for this method's activation.
+        // Note that we do this before doing an enter(). This matches the
+        // ordering of C2's stack overflow check / X86Register.rsp decrement and allows
+        // the SharedRuntime stack overflow handling to be consistent
+        // between the two compilers.
+        generateStackOverflowCheck(frameSizeInBytes);
+
+        enter();
+
+        // c2 leaves fpu stack dirty. Clean it on entry
+        if (C1XOptions.SSEVersion < 2) {
+          emptyFPUStack();
+        }
+        decrement(X86Register.rsp, frameSizeInBytes); // does not emit code for frameSize == 0
     }
 }

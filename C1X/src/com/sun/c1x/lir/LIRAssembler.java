@@ -176,7 +176,7 @@ public abstract class LIRAssembler {
         }
     }
 
-    void emitSlowCaseStubs() {
+    public void emitSlowCaseStubs() {
         emitStubs(slowCaseStubs);
     }
 
@@ -192,7 +192,7 @@ public abstract class LIRAssembler {
         return masm.pc();
     }
 
-    void emitExceptionEntries(List<ExceptionInfo> infoList) {
+    public void emitExceptionEntries(List<ExceptionInfo> infoList) {
         for (int i = 0; i < infoList.size(); i++) {
             List<ExceptionHandler> handlers = infoList.get(i).exceptionHandlers();
 
@@ -461,7 +461,9 @@ public abstract class LIRAssembler {
         }
 
         // emit the static call stub stuff out of line
-        emitStaticCallStub();
+        if (C1XOptions.EmitStaticCallStubs) {
+            emitStaticCallStub();
+        }
 
         switch (op.code()) {
             case StaticCall:
@@ -925,4 +927,9 @@ public abstract class LIRAssembler {
     protected abstract void emitProfileCall(LIRProfileCall lirProfileCall);
 
     public abstract void emitExceptionHandler();
+
+    public void emitDeoptHandler() {
+        // TODO Auto-generated method stub
+
+    }
 }

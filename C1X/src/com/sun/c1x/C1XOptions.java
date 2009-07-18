@@ -172,6 +172,7 @@ public class C1XOptions {
     public static boolean CMSIncrementalMode                 = ____;
     public static boolean TLABStats                          = ____;
     public static boolean GenerateAssertionCode              = ____;
+    public static boolean EmitStaticCallStubs                = ____;
 
     // Profiling settings
     public static boolean Tier1OptimizeVirtualCallProfiling  = ____;
