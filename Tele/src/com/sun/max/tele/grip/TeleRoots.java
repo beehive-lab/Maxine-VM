@@ -52,7 +52,8 @@ public final class TeleRoots extends AbstractTeleVMHolder{
 
     private RemoteTeleGrip teleRoots() {
         if (teleRootsPointer.isZero()) {
-            teleRootsPointer = teleVM().fields().InspectableHeapInfo_roots.staticTupleReference(teleVM()).toOrigin().plus(teleVM().fields().InspectableHeapInfo_roots.fieldActor().offset());
+            final int offset = teleVM().fields().InspectableHeapInfo_roots.fieldActor().offset();
+            teleRootsPointer = teleVM().fields().InspectableHeapInfo_roots.staticTupleReference(teleVM()).toOrigin().plus(offset);
         }
         return teleGripScheme.createTemporaryRemoteTeleGrip(teleVM().dataAccess().readWord(teleRootsPointer).asAddress());
     }

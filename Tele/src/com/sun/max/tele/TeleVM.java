@@ -409,7 +409,9 @@ public abstract class TeleVM implements MaxVM {
 
     private boolean isInGC = false;
 
-    // TODO (mlvdv)  Relax conservative assumptions being made during GC
+    /**
+     * @return whether the VM is currently performing Garbage Collection
+     */
     public final boolean isInGC() {
         return isInGC;
     }
@@ -675,6 +677,23 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /**
+     * Address of the field incremented each time a GC begins.
+     * @return memory location of the field holding the collection epoch
+     * @see #readCollectionEpoch()
+     */
+    public final Address collectionEpochAddress() {
+        return teleHeapManager.collectionEpochAddress();
+    }
+
+    /**
+     * Address of the field incremented each time a GC completes.
+     * @return memory location of the field holding the root epoch
+     * @see #readRootEpoch()
+     */
+    public final Address rootEpochAddress() {
+        return teleHeapManager.rootEpochAddress();
+    }
+    /**
      * @return manager for {@link MemoryRegion}s containing target code in the VM.
      */
     private TeleCodeManager teleCodeManager() {
@@ -789,11 +808,9 @@ public abstract class TeleVM implements MaxVM {
 
     public void initGarbageCollectorDebugging() throws TooManyWatchpointsException, DuplicateWatchpointException {
         if (false) {
-            final Pointer gcStart = fields().InspectableHeapInfo_collectionEpoch.staticTupleReference(this).toOrigin().plus(fields().InspectableHeapInfo_collectionEpoch.fieldActor().offset());
-            final Pointer gcEnd = fields().InspectableHeapInfo_rootEpoch.staticTupleReference(this).toOrigin().plus(fields().InspectableHeapInfo_rootEpoch.fieldActor().offset());
             try {
-                setRegionWatchpoint("GC Start", new FixedMemoryRegion(gcStart, Size.fromInt(wordSize()), ""), true, false, true, false, true);
-                setRegionWatchpoint("GC End", new FixedMemoryRegion(gcEnd, Size.fromInt(wordSize()), ""), true, false, true, false, true);
+                setWordWatchpoint("GC Start", teleHeapManager.collectionEpochAddress(), true, false, true, false, true);
+                setWordWatchpoint("GC End", teleHeapManager.rootEpochAddress(), true, false, true, false, true);
             } catch (TooManyWatchpointsException e) {
                 throw e;
             } catch (DuplicateWatchpointException e) {
@@ -1167,6 +1184,12 @@ public abstract class TeleVM implements MaxVM {
         return teleProcess.watchpointFactory().setRegionWatchpoint(description, memoryRegion, after, read, write, exec, gc);
     }
 
+    public final MaxWatchpoint setWordWatchpoint(String description, Address address, boolean after, boolean read, boolean write, boolean exec, boolean gc)
+        throws TooManyWatchpointsException, DuplicateWatchpointException {
+        final MemoryRegion memoryRegion = new FixedMemoryRegion(address, Size.fromInt(wordSize()), "");
+        return setRegionWatchpoint(description, memoryRegion, after, read, write, exec, gc);
+    }
+
     /* (non-Javadoc)
      * @see com.sun.max.tele.MaxVM#setObjectWatchpoint(java.lang.String, com.sun.max.tele.object.TeleObject, boolean, boolean, boolean, boolean)
      */
@@ -1247,8 +1270,8 @@ public abstract class TeleVM implements MaxVM {
     private void refreshReferences() {
         Trace.begin(TRACE_VALUE, refreshReferencesTracer);
         final long startTimeMillis = System.currentTimeMillis();
-        final long teleRootEpoch = fields().InspectableHeapInfo_rootEpoch.readLong(this);
-        final long teleCollectionEpoch = fields().InspectableHeapInfo_collectionEpoch.readLong(this);
+        final long teleRootEpoch = teleHeapManager.readRootEpoch();
+        final long teleCollectionEpoch = teleHeapManager.readCollectionEpoch();
         if (teleCollectionEpoch != teleRootEpoch) {
             // A GC is in progress, local cache is out of date by definition but can't update yet
             assert teleCollectionEpoch != cachedCollectionEpoch;
@@ -1286,7 +1309,7 @@ public abstract class TeleVM implements MaxVM {
         refreshReferences();
         if (!isInGC()) {
             // Only attempt to update state when not in a GC.
-            teleHeapManager.refresh(processEpoch);
+            teleHeapManager.refreshMemoryRegions(processEpoch);
             teleClassRegistry.refresh(processEpoch);
             teleObjectFactory.refresh(processEpoch);
         }
