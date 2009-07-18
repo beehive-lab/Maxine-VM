@@ -393,10 +393,8 @@ public class MaxCiTargetMethod implements CiTargetMethod {
         if (method != null) {
             final MaxCiMethod maxMethod = (MaxCiMethod) method;
             return maxMethod.asClassMethodActor("directCall()");
-        } else {
-            // TODO: get the class method actor for a runtime method call
         }
-
+        // TODO: get the class method actor for a runtime method call
         return null;
     }
 
