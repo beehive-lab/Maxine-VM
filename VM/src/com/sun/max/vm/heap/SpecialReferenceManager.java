@@ -32,6 +32,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
@@ -76,6 +77,9 @@ public class SpecialReferenceManager {
      * requires a sticky monitor.
      */
     public static final Object LOCK = WithoutAccessCheck.getStaticField(JDK.java_lang_ref_Reference.javaClass(), "lock");
+    static {
+        JavaMonitorManager.bindStickyMonitor(LOCK, new StandardJavaMonitor());
+    }
 
     // These methods and their invocation stubs must be compiled in the image
     private static final CriticalMethod registerMethod = new CriticalMethod(JDK.java_lang_ref_Finalizer.javaClass(), "register", SignatureDescriptor.create(Void.TYPE, Object.class));

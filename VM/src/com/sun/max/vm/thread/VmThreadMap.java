@@ -24,6 +24,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
+import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -34,7 +35,7 @@ import com.sun.max.vm.runtime.*;
  * N.B. The (singleton) ACTIVE VmThreadMap object is bound with a
  * special JavaMonitor that prevents a terminated thread's state from
  * changing from TERMINATED during removeThreadLocals.
- * It is therefore imperiative that all synchronization in this class use the
+ * It is therefore imperative that all synchronization in this class use the
  * ACTIVE object.
  *
  * @author Ben L. Titzer
@@ -43,10 +44,42 @@ import com.sun.max.vm.runtime.*;
 public final class VmThreadMap {
 
     /**
+     * Specialised JavaMonitor intended to be bound to the
+     * VMThreadMap.ACTIVE object at image build time.
+     *
+     * MonitorEnter semantics are slightly modified to
+     * halt a meta-circular regression arising from thread termination clean-up.
+     * See VmThread.beTerminated().
+     *
+     * @author Simon Wilkinson
+     */
+    static class VMThreadMapJavaMonitor extends StandardJavaMonitor {
+
+        @Override
+        public void monitorEnter() {
+            final VmThread currentThread = VmThread.current();
+            if (currentThread.state() == Thread.State.TERMINATED) {
+                if (ownerThread != currentThread) {
+                    mutex.lock();
+                    ownerThread = currentThread;
+                    recursionCount = 1;
+                } else {
+                    recursionCount++;
+                }
+            } else {
+                super.monitorEnter();
+            }
+        }
+    }
+
+    /**
      * The global thread map of active threads in the VM. This object also serves the role
      * of a global GC and thread creation lock.
      */
     public static final VmThreadMap ACTIVE = new VmThreadMap();
+    static {
+        JavaMonitorManager.bindStickyMonitor(ACTIVE, new VMThreadMapJavaMonitor());
+    }
 
     private final IDMap idMap = new IDMap(64);
     private Pointer vmThreadLocalsListHead = Pointer.zero();
@@ -161,7 +194,7 @@ public final class VmThreadMap {
                  * an out of memory exception. There is a small possibility that the failure was in the
                  * actual OS thread creation but that would require a way to disambiguate.
                  */
-                throw new OutOfMemoryError("unable to create new native thread");
+                throw new OutOfMemoryError("Unable to create new native thread");
             }
             if (!waitForThreadStartup(count)) {
                 vmThread.beTerminated();
