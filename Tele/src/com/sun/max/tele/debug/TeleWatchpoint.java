@@ -581,7 +581,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
             }
 
             if (relocatableWatchpointsCounter == 1) {
-                final Pointer endOfGCField = teleProcess.teleVM().fields().InspectableHeapInfo_rootEpoch.staticTupleReference(teleProcess.teleVM()).toOrigin().plus(teleProcess.teleVM().fields().InspectableHeapInfo_rootEpoch.fieldActor().offset());
+                final Address endOfGCField = teleProcess.teleVM().rootEpochAddress();
                 teleProcess.teleVM().setRegionWatchpoint("GC End", new FixedMemoryRegion(endOfGCField, Size.fromInt(Pointer.size()), ""), true, false, true, false, true); //TODO: make it invisible
             }
 
@@ -633,8 +633,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
 
                     if (teleWatchpoint.getTeleObject() != null) {
                         if (relocatableWatchpointsCounter == 1) {
-                            final Pointer endOfGCField = teleProcess.teleVM().fields().InspectableHeapInfo_rootEpoch.staticTupleReference(teleProcess.teleVM()).
-                                                            toOrigin().plus(teleProcess.teleVM().fields().InspectableHeapInfo_rootEpoch.fieldActor().offset());
+                            final Address endOfGCField = teleProcess.teleVM().rootEpochAddress();
                             final TeleWatchpoint endOfGCWatchpoint = (TeleWatchpoint) findWatchpoint(endOfGCField);
                             removeWatchpoint(endOfGCWatchpoint);
                             relocatableWatchpointsCounter = 0;
