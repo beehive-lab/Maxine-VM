@@ -125,6 +125,7 @@ public class X86FrameMap extends FrameMap {
     }
 
     static final LIROperand asPointerOpr(Register reg, Architecture arch) {
+        assert reg != null;
         if (arch.is32bit()) {
             return asPointerOpr32(reg);
         } else if (arch.is64bit()) {

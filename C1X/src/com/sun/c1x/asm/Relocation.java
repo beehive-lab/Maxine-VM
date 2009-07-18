@@ -49,4 +49,34 @@ public class Relocation {
         return false;
     }
 
+    public static RelocationHolder specExternalWord(Pointer loc) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public static RelocationHolder specInternalWord(Pointer loc) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public static RelocationHolder specRuntimeCall() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public static RelocationHolder specSimple(Pointer loc) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public static RelocationHolder specOptVirtualCallRelocation(long address) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public static RelocationHolder specStaticCallRelocation(long address) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
 }

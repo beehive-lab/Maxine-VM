@@ -25,6 +25,8 @@ import com.sun.c1x.asm.RelocInfo.*;
 
 public class RelocationHolder {
 
+    public static final RelocationHolder none = new RelocationHolder();
+
     public Type type() {
         // TODO Auto-generated method stub
         return null;

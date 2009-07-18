@@ -27,7 +27,7 @@ package com.sun.c1x.asm;
  */
 public class CodeCache {
 
-    public static CodeBlob findBlob(Pointer target) {
+    public static CodeBlob findBlob(long target) {
         // TODO Auto-generated method stub
         return null;
     }

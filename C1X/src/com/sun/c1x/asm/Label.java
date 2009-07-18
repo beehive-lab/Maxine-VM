@@ -45,23 +45,15 @@ public class Label {
     // References to instructions that jump to this unresolved label.
     // These instructions need to be patched when the label is bound
     // using the platform-specific patchInstruction() method.
-    private int [] patches;
-    private int patchIndex;
-    private ArrayList <Integer> patchOverflow;
+    private List<Integer> patchOverflow;
 
     /**
      * Creates a new Label.
      */
     public Label() {
         super();
-        patches = new int [PATCHCACHESIZE];
+        patchOverflow = new ArrayList<Integer>(PATCHCACHESIZE);
     }
-
-    public void init() {
-        loc = -1;
-        patchIndex = 0;
-        patchOverflow = null;
-      }
 
     /**
      * Returns the position of the the Label in the code buffer.
@@ -110,24 +102,16 @@ public class Label {
     }
 
     public boolean isUnbound() {
-        return loc == -1 && patchIndex > 0;
+        return loc == -1 && patchOverflow.size() > 0;
     }
 
     public boolean isUnused() {
-        return loc == -1 && patchIndex == 0;
+        return loc == -1 && patchOverflow.size() == 0;
     }
 
-    public void addPatchAt(CodeBuffer cb, int branchLocator) {
+    public void addPatchAt(int branchLocator) {
         assert loc == -1 : "Label is unbounded";
-        if (patchIndex < PATCHCACHESIZE) {
-          patches[patchIndex] = branchLocator;
-        } else {
-          if (patchOverflow == null) {
-            //TODO: patchOverflow = cb->create_patch_overflow();
-          }
-          patchOverflow.add(branchLocator);
-        }
-        patchIndex++;
+        patchOverflow.add(branchLocator);
       }
 
     public void printInstruction(LogStream out) {
@@ -149,54 +133,18 @@ public class Label {
 
     }
 
-    public void patchInstructions(AbstractAssembler abstractAssembler) {
-        // TODO Auto-generated method stub
+    public void patchInstructions(AbstractAssembler masm) {
 
+        assert isBound() : "Label is bound";
+
+        int target = loc;
+        for (int branchLoc : patchOverflow) {
+            masm.pdPatchInstruction(branchLoc, target);
+        }
     }
 
     public void bindLoc(int locator) {
         // TODO Auto-generated method stub
 
     }
-
-//    class Label VALUE_OBJ_CLASS_SPEC {
-//        private:
-//         enum { PatchCacheSize = 4 };
-//
-//         // _loc encodes both the binding state (via its sign)
-//         // and the binding locator (via its value) of a label.
-//         //
-//         // _loc >= 0   bound label, loc() encodes the target (jump) position
-//         // _loc == -1  unbound label
-//         int _loc;
-//
-//         // References to instructions that jump to this unresolved label.
-//         // These instructions need to be patched when the label is bound
-//         // using the platform-specific patchInstruction() method.
-//         //
-//         // To avoid having to allocate from the C-heap each time, we provide
-//         // a local cache and use the overflow only if we exceed the local cache
-//         int _patches[PatchCacheSize];
-//         int _patch_index;
-//         GrowableArray<int>* _patch_overflow;
-//
-//         Label(const Label&) { ShouldNotReachHere(); }
-//
-//        public:
-//
-//         /**
-//          * After binding, be sure 'patch_instructions' is called later to link
-//          */
-//         void bind_loc(int loc) {
-//           assert(loc >= 0, "illegal locator");
-//           assert(_loc == -1, "already bound");
-//           _loc = loc;
-//         }
-//         void bind_loc(int pos, int sect);  // = bind_loc(locator(pos, sect))
-//
-//       #ifndef PRODUCT
-//         // Iterates over all unresolved instructions for printing
-//         void print_instructions(MacroAssembler* masm) const;
-//       #endif // PRODUCT
-
 }

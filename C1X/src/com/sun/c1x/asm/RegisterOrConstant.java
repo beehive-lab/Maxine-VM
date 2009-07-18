@@ -66,4 +66,9 @@ public class RegisterOrConstant {
         return 0;
     }
 
+    public Register registerOrNoReg() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
 }

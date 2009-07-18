@@ -108,6 +108,10 @@ public final class BinaryImageGenerator {
             "For the Java tester, this option specifies that each test case's method should be compiled " +
             "with the JIT compiler (helpful for testing JIT->JIT and opt->JIT calls).");
 
+    private final Option<Boolean> testCalleeC1X = options.newBooleanOption("test-callee-c1x", false,
+        "For the Java tester, this option specifies that each test case's method should be compiled " +
+        "with the C1X compiler (helpful for testing C1X->C1X and opt->C1X calls).");
+
     private final Option<Boolean> testUnlinked = options.newBooleanOption("test-unlinked", false,
             "For the Java tester, this option specifies that each test case method should be unlinked.");
 
@@ -133,6 +137,11 @@ public final class BinaryImageGenerator {
      * Used by the Java tester to indicate whether to compile the tests themselves with the JIT.
      */
     public static boolean calleeJit = false;
+
+    /**
+     * Used by the Java tester to indicate whether to compile the tests themselves with the JIT.
+     */
+    public static boolean calleeC1X = false;
 
     /**
      * Used by the Java tester to indicate that testing requires dynamically loading native libraries.
@@ -207,6 +216,7 @@ public final class BinaryImageGenerator {
                 VMOption.setVMArguments(vmArguments.getValue().split("\\s+"));
             }
 
+            BinaryImageGenerator.calleeC1X = testCalleeC1X.getValue();
             BinaryImageGenerator.calleeJit = testCalleeJit.getValue();
             BinaryImageGenerator.callerJit = testCallerJit.getValue();
             BinaryImageGenerator.unlinked = testUnlinked.getValue();

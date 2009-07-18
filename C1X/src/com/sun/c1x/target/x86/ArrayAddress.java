@@ -29,8 +29,7 @@ import com.sun.c1x.asm.*;
  */
 public class ArrayAddress extends Address {
 
-    public ArrayAddress(int displacement) {
-        super(displacement);
+    public ArrayAddress() {
         // TODO Auto-generated constructor stub
     }
 
