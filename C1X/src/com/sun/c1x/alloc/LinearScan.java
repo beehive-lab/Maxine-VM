@@ -2875,7 +2875,7 @@ public class LinearScan extends RegisterAllocator {
                 first = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rnameFirst));
                 // %%% This is probably a waste but we'll keep things as they were for now
                 if (true) {
-                    CiLocation rnameSecond = rnameFirst.next();
+                    CiLocation rnameSecond = nextLocation(rnameFirst);
                     second = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rnameSecond));
                 }
 
@@ -2905,7 +2905,7 @@ public class LinearScan extends RegisterAllocator {
                 first = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rnameFirst));
                 // %%% This is probably a waste but we'll keep things as they were for now
                 if (true) {
-                    CiLocation rnameSecond = rnameFirst.next();
+                    CiLocation rnameSecond = nextLocation(rnameFirst);
                     second = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rnameSecond));
                 }
 
@@ -2926,6 +2926,11 @@ public class LinearScan extends RegisterAllocator {
             scopeValues.add(first);
             return 2;
         }
+    }
+
+    private CiLocation nextLocation(CiLocation rnameFirst) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     private boolean floatSavedAsDouble() {
