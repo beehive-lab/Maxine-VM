@@ -25,6 +25,7 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.alloc.Interval.*;
 import com.sun.c1x.bytecode.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
@@ -2211,8 +2212,8 @@ public class LinearScan extends RegisterAllocator {
     // * Phase 7: assign register numbers back to LIR
     // (includes computation of debug information and oop maps)
 
-    VMReg vmRegForInterval(Interval interval) {
-        VMReg reg = interval.cachedVmReg();
+    CiLocation vmRegForInterval(Interval interval) {
+        CiLocation reg = interval.cachedVmReg();
         if (!reg.isValid()) {
             reg = vmRegForOperand(operandForInterval(interval));
             interval.setCachedVmReg(reg);
@@ -2221,7 +2222,7 @@ public class LinearScan extends RegisterAllocator {
         return reg;
     }
 
-    VMReg vmRegForOperand(LIROperand opr) {
+    CiLocation vmRegForOperand(LIROperand opr) {
         assert opr.isOop() : "currently only implemented for oop operands";
         return frameMap().regname(opr);
     }
@@ -2593,7 +2594,7 @@ public class LinearScan extends RegisterAllocator {
                 // caller-save registers must not be included into oop-maps at calls
                 assert !isCallSite || assignedReg >= nofRegs || !isCallerSave(assignedReg) : "interval is in a caller-save register at a call . register will be overwritten";
 
-                VMReg name = vmRegForInterval(interval);
+                CiLocation name = vmRegForInterval(interval);
                 map.setOop(name);
 
                 // Spill optimization: when the stack value is guaranteed to be always correct,
@@ -2784,7 +2785,7 @@ public class LinearScan extends RegisterAllocator {
             ScopeValue sv = scopeValueCache[cacheIdx];
             if (sv == null) {
                 Location.LocationType locType = isOop ? Location.LocationType.Oop : Location.LocationType.Normal;
-                VMReg rname = frameMap().regname(opr);
+                CiLocation rname = frameMap().regname(opr);
                 sv = new LocationValue(Location.newRegLoc(locType, rname));
                 scopeValueCache[cacheIdx] = sv;
             }
@@ -2796,7 +2797,7 @@ public class LinearScan extends RegisterAllocator {
             return 1;
 
         } else if (opr.isSingleXmm() && compilation.target.arch.isX86()) {
-            VMReg rname = opr.asRegister().asVMReg();
+            CiLocation rname = opr.asRegister().asVMReg();
             LocationValue sv = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rname));
 
             scopeValues.add(sv);
@@ -2814,7 +2815,7 @@ public class LinearScan extends RegisterAllocator {
             }
 
             Location.LocationType locType = floatSavedAsDouble() ? Location.LocationType.FloatInDbl : Location.LocationType.Normal;
-            VMReg rname = frameMap().fpuRegname(opr.fpuRegnr());
+            CiLocation rname = frameMap().fpuRegname(opr.fpuRegnr());
             LocationValue sv = new LocationValue(Location.newRegLoc(locType, rname));
 
             scopeValues.add(sv);
@@ -2850,16 +2851,16 @@ public class LinearScan extends RegisterAllocator {
             } else if (opr.isDoubleCpu()) {
 
                 if (compilation.target.arch.is64bit()) {
-                    VMReg rnameFirst = opr.asRegisterLo().asVMReg();
+                    CiLocation rnameFirst = opr.asRegisterLo().asVMReg();
                     first = new LocationValue(Location.newRegLoc(Location.LocationType.Long, rnameFirst));
                     second = int0ScopeValue;
                 } else {
-                    VMReg rnameFirst = opr.asRegisterLo().asVMReg();
-                    VMReg rnameSecond = opr.asRegisterHi().asVMReg();
+                    CiLocation rnameFirst = opr.asRegisterLo().asVMReg();
+                    CiLocation rnameSecond = opr.asRegisterHi().asVMReg();
 
                     if (compilation.target.arch.hiWordOffsetInBytes < compilation.target.arch.loWordOffsetInBytes) {
                         // lo/hi and swapped relative to first and second, so swap them
-                        VMReg tmp = rnameFirst;
+                        CiLocation tmp = rnameFirst;
                         rnameFirst = rnameSecond;
                         rnameSecond = tmp;
                     }
@@ -2870,18 +2871,18 @@ public class LinearScan extends RegisterAllocator {
 
             } else if (opr.isDoubleXmm() && compilation.target.arch.isX86()) {
                 assert opr.fpuRegnrLo() == opr.fpuRegnrHi() : "assumed in calculation";
-                VMReg rnameFirst = opr.asRegister().asVMReg();
+                CiLocation rnameFirst = opr.asRegister().asVMReg();
                 first = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rnameFirst));
                 // %%% This is probably a waste but we'll keep things as they were for now
                 if (true) {
-                    VMReg rnameSecond = rnameFirst.next();
+                    CiLocation rnameSecond = rnameFirst.next();
                     second = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rnameSecond));
                 }
 
             } else if (opr.isDoubleFpu()) {
                 // On SPARC, fpuRegnrLo/fpuRegnrHi represents the two halves of
                 // the double as float registers in the native ordering. On X86,
-                // fpuRegnrLo is a FPU stack slot whose VMReg represents
+                // fpuRegnrLo is a FPU stack slot whose VMRegImpl represents
                 // the low-order word of the double and fpuRegnrLo + 1 is the
                 // name for the other half. *first and *second must represent the
                 // least and most significant words, respectively.
@@ -2899,12 +2900,12 @@ public class LinearScan extends RegisterAllocator {
                     assert opr.fpuRegnrLo() == opr.fpuRegnrHi() + 1 : "assumed in calculation (only fpuRegnrHi is used)";
                 }
 
-                VMReg rnameFirst = frameMap().fpuRegname(opr.fpuRegnrHi());
+                CiLocation rnameFirst = frameMap().fpuRegname(opr.fpuRegnrHi());
 
                 first = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rnameFirst));
                 // %%% This is probably a waste but we'll keep things as they were for now
                 if (true) {
-                    VMReg rnameSecond = rnameFirst.next();
+                    CiLocation rnameSecond = rnameFirst.next();
                     second = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rnameSecond));
                 }
 

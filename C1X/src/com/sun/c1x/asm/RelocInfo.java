@@ -46,5 +46,32 @@ public class RelocInfo {
         dataPrefixTag
         // tag for a prefix (carries data arguments)
         // typeMask = 15 // A mask which selects only the above values
-    };
+    }
+
+    public enum RelocInfoEncoding {
+        ValueWidth((Short.SIZE / 8) * Byte.SIZE),
+        TypeWidth(4),   // == log2(typeMask+1)
+        NontypeWidth(ValueWidth.value - TypeWidth.value),
+        DatalenWidth(NontypeWidth.value - 1),
+        DatalenTag(1 << DatalenWidth.value),  // or-ed into value
+        DatalenLimit(1 << DatalenWidth.value),
+        DatalenMask((1 << DatalenWidth.value) - 1);
+
+        public int value;
+
+        private RelocInfoEncoding(int value) {
+            this.value = value;
+        }
+      }
+
+    protected short value;
+
+    protected enum RawBitsToken {
+        RawBits
+    }
+
+    protected RelocInfo(Type type, RawBitsToken ignore, int bits) {
+        this.value = (short) ((type.ordinal() << RelocInfoEncoding.NontypeWidth.value) + bits);
+    }
+
 }

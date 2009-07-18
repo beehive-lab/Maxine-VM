@@ -343,7 +343,7 @@ public class X86LIRAssembler extends LIRAssembler {
         // The frameMap records size in slots (32bit word)
 
         // subtract two words to account for return address and link
-        return (frameMap().framesize() - (2 * VMRegImpl.slotsPerWord(wordSize))) * VMRegImpl.stackSlotSize;
+        return (frameMap().framesize() - (2 * CiLocation.slotsPerWord(wordSize))) * CiLocation.stackSlotSize;
     }
 
     @Override

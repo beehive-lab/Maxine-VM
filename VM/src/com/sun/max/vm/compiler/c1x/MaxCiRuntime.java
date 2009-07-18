@@ -25,7 +25,6 @@ import java.util.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.target.*;
 import com.sun.c1x.target.x86.X86Register;
-import com.sun.c1x.target.x86.Address;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.max.vm.actor.holder.*;

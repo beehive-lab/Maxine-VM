@@ -22,8 +22,10 @@ package com.sun.c1x.alloc;
 
 import java.util.*;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.target.*;
+import com.sun.c1x.target.x86.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
@@ -115,7 +117,7 @@ public class Interval {
 
     int cachedTo; // cached value: to of last range (-1: not cached)
     LIROperand cachedOpr;
-    VMReg cachedVmReg;
+    CiLocation cachedVmReg;
 
     Interval splitParent; // the original interval where this interval is derived from
     List<Interval> splitChildren; // list of all intervals that are split off from this interval (only available for
@@ -282,7 +284,7 @@ public class Interval {
         return cachedOpr;
     }
 
-    VMReg cachedVmReg() {
+    CiLocation cachedVmReg() {
         return cachedVmReg;
     }
 
@@ -290,7 +292,7 @@ public class Interval {
         cachedOpr = opr;
     }
 
-    void setCachedVmReg(VMReg reg) {
+    void setCachedVmReg(CiLocation reg) {
         cachedVmReg = reg;
     }
 

@@ -105,6 +105,33 @@ public class Util {
     }
 
     /**
+     * Gets a word with the nth bit set.
+     * @param n the nth bit to set
+     * @return an integer value with the nth bit set
+     */
+    public static int nthBit(int n) {
+        return (n >= Integer.SIZE ? 0 : 1 << (n));
+    }
+
+    /**
+     * Gets a word with the right-most n bits set.
+     * @param n the number of rigth most bits to set
+     * @return an integer value with the right-most n bits set
+     */
+    public static int rightNBits(int n) {
+        return nthBit(n) - 1;
+    }
+
+    /**
+     * Gets a word with the left-most n bits set.
+     * @param n the number of right-most bits to set
+     * @return an integer value with the right-most n bits set
+     */
+    public static int leftNBits(int n) {
+        return (rightNBits(n) << (n >= Integer.SIZE ? 0 : (Integer.SIZE - n)));
+    }
+
+    /**
      * Statically cast an object to an arbitrary Object type. Dynamically checked.
      */
     @SuppressWarnings("unchecked")

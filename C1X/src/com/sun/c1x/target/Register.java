@@ -20,7 +20,8 @@
  */
 package com.sun.c1x.target;
 
-import com.sun.c1x.lir.*;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.target.x86.*;
 
 /**
  * The <code>Register</code> class definition.
@@ -80,7 +81,7 @@ public class Register {
         return checkFlag(RegisterFlag.XMM);
     }
 
-    public VMReg asVMReg() {
+    public CiLocation asVMReg() {
         // TODO Auto-generated method stub
         return null;
     }
@@ -112,5 +113,4 @@ public class Register {
 
         return true;
     }
-
 }

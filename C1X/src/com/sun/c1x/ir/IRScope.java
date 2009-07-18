@@ -210,4 +210,12 @@ public class IRScope {
         }
         return myMax + calleeMax;
     }
+
+    /**
+     * @return
+     */
+    public C1XCompilation compilation() {
+        // TODO Auto-generated method stub
+        return compilation;
+    }
 }
