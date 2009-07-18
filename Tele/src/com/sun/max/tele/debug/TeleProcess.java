@@ -110,8 +110,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
          */
         private boolean handleWatchpoint(TeleNativeThread thread, MaxWatchpoint watchpoint, Address triggeredWatchpointAddress) {
             assert thread.state() == ThreadState.WATCHPOINT;
-            final Pointer gcEnd = teleVM().fields().InspectableHeapInfo_rootEpoch.staticTupleReference(teleVM()).toOrigin().plus(teleVM().fields().InspectableHeapInfo_rootEpoch.fieldActor().offset());
-            if (triggeredWatchpointAddress.equals(gcEnd)) {
+            if (triggeredWatchpointAddress.equals(teleVM().rootEpochAddress())) {
                 // The counter signifying end of a GC has been changed.
                 // TODO: handle relocatable watchpoints (stop-the-world case)
                 watchpointFactory().reenableWatchpointsAfterGC();
