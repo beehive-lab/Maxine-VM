@@ -77,7 +77,7 @@ public class OopMap {
         setOmvData(null);
         setOmvCount(0);
 
-        locsLength = CiLocation.stack2reg(0).value() + frameSize + argCount;
+        locsLength = new CiLocation(0).first.number + frameSize + argCount;
         locsUsed = new ArrayList<OopTypes>(locsLength);
         for (int i = 0; i < locsLength; i++) {
             locsUsed.set(i, OopTypes.UnusedValue);
@@ -155,17 +155,17 @@ public class OopMap {
     // frameSize units are stack-slots (4 bytes) NOT intptrT; we can name odd
     // slots to hold 4-byte values like ints and floats in the LP64 build.
     public void setOop(CiLocation reg) {
-        setXxx(reg, OopTypes.OopValue, CiLocation.bad());
+        setXxx(reg, OopTypes.OopValue, CiLocation.InvalidLocation);
     }
 
     public void setValue(CiLocation reg) {
         // At this time, we only need value entries in our OopMap when ZapDeadCompiledLocals is active.
         // if (ZapDeadCompiledLocals)
-        setXxx(reg, OopTypes.ValueValue, CiLocation.bad());
+        setXxx(reg, OopTypes.ValueValue, CiLocation.InvalidLocation);
     }
 
     public void setNarrowoop(CiLocation reg) {
-        setXxx(reg, OopTypes.NarrowOopValue, CiLocation.bad());
+        setXxx(reg, OopTypes.NarrowOopValue, CiLocation.InvalidLocation);
     }
 
     public void setDead(CiLocation reg) {
@@ -185,14 +185,14 @@ public class OopMap {
     }
 
     public void setXxx(CiLocation reg, OopTypes x, CiLocation optional) {
-        assert reg.value() < locsLength : "too big reg value for stack size";
-        assert locsUsed.get(reg.value()) == OopTypes.UnusedValue : "cannot insert twice";
-        locsUsed.add(reg.value(), x);
+        assert reg.first.number < locsLength : "too big reg value for stack size";
+        assert locsUsed.get(reg.first.number) == OopTypes.UnusedValue : "cannot insert twice";
+        locsUsed.add(reg.first.number, x);
         OopMapValue o = new OopMapValue(reg, x);
 
         if (x == OopTypes.CalleeSavedValue) {
             // This can never be a stack location, so we don't need to transform it.
-            assert optional.isReg() : "Trying to callee save a stack location";
+            assert optional.isRegister() : "Trying to callee save a stack location";
             o.setContentReg(optional);
         } else if (x == OopTypes.DerivedOopValue) {
             o.setContentReg(optional);

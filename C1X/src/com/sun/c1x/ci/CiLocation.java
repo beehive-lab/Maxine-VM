@@ -20,9 +20,7 @@
  */
 package com.sun.c1x.ci;
 
-import com.sun.c1x.lir.*;
 import com.sun.c1x.target.*;
-import com.sun.c1x.util.*;
 
 /**
  *
@@ -30,6 +28,8 @@ import com.sun.c1x.util.*;
  *
  */
 public final class CiLocation {
+
+    public static final CiLocation InvalidLocation = new CiLocation();
 
     public final Register first;
     public final Register second;
@@ -47,6 +47,12 @@ public final class CiLocation {
         stackOffset = 0;
     }
 
+    private CiLocation() {
+        this.first = null;
+        this.second = null;
+        this.stackOffset = 0;
+    }
+
     public CiLocation(int stackOffset) {
         assert stackOffset > 0;
         this.first = null;
@@ -62,110 +68,30 @@ public final class CiLocation {
         return second != null;
     }
 
+    public boolean isRegister() {
+        return isSingleRegister() || isDoubleRegister();
+    }
+
     public boolean isStackOffset() {
         return stackOffset > 0;
     }
 
-    // From VMRegImpl
-
-    public static int stackSlotSize = 4;
-
-    public static int slotsPerWord(int wordSize) {
-        return wordSize / stackSlotSize;
-    }
-
-    /**
-     * @return
-     */
-    public static CiLocation bad() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    /**
-     * @param i
-     * @return
-     */
-        // TODO Auto-generated method stub
-    public static CiLocation asVMReg(int i) {
-        return null;
-    }
-
-    /**
-     * @return
-     */
-    public int value() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    /**
-     * @return
-     */
-    public String name() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
     public boolean isValid() {
-        // TODO Auto-generated method stub
-        return true;
-    }
-
-    public CiLocation next() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    /**
-     * @return
-     */
-    public boolean isReg() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    /**
-     * @return
-     */
-    public boolean isStack() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    /**
-     * @return
-     */
-    public int reg2stack() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    /**
-     * @param tty
-     */
-    public void printOn(LogStream tty) {
-        // TODO Auto-generated method stub
+        return isStackOffset() || isRegister();
 
     }
 
-    /**
-     * @param contentReg
-     * @param b
-     * @return
-     */
-    public static CiLocation asVMReg(short contentReg, boolean b) {
-        // TODO Auto-generated method stub
-        return null;
+    @Override
+    public String toString() {
+        if (isSingleRegister()) {
+            return first.name;
+        } else if (isDoubleRegister()) {
+            return first.name + "+" + second.name;
+        } else if (isStackOffset()) {
+            return "STACKED REG";
+        } else {
+            assert !this.isValid();
+            return "BAD";
+        }
     }
-
-    /**
-     * @param i
-     * @return
-     */
-    public static OopMapValue stack2reg(int i) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
 }

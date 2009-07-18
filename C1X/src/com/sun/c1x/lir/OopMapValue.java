@@ -131,11 +131,11 @@ public class OopMapValue {
                 break;
             case CalleeSavedValue:
                 st.print("Callers_");
-                optional.printOn(st);
+                st.print(optional.toString());
                 break;
             case DerivedOopValue:
                 st.print("DerivedOop_");
-                optional.printOn(st);
+                st.print(optional.toString());
                 break;
             default:
                 Util.shouldNotReachHere();
@@ -145,7 +145,7 @@ public class OopMapValue {
     // Constructors
     public OopMapValue() {
         setValue(0);
-        setContentReg(CiLocation.bad());
+        setContentReg(CiLocation.InvalidLocation);
     }
 
     public OopMapValue(CiLocation reg, OopTypes t) {
@@ -165,14 +165,14 @@ public class OopMapValue {
     public void writeOn(CompressedWriteStream stream) {
         stream.writeInt(value());
         if (isCalleeSaved() || isDerivedOop()) {
-            stream.writeInt(contentReg().value());
+            stream.writeInt(contentReg().first.number);
         }
     }
 
     public void readFrom(CompressedReadStream stream) {
         setValue(stream.readInt());
         if (isCalleeSaved() || isDerivedOop()) {
-            setContentReg(CiLocation.asVMReg((short) stream.readInt(), true));
+            setContentReg(OopMapValue.asVMReg((short) stream.readInt(), true));
         }
     }
 
@@ -218,7 +218,7 @@ public class OopMapValue {
     }
 
     CiLocation reg() {
-        return CiLocation.asVMReg((value() & OopMapValueMask.RegisterMaskInPlace.value) >> OopMapValueShift.RegisterShift.value);
+        return Location.asVMReg((value() & OopMapValueMask.RegisterMaskInPlace.value) >> OopMapValueShift.RegisterShift.value);
     }
 
     OopTypes type() {
@@ -226,40 +226,40 @@ public class OopMapValue {
     }
 
     static boolean legalVmRegName(CiLocation p) {
-        return (p.value() == (p.value() & OopMapValueMask.RegisterMask.value));
+        return (p.first.number == (p.first.number & OopMapValueMask.RegisterMask.value));
     }
 
     void setRegType(CiLocation p, OopTypes t) {
-        setValue((p.value() << OopMapValueShift.RegisterShift.value) | t.mask());
+        setValue((p.first.number << OopMapValueShift.RegisterShift.value) | t.mask());
         assert reg() == p : "sanity check";
         assert type() == t : "sanity check";
     }
 
     CiLocation contentReg() {
-        return CiLocation.asVMReg(contentReg, true);
+        return OopMapValue.asVMReg(contentReg, true);
     }
 
     void setContentReg(CiLocation r) {
-        contentReg = (short) r.value();
+        contentReg = (short) r.first.number;
     }
 
     // Physical location queries
     boolean isRegisterLoc() {
-        return reg().isReg();
+        return reg().isRegister();
     }
 
     boolean isStackLoc() {
-        return reg().isStack();
+        return reg().isStackOffset();
     }
 
     // Returns offset from sp.
     int stackOffset() {
         assert isStackLoc() : "must be stack location";
-        return reg().reg2stack();
+        return reg().stackOffset;
     }
 
     void printOn(LogStream tty) {
-        reg().printOn(tty);
+        TTY.print(reg().toString());
         tty.print("=");
         printRegisterType(type(), contentReg(), tty);
         tty.print(" ");
@@ -267,5 +267,15 @@ public class OopMapValue {
 
     void print() {
         printOn(TTY.out);
+    }
+
+    /**
+     * @param contentReg
+     * @param b
+     * @return
+     */
+    public static CiLocation asVMReg(short contentReg, boolean b) {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

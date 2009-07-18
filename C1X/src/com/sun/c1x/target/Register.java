@@ -21,7 +21,6 @@
 package com.sun.c1x.target;
 
 import com.sun.c1x.ci.*;
-import com.sun.c1x.target.x86.*;
 
 /**
  * The <code>Register</code> class definition.
