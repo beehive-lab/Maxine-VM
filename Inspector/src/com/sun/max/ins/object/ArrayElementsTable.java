@@ -144,7 +144,7 @@ public final class ArrayElementsTable extends InspectorTable {
                             menu.add(actions().setArrayElementWatchpoint(teleObject, elementKind, startOffset, model.rowToElementIndex(hitRowIndex), indexPrefix, "Watch this array element"));
                             menu.add(actions().setObjectWatchpoint(teleObject, "Watch this array's memory"));
                             final MemoryRegion memoryRegion = model.rowToMemoryRegion(hitRowIndex);
-                            menu.add(actions().editWatchpoint(memoryRegion, "Edit memory watchpoint"));
+                            menu.add(new WatchpointSettingsMenu(model.rowToWatchpoint(hitRowIndex)));
                             menu.add(actions().removeWatchpoint(memoryRegion, "Remove memory watchpoint"));
                             menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                         }
@@ -347,6 +347,17 @@ public final class ArrayElementsTable extends InspectorTable {
         }
     }
 
+    /**
+     * @return color the text specially in the row where a watchpoint is triggered
+     */
+    private Color getRowTextColor(int row) {
+        final MaxWatchpointEvent watchpointEvent = maxVMState().watchpointEvent();
+        if (watchpointEvent != null && model.rowToMemoryRegion(row).contains(watchpointEvent.address())) {
+            return style().debugIPTagColor();
+        }
+        return style().defaultTextColor();
+    }
+
     private final class TagRenderer extends MemoryTagTableCellRenderer implements TableCellRenderer {
 
         TagRenderer() {
@@ -354,7 +365,9 @@ public final class ArrayElementsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            return getRenderer(model.rowToMemoryRegion(row), focus().thread(), model.rowToWatchpoint(row));
+            final Component renderer = getRenderer(model.rowToMemoryRegion(row), focus().thread(), model.rowToWatchpoint(row));
+            renderer.setForeground(getRowTextColor(row));
+            return renderer;
         }
     }
 
@@ -366,6 +379,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             setValue(model.rowToOffset(row), objectOrigin);
+            setForeground(getRowTextColor(row));
             return this;
         }
     }
@@ -378,6 +392,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             setValue(model.rowToOffset(row), objectOrigin);
+            setForeground(getRowTextColor(row));
             return this;
         }
     }
@@ -390,6 +405,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             setValue(row, model.rowToOffset(row), objectOrigin);
+            setForeground(getRowTextColor(row));
             return this;
         }
     }
