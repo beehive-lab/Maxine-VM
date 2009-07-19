@@ -20,6 +20,7 @@
  */
 package com.sun.max.tele.object;
 
+import com.sun.max.atomic.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
@@ -66,7 +67,8 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject implements MemoryRe
      * Reads from the {@link TeleVM} the mark field of the {@link RuntimeMemoryRegion}.
      */
     public Address mark() {
-        return teleVM().fields().RuntimeMemoryRegion_mark.readWord(reference()).asAddress();
+        final Reference mark = teleVM().fields().RuntimeMemoryRegion_mark.readReference(reference());
+        return mark.readWord(AtomicWord.valueOffset()).asPointer();
     }
 
     /**

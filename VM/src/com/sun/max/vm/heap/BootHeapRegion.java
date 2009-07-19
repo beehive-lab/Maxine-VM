@@ -60,7 +60,7 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
 
     private void verifyCells() {
         Pointer cell = start().asPointer();
-        while (cell.lessThan(mark)) {
+        while (cell.lessThan(mark())) {
             if (MaxineVM.isDebug()) {
                 cell = cell.plusWords(1);
                 if (!DebugHeap.isValidCellTag(cell.getWord(-1))) {

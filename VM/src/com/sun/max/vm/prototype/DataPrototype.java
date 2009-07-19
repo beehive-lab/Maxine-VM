@@ -27,6 +27,7 @@ import java.util.*;
 import java.util.Arrays;
 import java.util.concurrent.*;
 
+import com.sun.max.atomic.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
@@ -1067,7 +1068,6 @@ public final class DataPrototype extends Prototype {
 
     private static final Utf8Constant codeStart = SymbolTable.makeSymbol("codeStart");
     private static final Utf8Constant start = SymbolTable.makeSymbol("start");
-    private static final Utf8Constant mark = SymbolTable.makeSymbol("mark");
 
     /**
      * Assign relocation flags for target methods.
@@ -1102,9 +1102,8 @@ public final class DataPrototype extends Prototype {
         assignTargetMethodRelocationFlags(startFieldOffset);
         setRelocationFlag(objectToCell.get(Code.bootCodeRegion).plus(startFieldOffset));
 
-        final int markFieldOffset = getInstanceFieldOffsetInTupleCell(LinearAllocatorHeapRegion.class, mark, JavaTypeDescriptor.forJavaClass(Address.class));
-        setRelocationFlag(objectToCell.get(Heap.bootHeapRegion).plus(markFieldOffset));
-        setRelocationFlag(objectToCell.get(Code.bootCodeRegion).plus(markFieldOffset));
+        setRelocationFlag(objectToCell.get(Heap.bootHeapRegion.mark).plus(AtomicWord.valueOffset()));
+        setRelocationFlag(objectToCell.get(Code.bootCodeRegion.mark).plus(AtomicWord.valueOffset()));
 
         Trace.end(1, "assignRelocationFlags");
     }

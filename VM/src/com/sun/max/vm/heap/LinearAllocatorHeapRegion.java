@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.heap;
 
+import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -33,17 +34,16 @@ import com.sun.max.vm.runtime.*;
 public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements HeapRegion {
 
     public void setMark(Address mark) {
-        this.mark = mark.wordAligned();
+        this.mark.set(mark.wordAligned());
     }
 
     public LinearAllocatorHeapRegion(String description) {
-        mark = Address.zero();
         setDescription(description);
     }
 
     public LinearAllocatorHeapRegion(Address start, Size size, String description) {
         super(start, size);
-        mark = start().wordAligned();
+        mark.set(start.wordAligned());
         setDescription(description);
     }
 
@@ -51,18 +51,38 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
         return VMConfiguration.target().debugging() ? cellSize.plus(VMConfiguration.target().wordWidth().numberOfBytes) : cellSize;
     }
 
-    public Pointer allocateCell(Size cellSize) {
-        assert mark.isWordAligned();
-        final Pointer cellStart = VMConfiguration.target().debugging() ? mark.plus(Word.size()).asPointer() : mark.asPointer();
-        final Address cellEnd = cellStart.plus(cellSize);
-        if (cellEnd.greaterThan(end())) {
-            if (MaxineVM.isPrototyping()) {
-                ProgramError.unexpected("out of space in linear allocator region");
-            }
-            return Pointer.zero();
+    /**
+     *
+     * @param size the requested cell size to be allocated
+     * @param adjustForDebugTag specifies if an extra word is to be reserved before the cell for the debug tag word
+     * @return
+     */
+    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
+    private Pointer allocate(Size size, boolean adjustForDebugTag) {
+        if (!size.isWordAligned()) {
+            FatalError.unexpected("Allocation size must be word aligned");
         }
-        mark = cellEnd.wordAligned();
-        return cellStart;
+
+        Pointer oldAllocationMark;
+        Pointer cell;
+        Address end;
+        do {
+            oldAllocationMark = mark();
+            cell = adjustForDebugTag ? DebugHeap.adjustForDebugTag(oldAllocationMark) : oldAllocationMark;
+            end = cell.plus(size);
+            if (end.greaterThan(end())) {
+                if (MaxineVM.isPrototyping()) {
+                    ProgramError.unexpected("out of space in linear allocator region");
+                }
+                return Pointer.zero();
+            }
+        } while (mark.compareAndSwap(oldAllocationMark, end) != oldAllocationMark);
+        return cell;
+    }
+
+    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
+    public Pointer allocateCell(Size cellSize) {
+        return allocate(cellSize, true);
     }
 
     /**
@@ -74,15 +94,9 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
      *
      * @return start address of allocated space
      */
+    @NO_SAFEPOINTS("object create and initialization must be atomic")
     public Pointer allocateSpace(Size spaceSize) {
-        assert mark.isWordAligned();
-        final Pointer spaceStart = mark.asPointer();
-        final Address spaceEnd = spaceStart.plus(spaceSize);
-        if (spaceEnd.greaterThan(end())) {
-            return Pointer.zero();
-        }
-        mark = spaceEnd.wordAligned();
-        return spaceStart;
+        return allocate(spaceSize, false);
     }
 
     /**
@@ -94,7 +108,7 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
 
     public void visitCells(CellVisitor cellVisitor) {
         Pointer cell = start().asPointer();
-        while (cell.lessThan(mark)) {
+        while (cell.lessThan(mark())) {
             if (MaxineVM.isDebug()) {
                 cell = cell.plusWords(1);
                 if (!DebugHeap.isValidCellTag(cell.getWord(-1))) {

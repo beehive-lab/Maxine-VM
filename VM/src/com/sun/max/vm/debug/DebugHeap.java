@@ -36,7 +36,8 @@ import com.sun.max.vm.type.*;
 
 /**
  * A collection of routines useful for placing and operating on special
- * tags in an object heap in aid of debugging a garbage collector.
+ * tags in an object heap in aid of debugging a garbage collector in
+ * a {@linkplain MaxineVM#isDebug() debug} build of the VM.
  *
  * @author Doug Simon
  */
@@ -222,6 +223,21 @@ public final class DebugHeap {
                 cell = cell.plus(Layout.size(origin));
             }
         }
+    }
+
+    /**
+     * Increments a given allocation mark to reserve space for a {@linkplain writeCellTag debug tag} if
+     * this is a {@linkplain MaxineVM#isDebug() debug} VM.
+     *
+     * @param mark an address at which a cell will be allocated
+     * @return the given allocation address increment by 1 word if necessary
+     */
+    @INLINE
+    public static Pointer adjustForDebugTag(Pointer mark) {
+        if (MaxineVM.isDebug()) {
+            return mark.plusWords(1);
+        }
+        return mark;
     }
 
 }

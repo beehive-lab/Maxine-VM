@@ -145,7 +145,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     /**
      * The global allocation mark.
      */
-    private AtomicWord allocationMark;
+    private final AtomicWord allocationMark = new AtomicWord();
 
     /**
      * Flags if TLABs are being used for allocation.
@@ -196,8 +196,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 heapRootsVerifier = new SequentialHeapRootsScanner(pointerIndexGripVerifier);
                 tlabPadObjectOverhead = PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub().specificLayout.headerSize() + debugTagSize;
             }
-
-            allocationMark = new AtomicWord();
 
         } else if (phase == MaxineVM.Phase.PRISTINE) {
             final Size size = Heap.initialSize().dividedBy(2);
@@ -732,6 +730,14 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         return allocationMark().minus(toSpace.start()).asSize();
     }
 
+    /**
+     * Allocates space for a cell being copied to 'to space' during GC.
+     * Note that this allocation is only ever performed by the GC thread and so there's no
+     * need to use compare-and-swap when updating the allocation mark.
+     *
+     * @param size the size of the cell being copied
+     * @return the start of the allocated cell in 'to space'
+     */
     private Pointer gcAllocate(Size size) {
         Pointer cell = allocationMark().asPointer();
         if (MaxineVM.isDebug()) {
@@ -775,7 +781,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     private Pointer allocate(Size size) {
         final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
         final Pointer oldAllocationMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
-        final Pointer cell = adjustForDebugTag(oldAllocationMark);
+        final Pointer cell = DebugHeap.adjustForDebugTag(oldAllocationMark);
         final Pointer end = cell.plus(size);
         if (end.greaterThan(enabledVmThreadLocals.getWord(TLAB_TOP.index).asAddress())) {
             // This path will always be taken if TLAB allocation is not enabled
@@ -807,11 +813,11 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             if (size.plus(MaxineVM.isDebug() ? Word.size() : 0).plus(tlabPadObjectOverhead).greaterEqual(tlabSize)) {
                 // Allocate large objects (i.e. those that won't fit in a TLAB) directly on the heap.
                 // This means the next allocation will also take the slow path.
-                return retryAllocate(size, false);
+                return retryAllocate(size, true);
             }
 
             final Size tlabSize = this.tlabSize;
-            final Pointer tlab = retryAllocate(tlabSize, true);
+            final Pointer tlab = retryAllocate(tlabSize, false);
             final Pointer tlabTop;
             final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
             if (MaxineVM.isDebug()) {
@@ -820,7 +826,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             } else {
                 tlabTop = tlab.plus(tlabSize);
             }
-            final Pointer cell = adjustForDebugTag(tlab);
+            final Pointer cell = DebugHeap.adjustForDebugTag(tlab);
             enabledVmThreadLocals.setWord(TLAB_TOP.index, tlabTop);
             enabledVmThreadLocals.setWord(TLAB_MARK.index, cell.plus(size));
             if (Heap.traceAllocation() || Heap.traceGC()) {
@@ -840,7 +846,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             }
             return cell;
         }
-        return retryAllocate(size, false);
+        return retryAllocate(size, true);
     }
 
     /**
@@ -849,15 +855,18 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      * If allocation fails in this routine, then a garbage collection is performed. If a collection
      * does not free up enough space to satisfy the allocation request, then the heap is expanded.
      * If there is still not enough space after heap expansion, a {@link OutOfMemoryError} is thrown.
+     *
+     * @param size the requested cell size to be allocated
+     * @param adjustForDebugTag specifies if an extra word is to be reserved before the cell for the debug tag word
      */
     @NEVER_INLINE
-    private Pointer retryAllocate(Size size, boolean tlab) {
+    private Pointer retryAllocate(Size size, boolean adjustForDebugTag) {
         Pointer oldAllocationMark;
         Pointer cell;
         Address end;
         do {
             oldAllocationMark = allocationMark().asPointer();
-            cell = tlab ? oldAllocationMark : adjustForDebugTag(oldAllocationMark);
+            cell = adjustForDebugTag ? DebugHeap.adjustForDebugTag(oldAllocationMark) : oldAllocationMark;
             end = cell.plus(size);
             while (end.greaterThan(top)) {
                 if (!Heap.collectGarbage(size)) {
@@ -882,7 +891,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                     }
                 }
                 oldAllocationMark = allocationMark().asPointer();
-                cell = tlab ? oldAllocationMark : adjustForDebugTag(oldAllocationMark);
+                cell = adjustForDebugTag ? DebugHeap.adjustForDebugTag(oldAllocationMark) : oldAllocationMark;
                 end = cell.plus(size);
             }
         } while (allocationMark.compareAndSwap(oldAllocationMark, end) != oldAllocationMark);
@@ -902,7 +911,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         if (!tlabTop.isZero()) {
             final Pointer tlabMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
             final int tlabPadByteArrayLength = tlabTop.minus(tlabMark).asSize().toInt();
-            final Pointer tlabPadByteArrayCell = adjustForDebugTag(tlabMark);
+            final Pointer tlabPadByteArrayCell = DebugHeap.adjustForDebugTag(tlabMark);
             final Size tlabPadByteArrayCellSize = Layout.getArraySize(Kind.BYTE, tlabPadByteArrayLength);
             Cell.plantArray(tlabPadByteArrayCell, tlabPadByteArrayCellSize, PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub(), tlabPadByteArrayLength);
             if (Heap.traceAllocation() || Heap.traceGC()) {
@@ -952,21 +961,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         }
     }
 
-    /**
-     * Increments a given allocation mark to reserve space for a {@linkplain DebugHeap#writeCellTag(Pointer) debug tag} if
-     * this is a {@linkplain MaxineVM#isDebug() debug} VM.
-     *
-     * @param mark an address at which a cell will be allocated
-     * @return the given allocation address increment by 1 word if necessary
-     */
-    @INLINE
-    private static Pointer adjustForDebugTag(Pointer mark) {
-        if (MaxineVM.isDebug()) {
-            return mark.plusWords(1);
-        }
-        return mark;
-    }
-
     @Override
     public void disableAllocationForCurrentThread() {
         final Pointer vmThreadLocals = VmThread.currentVmThreadLocals();
@@ -992,7 +986,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
 
     @INLINE
-    @NO_SAFEPOINTS("initialization must be atomic")
+    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
     public Object createArray(DynamicHub dynamicHub, int length) {
         final Size size = Layout.getArraySize(dynamicHub.classActor.componentClassActor().kind, length);
         final Pointer cell = allocate(size);
@@ -1000,27 +994,27 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     }
 
     @INLINE
-    @NO_SAFEPOINTS("initialization must be atomic")
+    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
     public Object createTuple(Hub hub) {
         final Pointer cell = allocate(hub.tupleSize);
         return Cell.plantTuple(cell, hub);
     }
 
-    @NO_SAFEPOINTS("initialization must be atomic")
+    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
     public Object createHybrid(DynamicHub hub) {
         final Size size = hub.tupleSize;
         final Pointer cell = allocate(size);
         return Cell.plantHybrid(cell, size, hub);
     }
 
-    @NO_SAFEPOINTS("initialization must be atomic")
+    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
     public Hybrid expandHybrid(Hybrid hybrid, int length) {
         final Size newSize = Layout.hybridLayout().getArraySize(length);
         final Pointer newCell = allocate(newSize);
         return Cell.plantExpandedHybrid(newCell, newSize, hybrid, length);
     }
 
-    @NO_SAFEPOINTS("initialization must be atomic")
+    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
     public Object clone(Object object) {
         final Size size = Layout.size(Reference.fromJava(object));
         final Pointer cell = allocate(size);

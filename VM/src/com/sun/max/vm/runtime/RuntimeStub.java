@@ -46,7 +46,7 @@ public abstract class RuntimeStub extends RuntimeMemoryRegion {
         if (!Code.allocateRuntimeStub(this)) {
             FatalError.unexpected("Could not allocate the stub code for " + this.getClass().getName());
         }
-        mark = end();
+        mark.set(end());
         final Pointer stubStart = this.start().asPointer();
         Memory.writeBytes(code, stubStart);
     }

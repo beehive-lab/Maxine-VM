@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
+import com.sun.max.atomic.*;
 import com.sun.max.collect.*;
 import com.sun.max.collect.ChainedHashMapping.*;
 import com.sun.max.ide.*;
@@ -139,7 +140,7 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess FieldRefConstant$Resolved_fieldActor = new TeleInstanceReferenceFieldAccess(FieldRefConstant.Resolved.class, "fieldActor", FieldActor.class);
     public final TeleInstanceReferenceFieldAccess ResolvedMethodRefConstant_methodActor = new TeleInstanceReferenceFieldAccess(ResolvedMethodRefConstant.class, "methodActor", MethodActor.class);
     public final TeleInstanceReferenceFieldAccess RuntimeMemoryRegion_description = new TeleInstanceReferenceFieldAccess(RuntimeMemoryRegion.class, "description", String.class);
-    public final TeleInstanceWordFieldAccess RuntimeMemoryRegion_mark = new TeleInstanceWordFieldAccess(RuntimeMemoryRegion.class, "mark");
+    public final TeleInstanceReferenceFieldAccess RuntimeMemoryRegion_mark = new TeleInstanceReferenceFieldAccess(RuntimeMemoryRegion.class, "mark", AtomicWord.class);
     public final TeleInstanceWordFieldAccess RuntimeMemoryRegion_size = new TeleInstanceWordFieldAccess(RuntimeMemoryRegion.class, "size");
     public final TeleInstanceWordFieldAccess RuntimeMemoryRegion_start = new TeleInstanceWordFieldAccess(RuntimeMemoryRegion.class, "start");
     public final TeleInstanceReferenceFieldAccess StringConstant_value = new TeleInstanceReferenceFieldAccess(StringConstant.class, "value", String.class);

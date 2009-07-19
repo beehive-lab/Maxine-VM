@@ -21,6 +21,7 @@
 package com.sun.max.memory;
 
 import com.sun.max.annotate.*;
+import com.sun.max.atomic.*;
 import com.sun.max.unsafe.*;
 
 public class RuntimeMemoryRegion implements MemoryRegion {
@@ -28,43 +29,12 @@ public class RuntimeMemoryRegion implements MemoryRegion {
     @INSPECTED
     protected Address start;
 
+    /**
+     * The current allocation mark. This is an atomic word so that it can be updated
+     * atomically if necessary.
+     */
     @INSPECTED
-    protected Address mark;
-
-    @INLINE
-    public final Address start() {
-        return start;
-    }
-
-    public void setStart(Address start) {
-        this.start = start;
-    }
-
-    @INSPECTED
-    protected Size size;
-
-    public Size size() {
-        return size;
-    }
-
-    public void setSize(Size size) {
-        this.size = size;
-    }
-
-    public void setEnd(Address end) {
-        size = end.minus(start).asSize();
-    }
-
-    @INSPECTED
-    private String description = "?";
-
-    public String description() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    public final AtomicWord mark = new AtomicWord();
 
     public RuntimeMemoryRegion() {
         start = Address.zero();
@@ -86,23 +56,63 @@ public class RuntimeMemoryRegion implements MemoryRegion {
         size = memoryRegion.size();
     }
 
-    public Address end() {
+    @INLINE
+    public final Address start() {
+        return start;
+    }
+
+    @INLINE
+    public final Pointer mark() {
+        return mark.get().asPointer();
+    }
+
+    public void setStart(Address start) {
+        this.start = start;
+    }
+
+    @INSPECTED
+    protected Size size;
+
+    public final Size size() {
+        return size;
+    }
+
+    public final void setSize(Size size) {
+        this.size = size;
+    }
+
+    public final void setEnd(Address end) {
+        size = end.minus(start).asSize();
+    }
+
+    @INSPECTED
+    private String description = "?";
+
+    public final String description() {
+        return description;
+    }
+
+    public final void setDescription(String description) {
+        this.description = description;
+    }
+
+    public final Address end() {
         return start().plus(size());
     }
 
-    public boolean contains(Address address) {
+    public final boolean contains(Address address) {
         return address.greaterEqual(start()) && address.lessThan(end());
     }
 
-    public boolean overlaps(MemoryRegion memoryRegion) {
+    public final boolean overlaps(MemoryRegion memoryRegion) {
         return start().lessThan(memoryRegion.end()) && end().greaterThan(memoryRegion.start());
     }
 
-    public boolean sameAs(MemoryRegion otherMemoryRegion) {
+    public final boolean sameAs(MemoryRegion otherMemoryRegion) {
         return otherMemoryRegion != null && start().equals(otherMemoryRegion.start()) && size().equals(otherMemoryRegion.size());
     }
 
-    public void clear() {
+    public final void clear() {
         Memory.clearBytes(start().asPointer(), size());
     }
 
@@ -113,6 +123,6 @@ public class RuntimeMemoryRegion implements MemoryRegion {
 
     @INLINE
     public final Address getAllocationMark() {
-        return mark;
+        return mark.get().asAddress();
     }
 }
