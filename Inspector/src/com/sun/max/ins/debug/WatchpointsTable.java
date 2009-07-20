@@ -96,7 +96,6 @@ public final class WatchpointsTable extends InspectorTable {
     public void updateFocusSelection() {
         final MaxWatchpoint watchpoint = inspection().focus().watchpoint();
         final int row = tableModel.findRow(watchpoint);
-
         updateFocusSelection(row);
     }
 
@@ -194,24 +193,6 @@ public final class WatchpointsTable extends InspectorTable {
                 default:
                     throw FatalError.unexpected("Unspected Watchpoint Data column");
             }
-
-//            int count = 0;
-//            for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
-//                if (WatchpointsColumnKind.VALUES.get(col) == WatchpointsColumnKind.READ) {
-//                    return watchpoint.isRead();
-//                }
-//                if (WatchpointsColumnKind.VALUES.get(col) == WatchpointsColumnKind.WRITE) {
-//                    return watchpoint.isWrite();
-//                }
-//                if (WatchpointsColumnKind.VALUES.get(col) == WatchpointsColumnKind.EXEC) {
-//                    return watchpoint.isExec();
-//                }
-//                if (count == row) {
-//                    return watchpoint;
-//                }
-//                count++;
-//            }
-            //return null;
         }
 
         private MaxWatchpoint get(int row) {

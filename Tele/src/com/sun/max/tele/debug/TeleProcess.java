@@ -113,13 +113,17 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
          */
         private boolean handleWatchpoint() {
             final MaxWatchpoint watchpoint = teleVM().findTriggeredWatchpoint();
-            final Pointer gcEnd = teleVM().fields().InspectableHeapInfo_rootEpoch.staticTupleReference(teleVM()).toOrigin().plus(teleVM().fields().InspectableHeapInfo_rootEpoch.fieldActor().offset());
+            final Pointer gcEnd = teleVM().fields().InspectableHeapInfo_collectionEpoch.staticTupleReference(teleVM()).toOrigin().plus(teleVM().fields().InspectableHeapInfo_collectionEpoch.fieldActor().offset());
+            System.out.println("WATCHPONT EVENT");
             if (watchpoint != null) {
                 if (gcEnd.toLong() == readWatchpointAddress()) {
                     // End of GC; TODO: handle relocatable watchpoints (stop-the-world case)
+                    System.out.println("END OF GC WATCHPOINT EVENT");
                     watchpointFactory().reenableWatchpointsAfterGC();
+                    watchpointFactory().lazyUpdateRelocatableWatchpoint();
                     return true;
                 } else if (teleVM().isInGC()) {
+                    System.out.println("IN GC WATCHPONT EVENT");
                     // We are in GC. Turn Watchpoints off for all objects that are not intersted.
                     watchpointFactory().disableWatchpointsDuringGC();
                     if (!watchpoint.isGC()) {
