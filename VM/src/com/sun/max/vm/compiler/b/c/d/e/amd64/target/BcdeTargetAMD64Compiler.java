@@ -40,7 +40,6 @@ import com.sun.max.vm.compiler.b.c.d.e.amd64.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.stack.*;
@@ -102,15 +101,8 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
 
         final ClassMethodActor callee = caller.callSiteToCallee(callSite);
 
-        Address calleeEntryPoint;
-        if (callee.isInterpretOnly()) {
-            DebugBreak.here();
-            final TargetMethod targetMethod = VMConfiguration.target().interpreterScheme().makeInterpretedTargetMethod(callee);
-            calleeEntryPoint = targetMethod.getEntryPoint(caller.abi().callEntryPoint()).asAddress();
-        } else {
-            // Use the caller's abi to get the correct entry point.
-            calleeEntryPoint = CompilationScheme.Static.compile(callee, caller.abi().callEntryPoint(), CompilationDirective.DEFAULT);
-        }
+        // Use the caller's abi to get the correct entry point.
+        final Address calleeEntryPoint = CompilationScheme.Static.compile(callee, caller.abi().callEntryPoint(), CompilationDirective.DEFAULT);
         patchRipCallSite(callSite, calleeEntryPoint);
 
         // Make the trampoline's caller re-execute the now modified CALL instruction after we return from the trampoline:
