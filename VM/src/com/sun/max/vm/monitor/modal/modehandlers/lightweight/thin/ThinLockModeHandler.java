@@ -345,7 +345,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             final int lockwordThreadID = encodeCurrentThreadIDForLockword();
             final ThinLockWord64 lockWord = ThinLockWord64.from(ObjectAccess.readMisc(object));
             final ThinLockWord64 asUnlocked = lockWord.asUnlocked();
-            final ThinLockWord64 asLocked  = lockWord.asLockedOnceBy(lockwordThreadID);
+            final ThinLockWord64 asLocked = lockWord.asLockedOnceBy(lockwordThreadID);
             final ModalLockWord64 answer = ModalLockWord64.from(ObjectAccess.compareAndSwapMisc(object, asUnlocked, asLocked));
             if (!answer.equals(asUnlocked)) {
                 slowPathMonitorEnter(object, answer, lockwordThreadID);

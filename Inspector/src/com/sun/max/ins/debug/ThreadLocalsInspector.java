@@ -35,6 +35,7 @@ import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -199,6 +200,11 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     @Override
     public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
         reconstructView();
+    }
+
+    @Override
+    public void addressFocusChanged(Address oldAddress, Address newAddress) {
+        refreshView(true);
     }
 
     public void tableColumnViewPreferencesChanged() {

@@ -204,6 +204,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
             InspectableHeapInfo.registerMemoryRegions(space);
         } else if (phase == MaxineVM.Phase.STARTING) {
             collectorThread = new StopTheWorldGCDaemon("GC", collect);
+            collectorThread.start();
         }
     }
 

@@ -25,6 +25,7 @@ import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.Log.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.reference.*;
@@ -58,7 +59,7 @@ import com.sun.max.vm.type.*;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public final class VmThreadLocal {
+public class VmThreadLocal {
 
     /**
      * The kind of this variable.
@@ -100,21 +101,21 @@ public final class VmThreadLocal {
      * {@linkplain Safepoint#enable() enabled}.
      */
     public static final VmThreadLocal SAFEPOINTS_ENABLED_THREAD_LOCALS
-        = new VmThreadLocal("SAFEPOINTS_ENABLED_THREAD_LOCALS", Kind.WORD, "->TLS used when safepoints enabled");
+        = new VmThreadLocal("SAFEPOINTS_ENABLED_THREAD_LOCALS", Kind.WORD, "points to TLS used when safepoints enabled");
 
     /**
      * The {@linkplain VmThread#currentVmThreadLocals() current} thread local storage when safepoints for the thread are
      * {@linkplain Safepoint#disable() disabled}.
      */
     public static final VmThreadLocal SAFEPOINTS_DISABLED_THREAD_LOCALS
-        = new VmThreadLocal("SAFEPOINTS_DISABLED_THREAD_LOCALS", Kind.WORD, "->TLS used when safepoints disabled");
+        = new VmThreadLocal("SAFEPOINTS_DISABLED_THREAD_LOCALS", Kind.WORD, "points to TLS used when safepoints disabled");
 
     /**
      * The {@linkplain VmThread#currentVmThreadLocals() current} thread local storage when safepoints for the thread are
      * {@linkplain Safepoint#trigger(Pointer, Word, Word) triggered}.
      */
     public static final VmThreadLocal SAFEPOINTS_TRIGGERED_THREAD_LOCALS
-        = new VmThreadLocal("SAFEPOINTS_TRIGGERED_THREAD_LOCALS", Kind.WORD, "->TLS used when safepoints triggered");
+        = new VmThreadLocal("SAFEPOINTS_TRIGGERED_THREAD_LOCALS", Kind.WORD, "points to TLS used when safepoints triggered");
 
     /**
      * The procedure to run when a safepoint has been triggered.
@@ -132,7 +133,17 @@ public final class VmThreadLocal {
     /**
      * Reference to the {@link VmThread} associated with a set of thread locals.
      */
-    public static final VmThreadLocal VM_THREAD = new VmThreadLocal("VM_THREAD", Kind.REFERENCE, "VM thread holding these locals");
+    public static final VmThreadLocal VM_THREAD = new VmThreadLocal("VM_THREAD", Kind.REFERENCE, "VM thread holding these locals") {
+        @Override
+        public void log(LogPrintStream out, Pointer vmThreadLocals, boolean prefixName) {
+            super.log(out, vmThreadLocals, prefixName);
+            final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
+            if (vmThread != null) {
+                out.print(' ');
+                out.printVmThread(vmThread, false);
+            }
+        }
+    };
 
     /**
      * Handle to the native threading library object for a thread (e.g. a pthread_t value).
@@ -142,7 +153,7 @@ public final class VmThreadLocal {
     /**
      * The address of the table of {@linkplain JniNativeInterface#pointer() JNI functions}.
      */
-    public static final VmThreadLocal JNI_ENV = new VmThreadLocal("JNI_ENV", Kind.WORD, "->table of JNI functions");
+    public static final VmThreadLocal JNI_ENV = new VmThreadLocal("JNI_ENV", Kind.WORD, "points to table of JNI functions");
 
     public static final VmThreadLocal LAST_JAVA_CALLER_STACK_POINTER = new VmThreadLocal("LAST_JAVA_CALLER_STACK_POINTER", Kind.WORD, "");
     public static final VmThreadLocal LAST_JAVA_CALLER_FRAME_POINTER = new VmThreadLocal("LAST_JAVA_CALLER_FRAME_POINTER", Kind.WORD, "");
@@ -216,7 +227,7 @@ public final class VmThreadLocal {
      * Once initialized, this value does not change for the lifetime of the thread.
      */
     public static final VmThreadLocal HIGHEST_STACK_SLOT_ADDRESS
-        = new VmThreadLocal("HIGHEST_STACK_SLOT_ADDRESS", Kind.WORD, "->stack slot with highest address covered by stack reference map");
+        = new VmThreadLocal("HIGHEST_STACK_SLOT_ADDRESS", Kind.WORD, "points to stack slot with highest address covered by stack reference map");
 
     /**
      * The address of the stack slot with the lowest address that is covered by the {@linkplain #STACK_REFERENCE_MAP
@@ -224,7 +235,7 @@ public final class VmThreadLocal {
      * not change for the lifetime of the thread.
      */
     public static final VmThreadLocal LOWEST_STACK_SLOT_ADDRESS
-        = new VmThreadLocal("LOWEST_STACK_SLOT_ADDRESS", Kind.WORD, "->stack slot with lowest address covered by stack reference map");
+        = new VmThreadLocal("LOWEST_STACK_SLOT_ADDRESS", Kind.WORD, "points to stack slot with lowest address covered by stack reference map");
 
     /**
      * The address of the active stack slot with the lowest address that is covered by the
@@ -236,7 +247,7 @@ public final class VmThreadLocal {
      * needs to have its <b>complete</b> stack reference map prepared on its behalf.
      */
     public static final VmThreadLocal LOWEST_ACTIVE_STACK_SLOT_ADDRESS
-        = new VmThreadLocal("LOWEST_ACTIVE_STACK_SLOT_ADDRESS", Kind.WORD, "->active stack slot with lowest address covered by stack reference map");
+        = new VmThreadLocal("LOWEST_ACTIVE_STACK_SLOT_ADDRESS", Kind.WORD, "points to active stack slot with lowest address covered by stack reference map");
 
     /**
      * The address of the stack reference map. This reference map has sufficient capacity to store a bit for each
@@ -245,13 +256,13 @@ public final class VmThreadLocal {
      * bit 0) denotes the address given by {@code STACK_TOP_FOR_REFERENCE_MAP}.
      */
     public static final VmThreadLocal STACK_REFERENCE_MAP
-        = new VmThreadLocal("STACK_REFERENCE_MAP", Kind.WORD, "->stack reference map");
+        = new VmThreadLocal("STACK_REFERENCE_MAP", Kind.WORD, "points to stack reference map");
 
     /**
      * Links for a doubly-linked list of all thread locals for active threads.
      */
-    public static final VmThreadLocal FORWARD_LINK = new VmThreadLocal("FORWARD_LINK", Kind.WORD, "->next thread locals in list of all active");
-    public static final VmThreadLocal BACKWARD_LINK = new VmThreadLocal("BACKWARD_LINK", Kind.WORD, "->previous thread locals in list of all active");
+    public static final VmThreadLocal FORWARD_LINK = new VmThreadLocal("FORWARD_LINK", Kind.WORD, "points to next thread locals in list of all active");
+    public static final VmThreadLocal BACKWARD_LINK = new VmThreadLocal("BACKWARD_LINK", Kind.WORD, "points to previous thread locals in list of all active");
 
     static {
         ProgramError.check(SAFEPOINT_LATCH.index == 0);
@@ -323,10 +334,29 @@ public final class VmThreadLocal {
      * @param vmThreadLocals the base address of the thread local variables
      */
     @INLINE
-    public Pointer pointer(Pointer vmThreadLocals) {
+    public final Pointer pointer(Pointer vmThreadLocals) {
         return vmThreadLocals.plusWords(index);
     }
 
+    /**
+     * Prints the value of this thread local to a given log stream.
+     *
+     * @param out the log stream to which the value will be printed
+     * @param vmThreadLocals the TLS area from which to read the value of this thread local
+     * @param prefixName if true, then the name of this thread local plus ": " will be printed before the value
+     */
+    public void log(LogPrintStream out, Pointer vmThreadLocals, boolean prefixName) {
+        if (prefixName) {
+            out.print(name);
+            out.print(": ");
+        }
+        if (this == SAFEPOINT_LATCH && SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(vmThreadLocals).equals(vmThreadLocals)) {
+            out.print("<trigger latch>");
+        } else {
+            out.print("0x");
+            out.print(vmThreadLocals.getWord(index));
+        }
+    }
 
     /**
      * Updates the value of this variable in all three ({@linkplain #SAFEPOINTS_ENABLED_THREAD_LOCALS safepoints-enabled},
@@ -338,7 +368,7 @@ public final class VmThreadLocal {
      * @param value the new value for this variable
      */
     @INLINE
-    public void setConstantWord(Pointer vmThreadLocals, Word value) {
+    public final void setConstantWord(Pointer vmThreadLocals, Word value) {
         vmThreadLocals.getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer().setWord(index, value);
         vmThreadLocals.getWord(SAFEPOINTS_DISABLED_THREAD_LOCALS.index).asPointer().setWord(index, value);
         vmThreadLocals.getWord(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index).asPointer().setWord(index, value);
@@ -352,7 +382,7 @@ public final class VmThreadLocal {
      * @param value the new value for this variable
      */
     @INLINE
-    public void setConstantWord(Word value) {
+    public final void setConstantWord(Word value) {
         setConstantWord(VmThread.currentVmThreadLocals(), value);
     }
 
@@ -365,7 +395,7 @@ public final class VmThreadLocal {
      *         vmThreadLocals}
      */
     @INLINE
-    public Word getConstantWord(Pointer vmThreadLocals) {
+    public final Word getConstantWord(Pointer vmThreadLocals) {
         return vmThreadLocals.getWord(index);
     }
 
@@ -376,7 +406,7 @@ public final class VmThreadLocal {
      * @return value the value of this variable in the current thread locals
      */
     @INLINE
-    public Word getConstantWord() {
+    public final Word getConstantWord() {
         return getConstantWord(VmThread.currentVmThreadLocals());
     }
 
@@ -390,7 +420,7 @@ public final class VmThreadLocal {
      * @param value the new value for this variable
      */
     @INLINE
-    public void setConstantReference(Pointer vmThreadLocals, Reference value) {
+    public final void setConstantReference(Pointer vmThreadLocals, Reference value) {
         vmThreadLocals.getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer().setReference(index, value);
         vmThreadLocals.getWord(SAFEPOINTS_DISABLED_THREAD_LOCALS.index).asPointer().setReference(index, value);
         vmThreadLocals.getWord(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index).asPointer().setReference(index, value);
@@ -405,7 +435,7 @@ public final class VmThreadLocal {
      *         vmThreadLocals}
      */
     @INLINE
-    public Reference getConstantReference(Pointer vmThreadLocals) {
+    public final Reference getConstantReference(Pointer vmThreadLocals) {
         return vmThreadLocals.getReference(index);
     }
 
@@ -417,7 +447,7 @@ public final class VmThreadLocal {
      * @param value the new value for this variable
      */
     @INLINE
-    public void setConstantReference(Reference value) {
+    public final void setConstantReference(Reference value) {
         setConstantReference(VmThread.currentVmThreadLocals(), value);
     }
 
@@ -428,13 +458,8 @@ public final class VmThreadLocal {
      * @return value the value of this variable in the current thread locals
      */
     @INLINE
-    public Reference getConstantReference() {
+    public final Reference getConstantReference() {
         return getConstantReference(VmThread.currentVmThreadLocals());
-    }
-
-    @INLINE
-    public static VmThread getVmThread(Pointer vmThreadLocals) {
-        return UnsafeLoophole.cast(VM_THREAD.getConstantReference(vmThreadLocals));
     }
 
     /**
@@ -445,7 +470,7 @@ public final class VmThreadLocal {
      * @param value the new value for this variable
      */
     @INLINE
-    public void setVariableWord(Pointer vmThreadLocals, Word value) {
+    public final void setVariableWord(Pointer vmThreadLocals, Word value) {
         vmThreadLocals.getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer().setWord(index, value);
     }
 
@@ -455,7 +480,7 @@ public final class VmThreadLocal {
      * @param value the new value for this variable
      */
     @INLINE
-    public void setVariableWord(Word value) {
+    public final void setVariableWord(Word value) {
         setVariableWord(VmThread.currentVmThreadLocals(), value);
     }
 
@@ -467,7 +492,7 @@ public final class VmThreadLocal {
      * @return value the value of this variable in the safepoints-enabled thread locals
      */
     @INLINE
-    public Word getVariableWord(Pointer vmThreadLocals) {
+    public final Word getVariableWord(Pointer vmThreadLocals) {
         return vmThreadLocals.getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer().getWord(index);
     }
 
@@ -477,7 +502,7 @@ public final class VmThreadLocal {
      * @return value the value of this variable in the safepoints-enabled thread locals
      */
     @INLINE
-    public Word getVariableWord() {
+    public final Word getVariableWord() {
         return getVariableWord(VmThread.currentVmThreadLocals());
     }
 
@@ -489,7 +514,7 @@ public final class VmThreadLocal {
      * @param value the new value for this variable
      */
     @INLINE
-    public void setVariableReference(Pointer vmThreadLocals, Reference value) {
+    public final void setVariableReference(Pointer vmThreadLocals, Reference value) {
         vmThreadLocals.getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer().setReference(index, value);
     }
 
@@ -501,7 +526,7 @@ public final class VmThreadLocal {
      * @return value the value of this variable in the safepoints-enabled thread locals
      */
     @INLINE
-    public Reference getVariableReference(Pointer vmThreadLocals) {
+    public final Reference getVariableReference(Pointer vmThreadLocals) {
         return vmThreadLocals.getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer().getReference(index);
     }
 
@@ -511,7 +536,7 @@ public final class VmThreadLocal {
      * @param value the new value for this variable
      */
     @INLINE
-    public void setVariableReference(Reference value) {
+    public final void setVariableReference(Reference value) {
         setVariableReference(VmThread.currentVmThreadLocals(), value);
     }
 
@@ -521,7 +546,7 @@ public final class VmThreadLocal {
      * @return value the value of this variable in the safepoints-enabled thread locals
      */
     @INLINE
-    public Reference getVariableReference() {
+    public final Reference getVariableReference() {
         return getVariableReference(VmThread.currentVmThreadLocals());
     }
 
@@ -538,7 +563,7 @@ public final class VmThreadLocal {
      * @return the amount of time taken to prepare the reference map
      */
     public static long prepareStackReferenceMap(Pointer vmThreadLocals) {
-        final VmThread vmThread = UnsafeLoophole.cast(VM_THREAD.getConstantReference(vmThreadLocals));
+        final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
         final StackReferenceMapPreparer stackReferenceMapPreparer = vmThread.stackReferenceMapPreparer();
         stackReferenceMapPreparer.prepareStackReferenceMap(vmThreadLocals);
         return stackReferenceMapPreparer.preparationTime();
@@ -582,7 +607,7 @@ public final class VmThreadLocal {
         final Pointer highestSlot = HIGHEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
         final Pointer lowestSlot = LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
 
-        final VmThread vmThread = UnsafeLoophole.cast(VM_THREAD.getConstantReference(vmThreadLocals));
+        final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
         if (!vmThread.isGCThread() && lastJavaCallerStackPointer.lessThan(lowestActiveSlot)) {
             Log.print("The stack for thread \"");
             Log.printVmThread(vmThread, false);

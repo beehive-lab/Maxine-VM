@@ -60,7 +60,7 @@ public abstract class Safepoint {
 
     public static final boolean UseThreadStateWordForGCMutatorSynchronization = false;
 
-    public static final int casMutatorState(Pointer enabledVmThreadLocals, int suspectedValue, int newValue) {
+    public static int casMutatorState(Pointer enabledVmThreadLocals, int suspectedValue, int newValue) {
         return enabledVmThreadLocals.compareAndSwapInt(MUTATOR_STATE.offset, suspectedValue, newValue);
     }
 
@@ -110,12 +110,16 @@ public abstract class Safepoint {
     protected Safepoint() {
     }
 
+    /**
+     * Gets the current value of the safepoint latch register.
+     */
     @INLINE
     public static Pointer getLatchRegister() {
         return VMRegister.getSafepointLatchRegister();
     }
 
     /**
+     * Updates the current value of the safepoint latch register.
      *
      * @param vmThreadLocals a pointer to a copy of the thread locals from which the base of the safepoints-enabled
      *            thread locals can be obtained
@@ -232,14 +236,15 @@ public abstract class Safepoint {
     }
 
     /**
-     * Runs a given procedure on the thread corresponding to the specified {@code VmThread} instance,
+     * Runs a given procedure on the thread denoted by {@code vmThreadLocals},
      * when that thread is at a safepoint and safepoints are disabled.
      * This method allows the VM to stop a thread at a safepoint and then run the specified procedure (e.g. garbage collection
      * or biased monitor revocation). Note that this method returns when the procedure is successfully
      * queued to be run on that thread, but the procedure may not actually have run yet.
      * Note also that this method will spin
      * if that thread is already executing or is scheduled to execute another procedure.
-     *
+     * 
+     * @param vmThreadLocals the thread locals on which to push the procedure
      * @param procedure the procedure to run on this thread
      */
     public static void runProcedure(Pointer vmThreadLocals, Procedure procedure) {
@@ -279,7 +284,7 @@ public abstract class Safepoint {
     }
 
     /**
-     * A procedure that resets safepoints for a given thread.
+     * A procedure that resets safepoints for a given thread and {@linkplain Safepoint#cancelProcedure(Pointer) cancels} the safepoint procedure.
      */
     public static class ResetSafepoints implements Pointer.Procedure {
         /**

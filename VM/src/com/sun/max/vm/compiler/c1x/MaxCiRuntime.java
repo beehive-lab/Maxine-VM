@@ -24,7 +24,8 @@ import java.util.*;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.target.*;
-import com.sun.c1x.target.x86.*;
+import com.sun.c1x.target.x86.X86Register;
+import com.sun.c1x.target.x86.Address;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.max.vm.actor.holder.*;
@@ -476,16 +477,6 @@ public class MaxCiRuntime implements CiRuntime {
         throw Util.unimplemented();
     }
 
-    @Override
-    public Register[] getAllocatableRegisters() {
-        final List<Register> result = new ArrayList<Register>();
-        result.addAll(Arrays.asList(X86Register.cpuRegisters64));
-        result.addAll(Arrays.asList(X86Register.fpuRegisters));
-        result.addAll(Arrays.asList(X86Register.xmmRegisters64));
-        return result.toArray(new Register[result.size()]);
-    }
-
-    @Override
     public int javaCallingConvention(CiMethod method, CiLocation[] result, boolean outgoing) {
 
         int iGeneral = 0;
@@ -546,14 +537,9 @@ public class MaxCiRuntime implements CiRuntime {
         return 0;
     }
 
-    @Override
     public int outPreserveStackSlots() {
         // This is probably correct for now.
         return 0;
     }
 
-    @Override
-    public Register[] callerSavedRegisters() {
-        return getAllocatableRegisters();
-    }
 }

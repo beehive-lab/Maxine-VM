@@ -55,7 +55,7 @@ import com.sun.max.vm.type.*;
  */
 public class StopTheWorldGCDaemon extends BlockingServerDaemon {
 
-    private static final VMBooleanXXOption traceGCDaemon = VMOptions.register(new VMBooleanXXOption("-XX:-TraceGCDaemon", "Print GC daemon activity"), MaxineVM.Phase.STARTING);
+    private static final VMBooleanXXOption traceGCDaemon = VMOptions.register(new VMBooleanXXOption("-XX:-TraceGCDaemon", "Print GC daemon activity."), MaxineVM.Phase.STARTING);
 
     /**
      * The procedure that is run on a mutator thread that has been stopped by a safepoint for the
@@ -112,26 +112,11 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
     /**
      * The procedure supplied by the {@link HeapScheme} that implements the GC algorithm.
      */
-    private final Runnable procedure;
+    private final Runnable collect;
 
-    public StopTheWorldGCDaemon(String name, Runnable procedure) {
+    public StopTheWorldGCDaemon(String name, Runnable collect) {
         super(name);
-        this.procedure = procedure;
-
-    }
-
-    @Override
-    public void start() {
-        // If the waitUntilNonMutating Procedure tries to link nativeSleep in response to a safepoint request
-        // from System.gc(), then we have a deadlock. (As the thread calling System.gc() gets a lock on the
-        // Heap scheme, which prevents the GC thread from allocating the MethodActor for nativeSleep).
-        // So we link it here.
-        try {
-            sleep(1);
-        } catch (InterruptedException interruptedException) {
-        }
-
-        super.start();
+        this.collect = collect;
     }
 
     @Override
@@ -177,12 +162,22 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
     private final class ResetMutator extends Safepoint.ResetSafepoints {
         @Override
         public void run(Pointer vmThreadLocals) {
-            GC_STATE.setVariableWord(vmThreadLocals, Address.zero());
+            if (traceGCDaemon.getValue()) {
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.print("GCDaemon: Resetting mutator thread ");
+                Log.printVmThread(VmThread.fromVmThreadLocals(vmThreadLocals), true);
+                Log.unlock(lockDisabledSafepoints);
+            }
 
             // Indicates that the stack reference map for the thread is once-again unprepared.
             LOWEST_ACTIVE_STACK_SLOT_ADDRESS.setVariableWord(vmThreadLocals, Address.zero());
 
+            // Resets the safepoint latch and resets the safepoint procedure to null
             super.run(vmThreadLocals);
+
+            // This must be last so that a mutator thread trying to return out of native code stays in the spin
+            // loop until its GC & safepoint related state has been completely reset
+            GC_STATE.setVariableWord(vmThreadLocals, Address.zero());
         }
     }
 
@@ -212,6 +207,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                     } catch (InterruptedException interruptedException) {
                     }
                 }
+
                 if (currentState == THREAD_IN_GC_FROM_NATIVE) {
                     // Since this thread is in native code it did not get an opportunity to prepare its stack maps,
                     // so we will take care of that for it now:
@@ -226,7 +222,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                     }
                     final Pointer stackPointer = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
                     final Pointer framePointer = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals).asPointer();
-                    final VmThread vmThread = UnsafeLoophole.cast(VM_THREAD.getConstantReference(vmThreadLocals));
+                    final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
                     final StackReferenceMapPreparer stackReferenceMapPreparer = vmThread.stackReferenceMapPreparer();
                     stackReferenceMapPreparer.completeStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer);
                     stackReferenceMapPreparationTime += stackReferenceMapPreparer.preparationTime();
@@ -239,6 +235,13 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                         sleep(1);
                     } catch (InterruptedException interruptedException) {
                     }
+                }
+
+                if (traceGCDaemon.getValue()) {
+                    final boolean lockDisabledSafepoints = Log.lock();
+                    Log.print("GCDaemon: Stopped mutator thread ");
+                    Log.printVmThread(VmThread.fromVmThreadLocals(vmThreadLocals), true);
+                    Log.unlock(lockDisabledSafepoints);
                 }
 
                 if (LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).isZero()) {
@@ -255,7 +258,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                     }
                     final Pointer stackPointer = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
                     final Pointer framePointer = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals).asPointer();
-                    final VmThread vmThread = UnsafeLoophole.cast(VM_THREAD.getConstantReference(vmThreadLocals));
+                    final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
                     final StackReferenceMapPreparer stackReferenceMapPreparer = vmThread.stackReferenceMapPreparer();
                     stackReferenceMapPreparer.completeStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer);
                     stackReferenceMapPreparationTime += stackReferenceMapPreparer.preparationTime();
@@ -273,8 +276,8 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
      */
     class GCRequest implements Runnable {
         public void run() {
+            // The lock for the special reference manager must be held before starting GC
             synchronized (SpecialReferenceManager.LOCK) {
-                // the lock for the special reference manager must be held before starting GC
                 synchronized (VmThreadMap.ACTIVE) {
                     waitUntilNonMutating.stackReferenceMapPreparationTime = 0;
 
@@ -301,7 +304,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                     // The next 2 statements *must* be adjacent as the reference map for this frame must
                     // be the same at both calls. This is verified by StopTheWorldDaemon.checkInvariants().
                     final long time = VmThreadLocal.prepareCurrentStackReferenceMap();
-                    procedure.run();
+                    collect.run();
 
                     if (traceGCDaemon.getValue()) {
                         Log.println("GCDaemon: Resetting mutators");
