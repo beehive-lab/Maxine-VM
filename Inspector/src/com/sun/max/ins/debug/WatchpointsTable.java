@@ -96,7 +96,6 @@ public final class WatchpointsTable extends InspectorTable {
     public void updateFocusSelection() {
         final MaxWatchpoint watchpoint = inspection().focus().watchpoint();
         final int row = tableModel.findRow(watchpoint);
-
         updateFocusSelection(row);
     }
 
@@ -524,13 +523,13 @@ public final class WatchpointsTable extends InspectorTable {
                 String codeName;
                 switch(watchpointCode) {
                     case 1:
-                        codeName = "exec";
+                        codeName = "read";
                         break;
                     case 2:
                         codeName = "write";
                         break;
                     case 3:
-                        codeName = "read";
+                        codeName = "exec";
                         break;
                     default:
                         codeName = "unknown";

@@ -29,10 +29,12 @@ import java.util.concurrent.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.gui.*;
+import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.TeleNativeThread.*;
+import com.sun.max.tele.debug.TeleWatchpoint.*;
 import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
@@ -60,7 +62,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         return "[TeleProcess: " + Thread.currentThread().getName() + "] ";
     }
 
-    private TeleNativeThread lastSingleStepThread;
+    private TeleNativeThread lastSingleStepThread;;
 
     public abstract DataAccess dataAccess();
 
@@ -99,6 +101,8 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
          */
         private BlockingDeque<TeleEventRequest> requests = new LinkedBlockingDeque<TeleEventRequest>(10);
 
+        private TeleWatchpoint endOfGCWatchpoint = null;
+
         RequestHandlingThread() {
             super("RequestHandlingThread");
             setDaemon(true);
@@ -107,19 +111,31 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         /**
          * Special handling of a triggered watchpoint, if needed.
          * @return true if it is a transparent watchpoint, and execution should be resumed.
+         * @throws DuplicateWatchpointException
+         * @throws TooManyWatchpointsException
          */
-        private boolean handleWatchpoint(TeleNativeThread thread, MaxWatchpoint watchpoint, Address triggeredWatchpointAddress) {
+        private boolean handleWatchpoint(TeleNativeThread thread, MaxWatchpoint watchpoint, Address triggeredWatchpointAddress) throws TooManyWatchpointsException, DuplicateWatchpointException {
             assert thread.state() == ThreadState.WATCHPOINT;
             if (triggeredWatchpointAddress.equals(teleVM().rootEpochAddress())) {
                 // The counter signifying end of a GC has been changed.
-                // TODO: handle relocatable watchpoints (stop-the-world case)
+                //System.out.println("\nROOTEPOCHADDRESS\n");
+
+                watchpointFactory().lazyUpdateRelocatableWatchpoint();
                 watchpointFactory().reenableWatchpointsAfterGC();
+                endOfGCWatchpoint.disable();
                 return true;
             } else if (teleVM().isInGC()) {
+                if (endOfGCWatchpoint == null) {
+                    endOfGCWatchpoint = watchpointFactory().createInvisibleWatchpoint("End of GC", new FixedMemoryRegion(teleVM().rootEpochAddress(), Size.fromInt(Pointer.size()), "Root epoch address"), true, false, true, false, true);
+                }
                 // The VM is in GC. Turn Watchpoints off for all objects that are not interested in GC related triggers.
-                watchpointFactory().disableWatchpointsDuringGC();
-                if (!watchpoint.isEnabledDuringGC()) {
-                    return true;
+                if (!watchpointFactory().isInGCMode()) {
+                    endOfGCWatchpoint.enable();
+                    //System.out.println("\nEND OF GC WATCHPOINT ACTIVATED\n");
+                    watchpointFactory().disableWatchpointsDuringGC();
+                    if (!watchpoint.isEnabledDuringGC()) {
+                        return true;
+                    }
                 }
                 // else if check for special object handle watchpoint
             }

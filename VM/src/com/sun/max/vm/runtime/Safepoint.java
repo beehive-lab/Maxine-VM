@@ -69,6 +69,7 @@ public abstract class Safepoint {
     public static final int THREAD_IN_JAVA_STOPPING_FOR_GC = 2;
     public static final int THREAD_IN_GC_FROM_JAVA = 3;
     public static final int THREAD_IN_GC_FROM_NATIVE = 4;
+    public static final int THREAD_IN_GC_FROM_JAVA_DONE = 5;
 
     public enum State implements PoolObject {
         ENABLED(SAFEPOINTS_ENABLED_THREAD_LOCALS),
@@ -153,11 +154,13 @@ public abstract class Safepoint {
             final int state = MUTATOR_STATE.getVariableWord(vmThreadLocals).asAddress().toInt();
             if (state == THREAD_IN_GC_FROM_NATIVE) {
                 MUTATOR_STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_NATIVE));
+                Log.println("RESET TO THREAD IN NATIVE");
             } else {
                 if (state != THREAD_IN_GC_FROM_JAVA) {
                     reportIllegalThreadState("While resetting safepoints", state);
                 }
-                MUTATOR_STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_JAVA));
+                MUTATOR_STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_GC_FROM_JAVA_DONE));
+                Log.println("RESET TO THREAD IN GCJAVADONE");
             }
         }
         SAFEPOINT_LATCH.setVariableWord(vmThreadLocals, SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals));
