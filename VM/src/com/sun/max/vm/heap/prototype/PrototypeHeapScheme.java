@@ -60,9 +60,6 @@ public class PrototypeHeapScheme extends HeapSchemeAdaptor implements HeapScheme
 
     }
 
-    public void initializeVmThread(Pointer vmThreadLocals) {
-    }
-
     public Object createArrayIntoCell(DynamicHub hub, int length, Pointer cell) {
         throw ProgramError.unexpected();
     }

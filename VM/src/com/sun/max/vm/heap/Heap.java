@@ -250,10 +250,6 @@ public final class Heap {
         heapScheme().initializeAuxiliarySpace(primordialVmThreadLocals, auxiliarySpace);
     }
 
-    public static void initializeVmThread(Pointer vmThreadLocals) {
-        heapScheme().initializeVmThread(vmThreadLocals);
-    }
-
     @INLINE
     public static Object createArray(DynamicHub hub, int length) {
         final Object array = heapScheme().createArray(hub, length);
