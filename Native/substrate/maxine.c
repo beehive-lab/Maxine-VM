@@ -356,8 +356,8 @@ int maxine(int argc, char *argv[], char *executablePath) {
 #endif
 
     Address auxiliarySpace = 0;
-    Size auxiliarySpaceSize = image_header()->auxiliarySpaceSize + REFERENCE_BUFFER_SIZE;
-    if (auxiliarySpaceSize) {
+    if (image_header()->auxiliarySpaceSize != 0) {
+        Size auxiliarySpaceSize = image_header()->auxiliarySpaceSize + REFERENCE_BUFFER_SIZE;
         auxiliarySpace = (Address) malloc(image_header()->auxiliarySpaceSize + REFERENCE_BUFFER_SIZE);
         if (auxiliarySpace == 0) {
             log_exit(1, "Failed to allocate %lu bytes of auxiliary space", auxiliarySpaceSize);
