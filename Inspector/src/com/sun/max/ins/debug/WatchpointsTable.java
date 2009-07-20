@@ -523,13 +523,13 @@ public final class WatchpointsTable extends InspectorTable {
                 String codeName;
                 switch(watchpointCode) {
                     case 1:
-                        codeName = "exec";
+                        codeName = "read";
                         break;
                     case 2:
                         codeName = "write";
                         break;
                     case 3:
-                        codeName = "read";
+                        codeName = "exec";
                         break;
                     default:
                         codeName = "unknown";
