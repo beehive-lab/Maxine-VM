@@ -22,6 +22,7 @@ package com.sun.max.ins.gui;
 
 import java.awt.*;
 
+import javax.swing.*;
 import javax.swing.table.*;
 
 import com.sun.max.ins.*;
@@ -31,16 +32,18 @@ import com.sun.max.tele.debug.*;
 
 
 /**
- * A renderer suitable for a table "Tag" cell in an Inspector display where each row corresponds to a memory regin.
+ * A renderer suitable for a table "Tag" cell in an Inspector display where each row corresponds to a memory region.
  * Displays text identifying registers, if any, that point into this region; displays a special border if there is a
- * watchpoint at the location.
+ * watchpoint at the location, and displays a pointer icon if a watchpoint is currently triggered at this location.
  *
  * @author Michael Van De Vanter
  */
-public abstract class MemoryTagTableCellRenderer extends InspectorLabel implements TableCellRenderer {
+public abstract class MemoryTagTableCellRenderer extends JLabel implements TableCellRenderer, Prober {
+
+    private final Inspection inspection;
 
     public MemoryTagTableCellRenderer(Inspection inspection) {
-        super(inspection);
+        this.inspection = inspection;
     }
 
     /**
@@ -56,31 +59,46 @@ public abstract class MemoryTagTableCellRenderer extends InspectorLabel implemen
      * @return a component for displaying the cell
      */
     public Component getRenderer(MemoryRegion memoryRegion, MaxThread thread, MaxWatchpoint watchpoint) {
-        InspectorLabel label = this;
+        JLabel label = this;
         String labelText = "";
         String toolTipText = "";
+        setFont(inspection.style().defaultTextFont());
         // See if any registers point here
         if (thread != null) {
             final TeleIntegerRegisters teleIntegerRegisters = thread.integerRegisters();
             if (teleIntegerRegisters == null) {
                 // Return a specialized renderer with its own content.
-                label = gui().getUnavailableDataTableCellRenderer();
+                label = inspection.gui().getUnavailableDataTableCellRenderer();
             } else {
                 final String registerNameList = teleIntegerRegisters.findAsNameList(memoryRegion);
                 if (registerNameList.isEmpty()) {
-                    label.setForeground(style().memoryDefaultTagTextColor());
+                    label.setForeground(inspection.style().memoryDefaultTagTextColor());
                 } else {
                     labelText += registerNameList + "-->";
-                    toolTipText += "Register(s): " + registerNameList + " in thread " + inspection().nameDisplay().longName(thread) + " point at this location";
-                    setForeground(style().memoryRegisterTagTextColor());
+                    toolTipText += "Register(s): " + registerNameList + " in thread " + inspection.nameDisplay().longName(thread) + " point at this location";
+                    setForeground(inspection.style().memoryRegisterTagTextColor());
                 }
             }
+        }
+        // If a watchpoint is currently triggered here, add a pointer icon.
+        if (inspection.maxVM().maxVMState().watchpointEvent() != null && memoryRegion.contains(inspection.maxVM().maxVMState().watchpointEvent().address())) {
+            label.setIcon(inspection.style().debugIPTagIcon());
+            label.setForeground(inspection.style().debugIPTagColor());
+        } else {
+            label.setIcon(null);
+            label.setForeground(inspection.style().defaultTextColor());
         }
         if (watchpoint != null) {
             toolTipText += "  " + watchpoint.toString();
             label.setText(labelText);
             label.setToolTipText(toolTipText);
-            return label.getBorderWrappedPanel(style().debugEnabledTargetBreakpointTagBorder());
+            if (watchpoint.isEnabled()) {
+                label.setBorder(inspection.style().debugEnabledTargetBreakpointTagBorder());
+            } else {
+                label.setBorder(inspection.style().debugDisabledTargetBreakpointTagBorder());
+            }
+        } else {
+            label.setBorder(null);
         }
         label.setText(labelText);
         label.setToolTipText(toolTipText);

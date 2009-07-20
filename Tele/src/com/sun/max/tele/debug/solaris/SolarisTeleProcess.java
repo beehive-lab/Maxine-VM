@@ -214,15 +214,15 @@ public final class SolarisTeleProcess extends TeleProcess {
     private static native int nativeReadWatchpointAccessCode(long processHandle);
 
     @Override
-    protected String readWatchpointAccessCode() {
+    protected int readWatchpointAccessCode() {
         int code = nativeReadWatchpointAccessCode(processHandle);
         if (code == 3) {
-            return "read";
+            return 1;
         } else if (code == 4) {
-            return "write";
+            return 2;
         } else if (code == 5) {
-            return "exec";
+            return 3;
         }
-        return "n/a";
+        return 0;
     }
 }

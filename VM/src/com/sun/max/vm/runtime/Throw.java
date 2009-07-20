@@ -21,6 +21,7 @@
 package com.sun.max.vm.runtime;
 
 import static com.sun.max.vm.stack.RawStackFrameVisitor.Util.*;
+import static com.sun.max.vm.thread.VmThreadLocal.*;
 import static com.sun.max.vm.VMOptions.*;
 
 import com.sun.max.annotate.*;
@@ -171,30 +172,60 @@ public final class Throw {
      * attempt to decode Java frame descriptors to show virtual frames (i.e. frames that would have existed if there was
      * no inlining performed).
      *
-     * @param message the message to print accompanying the stack trace
+     * @param message if not {@code null}, this message is printed on a separate line prior to the stack trace
      * @param instructionPointer the instruction pointer at which to begin the stack trace
      * @param cpuStackPointer the stack pointer at which to begin the stack trace
      * @param cpuFramePointer the frame pointer at which to begin the stack trace
      */
     @NEVER_INLINE
     public static void stackDump(String message, final Pointer instructionPointer, final Pointer cpuStackPointer, final Pointer cpuFramePointer) {
-        Log.println(message);
+        if (message != null) {
+            Log.println(message);
+        }
         VmThread.current().stackDumpStackFrameWalker().inspect(instructionPointer, cpuStackPointer, cpuFramePointer, stackFrameDumper);
     }
+
+    /**
+     * Dumps the entire stack of the thread denoted by a given VM thread locals pointer.
+     * <p>
+     * This stack dump is meant to be more primitive that the dump obtained by {@link Thread#dumpStack()} in that all
+     * the actual frames are dumped, not only the frames of application visible methods. In addition, there is no
+     * attempt to decode Java frame descriptors to show virtual frames (i.e. frames that would have existed if there was
+     * no inlining performed).
+     *
+     * @param message if not {@code null}, this message is printed on a separate line prior to the stack trace
+     * @param vmThreadLocals
+     */
+    @NEVER_INLINE
+    public static void stackDump(String message, final Pointer vmThreadLocals) {
+        if (message != null) {
+            Log.println(message);
+        }
+        final Pointer instructionPointer = LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).asPointer();
+        if (instructionPointer.isZero()) {
+            FatalError.unexpected("Thread is not stopped");
+        }
+        final Pointer stackPointer = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
+        final Pointer framePointer = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals).asPointer();
+        VmThread.fromVmThreadLocals(vmThreadLocals).stackDumpStackFrameWalker().inspect(instructionPointer, stackPointer, framePointer, stackFrameDumper);
+    }
+
 
     /**
      * Dumps the stack of the current thread. This method is equivalent to
      * {@link #stackDump(String, Pointer, Pointer, Pointer)} except that it takes an extra parameter ({@code depth})
      * that specifies the maximum number of stack frames to be walked.
      *
-     * @param message the message to print accompanying the stack trace
+     * @param message if not {@code null}, this message is printed on a separate line prior to the stack trace
      * @param instructionPointer the instruction pointer at which to begin the stack trace
      * @param cpuStackPointer the stack pointer at which to begin the stack trace
      * @param cpuFramePointer the frame pointer at which to begin the stack trace
      * @param depth the maximum number of stack frames to be walked
      */
     public static void stackDump(String message, final Pointer instructionPointer, final Pointer cpuStackPointer, final Pointer cpuFramePointer, int depth) {
-        Log.println(message);
+        if (message != null) {
+            Log.println(message);
+        }
         stackFrameDumper.maximum = depth;
         VmThread.current().stackDumpStackFrameWalker().inspect(instructionPointer, cpuStackPointer, cpuFramePointer, stackFrameDumper);
         stackFrameDumper.maximum = 0;
@@ -208,11 +239,13 @@ public final class Throw {
      * attempt to decode Java frame descriptors to show virtual frames (i.e. frames that would have existed if there was
      * no inlining performed).
      *
-     * @param message the message to print accompanying the stack trace
+     * @param message if not {@code null}, this message is printed on a separate line prior to the stack trace
      */
     @NEVER_INLINE
     public static void stackDump(String message) {
-        Log.println(message);
+        if (message != null) {
+            Log.println(message);
+        }
         VmThread.current().stackDumpStackFrameWalker().inspect(VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), stackFrameDumper);
     }
 

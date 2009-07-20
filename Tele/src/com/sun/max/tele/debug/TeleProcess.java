@@ -33,7 +33,6 @@ import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.TeleNativeThread.*;
-import com.sun.max.tele.debug.TeleWatchpoint.*;
 import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
@@ -106,29 +105,21 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         }
 
         /**
-         * Handles a special triggered watchpoint.
-         * @return true if it is a transparent watchpoint (resume).
-         * @throws TooManyWatchpointsException
-         * @throws DuplicateWatchpointException
+         * Special handling of a triggered watchpoint, if needed.
+         * @return true if it is a transparent watchpoint, and execution should be resumed.
          */
-        private boolean handleWatchpoint() {
-            final MaxWatchpoint watchpoint = teleVM().findTriggeredWatchpoint();
-            final Pointer gcEnd = teleVM().fields().InspectableHeapInfo_collectionEpoch.staticTupleReference(teleVM()).toOrigin().plus(teleVM().fields().InspectableHeapInfo_collectionEpoch.fieldActor().offset());
-            System.out.println("WATCHPONT EVENT");
-            if (watchpoint != null) {
-                if (gcEnd.toLong() == readWatchpointAddress()) {
-                    // End of GC; TODO: handle relocatable watchpoints (stop-the-world case)
-                    System.out.println("END OF GC WATCHPOINT EVENT");
-                    watchpointFactory().reenableWatchpointsAfterGC();
-                    watchpointFactory().lazyUpdateRelocatableWatchpoint();
+        private boolean handleWatchpoint(TeleNativeThread thread, MaxWatchpoint watchpoint, Address triggeredWatchpointAddress) {
+            assert thread.state() == ThreadState.WATCHPOINT;
+            if (triggeredWatchpointAddress.equals(teleVM().rootEpochAddress())) {
+                // The counter signifying end of a GC has been changed.
+                // TODO: handle relocatable watchpoints (stop-the-world case)
+                watchpointFactory().reenableWatchpointsAfterGC();
+                return true;
+            } else if (teleVM().isInGC()) {
+                // The VM is in GC. Turn Watchpoints off for all objects that are not interested in GC related triggers.
+                watchpointFactory().disableWatchpointsDuringGC();
+                if (!watchpoint.isEnabledDuringGC()) {
                     return true;
-                } else if (teleVM().isInGC()) {
-                    System.out.println("IN GC WATCHPONT EVENT");
-                    // We are in GC. Turn Watchpoints off for all objects that are not intersted.
-                    watchpointFactory().disableWatchpointsDuringGC();
-                    if (!watchpoint.isGC()) {
-                        return true;
-                    }
                 }
                 // else if check for special object handle watchpoint
             }
@@ -136,76 +127,108 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         }
 
         /**
-         * Waits until the tele process has stopped after it has been issued an execution request. The request's
-         * post-execution action is then performed.
+         * Special handling of a breakpoint, if needed.
+         * @return true if it is a conditional breakpoint whose condition is unsatified, and execution should be resumed.
+         * @throws ProcessTerminatedException
+         */
+        private boolean handleBreakpoint(TeleNativeThread thread, TeleTargetBreakpoint breakpoint) throws ProcessTerminatedException {
+            assert thread.state() == ThreadState.BREAKPOINT;
+            if (breakpoint.condition() != null && !breakpoint.condition().evaluate(TeleProcess.this, thread)) {
+                // At a conditional breakpoint, but condition tests false; prepare to resume VM execution
+                try {
+                    thread.evadeBreakpoint();
+                } catch (OSExecutionRequestException executionRequestException) {
+                    throw new ProcessTerminatedException("attempting to step over unsatisfied conditional breakpoint");
+                }
+                Trace.line(TRACE_VALUE, tracePrefix() + "continuing after hitting unsatisfied conditional breakpoint");
+                return true;
+            }
+            return false;
+        }
+
+        /**
+         * Waits until the tele process has stopped after it has been issued an execution request.
+         * Carry out any special processing needed in case of triggered watchpoint or breakpoint.
+         * The request's post-execution action is then performed.
          * Finally, any threads waiting for an execution request to complete are notified.
          *
-         * @param request
+         * @param request the intended VM action assumed to be running in the VM.
          */
         private void waitUntilProcessStopped(TeleEventRequest request) {
             assert requestHandlingThread == Thread.currentThread();
             Trace.begin(TRACE_VALUE, tracePrefix() + "waiting for execution to stop: " + request);
             try {
-                boolean continuing;
                 final AppendableSequence<TeleNativeThread> breakpointThreads = new LinkSequence<TeleNativeThread>();
+                TeleWatchpointEvent teleWatchpointEvent = null;
+                // Should VM execution be resumed in order to complete the requested action?
+                boolean resumeExecution;
                 do {
-
-                    continuing = false;
-                    final boolean ok = waitUntilStopped();
-                    if (!ok) {
-                        Trace.end(TRACE_VALUE, tracePrefix() + "waiting for execution to stop: " + request + " (PROCESS TERMINATED)");
-                        updateState(TERMINATED, EMPTY_THREAD_SEQUENCE);
-                        return;
+                    resumeExecution = false;
+                    // Wait here for VM process to stop
+                    if (!waitUntilStopped()) {
+                        // Something went wrong; process presumed to be dead.
+                        throw new ProcessTerminatedException("");
                     }
-
+                    Trace.line(TRACE_VALUE, tracePrefix() + "Execution stopped: " + request);
+                    // Read VM memory and update various bits of cached state about the VM state
                     teleVM().refresh(++epoch);
                     refreshThreads();
                     final Sequence<TeleTargetBreakpoint> deactivatedBreakpoints = targetBreakpointFactory().deactivateAll();
-                    Trace.line(TRACE_VALUE, tracePrefix() + "Execution stopped: " + request);
 
-
-                    if (handleWatchpoint()) {
-                        TeleProcess.this.resume();
-                        continuing = true;
-                    } else {
-                        for (TeleNativeThread thread : threads()) {
-                            final TeleTargetBreakpoint breakpoint = thread.breakpoint();
-                            if (breakpoint != null) {
-                                // Check conditional breakpoint:
-                                if (breakpoint.condition() != null && !breakpoint.condition().evaluate(TeleProcess.this, thread)) {
-                                    try {
-                                        // Evade the breakpoint
-                                        thread.evadeBreakpoint();
-
-                                        // Re-activate all the de-activated breakpoints
-                                        for (TeleTargetBreakpoint bp : deactivatedBreakpoints) {
-                                            bp.activate();
-                                        }
-
-                                        //updateState(RUNNING);
-                                        Trace.line(TRACE_VALUE, tracePrefix() + "continuing after hitting unsatisfied conditional breakpoint");
-                                        TeleProcess.this.resume();
-                                        continuing = true;
-                                    } catch (OSExecutionRequestException executionRequestException) {
-                                        Trace.line(TRACE_VALUE, tracePrefix() + "process terminated while attempting to step over unsatisfied conditional breakpoint");
-                                        updateState(TERMINATED, EMPTY_THREAD_SEQUENCE);
-                                        return;
-                                    }
+                    // Look through all the threads to see if any special attention is needed
+                    for (TeleNativeThread thread : threads()) {
+                        switch(thread.state()) {
+                            case BREAKPOINT:
+                                final TeleTargetBreakpoint breakpoint = thread.breakpoint();
+                                if (handleBreakpoint(thread, breakpoint)) {
+                                    resumeExecution = true;
                                 } else {
+                                    // At a breakpoint where we should really stop; create a record
                                     breakpointThreads.append(thread);
                                 }
+                                break;
+                            case WATCHPOINT:
+                                final Address triggeredWatchpointAddress = Address.fromLong(readWatchpointAddress());
+                                final MaxWatchpoint triggeredWatchpoint = watchpointFactory().findWatchpoint(triggeredWatchpointAddress);
+                                if (handleWatchpoint(thread, triggeredWatchpoint, triggeredWatchpointAddress)) {
+                                    resumeExecution = true;
+                                } else {
+                                    // At a watchpoint where we should really stop; create a record of the event
+                                    final int triggeredWatchpointCode = readWatchpointAccessCode();
+                                    teleWatchpointEvent = new TeleWatchpointEvent(triggeredWatchpoint, thread, triggeredWatchpointAddress, triggeredWatchpointCode);
+                                }
+                                break;
+                            default:
+                                // This thread not stopped at breakpoint or watchpoint
+                        }
+                        if (resumeExecution) {
+                            // Reactivate the deactivated breakpoints
+                            for (TeleTargetBreakpoint bp : deactivatedBreakpoints) {
+                                bp.activate();
                             }
+                            try {
+                                TeleProcess.this.resume();
+                            } catch (OSExecutionRequestException executionRequestException) {
+                                throw new ProcessTerminatedException("attempting to resume after handling transient breakpoint or watchpoint");
+                            }
+                            break;
                         }
                     }
-                } while (continuing);
+                } while (resumeExecution);
                 Trace.end(TRACE_VALUE, tracePrefix() + "waiting for execution to stop: " + request);
                 Trace.begin(TRACE_VALUE, tracePrefix() + "firing execution post-request action: " + request);
                 request.notifyProcessStopped();
                 Trace.end(TRACE_VALUE, tracePrefix() + "firing execution post-request action: " + request);
-                updateState(STOPPED, breakpointThreads);
+                updateState(STOPPED, breakpointThreads, teleWatchpointEvent);
+
+            } catch (ProcessTerminatedException processTerminatedException) {
+                Trace.line(TRACE_VALUE, tracePrefix() + "VM process terminated:" + processTerminatedException.getMessage());
+                updateState(TERMINATED);
+
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
                 ThrowableDialog.showLater(throwable, null, tracePrefix() + "Uncaught exception while processing " + request);
+
             } finally {
                 Trace.begin(TRACE_VALUE, tracePrefix() + "notifying completion of request: " + request);
                 request.notifyOfCompletion();
@@ -258,7 +281,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                 try {
                     lastSingleStepThread = null;
                     Trace.begin(TRACE_VALUE, tracePrefix() + "executing request: " + request);
-                    updateState(RUNNING, EMPTY_THREAD_SEQUENCE);
+                    updateState(RUNNING);
                     request.execute();
                     Trace.end(TRACE_VALUE, tracePrefix() + "executing request: " + request);
                 } catch (OSExecutionRequestException executionRequestException) {
@@ -385,10 +408,10 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
 //        assert teleNativeThread.breakpoint() != null;
 //        final Sequence<TeleNativeThread> breakpointThreads = new ArrayListSequence<TeleNativeThread>(teleNativeThread);
 //        updateState(_processState, breakpointThreads);
-        updateState(processState, EMPTY_THREAD_SEQUENCE);
+        updateState(processState);
     }
 
-    private void updateState(ProcessState newState, Sequence<TeleNativeThread> breakpointThreads) {
+    private void updateState(ProcessState newState, Sequence<TeleNativeThread> breakpointThreads, TeleWatchpointEvent teleWatchpointEvent) {
         processState = newState;
         if (newState == TERMINATED) {
             this.threadsDied.addAll(handleToThreadMap.values());
@@ -404,7 +427,11 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             this.threadsDied.isEmpty() ? EMPTY_THREAD_SEQUENCE : new ArrayListSequence<TeleNativeThread>(this.threadsDied);
         this.threadsStarted.clear();
         this.threadsDied.clear();
-        teleVM().notifyStateChange(processState, epoch, lastSingleStepThread, breakpointThreads, handleToThreadMap.values(), threadsStarted, threadsDied);
+        teleVM().notifyStateChange(processState, epoch, lastSingleStepThread, handleToThreadMap.values(), threadsStarted, threadsDied, breakpointThreads, teleWatchpointEvent);
+    }
+
+    private void updateState(ProcessState newState) {
+        updateState(newState, EMPTY_THREAD_SEQUENCE, null);
     }
 
     /**
@@ -671,7 +698,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         return 0;
     }
 
-    protected String readWatchpointAccessCode() {
-        return "";
+    protected int readWatchpointAccessCode() {
+        return 0;
     }
 }

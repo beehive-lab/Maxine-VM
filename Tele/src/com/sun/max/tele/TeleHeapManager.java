@@ -91,7 +91,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
         final long startTimeMillis = System.currentTimeMillis();
         final Reference bootHeapRegionReference = teleVM().fields().Heap_bootHeapRegion.readReference(teleVM());
         teleBootHeapRegion = (TeleRuntimeMemoryRegion) teleVM().makeTeleObject(bootHeapRegionReference);
-        refresh(processEpoch);
+        refreshMemoryRegions(processEpoch);
         Trace.end(1, tracePrefix() + "initializing", startTimeMillis);
     }
 
@@ -101,7 +101,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
      * Updates local cache of information about dynamically allocated heap regions in the {@link TeleVM}.
      * During this update, any method calls to check heap containment are handled specially.
      */
-    public void refresh(long processEpoch) {
+    public void refreshMemoryRegions(long processEpoch) {
         if (isInitialized()) {
             Trace.begin(TRACE_VALUE, tracePrefix() + "refreshing");
             final long startTimeMillis = System.currentTimeMillis();
@@ -129,7 +129,6 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
             }
             updatingHeapMemoryRegions = false;
             Trace.end(TRACE_VALUE, tracePrefix() + "refreshing", startTimeMillis);
-
         }
     }
 
@@ -204,6 +203,49 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
             }
         }
         return false;
+    }
+
+    /**
+     * Reads the collection table count; incremented each time a GC begins.
+     * @return one greater than {@link #readRootEpoch()} during GC, otherwise equal
+     */
+    public long readCollectionEpoch() {
+        return teleVM().fields().InspectableHeapInfo_collectionEpoch.readLong(teleVM());
+    }
+
+    /**
+     * Reads the root table update count; incremented each time a GC completes.
+     * @return number of times inspectable root table updated
+     */
+    public long readRootEpoch() {
+        return teleVM().fields().InspectableHeapInfo_rootEpoch.readLong(teleVM());
+    }
+
+    /**
+     * @ return is the VM in GC
+     */
+    public boolean isInGC() {
+        return readCollectionEpoch() != readRootEpoch();
+    }
+
+    /**
+     * Address of the field incremented each time a GC begins.
+     * @return memory location of the field holding the collection epoch
+     * @see #readCollectionEpoch()
+     */
+    public Address collectionEpochAddress() {
+        final int offset = teleVM().fields().InspectableHeapInfo_collectionEpoch.fieldActor().offset();
+        return teleVM().fields().InspectableHeapInfo_collectionEpoch.staticTupleReference(teleVM()).toOrigin().plus(offset);
+    }
+
+    /**
+     * Address of the field incremented each time a GC completes.
+     * @return memory location of the field holding the root epoch
+     * @see #readRootEpoch()
+     */
+    public Address rootEpochAddress() {
+        final int offset = teleVM().fields().InspectableHeapInfo_rootEpoch.fieldActor().offset();
+        return teleVM().fields().InspectableHeapInfo_rootEpoch.staticTupleReference(teleVM()).toOrigin().plus(offset);
     }
 
 }

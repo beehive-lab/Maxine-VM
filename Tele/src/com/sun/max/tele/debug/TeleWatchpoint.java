@@ -57,7 +57,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
     private boolean read;
     private boolean write;
     private boolean exec;
-    private boolean gc;
+    private boolean isEnabledDuringGC;
 
 
     private byte[] teleWatchpointCache;
@@ -68,11 +68,11 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
      * @see RuntimeMemoryRegion#setStart(Address)
      * @see RuntimeMemoryRegion#setSize(Size)
      */
-    private TeleWatchpoint(Factory factory, String description, boolean after, boolean read, boolean write, boolean exec, boolean gc) {
-        this(factory, description, Address.zero(), Size.zero(), after, read, write, exec, gc);
+    private TeleWatchpoint(Factory factory, String description, boolean after, boolean read, boolean write, boolean exec, boolean isEnabledDuringGC) {
+        this(factory, description, Address.zero(), Size.zero(), after, read, write, exec, isEnabledDuringGC);
     }
 
-    private TeleWatchpoint(Factory factory, String description, Address start, Size size, boolean after, boolean read, boolean write, boolean exec, boolean gc) {
+    private TeleWatchpoint(Factory factory, String description, Address start, Size size, boolean after, boolean read, boolean write, boolean exec, boolean isEnabledDuringGC) {
         super(start, size);
         setDescription(description);
         this.factory = factory;
@@ -80,10 +80,10 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         this.read = read;
         this.write = write;
         this.exec = exec;
-        this.gc = gc;
+        this.isEnabledDuringGC = isEnabledDuringGC;
     }
 
-    private TeleWatchpoint(Factory factory, String description, MemoryRegion memoryRegion, boolean after, boolean read, boolean write, boolean exec, boolean gc) {
+    private TeleWatchpoint(Factory factory, String description, MemoryRegion memoryRegion, boolean after, boolean read, boolean write, boolean exec, boolean isEnabledDuringGC) {
         super(memoryRegion);
         setDescription(description);
         this.factory = factory;
@@ -91,7 +91,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         this.read = read;
         this.write = write;
         this.exec = exec;
-        this.gc = gc;
+        this.isEnabledDuringGC = isEnabledDuringGC;
     }
 
     @Override
@@ -117,7 +117,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
     public boolean setRead(boolean read) {
         ProgramError.check(active, "Attempt to set flag on disabled watchpoint");
         this.read = read;
-        if (factory.ongoingGC && !gc) {
+        if (factory.ongoingGC && !isEnabledDuringGC) {
             return true;
         }
         return factory.resetWatchpoint(this);
@@ -136,7 +136,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
     public boolean setWrite(boolean write) {
         ProgramError.check(active, "Attempt to set flag on disabled watchpoint");
         this.write = write;
-        if (factory.ongoingGC && !gc) {
+        if (factory.ongoingGC && !isEnabledDuringGC) {
             return true;
         }
         return factory.resetWatchpoint(this);
@@ -155,31 +155,28 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
     public boolean setExec(boolean exec) {
         ProgramError.check(active, "Attempt to set flag on disabled watchpoint");
         this.exec = exec;
-        if (factory.ongoingGC && !gc) {
+        if (factory.ongoingGC && !isEnabledDuringGC) {
             return true;
         }
         return factory.resetWatchpoint(this);
     }
 
-    public boolean isGC() {
-        return gc;
+    public boolean isEnabledDuringGC() {
+        return isEnabledDuringGC;
     }
 
-    public void setGC(boolean gc) {
+    public void setEnabledDuringGC(boolean isEnabledDuringGC) {
         ProgramError.check(active, "Attempt to set flag on disabled watchpoint");
-        this.gc = gc;
-        if (factory.ongoingGC && !gc) {
+        this.isEnabledDuringGC = isEnabledDuringGC;
+        if (factory.ongoingGC && !isEnabledDuringGC) {
             disable();
-        } else if (factory.ongoingGC && gc) {
+        } else if (factory.ongoingGC && isEnabledDuringGC) {
             reenable();
         }
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxWatchpoint#isActive()
-     */
-    public boolean isActive() {
-        return active;
+    public boolean isEnabled() {
+        return active && (read || write || exec);
     }
 
     /* (non-Javadoc)
@@ -358,7 +355,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         // Keep the set ordered by start address only, implemented by the comparator and equals().
         // An additional constraint imposed by this factory is that no regions overlap,
         // either in part or whole, with others in the set.
-        private TreeSet<TeleWatchpoint> watchpoints = new TreeSet<TeleWatchpoint>(this);
+        private final TreeSet<TeleWatchpoint> watchpoints = new TreeSet<TeleWatchpoint>(this);
 
         // A thread-safe, immutable collection of the current watchpoint list.
         // This list will be read many, many more times than it will change.
@@ -561,7 +558,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
                 watchpoints.remove(teleWatchpoint);
                 throw new DuplicateWatchpointException("Watchpoint already exists that overlaps with start=" + teleWatchpoint.start().toHexString() + ", size=" + teleWatchpoint.size().toString());
             }
-            if (teleWatchpoint.isGC() || !ongoingGC) {
+            if (teleWatchpoint.isEnabledDuringGC() || !ongoingGC) {
                 if (!teleProcess.activateWatchpoint(teleWatchpoint)) {
                     Trace.line(TRACE_VALUE, "Failed to create watchpoint " + teleWatchpoint.toString());
                     watchpoints.remove(teleWatchpoint);
@@ -572,7 +569,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
             }
 
             if (relocatableWatchpointsCounter == 1) {
-                final Pointer endOfGCField = teleProcess.teleVM().fields().InspectableHeapInfo_rootEpoch.staticTupleReference(teleProcess.teleVM()).toOrigin().plus(teleProcess.teleVM().fields().InspectableHeapInfo_rootEpoch.fieldActor().offset());
+                final Address endOfGCField = teleProcess.teleVM().rootEpochAddress();
                 teleProcess.teleVM().setRegionWatchpoint("GC End", new FixedMemoryRegion(endOfGCField, Size.fromInt(Pointer.size()), ""), true, false, true, false, true); //TODO: make it invisible
             }
 
@@ -609,6 +606,11 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
             return true;
         }
 
+        /**
+         * Deactivates a watchpoint, but keeps it in the watchpoints list.
+         * @param teleWatchpoint
+         * @return true if succeeded
+         */
         private synchronized boolean deactivateWatchpoint(TeleWatchpoint teleWatchpoint) {
             if (!teleProcess.deactivateWatchpoint(teleWatchpoint)) {
                 Trace.line(TRACE_VALUE, "Failed to deactivate watchpoint at " + teleWatchpoint.start().toHexString());
@@ -622,6 +624,11 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
             return true;
         }
 
+        /**
+         * Activates a watchpoint.
+         * @param teleWatchpoint
+         * @return true if succeeded
+         */
         private synchronized boolean activateWatchpoint(TeleWatchpoint teleWatchpoint) {
             if (!teleProcess.activateWatchpoint(teleWatchpoint)) {
                 Trace.line(TRACE_VALUE, "Failed to activated watchpoint at " + teleWatchpoint.start().toHexString());
@@ -650,8 +657,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
 
                     if (teleWatchpoint.getTeleObject() != null) {
                         if (relocatableWatchpointsCounter == 1) {
-                            final Pointer endOfGCField = teleProcess.teleVM().fields().InspectableHeapInfo_rootEpoch.staticTupleReference(teleProcess.teleVM()).
-                                                            toOrigin().plus(teleProcess.teleVM().fields().InspectableHeapInfo_rootEpoch.fieldActor().offset());
+                            final Address endOfGCField = teleProcess.teleVM().rootEpochAddress();
                             final TeleWatchpoint endOfGCWatchpoint = (TeleWatchpoint) findWatchpoint(endOfGCField);
                             removeWatchpoint(endOfGCWatchpoint);
                             relocatableWatchpointsCounter = 0;
@@ -680,10 +686,13 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
             }
         }
 
+        /**
+         * Disables all watchpoints during GC, which are not interested in GC actions.
+         */
         public void disableWatchpointsDuringGC() {
             if (!ongoingGC) {
                 for (MaxWatchpoint maxWatchpoint : watchpointsCache) {
-                    if (!maxWatchpoint.isGC()) {
+                    if (!maxWatchpoint.isEnabledDuringGC()) {
                         maxWatchpoint.disable();
                     }
                 }
@@ -691,45 +700,18 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
             }
         }
 
+        /**
+         * Reenables all watchpoints after GC, which got deactived during GC.
+         */
         public void reenableWatchpointsAfterGC() {
             if (ongoingGC) {
                 for (MaxWatchpoint maxWatchpoint : watchpointsCache) {
-                    if (!maxWatchpoint.isGC()) {
+                    if (!maxWatchpoint.isEnabledDuringGC()) {
                         maxWatchpoint.reenable();
                     }
                 }
                 ongoingGC = false;
             }
-        }
-
-        /**
-         * Finds the watchpoint which triggered a signal.
-         * @return triggered watchpoint
-         */
-        public MaxWatchpoint findTriggeredWatchpoint() {
-            triggeredWatchpointAddress = Address.fromLong(teleProcess.readWatchpointAddress());
-            if (triggeredWatchpointAddress.equals(Word.zero())) {
-                return null;
-            }
-            triggeredWatchpointCode = teleProcess.readWatchpointAccessCode();
-
-            return findWatchpoint(triggeredWatchpointAddress);
-        }
-
-        /**
-         * Returns the address which triggered the watchpoint.
-         * @return
-         */
-        public Address getTriggeredWatchpointAddress() {
-            return triggeredWatchpointAddress;
-        }
-
-        /**
-         * Returns the code of the triggered watchpoint.
-         * @return
-         */
-        public String getTriggeredWatchpointCode() {
-            return triggeredWatchpointCode;
         }
 
         /**

@@ -251,15 +251,34 @@ public final class Trap {
             if (runnable != null) {
                 // run the procedure and then set the vm thread local to null
                 runnable.run(trapState);
-                // the state of the safepoint latch was TRIGGERED when the trap happened. reset it back to ENABLED.
-                final Pointer enabledVmThreadLocals = VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(disabledVmThreadLocals).asPointer();
-                safepoint.setSafepointLatch(trapState, enabledVmThreadLocals);
 
                 // reset the procedure to be null
-                VmThreadLocal.SAFEPOINT_PROCEDURE.setVariableReference(triggeredVmThreadLocals, null);
-
-                Safepoint.reset(enabledVmThreadLocals);
+                SAFEPOINT_PROCEDURE.setVariableReference(triggeredVmThreadLocals, null);
+            } else {
+                /*
+                 * The interleaving of a mutator thread and a GC thread below demonstrates
+                 * one case where this can occur:
+                 *
+                 *    Mutator thread        |  GC thread
+                 *  ------------------------+-----------------------------------------------------------------
+                 *                          |  trigger safepoints and set safepoint procedure for all threads
+                 *  loop: safepoint         |
+                 *        block on mutex    |
+                 *                          |  complete GC
+                 *                          |  reset safepoints and cancel safepoint procedure for all threads
+                 *        wake from mutex   |
+                 *  loop: safepoint         |
+                 *
+                 * The second safepoint instruction on the mutator thread will cause a trap when
+                 * the safepoint procedure for the mutator is null.
+                 */
             }
+            // The state of the safepoint latch was TRIGGERED when the trap happened. It must be reset back to ENABLED
+            // here otherwise another trap will occur as soon as the trap stub returns and re-executes the
+            // safepoint instruction.
+            final Pointer enabledVmThreadLocals = VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(disabledVmThreadLocals).asPointer();
+            safepoint.setSafepointLatch(trapState, enabledVmThreadLocals);
+
         } else if (inJava(disabledVmThreadLocals)) {
             safepoint.setTrapNumber(trapState, Number.NULL_POINTER_EXCEPTION);
             // null pointer exception
