@@ -27,7 +27,6 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
@@ -58,24 +57,6 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
         this.specialReferences = specialRefs;
     }
 
-    private void verifyCells() {
-        Pointer cell = start().asPointer();
-        while (cell.lessThan(mark())) {
-            if (MaxineVM.isDebug()) {
-                cell = cell.plusWords(1);
-                if (!DebugHeap.isValidCellTag(cell.getWord(-1))) {
-                    Log.print("CELL VISITOR ERROR: missing object tag @ ");
-                    Log.print(cell);
-                    Log.print("(start + ");
-                    Log.print(cell.minus(start()).asOffset().toInt());
-                    Log.println(")");
-                    FatalError.unexpected("CELL VISITOR ERROR: missing object tag");
-                }
-            }
-            cell = verifyCell(cell);
-        }
-    }
-
     public void visitPointerOffset(Pointer pointer, int offset) {
         final Pointer address = pointer.plus(offset);
         final int heapWordIndex = address.minus(start()).dividedBy(Word.size()).toInt();
@@ -103,27 +84,6 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
         }
     }
 
-    private Pointer verifyCell(Pointer cell) {
-        final Pointer origin = Layout.cellToOrigin(cell);
-        final Grip newHubGrip = Layout.readHubGrip(origin);
-        final Hub hub = UnsafeLoophole.cast(newHubGrip.toJava());
-        final SpecificLayout specificLayout = hub.specificLayout;
-        if (specificLayout.isTupleLayout()) {
-            TupleReferenceMap.visitOriginOffsets(hub, origin, this);
-            return cell.plus(hub.tupleSize);
-        }
-        if (specificLayout.isHybridLayout()) {
-            TupleReferenceMap.visitOriginOffsets(hub, origin, this);
-        } else if (specificLayout.isReferenceArrayLayout()) {
-            final int length = Layout.readArrayLength(origin);
-            for (int index = 0; index < length; index++) {
-                final int offset = Layout.referenceArrayLayout().getElementOffsetFromOrigin(index).toInt();
-                visitPointerOffset(origin, offset);
-            }
-        }
-        return cell.plus(Layout.size(origin));
-    }
-
     public void visitPointers(PointerIndexVisitor pointerIndexVisitor) {
         if (referenceMap.isZero()) {
             referenceMap = Grip.fromJava(referenceMapBytes).toOrigin().plus(Layout.byteArrayLayout().getElementOffsetFromOrigin(0));
@@ -140,7 +100,7 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
             Log.println(start().plus(referenceMapWords * Word.size()));
         }
         if (MaxineVM.isDebug()) {
-            verifyCells();
+            DebugHeap.verifyRegion(start().asPointer(), end(), this, this);
         }
 
         if (Heap.traceRootScanning()) {

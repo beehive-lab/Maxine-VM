@@ -300,17 +300,15 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     }
 
     private final class PointerOffsetGripVerifier implements PointerOffsetVisitor {
-
         public void visitPointerOffset(Pointer pointer, int offset) {
-            DebugHeap.verifyGripAtIndex(pointer, offset, pointer.readGrip(offset), toSpace);
+            DebugHeap.verifyGripAtIndex(pointer, offset, pointer.readGrip(offset), toSpace, null);
         }
     }
 
     private final class PointerIndexGripVerifier extends PointerIndexVisitor {
-
         @Override
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
-            DebugHeap.verifyGripAtIndex(pointer, wordIndex * Kind.REFERENCE.width.numberOfBytes, pointer.getGrip(wordIndex), toSpace);
+            DebugHeap.verifyGripAtIndex(pointer, wordIndex * Kind.REFERENCE.width.numberOfBytes, pointer.getGrip(wordIndex), toSpace, null);
         }
     }
 
@@ -321,7 +319,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         public void run() {
             try {
                 VmThreadMap.ACTIVE.forAllVmThreadLocals(null, resetTLAB);
-                if (vmConfiguration().debugging()) {
+                if (MaxineVM.isDebug()) {
                     // Pre-verification of the heap.
                     verifyHeap("before GC");
                 }
@@ -380,7 +378,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
                 VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
 
-                if (vmConfiguration().debugging()) {
+                if (MaxineVM.isDebug()) {
                     verifyHeap("after GC");
                 }
 
@@ -491,10 +489,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     public void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
     }
 
-    public void initializeVmThread(Pointer vmThreadLocals) {
-    }
-
-
     private Size immediateFreeSpace() {
         return top.minus(allocationMark()).asSize();
     }
@@ -502,13 +496,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     private Grip mapGrip(Grip grip) {
         final Pointer fromOrigin = grip.toOrigin();
         if (MaxineVM.isDebug()) {
-            if (!(grip.isZero() || fromSpace.contains(fromOrigin) || toSpace.contains(fromOrigin) || Heap.bootHeapRegion.contains(fromOrigin) || Code.contains(fromOrigin))) {
-                Log.print("invalid grip: ");
-                Log.print(grip.toOrigin().asAddress());
-                Log.println();
-                FatalError.unexpected("invalid grip");
-            }
-            DebugHeap.checkGripTag(grip);
+            DebugHeap.verifyGripAtIndex(Address.zero(), 0, grip, toSpace, fromSpace);
         }
         if (fromSpace.contains(fromOrigin)) {
             final Grip forwardGrip = Layout.readForwardGrip(fromOrigin);
@@ -587,7 +575,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     private void moveReachableObjects() {
         Pointer cell = toSpace.start().asPointer();
         while (cell.lessThan(allocationMark())) {
-            cell = DebugHeap.checkDebugCellTag(cell);
+            cell = DebugHeap.checkDebugCellTag(toSpace.start(), cell);
             if (Heap.traceGC()) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Visiting cell in to space ");

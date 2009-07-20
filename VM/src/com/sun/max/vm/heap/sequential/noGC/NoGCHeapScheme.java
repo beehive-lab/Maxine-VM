@@ -83,9 +83,6 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     public void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
     }
 
-    public void initializeVmThread(Pointer vmThreadLocals) {
-    }
-
     private final Timer clearTimer = GlobalMetrics.newTimer("Clear", Clock.SYSTEM_MILLISECONDS);
     private final Timer gcTimer = GlobalMetrics.newTimer("GC", Clock.SYSTEM_MILLISECONDS);
     private final Timer rootScanTimer = GlobalMetrics.newTimer("Roots scan", Clock.SYSTEM_MILLISECONDS);

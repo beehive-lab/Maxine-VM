@@ -98,8 +98,6 @@ public class BeltwaySSCollector extends BeltwayCollector {
             beltwayHeapSchemeBSS.fillLastTLAB();
         }
 
-        beltwayHeapSchemeBSS.wipeMemory(beltwayHeapSchemeBSS.getFromSpace());
-
         VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
 
         verifyBelt(beltwayHeapSchemeBSS.getToSpace());

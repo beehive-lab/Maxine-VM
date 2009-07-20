@@ -48,7 +48,7 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
     }
 
     public Size allocationSize(Size cellSize) {
-        return VMConfiguration.target().debugging() ? cellSize.plus(VMConfiguration.target().wordWidth().numberOfBytes) : cellSize;
+        return DebugHeap.adjustForDebugTag(cellSize.asPointer()).asSize();
     }
 
     /**
@@ -109,17 +109,7 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
     public void visitCells(CellVisitor cellVisitor) {
         Pointer cell = start().asPointer();
         while (cell.lessThan(mark())) {
-            if (MaxineVM.isDebug()) {
-                cell = cell.plusWords(1);
-                if (!DebugHeap.isValidCellTag(cell.getWord(-1))) {
-                    Log.print("CELL VISITOR ERROR: missing object tag @ ");
-                    Log.print(cell);
-                    Log.print("(start + ");
-                    Log.print(cell.minus(start()).asOffset().toInt());
-                    Log.println(")");
-                    FatalError.unexpected("CELL VISITOR ERROR: missing object tag");
-                }
-            }
+            cell = DebugHeap.checkDebugCellTag(start(), cell);
             cell = cellVisitor.visitCell(cell);
         }
     }

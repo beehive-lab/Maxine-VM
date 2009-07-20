@@ -75,7 +75,7 @@ class AMD64DtInterpretedTargetMethodGenerator implements InterpretedTargetMethod
     private int createReferenceLiteral(Object literal) {
         int literalOffset = computeReferenceLiteralOffset(1 + referenceLiterals.length());
         referenceLiterals.prepend(literal);
-        if (VMConfiguration.target().debugging()) {
+        if (MaxineVM.isDebug()) {
             // Account for the DebugHeap tag in front of the code object:
             literalOffset += VMConfiguration.target().wordWidth().numberOfBytes;
         }
