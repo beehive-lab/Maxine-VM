@@ -315,7 +315,7 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
 
             setContentPane(contentPanel);
             pack();
-            inspection.gui().moveToMiddle(this);
+            inspection.gui().setLocationRelativeToMouse(this, 5);
             setVisible(true);
         }
 
@@ -348,7 +348,7 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
 
             setContentPane(contentPanel);
             pack();
-            inspection.gui().moveToMiddle(this);
+            inspection.gui().setLocationRelativeToMouse(this, 5);
             setVisible(true);
         }
     }
