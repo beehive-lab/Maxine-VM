@@ -74,4 +74,12 @@ public class RelocInfo {
         this.value = (short) ((type.ordinal() << RelocInfoEncoding.NontypeWidth.value) + bits);
     }
 
+    /**
+     * @param rtype
+     * @param i
+     */
+    public RelocInfo(Type rtype, int i) {
+        // TODO Auto-generated constructor stub
+    }
+
 }

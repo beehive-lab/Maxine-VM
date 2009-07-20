@@ -29,10 +29,7 @@ import com.sun.c1x.asm.RelocInfo.*;
  */
 public class Relocation {
 
-    public static RelocationHolder specSimple(Type rtype) {
-        // TODO Auto-generated method stub
-        return null;
-    }
+
 
     public Type type() {
         // TODO Auto-generated method stub
@@ -78,5 +75,57 @@ public class Relocation {
         // TODO Auto-generated method stub
         return null;
     }
+
+    // from here
+
+
+    private static void guaranteeSize(){
+
+    }
+    // When a relocation has been created by a RelocIterator,
+    // this field is non-null.  It allows the relocation to know
+    // its context, such as the address to which it applies.
+    private RelocIterator binding;
+
+
+    protected RelocIterator binding()  {
+      assert binding != null :  "must be bound";
+      return binding;
+    }
+    protected void setBinding(RelocIterator b) {
+      assert binding == null :  "must be unbound";
+      binding = b;
+      assert binding != null :  "must now be bound";
+    }
+
+    protected Relocation() {
+      binding = null;
+    }
+
+    protected static RelocationHolder newHolder() {
+      return new RelocationHolder();
+    }
+
+
+//    public void operator new(sizeT size,  RelocationHolder& holder) {
+//      if (size > sizeof(holder.relocbuf)) guaranteeSize();
+//      assert (void  *)holder.reloc() == &holder.relocbuf[0] :  "ptrs must agree";
+//      return holder.reloc();
+//    }
+
+    // make a generic relocation for a given type (if possible)
+    public static RelocationHolder specSimple(Type rtype){
+        if (rtype == RelocInfo.Type.none) {
+            return RelocationHolder.none;
+        }
+        RelocInfo ri = new RelocInfo(rtype, 0);
+        RelocIterator itr;
+//        itr.setCurrent(ri);
+//        itr.reloc();
+//        return itr.rh;
+        return null;
+    }
+
+
 
 }
