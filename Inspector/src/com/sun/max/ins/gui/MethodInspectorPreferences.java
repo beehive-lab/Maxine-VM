@@ -159,7 +159,7 @@ public class MethodInspectorPreferences extends AbstractInspectionHolder {
             dialogPanel.add(buttons, BorderLayout.SOUTH);
             setContentPane(dialogPanel);
             pack();
-            inspection.gui().moveToMiddle(this);
+            inspection.gui().setLocationRelativeToMouse(this, 5);
             setVisible(true);
         }
     }

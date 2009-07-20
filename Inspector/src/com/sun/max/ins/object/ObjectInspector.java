@@ -443,7 +443,7 @@ public abstract class ObjectInspector extends Inspector {
             dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
             setContentPane(dialogPanel);
             pack();
-            inspection.gui().moveToMiddle(this);
+            inspection.gui().setLocationRelativeToMouse(this, 5);
             setVisible(true);
         }
     }

@@ -118,7 +118,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             assert thread.state() == ThreadState.WATCHPOINT;
             if (triggeredWatchpointAddress.equals(teleVM().rootEpochAddress())) {
                 // The counter signifying end of a GC has been changed.
-                System.out.println("\nROOTEPOCHADDRESS\n");
+                //System.out.println("\nROOTEPOCHADDRESS\n");
 
                 watchpointFactory().lazyUpdateRelocatableWatchpoint();
                 watchpointFactory().reenableWatchpointsAfterGC();
@@ -131,7 +131,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                 // The VM is in GC. Turn Watchpoints off for all objects that are not interested in GC related triggers.
                 if (!watchpointFactory().isInGCMode()) {
                     endOfGCWatchpoint.enable();
-                    System.out.println("\nEND OF GC WATCHPOINT ACTIVATED\n");
+                    //System.out.println("\nEND OF GC WATCHPOINT ACTIVATED\n");
                     watchpointFactory().disableWatchpointsDuringGC();
                     if (!watchpoint.isEnabledDuringGC()) {
                         return true;
