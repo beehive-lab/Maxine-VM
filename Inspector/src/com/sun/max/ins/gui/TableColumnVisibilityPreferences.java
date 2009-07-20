@@ -243,7 +243,7 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
             }
         };
         final JPanel content = new InspectorPanel(inspection);
-        content.add(new TextLabel(inspection, "Columns:  "));
+        content.add(new TextLabel(inspection, "View Columns:  "));
         for (Column_Type columnType : columnTypeValues) {
             if (canBeMadeInvisible(columnType)) {
                 final JCheckBox checkBox =
