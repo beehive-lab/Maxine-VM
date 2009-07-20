@@ -26,7 +26,7 @@ import com.sun.max.ins.*;
 
 
 /**
- * Persistent preferences for viewing watchpoints in the VM.
+ * Persistent preferences for managing and viewing watchpoints in the VM.
  *
  * @author Michael Van De Vanter
   */
