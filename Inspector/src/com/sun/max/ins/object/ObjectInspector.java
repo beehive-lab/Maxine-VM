@@ -328,16 +328,6 @@ public abstract class ObjectInspector extends Inspector {
         public ViewOptionsPanel(Inspection inspection) {
             super(inspection, new BorderLayout());
 
-            final InspectorCheckBox showHeaderCheckBox = new InspectorCheckBox(inspection(), "Header", "Display Object Header", showHeader);
-            showHeaderCheckBox.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent actionEvent) {
-                    showHeader = showHeaderCheckBox.isSelected();
-                    if (!showHeaderCheckBox.isSelected()) {
-                        objectHeaderTable = null;
-                    }
-                    reconstructView();
-                }
-            });
             final InspectorCheckBox showAddressesCheckBox = new InspectorCheckBox(inspection(), "Addresses", "Display addresses", showAddresses);
             showAddressesCheckBox.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent actionEvent) {
@@ -366,6 +356,16 @@ public abstract class ObjectInspector extends Inspector {
                     reconstructView();
                 }
             });
+            final InspectorCheckBox showHeaderCheckBox = new InspectorCheckBox(inspection(), "Show Header", "Display Object Header", showHeader);
+            showHeaderCheckBox.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent actionEvent) {
+                    showHeader = showHeaderCheckBox.isSelected();
+                    if (!showHeaderCheckBox.isSelected()) {
+                        objectHeaderTable = null;
+                    }
+                    reconstructView();
+                }
+            });
             final InspectorCheckBox hideNullArrayElementsCheckBox = new InspectorCheckBox(inspection(), "Hide null array elements", "Hide null array elements", hideNullArrayElements);
             hideNullArrayElementsCheckBox.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent actionEvent) {
@@ -375,8 +375,7 @@ public abstract class ObjectInspector extends Inspector {
             });
 
             final JPanel upperContentPanel = new InspectorPanel(inspection());
-            upperContentPanel.add(new TextLabel(inspection(), "View:  "));
-            upperContentPanel.add(showHeaderCheckBox);
+            upperContentPanel.add(new TextLabel(inspection(), "View Columns:  "));
             upperContentPanel.add(showAddressesCheckBox);
             upperContentPanel.add(showOffsetsCheckBox);
             upperContentPanel.add(showTypesCheckBox);
@@ -386,7 +385,8 @@ public abstract class ObjectInspector extends Inspector {
             upperPanel.add(upperContentPanel, BorderLayout.WEST);
 
             final JPanel lowerContentPanel = new InspectorPanel(inspection());
-            lowerContentPanel.add(new TextLabel(inspection(), "Options:  "));
+            lowerContentPanel.add(new TextLabel(inspection(), "View Options:  "));
+            lowerContentPanel.add(showHeaderCheckBox);
             lowerContentPanel.add(hideNullArrayElementsCheckBox);
 
             final JPanel lowerPanel = new InspectorPanel(inspection(), new BorderLayout());
