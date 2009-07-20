@@ -129,7 +129,7 @@ public class BytecodeViewerPreferences  extends TableColumnVisibilityPreferences
 
         final JPanel panel = new InspectorPanel(inspection(), new BorderLayout());
         panel.add(super.getPanel(), BorderLayout.NORTH);
-        panel.add(operandStylePanel, BorderLayout.SOUTH);
+        panel.add(panel2, BorderLayout.SOUTH);
         return panel;
     }
 
