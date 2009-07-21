@@ -48,31 +48,61 @@ public final class DebugHeap {
     }
 
     private static final long LONG_OBJECT_TAG = 0xccccddddddddeeeeL;
+    private static final long LONG_OBJECT_PAD = 0xeeeeddddddddccccL;
 
     private static final int INT_OBJECT_TAG = 0xcccceeee;
+    private static final int INT_OBJECT_PAD = 0xeeeecccc;
 
     public static byte[] tagBytes(DataModel dataModel) {
         return dataModel.wordWidth == WordWidth.BITS_64 ? dataModel.toBytes(DebugHeap.LONG_OBJECT_TAG) : dataModel.toBytes(DebugHeap.INT_OBJECT_TAG);
     }
 
-    public static boolean isValidCellTag(Word word) {
+    @INLINE
+    private static Word tagWord() {
         if (Word.width() == WordWidth.BITS_64) {
-            if (word.asAddress().toLong() == LONG_OBJECT_TAG) {
-                return true;
-            }
+            return Address.fromLong(LONG_OBJECT_TAG);
         }
-        return word.asAddress().toInt() == INT_OBJECT_TAG;
+        return Address.fromInt(INT_OBJECT_TAG);
+    }
+
+    @INLINE
+    private static Word padWord() {
+        if (Word.width() == WordWidth.BITS_64) {
+            return Address.fromLong(LONG_OBJECT_PAD);
+        }
+        return Address.fromInt(INT_OBJECT_PAD);
+    }
+
+    public static boolean isValidCellTag(Word word) {
+        return word.equals(tagWord());
+    }
+
+    public static void writeCellPadding(Pointer start, int words) {
+        FatalError.check(MaxineVM.isDebug(), "Can only be called in debug VM");
+        Memory.setWords(start, words, padWord());
+    }
+
+    public static int writeCellPadding(Pointer start, Address end) {
+        FatalError.check(MaxineVM.isDebug(), "Can only be called in debug VM");
+        final int words = end.minus(start).dividedBy(Word.size()).toInt();
+        Memory.setWords(start, words, padWord());
+        return words;
     }
 
     @INLINE
     public static void writeCellTag(Pointer cell) {
         if (MaxineVM.isDebug()) {
-            if (Word.width() == WordWidth.BITS_64) {
-                cell.setLong(-1, DebugHeap.LONG_OBJECT_TAG);
-            } else {
-                cell.setInt(-1, DebugHeap.INT_OBJECT_TAG);
+            cell.setWord(-1, tagWord());
+        }
+    }
+
+    public static Pointer skipCellPadding(Pointer cell) {
+        if (MaxineVM.isDebug()) {
+            while (cell.getWord().equals(padWord())) {
+                cell = cell.plusWords(1);
             }
         }
+        return cell;
     }
 
     @INLINE
@@ -196,8 +226,9 @@ public final class DebugHeap {
      */
     public static void verifyRegion(Pointer start, final Address end, final MemoryRegion space, PointerOffsetVisitor verifier) {
         Pointer cell = start;
-        while (cell.lessThan(end)) {
+        while (skipCellPadding(cell).lessThan(end)) {
             cell = checkDebugCellTag(start, cell);
+
 
             final Pointer origin = Layout.cellToOrigin(cell);
             final Hub hub = checkHub(origin, space);

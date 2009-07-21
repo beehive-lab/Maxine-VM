@@ -108,7 +108,7 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
 
     public void visitCells(CellVisitor cellVisitor) {
         Pointer cell = start().asPointer();
-        while (cell.lessThan(mark())) {
+        while (DebugHeap.skipCellPadding(cell).lessThan(mark())) {
             cell = DebugHeap.checkDebugCellTag(start(), cell);
             cell = cellVisitor.visitCell(cell);
         }
