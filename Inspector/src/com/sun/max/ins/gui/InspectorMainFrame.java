@@ -305,6 +305,12 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         }
     }
 
+    public void setLocationRelativeToMouse(JDialog dialog, int offset) {
+        final Point location = InspectorFrame.TitleBarListener.recentMouseLocationOnScreen();
+        location.translate(offset, offset);
+        dialog.setLocation(location);
+    }
+
     public void moveToMiddle(JDialog dialog) {
         final Point middle = getMiddle(dialog);
         middle.translate(getX(), getY());

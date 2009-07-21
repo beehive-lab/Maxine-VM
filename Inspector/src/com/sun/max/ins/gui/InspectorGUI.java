@@ -119,6 +119,8 @@ public interface InspectorGUI {
      */
     void moveToMiddleIfNotVisble(Inspector inspector);
 
+    void setLocationRelativeToMouse(JDialog dialog, int offset);
+
     /**
      * Sets dialog frame location to middle of Inspection display.
      */
