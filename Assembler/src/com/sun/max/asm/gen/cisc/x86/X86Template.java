@@ -161,15 +161,14 @@ public abstract class X86Template extends Template implements X86InstructionDesc
         }
     }
 
-    private boolean isRedundant;
+    /**
+     * @see #computeRedundancyWith(X86Template)
+     */
+    public X86Template redundantTo;
 
     @Override
     public boolean isRedundant() {
-        return isRedundant;
-    }
-
-    public void beRedundant() {
-        isRedundant = true;
+        return redundantTo != null;
     }
 
     private String canonicalName;
@@ -413,13 +412,19 @@ public abstract class X86Template extends Template implements X86InstructionDesc
     }
 
     /**
-     * @param other
-     *            another template to compare against
-     * @return whether both templates have the same name and operands and thus
-     *         are assumed to implement the same machine instruction semantics,
-     *         though potentially denoting different machine codes
+     * Determines if this template is redundant with respect to a given template.
+     * Two templates are redundant if they both have the same name and operands.
+     * Redundant pairs of instructions are assumed to implement the same machine
+     * instruction semantics but have different encodings.
+     *
+     * @param other another template to compare against
+     * @return whether this template is redundant with respect to {@code other}
      */
-    public boolean isRedundant(X86Template other) {
+    public boolean computeRedundancyWith(X86Template other) {
+        if (redundantTo != null) {
+            assert redundantTo == other;
+            return true;
+        }
         if (!canonicalName().equals(other.canonicalName())) {
             return false;
         }
@@ -431,6 +436,7 @@ public abstract class X86Template extends Template implements X86InstructionDesc
                 return false;
             }
         }
+        redundantTo = other;
         return true;
     }
 

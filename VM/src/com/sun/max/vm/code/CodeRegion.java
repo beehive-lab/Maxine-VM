@@ -83,28 +83,28 @@ public class CodeRegion extends LinearAllocatorHeapRegion {
      * Allocate space for a target method's code and data structures in this code region.
      *
      * @param targetMethod the target method to allocate in this region
-     * @return true if space was successfully allocated for the specified target method
+     * @param size the size of the block to allocate
+     * @return the allocated space or zero if allocation was not successful
      */
-    public boolean allocateTargetMethod(TargetMethod targetMethod) {
-        final Pointer start = allocateSpace(targetMethod.size());
-        if (start.isZero()) {
-            return false;
-
+    public Pointer allocateTargetMethod(TargetMethod targetMethod, Size size) {
+        final Pointer start = allocateSpace(size);
+        if (!start.isZero()) {
+            if (Heap.traceAllocation()) {
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.print("Allocated target code bundle for ");
+                Log.printMethodActor(targetMethod.classMethodActor(), false);
+                Log.print(" at ");
+                Log.print(start);
+                Log.print(" [");
+                Log.print(size.toInt());
+                Log.println(" bytes]");
+                Log.unlock(lockDisabledSafepoints);
+            }
+            targetMethod.setStart(start);
+            targetMethod.setSize(size);
+            sortedMemoryRegions.add(targetMethod);
         }
-        if (Heap.traceAllocation()) {
-            final boolean lockDisabledSafepoints = Log.lock();
-            Log.print("Allocated target code bundle for ");
-            Log.printMethodActor(targetMethod.classMethodActor(), false);
-            Log.print(" at ");
-            Log.print(start);
-            Log.print(" [");
-            Log.print(targetMethod.size().toInt());
-            Log.println(" bytes]");
-            Log.unlock(lockDisabledSafepoints);
-        }
-        targetMethod.setStart(start);
-        sortedMemoryRegions.add(targetMethod);
-        return true;
+        return start;
     }
 
     /**

@@ -107,7 +107,6 @@ public abstract class Actor {
     public static final int INLINE_AFTER_SNIPPETS_ARE_COMPILED =
                                                    0x00010000;
     public static final int NO_SAFEPOINTS =        0x00004000;
-    public static final int INTERPRET_ONLY =       0x00080000;
 
     /**
      * Mask of the flags defined for classes in Table 4.1 of the JVM specification.
@@ -452,11 +451,6 @@ public abstract class Actor {
         return (flags & FINALIZER) != 0;
     }
 
-    @INLINE
-    public static boolean isInterpretOnly(int flags) {
-        return (flags & INTERPRET_ONLY) != 0;
-    }
-
     public static Predicate<Actor> staticPredicate = new Predicate<Actor>() {
         public boolean evaluate(Actor actor) {
             return actor.isStatic();
@@ -602,8 +596,8 @@ public abstract class Actor {
         if (isWrapper(flags)) {
             sb.append("wrapper ");
         }
-        if (isInterpretOnly(flags) || isReset(flags)) {
-            sb.append("interpretOnly/reset ");
+        if (isReset(flags)) {
+            sb.append("reset ");
         }
 
         if (sb.length() > 0) {

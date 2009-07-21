@@ -141,7 +141,7 @@ public abstract class RiscTemplate extends Template implements RiscInstructionDe
         return Integer.bitCount(opcodeMask);
     }
 
-    public void organizeOption(Option option, RiscTemplate canonikalRepresentative) {
+    public void organizeOption(Option option, RiscTemplate canonicalRepresentative) {
         instructionDescription().setExternalName(externalName() + option.externalName());
         setInternalName(internalName() + option.name());
         try {
@@ -153,7 +153,7 @@ public abstract class RiscTemplate extends Template implements RiscInstructionDe
 
         options.append(option);
         if (option.isRedundant()) {
-            this.canonicalRepresentative = canonikalRepresentative;
+            this.canonicalRepresentative = canonicalRepresentative;
         }
     }
 

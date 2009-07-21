@@ -83,7 +83,7 @@ public class BytecodeTemplateGenerator extends TemplateGenerator {
                 if (!(targetMethod.referenceLiterals() == null)) {
                     ProgramError.unexpected("Template must not have *any* reference literals: " + targetMethod + " " + Arrays.toString(targetMethod.referenceLiterals()), null);
                 }
-                ProgramError.check(targetMethod.scalarLiteralBytes() == null, "Template must not have *any* scalar literals: " + targetMethod);
+                ProgramError.check(targetMethod.scalarLiterals() == null, "Template must not have *any* scalar literals: " + targetMethod);
                 if (targetMethod.frameSize() > maxTemplateFrameSize) {
                     maxTemplateFrameSize = targetMethod.frameSize();
                 }
