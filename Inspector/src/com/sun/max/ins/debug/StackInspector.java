@@ -323,7 +323,7 @@ public class StackInspector extends Inspector {
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected boolean refreshView(boolean force) {
         if (thread != null && thread.isLive()) {
             final Sequence<StackFrame> frames = thread.frames();
             assert !frames.isEmpty();
@@ -348,6 +348,7 @@ public class StackInspector extends Inspector {
         super.refreshView(force);
         // The title displays thread state, so must be updated.
         updateFrameTitle();
+        return true;
     }
 
     public void viewConfigurationChanged() {

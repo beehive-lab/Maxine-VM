@@ -83,11 +83,14 @@ public final class StringInspector extends ObjectInspector {
     }
 
     @Override
-    protected void refreshView(boolean force) {
-        super.refreshView(force);
-        // Only refresh the visible pane
-        final Prober pane = (Prober) tabbedPane.getSelectedComponent();
-        pane.refresh(force);
+    protected boolean refreshView(boolean force) {
+        if (super.refreshView(force)) {
+            // Only refresh the visible pane
+            final Prober pane = (Prober) tabbedPane.getSelectedComponent();
+            pane.refresh(force);
+            return true;
+        }
+        return false;
     }
 
 }

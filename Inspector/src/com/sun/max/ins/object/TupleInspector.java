@@ -69,7 +69,7 @@ public class TupleInspector extends ObjectInspector {
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected boolean refreshView(boolean force) {
         if (isShowing() || force) {
             fieldsPane.refresh(force);
             if (classMethodInspectorMenuItems != null) {
@@ -80,6 +80,7 @@ public class TupleInspector extends ObjectInspector {
             }
             super.refreshView(force);
         }
+        return true;
     }
 
 }

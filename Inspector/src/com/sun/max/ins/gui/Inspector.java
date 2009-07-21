@@ -115,6 +115,10 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         };
     }
 
+    protected void setWarningColor() {
+        frame().getContentPane().setBackground(Color.RED);
+    }
+
     /**
      * @return a short string suitable for appearing in the window frame of an inspector.
      * If this text is expected to change dynamically, a call to {@link #updateFrameTitle()}
@@ -171,10 +175,11 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      *
      * @param force suspend caching behavior; read state unconditionally.
      */
-    protected void refreshView(boolean force) {
+    protected boolean refreshView(boolean force) {
         frame.refresh(force);
         frame.invalidate();
         frame.repaint();
+        return true;
     }
 
     /**

@@ -161,7 +161,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected boolean refreshView(boolean force) {
 
         boolean panelsAddedOrRemoved = false;
         for (Safepoint.State state : Safepoint.State.CONSTANTS) {
@@ -191,6 +191,8 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         super.refreshView(force);
         // The title displays thread state, so must be updated.
         updateFrameTitle();
+
+        return true;
     }
 
     public void viewConfigurationChanged() {

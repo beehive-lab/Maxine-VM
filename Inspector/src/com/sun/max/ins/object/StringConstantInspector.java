@@ -85,10 +85,11 @@ public class StringConstantInspector extends ObjectInspector {
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected boolean refreshView(boolean force) {
         // Only refresh the visible pane.
         final Prober pane = (Prober) tabbedPane.getSelectedComponent();
         pane.refresh(force);
         super.refreshView(force);
+        return true;
     }
 }

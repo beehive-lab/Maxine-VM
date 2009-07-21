@@ -133,7 +133,11 @@ public abstract class ObjectInspector extends Inspector {
 
     @Override
     public final String getTextForTitle() {
-        return teleObject.getCurrentOrigin().toHexString() + inspection().nameDisplay().referenceLabelText(teleObject);
+        Pointer pointer = teleObject.getCurrentOrigin();
+        if (teleObject.isLive()) {
+            return pointer.toHexString() + inspection().nameDisplay().referenceLabelText(teleObject);
+        }
+        return this.getCurrentTitle() + " - got collected by GC";
     }
 
     @Override
@@ -276,8 +280,13 @@ public abstract class ObjectInspector extends Inspector {
     };
 
     @Override
-    protected void refreshView(boolean force) {
+    protected boolean refreshView(boolean force) {
         final Pointer newOrigin = teleObject.getCurrentOrigin();
+        if (!teleObject.isLive()) {
+            setWarningColor();
+            updateFrameTitle();
+            return false;
+        }
         if (!newOrigin.equals(currentObjectOrigin)) {
             // The object has been relocated in memory
             currentObjectOrigin = newOrigin;
@@ -288,6 +297,8 @@ public abstract class ObjectInspector extends Inspector {
             }
         }
         super.refreshView(force);
+
+        return true;
     }
 
     public void viewConfigurationChanged() {

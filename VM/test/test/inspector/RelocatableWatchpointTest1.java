@@ -38,12 +38,19 @@ public class RelocatableWatchpointTest1 {
         return new String("allocationTest");
     }
 
+    public static String getGarbageMessage() {
+        return new String("allocationTestGarbage");
+    }
+
     public static void printMessage(String message) {
         System.out.println(message);
     }
 
     public static void relocationTest() {
-        String test = getMessage();
+        String test = getGarbageMessage();
+        printMessage(test);
+        test = getMessage();
+        printMessage(test);
         for (int i = 0; i < allocations; i++) {
             final byte[] tmp = new byte[allocationSize];
             tmp[0] = 1;

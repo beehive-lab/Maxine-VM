@@ -47,9 +47,10 @@ public final class ArrayInspector extends ObjectInspector {
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected boolean refreshView(boolean force) {
         elementsPane.refresh(force);
         super.refreshView(force);
+        return true;
     }
 
 }
