@@ -417,15 +417,25 @@ public class ExtendImageRunScheme extends JavaRunScheme {
 
     @PROTOTYPE_ONLY
     protected void doReinitClass(String argument) {
+        doForceInitClass(argument, true);
+    }
+
+    @PROTOTYPE_ONLY
+    protected ClassActor doForceInitClass(String argument, boolean reinit) {
         final String className = argument;
         try {
             final ClassActor classActor = ClassActor.fromJava(Class.forName(className, false, PrototypeClassLoader.PROTOTYPE_CLASS_LOADER));
-            Trace.line(1, "arranging to reinitialize " +  className + " prior to main");
-            reinitClasses.append(classActor);
+            Trace.line(1, "forcing compilation of " +  className + ".<clinit>");
             forceCompileMethod(argument + ".<clinit>");
+            if (reinit) {
+                Trace.line(1, "arranging to reinitialize " +  className + " prior to main");
+                reinitClasses.append(classActor);
+            }
+            return classActor;
         }  catch (Exception ex) {
             ProgramError.unexpected("failed to find: " + argument);
         }
+        return null;
     }
 
     @PROTOTYPE_ONLY
