@@ -86,6 +86,10 @@ public class C1XOptions {
     public static boolean ProfileCalls                       = ____;
     public static boolean ProfileCheckcasts                  = ____;
     public static boolean ProfileInlinedCalls                = ____;
+    public static boolean OptimizeVirtualCallProfiling       = ____;
+    public static boolean ProfileVirtualCalls                = ____;
+    public static int     ProfileTypeWidth                   = 0;
+    public static boolean TestCompressedStreamEnabled        = ____;
 
     // optimistic optimization settings
     public static boolean UseCHA                             = ____;
@@ -106,10 +110,11 @@ public class C1XOptions {
     public static boolean UseInlineCaches                    = ____;
     public static boolean RegisterFinalizersAtInit           = TRUE;
 
-    public static boolean LIRFillDelaySlots                  = ____;
+    // global optimization settings
+    public static boolean DoGlobalValueNumbering             = ____;
+    public static int     MaximumGVNLoopSize                 = 8;
 
     // future settings
-    public static boolean DoGlobalValueNumbering             = ____;
     public static boolean DoArrayBoundsCheckElimination      = ____;
     public static boolean DistinguishExceptionHandlerCode    = ____;
     public static boolean DoNullCheckElimination             = ____;
@@ -127,39 +132,45 @@ public class C1XOptions {
 
     // LIR settings
     public static boolean PrintIRWithLIR                     = TRUE;
+    public static boolean LIRFillDelaySlots                  = ____;
     public static boolean LIRTraceExecution                  = ____;
     public static boolean TwoOperandLIRForm                  = ____;
     public static boolean PatchALot                          = ____;
-    public static boolean GenerateSynchronizationCode        = ____;
-    public static boolean UseFastLocking                     = ____;
-    public static boolean UseFastNewInstance                 = ____;
     public static boolean PrintNotLoaded                     = ____;
+    public static boolean GenerateSynchronizationCode        = ____;
+    public static boolean GenerateArrayStoreCheck            = TRUE;
     public static boolean GenerateBoundsChecks               = ____;
     public static boolean GenerateCompilerNullChecks         = ____;
     public static boolean UseTableRanges                     = ____;
     public static boolean DetailedAsserts                    = TRUE;
-
-    public static boolean GenerateArrayStoreCheck            = TRUE;
-    public static boolean UseBiasedLocking                   = ____;
-    public static boolean ImplicitDiv0Checks                 = ____;
     public static boolean PrintLIR                           = TRUE;
     public static boolean Verbose                            = ____;
     public static boolean LIRTracePeephole                   = ____;
+
+    // backend optimization settings
+    public static boolean OptimizeControlFlow                = ____;
+    public static boolean OptimizeMoves                      = ____;
+
+    // Runtime settings
+    public static boolean UseBiasedLocking                   = ____;
+    public static boolean UseImplicitDiv0Checks              = ____;
+    public static boolean UseTLAB                            = ____;
+    public static int     ReadPrefetchInstr                  = 0;
+    public static int     AllocatePrefetchInstr              = 0;
+    public static boolean UseFastLocking                     = ____;
+    public static boolean UseFastNewInstance                 = ____;
+    public static boolean UseSlowPath                        = ____;
+    public static boolean UseFastNewObjectArray              = ____;
+    public static boolean UseFastNewTypeArray                = ____;
+    public static boolean UseStackBanging                    = TRUE;
+    public static int     StackShadowPages                   = 3;
 
     // Assembler settings
     public static boolean CommentedAssembly                  = ____;
     public static boolean PrintLIRWithAssembly               = ____;
     public static boolean VerifyOopMaps                      = ____;
     public static boolean VerifyOops                         = ____;
-    public static int     CodeEntryAlignment                 = 16;
     public static int     SafepointPollOffset                = 256; // x86 only?
-    public static int     ReadPrefetchInstr                  = 0;
-    public static int     AllocatePrefetchInstr              = 0;
-    public static boolean UseSlowPath                        = ____;
-    public static boolean UseFastNewObjectArray              = ____;
-    public static boolean UseFastNewTypeArray                = ____;
-    public static boolean UseStackBanging                    = TRUE;
-    public static int     StackShadowPages                   = 3;
     public static int     Atomics                            = 0;
     public static boolean UseNormalNop                       = TRUE;
     public static boolean UseAddressNop                      = TRUE;
@@ -167,17 +178,13 @@ public class C1XOptions {
     public static boolean PrintBiasedLockingStatistics       = ____;
     public static boolean UseIncDec                          = ____;
     public static boolean UseXmmLoadAndClearUpper            = ____;
-    public static boolean UseTLAB                            = ____;
     public static boolean UseXmmRegToRegMoveAll              = ____;
     public static boolean CMSIncrementalMode                 = ____;
     public static boolean TLABStats                          = ____;
     public static boolean GenerateAssertionCode              = ____;
 
     // Profiling settings
-    public static boolean Tier1OptimizeVirtualCallProfiling  = ____;
-    public static boolean Tier1ProfileVirtualCalls           = ____;
-    public static int     TypeProfileWidth                   = 0;
-    public static boolean TestCompressedStreamEnabled        = ____;
+
     public static final int InvocationEntryBci = -1;
 
     public static void setOptimizationLevel(int level) {
@@ -201,6 +208,10 @@ public class C1XOptions {
         MergeEquivalentConstants           = ____;
         ComputeStoresInLoops               = ____;
         SimplifyPhis                       = ____;
+
+        // turn off backend optimizations
+        OptimizeControlFlow                = ____;
+        OptimizeMoves                      = ____;
 
         DoGlobalValueNumbering             = ____;
         DoArrayBoundsCheckElimination      = ____;
@@ -228,6 +239,10 @@ public class C1XOptions {
         UseDeopt                           = TRUE;
         UseCHALeafMethods                  = TRUE;
 
+        // turn on backend optimizations
+        OptimizeControlFlow                = TRUE;
+        OptimizeMoves                      = TRUE;
+
         // turn off global optimizations, except null check elimination
         DoGlobalValueNumbering             = ____;
         DoArrayBoundsCheckElimination      = ____;
@@ -254,6 +269,10 @@ public class C1XOptions {
         UseCHA                             = TRUE;
         UseDeopt                           = TRUE;
         UseCHALeafMethods                  = TRUE;
+
+        // turn on backend optimizations
+        OptimizeControlFlow                = TRUE;
+        OptimizeMoves                      = TRUE;
 
         // turn on global optimizations
         DoGlobalValueNumbering             = TRUE;
