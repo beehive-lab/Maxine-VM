@@ -28,15 +28,12 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.sequential.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.type.*;
 
@@ -211,27 +208,6 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
         return top.minus(allocationMark()).asSize();
     }
 
-    private void checkCellTag(Pointer cell) {
-        if (MaxineVM.isDebug()) {
-            if (!DebugHeap.isValidCellTag(cell.getWord(-1))) {
-                Log.print("cell: ");
-                Log.print(cell);
-                Log.print("  origin: ");
-                Log.print(Layout.cellToOrigin(cell));
-                Log.println();
-                FatalError.unexpected("missing object tag");
-            }
-        }
-    }
-
-    private void checkGripTag(Grip grip) {
-        if (MaxineVM.isDebug()) {
-            if (!grip.isZero()) {
-                checkCellTag(Layout.originToCell(grip.toOrigin()));
-            }
-        }
-    }
-
     private boolean outOfMemory;
 
     @INLINE
@@ -340,60 +316,24 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
         return true;
     }
 
-    private void verifyGripAtIndex(Address address, int index, Grip grip) {
-        if (grip.isZero()) {
-            return;
-        }
-        checkGripTag(grip);
-        final Pointer origin = grip.toOrigin();
-        if (!(space.contains(origin) || Heap.bootHeapRegion.contains(origin) || Code.contains(origin))) {
-            Log.print("invalid grip: ");
-            Log.print(origin.asAddress());
-            Log.print(" @ ");
-            Log.print(address);
-            Log.print(" + ");
-            Log.print(index);
-            Log.println();
-            FatalError.unexpected("invalid grip");
-        }
-    }
-
     private void checkClassActor(ClassActor classActor) {
     }
 
-    private Hub checkHub(Pointer origin) {
-        final Grip hubGrip = Layout.readHubGrip(origin);
-        FatalError.check(!hubGrip.isZero(), "null hub");
-        verifyGripAtIndex(origin, 0, hubGrip); // zero is not strictly correctly here
-        final Hub hub = UnsafeLoophole.cast(hubGrip.toJava());
-
-        Hub h = hub;
-        if (h instanceof StaticHub) {
-            final ClassActor classActor = hub.classActor;
-            checkClassActor(h.classActor);
-            FatalError.check(classActor.staticHub() == h, "lost static hub");
-            h = ObjectAccess.readHub(h);
+    private final class PointerOffsetGripVerifier implements PointerOffsetVisitor {
+        public void visitPointerOffset(Pointer pointer, int offset) {
+            DebugHeap.verifyGripAtIndex(pointer, offset, pointer.readGrip(offset), space, null);
         }
-
-        for (int i = 0; i < 2; i++) {
-            h = ObjectAccess.readHub(h);
-        }
-        FatalError.check(ObjectAccess.readHub(h) == h, "lost hub hub");
-        return hub;
     }
 
-    private final PointerIndexVisitor pointerIndexGripVerifier = new PointerIndexVisitor() {
+    private final class PointerIndexGripVerifier extends PointerIndexVisitor {
         @Override
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
-            verifyGripAtIndex(pointer, wordIndex * Kind.REFERENCE.width.numberOfBytes, pointer.getGrip(wordIndex));
+            DebugHeap.verifyGripAtIndex(pointer, wordIndex * Kind.REFERENCE.width.numberOfBytes, pointer.getGrip(wordIndex), space, null);
         }
-    };
+    }
+    private final PointerIndexGripVerifier pointerIndexGripVerifier = new PointerIndexGripVerifier();
 
-    private final PointerOffsetVisitor pointerOffsetGripVerifier = new PointerOffsetVisitor() {
-        public void visitPointerOffset(Pointer pointer, int offset) {
-            verifyGripAtIndex(pointer, offset, pointer.readGrip(offset));
-        }
-    };
+    private final PointerOffsetGripVerifier pointerOffsetGripVerifier = new PointerOffsetGripVerifier();
 
     private final SequentialHeapRootsScanner heapRootsVerifier = new SequentialHeapRootsScanner(pointerIndexGripVerifier);
 
@@ -402,31 +342,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
             Log.println("Verifying heap...");
         }
         heapRootsVerifier.run();
-        Pointer cell = space.start().asPointer();
-        final Address end = allocationMark();
-        while (cell.lessThan(end)) {
-            if (MaxineVM.isDebug()) {
-                cell = cell.plusWords(1);
-                checkCellTag(cell);
-            }
-            final Pointer origin = Layout.cellToOrigin(cell);
-            final Hub hub = checkHub(origin);
-            final SpecificLayout specificLayout = hub.specificLayout;
-            if (specificLayout.isTupleLayout()) {
-                TupleReferenceMap.visitOriginOffsets(hub, origin, pointerOffsetGripVerifier);
-                cell = cell.plus(hub.tupleSize);
-            } else {
-                if (specificLayout.isHybridLayout()) {
-                    TupleReferenceMap.visitOriginOffsets(hub, origin, pointerOffsetGripVerifier);
-                } else if (specificLayout.isReferenceArrayLayout()) {
-                    final int length = Layout.readArrayLength(origin);
-                    for (int index = 0; index < length; index++) {
-                        verifyGripAtIndex(origin, index * Kind.REFERENCE.width.numberOfBytes, Layout.getGrip(origin, index));
-                    }
-                }
-                cell = cell.plus(Layout.size(origin));
-            }
-        }
+        DebugHeap.verifyRegion(space.start().asPointer(), allocationMark(), space, pointerOffsetGripVerifier);
         if (Heap.traceGC()) {
             Log.println("done verifying heap");
         }

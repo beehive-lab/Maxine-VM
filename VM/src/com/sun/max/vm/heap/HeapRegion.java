@@ -33,12 +33,11 @@ public interface HeapRegion extends MemoryRegion {
     /**
      * Allocates a cell of a requested size from this heap region.
      * In a {@linkplain MaxineVM#isDebug() debug} build of the VM,
-     * an extra word is to be reserved just below the cell for the
+     * an extra word is reserved just below the cell for the
      * {@linkplain DebugHeap#adjustForDebugTag(Pointer) debug tag word}.
      *
-     * If this method can be called concurrently from more than one thread,
-     * then its implementation must use appropriate synchronization operations
-     * to ensure the allocation mark is adjusted consistently.
+     * Thread safety considerations: The caller(s) are responsible for ensuring that calls to this
+     * method are synchronized. Failure to do so may put the allocation mark in an inconsistent state.
      *
      * @param size the requested allocation size which must be {@linkplain Size#isWordAligned() word aligned}
      * @return the start of the allocated cell or zero if the allocation request could not be satisfied
