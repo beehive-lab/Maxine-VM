@@ -20,9 +20,12 @@
  */
 package com.sun.max.asm.gen.cisc.x86;
 
+import static com.sun.max.asm.gen.cisc.x86.X86AssemblerGenerator.*;
+
 import java.io.*;
 
 import com.sun.max.asm.*;
+import com.sun.max.asm.amd64.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -53,6 +56,27 @@ public class X86TemplateAssembler<Template_Type extends X86Template> {
         bytes[n++] = b.byteValue();
     }
 
+    private int createRexData(int bitIndex, Argument argument, boolean unconditionalRexBit) {
+        if (unconditionalRexBit) {
+            return ((int) argument.asLong() & 8) >> (3 - bitIndex);
+        }
+        int rexByte = 0;
+        if (argument instanceof AMD64GeneralRegister8) {
+            final AMD64GeneralRegister8 reg8 = (AMD64GeneralRegister8) argument;
+            if (reg8.requiresRexPrefix()) {
+                rexByte |= basicRexValue(template);
+                if (argument.asLong() >= 8) {
+                    rexByte |= createRexData(bitIndex, argument.asLong());
+                }
+            }
+        } else {
+            if (argument.asLong() >= 8) {
+                rexByte |= createRexData(bitIndex, argument.asLong()) + basicRexValue(template);
+            }
+        }
+        return rexByte;
+    }
+
     private int createRexData(int bitIndex, long argument) {
         final byte b = (byte) (argument & 0xffL);
         if (b == 0) {
@@ -62,7 +86,7 @@ public class X86TemplateAssembler<Template_Type extends X86Template> {
     }
 
     private int createFieldData(X86Field field, long argument) {
-        return field.inPlace((byte) (argument & 0xffL));
+        return field.inPlace((byte) (argument & field.mask));
     }
 
     private final Template_Type template;
@@ -108,9 +132,10 @@ public class X86TemplateAssembler<Template_Type extends X86Template> {
     }
 
     public byte[] assemble(IndexedSequence<Argument> arguments) {
-        int rexByt = 0;
-        if (template.operandSizeAttribute() == WordWidth.BITS_64 && template.instructionDescription().defaultOperandSize() != WordWidth.BITS_64) {
-            rexByt = X86Opcode.REX_MIN.byteValue() | (1 << X86Field.REX_W_BIT_INDEX);
+        int rexByte = 0;
+        final boolean unconditionalRexBit = template.operandSizeAttribute() == WordWidth.BITS_64 && template.instructionDescription().defaultOperandSize() != WordWidth.BITS_64;
+        if (unconditionalRexBit) {
+            rexByte = X86Opcode.REX_MIN.byteValue() | (1 << X86Field.REX_W_BIT_INDEX);
         }
         int opcode1 = template.opcode1().byteValue() & 0xff;
         int opcode2 = template.opcode2() == null ? 0 : template.opcode2().byteValue() & 0xff;
@@ -122,25 +147,25 @@ public class X86TemplateAssembler<Template_Type extends X86Template> {
             final long argument = arguments.get(i).asLong();
             switch (parameter.place()) {
                 case MOD_REG_REXR:
-                    rexByt |= createRexData(X86Field.REX_R_BIT_INDEX, argument);
+                    rexByte |= createRexData(X86Field.REX_R_BIT_INDEX, arguments.get(i), unconditionalRexBit);
                     // fall through...
                 case MOD_REG:
                     modRMByte |= createFieldData(X86Field.REG, argument);
                     break;
                 case MOD_RM_REXB:
-                    rexByt |= createRexData(X86Field.REX_B_BIT_INDEX, argument);
+                    rexByte |= createRexData(X86Field.REX_B_BIT_INDEX, arguments.get(i), unconditionalRexBit);
                     // fall through...
                 case MOD_RM:
                     modRMByte |= createFieldData(X86Field.RM, argument);
                     break;
                 case SIB_BASE_REXB:
-                    rexByt |= createRexData(X86Field.REX_B_BIT_INDEX, argument);
+                    rexByte |= createRexData(X86Field.REX_B_BIT_INDEX, arguments.get(i), unconditionalRexBit);
                     // fall through...
                 case SIB_BASE:
                     sibByte |= createFieldData(X86Field.BASE, argument);
                     break;
                 case SIB_INDEX_REXX:
-                    rexByt |= createRexData(X86Field.REX_X_BIT_INDEX, argument);
+                    rexByte |= createRexData(X86Field.REX_X_BIT_INDEX, arguments.get(i), unconditionalRexBit);
                     // fall through...
                 case SIB_INDEX:
                     sibByte |= createFieldData(X86Field.INDEX, argument);
@@ -174,21 +199,21 @@ public class X86TemplateAssembler<Template_Type extends X86Template> {
                     }
                     break;
                 case OPCODE1_REXB:
-                    rexByt |= createRexData(X86Field.REX_B_BIT_INDEX, argument);
+                    rexByte |= createRexData(X86Field.REX_B_BIT_INDEX, arguments.get(i), unconditionalRexBit);
                     // fall through...
                 case OPCODE1:
                     opcode1 |= (int) argument & 7;
                     break;
                 case OPCODE2_REXB:
-                    rexByt |= createRexData(X86Field.REX_B_BIT_INDEX, argument);
+                    rexByte |= createRexData(X86Field.REX_B_BIT_INDEX, arguments.get(i), unconditionalRexBit);
                     // fall through...
                 case OPCODE2:
                     opcode2 |= (int) argument & 7;
                     break;
             }
         }
-        if (rexByt > 0) {
-            emit(rexByt);
+        if (rexByte > 0) {
+            emit(rexByte);
         }
         if (template.addressSizeAttribute() != addressWidth) {
             emit(X86Opcode.ADDRESS_SIZE);

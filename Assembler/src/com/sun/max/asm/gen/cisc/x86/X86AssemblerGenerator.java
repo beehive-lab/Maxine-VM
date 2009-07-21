@@ -518,4 +518,11 @@ public abstract class X86AssemblerGenerator<Template_Type extends X86Template> e
             }
         }
     }
+
+    public static byte basicRexValue(X86Template template) {
+        if (template.operandSizeAttribute() == WordWidth.BITS_64 && template.instructionDescription().defaultOperandSize() != WordWidth.BITS_64) {
+            return (byte) (X86Opcode.REX_MIN.ordinal() + (1 << X86Field.REX_W_BIT_INDEX));
+        }
+        return (byte) X86Opcode.REX_MIN.ordinal();
+    }
 }
