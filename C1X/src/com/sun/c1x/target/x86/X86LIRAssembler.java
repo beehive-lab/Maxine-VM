@@ -281,17 +281,17 @@ public class X86LIRAssembler extends LIRAssembler {
 
         if (!C1XOptions.VerifyOops) {
             // insert some nops so that the verified entry point is aligned on CodeEntryAlignment
-            while ((masm().offset() + icCmpSize) % C1XOptions.CodeEntryAlignment != 0) {
+            while ((masm().offset() + icCmpSize) % compilation.target.codeAlignment != 0) {
                 masm().nop();
             }
         }
         int offset = masm().offset();
         masm().inlineCacheCheck(receiver, ICKlass);
-        assert masm().offset() % C1XOptions.CodeEntryAlignment == 0 || C1XOptions.VerifyOops : "alignment must be correct";
+        assert masm().offset() % compilation.target.codeAlignment == 0 || C1XOptions.VerifyOops : "alignment must be correct";
         if (C1XOptions.VerifyOops) {
             // force alignment after the cache check.
             // It's been verified to be aligned if !VerifyOops
-            masm().align(C1XOptions.CodeEntryAlignment);
+            masm().align(compilation.target.codeAlignment);
         }
         return offset;
     }
@@ -3336,19 +3336,19 @@ public class X86LIRAssembler extends LIRAssembler {
         int bc = method.javaCodeAtBci(bci);
         // Perform additional virtual call profiling for invokevirtual and
         // invokeinterface bytecodes
-        if ((bc == Bytecodes.INVOKEVIRTUAL || bc == Bytecodes.INVOKEINTERFACE) && C1XOptions.Tier1ProfileVirtualCalls) {
+        if ((bc == Bytecodes.INVOKEVIRTUAL || bc == Bytecodes.INVOKEINTERFACE) && C1XOptions.ProfileVirtualCalls) {
             assert op.recv().isSingleCpu() : "recv must be allocated";
             Register recv = op.recv().asRegister();
             assert Register.assertDifferentRegisters(mdo, recv);
             CiType knownKlass = op.knownHolder();
-            if (C1XOptions.Tier1OptimizeVirtualCallProfiling && knownKlass != null) {
+            if (C1XOptions.OptimizeVirtualCallProfiling && knownKlass != null) {
                 // We know the type that will be seen at this call site; we can
                 // statically update the methodDataOop rather than needing to do
                 // dynamic tests on the receiver type
 
                 // NOTE: we should probably put a lock around this search to
                 // avoid collisions by concurrent compilations
-                for (int i = 0; i < C1XOptions.TypeProfileWidth; i++) {
+                for (int i = 0; i < C1XOptions.ProfileTypeWidth; i++) {
                     CiType receiver = md.receiver(bci, i);
                     if (knownKlass.equals(receiver)) {
                         Address dataAddr = new Address(mdo, md.receiverCountOffset(bci, i));
@@ -3362,7 +3362,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 // Note that this is less efficient than it should be because it
                 // always does a write to the receiver part of the
                 // VirtualCallData rather than just the first time
-                for (int i = 0; i < C1XOptions.TypeProfileWidth; i++) {
+                for (int i = 0; i < C1XOptions.ProfileTypeWidth; i++) {
                     CiType receiver = md.receiver(bci, i);
                     if (receiver == null) {
                         Address recvAddr = new Address(mdo, md.receiverOffset(bci, i));
@@ -3375,7 +3375,7 @@ public class X86LIRAssembler extends LIRAssembler {
             } else {
                 masm().movptr(recv, new Address(recv, compilation.runtime.klassOffsetInBytes()));
                 Label updateDone = new Label();
-                for (int i = 0; i < C1XOptions.TypeProfileWidth; i++) {
+                for (int i = 0; i < C1XOptions.ProfileTypeWidth; i++) {
                     Label nextTest = new Label();
                     // See if the receiver is receiver[n].
                     masm().cmpptr(recv, new Address(mdo, md.receiverOffset(bci, i)));
@@ -3387,14 +3387,14 @@ public class X86LIRAssembler extends LIRAssembler {
                 }
 
                 // Didn't find receiver; find next empty slot and fill it in
-                for (int i = 0; i < C1XOptions.TypeProfileWidth; i++) {
+                for (int i = 0; i < C1XOptions.ProfileTypeWidth; i++) {
                     Label nextTest = new Label();
                     Address recvAddr = new Address(mdo, md.receiverOffset(bci, i));
                     masm().cmpptr(recvAddr, (int) NULLWORD);
                     masm().jcc(X86Assembler.Condition.notEqual, nextTest);
                     masm().movptr(recvAddr, recv);
                     masm().movl(new Address(mdo, md.receiverCountOffset(bci, i)), 1);
-                    if (i < (C1XOptions.TypeProfileWidth - 1)) {
+                    if (i < (C1XOptions.ProfileTypeWidth - 1)) {
                         masm().jmp(updateDone);
                     }
                     masm().bind(nextTest);

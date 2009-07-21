@@ -571,7 +571,7 @@ public class ComputeLinearScanOrder {
 
                 TTY.println(String.format("%4d: B%2d: ", cur.linearScanNumber(), cur.blockID()));
                 for (int loopIdx = 0; loopIdx < numLoops; loopIdx++) {
-                    TTY.println(String.format("%d ", isBlockInLoop(loopIdx, cur)));
+                    TTY.println(String.format("%d = %b ", loopIdx, isBlockInLoop(loopIdx, cur)));
                 }
                 TTY.println(String.format(" . loopIndex: %2d, loopDepth: %2d", cur.loopIndex(), cur.loopDepth()));
             }
