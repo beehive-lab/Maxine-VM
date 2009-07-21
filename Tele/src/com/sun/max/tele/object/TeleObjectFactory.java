@@ -28,6 +28,7 @@ import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
@@ -35,7 +36,6 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.interpret.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -113,7 +113,6 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
         classToTeleTupleObjectConstructor.put(CodeRegion.class, getConstructor(TeleCodeRegion.class));
         classToTeleTupleObjectConstructor.put(CodeManager.class, getConstructor(TeleCodeManager.class));
         classToTeleTupleObjectConstructor.put(RuntimeMemoryRegion.class, getConstructor(TeleRuntimeMemoryRegion.class));
-        classToTeleTupleObjectConstructor.put(InterpretedTargetMethod.class, getConstructor(TeleInterpretedTargetMethod.class));
         // Other Maxine support
         classToTeleTupleObjectConstructor.put(Kind.class, getConstructor(TeleKind.class));
         classToTeleTupleObjectConstructor.put(ObjectReferenceValue.class, getConstructor(TeleObjectReferenceValue.class));
@@ -181,9 +180,17 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
             return null;
         }
 
-        final Reference hubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(reference));
-        final Reference classActorReference = teleVM().fields().Hub_classActor.readReference(hubReference);
-        final ClassActor classActor = teleVM().makeClassActor(classActorReference);
+        Reference hubReference;
+        Reference classActorReference;
+        ClassActor classActor;
+
+        try {
+            hubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(reference));
+            classActorReference = teleVM().fields().Hub_classActor.readReference(hubReference);
+            classActor = teleVM().makeClassActor(classActorReference);
+        } catch (InvalidReferenceException invalidReferenceException) {
+            return null;
+        }
 
         // Must check for the static tuple case first; it doesn't follow the usual rules
         final Reference hubhubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(hubReference));

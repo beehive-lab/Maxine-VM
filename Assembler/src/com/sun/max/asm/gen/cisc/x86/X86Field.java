@@ -26,8 +26,8 @@ package com.sun.max.asm.gen.cisc.x86;
  */
 public final class X86Field {
 
-    private final int shift;
-    private final int mask;
+    public final int shift;
+    public final int mask;
 
     private X86Field(int shift, int width) {
         this.shift = shift;
@@ -39,7 +39,8 @@ public final class X86Field {
     }
 
     public int extract(byte b) {
-        return (b >> shift) & mask;
+        final int ub = b & 0xff;
+        return (ub >> shift) & mask;
     }
 
     public int inPlace(byte value) {
@@ -60,10 +61,12 @@ public final class X86Field {
     public static final int REX_W_BIT_INDEX = 3;
 
     public static int extractRexValue(int rexBitIndex, byte rexByte) {
-        return ((rexByte >> rexBitIndex) & 1) << 3;
+        final int urexByte = rexByte & 0xff;
+        return ((urexByte >> rexBitIndex) & 1) << 3;
     }
 
     public static int inRexPlace(int rexBitIndex, byte rexValue) {
-        return ((rexValue >> 3) & 1) << rexBitIndex;
+        final int urexValue = rexValue & 0xff;
+        return ((urexValue >> 3) & 1) << rexBitIndex;
     }
 }

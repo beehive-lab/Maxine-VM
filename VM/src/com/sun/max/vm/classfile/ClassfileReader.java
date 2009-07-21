@@ -879,17 +879,6 @@ public final class ClassfileReader {
                         }
                     }
 
-                } // Maxine.isPrototyping()
-
-                // Maxine annotations present in classfiles loaded at runtime
-                if (runtimeVisibleAnnotationsBytes != null) {
-                    final ClassfileStream annotations = new ClassfileStream(runtimeVisibleAnnotationsBytes);
-                    for (AnnotationInfo info : AnnotationInfo.parse(annotations, constantPool)) {
-                        final TypeDescriptor annotationTypeDescriptor = info.annotationTypeDescriptor();
-                        if (annotationTypeDescriptor.equals(forJavaClass(INTERPRET_ONLY.class))) {
-                            flags |= INTERPRET_ONLY;
-                        }
-                    }
                 }
 
                 if (isNative(flags)) {

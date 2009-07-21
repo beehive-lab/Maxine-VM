@@ -232,7 +232,7 @@ public class GraphStats {
         total += sizeOf(targetMethod.referenceLiterals());
         total += sizeOf(targetMethod.directCallees());
         total += sizeOf(targetMethod.referenceMaps());
-        total += sizeOf(targetMethod.scalarLiteralBytes());
+        total += sizeOf(targetMethod.scalarLiterals());
         total += sizeOf(targetMethod.stopPositions());
         if (targetMethod instanceof JitTargetMethod) {
             final JitTargetMethod jitTargetMethod = (JitTargetMethod) targetMethod;

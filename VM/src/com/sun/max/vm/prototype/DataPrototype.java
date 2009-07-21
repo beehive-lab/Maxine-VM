@@ -125,14 +125,15 @@ public final class DataPrototype extends Prototype {
      * Allocates a cell for a given object which is referenced from a given target bundle.
      *
      * @param object the object with which to associate the cell
-     * @param targetBundle the bundle of objects to assign to the cell
+     * @param start the start of the region described by {@code targetBundleLayout}
+     * @param targetBundleLayout the layout of the object to assign to the cell
      * @param field the field of the target bundle that contains a reference to the array
      */
-    private void assignCodeCell(Object object, TargetBundle targetBundle, ArrayField field) {
+    private void assignCodeCell(Object object, Address start, TargetBundleLayout targetBundleLayout, ArrayField field) {
         if (object != null) {
-            final Size cellSize = targetBundle.layout().cellSize(field);
+            final Size cellSize = targetBundleLayout.cellSize(field);
             assert !cellSize.isZero();
-            final Pointer cell = targetBundle.cell(field);
+            final Pointer cell = start.plus(targetBundleLayout.cellOffset(field)).asPointer();
             if (assignCell(object, cell)) {
                 codeObjects.append(object);
                 assert HostObjectAccess.getSize(object).equals(cellSize);
@@ -148,15 +149,10 @@ public final class DataPrototype extends Prototype {
         Size size = Size.zero();
         int n = 0;
         for (TargetMethod targetMethod : Code.bootCodeRegion.targetMethods()) {
-            final TargetBundle targetBundle = TargetBundle.from(targetMethod);
-            assignCodeCell(targetMethod.catchRangePositions(), targetBundle, ArrayField.catchRangePositions);
-            assignCodeCell(targetMethod.catchBlockPositions(), targetBundle, ArrayField.catchBlockPositions);
-            assignCodeCell(targetMethod.stopPositions(), targetBundle, ArrayField.stopPositions);
-            assignCodeCell(targetMethod.directCallees(), targetBundle, ArrayField.directCallees);
-            assignCodeCell(targetMethod.referenceMaps(), targetBundle, ArrayField.referenceMaps);
-            assignCodeCell(targetMethod.scalarLiteralBytes(), targetBundle, ArrayField.scalarLiteralBytes);
-            assignCodeCell(targetMethod.referenceLiterals(), targetBundle, ArrayField.referenceLiterals);
-            assignCodeCell(targetMethod.code(), targetBundle, ArrayField.code);
+            final TargetBundleLayout targetBundleLayout = TargetBundleLayout.from(targetMethod);
+            assignCodeCell(targetMethod.scalarLiterals(), targetMethod.start(), targetBundleLayout, ArrayField.scalarLiterals);
+            assignCodeCell(targetMethod.referenceLiterals(), targetMethod.start(), targetBundleLayout, ArrayField.referenceLiterals);
+            assignCodeCell(targetMethod.code(), targetMethod.start(), targetBundleLayout, ArrayField.code);
             size = size.plus(targetMethod.size());
             ++n;
         }

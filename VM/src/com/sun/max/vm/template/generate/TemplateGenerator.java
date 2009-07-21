@@ -116,7 +116,7 @@ public class TemplateGenerator {
                 ProgramError.check(targetGenerator().hasStackParameters(sourceTemplate), "Template must not have *any* stack parameters: " + sourceTemplate);
                 final TargetMethod targetMethod = targetGenerator().makeIrMethod(sourceTemplate);
                 ProgramError.check(targetMethod.referenceLiterals() == null, "Template must not have *any* reference literals: " + targetMethod);
-                ProgramError.check(targetMethod.scalarLiteralBytes() == null, "Template must not have *any* scalar literals: " + targetMethod);
+                ProgramError.check(targetMethod.scalarLiterals() == null, "Template must not have *any* scalar literals: " + targetMethod);
                 return targetMethod;
             }
         });

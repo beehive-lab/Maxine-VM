@@ -807,12 +807,9 @@ public final class Log {
      *         entered).
      */
     public static boolean lock() {
-        final boolean safepointsDisabled = Safepoint.isDisabled();
-        if (!safepointsDisabled) {
-            Safepoint.disable();
-        }
+        boolean wasDisabled = Safepoint.disable();
         Log.log_lock();
-        return !safepointsDisabled;
+        return !wasDisabled;
     }
 
     /**

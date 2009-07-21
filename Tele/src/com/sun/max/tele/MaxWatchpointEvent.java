@@ -18,9 +18,36 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+package com.sun.max.tele;
+
+import com.sun.max.unsafe.*;
+
+
 /**
- * Place holder scheme for a specifying no interpreter should be included in the VM
+ * An immutable (thread-safe) record of a thread in the VM triggering a memory watchpoint.
  *
- * @author Simon Wilkinson
- */
-package com.sun.max.vm.interpret.empty;
+ * @author Michael Van De Vanter
+  */
+public interface MaxWatchpointEvent {
+
+    /**
+     * @return the watchpoint that triggered the event.
+     */
+    MaxWatchpoint maxWatchpoint();
+
+    /**
+     * @return the thread that triggered the watchpoint.
+     */
+    MaxVMThread maxVMThread();
+
+    /**
+     * @return the memory location where the watchpoint was triggered.
+     */
+    Address address();
+
+    /**
+     * @return code that identifies the kind of memory action that triggered the watchpoint.
+     */
+    int eventCode();
+
+}
