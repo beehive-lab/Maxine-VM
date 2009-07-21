@@ -805,7 +805,7 @@ public final class JDK_java_lang_System {
         } else if (os == OperatingSystem.SOLARIS) {
             setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext"), "/usr/jdk/packages/lib/ext"));
         } else if (os == OperatingSystem.GUESTVM) {
-            setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext"), "/usr/java/packages/lib/ext"));
+            setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext")));
         } else {
             ProgramError.unknownCase(os.toString());
         }
