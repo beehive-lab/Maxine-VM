@@ -105,9 +105,9 @@ public final class VMOptions {
         }
     }, MaxineVM.Phase.STARTING);
 
-    private static final VMOption verboseOption = register(new VMOption("-verbose ", "Enables all verbose options."), MaxineVM.Phase.PRISTINE);
+    private static final VMOption verboseOption = register(new VMOption("-verbose ", "Enable all verbose options."), MaxineVM.Phase.PRISTINE);
 
-    private static final VMIntOption traceLevelOption = register(new VMIntOption("-XX:TraceLevel=", 0, "Enables tracing output at the specified level.") {
+    private static final VMIntOption traceLevelOption = register(new VMIntOption("-XX:TraceLevel=", 0, "Enable tracing output at the specified level.") {
         @Override
         public boolean parseValue(Pointer optionValue) {
             Trace.on(getValue());
@@ -115,8 +115,15 @@ public final class VMOptions {
         }
     }, MaxineVM.Phase.PRISTINE);
 
-    private static final VMBooleanXXOption printConfiguration = register(new VMBooleanXXOption("-XX:-PrintConfiguration", "Shows VM configuration details and exits."), MaxineVM.Phase.STARTING);
-    private static final VMBooleanXXOption showConfiguration = register(new VMBooleanXXOption("-XX:-ShowConfiguration", "Shows VM configuration details and continues."), MaxineVM.Phase.STARTING);
+    private static final VMBooleanXXOption printConfiguration = register(new VMBooleanXXOption("-XX:-PrintConfiguration", "Show VM configuration details and exits."), MaxineVM.Phase.STARTING);
+    private static final VMBooleanXXOption showConfiguration = register(new VMBooleanXXOption("-XX:-ShowConfiguration", "Show VM configuration details and continues."), MaxineVM.Phase.STARTING);
+
+    /**
+     * This option is parsed in the native code (see maxine.c). It's declared here simply so that it
+     * shows up in the {@linkplain #printUsage() usage} message.
+     */
+    private static final VMStringOption logFileOption = register(new VMStringOption("-XX:LogFile=", false, "",
+        "Redirect VM log output to the specified file. By default, VM log output goes to the standard output stream."), MaxineVM.Phase.STARTING);
 
     private static Pointer argv;
     private static int argc;
@@ -265,7 +272,7 @@ public final class VMOptions {
      * Gets the index of the next non-empty {@linkplain #argv command line argument} starting at a given index.
      *
      * @param start the index of the first argument to consider
-     * @return the index of the first word in {@link _argv} that points to a non-empty C string or -1 if there is no
+     * @return the index of the first word in {@link #argv} that points to a non-empty C string or -1 if there is no
      *         such command line argument at whose index is greater than or equal to {@code index} and less than
      *         {@link #argc}
      */

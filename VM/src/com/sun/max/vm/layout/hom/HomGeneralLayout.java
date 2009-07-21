@@ -192,7 +192,7 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
     }
 
     @INLINE
-    public Grip readForwardGrip(Accessor accessor) {
+    public final Grip readForwardGrip(Accessor accessor) {
         final Grip forwardGrip = accessor.readGrip(hubOffset);
         if (forwardGrip.isMarked()) {
             return forwardGrip.unmarked();
@@ -202,7 +202,7 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
     }
 
     @INLINE
-    public Grip readForwardGripValue(Accessor accessor) {
+    public final Grip readForwardGripValue(Accessor accessor) {
         final Grip forwardGrip = accessor.readGrip(hubOffset);
         if (forwardGrip.isMarked()) {
             return forwardGrip.unmarked();
@@ -212,7 +212,7 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
     }
 
     @INLINE
-    public void writeForwardGrip(Accessor accessor, Grip forwardGrip) {
+    public final void writeForwardGrip(Accessor accessor, Grip forwardGrip) {
         accessor.writeGrip(hubOffset, forwardGrip.marked());
     }
 

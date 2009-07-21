@@ -20,9 +20,9 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.stack.RawStackFrameVisitor.Util.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
-import static com.sun.max.vm.VMOptions.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
@@ -202,12 +202,15 @@ public final class Throw {
             Log.println(message);
         }
         final Pointer instructionPointer = LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).asPointer();
+        final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
         if (instructionPointer.isZero()) {
-            FatalError.unexpected("Thread is not stopped");
+            Log.print("Cannot dump stack for non-stopped thread ");
+            Log.printVmThread(vmThread, true);
+        } else {
+            final Pointer stackPointer = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
+            final Pointer framePointer = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals).asPointer();
+            vmThread.stackDumpStackFrameWalker().inspect(instructionPointer, stackPointer, framePointer, stackFrameDumper);
         }
-        final Pointer stackPointer = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
-        final Pointer framePointer = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals).asPointer();
-        VmThread.fromVmThreadLocals(vmThreadLocals).stackDumpStackFrameWalker().inspect(instructionPointer, stackPointer, framePointer, stackFrameDumper);
     }
 
 
