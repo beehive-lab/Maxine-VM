@@ -84,8 +84,8 @@ public final class ArrayAccess {
         }
     }
 
-    public static Pointer elementPointer(byte[] array, int offset) {
-        return Reference.fromJava(array).toOrigin().plus(Layout.byteArrayLayout().getElementOffsetFromOrigin(offset));
+    public static Pointer elementPointer(byte[] array, int index) {
+        return Reference.fromJava(array).toOrigin().plus(Layout.byteArrayLayout().getElementOffsetFromOrigin(index));
     }
 
     /**

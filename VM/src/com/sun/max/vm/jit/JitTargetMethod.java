@@ -332,7 +332,7 @@ public abstract class JitTargetMethod extends TargetMethod {
         return bytecodeInfos;
     }
 
-    public final void setGenerated(TargetBundle targetBundle,
+    public final void setGenerated(
                     int[] catchRangePositions,
                     int[] catchBlockPositions,
                     int[] stopPositions,
@@ -355,7 +355,6 @@ public abstract class JitTargetMethod extends TargetMethod {
                     boolean[] blockStarts,
                     JitStackFrameLayout jitStackFrameLayout, TargetABI abi) {
         setGenerated(
-            targetBundle,
             catchRangePositions,
             catchBlockPositions,
             stopPositions,
@@ -363,7 +362,7 @@ public abstract class JitTargetMethod extends TargetMethod {
             directCallees,
             numberOfIndirectCalls,
             numberOfSafepoints,
-                referenceMaps,
+            referenceMaps,
             scalarLiteralBytes,
             referenceLiterals,
             codeOrCodeBuffer,

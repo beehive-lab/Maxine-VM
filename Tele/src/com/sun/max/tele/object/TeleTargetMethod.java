@@ -570,7 +570,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
 
     /**
      * Gets a special, reduced shallow copy, (newly created if not in cache)  that excludes the
-     * {@linkplain TargetMethod#scalarLiteralBytes()} or {@linkplain TargetMethod#referenceLiterals() reference}
+     * {@linkplain TargetMethod#scalarLiterals()} or {@linkplain TargetMethod#referenceLiterals() reference}
      * literals of the method or its {@linkplain TargetMethod#code() compiled code}.
      */
     public synchronized TargetMethod reducedShallowCopy() {
@@ -584,14 +584,14 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
 
     private static class OmittedTargetMethodFields implements FieldIncludeChecker {
         public OmittedTargetMethodFields(TeleVM teleVM) {
-            scalarLiteralBytes = teleVM.fields().TargetMethod_scalarLiteralBytes.fieldActor();
+            scalarLiterals = teleVM.fields().TargetMethod_scalarLiterals.fieldActor();
             referenceLiterals = teleVM.fields().TargetMethod_referenceLiterals.fieldActor();
         }
-        private final FieldActor scalarLiteralBytes;
+        private final FieldActor scalarLiterals;
         private final FieldActor referenceLiterals;
 
         public boolean include(int level, FieldActor fieldActor) {
-            return !(fieldActor.equals(referenceLiterals) || fieldActor.equals(scalarLiteralBytes));
+            return !(fieldActor.equals(referenceLiterals) || fieldActor.equals(scalarLiterals));
         }
     }
 
