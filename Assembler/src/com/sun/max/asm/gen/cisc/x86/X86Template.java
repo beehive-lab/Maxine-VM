@@ -164,7 +164,7 @@ public abstract class X86Template extends Template implements X86InstructionDesc
     /**
      * @see #computeRedundancyWith(X86Template)
      */
-    private X86Template redundantTo;
+    public X86Template redundantTo;
 
     @Override
     public boolean isRedundant() {
