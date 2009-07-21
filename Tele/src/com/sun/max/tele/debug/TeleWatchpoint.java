@@ -585,7 +585,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
          * @throws TooManyWatchpointsException
          * @throws DuplicateWatchpointException
          */
-        private TeleWatchpoint addWatchpoint(TeleWatchpoint teleWatchpoint)  throws TooManyWatchpointsException, DuplicateWatchpointException {
+        private synchronized TeleWatchpoint addWatchpoint(TeleWatchpoint teleWatchpoint)  throws TooManyWatchpointsException, DuplicateWatchpointException {
             teleWatchpoint.active = false;
             if (watchpoints.size() >= teleProcess.maximumWatchpointCount()) {
                 throw new TooManyWatchpointsException("Number of watchpoints supported by platform (" +
@@ -730,12 +730,12 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
                 MutableTeleGrip grip = (MutableTeleGrip) teleObject.reference().grip();
                 Address newAddress = grip.raw();
 
-//                System.out.println("LAZY UPDATE ");
-//                System.out.println("Objects old watchpoint address: " + teleWatchpoint.start.toHexString());
-//                System.out.println("Object " + teleObject.toString());
-//                System.out.println("Objects new watchpoint address " + newAddress.toHexString());
-//                System.out.println("Grip " + grip.toString());
-//                System.out.println("Index " + grip.hashCode());
+                /*System.out.println("LAZY UPDATE ");
+                System.out.println("Objects old watchpoint address: " + teleWatchpoint.start.toHexString());
+                System.out.println("Object " + teleObject.toString());
+                System.out.println("Objects new watchpoint address " + newAddress.toHexString());
+                System.out.println("Grip " + grip.toString());
+                System.out.println("Index " + grip.hashCode());*/
 
                 if (removeWatchpoint(teleWatchpoint)) {
                     teleWatchpoint.setStart(newAddress);
