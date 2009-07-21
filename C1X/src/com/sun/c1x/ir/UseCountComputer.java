@@ -22,7 +22,6 @@ package com.sun.c1x.ir;
 
 import java.util.*;
 
-import com.sun.c1x.*;
 import com.sun.c1x.util.*;
 
 /**
@@ -36,7 +35,7 @@ public class UseCountComputer implements BlockClosure {
 
     private List<Instruction> worklist = new ArrayList<Instruction>();
     private int depth;
-    private Map<Instruction, Integer> result = new HashMap<Instruction, Integer>();;
+    private Map<Instruction, Integer> result = new HashMap<Instruction, Integer>();
 
     public Map<Instruction, Integer> result() {
         return result;
@@ -47,13 +46,11 @@ public class UseCountComputer implements BlockClosure {
         public Instruction apply(Instruction n) {
             // Local instructions and Phis for expression stack values at the
             // start of basic blocks are not added to the instruction list
-            if (n.bci() == -99 && !(n instanceof Local) && !(n instanceof Phi)) {
-                assert false : "a node was not appended to the graph";
-                throw new Bailout("a node was not appended to the graph");
-            }
+            assert n.isAppended() || n instanceof Local || n instanceof Phi : "node was not appended to the graph: " + n;
             // use n's input if not visited before
             if (!n.isPinned() && !result.containsKey(n)) {
-                // note: a) if the instruction is pinned, it will be handled by computeUseCount
+                // note:
+                // a) if the instruction is pinned, it will be handled by computeUseCount
                 // b) if the instruction has uses, it was touched before
                 // => in both cases we don't need to update n's values
                 usesDo(n);
