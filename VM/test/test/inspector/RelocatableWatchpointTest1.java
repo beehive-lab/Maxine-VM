@@ -18,46 +18,46 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.object;
-
-import com.sun.max.jdwp.vm.proxy.*;
-import com.sun.max.tele.*;
-import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.reference.*;
+package test.inspector;
 
 /**
- * Canonical surrogate for an object of type {@link String} in the {@link TeleVM}.
+ * Simple Inspector test to proof the implemented watchpoints code.
  *
- * @author Michael Van De Vanter
+ * @author Hannes Payer
  */
-public class TeleString extends TeleTupleObject implements StringProvider {
+public class RelocatableWatchpointTest1 {
 
-    public String getString() {
-        return SymbolTable.intern(teleVM().getString(reference()));
+    /**
+     * @param args
+     */
+
+    private static final int allocations = 10000000;
+    private static final int allocationSize = 20;
+
+    public static String getMessage() {
+        return new String("allocationTest");
     }
 
-    protected TeleString(TeleVM teleVM, Reference stringReference) {
-        super(teleVM, stringReference);
+    public static void printMessage(String message) {
+        System.out.println(message);
     }
 
-    @Override
-    protected Object createDeepCopy(DeepCopyContext context) {
-        // Translate into local equivalent
-        return getString();
+    public static void relocationTest() {
+        String test = getMessage();
+        for (int i = 0; i < allocations; i++) {
+            final byte[] tmp = new byte[allocationSize];
+            tmp[0] = 1;
+        }
+        printMessage(test);
+        for (int i = 0; i < allocations; i++) {
+            final byte[] tmp = new byte[allocationSize];
+            tmp[0] = 1;
+        }
+        printMessage(test);
     }
 
-    @Override
-    public String maxineRole() {
-        return "String";
-    }
-
-    @Override
-    public String maxineTerseRole() {
-        return "String.";
-    }
-
-    public String stringValue() {
-        return getString();
+    public static void main(String[] args) {
+        relocationTest();
     }
 
 }
