@@ -405,7 +405,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         }
 
         /**
-         * Does the bookkeeping of set releocatable watchpoints in our system.
+         * Does the bookkeeping of set relocatable watchpoints in our system.
          * @param watchpoint
          * @return watchpoint if creation was successful
          * @throws TooManyWatchpointsException
@@ -775,7 +775,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         }
 
         /**
-         * Reenables all watchpoints after GC, which got deactived during GC.
+         * Re-enables all watchpoints after GC, which got deactived during GC.
          */
         public void reenableWatchpointsAfterGC() {
             if (inGCMode) {
