@@ -98,7 +98,7 @@ public class ValueMap {
             Link l = table[index];
             // hash and linear search
             while (l != null) {
-                if (l.valueNumber == valueNumber && l.value.valueEqual(x) ) {
+                if (l.valueNumber == valueNumber && l.value.valueEqual(x)) {
                     return l.value;
                 }
                 l = l.next;
@@ -129,7 +129,8 @@ public class ValueMap {
         Link[] ntable = new Link[table.length * 3 + 4];
         if (parent != null) {
             // first add all the parent's entries by cloning them
-            for (Link l : table) {
+            for (int i = 0; i < table.length; i++) {
+                Link l = table[i];
                 while (l != null && l.map == this) {
                     l = l.next; // skip entries in this map
                 }
@@ -142,7 +143,8 @@ public class ValueMap {
             }
         }
 
-        for (Link l : table) {
+        for (int i = 0; i < table.length; i++) {
+            Link l = table[i];
             // now add all the entries from this map
             while (l != null && l.map == this) {
                 int index = indexOf(l.valueNumber, ntable);
