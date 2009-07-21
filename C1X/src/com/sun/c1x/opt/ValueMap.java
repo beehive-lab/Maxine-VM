@@ -54,6 +54,7 @@ public class ValueMap {
      * A bitmap denoting which of the values have been killed (by their {@link Link#id}).
      */
     private final BitMap parentKill;
+    public boolean memoryKilled;
 
     /**
      * Creates a new value map.
@@ -225,6 +226,7 @@ public class ValueMap {
     }
 
     void killMemory() {
+        memoryKilled = true;
         killMemory(true, null, null);
     }
 
@@ -242,7 +244,7 @@ public class ValueMap {
 
     void killException() {
         // TODO: kill only those values that are in the map one level above
-        killMemory(true, null, null);
+        killMemory();
     }
 
     CiField checkField(CiField field) {

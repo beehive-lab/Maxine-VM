@@ -24,9 +24,11 @@ import com.sun.c1x.graph.IR;
 import com.sun.c1x.ir.BlockBegin;
 import com.sun.c1x.ir.Base;
 import com.sun.c1x.ir.Instruction;
+import com.sun.c1x.C1XOptions;
 
 import java.util.List;
 import java.util.HashMap;
+import java.util.ArrayList;
 
 /**
  * Implements global value numbering based on dominators.
@@ -134,8 +136,43 @@ public class GlobalValueNumbering {
 
     }
 
-    private boolean optimizeShortLoop(BlockBegin block) {
-        // TODO: try to optimize short loops
-        return false;
+    private boolean optimizeShortLoop(BlockBegin loop_header) {
+          boolean tooComplicated = false;
+           List<BlockBegin> loopBlocks = new ArrayList<BlockBegin>();
+          loopBlocks.add(loop_header);
+
+          for (int i = 0; i < loopBlocks.size(); i++) {
+            BlockBegin block = loopBlocks.get(i);
+
+            if (block.isExceptionEntry()) {
+              // this would be too complicated
+              return false;
+            }
+
+            // add predecessors to worklist
+            for (int j = block.numberOfPreds() - 1; j >= 0; j--) {
+              BlockBegin pred = block.predAt(j);
+
+              ValueMap pred_map = valueMaps.get(pred);
+              if (pred_map != null) {
+                currentMap.killMap(pred_map);
+              } else if (!loopBlocks.contains(pred)) {
+                if (loopBlocks.size() >= C1XOptions.MaximumGVNLoopSize) {
+                  return false;
+                }
+                loopBlocks.add(pred);
+              }
+            }
+
+            // use the instruction visitor for killing values
+            for (Instruction instr = block.next(); instr != null; instr = instr.next()) {
+              instr.accept(currentMap.effects);
+              if (currentMap.memoryKilled) {
+                return false;
+              }
+            }
+          }
+
+          return true;
     }
 }
