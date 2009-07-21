@@ -84,12 +84,14 @@ public final class Code {
     }
 
     /**
-     * Allocate space in the code manager for the specified target method, installing its code.
+     * Allocates space in a code region for the code-related arrays of a given target method
+     * and {@linkplain TargetMethod#setCodeArrays(byte[], byte[], Object[]) initializes} them.
      *
-     * @param targetMethod the target method to install into the code manager
+     * @param targetBundleLayout describes the layout of the arrays in the allocate space
+     * @param targetMethod the target method for which the code-related arrays are allocated
      */
-    public static void allocate(TargetMethod targetMethod) {
-        codeManager.allocate(targetMethod);
+    public static void allocate(TargetBundleLayout targetBundleLayout, TargetMethod targetMethod) {
+        codeManager.allocate(targetBundleLayout, targetMethod);
     }
 
     /**

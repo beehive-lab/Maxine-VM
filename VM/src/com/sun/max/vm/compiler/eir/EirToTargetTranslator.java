@@ -173,11 +173,11 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         }
     }
 
-    private byte[] packReferenceMaps(TargetBundleLayout targetBundleLayout, EirTargetEmitter<?> emitter, int frameReferenceMapSize, int regReferenceMapSize) {
-        if (targetBundleLayout.cellSize(ArrayField.referenceMaps).isZero()) {
+    private byte[] packReferenceMaps(int referenceMapsSize, EirTargetEmitter<?> emitter, int frameReferenceMapSize, int regReferenceMapSize) {
+        if (referenceMapsSize == 0) {
             return null;
         }
-        final byte[] referenceMaps = new byte[targetBundleLayout.length(ArrayField.referenceMaps)];
+        final byte[] referenceMaps = new byte[referenceMapsSize];
         final WordWidth stackSlotWidth = emitter.stackSlotWidth();
         final ByteArrayBitMap bitMap = new ByteArrayBitMap(referenceMaps, 0, frameReferenceMapSize);
         if (frameReferenceMapSize > 0) {
@@ -246,46 +246,40 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
 
         final int placeholderCodeLength = 0;
         final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(
-                        emitter.catchRangeLabels().length(),
-                        emitter.directCallLabels().length(),
-                        emitter.indirectCallLabels().length(),
-                        emitter.safepointLabels().length(),
                         (scalarLiteralBytes == null) ? 0 : scalarLiteralBytes.length,
                         (referenceLiteralObjects == null) ? 0 : referenceLiteralObjects.length,
-                        placeholderCodeLength,
-                        frameReferenceMapSize,
-                        targetMethod.registerReferenceMapSize());
-
-        final TargetBundle canonicalTargetBundle = new TargetBundle(targetBundleLayout, Address.zero());
-
+                        placeholderCodeLength);
 
         if (!scalarLiterals.isEmpty()) {
-            fixLiteralLabels(emitter, scalarLiterals, canonicalTargetBundle.firstElementPointer(ArrayField.scalarLiteralBytes));
+            fixLiteralLabels(emitter, scalarLiterals, targetBundleLayout.firstElementPointer(Address.zero(), ArrayField.scalarLiterals));
         }
         if (!referenceLiterals.isEmpty()) {
-            fixLiteralLabels(emitter, referenceLiterals, canonicalTargetBundle.firstElementPointer(ArrayField.referenceLiterals));
+            fixLiteralLabels(emitter, referenceLiterals, targetBundleLayout.firstElementPointer(Address.zero(), ArrayField.referenceLiterals));
         }
 
         final byte[] code;
         try {
-            emitter.setStartAddress(canonicalTargetBundle.firstElementPointer(ArrayField.code));
+            emitter.setStartAddress(targetBundleLayout.firstElementPointer(Address.zero(), ArrayField.code));
             code = emitter.toByteArray();
         } catch (AssemblyException assemblyException) {
             throw ProgramError.unexpected("assembling failed", assemblyException);
         }
 
         targetBundleLayout.update(ArrayField.code, code.length);
+        Code.allocate(targetBundleLayout, targetMethod);
 
-        targetMethod.setSize(targetBundleLayout.bundleSize());
-        Code.allocate(targetMethod);
-
-        final TargetBundle targetBundle = new TargetBundle(targetBundleLayout, targetMethod.start());
         final Sequence<EirCall> directCalls = emitter.directCalls();
         final int[] stopPositions = packLabelPositions(emitter.directCallLabels(), emitter.indirectCallLabels(), emitter.safepointLabels());
         markReferenceCalls(stopPositions, emitter);
         final byte[] compressedJavaFrameDescriptors = targetMethod.classMethodActor().isTemplate() ? null : emitter.getCompressedJavaFrameDescriptors();
 
-        targetMethod.setGenerated(targetBundle,
+        final int numberOfDirectCalls = emitter.directCallLabels().length();
+        final int numberOfIndirectCalls = emitter.indirectCallLabels().length();
+        final int numberOfSafepoints = emitter.safepointLabels().length();
+        final int registerReferenceMapSize = targetMethod.registerReferenceMapSize();
+        int referenceMapsSize = TargetMethod.computeReferenceMapsSize(numberOfDirectCalls, numberOfIndirectCalls, numberOfSafepoints, frameReferenceMapSize, registerReferenceMapSize);
+
+        targetMethod.setGenerated(
                         packLabelPositions(emitter.catchRangeLabels()),
                         packCatchBlockPositions(emitter.catchBlocks()),
                         stopPositions,
@@ -293,7 +287,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
                         packDirectCallees(directCalls),
                         emitter.indirectCallLabels().length(),
                         emitter.safepointLabels().length(),
-                packReferenceMaps(targetBundleLayout, emitter, frameReferenceMapSize, targetMethod.registerReferenceMapSize()),
+                        packReferenceMaps(referenceMapsSize, emitter, frameReferenceMapSize, registerReferenceMapSize),
                         scalarLiteralBytes,
                         referenceLiteralObjects,
                         code,

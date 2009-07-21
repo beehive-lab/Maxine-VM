@@ -24,15 +24,12 @@ import com.sun.c1x.ci.*;
 import com.sun.max.vm.actor.member.ClassMethodActor;
 import com.sun.max.vm.actor.member.MethodActor;
 import com.sun.max.vm.collect.ByteArrayBitMap;
-import com.sun.max.vm.compiler.target.TargetBundleLayout;
-import com.sun.max.vm.compiler.target.TargetBundle;
-import com.sun.max.vm.compiler.target.TargetABI;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.code.Code;
 import com.sun.max.vm.VMConfiguration;
 import com.sun.max.collect.AppendableSequence;
 import com.sun.max.annotate.PROTOTYPE_ONLY;
-import com.sun.max.unsafe.Pointer;
-import com.sun.max.unsafe.Offset;
+import com.sun.max.unsafe.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -278,23 +275,22 @@ public class MaxCiTargetMethod implements CiTargetMethod {
      * Finishes the compilation and installs the machine code into internal VM data structures.
      */
     public void finish() {
-        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(exceptionHandlers.size(), directCalls, indirectCalls, safepoints, dataSize, refSize, targetCodeSize, frameSize, registerSize);
+        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(dataSize, refSize, targetCodeSize);
 
-        final int[] stopPositions = new int[targetBundleLayout.length(TargetBundleLayout.ArrayField.stopPositions)];
-        final byte[] refMaps = new byte[targetBundleLayout.length(TargetBundleLayout.ArrayField.referenceMaps)];
+        final int numberOfStopPositions = directCalls + indirectCalls + safepoints;
+        final int[] stopPositions = new int[numberOfStopPositions];
+        final byte[] refMaps = new byte[TargetMethod.computeReferenceMapsSize(directCalls, indirectCalls, safepoints, stackRefMapSize(), registerRefMapSize())];
         final ByteArrayBitMap bitMap = new ByteArrayBitMap(refMaps);
         final Object[] refLiterals = new Object[refSize];
 
         targetMethod = new C1XTargetMethod(classMethodActor);
-        targetMethod.setSize(targetBundleLayout.bundleSize());
-        Code.allocate(targetMethod);
-        TargetBundle targetBundle = new TargetBundle(targetBundleLayout, targetMethod.start());
+        Code.allocate(targetBundleLayout, targetMethod);
 
-        ClassMethodActor[] directCallees = processCallSites(targetBundle, stopPositions, bitMap);
-        processSafepoints(targetBundle, stopPositions, bitMap);
+        ClassMethodActor[] directCallees = processCallSites(stopPositions, bitMap);
+        processSafepoints(stopPositions, bitMap);
 
-        processDataPatches(targetBundle);
-        processRefPatches(targetBundle, refLiterals);
+        processDataPatches(targetBundleLayout);
+        processRefPatches(targetBundleLayout, refLiterals);
 
         // TODO: encode exception handler information
         int[] catchRangePositions = null;
@@ -305,7 +301,6 @@ public class MaxCiTargetMethod implements CiTargetMethod {
         TargetABI abi = VMConfiguration.target().targetABIsScheme().optimizedJavaABI();
 
         targetMethod.setGenerated(
-            targetBundle,
             catchRangePositions,
             catchBlockPositions,
             stopPositions,
@@ -324,23 +319,24 @@ public class MaxCiTargetMethod implements CiTargetMethod {
         );
     }
 
-    private void processRefPatches(TargetBundle bundle, Object[] refLiterals) {
-        Pointer dataStart = bundle.firstElementPointer(TargetBundleLayout.ArrayField.referenceLiterals);
-        Pointer codeStart = bundle.firstElementPointer(TargetBundleLayout.ArrayField.code);
-        Offset diff = codeStart.minus(dataStart).asOffset();
+    private void processRefPatches(TargetBundleLayout bundleLayout, Object[] refLiterals) {
+        Offset dataStart = bundleLayout.cellOffset(TargetBundleLayout.ArrayField.referenceLiterals);
+        Offset codeStart = bundleLayout.cellOffset(TargetBundleLayout.ArrayField.code);
+        Offset diff = dataStart.minus(codeStart).asOffset();
         int refPatchPos = 0;
         for (RefPatchSite refPatch : refPatchSites) {
             refLiterals[refPatchPos++] = refPatch.referrent;
-            patchRelativeInstruction(refPatch.codePos, diff.plus(refPatch.codePos - refPatch.index));
+            int refSize = Word.size(); // TODO: Use C1X target object
+            patchRelativeInstruction(refPatch.codePos, diff.plus(refPatch.index * refSize - refPatch.codePos));
         }
     }
 
-    private void processDataPatches(TargetBundle bundle) {
-        Pointer dataStart = bundle.firstElementPointer(TargetBundleLayout.ArrayField.scalarLiteralBytes);
-        Pointer codeStart = bundle.firstElementPointer(TargetBundleLayout.ArrayField.code);
-        Offset diff = codeStart.minus(dataStart).asOffset();
+    private void processDataPatches(TargetBundleLayout bundleLayout) {
+        Offset dataStart = bundleLayout.cellOffset(TargetBundleLayout.ArrayField.scalarLiterals);
+        Offset codeStart = bundleLayout.cellOffset(TargetBundleLayout.ArrayField.code);
+        Offset diff = dataStart.minus(codeStart).asOffset();
         for (DataPatchSite dataPatch : dataPatchSites) {
-            patchRelativeInstruction(dataPatch.codePos, diff.plus(dataPatch.codePos - dataPatch.dataPos));
+            patchRelativeInstruction(dataPatch.codePos, diff.plus(dataPatch.dataPos - dataPatch.codePos));
         }
     }
 
@@ -348,7 +344,7 @@ public class MaxCiTargetMethod implements CiTargetMethod {
         // TODO: patch relative load instructions in a platform-dependent way
     }
 
-    private void processSafepoints(TargetBundle bundle, int[] stopPositions, ByteArrayBitMap bitMap) {
+    private void processSafepoints(int[] stopPositions, ByteArrayBitMap bitMap) {
         int safepointPos = directCalls + indirectCalls;
         bitMap.setSize(stackRefMapSize());
         bitMap.setIndex(safepointPos);
@@ -364,7 +360,7 @@ public class MaxCiTargetMethod implements CiTargetMethod {
         }
     }
 
-    private ClassMethodActor[] processCallSites(TargetBundle bundle, int[] stopPositions, ByteArrayBitMap bitMap) {
+    private ClassMethodActor[] processCallSites(int[] stopPositions, ByteArrayBitMap bitMap) {
         int directPos = 0;
         int indirectPos = directCalls;
         bitMap.setSize(stackRefMapSize());
