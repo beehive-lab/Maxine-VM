@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
-import java.io.*;
 import java.util.*;
 
 import com.sun.c1x.ci.*;
@@ -28,17 +27,9 @@ import com.sun.c1x.target.*;
 import com.sun.c1x.target.x86.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
-import com.sun.max.asm.*;
-import com.sun.max.asm.dis.*;
-import com.sun.max.io.*;
-import com.sun.max.platform.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.prototype.*;
@@ -563,7 +554,7 @@ public class MaxCiRuntime implements CiRuntime {
 
     @Override
     public String disassemble(byte[] code) {
-        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        /*final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
         writer.flush();
         final ProcessorKind processorKind = VMConfiguration.target().platform().processorKind;
@@ -587,7 +578,9 @@ public class MaxCiRuntime implements CiRuntime {
             }
         };
         Disassemble.disassemble(byteArrayOutputStream, code, processorKind, startAddress, inlineDataDecoder, disassemblyPrinter);
-        return byteArrayOutputStream.toString();
+        return byteArrayOutputStream.toString();*/
+
+        return "";
     }
 
 }

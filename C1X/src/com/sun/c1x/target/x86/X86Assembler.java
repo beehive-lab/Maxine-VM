@@ -1116,7 +1116,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         this.setInstMark();
         try {
             emitByte(0xE8);
-            long disp = entry.value - (codePos().value + Util.sizeofInt());
+            long disp = entry.value - (codeBuffer.position() + Util.sizeofInt());
             assert isSimm32(disp) : "must be 32bit offset (call2)";
             // Technically, should use WhichOperand.call32operand, but this format is
             // implied by the fact that we're emitting a call instruction.
@@ -1478,7 +1478,7 @@ public abstract class X86Assembler extends AbstractAssembler {
 
                 int shortSize = 2;
                 int longSize = 6;
-                long offs = dst.value - codePos().value;
+                long offs = dst.value - codeBuffer.position();
                 if (reloc.type() == RelocInfo.Type.none && Util.is8bit(offs - shortSize)) {
                     // 0111 tttn #8-bit disp
                     emitByte(0x70 | cc.value);
@@ -1509,8 +1509,8 @@ public abstract class X86Assembler extends AbstractAssembler {
         if (l.isBound()) {
             int shortSize = 2;
             Pointer entry = target(l);
-            assert Util.is8bit(entry.value - (codePos().value + shortSize)) : "Dispacement too large for a short jmp";
-            long offs = entry.value - codePos().value;
+            assert Util.is8bit(entry.value - (codeBuffer.position() + shortSize)) : "Dispacement too large for a short jmp";
+            long offs = entry.value - codeBuffer.position();
             // 0111 tttn #8-bit disp
             emitByte(0x70 | cc.value);
             emitByte((int) ((offs - shortSize) & 0xFF));
@@ -1545,7 +1545,7 @@ public abstract class X86Assembler extends AbstractAssembler {
             try {
                 int shortSize = 2;
                 int longSize = 5;
-                long offs = entry.value - codePos().value;
+                long offs = entry.value - codeBuffer.position();
                 if (reloc.type() == RelocInfo.Type.none && Util.is8bit(offs - shortSize)) {
                     emitByte(0xEB);
                     emitByte((int) ((offs - shortSize) & 0xFF));
@@ -1584,7 +1584,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         try {
             emitByte(0xE9);
             assert dest != null : "must have a target";
-            long disp = dest.value - (codePos().value + Util.sizeofInt());
+            long disp = dest.value - (codeBuffer.position() + Util.sizeofInt());
             assert isSimm32(disp) : "must be 32bit offset (jmp)";
             emitData((int) disp, rspec.type(), WhichOperand.call32operand.ordinal());
         } finally {
@@ -1597,8 +1597,8 @@ public abstract class X86Assembler extends AbstractAssembler {
             int shortSize = 2;
             Pointer entry = target(l);
             assert entry != null : "jmp most probably wrong";
-            assert Util.is8bit((entry.value - codePos().value) + shortSize) : "Dispacement too large for a short jmp";
-            long offs = entry.value - codePos().value;
+            assert Util.is8bit((entry.value - codeBuffer.position()) + shortSize) : "Dispacement too large for a short jmp";
+            long offs = entry.value - codeBuffer.position();
             emitByte(0xEB);
             emitByte((int) ((offs - shortSize) & 0xFF));
         } else {

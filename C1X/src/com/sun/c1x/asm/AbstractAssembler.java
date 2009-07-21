@@ -61,7 +61,7 @@ public abstract class AbstractAssembler {
     }
 
     public Pointer pc() {
-        return codePos();
+        return new Pointer(codeBuffer.position());
     }
 
     public int offset() {
@@ -206,8 +206,8 @@ public abstract class AbstractAssembler {
             return;
         }
 
-        assert !pdCheckInstructionMark() || instMark() == InvalidInstructionMark || instMark() == codePos().value : "call relocate() between instructions";
-        relocate((int) (codePos().value), rspec);
+        assert !pdCheckInstructionMark() || instMark() == InvalidInstructionMark || instMark() == codeBuffer.position() : "call relocate() between instructions";
+        relocate(codeBuffer.position(), rspec);
     }
 
     protected void relocate(int position, Relocation relocation) {
@@ -308,10 +308,6 @@ public abstract class AbstractAssembler {
             compilation.targetMethod.setFrameSize(compilation.frameMap().framesize());
             compilation.targetMethod.finish();
         }
-    }
-
-    protected Pointer codePos() {
-        return new Pointer(codeBuffer.position());
     }
 
     public void decode() {
