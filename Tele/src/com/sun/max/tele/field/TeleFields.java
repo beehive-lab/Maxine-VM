@@ -157,7 +157,7 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceIntFieldAccess TargetMethod_numberOfIndirectCalls = new TeleInstanceIntFieldAccess(TargetMethod.class, "numberOfIndirectCalls");
     public final TeleInstanceIntFieldAccess TargetMethod_numberOfSafepoints = new TeleInstanceIntFieldAccess(TargetMethod.class, "numberOfSafepoints");
     public final TeleInstanceReferenceFieldAccess TargetMethod_referenceLiterals = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "referenceLiterals", Object[].class);
-    public final TeleInstanceReferenceFieldAccess TargetMethod_scalarLiteralBytes = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "scalarLiteralBytes", byte[].class);
+    public final TeleInstanceReferenceFieldAccess TargetMethod_scalarLiterals = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "scalarLiterals", byte[].class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_stopPositions = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "stopPositions", int[].class);
     public final TeleStaticIntFieldAccess Trace_level = new TeleStaticIntFieldAccess(Trace.class, "level");
     public final TeleStaticLongFieldAccess Trace_threshold = new TeleStaticLongFieldAccess(Trace.class, "threshold");

@@ -269,8 +269,8 @@ public abstract class TeleVM implements MaxVM {
                 getInspectorGripPackage(b.gripPackage),
                 new com.sun.max.tele.reference.plain.Package(),
                 b.layoutPackage, b.heapPackage, b.monitorPackage,
-                b.compilerPackage, b.jitPackage, b.interpreterPackage, b.trampolinePackage,
-                b.targetABIsPackage, b.runPackage);
+                b.compilerPackage, b.jitPackage, b.trampolinePackage, b.targetABIsPackage,
+                b.runPackage);
         vmConfiguration.loadAndInstantiateSchemes();
 
         final MaxineVM vm = new MaxineVM(vmConfiguration);
@@ -1307,11 +1307,11 @@ public abstract class TeleVM implements MaxVM {
             teleHeapManager.initialize(processEpoch);
         }
         refreshReferences();
+        teleObjectFactory.refresh(processEpoch);
         if (!isInGC()) {
             // Only attempt to update state when not in a GC.
             teleHeapManager.refreshMemoryRegions(processEpoch);
             teleClassRegistry.refresh(processEpoch);
-            teleObjectFactory.refresh(processEpoch);
         }
         Trace.end(TRACE_VALUE, refreshTracer, startTimeMillis);
     }

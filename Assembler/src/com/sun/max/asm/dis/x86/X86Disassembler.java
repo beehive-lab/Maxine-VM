@@ -282,7 +282,9 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
                             byte[] bytes;
                             if (true) {
                                 final Assembler assembler = createAssembler(currentPosition);
-                                assembly().assemble(assembler, template, arguments);
+                                final Class<Template_Type> type = null;
+                                final Template_Type t = StaticLoophole.cast(type, template.redundantTo);
+                                assembly().assemble(assembler, t == null ? template : t, arguments);
                                 bytes = assembler.toByteArray();
                             } else { // TODO: does not work yet
                                 final X86TemplateAssembler<Template_Type> templateAssembler = new X86TemplateAssembler<Template_Type>(template, addressWidth());

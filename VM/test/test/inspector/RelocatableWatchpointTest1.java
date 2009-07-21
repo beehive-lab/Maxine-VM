@@ -18,24 +18,46 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.interpret.empty;
-
-import com.sun.max.vm.*;
-import com.sun.max.vm.interpret.*;
+package test.inspector;
 
 /**
- * @see VMPackage
+ * Simple Inspector test to proof the implemented watchpoints code.
  *
- * @author Simon Wilkinson
+ * @author Hannes Payer
  */
-public class Package extends VMPackage {
-    public Package() {
-        super();
-        registerScheme(InterpreterScheme.class, EmptyInterpreterScheme.class);
+public class RelocatableWatchpointTest1 {
+
+    /**
+     * @param args
+     */
+
+    private static final int allocations = 10000000;
+    private static final int allocationSize = 20;
+
+    public static String getMessage() {
+        return new String("allocationTest");
     }
 
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.interpreterPackage.equals(this);
+    public static void printMessage(String message) {
+        System.out.println(message);
     }
+
+    public static void relocationTest() {
+        String test = getMessage();
+        for (int i = 0; i < allocations; i++) {
+            final byte[] tmp = new byte[allocationSize];
+            tmp[0] = 1;
+        }
+        printMessage(test);
+        for (int i = 0; i < allocations; i++) {
+            final byte[] tmp = new byte[allocationSize];
+            tmp[0] = 1;
+        }
+        printMessage(test);
+    }
+
+    public static void main(String[] args) {
+        relocationTest();
+    }
+
 }

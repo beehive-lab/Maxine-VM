@@ -32,6 +32,7 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -126,7 +127,7 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
 
     public void visitPointers(PointerIndexVisitor pointerIndexVisitor) {
         if (referenceMap.isZero()) {
-            referenceMap = Grip.fromJava(referenceMapBytes).toOrigin().plus(Layout.byteArrayLayout().getElementOffsetFromOrigin(0));
+            referenceMap = ArrayAccess.elementPointer(referenceMapBytes, 0);
         }
 
         final Pointer refMap = referenceMap;

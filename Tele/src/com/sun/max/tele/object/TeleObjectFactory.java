@@ -36,7 +36,6 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.interpret.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -114,7 +113,6 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
         classToTeleTupleObjectConstructor.put(CodeRegion.class, getConstructor(TeleCodeRegion.class));
         classToTeleTupleObjectConstructor.put(CodeManager.class, getConstructor(TeleCodeManager.class));
         classToTeleTupleObjectConstructor.put(RuntimeMemoryRegion.class, getConstructor(TeleRuntimeMemoryRegion.class));
-        classToTeleTupleObjectConstructor.put(InterpretedTargetMethod.class, getConstructor(TeleInterpretedTargetMethod.class));
         // Other Maxine support
         classToTeleTupleObjectConstructor.put(Kind.class, getConstructor(TeleKind.class));
         classToTeleTupleObjectConstructor.put(ObjectReferenceValue.class, getConstructor(TeleObjectReferenceValue.class));

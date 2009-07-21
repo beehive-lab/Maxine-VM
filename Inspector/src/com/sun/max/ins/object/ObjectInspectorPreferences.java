@@ -127,7 +127,7 @@ public final class ObjectInspectorPreferences extends AbstractInspectionHolder {
      */
     private JPanel getPanel() {
         final JCheckBox alwaysShowHeaderCheckBox =
-            new InspectorCheckBox(inspection(), "Header", "Should new Object Inspectors initially display the header?", showHeader);
+            new InspectorCheckBox(inspection(), "Show Header", "Should new Object Inspectors initially display the header?", showHeader);
         final JCheckBox alwaysShowAddressesCheckBox =
             new InspectorCheckBox(inspection(), "Addresses", "Should new Object Inspectors initially display addresses?", showAddresses);
         final JCheckBox alwaysShowOffsetsCheckBox =
@@ -166,8 +166,7 @@ public final class ObjectInspectorPreferences extends AbstractInspectionHolder {
         hideNullArrayElementsCheckBox.addItemListener(itemListener);
 
         final JPanel upperContentPanel = new InspectorPanel(inspection());
-        upperContentPanel.add(new TextLabel(inspection(), "View:  "));
-        upperContentPanel.add(alwaysShowHeaderCheckBox);
+        upperContentPanel.add(new TextLabel(inspection(), "View Columns:  "));
         upperContentPanel.add(alwaysShowAddressesCheckBox);
         upperContentPanel.add(alwaysShowOffsetsCheckBox);
         upperContentPanel.add(alwaysShowTupleTypeCheckBox);
@@ -177,7 +176,8 @@ public final class ObjectInspectorPreferences extends AbstractInspectionHolder {
         upperPanel.add(upperContentPanel, BorderLayout.WEST);
 
         final JPanel lowerContentPanel = new InspectorPanel(inspection());
-        lowerContentPanel.add(new TextLabel(inspection(), "Options:  "));
+        lowerContentPanel.add(new TextLabel(inspection(), "View Options:  "));
+        lowerContentPanel.add(alwaysShowHeaderCheckBox);
         lowerContentPanel.add(hideNullArrayElementsCheckBox);
 
         final JPanel lowerPanel = new InspectorPanel(inspection(), new BorderLayout());

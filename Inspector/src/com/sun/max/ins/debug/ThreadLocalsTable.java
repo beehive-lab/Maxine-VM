@@ -97,7 +97,7 @@ public final class ThreadLocalsTable extends InspectorTable {
                             final InspectorMenu menu = new InspectorMenu();
                             final MemoryRegion memoryRegion = model.rowToMemoryRegion(hitRowIndex);
                             menu.add(actions().setThreadLocalWatchpoint(threadLocalValues, hitRowIndex, "Watch this memory location"));
-                            menu.add(actions().editWatchpoint(memoryRegion, "Edit memory watchpoint"));
+                            menu.add(new WatchpointSettingsMenu(model.rowToWatchpoint(hitRowIndex)));
                             menu.add(actions().removeWatchpoint(memoryRegion, "Remove memory watchpoint"));
                             menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                         }
@@ -274,6 +274,17 @@ public final class ThreadLocalsTable extends InspectorTable {
         }
     }
 
+    /**
+     * @return color the text specially in the row where a watchpoint is triggered
+     */
+    private Color getRowTextColor(int row) {
+        final MaxWatchpointEvent watchpointEvent = maxVMState().watchpointEvent();
+        if (watchpointEvent != null && model.rowToMemoryRegion(row).contains(watchpointEvent.address())) {
+            return style().debugIPTagColor();
+        }
+        return style().defaultTextColor();
+    }
+
     private final class TagRenderer extends MemoryTagTableCellRenderer implements TableCellRenderer {
 
         TagRenderer(Inspection inspection) {
@@ -281,7 +292,9 @@ public final class ThreadLocalsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            return getRenderer(model.rowToMemoryRegion(row), model.getMaxThread(), model.rowToWatchpoint(row));
+            final Component renderer = getRenderer(model.rowToMemoryRegion(row), model.getMaxThread(), model.rowToWatchpoint(row));
+            renderer.setForeground(getRowTextColor(row));
+            return renderer;
         }
     }
 
@@ -294,6 +307,7 @@ public final class ThreadLocalsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final VmThreadLocal vmThreadLocal = (VmThreadLocal) value;
             setValue(vmThreadLocal.offset, model.start());
+            setForeground(getRowTextColor(row));
             return this;
         }
     }
@@ -307,6 +321,7 @@ public final class ThreadLocalsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final VmThreadLocal vmThreadLocal = (VmThreadLocal) value;
             setValue(vmThreadLocal.offset, model.start());
+            setForeground(getRowTextColor(row));
             return this;
         }
     }
@@ -321,6 +336,7 @@ public final class ThreadLocalsTable extends InspectorTable {
             final VmThreadLocal vmThreadLocal = (VmThreadLocal) value;
             setValue(vmThreadLocal.name);
             setToolTipText(vmThreadLocal.description);
+            setForeground(getRowTextColor(row));
             return this;
         }
     }

@@ -776,7 +776,7 @@ public abstract class TargetLocation {
     /**
      * A scalar literal target location. The value returned by {@link #index()} for a {@code ScalarLiteral} object is
      * the index of the first byte of the scalar value in the
-     * {@linkplain TargetMethod#scalarLiteralBytes() scalar values} of a target method. The bytes of the scalar value
+     * {@linkplain TargetMethod#scalarLiterals() scalar values} of a target method. The bytes of the scalar value
      * are encoded in the target-specific endianness.
      */
     public static final class ScalarLiteral extends Index {

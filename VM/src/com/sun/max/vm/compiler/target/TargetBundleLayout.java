@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.target;
 
+
 import static com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField.*;
 
 import com.sun.max.collect.*;
@@ -31,7 +32,9 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Describes the layout of a {@linkplain TargetBundle target bundle}.
+ * Describes the layout of a contiguous chunk of memory in a code region that contains
+ * the arrays referenced by some {@linkplain ArrayField array fields} in a {@link TargetMethod}.
+ * These arrays contain the machine code and data that must be co-located.
  *
  * @author Doug Simon
  */
@@ -41,43 +44,30 @@ public final class TargetBundleLayout {
      * Constants denoting the arrays referenced by fields in {@link TargetMethod} that are colocated in a target bundle.
      */
     public enum ArrayField {
-        catchRangePositions,
-        catchBlockPositions,
-        stopPositions,
-        directCallees,
-        referenceMaps,
-        scalarLiteralBytes,
-        referenceLiterals,
-        code {
-            @Override
-            protected boolean allocateEmptyArray() {
-                return true;
-            }
-        };
+        scalarLiterals(false),
+        referenceLiterals(false),
+        code(true);
 
         public static final IndexedSequence<ArrayField> VALUES = new ArraySequence<ArrayField>(values());
 
         public final ArrayLayout arrayLayout;
 
-        ArrayField() {
+        ArrayField(boolean allocateEmptyArray) {
             final LayoutScheme layoutScheme = VMConfiguration.hostOrTarget().layoutScheme();
             final String fieldName = name();
             final TypeDescriptor fieldType = JavaTypeDescriptor.forJavaClass(Classes.getDeclaredField(TargetMethod.class, fieldName).getType());
             assert JavaTypeDescriptor.isArray(fieldType);
             arrayLayout = fieldType.componentTypeDescriptor().toKind().arrayLayout(layoutScheme);
+            this.allocateEmptyArray = allocateEmptyArray;
         }
 
         /**
-         * Determines if space should be reserved for the array referenced by this field if the length of the array is
-         * 0.
-         * @return whether space should be reserved
+         * Determines if space should be reserved for the array referenced by this field if the length of the array is 0.
          */
-        protected boolean allocateEmptyArray() {
-            return false;
-        }
+        public final boolean allocateEmptyArray;
 
         /**
-         * Allocates space within a target bundle for a cell of a given size. If the {@code size.isZero()}, no space is
+         * Allocates space within a target bundle for a cell of a given size. If {@code size.isZero() == true}, no space is
          * allocated.
          *
          * @param region an object used to do the allocation
@@ -106,7 +96,7 @@ public final class TargetBundleLayout {
             final int ordinal = ordinal();
             targetBundleLayout.lengths[ordinal] = length;
             final Size cellSize;
-            if (allocateEmptyArray() || length != 0) {
+            if (allocateEmptyArray || length != 0) {
                 cellSize = arrayLayout.getArraySize(length);
             } else {
                 cellSize = Size.zero();
@@ -126,15 +116,9 @@ public final class TargetBundleLayout {
     final Offset[] cellOffsets;
     private Size bundleSize;
 
-    public TargetBundleLayout(int numberOfCatchRanges,
-                              int numberOfDirectCalls,
-                              int numberOfIndirectCalls,
-                              int numberOfSafepoints,
-                              int numberOfScalarLiteralBytes,
+    public TargetBundleLayout(int numberOfScalarLiteralBytes,
                               int numberOfReferenceLiterals,
-                              int numberOfCodeBytes,
-                              int frameReferenceMapSize,
-                              int registerReferenceMapSize) {
+                              int numberOfCodeBytes) {
 
         final LinearAllocatorHeapRegion region = new LinearAllocatorHeapRegion(Address.zero(), Size.fromLong(Long.MAX_VALUE), "TargetBundle");
 
@@ -148,20 +132,7 @@ public final class TargetBundleLayout {
             bundleSize = Size.zero();
         }
 
-        if (numberOfCatchRanges != 0) {
-            initialize(catchRangePositions, numberOfCatchRanges, region);
-            initialize(catchBlockPositions, numberOfCatchRanges, region);
-        }
-
-        final int numberOfStopPositions = numberOfDirectCalls + numberOfIndirectCalls + numberOfSafepoints;
-        initialize(stopPositions, numberOfStopPositions, region);
-        initialize(directCallees, numberOfDirectCalls, region);
-        if (numberOfStopPositions != 0) {
-            // NOTE: number of safepoints is counted twice due to the need for a register map.
-            final int numberOfReferenceMapsBytes = (numberOfStopPositions * frameReferenceMapSize) + (numberOfSafepoints * registerReferenceMapSize);
-            initialize(referenceMaps, numberOfReferenceMapsBytes, region);
-        }
-        initialize(scalarLiteralBytes, numberOfScalarLiteralBytes, region);
+        initialize(scalarLiterals, numberOfScalarLiteralBytes, region);
         initialize(referenceLiterals, numberOfReferenceLiterals, region);
         initialize(code, numberOfCodeBytes, region);
 
@@ -223,6 +194,44 @@ public final class TargetBundleLayout {
     }
 
     /**
+     * Gets the address of the cell containing the array in this target bundle referenced by a given field.
+     *
+     * @param field the field for which the cell address is being requested
+     * @param start the start address of the target bundle
+     * @return the address of the cell containing the array referenced {@code field}
+     * @throws IllegalArgumentException if no cell has been allocated for {@code field} in this target bundle
+     */
+    public Pointer cell(Address start, ArrayField field) {
+        return start.plus(cellOffset(field)).asPointer();
+    }
+
+    /**
+     * Gets the address of the end of the cell containing the array in this target bundle referenced by a given field.
+     *
+     * @param field the field for which the cell end address is being requested
+     * @param start the start address of the target bundle
+     * @return the address of the end of the cell containing the array referenced {@code field}
+     * @throws IllegalArgumentException if no cell has been allocated for {@code field} in this target bundle
+     */
+    public Pointer cellEnd(Address start, ArrayField field) {
+        return start.plus(cellEndOffset(field)).asPointer();
+    }
+
+    /**
+     * Gets the address of the first element in the array in this target bundle referenced by a given field.
+     *
+     * @param field the field for which the cell end address is being requested
+     * @param start the start address of the target bundle
+     * @return the address of the end of the cell containing the array referenced {@code field}
+     * @throws IllegalArgumentException if no cell has been allocated for {@code field} in this target bundle
+     */
+    public Pointer firstElementPointer(Address start, ArrayField field) {
+        return start.plus(firstElementOffset(field)).asPointer();
+    }
+
+
+
+    /**
      * Gets the array length based on which size of the cell reserved for a given field was calculated.
      * @param field the array field
      * @return the length
@@ -233,6 +242,7 @@ public final class TargetBundleLayout {
 
     /**
      * Gets the total size of this target bundle.
+     *
      * @return the size of the entire bundle
      */
     public Size bundleSize() {
@@ -283,14 +293,8 @@ public final class TargetBundleLayout {
      * Creates an object describing the layout of the target bundle associated with a given target method.
      */
     public static TargetBundleLayout from(TargetMethod targetMethod) {
-        return new TargetBundleLayout(targetMethod.numberOfCatchRanges(),
-                targetMethod.numberOfDirectCalls(),
-                targetMethod.numberOfIndirectCalls(),
-                targetMethod.numberOfSafepoints(),
-                targetMethod.numberOfScalarLiteralBytes(),
+        return new TargetBundleLayout(targetMethod.numberOfScalarLiteralBytes(),
                 targetMethod.numberOfReferenceLiterals(),
-                targetMethod.codeLength(),
-                targetMethod.frameReferenceMapSize(),
-                targetMethod.registerReferenceMapSize());
+                targetMethod.codeLength());
     }
 }
