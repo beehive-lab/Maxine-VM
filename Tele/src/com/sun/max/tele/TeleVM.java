@@ -1307,11 +1307,11 @@ public abstract class TeleVM implements MaxVM {
             teleHeapManager.initialize(processEpoch);
         }
         refreshReferences();
+        teleObjectFactory.refresh(processEpoch);
         if (!isInGC()) {
             // Only attempt to update state when not in a GC.
             teleHeapManager.refreshMemoryRegions(processEpoch);
             teleClassRegistry.refresh(processEpoch);
-            teleObjectFactory.refresh(processEpoch);
         }
         Trace.end(TRACE_VALUE, refreshTracer, startTimeMillis);
     }
