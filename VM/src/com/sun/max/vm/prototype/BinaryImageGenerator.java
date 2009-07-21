@@ -261,7 +261,6 @@ public final class BinaryImageGenerator {
         try {
             final FileOutputStream outputStream = new FileOutputStream(file);
             final BootImage bootImage = new BootImage(dataPrototype);
-       //     dataPrototype.setupOffsetTable();
             try {
                 Trace.begin(1, "writing boot image file: " + file);
                 bootImage.write(outputStream);
@@ -467,7 +466,7 @@ public final class BinaryImageGenerator {
             zeroStopPositions += savingsFrom(headerSize, targetMethod.stopPositions());
             zeroDirectCallees += savingsFrom(headerSize, targetMethod.directCallees());
             zeroReferenceMaps += savingsFrom(headerSize, targetMethod.referenceMaps());
-            zeroScalarLiterals += savingsFrom(headerSize, targetMethod.scalarLiteralBytes());
+            zeroScalarLiterals += savingsFrom(headerSize, targetMethod.scalarLiterals());
         }
         int redundantReferenceLiterals = 0;
         for (Map.Entry<Object, Integer> entry : distribution.asMap().entrySet()) {

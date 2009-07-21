@@ -430,7 +430,6 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
      */
     public void setGenerated(
                     TargetMethod targetMethod,
-                    TargetBundle targetBundle,
                     int[] catchRangePositions,
                     int[] catchBlockPositions,
                     Stops stops,
@@ -443,7 +442,6 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
                     TargetABI abi) {
         final JitTargetMethod jitTargetMethod = (JitTargetMethod) targetMethod;
         jitTargetMethod.setGenerated(
-            targetBundle,
             catchRangePositions,
             catchBlockPositions,
             stops.stopPositions,

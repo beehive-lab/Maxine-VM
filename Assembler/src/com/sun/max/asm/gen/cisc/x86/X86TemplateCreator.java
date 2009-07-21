@@ -62,16 +62,15 @@ public abstract class X86TemplateCreator<Template_Type extends X86Template> {
         t.append(template);
     }
 
-    private boolean isRedundant(X86Template template) {
+    private void computeRedundancy(X86Template template) {
         final Sequence<Template_Type> t = internalNameToTemplates.get(template.internalName());
         if (t != null) {
             for (X86Template other : t) {
-                if (template.isRedundant(other)) {
-                    return true;
+                if (template.computeRedundancyWith(other)) {
+                    return;
                 }
             }
         }
-        return false;
     }
 
     protected abstract Template_Type createTemplate(X86InstructionDescription description, int ser, InstructionAssessment instructionFamily, X86TemplateContext contxt);
@@ -83,13 +82,7 @@ public abstract class X86TemplateCreator<Template_Type extends X86Template> {
             if (modRMInstructionDescription != null && !X86InstructionDescriptionVisitor.Static.visitInstructionDescription(template, modRMInstructionDescription)) {
                 return;
             }
-            if (isRedundant(template)) {
-                if (assembly.usingRedundantTemplates()) {
-                    template.beRedundant();
-                } else {
-                    return;
-                }
-            }
+            computeRedundancy(template);
             addTemplate(template);
             serial++;
         }

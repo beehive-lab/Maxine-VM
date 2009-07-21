@@ -122,7 +122,7 @@ public final class HubInspectorPreferences {
         alwaysShowRefMapsCheckBox.addItemListener(itemListener);
 
         final JPanel contentPanel = new InspectorPanel(inspection);
-        contentPanel.add(new TextLabel(inspection, "Show:  "));
+        contentPanel.add(new TextLabel(inspection, "View Options:  "));
         contentPanel.add(alwaysShowFieldsCheckBox);
         contentPanel.add(alwaysShowVTablesCheckBox);
         contentPanel.add(alwaysShowITablesCheckBox);

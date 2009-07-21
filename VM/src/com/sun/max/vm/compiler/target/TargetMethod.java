@@ -29,11 +29,9 @@ import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
-import com.sun.max.profile.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
@@ -45,8 +43,6 @@ import com.sun.max.vm.compiler.ir.observer.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.heap.*;
-import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -100,7 +96,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     private int numberOfSafepoints;
 
     @INSPECTED
-    private byte[] scalarLiteralBytes;
+    private byte[] scalarLiterals;
 
     @INSPECTED
     private Object[] referenceLiterals;
@@ -456,12 +452,12 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     /**
      * @return non-object data referenced by the machine code
      */
-    public final byte[] scalarLiteralBytes() {
-        return scalarLiteralBytes;
+    public final byte[] scalarLiterals() {
+        return scalarLiterals;
     }
 
     public final int numberOfScalarLiteralBytes() {
-        return (scalarLiteralBytes == null) ? 0 : scalarLiteralBytes.length;
+        return (scalarLiterals == null) ? 0 : scalarLiterals.length;
     }
 
     /**
@@ -580,31 +576,45 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     public abstract int registerReferenceMapSize();
 
     /**
+     * Assigns the arrays co-located in a {@linkplain CodeRegion code region} containing the machine code and related data.
+     *
+     * @param code the code
+     * @param scalarLiterals the scalar data referenced from {@code code}
+     * @param referenceLiterals the reference data referenced from {@code code}
+     */
+    public final void setCodeArrays(byte[] code, Pointer codeStart, byte[] scalarLiterals, Object[] referenceLiterals) {
+        this.scalarLiterals = scalarLiterals;
+        this.referenceLiterals = referenceLiterals;
+        this.code = code;
+        this.codeStart = codeStart;
+    }
+
+    /**
      * Completes the definition of this target method as the result of compilation.
      *
-     * @param targetBundle an object describing the address of the objects allocated in a {@link com.sun.max.vm.code.CodeRegion} referenced
-     *            by this target method's fields
      * @param catchRangePositions describes the {@linkplain #catchRangePositions() code ranges} covered by exception
-*            dispatchers
+     *            dispatchers
      * @param catchBlockPositions the positions of the {@linkplain #catchBlockPositions() exception dispatchers}
      * @param stopPositions the positions in this target method at which the locations of object references are
-*            precisely known
+     *            precisely known
      * @param directCallees the positions in this target method of direct calls (e.g. calls to methods for which a
-*            compiled version available)
+     *            compiled version available)
      * @param numberOfIndirectCalls the positions in this target method of register indirect calls (e.g. late binding
-*            calls, virtual/interface calls)
-     * @param numberOfSafepoints the number of {@linkplain com.sun.max.vm.runtime.Safepoint safepoint} positions in this target method
+     *            calls, virtual/interface calls)
+     * @param numberOfSafepoints the number of {@linkplain com.sun.max.vm.runtime.Safepoint safepoint} positions in this
+     *            target method
      * @param referenceMaps the set of bits maps, one per stop position, describing the locations of object references.
-*            The format requirements of this data structure are explained {@linkplain #referenceMaps() here}.
-     * @param scalarLiteralBytes a byte array encoding the scalar data accessed by this target via code relative offsets
+     *            The format requirements of this data structure are explained {@linkplain #referenceMaps() here}.
+     * @param scalarLiterals a byte array encoding the scalar data accessed by this target via code relative offsets
      * @param referenceLiterals an object array encoding the object references accessed by this target via code relative
-*            offsets
+     *            offsets
      * @param codeOrCodeBuffer the compiled code, either as a byte array, or as a {@code CodeBuffer} object
      * @param frameSize the amount of stack allocated for an activation frame during a call to this target method
      * @param abi the target ABI
+     *
+     * TODO: move ABI initialization to constructor
      */
-    public final void setGenerated(TargetBundle targetBundle,
-                                   int[] catchRangePositions,
+    public final void setGenerated(int[] catchRangePositions,
                                    int[] catchBlockPositions,
                                    int[] stopPositions,
                                    byte[] compressedJavaFrameDescriptors,
@@ -612,15 +622,16 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
                                    int numberOfIndirectCalls,
                                    int numberOfSafepoints,
                                    byte[] referenceMaps,
-                                   byte[] scalarLiteralBytes,
+                                   byte[] scalarLiterals,
                                    Object[] referenceLiterals,
                                    Object codeOrCodeBuffer,
                                    byte[] encodedInlineDataDescriptors,
                                    int frameSize,
                                    int frameReferenceMapSize,
-                                   TargetABI abi
-    ) {
-        this.codeStart = targetBundle.firstElementPointer(ArrayField.code);
+                                   TargetABI abi) {
+
+        assert code != null : "Must call setCodeArrays() first";
+
         this.frameSize = frameSize;
         this.frameReferenceMapSize = frameReferenceMapSize;
         this.numberOfIndirectCalls = numberOfIndirectCalls;
@@ -632,50 +643,34 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         assert checkReferenceMapSize(stopPositions, numberOfSafepoints, referenceMaps, frameReferenceMapSize);
 
         // copy the arrays into the target bundle
-        this.catchRangePositions = copyObjectIntoArrayCell(catchRangePositions, targetBundle, ArrayField.catchRangePositions);
-        this.catchBlockPositions = copyObjectIntoArrayCell(catchBlockPositions, targetBundle, ArrayField.catchBlockPositions);
-        this.stopPositions = copyObjectIntoArrayCell(stopPositions, targetBundle, ArrayField.stopPositions);
-        this.directCallees = copyObjectIntoArrayCell(directCallees, targetBundle, ArrayField.directCallees);
-        this.referenceMaps = copyObjectIntoArrayCell(referenceMaps, targetBundle, ArrayField.referenceMaps);
-        this.scalarLiteralBytes = copyObjectIntoArrayCell(scalarLiteralBytes, targetBundle, ArrayField.scalarLiteralBytes);
-        this.referenceLiterals = copyObjectIntoArrayCell(referenceLiterals, targetBundle, ArrayField.referenceLiterals);
+        this.catchRangePositions = catchRangePositions;
+        this.catchBlockPositions = catchBlockPositions;
+        this.stopPositions = stopPositions;
+        this.directCallees = directCallees;
+        this.referenceMaps = referenceMaps;
+        if (scalarLiterals != null) {
+            assert scalarLiterals.length != 0;
+            System.arraycopy(scalarLiterals, 0, this.scalarLiterals, 0, this.scalarLiterals.length);
+        } else {
+            assert this.scalarLiterals == null;
+        }
+        if (referenceLiterals != null) {
+            System.arraycopy(referenceLiterals, 0, this.referenceLiterals, 0, this.referenceLiterals.length);
+        }
 
         // now copy the code (or a code buffer) into the cell for the byte[]
         if (codeOrCodeBuffer instanceof byte[]) {
-            this.code = copyObjectIntoArrayCell((byte[]) codeOrCodeBuffer, targetBundle, ArrayField.code);
+            System.arraycopy(codeOrCodeBuffer, 0, code, 0, code.length);
         } else if (codeOrCodeBuffer instanceof CodeBuffer) {
             final CodeBuffer codeBuffer = (CodeBuffer) codeOrCodeBuffer;
-            if (MaxineVM.isPrototyping()) {
-                this.code = new byte[codeBuffer.currentPosition()];
-            } else {
-                this.code = UnsafeLoophole.cast(Cell.plantArray(targetBundle.cell(ArrayField.code), PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub(), codeBuffer.currentPosition()));
-            }
             codeBuffer.copyTo(code);
         } else {
             throw ProgramError.unexpected("byte[] or CodeBuffer required in TargetMethod.setGenerated()");
-        }
-
-        // collect metrics about the size of target methods' constituent arrays
-        if (MaxineVM.isPrototyping() && COLLECT_TARGET_METHOD_STATS) {
-            for (ArrayField field : ArrayField.VALUES) {
-                Metrics.accumulate("TargetMethod." + field, targetBundle.layout().cellSize(field).toInt());
-            }
-            if (compressedJavaFrameDescriptors != null) {
-                Metrics.accumulate("TargetMethod.compressedFrameDescriptors", HostObjectAccess.getSize(compressedJavaFrameDescriptors).toInt());
-            }
         }
     }
 
     private boolean checkReferenceMapSize(int[] stopPositions, int numberOfSafepoints, byte[] referenceMaps, int frameReferenceMapSize) {
         return referenceMaps == null || referenceMaps.length > 0 && (referenceMaps.length - (frameReferenceMapSize * stopPositions.length) == numberOfSafepoints * registerReferenceMapSize());
-    }
-
-    private <Object_Type> Object_Type copyObjectIntoArrayCell(Object_Type object, TargetBundle targetBundle, ArrayField field) {
-        if (MaxineVM.isPrototyping() || object == null) {
-            return object;
-        }
-        final Class<Object_Type> type = null;
-        return StaticLoophole.cast(type, Cell.plantClone(targetBundle.cell(field), object));
     }
 
     public final boolean isGenerated() {
@@ -718,16 +713,16 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * @param writer where the trace is written
      */
     public final void traceBundle(IndentWriter writer) {
-        final TargetBundle targetBundle = TargetBundle.from(this);
+        final TargetBundleLayout targetBundleLayout = TargetBundleLayout.from(this);
         writer.println("Layout:");
-        writer.println(Strings.indent(targetBundle.layout().toString(), writer.indentation()));
+        writer.println(Strings.indent(targetBundleLayout.toString(), writer.indentation()));
         traceExceptionHandlers(writer);
         traceDirectCallees(writer);
-        traceScalarBytes(writer, targetBundle);
-        traceReferenceLiterals(writer, targetBundle);
+        traceScalarBytes(writer, targetBundleLayout);
+        traceReferenceLiterals(writer, targetBundleLayout);
         traceFrameDescriptors(writer);
         traceReferenceMaps(writer);
-        writer.println("Code cell: " + targetBundle.cell(ArrayField.code).toString());
+        writer.println("Code cell: " + targetBundleLayout.cell(start(), ArrayField.code).toString());
     }
 
     /**
@@ -769,17 +764,17 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     }
 
     /**
-     * Traces the {@linkplain #scalarLiteralBytes() scalar data} addressed by the compiled code represented by this object.
+     * Traces the {@linkplain #scalarLiterals() scalar data} addressed by the compiled code represented by this object.
      *
      * @param writer where the trace is written
      */
-    public final void traceScalarBytes(IndentWriter writer, final TargetBundle targetBundle) {
-        if (scalarLiteralBytes != null) {
+    public final void traceScalarBytes(IndentWriter writer, final TargetBundleLayout targetBundleLayout) {
+        if (scalarLiterals != null) {
             writer.println("Scalars:");
             writer.indent();
-            for (int i = 0; i < scalarLiteralBytes.length; i++) {
-                final Pointer pointer = targetBundle.cell(ArrayField.scalarLiteralBytes).plus(ArrayField.scalarLiteralBytes.arrayLayout.getElementOffsetInCell(i));
-                writer.println("[" + pointer.toString() + "] 0x" + Integer.toHexString(scalarLiteralBytes[i] & 0xFF) + "  " + scalarLiteralBytes[i]);
+            for (int i = 0; i < scalarLiterals.length; i++) {
+                final Pointer pointer = targetBundleLayout.cell(start(), ArrayField.scalarLiterals).plus(ArrayField.scalarLiterals.arrayLayout.getElementOffsetInCell(i));
+                writer.println("[" + pointer.toString() + "] 0x" + Integer.toHexString(scalarLiterals[i] & 0xFF) + "  " + scalarLiterals[i]);
             }
             writer.outdent();
         }
@@ -790,12 +785,12 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      *
      * @param writer where the trace is written
      */
-    public final void traceReferenceLiterals(IndentWriter writer, final TargetBundle targetBundle) {
+    public final void traceReferenceLiterals(IndentWriter writer, final TargetBundleLayout targetBundleLayout) {
         if (referenceLiterals != null) {
             writer.println("References: ");
             writer.indent();
             for (int i = 0; i < referenceLiterals.length; i++) {
-                final Pointer pointer = targetBundle.cell(ArrayField.referenceLiterals).plus(ArrayField.referenceLiterals.arrayLayout.getElementOffsetInCell(i));
+                final Pointer pointer = targetBundleLayout.cell(start(), ArrayField.referenceLiterals).plus(ArrayField.referenceLiterals.arrayLayout.getElementOffsetInCell(i));
                 writer.println("[" + pointer.toString() + "] " + referenceLiterals[i]);
             }
             writer.outdent();
@@ -899,74 +894,28 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return MaxineVM.hostOrTarget().configuration().compilerScheme();
     }
 
-    public final Pointer[] referenceLiteralPointers() {
-        final Object[] literals = referenceLiterals();
-        if (literals == null) {
-            return new Pointer[0];
-        }
-        final Pointer[] pointers = new Pointer[literals.length];
-        final TargetBundle targetBundle = TargetBundle.from(this);
-        for (int i = 0; i < literals.length; i++) {
-            WordArray.set(pointers, i, targetBundle.cell(ArrayField.referenceLiterals).plus(ArrayField.referenceLiterals.arrayLayout.getElementOffsetInCell(i)));
-        }
-        return pointers;
-    }
-
     public final TargetMethod duplicate() {
         final TargetGeneratorScheme targetGeneratorScheme = (TargetGeneratorScheme) compilerScheme();
         final TargetMethod duplicate = targetGeneratorScheme.targetGenerator().createIrMethod(classMethodActor());
         final TargetBundleLayout targetBundleLayout = TargetBundleLayout.from(this);
-        duplicate.setSize(targetBundleLayout.bundleSize());
-        Code.allocate(duplicate);
-        final TargetBundle targetBundle = new TargetBundle(targetBundleLayout, duplicate.start());
-        if (MaxineVM.isPrototyping()) {
-            // setGenerated below will not create a clone of the elements of the target method when in prototyping mode.
-            ClassMethodActor[] duplicatedDirectCallees = directCallees();
-            if (duplicatedDirectCallees != null) {
-                duplicatedDirectCallees = new ClassMethodActor[duplicatedDirectCallees.length];
-                System.arraycopy(directCallees(), 0, duplicatedDirectCallees, 0, duplicatedDirectCallees.length);
-            }
-            Object[] duplicatedReferenceLiterals = referenceLiterals();
-            if (duplicatedReferenceLiterals != null) {
-                duplicatedReferenceLiterals = new Object[duplicatedReferenceLiterals.length];
-                System.arraycopy(referenceLiterals(), 0, duplicatedReferenceLiterals, 0, duplicatedReferenceLiterals.length);
-            }
-            duplicate.setGenerated(targetBundle,
-                        catchRangePositions() == null ? null : catchRangePositions().clone(),
-                        catchBlockPositions() == null ? null : catchBlockPositions().clone(),
-                        stopPositions == null ? null : stopPositions.clone(),
-                        compressedJavaFrameDescriptors,
-                        duplicatedDirectCallees,
-                        numberOfIndirectCalls(),
-                        numberOfSafepoints(),
-                    referenceMaps() == null ? null : referenceMaps().clone(),
-                        scalarLiteralBytes() == null ? null : scalarLiteralBytes().clone(),
-                        duplicatedReferenceLiterals,
-                        code().clone(),
-                        encodedInlineDataDescriptors,
-                        frameSize(),
-                        frameReferenceMapSize(),
-                        abi()
-            );
-        } else {
-            duplicate.setGenerated(targetBundle,
-                            catchRangePositions(),
-                            catchBlockPositions(),
-                            stopPositions,
-                            compressedJavaFrameDescriptors,
-                            directCallees(),
-                            numberOfIndirectCalls(),
-                            numberOfSafepoints(),
-                    referenceMaps(),
-                            scalarLiteralBytes(),
-                            referenceLiterals(),
-                            code(),
-                            encodedInlineDataDescriptors,
-                            frameSize(),
-                            frameReferenceMapSize(),
-                            abi()
-            );
-        }
+        Code.allocate(targetBundleLayout, duplicate);
+        duplicate.setGenerated(
+            catchRangePositions(),
+            catchBlockPositions(),
+            stopPositions,
+            compressedJavaFrameDescriptors,
+            directCallees(),
+            numberOfIndirectCalls(),
+            numberOfSafepoints(),
+            referenceMaps(),
+            scalarLiterals(),
+            referenceLiterals(),
+            code(),
+            encodedInlineDataDescriptors,
+            frameSize(),
+            frameReferenceMapSize(),
+            abi()
+        );
         return duplicate;
     }
 
@@ -1148,6 +1097,25 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
             return stopIndexWithClosestPosition;
         }
         return -1;
+    }
+
+    /**
+     * Computes the number of bytes required for the reference maps of a target method.
+     *
+     * @param numberOfDirectCalls
+     * @param numberOfIndirectCalls
+     * @param numberOfSafepoints
+     * @param frameReferenceMapSize
+     * @param registerReferenceMapSize
+     * @return
+     */
+    public static int computeReferenceMapsSize(int numberOfDirectCalls, int numberOfIndirectCalls, int numberOfSafepoints, int frameReferenceMapSize, int registerReferenceMapSize) {
+        final int numberOfStopPositions = numberOfDirectCalls + numberOfIndirectCalls + numberOfSafepoints;
+        if (numberOfStopPositions != 0) {
+            // NOTE: number of safepoints is counted twice due to the need for a register map.
+            return (numberOfStopPositions * frameReferenceMapSize) + (numberOfSafepoints * registerReferenceMapSize);
+        }
+        return 0;
     }
 
     /**

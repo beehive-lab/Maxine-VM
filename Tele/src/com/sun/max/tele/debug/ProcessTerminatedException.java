@@ -18,24 +18,18 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.interpret.empty;
+package com.sun.max.tele.debug;
 
-import com.sun.max.vm.*;
-import com.sun.max.vm.interpret.*;
 
 /**
- * @see VMPackage
+ * Thrown when the VM process has terminated.
  *
- * @author Simon Wilkinson
+ * @author Michael Van De Vanter
  */
-public class Package extends VMPackage {
-    public Package() {
-        super();
-        registerScheme(InterpreterScheme.class, EmptyInterpreterScheme.class);
+public class ProcessTerminatedException extends Exception {
+
+    public ProcessTerminatedException(String message) {
+        super(message);
     }
 
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.interpreterPackage.equals(this);
-    }
 }
