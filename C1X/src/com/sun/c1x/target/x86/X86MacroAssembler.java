@@ -2136,7 +2136,7 @@ public class X86MacroAssembler extends X86Assembler {
                 relocate(dst.rspec);
                 int shortSize = 2;
                 int longSize = 6;
-                int offs = Util.safeToInt(dst.target().value - codePos().value);
+                int offs = Util.safeToInt(dst.target().value - codeBuffer.position());
                 if (dst.reloc() == RelocInfo.Type.none && is8bit(offs - shortSize)) {
                     // 0111 tttn #8-bit disp
                     emitByte(0x70 | cc.value);

@@ -39,6 +39,7 @@ public abstract class StateSplit extends Instruction {
      */
     public StateSplit(ValueType type) {
         super(type);
+        pin();
     }
 
     /**
