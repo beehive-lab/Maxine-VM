@@ -82,6 +82,14 @@ public abstract class Template implements Cloneable, Comparable<Template> {
 
     protected Method assemblerMethod;
 
+    /**
+     * Determines if this template is redundant with respect to another template.
+     * Two templates are redundant if they both have the same name and operands.
+     * Redundant pairs of instructions are assumed to implement the same machine
+     * instruction semantics but may have different encodings.
+     *
+     * @return whether this template is redundant with respect some other template
+     */
     public abstract boolean isRedundant();
 
     /**
