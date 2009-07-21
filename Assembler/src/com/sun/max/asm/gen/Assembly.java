@@ -106,8 +106,9 @@ public abstract class Assembly<Template_Type extends Template> {
     }
 
     private Method getAssemblerMethod(Assembler assembler, Template_Type template, Class[] parameterTypes) throws AssemblyException {
+        final String name = template.assemblerMethodName();
         try {
-            return assembler.getClass().getMethod(template.assemblerMethodName(), parameterTypes);
+            return assembler.getClass().getMethod(name, parameterTypes);
         } catch (NoSuchMethodException e) {
             throw new AssemblyException("could not find assembler method for template: " + template);
         }
