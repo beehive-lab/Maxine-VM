@@ -24,11 +24,9 @@ import com.sun.c1x.graph.IR;
 import com.sun.c1x.ir.BlockBegin;
 import com.sun.c1x.ir.Base;
 import com.sun.c1x.ir.Instruction;
-import com.sun.c1x.C1XOptions;
 
 import java.util.List;
 import java.util.HashMap;
-import java.util.ArrayList;
 
 /**
  * Implements global value numbering based on dominators.
@@ -43,6 +41,7 @@ public class GlobalValueNumbering {
 
     /**
      * Creates a new GlobalValueNumbering pass and performs it on the IR.
+     *
      * @param ir the IR on which to perform global value numbering
      */
     public GlobalValueNumbering(IR ir) {
@@ -66,8 +65,8 @@ public class GlobalValueNumbering {
             // iterate through all the blocks
             BlockBegin block = blocks.get(i);
 
-            int num_preds = block.numberOfPreds();
-            assert num_preds > 0 : "block must have predecessors";
+            int numPreds = block.numberOfPreds();
+            assert numPreds > 0 : "block must have predecessors";
 
             BlockBegin dominator = block.dominator();
             assert dominator != null : "dominator must exist";
@@ -76,53 +75,18 @@ public class GlobalValueNumbering {
             // create new value map with increased nesting
             currentMap = new ValueMap(valueMaps.get(dominator));
 
-            if (num_preds == 1) {
-                assert dominator == block.predAt(0) : "dominator must be equal to predecessor";
-                // nothing to do here
-
-            } else if (block.checkBlockFlag(BlockBegin.BlockFlag.LinearScanLoopHeader)) {
-                // block has incoming backward branches -> try to optimize short loops
-                if (!optimizeShortLoop(block)) {
-                    // loop is too complicated, so kill all memory loads because there might be
-                    // stores to them in the loop
-                    currentMap.killMemory();
-                }
-
-            } else {
-                // only incoming forward branches that are already processed
-                for (int j = 0; j < num_preds; j++) {
-                    BlockBegin pred = block.predAt(j);
-                    ValueMap predMap = valueMaps.get(pred);
-
-                    if (predMap != null) {
-                        // propagate killed values of the predecessor to this block
-                        currentMap.killMap(valueMaps.get(pred));
-                    } else {
-                        // kill all memory loads because predecessor not yet processed
-                        // (this can happen with non-natural loops and OSR-compiles)
-                        currentMap.killMemory();
-                    }
-                }
-            }
-
-            if (block.isExceptionEntry()) {
-                currentMap.killException();
-            }
+            assert numPreds > 1 || dominator == block.predAt(0) : "dominator must be equal to predecessor";
 
             // visit all instructions of this block
             for (Instruction instr = block.next(); instr != null; instr = instr.next()) {
                 assert !instr.hasSubst() : "substitution already set";
 
-                // check if instruction kills any values
-                instr.accept(currentMap.effects);
-
-                if (instr.valueNumber() != 0) {
-                    Instruction f = currentMap.findInsert(instr);
-                    if (f != instr) {
-                        assert !f.hasSubst() : "can't have a substitution";
-                        instr.setSubst(f);
-                        substCount++;
-                    }
+                // attempt value numbering
+                Instruction f = currentMap.findInsert(instr);
+                if (f != instr) {
+                    assert !f.hasSubst() : "can't have a substitution";
+                    instr.setSubst(f);
+                    substCount++;
                 }
             }
 
@@ -133,46 +97,5 @@ public class GlobalValueNumbering {
         if (substCount != 0) {
             new SubstitutionResolver(startBlock);
         }
-
-    }
-
-    private boolean optimizeShortLoop(BlockBegin loop_header) {
-          boolean tooComplicated = false;
-           List<BlockBegin> loopBlocks = new ArrayList<BlockBegin>();
-          loopBlocks.add(loop_header);
-
-          for (int i = 0; i < loopBlocks.size(); i++) {
-            BlockBegin block = loopBlocks.get(i);
-
-            if (block.isExceptionEntry()) {
-              // this would be too complicated
-              return false;
-            }
-
-            // add predecessors to worklist
-            for (int j = block.numberOfPreds() - 1; j >= 0; j--) {
-              BlockBegin pred = block.predAt(j);
-
-              ValueMap pred_map = valueMaps.get(pred);
-              if (pred_map != null) {
-                currentMap.killMap(pred_map);
-              } else if (!loopBlocks.contains(pred)) {
-                if (loopBlocks.size() >= C1XOptions.MaximumGVNLoopSize) {
-                  return false;
-                }
-                loopBlocks.add(pred);
-              }
-            }
-
-            // use the instruction visitor for killing values
-            for (Instruction instr = block.next(); instr != null; instr = instr.next()) {
-              instr.accept(currentMap.effects);
-              if (currentMap.memoryKilled) {
-                return false;
-              }
-            }
-          }
-
-          return true;
     }
 }

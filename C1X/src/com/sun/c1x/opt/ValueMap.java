@@ -21,10 +21,7 @@
 package com.sun.c1x.opt;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
 
 /**
  * The <code>ValueMap</code> class implements a nested hashtable data structure
@@ -33,6 +30,24 @@ import com.sun.c1x.value.*;
  * @author Ben L. Titzer
  */
 public class ValueMap {
+    /**
+     * The class that forms hash chains.
+     */
+    private static class Link {
+        final ValueMap map;
+        final int valueNumber;
+        final Instruction value;
+        Link next;
+
+        Link(ValueMap map, int valueNumber, Instruction value, Link next) {
+            this.map = map;
+            this.valueNumber = valueNumber;
+            this.value = value;
+            this.next = next;
+        }
+    }
+
+    private final ValueMap parent;
 
     /**
      * The table of links, indexed by hashing using the {@link Instruction#valueNumber() method}.
@@ -46,22 +61,16 @@ public class ValueMap {
     private int count;
 
     /**
-     * A visitor to kill necessary values.
+     * The maximum size allowed before triggering resizing.
      */
-    final ValueNumberingEffects effects = new ValueNumberingEffects();
-
-    /**
-     * A bitmap denoting which of the values have been killed (by their {@link Link#id}).
-     */
-    private final BitMap parentKill;
-    public boolean memoryKilled;
+    private int max;
 
     /**
      * Creates a new value map.
      */
     public ValueMap() {
+        parent = null;
         table = new Link[19];
-        parentKill = null;
     }
 
     /**
@@ -69,32 +78,10 @@ public class ValueMap {
      * @param parent the parent value map
      */
     public ValueMap(ValueMap parent) {
-        table = parent.table.clone();
-        parentKill = new BitMap(parent.count);
-        count = parent.count;
-    }
-
-    /**
-     * The class that forms hash chains.
-     */
-    private static class Link {
-        final ValueMap map;
-        final int valueNumber;
-        final int id;
-        final Instruction value;
-        Link next;
-
-        Link(ValueMap map, int valueNumber, int id, Instruction value, Link next) {
-            this.map = map;
-            this.valueNumber = valueNumber;
-            this.id = id;
-            this.value = value;
-            this.next = next;
-        }
-
-        boolean isKilled(ValueMap where) {
-            return where != map && where.parentKill.get(id);
-        }
+        this.parent = parent;
+        this.table = parent.table.clone();
+        this.count = parent.count;
+        this.max = table.length + table.length / 2;
     }
 
     /**
@@ -111,14 +98,14 @@ public class ValueMap {
             Link l = table[index];
             // hash and linear search
             while (l != null) {
-                if (!l.isKilled(this) && l.valueNumber == valueNumber && l.value.valueEqual(x)) {
+                if (l.valueNumber == valueNumber && l.value.valueEqual(x) ) {
                     return l.value;
                 }
                 l = l.next;
             }
             // not found; insert
-            table[index] = new Link(this, valueNumber, count++, x, table[index]);
-            if (count > table.length * 1.5) {
+            table[index] = new Link(this, valueNumber, x, table[index]);
+            if (count > max) {
                 resize();
             }
         }
@@ -126,175 +113,48 @@ public class ValueMap {
     }
 
     /**
-     * Process the effects of an instruction on the value map. Effects include
-     * killing all of memory, killing only a field, or killing an array.
-     * @param x the instruction for which to process the effects
-     */
-    public void processEffects(Instruction x) {
-        x.accept(effects);
-    }
-
-    /**
-     * Removes all values from this value map. This should only be used for local value numbering.
+     * Kills all values in this local value map.
      */
     public void killAll() {
-        assert parentKill == null : "should only be used for local value numbering";
+        assert parent == null : "should only be used for local value numbering";
         for (int i = 0; i < table.length; i++) {
             table[i] = null;
         }
         count = 0;
     }
 
+
     private void resize() {
         C1XMetrics.ValueMapResizes++;
         Link[] ntable = new Link[table.length * 3 + 4];
-        if (parentKill != null) {
-            // first add all the (live) parent's entries by cloning them
-            for (int i = 0; i < table.length; i++) {
-                Link l = table[i];
+        if (parent != null) {
+            // first add all the parent's entries by cloning them
+            for (Link l : table) {
                 while (l != null && l.map == this) {
                     l = l.next; // skip entries in this map
                 }
-                while (l != null && !l.isKilled(this)) {
-                    // add live entries from parent
+                while (l != null) {
+                    // copy entries from parent
                     int index = indexOf(l.valueNumber, ntable);
-                    ntable[index] = new Link(l.map, l.valueNumber, l.id, l.value, ntable[index]);
+                    ntable[index] = new Link(l.map, l.valueNumber, l.value, ntable[index]);
                     l = l.next;
                 }
             }
         }
 
-        for (int i = 0; i < table.length; i++) {
-            Link l = table[i];
-            // now add all the new entries
+        for (Link l : table) {
+            // now add all the entries from this map
             while (l != null && l.map == this) {
                 int index = indexOf(l.valueNumber, ntable);
-                ntable[index] = new Link(l.map, l.valueNumber, l.id, l.value, ntable[index]);
+                ntable[index] = new Link(l.map, l.valueNumber, l.value, ntable[index]);
                 l = l.next;
             }
         }
         table = ntable;
+        max = table.length + table.length / 2;
     }
 
     private int indexOf(int valueNumber, Link[] t) {
         return (valueNumber & 0x7fffffff) % t.length;
-    }
-
-    void killMemory(boolean all, CiField field, BasicType basicType) {
-        // loop through all the chains
-        for (int i = 0; i < table.length; i++) {
-            Link l = table[i];
-            Link p = null;
-            // kill all the values in this map first by removing them from the list
-            while (l != null && l.map == this) {
-                if (mustKill(l.value, all, field, basicType)) {
-                    if (p != null) {
-                        p.next = l.next;
-                    } else {
-                        table[i] = l.next;
-                    }
-                    count--;
-                } else {
-                    p = l;
-                }
-                l = l.next;
-            }
-            // kill all the values in the parent map by adding them to the parentKill bitmap
-            while (l != null) {
-                if (mustKill(l.value, all, field, basicType)) {
-                    parentKill.set(l.id);
-                }
-                l = l.next;
-            }
-        }
-    }
-
-    boolean mustKill(Instruction instr, boolean all, CiField field, BasicType basicType) {
-        if (instr instanceof LoadField) {
-            if (all || ((LoadField) instr).field() == field) {
-                C1XMetrics.ValueMapKills++;
-                return true;
-            }
-        }
-        if (instr instanceof LoadIndexed) {
-            if (all || instr.type().basicType == basicType) {
-                C1XMetrics.ValueMapKills++;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    void killMemory() {
-        memoryKilled = true;
-        killMemory(true, null, null);
-    }
-
-    void killField(CiField field) {
-        killMemory(false, field, null);
-    }
-
-    void killArray(ValueType elementType) {
-        killMemory(false, null, elementType.basicType);
-    }
-
-    void killMap(ValueMap map) {
-        parentKill.setUnion(map.parentKill);
-    }
-
-    void killException() {
-        // TODO: kill only those values that are in the map one level above
-        killMemory();
-    }
-
-    CiField checkField(CiField field) {
-        if (!field.isLoaded()) {
-            killMemory();
-        }
-        return field;
-    }
-
-    private class ValueNumberingEffects extends InstructionVisitor {
-        @Override
-        public void visitLoadField(LoadField i) {
-            checkField(i.field());
-        }
-
-        @Override
-        public void visitStoreField(StoreField i) {
-            killField(checkField(i.field()));
-        }
-
-        @Override
-        public void visitStoreIndexed(StoreIndexed i) {
-            killArray(i.type());
-        }
-
-        @Override
-        public void visitMonitorEnter(MonitorEnter i) {
-            killMemory();
-        }
-
-        @Override
-        public void visitMonitorExit(MonitorExit i) {
-            killMemory();
-        }
-
-        @Override
-        public void visitIntrinsic(Intrinsic i) {
-            if (!i.preservesState()) {
-                killMemory();
-            }
-        }
-
-        @Override
-        public void visitUnsafePutRaw(UnsafePutRaw i) {
-            killMemory();
-        }
-
-        @Override
-        public void visitUnsafePutObject(UnsafePutObject i) {
-            killMemory();
-        }
     }
 }
