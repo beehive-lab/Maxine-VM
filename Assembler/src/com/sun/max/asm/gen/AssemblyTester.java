@@ -128,13 +128,12 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
          * Creates an iterator over a set of test cases for a given template.
          *
          * @param template
-         * @param legalCases
-         *            if true, only legal test cases are returned by this iterator otherwise only illegal test cases are
-         *            returned
-         * @param legalArguments
-         *            if {@code legalCases == true}, then this parameter is ignored. Otherwise, if true,
-         *            then all the arguments in a returned test case are {@link Parameter#getLegalTestArguments legal}
-         *            otherwise at least one argument in a returned test case will be {@link Parameter#getIllegalTestArguments illegal}
+         * @param legalCases if true, only legal test cases are returned by this iterator otherwise only illegal test
+         *            cases are returned
+         * @param legalArguments if {@code legalCases == true}, then this parameter is ignored. Otherwise, if true, then
+         *            all the arguments in a returned test case are {@link Parameter#getLegalTestArguments legal}
+         *            otherwise at least one argument in a returned test case will be
+         *            {@link Parameter#getIllegalTestArguments illegal}
          */
         ArgumentListIterator(Template_Type template, TestCaseLegality testCaseLegality) {
             this.testCaseLegality  = testCaseLegality;
@@ -373,7 +372,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
      * to be able to remotely execute via SSH as user {@code dsimon} on machine
      * {@code remote}:
      * <p>
-     * <table border="1" cellspacing="0" cellpadding="5" width="100%" bgcolor="#CCCCCC"><tr><td><pre>
+     * <pre>
      * [dsimon@local:~]$ <b>ssh-keygen -t dsa</b>
      * Generating public/private dsa key pair.
      * Enter file in which to save the key (/home/dsimon/.ssh/id_dsa):
@@ -389,7 +388,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
      * [dsimon@local:~]$ ssh dsimon@remote
      * Password:
      * [dsimon@remote:~]$ <b>{@literal cat id_dsa.pub >> .ssh/authorized_keys2}</b>
-     * </pre></td></tr></table>
+     * </pre>
      *
      * @param remoteUserAndHost a {@code user@host} value denoting a machine that
      *        supports remote execution via SSH2 using public key authentication
@@ -546,6 +545,10 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
         final int available = disassemblyStream.available();
         if (available != 0 || !matchFound) {
             System.err.println("internal disassembler test failed - " + disassembledObjects.length() + " false matches found: ");
+//final Assembler assembler = createTestAssembler();
+//assembly().assemble(assembler, template, argumentList);
+//disassemblyStream.reset();
+//disassembler.scanOne(disassemblyStream);
             if (available != 0) {
                 System.err.print("extra bytes at end of disassembly stream:");
                 final int bytesToPrint = Math.min(available, 200);
@@ -608,8 +611,8 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
             final Assembler assembler = createTestAssembler();
             assembly().assemble(assembler, template, argumentList);
             final byte[] internalResult = assembler.toByteArray();
-            if (Trace.hasLevel(3)) {
-                Trace.line(3, "assembleInternally[" + testCaseNumber + "]: " + assembly().createMethodCallString(template, argumentList) + " = " + DisassembledInstruction.toHexString(internalResult));
+            if (Trace.hasLevel(1)) {
+                Trace.line(1, "assembleInternally[" + testCaseNumber + "]: " + assembly().createMethodCallString(template, argumentList) + " = " + DisassembledInstruction.toHexString(internalResult));
             }
             if (components.contains(AssemblyTestComponent.DISASSEMBLER) && template.isDisassemblable() &&
                     !findExcludedDisassemblerTestArgument(template.parameters(), argumentList)) {
@@ -680,8 +683,8 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
     /**
      * Sets the pattern that restricts which templates are tested.
      *
-     * @param pattern if non-null, only templates whose {@link Template#internalName() name} contains
-     *                {@code pattern} as a substring are tested
+     * @param pattern if non-null, only templates whose {@link Template#internalName() name} contains {@code pattern} as
+     *            a substring are tested
      */
     public void setTemplatePattern(String pattern) {
         templatePattern = pattern;
@@ -690,14 +693,11 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
     /**
      * Tests a range of templates.
      *
-     * @param startTemplateSerial
-     *            the {@linkplain Template#serial() serial} number of the first template to test or -1 to start with the
-     *            first template of the {@linkplain #assembly() assembly}.
-     * @param endTemplateSerial
-     *            the {@linkplain Template#serial() serial} number of the last template to test or -1 to end with the
-     *            last template of the {@linkplain #assembly() assembly}.
-     * @param parallelize
-     *            specifies if the testing should be parallelized
+     * @param startTemplateSerial the {@linkplain Template#serial() serial} number of the first template to test or -1
+     *            to start with the first template of the {@linkplain #assembly() assembly}.
+     * @param endTemplateSerial the {@linkplain Template#serial() serial} number of the last template to test or -1 to
+     *            end with the last template of the {@linkplain #assembly() assembly}.
+     * @param parallelize specifies if the testing should be parallelized
      */
     public void run(int startTemplateSerial, int endTemplateSerial, boolean parallelize) {
 

@@ -37,7 +37,6 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.interpret.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
@@ -90,10 +89,6 @@ public final class PrototypeGenerator {
             "Specifies the compiler scheme for the target.");
     private final Option<MaxPackage> jitScheme = schemeOption("jit", new com.sun.max.vm.jit.Package(), DynamicCompilerScheme.class,
             "Specifies the JIT scheme for the target.");
-    private final Option<MaxPackage> c1xScheme = schemeOption("c1x", new com.sun.max.vm.compiler.c1x.Package(), CompilerScheme.class,
-            "Specifies the C1X scheme for the target.");
-    private final Option<MaxPackage> interpreterScheme = schemeOption("interpreter", new com.sun.max.vm.interpret.Package(), InterpreterScheme.class,
-            "Specifies the interpreter scheme for the target.");
     private final Option<MaxPackage> trampolineScheme = schemeOption("trampoline", new com.sun.max.vm.trampoline.Package(), DynamicTrampolineScheme.class,
             "Specifies the dynamic trampoline scheme for the target.");
     private final Option<MaxPackage> targetABIsScheme = schemeOption("abi", new com.sun.max.vm.compiler.target.Package(), TargetABIsScheme.class,
@@ -140,7 +135,6 @@ public final class PrototypeGenerator {
         monitorScheme.setDefaultValue(defaultConfiguration.monitorPackage);
         compilerScheme.setDefaultValue(defaultConfiguration.compilerPackage);
         jitScheme.setDefaultValue(defaultConfiguration.jitPackage);
-        interpreterScheme.setDefaultValue(defaultConfiguration.interpreterPackage);
         trampolineScheme.setDefaultValue(defaultConfiguration.trampolinePackage);
         targetABIsScheme.setDefaultValue(defaultConfiguration.targetABIsPackage);
         runScheme.setDefaultValue(defaultConfiguration.runPackage);
@@ -165,7 +159,6 @@ public final class PrototypeGenerator {
                                     vm(monitorScheme),
                                     vm(compilerScheme),
                                     vm(jitScheme),
-                                    vm(interpreterScheme),
                                     vm(trampolineScheme),
                                     vm(targetABIsScheme),
                                     vm(runScheme));

@@ -132,25 +132,16 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
         final Stops stops = codeGenerator.packStops();
 
         final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(
-                        codeGenerator.numberOfCatchRanges(),
-                        stops.numberOfDirectCalls(),
-                        stops.numberOfIndirectCalls,
-                        stops.numberOfSafepoints,
-                        0, // no scalar literals ever
+                        0,
                         (referenceLiterals == null) ? 0 : referenceLiterals.length,
-                                        codeGenerator.codeBuffer().currentPosition(),
-                                        codeGenerator.frameReferenceMapSize(),
-                                        targetMethod.registerReferenceMapSize());
-        targetMethod.setSize(targetBundleLayout.bundleSize());
-        Code.allocate(targetMethod);
-        final TargetBundle targetBundle = new TargetBundle(targetBundleLayout, targetMethod.start());
+                        codeGenerator.codeBuffer().currentPosition());
+        Code.allocate(targetBundleLayout, targetMethod);
 
         final int[] catchRangeOffsets = codeGenerator.catchRangePositions();
         final int[] catchBlockOffsets =  codeGenerator.catchBlockPositions();
 
         codeGenerator.setGenerated(
                         targetMethod,
-                        targetBundle,
                         catchRangeOffsets,
                         catchBlockOffsets,
                         stops,

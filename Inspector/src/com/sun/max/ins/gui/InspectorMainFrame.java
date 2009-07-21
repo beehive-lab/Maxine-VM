@@ -59,7 +59,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     private final JScrollPane scrollPane;
     private final InspectorMainMenuBar menuBar;
     private final InspectorMenu desktopMenu = new InspectorMenu();
-    private final InspectorLabel unavailableDataTableCellRenderer;
+    private final JLabel unavailableDataTableCellRenderer;
 
     /**
      * Creates a new main window frame for the Maxine VM inspection session.
@@ -305,6 +305,12 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         }
     }
 
+    public void setLocationRelativeToMouse(JDialog dialog, int offset) {
+        final Point location = InspectorFrame.TitleBarListener.recentMouseLocationOnScreen();
+        location.translate(offset, offset);
+        dialog.setLocation(location);
+    }
+
     public void moveToMiddle(JDialog dialog) {
         final Point middle = getMiddle(dialog);
         middle.translate(getX(), getY());
@@ -315,7 +321,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         return this;
     }
 
-    public InspectorLabel getUnavailableDataTableCellRenderer() {
+    public JLabel getUnavailableDataTableCellRenderer() {
         return unavailableDataTableCellRenderer;
     }
 
@@ -403,15 +409,26 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         repaint();
     }
 
-    private final class UnavailableDataTableCellRenderer extends PlainLabel implements TableCellRenderer, TextSearchable, Prober {
+    private final class UnavailableDataTableCellRenderer extends JLabel implements TableCellRenderer, TextSearchable, Prober {
+
         UnavailableDataTableCellRenderer(Inspection inspection) {
-            super(inspection, null);
-            setText(nameDisplay.unavailableDataShortText());
-            setToolTipText(nameDisplay.unavailableDataLongText());
+            setText(inspection.nameDisplay().unavailableDataShortText());
+            setToolTipText(inspection.nameDisplay().unavailableDataLongText());
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             return this;
         }
+
+        public String getSearchableText() {
+            return null;
+        }
+
+        public void redisplay() {
+        }
+
+        public void refresh(boolean force) {
+        }
+
     }
 }
