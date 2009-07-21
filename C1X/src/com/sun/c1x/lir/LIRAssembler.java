@@ -637,7 +637,7 @@ public abstract class LIRAssembler {
             case StdEntry:
                 // init offsets
                 offsets().setValue(CodeOffsets.Entries.OSREntry, masm.offset());
-                masm.align(C1XOptions.CodeEntryAlignment);
+                masm.align(compilation.target.codeAlignment);
                 if (needsIcache(compilation().method())) {
                     checkIcache();
                 }

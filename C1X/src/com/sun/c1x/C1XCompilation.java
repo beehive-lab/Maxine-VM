@@ -391,35 +391,39 @@ public class C1XCompilation {
     }
 
     private void emitLIR() {
-        frameMap = target.backend.newFrameMap(this, method, hir.topScope.numberOfLocks(), hir.topScope.maxStack());
-        final LIRGenerator lirGenerator = target.backend.newLIRGenerator(this);
-        hir.iterateLinearScanOrder(lirGenerator);
+        if (C1XOptions.GenerateLIR) {
+            frameMap = target.backend.newFrameMap(this, method, hir.topScope.numberOfLocks(), hir.topScope.maxStack());
+            final LIRGenerator lirGenerator = target.backend.newLIRGenerator(this);
+            hir.iterateLinearScanOrder(lirGenerator);
 
-        final RegisterAllocator registerAllocator = new LinearScan(this, hir, lirGenerator, frameMap());
-        registerAllocator.allocate();
+            final RegisterAllocator registerAllocator = new LinearScan(this, hir, lirGenerator, frameMap());
+            registerAllocator.allocate();
+        }
     }
 
     private void emitCode() {
-        CodeBuffer tmp = new CodeBuffer();
-        assembler = target.backend.newAssembler(this, tmp);
-        final LIRAssembler lirAssembler = target.backend.newLIRAssembler(this);
-        lirAssembler.emitCode(hir.linearScanOrder());
+        if (C1XOptions.GenerateLIR && C1XOptions.GenerateAssembly) {
+            CodeBuffer tmp = new CodeBuffer();
+            assembler = target.backend.newAssembler(this, tmp);
+            final LIRAssembler lirAssembler = target.backend.newLIRAssembler(this);
+            lirAssembler.emitCode(hir.linearScanOrder());
 
 
-        // generate code or slow cases
-        lirAssembler.emitSlowCaseStubs();
+            // generate code or slow cases
+            lirAssembler.emitSlowCaseStubs();
 
-        // generate exception adapters
-        lirAssembler.emitExceptionEntries(exceptionInfoList);
+            // generate exception adapters
+            lirAssembler.emitExceptionEntries(exceptionInfoList);
 
-        // generate code for exception handler
-        // TODO: Check if we need this
-        //lirAssembler.emitExceptionHandler();
+            // generate code for exception handler
+            // TODO: Check if we need this
+            //lirAssembler.emitExceptionHandler();
 
-        lirAssembler.emitDeoptHandler();
+            lirAssembler.emitDeoptHandler();
 
 
-        assembler.installTargetMethod();
+            assembler.installTargetMethod();
+        }
     }
 
     public int numberOfBlocks() {
