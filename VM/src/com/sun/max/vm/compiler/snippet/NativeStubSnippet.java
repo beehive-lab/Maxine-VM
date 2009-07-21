@@ -88,7 +88,7 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
                 LAST_JAVA_CALLER_INSTRUCTION_POINTER.setVariableWord(vmThreadLocals, instructionPointer);
 
                 final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-                /*int oldValue = Safepoint.casMutatorState(enabledVmThreadLocals, THREAD_IN_JAVA, THREAD_IN_NATIVE);
+                int oldValue = Safepoint.casMutatorState(enabledVmThreadLocals, THREAD_IN_JAVA, THREAD_IN_NATIVE);
                 if (oldValue != THREAD_IN_JAVA) {
                     if (oldValue != THREAD_IN_JAVA_STOPPING_FOR_GC) {
                         Safepoint.reportIllegalThreadState("JNI call prologue", oldValue);
@@ -97,12 +97,12 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
                     if (oldValue != THREAD_IN_JAVA_STOPPING_FOR_GC) {
                         Safepoint.reportIllegalThreadState("JNI call prologue", oldValue);
                     }
-                }*/
-                if (MUTATOR_STATE.getVariableWord(vmThreadLocals).equals(Address.fromInt(THREAD_IN_JAVA))) {
+                }
+                /*if (MUTATOR_STATE.getVariableWord(vmThreadLocals).equals(Address.fromInt(THREAD_IN_JAVA))) {
                     MUTATOR_STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_NATIVE));
                 } else {
                     MUTATOR_STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_GC_FROM_JAVA));
-                }
+                }*/
             } else {
                 LAST_JAVA_CALLER_INSTRUCTION_POINTER.setVariableWord(vmThreadLocals, instructionPointer);
 
@@ -125,22 +125,41 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
         public static void nativeCallEpilogue(Pointer vmThreadLocals) {
             if (Safepoint.UseThreadStateWordForGCMutatorSynchronization) {
                 final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+                while (true) {
+                    if (Safepoint.casMutatorState(enabledVmThreadLocals, THREAD_IN_GC_FROM_JAVA_DONE, THREAD_IN_JAVA) == THREAD_IN_GC_FROM_JAVA_DONE) {
+                        break;
+                    }
+                    if (Safepoint.casMutatorState(enabledVmThreadLocals, THREAD_IN_NATIVE, THREAD_IN_JAVA) == THREAD_IN_NATIVE) {
+                        break;
+                    }
+                    Log.print("Wating in nativecallepilogue ");
+                    SpecialBuiltin.pause();
+                }
                 /*if (Safepoint.casMutatorState(enabledVmThreadLocals, THREAD_IN_GC_FROM_JAVA, THREAD_IN_JAVA) == THREAD_IN_GC_FROM_JAVA) {
+                    Log.print("NativeCallEpilogue Update completed: ");
+                    Log.print(THREAD_IN_GC_FROM_JAVA);
+                    Log.print(" -> ");
+                    Log.println(THREAD_IN_JAVA);
                     // done!
-                } else {
+                } else if (MUTATOR_STATE.getVariableWord(vmThreadLocals).equals(Address.fromInt(THREAD_IN_GC_FROM_JAVA))) {
+                    // done!
+                }
+                else {
                     while (Safepoint.casMutatorState(enabledVmThreadLocals, THREAD_IN_NATIVE, THREAD_IN_JAVA) != THREAD_IN_NATIVE) {
                         // Spin loop that is free of safepoints and object accesses
+                        Log.print("Wating in nativecallepilogue ");
+                        Log.println(MUTATOR_STATE.getVariableWord(vmThreadLocals));
                         SpecialBuiltin.pause();
                     }
                 }*/
-                if (MUTATOR_STATE.getVariableWord(vmThreadLocals).equals(Address.fromInt(THREAD_IN_GC_FROM_JAVA))) {
+                /*if (MUTATOR_STATE.getVariableWord(vmThreadLocals).equals(Address.fromInt(THREAD_IN_GC_FROM_JAVA))) {
                     MUTATOR_STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_JAVA));
                 } else {
                     while (Safepoint.casMutatorState(enabledVmThreadLocals, THREAD_IN_NATIVE, THREAD_IN_JAVA) != THREAD_IN_NATIVE) {
                         // Spin loop that is free of safepoints and object accesses
                         SpecialBuiltin.pause();
                     }
-                }
+                }*/
                 LAST_JAVA_CALLER_INSTRUCTION_POINTER.setVariableWord(vmThreadLocals, Word.zero());
             } else {
                 spinUntilGCFinished(vmThreadLocals);
@@ -158,6 +177,7 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
         private static void spinUntilGCFinished(Pointer vmThreadLocals) {
             if (UseThreadStateWordForGCMutatorSynchronization) {
                 while (Safepoint.isTriggered()) {
+                    Log.println("Wating in spinuntilgcfinished");
                     // Spin loop that is free of safepoints and object accesses
                     SpecialBuiltin.pause();
                 }

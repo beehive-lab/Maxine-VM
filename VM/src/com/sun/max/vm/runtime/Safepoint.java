@@ -69,6 +69,7 @@ public abstract class Safepoint {
     public static final int THREAD_IN_JAVA_STOPPING_FOR_GC = 2;
     public static final int THREAD_IN_GC_FROM_JAVA = 3;
     public static final int THREAD_IN_GC_FROM_NATIVE = 4;
+    public static final int THREAD_IN_GC_FROM_JAVA_DONE = 5;
 
     public enum State implements PoolObject {
         ENABLED(SAFEPOINTS_ENABLED_THREAD_LOCALS),
@@ -153,11 +154,13 @@ public abstract class Safepoint {
             final int state = MUTATOR_STATE.getVariableWord(vmThreadLocals).asAddress().toInt();
             if (state == THREAD_IN_GC_FROM_NATIVE) {
                 MUTATOR_STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_NATIVE));
+                Log.println("RESET TO THREAD IN NATIVE");
             } else {
                 if (state != THREAD_IN_GC_FROM_JAVA) {
                     reportIllegalThreadState("While resetting safepoints", state);
                 }
-                MUTATOR_STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_JAVA));
+                MUTATOR_STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_GC_FROM_JAVA_DONE));
+                Log.println("RESET TO THREAD IN GCJAVADONE");
             }
         }
         SAFEPOINT_LATCH.setVariableWord(vmThreadLocals, SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals));
@@ -180,16 +183,35 @@ public abstract class Safepoint {
         return !MaxineVM.isPrototyping() && SAFEPOINT_LATCH.getVariableWord().equals(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord());
     }
 
+    /**
+     * Disables safepoints for the current thread. To temporarily disable safepoints on a thread, a call to this method
+     * should paired with a call to {@link #enable()}, passing the value returned by the former as the single
+     * parameter to the later. That is:
+     * <pre>
+     *     boolean wasDisabled = Safepoint.disable();
+     *     // perform action with safepoints disabled
+     *     if (!wasDisabled) {
+     *         Safepoints.enable();
+     *     }
+     * </pre>
+     *
+     * @return true if this call caused safepoints to be disabled (i.e. they were enabled upon entry to this method)
+     */
     @INLINE
-    public static void disable() {
+    public static boolean disable() {
+        final boolean wasDisabled = getLatchRegister().equals(SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord().asPointer());
         setLatchRegister(SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord().asPointer());
-        // copy variable thread locals
+        return wasDisabled;
     }
 
+    /**
+     * Enables safepoints for the current thread, irrespective of whether or not they are currently enabled.
+     *
+     * @see #disable()
+     */
     @INLINE
     public static void enable() {
         setLatchRegister(SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord().asPointer());
-        // copy variable thread locals
     }
 
     public static void initializePrimordial(Pointer primordialVmThreadLocals) {
@@ -240,7 +262,7 @@ public abstract class Safepoint {
      * queued to be run on that thread, but the procedure may not actually have run yet.
      * Note also that this method will spin
      * if that thread is already executing or is scheduled to execute another procedure.
-     * 
+     *
      * @param vmThreadLocals the thread locals on which to push the procedure
      * @param procedure the procedure to run on this thread
      */

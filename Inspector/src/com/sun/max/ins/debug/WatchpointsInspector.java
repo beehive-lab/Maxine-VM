@@ -102,10 +102,10 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
 
     @Override
     public InspectorAction getViewOptionsAction() {
-        return new InspectorAction(inspection(), "View Options") {
+        return new InspectorAction(inspection(), "Options") {
             @Override
             public void procedure() {
-                new TableColumnVisibilityPreferences.Dialog<WatchpointsColumnKind>(inspection(), "Watchpoints View Options", viewPreferences);
+                new TableColumnVisibilityPreferences.Dialog<WatchpointsColumnKind>(inspection(), "Watchpoints Options", viewPreferences);
             }
         };
     }

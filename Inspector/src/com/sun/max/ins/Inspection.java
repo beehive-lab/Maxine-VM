@@ -136,7 +136,7 @@ public final class Inspection {
                 StackInspector.make(this);
                 BreakpointsInspector.make(this);
                 focus.setCodeLocation(maxVM.createCodeLocation(focus.thread().instructionPointer()), false);
-                //WatchpointsInspector.make(this);
+                WatchpointsInspector.make(this);
                 //maxVM().initGarbageCollectorDebugging();
             } catch (Throwable throwable) {
                 System.err.println("Error during initialization");
@@ -504,19 +504,24 @@ public final class Inspection {
         Trace.end(TRACE_VALUE, threadTracer, startTimeMillis);
         try {
             refreshAll(false);
-            // Make visible the code at the IP of the thread that triggered the breakpoint.
-            boolean atBreakpoint = false;
-            for (MaxThread thread : maxVMState().threads()) {
-                if (thread.breakpoint() != null) {
+
+            // Make visible the code at the IP of the thread that triggered the breakpoint
+            // or the memory location that triggered a watchpoint
+
+            final MaxWatchpointEvent watchpointEvent = maxVMState().watchpointEvent();
+            if (watchpointEvent != null) {
+                focus().setThread(watchpointEvent.maxVMThread().maxThread());
+                focus().setWatchpoint(watchpointEvent.maxWatchpoint());
+                focus().setAddress(watchpointEvent.address());
+            } else if (!maxVMState().breakpointThreads().isEmpty()) {
+                final MaxThread thread = maxVMState().breakpointThreads().first();
+                if (thread != null) {
                     focus().setThread(thread);
-                    atBreakpoint = true;
-                    break;
+                } else {
+                    // If there was no selection based on breakpoint, then check the thread that was selected before the
+                    // change.
+                    InspectorError.check(focus().thread().isLive(), "Selected thread no longer valid");
                 }
-            }
-            if (!atBreakpoint) {
-                // If there was no selection based on breakpoint, then check the thread that was selected before the
-                // change.
-                InspectorError.check(focus().thread().isLive(), "Selected thread no longer valid");
             }
             // Reset focus to new IP.
             final MaxThread focusThread = focus().thread();

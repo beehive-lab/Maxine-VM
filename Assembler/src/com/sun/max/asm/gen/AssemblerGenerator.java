@@ -34,6 +34,7 @@ import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
+import com.sun.max.util.*;
 
 /**
  * Source code generator for raw and label assembler methods derived from an ISA specification.
@@ -54,6 +55,10 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
             "Class containing the generated raw assembler methods.");
     private final Option<String> labelAssemblerClassNameOption = options.newStringOption("l", null,
             "Class containing the generated label assembler methods.");
+    private final Option<Boolean> generateRedundantInstructionsOption = options.newBooleanOption("redundant", false,
+            "Generate assembler methods for redundant templates. Two templates are redundant if they " +
+            "both have the same name and operands. Redundant pairs of instructions are assumed to " +
+            "implement the same machine instruction semantics but may have different encodings.");
 
     private final Assembly<Template_Type> assembly;
     private final boolean sortAssemblerMethods;
@@ -116,6 +121,17 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
 
     }
 
+    private Sequence<Template_Type> filterTemplates(Sequence<Template_Type> templates) {
+        if (!generateRedundantInstructionsOption.getValue()) {
+            return Sequence.Static.filter(templates, new Predicate<Template_Type>() {
+                public boolean evaluate(Template_Type template) {
+                    return !template.isRedundant();
+                }
+            });
+        }
+        return templates;
+    }
+
     /**
      * Initializes the set of label and raw templates that will be generated as assembler methods.
      * This includes doing any filtering out of templates based on an {@linkplain #assemblerInterfaceNameOption assembler interface}.
@@ -125,8 +141,8 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
         if (templates == null) {
             final String assemblerInterfaceName = assemblerInterfaceNameOption.getValue();
             if (assemblerInterfaceName == null) {
-                templates = assembly().templates();
-                labelTemplates = assembly().labelTemplates();
+                templates = filterTemplates(assembly().templates());
+                labelTemplates = filterTemplates(assembly().labelTemplates());
             } else {
                 final AppendableSequence<Template_Type> newTemplates = new ArrayListSequence<Template_Type>();
                 final AppendableSequence<Template_Type> newLabelTemplates = new ArrayListSequence<Template_Type>();
@@ -328,7 +344,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
                     final String exampleInstruction = instruction.toString(addressMapper);
                     writer.println(" * Example disassembly syntax: {@code " + exampleInstruction + "}");
                 } catch (AssemblyException e) {
-                    ProgramWarning.message("Error generating example instrutcion: " + e);
+                    ProgramWarning.message("Error generating example instruction: " + e);
                 }
             }
         }

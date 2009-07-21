@@ -32,16 +32,8 @@ import com.sun.max.vm.reference.*;
  */
 public class TeleString extends TeleTupleObject implements StringProvider {
 
-    private String string;
-
-    /**
-     * @return a local copy of the string contained in this object in the {@link TeleVM}.
-     */
     public String getString() {
-        if (string == null) {
-            string = SymbolTable.intern(teleVM().getString(reference()));
-        }
-        return string;
+        return SymbolTable.intern(teleVM().getString(reference()));
     }
 
     protected TeleString(TeleVM teleVM, Reference stringReference) {

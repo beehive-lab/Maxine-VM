@@ -62,14 +62,6 @@ public abstract class Assembly<Template_Type extends Template> {
         return instructionSetPackage(instructionSet);
     }
 
-    // Switch this on if you also need to disassemble redundant instructions that you cannot assemble:
-    private static final String USE_REDUNDANT_TEMPLATES_PROPERTY = "max.asm.useRedundantTemplates";
-    private boolean usingRedundantTemplates = System.getProperty(USE_REDUNDANT_TEMPLATES_PROPERTY) != null;
-
-    public boolean usingRedundantTemplates() {
-        return usingRedundantTemplates;
-    }
-
     protected abstract Sequence<Template_Type> createTemplates();
 
     private Sequence<Template_Type> templates;
@@ -113,15 +105,16 @@ public abstract class Assembly<Template_Type extends Template> {
         return call + ")";
     }
 
-    private Method getAssemblerMethod(Assembler assembler, Template_Type template, Class[] parameterTypes) {
+    private Method getAssemblerMethod(Assembler assembler, Template_Type template, Class[] parameterTypes) throws AssemblyException {
+        final String name = template.assemblerMethodName();
         try {
-            return assembler.getClass().getMethod(template.assemblerMethodName(), parameterTypes);
-        } catch (Throwable throwable) {
-            throw ProgramError.unexpected("could not find assembler method for template: " + this, throwable);
+            return assembler.getClass().getMethod(name, parameterTypes);
+        } catch (NoSuchMethodException e) {
+            throw new AssemblyException("could not find assembler method for template: " + template);
         }
     }
 
-    private Method getAssemblerMethod(Assembler assembler, Template_Type template, IndexedSequence<Argument> arguments) {
+    private Method getAssemblerMethod(Assembler assembler, Template_Type template, IndexedSequence<Argument> arguments) throws AssemblyException {
         final Class[] parameterTypes = template.parameterTypes();
         final int index = template.labelParameterIndex();
         if (index >= 0 && arguments.get(index) instanceof Label) {
