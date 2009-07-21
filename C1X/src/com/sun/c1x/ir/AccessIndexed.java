@@ -91,6 +91,8 @@ public abstract class AccessIndexed extends AccessArray {
     public void inputValuesDo(InstructionClosure closure) {
         super.inputValuesDo(closure);
         index = closure.apply(index);
-        length = closure.apply(length);
+        if (length != null) {
+            length = closure.apply(length);
+        }
     }
 }

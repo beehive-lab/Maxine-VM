@@ -101,6 +101,25 @@ public class MemoryBuffer {
     }
 
     /**
+     * Insert a new result for a load into the memory map.
+     * @param load the load instruction
+     * @param result the result that the load instruction should produce
+     */
+    public void setResult(LoadField load, Instruction result) {
+        if (load.isLoaded()) {
+            CiField field = load.field();
+            if (load.isStatic()) {
+                // the field is static, put it in the static map
+                valueMap.put(field, result);
+            } else {
+                // put the result for the loaded object into the map
+                objectMap.put(field, load.object());
+                valueMap.put(field, result);
+            }
+        }
+    }
+
+    /**
      * Look up a store for store elimination, and put this store into the load elimination map.
      * @param store the store instruction to put into the map
      * @return <code>null</code> if the store operation is redundant; the <code>store</code> parameter
