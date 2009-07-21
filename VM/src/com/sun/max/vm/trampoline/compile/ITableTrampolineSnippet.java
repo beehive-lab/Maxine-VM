@@ -31,7 +31,7 @@ import com.sun.max.vm.trampoline.*;
 
 /**
  * Implements dynamic linking of calls through iTables .
- * 
+ *
  * @author Bernd Mathiske
  * @author Laurent Daynes
  */

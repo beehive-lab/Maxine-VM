@@ -65,7 +65,7 @@ public class InspectorGeometry12Pt implements InspectorGeometry {
     }
 
     public Rectangle watchpointsFrameDefaultBounds() {
-        return new Rectangle(100, 100, 20, 150);
+        return new Rectangle(100, 100, 575, 150);
     }
 
     public Rectangle threadLocalsFrameDefaultBounds() {

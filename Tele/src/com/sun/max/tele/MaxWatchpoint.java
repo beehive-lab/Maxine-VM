@@ -110,8 +110,8 @@ public interface MaxWatchpoint extends MemoryRegion {
     boolean disable();
 
     /**
-     * Reenable watchpoint with old tomporary stored configuration.
+     * Re-enable watchpoint with old temporary stored configuration.
      */
-    boolean reenable();
+    boolean enable();
 
 }

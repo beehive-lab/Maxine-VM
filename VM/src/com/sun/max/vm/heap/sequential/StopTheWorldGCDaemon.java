@@ -202,6 +202,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                     }
                     try {
                         // Wait for safepoint to fire
+                        Log.println("Wating in stoptheworlddeamon");
                         sleep(1);
                     } catch (InterruptedException interruptedException) {
                     }

@@ -26,9 +26,12 @@ import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.actor.member.MethodKey.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 
@@ -108,19 +111,54 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
     protected abstract CodeRegion makeFreeCodeRegion();
 
     /**
-     * Allocates space for the specified target method, including its code and attached metadata.
+     * Allocates memory in a code region for the code-related arrays of a given target method
+     * and {@linkplain TargetMethod#setCodeArrays(byte[], byte[], Object[]) initializes} them.
+     * Once initialized, the
      *
-     * @param targetMethod the target method to allocate space for
+     * @param targetBundleLayout describes the layout of the arrays in the allocate space
+     * @param targetMethod the target method for which the code-related arrays are allocated
      */
-    synchronized void allocate(TargetMethod targetMethod) {
-        if (!currentCodeRegion.allocateTargetMethod(targetMethod)) {
-            currentCodeRegion = makeFreeCodeRegion();
-            Code.registerMemoryRegion(currentCodeRegion);
-            if (!currentCodeRegion.allocateTargetMethod(targetMethod)) {
-                ProgramError.unexpected("could not allocate code");
+    synchronized void allocate(TargetBundleLayout targetBundleLayout, TargetMethod targetMethod) {
+        // Object allocation an initialization must be atomic with respect to GC
+        final boolean wasDisabled = !MaxineVM.isPrototyping() && Safepoint.disable();
+        try {
+            final Size bundleSize = targetBundleLayout.bundleSize();
+            Pointer start = currentCodeRegion.allocateTargetMethod(targetMethod, bundleSize);
+            if (start.isZero()) {
+                currentCodeRegion = makeFreeCodeRegion();
+                Code.registerMemoryRegion(currentCodeRegion);
+                start = currentCodeRegion.allocateTargetMethod(targetMethod, bundleSize);
+                if (start.isZero()) {
+                    ProgramError.unexpected("could not allocate code");
+                }
+            }
+            methodKeyToTargetMethods.add(new MethodActorKey(targetMethod.classMethodActor()), targetMethod);
+
+            byte[] code;
+            byte[] scalarLiterals = null;
+            Object[] referenceLiterals = null;
+            int codeLength = targetBundleLayout.length(ArrayField.code);
+            int scalarLiteralsLength = targetBundleLayout.length(ArrayField.scalarLiterals);
+            int referenceLiteralsLength = targetBundleLayout.length(ArrayField.referenceLiterals);
+            if (MaxineVM.isPrototyping()) {
+                code = new byte[codeLength];
+                scalarLiterals = scalarLiteralsLength == 0 ? null : new byte[scalarLiteralsLength];
+                referenceLiterals = referenceLiteralsLength == 0 ? null : new Object[referenceLiteralsLength];
+            } else {
+                code = (byte[]) Cell.plantArray(targetBundleLayout.cell(start, ArrayField.code), PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub(), codeLength);
+                if (scalarLiteralsLength != 0) {
+                    scalarLiterals = (byte[]) Cell.plantArray(targetBundleLayout.cell(start, ArrayField.scalarLiterals), PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub(), scalarLiteralsLength);
+                }
+                if (referenceLiteralsLength != 0) {
+                    referenceLiterals = (Object[]) Cell.plantArray(targetBundleLayout.cell(start, ArrayField.referenceLiterals), ClassActor.fromJava(Object[].class).dynamicHub(), referenceLiteralsLength);
+                }
+            }
+            targetMethod.setCodeArrays(code, targetBundleLayout.firstElementPointer(start, ArrayField.code), scalarLiterals, referenceLiterals);
+        } finally {
+            if (!MaxineVM.isPrototyping() && !wasDisabled) {
+                Safepoint.enable();
             }
         }
-        methodKeyToTargetMethods.add(new MethodActorKey(targetMethod.classMethodActor()), targetMethod);
     }
 
     /**

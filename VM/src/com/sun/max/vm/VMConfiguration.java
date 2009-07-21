@@ -34,7 +34,6 @@ import com.sun.max.vm.compiler.adaptive.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.interpret.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.reference.*;
@@ -59,7 +58,6 @@ public final class VMConfiguration {
     public final VMPackage monitorPackage;
     public final VMPackage compilerPackage;
     public final VMPackage jitPackage;
-    public final VMPackage interpreterPackage;
     public final VMPackage trampolinePackage;
     public final VMPackage targetABIsPackage;
     public final VMPackage runPackage;
@@ -85,8 +83,6 @@ public final class VMConfiguration {
     @CONSTANT_WHEN_NOT_ZERO
     private DynamicCompilerScheme jitScheme = null;
     @CONSTANT_WHEN_NOT_ZERO
-    private InterpreterScheme interpreterScheme = null;
-    @CONSTANT_WHEN_NOT_ZERO
     private CompilationScheme compilationScheme = null;
     @CONSTANT_WHEN_NOT_ZERO
     private DynamicTrampolineScheme trampolineScheme = null;
@@ -96,7 +92,7 @@ public final class VMConfiguration {
     private RunScheme runScheme = null;
 
     public VMConfiguration(BuildLevel buildLevel, Platform platform, VMPackage gripPackage, VMPackage referencePackage, VMPackage layoutPackage, VMPackage heapPackage,
-        VMPackage monitorPackage, VMPackage compilerPackage, VMPackage jitPackage, VMPackage interpreterPackage, VMPackage trampolinePackage, VMPackage targetABIsPackage, VMPackage runPackage) {
+        VMPackage monitorPackage, VMPackage compilerPackage, VMPackage jitPackage, VMPackage trampolinePackage, VMPackage targetABIsPackage, VMPackage runPackage) {
         this.buildLevel = buildLevel;
         this.platform = platform;
         this.gripPackage = gripPackage;
@@ -106,7 +102,6 @@ public final class VMConfiguration {
         this.monitorPackage = monitorPackage;
         this.compilerPackage = compilerPackage;
         this.jitPackage = jitPackage;
-        this.interpreterPackage = interpreterPackage;
         this.trampolinePackage = trampolinePackage;
         this.targetABIsPackage = targetABIsPackage;
         this.runPackage = runPackage;
@@ -174,11 +169,6 @@ public final class VMConfiguration {
     @INLINE
     public DynamicCompilerScheme jitScheme() {
         return jitScheme;
-    }
-
-    @INLINE
-    public InterpreterScheme interpreterScheme() {
-        return interpreterScheme;
     }
 
     @INLINE
@@ -263,7 +253,6 @@ public final class VMConfiguration {
             // no JIT, always using the optimizing compiler
             jitScheme = compilerScheme;
         }
-        interpreterScheme = loadAndInstantiateScheme(interpreterPackage, InterpreterScheme.class, this);
 
         compilationScheme = new AdaptiveCompilationScheme(this);
         vmSchemes.append(compilationScheme);

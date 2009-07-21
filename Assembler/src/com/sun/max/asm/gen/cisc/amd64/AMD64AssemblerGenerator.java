@@ -50,11 +50,8 @@ public class AMD64AssemblerGenerator extends X86AssemblerGenerator<AMD64Template
 
     private static final String REX_BYTE_NAME = "rex";
 
-    private String basicRexValue(X86Template template) {
-        if (template.operandSizeAttribute() == WordWidth.BITS_64 && template.instructionDescription().defaultOperandSize() != WordWidth.BITS_64) {
-            return Bytes.toHexLiteral((byte) (X86Opcode.REX_MIN.ordinal() + (1 << X86Field.REX_W_BIT_INDEX)));
-        }
-        return Bytes.toHexLiteral((byte) X86Opcode.REX_MIN.ordinal());
+    private static String basicRexValueAsString(X86Template template) {
+        return Bytes.toHexLiteral(basicRexValue(template));
     }
 
     private void printUnconditionalRexBit(IndentWriter writer, X86Parameter parameter, int bitIndex) {
@@ -75,7 +72,7 @@ public class AMD64AssemblerGenerator extends X86AssemblerGenerator<AMD64Template
     }
 
     private void printUnconditionalRexPrefix(IndentWriter writer, X86Template template) {
-        writer.println("byte " + REX_BYTE_NAME + " = (byte) " + basicRexValue(template) + ";");
+        writer.println("byte " + REX_BYTE_NAME + " = (byte) " + basicRexValueAsString(template) + ";");
         for (X86Parameter parameter : template.parameters()) {
             switch (parameter.place()) {
                 case MOD_REG_REXR:
@@ -103,7 +100,7 @@ public class AMD64AssemblerGenerator extends X86AssemblerGenerator<AMD64Template
         if (parameter.type() == AMD64GeneralRegister8.class) {
             writer.println("if (" + parameter.variableName() + ".requiresRexPrefix()) {");
             writer.indent();
-            writer.println(REX_BYTE_NAME + " |= " + basicRexValue(template) + ";");
+            writer.println(REX_BYTE_NAME + " |= " + basicRexValueAsString(template) + ";");
             writer.println("if (" + parameter.valueString() + " >= 8) {");
             writer.indent();
             writer.println(REX_BYTE_NAME + " |= 1 << " + bitIndex + "; // " + parameter.place().comment());
@@ -114,7 +111,7 @@ public class AMD64AssemblerGenerator extends X86AssemblerGenerator<AMD64Template
         } else {
             writer.println("if (" + parameter.valueString() + " >= 8) {");
             writer.indent();
-            writer.println(REX_BYTE_NAME + " |= (1 << " + bitIndex + ") + " + basicRexValue(template) + "; // " + parameter.place().comment());
+            writer.println(REX_BYTE_NAME + " |= (1 << " + bitIndex + ") + " + basicRexValueAsString(template) + "; // " + parameter.place().comment());
             writer.outdent();
             writer.println("}");
         }
