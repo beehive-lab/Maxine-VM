@@ -3239,7 +3239,9 @@ public class LinearScan extends RegisterAllocator {
             printLir(2, "LIR after FPU stack allocation:", true);
         }
         EdgeMoveOptimizer.optimize(ir().linearScanOrder());
-        ControlFlowOptimizer.optimize(ir().linearScanOrder());
+        if (C1XOptions.OptimizeControlFlow) {
+            ControlFlowOptimizer.optimize(ir().linearScanOrder());
+        }
         // check that cfg is still correct after optimizations
         assert ir().verify();
         printLir(1, "Before Code Generation", false);

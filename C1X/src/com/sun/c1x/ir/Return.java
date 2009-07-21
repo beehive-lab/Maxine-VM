@@ -67,7 +67,9 @@ public class Return extends BlockEnd {
      */
     @Override
     public void inputValuesDo(InstructionClosure closure) {
-        result = closure.apply(result);
+        if (result != null) {
+            result = closure.apply(result);
+        }
     }
 
     /**
