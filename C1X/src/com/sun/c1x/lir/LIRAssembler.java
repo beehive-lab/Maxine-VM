@@ -152,13 +152,6 @@ public abstract class LIRAssembler {
         slowCaseStubs.add(stub);
     }
 
-    void checkCodespace() {
-        CodeSection cs = masm.codeSection();
-        if (cs.remaining() < 1 * Util.K) {
-            throw new Bailout("CodeBuffer overflow");
-        }
-    }
-
     protected void emitCodeStub(CodeStub stub) {
         slowCaseStubs.add(stub);
     }
@@ -166,7 +159,6 @@ public abstract class LIRAssembler {
     void emitStubs(List<CodeStub> stubList) {
         for (int m = 0; m < stubList.size(); m++) {
             CodeStub s = stubList.get(m);
-            checkCodespace();
             if (C1XOptions.CommentedAssembly) {
                 String st = s.name() + " slow case";
                 masm.blockComment(st);
@@ -278,8 +270,6 @@ public abstract class LIRAssembler {
         for (int i = 0; i < n; i++) {
             LIRInstruction op = list.at(i);
 
-            checkCodespace();
-
             if (C1XOptions.CommentedAssembly) {
                 // Don't record out every op since that's too verbose. Print
                 // branches since they include block and stub names. Also print
@@ -305,7 +295,7 @@ public abstract class LIRAssembler {
             }
 
             if (C1XOptions.PrintLIRWithAssembly) {
-                masm.code().decode();
+                masm.decode();
             }
         }
     }
@@ -323,7 +313,8 @@ public abstract class LIRAssembler {
     }
 
     protected void addDebugInfoForBranch(CodeEmitInfo info) {
-        masm.codeSection().relocate(pc(), RelocInfo.Type.pollType);
+        // TODO: poll
+        //masm.codeSection().relocate(pc(), RelocInfo.Type.pollType);
         int pcOffset = codeOffset();
         flushDebugInfo(pcOffset);
         info.recordDebugInfo(compilation().debugInfoRecorder(), pcOffset);
@@ -450,7 +441,7 @@ public abstract class LIRAssembler {
         rtCall(op.result(), op.address(), op.arguments(), op.tmp(), op.info());
     }
 
-    protected abstract void rtCall(LIROperand result, long l, List<LIROperand> arguments, LIROperand tmp, CodeEmitInfo info);
+    protected abstract void rtCall(LIROperand result, CiRuntimeCall l, List<LIROperand> arguments, LIROperand tmp, CodeEmitInfo info);
 
     void emitCall(LIRJavaCall op) {
         verifyOopMap(op.info());
@@ -467,29 +458,29 @@ public abstract class LIRAssembler {
 
         switch (op.code()) {
             case StaticCall:
-                call(op.addr, RelocInfo.Type.staticCallType, op.info());
+                call(op.method(), op.addr, op.info());
                 break;
             case OptVirtualCall:
-                call(op.addr, RelocInfo.Type.optVirtualCallType, op.info());
+                call(op.method(), op.addr, op.info());
                 break;
             case IcVirtualCall:
-                icCall(op.addr, op.info());
+                icCall(op.method(), op.addr, op.info());
                 break;
             case VirtualCall:
-                vtableCall(op.vtableOffset(), op.info());
+                vtableCall(op.method(), op.vtableOffset(), op.info());
                 break;
             default:
                 throw Util.shouldNotReachHere();
         }
     }
 
-    protected abstract void call(long addr, RelocInfo.Type relocInfo, CodeEmitInfo info);
+    protected abstract void call(CiMethod ciMethod, CiRuntimeCall addr, CodeEmitInfo info);
 
     protected abstract void emitStaticCallStub();
 
-    protected abstract void vtableCall(long l, CodeEmitInfo info);
+    protected abstract void vtableCall(CiMethod ciMethod, long l, CodeEmitInfo info);
 
-    protected abstract void icCall(long addr, CodeEmitInfo info);
+    protected abstract void icCall(CiMethod ciMethod, CiRuntimeCall addr, CodeEmitInfo info);
 
     protected abstract void alignCall(LIROpcode code);
 
@@ -605,7 +596,7 @@ public abstract class LIRAssembler {
 
     protected abstract void fxch(int asJint);
 
-    protected abstract int safepointPoll(LIROperand inOpr, CodeEmitInfo info);
+    protected abstract void safepointPoll(LIROperand inOpr, CodeEmitInfo info);
 
     protected abstract void returnOp(LIROperand inOpr);
 
@@ -638,6 +629,7 @@ public abstract class LIRAssembler {
                 // init offsets
                 offsets().setValue(CodeOffsets.Entries.OSREntry, masm.offset());
                 masm.align(C1XOptions.CodeEntryAlignment);
+                masm.makeOffset(compilation.runtime.codeOffset());
                 if (needsIcache(compilation().method())) {
                     checkIcache();
                 }

@@ -60,7 +60,7 @@ public class Address {
     public final int disp;
     public final ScaleFactor scale;
     public final Register index;
-    public final RelocationHolder rspec;
+    public final Relocation rspec;
 
     public Address() {
         this(Register.noreg, 0);
@@ -79,7 +79,7 @@ public class Address {
         this.index = index;
         this.scale = scale;
         this.disp = displacement;
-        this.rspec = RelocationHolder.none;
+        this.rspec = Relocation.none;
         assert base != null && index != null && scale != null;
     }
 
@@ -104,11 +104,6 @@ public class Address {
             case runtimeCallType:
                 // HMM
                 rspec = Relocation.specRuntimeCall();
-                break;
-            case pollType:
-                // fall through
-            case pollReturnType:
-                rspec = Relocation.specSimple(loc);
                 break;
             case none:
                 rspec = null;

@@ -73,13 +73,6 @@ public interface CiRuntime {
     boolean mustNotCompile(CiMethod method);
 
     /**
-     * Returns the address of a runtime call.
-     * @param runtimeCall identifies the runtime call whose address should be returned
-     * @return the address of the runtime call
-     */
-    long getRuntimeEntry(CiRuntimeCall runtimeCall);
-
-    /**
      * Byte offset of the array length of an array object.
      * @return the byte offset of the array length
      */
@@ -303,5 +296,9 @@ public interface CiRuntime {
     int javaCallingConvention(CiMethod method, CiLocation[] result, boolean outgoing);
 
     int sizeofBasicObjectLock();
+
+    int codeOffset();
+
+    String disassemble(byte[] copyOf);
 
 }

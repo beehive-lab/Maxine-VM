@@ -27,6 +27,7 @@ import java.util.concurrent.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.c1x.*;
@@ -406,7 +407,9 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             if (CompiledPrototype.jitCompile(classMethodActor)) {
                 return jitCompiler;
             } else if (CompiledPrototype.c1xCompile(classMethodActor)) {
-                return new C1XCompiler(vmConfiguration());
+                final DynamicCompilerScheme result = new C1XCompiler(vmConfiguration());
+                result.initialize(Phase.PROTOTYPING);
+                return result;
             }
 
             return prototypeCompiler;

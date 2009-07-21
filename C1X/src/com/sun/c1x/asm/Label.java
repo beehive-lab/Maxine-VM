@@ -53,6 +53,7 @@ public class Label {
     public Label() {
         super();
         patchOverflow = new ArrayList<Integer>(PATCHCACHESIZE);
+        this.loc = -1;
     }
 
     /**
@@ -64,37 +65,6 @@ public class Label {
     public int loc() {
         assert loc >= 0 : "Unbounded label is being referenced";
         return loc;
-    }
-
-    /**
-     * Binds this label to a given location.
-     *
-     * @param locator the locator to bind this label
-     */
-    public void bindLocation(int locator) {
-        assert locator >= 0 : "The locator " + locator + " is not a valid binding locator";
-        assert this.loc == -1 : "The Label is already baunded";
-        this.loc = locator;
-    }
-
-    /**
-     * Gets the offset encoded in the locator.
-     *
-     * @return the locator's offset.
-     */
-    public int locatorOffset() {
-        // TODO: to be implemented. Depends on CodeBuffer
-        return loc >> 2;
-    }
-
-    /**
-     * Gets the section encoded by the locator.
-     *
-     * @return the locator's section
-     */
-    public int locatorSection() {
-        // TODO: to be implemented. Depends on CodeBuffer
-        return loc & 2;
     }
 
     public boolean isBound() {
@@ -118,16 +88,6 @@ public class Label {
 
     }
 
-    public int locPos() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    public int locSect() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
     public void printInstructions(AbstractAssembler abstractAssembler) {
         // TODO Auto-generated method stub
 
@@ -143,8 +103,7 @@ public class Label {
         }
     }
 
-    public void bindLoc(int locator) {
-        // TODO Auto-generated method stub
-
+    public void bindLoc(int codeOffset) {
+        this.loc = codeOffset;
     }
 }

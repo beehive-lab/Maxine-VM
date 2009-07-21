@@ -29,11 +29,15 @@ import com.sun.c1x.asm.RelocInfo.*;
  */
 public class Relocation {
 
+    public static final Relocation none = new Relocation(Type.none);
+    private final Type type;
 
+    public Relocation(Type type) {
+        this.type = type;
+    }
 
     public Type type() {
-        // TODO Auto-generated method stub
-        return null;
+        return type;
     }
 
     public boolean isCall() {
@@ -46,84 +50,56 @@ public class Relocation {
         return false;
     }
 
-    public static RelocationHolder specExternalWord(Pointer loc) {
+    public static Relocation specExternalWord(Pointer loc) {
         // TODO Auto-generated method stub
         return null;
     }
 
-    public static RelocationHolder specInternalWord(Pointer loc) {
+    public static Relocation specInternalWord(Pointer loc) {
         // TODO Auto-generated method stub
         return null;
     }
 
-    public static RelocationHolder specRuntimeCall() {
+    public static Relocation specRuntimeCall() {
+        return specSimple(RelocInfo.Type.runtimeCallType);
+    }
+
+    public static Relocation specSimple(Pointer loc) {
         // TODO Auto-generated method stub
         return null;
     }
 
-    public static RelocationHolder specSimple(Pointer loc) {
+    public static Relocation specOptVirtualCallRelocation(long address) {
         // TODO Auto-generated method stub
         return null;
     }
 
-    public static RelocationHolder specOptVirtualCallRelocation(long address) {
+    public static Relocation specStaticCallRelocation(long address) {
         // TODO Auto-generated method stub
         return null;
     }
-
-    public static RelocationHolder specStaticCallRelocation(long address) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    // from here
-
-
-    private static void guaranteeSize(){
-
-    }
-    // When a relocation has been created by a RelocIterator,
-    // this field is non-null.  It allows the relocation to know
-    // its context, such as the address to which it applies.
-    private RelocIterator binding;
-
-
-    protected RelocIterator binding()  {
-      assert binding != null :  "must be bound";
-      return binding;
-    }
-    protected void setBinding(RelocIterator b) {
-      assert binding == null :  "must be unbound";
-      binding = b;
-      assert binding != null :  "must now be bound";
-    }
-
-    protected Relocation() {
-      binding = null;
-    }
-
-    protected static RelocationHolder newHolder() {
-      return new RelocationHolder();
-    }
-
-
-//    public void operator new(sizeT size,  RelocationHolder& holder) {
-//      if (size > sizeof(holder.relocbuf)) guaranteeSize();
-//      assert (void  *)holder.reloc() == &holder.relocbuf[0] :  "ptrs must agree";
-//      return holder.reloc();
-//    }
 
     // make a generic relocation for a given type (if possible)
-    public static RelocationHolder specSimple(Type rtype){
+    public static Relocation specSimple(Type rtype) {
         if (rtype == RelocInfo.Type.none) {
-            return RelocationHolder.none;
+            return Relocation.none;
         }
-        RelocInfo ri = new RelocInfo(rtype, 0);
-        RelocIterator itr;
-//        itr.setCurrent(ri);
-//        itr.reloc();
-//        return itr.rh;
+        return new Relocation(rtype);
+    }
+
+    public static Relocation virtualCallRelocationSpec(Pointer pc) {
+        // TODO Auto-generated method stub
         return null;
+    }
+
+    public static Relocation specForImmediate() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public int format() {
+        // TODO Auto-generated method stub
+        return 0;
     }
 
 

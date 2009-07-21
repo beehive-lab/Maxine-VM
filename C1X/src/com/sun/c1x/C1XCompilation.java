@@ -82,11 +82,17 @@ public class C1XCompilation {
 
     /**
      * Creates a new compilation for the specified method and runtime.
-     * @param target the target of the compilation, including architecture information
-     * @param runtime the runtime implementation
-     * @param method the method to be compiled
-     * @param targetMethod the target method to accept the results
-     * @param osrBCI the bytecode index for on-stack replacement, if requested
+     *
+     * @param target
+     *            the target of the compilation, including architecture information
+     * @param runtime
+     *            the runtime implementation
+     * @param method
+     *            the method to be compiled
+     * @param targetMethod
+     *            the target method to accept the results
+     * @param osrBCI
+     *            the bytecode index for on-stack replacement, if requested
      */
     public C1XCompilation(Target target, CiRuntime runtime, CiMethod method, CiTargetMethod targetMethod, int osrBCI) {
         this.target = target;
@@ -98,17 +104,18 @@ public class C1XCompilation {
 
     /**
      * Creates a new compilation for the specified method and runtime.
-     * @param target the target of the compilation, including architecture information
-     * @param runtime the runtime implementation
-     * @param method the method to be compiled
-     * @param targetMethod the target method
+     *
+     * @param target
+     *            the target of the compilation, including architecture information
+     * @param runtime
+     *            the runtime implementation
+     * @param method
+     *            the method to be compiled
+     * @param targetMethod
+     *            the target method
      */
     public C1XCompilation(Target target, CiRuntime runtime, CiMethod method, CiTargetMethod targetMethod) {
-        this.target = target;
-        this.runtime = runtime;
-        this.method = method;
-        this.targetMethod = targetMethod;
-        this.osrBCI = -1;
+        this(target, runtime, method, targetMethod, -1);
     }
 
     public IR hir() {
@@ -330,7 +337,7 @@ public class C1XCompilation {
 
         if (C1XOptions.PrintExceptionHandlers && C1XOptions.Verbose) {
             TTY.println("  added exception scope for pco %d", pcOffset);
-          }
+        }
         exceptionInfoList.add(new ExceptionInfo(pcOffset, exceptionHandlers));
     }
 
@@ -400,11 +407,9 @@ public class C1XCompilation {
     }
 
     private void emitCode() {
-        CodeBuffer tmp = new CodeBuffer();
-        assembler = target.backend.newAssembler(this, tmp);
+        assembler = target.backend.newAssembler(this);
         final LIRAssembler lirAssembler = target.backend.newLIRAssembler(this);
         lirAssembler.emitCode(hir.linearScanOrder());
-
 
         // generate code or slow cases
         lirAssembler.emitSlowCaseStubs();
@@ -414,10 +419,9 @@ public class C1XCompilation {
 
         // generate code for exception handler
         // TODO: Check if we need this
-        //lirAssembler.emitExceptionHandler();
+        // lirAssembler.emitExceptionHandler();
 
         lirAssembler.emitDeoptHandler();
-
 
         assembler.installTargetMethod();
     }

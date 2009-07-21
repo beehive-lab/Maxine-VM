@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
+import java.io.*;
 import java.util.*;
 
 import com.sun.c1x.ci.*;
@@ -27,11 +28,20 @@ import com.sun.c1x.target.*;
 import com.sun.c1x.target.x86.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.max.asm.*;
+import com.sun.max.asm.dis.*;
+import com.sun.max.io.*;
+import com.sun.max.platform.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.*;
+import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
@@ -196,10 +206,6 @@ public class MaxCiRuntime implements CiRuntime {
         return false;
     }
 
-    public long getRuntimeEntry(CiRuntimeCall runtimeCall) {
-        throw Util.unimplemented();
-    }
-
     public int headerSize() {
         throw Util.unimplemented();
     }
@@ -286,7 +292,7 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public int vmPageSize() {
-        throw Util.unimplemented();
+        return Integer.getInteger(Prototype.PAGE_SIZE_PROPERTY, Prototype.nativeGetPageSize());
     }
 
     public int argRegSaveAreaBytes() {
@@ -546,6 +552,42 @@ public class MaxCiRuntime implements CiRuntime {
     public int sizeofBasicObjectLock() {
         // TODO Auto-generated method stub
         return 0;
+    }
+
+    @Override
+    public int codeOffset() {
+        // TODO: get rid of this!
+        // Offset because this is optimized code:
+        return 8;
+    }
+
+    @Override
+    public String disassemble(byte[] code) {
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
+        writer.flush();
+        final ProcessorKind processorKind = VMConfiguration.target().platform().processorKind;
+        final InlineDataDecoder inlineDataDecoder = null; //InlineDataDecoder.createFrom(teleTargetMethod.getEncodedInlineDataDescriptors());
+        final Pointer startAddress = Pointer.fromInt(0);
+        final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
+            @Override
+            protected String disassembledObjectString(Disassembler disassembler, DisassembledObject disassembledObject) {
+                final String string = super.disassembledObjectString(disassembler, disassembledObject);
+                if (string.startsWith("call ")) {
+                    final BytecodeLocation bytecodeLocation = null; //_teleTargetMethod.getBytecodeLocationFor(startAddress.plus(disassembledObject.startPosition()));
+                    if (bytecodeLocation != null) {
+                        final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
+                        if (methodRef != null) {
+                            final ConstantPool pool = bytecodeLocation.classMethodActor().codeAttribute().constantPool();
+                            return string + " [" + methodRef.holder(pool).toJavaString(false) + "." + methodRef.name(pool) + methodRef.signature(pool).toJavaString(false, false) + "]";
+                        }
+                    }
+                }
+                return string;
+            }
+        };
+        Disassemble.disassemble(byteArrayOutputStream, code, processorKind, startAddress, inlineDataDecoder, disassemblyPrinter);
+        return byteArrayOutputStream.toString();
     }
 
 }

@@ -29,57 +29,8 @@ public class RelocInfo {
 
     public enum Type {
         none, // Used when no relocation should be generated
-        oopType, // embedded oop
-        virtualCallType, // a standard inline cache call for a virtual send
-        optVirtualCallType, // a virtual call that has been statically bound (i.e., no IC cache)
-        staticCallType, // a static send
-        staticStubType, // stub-entry for static send (takes care of interpreter case)
         runtimeCallType, // call to fixed external routine
         externalWordType, // reference to fixed external address
         internalWordType, // reference within the current code blob
-        sectionWordType, // internal, but a cross-section reference
-        pollType, // polling instruction for safepoints
-        pollReturnType, // polling instruction for safepoints at return
-        breakpointType, // an initialization barrier or safepoint
-        yetUnusedType, // Still unused
-        yetUnusedType_2, // Still unused
-        dataPrefixTag
-        // tag for a prefix (carries data arguments)
-        // typeMask = 15 // A mask which selects only the above values
     }
-
-    public enum RelocInfoEncoding {
-        ValueWidth((Short.SIZE / 8) * Byte.SIZE),
-        TypeWidth(4),   // == log2(typeMask+1)
-        NontypeWidth(ValueWidth.value - TypeWidth.value),
-        DatalenWidth(NontypeWidth.value - 1),
-        DatalenTag(1 << DatalenWidth.value),  // or-ed into value
-        DatalenLimit(1 << DatalenWidth.value),
-        DatalenMask((1 << DatalenWidth.value) - 1);
-
-        public int value;
-
-        private RelocInfoEncoding(int value) {
-            this.value = value;
-        }
-      }
-
-    protected short value;
-
-    protected enum RawBitsToken {
-        RawBits
-    }
-
-    protected RelocInfo(Type type, RawBitsToken ignore, int bits) {
-        this.value = (short) ((type.ordinal() << RelocInfoEncoding.NontypeWidth.value) + bits);
-    }
-
-    /**
-     * @param rtype
-     * @param i
-     */
-    public RelocInfo(Type rtype, int i) {
-        // TODO Auto-generated constructor stub
-    }
-
 }

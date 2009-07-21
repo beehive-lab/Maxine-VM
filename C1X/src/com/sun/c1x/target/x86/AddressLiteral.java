@@ -28,39 +28,21 @@ import com.sun.c1x.util.*;
 public class AddressLiteral {
 
     public final long target;
-    public final RelocationHolder rspec;
+    public final Relocation rspec;
     public final boolean isLval;
 
     public AddressLiteral(long address, Type relocationType) {
         isLval = false;
         this.target = address;
         switch (relocationType) {
-        case oopType:
-          // Oops are a special case. Normally they would be their own section
-          // but in cases like icBuffer they are literals in the code stream that
-          // we don't have a section for. We use none so that we get a literal Pointer
-          // which is always patchable.
-            // TODO: Check what to do with loops
-          rspec = null;
-           break;
         case externalWordType:
           rspec = Relocation.specExternalWord(new Pointer(address));
           break;
         case internalWordType:
           rspec = Relocation.specInternalWord(new Pointer(address));
           break;
-        case optVirtualCallType:
-          rspec = Relocation.specOptVirtualCallRelocation(address);
-          break;
-        case staticCallType:
-          rspec = Relocation.specStaticCallRelocation(address);
-          break;
         case runtimeCallType:
           rspec = Relocation.specRuntimeCall();
-          break;
-        case pollType:
-        case pollReturnType:
-          rspec = Relocation.specSimple(relocationType);
           break;
         case none:
             rspec = null;
@@ -70,11 +52,15 @@ public class AddressLiteral {
         }
     }
 
-    public AddressLiteral(long address, RelocationHolder rspec) {
+    public AddressLiteral(Relocation reloc) {
+        this(0, reloc, false);
+    }
+
+    public AddressLiteral(long address, Relocation rspec) {
         this(address, rspec, false);
     }
 
-    public AddressLiteral(long address, RelocationHolder rspec, boolean isLval) {
+    public AddressLiteral(long address, Relocation rspec, boolean isLval) {
         this.target = address;
         this.rspec = rspec;
         this.isLval = isLval;
@@ -97,7 +83,7 @@ public class AddressLiteral {
         return new Pointer(target);
     }
 
-    public RelocationHolder rspec() {
-        return rspec;
+    public Relocation rspec() {
+        return (rspec == null) ? Relocation.none : rspec;
     }
 }

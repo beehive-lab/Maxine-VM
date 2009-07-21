@@ -587,4 +587,19 @@ public class Util {
     public static int sizeofDouble() {
         return 8;
     }
+
+    public static void printBytes(byte[] array) {
+        printBytes(array, array.length);
+    }
+
+
+    public static void printBytes(byte[] array, int length) {
+        TTY.println("%d bytes: ", length);
+        for (int i = 0; i < length; i++) {
+            TTY.print("%2x ", array[i]);
+            if (i % 8 == 7) {
+                TTY.println();
+            }
+        }
+    }
 }

@@ -71,6 +71,6 @@ public class LIRLabel extends LIROp0 {
      */
     @Override
     public void printInstruction(LogStream out) {
-        out.printf("[label:0x%x]", label.loc());
+        out.printf("[label:%s]", label);
     }
 }

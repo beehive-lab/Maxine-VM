@@ -186,8 +186,8 @@ public class OptionSet {
                     if (syntax == Syntax.CONSUMES_NEXT) {
                         value = args[++i];
                     }
-                } catch (Option.Error error) {
                     setValue(optionName, value);
+                } catch (Option.Error error) {
                     handleErrorDuringParseOrLoad(error, optionName);
                 }
             } else {

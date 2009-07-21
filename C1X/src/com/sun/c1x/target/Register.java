@@ -53,7 +53,7 @@ public class Register {
         this.number = number;
         this.name = name;
         this.flags = createMask(flags);
-        this.encoding = number;
+        this.encoding = number - 1;
     }
 
     private int createMask(RegisterFlag... flags) {

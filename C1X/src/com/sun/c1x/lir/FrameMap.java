@@ -92,7 +92,7 @@ public class FrameMap {
         }
 
         // add remaining arguments
-        for (int i = 0; i < sig.argumentSlots(false); i++) {
+        for (int i = 0; i < sig.argumentCount(false); i++) {
             CiType type = sig.argumentTypeAt(i);
             BasicType t = type.basicType();
             sta[z++] = t;

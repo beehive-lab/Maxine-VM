@@ -40,9 +40,15 @@ public class X86LIRAssembler extends LIRAssembler {
     private static final Register ICKlass = X86Register.rax;
     private static final Register SYNCHeader = X86Register.rax;
     private static final Register SHIFTCount = X86Register.rcx;
+
+    private static final int FloatConstantAlignment = 16;
+    private static final long FloatSignFlip = 0x8000000080000000L;
+    private static final long DoubleSignFlip = 0x8000000000000000L;
+    private static final long DoubleSignMask = 0x7FFFFFFFFFFFFFFFL;
+
     private X86MacroAssembler masm;
 
-    private final int callStubSize;
+    final int callStubSize;
     private final int exceptionHandlerSize;
     final int deoptHandlerSize;
     private final int wordSize;
@@ -75,13 +81,13 @@ public class X86LIRAssembler extends LIRAssembler {
     @Override
     protected void set_24bitFPU() {
 
-        masm().fldcw(new ExternalAddress(compilation.runtime.getRuntimeEntry(CiRuntimeCall.FpuCntrlWrd_24)));
+        masm().fldcw(new RuntimeAddress(CiRuntimeCall.FpuCntrlWrd_24));
 
     }
 
     @Override
     protected void resetFPU() {
-        masm().fldcw(new ExternalAddress(compilation.runtime.getRuntimeEntry(CiRuntimeCall.FpuCntrlWrdStd)));
+        masm().fldcw(new RuntimeAddress(CiRuntimeCall.FpuCntrlWrdStd));
     }
 
     @Override
@@ -270,6 +276,9 @@ public class X86LIRAssembler extends LIRAssembler {
             icCmpSize = 10;
         }
 
+        // TODO: Check why icCmpSize is 9 !!
+        icCmpSize = 9;
+
         if (!C1XOptions.VerifyOops) {
             // insert some nops so that the verified entry point is aligned on CodeEntryAlignment
             while ((masm().offset() + icCmpSize) % C1XOptions.CodeEntryAlignment != 0) {
@@ -379,7 +388,7 @@ public class X86LIRAssembler extends LIRAssembler {
             masm().verifyNotNullOop(X86Register.rax);
 
             // search an exception handler (rax: exception oop, rdx: throwing pc)
-            masm().call(new RuntimeAddress(compilation.runtime.getRuntimeEntry(CiRuntimeCall.HandleExceptionNofpu)));
+            masm().call(new RuntimeAddress(CiRuntimeCall.HandleExceptionNofpu));
 
             // if the call returns here : then the exception handler for particular
             // exception doesn't exist . unwind activation and forward exception to caller
@@ -401,7 +410,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
         // unwind activation and forward exception to caller
         // rax : : exception
-        masm().jump(new RuntimeAddress(compilation.runtime.getRuntimeEntry(CiRuntimeCall.UnwindException)));
+        masm().jump(new RuntimeAddress(CiRuntimeCall.UnwindException));
 
         assert codeOffset() - offset <= exceptionHandlerSize : "overflow";
 
@@ -436,25 +445,24 @@ public class X86LIRAssembler extends LIRAssembler {
         masm().ret(0);
     }
 
-    // TODO: Check why return type is int?
     @Override
-    protected int safepointPoll(LIROperand tmp, CodeEmitInfo info) {
-        AddressLiteral pollingPage = new AddressLiteral(compilation.runtime.getPollingPage() + (C1XOptions.SafepointPollOffset % compilation.runtime.vmPageSize()), RelocInfo.Type.pollType);
-
-        if (info != null) {
-            addDebugInfoForBranch(info);
-        } else {
-            throw Util.shouldNotReachHere();
-        }
-
-        int offset = masm().offset();
-
-        // NOTE: the requires that the polling page be reachable else the reloc
-        // goes to the movq that loads the address and not the faulting instruction
-        // which breaks the signal handler code
-
-        masm().test32(X86Register.rax, pollingPage);
-        return offset;
+    protected void safepointPoll(LIROperand tmp, CodeEmitInfo info) {
+        // TODO: Add safepoint polling
+//        AddressLiteral pollingPage = new ExternalAddress(compilation.runtime.getPollingPage() + (C1XOptions.SafepointPollOffset % compilation.runtime.vmPageSize()), RelocInfo.Type.pollType);
+//
+//        if (info != null) {
+//            addDebugInfoForBranch(info);
+//        } else {
+//            throw Util.shouldNotReachHere();
+//        }
+//
+//        int offset = masm().offset();
+//
+//        // NOTE: the requires that the polling page be reachable else the reloc
+//        // goes to the movq that loads the address and not the faulting instruction
+//        // which breaks the signal handler code
+//
+//        masm().test32(X86Register.rax, pollingPage);
     }
 
     private void moveRegs(Register fromReg, Register toReg) {
@@ -1383,10 +1391,10 @@ public class X86LIRAssembler extends LIRAssembler {
                     masm().cvttsd2sil(dest.asRegister(), asXmmDoubleReg(src));
                 } else {
                     assert src.fpu() == 0 : "input must be on TOS";
-                    masm().fldcw(new ExternalAddress(compilation.runtime.getRuntimeEntry(CiRuntimeCall.FpuCntrlWrdTrunc)));
+                    masm().fldcw(new RuntimeAddress(CiRuntimeCall.FpuCntrlWrdTrunc));
                     masm().fistS(new Address(X86Register.rsp, 0));
                     masm().movl(dest.asRegister(), new Address(X86Register.rsp, 0));
-                    masm().fldcw(new ExternalAddress(compilation.runtime.getRuntimeEntry(CiRuntimeCall.FpuCntrlWrdStd)));
+                    masm().fldcw(new RuntimeAddress(CiRuntimeCall.FpuCntrlWrdStd));
                 }
 
                 // IA32 conversion instructions do not match JLS for overflow, underflow and NaN . fixup in stub
@@ -1416,7 +1424,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 assert dest == X86FrameMap.long0Opr(compilation.target.arch) : "runtime stub places result in these registers";
 
                 // instruction sequence too long to inline it here
-                masm().call(new RuntimeAddress(compilation.runtime.getRuntimeEntry(CiRuntimeCall.Fpu2longStub)));
+                masm().call(new RuntimeAddress(CiRuntimeCall.Fpu2longStub));
                 break;
 
             default:
@@ -1509,7 +1517,7 @@ public class X86LIRAssembler extends LIRAssembler {
             // call out-of-line instance of lir(). checkKlassSubtypeSlowPath(...):
             masm().push(klassRInfo);
             masm().push(kRInfo);
-            masm().call(new RuntimeAddress(compilation.runtime.getRuntimeEntry(CiRuntimeCall.SlowSubtypeCheck)));
+            masm().call(new RuntimeAddress(CiRuntimeCall.SlowSubtypeCheck));
             masm().pop(klassRInfo);
             masm().pop(kRInfo);
             // result is a boolean
@@ -1637,7 +1645,7 @@ public class X86LIRAssembler extends LIRAssembler {
                         } else {
                             masm().pushoop(k);
                         }
-                        masm().call(new RuntimeAddress(compilation.runtime.getRuntimeEntry(CiRuntimeCall.SlowSubtypeCheck)));
+                        masm().call(new RuntimeAddress(CiRuntimeCall.SlowSubtypeCheck));
                         masm().pop(klassRInfo);
                         masm().pop(klassRInfo);
                         // result is a boolean
@@ -1651,7 +1659,7 @@ public class X86LIRAssembler extends LIRAssembler {
                     // call out-of-line instance of lir(). checkKlassSubtypeSlowPath(...):
                     masm().push(klassRInfo);
                     masm().push(kRInfo);
-                    masm().call(new RuntimeAddress(compilation.runtime.getRuntimeEntry(CiRuntimeCall.SlowSubtypeCheck)));
+                    masm().call(new RuntimeAddress(CiRuntimeCall.SlowSubtypeCheck));
                     masm().pop(klassRInfo);
                     masm().pop(kRInfo);
                     // result is a boolean
@@ -1719,7 +1727,7 @@ public class X86LIRAssembler extends LIRAssembler {
                         masm().jcc(X86Assembler.Condition.equal, one);
                         masm().push(klassRInfo);
                         masm().pushoop(k);
-                        masm().call(new RuntimeAddress(compilation.runtime.getRuntimeEntry(CiRuntimeCall.SlowSubtypeCheck)));
+                        masm().call(new RuntimeAddress(CiRuntimeCall.SlowSubtypeCheck));
                         masm().pop(klassRInfo);
                         masm().pop(dst);
                         masm().jmp(done);
@@ -1733,7 +1741,7 @@ public class X86LIRAssembler extends LIRAssembler {
                     // call out-of-line instance of lir(). checkKlassSubtypeSlowPath(...):
                     masm().push(klassRInfo);
                     masm().push(kRInfo);
-                    masm().call(new RuntimeAddress(compilation.runtime.getRuntimeEntry(CiRuntimeCall.SlowSubtypeCheck)));
+                    masm().call(new RuntimeAddress(CiRuntimeCall.SlowSubtypeCheck));
                     masm().pop(klassRInfo);
                     masm().pop(dst);
                     masm().jmp(done);
@@ -2184,7 +2192,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
             if (code == LIROpcode.MulStrictFp || code == LIROpcode.DivStrictFp) {
                 // Double values require special handling for strictfp mul/div on x86
-                masm().fldX(new ExternalAddress(compilation.runtime.getRuntimeEntry(CiRuntimeCall.AddrFpuSubnormalBias1)));
+                masm().fldX(new RuntimeAddress(CiRuntimeCall.AddrFpuSubnormalBias1));
                 masm().fmulp(left.fpuRegnrLo() + 1);
             }
 
@@ -2227,7 +2235,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
             if (code == LIROpcode.MulStrictFp || code == LIROpcode.DivStrictFp) {
                 // Double values require special handling for strictfp mul/div on x86
-                masm().fldX(new ExternalAddress(compilation.runtime.getRuntimeEntry(CiRuntimeCall.AddrFpuSubnormalBias2)));
+                masm().fldX(new RuntimeAddress(CiRuntimeCall.AddrFpuSubnormalBias2));
                 masm().fmulp(dest.fpuRegnrLo() + 1);
             }
 
@@ -2369,7 +2377,7 @@ public class X86LIRAssembler extends LIRAssembler {
                     if (asXmmDoubleReg(dest) != asXmmDoubleReg(value)) {
                         masm().movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(value));
                     }
-                    masm().andpd(asXmmDoubleReg(dest), new ExternalAddress(compilation.runtime.doubleSignmaskPoolAddress()));
+                    masm().andpd(asXmmDoubleReg(dest), new InternalAddress(masm().longConstant(DoubleSignMask, FloatConstantAlignment)));
                     break;
 
                 case Sqrt:
@@ -2841,23 +2849,22 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void call(long entry, RelocInfo.Type rtype, CodeEmitInfo info) {
+    protected void call(CiMethod method, CiRuntimeCall entry, CodeEmitInfo info) {
         assert !compilation.runtime.isMP() || (masm().offset() + compilation.runtime.nativeCallDisplacementOffset()) % wordSize == 0 : "must be aligned";
-        masm().call(new AddressLiteral(entry, rtype));
+        masm().call(new RuntimeAddress(entry, method));
         addCallInfo(codeOffset(), info);
     }
 
     @Override
-    protected void icCall(long entry, CodeEmitInfo info) {
-        RelocationHolder rh = RelocationHolder.virtualCallRelocationSpec(pc());
+    protected void icCall(CiMethod method, CiRuntimeCall entry, CodeEmitInfo info) {
         masm().movoop(ICKlass, compilation.runtime.universeNonOopWord());
         assert !compilation.runtime.isMP() || (masm().offset() + compilation.runtime.nativeCallDisplacementOffset()) % wordSize == 0 : "must be aligned";
-        masm().call(new AddressLiteral(entry, rh));
+        masm().call(new RuntimeAddress(entry, method));
         addCallInfo(codeOffset(), info);
     }
 
     @Override
-    protected void vtableCall(long vtableOffset, CodeEmitInfo info) {
+    protected void vtableCall(CiMethod method, long vtableOffset, CodeEmitInfo info) {
         throw Util.shouldNotReachHere();
     }
 
@@ -2868,30 +2875,30 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitStaticCallStub() {
-        Pointer callPc = masm().pc();
-
         // TODO: Check with what to replace this!
+      //  Pointer callPc = masm().pc();
+
 //        Pointer stub = masm().startAStub(callStubSize);
 //        if (stub == null) {
 //            throw new Bailout("static call stub overflow");
 //        }
-
-        int start = masm().offset();
-        if (compilation.runtime.isMP()) {
-            // make sure that the displacement word of the call ends up word aligned
-            int offset = masm().offset() + compilation.runtime.nativeMovConstRegInstructionSize() + compilation.runtime.nativeCallDisplacementOffset();
-            while (offset++ % wordSize != 0) {
-                masm().nop();
-            }
-        }
-        masm().relocate(RelocationHolder.staticStubRelocationSpec(callPc));
-        masm().movoop(X86Register.rbx, null);
-        // must be set to -1 at code generation time
-        assert !compilation.runtime.isMP() || ((masm().offset() + 1) % wordSize) == 0 : "must be aligned on MP";
-        // On 64bit this will die since it will take a movq & jmp, must be only a jmp
-        masm().jump(new RuntimeAddress(masm().pc().value));
-
-        assert masm().offset() - start <= callStubSize : "stub too big";
+//
+//        int start = masm().offset();
+//        if (compilation.runtime.isMP()) {
+//            // make sure that the displacement word of the call ends up word aligned
+//            int offset = masm().offset() + compilation.runtime.nativeMovConstRegInstructionSize() + compilation.runtime.nativeCallDisplacementOffset();
+//            while (offset++ % wordSize != 0) {
+//                masm().nop();
+//            }
+//        }
+//        masm().relocate(Relocation.staticStubRelocationSpec(callPc));
+//        masm().movoop(X86Register.rbx, null);
+//        // must be set to -1 at code generation time
+//        assert !compilation.runtime.isMP() || ((masm().offset() + 1) % wordSize) == 0 : "must be aligned on MP";
+//        // On 64bit this will die since it will take a movq & jmp, must be only a jmp
+//        masm().jump(new RuntimeAddress(masm().pc().value));
+//
+//        assert masm().offset() - start <= callStubSize : "stub too big";
        // masm().endAStub();
     }
 
@@ -2923,7 +2930,7 @@ public class X86LIRAssembler extends LIRAssembler {
         } else {
             unwindId = CiRuntimeCall.UnwindException;
         }
-        masm().call(new RuntimeAddress(compilation.runtime.getRuntimeEntry(unwindId)));
+        masm().call(new RuntimeAddress(unwindId));
 
         // enough room for two byte trap
         masm().nop();
@@ -3102,7 +3109,7 @@ public class X86LIRAssembler extends LIRAssembler {
             storeParameter(src, 4);
             assert compilation.target.arch.is64bit() || (src == X86Register.rcx && srcPos == X86Register.rdx) : "mismatch in calling convention";
 
-            long entry = compilation.runtime.getRuntimeEntry(CiRuntimeCall.ArrayCopy);
+            CiRuntimeCall entry = CiRuntimeCall.ArrayCopy;
 
             // pass arguments: may push as this is not a safepoint; SP must be fix at each safepoint
             if (compilation.target.arch.is64bit()) {
@@ -3275,9 +3282,9 @@ public class X86LIRAssembler extends LIRAssembler {
             storeParameter(length, 2);
         }
         if (basicType == BasicType.Object) {
-            masm().callVMLeaf(compilation.runtime.getRuntimeEntry(CiRuntimeCall.OopArrayCopy), 0);
+            masm().callVMLeaf(CiRuntimeCall.OopArrayCopy, 0);
         } else {
-            masm().callVMLeaf(compilation.runtime.getRuntimeEntry(CiRuntimeCall.PrimitiveArrayCopy), 0);
+            masm().callVMLeaf(CiRuntimeCall.PrimitiveArrayCopy, 0);
         }
 
         masm().bind(stub.continuation());
@@ -3442,13 +3449,13 @@ public class X86LIRAssembler extends LIRAssembler {
             if (asXmmFloatReg(left) != asXmmFloatReg(dest)) {
                 masm().movflt(asXmmFloatReg(dest), asXmmFloatReg(left));
             }
-            masm().xorps(asXmmFloatReg(dest), new ExternalAddress(compilation.runtime.floatSignflipPoolAddress()));
+            masm().xorps(asXmmFloatReg(dest), new InternalAddress(masm.longConstant(FloatSignFlip, FloatConstantAlignment)));
 
         } else if (dest.isDoubleXmm()) {
             if (asXmmDoubleReg(left) != asXmmDoubleReg(dest)) {
                 masm().movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(left));
             }
-            masm().xorpd(asXmmDoubleReg(dest), new ExternalAddress(compilation.runtime.doubleSignflipPoolAddress()));
+            masm().xorpd(asXmmDoubleReg(dest), new InternalAddress(masm.longConstant(DoubleSignFlip, FloatConstantAlignment)));
 
         } else if (left.isSingleFpu() || left.isDoubleFpu()) {
             assert left.fpu() == 0 : "arg must be on TOS";
@@ -3468,7 +3475,7 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void rtCall(LIROperand result, long dest, List<LIROperand> args, LIROperand tmp, CodeEmitInfo info) {
+    protected void rtCall(LIROperand result, CiRuntimeCall dest, List<LIROperand> args, LIROperand tmp, CodeEmitInfo info) {
         assert !tmp.isValid() : "don't need temporary";
         masm().call(new RuntimeAddress(dest));
         if (info != null) {

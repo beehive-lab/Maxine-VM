@@ -80,11 +80,11 @@ public final class Buffer {
     }
 
     private boolean isByte(int b) {
-        return b == (byte) b;
+        return b == (b & 0xFF);
     }
 
     private boolean isShort(int s) {
-        return s == (short) s;
+        return s == (s & 0xFFFF);
     }
 
     private void ensureSize(int length) {
@@ -176,5 +176,13 @@ public final class Buffer {
 
     public int getByte(int i) {
         return Bytes.beU1(data, i);
+    }
+
+    public byte[] getData(int start, int end) {
+        return Arrays.copyOfRange(data, start, end);
+    }
+
+    public void align(int align) {
+        position = Util.roundTo(position + 1, align) - 1;
     }
 }

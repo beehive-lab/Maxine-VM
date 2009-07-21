@@ -51,8 +51,8 @@ public class X86MacroAssembler extends X86Assembler {
     final Register jRarg4;
     private static final long NULLWORD = 0;
 
-    public X86MacroAssembler(C1XCompilation compilation, CodeBuffer code) {
-        super(compilation, code);
+    public X86MacroAssembler(C1XCompilation compilation) {
+        super(compilation);
         // TODO Auto-generated constructor stub
 
         rscratch1 = X86FrameMap.rscratch1(compilation.target.arch);
@@ -303,16 +303,18 @@ public class X86MacroAssembler extends X86Assembler {
         // explicit null check not needed since load from [klassOffset] causes a trap
         // check against inline cache
         assert !compilation.runtime.needsExplicitNullCheck(compilation.runtime.klassOffsetInBytes()) : "must add explicit null check";
-        int startOffset = offset();
+        //int startOffset = offset();
         cmpptr(iCache, new Address(receiver, compilation.runtime.klassOffsetInBytes()));
         // if icache check fails, then jump to runtime routine
         // Note: RECEIVER must still contain the receiver!
-        jumpCc(X86Assembler.Condition.notEqual, new RuntimeAddress(compilation.runtime.getRuntimeEntry(CiRuntimeCall.IcMiss)));
-        int icCmpSize = 10;
-        if (compilation.target.arch.is32bit()) {
-            icCmpSize = 9;
-        }
-        assert offset() - startOffset == icCmpSize : "check alignment in emitMethodEntry";
+        jumpCc(X86Assembler.Condition.notEqual, new RuntimeAddress(CiRuntimeCall.IcMiss));
+
+        // TODO: Check why the size is 9
+//        int icCmpSize = 10;
+//        if (compilation.target.arch.is32bit()) {
+//            icCmpSize = 9;
+//        }
+//        assert offset() - startOffset == icCmpSize : "check alignment in emitMethodEntry";
     }
 
     void increment(Register reg, int value /* = 1 */) {
@@ -331,7 +333,7 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    void callVMLeafBase(long entryPoint, int numberOfArguments) {
+    void callVMLeafBase(CiRuntimeCall entryPoint, int numberOfArguments) {
         if (compilation.target.arch.is32bit()) {
             call(new RuntimeAddress(entryPoint));
             increment(X86Register.rsp, numberOfArguments * compilation.target.arch.wordSize);
@@ -369,11 +371,11 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void cmpoop(Address src1, Object obj) {
-        cmpLiteral32(src1, Util.convertToPointer32(obj), RelocationHolder.specForImmediate());
+        cmpLiteral32(src1, Util.convertToPointer32(obj), Relocation.specForImmediate());
     }
 
     void cmpoop(Register src1, Object obj) {
-        cmpLiteral32(src1, Util.convertToPointer32(obj), RelocationHolder.specForImmediate());
+        cmpLiteral32(src1, Util.convertToPointer32(obj), Relocation.specForImmediate());
     }
 
     void extendSign(Register hi, Register lo) {
@@ -620,10 +622,10 @@ public class X86MacroAssembler extends X86Assembler {
 
     void movoop(Register dst, Object obj) {
         if (compilation.target.arch.is32bit()) {
-            movLiteral32(dst, Util.convertToPointer32(obj), RelocationHolder.specForImmediate());
+            movLiteral32(dst, Util.convertToPointer32(obj), Relocation.specForImmediate());
         } else if (compilation.target.arch.is64bit()) {
 
-            movLiteral64(dst, Util.convertToPointer64(obj), RelocationHolder.specForImmediate());
+            movLiteral64(dst, Util.convertToPointer64(obj), Relocation.specForImmediate());
         } else {
             Util.shouldNotReachHere();
         }
@@ -632,9 +634,9 @@ public class X86MacroAssembler extends X86Assembler {
     void movoop(Address dst, Object obj) {
 
         if (compilation.target.arch.is32bit()) {
-            movLiteral32(dst, Util.convertToPointer32(obj), RelocationHolder.specForImmediate());
+            movLiteral32(dst, Util.convertToPointer32(obj), Relocation.specForImmediate());
         } else if (compilation.target.arch.is64bit()) {
-            movLiteral64(rscratch1, Util.convertToPointer64(obj), RelocationHolder.specForImmediate());
+            movLiteral64(rscratch1, Util.convertToPointer64(obj), Relocation.specForImmediate());
             movq(dst, rscratch1);
         } else {
             Util.shouldNotReachHere();
@@ -733,7 +735,7 @@ public class X86MacroAssembler extends X86Assembler {
     void pushoop(Object obj) {
 
         if (compilation.target.arch.is32bit()) {
-            pushLiteral32(Util.convertToPointer32(obj), RelocationHolder.specForImmediate());
+            pushLiteral32(Util.convertToPointer32(obj), Relocation.specForImmediate());
         } else if (compilation.target.arch.is64bit()) {
             movoop(rscratch1, obj);
             push(rscratch1);
@@ -1232,7 +1234,7 @@ public class X86MacroAssembler extends X86Assembler {
             lea(cRarg1, new InternalAddress(rip));
             movq(cRarg2, X86Register.rsp); // pass pointer to regs array
             andq(X86Register.rsp, -16); // align stack as required by ABI
-            call(new RuntimeAddress(compilation.runtime.getRuntimeEntry(CiRuntimeCall.Debug)));
+            call(new RuntimeAddress(CiRuntimeCall.Debug));
             hlt();
         } else {
             throw Util.unimplemented();
@@ -1247,7 +1249,7 @@ public class X86MacroAssembler extends X86Assembler {
 
             pushCPUState(); // keeps alignment at 16 bytes
             lea(cRarg0, new ExternalAddress(Util.stringToAddress(msg)));
-            callVMLeaf(compilation.runtime.getRuntimeEntry(CiRuntimeCall.Warning), 0);
+            callVMLeaf(CiRuntimeCall.Warning, 0);
             popCPUState();
 
             movq(X86Register.rsp, X86Register.r12);
@@ -1290,6 +1292,11 @@ public class X86MacroAssembler extends X86Assembler {
         if (offset() % modulus != 0) {
             nop(modulus - (offset() % modulus));
         }
+    }
+
+    @Override
+    public void makeOffset(int length) {
+        nop(length);
     }
 
     void andpd(Register dst, AddressLiteral src) {
@@ -1372,10 +1379,10 @@ public class X86MacroAssembler extends X86Assembler {
 
     // Implementation of callVM versions
 
-    void callVM(Register oopResult, long entryPoint, boolean checkExceptions) {
+    void callVM(Register oopResult, CiRuntimeCall entryPoint, boolean checkExceptions) {
         Label c = new Label();
         Label e = new Label();
-        call(c, RelocInfo.Type.none);
+        call(c);
         jmp(e);
 
         bind(c);
@@ -1385,10 +1392,10 @@ public class X86MacroAssembler extends X86Assembler {
         bind(e);
     }
 
-    void callVM(Register oopResult, long entryPoint, Register arg1, boolean checkExceptions) {
+    void callVM(Register oopResult, CiRuntimeCall entryPoint, Register arg1, boolean checkExceptions) {
         Label c = new Label();
         Label e = new Label();
-        call(c, RelocInfo.Type.none);
+        call(c);
         jmp(e);
 
         bind(c);
@@ -1399,10 +1406,10 @@ public class X86MacroAssembler extends X86Assembler {
         bind(e);
     }
 
-    void callVM(Register oopResult, long entryPoint, Register arg1, Register arg2, boolean checkExceptions) {
+    void callVM(Register oopResult, CiRuntimeCall entryPoint, Register arg1, Register arg2, boolean checkExceptions) {
         Label c = new Label();
         Label e = new Label();
-        call(c, RelocInfo.Type.none);
+        call(c);
         jmp(e);
 
         bind(c);
@@ -1417,10 +1424,10 @@ public class X86MacroAssembler extends X86Assembler {
         bind(e);
     }
 
-    void callVM(Register oopResult, long entryPoint, Register arg1, Register arg2, Register arg3, boolean checkExceptions) {
+    void callVM(Register oopResult, CiRuntimeCall entryPoint, Register arg1, Register arg2, Register arg3, boolean checkExceptions) {
         Label c = new Label();
         Label e = new Label();
-        call(c, RelocInfo.Type.none);
+        call(c);
         jmp(e);
 
         bind(c);
@@ -1439,17 +1446,17 @@ public class X86MacroAssembler extends X86Assembler {
         bind(e);
     }
 
-    void callVM(Register oopResult, Register lastJavaSp, long entryPoint, int numberOfArguments, boolean checkExceptions) {
+    void callVM(Register oopResult, Register lastJavaSp, CiRuntimeCall entryPoint, int numberOfArguments, boolean checkExceptions) {
         Register thread = (compilation.target.arch.is64bit()) ? X86FrameMap.r15thread : Register.noreg;
         callVMBase(oopResult, thread, lastJavaSp, entryPoint, numberOfArguments, checkExceptions);
     }
 
-    void callVM(Register oopResult, Register lastJavaSp, long entryPoint, Register arg1, boolean checkExceptions) {
+    void callVM(Register oopResult, Register lastJavaSp, CiRuntimeCall entryPoint, Register arg1, boolean checkExceptions) {
         passArg1(this, arg1);
         callVM(oopResult, lastJavaSp, entryPoint, 1, checkExceptions);
     }
 
-    void callVM(Register oopResult, Register lastJavaSp, long entryPoint, Register arg1, Register arg2, boolean checkExceptions) {
+    void callVM(Register oopResult, Register lastJavaSp, CiRuntimeCall entryPoint, Register arg1, Register arg2, boolean checkExceptions) {
 
         assert !compilation.target.arch.is64bit() || arg1 != cRarg2 : "smashed arg";
         passArg2(this, arg2);
@@ -1457,7 +1464,7 @@ public class X86MacroAssembler extends X86Assembler {
         callVM(oopResult, lastJavaSp, entryPoint, 2, checkExceptions);
     }
 
-    void callVM(Register oopResult, Register lastJavaSp, long entryPoint, Register arg1, Register arg2, Register arg3, boolean checkExceptions) {
+    void callVM(Register oopResult, Register lastJavaSp, CiRuntimeCall entryPoint, Register arg1, Register arg2, Register arg3, boolean checkExceptions) {
         assert !compilation.target.arch.is64bit() || arg1 != cRarg3 : "smashed arg";
         assert !compilation.target.arch.is64bit() || arg2 != cRarg3 : "smashed arg";
         passArg3(this, arg3);
@@ -1467,7 +1474,7 @@ public class X86MacroAssembler extends X86Assembler {
         callVM(oopResult, lastJavaSp, entryPoint, 3, checkExceptions);
     }
 
-    void callVMBase(Register oopResult, Register javaThread, Register lastJavaSp, long entryPoint, int numberOfArguments, boolean checkExceptions) {
+    void callVMBase(Register oopResult, Register javaThread, Register lastJavaSp, CiRuntimeCall entryPoint, int numberOfArguments, boolean checkExceptions) {
         // determine javaThread register
         if (!javaThread.isValid()) {
 
@@ -1538,7 +1545,7 @@ public class X86MacroAssembler extends X86Assembler {
             // check for pending exceptions (javaThread is set upon return)
             cmpptr(new Address(javaThread, compilation.runtime.threadPendingExceptionOffset()), (int) NULLWORD);
             if (!compilation.target.arch.is64bit()) {
-                jumpCc(X86Assembler.Condition.notEqual, new RuntimeAddress(compilation.runtime.getRuntimeEntry(CiRuntimeCall.ForwardException)));
+                jumpCc(X86Assembler.Condition.notEqual, new RuntimeAddress(CiRuntimeCall.ForwardException));
             } else {
                 // This used to conditionally jump to forwardException however it is
                 // possible if we relocate that the branch will not reach. So we must jump
@@ -1546,7 +1553,7 @@ public class X86MacroAssembler extends X86Assembler {
 
                 Label ok = new Label();
                 jcc(X86Assembler.Condition.equal, ok);
-                jump(new RuntimeAddress(compilation.runtime.getRuntimeEntry(CiRuntimeCall.ForwardException)));
+                jump(new RuntimeAddress(CiRuntimeCall.ForwardException));
                 bind(ok);
             }
         }
@@ -1559,7 +1566,7 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    void callVMHelper(Register oopResult, long entryPoint, int numberOfArguments, boolean checkExceptions) {
+    void callVMHelper(Register oopResult, CiRuntimeCall entryPoint, int numberOfArguments, boolean checkExceptions) {
 
         // Calculate the value for lastJavaSp
         // somewhat subtle. callVM does an intermediate call
@@ -1582,16 +1589,16 @@ public class X86MacroAssembler extends X86Assembler {
 
     }
 
-    void callVMLeaf(long entryPoint, int numberOfArguments) {
+    void callVMLeaf(CiRuntimeCall entryPoint, int numberOfArguments) {
         callVMLeafBase(entryPoint, numberOfArguments);
     }
 
-    void callVMLeaf(long entryPoint, Register arg0) {
+    void callVMLeaf(CiRuntimeCall entryPoint, Register arg0) {
         passArg0(this, arg0);
         callVMLeaf(entryPoint, 1);
     }
 
-    void callVMLeaf(long entryPoint, Register arg0, Register arg1) {
+    void callVMLeaf(CiRuntimeCall entryPoint, Register arg0, Register arg1) {
 
         assert !compilation.target.arch.is64bit() || arg0 != cRarg1 : "smashed arg";
         passArg1(this, arg1);
@@ -1599,7 +1606,7 @@ public class X86MacroAssembler extends X86Assembler {
         callVMLeaf(entryPoint, 2);
     }
 
-    void callVMLeaf(long entryPoint, Register arg0, Register arg1, Register arg2) {
+    void callVMLeaf(CiRuntimeCall entryPoint, Register arg0, Register arg1, Register arg2) {
         assert !compilation.target.arch.is64bit() || arg0 != cRarg2 : "smashed arg";
         assert !compilation.target.arch.is64bit() || arg1 != cRarg2 : "smashed arg";
         passArg2(this, arg2);
@@ -2126,10 +2133,10 @@ public class X86MacroAssembler extends X86Assembler {
         if (reachable(dst)) {
             this.setInstMark();
             try {
-                relocate(dst.reloc());
+                relocate(dst.rspec);
                 int shortSize = 2;
                 int longSize = 6;
-                int offs = Util.safeToInt(dst.target().value - codePos.value);
+                int offs = Util.safeToInt(dst.target().value - codePos().value);
                 if (dst.reloc() == RelocInfo.Type.none && is8bit(offs - shortSize)) {
                     // 0111 tttn #8-bit disp
                     emitByte(0x70 | cc.value);
@@ -2435,7 +2442,7 @@ public class X86MacroAssembler extends X86Assembler {
     void osBreakpoint() {
         // instead of directly emitting a breakpoint, call os:breakpoint for better debugability
         // (e.g., MSVC can't call ps() otherwise)
-        call(new RuntimeAddress(compilation.runtime.getRuntimeEntry(CiRuntimeCall.Breakpoint)));
+        call(new RuntimeAddress(CiRuntimeCall.Breakpoint));
     }
 
     void popCPUState() {
@@ -2530,21 +2537,6 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    // Write serialization page so VM thread can do a pseudo remote membar.
-    // We use the current thread pointer to calculate a thread specific
-    // offset to write to within the page. This minimizes bus traffic
-    // due to cache line collision.
-    void serializeMemory(Register thread, Register tmp) {
-        movl(tmp, thread);
-        shrl(tmp, compilation.runtime.getSerializePageShiftCount());
-        andl(tmp, (compilation.runtime.vmPageSize() - Util.sizeofInt()));
-
-        Address index = new Address(Register.noreg, tmp, Address.ScaleFactor.times1);
-        ExternalAddress page = new ExternalAddress(compilation.runtime.getMemorySerializePage());
-
-        // Size of store must match masking code above
-        movl(asAddress(new ArrayAddress(page, index)), tmp);
-    }
 
     // Calls to C land
     //
@@ -2950,13 +2942,13 @@ public class X86MacroAssembler extends X86Assembler {
         // the MacroAssembler level
         switch (trig) {
             case 's':
-                callVMLeafBase(compilation.runtime.getRuntimeEntry(CiRuntimeCall.dsin), 0);
+                callVMLeafBase(CiRuntimeCall.dsin, 0);
                 break;
             case 'c':
-                callVMLeafBase(compilation.runtime.getRuntimeEntry(CiRuntimeCall.dcos), 0);
+                callVMLeafBase(CiRuntimeCall.dcos, 0);
                 break;
             case 't':
-                callVMLeafBase(compilation.runtime.getRuntimeEntry(CiRuntimeCall.dtan), 0);
+                callVMLeafBase(CiRuntimeCall.dtan, 0);
                 break;
             default:
                 Util.shouldNotReachHere();
@@ -3375,7 +3367,7 @@ public class X86MacroAssembler extends X86Assembler {
         movptr(X86Register.rax, buffer.addr());
         push(X86Register.rax);
         // call indirectly to solve generation ordering problem
-        movptr(X86Register.rax, new ExternalAddress(compilation.runtime.getRuntimeEntry(CiRuntimeCall.VerifyOopSubroutine)));
+        movptr(X86Register.rax, new RuntimeAddress(CiRuntimeCall.VerifyOopSubroutine));
         call(X86Register.rax);
         return true;
     }
@@ -3483,7 +3475,7 @@ public class X86MacroAssembler extends X86Assembler {
         push(X86Register.rax);
 
         // call indirectly to solve generation ordering problem
-        movptr(X86Register.rax, new ExternalAddress(compilation.runtime.getRuntimeEntry(CiRuntimeCall.VerifyOopSubroutine)));
+        movptr(X86Register.rax, new RuntimeAddress(CiRuntimeCall.VerifyOopSubroutine));
         call(X86Register.rax);
         // Caller pops the arguments and restores X86Register.rax : from the stack
     }
@@ -3579,7 +3571,7 @@ public class X86MacroAssembler extends X86Assembler {
             push(X86Register.rax);
             push(X86Register.rdx);
             push(X86Register.rcx);
-            call(new RuntimeAddress(compilation.runtime.getRuntimeEntry(CiRuntimeCall.Breakpoint)));
+            call(new RuntimeAddress(CiRuntimeCall.Breakpoint));
             pop(X86Register.rcx);
             pop(X86Register.rdx);
             pop(X86Register.rax);
@@ -3590,7 +3582,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void jmp(Label label) {
-        jmp(label, RelocInfo.Type.none);
+        jmp(label, Relocation.none);
     }
 
     // Support optimal SSE move instructions.
@@ -3852,7 +3844,7 @@ public class X86MacroAssembler extends X86Assembler {
 
         if (compilation.runtime.dtraceAllocProbes()) {
             assert obj == X86Register.rax : "must be";
-            call(new RuntimeAddress(compilation.runtime.getRuntimeEntry(CiRuntimeCall.DtraceObjectAlloc)));
+            call(new RuntimeAddress(CiRuntimeCall.DtraceObjectAlloc));
         }
 
         verifyOop(obj);
@@ -3993,7 +3985,7 @@ public class X86MacroAssembler extends X86Assembler {
 
         if (compilation.runtime.dtraceAllocProbes()) {
             assert obj == X86Register.rax : "must be";
-            call(new RuntimeAddress(compilation.runtime.getRuntimeEntry(CiRuntimeCall.DtraceObjectAlloc)));
+            call(new RuntimeAddress(CiRuntimeCall.DtraceObjectAlloc));
         }
 
         verifyOop(obj);
@@ -4128,5 +4120,14 @@ public class X86MacroAssembler extends X86Assembler {
           emptyFPUStack();
         }
         decrement(X86Register.rsp, frameSizeInBytes); // does not emit code for frameSize == 0
+    }
+
+    public int longConstant(long l) {
+        return dataBuffer.emitLong(l);
+    }
+
+    public int longConstant(long l, int alignment) {
+        dataBuffer.align(alignment);
+        return dataBuffer.emitLong(l);
     }
 }

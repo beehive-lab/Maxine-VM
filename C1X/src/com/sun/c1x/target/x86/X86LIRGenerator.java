@@ -430,16 +430,16 @@ public final class X86LIRGenerator extends LIRGenerator {
             lir().cmp(LIRCondition.Equal, right.result(), LIROperandFactory.longConst(0));
             lir().branch(LIRCondition.Equal, BasicType.Long, new DivByZeroStub(info));
 
-            long entry;
+            CiRuntimeCall entry;
             switch (x.opcode()) {
                 case Bytecodes.LREM:
-                    entry = compilation.runtime.getRuntimeEntry(CiRuntimeCall.Lrem);
+                    entry = CiRuntimeCall.Lrem;
                     break; // check if dividend is 0 is done elsewhere
                 case Bytecodes.LDIV:
-                    entry = compilation.runtime.getRuntimeEntry(CiRuntimeCall.Ldiv);
+                    entry = CiRuntimeCall.Ldiv;
                     break; // check if dividend is 0 is done elsewhere
                 case Bytecodes.LMUL:
-                    entry = compilation.runtime.getRuntimeEntry(CiRuntimeCall.Lmul);
+                    entry = CiRuntimeCall.Lmul;
                     break;
                 default:
                     throw Util.shouldNotReachHere();
@@ -1118,7 +1118,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         args.add(reg);
         args.add(rank);
         args.add(varargs);
-        lir().callRuntime(compilation.runtime.getRuntimeEntry(CiRuntimeCall.NewMultiArray), LIROperandFactory.IllegalOperand, reg, args, info);
+        lir().callRuntime(CiRuntimeCall.NewMultiArray, LIROperandFactory.IllegalOperand, reg, args, info);
 
         LIROperand result = rlockResult(x);
         lir().move(reg, result);
@@ -1245,7 +1245,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     protected void traceBlockEntry(BlockBegin block) {
         storeStackParameter(LIROperandFactory.intConst(block.id()), 0);
         List<LIROperand> args = new ArrayList<LIROperand>();
-        lir().callRuntimeLeaf(compilation.runtime.getRuntimeEntry(CiRuntimeCall.TraceBlockEntry), LIROperandFactory.IllegalOperand, LIROperandFactory.IllegalOperand, args);
+        lir().callRuntimeLeaf(CiRuntimeCall.TraceBlockEntry, LIROperandFactory.IllegalOperand, LIROperandFactory.IllegalOperand, args);
     }
 
     @Override

@@ -65,35 +65,11 @@ public class CodeSection {
 
     }
 
-    public CodeBuffer outer() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public Pointer mark() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public void setMark() {
-        // TODO Auto-generated method stub
-
-    }
-
     public Pointer target(Label l, Pointer pointer) {
         // TODO Auto-generated method stub
         return null;
     }
 
-    public int index() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    public void relocate(Pointer pointer, RelocationHolder rspec, int format) {
-        // TODO Auto-generated method stub
-
-    }
 
     public boolean isAllocated() {
         // TODO Auto-generated method stub

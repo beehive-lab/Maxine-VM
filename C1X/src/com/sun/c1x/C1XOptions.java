@@ -148,7 +148,7 @@ public class C1XOptions {
 
     // Assembler settings
     public static boolean CommentedAssembly                  = ____;
-    public static boolean PrintLIRWithAssembly               = ____;
+    public static boolean PrintLIRWithAssembly               = TRUE;
     public static boolean VerifyOopMaps                      = ____;
     public static boolean VerifyOops                         = ____;
     public static int     CodeEntryAlignment                 = 16;
