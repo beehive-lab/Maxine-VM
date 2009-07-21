@@ -48,7 +48,7 @@ public class ValueMap {
     /**
      * A visitor to kill necessary values.
      */
-    private final ValueNumberingEffects effects = new ValueNumberingEffects();
+    final ValueNumberingEffects effects = new ValueNumberingEffects();
 
     /**
      * A bitmap denoting which of the values have been killed (by their {@link Link#id}).
@@ -179,7 +179,7 @@ public class ValueMap {
         return (valueNumber & 0x7fffffff) % t.length;
     }
 
-    private void killMemory(boolean all, CiField field, BasicType basicType) {
+    void killMemory(boolean all, CiField field, BasicType basicType) {
         // loop through all the chains
         for (int i = 0; i < table.length; i++) {
             Link l = table[i];
@@ -208,7 +208,7 @@ public class ValueMap {
         }
     }
 
-    private boolean mustKill(Instruction instr, boolean all, CiField field, BasicType basicType) {
+    boolean mustKill(Instruction instr, boolean all, CiField field, BasicType basicType) {
         if (instr instanceof LoadField) {
             if (all || ((LoadField) instr).field() == field) {
                 C1XMetrics.ValueMapKills++;
@@ -224,19 +224,28 @@ public class ValueMap {
         return false;
     }
 
-    private void killMemory() {
+    void killMemory() {
         killMemory(true, null, null);
     }
 
-    private void killField(CiField field) {
+    void killField(CiField field) {
         killMemory(false, field, null);
     }
 
-    private void killArray(ValueType elementType) {
+    void killArray(ValueType elementType) {
         killMemory(false, null, elementType.basicType);
     }
 
-    private CiField checkField(CiField field) {
+    void killMap(ValueMap map) {
+        parentKill.setUnion(map.parentKill);
+    }
+
+    void killException() {
+        // TODO: kill only those values that are in the map one level above
+        killMemory(true, null, null);
+    }
+
+    CiField checkField(CiField field) {
         if (!field.isLoaded()) {
             killMemory();
         }

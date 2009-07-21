@@ -138,6 +138,8 @@ public class C1XOptions {
     public static boolean GenerateCompilerNullChecks         = ____;
     public static boolean UseTableRanges                     = ____;
     public static boolean DetailedAsserts                    = TRUE;
+    public static boolean OptimizeControlFlow                = ____;
+    public static boolean OptimizeMoves                      = ____;
 
     public static boolean GenerateArrayStoreCheck            = TRUE;
     public static boolean UseBiasedLocking                   = ____;
@@ -202,6 +204,10 @@ public class C1XOptions {
         ComputeStoresInLoops               = ____;
         SimplifyPhis                       = ____;
 
+        // turn off backend optimizations
+        OptimizeControlFlow                = ____;
+        OptimizeMoves                      = ____;
+
         DoGlobalValueNumbering             = ____;
         DoArrayBoundsCheckElimination      = ____;
         DistinguishExceptionHandlerCode    = ____;
@@ -227,6 +233,10 @@ public class C1XOptions {
         UseCHA                             = TRUE;
         UseDeopt                           = TRUE;
         UseCHALeafMethods                  = TRUE;
+
+        // turn on backend optimizations
+        OptimizeControlFlow                = TRUE;
+        OptimizeMoves                      = TRUE;
 
         // turn off global optimizations, except null check elimination
         DoGlobalValueNumbering             = ____;
@@ -254,6 +264,10 @@ public class C1XOptions {
         UseCHA                             = TRUE;
         UseDeopt                           = TRUE;
         UseCHALeafMethods                  = TRUE;
+
+        // turn on backend optimizations
+        OptimizeControlFlow                = TRUE;
+        OptimizeMoves                      = TRUE;
 
         // turn on global optimizations
         DoGlobalValueNumbering             = TRUE;
