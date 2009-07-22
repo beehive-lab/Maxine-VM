@@ -85,11 +85,12 @@ public final class CharacterArrayInspector extends ObjectInspector {
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected boolean refreshView(boolean force) {
         // Only refresh the visible pane.
         final Prober prober = (Prober) tabbedPane.getSelectedComponent();
         prober.refresh(force);
         super.refreshView(force);
+        return true;
     }
 
 }

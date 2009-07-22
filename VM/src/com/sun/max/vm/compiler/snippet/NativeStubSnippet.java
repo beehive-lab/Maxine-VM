@@ -98,6 +98,7 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
                         Safepoint.reportIllegalThreadState("JNI call prologue", oldValue);
                     }
                 }
+
                 /*if (MUTATOR_STATE.getVariableWord(vmThreadLocals).equals(Address.fromInt(THREAD_IN_JAVA))) {
                     MUTATOR_STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_NATIVE));
                 } else {
@@ -132,7 +133,6 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
                     if (Safepoint.casMutatorState(enabledVmThreadLocals, THREAD_IN_NATIVE, THREAD_IN_JAVA) == THREAD_IN_NATIVE) {
                         break;
                     }
-                    Log.print("Wating in nativecallepilogue ");
                     SpecialBuiltin.pause();
                 }
                 /*if (Safepoint.casMutatorState(enabledVmThreadLocals, THREAD_IN_GC_FROM_JAVA, THREAD_IN_JAVA) == THREAD_IN_GC_FROM_JAVA) {
@@ -177,7 +177,6 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
         private static void spinUntilGCFinished(Pointer vmThreadLocals) {
             if (UseThreadStateWordForGCMutatorSynchronization) {
                 while (Safepoint.isTriggered()) {
-                    Log.println("Wating in spinuntilgcfinished");
                     // Spin loop that is free of safepoints and object accesses
                     SpecialBuiltin.pause();
                 }
