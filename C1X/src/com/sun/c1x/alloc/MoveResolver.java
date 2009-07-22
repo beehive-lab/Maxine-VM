@@ -236,7 +236,7 @@ public class MoveResolver {
             // the lastUse flag is an optimization for FPU stack allocation. When the same
             // input interval is used in more than one move, then it is too difficult to determine
             // if this move is really the last use.
-            fromOpr = fromOpr.makeLastUse();
+            allocator.makeLastUse(fromOpr);
         }
         insertionBuffer.move(insertIdx, fromOpr, toOpr);
 
@@ -346,7 +346,7 @@ public class MoveResolver {
 
     void setInsertPosition(LIRList insertList, int insertIdx) {
         Util.traceLinearScan(4, "MoveResolver: setting insert position to Block B%d, index %d", insertList.block() != null ? insertList.block().blockID() : -1, insertIdx);
-        assert insertIdx == -1 : "use moveInsertPosition instead of setInsertPosition when data already set";
+        assert this.insertList == null && this.insertIdx == -1 : "use moveInsertPosition instead of setInsertPosition when data already set";
 
         createInsertionBuffer(insertList);
         this.insertList = insertList;
@@ -354,9 +354,9 @@ public class MoveResolver {
     }
 
     void moveInsertPosition(LIRList insertList, int insertIdx) {
-        Util.traceLinearScan(4, "MoveResolver: moving insert position to Block B%d, index %d", insertList.block() != null ? insertList.block().blockID() : -1, insertIdx);
+        Util.traceLinearScan(4, "MoveResolver: moving insert position to Block B%d, index %d", (insertList != null && insertList.block() != null) ? insertList.block().blockID() : -1, insertIdx);
 
-        if (this.insertList != insertList || this.insertIdx != insertIdx) {
+        if (this.insertList != null && (this.insertList != insertList || this.insertIdx != insertIdx)) {
             // insert position changed . resolve current mappings
             resolveMappings();
         }
@@ -377,7 +377,7 @@ public class MoveResolver {
                         toInterval.assignedReg(), toInterval.assignedRegHi());
 
         mappingFrom.add(fromInterval);
-        mappingFromOpr.add(LIROperandFactory.illegalOperand);
+        mappingFromOpr.add(LIROperandFactory.IllegalOperand);
         mappingTo.add(toInterval);
     }
 

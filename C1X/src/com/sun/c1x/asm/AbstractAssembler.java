@@ -20,9 +20,10 @@
  */
 package com.sun.c1x.asm;
 
+import java.util.*;
+
 import com.sun.c1x.*;
 import com.sun.c1x.target.*;
-import com.sun.c1x.target.x86.*;
 import com.sun.c1x.util.*;
 
 /**
@@ -32,16 +33,15 @@ import com.sun.c1x.util.*;
  */
 public abstract class AbstractAssembler {
 
-    protected CodeSection codeSection; // section within the code buffer
-    protected Pointer codeBegin; // first byte of code buffer
-    protected Pointer codeLimit; // first byte after code buffer
-    protected Pointer codePos; // current code generation position
+    protected final Buffer codeBuffer;
+    protected final Buffer dataBuffer;
+    private int lastInstructionStart;
+    private int lastDecodeStart;
+
+    public static final int InvalidInstructionMark = -1;
+
     protected OopRecorder oopRecorder; // support for relocInfo.oopType
     public final C1XCompilation compilation;
-
-    protected Address addrAt(int pos) {
-        return new Address(codeBegin.value + pos);
-    }
 
     protected boolean is8bit(int x) {
         return -0x80 <= x && x < 0x80;
@@ -57,15 +57,15 @@ public abstract class AbstractAssembler {
 
     // Accessors
     public CodeSection codeSection() {
-        return codeSection;
+        return null;
     }
 
     public Pointer pc() {
-        return codePos;
+        return new Pointer(codeBuffer.position());
     }
 
     public int offset() {
-        return Util.safeToInt(codePos.value - codeBegin.value);
+        return codeBuffer.position();
     }
 
     public OopRecorder oopRecorder() {
@@ -76,59 +76,17 @@ public abstract class AbstractAssembler {
         oopRecorder = r;
     }
 
-    public AbstractAssembler(C1XCompilation compilation, CodeBuffer code) {
+    public AbstractAssembler(C1XCompilation compilation) {
         this.compilation = compilation;
-        if (code == null) {
-            throw Util.shouldNotReachHere();
-        }
-        CodeSection cs = code.insts();
-        cs.clearMark(); // new assembler kills old mark
-        codeSection = cs;
-        codeBegin = cs.start();
-        codeLimit = cs.limit();
-        codePos = cs.end();
-        oopRecorder = code.oopRecorder();
-        if (codeBegin == null) {
-            compilation.runtime.vmExitOutOfMemory1(0, "CodeCache: no room for %s", code.name());
-        }
-    }
-
-    void setCodeSection(CodeSection cs) {
-        assert cs.outer() == codeSection().outer() : "sanity";
-        assert cs.isAllocated() : "need to pre-allocate this section";
-        cs.clearMark(); // new assembly into this section kills old mark
-        codeSection = cs;
-        codeBegin = cs.start();
-        codeLimit = cs.limit();
-        codePos = cs.end();
-    }
-
-    // Inform CodeBuffer that incoming code and relocation will be for stubs
-    public Pointer startAStub(int requiredSpace) {
-        CodeBuffer cb = code();
-        CodeSection cs = cb.stubs();
-        assert codeSection == cb.insts() : "not in insts?";
-        sync();
-        if (cs.maybeExpandToEnsureRemaining(requiredSpace) && cb.blob() == null) {
-            return null;
-        }
-        setCodeSection(cs);
-        return pc();
-    }
-
-    // Inform CodeBuffer that incoming code and relocation will be code
-    // Should not be called if startAStub() returned null
-    public void endAStub() {
-        assert codeSection == code().stubs() : "not in stubs?";
-        sync();
-        setCodeSection(code().insts());
+        this.codeBuffer = new Buffer(compilation.target.arch.bitOrdering);
+        this.dataBuffer = new Buffer(compilation.target.arch.bitOrdering);
+        oopRecorder = new OopRecorder();
+        lastInstructionStart = InvalidInstructionMark;
     }
 
     // Inform CodeBuffer that incoming code and relocation will be for stubs
     Address startAConst(int requiredSpace, int requiredAlign) {
         // TODO: Figure out how to do this in Java!
-// CodeBuffer cb = code();
-// CodeSection cs = cb.consts();
 // assert codeSection == cb.insts() : "not in insts?";
 // sync();
 // Address end = cs.end();
@@ -145,22 +103,8 @@ public abstract class AbstractAssembler {
 // }
 // cs.setEnd(end);
 // }
-// setCodeSection(cs);
 // return end;
         throw Util.unimplemented();
-    }
-
-    // Inform CodeBuffer that incoming code and relocation will be code
-    // Should not be called if startAConst() returned null
-    void endAConst() {
-        assert codeSection == code().consts() : "not in consts?";
-        sync();
-        setCodeSection(code().insts());
-    }
-
-    void flush() {
-        sync();
-        ICache.invalidateRange(addrAt(0), offset());
     }
 
     protected void aByte(int x) {
@@ -168,12 +112,12 @@ public abstract class AbstractAssembler {
     }
 
     void aLong(int x) {
-        emitLong(x);
+        emitInt(x);
     }
 
     void print(Label l) {
         if (l.isBound()) {
-            TTY.println(String.format("bound label to %d|%d", l.locPos(), l.locSect()));
+            TTY.println(String.format("bound label to %d", l.loc()));
         } else if (l.isUnbound()) {
             l.printInstructions(this);
         } else {
@@ -184,14 +128,14 @@ public abstract class AbstractAssembler {
     public void bind(Label l) {
         if (l.isBound()) {
             // Assembler can bind a label more than once to the same place.
-            Util.guarantee(l.loc() == locator(), "attempt to redefine label");
+            Util.guarantee(l.loc() == offset(), "attempt to redefine label");
             return;
         }
-        l.bindLoc(locator());
+        l.bindLoc(offset());
         l.patchInstructions(this);
     }
 
-    void generateStackOverflowCheck(int frameSizeInBytes) {
+    protected void generateStackOverflowCheck(int frameSizeInBytes) {
         if (C1XOptions.UseStackBanging) {
             // Each code entry causes one stack bang n pages down the stack where n
             // is configurable by StackBangPages. The setting depends on the maximum
@@ -226,164 +170,71 @@ public abstract class AbstractAssembler {
 
     protected abstract void bangStackWithOffset(int bangOffset);
 
-    void blockComment(char comment) {
-        if (sect() == CodeBuffer.Type.SECT_INSTS.value) {
-            codeSection().outer().blockComment(offset(), comment);
-        }
-    }
-
     protected abstract int codeFillByte();
 
-    void sync() {
-        CodeSection cs = codeSection();
-        // TODO: In C1 this is a guarantee!
-        assert cs.start() == codeBegin : "must not shift code buffer";
-        cs.setEnd(codePos);
-    }
-
-    protected void emitByte(long x) {
-        assert x == (int) x;
-        emitByte((int) x);
-    }
-
     protected void emitByte(int x) {
-        assert isByte(x) : "not a byte";
-
-        // TODO: Figure out how to do this in Java!
-// *(unsigned char)codePos = (unsigned char)x;
-// codePos += sizeof(unsigned char);
-        // sync();
-
-        TTY.println("Emitting byte: %2x", x);
-        //throw Util.unimplemented();
+        codeBuffer.emitByte(x);
     }
 
-    protected void emitWord(int x) {
-        // TODO: Figure out how to do this in Java!
-// *(short)codePos = (short)x;
-// codePos += sizeof(short);
-// sync();
-        TTY.println("Emitting word: %x", x);
+    protected void emitShort(int x) {
+        codeBuffer.emitShort(x);
+    }
+
+    protected void emitInt(int x) {
+        codeBuffer.emitInt(x);
     }
 
     protected void emitLong(long x) {
-        assert x == (int) x;
-        emitLong((int) x);
+        codeBuffer.emitLong(x);
     }
 
-    protected void emitLong(int x) {
-        // TODO: Figure out how to do this in Java!
-// *(jint)codePos = x;
-// codePos += sizeof(jint);
-// sync();
-        TTY.println("Emitting long: %x", x);
-    }
-
-    protected void emitLong64(long x) {
-        // TODO: Figure out how to do this in Java!
-//        *(jlong) codePos = x;
-//        codePos += sizeof(jlong);
-//        codeSection().setEnd(codePos);
-        throw Util.unimplemented();
-      }
-
-    void emitAddress(Address x) {
-        // TODO: Figure out how to do this in Java!
-// *(Address)codePos = x;
-// codePos += sizeof(Address);
-// sync();
-        throw Util.unimplemented();
-    }
-
-    protected Pointer instMark() {
-        return codeSection().mark();
+    protected int instMark() {
+        return lastInstructionStart;
     }
 
     protected void setInstMark() {
-        codeSection().setMark();
+        lastInstructionStart = this.codeBuffer.position();
     }
 
     protected void clearInstMark() {
-        codeSection().clearMark();
+        lastInstructionStart = InvalidInstructionMark;
     }
 
-    public void relocate(RelocationHolder rspec) {
-        relocate(rspec, 0);
-    }
+    protected void relocate(Relocation rspec) {
 
-    void relocate(RelocationHolder rspec, int format) {
-        assert !pdCheckInstructionMark() || instMark() == null || instMark() == codePos : "call relocate() between instructions";
-        codeSection().relocate(codePos, rspec, format);
-    }
-
-    protected void relocate(RelocInfo.Type rtype) {
-        relocate(rtype, 0);
-    }
-
-    void relocate(RelocInfo.Type rtype, int format) {
-        if (rtype != RelocInfo.Type.none) {
-            // TODO: Implement
-            Util.unimplemented();
-            // relocate(Relocation::spec_simple(rtype), format);
+        if (rspec == null || rspec == Relocation.none) {
+            return;
         }
+
+        assert !pdCheckInstructionMark() || instMark() == InvalidInstructionMark || instMark() == codeBuffer.position() : "call relocate() between instructions";
+        relocate(codeBuffer.position(), rspec);
+    }
+
+    protected void relocate(int position, Relocation relocation) {
+
+        TTY.println("RELOCATION recorded at position " + position + " " + relocation);
+        switch (relocation.type()) {
+
+        }
+
     }
 
     protected abstract boolean pdCheckInstructionMark();
-
-    public CodeBuffer code() {
-        return codeSection().outer();
-    }
-
-    int sect() {
-        return codeSection().index();
-    }
-
-    protected int locator() {
-        return CodeBuffer.locator(offset(), sect());
-    }
 
     protected Pointer target(Label l) {
         return codeSection().target(l, pc());
     }
 
-    // fp constants support
-    public Pointer doubleConstant(double c) {
-
-        // TODO: Figure out how to do this in Java!
-// Address ptr = startAConst(sizeof(c), sizeof(c));
-// if (ptr != null) {
-// *(jdouble)ptr = c;
-// codePos = ptr + sizeof(c);
-// endAConst();
-// }
-// return ptr;
-
-        throw Util.unimplemented();
+    public int doubleConstant(double d) {
+        int offset = dataBuffer.emitDouble(d);
+        compilation.targetMethod.recordDataReferenceInCode(lastInstructionStart, offset, true);
+        return offset;
     }
 
-    public Pointer floatConstant(float f) {
-        // TODO: Figure out how to do this in Java!
-// Address ptr = startAConst(sizeof(c), sizeof(c));
-// if (ptr != null) {
-// *(jfloat)ptr = c;
-// codePos = ptr + sizeof(c);
-// endAConst();
-// }
-// return ptr;
-        throw Util.unimplemented();
-    }
-
-    Address addressConstant(Address c, RelocationHolder rspec) {
-        // TODO: Figure out how to do this in Java!
-// Address ptr = startAConst(sizeof(c), sizeof(c));
-// if (ptr != null) {
-// relocate(rspec);
-// *(Address)ptr = c;
-// codePos = ptr + sizeof(c);
-// endAConst();
-// }
-// return ptr;
-        throw Util.unimplemented();
+    public int floatConstant(float f) {
+        int offset = dataBuffer.emitFloat(f);
+        compilation.targetMethod.recordDataReferenceInCode(lastInstructionStart, offset, true);
+        return offset;
     }
 
     public abstract void nop();
@@ -395,16 +246,76 @@ public abstract class AbstractAssembler {
 
     public abstract void nullCheck(Register r);
 
-
     public void verifiedEntry() {
         // TODO Auto-generated method stub
 
     }
 
-    public void buildFrame(int initialFrameSizeInBytes) {
-        // TODO Auto-generated method stub
-
-    }
+    public abstract void buildFrame(int initialFrameSizeInBytes);
 
     public abstract void align(int codeEntryAlignment);
+
+    public abstract void makeOffset(int offset);
+
+    public void pdPatchInstruction(int branch, int target) {
+        assert compilation.target.arch.isX86();
+
+        int op = codeBuffer.getByte(branch);
+        assert op == 0xE8 // call
+                        ||
+                        op == 0xE9 // jmp
+                        || op == 0xEB // short jmp
+                        || (op & 0xF0) == 0x70 // short jcc
+                        || op == 0x0F && (codeBuffer.getByte(branch + 1) & 0xF0) == 0x80 // jcc
+        : "Invalid opcode at patch point";
+
+        if (op == 0xEB || (op & 0xF0) == 0x70) {
+
+            // short offset operators (jmp and jcc)
+            int imm8 = target - (branch + 2);
+            assert this.is8bit(imm8) : "Short forward jump exceeds 8-bit offset";
+            codeBuffer.emitByte(imm8, branch + 1);
+
+        } else {
+
+            int off = 1;
+            if (op == 0x0F) {
+                off = 2;
+            }
+
+            int imm32 = target - (branch + 1 + off);
+            codeBuffer.emitInt(imm32, branch + off);
+        }
+    }
+
+    public void installTargetMethod() {
+        if (compilation.targetMethod == null) {
+            byte[] array = codeBuffer.finished();
+            int length = codeBuffer.position();
+            Util.printBytes(array, length);
+
+            TTY.println("Disassembled code:");
+            TTY.println(compilation.runtime.disassemble(Arrays.copyOf(array, length)));
+
+            array = dataBuffer.finished();
+            length = dataBuffer.position();
+            Util.printBytes(array, length);
+            TTY.println("Frame size: %d", compilation.frameMap().framesize());
+
+        } else {
+            compilation.targetMethod.setTargetCode(codeBuffer.finished(), codeBuffer.position());
+            compilation.targetMethod.setData(dataBuffer.finished(), dataBuffer.position());
+            compilation.targetMethod.setFrameSize(compilation.frameMap().framesize());
+            compilation.targetMethod.finish();
+        }
+    }
+
+    public void decode() {
+        byte[] currentBytes = codeBuffer.getData(lastDecodeStart, codeBuffer.position());
+        Util.printBytes(currentBytes);
+        if (currentBytes.length > 0) {
+            TTY.println(compilation.runtime.disassemble(currentBytes));
+        }
+        lastDecodeStart = codeBuffer.position();
+    }
 }

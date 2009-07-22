@@ -24,13 +24,15 @@ import java.util.*;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.target.*;
-import com.sun.c1x.target.x86.X86Register;
-import com.sun.c1x.target.x86.Address;
+import com.sun.c1x.target.x86.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.layout.*;
+import com.sun.max.vm.layout.Layout.*;
+import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
@@ -42,6 +44,9 @@ import com.sun.max.vm.type.*;
  * @author Ben L. Titzer
  */
 public class MaxCiRuntime implements CiRuntime {
+
+    private static final Register[] generalParameterRegisters = new Register[]{X86Register.rdi, X86Register.rsi, X86Register.rdx, X86Register.r8, X86Register.r9};
+    private static final Register[] xmmParameterRegisters = new Register[]{X86Register.xmm0, X86Register.xmm1, X86Register.xmm2, X86Register.xmm3, X86Register.xmm4, X86Register.xmm5, X86Register.xmm6, X86Register.xmm7};
 
     public static final MaxCiRuntime globalRuntime = new MaxCiRuntime();
 
@@ -187,16 +192,12 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public int arrayLengthOffsetInBytes() {
-        throw Util.unimplemented();
+        return Layout.arrayHeaderLayout().arrayLengthOffset();
     }
 
     public boolean dtraceMethodProbes() {
         // TODO: currently save to return false
         return false;
-    }
-
-    public long getRuntimeEntry(CiRuntimeCall runtimeCall) {
-        throw Util.unimplemented();
     }
 
     public int headerSize() {
@@ -212,7 +213,8 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public boolean jvmtiCanPostExceptions() {
-        throw Util.unimplemented();
+        // TODO: Check what to return here
+        return false;
     }
 
     public int klassJavaMirrorOffsetInBytes() {
@@ -220,12 +222,12 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public int klassOffsetInBytes() {
-        throw Util.unimplemented();
+        return Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt();
     }
 
     public boolean needsExplicitNullCheck(int offset) {
         // TODO: Return false if implicit null check is possible for this offset!
-        return true;
+        return offset > 0xbad;
     }
 
     public int threadExceptionOopOffset() {
@@ -240,24 +242,26 @@ public class MaxCiRuntime implements CiRuntime {
         throw Util.unimplemented();
     }
 
-    public Address throwCountAddress() {
+    public long throwCountAddress() {
         throw Util.unimplemented();
     }
 
     public int vtableEntryMethodOffsetInBytes() {
-        throw Util.unimplemented();
+        // TODO: (tw) check if 0 is correct (probably)
+        return 0;
     }
 
     public int vtableEntrySize() {
-        throw Util.unimplemented();
+        // TODO: (tw) modify, return better value
+        return 8;
     }
 
     public int vtableStartOffset() {
-        throw Util.unimplemented();
+        return Hub.vTableStartIndex();
     }
 
     public int arrayBaseOffsetInBytes(BasicType type) {
-        throw Util.unimplemented();
+        return Layout.layoutScheme().arrayHeaderLayout.headerSize();
     }
 
     public int nativeCallInstructionSize() {
@@ -285,10 +289,10 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public int vmPageSize() {
-        throw Util.unimplemented();
+        return Integer.getInteger(Prototype.PAGE_SIZE_PROPERTY, Prototype.nativeGetPageSize());
     }
 
-    public Address argRegSaveAreaBytes() {
+    public int argRegSaveAreaBytes() {
         throw Util.unimplemented();
     }
 
@@ -345,8 +349,7 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public Register javaCallingConventionReceiverRegister() {
-        // TODO Auto-generated method stub
-        return null;
+        return X86Register.rax;
     }
 
     public int markOffsetInBytes() {
@@ -477,24 +480,17 @@ public class MaxCiRuntime implements CiRuntime {
         throw Util.unimplemented();
     }
 
-    public int javaCallingConvention(CiMethod method, CiLocation[] result, boolean outgoing) {
+    public int javaCallingConvention(BasicType[] types, CiLocation[] result, boolean outgoing) {
 
-        int iGeneral = 0;
-        int iXMM = 0;
-        final CiSignature signature = method.signatureType();
+        assert result.length == types.length;
 
+        int currentGeneral = 0;
+        int currentXMM = 0;
+        int currentStackSlot = 1;
 
-        final int argumentCount = signature.argumentCount(!method.isStatic());
+        for (int i = 0; i < types.length; i++) {
 
-
-        for (int i = 0; i < argumentCount; i++) {
-
-            final BasicType kind;
-            if (i == 0 && !method.isStatic()) {
-                kind = BasicType.Object;
-            } else {
-                kind = signature.argumentBasicTypeAt(i);
-            }
+            final BasicType kind = types[i];
 
             switch (kind) {
                 case Byte:
@@ -504,42 +500,84 @@ public class MaxCiRuntime implements CiRuntime {
                 case Int:
                 case Long:
                 case Word:
-                case Object: {
-                    if (iGeneral < X86Register.cpuRegisters.length) {
-                        result[i] = new CiLocation(X86Register.cpuRegisters[iGeneral++]);
+                case Object:
+                    if (currentGeneral < generalParameterRegisters.length) {
+                        result[i] = new CiLocation(generalParameterRegisters[currentGeneral++]);
                     }
                     break;
-                }
+
                 case Float:
-                case Double: {
-                    if (iXMM < X86Register.xmmRegisters.length) {
-                        result[i] = new CiLocation(X86Register.xmmRegisters[iXMM++]);
+                case Double:
+                    if (currentXMM < xmmParameterRegisters.length) {
+                        result[i] = new CiLocation(xmmParameterRegisters[currentXMM++]);
                     }
-                    break;
-                }
-                case Void:
-                    result[i] = null;
                     break;
 
                 default:
                     throw Util.shouldNotReachHere();
             }
-        }
 
-        for (int i = 0; i < result.length; i++) {
             if (result[i] == null) {
-                throw Util.shouldNotReachHere();
-                // Currently cannot return stack slot
+                result[i] = new CiLocation(currentStackSlot);
+                currentStackSlot += kind.size;
             }
         }
 
-        // Return preserved stack size
-        return 0;
+        return currentStackSlot - 1;
     }
 
     public int outPreserveStackSlots() {
         // This is probably correct for now.
         return 0;
+    }
+
+    @Override
+    public CiLocation receiverLocation() {
+        return new CiLocation(generalParameterRegisters[0]);
+    }
+
+    @Override
+    public int sizeofBasicObjectLock() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public int codeOffset() {
+        // TODO: get rid of this!
+        // Offset because this is optimized code:
+        return 8;
+    }
+
+    @Override
+    public String disassemble(byte[] code) {
+        /*final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
+        writer.flush();
+        final ProcessorKind processorKind = VMConfiguration.target().platform().processorKind;
+        final InlineDataDecoder inlineDataDecoder = null; //InlineDataDecoder.createFrom(teleTargetMethod.getEncodedInlineDataDescriptors());
+        final Pointer startAddress = Pointer.fromInt(0);
+        final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
+            @Override
+            protected String disassembledObjectString(Disassembler disassembler, DisassembledObject disassembledObject) {
+                final String string = super.disassembledObjectString(disassembler, disassembledObject);
+                if (string.startsWith("call ")) {
+                    final BytecodeLocation bytecodeLocation = null; //_teleTargetMethod.getBytecodeLocationFor(startAddress.plus(disassembledObject.startPosition()));
+                    if (bytecodeLocation != null) {
+                        final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
+                        if (methodRef != null) {
+                            final ConstantPool pool = bytecodeLocation.classMethodActor().codeAttribute().constantPool();
+                            return string + " [" + methodRef.holder(pool).toJavaString(false) + "." + methodRef.name(pool) + methodRef.signature(pool).toJavaString(false, false) + "]";
+                        }
+                    }
+                }
+                return string;
+            }
+        };
+        Disassemble.disassemble(byteArrayOutputStream, code, processorKind, startAddress, inlineDataDecoder, disassemblyPrinter);
+        return byteArrayOutputStream.toString();*/
+
+        return "";
     }
 
 }

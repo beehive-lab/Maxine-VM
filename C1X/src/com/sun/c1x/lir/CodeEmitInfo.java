@@ -100,6 +100,10 @@ public class CodeEmitInfo {
         }
     }
 
+    FrameMap frameMap() {
+        return scope.compilation().frameMap();
+    }
+
     /**
      * Gets the scopeDebugInfo of this class.
      *
@@ -112,6 +116,10 @@ public class CodeEmitInfo {
     // accessors
     public OopMap oopMap() {
         return oopMap;
+    }
+
+    public void setOopMap(OopMap oopMap) {
+        this.oopMap = oopMap;
     }
 
     public IRScope scope() {
@@ -135,9 +143,18 @@ public class CodeEmitInfo {
     }
 
     public void addRegisterOop(LIROperand opr) {
+        assert oopMap != null :  "oop map must already exist";
+        assert opr.isSingleCpu() :  "should not call otherwise";
+
+        CiLocation name = frameMap().regname(opr);
+        oopMap.setOop(name);
     }
 
     public void recordDebugInfo(DebugInformationRecorder recorder, int pcOffset) {
+        // record the safepoint before recording the debug info for enclosing scopes
+        recorder.addSafepoint(pcOffset, oopMap.deepCopy());
+        scopeDebugInfo.recordDebugInfo(recorder, pcOffset);
+        recorder.endSafepoint(pcOffset);
     }
 
     public CodeEmitInfo next() {

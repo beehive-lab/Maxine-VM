@@ -20,21 +20,55 @@
  */
 package com.sun.c1x.asm;
 
+import com.sun.c1x.target.*;
 
-public class BufferBlob extends CodeBlob{
+/**
+ *
+ * @author Thomas Wuerthinger
+ *
+ */
+public class RegisterOrConstant {
 
-    /**
-     * @param name
-     * @param cb
-     * @param headerSize
-     * @param size
-     * @param frameComplete
-     * @param frameSize
-     * @param oopMaps
-     */
-    public BufferBlob(char name, CodeBuffer cb, int headerSize, int size, int frameComplete, int frameSize, OopMapSet oopMaps) {
-        super(name, cb, headerSize, size, frameComplete, frameSize, oopMaps);
+    public RegisterOrConstant(int i) {
         // TODO Auto-generated constructor stub
+    }
+
+    public RegisterOrConstant(long l) {
+        // TODO Auto-generated constructor stub
+    }
+
+    public RegisterOrConstant(Register tmp) {
+        // TODO Auto-generated constructor stub
+    }
+
+    public boolean isConstant() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public Register asRegister() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public int constantOrZero() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public boolean isRegister() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public int asConstant() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public Register registerOrNoReg() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

@@ -143,7 +143,10 @@ public class Invoke extends StateSplit {
     @Override
     public void inputValuesDo(InstructionClosure closure) {
         for (int i = 0; i < arguments.length; i++) {
-            arguments[i] = closure.apply(arguments[i]);
+            Instruction arg = arguments[i];
+            if (arg != null) {
+                arguments[i] = closure.apply(arg);
+            }
         }
     }
 

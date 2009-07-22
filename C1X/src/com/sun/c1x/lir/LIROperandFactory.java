@@ -20,9 +20,7 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.target.*;
-import com.sun.c1x.target.x86.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
@@ -38,39 +36,14 @@ import com.sun.c1x.value.*;
  */
 public class LIROperandFactory {
 
-    public static final LIROperand illegalOperand = LIROperand.ILLEGAL;
+    public static final LIROperand IllegalOperand = LIROperand.ILLEGAL;
 
-    public static LIROperand singleCpu(Register reg) {
-        return new LIRLocation(BasicType.Int, reg);
+    public static LIROperand singleLocation(BasicType type, Register reg) {
+        return new LIRLocation(type, reg);
     }
 
-    public static LIROperand singleCpuOop(Register reg) {
-        return new LIRLocation(BasicType.Object, reg);
-    }
-
-    public static LIROperand doubleCpu(Register reg1, Register reg2) {
-        return new LIRLocation(BasicType.Long, reg1, reg2, 0);
-    }
-
-    public static LIROperand singleFpu(Register reg) {
-        return new LIRLocation(BasicType.Float, reg);
-    }
-
-
-    public static LIROperand doubleFpuSparc(Register reg1, Register reg2) {
-        return new LIRLocation(BasicType.Double, reg1, reg2, 0);
-    }
-
-    public static LIROperand doubleFpuX86(Register reg) {
-        return new LIRLocation(BasicType.Double, reg);
-    }
-
-    public static LIROperand singleXmmX86(Register reg) {
-        return new LIRLocation(BasicType.Float, reg, LIRLocation.XMM);
-    }
-
-    public static LIROperand doubleXmmX86(Register reg) {
-        return new LIRLocation(BasicType.Double, reg, LIRLocation.XMM);
+    public static LIROperand doubleLocation(BasicType type, Register reg1, Register reg2) {
+        return new LIRLocation(type, reg1, reg2);
     }
 
     public static LIROperand virtualRegister(int index, BasicType type) {
@@ -78,9 +51,6 @@ public class LIROperandFactory {
         return new LIRLocation(type, index);
     }
 
-    // 'index' is computed by FrameMap.localStackPos(index); do not use other parameters as
-    // the index is platform independent; a double stack useing indeces 2 and 3 has always
-    // index 2.
     public static LIROperand stack(int index, BasicType type) {
         assert index > 0;
         return new LIRLocation(type, -index);
@@ -106,17 +76,9 @@ public class LIROperandFactory {
         return new LIRConstant(ConstType.forObject(o));
     }
 
-    public static LIROperand address(LIROperand a) {
-        return a;
-    }
-
     public static LIROperand intPtrConst(long p) {
         // TODO: address constants in ConstType
         return new LIRConstant(ConstType.forLong(p));
-    }
-
-    public static LIROperand intptrConst(int v) {
-        return new LIRConstant(ConstType.forLong(v));
     }
 
     public static LIROperand illegal() {
@@ -124,10 +86,15 @@ public class LIROperandFactory {
     }
 
     public static LIROperand valueType(ValueType type) {
-        if (type instanceof ClassType) {
-            ClassType c = (ClassType) type;
-            if (!c.isConstant()) {
-                return oopConst(null);
+
+        if (type.isObject()) {
+            if (type instanceof ClassType) {
+                ClassType c = (ClassType) type;
+                if (!c.isConstant()) {
+                    return oopConst(null);
+                } else {
+                    return oopConst(type.asConstant().asObject());
+                }
             } else {
                 return oopConst(type.asConstant().asObject());
             }
@@ -165,25 +132,4 @@ public class LIROperandFactory {
             return intConst(-1);
         }
     }
-
-        // TODO Auto-generated method stub
-    public static LIROperand intptrConst(Address counter) {
-        return null;
-    }
-
-
-    public static LIROperand longConst(int i) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public static LIROperand registerPairToOperand(CiLocation pair) {
-        if (pair.second == null) {
-            return singleCpu(pair.first);
-        } else {
-            return doubleCpu(pair.first, pair.second);
-        }
-    }
-
-    // TODO to be completed
 }

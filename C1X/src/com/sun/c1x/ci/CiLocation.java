@@ -29,6 +29,8 @@ import com.sun.c1x.target.*;
  */
 public final class CiLocation {
 
+    public static final CiLocation InvalidLocation = new CiLocation();
+
     public final Register first;
     public final Register second;
     public final int stackOffset;
@@ -43,6 +45,12 @@ public final class CiLocation {
         this.first = first;
         this.second = second;
         stackOffset = 0;
+    }
+
+    private CiLocation() {
+        this.first = null;
+        this.second = null;
+        this.stackOffset = 0;
     }
 
     public CiLocation(int stackOffset) {
@@ -60,7 +68,30 @@ public final class CiLocation {
         return second != null;
     }
 
+    public boolean isRegister() {
+        return isSingleRegister() || isDoubleRegister();
+    }
+
     public boolean isStackOffset() {
         return stackOffset > 0;
+    }
+
+    public boolean isValid() {
+        return isStackOffset() || isRegister();
+
+    }
+
+    @Override
+    public String toString() {
+        if (isSingleRegister()) {
+            return first.name;
+        } else if (isDoubleRegister()) {
+            return first.name + "+" + second.name;
+        } else if (isStackOffset()) {
+            return "STACKED REG";
+        } else {
+            assert !this.isValid();
+            return "BAD";
+        }
     }
 }

@@ -36,8 +36,8 @@ import com.sun.c1x.util.*;
  */
 public abstract class CodeStub {
 
-    protected Label entry;            // label at the stub entry point
-    protected Label continuation;     // label where stub continues, if any
+    protected final Label entry = new Label();            // label at the stub entry point
+    protected final Label continuation = new Label();     // label where stub continues, if any
 
     public CodeStub() {
 

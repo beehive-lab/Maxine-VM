@@ -21,7 +21,6 @@
 package com.sun.c1x.ci;
 
 import com.sun.c1x.target.*;
-import com.sun.c1x.target.x86.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -72,13 +71,6 @@ public interface CiRuntime {
      * @return {@code true} if the method cannot be compiled
      */
     boolean mustNotCompile(CiMethod method);
-
-    /**
-     * Returns the address of a runtime call.
-     * @param runtimeCall identifies the runtime call whose address should be returned
-     * @return the address of the runtime call
-     */
-    long getRuntimeEntry(CiRuntimeCall runtimeCall);
 
     /**
      * Byte offset of the array length of an array object.
@@ -146,7 +138,7 @@ public interface CiRuntime {
      * Returns the address of the throw counter. This is used for counting the number of throws.
      * @return the address of the throw counter
      */
-    Address throwCountAddress();
+    long throwCountAddress();
 
     /**
      * Checks whether jvmti can post exceptions.
@@ -246,7 +238,7 @@ public interface CiRuntime {
 
     int markOffsetInBytes();
 
-    Address argRegSaveAreaBytes();
+    int argRegSaveAreaBytes();
 
     int threadPendingExceptionOffset();
 
@@ -301,6 +293,14 @@ public interface CiRuntime {
 
     int outPreserveStackSlots();
 
-    int javaCallingConvention(CiMethod method, CiLocation[] result, boolean outgoing);
+    int javaCallingConvention(BasicType[] types, CiLocation[] result, boolean outgoing);
+
+    int sizeofBasicObjectLock();
+
+    int codeOffset();
+
+    String disassemble(byte[] copyOf);
+
+    CiLocation receiverLocation();
 
 }

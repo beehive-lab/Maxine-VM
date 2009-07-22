@@ -22,50 +22,68 @@ package com.sun.c1x.target.x86;
 
 import com.sun.c1x.asm.*;
 import com.sun.c1x.asm.RelocInfo.*;
+import com.sun.c1x.util.*;
 
 
 public class AddressLiteral {
 
-    public Pointer target;
+    public final long target;
+    public final Relocation rspec;
+    public final boolean isLval;
 
-    public AddressLiteral(Address address, Type none) {
-        // TODO Auto-generated constructor stub
+    public AddressLiteral(long address, Type relocationType) {
+        isLval = false;
+        this.target = address;
+        switch (relocationType) {
+        case externalWordType:
+          rspec = Relocation.specExternalWord(new Pointer(address));
+          break;
+        case internalWordType:
+          rspec = Relocation.specInternalWord(new Pointer(address));
+          break;
+        case runtimeCallType:
+          rspec = Relocation.specRuntimeCall();
+          break;
+        case none:
+            rspec = null;
+          break;
+        default:
+          throw Util.shouldNotReachHere();
+        }
     }
 
-    public AddressLiteral(long l, Type polltype) {
-        // TODO Auto-generated constructor stub
+    public AddressLiteral(Relocation reloc) {
+        this(0, reloc, false);
     }
 
-    public AddressLiteral(Address entry, RelocationHolder rh) {
-        // TODO Auto-generated constructor stub
+    public AddressLiteral(long address, Relocation rspec) {
+        this(address, rspec, false);
     }
 
-    public AddressLiteral(long entry, RelocationHolder rh) {
-        // TODO Auto-generated constructor stub
+    public AddressLiteral(long address, Relocation rspec, boolean isLval) {
+        this.target = address;
+        this.rspec = rspec;
+        this.isLval = isLval;
     }
 
-    public Address addr() {
+    public AddressLiteral addr() {
         // TODO Auto-generated method stub
-        return null;
+        return new AddressLiteral(target, rspec, true);
     }
 
     public Type reloc() {
-        // TODO Auto-generated method stub
-        return null;
+        return (rspec == null) ? RelocInfo.Type.none : rspec.type();
     }
 
     public boolean isLval() {
-        // TODO Auto-generated method stub
-        return false;
+        return isLval;
     }
 
     public Pointer target() {
-        // TODO Auto-generated method stub
-        return new Pointer(0);
+        return new Pointer(target);
     }
 
-    public RelocationHolder rspec() {
-        // TODO Auto-generated method stub
-        return null;
+    public Relocation rspec() {
+        return (rspec == null) ? Relocation.none : rspec;
     }
 }

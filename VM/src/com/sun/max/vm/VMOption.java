@@ -63,7 +63,7 @@ public class VMOption {
          */
         IMPLEMENTATION_SPECIFIC;
 
-        public static final Category from(String prefix) {
+        public static Category from(String prefix) {
             if (prefix.startsWith("-XX")) {
                 return Category.IMPLEMENTATION_SPECIFIC;
             }
@@ -236,6 +236,7 @@ public class VMOption {
     /**
      * Gets all of the VM arguments provided to {@link #setVMArguments(String[])} that have not been matched
      * against a VM option.
+     * @return all of the VM arguments that have not been matched
      */
     @PROTOTYPE_ONLY
     public static List<String> unmatchedVMArguments() {
@@ -288,8 +289,7 @@ public class VMOption {
                             parseError("Error parsing " + this, i);
                         }
                     } else {
-                        final Pointer optionValue = argumentPointer;
-                        final boolean ok = parse(optionValue);
+                        final boolean ok = parse(argumentPointer);
                         if (!ok) {
                             parseError("Error parsing " + this, i);
                         }

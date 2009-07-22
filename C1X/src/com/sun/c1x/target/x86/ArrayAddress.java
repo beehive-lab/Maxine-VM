@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.target.x86;
 
+import com.sun.c1x.asm.*;
+
 /**
  *
  * @author Thomas Wuerthinger
@@ -27,8 +29,7 @@ package com.sun.c1x.target.x86;
  */
 public class ArrayAddress extends Address {
 
-    public ArrayAddress(int displacement) {
-        super(displacement);
+    public ArrayAddress() {
         // TODO Auto-generated constructor stub
     }
 
