@@ -105,7 +105,10 @@ public final class VMOptions {
         }
     }, MaxineVM.Phase.STARTING);
 
-    private static final VMOption verboseOption = register(new VMOption("-verbose ", "Enable all verbose options."), MaxineVM.Phase.PRISTINE);
+    /**
+     * The '-verbose' option and all its variants (e.g. '-verbose:gc', '-verbose:class' etc).
+     */
+    public static final VerboseVMOption verboseOption = register(new VerboseVMOption(), MaxineVM.Phase.PRISTINE);
 
     private static final VMIntOption traceLevelOption = register(new VMIntOption("-XX:TraceLevel=", 0, "Enable tracing output at the specified level.") {
         @Override
@@ -175,11 +178,6 @@ public final class VMOptions {
         }
         for (VMOption existingOption : allOptions) {
             ProgramError.check(!existingOption.prefix.equals(option.prefix), "VM option prefix is not unique: " + option.prefix);
-            if (option.prefix.startsWith(existingOption.prefix)) {
-                existingOption.addSuboption(option);
-            } else if (existingOption.prefix.startsWith(option.prefix)) {
-                option.addSuboption(existingOption);
-            }
         }
         options.add(option);
         return options.toArray(new VMOption[options.size()]);

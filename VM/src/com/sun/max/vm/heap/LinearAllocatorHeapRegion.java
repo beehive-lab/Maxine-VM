@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.heap;
 
-import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -82,7 +81,7 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
             }
             return Pointer.zero();
         }
-        mark.set(end);
+        setMark(end);
         return cell;
     }
 
@@ -112,7 +111,11 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
 
     public void visitCells(CellVisitor cellVisitor) {
         Pointer cell = start().asPointer();
-        while (DebugHeap.skipCellPadding(cell).lessThan(mark())) {
+        while (cell.lessThan(mark())) {
+            cell = DebugHeap.skipCellPadding(cell);
+            if (cell.greaterEqual(mark())) {
+                break;
+            }
             cell = DebugHeap.checkDebugCellTag(start(), cell);
             cell = cellVisitor.visitCell(cell);
         }

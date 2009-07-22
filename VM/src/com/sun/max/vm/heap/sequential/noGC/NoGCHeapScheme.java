@@ -96,7 +96,9 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
                 Log.println(allocationMark().minus(space.start()).toInt());
             }
 
-            verifyHeap();
+            if (MaxineVM.isDebug()) {
+                verifyHeap();
+            }
 
             ++numberOfGarbageCollectionInvocations;
             InspectableHeapInfo.beforeGarbageCollection();
@@ -113,7 +115,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
             rootScanTimer.start();
             rootScanTimer.stop();
 
-            if (Heap.traceGC()) {
+            if (Heap.traceGCPhases()) {
                 Log.println("Scanning boot heap...");
             }
             bootHeapScanTimer.start();
@@ -122,7 +124,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
             codeScanTimer.start();
             codeScanTimer.stop();
 
-            if (Heap.traceGC()) {
+            if (Heap.traceGCPhases()) {
                 Log.println("Moving reachable...");
             }
 
@@ -132,11 +134,13 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
 
             VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
 
-            verifyHeap();
+            if (MaxineVM.isDebug()) {
+                verifyHeap();
+            }
 
             InspectableHeapInfo.afterGarbageCollection();
 
-            if (Heap.traceGC()) {
+            if (Heap.traceGCPhases()) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("clear & initialize: ");
                 Log.print(TimerUtil.getLastElapsedMilliSeconds(clearTimer));
@@ -338,12 +342,12 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     private final SequentialHeapRootsScanner heapRootsVerifier = new SequentialHeapRootsScanner(pointerIndexGripVerifier);
 
     private void verifyHeap() {
-        if (Heap.traceGC()) {
+        if (Heap.traceGCPhases()) {
             Log.println("Verifying heap...");
         }
         heapRootsVerifier.run();
-        DebugHeap.verifyRegion(space.start().asPointer(), allocationMark(), space, pointerOffsetGripVerifier);
-        if (Heap.traceGC()) {
+        DebugHeap.verifyRegion("Heap", space.start().asPointer(), allocationMark(), space, pointerOffsetGripVerifier);
+        if (Heap.traceGCPhases()) {
             Log.println("done verifying heap");
         }
     }

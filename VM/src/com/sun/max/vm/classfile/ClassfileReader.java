@@ -1249,13 +1249,10 @@ public final class ClassfileReader {
         return classActor;
     }
 
-    private static final VMOption verboseOption = register(new VMOption("-verbose:class",
-        "Display information about each class loaded."), MaxineVM.Phase.PRISTINE);
-
     private ClassActor loadClass(final Utf8Constant name, Object source) {
         try {
             String optSource = null;
-            if (verboseOption.isPresent()) {
+            if (verboseOption.verboseClass) {
                 if (source != null) {
                     Log.println("[Loading " + name + " from " + source + "]");
                 } else {
@@ -1271,7 +1268,7 @@ public final class ClassfileReader {
             });
             final ClassActor classActor = loadClass0(name);
 
-            if (verboseOption.isPresent()) {
+            if (verboseOption.verboseClass) {
                 if (source != null) {
                     Log.println("[Loaded " + name + " from " + source + "]");
                 } else {

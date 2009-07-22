@@ -45,8 +45,6 @@ import com.sun.max.vm.runtime.*;
  */
 class Compilation implements Future<TargetMethod> {
 
-    private static final VMOption verboseOption = register(new VMOption("-verbose:comp", "Display information about each compilation performed."), MaxineVM.Phase.PRISTINE);
-
     /**
      * A reference to the enclosing instance of the compilation scheme.
      */
@@ -159,14 +157,14 @@ class Compilation implements Future<TargetMethod> {
 
         try {
             String methodString = null;
-            if (verboseOption.isPresent()) {
+            if (verboseOption.verboseCompilation) {
                 methodString = methodState.classMethodActor().format("%H.%n(%p)");
                 Log.println(comp.name() + ": Compiling " + methodString);
             }
             final CompilerStats stats = statsOptions.start(comp, methodState.classMethodActor());
             targetMethod = IrTargetMethod.asTargetMethod(comp.compile(methodState.classMethodActor(), directive));
             statsOptions.stop(stats);
-            if (verboseOption.isPresent()) {
+            if (verboseOption.verboseCompilation) {
                 Log.print(comp.name() + ": Compiled  " + methodString + " @ ");
                 Log.print(targetMethod.codeStart());
                 Log.print(" {code length=" + targetMethod.codeLength() + "}");

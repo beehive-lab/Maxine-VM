@@ -31,6 +31,7 @@ import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * A code region that encapsulates a contiguous, fixed-sized memory area in the {@link TeleVM}
@@ -89,15 +90,18 @@ public class CodeRegion extends LinearAllocatorHeapRegion {
     public Pointer allocateTargetMethod(TargetMethod targetMethod, Size size) {
         final Pointer start = allocateSpace(size);
         if (!start.isZero()) {
-            if (Heap.traceAllocation()) {
+            if (Heap.traceGC()) {
                 final boolean lockDisabledSafepoints = Log.lock();
-                Log.print("Allocated target code bundle for ");
+                Log.printVmThread(VmThread.current(), false);
+                Log.print(": Allocated target code bundle for ");
                 Log.printMethodActor(targetMethod.classMethodActor(), false);
                 Log.print(" at ");
                 Log.print(start);
-                Log.print(" [");
+                Log.print(" [size=");
                 Log.print(size.toInt());
-                Log.println(" bytes]");
+                Log.print(", end=");
+                Log.print(start.plus(size));
+                Log.println("]");
                 Log.unlock(lockDisabledSafepoints);
             }
             targetMethod.setStart(start);
@@ -127,15 +131,17 @@ public class CodeRegion extends LinearAllocatorHeapRegion {
             // allocation failed.
             return false;
         }
-        if (Heap.traceAllocation()) {
+        if (Heap.traceGC()) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("Allocated runtime stub named \"");
             Log.print(stub.name());
             Log.print("\" at ");
             Log.print(cell);
-            Log.print(" [");
+            Log.print(" [size=");
             Log.print(allocationSize.toInt());
-            Log.println(" bytes]");
+            Log.print(", end=");
+            Log.print(cell.plus(allocationSize));
+            Log.println("]");
             Log.unlock(lockDisabledSafepoints);
         }
         DebugHeap.writeCellTag(cell);
