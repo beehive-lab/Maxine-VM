@@ -73,22 +73,4 @@ public class LoadField extends AccessField {
     public void accept(InstructionVisitor v) {
         v.visitLoadField(this);
     }
-
-    @Override
-    public int valueNumber() {
-        if (object != null) {
-            return Util.hash1(field.hashCode(), object);
-        }
-        return 0x60000000 | field.hashCode();
-    }
-
-    @Override
-    public boolean valueEqual(Instruction i) {
-        if (i instanceof LoadField) {
-            LoadField o = (LoadField) i;
-            return field == o.field && object == o.object;
-        }
-        return false;
-    }
-
 }

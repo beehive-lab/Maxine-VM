@@ -265,7 +265,7 @@ public final class VMOptions {
      * Gets the index of the next non-empty {@linkplain #argv command line argument} starting at a given index.
      *
      * @param start the index of the first argument to consider
-     * @return the index of the first word in {@link _argv} that points to a non-empty C string or -1 if there is no
+     * @return the index of the first word in {@link #argv} that points to a non-empty C string or -1 if there is no
      *         such command line argument at whose index is greater than or equal to {@code index} and less than
      *         {@link #argc}
      */

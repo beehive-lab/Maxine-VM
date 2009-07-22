@@ -511,7 +511,7 @@ public final class X86LIRGenerator extends LIRGenerator {
                 resultReg = remOutOpr();
             }
 
-            if (!C1XOptions.ImplicitDiv0Checks) {
+            if (!C1XOptions.UseImplicitDiv0Checks) {
                 lir().cmp(LIRCondition.Equal, right.result(), LIROperandFactory.intConst(0));
                 lir().branch(LIRCondition.Equal, BasicType.Int, new DivByZeroStub(info));
             }
@@ -1052,7 +1052,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         // in case of patching (i.e., object class is not yet loaded), we need to reexecute the instruction
         // and therefore provide the state before the parameters have been consumed
         CodeEmitInfo patchingInfo = null;
-        if (!x.elementClass().isLoaded() || C1XOptions.PatchALot) {
+        if (!x.elementClass().isLoaded() || C1XOptions.TestPatching) {
             patchingInfo = stateFor(x, x.stateBefore());
         }
 
@@ -1089,7 +1089,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
         // need to get the info before, as the items may become invalid through itemFree
         CodeEmitInfo patchingInfo = null;
-        if (!x.elementType().isLoaded() || C1XOptions.PatchALot) {
+        if (!x.elementType().isLoaded() || C1XOptions.TestPatching) {
             patchingInfo = stateFor(x, x.stateBefore());
 
             // cannot re-use same xhandlers for multiple CodeEmitInfos, so
@@ -1134,7 +1134,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIRItem obj = new LIRItem(x.object(), this);
 
         CodeEmitInfo patchingInfo = null;
-        if (!x.targetClass().isLoaded() || (C1XOptions.PatchALot && !x.isIncompatibleClassChangeCheck())) {
+        if (!x.targetClass().isLoaded() || (C1XOptions.TestPatching && !x.isIncompatibleClassChangeCheck())) {
             // must do this before locking the destination register as an oop register,
             // and before the obj is loaded (the latter is for deoptimization)
             patchingInfo = stateFor(x, x.stateBefore());
@@ -1164,7 +1164,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         // result and test object may not be in same register
         LIROperand reg = rlockResult(x);
         CodeEmitInfo patchingInfo = null;
-        if ((!x.targetClass().isLoaded() || C1XOptions.PatchALot)) {
+        if ((!x.targetClass().isLoaded() || C1XOptions.TestPatching)) {
             // must do this before locking the destination register as an oop register
             patchingInfo = stateFor(x, x.stateBefore());
         }
