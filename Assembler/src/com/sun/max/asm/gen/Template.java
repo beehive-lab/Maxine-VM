@@ -83,14 +83,22 @@ public abstract class Template implements Cloneable, Comparable<Template> {
     protected Method assemblerMethod;
 
     /**
-     * Determines if this template is redundant with respect to another template.
+     * Determines if this template is redundant with respect to another
+     * {@linkplain #canonicalRepresentative() canonical} template.
      * Two templates are redundant if they both have the same name and operands.
      * Redundant pairs of instructions are assumed to implement the same machine
      * instruction semantics but may have different encodings.
      *
      * @return whether this template is redundant with respect some other template
      */
-    public abstract boolean isRedundant();
+    public final boolean isRedundant() {
+        return canonicalRepresentative() != null;
+    }
+
+    /**
+     * @see #isRedundant()
+     */
+    public abstract Template canonicalRepresentative();
 
     /**
      * The name of the Java method that will be created from this template.
@@ -173,7 +181,18 @@ public abstract class Template implements Cloneable, Comparable<Template> {
         return new Integer(myParameters.length()).compareTo(otherParameters.length());
     }
 
-    public boolean isEquivalentTo(Template other) {
-        return this == other;
+    public final boolean isEquivalentTo(Template other) {
+        if (this == other) {
+            return true;
+        }
+        Template a = this;
+        if (a.canonicalRepresentative() != null) {
+            a = a.canonicalRepresentative();
+        }
+        Template b = other;
+        if (b.canonicalRepresentative() != null) {
+            b = b.canonicalRepresentative();
+        }
+        return a == b;
     }
 }

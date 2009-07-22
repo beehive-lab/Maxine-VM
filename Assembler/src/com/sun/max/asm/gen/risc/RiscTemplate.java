@@ -158,27 +158,8 @@ public abstract class RiscTemplate extends Template implements RiscInstructionDe
     }
 
     @Override
-    public boolean isRedundant() {
-        return canonicalRepresentative != null;
-    }
-
-    @Override
-    public boolean isEquivalentTo(Template other) {
-        if (this == other) {
-            return true;
-        }
-        if (!(other instanceof RiscTemplate)) {
-            return false;
-        }
-        RiscTemplate a = this;
-        if (a.canonicalRepresentative != null) {
-            a = a.canonicalRepresentative;
-        }
-        RiscTemplate b = (RiscTemplate) other;
-        if (b.canonicalRepresentative != null) {
-            b = b.canonicalRepresentative;
-        }
-        return a == b;
+    public Template canonicalRepresentative() {
+        return canonicalRepresentative();
     }
 
     @Override
