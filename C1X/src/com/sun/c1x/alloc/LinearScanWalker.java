@@ -419,7 +419,7 @@ public class LinearScanWalker extends IntervalWalker {
         splitPart.setInsertMoveWhenActivated(moveNecessary);
         unhandledFirst[IntervalKind.anyKind.ordinal()] = appendToUnhandled(unhandledFirst(IntervalKind.anyKind), splitPart);
 
-        Util.traceLinearScan(2, "      split interval in two parts (insertMoveWhenActivated: %d)", moveNecessary);
+        Util.traceLinearScan(2, "      split interval in two parts (insertMoveWhenActivated: %b)", moveNecessary);
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.print("      ");
             it.print(TTY.out, allocator);

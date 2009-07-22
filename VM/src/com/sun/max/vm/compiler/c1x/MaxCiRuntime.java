@@ -474,24 +474,17 @@ public class MaxCiRuntime implements CiRuntime {
         throw Util.unimplemented();
     }
 
-    public int javaCallingConvention(CiMethod method, CiLocation[] result, boolean outgoing) {
+    public int javaCallingConvention(BasicType[] types, CiLocation[] result, boolean outgoing) {
 
-        int iGeneral = 0;
-        int iXMM = 0;
-        final CiSignature signature = method.signatureType();
+        assert result.length == types.length;
 
+        int currentGeneral = 0;
+        int currentXMM = 0;
+        int currentStackSlot = 1;
 
-        final int argumentCount = signature.argumentCount(!method.isStatic());
+        for (int i = 0; i < types.length; i++) {
 
-
-        for (int i = 0; i < argumentCount; i++) {
-
-            final BasicType kind;
-            if (i == 0 && !method.isStatic()) {
-                kind = BasicType.Object;
-            } else {
-                kind = signature.argumentBasicTypeAt(i);
-            }
+            final BasicType kind = types[i];
 
             switch (kind) {
                 case Byte:
@@ -501,37 +494,30 @@ public class MaxCiRuntime implements CiRuntime {
                 case Int:
                 case Long:
                 case Word:
-                case Object: {
-                    if (iGeneral < X86Register.cpuRegisters.length) {
-                        result[i] = new CiLocation(X86Register.cpuRegisters[iGeneral++]);
+                case Object:
+                    if (currentGeneral < X86Register.cpuRegisters.length) {
+                        result[i] = new CiLocation(X86Register.cpuRegisters[currentGeneral++]);
                     }
                     break;
-                }
+
                 case Float:
-                case Double: {
-                    if (iXMM < X86Register.xmmRegisters.length) {
-                        result[i] = new CiLocation(X86Register.xmmRegisters[iXMM++]);
+                case Double:
+                    if (currentXMM < X86Register.xmmRegisters.length) {
+                        result[i] = new CiLocation(X86Register.xmmRegisters[currentXMM++]);
                     }
-                    break;
-                }
-                case Void:
-                    result[i] = null;
                     break;
 
                 default:
                     throw Util.shouldNotReachHere();
             }
-        }
 
-        for (int i = 0; i < result.length; i++) {
             if (result[i] == null) {
-                throw Util.shouldNotReachHere();
-                // Currently cannot return stack slot
+                result[i] = new CiLocation(currentStackSlot);
+                currentStackSlot += kind.size;
             }
         }
 
-        // Return preserved stack size
-        return 0;
+        return currentStackSlot - 1;
     }
 
     public int outPreserveStackSlots() {

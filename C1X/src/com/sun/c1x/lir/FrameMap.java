@@ -54,6 +54,7 @@ public class FrameMap {
         this.compilation = compilation;
         framesize = -1;
         numSpills = -1;
+        argcount = method.signatureType().argumentSlots(!method.isStatic());
 
         assert monitors >= 0 : "not set";
         numMonitors = monitors;
@@ -111,61 +112,27 @@ public class FrameMap {
 
     public CallingConvention javaCallingConvention(BasicType[] signature, boolean outgoing) {
 
-
-        // compute the size of the arguments first.  The signature array
-        // that javaCallingConvention takes includes a TVOID after double
-        // work items but our signatures do not.
-        int i;
-        int sizeargs = 0;
-        for (i = 0; i < signature.length; i++) {
-          sizeargs += signature[i].size;
-        }
-
-        BasicType[] sigBt = new BasicType[sizeargs];
-        CiLocation[] regs = new CiLocation[sizeargs];
-        int sigIndex = 0;
-        for (i = 0; i < sizeargs; i++, sigIndex++) {
-          sigBt[i] = signature[sigIndex];
-          if (sigBt[i] == BasicType.Long || sigBt[i] == BasicType.Double) {
-            sigBt[i + 1] = BasicType.Void;
-            i++;
-          }
-        }
-
-        int outPreserve = compilation.runtime.javaCallingConvention(compilation.method, regs, outgoing);
-
-
+        CiLocation[] regs = new CiLocation[signature.length];
+        int preservedStackSlots = compilation.runtime.javaCallingConvention(signature, regs, outgoing);
         List<LIROperand> args = new ArrayList<LIROperand>(signature.length);
-        for (i = 0; i < sizeargs;) {
-          BasicType t = sigBt[i];
-          assert t != BasicType.Void :  "should be skipping these";
-
-          LIROperand opr = mapToOpr(t, regs[i], outgoing);
-          args.add(opr);
-          if (opr.isAddress()) {
-            LIRAddress addr = opr.asAddressPtr();
-            outPreserve = Math.max(outPreserve, addr.displacement / 4);
-          }
-          i += t.size;
+        for (int i = 0; i < signature.length; i++) {
+            args.add(mapToOpr(signature[i], regs[i], outgoing));
         }
-        assert args.size() == signature.length :  "size mismatch";
-        outPreserve += compilation.runtime.outPreserveStackSlots();
 
-        if (outgoing) {
-          // update the space reserved for arguments.
-          updateReservedArgumentAreaSize(outPreserve);
-        }
-        return new CallingConvention(args, outPreserve);
+        return new CallingConvention(args, preservedStackSlots);
     }
 
-    private void updateReservedArgumentAreaSize(int outPreserve) {
-        // TODO Auto-generated method stub
+    private LIROperand mapToOpr(BasicType t, CiLocation location, boolean outgoing) {
 
-    }
-
-    private LIROperand mapToOpr(BasicType t, CiLocation pair, boolean outgoing) {
-        // TODO Auto-generated method stub
-        return LIROperandFactory.registerPairToOperand(t, pair);
+        if (location.isStackOffset()) {
+            return LIROperandFactory.stack(location.stackOffset, t);
+        } else if (location.second == null) {
+            assert location.first != null;
+            return new LIRLocation(t, location.first);
+        } else {
+            assert location.first != null;
+            return new LIRLocation(t, location.first, location.second);
+        }
     }
 
     public CallingConvention incomingArguments() {
@@ -199,15 +166,11 @@ public class FrameMap {
 
     public int framesize() {
         assert framesize != -1 :  "hasn't been calculated";
-
-        //return framesize;
-        // TODO: calc frame size
-        return 64;
+        return framesize;
     }
 
     public int argcount() {
-        // TODO Auto-generated method stub
-        return 0;
+        return argcount;
     }
 
     public Register[] callerSavedRegisters() {

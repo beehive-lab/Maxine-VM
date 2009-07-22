@@ -293,7 +293,7 @@ public interface CiRuntime {
 
     int outPreserveStackSlots();
 
-    int javaCallingConvention(CiMethod method, CiLocation[] result, boolean outgoing);
+    int javaCallingConvention(BasicType[] types, CiLocation[] result, boolean outgoing);
 
     int sizeofBasicObjectLock();
 
