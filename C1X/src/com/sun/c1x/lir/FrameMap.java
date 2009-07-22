@@ -23,10 +23,11 @@ package com.sun.c1x.lir;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.lir.Location.*;
 import com.sun.c1x.target.*;
-import com.sun.c1x.target.x86.*;
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -34,7 +35,9 @@ import com.sun.c1x.value.*;
  * @author Thomas Wuerthinger
  *
  */
-public class FrameMap {
+public abstract class FrameMap {
+
+    public static final int spillSlotSizeInBytes = 4;
 
     int framesize;
     int argcount;
@@ -47,11 +50,13 @@ public class FrameMap {
     int[] argumentLocations;
     final C1XCompilation compilation;
 
+
     public FrameMap(C1XCompilation compilation, CiMethod method, int monitors, int maxStack) {
 
         this.compilation = compilation;
         framesize = -1;
         numSpills = -1;
+        argcount = method.signatureType().argumentSlots(!method.isStatic());
 
         assert monitors >= 0 : "not set";
         numMonitors = monitors;
@@ -90,7 +95,7 @@ public class FrameMap {
         }
 
         // add remaining arguments
-        for (int i = 0; i < sig.argumentSlots(false); i++) {
+        for (int i = 0; i < sig.argumentCount(false); i++) {
             CiType type = sig.argumentTypeAt(i);
             BasicType t = type.basicType();
             sta[z++] = t;
@@ -103,67 +108,32 @@ public class FrameMap {
     }
 
     public CallingConvention runtimeCallingConvention(BasicType[] signature) {
-        // TODO Auto-generated method stub
-        return null;
+        return javaCallingConvention(signature, true);
     }
 
     public CallingConvention javaCallingConvention(BasicType[] signature, boolean outgoing) {
 
-
-        // compute the size of the arguments first.  The signature array
-        // that javaCallingConvention takes includes a TVOID after double
-        // work items but our signatures do not.
-        int i;
-        int sizeargs = 0;
-        for (i = 0; i < signature.length; i++) {
-          sizeargs += signature[i].size;
-        }
-
-        BasicType[] sigBt = new BasicType[sizeargs];
-        CiLocation[] regs = new CiLocation[sizeargs];
-        int sigIndex = 0;
-        for (i = 0; i < sizeargs; i++, sigIndex++) {
-          sigBt[i] = signature[sigIndex];
-          if (sigBt[i] == BasicType.Long || sigBt[i] == BasicType.Double) {
-            sigBt[i + 1] = BasicType.Void;
-            i++;
-          }
-        }
-
-        int outPreserve = compilation.runtime.javaCallingConvention(compilation.method, regs, outgoing);
-
-
+        CiLocation[] regs = new CiLocation[signature.length];
+        int preservedStackSlots = compilation.runtime.javaCallingConvention(signature, regs, outgoing);
         List<LIROperand> args = new ArrayList<LIROperand>(signature.length);
-        for (i = 0; i < sizeargs;) {
-          BasicType t = sigBt[i];
-          assert t != BasicType.Void :  "should be skipping these";
-
-          LIROperand opr = mapToOpr(t, regs[i], outgoing);
-          args.add(opr);
-          if (opr.isAddress()) {
-            LIRAddress addr = opr.asAddressPtr();
-            outPreserve = Math.max(outPreserve, addr.displacement / 4);
-          }
-          i += t.size;
+        for (int i = 0; i < signature.length; i++) {
+            args.add(mapToOpr(signature[i], regs[i], outgoing));
         }
-        assert args.size() == signature.length :  "size mismatch";
-        outPreserve += compilation.runtime.outPreserveStackSlots();
 
-        if (outgoing) {
-          // update the space reserved for arguments.
-          updateReservedArgumentAreaSize(outPreserve);
-        }
-        return new CallingConvention(args, outPreserve);
+        return new CallingConvention(args, preservedStackSlots);
     }
 
-    private void updateReservedArgumentAreaSize(int outPreserve) {
-        // TODO Auto-generated method stub
+    private LIROperand mapToOpr(BasicType t, CiLocation location, boolean outgoing) {
 
-    }
-
-    private LIROperand mapToOpr(BasicType t, CiLocation pair, boolean outgoing) {
-        // TODO Auto-generated method stub
-        return LIROperandFactory.registerPairToOperand(pair);
+        if (location.isStackOffset()) {
+            return LIROperandFactory.stack(location.stackOffset, t);
+        } else if (location.second == null) {
+            assert location.first != null;
+            return new LIRLocation(t, location.first);
+        } else {
+            assert location.first != null;
+            return new LIRLocation(t, location.first, location.second);
+        }
     }
 
     public CallingConvention incomingArguments() {
@@ -196,26 +166,54 @@ public class FrameMap {
     }
 
     public int framesize() {
-        // TODO Auto-generated method stub
-        return 0;
+        assert framesize != -1 :  "hasn't been calculated";
+        return framesize;
     }
 
     public int argcount() {
-        // TODO Auto-generated method stub
-        return 0;
+        return argcount;
     }
 
-    public Register[] callerSavedRegisters() {
-        // TODO Auto-generated method stub
-        return null;
+    public boolean finalizeFrame(int nofSlots) {
+        assert nofSlots >= 0 :  "must be positive";
+        assert numSpills == -1 :  "can only be set once";
+        numSpills = nofSlots;
+        assert framesize == -1 :  "should only be calculated once";
+
+
+        // TODO:  Add offset of deopt orig pc
+        framesize =  Util.roundTo(spOffsetForMonitorBase(0) +
+                               numMonitors * compilation.runtime.sizeofBasicObjectLock() +
+
+                               compilation.target.arch.framePadding,
+                               compilation.target.stackAlignment) / 4;
+
+        for (int i = 0; i < incomingArguments.length(); i++) {
+          LIROperand opr = incomingArguments.at(i);
+          if (opr.isStack()) {
+            argumentLocations[i] += framesizeInBytes();
+          }
+        }
+        // make sure it's expressible on the platform
+        return validateFrame();
     }
 
-    public boolean finalizeFrame(int maxSpills) {
-        // TODO Complete this, for now just return true
+    private int spOffsetForMonitorBase(int index) {
+        int endOfSpills = Util.roundTo(compilation.target.firstAvailableSpInFrame + reservedArgumentAreaSize, Util.sizeofDouble()) +
+        numSpills * spillSlotSizeInBytes;
+      int offset = Util.roundTo(endOfSpills, compilation.target.arch.wordSize) + index * compilation.runtime.sizeofBasicObjectLock();
+      return offset;
+    }
+
+    private int framesizeInBytes() {
+        return framesize * 4;
+    }
+
+    private boolean validateFrame() {
         return true;
     }
 
-    public VMReg regname(LIROperand opr) {
+    public CiLocation regname(LIROperand opr) {
         // TODO Auto-generated method stub
         return null;
     }
@@ -230,12 +228,12 @@ public class FrameMap {
         return 0;
     }
 
-    public VMReg slotRegname(int i) {
+    public CiLocation slotRegname(int i) {
         // TODO Auto-generated method stub
         return null;
     }
 
-    public VMReg monitorObjectRegname(int i) {
+    public CiLocation monitorObjectRegname(int i) {
         // TODO Auto-generated method stub
         return null;
     }
@@ -260,8 +258,14 @@ public class FrameMap {
         return false;
     }
 
-    public VMReg fpuRegname(int fpuRegnrHi) {
+    public CiLocation fpuRegname(int fpuRegnrHi) {
         // TODO Auto-generated method stub
         return null;
     }
+
+    public LIROperand receiverOpr() {
+        return mapToOpr(BasicType.Object, compilation.runtime.receiverLocation(), false);
+    }
+
+    public abstract boolean allocatableRegister(Register r);
 }

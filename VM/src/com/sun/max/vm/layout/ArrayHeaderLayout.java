@@ -32,6 +32,8 @@ public interface ArrayHeaderLayout extends GeneralLayout {
 
     void writeLength(Accessor accessor, int length);
 
+    int arrayLengthOffset();
+
     Size getArraySize(Kind kind, int length);
 
     int headerSize();

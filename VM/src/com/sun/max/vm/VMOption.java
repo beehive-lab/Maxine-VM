@@ -63,7 +63,7 @@ public class VMOption {
          */
         IMPLEMENTATION_SPECIFIC;
 
-        public static final Category from(String prefix) {
+        public static Category from(String prefix) {
             if (prefix.startsWith("-XX")) {
                 return Category.IMPLEMENTATION_SPECIFIC;
             }
@@ -103,19 +103,6 @@ public class VMOption {
         this.help = help;
     }
 
-    private VMOption parentOption;
-
-    private VMOption[] suboptions = {};
-
-    @PROTOTYPE_ONLY
-    void addSuboption(VMOption suboption) {
-        assert suboption.prefix.startsWith(prefix) && !suboption.prefix.equals(prefix);
-        assert suboption.parentOption == null : "Cannot re-parent suboption from " + suboption.parentOption + " to " + this;
-        suboptions = java.util.Arrays.copyOf(suboptions, suboptions.length + 1);
-        suboptions[suboptions.length - 1] = suboption;
-        suboption.parentOption = this;
-    }
-
     /**
      * Determines if this option matches a given command line argument.
      *
@@ -137,18 +124,7 @@ public class VMOption {
      */
     public boolean parse(Pointer start) {
         this.optionStart = start;
-        if (suboptions.length == 0) {
-            return parseValue(start.plus(prefix.length()));
-        }
-        if (!parseValue(start.plus(prefix.length()))) {
-            return false;
-        }
-        for (VMOption suboption : suboptions) {
-            if (!suboption.parse(start)) {
-                return false;
-            }
-        }
-        return true;
+        return parseValue(start.plus(prefix.length()));
     }
 
     /**
@@ -174,7 +150,7 @@ public class VMOption {
      * @return {@code true} if this option was present on the command line; {@code false} otherwise
      */
     public boolean isPresent() {
-        return !optionStart.isZero() || (parentOption != null && parentOption.isPresent());
+        return !optionStart.isZero();
     }
 
     /**
@@ -260,6 +236,7 @@ public class VMOption {
     /**
      * Gets all of the VM arguments provided to {@link #setVMArguments(String[])} that have not been matched
      * against a VM option.
+     * @return all of the VM arguments that have not been matched
      */
     @PROTOTYPE_ONLY
     public static List<String> unmatchedVMArguments() {
@@ -312,8 +289,7 @@ public class VMOption {
                             parseError("Error parsing " + this, i);
                         }
                     } else {
-                        final Pointer optionValue = argumentPointer;
-                        final boolean ok = parse(optionValue);
+                        final boolean ok = parse(argumentPointer);
                         if (!ok) {
                             parseError("Error parsing " + this, i);
                         }

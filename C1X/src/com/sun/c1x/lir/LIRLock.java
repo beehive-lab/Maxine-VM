@@ -48,7 +48,7 @@ public class LIRLock extends LIRInstruction{
      * @param stub
      */
     public LIRLock(LIROpcode opcode, LIROperand hdr, LIROperand obj, LIROperand lock, LIROperand scratch, CodeStub stub, CodeEmitInfo info) {
-        super(opcode, LIROperandFactory.illegalOperand, info);
+        super(opcode, LIROperandFactory.IllegalOperand, info);
         this.hdr = hdr;
         this.obj = obj;
         this.lock = lock;

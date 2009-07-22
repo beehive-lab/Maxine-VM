@@ -419,7 +419,7 @@ public class LinearScanWalker extends IntervalWalker {
         splitPart.setInsertMoveWhenActivated(moveNecessary);
         unhandledFirst[IntervalKind.anyKind.ordinal()] = appendToUnhandled(unhandledFirst(IntervalKind.anyKind), splitPart);
 
-        Util.traceLinearScan(2, "      split interval in two parts (insertMoveWhenActivated: %d)", moveNecessary);
+        Util.traceLinearScan(2, "      split interval in two parts (insertMoveWhenActivated: %b)", moveNecessary);
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.print("      ");
             it.print(TTY.out, allocator);
@@ -563,7 +563,8 @@ public class LinearScanWalker extends IntervalWalker {
         int maxPartialReg = LinearScan.getAnyreg();
 
         for (int i = firstReg; i <= lastReg; i++) {
-            if (i == ignoreReg) {
+            // TODO: for performance reasons we need something different than a call to isProcessedRegNum
+            if (i == ignoreReg || !allocator.isProcessedRegNum(i)) {
                 // this register must be ignored
 
             } else if (usePos[i] >= intervalTo) {
@@ -639,7 +640,9 @@ public class LinearScanWalker extends IntervalWalker {
         Util.traceLinearScan(4, "      state of registers:");
         if (C1XOptions.TraceLinearScanLevel >= 4) {
             for (int i = firstReg; i <= lastReg; i++) {
-                TTY.println("      reg %d: usePos: %d", i, usePos[i]);
+                if (allocator.isProcessedRegNum(i)) {
+                    TTY.println("      reg %d: usePos: %d", i, usePos[i]);
+                }
             }
         }
 
@@ -729,7 +732,7 @@ public class LinearScanWalker extends IntervalWalker {
         int maxReg = LinearScan.getAnyreg();
 
         for (int i = firstReg; i <= lastReg; i++) {
-            if (i == ignoreReg) {
+            if (i == ignoreReg || !allocator.isProcessedRegNum(i)) {
                 // this register must be ignored
 
             } else if (usePos[i] > regNeededUntil) {
@@ -805,11 +808,13 @@ public class LinearScanWalker extends IntervalWalker {
       if (C1XOptions.TraceLinearScanLevel >= 4) {
         TTY.println("      state of registers:");
         for (int i = firstReg; i <= lastReg; i++) {
-          TTY.print("      reg %d: usePos: %d, blockPos: %d, intervals: ", i, usePos[i], blockPos[i]);
-          for (int j = 0; j < spillIntervals[i].size(); j++) {
-            TTY.print("%d ", spillIntervals[i].get(j).regNum());
-          }
-          TTY.println();
+            if (allocator.isProcessedRegNum(i)) {
+              TTY.print("      reg %d: usePos: %d, blockPos: %d, intervals: ", i, usePos[i], blockPos[i]);
+              for (int j = 0; j < spillIntervals[i].size(); j++) {
+                TTY.print("%d ", spillIntervals[i].get(j).regNum());
+              }
+              TTY.println();
+            }
         }
       }
 

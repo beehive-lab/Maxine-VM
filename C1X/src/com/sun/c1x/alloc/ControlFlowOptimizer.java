@@ -254,8 +254,8 @@ public final class ControlFlowOptimizer {
                 // can be replaced with a return instruction
                 //
                 // Note: the original block with only a return statement cannot be deleted completely
-                // because the predecessors might have other (conditional) jumps to this block
-                // . this may lead to unnecesary return instructions in the final code
+                // because the predecessors might have other (conditional) jumps to this block.
+                // this may lead to unnecesary return instructions in the final code
 
                 assert curLastOp.info() == null : "return instructions do not have debug information";
 

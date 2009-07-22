@@ -42,6 +42,7 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.value.*;
 
+// TODO (mlvdv)  Rework this; model architecture is bogus
 
 /**
  * A table specialized for displaying the memory regions in the VM.
@@ -51,7 +52,7 @@ import com.sun.max.vm.value.*;
 public final class MemoryRegionsTable extends InspectorTable {
 
     private final HeapRegionDisplay bootHeapRegionDisplay;
-    private final CodeRegionDisplay bootCodeRegionDisplay;
+    private final CodeRegionDisplay bootCodeRegionDisplay;;
 
     private final HeapScheme heapScheme;
     private final String heapSchemeName;
@@ -188,6 +189,9 @@ public final class MemoryRegionsTable extends InspectorTable {
             sortedMemoryRegions.add(bootHeapRegionDisplay);
             for (TeleRuntimeMemoryRegion teleRuntimeMemoryRegion : maxVM().teleHeapRegions()) {
                 sortedMemoryRegions.add(new HeapRegionDisplay(teleRuntimeMemoryRegion));
+            }
+            if (maxVM().teleRootsRegion() != null) {
+                sortedMemoryRegions.add(new OtherRegionDisplay(maxVM().teleRootsRegion()));
             }
 
             sortedMemoryRegions.add(bootCodeRegionDisplay);
@@ -391,6 +395,10 @@ public final class MemoryRegionsTable extends InspectorTable {
             return memoryRegion().end();
         }
 
+        public Address mark() {
+            return end();
+        }
+
         public boolean contains(Address address) {
             return memoryRegion().contains(address);
         }
@@ -553,5 +561,28 @@ public final class MemoryRegionsTable extends InspectorTable {
 
     }
 
+    private final class OtherRegionDisplay extends MemoryRegionDisplay {
+
+        private final MemoryRegion memoryRegion;
+
+        OtherRegionDisplay(MemoryRegion memoryRegion) {
+            this.memoryRegion = memoryRegion;
+        }
+
+        @Override
+        MemoryRegionKind kind() {
+            return MemoryRegionKind.OTHER;
+        }
+
+        @Override
+        MemoryRegion memoryRegion() {
+            return memoryRegion;
+        }
+
+        @Override
+        String toolTipText() {
+            return "A VM utility region";
+        }
+    }
 
 }

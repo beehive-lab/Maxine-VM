@@ -1317,12 +1317,6 @@ public abstract class ClassActor extends Actor {
         return UnsafeLoophole.cast(oldValue.toJava());
     }
 
-
-    @INLINE
-    public final Class uncheckedGetMirror() {
-        return mirror;
-    }
-
     @PROTOTYPE_ONLY
     public final void setMirror(Class javaClass) {
         if (mirror == null) {

@@ -22,6 +22,7 @@ package com.sun.c1x.alloc;
 
 import java.util.*;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.target.*;
 import com.sun.c1x.util.*;
@@ -115,7 +116,7 @@ public class Interval {
 
     int cachedTo; // cached value: to of last range (-1: not cached)
     LIROperand cachedOpr;
-    VMReg cachedVmReg;
+    CiLocation cachedVmReg;
 
     Interval splitParent; // the original interval where this interval is derived from
     List<Interval> splitChildren; // list of all intervals that are split off from this interval (only available for
@@ -192,11 +193,13 @@ public class Interval {
     }
 
     void assignReg(int reg) {
+        assert reg != 5;
         assignedReg = reg;
         assignedRegHi = LinearScan.getAnyreg();
     }
 
     void assignReg(int reg, int regHi) {
+        assert reg != 5;
         assignedReg = reg;
         assignedRegHi = regHi;
     }
@@ -282,7 +285,7 @@ public class Interval {
         return cachedOpr;
     }
 
-    VMReg cachedVmReg() {
+    CiLocation cachedVmReg() {
         return cachedVmReg;
     }
 
@@ -290,7 +293,7 @@ public class Interval {
         cachedOpr = opr;
     }
 
-    void setCachedVmReg(VMReg reg) {
+    void setCachedVmReg(CiLocation reg) {
         cachedVmReg = reg;
     }
 
@@ -352,7 +355,7 @@ public class Interval {
         this.assignedReg = LinearScan.getAnyreg();
         this.assignedRegHi = LinearScan.getAnyreg();
         this.cachedTo = -1;
-        this.cachedOpr = LIROperandFactory.illegalOperand;
+        this.cachedOpr = LIROperandFactory.IllegalOperand;
         this.cachedVmReg = null; // TODO: Check if to use VMReg.Bad
         this.canonicalSpillSlot = -1;
         this.insertMoveWhenActivated = false;
@@ -794,11 +797,11 @@ public class Interval {
             typeName = "fixed";
             // need a temporary operand for fixed intervals because type() cannot be called
             if (allocator.isCpu(assignedReg())) {
-                opr = LIROperandFactory.singleCpu(allocator.toRegister(assignedReg()));
+                opr = LIROperandFactory.singleLocation(BasicType.Int, allocator.toRegister(assignedReg()));
             } else if (allocator.isFpu(assignedReg())) {
-                opr = LIROperandFactory.singleFpu(allocator.toRegister(assignedReg()));
+                opr = LIROperandFactory.singleLocation(BasicType.Float, allocator.toRegister(assignedReg()));
             } else if (allocator.isXmm(assignedReg())) {
-                opr = LIROperandFactory.singleXmmX86(allocator.toRegister(assignedReg()));
+                opr = LIROperandFactory.singleLocation(BasicType.Float, allocator.toRegister(assignedReg()));
             } else {
                 Util.shouldNotReachHere();
             }

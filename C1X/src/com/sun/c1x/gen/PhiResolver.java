@@ -58,8 +58,9 @@ public class PhiResolver {
 
     public PhiResolver(LIRGenerator gen, int maxVregs) {
         this.gen = gen;
+        state = new PhiResolverState();
         state.reset(maxVregs);
-        temp = LIROperandFactory.illegalOperand;
+        temp = LIROperandFactory.IllegalOperand;
     }
 
     public void dispose() {
@@ -165,7 +166,7 @@ public class PhiResolver {
     private void moveTempTo(LIROperand dest) {
         assert temp.isValid();
         emitMove(temp, dest);
-        temp = LIROperandFactory.illegalOperand;
+        temp = LIROperandFactory.IllegalOperand;
     }
 
     private void moveToTemp(LIROperand src) {

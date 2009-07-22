@@ -35,6 +35,7 @@ public class LIRJavaCall extends LIRCall {
 
     private CiMethod method;
     LIROperand receiver;
+    int vTableOffset;
 
     /**
      * Creates a new LIRJavaCall instruction.
@@ -47,10 +48,28 @@ public class LIRJavaCall extends LIRCall {
      * @param arguments
      * @param info
      */
-    public LIRJavaCall(LIROpcode opcode, CiMethod method, LIROperand receiver, LIROperand result, long address, List<LIROperand> arguments, CodeEmitInfo info) {
+    public LIRJavaCall(LIROpcode opcode, CiMethod method, LIROperand receiver, LIROperand result, CiRuntimeCall address, List<LIROperand> arguments, CodeEmitInfo info) {
         super(opcode, address, result, arguments, info);
         this.method = method;
         this.receiver = receiver;
+    }
+
+    /**
+     * Creates a new LIRJavaCall instruction.
+     *
+     * @param opcode
+     * @param method
+     * @param receiver
+     * @param result
+     * @param address
+     * @param arguments
+     * @param info
+     */
+    public LIRJavaCall(LIROpcode opcode, CiMethod method, LIROperand receiver, LIROperand result, int vTableOffset, List<LIROperand> arguments, CodeEmitInfo info) {
+        super(opcode, null, result, arguments, info);
+        this.method = method;
+        this.receiver = receiver;
+        this.vTableOffset = vTableOffset;
     }
 
     /**
@@ -78,7 +97,7 @@ public class LIRJavaCall extends LIRCall {
      */
     public long vtableOffset() {
         assert code == LIROpcode.VirtualCall : "Only have vtable for real virtual call";
-        return address();
+        return vTableOffset;
     }
 
     /**
@@ -99,7 +118,7 @@ public class LIRJavaCall extends LIRCall {
     @Override
     public void printInstruction(LogStream out) {
         out.print("call: ");
-        out.printf("[addr: 0x%x]", address());
+        out.printf("[addr: %s]", (address() == null) ? "null" : address().name());
         if (receiver.isValid()) {
             out.print(" [recv: ");
             receiver.print(out);

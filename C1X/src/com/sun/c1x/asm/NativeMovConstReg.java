@@ -20,8 +20,6 @@
  */
 package com.sun.c1x.asm;
 
-import com.sun.c1x.target.x86.*;
-
 
 /**
  * The <code>NativeMovConstReg</code> class definition.

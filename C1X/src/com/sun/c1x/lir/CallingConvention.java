@@ -74,4 +74,16 @@ public class CallingConvention {
 
     }
 
+    @Override
+    public String toString() {
+        StringBuffer result = new StringBuffer();
+        result.append("CallingConvention[");
+        for (LIROperand op : arguments) {
+            result.append(op.toString() + " ");
+        }
+        result.append("reservedStack=" + reservedStackSlots);
+        result.append("]");
+        return result.toString();
+    }
+
 }

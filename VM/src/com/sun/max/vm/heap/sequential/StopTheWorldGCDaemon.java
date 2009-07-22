@@ -55,8 +55,6 @@ import com.sun.max.vm.type.*;
  */
 public class StopTheWorldGCDaemon extends BlockingServerDaemon {
 
-    private static final VMBooleanXXOption traceGCDaemon = VMOptions.register(new VMBooleanXXOption("-XX:-TraceGCDaemon", "Print GC daemon activity."), MaxineVM.Phase.STARTING);
-
     /**
      * The procedure that is run on a mutator thread that has been stopped by a safepoint for the
      * purpose of performing a stop-the-world garbage collection.
@@ -173,7 +171,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
     private final class ResetMutator extends Safepoint.ResetSafepoints {
         @Override
         public void run(Pointer vmThreadLocals) {
-            if (traceGCDaemon.getValue()) {
+            if (Heap.traceGCPhases()) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("GCDaemon: Resetting mutator thread ");
                 Log.printVmThread(VmThread.fromVmThreadLocals(vmThreadLocals), true);
@@ -248,7 +246,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                     }
                 }
 
-                if (traceGCDaemon.getValue()) {
+                if (Heap.traceGCPhases()) {
                     final boolean lockDisabledSafepoints = Log.lock();
                     Log.print("GCDaemon: Stopped mutator thread ");
                     Log.printVmThread(VmThread.fromVmThreadLocals(vmThreadLocals), true);
@@ -292,7 +290,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                 synchronized (VmThreadMap.ACTIVE) {
                     waitUntilNonMutating.stackReferenceMapPreparationTime = 0;
 
-                    if (traceGCDaemon.getValue()) {
+                    if (Heap.traceGCPhases()) {
                         Log.println("GCDaemon: Triggering safepoints for all mutators");
                     }
 
@@ -302,13 +300,13 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                     // the MUTATOR_STATE variable for each thread.
                     MemoryBarrier.storeLoad();
 
-                    if (traceGCDaemon.getValue()) {
+                    if (Heap.traceGCPhases()) {
                         Log.println("GCDaemon: Waiting for all mutators to stop");
                     }
 
                     VmThreadMap.ACTIVE.forAllVmThreadLocals(isNotGCOrCurrentThread, waitUntilNonMutating);
 
-                    if (traceGCDaemon.getValue()) {
+                    if (Heap.traceGCPhases()) {
                         Log.println("GCDaemon: Running GC algorithm");
                     }
 
@@ -317,7 +315,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                     final long time = VmThreadLocal.prepareCurrentStackReferenceMap();
                     collect.run();
 
-                    if (traceGCDaemon.getValue()) {
+                    if (Heap.traceGCPhases()) {
                         Log.println("GCDaemon: Resetting mutators");
                     }
 
@@ -330,7 +328,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                         Log.unlock(lockDisabledSafepoints);
                     }
 
-                    if (traceGCDaemon.getValue()) {
+                    if (Heap.traceGCPhases()) {
                         Log.println("GCDaemon: Completed GC request");
                     }
                 }

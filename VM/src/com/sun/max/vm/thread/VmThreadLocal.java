@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.thread;
 
+import java.lang.reflect.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
@@ -243,7 +245,7 @@ public class VmThreadLocal {
      * and then used by stack reference map scanning. That is, this value indicates how much of the stack represents
      * live data at any given garbage collection point. The value is only non-zero for a Java thread that was stopped
      * for GC <b>and</b> has partially prepared its stack reference map. That is, if the GC sees a zero value for a thread
-     * that has been stopped (with repect to object graph mutation), then it infers said thread is in native code and
+     * that has been stopped (with respect to object graph mutation), then it infers said thread is in native code and
      * needs to have its <b>complete</b> stack reference map prepared on its behalf.
      */
     public static final VmThreadLocal LOWEST_ACTIVE_STACK_SLOT_ADDRESS
@@ -277,6 +279,9 @@ public class VmThreadLocal {
      */
     public static IndexedSequence<VmThreadLocal> values() {
         if (MaxineVM.isPrototyping()) {
+            // Initialize this information while we're at it.
+            valuesNeedingInitialization();
+
             return prototypeValues();
         }
         return values;
@@ -295,6 +300,30 @@ public class VmThreadLocal {
             FatalError.check(valuesExposed == values.length(), "VM thread local sequence exposed before initialization completed");
         }
         return values;
+    }
+
+    private static VmThreadLocal[] valuesNeedingInitialization;
+
+    /**
+     * Gets the array of VM thread locals whose class overrides {@link #initialize(com.sun.max.vm.MaxineVM.Phase)}.
+     */
+    static VmThreadLocal[] valuesNeedingInitialization() {
+        if (MaxineVM.isPrototyping() && valuesNeedingInitialization == null) {
+            try {
+                final AppendableSequence<VmThreadLocal> valuesNeedingInitialization = new ArrayListSequence<VmThreadLocal>();
+                IndexedSequence<VmThreadLocal> values = prototypeValues();
+                final Method emptyInitializeMethod = VmThreadLocal.class.getMethod("initialize", MaxineVM.Phase.class);
+                for (VmThreadLocal value : values) {
+                    if (!emptyInitializeMethod.equals(value.getClass().getMethod("initialize", MaxineVM.Phase.class))) {
+                        valuesNeedingInitialization.append(value);
+                    }
+                }
+                VmThreadLocal.valuesNeedingInitialization = Sequence.Static.toArray(valuesNeedingInitialization, VmThreadLocal.class);
+            } catch (NoSuchMethodException e) {
+                throw ProgramError.unexpected(e);
+            }
+        }
+        return valuesNeedingInitialization;
     }
 
     /**
@@ -356,6 +385,15 @@ public class VmThreadLocal {
             out.print("0x");
             out.print(vmThreadLocals.getWord(index));
         }
+    }
+
+    /**
+     * Performs any initialization required for this thread local at thread startup time.
+     * This is called before any heap allocation or object stores are executed on the thread.
+     *
+     * The set of VM thread locals that override this method can be obtained via {@link #valuesNeedingInitialization()}.
+     */
+    public void initialize(MaxineVM.Phase phase) {
     }
 
     /**

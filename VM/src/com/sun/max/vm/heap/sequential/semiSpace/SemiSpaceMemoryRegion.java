@@ -37,7 +37,7 @@ public final class SemiSpaceMemoryRegion extends RuntimeMemoryRegion {
      * @param title how the region should identify itself for debugging purposes
      */
     public SemiSpaceMemoryRegion(String title) {
-        super(Size.zero(), Size.zero());
+        super(Address.zero(), Size.zero());
         setDescription(title);
     }
 
@@ -45,7 +45,7 @@ public final class SemiSpaceMemoryRegion extends RuntimeMemoryRegion {
      * @param address sets an inspected field that can be used for debugging.
      */
     void setAllocationMark(Address address) {
-        mark = address;
+        mark.set(address);
     }
 
 }

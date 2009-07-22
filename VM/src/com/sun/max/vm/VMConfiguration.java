@@ -265,6 +265,8 @@ public final class VMConfiguration {
         for (int i = 0; i < vmSchemes.length(); i++) {
             vmSchemes.get(i).initialize(phase);
         }
+
+        // TODO: Inform the C1X-scheme...!
     }
 
     public void finalizeSchemes(MaxineVM.Phase phase) {
@@ -304,6 +306,9 @@ public final class VMConfiguration {
         }
     }
 
+    /**
+     * Use {@link MaxineVM#isDebug()} instead of calling this directly.
+     */
     @FOLD
     public boolean debugging() {
         return buildLevel() == BuildLevel.DEBUG;
