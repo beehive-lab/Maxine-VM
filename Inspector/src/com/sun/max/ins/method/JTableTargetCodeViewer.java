@@ -303,8 +303,8 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                             menu.add(actions().removeTargetCodeBreakpoint(address, "Unset breakpoint"));
                             menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                         }
-                        super.procedure(mouseEvent);
                     }
+                    super.procedure(mouseEvent);
                 }
             });
         }
