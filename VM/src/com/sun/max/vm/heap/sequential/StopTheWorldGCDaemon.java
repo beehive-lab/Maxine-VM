@@ -72,14 +72,25 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
         public void run(Pointer trapState) {
             if (Safepoint.UseThreadStateWordForGCMutatorSynchronization) {
                 final Pointer vmThreadLocals = Safepoint.getLatchRegister();
-
                 MUTATOR_STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_JAVA_STOPPING_FOR_GC));
+
+                if (!VmThreadLocal.inJava(vmThreadLocals)) {
+                    FatalError.unexpected("Mutator thread trapped while in native code");
+                }
+                Heap.disableAllocationForCurrentThread();
+                if (!LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).isZero()) {
+                    FatalError.unexpected("Stack reference map preparer should be cleared before GC");
+                }
 
                 VmThreadLocal.prepareStackReferenceMapFromTrap(vmThreadLocals, trapState);
 
                 synchronized (VmThreadMap.ACTIVE) {
                     // Stops this thread until GC is done.
                 }
+                if (!LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).isZero()) {
+                    FatalError.unexpected("Stack reference map preparer should be cleared after GC");
+                }
+                Heap.enableAllocationForCurrentThread();
             } else {
                 // note that this procedure always runs with safepoints disabled
                 final Pointer vmThreadLocals = Safepoint.getLatchRegister();
