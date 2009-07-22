@@ -603,11 +603,16 @@ public class ValueStack {
     public void valuesDo(InstructionClosure closure) {
         final int max = valuesSize();
         for (int i = 0; i < max; i++) {
-            values[i] = closure.apply(values[i]);
+            if (values[i] != null) {
+                values[i] = closure.apply(values[i]);
+            }
         }
         if (locks != null) {
             for (int i = 0; i < locks.size(); i++) {
-                locks.set(i, closure.apply(locks.get(i)));
+                Instruction instr = locks.get(i);
+                if (instr != null) {
+                    locks.set(i, closure.apply(instr));
+                }
             }
         }
         ValueStack state = this.scope().callerState();
@@ -742,15 +747,7 @@ public class ValueStack {
 
         final List<Phi> phis = new ArrayList<Phi>();
 
-        for (int i = 0; i < this.stackSize(); i++) {
-            final Instruction instr = this.stackAt(i);
-            if (instr instanceof Phi) {
-                phis.add((Phi) instr);
-            }
-        }
-
-        for (int i = 0; i < this.localsSize(); i++) {
-            final Instruction instr = this.localAt(i);
+        for (Instruction instr : allStateValues()) {
             if (instr instanceof Phi) {
                 phis.add((Phi) instr);
             }
@@ -759,8 +756,27 @@ public class ValueStack {
         return phis;
     }
 
+    /**
+     * This is a helper method for iterating over all stack values and local variables in this value stack.
+     * @return an interator over all state values
+     */
     public Iterable<Instruction> allStateValues() {
-        // TODO Auto-generated method stub
-        return null;
+        final List<Instruction> result = new ArrayList<Instruction>();
+
+        for (int i = 0; i < this.stackSize(); i++) {
+            final Instruction instr = this.stackAt(i);
+            if (instr != null) {
+                result.add(instr);
+            }
+        }
+
+        for (int i = 0; i < this.localsSize(); i++) {
+            final Instruction instr = this.localAt(i);
+            if (instr != null) {
+                result.add(instr);
+            }
+        }
+
+        return result;
     }
 }

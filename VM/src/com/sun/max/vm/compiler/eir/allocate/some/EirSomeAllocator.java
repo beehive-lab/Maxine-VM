@@ -26,6 +26,7 @@ import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.profile.*;
 import com.sun.max.util.timer.Timer;
+import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.EirTraceObserver.*;
 import com.sun.max.vm.compiler.eir.allocate.*;
@@ -487,7 +488,7 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
         coalesceVariables(rankedVariables);
         coalescingTimer.stop();
         assert assertPlausibleCorrectness();
-        if (methodGeneration().eirGenerator.compilerScheme().vmConfiguration().debugging()) {
+        if (MaxineVM.isDebug()) {
             trimTimer.start();
             trim();
             trimTimer.stop();

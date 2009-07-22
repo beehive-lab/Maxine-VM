@@ -36,6 +36,6 @@ public class Package extends VMPackage {
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
         // TODO: currently C1X is not part of Maxine until there are Scheme implementations
-        return false;
+        return true;
     }
 }

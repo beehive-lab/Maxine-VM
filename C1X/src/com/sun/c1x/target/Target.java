@@ -37,9 +37,11 @@ public class Target {
     public int referenceSize;
     public int stackAlignment;
     public int cacheAlignment;
+    public int codeAlignment;
     public int heapAlignment;
     public final Register[] allocatableRegisters;
     public final Register[] callerSavedRegisters;
+    public int firstAvailableSpInFrame;
 
     public Target(Architecture arch, Register[] allocatableRegisters, Register[] callerSavedRegisters) {
         this.arch = arch;
@@ -47,6 +49,7 @@ public class Target {
         stackAlignment = arch.wordSize;
         cacheAlignment = arch.wordSize;
         heapAlignment = arch.wordSize;
+        codeAlignment = 16;
         backend = arch.getBackend(this);
         this.callerSavedRegisters = callerSavedRegisters;
         this.allocatableRegisters = allocatableRegisters;

@@ -33,8 +33,6 @@ import com.sun.max.vm.reference.*;
  */
 public class AtomicWord {
 
-    private static final int valueOffset = ClassActor.fromJava(AtomicWord.class).findLocalInstanceFieldActor("value").offset();
-
     private volatile Word value;
 
     /**
@@ -83,14 +81,14 @@ public class AtomicWord {
     public final boolean compareAndSet(Word expect, Word update) {
         if (MaxineVM.isPrototyping()) {
             synchronized (this) {
-                if (expect == value) {
+                if (expect.equals(value)) {
                     value = update;
                     return true;
                 }
                 return false;
             }
         }
-        return Reference.fromJava(this).compareAndSwapWord(valueOffset, expect, update) == expect;
+        return Reference.fromJava(this).compareAndSwapWord(valueOffset(), expect, update) == expect;
     }
 
     /**
@@ -105,14 +103,14 @@ public class AtomicWord {
     public final Word compareAndSwap(Word expect, Word update) {
         if (MaxineVM.isPrototyping()) {
             synchronized (this) {
-                if (expect == value) {
+                if (expect.equals(value)) {
                     value = update;
                     return expect;
                 }
                 return value;
             }
         }
-        return Reference.fromJava(this).compareAndSwapWord(valueOffset, expect, update);
+        return Reference.fromJava(this).compareAndSwapWord(valueOffset(), expect, update);
     }
 
     /**
@@ -136,5 +134,10 @@ public class AtomicWord {
     @Override
     public String toString() {
         return get().toHexString();
+    }
+
+    @FOLD
+    public static int valueOffset() {
+        return ClassActor.fromJava(AtomicWord.class).findLocalInstanceFieldActor("value").offset();
     }
 }

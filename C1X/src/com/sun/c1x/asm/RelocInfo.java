@@ -29,22 +29,8 @@ public class RelocInfo {
 
     public enum Type {
         none, // Used when no relocation should be generated
-        oopType, // embedded oop
-        virtualCallType, // a standard inline cache call for a virtual send
-        optVirtualCallType, // a virtual call that has been statically bound (i.e., no IC cache)
-        staticCallType, // a static send
-        staticStubType, // stub-entry for static send (takes care of interpreter case)
         runtimeCallType, // call to fixed external routine
         externalWordType, // reference to fixed external address
         internalWordType, // reference within the current code blob
-        sectionWordType, // internal, but a cross-section reference
-        pollType, // polling instruction for safepoints
-        pollReturnType, // polling instruction for safepoints at return
-        breakpointType, // an initialization barrier or safepoint
-        yetUnusedType, // Still unused
-        yetUnusedType_2, // Still unused
-        dataPrefixTag
-        // tag for a prefix (carries data arguments)
-        // typeMask = 15 // A mask which selects only the above values
-    };
+    }
 }

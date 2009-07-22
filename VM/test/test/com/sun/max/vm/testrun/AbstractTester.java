@@ -155,6 +155,9 @@ public abstract class AbstractTester extends JavaRunScheme {
         if (BinaryImageGenerator.calleeJit) {
             CompiledPrototype.registerJitClass(javaClass);
         }
+        if (BinaryImageGenerator.calleeC1X) {
+            CompiledPrototype.registerC1XClass(javaClass);
+        }
         if (BinaryImageGenerator.unlinked) {
             CompiledPrototype.registerClassUnlinked(actor);
         }

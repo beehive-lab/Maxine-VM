@@ -40,9 +40,6 @@ public class Return extends BlockEnd {
     public Return(Instruction result) {
         super(result == null ? ValueType.VOID_TYPE : result.type(), null, true);
         this.result = result;
-
-        // (tw) TODO: Check why this is necessary? Try method return a+b;
-        pin();
     }
 
     /**
@@ -67,7 +64,9 @@ public class Return extends BlockEnd {
      */
     @Override
     public void inputValuesDo(InstructionClosure closure) {
-        result = closure.apply(result);
+        if (result != null) {
+            result = closure.apply(result);
+        }
     }
 
     /**

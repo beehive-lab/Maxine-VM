@@ -40,7 +40,7 @@ public class LIRLabel extends LIROp0 {
      * @param label
      */
     public LIRLabel(Label label) {
-        super(LIROpcode.Label, LIROperandFactory.illegalOperand, null);
+        super(LIROpcode.Label, LIROperandFactory.IllegalOperand, null);
         assert label != null;
         this.label = label;
     }
@@ -71,6 +71,6 @@ public class LIRLabel extends LIROp0 {
      */
     @Override
     public void printInstruction(LogStream out) {
-        out.printf("[label:0x%x]", label.loc());
+        out.printf("[label:%s]", label);
     }
 }

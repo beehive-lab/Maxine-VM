@@ -20,6 +20,9 @@
  */
 package com.sun.c1x.lir;
 
+import java.util.*;
+
+import com.sun.c1x.ci.*;
 
 /**
  * The <code>OopMap</code> class definition.
@@ -30,13 +33,16 @@ package com.sun.c1x.lir;
  */
 public class OopMap {
 
-    public OopMap(int frameSize, int argCount) {
-        // TODO Auto-generated constructor stub
+
+    private final List<CiLocation> oopLocations = new ArrayList<CiLocation>();
+
+    public void setOop(CiLocation location) {
+        oopLocations.add(location);
     }
-    //TODO: Not yet implemented
 
-    public void setOop(VMReg name) {
-        // TODO Auto-generated method stub
-
+    public OopMap deepCopy() {
+        OopMap result = new OopMap();
+        result.oopLocations.addAll(oopLocations);
+        return result;
     }
 }

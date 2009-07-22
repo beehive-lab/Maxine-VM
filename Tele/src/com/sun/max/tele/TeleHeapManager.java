@@ -35,15 +35,23 @@ import com.sun.max.vm.reference.*;
 
 /**
  * Singleton class that caches information about the heap in the {@link TeleVM}.
- *
+ *<br>
  * Initialization between this manager and {@link TeleClassRegistry} are mutually
  * dependent.  The cycle is broken by creating this manager in a partially initialized
  * state that only considers the boot heap region; the manager is only made fully functional
  * with a call to {@link #initialize()}, which requires that {@link TeleClassRegistry} be
  * fully initialized.
+ * <br>
+  * Interesting heap state includes the list of memory regions allocated.
+ * <br>
+ * It also provides access to a special root table in the VM, active
+ * only when being inspected, that allows Inspector references
+ * to track object locations when they are relocated by GC.
  *
  * @author Michael Van De Vanter
  *
+ * @see InspectableHeapInfo
+ * @see TeleRoots
  */
 public final class TeleHeapManager extends AbstractTeleVMHolder {
 
@@ -64,6 +72,10 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
      * Surrogates for each of the heap regions created by GC implementations in the {@link TeleVM}.
      */
     private TeleRuntimeMemoryRegion[] teleHeapRegions = new TeleRuntimeMemoryRegion[0];
+
+    private Pointer teleRootsPointer = Pointer.zero();
+
+    private TeleRuntimeMemoryRegion teleRootsRegion = null;
 
     private TeleHeapManager(TeleVM teleVM) {
         super(teleVM);
@@ -91,7 +103,11 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
         final long startTimeMillis = System.currentTimeMillis();
         final Reference bootHeapRegionReference = teleVM().fields().Heap_bootHeapRegion.readReference(teleVM());
         teleBootHeapRegion = (TeleRuntimeMemoryRegion) teleVM().makeTeleObject(bootHeapRegionReference);
-        refreshMemoryRegions(processEpoch);
+        final int teleRootsOffset = teleVM().fields().InspectableHeapInfo_rootsPointer.fieldActor().offset();
+        // The address of the tele roots field must be accessible before any {@link TeleObject}s can be created,
+        // which means that it must be accessible before calling {@link #refresh()} here.
+        teleRootsPointer = teleVM().fields().InspectableHeapInfo_rootsPointer.staticTupleReference(teleVM()).toOrigin().plus(teleRootsOffset);
+        refresh(processEpoch);
         Trace.end(1, tracePrefix() + "initializing", startTimeMillis);
     }
 
@@ -101,7 +117,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
      * Updates local cache of information about dynamically allocated heap regions in the {@link TeleVM}.
      * During this update, any method calls to check heap containment are handled specially.
      */
-    public void refreshMemoryRegions(long processEpoch) {
+    public void refresh(long processEpoch) {
         if (isInitialized()) {
             Trace.begin(TRACE_VALUE, tracePrefix() + "refreshing");
             final long startTimeMillis = System.currentTimeMillis();
@@ -128,6 +144,12 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
                 }
             }
             updatingHeapMemoryRegions = false;
+            if (teleRootsRegion == null) {
+                final Reference teleRootsRegionReference = teleVM().fields().InspectableHeapInfo_rootsRegion.readReference(teleVM());
+                if (teleRootsRegionReference != null && !teleRootsRegionReference.isZero()) {
+                    teleRootsRegion = (TeleRuntimeMemoryRegion) teleVM().makeTeleObject(teleRootsRegionReference);
+                }
+            }
             Trace.end(TRACE_VALUE, tracePrefix() + "refreshing", startTimeMillis);
         }
     }
@@ -142,9 +164,36 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
     /**
      * @return surrogates for all {@link RuntimeMemoryRegion}s in the {@link Heap} of the {@link TeleVM}.
      * Sorted in order of allocation.  Does not include the boot heap region.
+     * @see InspectableHeapInfo
      */
     public IndexedSequence<TeleRuntimeMemoryRegion> teleHeapRegions() {
         return new ArraySequence<TeleRuntimeMemoryRegion>(teleHeapRegions);
+    }
+
+    /**
+     * @return surrogate for the memory specially allocated in the VM for managing
+     * remotely held References in the Inspector.
+     * @see TeleRoots
+     * @see InspectableHeapInfo
+     */
+    public TeleRuntimeMemoryRegion teleRootsRegion() {
+        return teleRootsRegion;
+    }
+
+    /**
+     * Gets the raw location of the tele roots table in VM memory.  This is a specially allocated
+     * region of memory that is assumed will not move.
+     * <br>
+     * It is equivalent to the starting location of {@link #teleRootsRegion()}, but must be
+     * accessed this way instead to avoid a circularity.  It is used before
+     * more abstract objects such as {@link TeleMemoryRegion}s can be created.
+     *
+     * @return location of the specially allocated VM memory region where teleRoots are stored.
+     * @see TeleRoots
+     * @see InspectableHeapInfo
+     */
+    public Pointer teleRootsPointer() {
+        return teleRootsPointer;
     }
 
     /**

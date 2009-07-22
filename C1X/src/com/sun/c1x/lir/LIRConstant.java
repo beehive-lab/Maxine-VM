@@ -264,18 +264,33 @@ public class LIRConstant extends LIROperand {
     }
 
     @Override
+    public float asJfloat() {
+        return this.asFloat();
+    }
+
+    @Override
+    public double asJdouble() {
+        return this.asDouble();
+    }
+
+    @Override
+    public Object asJobject() {
+        return this.asObject();
+    }
+
+    @Override
     public String valueToString() {
         switch (type()) {
             case Int:
-                return String.format("int:%d", asJint());
+                return String.format("int:%d", asInt());
             case Long:
-                return String.format("lng:%lld", asLong());
+                return String.format("lng:%d", asLong());
             case Float:
                 return String.format("flt:%f", asJfloat());
             case Double:
                 return String.format("dbl:%f", asJdouble());
             case Object:
-                return String.format("obj:0x%x", asJobject());
+                return String.format("obj:%s", asJobject());
             default:
                 return String.format("%3d:0x%x", type(), asJdouble());
         }

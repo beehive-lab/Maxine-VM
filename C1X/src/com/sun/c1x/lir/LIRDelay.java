@@ -35,7 +35,7 @@ public class LIRDelay extends LIRInstruction {
     private LIRInstruction operand;
 
     public LIRDelay(LIRInstruction operand, CodeEmitInfo info) {
-        super(LIROpcode.DelaySlot, LIROperandFactory.illegalOperand, info);
+        super(LIROpcode.DelaySlot, LIROperandFactory.IllegalOperand, info);
         this.operand = operand;
         assert operand.code == LIROpcode.Nop || C1XOptions.LIRFillDelaySlots : "Should be filling with nops";
     }

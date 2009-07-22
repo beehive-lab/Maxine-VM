@@ -29,8 +29,9 @@ import com.sun.c1x.asm.*;
  */
 public class ExternalAddress extends AddressLiteral {
 
-    public ExternalAddress(long target) {
-        super(target, RelocInfo.Type.externalWordType);
+    public ExternalAddress(long doubleSignmaskPoolAddress) {
+        super(0, RelocInfo.Type.externalWordType);
+        // TODO Auto-generated constructor stub
     }
 
 }

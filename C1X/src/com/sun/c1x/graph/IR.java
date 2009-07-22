@@ -23,6 +23,7 @@ package com.sun.c1x.graph;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.opt.GlobalValueNumbering;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
 
@@ -60,6 +61,10 @@ public class IR {
         ComputeLinearScanOrder computeLinearScanOrder = new ComputeLinearScanOrder(compilation.numberOfBlocks(), startBlock);
         orderedBlocks = computeLinearScanOrder.linearScanOrder();
         computeLinearScanOrder.printBlocks();
+
+        if (C1XOptions.DoGlobalValueNumbering) {
+            new GlobalValueNumbering(this);
+        }
     }
 
     void computeUseCounts() {
