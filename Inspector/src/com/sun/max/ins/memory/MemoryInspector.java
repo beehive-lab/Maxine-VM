@@ -146,7 +146,7 @@ public final class MemoryInspector extends Inspector {
     private TextLabel[] charLabels;
 
     @Override
-    protected void refreshView(boolean force) {
+    protected boolean refreshView(boolean force) {
         final byte[] bytes = new byte[numberOfBytesPerGroup];
         for (int i = 0; i < numberOfGroups; i++) {
             final Address address = this.address.plus(i * numberOfBytesPerGroup);
@@ -170,6 +170,7 @@ public final class MemoryInspector extends Inspector {
             }
         }
         super.refreshView(force);
+        return true;
     }
 
     private JPanel contentPane;

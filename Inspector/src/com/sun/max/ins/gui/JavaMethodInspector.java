@@ -268,7 +268,7 @@ public class JavaMethodInspector extends MethodInspector {
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected boolean refreshView(boolean force) {
         if (isShowing() || force) {
             teleClassMethodActor.refreshView();
             if (classMethodMenuItems != null) {
@@ -282,6 +282,7 @@ public class JavaMethodInspector extends MethodInspector {
             }
             super.refreshView(force);
         }
+        return true;
     }
 
     public void viewConfigurationChanged() {
