@@ -59,11 +59,11 @@ public class RegisterVerifier {
 
     // accessors
     List<Interval> stateForBlock(BlockBegin block) {
-        return savedStates.get(block.blockID());
+        return savedStates.get(block.blockID);
     }
 
     void setStateForBlock(BlockBegin block, List<Interval> savedState) {
-        savedStates.put(block.blockID(), savedState);
+        savedStates.put(block.blockID, savedState);
     }
 
     void addToWorkList(BlockBegin block) {
@@ -115,7 +115,7 @@ public class RegisterVerifier {
     void processBlock(BlockBegin block) {
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.println();
-            TTY.println("processBlock B%d", block.blockID());
+            TTY.println("processBlock B%d", block.blockID);
         }
 
         // must copy state because it is modified
@@ -145,7 +145,7 @@ public class RegisterVerifier {
     }
 
     void processXhandler(ExceptionHandler xhandler, List<Interval> inputState) {
-        Util.traceLinearScan(2, "processXhandler B%d", xhandler.entryBlock().blockID());
+        Util.traceLinearScan(2, "processXhandler B%d", xhandler.entryBlock().blockID);
 
         // must copy state because it is modified
         inputState = copy(inputState);
@@ -175,23 +175,23 @@ public class RegisterVerifier {
                         savedStateCorrect = false;
                         savedState.set(i, null);
 
-                        Util.traceLinearScan(4, "processSuccessor B%d: invalidating slot %d", block.blockID(), i);
+                        Util.traceLinearScan(4, "processSuccessor B%d: invalidating slot %d", block.blockID, i);
                     }
                 }
             }
 
             if (savedStateCorrect) {
                 // already processed block with correct inputState
-                Util.traceLinearScan(2, "processSuccessor B%d: previous visit already correct", block.blockID());
+                Util.traceLinearScan(2, "processSuccessor B%d: previous visit already correct", block.blockID);
             } else {
                 // must re-visit this block
-                Util.traceLinearScan(2, "processSuccessor B%d: must re-visit because input state changed", block.blockID());
+                Util.traceLinearScan(2, "processSuccessor B%d: must re-visit because input state changed", block.blockID);
                 addToWorkList(block);
             }
 
         } else {
             // block was not processed before, so set initial inputState
-            Util.traceLinearScan(2, "processSuccessor B%d: initial visit", block.blockID());
+            Util.traceLinearScan(2, "processSuccessor B%d: initial visit", block.blockID);
 
             setStateForBlock(block, copy(inputState));
             addToWorkList(block);

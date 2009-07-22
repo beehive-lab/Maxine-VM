@@ -29,16 +29,16 @@ import com.sun.c1x.util.*;
  * @author Thomas Wuerthinger
  *
  */
-public class UseCountComputer implements BlockClosure {
+public class UseCountComputer {
 
     private static final int maxRecurseDepth = 20;
 
     private List<Instruction> worklist = new ArrayList<Instruction>();
     private int depth;
-    private Map<Instruction, Integer> result = new HashMap<Instruction, Integer>();
+    private HashMap<Instruction, Integer> map = new HashMap<Instruction, Integer>();
 
-    public Map<Instruction, Integer> result() {
-        return result;
+    public UseCountComputer(HashMap<Instruction, Integer> map) {
+        this.map = map;
     }
 
     private InstructionClosure updateUseCount = new InstructionClosure() {
@@ -48,7 +48,7 @@ public class UseCountComputer implements BlockClosure {
             // start of basic blocks are not added to the instruction list
             assert n.isAppended() || n instanceof Local || n instanceof Phi : "node was not appended to the graph: " + n;
             // use n's input if not visited before
-            if (!n.isPinned() && !result.containsKey(n)) {
+            if (!n.isPinned() && !map.containsKey(n)) {
                 // note:
                 // a) if the instruction is pinned, it will be handled by computeUseCount
                 // b) if the instruction has uses, it was touched before
@@ -56,10 +56,10 @@ public class UseCountComputer implements BlockClosure {
                 usesDo(n);
             }
             // use n
-            if (!result.containsKey(n)) {
-                result.put(n, 1);
+            if (!map.containsKey(n)) {
+                map.put(n, 1);
             } else {
-                result.put(n, result.get(n) + 1);
+                map.put(n, map.get(n) + 1);
             }
 
             return n;
@@ -84,7 +84,7 @@ public class UseCountComputer implements BlockClosure {
         depth--;
     }
 
-    public void apply(BlockBegin b) {
+    public void visitBlock(BlockBegin b) {
         depth = 0;
         // process all pinned nodes as the roots of expression trees
         for (Instruction n = b; n != null; n = n.next()) {

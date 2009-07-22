@@ -80,7 +80,7 @@ public class C1XTest {
 
     static {
         // add all the fields from C1XOptions as options
-        options.addFieldOptions(C1XOptions.class, "XX:-");
+        options.addFieldOptions(C1XOptions.class, "XX");
         // add a special option "c1x-optlevel" which adjusts the optimization level
         options.addOption(new Option<Integer>("c1x-optlevel", -1, OptionTypes.INT_TYPE, "Set the overall optimization level of C1X (-1 to use default settings)") {
             @Override

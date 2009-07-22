@@ -28,6 +28,7 @@ package com.sun.c1x;
  */
 public class C1XMetrics {
     public static int LocalValueNumberHits;
+    public static int GlobalValueNumberHits;
     public static int ValueMapResizes;
     public static int ValueMapKills;
     public static int InlinedMethods;
