@@ -51,4 +51,13 @@ public class Pointer {
         return 0;
     }
 
+    /**
+     * @param addr
+     * @param oopMap
+     */
+    public static void memcopy(Pointer dst, Object src, int size) {
+        // TODO Auto-generated method stub
+
+    }
+
 }

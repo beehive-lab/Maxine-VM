@@ -49,7 +49,7 @@ public class LIRProfileCall extends LIRInstruction {
      * @param tmp1
      */
     public LIRProfileCall(LIROpcode opcode, CiMethod profiledMethod, int profiledBci, LIROperand mdo, LIROperand recv, LIROperand tmp1, CiType knownHolder) {
-        super(opcode, LIROperandFactory.illegalOperand, null);
+        super(opcode, LIROperandFactory.IllegalOperand, null);
         this.profiledMethod = profiledMethod;
         this.profiledBci = profiledBci;
         this.mdo = mdo;

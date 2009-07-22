@@ -654,7 +654,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         } else {
             assert this.scalarLiterals == null;
         }
-        if (referenceLiterals != null) {
+        if (referenceLiterals != null && referenceLiterals.length > 0) {
             System.arraycopy(referenceLiterals, 0, this.referenceLiterals, 0, this.referenceLiterals.length);
         }
 

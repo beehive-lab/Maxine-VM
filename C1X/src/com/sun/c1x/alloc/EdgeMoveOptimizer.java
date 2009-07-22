@@ -116,7 +116,7 @@ public final class EdgeMoveOptimizer {
             assert op2 instanceof LIROp1 : "fxch must be LIROp1";
             LIROp1 fxch1 = (LIROp1) op1;
             LIROp1 fxch2 = (LIROp1) op2;
-            if (fxch1.inOpr().asJint() == fxch2.inOpr().asJint()) {
+            if (fxch1.inOpr().asInt() == fxch2.inOpr().asInt()) {
                 // equal FPU stack operations can be optimized
                 return false;
             }

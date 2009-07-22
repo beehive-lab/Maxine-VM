@@ -29,9 +29,6 @@ package com.sun.c1x.util;
  */
 public class BitMap {
 
-    private static final int BitsPerWord = 32;
-    private static final int LogBitsPerWord = Util.log2(BitsPerWord);
-
     private final int length;
     private int low;
     private int[] extra;
@@ -42,8 +39,8 @@ public class BitMap {
      */
     public BitMap(int length) {
         this.length = length;
-        if (length > BitsPerWord) {
-            extra = new int[length >> LogBitsPerWord];
+        if (length > 32) {
+            extra = new int[length >> 5];
         }
     }
 
@@ -52,7 +49,7 @@ public class BitMap {
      * @param i the index of the bit to set
      */
     public void set(int i) {
-        if (checkIndex(i) < BitsPerWord) {
+        if (checkIndex(i) < 32) {
             low |= 1 << i;
         } else {
             int pos = wordIndex(i);
@@ -62,11 +59,11 @@ public class BitMap {
     }
 
     private int bitInWord(int i) {
-        return i & (BitsPerWord - 1);
+        return i & (32 - 1);
     }
 
     private int wordIndex(int i) {
-        return (i >> LogBitsPerWord) - 1;
+        return (i >> 5) - 1;
     }
 
     /**
@@ -74,7 +71,7 @@ public class BitMap {
      * @param i the index of the bit to clear
      */
     public void clear(int i) {
-        if (checkIndex(i) < BitsPerWord) {
+        if (checkIndex(i) < 32) {
             low &= ~(1 << i);
         } else {
             int pos = wordIndex(i);
@@ -115,7 +112,7 @@ public class BitMap {
      * @return <code>true</code> if the bit at the specified position is <code>1</code>
      */
     public boolean get(int i) {
-        if (checkIndex(i) < BitsPerWord) {
+        if (checkIndex(i) < 32) {
             return ((low >> i) & 1) != 0;
         }
         int pos = wordIndex(i);
@@ -181,25 +178,25 @@ public class BitMap {
         }
     }
 
-    public void setDifference(BitMap liveKill) {
-        assert this.length == liveKill.length : "must have same size";
+    public void setDifference(BitMap other) {
+        assert this.length == other.length : "must have same size";
 
-        low &= ~liveKill.low;
+        low &= ~other.low;
         if (extra != null) {
             for (int i = 0; i < extra.length; i++) {
-                extra[i] &= ~liveKill.extra[i];
+                extra[i] &= ~other.extra[i];
             }
         }
     }
 
-    public boolean isSame(BitMap liveOut) {
-        if (this.length != liveOut.length || this.low != liveOut.low) {
+    public boolean isSame(BitMap other) {
+        if (this.length != other.length || this.low != other.low) {
             return false;
         }
 
         if (extra != null) {
             for (int i = 0; i < extra.length; i++) {
-                if (extra[i] != liveOut.extra[i]) {
+                if (extra[i] != other.extra[i]) {
                     return false;
                 }
             }
@@ -248,7 +245,7 @@ public class BitMap {
     }
 
     private int bitIndex(int index) {
-        return (index + 1) << LogBitsPerWord;
+        return (index + 1) << 5;
     }
 
     private int map(int index) {
@@ -264,7 +261,7 @@ public class BitMap {
         res.append("[");
         for (int i = 0; i < this.length; i++) {
             if (this.get(i)) {
-                res.append(i + " ");
+                res.append(i).append(" ");
             }
         }
         res.append("]");

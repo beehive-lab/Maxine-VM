@@ -842,7 +842,13 @@ public class GraphBuilder {
                 return;
             }
         }
-        push(basicType.stackType(), append(load));
+        // append the load to the instruction
+        Instruction optimized = append(load);
+        if (memoryMap != null && optimized != load) {
+            // local optimization happened, replace its value in the memory map
+            memoryMap.setResult(load, optimized);
+        }
+        push(basicType.stackType(), optimized);
     }
 
     void invokeStatic(CiMethod target) {
@@ -1081,7 +1087,7 @@ public class GraphBuilder {
     void monitorenter(Instruction x, int bci) {
         ValueStack lockStack = lockStack();
         appendWithBCI(new MonitorEnter(x, curState.lock(scope(), x), lockStack), bci, false);
-        killValueAndMemoryMaps(); // prevent any optimizations across synchronization
+        killMemoryMap(); // prevent any optimizations across synchronization
     }
 
     void monitorexit(Instruction x, int bci) {
@@ -1101,7 +1107,7 @@ public class GraphBuilder {
             throw new Bailout("monitor stack underflow");
         }
         appendWithBCI(new MonitorExit(x, curState.unlock()), bci, false);
-        killValueAndMemoryMaps(); // prevent any optimizations across synchronization
+        killMemoryMap(); // prevent any optimizations across synchronization
     }
 
     void jsr(int dest) {
@@ -1253,8 +1259,6 @@ public class GraphBuilder {
                 assert r.isAppended() : "lvn result should already be appended";
                 return r;
             }
-            // process the effects of adding this instruction
-            localValueMap.processEffects(x);
         }
 
         if (!(x instanceof Phi || x instanceof Local)) {
@@ -1719,7 +1723,7 @@ public class GraphBuilder {
                 }
                 b.setWasVisited(true);
                 // now parse the block
-                killValueAndMemoryMaps();
+                killMemoryMap();
                 curBlock = b;
                 curState = b.state().copy();
                 lastInstr = b;
@@ -1760,7 +1764,7 @@ public class GraphBuilder {
         ValueStack state = target.state().copy();
         ir.osrEntryBlock.setState(state);
 
-        killValueAndMemoryMaps();
+        killMemoryMap();
         curBlock = ir.osrEntryBlock;
         curState = state.copy();
         lastInstr = ir.osrEntryBlock;
@@ -2092,7 +2096,7 @@ public class GraphBuilder {
         return end;
     }
 
-    void killValueAndMemoryMaps() {
+    void killMemoryMap() {
         if (localValueMap != null) {
             localValueMap.killAll();
         }

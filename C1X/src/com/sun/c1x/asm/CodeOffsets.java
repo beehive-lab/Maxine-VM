@@ -30,10 +30,10 @@ public class CodeOffsets {
         VerifiedEntry,
         FrameComplete, // Offset in the code where the frame setup is (for forte stackwalks) is complete
         OSREntry,
-        /*DtraceTrap = OSREntry,  // dtrace probes can never have an OSR entry so reuse it*/
+        DtraceTrap,  // dtrace probes can never have an OSR entry so reuse it*/
         Exceptions,     // Offset where exception handler lives
-        Deopt,          // Offset where deopt handler lives
-        maxEntries }
+        Deopt          // Offset where deopt handler lives
+         }
 
     public void setValue(Entries osrentry, int offset) {
         // TODO Auto-generated method stub

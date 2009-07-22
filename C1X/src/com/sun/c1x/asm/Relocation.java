@@ -29,14 +29,15 @@ import com.sun.c1x.asm.RelocInfo.*;
  */
 public class Relocation {
 
-    public static RelocationHolder specSimple(Type rtype) {
-        // TODO Auto-generated method stub
-        return null;
+    public static final Relocation none = new Relocation(Type.none);
+    private final Type type;
+
+    public Relocation(Type type) {
+        this.type = type;
     }
 
     public Type type() {
-        // TODO Auto-generated method stub
-        return null;
+        return type;
     }
 
     public boolean isCall() {
@@ -48,5 +49,59 @@ public class Relocation {
         // TODO Auto-generated method stub
         return false;
     }
+
+    public static Relocation specExternalWord(Pointer loc) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public static Relocation specInternalWord(Pointer loc) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public static Relocation specRuntimeCall() {
+        return specSimple(RelocInfo.Type.runtimeCallType);
+    }
+
+    public static Relocation specSimple(Pointer loc) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public static Relocation specOptVirtualCallRelocation(long address) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public static Relocation specStaticCallRelocation(long address) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    // make a generic relocation for a given type (if possible)
+    public static Relocation specSimple(Type rtype) {
+        if (rtype == RelocInfo.Type.none) {
+            return Relocation.none;
+        }
+        return new Relocation(rtype);
+    }
+
+    public static Relocation virtualCallRelocationSpec(Pointer pc) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public static Relocation specForImmediate() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public int format() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+
 
 }

@@ -105,6 +105,33 @@ public class Util {
     }
 
     /**
+     * Gets a word with the nth bit set.
+     * @param n the nth bit to set
+     * @return an integer value with the nth bit set
+     */
+    public static int nthBit(int n) {
+        return (n >= Integer.SIZE ? 0 : 1 << (n));
+    }
+
+    /**
+     * Gets a word with the right-most n bits set.
+     * @param n the number of rigth most bits to set
+     * @return an integer value with the right-most n bits set
+     */
+    public static int rightNBits(int n) {
+        return nthBit(n) - 1;
+    }
+
+    /**
+     * Gets a word with the left-most n bits set.
+     * @param n the number of right-most bits to set
+     * @return an integer value with the right-most n bits set
+     */
+    public static int leftNBits(int n) {
+        return (rightNBits(n) << (n >= Integer.SIZE ? 0 : (Integer.SIZE - n)));
+    }
+
+    /**
      * Statically cast an object to an arbitrary Object type. Dynamically checked.
      */
     @SuppressWarnings("unchecked")
@@ -527,7 +554,6 @@ public class Util {
     }
 
     public static int sizeofJdouble() {
-        // TODO Auto-generated method stub
         return 8;
     }
 
@@ -555,6 +581,25 @@ public class Util {
     public static void truncate(List<?> instructions, int length) {
         while (instructions.size() > length) {
             instructions.remove(instructions.size() - 1);
+        }
+    }
+
+    public static int sizeofDouble() {
+        return 8;
+    }
+
+    public static void printBytes(byte[] array) {
+        printBytes(array, array.length);
+    }
+
+
+    public static void printBytes(byte[] array, int length) {
+        TTY.println("%d bytes: ", length);
+        for (int i = 0; i < length; i++) {
+            TTY.print("%2x ", array[i]);
+            if (i % 8 == 7) {
+                TTY.println();
+            }
         }
     }
 }
