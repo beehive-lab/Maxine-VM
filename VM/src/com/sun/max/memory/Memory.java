@@ -28,7 +28,7 @@ import com.sun.max.unsafe.box.*;
 /**
  * This class provides methods to access raw memory through pointers.
  * It also provides allocation methods that are expected to be for small quantities
- * of memory (or quanttites that are not multiple of a page) that will be satisfied
+ * of memory (or quantities that are not multiple of a page) that will be satisfied
  * by the native allocation library, i.e. malloc/free.
  * Large amounts of memory should be allocated using the @see VirtualMemory class.
  *
