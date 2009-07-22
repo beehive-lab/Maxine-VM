@@ -21,6 +21,7 @@
 /**
  * @author Bernd Mathiske
  * @author Laurent Daynes
+ * @author Paul Caprioli
  */
 
 #if !os_GUESTVMXEN
@@ -148,6 +149,7 @@ static void setInstructionPointer(UContext *ucontext, Address stub) {
 #endif
 }
 
+#if 0
 static Address getStackPointer(UContext *ucontext) {
 #if os_SOLARIS
   return ucontext->uc_mcontext.gregs[REG_SP];
@@ -167,6 +169,7 @@ static Address getStackPointer(UContext *ucontext) {
         c_UNIMPLEMENTED();
 #endif
 }
+#endif
 
 static Address getFaultAddress(SigInfo * sigInfo, UContext *ucontext) {
 #if (os_DARWIN || os_SOLARIS || os_LINUX )
@@ -195,11 +198,6 @@ static void blueZoneTrap(ThreadSpecifics threadSpecifics) {
 #endif
 }
 
-static int isInGuardZone(Address address, Address zoneBegin) {
-    /* return true if the address is in the zone, or is within N pages of the zone */
-    return address >= zoneBegin && (address - zoneBegin) < ((1 + STACK_GUARD_PAGES) * virtualMemory_getPageSize());
-}
-
 static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext) {
 #if log_TRAP
     char *sigName = signalName(signal);
@@ -223,30 +221,26 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     }
 
     int trapNumber = getTrapNumber(signal);
-    Word *stackPointer = (Word *)getStackPointer(ucontext);
-
-
-    if (isInGuardZone((Address)stackPointer, threadSpecifics->stackRedZone)) {
-    	/* if the stack pointer is in the red zone, (we shouldn't be alive) */
-        log_exit(-20, "SIGSEGV: (stack pointer is in fatal red zone)");
-    } else if (isInGuardZone((Address)stackPointer, threadSpecifics->stackYellowZone)) {
-        /* if the stack pointer is in the yellow zone, assume this is a stack fault */
-    	virtualMemory_unprotectPage(threadSpecifics->stackYellowZone);
-        trapNumber = STACK_FAULT;
-    } else  if (isInGuardZone((Address)stackPointer, threadSpecifics->stackBlueZone)) {
-    	/* need to map more of the stack? */
-    	blueZoneTrap(threadSpecifics);
-    	return;
-    } else if (stackPointer == 0) {
-        /* if the stack pointer is zero, (we shouldn't be alive) */
-        log_exit(-19, "SIGSEGV: (stack pointer is zero)");
+    Address faultAddress = getFaultAddress(signalInfo, ucontext);
+    if (faultAddress >= threadSpecifics->stackRedZone && faultAddress < threadSpecifics->stackBase + threadSpecifics->stackSize) {
+        if (faultAddress < threadSpecifics->stackYellowZone) {
+            /* The faultAddress is in the red zone; we shouldn't be alive. */
+            log_exit(-20, "SIGSEGV: Address %p is in stack red zone.");
+        } else if (faultAddress < threadSpecifics->stackYellowZone + virtualMemory_getPageSize()) {
+            /* the faultAddress is in the yellow zone; assume this is a stack fault. */
+            virtualMemory_unprotectPage(threadSpecifics->stackYellowZone);
+            trapNumber = STACK_FAULT;
+        } else {
+            blueZoneTrap(threadSpecifics);
+            return;
+        }
     }
 
     /* save the trap information in the disabled vm thread locals */
     Address *trapInfo = (Address*) (disabledVmThreadLocals + image_header()->vmThreadLocalsTrapNumberOffset);
     trapInfo[0] = trapNumber;
     trapInfo[1] = getInstructionPointer(ucontext);
-    trapInfo[2] = getFaultAddress(signalInfo, ucontext);
+    trapInfo[2] = faultAddress;
 #if os_SOLARIS && isa_SPARC
 	 /* save the value of the safepoint latch at the trapped instruction */
 	 trapInfo[3] = ucontext->uc_mcontext.gregs[REG_G2];
