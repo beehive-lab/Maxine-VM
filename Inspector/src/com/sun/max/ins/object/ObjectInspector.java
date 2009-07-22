@@ -137,7 +137,10 @@ public abstract class ObjectInspector extends Inspector {
         if (teleObject.isLive()) {
             return pointer.toHexString() + inspection().nameDisplay().referenceLabelText(teleObject);
         }
-        return this.getCurrentTitle() + " - got collected by GC";
+        if (getCurrentTitle().endsWith(" - got collected by GC")) {
+            return getCurrentTitle();
+        }
+        return getCurrentTitle() + " - got collected by GC";
     }
 
     @Override
@@ -283,7 +286,7 @@ public abstract class ObjectInspector extends Inspector {
     protected boolean refreshView(boolean force) {
         final Pointer newOrigin = teleObject.getCurrentOrigin();
         if (!teleObject.isLive()) {
-            setWarningColor();
+            setWarning();
             updateFrameTitle();
             return false;
         }

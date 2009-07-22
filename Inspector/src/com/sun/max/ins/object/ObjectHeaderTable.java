@@ -127,19 +127,21 @@ public final class ObjectHeaderTable extends InspectorTable {
         if (maxVMState().newerThan(lastRefreshedState) || force) {
             lastRefreshedState = maxVMState();
             objectOrigin = teleObject.getCurrentOrigin();
-            teleHub = teleObject.getTeleHub();
-            final int oldSelectedRow = getSelectedRow();
-            final int newRow = model.addressToRow(focus().address());
-            if (newRow >= 0) {
-                getSelectionModel().setSelectionInterval(newRow, newRow);
-            } else {
-                if (oldSelectedRow >= 0) {
-                    getSelectionModel().clearSelection();
+            if (teleObject.isLive()) {
+                teleHub = teleObject.getTeleHub();
+                final int oldSelectedRow = getSelectedRow();
+                final int newRow = model.addressToRow(focus().address());
+                if (newRow >= 0) {
+                    getSelectionModel().setSelectionInterval(newRow, newRow);
+                } else {
+                    if (oldSelectedRow >= 0) {
+                        getSelectionModel().clearSelection();
+                    }
                 }
-            }
-            for (TableColumn column : columns) {
-                final Prober prober = (Prober) column.getCellRenderer();
-                prober.refresh(force);
+                for (TableColumn column : columns) {
+                    final Prober prober = (Prober) column.getCellRenderer();
+                    prober.refresh(force);
+                }
             }
         }
     }
