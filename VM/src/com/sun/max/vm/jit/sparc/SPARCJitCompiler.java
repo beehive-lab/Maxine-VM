@@ -138,7 +138,7 @@ public class SPARCJitCompiler extends JitCompiler {
             framePointer =  stackFrameWalker.stackPointer();
             stackPointer = framePointer.minus(adapterFrameSize);
         } else {
-            framePointer = isTopFrame ?  stackFrameWalker.framePointer() : STACK_BIAS.SPARC_V9.bias(stackFrameWalker.framePointer());
+            framePointer = isTopFrame ?  stackFrameWalker.framePointer() : StackBias.SPARC_V9.bias(stackFrameWalker.framePointer());
             stackPointer =  stackFrameWalker.stackPointer();
         }
 
@@ -258,7 +258,7 @@ public class SPARCJitCompiler extends JitCompiler {
 
                         // Compute the catcher stack pointer: this one will be the top frame, so we need to augment it with space for saving a register window plus
                         // mandatory output register. We also need to bias it.
-                        final Pointer catcherStackPointer = STACK_BIAS.JIT_SPARC_V9.bias(catcherTopOfStackPointer.minus(SPARCStackFrameLayout.minStackFrameSize()));
+                        final Pointer catcherStackPointer = StackBias.JIT_SPARC_V9.bias(catcherTopOfStackPointer.minus(SPARCStackFrameLayout.minStackFrameSize()));
                         final Pointer literalBase = localVariablesBase.readWord(-JitStackFrameLayout.STACK_SLOT_SIZE).asPointer();
 
                         // found an exception handler, and thus we are done with the stack walker

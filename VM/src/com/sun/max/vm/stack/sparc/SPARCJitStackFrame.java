@@ -79,8 +79,8 @@ public class SPARCJitStackFrame extends JitStackFrame<SPARCJitStackFrameLayout> 
     }
 
     @Override
-    public STACK_BIAS bias() {
-        return STACK_BIAS.JIT_SPARC_V9;
+    public StackBias bias() {
+        return StackBias.JIT_SPARC_V9;
     }
 
 }

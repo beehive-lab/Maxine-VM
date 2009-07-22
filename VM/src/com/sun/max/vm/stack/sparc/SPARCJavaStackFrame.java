@@ -61,8 +61,8 @@ public class SPARCJavaStackFrame extends JavaStackFrame<OptoStackFrameLayout> {
     }
 
     @Override
-    public STACK_BIAS bias() {
-        return STACK_BIAS.SPARC_V9;
+    public StackBias bias() {
+        return StackBias.SPARC_V9;
     }
 
 }
