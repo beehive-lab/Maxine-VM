@@ -115,8 +115,8 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         };
     }
 
-    protected void setWarningColor() {
-        frame().getContentPane().setBackground(Color.RED);
+    protected void setWarning() {
+        highlight();
     }
 
     /**
