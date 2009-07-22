@@ -574,7 +574,7 @@ public class LIRList {
     public static void printBlock(BlockBegin x) {
         // print block id
         BlockEnd end = x.end();
-        TTY.print("B%d ", x.blockID());
+        TTY.print("B%d ", x.blockID);
 
         // print flags
         if (x.checkBlockFlag(BlockBegin.BlockFlag.StandardEntry)) {
@@ -606,14 +606,14 @@ public class LIRList {
         if (x.numberOfPreds() > 0) {
             TTY.print("preds: ");
             for (int i = 0; i < x.numberOfPreds(); i++) {
-                TTY.print("B%d ", x.predAt(i).blockID());
+                TTY.print("B%d ", x.predAt(i).blockID);
             }
         }
 
         if (x.numberOfSux() > 0) {
             TTY.print("sux: ");
             for (int i = 0; i < x.numberOfSux(); i++) {
-                TTY.print("B%d ", x.suxAt(i).blockID());
+                TTY.print("B%d ", x.suxAt(i).blockID);
             }
         }
 
@@ -621,7 +621,7 @@ public class LIRList {
         if (x.numberOfExceptionHandlers() > 0) {
             TTY.print("xhandler: ");
             for (int i = 0; i < x.numberOfExceptionHandlers(); i++) {
-                TTY.print("B%d ", x.exceptionHandlerAt(i).blockID());
+                TTY.print("B%d ", x.exceptionHandlerAt(i).blockID);
             }
         }
 

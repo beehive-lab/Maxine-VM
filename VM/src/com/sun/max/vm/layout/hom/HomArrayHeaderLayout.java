@@ -98,7 +98,6 @@ public class HomArrayHeaderLayout extends HomGeneralLayout implements ArrayHeade
         return word.asAddress().unsignedShiftedRight(1).toInt();
     }
 
-    @Override
     public int arrayLengthOffset() {
         return arrayLengthOffset;
     }

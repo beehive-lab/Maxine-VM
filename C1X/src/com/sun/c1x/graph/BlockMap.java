@@ -85,7 +85,7 @@ public class BlockMap {
 
         Iterable<BlockBegin> getHandlers(BlockBegin block) {
             // lookup handlers for the basic block
-            HashSet<BlockBegin> set = handlerMap.get(block.blockID());
+            HashSet<BlockBegin> set = handlerMap.get(block.blockID);
             return set == null ? NONE_LIST : set;
         }
 
@@ -98,10 +98,10 @@ public class BlockMap {
 
         void addHandler(BlockBegin block, BlockBegin handler) {
             // add a handler to a basic block, creating the set if necessary
-            HashSet<BlockBegin> set = handlerMap.get(block.blockID());
+            HashSet<BlockBegin> set = handlerMap.get(block.blockID);
             if (set == null) {
                 set = new HashSet<BlockBegin>();
-                handlerMap.put(block.blockID(), set);
+                handlerMap.put(block.blockID, set);
             }
             set.add(handler);
         }
@@ -160,8 +160,7 @@ public class BlockMap {
     BlockBegin make(int bci) {
         BlockBegin block = blockMap[bci];
         if (block == null) {
-            block = new BlockBegin(bci);
-            block.setBlockID(blockNum++);
+            block = new BlockBegin(bci, blockNum++);
             blockMap[bci] = block;
         }
         return block;
@@ -407,7 +406,7 @@ public class BlockMap {
 
     boolean numberBlock(BlockBegin block, BitMap visited, BitMap active) {
         // number a block with its reverse post-order traversal number
-        int blockIndex = block.blockID() - firstBlock;
+        int blockIndex = block.blockID - firstBlock;
 
         if (visited.get(blockIndex)) {
             if (active.get(blockIndex)) {

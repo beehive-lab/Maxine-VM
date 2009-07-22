@@ -169,7 +169,7 @@ public class LIRBranch extends LIRInstruction {
         printCondition(out, cond());
         out.print(" ");
         if (block() != null) {
-            out.printf("[B%d] ", block().blockID());
+            out.printf("[B%d] ", block().blockID);
         } else if (stub() != null) {
             out.print("[");
             stub().printName(out);
@@ -181,7 +181,7 @@ public class LIRBranch extends LIRInstruction {
             out.printf("[label:0x%x] ", label().loc());
         }
         if (ublock() != null) {
-            out.printf("unordered: [B%d] ", ublock().blockID());
+            out.printf("unordered: [B%d] ", ublock().blockID);
         }
     }
 }
