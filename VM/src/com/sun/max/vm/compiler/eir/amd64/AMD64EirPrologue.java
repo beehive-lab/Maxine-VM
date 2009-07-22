@@ -29,6 +29,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.asm.amd64.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.thread.*;
 
@@ -63,11 +64,8 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
                     asm.subq(framePointer, frameSize);
                 }
                 if (STACK_BANGING) {
-                    // emit a read of the stack 2 pages down to trigger a stack overflow earlier
-                    // TODO (tw): Check why the LSRA needs the value 3 here. Can probably be removed after implementing better stack slot sharing.
-                    asm.mov(emitter.scratchRegister(), -3 * emitter.abi().vmConfiguration().platform().pageSize, emitter.stackPointer().indirect());
-                    //asm.mov(emitter.scratchRegister(), -2 * emitter.abi().vmConfiguration().platform().pageSize(), emitter.stackPointer().indirect());
-
+                    // emit a read of the stack stackGuardSize bytes down to trigger a stack overflow earlier than would otherwise occur.
+                    asm.mov(emitter.scratchRegister(), -Trap.stackGuardSize, emitter.stackPointer().indirect());
                 }
             }
         }

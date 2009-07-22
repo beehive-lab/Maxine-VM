@@ -35,9 +35,9 @@ import com.sun.max.vm.stack.sparc.*;
  *
  * @author Laurent Daynes
  */
-public enum STACK_BIAS {
+public enum StackBias {
     /**
-     * Default case: no bias. Use this for all platforms who ABI doesn't use any stack bias.
+     * Default case: no bias. Use this for all platforms whose ABI doesn't use any stack bias.
      */
     NONE,
 

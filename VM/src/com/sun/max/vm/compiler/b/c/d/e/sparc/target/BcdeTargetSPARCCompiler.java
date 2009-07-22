@@ -52,6 +52,7 @@ import com.sun.max.vm.thread.*;
 /**
  * @author Bernd Mathiske
  * @author Laurent Daynes
+ * @author Paul Caprioli
  */
 public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements TargetGeneratorScheme {
 
@@ -94,7 +95,6 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
     }
 
     private static final int CALL_INSTRUCTION = 0x40000000;
-    private static final int CALL_DISP_MASK = 0x3fffffff;
 
     /**
      * This is a snippet implementation and we want to access the snippet's caller via our stack pointer.
@@ -120,9 +120,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
         final Address calleeEntryPoint = CompilationScheme.Static.compile(callee, caller.abi().callEntryPoint(), CompilationDirective.DEFAULT);
         // Compute offset to the callee from the caller
         final int calleeOffset = calleeEntryPoint.minus(callSite).toInt();
-        // Compute the 30 bits field displacement for the call instruction (see SPARC manual, A.8).
-        final int disp30 = (calleeOffset >> 2) & CALL_DISP_MASK;
-        final int instr = CALL_INSTRUCTION | disp30;
+        final int instr = CALL_INSTRUCTION | (calleeOffset >>> 2);
         callSite.writeInt(0, instr);
     }
 
@@ -364,7 +362,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                 // We can fish for the caller's instruction pointer in the trapped state, which is located at the
                 // top of the callee stack.
                 final SPARCSafepoint safepoint = (SPARCSafepoint) VMConfiguration.hostOrTarget().safepoint;
-                final Pointer trapState = STACK_BIAS.SPARC_V9.unbias(stackFrameWalker.stackPointer()).minus(SPARCSafepoint.TRAP_STATE_SIZE);
+                final Pointer trapState = StackBias.SPARC_V9.unbias(stackFrameWalker.stackPointer()).minus(SPARCSafepoint.TRAP_STATE_SIZE);
                 callerInstructionPointer = safepoint.getCallAddressRegister(trapState);
             }
         } else {
@@ -385,11 +383,11 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                     stackFrameWalker.useABI(caller.abi());
                     callerFramePointer = stackFrameWalker.framePointer();
                 } else {
-                    final Pointer savedRegisterWindow = STACK_BIAS.SPARC_V9.unbias(stackFrameWalker.stackPointer());
+                    final Pointer savedRegisterWindow = StackBias.SPARC_V9.unbias(stackFrameWalker.stackPointer());
                     callerFramePointer = SPARCStackFrameLayout.getRegisterInSavedWindow(stackFrameWalker, savedRegisterWindow, GPR.L6).asPointer();
                 }
             } else {
-                final Pointer savedRegisterWindow = STACK_BIAS.SPARC_V9.unbias(callerStackPointer);
+                final Pointer savedRegisterWindow = StackBias.SPARC_V9.unbias(callerStackPointer);
                 callerFramePointer = SPARCStackFrameLayout.getRegisterInSavedWindow(stackFrameWalker, savedRegisterWindow, GPR.L6).asPointer();
             }
         }
