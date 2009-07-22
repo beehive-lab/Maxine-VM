@@ -54,44 +54,44 @@ public class ComputeLinearScanOrder {
     }
 
     boolean isVisited(BlockBegin b) {
-        return visitedBlocks.get(b.blockID());
+        return visitedBlocks.get(b.blockID);
     }
 
     boolean isActive(BlockBegin b) {
-        return activeBlocks.get(b.blockID());
+        return activeBlocks.get(b.blockID);
     }
 
     void setVisited(BlockBegin b) {
         assert !isVisited(b) : "already set";
-        visitedBlocks.set(b.blockID());
+        visitedBlocks.set(b.blockID);
     }
 
     void setActive(BlockBegin b) {
         assert !isActive(b) : "already set";
-        activeBlocks.set(b.blockID());
+        activeBlocks.set(b.blockID);
     }
 
     void clearActive(BlockBegin b) {
         assert isActive(b) : "not already";
-        activeBlocks.clear(b.blockID());
+        activeBlocks.clear(b.blockID);
     }
 
     // accessors for forwardBranches
     void incForwardBranches(BlockBegin b) {
-        forwardBranches[b.blockID()]++;
+        forwardBranches[b.blockID]++;
     }
 
     int decForwardBranches(BlockBegin b) {
-        return --forwardBranches[b.blockID()];
+        return --forwardBranches[b.blockID];
     }
 
     // accessors for loopMap
     boolean isBlockInLoop(int loopIdx, BlockBegin b) {
-        return loopMap.at(loopIdx, b.blockID());
+        return loopMap.at(loopIdx, b.blockID);
     }
 
     void setBlockInLoop(int loopIdx, BlockBegin b) {
-        loopMap.setBit(loopIdx, b.blockID());
+        loopMap.setBit(loopIdx, b.blockID);
     }
 
     void clearBlockInLoop(int loopIdx, int blockId) {
@@ -116,6 +116,9 @@ public class ComputeLinearScanOrder {
         forwardBranches = new int[maxBlockId];
         loopEndBlocks = new ArrayList<BlockBegin>(8);
         workList = new ArrayList<BlockBegin>(8);
+
+        Util.traceLinearScan(2, " splitting critical edges");
+        splitCriticalEdges();
         Util.traceLinearScan(2, " computing linear-scan block order");
 
         initVisited();
@@ -134,13 +137,17 @@ public class ComputeLinearScanOrder {
         assert verify();
     }
 
+    void splitCriticalEdges() {
+        // TODO: implement critical edge splitting
+    }
+
     // Traverse the CFG:
     // * count total number of blocks
     // * count all incoming edges and backward incoming edges
     // * number loop header blocks
     // * create a list with all loop end blocks
     void countEdges(BlockBegin cur, BlockBegin parent) {
-        Util.traceLinearScan(3, "Enter countEdges for block B%d coming from B%d", cur.blockID(), parent != null ? parent.blockID() : -1);
+        Util.traceLinearScan(3, "Enter countEdges for block B%d coming from B%d", cur.blockID, parent != null ? parent.blockID : -1);
         assert cur.dominator() == null : "dominator already initialized";
 
         if (isActive(cur)) {
@@ -197,13 +204,13 @@ public class ComputeLinearScanOrder {
         // have returned.
         if (cur.checkBlockFlag(BlockBegin.BlockFlag.LinearScanLoopHeader)) {
             assert cur.loopIndex() == -1 : "cannot set loop-index twice";
-            Util.traceLinearScan(3, "Block B%d is loop header of loop %d", cur.blockID(), numLoops);
+            Util.traceLinearScan(3, "Block B%d is loop header of loop %d", cur.blockID, numLoops);
 
             cur.setLoopIndex(numLoops);
             numLoops++;
         }
 
-        Util.traceLinearScan(3, "Finished countEdges for block B%d", cur.blockID());
+        Util.traceLinearScan(3, "Finished countEdges for block B%d", cur.blockID);
     }
 
     void markLoops() {
@@ -217,7 +224,7 @@ public class ComputeLinearScanOrder {
             BlockBegin loopStart = loopEnd.suxAt(0);
             int loopIdx = loopStart.loopIndex();
 
-            Util.traceLinearScan(3, "Processing loop from B%d to B%d (loop %d):", loopStart.blockID(), loopEnd.blockID(), loopIdx);
+            Util.traceLinearScan(3, "Processing loop from B%d to B%d (loop %d):", loopStart.blockID, loopEnd.blockID, loopIdx);
             assert loopEnd.checkBlockFlag(BlockBegin.BlockFlag.LinearScanLoopEnd) : "loop end flag must be set";
 //            assert loopEnd.numberOfSux() == 1 : "incorrect number of successors";
             assert loopStart.checkBlockFlag(BlockBegin.BlockFlag.LinearScanLoopHeader) : "loop header flag must be set";
@@ -230,7 +237,7 @@ public class ComputeLinearScanOrder {
             do {
                 BlockBegin cur = workList.remove(workList.size() - 1);
 
-                Util.traceLinearScan(3, "    processing B%d", cur.blockID());
+                Util.traceLinearScan(3, "    processing B%d", cur.blockID);
                 assert isBlockInLoop(loopIdx, cur) : "bit in loop map must be set when block is in work list";
 
                 // recursive processing of all predecessors ends when start block of loop is reached
@@ -240,7 +247,7 @@ public class ComputeLinearScanOrder {
 
                         if (!isBlockInLoop(loopIdx, pred)) {
                             // this predecessor has not been processed yet, so add it to work list
-                            Util.traceLinearScan(3, "    pushing B%d", pred.blockID());
+                            Util.traceLinearScan(3, "    pushing B%d", pred.blockID);
                             workList.add(pred);
                             setBlockInLoop(loopIdx, pred);
                         }
@@ -280,7 +287,7 @@ public class ComputeLinearScanOrder {
 
             if (!isVisited(cur)) {
                 setVisited(cur);
-                Util.traceLinearScan(4, "Computing loop depth for block B%d", cur.blockID());
+                Util.traceLinearScan(4, "Computing loop depth for block B%d", cur.blockID);
 
                 // compute loop-depth and loop-index for the block
                 assert cur.loopDepth() == 0 : "cannot set loop-depth twice";
@@ -312,11 +319,11 @@ public class ComputeLinearScanOrder {
 
         dominatorBlocks.clearAll();
         while (a != null) {
-            dominatorBlocks.set(a.blockID());
+            dominatorBlocks.set(a.blockID);
             assert a.dominator() != null || a == linearScanOrder.get(0) : "dominator must be initialized";
             a = a.dominator();
         }
-        while (b != null && !dominatorBlocks.get(b.blockID())) {
+        while (b != null && !dominatorBlocks.get(b.blockID)) {
             assert b.dominator() != null || b == linearScanOrder.get(0) : "dominator must be initialized";
             b = b.dominator();
         }
@@ -327,12 +334,12 @@ public class ComputeLinearScanOrder {
 
     void computeDominator(BlockBegin cur, BlockBegin parent) {
         if (cur.dominator() == null) {
-            Util.traceLinearScan(4, "DOM: initializing dominator of B%d to B%d", cur.blockID(), parent.blockID());
+            Util.traceLinearScan(4, "DOM: initializing dominator of B%d to B%d", cur.blockID, parent.blockID);
             cur.setDominator(parent);
 
         } else if (!(cur.checkBlockFlag(BlockBegin.BlockFlag.LinearScanLoopHeader) && parent.checkBlockFlag(BlockBegin.BlockFlag.LinearScanLoopEnd))) {
-            Util.traceLinearScan(4, "DOM: computing dominator of B%d: common dominator of B%d and B%d is B%d", cur.blockID(), parent.blockID(), cur.dominator().blockID(), commonDominator(
-                            cur.dominator(), parent).blockID());
+            Util.traceLinearScan(4, "DOM: computing dominator of B%d: common dominator of B%d and B%d is B%d", cur.blockID, parent.blockID, cur.dominator().blockID, commonDominator(
+                    cur.dominator(), parent).blockID);
             assert cur.numberOfPreds() > 1 : "";
             cur.setDominator(commonDominator(cur.dominator(), parent));
         }
@@ -431,10 +438,10 @@ public class ComputeLinearScanOrder {
         }
         workList.set(insertIdx, cur);
 
-        Util.traceLinearScan(3, "Sorted B%d into worklist. new worklist:", cur.blockID());
+        Util.traceLinearScan(3, "Sorted B%d into worklist. new worklist:", cur.blockID);
         if (C1XOptions.TraceLinearScanLevel >= 3) {
             for (int i = 0; i < workList.size(); i++) {
-                TTY.println(String.format("%8d B%2d  weight:%6x", i, workList.get(i).blockID(), workList.get(i).linearScanNumber()));
+                TTY.println(String.format("%8d B%2d  weight:%6x", i, workList.get(i).blockID, workList.get(i).linearScanNumber()));
             }
         }
 
@@ -445,7 +452,7 @@ public class ComputeLinearScanOrder {
     }
 
     void appendBlock(BlockBegin cur) {
-        Util.traceLinearScan(3, "appending block B%d (weight 0x%6x) to linear-scan order", cur.blockID(), cur.linearScanNumber());
+        Util.traceLinearScan(3, "appending block B%d (weight 0x%6x) to linear-scan order", cur.blockID, cur.linearScanNumber());
         assert linearScanOrder.indexOf(cur) == -1 : "cannot add the same block twice";
 
         // currently, the linear scan order and code emit order are equal.
@@ -539,7 +546,7 @@ public class ComputeLinearScanOrder {
             }
 
             if (dominator != block.dominator()) {
-                Util.traceLinearScan(4, "DOM: updating dominator of B%d from B%d to B%d", block.blockID(), block.dominator().blockID(), dominator.blockID());
+                Util.traceLinearScan(4, "DOM: updating dominator of B%d from B%d to B%d", block.blockID, block.dominator().blockID, dominator.blockID);
                 block.setDominator(dominator);
                 changed = true;
             }
@@ -569,7 +576,7 @@ public class ComputeLinearScanOrder {
             for (int blockIdx = 0; blockIdx < linearScanOrder.size(); blockIdx++) {
                 BlockBegin cur = linearScanOrder.get(blockIdx);
 
-                TTY.println(String.format("%4d: B%2d: ", cur.linearScanNumber(), cur.blockID()));
+                TTY.println(String.format("%4d: B%2d: ", cur.linearScanNumber(), cur.blockID));
                 for (int loopIdx = 0; loopIdx < numLoops; loopIdx++) {
                     TTY.println(String.format("%d = %b ", loopIdx, isBlockInLoop(loopIdx, cur)));
                 }
@@ -581,7 +588,7 @@ public class ComputeLinearScanOrder {
             TTY.println("----- linear-scan block order:");
             for (int blockIdx = 0; blockIdx < linearScanOrder.size(); blockIdx++) {
                 BlockBegin cur = linearScanOrder.get(blockIdx);
-                TTY.print(String.format("%4d: B%2d    loop: %2d  depth: %2d", cur.linearScanNumber(), cur.blockID(), cur.loopIndex(), cur.loopDepth()));
+                TTY.print(String.format("%4d: B%2d    loop: %2d  depth: %2d", cur.linearScanNumber(), cur.blockID, cur.loopIndex(), cur.loopDepth()));
 
                 TTY.print(cur.checkBlockFlag(BlockBegin.BlockFlag.ExceptionEntry) ? " ex" : "   ");
                 TTY.print(cur.checkBlockFlag(BlockBegin.BlockFlag.CriticalEdgeSplit) ? " ce" : "   ");
@@ -589,7 +596,7 @@ public class ComputeLinearScanOrder {
                 TTY.print(cur.checkBlockFlag(BlockBegin.BlockFlag.LinearScanLoopEnd) ? " le" : "   ");
 
                 if (cur.dominator() != null) {
-                    TTY.print("    dom: B%d ", cur.dominator().blockID());
+                    TTY.print("    dom: B%d ", cur.dominator().blockID);
                 } else {
                     TTY.print("    dom: null ");
                 }
@@ -598,21 +605,21 @@ public class ComputeLinearScanOrder {
                     TTY.print("    preds: ");
                     for (int j = 0; j < cur.numberOfPreds(); j++) {
                         BlockBegin pred = cur.predAt(j);
-                        TTY.print("B%d ", pred.blockID());
+                        TTY.print("B%d ", pred.blockID);
                     }
                 }
                 if (cur.numberOfSux() > 0) {
                     TTY.print("    sux: ");
                     for (int j = 0; j < cur.numberOfSux(); j++) {
                         BlockBegin sux = cur.suxAt(j);
-                        TTY.print("B%d ", sux.blockID());
+                        TTY.print("B%d ", sux.blockID);
                     }
                 }
                 if (cur.numberOfExceptionHandlers() > 0) {
                     TTY.print("    ex: ");
                     for (int j = 0; j < cur.numberOfExceptionHandlers(); j++) {
                         BlockBegin ex = cur.exceptionHandlerAt(j);
-                        TTY.print("B%d ", ex.blockID());
+                        TTY.print("B%d ", ex.blockID);
                     }
                 }
                 TTY.cr();

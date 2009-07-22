@@ -537,7 +537,8 @@ public class OptionSet {
      */
     public void addFieldOptions(Class<?> javaClass, String prefix) {
         for (final Field field : javaClass.getDeclaredFields()) {
-            if (Modifier.isStatic(field.getModifiers())) {
+            int modifiers = field.getModifiers();
+            if (Modifier.isStatic(modifiers) && !Modifier.isFinal(modifiers)) {
                 field.setAccessible(true);
                 final OptionSettings settings = field.getAnnotation(OptionSettings.class);
                 String help;
@@ -549,44 +550,61 @@ public class OptionSet {
                     help = "";
                     name = field.getName().replace('_', '-');
                 }
-                addFieldOption(prefix + name, null, field, help);
+                addFieldOption(prefix, name, null, field, help);
             }
         }
     }
 
     /**
      * Adds a new option whose value is stored in the specified reflection field.
+     * @param prefix the name of the option
      * @param name the name of the option
      * @param object the object containing the field (if the field is not static)
      * @param field the field to store the value
-     * @param help the help text for the option   @return a new option that will modify the field when parsed
+     * @param help the help text for the option   @return a new option that will mod?ify the field when parsed
+     * @return the option created
      */
     @SuppressWarnings("unchecked")
-    public Option<?> addFieldOption(String name, Object object, Field field, String help) {
+    public Option<?> addFieldOption(String prefix, String name, Object object, Field field, String help) {
         final Class<?> fieldType = field.getType();
         final Object defaultValue;
+        final String optionName = prefix + ":" + name;
         try {
             defaultValue = field.get(null);
         } catch (IllegalAccessException e) {
             return null;
         }
         if (fieldType == boolean.class) {
-            return addOption(new FieldOption<Boolean>(name, object, field, (Boolean) defaultValue, OptionTypes.BOOLEAN_TYPE, help));
+            if (prefix.length() > 0) {
+                // setup a "-prefix+name" option
+                String plusName = prefix + "+" + name;
+                FieldOption<Boolean> plusOption = new FieldOption<Boolean>(plusName, object, field, (Boolean) defaultValue, OptionTypes.BOOLEAN_TYPE, help);
+                plusOption.nullValue = true;
+                addOption(plusOption, Syntax.REQUIRES_BLANK);
+
+                // setup a "-prefix-name" option
+                String minusName = prefix + "-" + name;
+                FieldOption<Boolean> minusOption = new FieldOption<Boolean>(minusName, object, field, (Boolean) defaultValue, OptionTypes.BOOLEAN_TYPE, help);
+                minusOption.nullValue = false;
+                return addOption(minusOption, Syntax.REQUIRES_BLANK);
+            } else {
+                return addOption(new FieldOption<Boolean>(optionName, object, field, (Boolean) defaultValue, OptionTypes.BOOLEAN_TYPE, help));
+            }
         } else if (fieldType == int.class) {
-            return addOption(new FieldOption<Integer>(name, object, field, (Integer) defaultValue, OptionTypes.INT_TYPE, help));
+            return addOption(new FieldOption<Integer>(optionName, object, field, (Integer) defaultValue, OptionTypes.INT_TYPE, help));
         } else if (fieldType == float.class) {
-            return addOption(new FieldOption<Float>(name, object, field, (Float) defaultValue, OptionTypes.FLOAT_TYPE, help));
+            return addOption(new FieldOption<Float>(optionName, object, field, (Float) defaultValue, OptionTypes.FLOAT_TYPE, help));
         } else if (fieldType == long.class) {
-            return addOption(new FieldOption<Long>(name, object, field, (Long) defaultValue, OptionTypes.LONG_TYPE, help));
+            return addOption(new FieldOption<Long>(optionName, object, field, (Long) defaultValue, OptionTypes.LONG_TYPE, help));
         } else if (fieldType == double.class) {
-            return addOption(new FieldOption<Double>(name, object, field, (Double) defaultValue, OptionTypes.DOUBLE_TYPE, help));
+            return addOption(new FieldOption<Double>(optionName, object, field, (Double) defaultValue, OptionTypes.DOUBLE_TYPE, help));
         } else if (fieldType == String.class) {
-            return addOption(new FieldOption<String>(name, object, field, (String) defaultValue, OptionTypes.STRING_TYPE, help));
+            return addOption(new FieldOption<String>(optionName, object, field, (String) defaultValue, OptionTypes.STRING_TYPE, help));
         } else if (fieldType == File.class) {
-            return addOption(new FieldOption<File>(name, object, field, (File) defaultValue, OptionTypes.FILE_TYPE, help));
+            return addOption(new FieldOption<File>(optionName, object, field, (File) defaultValue, OptionTypes.FILE_TYPE, help));
         } else if (fieldType.isEnum()) {
             final Class<? extends Enum> enumClass = StaticLoophole.cast(fieldType);
-            return addOption(makeEnumFieldOption(name, object, field, defaultValue, enumClass, help));
+            return addOption(makeEnumFieldOption(optionName, object, field, defaultValue, enumClass, help));
         }
         return null;
     }

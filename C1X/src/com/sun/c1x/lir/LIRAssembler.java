@@ -251,7 +251,7 @@ public abstract class LIRAssembler {
         assert block.lir() != null : "must have LIR";
         assert assertFrameSize();
         if (C1XOptions.CommentedAssembly) {
-            String st = String.format(" block B%d [%d, %d]", block.blockID(), block.bci(), block.end().bci());
+            String st = String.format(" block B%d [%d, %d]", block.blockID, block.bci(), block.end().bci());
             masm.blockComment(st);
         }
 
@@ -304,7 +304,7 @@ public abstract class LIRAssembler {
 
         for (int i = 0; i < branchTargetBlocks.size() - 1; i++) {
             if (!branchTargetBlocks.get(i).label().isBound()) {
-                TTY.println(String.format("label of block B%d is not bound", branchTargetBlocks.get(i).blockID()));
+                TTY.println(String.format("label of block B%d is not bound", branchTargetBlocks.get(i).blockID));
                 assert false : "unbound label";
             }
         }

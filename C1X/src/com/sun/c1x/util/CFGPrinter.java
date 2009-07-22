@@ -107,25 +107,25 @@ public class CFGPrinter {
     void printBlock(BlockBegin block, List<BlockBegin> successors, Iterable<BlockBegin> handlers, boolean printHIR, boolean printLIR) {
         begin("block");
 
-        out.print("name \"B").print(block.blockID()).println('"');
+        out.print("name \"B").print(block.blockID).println('"');
         out.print("from_bci ").println(block.bci());
         out.print("to_bci ").println(block.end() == null ? -1 : block.end().bci());
 
         out.print("predecessors ");
         for (BlockBegin pred : block.predecessors()) {
-          out.print("\"B").print(pred.blockID()).print("\" ");
+            out.print("\"B").print(pred.blockID).print("\" ");
         }
         out.println();
 
         out.print("successors ");
         for (BlockBegin succ : successors) {
-            out.print("\"B").print(succ.blockID()).print("\" ");
+            out.print("\"B").print(succ.blockID).print("\" ");
         }
         out.println();
 
         out.print("xhandlers");
         for (BlockBegin handler : handlers) {
-            out.print("\"B").print(handler.blockID()).print("\" ");
+            out.print("\"B").print(handler.blockID).print("\" ");
         }
         out.println();
 
@@ -160,7 +160,7 @@ public class CFGPrinter {
         out.println();
 
         if (block.dominator() != null) {
-            out.print("dominator \"B").print(block.dominator().blockID()).println('"');
+            out.print("dominator \"B").print(block.dominator().blockID).println('"');
         }
         if (block.loopIndex() != -1) {
             out.print("loop_index ").println(block.loopIndex());
