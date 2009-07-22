@@ -88,19 +88,4 @@ public class LoadIndexed extends AccessIndexed {
     public void accept(InstructionVisitor v) {
         v.visitLoadIndexed(this);
     }
-
-    @Override
-    public int valueNumber() {
-        return Util.hash2(124, array, index);
-    }
-
-    @Override
-    public boolean valueEqual(Instruction i) {
-        if (i instanceof LoadIndexed) {
-            LoadIndexed o = (LoadIndexed) i;
-            return array == o.array && index == o.index;
-        }
-        return false;
-    }
-
 }

@@ -320,23 +320,27 @@ public class MaxCiTargetMethod implements CiTargetMethod {
     }
 
     private void processRefPatches(TargetBundleLayout bundleLayout, Object[] refLiterals) {
-        Offset dataStart = bundleLayout.cellOffset(TargetBundleLayout.ArrayField.referenceLiterals);
-        Offset codeStart = bundleLayout.cellOffset(TargetBundleLayout.ArrayField.code);
-        Offset diff = dataStart.minus(codeStart).asOffset();
-        int refPatchPos = 0;
-        for (RefPatchSite refPatch : refPatchSites) {
-            refLiterals[refPatchPos++] = refPatch.referrent;
-            int refSize = Word.size(); // TODO: Use C1X target object
-            patchRelativeInstruction(refPatch.codePos, diff.plus(refPatch.index * refSize - refPatch.codePos));
+        if (!refPatchSites.isEmpty()) {
+            Offset dataStart = bundleLayout.cellOffset(TargetBundleLayout.ArrayField.referenceLiterals);
+            Offset codeStart = bundleLayout.cellOffset(TargetBundleLayout.ArrayField.code);
+            Offset diff = dataStart.minus(codeStart).asOffset();
+            int refPatchPos = 0;
+            for (RefPatchSite refPatch : refPatchSites) {
+                refLiterals[refPatchPos++] = refPatch.referrent;
+                int refSize = Word.size(); // TODO: Use C1X target object
+                patchRelativeInstruction(refPatch.codePos, diff.plus(refPatch.index * refSize - refPatch.codePos));
+            }
         }
     }
 
     private void processDataPatches(TargetBundleLayout bundleLayout) {
-        Offset dataStart = bundleLayout.cellOffset(TargetBundleLayout.ArrayField.scalarLiterals);
-        Offset codeStart = bundleLayout.cellOffset(TargetBundleLayout.ArrayField.code);
-        Offset diff = dataStart.minus(codeStart).asOffset();
-        for (DataPatchSite dataPatch : dataPatchSites) {
-            patchRelativeInstruction(dataPatch.codePos, diff.plus(dataPatch.dataPos - dataPatch.codePos));
+        if (!dataPatchSites.isEmpty()) {
+            Offset dataStart = bundleLayout.cellOffset(TargetBundleLayout.ArrayField.scalarLiterals);
+            Offset codeStart = bundleLayout.cellOffset(TargetBundleLayout.ArrayField.code);
+            Offset diff = dataStart.minus(codeStart).asOffset();
+            for (DataPatchSite dataPatch : dataPatchSites) {
+                patchRelativeInstruction(dataPatch.codePos, diff.plus(dataPatch.dataPos - dataPatch.codePos));
+            }
         }
     }
 
