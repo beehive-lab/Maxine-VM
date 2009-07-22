@@ -301,4 +301,6 @@ public interface CiRuntime {
 
     String disassemble(byte[] copyOf);
 
+    CiLocation receiverLocation();
+
 }

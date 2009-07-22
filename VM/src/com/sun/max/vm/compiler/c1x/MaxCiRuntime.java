@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
+import static com.sun.max.vm.compiler.eir.amd64.AMD64EirRegister.General.*;
+import static com.sun.max.vm.compiler.eir.amd64.AMD64EirRegister.XMM.*;
+
 import java.util.*;
 
 import com.sun.c1x.ci.*;
@@ -27,9 +30,11 @@ import com.sun.c1x.target.*;
 import com.sun.c1x.target.x86.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.max.collect.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.eir.amd64.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.prototype.*;
@@ -44,6 +49,9 @@ import com.sun.max.vm.type.*;
  * @author Ben L. Titzer
  */
 public class MaxCiRuntime implements CiRuntime {
+
+    private static final Register[] generalParameterRegisters = new Register[]{X86Register.rdi, X86Register.rsi, X86Register.rdx, X86Register.r8, X86Register.r9};
+    private static final Register[] xmmParameterRegisters = new Register[]{X86Register.xmm0, X86Register.xmm1, X86Register.xmm2, X86Register.xmm3, X86Register.xmm4, X86Register.xmm5, X86Register.xmm6, X86Register.xmm7};
 
     public static final MaxCiRuntime globalRuntime = new MaxCiRuntime();
 
@@ -189,7 +197,7 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public int arrayLengthOffsetInBytes() {
-        throw Util.unimplemented();
+        return Layout.arrayHeaderLayout().arrayLengthOffset();
     }
 
     public boolean dtraceMethodProbes() {
@@ -210,7 +218,8 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public boolean jvmtiCanPostExceptions() {
-        throw Util.unimplemented();
+        // TODO: Check what to return here
+        return false;
     }
 
     public int klassJavaMirrorOffsetInBytes() {
@@ -243,19 +252,21 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public int vtableEntryMethodOffsetInBytes() {
-        throw Util.unimplemented();
+        // TODO: (tw) check if 0 is correct (probably)
+        return 0;
     }
 
     public int vtableEntrySize() {
-        throw Util.unimplemented();
+        // TODO: (tw) modify, return better value
+        return 8;
     }
 
     public int vtableStartOffset() {
-        throw Util.unimplemented();
+        return Hub.vTableStartIndex();
     }
 
     public int arrayBaseOffsetInBytes(BasicType type) {
-        throw Util.unimplemented();
+        return Layout.layoutScheme().arrayHeaderLayout.headerSize();
     }
 
     public int nativeCallInstructionSize() {
@@ -495,15 +506,15 @@ public class MaxCiRuntime implements CiRuntime {
                 case Long:
                 case Word:
                 case Object:
-                    if (currentGeneral < X86Register.cpuRegisters.length) {
-                        result[i] = new CiLocation(X86Register.cpuRegisters[currentGeneral++]);
+                    if (currentGeneral < generalParameterRegisters.length) {
+                        result[i] = new CiLocation(generalParameterRegisters[currentGeneral++]);
                     }
                     break;
 
                 case Float:
                 case Double:
-                    if (currentXMM < X86Register.xmmRegisters.length) {
-                        result[i] = new CiLocation(X86Register.xmmRegisters[currentXMM++]);
+                    if (currentXMM < xmmParameterRegisters.length) {
+                        result[i] = new CiLocation(xmmParameterRegisters[currentXMM++]);
                     }
                     break;
 
@@ -523,6 +534,11 @@ public class MaxCiRuntime implements CiRuntime {
     public int outPreserveStackSlots() {
         // This is probably correct for now.
         return 0;
+    }
+
+    @Override
+    public CiLocation receiverLocation() {
+        return new CiLocation(generalParameterRegisters[0]);
     }
 
     @Override

@@ -354,9 +354,9 @@ public class MoveResolver {
     }
 
     void moveInsertPosition(LIRList insertList, int insertIdx) {
-        Util.traceLinearScan(4, "MoveResolver: moving insert position to Block B%d, index %d", insertList.block() != null ? insertList.block().blockID() : -1, insertIdx);
+        Util.traceLinearScan(4, "MoveResolver: moving insert position to Block B%d, index %d", (insertList != null && insertList.block() != null) ? insertList.block().blockID() : -1, insertIdx);
 
-        if (this.insertList != insertList || this.insertIdx != insertIdx) {
+        if (this.insertList != null && (this.insertList != insertList || this.insertIdx != insertIdx)) {
             // insert position changed . resolve current mappings
             resolveMappings();
         }

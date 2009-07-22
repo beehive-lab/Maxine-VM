@@ -193,11 +193,13 @@ public class Interval {
     }
 
     void assignReg(int reg) {
+        assert reg != 5;
         assignedReg = reg;
         assignedRegHi = LinearScan.getAnyreg();
     }
 
     void assignReg(int reg, int regHi) {
+        assert reg != 5;
         assignedReg = reg;
         assignedRegHi = regHi;
     }

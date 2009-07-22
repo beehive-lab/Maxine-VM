@@ -27,6 +27,7 @@ import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -55,6 +56,11 @@ public class PrototypeArrayHeaderLayout extends PrototypeGeneralLayout implement
 
     public Kind getElementKind(Accessor accessor) {
         return HostObjectAccess.readHub(accessor).classActor.componentClassActor().kind;
+    }
+
+    @Override
+    public int arrayLengthOffset() {
+        throw ProgramError.unexpected("cannot get array length offset in prototype layout");
     }
 
     public int readLength(Accessor accessor) {

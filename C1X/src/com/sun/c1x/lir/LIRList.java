@@ -559,18 +559,6 @@ public class LIRList {
         load(counter, result, null);
     }
 
-    public void store(LIROperand result, LIRAddress counter) {
-        store(result, counter, null);
-    }
-
-    public void rem(LIROperand leftOp, LIROperand rightOp, LIROperand resultOp) {
-        rem(leftOp, rightOp, resultOp, null);
-    }
-
-    public void div(LIROperand leftOp, LIROperand rightOp, LIROperand resultOp) {
-        div(leftOp, rightOp, resultOp);
-    }
-
     public void sub(LIROperand leftOp, LIROperand rightOp, LIROperand resultOp) {
         sub(leftOp, rightOp, resultOp, null);
     }
@@ -654,7 +642,7 @@ public class LIRList {
 
     private void printInstructions() {
         for (int i = 0; i < operations.size(); i++) {
-            operations.get(i).printInstruction(TTY.out);
+            operations.get(i).printOn(TTY.out);
             TTY.println();
         }
         TTY.cr();

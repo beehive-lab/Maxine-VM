@@ -308,7 +308,7 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
             // need to free up storage used for OSR entry point
             LIROperand osrBuffer = currentBlock.next().operand();
             BasicType[] signature = new BasicType[] {BasicType.Int};
-            CallingConvention cc = frameMap().runtimeCallingConvention(signature);
+            CallingConvention cc = compilation.frameMap().runtimeCallingConvention(signature);
             lir.move(osrBuffer, cc.args().get(0));
             lir.callRuntimeLeaf(CiRuntimeCall.OSRMigrationEnd, getThreadTemp(), LIROperandFactory.IllegalOperand, cc.args());
         }
@@ -445,7 +445,7 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
 
     @Override
     public void visitInvoke(Invoke x) {
-        CallingConvention cc = frameMap().javaCallingConvention(x.signature(), true);
+        CallingConvention cc = compilation.frameMap().javaCallingConvention(x.signature(), true);
 
         List<LIROperand> argList = cc.args();
         List<LIRItem> args = visitInvokeArguments(x);
@@ -485,7 +485,7 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
                     lir.callIcvirtual(x.target(), receiver, resultRegister, CiRuntimeCall.ResolveVirtualCall, argList, info);
                 } else {
                     int entryOffset = compilation.runtime.vtableStartOffset() + x.vtableIndex() * compilation.runtime.vtableEntrySize();
-                    int vtableOffset = entryOffset * compilation.target.arch.wordSize + compilation.runtime.vtableEntryMethodOffsetInBytes();
+                    int vtableOffset = entryOffset + compilation.runtime.vtableEntryMethodOffsetInBytes();
                     lir.callVirtual(x.target(), receiver, resultRegister, vtableOffset, argList, info);
                 }
                 break;
@@ -1119,7 +1119,7 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
         }
 
         // move the arguments into the correct location
-        CallingConvention cc = frameMap().runtimeCallingConvention(signature);
+        CallingConvention cc = compilation.frameMap().runtimeCallingConvention(signature);
 
         assert cc.length() == args.size() : "argument mismatch";
         for (int i = 0; i < args.size(); i++) {
@@ -1165,10 +1165,6 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
         // move from register to spill
         lir.move(value, tmp);
         return tmp;
-    }
-
-    protected FrameMap frameMap() {
-        throw Util.unimplemented();
     }
 
     private LIROperand loadConstant(Constant x) {
@@ -1406,7 +1402,7 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
 
     }
 
-    void arithmeticOp(int code, LIROperand result, LIROperand left, LIROperand right, boolean isStrictfp, LIROperand tmpOp, CodeEmitInfo info) {
+    protected void arithmeticOpFpu(int code, LIROperand result, LIROperand left, LIROperand right, boolean isStrictfp, LIROperand tmp) {
         LIROperand resultOp = result;
         LIROperand leftOp = left;
         LIROperand rightOp = right;
@@ -1431,6 +1427,169 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
 
             case Bytecodes.DMUL:
                 if (isStrictfp) {
+                    lir.mulStrictfp(leftOp, rightOp, resultOp, tmp);
+                    break;
+                } else {
+                    lir.mul(leftOp, rightOp, resultOp);
+                    break;
+                }
+
+            case Bytecodes.IMUL:
+                boolean didStrengthReduce = false;
+                if (right.isConstant()) {
+                    int c = right.asInt();
+                    if (Util.isPowerOf2(c)) {
+                        // do not need tmp here
+                        lir.shiftLeft(leftOp, Util.log2(c), resultOp);
+                        didStrengthReduce = true;
+                    } else {
+                        didStrengthReduce = strengthReduceMultiply(leftOp, c, resultOp, tmp);
+                    }
+                }
+                // we couldn't strength reduce so just emit the multiply
+                if (!didStrengthReduce) {
+                    lir.mul(leftOp, rightOp, resultOp);
+                }
+                break;
+
+            case Bytecodes.DSUB:
+            case Bytecodes.FSUB:
+            case Bytecodes.LSUB:
+            case Bytecodes.ISUB:
+                lir.sub(leftOp, rightOp, resultOp);
+                break;
+
+            case Bytecodes.FDIV:
+                lir.div(leftOp, rightOp, resultOp, null);
+                break;
+            // ldiv and lrem are implemented with a direct runtime call
+
+            case Bytecodes.DDIV:
+                if (isStrictfp) {
+                    lir.divStrictfp(leftOp, rightOp, resultOp, tmp);
+                    break;
+                } else {
+                    lir.div(leftOp, rightOp, resultOp, null);
+                    break;
+                }
+
+            case Bytecodes.DREM:
+            case Bytecodes.FREM:
+                lir.rem(leftOp, rightOp, resultOp, null);
+                break;
+
+            default:
+                Util.shouldNotReachHere();
+        }
+    }
+
+    protected void arithmeticOpInt(int code, LIROperand result, LIROperand left, LIROperand right, LIROperand tmp) {
+        LIROperand resultOp = result;
+        LIROperand leftOp = left;
+        LIROperand rightOp = right;
+
+        if (C1XOptions.TwoOperandLIRForm && leftOp != resultOp) {
+            assert rightOp != resultOp : "malformed";
+            lir.move(leftOp, resultOp);
+            leftOp = resultOp;
+        }
+
+        switch (code) {
+            case Bytecodes.DADD:
+            case Bytecodes.FADD:
+            case Bytecodes.LADD:
+            case Bytecodes.IADD:
+                lir.add(leftOp, rightOp, resultOp);
+                break;
+            case Bytecodes.FMUL:
+            case Bytecodes.LMUL:
+                lir.mul(leftOp, rightOp, resultOp);
+                break;
+
+            case Bytecodes.DMUL:
+                if (false) {
+                    lir.mulStrictfp(leftOp, rightOp, resultOp, tmp);
+                    break;
+                } else {
+                    lir.mul(leftOp, rightOp, resultOp);
+                    break;
+                }
+
+            case Bytecodes.IMUL:
+                boolean didStrengthReduce = false;
+                if (right.isConstant()) {
+                    int c = right.asInt();
+                    if (Util.isPowerOf2(c)) {
+                        // do not need tmp here
+                        lir.shiftLeft(leftOp, Util.log2(c), resultOp);
+                        didStrengthReduce = true;
+                    } else {
+                        didStrengthReduce = strengthReduceMultiply(leftOp, c, resultOp, tmp);
+                    }
+                }
+                // we couldn't strength reduce so just emit the multiply
+                if (!didStrengthReduce) {
+                    lir.mul(leftOp, rightOp, resultOp);
+                }
+                break;
+
+            case Bytecodes.DSUB:
+            case Bytecodes.FSUB:
+            case Bytecodes.LSUB:
+            case Bytecodes.ISUB:
+                lir.sub(leftOp, rightOp, resultOp);
+                break;
+
+            case Bytecodes.FDIV:
+                lir.div(leftOp, rightOp, resultOp, null);
+                break;
+            // ldiv and lrem are implemented with a direct runtime call
+
+            case Bytecodes.DDIV:
+                if (false) {
+                    lir.divStrictfp(leftOp, rightOp, resultOp, tmp);
+                    break;
+                } else {
+                    lir.div(leftOp, rightOp, resultOp, null);
+                    break;
+                }
+
+            case Bytecodes.DREM:
+            case Bytecodes.FREM:
+                lir.rem(leftOp, rightOp, resultOp, null);
+                break;
+
+            default:
+                Util.shouldNotReachHere();
+        }
+    }
+
+    protected void arithmeticOpLong(int code, LIROperand result, LIROperand left, LIROperand right, CodeEmitInfo info) {
+        LIROperand tmpOp = LIROperandFactory.IllegalOperand;
+        LIROperand resultOp = result;
+        LIROperand leftOp = left;
+        LIROperand rightOp = right;
+
+        if (C1XOptions.TwoOperandLIRForm && leftOp != resultOp) {
+            assert rightOp != resultOp : "malformed";
+            lir.move(leftOp, resultOp);
+            leftOp = resultOp;
+        }
+
+        switch (code) {
+            case Bytecodes.DADD:
+            case Bytecodes.FADD:
+            case Bytecodes.LADD:
+            case Bytecodes.IADD:
+                lir.add(leftOp, rightOp, resultOp);
+                break;
+            case Bytecodes.FMUL:
+            case Bytecodes.LMUL:
+                lir.mul(leftOp, rightOp, resultOp);
+                break;
+
+            case Bytecodes.DMUL:
+                if (false) {
                     lir.mulStrictfp(leftOp, rightOp, resultOp, tmpOp);
                     break;
                 } else {
@@ -1464,39 +1623,27 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
                 break;
 
             case Bytecodes.FDIV:
-                lir.div(leftOp, rightOp, resultOp);
+                lir.div(leftOp, rightOp, resultOp, null);
                 break;
             // ldiv and lrem are implemented with a direct runtime call
 
             case Bytecodes.DDIV:
-                if (isStrictfp) {
+                if (false) {
                     lir.divStrictfp(leftOp, rightOp, resultOp, tmpOp);
                     break;
                 } else {
-                    lir.div(leftOp, rightOp, resultOp);
+                    lir.div(leftOp, rightOp, resultOp, null);
                     break;
                 }
 
             case Bytecodes.DREM:
             case Bytecodes.FREM:
-                lir.rem(leftOp, rightOp, resultOp);
+                lir.rem(leftOp, rightOp, resultOp, null);
                 break;
 
             default:
                 Util.shouldNotReachHere();
         }
-    }
-
-    protected void arithmeticOpFpu(int code, LIROperand result, LIROperand left, LIROperand right, boolean isStrictfp, LIROperand tmp) {
-        arithmeticOp(code, result, left, right, isStrictfp, tmp, null);
-    }
-
-    protected void arithmeticOpInt(int code, LIROperand result, LIROperand left, LIROperand right, LIROperand tmp) {
-        arithmeticOp(code, result, left, right, false, tmp, null);
-    }
-
-    protected void arithmeticOpLong(int code, LIROperand result, LIROperand left, LIROperand right, CodeEmitInfo info) {
-        arithmeticOp(code, result, left, right, false, LIROperandFactory.IllegalOperand, info);
     }
 
     protected final void arraycopyHelper(Intrinsic x, int[] flagsp, CiType[] expectedTypep) {
@@ -1628,7 +1775,7 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
         }
 
         // move the arguments into the correct location
-        CallingConvention cc = frameMap().runtimeCallingConvention(signature);
+        CallingConvention cc = compilation.frameMap().runtimeCallingConvention(signature);
         assert cc.length() == args.size() : "argument mismatch";
         for (int i = 0; i < args.size(); i++) {
             LIROperand arg = args.get(i);
@@ -1757,7 +1904,7 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
         LIROperand result = newRegister(BasicType.Int);
         lir.load(counter, result);
         lir.add(result, LIROperandFactory.intConst(increment), result);
-        lir.store(result, counter);
+        lir.store(result, counter, null);
         return result;
     }
 
@@ -2044,8 +2191,8 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
             CiMethod method = scope.method;
 
             BitMap liveness = method.liveness(bci);
+            if (bci == C1XCompilation.MethodCompilation.SynchronizationEntryBCI.value) {
                 if (x instanceof ExceptionObject || x instanceof Throw) {
-                    if (bci == C1XCompilation.MethodCompilation.SynchronizationEntryBCI.value) {
                     // all locals are dead on exit from the synthetic unlocker
                     liveness.clearAll();
                 } else {
@@ -2056,15 +2203,17 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
 
             for (int index = 0; index < s.localsSize(); index++) {
                 final Instruction value = s.localAt(index);
-                assert value.subst() == value : "missed substition";
-                if ((liveness == null || liveness.get(index)) && !value.type().isIllegal()) {
-                    if (!value.isPinned() && (!(value instanceof Constant)) && (!(value instanceof Local))) {
-                        walk(value);
-                        assert value.operand().isValid() : "must be evaluated now";
+                if (value != null) {
+                    assert value.subst() == value : "missed substition";
+                    if ((liveness == null || liveness.get(index)) && !value.type().isIllegal()) {
+                        if (!value.isPinned() && (!(value instanceof Constant)) && (!(value instanceof Local))) {
+                            walk(value);
+                            assert value.operand().isValid() : "must be evaluated now";
+                        }
+                    } else {
+                        // null out this local so that linear scan can assume that all non-null values are live.
+                        s.invalidateLocal(index);
                     }
-                } else {
-                    // null out this local so that linear scan can assume that all non-null values are live.
-                    s.invalidateLocal(index);
                 }
             }
             bci = scope.callerBCI();

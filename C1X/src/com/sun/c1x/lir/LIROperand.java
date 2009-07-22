@@ -287,11 +287,19 @@ public abstract class LIROperand {
     }
 
     public LIRConstant asConstantPtr() {
-        return (LIRConstant) this;
+        if (this instanceof LIRConstant) {
+            return (LIRConstant) this;
+        } else {
+            return null;
+        }
     }
 
     public LIRAddress asAddressPtr() {
-        return (LIRAddress) this;
+        if (this instanceof LIRAddress) {
+            return (LIRAddress) this;
+        } else {
+            return null;
+        }
     }
 
     public Register asRegister() {
@@ -321,23 +329,24 @@ public abstract class LIROperand {
     }
 
     public int asInt() {
-        return asConstantPtr().asInt();
+        throw Util.unimplemented();
     }
 
     public long asLong() {
-        return asConstantPtr().asLong();
+        throw Util.unimplemented();
     }
 
+
     public float asJfloat() {
-        return asConstantPtr().asFloat();
+        throw Util.unimplemented();
     }
 
     public double asJdouble() {
-        return asConstantPtr().asJdouble();
+        throw Util.unimplemented();
     }
 
     public Object asJobject() {
-        return asConstantPtr().asObject();
+        throw Util.unimplemented();
     }
 
     boolean isOopPointer() {

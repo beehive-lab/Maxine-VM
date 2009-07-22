@@ -214,7 +214,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     @Override
     protected void storeStackParameter(LIROperand item, int offsetFromSpInBytes) {
         BasicType type = item.type();
-        lir().store(item, new LIRAddress(X86FrameMap.rspOpr(compilation.target.arch), offsetFromSpInBytes, type));
+        lir().store(item, new LIRAddress(X86FrameMap.rspOpr(compilation.target.arch), offsetFromSpInBytes, type), null);
     }
 
     @Override
@@ -223,7 +223,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         boolean needsRangeCheck = true;
         boolean useLength = x.length() != null;
         boolean objStore = x.elementType() == BasicType.Jsr || x.elementType() == BasicType.Object;
-        boolean needsStoreCheck = objStore && ((!(x.value() instanceof Constant)) || x.type().asConstant().asObject() != null);
+        boolean needsStoreCheck = objStore && ((!(x.value() instanceof Constant)) || x.value().type().asConstant().asObject() != null);
 
         LIRItem array = new LIRItem(x.array(), this);
         LIRItem index = new LIRItem(x.index(), this);
@@ -395,7 +395,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             }
             lir().move(right.result(), fpu1); // order of left and right operand is important!
             lir().move(left.result(), fpu0);
-            lir().rem(fpu0, fpu1, fpu0);
+            lir().rem(fpu0, fpu1, fpu0, null);
             lir().move(fpu0, reg);
 
         } else {
@@ -416,7 +416,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             right.setDestroysRegister();
 
             BasicType[] signature = new BasicType[] {BasicType.Long, BasicType.Long};
-            CallingConvention cc = frameMap().runtimeCallingConvention(signature);
+            CallingConvention cc = compilation.frameMap().runtimeCallingConvention(signature);
 
             // check for division by zero (destroys registers of right operand!)
             CodeEmitInfo info = stateFor(x);
@@ -1338,7 +1338,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     @Override
     protected LIROperand receiverOpr() {
         // TODO Auto-generated method stub
-        return null;
+        return compilation.frameMap().receiverOpr();
     }
 
     @Override

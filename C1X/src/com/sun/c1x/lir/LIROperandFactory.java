@@ -86,10 +86,15 @@ public class LIROperandFactory {
     }
 
     public static LIROperand valueType(ValueType type) {
-        if (type instanceof ClassType) {
-            ClassType c = (ClassType) type;
-            if (!c.isConstant()) {
-                return oopConst(null);
+
+        if (type.isObject()) {
+            if (type instanceof ClassType) {
+                ClassType c = (ClassType) type;
+                if (!c.isConstant()) {
+                    return oopConst(null);
+                } else {
+                    return oopConst(type.asConstant().asObject());
+                }
             } else {
                 return oopConst(type.asConstant().asObject());
             }

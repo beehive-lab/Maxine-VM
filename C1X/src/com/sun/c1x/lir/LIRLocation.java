@@ -123,16 +123,6 @@ public class LIRLocation extends LIROperand {
     }
 
     @Override
-    public boolean isSameRegister(LIROperand opr) {
-        assert this.isRegister();
-        if (!(opr instanceof LIRLocation)) {
-            return false;
-        }
-        LIRLocation other = (LIRLocation) opr;
-        return this.location1 == other.location1 && this.location2 == other.location2;
-    }
-
-    @Override
     public boolean isSingleStack() {
         return isStack() && basicType.sizeInSlots() == 1;
     }
@@ -311,7 +301,7 @@ public class LIRLocation extends LIROperand {
     }
 
     public void changeTo(LIROperand newValues) {
-        assert newValues.isRegister() && (newValues instanceof LIRLocation);
+        assert newValues instanceof LIRLocation;
         final LIRLocation otherLocation = (LIRLocation) newValues;
         this.location1 = otherLocation.location1;
         this.location2 = otherLocation.location2;

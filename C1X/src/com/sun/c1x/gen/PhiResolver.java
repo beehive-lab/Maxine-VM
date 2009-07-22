@@ -58,6 +58,7 @@ public class PhiResolver {
 
     public PhiResolver(LIRGenerator gen, int maxVregs) {
         this.gen = gen;
+        state = new PhiResolverState();
         state.reset(maxVregs);
         temp = LIROperandFactory.IllegalOperand;
     }

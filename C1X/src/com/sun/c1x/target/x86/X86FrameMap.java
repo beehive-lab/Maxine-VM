@@ -147,5 +147,10 @@ public class X86FrameMap extends FrameMap {
         super(compilation, method, numberOfLocks, maxStack);
     }
 
+    @Override
+    public boolean allocatableRegister(Register r) {
+        // TODO: (tw) Remove this hack
+        return r != X86Register.rsp && r != X86Register.rbp;
+    }
 
 }

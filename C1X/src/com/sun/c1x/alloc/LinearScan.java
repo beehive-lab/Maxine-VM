@@ -1,22 +1,19 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc. All rights reserved.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product that is
+ * described in this document. In particular, and without limitation, these intellectual property rights may include one
+ * or more of the U.S. patents listed at http://www.sun.com/patents and one or more additional patents or pending patent
+ * applications in the U.S. and in other countries.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun Microsystems, Inc. standard
+ * license agreement and applicable provisions of the FAR and its supplements.
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or registered
+ * trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks are used under license and
+ * are trademarks or registered trademarks of SPARC International, Inc. in the U.S. and other countries.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open Company, Ltd.
  */
 package com.sun.c1x.alloc;
 
@@ -45,6 +42,7 @@ public class LinearScan extends RegisterAllocator {
     private int nofCpuRegs;
     private int vregBase;
     private Register[] registerMapping;
+    private boolean[] allocatableRegister;
     int nofRegs;
 
     C1XCompilation compilation;
@@ -151,10 +149,11 @@ public class LinearScan extends RegisterAllocator {
 
         int maxReg = Math.max(fpuLast, Math.max(cpuLast, xmmLast));
         registerMapping = new Register[maxReg + 1];
-
+        allocatableRegister = new boolean[maxReg + 1];
         for (Register r : registers) {
             assert registerMapping[r.number] == null : "duplicate register!";
             registerMapping[r.number] = r;
+            allocatableRegister[r.number] = frameMap().allocatableRegister(r);
         }
 
         pdFirstByteReg = byteFirst;
@@ -168,7 +167,6 @@ public class LinearScan extends RegisterAllocator {
 
         pdFirstXmmReg = xmmFirst;
         pdLastXmmReg = xmmLast;
-
 
         nofCpuRegs = cpuCnt;
 
@@ -342,6 +340,7 @@ public class LinearScan extends RegisterAllocator {
     // (only used for parent intervals that are created during the building phase)
     Interval createInterval(int regNum) {
         assert intervals.get(regNum) == null : "overwriting exisiting interval";
+        assert isProcessedRegNum(regNum);
 
         Interval interval = new Interval(regNum);
         intervals.set(regNum, interval);
@@ -1149,7 +1148,7 @@ public class LinearScan extends RegisterAllocator {
     }
 
     boolean isProcessedRegNum(int reg) {
-        return reg > Register.vregBase || (reg >= 0 && reg < registerMapping.length && registerMapping[reg] != null);
+        return reg > Register.vregBase || reg >= registerMapping.length || (reg >= 0 && reg < registerMapping.length && registerMapping[reg] != null && allocatableRegister[reg]);
     }
 
     void addDef(int regNum, int defPos, IntervalUseKind useKind, BasicType type) {
@@ -1462,8 +1461,8 @@ public class LinearScan extends RegisterAllocator {
 
         // create a list with all caller-save registers (cpu, fpu, xmm)
         // when an instruction is a call, a temp range is created for all these registers
-        int numCallerSaveRegisters = 0;
-        int[] callerSaveRegisters = new int[nofRegs];
+        int numCallerSaveRegisters = compilation.target.callerSavedRegisters.length;
+        int[] callerSaveRegisters = new int[compilation.target.callerSavedRegisters.length];
         int z = 0;
         for (Register r : compilation.target.callerSavedRegisters) {
             callerSaveRegisters[z++] = r.number;
@@ -1516,7 +1515,9 @@ public class LinearScan extends RegisterAllocator {
                 // add a temp range for each register if operation destroys caller-save registers
                 if (visitor.hasCall()) {
                     for (int k = 0; k < numCallerSaveRegisters; k++) {
-                        addTemp(callerSaveRegisters[k], opId, IntervalUseKind.noUse, BasicType.Illegal);
+                        if (isProcessedRegNum(callerSaveRegisters[k])) {
+                            addTemp(callerSaveRegisters[k], opId, IntervalUseKind.noUse, BasicType.Illegal);
+                        }
                     }
                     Util.traceLinearScan(4, "operation destroys all caller-save registers");
                 }
@@ -1605,7 +1606,7 @@ public class LinearScan extends RegisterAllocator {
                     }
                     int opId = op.id();
 
-                    for (Register r : compilation.frameMap().callerSavedRegisters()) {
+                    for (Register r : compilation.target.callerSavedRegisters) {
                         if (r.isXMM()) {
                             addTemp(r.number, opId, IntervalUseKind.noUse, BasicType.Illegal);
                         }
@@ -2214,7 +2215,7 @@ public class LinearScan extends RegisterAllocator {
 
     CiLocation vmRegForInterval(Interval interval) {
         CiLocation reg = interval.cachedVmReg();
-        if (!reg.isValid()) {
+        if (reg == null) {
             reg = vmRegForOperand(operandForInterval(interval));
             interval.setCachedVmReg(reg);
         }
@@ -2245,7 +2246,7 @@ public class LinearScan extends RegisterAllocator {
         if (assignedReg >= nofRegs) {
             // stack slot
             assert interval.assignedRegHi() == getAnyreg() : "must not have hi register";
-            return LIROperandFactory.stack(assignedReg - nofRegs, type);
+            return LIROperandFactory.stack(assignedReg - nofRegs + 1, type);
 
         } else {
             // register
@@ -2401,7 +2402,6 @@ public class LinearScan extends RegisterAllocator {
     }
 
     // some methods used to check correctness of debug information
-
 
     void assertNoRegisterValuesScope(List<ScopeValue> values) {
         if (values == null) {
@@ -2562,9 +2562,7 @@ public class LinearScan extends RegisterAllocator {
         // included in the oop map
         iw.walkBefore(op.id());
 
-        int frameSize = frameMap().framesize();
-        int argCount = frameMap().oopMapArgCount();
-        OopMap map = new OopMap(frameSize, argCount);
+        OopMap map = new OopMap();
 
         // Check if this is a patch site.
         boolean isPatchInfo = false;
@@ -3163,7 +3161,7 @@ public class LinearScan extends RegisterAllocator {
                 LIROp1 move = (LIROp1) op;
                 LIROperand src = move.inOpr();
                 LIROperand dst = move.resultOpr();
-                if (dst == src || !dst.isPointer() && !src.isPointer() && src.isSameRegister(dst)) {
+                if (dst == src || !dst.isPointer() && !src.isPointer() && src.equals(dst)) {
                     instructions.set(j, null);
                     hasDead = true;
                 }
@@ -3383,7 +3381,7 @@ public class LinearScan extends RegisterAllocator {
             }
 
             if (!isProcessedRegNum(i1.assignedReg())) {
-                TTY.println("Can not have an Interval for an ignored register");
+                TTY.println("Can not have an Interval for an ignored register " + i1.assignedReg);
                 i1.print(TTY.out, this);
                 TTY.cr();
                 hasError = true;
@@ -3509,35 +3507,37 @@ public class LinearScan extends RegisterAllocator {
                             }
                         }
                     }
-                }
 
-                // oop-maps at calls do not contain registers, so check is not needed
-                if (!visitor.hasCall()) {
+                    // TODO: (tw) Check whether this should also be asserted when visitor.infoCount() == 0 (to me this seems wrong in C1)
 
-                    for (LIRVisitState.OperandMode mode : LIRVisitState.OperandMode.values()) {
-                        int n = visitor.oprCount(mode);
-                        for (int k = 0; k < n; k++) {
-                            LIROperand opr = visitor.oprAt(mode, k);
+                    // oop-maps at calls do not contain registers, so check is not needed
+                    if (!visitor.hasCall()) {
 
-                            if (opr.isFixedCpu() && opr.isOop()) {
-                                // operand is a non-virtual cpu register and contains an oop
-                                if (C1XOptions.TraceLinearScanLevel >= 4) {
-                                    op.printOn(TTY.out);
-                                    TTY.print("checking operand ");
-                                    opr.print(TTY.out);
-                                    TTY.println();
-                                }
+                        for (LIRVisitState.OperandMode mode : LIRVisitState.OperandMode.values()) {
+                            int n = visitor.oprCount(mode);
+                            for (int k = 0; k < n; k++) {
+                                LIROperand opr = visitor.oprAt(mode, k);
 
-                                Interval interval = intervalAt(regNum(opr));
-                                assert interval != null : "no interval";
-
-                                if (mode == LIRVisitState.OperandMode.InputMode) {
-                                    if (interval.to() >= opId + 1) {
-                                        assert interval.to() < opId + 2 || interval.hasHoleBetween(opId, opId + 2) : "oop input operand live after instruction";
+                                if (opr.isFixedCpu() && opr.isOop()) {
+                                    // operand is a non-virtual cpu register and contains an oop
+                                    if (C1XOptions.TraceLinearScanLevel >= 4) {
+                                        op.printOn(TTY.out);
+                                        TTY.print("checking operand ");
+                                        opr.print(TTY.out);
+                                        TTY.println();
                                     }
-                                } else if (mode == LIRVisitState.OperandMode.OutputMode) {
-                                    if (interval.from() <= opId - 1) {
-                                        assert interval.hasHoleBetween(opId - 1, opId) : "oop input operand live after instruction";
+
+                                    Interval interval = intervalAt(regNum(opr));
+                                    assert interval != null : "no interval";
+
+                                    if (mode == LIRVisitState.OperandMode.InputMode) {
+                                        if (interval.to() >= opId + 1) {
+                                            assert interval.to() < opId + 2 || interval.hasHoleBetween(opId, opId + 2) : "oop input operand live after instruction";
+                                        }
+                                    } else if (mode == LIRVisitState.OperandMode.OutputMode) {
+                                        if (interval.from() <= opId - 1) {
+                                            assert interval.hasHoleBetween(opId - 1, opId) : "oop input operand live after instruction";
+                                        }
                                     }
                                 }
                             }

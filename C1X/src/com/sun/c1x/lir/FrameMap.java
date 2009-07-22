@@ -27,6 +27,7 @@ import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.lir.Location.*;
 import com.sun.c1x.target.*;
+import com.sun.c1x.target.x86.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
@@ -35,9 +36,10 @@ import com.sun.c1x.value.*;
  * @author Thomas Wuerthinger
  *
  */
-public class FrameMap {
+public abstract class FrameMap {
 
     public static final int spillSlotSizeInBytes = 4;
+
     int framesize;
     int argcount;
     int numMonitors;
@@ -48,6 +50,7 @@ public class FrameMap {
     CallingConvention incomingArguments;
     int[] argumentLocations;
     final C1XCompilation compilation;
+
 
     public FrameMap(C1XCompilation compilation, CiMethod method, int monitors, int maxStack) {
 
@@ -106,8 +109,7 @@ public class FrameMap {
     }
 
     public CallingConvention runtimeCallingConvention(BasicType[] signature) {
-        // TODO Auto-generated method stub
-        return null;
+        return javaCallingConvention(signature, true);
     }
 
     public CallingConvention javaCallingConvention(BasicType[] signature, boolean outgoing) {
@@ -171,11 +173,6 @@ public class FrameMap {
 
     public int argcount() {
         return argcount;
-    }
-
-    public Register[] callerSavedRegisters() {
-        // TODO Auto-generated method stub
-        return null;
     }
 
     public boolean finalizeFrame(int nofSlots) {
@@ -266,4 +263,10 @@ public class FrameMap {
         // TODO Auto-generated method stub
         return null;
     }
+
+    public LIROperand receiverOpr() {
+        return mapToOpr(BasicType.Object, compilation.runtime.receiverLocation(), false);
+    }
+
+    public abstract boolean allocatableRegister(Register r);
 }

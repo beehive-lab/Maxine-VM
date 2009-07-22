@@ -173,7 +173,7 @@ public class LIRBranch extends LIRInstruction {
         } else if (stub() != null) {
             out.print("[");
             stub().printName(out);
-            out.printf(": 0x%x]", stub());
+            out.printf(": %s]", stub().toString());
             if (stub().info() != null) {
                 out.printf(" [bci:%d]", stub().info().bci());
             }
