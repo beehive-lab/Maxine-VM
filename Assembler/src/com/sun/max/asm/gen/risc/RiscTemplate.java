@@ -159,7 +159,7 @@ public abstract class RiscTemplate extends Template implements RiscInstructionDe
 
     @Override
     public Template canonicalRepresentative() {
-        return canonicalRepresentative();
+        return canonicalRepresentative;
     }
 
     @Override
