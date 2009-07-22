@@ -28,36 +28,66 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
 
 /**
- * @author Thomas Wuerthinger
+ * This class implements the overall container for the HIR (high-level IR) graph
+ * and directs its construction, optimization, and finalization.
  *
+ * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
  */
 public class IR {
 
+    public final C1XCompilation compilation;
     public BlockBegin startBlock;
-    BlockBegin osrEntryBlock;
-    private List<BlockBegin> orderedBlocks;
-    private Map<Instruction, Integer> useCounts;
+    public BlockBegin osrEntryBlock;
     public IRScope topScope;
-    private final C1XCompilation compilation;
+    private List<BlockBegin> orderedBlocks;
 
     public IR(C1XCompilation compilation) {
         this.compilation = compilation;
     }
 
-    // ir manipulation
+    /**
+     * Builds the graph and optimizes it.
+     */
+    public void build() {
+        topScope = new IRScope(compilation, null, -1, compilation.method, compilation.osrBCI());
+
+        // Graph builder must set the startBlock and the osrEntryBlock
+        new GraphBuilder(compilation, topScope, this);
+        assert startBlock != null;
+
+        print("After graph building");
+
+        assert verify();
+
+        optimize();
+
+        assert verify();
+
+        splitCriticalEdges();
+
+        print("After optimizations");
+
+        assert verify();
+
+        // compute block ordering for code generation
+        // the control flow must not be changed from here on
+        computeLinearScanOrder();
+
+        print("Before code generation");
+
+        assert verify();
+    }
+
     void optimize() {
 
     }
 
-    void computePredecessors() {
-
-    }
-
     void splitCriticalEdges() {
-
+        // TODO: split critical edges
     }
 
-    void computeCode() {
+    void computeLinearScanOrder() {
         ComputeLinearScanOrder computeLinearScanOrder = new ComputeLinearScanOrder(compilation.numberOfBlocks(), startBlock);
         orderedBlocks = computeLinearScanOrder.linearScanOrder();
         computeLinearScanOrder.printBlocks();
@@ -67,113 +97,30 @@ public class IR {
         }
     }
 
-    void computeUseCounts() {
-        UseCountComputer useCountComputer = new UseCountComputer();
-        this.iterateLinearScanOrder(useCountComputer);
-        this.useCounts = useCountComputer.result();
-    }
-
+    /**
+     * Gets the linear scan ordering of blocks.
+     * @return the blocks in linear scan order
+     */
     public List<BlockBegin> linearScanOrder() {
         return orderedBlocks;
     }
 
-
-    public void iterateLinearScanOrder(BlockClosure closure) {
-        assert orderedBlocks != null;
-        for (BlockBegin begin : this.orderedBlocks) {
-            closure.apply(begin);
-        }
-    }
-
-    public int useCount(Instruction instr) {
-        if (!this.useCounts.containsKey(instr)) {
-            return 0;
-        } else {
-            return this.useCounts.get(instr);
-        }
-    }
-
-    public boolean hasUses(Instruction instr) {
-        return useCount(instr) > 0;
-    }
-
-    public void build() {
-
+    private void print(String phase) {
         CFGPrinter cfgPrinter = compilation.cfgPrinter();
-
-        topScope = new IRScope(compilation, null, -1, compilation.method, compilation.osrBCI());
-
-        // Graph builder must set the startBlock and the osrEntryBlock
-        new GraphBuilder(compilation, topScope, this);
-        assert startBlock != null;
-
         if (C1XOptions.PrintCFGToFile && cfgPrinter != null) {
-            cfgPrinter.printCFG(startBlock, "After Generation of HIR", true, false);
+            cfgPrinter.printCFG(startBlock, phase, true, false);
         }
 
         if (C1XOptions.PrintCFG) {
-            TTY.println("CFG after parsing");
+            TTY.println(phase);
             print(true);
         }
 
         if (C1XOptions.PrintIR) {
-            TTY.println("IR after parsing");
+            TTY.println(phase);
             print(false);
         }
-
-        assert verify();
-        optimize();
-
-        assert verify();
-
-        splitCriticalEdges();
-
-        if (C1XOptions.PrintCFG) {
-            TTY.println("CFG after optimizations");
-            print(true);
-        }
-
-        if (C1XOptions.PrintIR) {
-            TTY.println("IR after optimizations");
-            print(false);
-        }
-
-        assert verify();
-
-        // compute block ordering for code generation
-        // the control flow must not be changed from here on
-        computeCode();
-
-        // compute use counts after global value numbering
-        computeUseCounts();
-
-        if (C1XOptions.PrintCFG) {
-            TTY.println("CFG before code generation");
-            printBlocks(true, false);
-        }
-
-        if (C1XOptions.PrintIR) {
-            TTY.println("IR before code generation");
-            printBlocks(false, true);
-        }
-
-        assert verify();
-
     }
-
-    private void printBlocks(boolean cfgOnly, boolean liveOnly) {
-        InstructionPrinter ip = new InstructionPrinter(TTY.out, false);
-        for (BlockBegin block : linearScanOrder()) {
-          if (cfgOnly) {
-            ip.printInstruction(block); TTY.println();
-          } else {
-
-              BlockPrinter blockPrinter = new BlockPrinter(this, ip, cfgOnly, liveOnly);
-              blockPrinter.printBlock(block, liveOnly);
-          }
-        }
-    }
-
 
     private void print(boolean cfgOnly) {
         TTY.println("IR for " + compilation.method);
@@ -194,5 +141,4 @@ public class IR {
     public BlockBegin start() {
         return startBlock;
     }
-
 }

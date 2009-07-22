@@ -18,23 +18,57 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x;
+package test.optimize;
 
-/**
- * The <code>C1XMetrics</code> class contains a number of fields that collect metrics about
- * compilation.
- *
- * @author Ben L. Titzer
+/*
+ * Tests constant folding of integer operations.
+ * @Harness: java
+ * @Runs: 0=18; 1=18; 2=!java.lang.NullPointerException
  */
-public class C1XMetrics {
-    public static int LocalValueNumberHits;
-    public static int GlobalValueNumberHits;
-    public static int ValueMapResizes;
-    public static int ValueMapKills;
-    public static int InlinedMethods;
-    public static int InlinedIntrinsics;
-    public static int InlinedFinalizerChecks;
-    public static int FoldableMethodsRegistered;
-    public static int MethodsFolded;
-    public static int InlineForcedMethods;
+public class VN_Field02 {
+    private static boolean cond = true;
+    static final VN_Field02 _object = new VN_Field02();
+
+    int _field = 9;
+
+    public static int test(int arg) {
+        if (arg == 0) {
+            return test1();
+        }
+        if (arg == 1) {
+            return test2();
+        }
+        if (arg == 2) {
+            return test3();
+        }
+        return 0;
+    }
+
+    private static int test1() {
+        VN_Field02 a = _object;
+        int c = a._field;
+        if (cond) {
+            return c + a._field;
+        }
+        return 0;
+    }
+
+    private static int test2() {
+        VN_Field02 a = _object;
+        if (cond) {
+            VN_Field02 b = _object;
+            return a._field + b._field;
+        }
+        return 0;
+    }
+
+    private static int test3() {
+        VN_Field02 a = null;
+        if (cond) {
+            VN_Field02 b = null;
+            return a._field + b._field;
+        }
+        return 0;
+    }
+
 }

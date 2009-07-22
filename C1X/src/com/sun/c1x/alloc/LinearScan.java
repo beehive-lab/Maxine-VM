@@ -37,7 +37,6 @@ import com.sun.c1x.value.*;
 /**
  *
  * @author Thomas Wuerthinger
- *
  */
 public class LinearScan extends RegisterAllocator {
 

@@ -41,7 +41,7 @@ import com.sun.c1x.value.*;
  * @author Thomas Wuerthinger
  *
  */
-public abstract class LIRGenerator extends InstructionVisitor implements BlockClosure {
+public abstract class LIRGenerator extends InstructionVisitor {
 
     // the range of values in a lookupswitch or tableswitch statement
     private static final class SwitchRange {
@@ -54,7 +54,7 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
             this.highKey = lowKey;
             this.sux = sux;
         }
-    };
+    }
 
     // Flags that can be set on vregs
     public enum VregFlag {
@@ -65,6 +65,7 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
     }
 
     protected final C1XCompilation compilation;
+    protected final HashMap<Instruction, Integer> useCounts = new HashMap<Instruction, Integer>(30);
     PhiResolver.PhiResolverState resolverState;
     private BlockBegin currentBlock;
     private int virtualRegisterNumber;
@@ -95,7 +96,23 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
         return lir;
     }
 
-    public void apply(BlockBegin block) {
+    public int useCount(Instruction x) {
+        Integer result = useCounts.get(x);
+        if (result != null) {
+            return result;
+        }
+        return 0;
+    }
+
+    public boolean hasUses(Instruction x) {
+        return useCount(x) > 0;
+    }
+
+    public boolean isRoot(Instruction x) {
+        return x.isPinned() || useCount(x) > 1;
+    }
+
+    public void visitBlock(BlockBegin block) {
         blockDoProlog(block);
         this.currentBlock = block;
 
@@ -121,10 +138,7 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
     }
 
     public boolean isVregFlagSet(int vregNum, VregFlag f) {
-        if (!vregFlags.isValidIndex(vregNum, f.ordinal())) {
-            return false;
-        }
-        return vregFlags.at(vregNum, f.ordinal());
+        return vregFlags.isValidIndex(vregNum, f.ordinal()) && vregFlags.at(vregNum, f.ordinal());
     }
 
     public boolean isVregFlagSet(LIROperand opr, VregFlag f) {
@@ -255,7 +269,7 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
             LIROperand reg = rlockResult(x);
             CodeEmitInfo info = stateFor(x, x.state());
             lir.oop2regPatch(null, reg, info);
-        } else if (compilation.hir().useCount(x) > 1 && !canInlineAsConstant(x)) {
+        } else if (useCount(x) > 1 && !canInlineAsConstant(x)) {
             if (!x.isPinned()) {
                 // unpinned constants are handled specially so that they can be
                 // put into registers when they are used multiple times within a
@@ -1758,7 +1772,7 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
 
             instr.accept(this);
 
-            assert !compilation.hir().hasUses(instr) || instr.operand().isValid() || instr instanceof Constant || compilation.bailout() != null : "invalid item set";
+            assert !hasUses(instr) || instr.operand().isValid() || instr instanceof Constant || compilation.bailout() != null : "invalid item set";
         } finally {
             compilation.setCurrentInstruction(prev);
         }
@@ -1778,15 +1792,17 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
         incrementInvocationCounter(info, true);
     }
 
-void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
+    void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         if (C1XOptions.ProfileInlinedCalls) {
             // TODO: For tiered compilation C1X has code here, probably not necessary.
         }
     }
 
     void init() {
-        // TODO Check what to do with this!
-        // _bs = Universe::heap()->barrier_set();
+        UseCountComputer useCountComputer = new UseCountComputer(useCounts);
+        for (BlockBegin begin : ir.linearScanOrder()) {
+            useCountComputer.visitBlock(begin);
+        }
     }
 
     protected void jobject2regWithPatching(LIROperand r, Object obj, CodeEmitInfo info) {
@@ -1989,7 +2005,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
     }
 
     protected void setNoResult(Instruction x) {
-        assert !compilation.hir().hasUses(x) : "can't have use";
+        assert !hasUses(x) : "can't have use";
         x.clearOperand();
     }
 

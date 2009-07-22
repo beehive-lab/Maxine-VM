@@ -327,7 +327,6 @@ public class C1XCompilation {
     }
 
     public void addExceptionHandlersForPco(int pcOffset, List<ExceptionHandler> exceptionHandlers) {
-
         if (C1XOptions.PrintExceptionHandlers && C1XOptions.Verbose) {
             TTY.println("  added exception scope for pco %d", pcOffset);
           }
@@ -394,7 +393,9 @@ public class C1XCompilation {
         if (C1XOptions.GenerateLIR) {
             frameMap = target.backend.newFrameMap(this, method, hir.topScope.numberOfLocks(), hir.topScope.maxStack());
             final LIRGenerator lirGenerator = target.backend.newLIRGenerator(this);
-            hir.iterateLinearScanOrder(lirGenerator);
+            for (BlockBegin begin : hir.linearScanOrder()) {
+                lirGenerator.visitBlock(begin);
+            }
 
             final RegisterAllocator registerAllocator = new LinearScan(this, hir, lirGenerator, frameMap());
             registerAllocator.allocate();

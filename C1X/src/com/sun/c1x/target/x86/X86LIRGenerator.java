@@ -219,7 +219,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitStoreIndexed(StoreIndexed x) {
-        assert x.isRoot(compilation) : "";
+        assert isRoot(x) : "";
         boolean needsRangeCheck = true;
         boolean useLength = x.length() != null;
         boolean objStore = x.elementType() == BasicType.Jsr || x.elementType() == BasicType.Object;
@@ -293,7 +293,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitMonitorEnter(MonitorEnter x) {
-        assert x.isRoot(compilation) : "";
+        assert isRoot(x) : "";
         LIRItem obj = new LIRItem(x.object(), this);
         obj.loadItem();
 
@@ -319,7 +319,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitMonitorExit(MonitorExit x) {
-        assert x.isRoot(compilation) : "";
+        assert isRoot(x) : "";
 
         LIRItem obj = new LIRItem(x.object(), this);
         obj.dontLoadItem();
@@ -580,7 +580,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     public void visitArithmeticOp(ArithmeticOp x) {
         // when an operand with use count 1 is the left operand, then it is
         // likely that no move for 2-operand-LIR-form is necessary
-        if (x.isCommutative() && !(x.y() instanceof Constant) && ir.useCount(x.x()) > ir.useCount(x.y())) {
+        if (x.isCommutative() && !(x.y() instanceof Constant) && useCount(x.x()) > useCount(x.y())) {
             x.swapOperands();
         }
 
@@ -597,7 +597,7 @@ public final class X86LIRGenerator extends LIRGenerator {
                 visitArithmeticOpInt(x);
                 return;
         }
-        Util.shouldNotReachHere();
+        throw Util.shouldNotReachHere();
     }
 
     @Override
@@ -623,7 +623,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     public void visitLogicOp(LogicOp x) {
         // when an operand with use count 1 is the left operand, then it is
         // likely that no move for 2-operand-LIR-form is necessary
-        if (x.isCommutative() && (!(x.y() instanceof Constant)) && ir.useCount(x.x()) > ir.useCount(x.y())) {
+        if (x.isCommutative() && (!(x.y() instanceof Constant)) && useCount(x.x()) > useCount(x.y())) {
             x.swapOperands();
         }
 
