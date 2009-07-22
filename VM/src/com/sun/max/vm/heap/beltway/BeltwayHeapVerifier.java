@@ -23,6 +23,7 @@ package com.sun.max.vm.heap.beltway;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
@@ -71,10 +72,7 @@ public class BeltwayHeapVerifier {
         }
         Pointer cell = regionStartAddress.asPointer();
         while (cell.lessThan(allocationMark)) {
-            if (MaxineVM.isDebug()) {
-                cell = cell.plusWords(1);
-                cellVerifier.checkCellTag(cell);
-            }
+            cell = DebugHeap.checkDebugCellTag(Address.zero(), cell);
             final Pointer origin = Layout.cellToOrigin(cell);
             final Grip hubGrip = Layout.readHubGrip(origin);
             FatalError.check(!hubGrip.isZero(), "null hub");

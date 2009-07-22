@@ -147,7 +147,7 @@ public class AdaptiveMethodState extends MethodState {
         }
         methodHistory[methodHistory.length - 1] = targetMethod;
         targetMethods[compilationDirective.ordinal()] = methodHistory;
-        // TODO: No need to keep track of method history in two places, remove if from the super class.
+        // TODO: No need to keep track of method history in two places, remove it from the super class.
         // For now we leave it in to make the inspector happy.
         addTargetMethod(targetMethod);
     }

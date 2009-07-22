@@ -105,9 +105,12 @@ public final class VMOptions {
         }
     }, MaxineVM.Phase.STARTING);
 
-    private static final VMOption verboseOption = register(new VMOption("-verbose ", "Enables all verbose options."), MaxineVM.Phase.PRISTINE);
+    /**
+     * The '-verbose' option and all its variants (e.g. '-verbose:gc', '-verbose:class' etc).
+     */
+    public static final VerboseVMOption verboseOption = register(new VerboseVMOption(), MaxineVM.Phase.PRISTINE);
 
-    private static final VMIntOption traceLevelOption = register(new VMIntOption("-XX:TraceLevel=", 0, "Enables tracing output at the specified level.") {
+    private static final VMIntOption traceLevelOption = register(new VMIntOption("-XX:TraceLevel=", 0, "Enable tracing output at the specified level.") {
         @Override
         public boolean parseValue(Pointer optionValue) {
             Trace.on(getValue());
@@ -115,8 +118,15 @@ public final class VMOptions {
         }
     }, MaxineVM.Phase.PRISTINE);
 
-    private static final VMBooleanXXOption printConfiguration = register(new VMBooleanXXOption("-XX:-PrintConfiguration", "Shows VM configuration details and exits."), MaxineVM.Phase.STARTING);
-    private static final VMBooleanXXOption showConfiguration = register(new VMBooleanXXOption("-XX:-ShowConfiguration", "Shows VM configuration details and continues."), MaxineVM.Phase.STARTING);
+    private static final VMBooleanXXOption printConfiguration = register(new VMBooleanXXOption("-XX:-PrintConfiguration", "Show VM configuration details and exits."), MaxineVM.Phase.STARTING);
+    private static final VMBooleanXXOption showConfiguration = register(new VMBooleanXXOption("-XX:-ShowConfiguration", "Show VM configuration details and continues."), MaxineVM.Phase.STARTING);
+
+    /**
+     * This option is parsed in the native code (see maxine.c). It's declared here simply so that it
+     * shows up in the {@linkplain #printUsage() usage} message.
+     */
+    private static final VMStringOption logFileOption = register(new VMStringOption("-XX:LogFile=", false, "",
+        "Redirect VM log output to the specified file. By default, VM log output goes to the standard output stream."), MaxineVM.Phase.STARTING);
 
     private static Pointer argv;
     private static int argc;
@@ -168,11 +178,6 @@ public final class VMOptions {
         }
         for (VMOption existingOption : allOptions) {
             ProgramError.check(!existingOption.prefix.equals(option.prefix), "VM option prefix is not unique: " + option.prefix);
-            if (option.prefix.startsWith(existingOption.prefix)) {
-                existingOption.addSuboption(option);
-            } else if (existingOption.prefix.startsWith(option.prefix)) {
-                option.addSuboption(existingOption);
-            }
         }
         options.add(option);
         return options.toArray(new VMOption[options.size()]);

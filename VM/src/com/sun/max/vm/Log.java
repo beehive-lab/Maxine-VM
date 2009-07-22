@@ -26,6 +26,7 @@ import java.io.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
+import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.program.ProgramWarning.*;
@@ -95,6 +96,12 @@ public final class Log {
      * The singleton VM print stream. This print stream sends all its output to {@link #os}.
      */
     public static final LogPrintStream out = new LogPrintStream(os);
+
+    /**
+     * The non-moving raw memory buffer used to pass data to the native log functions.
+     * The log {@linkplain Log#lock() lock} must be held when using this buffer.
+     */
+    private static final BootMemory buffer = new BootMemory(Ints.K);
 
     /**
      * Equivalent to calling {@link LogPrintStream#print(String)} on {@link #out}.
@@ -293,6 +300,7 @@ public final class Log {
     }
 
     private static final class LogOutputStream extends OutputStream {
+
         /**
          * Only a {@linkplain Log#os singleton} instance of this class exists.
          */
@@ -344,13 +352,11 @@ public final class Log {
                 }
             } else {
                 final boolean lockDisabledSafepoints = Log.lock();
-                final Pointer buffer = BootMemory.buffer();
-                final int bufferSize = BootMemory.bufferSize();
                 int i = off;
                 final int end = off + len;
                 while (i < end) {
-                    i = CString.writeBytes(b, i, end, buffer, bufferSize);
-                    log_print_buffer(buffer);
+                    i = CString.writeBytes(b, i, end, buffer.address(), buffer.size());
+                    log_print_buffer(buffer.address());
                 }
                 Log.unlock(lockDisabledSafepoints);
             }
@@ -358,6 +364,32 @@ public final class Log {
     }
 
     public static final class LogPrintStream extends PrintStream {
+
+        /**
+         * Prints a given char array to the log stream. The log {@linkplain Log#lock() lock}
+         * must be held by the caller.
+         */
+        private void printChars(char[] ch) {
+            int i = 0;
+            while (i < ch.length) {
+                i = CString.writePartialUtf8(ch, i, buffer.address(), buffer.size());
+                log_print_buffer(buffer.address());
+            }
+        }
+
+        /**
+         * Prints a given string to the log stream. The log {@linkplain Log#lock() lock}
+         * must be held by the caller.
+         */
+        private void printString(String string) {
+            final String s = string == null ? "null" : string;
+            int i = 0;
+            while (i < s.length()) {
+                i = CString.writePartialUtf8(s, i, buffer.address(), buffer.size());
+                log_print_buffer(buffer.address());
+            }
+        }
+
         /**
          * Only a {@linkplain Log#out singleton} instance of this class exists.
          */
@@ -621,26 +653,6 @@ public final class Log {
             }
         }
 
-        private void printString(String string) {
-            final String s = string == null ? "null" : string;
-            final Pointer buffer = BootMemory.buffer();
-            final int bufferSize = BootMemory.bufferSize();
-            int i = 0;
-            while (i < s.length()) {
-                i = CString.writePartialUtf8(s, i, buffer, bufferSize);
-                log_print_buffer(buffer);
-            }
-        }
-
-        private void printChars(char[] ch) {
-            final Pointer buffer = BootMemory.buffer();
-            final int bufferSize = BootMemory.bufferSize();
-            int i = 0;
-            while (i < ch.length) {
-                i = CString.writePartialUtf8(ch, i, buffer, bufferSize);
-                log_print_buffer(buffer);
-            }
-        }
         /**
          * Convenience routine for printing a {@link FieldActor} to this stream. The output is of the form:
          *

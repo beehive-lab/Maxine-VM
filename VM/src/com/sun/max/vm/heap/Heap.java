@@ -117,13 +117,11 @@ public final class Heap {
         return initialHeapSizeOption.isPresent();
     }
 
-    private static final VMOption verboseOption = register(new VMOption("-verbose:gc", "Report on each garbage collection event."), MaxineVM.Phase.PRISTINE);
-
     /**
      * Determines if information should be displayed about each garbage collection event.
      */
     public static boolean verbose() {
-        return verboseOption.isPresent() || traceGC || traceRootScanningOption.getValue() || Heap.traceGCTime() || traceGC;
+        return verboseOption.verboseGC || traceGC || traceRootScanningOption.getValue() || Heap.traceGCTime() || traceGC;
     }
 
     private static boolean traceAllocation;
@@ -171,6 +169,14 @@ public final class Heap {
     }
 
     /**
+     * Determines if the garbage collection phases should be traced.
+     */
+    @INLINE
+    public static boolean traceGCPhases() {
+        return traceGC || traceGCPhasesOption.getValue();
+    }
+
+    /**
      * Determines if garbage collection root scanning should be traced.
      */
     @INLINE
@@ -188,6 +194,9 @@ public final class Heap {
 
     private static boolean traceGC;
 
+    private static final VMBooleanXXOption traceGCPhasesOption = register(new VMBooleanXXOption("-XX:-TraceGCPhases",
+        "Trace garbage collection phases."), MaxineVM.Phase.STARTING);
+
     private static final VMBooleanXXOption traceRootScanningOption = register(new VMBooleanXXOption("-XX:-TraceRootScanning",
         "Trace garbage collection root scanning."), MaxineVM.Phase.STARTING);
 
@@ -197,7 +206,7 @@ public final class Heap {
     private static final class TraceGCOption extends VMBooleanXXOption {
         TraceGCOption() {
             super("-XX:-TraceGC", "Trace all garbage collection activity. Enabling this option also enables the " +
-                traceRootScanningOption + " and " + timeOption + " options.");
+                traceRootScanningOption + ", " + traceGCPhasesOption + " and " + timeOption + " options.");
         }
 
         @Override
@@ -248,10 +257,6 @@ public final class Heap {
 
     public static void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
         heapScheme().initializeAuxiliarySpace(primordialVmThreadLocals, auxiliarySpace);
-    }
-
-    public static void initializeVmThread(Pointer vmThreadLocals) {
-        heapScheme().initializeVmThread(vmThreadLocals);
     }
 
     @INLINE
@@ -379,28 +384,36 @@ public final class Heap {
     }
 
     public static boolean collectGarbage(Size requestedFreeSpace) {
+        long beforeFree = 0L;
+        long beforeUsed = 0L;
         if (verbose()) {
+            beforeUsed = reportUsedSpace().toLong();
+            beforeFree = reportFreeSpace().toLong();
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("--GC requested by thread ");
             Log.printVmThread(VmThread.current(), false);
             Log.println("--");
             Log.print("--Before GC   used: ");
-            Log.print(reportUsedSpace().toLong());
+            Log.print(beforeUsed);
             Log.print(", free: ");
-            Log.print(reportFreeSpace().toLong());
+            Log.print(beforeFree);
             Log.println("--");
             Log.unlock(lockDisabledSafepoints);
         }
         final boolean freedEnough = heapScheme().collectGarbage(requestedFreeSpace);
         if (verbose()) {
+            final long afterUsed = reportUsedSpace().toLong();
+            final long afterFree = reportFreeSpace().toLong();
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("--GC requested by thread ");
             Log.printVmThread(VmThread.current(), false);
             Log.println(" done--");
             Log.print("--After GC   used: ");
-            Log.print(reportUsedSpace().toLong());
+            Log.print(afterUsed);
             Log.print(", free: ");
-            Log.print(reportFreeSpace().toLong());
+            Log.print(afterFree);
+            Log.print(", reclaimed: ");
+            Log.print(beforeUsed - afterUsed);
             Log.println("--");
             if (freedEnough) {
                 Log.println("--GC freed enough--");

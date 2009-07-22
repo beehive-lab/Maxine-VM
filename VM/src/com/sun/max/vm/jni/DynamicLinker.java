@@ -24,6 +24,7 @@ import java.io.*;
 import java.lang.reflect.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -32,6 +33,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -43,7 +45,7 @@ import com.sun.max.vm.value.*;
  * defined in dlfcn.h).
  *
  * This class plays a key role in the VM bootstrap by providing a simple path to resolve critical
- * native symbols, e.g., for debugging and monitor support. Eveything actually hinges on three native functions,
+ * native symbols, e.g., for debugging and monitor support. Everything actually hinges on three native functions,
  * "dlsym", "dlerror" and "nativeOpenDynamicLibrary", which are passed to the {@link #initialize} method. Every other native
  *  symbol  can be found from there.
  *
@@ -67,6 +69,12 @@ public final class DynamicLinker {
 
     @CONSTANT_WHEN_NOT_ZERO
     private static Word mainHandle = Word.zero();
+
+    /**
+     * The non-moving raw memory buffer used to pass data to the native dynamic linker functions.
+     * Any use of the buffer must synchronize on this object once the VM is multi-threaded.
+     */
+    private static final BootMemory buffer = new BootMemory(Ints.K);
 
     /**
      * Initialize the system, "opening" the main program dynamic library.
@@ -101,10 +109,9 @@ public final class DynamicLinker {
         if (absolutePath == null) {
             handle = mainHandle;
         } else {
-            final Pointer buffer = BootMemory.buffer();
-            final int i = CString.writePartialUtf8(absolutePath, 0, buffer, BootMemory.bufferSize());
-            assert i == absolutePath.length();
-            handle = nativeOpenDynamicLibrary(buffer);
+            final int i = CString.writePartialUtf8(absolutePath, 0, buffer.address(), buffer.size());
+            FatalError.check(i == absolutePath.length(), "Dynamic library path is too long for buffer");
+            handle = nativeOpenDynamicLibrary(buffer.address());
         }
         if (handle.isZero()) {
             try {
@@ -134,7 +141,7 @@ public final class DynamicLinker {
         if (MaxineVM.isPrimordialOrPristine()) {
             return doLoad(absolutePath);
         }
-        synchronized (BootMemory.class) {
+        synchronized (buffer) {
             return doLoad(absolutePath);
         }
     }
@@ -158,22 +165,18 @@ public final class DynamicLinker {
             }
             h = mainHandle;
             if (MaxineVM.isPrimordialOrPristine()) {
-                // 'synchronized' does not work yet while starting,
-                // but we don't need it in that case, we are still single-threaded.
                 // N.B. the first call to dlsym will cause a recursive call to this
                 // method since it is not yet resolved. The recursion is broken by the
                 // explicit check above.
-                final Pointer buffer = BootMemory.buffer();
-                final int i = CString.writePartialUtf8(name, 0, buffer, BootMemory.bufferSize());
-                assert i == name.length();
-                return dlsym(h, buffer);
+                final int i = CString.writePartialUtf8(name, 0, buffer.address(), buffer.size());
+                FatalError.check(i == name.length(), "Symbol name is too long for buffer");
+                return dlsym(h, buffer.address());
             }
         }
-        synchronized (BootMemory.class) {
-            final Pointer buffer = BootMemory.buffer();
-            final int i = CString.writePartialUtf8(name, 0, buffer, BootMemory.bufferSize());
-            assert i == name.length();
-            return dlsym(h, buffer);
+        synchronized (buffer) {
+            final int i = CString.writePartialUtf8(name, 0, buffer.address(), buffer.size());
+            FatalError.check(i == name.length(), "Symbol name is too long for buffer");
+            return dlsym(h, buffer.address());
         }
     }
 

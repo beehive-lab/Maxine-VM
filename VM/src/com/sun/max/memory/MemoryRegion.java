@@ -48,6 +48,14 @@ public interface MemoryRegion {
     Address end();
 
     /**
+     * Gets the address just past the last allocated/used location in the region.
+     *
+     * If this region is not used for allocation, then the value returned by this
+     * method will be identical to the value returned by {@link #end()}.
+     */
+    Address mark();
+
+    /**
      * @return does the region contain the address.
      */
     boolean contains(Address address);

@@ -21,57 +21,68 @@
 package com.sun.max.memory;
 
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * A single, globally available chunk of memory at a fixed address.
+ * A chunk of memory at a fixed address by virtue of being in the boot image.
  * This can be used even before having allocation via JNI enabled.
  * It is immediately present at boot time, right after mapping the boot image.
  *
+ * The {@link #lock} object must be synchronized if {@link #bufferUseRequiresSynchronization()} is
+ * true when using the {@linkplain #address() buffer}.
+ *
  * @author Bernd Mathiske
+ * @author Doug Simon
  */
 public final class BootMemory {
 
-    private BootMemory() {
+    /**
+     * Making this constructor {@linkplain PROTOTYPE_ONLY prototype-only} forces all {@code BootMemory}
+     * objects to live in the boot heap.
+     *
+     * @param size the size of the buffer
+     */
+    @PROTOTYPE_ONLY
+    public BootMemory(int size) {
+        bufferBytes = new byte[size];
     }
-
-    private static final int SIZE = Ints.K;
 
     /**
      * Since this object lands in the boot image, it will have a fixed address.
-     *
-     * ATTENTION: To prevent the code in method 'buffer()' below from folding,
-     * we must NOT declare this variable 'final':
      */
-    private static byte[] bufferBytes = new byte[SIZE];
+    private final byte[] bufferBytes;
 
     /**
      * The offset of the byte array data from the byte array object's origin.
      */
-    private static final Offset dataOffset = VMConfiguration.target().layoutScheme().byteArrayLayout.getElementOffsetFromOrigin(0);
+    private static final Offset dataOffset = Layout.byteArrayLayout().getElementOffsetFromOrigin(0);
 
     /**
-     * A single byte buffer with a fixed address.
+     * The raw pointer to element 0 of {@link #bufferBytes}.
      */
-    @CONSTANT_WHEN_NOT_ZERO
-    private static Pointer buffer = Pointer.zero();
+    private Pointer buffer;
 
-    public static Pointer buffer() {
+    /**
+     * Gets a pointer to the buffer.
+     */
+    public Pointer address() {
         if (buffer.isZero()) {
             if (MaxineVM.isPrototyping()) {
-                buffer = Memory.mustAllocate(SIZE);
+                buffer = Memory.mustAllocate(bufferBytes.length);
             } else {
                 buffer = Reference.fromJava(bufferBytes).toOrigin().plus(dataOffset);
-                bufferBytes = null; // This prevents optimizations from discovering that 'bytes' is de facto 'final'
             }
         }
         return buffer;
     }
-    public static int bufferSize() {
-        return SIZE;
-    }
 
+    /**
+     * Gets the size of the buffer.
+     */
+    public int size() {
+        return bufferBytes.length;
+    }
 }

@@ -88,11 +88,13 @@ public class HomArrayHeaderLayout extends HomGeneralLayout implements ArrayHeade
         return super.getOffsetFromOrigin(headerField);
     }
 
-    protected Word lengthToWord(int length) {
+    @INLINE
+    protected final Word lengthToWord(int length) {
         return Address.fromInt(length).shiftedLeft(1).or(1);
     }
 
-    protected int wordToLength(Word word) {
+    @INLINE
+    private int wordToLength(Word word) {
         return word.asAddress().unsignedShiftedRight(1).toInt();
     }
 

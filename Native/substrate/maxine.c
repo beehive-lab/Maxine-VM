@@ -308,8 +308,20 @@ int maxine(int argc, char *argv[], char *executablePath) {
     VMRunMethod method;
     int exitCode = 0;
     int fd;
+    int i;
 
-    log_initialize();
+    /* Extract the '-XX:LogFile' argument and pass the rest through to MaxineVM.run(). */
+    const char *logFilePath = NULL;
+    for (i = 1; i < argc; i++) {
+        const char *arg = argv[i];
+        if (strncmp(arg, "-XX:LogFile=", 12) == 0) {
+            logFilePath = arg + 12;
+            /* Null out the argument so that it is not parsed later. */
+            argv[i] = NULL;
+            break;
+        }
+    }
+    log_initialize(logFilePath);
 
 #if os_DARWIN
     _executablePath = executablePath;
@@ -325,7 +337,6 @@ int maxine(int argc, char *argv[], char *executablePath) {
     }
 #endif
     log_println("Arguments: argc %d, argv %lx", argc, argv);
-    int i;
     for (i = 0; i < argc; i++) {
         log_println("arg[%d]: %lx, \"%s\"", i, argv[i], argv[i]);
     }
@@ -356,8 +367,8 @@ int maxine(int argc, char *argv[], char *executablePath) {
 #endif
 
     Address auxiliarySpace = 0;
-    Size auxiliarySpaceSize = image_header()->auxiliarySpaceSize + REFERENCE_BUFFER_SIZE;
-    if (auxiliarySpaceSize) {
+    if (image_header()->auxiliarySpaceSize != 0) {
+        Size auxiliarySpaceSize = image_header()->auxiliarySpaceSize + REFERENCE_BUFFER_SIZE;
         auxiliarySpace = (Address) malloc(image_header()->auxiliarySpaceSize + REFERENCE_BUFFER_SIZE);
         if (auxiliarySpace == 0) {
             log_exit(1, "Failed to allocate %lu bytes of auxiliary space", auxiliarySpaceSize);

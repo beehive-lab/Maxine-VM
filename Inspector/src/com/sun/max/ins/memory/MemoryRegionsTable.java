@@ -395,6 +395,10 @@ public final class MemoryRegionsTable extends InspectorTable {
             return memoryRegion().end();
         }
 
+        public Address mark() {
+            return end();
+        }
+
         public boolean contains(Address address) {
             return memoryRegion().contains(address);
         }

@@ -44,42 +44,34 @@ void log_assert(Boolean condition, char *conditionString, char *fileName, int li
 
 static mutex_Struct log_mutexStruct;
 
-#if !os_GUESTVMXEN
-FILE *getFileStream() {
-    if (fileStream == NULL) {
-#if TELE
-        char *path = getenv("TELE_LOG_FILE");
-#else
-        char *path = getenv("MAXINE_LOG_FILE");
-#endif
-        if (path == NULL) {
-            path = "stdout";
-        }
-        if (strncmp(path, "stdout\0", 7) == 0) {
-            fileStream = stdout;
-            /* Set the file stream to flush whenever a newline character is encountered */
-            setlinebuf(fileStream);
-        } else if (strncmp(path, "stderr\0", 7) == 0) {
-            fileStream = stderr;
-        } else {
-            fileStream = fopen(path, "w");
-            if (fileStream == NULL) {
-                fprintf(stderr, "Could not open file for VM output stream: %s\n", path);
-                exit(1);
-            }
-            /* Set the file stream to flush whenever a newline character is encountered */
-            setlinebuf(fileStream);
-        }
-
-    }
-    return fileStream;
-}
-#endif
-
-void log_initialize(void) {
+void log_initialize(const char *path) {
     mutex_initialize(&log_mutexStruct);
 #if !os_GUESTVMXEN
-    getFileStream();
+    if (path == NULL) {
+#if TELE
+        path = getenv("TELE_LOG_FILE");
+#else
+        path = getenv("MAXINE_LOG_FILE");
+#endif
+    }
+    if (path == NULL) {
+        path = "stdout";
+    }
+    if (strncmp(path, "stdout\0", 7) == 0) {
+        fileStream = stdout;
+        /* Set the file stream to flush whenever a newline character is encountered */
+        setlinebuf(fileStream);
+    } else if (strncmp(path, "stderr\0", 7) == 0) {
+        fileStream = stderr;
+    } else {
+        fileStream = fopen(path, "w");
+        if (fileStream == NULL) {
+            fprintf(stderr, "Could not open file for VM output stream: %s\n", path);
+            exit(1);
+        }
+        /* Set the file stream to flush whenever a newline character is encountered */
+        setlinebuf(fileStream);
+    }
 #endif
 }
 
@@ -101,7 +93,7 @@ void log_print_format(const char *format, ...) {
     va_list ap;
     va_start(ap, format);
 #if !os_GUESTVMXEN
-    FILE* out = getFileStream();
+    FILE* out = fileStream == NULL ? stdout : fileStream;
     vfprintf(out, format, ap);
 #else
     vprintf(format, ap);
@@ -111,8 +103,8 @@ void log_print_format(const char *format, ...) {
 
 void log_print_vformat(const char *format, va_list ap) {
 #if !os_GUESTVMXEN
-    FILE* out = getFileStream();
-    vfprintf(out, format, ap);
+    FILE* out = fileStream == NULL ? stdout : fileStream;
+    vfprintf(fileStream, format, ap);
 #else
     vprintf(format, ap);
 #endif

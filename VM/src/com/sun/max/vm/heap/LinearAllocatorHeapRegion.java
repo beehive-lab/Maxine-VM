@@ -33,36 +33,60 @@ import com.sun.max.vm.runtime.*;
 public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements HeapRegion {
 
     public void setMark(Address mark) {
-        this.mark = mark.wordAligned();
+        this.mark.set(mark.wordAligned());
     }
 
     public LinearAllocatorHeapRegion(String description) {
-        mark = Address.zero();
         setDescription(description);
     }
 
     public LinearAllocatorHeapRegion(Address start, Size size, String description) {
         super(start, size);
-        mark = start().wordAligned();
+        mark.set(start.wordAligned());
         setDescription(description);
     }
 
     public Size allocationSize(Size cellSize) {
-        return VMConfiguration.target().debugging() ? cellSize.plus(VMConfiguration.target().wordWidth().numberOfBytes) : cellSize;
+        return DebugHeap.adjustForDebugTag(cellSize.asPointer()).asSize();
     }
 
-    public Pointer allocateCell(Size cellSize) {
-        assert mark.isWordAligned();
-        final Pointer cellStart = VMConfiguration.target().debugging() ? mark.plus(Word.size()).asPointer() : mark.asPointer();
-        final Address cellEnd = cellStart.plus(cellSize);
-        if (cellEnd.greaterThan(end())) {
+    /**
+     * Allocates some memory from this region.
+     *
+     * Garbage Collector considerations:
+     *
+     * If the garbage collector expects to be able to scan this memory region as a sequence of
+     * well-formed, contiguous objects between {@link #start()} and {@link #mark()}, then
+     * this caller(s) of this method must ensure that safepoints are {@linkplain Safepoint#disable() disabled}
+     * until the space allocated by this call has been initialized with the appropriate object header(s).
+     *
+     * Thread safety considerations: The caller(s) are responsible for ensuring that calls to this
+     * method are synchronized. Failure to do so will leave the {@link #mark()} in an inconsistent state.
+     *
+     * @param size the requested cell size to be allocated
+     * @param adjustForDebugTag specifies if an extra word is to be reserved before the cell for the debug tag word
+     * @return
+     */
+    private Pointer allocate(Size size, boolean adjustForDebugTag) {
+        if (!size.isWordAligned()) {
+            FatalError.unexpected("Allocation size must be word aligned");
+        }
+
+        Pointer oldAllocationMark = mark();
+        Pointer cell = adjustForDebugTag ? DebugHeap.adjustForDebugTag(oldAllocationMark) : oldAllocationMark;
+        Address end = cell.plus(size);
+        if (end.greaterThan(end())) {
             if (MaxineVM.isPrototyping()) {
                 ProgramError.unexpected("out of space in linear allocator region");
             }
             return Pointer.zero();
         }
-        mark = cellEnd.wordAligned();
-        return cellStart;
+        setMark(end);
+        return cell;
+    }
+
+    public Pointer allocateCell(Size cellSize) {
+        return allocate(cellSize, true);
     }
 
     /**
@@ -75,14 +99,7 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
      * @return start address of allocated space
      */
     public Pointer allocateSpace(Size spaceSize) {
-        assert mark.isWordAligned();
-        final Pointer spaceStart = mark.asPointer();
-        final Address spaceEnd = spaceStart.plus(spaceSize);
-        if (spaceEnd.greaterThan(end())) {
-            return Pointer.zero();
-        }
-        mark = spaceEnd.wordAligned();
-        return spaceStart;
+        return allocate(spaceSize, false);
     }
 
     /**
@@ -94,18 +111,12 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
 
     public void visitCells(CellVisitor cellVisitor) {
         Pointer cell = start().asPointer();
-        while (cell.lessThan(mark)) {
-            if (MaxineVM.isDebug()) {
-                cell = cell.plusWords(1);
-                if (!DebugHeap.isValidCellTag(cell.getWord(-1))) {
-                    Log.print("CELL VISITOR ERROR: missing object tag @ ");
-                    Log.print(cell);
-                    Log.print("(start + ");
-                    Log.print(cell.minus(start()).asOffset().toInt());
-                    Log.println(")");
-                    FatalError.unexpected("CELL VISITOR ERROR: missing object tag");
-                }
+        while (cell.lessThan(mark())) {
+            cell = DebugHeap.skipCellPadding(cell);
+            if (cell.greaterEqual(mark())) {
+                break;
             }
+            cell = DebugHeap.checkDebugCellTag(start(), cell);
             cell = cellVisitor.visitCell(cell);
         }
     }

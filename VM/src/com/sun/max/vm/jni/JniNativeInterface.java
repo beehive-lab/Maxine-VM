@@ -212,13 +212,10 @@ public final class JniNativeInterface {
         check(JniFunctionWrapper.savedLastJavaCallerStackPointer());
     }
 
-    private static final VMOption verboseOption = register(new VMOption("-verbose:jni",
-        "Report information about use of native methods and other Java Native Interface activity."), MaxineVM.Phase.PRISTINE);
-
     /**
      * Determines if information should be displayed about use of native methods and other Java Native Interface activity.
      */
     public static boolean verbose() {
-        return verboseOption.isPresent() || ClassMethodActor.traceJNI();
+        return verboseOption.verboseJNI || ClassMethodActor.traceJNI();
     }
 }
