@@ -216,6 +216,9 @@ public final class DebugHeap {
      * c. Each reference embedded in an object points to an address in the given memory region, the boot
      *    {@linkplain Heap#bootHeapRegion heap} or {@linkplain Code#bootCodeRegion code} region.
      *
+     * This method can only be called in a {@linkplain MaxineVM#isDebug() debug} VM.
+     *
+     * @param description a description of the region being verified
      * @param start the start of the memory region to verify
      * @param end the end of memory region
      * @param space the address space in which valid objects can be found apart from the boot
@@ -224,9 +227,24 @@ public final class DebugHeap {
      *            {@link #verifyGripAtIndex(Address, int, Grip, MemoryRegion, MemoryRegion)} for a reference value denoted by a base
      *            pointer and offset
      */
-    public static void verifyRegion(Pointer start, final Address end, final MemoryRegion space, PointerOffsetVisitor verifier) {
-        Pointer cell = start;
-        while (skipCellPadding(cell).lessThan(end)) {
+    public static void verifyRegion(String description, Address start, final Address end, final MemoryRegion space, PointerOffsetVisitor verifier) {
+
+        if (Heap.traceGCPhases()) {
+            Log.print("Verifying region ");
+            Log.print(description);
+            Log.print(" [");
+            Log.print(start);
+            Log.print(" .. ");
+            Log.print(end);
+            Log.println(")");
+        }
+
+        Pointer cell = start.asPointer();
+        while (cell.lessThan(end)) {
+            cell = skipCellPadding(cell);
+            if (cell.greaterEqual(end)) {
+                break;
+            }
             cell = checkDebugCellTag(start, cell);
 
 

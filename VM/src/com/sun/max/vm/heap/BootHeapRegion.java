@@ -100,7 +100,7 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
             Log.println(start().plus(referenceMapWords * Word.size()));
         }
         if (MaxineVM.isDebug()) {
-            DebugHeap.verifyRegion(start().asPointer(), end(), this, this);
+            DebugHeap.verifyRegion(description(), start().asPointer(), end(), this, this);
         }
 
         if (Heap.traceRootScanning()) {

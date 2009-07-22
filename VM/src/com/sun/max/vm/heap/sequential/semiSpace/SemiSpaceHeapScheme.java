@@ -328,21 +328,21 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 heapRootsScanner.run(); // Start scanning the reachable objects from my roots.
                 stopTimer(rootScanTimer);
 
-                if (Heap.traceGC()) {
+                if (Heap.traceGCPhases()) {
                     Log.println("Scanning boot heap...");
                 }
                 startTimer(bootHeapScanTimer);
                 scanBootHeap();
                 stopTimer(bootHeapScanTimer);
 
-                if (Heap.traceGC()) {
+                if (Heap.traceGCPhases()) {
                     Log.println("Scanning code...");
                 }
                 startTimer(codeScanTimer);
                 scanCode();
                 stopTimer(codeScanTimer);
 
-                if (Heap.traceGC()) {
+                if (Heap.traceGCPhases()) {
                     Log.println("Moving reachable...");
                 }
 
@@ -350,7 +350,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 moveReachableObjects();
                 stopTimer(copyTimer);
 
-                if (Heap.traceGC()) {
+                if (Heap.traceGCPhases()) {
                     Log.println("Processing weak references...");
                 }
 
@@ -876,7 +876,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
     /**
      * Inserts {@linkplain DebugHeap#writeCellPadding(Pointer, int) padding} into the unused portion of a thread's TLAB.
-     * This is required if {@linkplain DebugHeap#verifyRegion(Pointer, Address, MemoryRegion, PointerOffsetVisitor) verification}
+     * This is required if {@linkplain DebugHeap#verifyRegion(String, Pointer, Address, MemoryRegion, PointerOffsetVisitor) verification}
      * of the heap will be performed.
      *
      * @param enabledVmThreadLocals the pointer to the safepoint-enabled VM thread locals for the thread whose TLAB is
@@ -1011,20 +1011,16 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     }
 
     private void verifyHeap(String when) {
-        if (Heap.traceGC()) {
+        if (Heap.traceGCPhases()) {
             Log.print("Verifying heap ");
             Log.println(when);
         }
         heapRootsVerifier.run();
-        if (Heap.traceGC()) {
-            Log.print("Verifying region [");
-            Log.print(toSpace.start());
-            Log.print(" .. ");
-            Log.print(allocationMark());
-            Log.println(")");
-        }
-        DebugHeap.verifyRegion(toSpace.start().asPointer(), allocationMark(), toSpace, gripVerifier);
-        if (Heap.traceGC()) {
+
+        DebugHeap.verifyRegion(toSpace.description(), toSpace.start().asPointer(), allocationMark(), toSpace, gripVerifier);
+        Code.verifyRegions(toSpace, gripVerifier, false);
+
+        if (Heap.traceGCPhases()) {
             Log.print("Verifying heap ");
             Log.print(when);
             Log.println(": DONE");

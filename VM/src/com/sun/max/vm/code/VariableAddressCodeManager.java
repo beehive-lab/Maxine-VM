@@ -28,13 +28,12 @@ import com.sun.max.vm.runtime.*;
 /**
  * A code manager that allocates virtual memory somewhere in the address space.
  * Since we cannot guarantee that an allocated address of virtual memory is at an address
- * that is a multiple of RUNTIME_CODE_REGION_SIZE (unlike @See FixedAddressCodeManager)
- * we keep the _runtimeCodeRegions array sorted by increasing address.
+ * that is a multiple of {@link CodeManager#runtimeCodeRegions} (c.f. {@link FixedAddressCodeManager})
+ * we keep the {@link CodeManager#runtimeCodeRegions} array sorted by increasing address.
  *
  * In general we cannot easily guarantee the invariant that the regions managed by this manager
- * are within 32 bits of each other. We assume that the  @see com.sun.max.memory.VirtualMemory.allocate method
- * preserves the constraint when asked to allocate @See com.sun.max.memory.VirtualMemory.Type.CODE.
- *
+ * are within 32 bits of each other. We assume that {@link VirtualMemory#allocate(Size, com.sun.max.memory.VirtualMemory.Type)}
+ * preserves the constraint when asked to allocate {@linkplain VirtualMemory.Type#CODE code}.
  *
  * @author Bernd Mathiske
  * @author Mick Jordan
