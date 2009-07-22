@@ -25,6 +25,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.target.*;
 import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  *
@@ -33,7 +34,7 @@ import com.sun.c1x.util.*;
  */
 public class X86FrameMap extends FrameMap {
 
-    static final X86Register r15thread = X86Register.r15;
+    static final Register r15thread = X86Register.r15;
 
     static final LIROperand rsiOopOpr = asOopOpr(X86Register.rsi);
     static final LIROperand rdiOopOpr = asOopOpr(X86Register.rdi);
@@ -76,8 +77,8 @@ public class X86FrameMap extends FrameMap {
     static final LIROperand r14oopOpr = asOopOpr(X86Register.r14);
 
 
-    private static final LIROperand long0Opr32 = LIROperandFactory.doubleCpu(X86Register.rax, X86Register.rdx);
-    private static final LIROperand long0Opr64 = LIROperandFactory.doubleCpu(X86Register.rax, X86Register.rax);
+    private static final LIROperand long0Opr32 = LIROperandFactory.doubleLocation(BasicType.Long, X86Register.rax, X86Register.rdx);
+    private static final LIROperand long0Opr64 = LIROperandFactory.doubleLocation(BasicType.Long, X86Register.rax, X86Register.rax);
 
     static final LIROperand long0Opr(Architecture arch) {
         if (arch.is32bit()) {
@@ -89,8 +90,8 @@ public class X86FrameMap extends FrameMap {
         }
     }
 
-    private static final LIROperand long1Opr32 = LIROperandFactory.doubleCpu(X86Register.rbx, X86Register.rcx);
-    private static final LIROperand long1Opr64 = LIROperandFactory.doubleCpu(X86Register.rbx, X86Register.rbx);
+    private static final LIROperand long1Opr32 = LIROperandFactory.doubleLocation(BasicType.Long, X86Register.rbx, X86Register.rcx);
+    private static final LIROperand long1Opr64 = LIROperandFactory.doubleLocation(BasicType.Long, X86Register.rbx, X86Register.rbx);
     static final LIROperand long1Opr(Architecture arch) {
         if (arch.is32bit()) {
             return long1Opr32;
@@ -101,14 +102,14 @@ public class X86FrameMap extends FrameMap {
         }
     }
 
-    static final LIROperand fpu0FloatOpr   = LIROperandFactory.singleFpu(X86Register.fpu0);
-    static final LIROperand fpu0DoubleOpr   = LIROperandFactory.doubleFpuX86(X86Register.fpu0);
+    static final LIROperand fpu0FloatOpr   = LIROperandFactory.singleLocation(BasicType.Float, X86Register.fpu0);
+    static final LIROperand fpu0DoubleOpr   = LIROperandFactory.singleLocation(BasicType.Double, X86Register.fpu0);
 
-    static final LIROperand xmm0floatOpr = LIROperandFactory.singleXmmX86(X86Register.xmm0);
-    static final LIROperand xmm0doubleOpr = LIROperandFactory.doubleXmmX86(X86Register.xmm0);
+    static final LIROperand xmm0floatOpr = LIROperandFactory.singleLocation(BasicType.Float, X86Register.xmm0);
+    static final LIROperand xmm0doubleOpr = LIROperandFactory.singleLocation(BasicType.Double, X86Register.xmm0);
 
     static LIROperand asOopOpr(Register reg) {
-        return LIROperandFactory.singleCpuOop(reg);
+        return LIROperandFactory.singleLocation(BasicType.Object, reg);
     }
 
     private static LIROperand asPointerOpr32(Register reg) {
@@ -116,7 +117,7 @@ public class X86FrameMap extends FrameMap {
     }
 
     private static LIROperand asLongOpr(Register reg) {
-        return LIROperandFactory.doubleCpu(reg, reg);
+        return LIROperandFactory.doubleLocation(BasicType.Long, reg, reg);
     }
 
     private static LIROperand asPointerOpr64(Register reg) {
@@ -124,6 +125,7 @@ public class X86FrameMap extends FrameMap {
     }
 
     static final LIROperand asPointerOpr(Register reg, Architecture arch) {
+        assert reg != null;
         if (arch.is32bit()) {
             return asPointerOpr32(reg);
         } else if (arch.is64bit()) {
@@ -134,16 +136,21 @@ public class X86FrameMap extends FrameMap {
     }
 
     static LIROperand asOpr(Register reg) {
-        return LIROperandFactory.singleCpu(reg);
+        return LIROperandFactory.singleLocation(BasicType.Int, reg);
     }
 
-    public static X86Register rscratch1(Architecture arch) {
-        return (arch.is32bit()) ? X86Register.noreg : X86Register.r10;
+    public static Register rscratch1(Architecture arch) {
+        return (arch.is32bit()) ? Register.noreg : X86Register.r10;
     }
 
     public X86FrameMap(C1XCompilation compilation, CiMethod method, int numberOfLocks, int maxStack) {
         super(compilation, method, numberOfLocks, maxStack);
     }
 
+    @Override
+    public boolean allocatableRegister(Register r) {
+        // TODO: (tw) Remove this hack
+        return r != X86Register.rsp && r != X86Register.rbp;
+    }
 
 }

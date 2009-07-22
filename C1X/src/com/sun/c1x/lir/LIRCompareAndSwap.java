@@ -48,7 +48,7 @@ public class LIRCompareAndSwap extends LIRInstruction {
      * @param tmp2
      */
     public LIRCompareAndSwap(LIROpcode opcode, LIROperand addr, LIROperand cmpValue, LIROperand newValue, LIROperand tmp1, LIROperand tmp2) {
-        super(opcode, LIROperandFactory.illegalOperand, null);
+        super(opcode, LIROperandFactory.IllegalOperand, null);
         this.addr = addr;
         this.cmpValue = cmpValue;
         this.newValue = newValue;

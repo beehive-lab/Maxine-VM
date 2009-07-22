@@ -37,7 +37,7 @@ public class MonitorExitStub extends MonitorAccessStub {
     private int monitorIx;
 
     public MonitorExitStub(LIROperand lockReg, boolean computeLock, int monitorIx) {
-        super(LIROperandFactory.illegalOperand, lockReg);
+        super(LIROperandFactory.IllegalOperand, lockReg);
         this.computeLock = computeLock;
         this.monitorIx = monitorIx;
     }

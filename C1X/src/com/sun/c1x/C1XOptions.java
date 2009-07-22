@@ -144,6 +144,9 @@ public class C1XOptions {
     public static boolean GenerateCompilerNullChecks         = ____;
     public static boolean UseTableRanges                     = ____;
     public static boolean DetailedAsserts                    = TRUE;
+
+    public static boolean ImplicitDiv0Checks                 = ____;
+
     public static boolean PrintLIR                           = ____;
     public static boolean Verbose                            = ____;
     public static boolean LIRTracePeephole                   = ____;
@@ -184,6 +187,7 @@ public class C1XOptions {
     public static boolean CMSIncrementalMode                 = ____;
     public static boolean TLABStats                          = ____;
     public static boolean GenerateAssertionCode              = ____;
+    public static boolean EmitStaticCallStubs                = ____;
 
     // Profiling settings
 

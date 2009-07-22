@@ -168,8 +168,13 @@ public class MaxCiTargetMethod implements CiTargetMethod {
      * @param size the size of the data within the array
      */
     public void setData(byte[] data, int size) {
-        this.data = data;
-        this.dataSize = size;
+        if (size == 0) {
+            this.data = null;
+            this.dataSize = 0;
+        } else {
+            this.data = data;
+            this.dataSize = size;
+        }
     }
 
     /**
@@ -432,6 +437,20 @@ public class MaxCiTargetMethod implements CiTargetMethod {
                 }
             }
         }
+    }
+
+
+    @Override
+    public void recordCodeReferenceInData(int codePosition, int dataPosition, boolean relative) {
+        // TODO Auto-generated method stub
+
+    }
+
+
+    @Override
+    public void recordDataReferenceInCode(int codePosition, int dataPosition, boolean relative) {
+        // TODO Auto-generated method stub
+
     }
 
 }

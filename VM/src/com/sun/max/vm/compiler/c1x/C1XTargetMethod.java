@@ -20,13 +20,15 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
+import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.TargetMethod;
-import com.sun.max.vm.compiler.target.amd64.AMD64TargetMethod;
 import com.sun.max.vm.actor.member.ClassMethodActor;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.JavaStackFrameLayout;
 import com.sun.max.vm.stack.OptoStackFrameLayout;
 import com.sun.max.asm.InstructionSet;
-import com.sun.max.unsafe.Word;
+import com.sun.max.unsafe.*;
 
 /**
  * This class implements a {@link com.sun.max.vm.compiler.target.TargetMethod target method} for
@@ -35,6 +37,8 @@ import com.sun.max.unsafe.Word;
  * @author Ben L. Titzer
  */
 public class C1XTargetMethod extends TargetMethod {
+
+    private int registerReferenceMapSize = 2; // TODO: Set this appropriately
 
     public C1XTargetMethod(ClassMethodActor classMethodActor) {
         super(classMethodActor);
@@ -57,16 +61,57 @@ public class C1XTargetMethod extends TargetMethod {
 
     @Override
     public final int registerReferenceMapSize() {
-        return AMD64TargetMethod.registerReferenceMapSize();
+        return registerReferenceMapSize;
     }
 
     @Override
     public final void patchCallSite(int callOffset, Word callEntryPoint) {
-        AMD64TargetMethod.patchCallSite(this, callOffset, callEntryPoint);
+        patchCallSite(this, callOffset, callEntryPoint);
     }
 
     @Override
     public void forwardTo(TargetMethod newTargetMethod) {
-        AMD64TargetMethod.forwardTo(this, newTargetMethod);
+        forwardTo(this, newTargetMethod);
+    }
+
+    // TODO: (tw) Get rid of these!!!!!!!
+
+    private static final int RCALL = 0xe8;
+    private static final int RJMP = 0xe9;
+
+    public static void patchCallSite(TargetMethod targetMethod, int callOffset, Word callEntryPoint) {
+        patchCode(targetMethod, callOffset, callEntryPoint.asAddress().toLong(), RCALL);
+    }
+
+    public static void forwardTo(TargetMethod oldTargetMethod, TargetMethod newTargetMethod) {
+        assert oldTargetMethod != newTargetMethod;
+        assert !oldTargetMethod.isNative();
+        assert oldTargetMethod.abi().callEntryPoint() != CallEntryPoint.C_ENTRY_POINT;
+
+        final long newOptEntry = CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(newTargetMethod).asAddress().toLong();
+        final long newJitEntry = CallEntryPoint.JIT_ENTRY_POINT.in(newTargetMethod).asAddress().toLong();
+
+        patchCode(oldTargetMethod, CallEntryPoint.OPTIMIZED_ENTRY_POINT.offsetFromCodeStart(), newOptEntry, RJMP);
+        patchCode(oldTargetMethod, CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart(), newJitEntry, RJMP);
+    }
+
+    private static void patchCode(TargetMethod targetMethod, int offset, long target, int controlTransferOpcode) {
+        final Pointer callSite = targetMethod.codeStart().plus(offset);
+        final long displacement = (target - (callSite.toLong() + 5L)) & 0xFFFFFFFFL;
+        if (MaxineVM.isPrototyping()) {
+            final byte[] code = targetMethod.code();
+            code[offset] = (byte) controlTransferOpcode;
+            code[offset + 1] = (byte) displacement;
+            code[offset + 2] = (byte) (displacement >> 8);
+            code[offset + 3] = (byte) (displacement >> 16);
+            code[offset + 4] = (byte) (displacement >> 24);
+        } else {
+            // TODO: Patching code is probably not thread safe!
+            //       Patch location must not straddle a cache-line (32-byte) boundary.
+            FatalError.check(true | callSite.isWordAligned(), "Method " + targetMethod.classMethodActor().format("%H.%n(%p)") + " entry point is not word aligned.");
+            // The read, modify, write below should be changed to simply a write once we have the method entry point alignment fixed.
+            final Word patch = callSite.readWord(0).asAddress().and(0xFFFFFF0000000000L).or((displacement << 8) | controlTransferOpcode);
+            callSite.writeWord(0, patch);
+        }
     }
 }

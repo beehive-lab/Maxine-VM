@@ -92,8 +92,11 @@ public interface CiTargetMethod {
      * load an integer or floating point constant).
      * @param codePosition the position in the code where the data reference occurs
      * @param dataPosition the position in the data which is referred to
+     * @param relative true if the reference is relative to the code position
      */
-    void recordDataReferenceInCode(int codePosition, int dataPosition);
+    void recordDataReferenceInCode(int codePosition, int dataPosition, boolean relative);
+
+    void recordCodeReferenceInData(int codePosition, int dataPosition, boolean relative);
 
     /**
      * Records an object reference in the code section and the object that is

@@ -169,7 +169,7 @@ public abstract class Prototype {
      *
      * @return the page size in bytes
      */
-    private static native int nativeGetPageSize();
+    public static native int nativeGetPageSize();
 
     /**
      * Creates a {@code Platform} that describes the host VM's platform.

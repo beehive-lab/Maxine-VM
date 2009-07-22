@@ -219,17 +219,16 @@ public class RegisterVerifier {
     boolean checkState(List<Interval> inputState, int reg, Interval interval) {
         if (reg != LinearScan.getAnyreg() && reg < stateSize()) {
             if (inputState.get(reg) != interval) {
-                TTY.println("!! Error in register allocation: register %d does not contain interval %d", reg, interval.regNum());
-                return true;
+                TTY.println("!! Error in register allocation: register %d does not contain interval %d but interval %d", reg, interval.regNum(), inputState.get(reg));
+                return false;
             }
         }
-        return false;
+        return true;
     }
 
     void processOperations(LIRList ops, List<Interval> inputState) {
         // visit all instructions of the block
         LIRVisitState visitor = new LIRVisitState();
-        boolean hasError = false;
 
         for (int i = 0; i < ops.length(); i++) {
             LIRInstruction op = ops.at(i);
@@ -250,12 +249,13 @@ public class RegisterVerifier {
                         interval = interval.splitChildAtOpId(op.id(), LIRVisitState.OperandMode.InputMode, allocator);
                     }
 
-                    hasError |= checkState(inputState, interval.assignedReg(), interval.splitParent());
-                    hasError |= checkState(inputState, interval.assignedRegHi(), interval.splitParent());
+                    assert checkState(inputState, interval.assignedReg(), interval.splitParent());
+                    assert checkState(inputState, interval.assignedRegHi(), interval.splitParent());
 
                     // When an operand is marked with isLastUse, then the fpu stack allocator
                     // removes the register from the fpu stack . the register contains no value
-                    if (opr.isLastUse()) {
+                    // TODO: (tw) check why this leads to problems! " && opr.isFpuRegister()" manually inserted
+                    if (allocator.isLastUse(opr) && opr.isFpuRegister()) {
                         statePut(inputState, interval.assignedReg(), null);
                         statePut(inputState, interval.assignedRegHi(), null);
                     }
@@ -264,7 +264,7 @@ public class RegisterVerifier {
 
             // invalidate all caller save registers at calls
             if (visitor.hasCall()) {
-                for (Register r : allocator.frameMap.callerSavedRegisters()) {
+                for (Register r : allocator.compilation.target.callerSavedRegisters) {
                     statePut(inputState, r.number, null);
                 }
             }
@@ -306,6 +306,5 @@ public class RegisterVerifier {
                 }
             }
         }
-        assert hasError == false : "Error in register allocation";
     }
 }

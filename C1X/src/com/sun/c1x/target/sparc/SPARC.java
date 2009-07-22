@@ -31,7 +31,7 @@ import com.sun.c1x.util.*;
 public class SPARC extends Architecture {
 
     protected SPARC(String name, int wordSize, Register[] registers) {
-        super(name, wordSize, "sparc", BitOrdering.BigEndian, registers);
+        super(name, wordSize, "sparc", BitOrdering.BigEndian, registers, 0);
     }
 
     @Override

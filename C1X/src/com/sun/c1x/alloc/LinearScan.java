@@ -25,6 +25,7 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.alloc.Interval.*;
 import com.sun.c1x.bytecode.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
@@ -44,6 +45,7 @@ public class LinearScan extends RegisterAllocator {
     private int nofCpuRegs;
     private int vregBase;
     private Register[] registerMapping;
+    private boolean[] allocatableRegister;
     int nofRegs;
 
     C1XCompilation compilation;
@@ -72,6 +74,9 @@ public class LinearScan extends RegisterAllocator {
     BitMap hasCall; // bit set for each LIRInstruction id that destroys all caller save registers
     BitMap2D intervalInLoop; // bit set for each virtual register that is contained in each loop
 
+    // Used for FPU stack optimization
+    Set<LIROperand> isLastUse;
+
     // Implementation of LinearScan
 
     public LinearScan(C1XCompilation compilation, IR ir, LIRGenerator gen, FrameMap frameMap) {
@@ -99,6 +104,8 @@ public class LinearScan extends RegisterAllocator {
         assert this.compilation() != null : "check if valid";
         assert this.gen() != null : "check if valid";
         assert this.frameMap() != null : "check if valid";
+
+        isLastUse = new HashSet<LIROperand>();
     }
 
     private void initializeRegisters(Register[] registers) {
@@ -136,7 +143,7 @@ public class LinearScan extends RegisterAllocator {
                 fpuLast = Math.max(fpuLast, r.number);
             }
 
-            if (r.isXmm()) {
+            if (r.isXMM()) {
                 xmmCnt++;
                 xmmFirst = Math.min(xmmFirst, r.number);
                 xmmLast = Math.max(xmmLast, r.number);
@@ -145,10 +152,11 @@ public class LinearScan extends RegisterAllocator {
 
         int maxReg = Math.max(fpuLast, Math.max(cpuLast, xmmLast));
         registerMapping = new Register[maxReg + 1];
-
+        allocatableRegister = new boolean[maxReg + 1];
         for (Register r : registers) {
             assert registerMapping[r.number] == null : "duplicate register!";
             registerMapping[r.number] = r;
+            allocatableRegister[r.number] = frameMap().allocatableRegister(r);
         }
 
         pdFirstByteReg = byteFirst;
@@ -162,7 +170,6 @@ public class LinearScan extends RegisterAllocator {
 
         pdFirstXmmReg = xmmFirst;
         pdLastXmmReg = xmmLast;
-
 
         nofCpuRegs = cpuCnt;
 
@@ -336,6 +343,7 @@ public class LinearScan extends RegisterAllocator {
     // (only used for parent intervals that are created during the building phase)
     Interval createInterval(int regNum) {
         assert intervals.get(regNum) == null : "overwriting exisiting interval";
+        assert isProcessedRegNum(regNum);
 
         Interval interval = new Interval(regNum);
         intervals.set(regNum, interval);
@@ -1143,7 +1151,7 @@ public class LinearScan extends RegisterAllocator {
     }
 
     boolean isProcessedRegNum(int reg) {
-        return reg > Register.vregBase || (reg >= 0 && reg < registerMapping.length && registerMapping[reg] != null);
+        return reg > Register.vregBase || reg >= registerMapping.length || (reg >= 0 && reg < registerMapping.length && registerMapping[reg] != null && allocatableRegister[reg]);
     }
 
     void addDef(int regNum, int defPos, IntervalUseKind useKind, BasicType type) {
@@ -1456,8 +1464,8 @@ public class LinearScan extends RegisterAllocator {
 
         // create a list with all caller-save registers (cpu, fpu, xmm)
         // when an instruction is a call, a temp range is created for all these registers
-        int numCallerSaveRegisters = 0;
-        int[] callerSaveRegisters = new int[nofRegs];
+        int numCallerSaveRegisters = compilation.target.callerSavedRegisters.length;
+        int[] callerSaveRegisters = new int[compilation.target.callerSavedRegisters.length];
         int z = 0;
         for (Register r : compilation.target.callerSavedRegisters) {
             callerSaveRegisters[z++] = r.number;
@@ -1510,7 +1518,9 @@ public class LinearScan extends RegisterAllocator {
                 // add a temp range for each register if operation destroys caller-save registers
                 if (visitor.hasCall()) {
                     for (int k = 0; k < numCallerSaveRegisters; k++) {
-                        addTemp(callerSaveRegisters[k], opId, IntervalUseKind.noUse, BasicType.Illegal);
+                        if (isProcessedRegNum(callerSaveRegisters[k])) {
+                            addTemp(callerSaveRegisters[k], opId, IntervalUseKind.noUse, BasicType.Illegal);
+                        }
                     }
                     Util.traceLinearScan(4, "operation destroys all caller-save registers");
                 }
@@ -1599,8 +1609,8 @@ public class LinearScan extends RegisterAllocator {
                     }
                     int opId = op.id();
 
-                    for (Register r : compilation.frameMap().callerSavedRegisters()) {
-                        if (r.isXmm()) {
+                    for (Register r : compilation.target.callerSavedRegisters) {
+                        if (r.isXMM()) {
                             addTemp(r.number, opId, IntervalUseKind.noUse, BasicType.Illegal);
                         }
                     }
@@ -2206,9 +2216,9 @@ public class LinearScan extends RegisterAllocator {
     // * Phase 7: assign register numbers back to LIR
     // (includes computation of debug information and oop maps)
 
-    VMReg vmRegForInterval(Interval interval) {
-        VMReg reg = interval.cachedVmReg();
-        if (!reg.isValid()) {
+    CiLocation vmRegForInterval(Interval interval) {
+        CiLocation reg = interval.cachedVmReg();
+        if (reg == null) {
             reg = vmRegForOperand(operandForInterval(interval));
             interval.setCachedVmReg(reg);
         }
@@ -2216,7 +2226,7 @@ public class LinearScan extends RegisterAllocator {
         return reg;
     }
 
-    VMReg vmRegForOperand(LIROperand opr) {
+    CiLocation vmRegForOperand(LIROperand opr) {
         assert opr.isOop() : "currently only implemented for oop operands";
         return frameMap().regname(opr);
     }
@@ -2239,7 +2249,7 @@ public class LinearScan extends RegisterAllocator {
         if (assignedReg >= nofRegs) {
             // stack slot
             assert interval.assignedRegHi() == getAnyreg() : "must not have hi register";
-            return LIROperandFactory.stack(assignedReg - nofRegs, type);
+            return LIROperandFactory.stack(assignedReg - nofRegs + 1, type);
 
         } else {
             // register
@@ -2247,13 +2257,13 @@ public class LinearScan extends RegisterAllocator {
                 case Object: {
                     assert isCpu(assignedReg) : "no cpu register";
                     assert interval.assignedRegHi() == getAnyreg() : "must not have hi register";
-                    return LIROperandFactory.singleCpuOop(toRegister(assignedReg));
+                    return LIROperandFactory.singleLocation(BasicType.Object, toRegister(assignedReg));
                 }
 
                 case Int: {
                     assert isCpu(assignedReg) : "no cpu register";
                     assert interval.assignedRegHi() == getAnyreg() : "must not have hi register";
-                    return LIROperandFactory.singleCpu(toRegister(assignedReg));
+                    return LIROperandFactory.singleLocation(BasicType.Int, toRegister(assignedReg));
                 }
 
                 case Long: {
@@ -2269,12 +2279,12 @@ public class LinearScan extends RegisterAllocator {
                     }
 
                     if (compilation.target.arch.is64bit()) {
-                        return LIROperandFactory.doubleCpu(toRegister(assignedReg), toRegister(assignedReg));
+                        return LIROperandFactory.doubleLocation(BasicType.Long, toRegister(assignedReg), toRegister(assignedReg));
                     } else {
                         if (compilation.target.arch.isSPARC()) {
-                            return LIROperandFactory.doubleCpu(toRegister(assignedRegHi), toRegister(assignedReg));
+                            return LIROperandFactory.doubleLocation(BasicType.Long, toRegister(assignedRegHi), toRegister(assignedReg));
                         } else {
-                            return LIROperandFactory.doubleCpu(toRegister(assignedReg), toRegister(assignedRegHi));
+                            return LIROperandFactory.doubleLocation(BasicType.Long, toRegister(assignedReg), toRegister(assignedRegHi));
                         }
                     }
                 }
@@ -2283,19 +2293,19 @@ public class LinearScan extends RegisterAllocator {
                     if (C1XOptions.SSEVersion >= 1 && compilation.target.arch.isX86()) {
                         assert isXmm(assignedReg) : "no xmm register";
                         assert interval.assignedRegHi() == getAnyreg() : "must not have hi register";
-                        return LIROperandFactory.singleXmmX86(toRegister(assignedReg));
+                        return LIROperandFactory.singleLocation(BasicType.Float, toRegister(assignedReg));
                     }
 
                     assert isFpu(assignedReg) : "no fpu register";
                     assert interval.assignedRegHi() == getAnyreg() : "must not have hi register";
-                    return LIROperandFactory.singleFpu(toRegister(assignedReg));
+                    return LIROperandFactory.singleLocation(BasicType.Float, toRegister(assignedReg));
                 }
 
                 case Double: {
                     if (C1XOptions.SSEVersion >= 2 && compilation.target.arch.isX86()) {
                         assert isXmm(assignedReg) : "no xmm register";
                         assert interval.assignedRegHi() == getAnyreg() : "must not have hi register (double xmm values are stored in one register)";
-                        return LIROperandFactory.doubleXmmX86(toRegister(assignedReg));
+                        return LIROperandFactory.singleLocation(BasicType.Double, toRegister(assignedReg));
                     }
 
                     LIROperand result;
@@ -2303,18 +2313,18 @@ public class LinearScan extends RegisterAllocator {
                         assert isFpu(assignedReg) : "no fpu register";
                         assert isFpu(interval.assignedRegHi()) : "no fpu register";
                         assert assignedReg % 2 == 0 && assignedReg + 1 == interval.assignedRegHi() : "must be sequential and even";
-                        result = LIROperandFactory.doubleFpuSparc(toRegister(interval.assignedRegHi()), toRegister(assignedReg));
+                        result = LIROperandFactory.doubleLocation(BasicType.Double, toRegister(interval.assignedRegHi()), toRegister(assignedReg));
                     } else {
                         assert isFpu(assignedReg) : "no fpu register";
                         assert interval.assignedRegHi() == getAnyreg() : "must not have hi register (double fpu values are stored in one register on Intel)";
-                        result = LIROperandFactory.doubleFpuX86(toRegister(assignedReg));
+                        result = LIROperandFactory.singleLocation(BasicType.Double, toRegister(assignedReg));
                     }
                     return result;
                 }
 
                 default: {
                     Util.shouldNotReachHere();
-                    return LIROperandFactory.illegalOperand;
+                    return LIROperandFactory.IllegalOperand;
                 }
             }
         }
@@ -2325,7 +2335,7 @@ public class LinearScan extends RegisterAllocator {
     }
 
     boolean isXmm(int assignedReg) {
-        return assignedReg >= 0 && assignedReg < registerMapping.length && registerMapping[assignedReg] != null && this.registerMapping[assignedReg].isXmm();
+        return assignedReg >= 0 && assignedReg < registerMapping.length && registerMapping[assignedReg] != null && this.registerMapping[assignedReg].isXMM();
     }
 
     Register toRegister(int assignedReg) {
@@ -2382,9 +2392,9 @@ public class LinearScan extends RegisterAllocator {
             // last use information is completely correct
             // information is only needed for fpu stack allocation
             if (res.isFpuRegister()) {
-                if (opr.isLastUse() || opId == interval.to() || (opId != -1 && interval.hasHoleBetween(opId, opId + 1))) {
+                if (isLastUse(opr) || opId == interval.to() || (opId != -1 && interval.hasHoleBetween(opId, opId + 1))) {
                     assert opId == -1 || !isBlockBegin(opId) : "holes at begin of block may also result from control flow";
-                    res = res.makeLastUse();
+                    makeLastUse(res);
                 }
             }
         }
@@ -2555,9 +2565,7 @@ public class LinearScan extends RegisterAllocator {
         // included in the oop map
         iw.walkBefore(op.id());
 
-        int frameSize = frameMap().framesize();
-        int argCount = frameMap().oopMapArgCount();
-        OopMap map = new OopMap(frameSize, argCount);
+        OopMap map = new OopMap();
 
         // Check if this is a patch site.
         boolean isPatchInfo = false;
@@ -2587,7 +2595,7 @@ public class LinearScan extends RegisterAllocator {
                 // caller-save registers must not be included into oop-maps at calls
                 assert !isCallSite || assignedReg >= nofRegs || !isCallerSave(assignedReg) : "interval is in a caller-save register at a call . register will be overwritten";
 
-                VMReg name = vmRegForInterval(interval);
+                CiLocation name = vmRegForInterval(interval);
                 map.setOop(name);
 
                 // Spill optimization: when the stack value is guaranteed to be always correct,
@@ -2778,7 +2786,7 @@ public class LinearScan extends RegisterAllocator {
             ScopeValue sv = scopeValueCache[cacheIdx];
             if (sv == null) {
                 Location.LocationType locType = isOop ? Location.LocationType.Oop : Location.LocationType.Normal;
-                VMReg rname = frameMap().regname(opr);
+                CiLocation rname = frameMap().regname(opr);
                 sv = new LocationValue(Location.newRegLoc(locType, rname));
                 scopeValueCache[cacheIdx] = sv;
             }
@@ -2790,7 +2798,7 @@ public class LinearScan extends RegisterAllocator {
             return 1;
 
         } else if (opr.isSingleXmm() && compilation.target.arch.isX86()) {
-            VMReg rname = opr.asRegister().asVMReg();
+            CiLocation rname = opr.asRegister().asVMReg();
             LocationValue sv = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rname));
 
             scopeValues.add(sv);
@@ -2808,7 +2816,7 @@ public class LinearScan extends RegisterAllocator {
             }
 
             Location.LocationType locType = floatSavedAsDouble() ? Location.LocationType.FloatInDbl : Location.LocationType.Normal;
-            VMReg rname = frameMap().fpuRegname(opr.fpuRegnr());
+            CiLocation rname = frameMap().fpuRegname(opr.fpuRegnr());
             LocationValue sv = new LocationValue(Location.newRegLoc(locType, rname));
 
             scopeValues.add(sv);
@@ -2844,16 +2852,16 @@ public class LinearScan extends RegisterAllocator {
             } else if (opr.isDoubleCpu()) {
 
                 if (compilation.target.arch.is64bit()) {
-                    VMReg rnameFirst = opr.asRegisterLo().asVMReg();
+                    CiLocation rnameFirst = opr.asRegisterLo().asVMReg();
                     first = new LocationValue(Location.newRegLoc(Location.LocationType.Long, rnameFirst));
                     second = int0ScopeValue;
                 } else {
-                    VMReg rnameFirst = opr.asRegisterLo().asVMReg();
-                    VMReg rnameSecond = opr.asRegisterHi().asVMReg();
+                    CiLocation rnameFirst = opr.asRegisterLo().asVMReg();
+                    CiLocation rnameSecond = opr.asRegisterHi().asVMReg();
 
                     if (compilation.target.arch.hiWordOffsetInBytes < compilation.target.arch.loWordOffsetInBytes) {
                         // lo/hi and swapped relative to first and second, so swap them
-                        VMReg tmp = rnameFirst;
+                        CiLocation tmp = rnameFirst;
                         rnameFirst = rnameSecond;
                         rnameSecond = tmp;
                     }
@@ -2864,18 +2872,18 @@ public class LinearScan extends RegisterAllocator {
 
             } else if (opr.isDoubleXmm() && compilation.target.arch.isX86()) {
                 assert opr.fpuRegnrLo() == opr.fpuRegnrHi() : "assumed in calculation";
-                VMReg rnameFirst = opr.asRegister().asVMReg();
+                CiLocation rnameFirst = opr.asRegister().asVMReg();
                 first = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rnameFirst));
                 // %%% This is probably a waste but we'll keep things as they were for now
                 if (true) {
-                    VMReg rnameSecond = rnameFirst.next();
+                    CiLocation rnameSecond = nextLocation(rnameFirst);
                     second = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rnameSecond));
                 }
 
             } else if (opr.isDoubleFpu()) {
                 // On SPARC, fpuRegnrLo/fpuRegnrHi represents the two halves of
                 // the double as float registers in the native ordering. On X86,
-                // fpuRegnrLo is a FPU stack slot whose VMReg represents
+                // fpuRegnrLo is a FPU stack slot whose VMRegImpl represents
                 // the low-order word of the double and fpuRegnrLo + 1 is the
                 // name for the other half. *first and *second must represent the
                 // least and most significant words, respectively.
@@ -2893,12 +2901,12 @@ public class LinearScan extends RegisterAllocator {
                     assert opr.fpuRegnrLo() == opr.fpuRegnrHi() + 1 : "assumed in calculation (only fpuRegnrHi is used)";
                 }
 
-                VMReg rnameFirst = frameMap().fpuRegname(opr.fpuRegnrHi());
+                CiLocation rnameFirst = frameMap().fpuRegname(opr.fpuRegnrHi());
 
                 first = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rnameFirst));
                 // %%% This is probably a waste but we'll keep things as they were for now
                 if (true) {
-                    VMReg rnameSecond = rnameFirst.next();
+                    CiLocation rnameSecond = nextLocation(rnameFirst);
                     second = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rnameSecond));
                 }
 
@@ -2919,6 +2927,11 @@ public class LinearScan extends RegisterAllocator {
             scopeValues.add(first);
             return 2;
         }
+    }
+
+    private CiLocation nextLocation(CiLocation rnameFirst) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     private boolean floatSavedAsDouble() {
@@ -3105,8 +3118,8 @@ public class LinearScan extends RegisterAllocator {
                 int n = visitor.oprCount(mode);
                 for (int k = 0; k < n; k++) {
                     LIROperand opr = visitor.oprAt(mode, k);
-                    if (opr.isVirtualRegister()) {
-                        opr.assignPhysicalRegister(colorLirOpr(opr, opId, mode));
+                    if (opr instanceof LIRLocation && opr.isVirtualRegister()) {
+                        ((LIRLocation) opr).changeTo(colorLirOpr(opr, opId, mode));
                     }
                 }
             }
@@ -3151,7 +3164,7 @@ public class LinearScan extends RegisterAllocator {
                 LIROp1 move = (LIROp1) op;
                 LIROperand src = move.inOpr();
                 LIROperand dst = move.resultOpr();
-                if (dst == src || !dst.isPointer() && !src.isPointer() && src.isSameRegister(dst)) {
+                if (dst == src || !dst.isPointer() && !src.isPointer() && src.equals(dst)) {
                     instructions.set(j, null);
                     hasDead = true;
                 }
@@ -3371,7 +3384,7 @@ public class LinearScan extends RegisterAllocator {
             }
 
             if (!isProcessedRegNum(i1.assignedReg())) {
-                TTY.println("Can not have an Interval for an ignored register");
+                TTY.println("Can not have an Interval for an ignored register " + i1.assignedReg);
                 i1.print(TTY.out, this);
                 TTY.cr();
                 hasError = true;
@@ -3497,35 +3510,37 @@ public class LinearScan extends RegisterAllocator {
                             }
                         }
                     }
-                }
 
-                // oop-maps at calls do not contain registers, so check is not needed
-                if (!visitor.hasCall()) {
+                    // TODO: (tw) Check whether this should also be asserted when visitor.infoCount() == 0 (to me this seems wrong in C1)
 
-                    for (LIRVisitState.OperandMode mode : LIRVisitState.OperandMode.values()) {
-                        int n = visitor.oprCount(mode);
-                        for (int k = 0; k < n; k++) {
-                            LIROperand opr = visitor.oprAt(mode, k);
+                    // oop-maps at calls do not contain registers, so check is not needed
+                    if (!visitor.hasCall()) {
 
-                            if (opr.isFixedCpu() && opr.isOop()) {
-                                // operand is a non-virtual cpu register and contains an oop
-                                if (C1XOptions.TraceLinearScanLevel >= 4) {
-                                    op.printOn(TTY.out);
-                                    TTY.print("checking operand ");
-                                    opr.print(TTY.out);
-                                    TTY.println();
-                                }
+                        for (LIRVisitState.OperandMode mode : LIRVisitState.OperandMode.values()) {
+                            int n = visitor.oprCount(mode);
+                            for (int k = 0; k < n; k++) {
+                                LIROperand opr = visitor.oprAt(mode, k);
 
-                                Interval interval = intervalAt(regNum(opr));
-                                assert interval != null : "no interval";
-
-                                if (mode == LIRVisitState.OperandMode.InputMode) {
-                                    if (interval.to() >= opId + 1) {
-                                        assert interval.to() < opId + 2 || interval.hasHoleBetween(opId, opId + 2) : "oop input operand live after instruction";
+                                if (opr.isFixedCpu() && opr.isOop()) {
+                                    // operand is a non-virtual cpu register and contains an oop
+                                    if (C1XOptions.TraceLinearScanLevel >= 4) {
+                                        op.printOn(TTY.out);
+                                        TTY.print("checking operand ");
+                                        opr.print(TTY.out);
+                                        TTY.println();
                                     }
-                                } else if (mode == LIRVisitState.OperandMode.OutputMode) {
-                                    if (interval.from() <= opId - 1) {
-                                        assert interval.hasHoleBetween(opId - 1, opId) : "oop input operand live after instruction";
+
+                                    Interval interval = intervalAt(regNum(opr));
+                                    assert interval != null : "no interval";
+
+                                    if (mode == LIRVisitState.OperandMode.InputMode) {
+                                        if (interval.to() >= opId + 1) {
+                                            assert interval.to() < opId + 2 || interval.hasHoleBetween(opId, opId + 2) : "oop input operand live after instruction";
+                                        }
+                                    } else if (mode == LIRVisitState.OperandMode.OutputMode) {
+                                        if (interval.from() <= opId - 1) {
+                                            assert interval.hasHoleBetween(opId - 1, opId) : "oop input operand live after instruction";
+                                        }
                                     }
                                 }
                             }
@@ -3601,6 +3616,14 @@ public class LinearScan extends RegisterAllocator {
     }
 
     static int getAnyreg() {
-        return Register.anyReg.number;
+        return Register.noreg.number;
+    }
+
+    boolean isLastUse(LIROperand operand) {
+        return isLastUse.contains(operand);
+    }
+
+    void makeLastUse(LIROperand operand) {
+        isLastUse.add(operand);
     }
 }

@@ -48,7 +48,7 @@ public class LIRBranch extends LIRInstruction {
      *
      */
     public LIRBranch(LIRCondition cond, Label label) {
-        super(LIROpcode.Branch, LIROperandFactory.illegalOperand, null);
+        super(LIROpcode.Branch, LIROperandFactory.IllegalOperand, null);
         this.cond = cond;
         this.label = label;
     }
@@ -80,7 +80,7 @@ public class LIRBranch extends LIRInstruction {
     }
 
     public LIRBranch(LIRCondition cond, BasicType type, BlockBegin block, BlockBegin ublock) {
-        super(LIROpcode.Branch, LIROperandFactory.illegalOperand, null);
+        super(LIROpcode.Branch, LIROperandFactory.IllegalOperand, null);
         this.cond = cond;
         this.type = type;
         this.label = block.label();
@@ -173,7 +173,7 @@ public class LIRBranch extends LIRInstruction {
         } else if (stub() != null) {
             out.print("[");
             stub().printName(out);
-            out.printf(": 0x%x]", stub());
+            out.printf(": %s]", stub().toString());
             if (stub().info() != null) {
                 out.printf(" [bci:%d]", stub().info().bci());
             }
