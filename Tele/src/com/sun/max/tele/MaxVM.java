@@ -187,8 +187,9 @@ public interface MaxVM {
      *   <li>{@link #contains(Address)}</li>
      *   </ol>
      *   <p>
-     * The Maxine VM allocates memory regions for three purposes: <i>heap</i> (boot and dynamic regions),
-     * <i>code</i> (boot and dynamic regions), and <i>threads</i> (stack and thread locals)
+     * The Maxine VM allocates memory regions for three main purposes: <i>heap</i> (boot and dynamic regions),
+     * <i>code</i> (boot and dynamic regions), and <i>threads</i> (stack and thread locals).  There may also
+     * be occasional small regions allocated for special purposes.
      *
      * <p><b>Heap</b><br>
      * Heap memory regions are allocated by the instance of {@link HeapScheme} built into the VM.
@@ -270,6 +271,12 @@ public interface MaxVM {
      * @see #memoryRegions()
      */
     IndexedSequence<TeleRuntimeMemoryRegion> teleHeapRegions();
+
+    /**
+     * @return surrogate for the special memory region allocated for holding
+     * remote copies of addresses being held in {@linkplain Reference references}.
+     */
+    TeleRuntimeMemoryRegion teleRootsRegion();
 
     /**
      * @param address a memory address in the VM.

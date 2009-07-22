@@ -28,9 +28,20 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.tele.*;
 
 /**
- * Manage the remote root table where roots can be added for remotely held references.
+ * Access to and management of a special array in the VM
+ * that holds GC roots on behalf of References held in the Inspector.
+ * <br>
+ * Remote references held by the inspector are implemented as a
+ * handle that identifies an entry in this table, which contains actual
+ * memory addresses in the VM.  In order to track object movement
+ * across GC invocations, a mirror of this table is maintained in the
+ * VM, where it can be updated by the GC.
  *
  * @author Bernd Mathiske
+ * @author Michael Van De Vanter
+ *
+ * @see InspectableHeapInfo
+ * @see TeleHeapManager
  */
 public final class TeleRoots extends AbstractTeleVMHolder{
 
@@ -50,12 +61,8 @@ public final class TeleRoots extends AbstractTeleVMHolder{
     private final Address[] cachedRoots = new Address[InspectableHeapInfo.MAX_NUMBER_OF_ROOTS];
     private final BitSet usedIndices = new BitSet();
 
-    private RemoteTeleGrip teleRoots() {
-        if (teleRootsPointer.isZero()) {
-            final int offset = teleVM().fields().InspectableHeapInfo_roots.fieldActor().offset();
-            teleRootsPointer = teleVM().fields().InspectableHeapInfo_roots.staticTupleReference(teleVM()).toOrigin().plus(offset);
-        }
-        return teleGripScheme.createTemporaryRemoteTeleGrip(teleVM().dataAccess().readWord(teleRootsPointer).asAddress());
+    private RemoteTeleGrip teleRootsGrip() {
+        return teleGripScheme.createTemporaryRemoteTeleGrip(teleVM().dataAccess().readWord(teleVM().teleRootsPointer()).asAddress());
     }
 
 
@@ -69,7 +76,7 @@ public final class TeleRoots extends AbstractTeleVMHolder{
         WordArray.set(cachedRoots, index, rawGrip);
         // Remote root table
         //wordArrayLayout.setWord(teleRoots(), index, rawGrip);
-        teleRoots().setWord(0, index, rawGrip);
+        teleRootsGrip().setWord(0, index, rawGrip);
         return index;
     }
 
@@ -80,7 +87,7 @@ public final class TeleRoots extends AbstractTeleVMHolder{
         WordArray.set(cachedRoots, index, Address.zero());
         usedIndices.clear(index);
         //wordArrayLayout.setWord(teleRoots(), index, Word.zero());
-        teleRoots().setWord(0, index, Word.zero());
+        teleRootsGrip().setWord(0, index, Word.zero());
     }
 
     /**
@@ -101,7 +108,7 @@ public final class TeleRoots extends AbstractTeleVMHolder{
         final int numberOfIndices = usedIndices.length();
         for (int i = 0; i < numberOfIndices; i++) {
             //WordArray.set(cachedRoots, i, wordArrayLayout.getWord(teleRoots(), i).asAddress());
-            WordArray.set(cachedRoots, i, teleRoots().getWord(0, i).asAddress());
+            WordArray.set(cachedRoots, i, teleRootsGrip().getWord(0, i).asAddress());
         }
     }
 
