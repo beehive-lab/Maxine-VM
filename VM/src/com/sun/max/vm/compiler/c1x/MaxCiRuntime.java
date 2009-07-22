@@ -531,25 +531,21 @@ public class MaxCiRuntime implements CiRuntime {
         return 0;
     }
 
-    @Override
     public CiLocation receiverLocation() {
         return new CiLocation(generalParameterRegisters[0]);
     }
 
-    @Override
     public int sizeofBasicObjectLock() {
         // TODO Auto-generated method stub
         return 0;
     }
 
-    @Override
     public int codeOffset() {
         // TODO: get rid of this!
         // Offset because this is optimized code:
         return 8;
     }
 
-    @Override
     public String disassemble(byte[] code) {
         /*final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));

@@ -23,6 +23,7 @@ package com.sun.c1x.graph;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.opt.GlobalValueNumbering;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
@@ -36,76 +37,96 @@ import com.sun.c1x.util.*;
  */
 public class IR {
 
+    /**
+     * The compilation associated with this IR.
+     */
     public final C1XCompilation compilation;
+
+    /**
+     * The start block of this IR.
+     */
     public BlockBegin startBlock;
+
+    /**
+     * The entry block for an OSR compile.
+     */
     public BlockBegin osrEntryBlock;
+
+    /**
+     * The top IRScope.
+     */
     public IRScope topScope;
+
+    /**
+     * The linear-scan ordered list of blocks.
+     */
     private List<BlockBegin> orderedBlocks;
 
+    int totalBlocks = 1;
+
+    /**
+     * Creates a new IR instance for the specified compilation.
+     * @param compilation the compilation
+     */
     public IR(C1XCompilation compilation) {
         this.compilation = compilation;
     }
 
     /**
-     * Builds the graph and optimizes it.
+     * Builds the graph, optimizes it, and computes the linear scan block order.
      */
     public void build() {
+        buildGraph();
+        verifyAndPrint("After graph building");
+        optimize();
+        verifyAndPrint("After optimizations");
+        computeLinearScanOrder();
+        verifyAndPrint("Before code generation");
+    }
+
+    private void buildGraph() {
         topScope = new IRScope(compilation, null, -1, compilation.method, compilation.osrBCI());
 
         // Graph builder must set the startBlock and the osrEntryBlock
         new GraphBuilder(compilation, topScope, this);
         assert startBlock != null;
-
-        print("After graph building");
-
-        assert verify();
-
-        optimize();
-
-        assert verify();
-
-        splitCriticalEdges();
-
-        print("After optimizations");
-
-        assert verify();
-
-        // compute block ordering for code generation
-        // the control flow must not be changed from here on
-        computeLinearScanOrder();
-
-        print("Before code generation");
-
-        assert verify();
     }
 
-    void optimize() {
-
+    private void optimize() {
+        // do basic optimizations
     }
 
-    void splitCriticalEdges() {
-        // TODO: split critical edges
-    }
-
-    void computeLinearScanOrder() {
-        ComputeLinearScanOrder computeLinearScanOrder = new ComputeLinearScanOrder(compilation.numberOfBlocks(), startBlock);
+    private void computeLinearScanOrder() {
+        ComputeLinearScanOrder computeLinearScanOrder = new ComputeLinearScanOrder(totalBlocks, startBlock);
         orderedBlocks = computeLinearScanOrder.linearScanOrder();
         computeLinearScanOrder.printBlocks();
 
+        // do more advanced, dominator-based optimizations
         if (C1XOptions.DoGlobalValueNumbering) {
             new GlobalValueNumbering(this);
         }
     }
 
     /**
-     * Gets the linear scan ordering of blocks.
+     * Gets the linear scan ordering of blocks as a list.
      * @return the blocks in linear scan order
      */
     public List<BlockBegin> linearScanOrder() {
         return orderedBlocks;
     }
 
-    private void print(String phase) {
+    private void print(boolean cfgOnly) {
+        TTY.println("IR for " + compilation.method);
+        final InstructionPrinter ip = new InstructionPrinter(TTY.out, true);
+        final BlockPrinter bp = new BlockPrinter(this, ip, cfgOnly, false);
+        startBlock.iteratePreOrder(bp);
+    }
+
+    /**
+     * Verifies the IR and prints it out if the relevant options are set.
+     * @param phase the name of the phase for printing
+     */
+    public void verifyAndPrint(String phase) {
         CFGPrinter cfgPrinter = compilation.cfgPrinter();
         if (C1XOptions.PrintCFGToFile && cfgPrinter != null) {
             cfgPrinter.printCFG(startBlock, phase, true, false);
@@ -120,25 +141,94 @@ public class IR {
             TTY.println(phase);
             print(false);
         }
-    }
-
-    private void print(boolean cfgOnly) {
-        TTY.println("IR for " + compilation.method);
-        final InstructionPrinter ip = new InstructionPrinter(TTY.out, true);
-        final BlockPrinter bp = new BlockPrinter(this, ip, cfgOnly, false);
-        startBlock.iteratePreOrder(bp);
-    }
-
-    public boolean verify() {
-        return true;
+        // TODO: run verification
     }
 
     public int numLoops() {
-        // TODO Auto-generated method stub
+        // TODO record the number of loops found in compute linear scan order
         return 0;
     }
 
-    public BlockBegin start() {
-        return startBlock;
+    /**
+     * Creates and inserts a new block between this block and the specified successor,
+     * altering the successor and predecessor lists of involved blocks appropriately.
+     * Note that this method only splits the first occurrence of any edges between
+     * these two blocks (a block that ends in a switch may have multiple edges between
+     * the source and target).
+     * @param source the source of the edge
+     * @param target the successor before which to insert a block
+     * @return the new block inserted
+     */
+    public BlockBegin splitFirstEdge(BlockBegin source, BlockBegin target) {
+        int bci;
+        if (target.predecessors().size() == 1) {
+            bci = target.bci();
+        } else {
+            bci = source.end().bci();
+        }
+
+        // create new successor and mark it for special block order treatment
+        BlockBegin newSucc = new BlockBegin(bci, nextBlockNumber());
+        newSucc.setBlockFlag(BlockBegin.BlockFlag.CriticalEdgeSplit);
+
+        // This goto is not a safepoint.
+        Goto e = new Goto(target, null, false);
+        newSucc.setNext(e, bci);
+        newSucc.setEnd(e);
+        // setup states
+        ValueStack s = source.end().state();
+        newSucc.setState(s.copy());
+        e.setState(s.copy());
+        assert newSucc.state().localsSize() == s.localsSize();
+        assert newSucc.state().stackSize() == s.stackSize();
+        assert newSucc.state().locksSize() == s.locksSize();
+        // link predecessor to new block
+        source.end().substituteSuccessor(target, newSucc);
+
+        // The ordering needs to be the same, so remove the link that the
+        // set_end call above added and substitute the new_sux for this
+        // block.
+        target.removePredecessor(newSucc);
+
+        // the successor could be the target of a switch so it might have
+        // multiple copies of this predecessor, so substitute the new_sux
+        // for the first and delete the rest.
+        // XXX: wtf? why delete other occurrences?
+        List<BlockBegin> list = target.predecessors();
+        int x = list.indexOf(source);
+        assert x >= 0;
+        list.set(x, newSucc);
+        Iterator<BlockBegin> iterator = list.iterator();
+        while (iterator.hasNext()) {
+            if (iterator.next() == source) {
+                iterator.remove();
+            }
+        }
+        return newSucc;
+    }
+
+    /**
+     * Disconnects the specified block from all other blocks.
+     * @param block the block to remove from the graph
+     */
+    public void disconnectFromGraph(BlockBegin block) {
+        for (BlockBegin p : block.predecessors()) {
+            p.end().successors().remove(block);
+        }
+        for (BlockBegin s : block.end().successors()) {
+            s.predecessors().remove(block);
+        }
+    }
+
+    public int nextBlockNumber() {
+        return totalBlocks++;
+    }
+
+    public int numberOfBlocks() {
+        return totalBlocks;
+    }
+
+    public void incrementNumberOfBlocks(int i) {
+        totalBlocks += i;
     }
 }
