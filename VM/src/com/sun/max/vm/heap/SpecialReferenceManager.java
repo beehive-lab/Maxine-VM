@@ -152,13 +152,13 @@ public class SpecialReferenceManager {
 
     private static void processInspectableWeakReferencesMemory(GripForwarder gripForwarder) {
         for (int i = 0; i < InspectableHeapInfo.MAX_NUMBER_OF_ROOTS; i++) {
-            final Pointer rootPointer = InspectableHeapInfo.roots.getWord(i).asPointer();
+            final Pointer rootPointer = InspectableHeapInfo.rootsPointer().getWord(i).asPointer();
             if (!rootPointer.isZero()) {
                 final Grip referent = Grip.fromOrigin(rootPointer);
                 if (gripForwarder.isReachable(referent)) {
-                    InspectableHeapInfo.roots.setWord(i, gripForwarder.getForwardGrip(referent).toOrigin());
+                    InspectableHeapInfo.rootsPointer().setWord(i, gripForwarder.getForwardGrip(referent).toOrigin());
                 } else {
-                    InspectableHeapInfo.roots.setWord(i, Pointer.zero());
+                    InspectableHeapInfo.rootsPointer().setWord(i, Pointer.zero());
                 }
             }
         }

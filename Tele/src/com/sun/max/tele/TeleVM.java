@@ -626,9 +626,13 @@ public abstract class TeleVM implements MaxVM {
         final IterableWithLength<TeleNativeThread> threads = teleProcess.threads();
         final VariableSequence<MemoryRegion> regions = new ArrayListSequence<MemoryRegion>(teleHeapRegions.length() + teleCodeRegions.length() + threads.length() + 2);
         regions.append(teleBootHeapRegion());
+        if (teleRootsRegion() != null) {
+            regions.append(teleRootsRegion());
+        }
         for (MemoryRegion region : teleHeapRegions) {
             regions.append(region);
         }
+        regions.append(teleRootsRegion());
         regions.append(teleCodeManager().teleBootCodeRegion());
         for (MemoryRegion region : teleCodeRegions) {
             regions.append(region);
@@ -674,6 +678,14 @@ public abstract class TeleVM implements MaxVM {
 
     public final IndexedSequence<TeleRuntimeMemoryRegion> teleHeapRegions() {
         return teleHeapManager.teleHeapRegions();
+    }
+
+    public final TeleRuntimeMemoryRegion teleRootsRegion() {
+        return teleHeapManager.teleRootsRegion();
+    }
+
+    public final Pointer teleRootsPointer() {
+        return teleHeapManager.teleRootsPointer();
     }
 
     /**
@@ -1310,7 +1322,7 @@ public abstract class TeleVM implements MaxVM {
         teleObjectFactory.refresh(processEpoch);
         if (!isInGC()) {
             // Only attempt to update state when not in a GC.
-            teleHeapManager.refreshMemoryRegions(processEpoch);
+            teleHeapManager.refresh(processEpoch);
             teleClassRegistry.refresh(processEpoch);
         }
         Trace.end(TRACE_VALUE, refreshTracer, startTimeMillis);

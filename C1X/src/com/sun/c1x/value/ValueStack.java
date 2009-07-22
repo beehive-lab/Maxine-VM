@@ -603,11 +603,16 @@ public class ValueStack {
     public void valuesDo(InstructionClosure closure) {
         final int max = valuesSize();
         for (int i = 0; i < max; i++) {
-            values[i] = closure.apply(values[i]);
+            if (values[i] != null) {
+                values[i] = closure.apply(values[i]);
+            }
         }
         if (locks != null) {
             for (int i = 0; i < locks.size(); i++) {
-                locks.set(i, closure.apply(locks.get(i)));
+                Instruction instr = locks.get(i);
+                if (instr != null) {
+                    locks.set(i, closure.apply(instr));
+                }
             }
         }
         ValueStack state = this.scope().callerState();
