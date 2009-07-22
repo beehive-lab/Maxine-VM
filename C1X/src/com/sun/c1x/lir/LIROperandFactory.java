@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.target.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
@@ -126,14 +125,6 @@ public class LIROperandFactory {
         } else {
             Util.shouldNotReachHere();
             return intConst(-1);
-        }
-    }
-
-    public static LIROperand registerPairToOperand(BasicType t, CiLocation pair) {
-        if (pair.second == null) {
-            return new LIRLocation(t, pair.first);
-        } else {
-            return new LIRLocation(t, pair.first, pair.second);
         }
     }
 }
