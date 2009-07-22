@@ -30,6 +30,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
+import com.sun.c1x.lir.LIRList;
 
 /**
  * Utility for printing the control flow graph of a method being compiled by C1X at various compilation phases.
@@ -273,23 +274,24 @@ public class CFGPrinter {
     /**
      * Prints the LIR for each instruction in a given block.
      *
-     * @param block
+     * @param block the block to print
      */
     private void printLIR(BlockBegin block) {
-        begin("LIR");
-        for (int i = 0; i < block.lir().length(); i++) {
-            block.lir().at(i).printOn(out);
-            out.println(" <|@ ");
+        LIRList lir = block.lir();
+        if (lir != null) {
+            begin("LIR");
+            for (int i = 0; i < lir.length(); i++) {
+                lir.at(i).printOn(out);
+                out.println(" <|@ ");
+            }
+            end("LIR");
         }
-        end("LIR");
     }
 
     private void printLirOperand(Instruction i) {
-        /* TODO: Uncomment (and fix) once LIR is implemented
         if (i.operand().isVirtual()) {
-            _out.print(" \"").print(i.lirOperand()).print("\" ");
+            out.print(" \"").print(i.operand().toString()).print("\" ");
         }
-        */
     }
 
     /**

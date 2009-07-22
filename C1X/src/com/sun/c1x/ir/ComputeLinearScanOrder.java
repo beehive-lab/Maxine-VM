@@ -145,7 +145,7 @@ public class ComputeLinearScanOrder {
 
         if (isActive(cur)) {
             Util.traceLinearScan(3, "backward branch");
-            assert isVisited(cur) : "block must be visisted when block is active";
+            assert isVisited(cur) : "block must be visited when block is active";
             assert parent != null : "must have parent";
 
             cur.setBlockFlag(BlockBegin.BlockFlag.LinearScanLoopHeader);
@@ -161,7 +161,7 @@ public class ComputeLinearScanOrder {
                 iterativeDominators = true;
                 return;
             }
-            assert parent.numberOfSux() == 1 && parent.suxAt(0) == cur : "loop end blocks must have one successor (critical edges are split)";
+//            assert parent.numberOfSux() == 1 && parent.suxAt(0) == cur : "loop end blocks must have one successor (critical edges are split)";
 
             loopEndBlocks.add(parent);
             return;
@@ -219,7 +219,7 @@ public class ComputeLinearScanOrder {
 
             Util.traceLinearScan(3, "Processing loop from B%d to B%d (loop %d):", loopStart.blockID(), loopEnd.blockID(), loopIdx);
             assert loopEnd.checkBlockFlag(BlockBegin.BlockFlag.LinearScanLoopEnd) : "loop end flag must be set";
-            assert loopEnd.numberOfSux() == 1 : "incorrect number of successors";
+//            assert loopEnd.numberOfSux() == 1 : "incorrect number of successors";
             assert loopStart.checkBlockFlag(BlockBegin.BlockFlag.LinearScanLoopHeader) : "loop header flag must be set";
             assert loopIdx >= 0 && loopIdx < numLoops : "loop index not set";
             assert workList.isEmpty() : "work list must be empty before processing";
@@ -251,13 +251,13 @@ public class ComputeLinearScanOrder {
     }
 
     // check for non-natural loops (loops where the loop header does not dominate
-    // all other loop blocks = loops with mulitple entries).
+    // all other loop blocks = loops with multiple entries).
     // such loops are ignored
     void clearNonNaturalLoops(BlockBegin startBlock) {
         for (int i = numLoops - 1; i >= 0; i--) {
             if (isBlockInLoop(i, startBlock)) {
-                // loop i contains the entry block of the method
-                // . this is not a natural loop, so ignore it
+                // loop i contains the entry block of the method.
+                // this is not a natural loop, so ignore it
                 Util.traceLinearScan(2, "Loop %d is non-natural, so it is ignored", i);
 
                 for (int blockId = maxBlockId - 1; blockId >= 0; blockId--) {

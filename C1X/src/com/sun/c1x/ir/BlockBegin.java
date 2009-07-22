@@ -653,14 +653,6 @@ public class BlockBegin extends StateSplit {
 
     }
 
-    /**
-     * @param exceptionentry
-     * @return
-     */
-    public boolean isSet(BlockFlag flag) {
-        return (blockFlags & flag.mask()) != 0;
-    }
-
     public int numberOfExceptionHandlers() {
         return exceptionHandlerBlocks.size();
     }
@@ -677,25 +669,20 @@ public class BlockBegin extends StateSplit {
         return lirBlock.firstLirInstructionID;
     }
 
-
     public void setFirstLirInstructionId(int firstLirInstructionId) {
         lirBlock.firstLirInstructionID = firstLirInstructionId;
     }
 
-
-
     public int lastLirInstructionId() {
         return lirBlock.lastLirInstructionID;
     }
-
 
     public void setLastLirInstructionId(int lastLirInstructionId) {
         lirBlock.lastLirInstructionID = lastLirInstructionId;
     }
 
     public Iterable<Phi> phis() {
-        // TODO Auto-generated method stub
-        return null;
+        throw Util.unimplemented();
     }
 
     public void setLiveGen(BitMap liveGen) {
