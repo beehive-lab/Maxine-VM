@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
 
 
@@ -108,8 +109,8 @@ public class Location {
     }
 
     // Register location Factory
-    public static Location newRegLoc(LocationType t, VMReg reg) {
-        return new Location(Where.InRegister, t, reg.value());
+    public static Location newRegLoc(LocationType t, CiLocation reg) {
+        return new Location(Where.InRegister, t, reg.first.number);
     }
 
     // Default constructor
@@ -202,9 +203,9 @@ public class Location {
         return offset;
     }
 
-    public VMReg reg() {
+    public CiLocation reg() {
         assert where() == Where.InRegister : "wrong Where";
-        return VMRegImplementation.asVMReg(offset);
+        return Location.asVMReg(offset);
     }
 
     public void printOn(LogStream out, int logBytesPerInt) {
@@ -225,7 +226,7 @@ public class Location {
                 out.printf("stack[%d]", stackOffset(logBytesPerInt));
                 break;
             case InRegister:
-                out.printf("reg %s [%d]", reg().name(), registerNumber());
+                out.printf("reg %s [%d]", reg().toString(), registerNumber());
                 break;
             default:
                 out.printf("Wrong location where %d", where);
@@ -274,5 +275,14 @@ public class Location {
             return false;
         }
         return true;
+    }
+
+    /**
+     * @param i
+     * @return
+     */
+        // TODO Auto-generated method stub
+    public static CiLocation asVMReg(int i) {
+        return null;
     }
 }

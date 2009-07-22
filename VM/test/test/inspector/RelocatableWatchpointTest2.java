@@ -25,7 +25,7 @@ package test.inspector;
  *
  * @author Hannes Payer
  */
-public class RelocatableWatchpointTest1 {
+public class RelocatableWatchpointTest2 {
 
     /**
      * @param args
@@ -34,22 +34,22 @@ public class RelocatableWatchpointTest1 {
     private static final int allocations = 10000000;
     private static final int allocationSize = 20;
 
-    public static String getMessage() {
-        return new String("allocationTest");
+    public static SimpleObject getSimpleObject() {
+        return new SimpleObject(100, 200);
     }
 
-    public static String getGarbageMessage() {
-        return new String("allocationTestGarbage");
+    public static SimpleObject getGarbageSimpleObject() {
+        return new SimpleObject(10, 20);
     }
 
-    public static void printMessage(String message) {
-        System.out.println(message);
+    public static void printMessage(SimpleObject simpleObject) {
+        System.out.println(simpleObject.value1 + " " + simpleObject.value2);
     }
 
     public static void relocationTest() {
-        String test = getGarbageMessage();
+        SimpleObject test = getGarbageSimpleObject();
         printMessage(test);
-        test = getMessage();
+        test = getSimpleObject();
         printMessage(test);
         for (int i = 0; i < allocations; i++) {
             final byte[] tmp = new byte[allocationSize];
@@ -65,5 +65,16 @@ public class RelocatableWatchpointTest1 {
 
     public static void main(String[] args) {
         relocationTest();
+    }
+
+    private static class SimpleObject {
+
+        public SimpleObject(int value1, int value2) {
+            this.value1 = value1;
+            this.value2 = value2;
+        }
+
+        public int value1;
+        public int value2;
     }
 }

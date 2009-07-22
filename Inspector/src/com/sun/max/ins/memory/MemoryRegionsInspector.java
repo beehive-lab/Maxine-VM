@@ -109,9 +109,10 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected boolean refreshView(boolean force) {
         table.refresh(force);
         super.refreshView(force);
+        return true;
     }
 
     @Override

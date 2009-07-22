@@ -22,6 +22,7 @@ package com.sun.c1x.lir;
 
 import java.util.*;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
 
 /**
@@ -42,7 +43,7 @@ public class LIRRTCall extends LIRCall {
      * @param result
      * @param arguments
      */
-    public LIRRTCall(long entry, LIROperand tmp, LIROperand result, List <LIROperand> arguments) {
+    public LIRRTCall(CiRuntimeCall entry, LIROperand tmp, LIROperand result, List <LIROperand> arguments) {
         this(entry, tmp, result, arguments, null);
     }
 
@@ -55,7 +56,7 @@ public class LIRRTCall extends LIRCall {
      * @param arguments
      * @param info
      */
-    public LIRRTCall(long entry, LIROperand tmp, LIROperand result, List <LIROperand> arguments, CodeEmitInfo info) {
+    public LIRRTCall(CiRuntimeCall entry, LIROperand tmp, LIROperand result, List <LIROperand> arguments, CodeEmitInfo info) {
         super(LIROpcode.RtCall, entry, result, arguments, info);
         this.tmp = tmp;
     }

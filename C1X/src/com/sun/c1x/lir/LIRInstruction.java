@@ -48,7 +48,7 @@ public abstract class LIRInstruction {
      *
      */
     public LIRInstruction() {
-        this(LIROpcode.None, LIROperandFactory.illegalOperand, null);
+        this(LIROpcode.None, LIROperandFactory.IllegalOperand, null);
     }
 
     /**

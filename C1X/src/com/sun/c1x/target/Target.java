@@ -41,6 +41,7 @@ public class Target {
     public int heapAlignment;
     public final Register[] allocatableRegisters;
     public final Register[] callerSavedRegisters;
+    public int firstAvailableSpInFrame;
 
     public Target(Architecture arch, Register[] allocatableRegisters, Register[] callerSavedRegisters) {
         this.arch = arch;

@@ -57,6 +57,11 @@ public class PrototypeArrayHeaderLayout extends PrototypeGeneralLayout implement
         return HostObjectAccess.readHub(accessor).classActor.componentClassActor().kind;
     }
 
+    @Override
+    public int arrayLengthOffset() {
+        throw ProgramError.unexpected("cannot get array length offset in prototype layout");
+    }
+
     public int readLength(Accessor accessor) {
         final Reference reference = (Reference) accessor;
         return HostObjectAccess.getArrayLength(reference.toJava());

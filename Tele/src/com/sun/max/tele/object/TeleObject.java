@@ -85,6 +85,9 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     private final long oid;
     private TeleHub teleHub = null;
 
+    private boolean live;
+    private Pointer lastValidPointer;
+
     /**
      * The factory method {@link TeleObjectFactory#make(Reference)} ensures synchronized TeleObjects creation.
      */
@@ -93,9 +96,26 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
         this.reference = (TeleReference) reference;
         this.layoutScheme = teleVM.vmConfiguration().layoutScheme();
         oid = this.reference.makeOID();
+        live = true;
+        lastValidPointer = Pointer.zero();
+    }
+
+    public boolean isLive() {
+        return live;
+    }
+
+    public Pointer getLastValidPointer() {
+        return lastValidPointer;
     }
 
     protected void refresh(long processEpoch) {
+        /*TeleGrip grip = reference().grip();
+        if (grip instanceof MutableTeleGrip) {
+            MutableTeleGrip mGrip = (MutableTeleGrip) grip;
+            if (mGrip.raw().equals(Word.zero())) {
+                live = false;
+            }
+        }*/
     }
 
     /**
@@ -170,7 +190,13 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      *  in the {@link TeleVM}, subject to relocation by GC
      */
     public Pointer getCurrentOrigin() {
-        return reference.toOrigin();
+        Pointer pointer = reference.toOrigin();
+        if (pointer.equals(Pointer.zero())) {
+            live = false;
+            return lastValidPointer;
+        }
+        lastValidPointer = pointer;
+        return pointer;
     }
 
     /**

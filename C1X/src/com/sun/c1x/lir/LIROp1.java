@@ -126,7 +126,7 @@ public class LIROp1 extends LIRInstruction {
      * @param result the operand that holds the result of this instruction
      */
     public LIROp1(LIROpcode opcode, LIROperand opr) {
-        this(opcode, opr, LIROperandFactory.illegalOperand);
+        this(opcode, opr, LIROperandFactory.IllegalOperand);
     }
 
     /**
@@ -161,7 +161,7 @@ public class LIROp1 extends LIRInstruction {
      * @param kind the kind of move the instruction represents
      */
     public LIROp1(LIROpcode opcode, LIROperand opr, CodeEmitInfo info) {
-        super(opcode, LIROperandFactory.illegalOperand, info);
+        super(opcode, LIROperandFactory.IllegalOperand, info);
         this.opr = opr;
         this.type = BasicType.Illegal;
         this.patch = LIRPatchCode.PatchNone;

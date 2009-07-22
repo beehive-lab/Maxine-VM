@@ -63,7 +63,7 @@ public class X86Backend extends Backend {
         return new X86FrameMap(compilation, method, numberOfLocks, maxStack);
     }
     @Override
-    public AbstractAssembler newAssembler(C1XCompilation compilation, CodeBuffer code) {
-        return new X86MacroAssembler(compilation, code);
+    public AbstractAssembler newAssembler(C1XCompilation compilation) {
+        return new X86MacroAssembler(compilation);
     }
 }

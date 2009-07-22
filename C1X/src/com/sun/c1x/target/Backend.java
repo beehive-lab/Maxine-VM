@@ -41,5 +41,5 @@ public abstract class Backend {
     public abstract FrameMap newFrameMap(C1XCompilation compilation, CiMethod method, int numberOfLocks, int maxStack);
     public abstract LIRGenerator newLIRGenerator(C1XCompilation compilation);
     public abstract LIRAssembler newLIRAssembler(C1XCompilation compilation);
-    public abstract AbstractAssembler newAssembler(C1XCompilation c1xCompilation, CodeBuffer code);
+    public abstract AbstractAssembler newAssembler(C1XCompilation c1xCompilation);
 }

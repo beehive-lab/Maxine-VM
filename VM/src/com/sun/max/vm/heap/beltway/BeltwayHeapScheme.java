@@ -28,7 +28,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.beltway.profile.*;
 import com.sun.max.vm.layout.*;
@@ -202,14 +201,6 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
         return size.roundedUpBy(BeltwayHeapSchemeConfiguration.TLAB_SIZE.toInt()).asSize();
     }
 
-    public void wipeMemory(Belt belt) {
-        Pointer cell = belt.start().asPointer();
-        while (cell.lessThan(belt.end())) {
-            cell.setLong(DebugHeap.UNINITIALIZED);
-            cell = cell.plusWords(1);
-        }
-    }
-
     @INLINE
     protected final void createGCThreads() {
         for (int i = 0; i < BeltwayConfiguration.numberOfGCThreads; i++) {
@@ -241,11 +232,24 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     }
 
     private final BootHeapCellVisitor cellVisitor = new BootHeapCellVisitor();
+
     /**
      * Holds the biased card table address.
      */
-    public static final VmThreadLocal ADJUSTED_CARDTABLE_BASE
-        = new VmThreadLocal("ADJUSTED_CARDTABLE_BASE", Kind.WORD, "Beltway: ->biased card table");
+    public static final VmThreadLocal ADJUSTED_CARDTABLE_BASE = new VmThreadLocal("ADJUSTED_CARDTABLE_BASE", Kind.WORD, "Beltway: ->biased card table") {
+        @Override
+        public void initialize(com.sun.max.vm.MaxineVM.Phase phase) {
+            final Pointer vmThreadLocals = VmThread.currentVmThreadLocals();
+            // enable write barriers by setting the adjusted card table address
+            if (phase.equals(MaxineVM.Phase.RUNNING) || phase.equals(MaxineVM.Phase.STARTING)) {
+                // use the normal card table
+                ADJUSTED_CARDTABLE_BASE.setConstantWord(vmThreadLocals, BeltwayCardRegion.getAdjustedCardTable());
+            } else {
+                // use the primordial card table
+                ADJUSTED_CARDTABLE_BASE.setConstantWord(vmThreadLocals, ADJUSTED_CARDTABLE_BASE.getConstantWord(MaxineVM.primordialVmThreadLocals()));
+            }
+        }
+    };
 
     public void scanBootHeap(RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         cellVisitor.from = from;
@@ -548,21 +552,6 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     @INLINE
     public final Pointer allocate(RuntimeMemoryRegion to, Size size) {
         return null;
-    }
-
-    /**
-     * Perform thread-local initializations specific to the heap scheme when starting a new VM thread. For instance
-     * install card table address.
-     */
-    public void initializeVmThread(Pointer vmThreadLocals) {
-        // enable write barriers by setting the adjusted card table address
-        if (MaxineVM.isRunning() || MaxineVM.isStarting()) {
-            // use the normal card table
-            ADJUSTED_CARDTABLE_BASE.setConstantWord(vmThreadLocals, BeltwayCardRegion.getAdjustedCardTable());
-        } else {
-            // use the primordial card table
-            ADJUSTED_CARDTABLE_BASE.setConstantWord(vmThreadLocals, ADJUSTED_CARDTABLE_BASE.getConstantWord(MaxineVM.primordialVmThreadLocals()));
-        }
     }
 
     /**

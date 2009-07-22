@@ -271,7 +271,7 @@ public final class MaxineVM {
     @UNSAFE
     @FOLD
     public static boolean isDebug() {
-        return VMConfiguration.hostOrTarget().debugging();
+        return target().configuration().debugging();
     }
 
     /**

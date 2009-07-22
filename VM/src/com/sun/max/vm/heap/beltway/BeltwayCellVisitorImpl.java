@@ -43,7 +43,7 @@ public class BeltwayCellVisitorImpl implements BeltWayCellVisitor {
     public static void linearVisitAllCells(BeltWayCellVisitor cellVisitor, Action action, RuntimeMemoryRegion source, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         Pointer cell = source.start().asPointer();
         while (cell.lessThan(source.getAllocationMark())) {
-            cell = DebugHeap.checkDebugCellTag(from, cell);
+            cell = DebugHeap.checkDebugCellTag(from.start(), cell);
             cell = cellVisitor.visitCell(cell, action, from, to);
         }
     }
@@ -52,7 +52,7 @@ public class BeltwayCellVisitorImpl implements BeltWayCellVisitor {
         Pointer cell = tlab.start().asPointer();
         final Pointer initialEnd = tlab.end().asPointer();
         while (cell.lessThan(tlab.getAllocationMark()) && cell.lessThan(initialEnd)) {
-            cell = DebugHeap.checkDebugCellTag(from, cell);
+            cell = DebugHeap.checkDebugCellTag(from.start(), cell);
             cell = cellVisitor.visitCell(cell, action, from, to);
         }
     }
@@ -60,7 +60,7 @@ public class BeltwayCellVisitorImpl implements BeltWayCellVisitor {
     public static void linearVisitAllCellsTLAB(BeltWayCellVisitor cellVisitor, Action action, Pointer tlabStart, Pointer tlabEnd, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         Pointer cell = tlabStart;
         while (cell.lessThan(tlabEnd)) {
-            cell = DebugHeap.checkDebugCellTag(from, cell);
+            cell = DebugHeap.checkDebugCellTag(from.start(), cell);
             cell = cellVisitor.visitCell(cell, action, from, to);
         }
     }
@@ -70,7 +70,7 @@ public class BeltwayCellVisitorImpl implements BeltWayCellVisitor {
         VmThread thread = VmThread.current();
         TLAB currentTLAB = thread.getTLAB();
         while (cell.lessThan(currentTLAB.getAllocationMark())) {
-            cell = DebugHeap.checkDebugCellTag(from, cell);
+            cell = DebugHeap.checkDebugCellTag(from.start(), cell);
             cell = cellVisitor.visitCell(cell, action, from, to);
             thread = VmThread.current();
             currentTLAB = thread.getTLAB();

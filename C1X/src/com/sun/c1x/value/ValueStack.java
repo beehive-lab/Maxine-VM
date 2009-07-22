@@ -747,15 +747,7 @@ public class ValueStack {
 
         final List<Phi> phis = new ArrayList<Phi>();
 
-        for (int i = 0; i < this.stackSize(); i++) {
-            final Instruction instr = this.stackAt(i);
-            if (instr instanceof Phi) {
-                phis.add((Phi) instr);
-            }
-        }
-
-        for (int i = 0; i < this.localsSize(); i++) {
-            final Instruction instr = this.localAt(i);
+        for (Instruction instr : allStateValues()) {
             if (instr instanceof Phi) {
                 phis.add((Phi) instr);
             }
@@ -764,8 +756,27 @@ public class ValueStack {
         return phis;
     }
 
+    /**
+     * This is a helper method for iterating over all stack values and local variables in this value stack.
+     * @return an interator over all state values
+     */
     public Iterable<Instruction> allStateValues() {
-        // TODO Auto-generated method stub
-        return null;
+        final List<Instruction> result = new ArrayList<Instruction>();
+
+        for (int i = 0; i < this.stackSize(); i++) {
+            final Instruction instr = this.stackAt(i);
+            if (instr != null) {
+                result.add(instr);
+            }
+        }
+
+        for (int i = 0; i < this.localsSize(); i++) {
+            final Instruction instr = this.localAt(i);
+            if (instr != null) {
+                result.add(instr);
+            }
+        }
+
+        return result;
     }
 }

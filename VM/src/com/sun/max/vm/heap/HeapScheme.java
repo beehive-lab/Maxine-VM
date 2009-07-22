@@ -71,12 +71,6 @@ public interface HeapScheme extends VMScheme {
     void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace);
 
     /**
-     * Perform thread-local initializations specific to the heap scheme when starting a new VM thread. For instance
-     * install card table address.
-     */
-    void initializeVmThread(Pointer vmThreadLocals);
-
-    /**
      * Allocate a new array object and fill in its header and initial data.
      */
     Object createArray(DynamicHub hub, int length);

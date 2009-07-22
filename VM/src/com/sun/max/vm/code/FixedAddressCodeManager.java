@@ -53,6 +53,7 @@ public class FixedAddressCodeManager extends CodeManager {
     /**
      * Creates a new code region. In this implementation, the next empty memory region is
      * selected and virtual memory space is allocated for it.
+     *
      * @return a reference to the next empty code region
      */
     @Override
@@ -61,12 +62,13 @@ public class FixedAddressCodeManager extends CodeManager {
             final CodeRegion codeRegion = getRuntimeCodeRegion(i);
             if (codeRegion.size().isZero()) {
                 final Address address = start().plus(i * RUNTIME_CODE_REGION_SIZE);
-                if (!VirtualMemory.allocateAtFixedAddress(address, Size.fromInt(RUNTIME_CODE_REGION_SIZE), VirtualMemory.Type.CODE)) {
+                final Size size = Size.fromInt(RUNTIME_CODE_REGION_SIZE);
+                if (!VirtualMemory.allocateAtFixedAddress(address, size, VirtualMemory.Type.CODE)) {
                     ProgramError.unexpected("could not allocate runtime code region");
                 }
                 codeRegion.setStart(address);
                 codeRegion.setMark(address);
-                codeRegion.setSize(Size.fromInt(RUNTIME_CODE_REGION_SIZE));
+                codeRegion.setSize(size);
                 return codeRegion;
             }
         }

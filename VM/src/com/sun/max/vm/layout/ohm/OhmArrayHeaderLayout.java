@@ -81,6 +81,11 @@ public class OhmArrayHeaderLayout extends OhmGeneralLayout implements ArrayHeade
         return super.getOffsetFromOrigin(headerField);
     }
 
+    @Override
+    public int arrayLengthOffset() {
+        return lengthOffset;
+    }
+
     @INLINE
     public final int readLength(Accessor accessor) {
         return accessor.readInt(lengthOffset);

@@ -79,7 +79,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     protected LIROperand getThreadTemp() {
-        return LIROperandFactory.illegalOperand;
+        return LIROperandFactory.IllegalOperand;
     }
 
     @Override
@@ -122,7 +122,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     protected LIROperand safepointPollRegister() {
-        return LIROperandFactory.illegalOperand;
+        return LIROperandFactory.IllegalOperand;
     }
 
     @Override
@@ -158,7 +158,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             // compute the full adddres instead of computing once for the
             // store and again for the card mark.
             LIROperand tmp = newPointerRegister();
-            lir().leal(LIROperandFactory.address(addr), tmp);
+            lir().leal(addr, tmp);
             return new LIRAddress(tmp, 0, type);
         } else {
             return addr;
@@ -166,9 +166,9 @@ public final class X86LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected void incrementCounter(Address counter, int step) {
+    protected void incrementCounter(long counter, int step) {
         LIROperand pointer = newPointerRegister();
-        lir().move(LIROperandFactory.intptrConst(counter), pointer);
+        lir().move(LIROperandFactory.intPtrConst(counter), pointer);
         LIRAddress addr = new LIRAddress(pointer, 0, BasicType.Int);
         incrementCounter(addr, step);
     }
@@ -214,7 +214,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     @Override
     protected void storeStackParameter(LIROperand item, int offsetFromSpInBytes) {
         BasicType type = item.type();
-        lir().store(item, new LIRAddress(X86FrameMap.rspOpr(compilation.target.arch), offsetFromSpInBytes, type));
+        lir().store(item, new LIRAddress(X86FrameMap.rspOpr(compilation.target.arch), offsetFromSpInBytes, type), null);
     }
 
     @Override
@@ -223,7 +223,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         boolean needsRangeCheck = true;
         boolean useLength = x.length() != null;
         boolean objStore = x.elementType() == BasicType.Jsr || x.elementType() == BasicType.Object;
-        boolean needsStoreCheck = objStore && ((!(x.value() instanceof Constant)) || x.type().asConstant().asObject() != null);
+        boolean needsStoreCheck = objStore && ((!(x.value() instanceof Constant)) || x.value().type().asConstant().asObject() != null);
 
         LIRItem array = new LIRItem(x.array(), this);
         LIRItem index = new LIRItem(x.index(), this);
@@ -282,10 +282,10 @@ public final class X86LIRGenerator extends LIRGenerator {
 
         if (objStore) {
             // Needs GC write barriers.
-            preBarrier(LIROperandFactory.address(arrayAddr), false, null);
+            preBarrier(arrayAddr, false, null);
             lir().move(value.result(), arrayAddr, nullCheckInfo);
             // Seems to be a precise
-            postBarrier(LIROperandFactory.address(arrayAddr), value.result());
+            postBarrier(arrayAddr, value.result());
         } else {
             lir().move(value.result(), arrayAddr, nullCheckInfo);
         }
@@ -302,7 +302,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         // "lock" stores the address of the monitor stack slot, so this is not an oop
         LIROperand lock = newRegister(BasicType.Int);
         // Need a scratch register for biased locking on x86
-        LIROperand scratch = LIROperandFactory.illegalOperand;
+        LIROperand scratch = LIROperandFactory.IllegalOperand;
         if (C1XOptions.UseBiasedLocking) {
             scratch = newRegister(BasicType.Int);
         }
@@ -377,7 +377,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             right.dontLoadItem();
         }
         LIROperand reg = rlock(x);
-        LIROperand tmp = LIROperandFactory.illegalOperand;
+        LIROperand tmp = LIROperandFactory.IllegalOperand;
         if (x.isStrictFP() && (x.opcode() == Bytecodes.DMUL || x.opcode() == Bytecodes.DDIV)) {
             tmp = newRegister(BasicType.Double);
         }
@@ -387,15 +387,15 @@ public final class X86LIRGenerator extends LIRGenerator {
             LIROperand fpu0;
             LIROperand fpu1;
             if (x.opcode() == Bytecodes.FREM) {
-                fpu0 = LIROperandFactory.singleFpu(X86Register.fpu0);
-                fpu1 = LIROperandFactory.singleFpu(X86Register.fpu1);
+                fpu0 = LIROperandFactory.singleLocation(BasicType.Float, X86Register.fpu0);
+                fpu1 = LIROperandFactory.singleLocation(BasicType.Float, X86Register.fpu1);
             } else {
-                fpu0 = LIROperandFactory.doubleFpuX86(X86Register.fpu0);
-                fpu1 = LIROperandFactory.doubleFpuX86(X86Register.fpu1);
+                fpu0 = LIROperandFactory.singleLocation(BasicType.Double, X86Register.fpu0);
+                fpu1 = LIROperandFactory.singleLocation(BasicType.Double, X86Register.fpu1);
             }
             lir().move(right.result(), fpu1); // order of left and right operand is important!
             lir().move(left.result(), fpu0);
-            lir().rem(fpu0, fpu1, fpu0);
+            lir().rem(fpu0, fpu1, fpu0, null);
             lir().move(fpu0, reg);
 
         } else {
@@ -416,7 +416,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             right.setDestroysRegister();
 
             BasicType[] signature = new BasicType[] {BasicType.Long, BasicType.Long};
-            CallingConvention cc = frameMap().runtimeCallingConvention(signature);
+            CallingConvention cc = compilation.frameMap().runtimeCallingConvention(signature);
 
             // check for division by zero (destroys registers of right operand!)
             CodeEmitInfo info = stateFor(x);
@@ -430,16 +430,16 @@ public final class X86LIRGenerator extends LIRGenerator {
             lir().cmp(LIRCondition.Equal, right.result(), LIROperandFactory.longConst(0));
             lir().branch(LIRCondition.Equal, BasicType.Long, new DivByZeroStub(info));
 
-            long entry;
+            CiRuntimeCall entry;
             switch (x.opcode()) {
                 case Bytecodes.LREM:
-                    entry = compilation.runtime.getRuntimeEntry(CiRuntimeCall.Lrem);
+                    entry = CiRuntimeCall.Lrem;
                     break; // check if dividend is 0 is done elsewhere
                 case Bytecodes.LDIV:
-                    entry = compilation.runtime.getRuntimeEntry(CiRuntimeCall.Ldiv);
+                    entry = CiRuntimeCall.Ldiv;
                     break; // check if dividend is 0 is done elsewhere
                 case Bytecodes.LMUL:
-                    entry = compilation.runtime.getRuntimeEntry(CiRuntimeCall.Lmul);
+                    entry = CiRuntimeCall.Lmul;
                     break;
                 default:
                     throw Util.shouldNotReachHere();
@@ -560,7 +560,7 @@ public final class X86LIRGenerator extends LIRGenerator {
                 } else {
                     rightArg.loadItem();
                 }
-                LIROperand tmp = LIROperandFactory.illegalOperand;
+                LIROperand tmp = LIROperandFactory.IllegalOperand;
                 if (useTmp) {
                     tmp = newRegister(BasicType.Int);
                 }
@@ -570,7 +570,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             } else {
                 rightArg.dontLoadItem();
                 rlockResult(x);
-                LIROperand tmp = LIROperandFactory.illegalOperand;
+                LIROperand tmp = LIROperandFactory.IllegalOperand;
                 arithmeticOpInt(x.opcode(), x.operand(), leftArg.result(), rightArg.result(), tmp);
             }
         }
@@ -616,7 +616,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         value.loadItem();
         LIROperand reg = rlockResult(x);
 
-        shiftOp(x.opcode(), reg, value.result(), count.result(), LIROperandFactory.illegalOperand);
+        shiftOp(x.opcode(), reg, value.result(), count.result(), LIROperandFactory.IllegalOperand);
     }
 
     @Override
@@ -680,8 +680,8 @@ public final class X86LIRGenerator extends LIRGenerator {
         int valueOffset = compilation.runtime.sunMiscAtomicLongCSImplValueOffset();
         LIROperand addr = obj.result();
         lir().add(addr, LIROperandFactory.intConst(valueOffset), addr);
-        LIROperand t1 = LIROperandFactory.illegalOperand; // no temp needed
-        LIROperand t2 = LIROperandFactory.illegalOperand; // no temp needed
+        LIROperand t1 = LIROperandFactory.IllegalOperand; // no temp needed
+        LIROperand t2 = LIROperandFactory.IllegalOperand; // no temp needed
         lir().casLong(addr, cmpValue.result(), newValue.result(), t1, t2);
 
         // generate conditional move of boolean result
@@ -732,7 +732,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             preBarrier(addr, false, null);
         }
 
-        LIROperand ill = LIROperandFactory.illegalOperand; // for convenience
+        LIROperand ill = LIROperandFactory.IllegalOperand; // for convenience
         if (type.isObject()) {
             lir().casObj(addr, cmp.result(), val.result(), ill, ill);
         } else if (type.isInt()) {
@@ -777,8 +777,8 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand calcResult = rlockResult(x);
 
         // sin and cos need two free fpu stack slots, so register two temporary operands
-        LIROperand tmp1 = LIROperandFactory.singleFpu(compilation.runtime.callerSaveFpuRegAt(0));
-        LIROperand tmp2 = LIROperandFactory.singleFpu(compilation.runtime.callerSaveFpuRegAt(1));
+        LIROperand tmp1 = LIROperandFactory.singleLocation(BasicType.Float, compilation.runtime.callerSaveFpuRegAt(0));
+        LIROperand tmp2 = LIROperandFactory.singleLocation(BasicType.Float, compilation.runtime.callerSaveFpuRegAt(1));
 
         if (useFpu) {
             LIROperand tmp = X86FrameMap.fpu0DoubleOpr;
@@ -786,16 +786,16 @@ public final class X86LIRGenerator extends LIRGenerator {
 
             calcInput = tmp;
             calcResult = tmp;
-            tmp1 = LIROperandFactory.singleFpu(compilation.runtime.callerSaveFpuRegAt(1));
-            tmp2 = LIROperandFactory.singleFpu(compilation.runtime.callerSaveFpuRegAt(2));
+            tmp1 = LIROperandFactory.singleLocation(BasicType.Float, compilation.runtime.callerSaveFpuRegAt(1));
+            tmp2 = LIROperandFactory.singleLocation(BasicType.Float, compilation.runtime.callerSaveFpuRegAt(2));
         }
 
         switch (x.intrinsic()) {
             case java_lang_Math$abs:
-                lir().abs(calcInput, calcResult, LIROperandFactory.illegalOperand);
+                lir().abs(calcInput, calcResult, LIROperandFactory.IllegalOperand);
                 break;
             case java_lang_Math$sqrt:
-                lir().sqrt(calcInput, calcResult, LIROperandFactory.illegalOperand);
+                lir().sqrt(calcInput, calcResult, LIROperandFactory.IllegalOperand);
                 break;
             case java_lang_Math$sin:
                 lir().sin(calcInput, calcResult, tmp1, tmp2);
@@ -807,10 +807,10 @@ public final class X86LIRGenerator extends LIRGenerator {
                 lir().tan(calcInput, calcResult, tmp1, tmp2);
                 break;
             case java_lang_Math$log:
-                lir().log(calcInput, calcResult, LIROperandFactory.illegalOperand);
+                lir().log(calcInput, calcResult, LIROperandFactory.IllegalOperand);
                 break;
             case java_lang_Math$log10:
-                lir().log10(calcInput, calcResult, LIROperandFactory.illegalOperand);
+                lir().log10(calcInput, calcResult, LIROperandFactory.IllegalOperand);
                 break;
             default:
                 Util.shouldNotReachHere();
@@ -885,7 +885,7 @@ public final class X86LIRGenerator extends LIRGenerator {
                 return X86FrameMap.long0Opr(compilation.target.arch);
             default:
                 Util.shouldNotReachHere();
-                return LIROperandFactory.illegalOperand;
+                return LIROperandFactory.IllegalOperand;
         }
     }
 
@@ -1017,7 +1017,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         }
         CodeEmitInfo info = stateFor(x, x.state());
         LIROperand reg = resultRegisterFor(x.type());
-        newInstance(reg, x.instanceClass(), X86FrameMap.rcxOopOpr, X86FrameMap.rdiOopOpr, X86FrameMap.rsiOopOpr, LIROperandFactory.illegalOperand, X86FrameMap.rdxOopOpr, info);
+        newInstance(reg, x.instanceClass(), X86FrameMap.rcxOopOpr, X86FrameMap.rdiOopOpr, X86FrameMap.rsiOopOpr, LIROperandFactory.IllegalOperand, X86FrameMap.rdxOopOpr, info);
         LIROperand result = rlockResult(x);
         lir().move(reg, result);
     }
@@ -1118,7 +1118,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         args.add(reg);
         args.add(rank);
         args.add(varargs);
-        lir().callRuntime(compilation.runtime.getRuntimeEntry(CiRuntimeCall.NewMultiArray), LIROperandFactory.illegalOperand, reg, args, info);
+        lir().callRuntime(CiRuntimeCall.NewMultiArray, LIROperandFactory.IllegalOperand, reg, args, info);
 
         LIROperand result = rlockResult(x);
         lir().move(reg, result);
@@ -1147,13 +1147,13 @@ public final class X86LIRGenerator extends LIRGenerator {
         CodeStub stub;
         if (x.isIncompatibleClassChangeCheck()) {
             assert patchingInfo == null : "can't patch this";
-            stub = new SimpleExceptionStub(LIROperandFactory.illegalOperand, CiRuntimeCall.ThrowIncompatibleClassChangeError, infoForException);
+            stub = new SimpleExceptionStub(LIROperandFactory.IllegalOperand, CiRuntimeCall.ThrowIncompatibleClassChangeError, infoForException);
         } else {
             stub = new SimpleExceptionStub(obj.result(), CiRuntimeCall.ThrowClassCastException, infoForException);
         }
         LIROperand reg = rlockResult(x);
         lir().checkcast(reg, obj.result(), x.targetClass(), newRegister(BasicType.Object), newRegister(BasicType.Object),
-                        !x.targetClass().isLoaded() ? newRegister(BasicType.Object) : LIROperandFactory.illegalOperand, x.directCompare(), infoForException, patchingInfo, stub, x.profiledMethod(),
+                        !x.targetClass().isLoaded() ? newRegister(BasicType.Object) : LIROperandFactory.IllegalOperand, x.directCompare(), infoForException, patchingInfo, stub, x.profiledMethod(),
                         x.profiledBCI());
     }
 
@@ -1170,7 +1170,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         }
         obj.loadItem();
         LIROperand tmp = newRegister(BasicType.Object);
-        lir().genInstanceof(reg, obj.result(), x.targetClass(), tmp, newRegister(BasicType.Object), LIROperandFactory.illegalOperand, x.directCompare(), patchingInfo);
+        lir().genInstanceof(reg, obj.result(), x.targetClass(), tmp, newRegister(BasicType.Object), LIROperandFactory.IllegalOperand, x.directCompare(), patchingInfo);
     }
 
     @Override
@@ -1212,7 +1212,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             // increment backedge counter if needed
             incrementBackedgeCounter(stateFor(x, x.stateBefore()));
 
-            lir().safepoint(LIROperandFactory.illegalOperand, stateFor(x, x.stateBefore()));
+            lir().safepoint(LIROperandFactory.IllegalOperand, stateFor(x, x.stateBefore()));
         }
         setNoResult(x);
 
@@ -1245,7 +1245,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     protected void traceBlockEntry(BlockBegin block) {
         storeStackParameter(LIROperandFactory.intConst(block.id()), 0);
         List<LIROperand> args = new ArrayList<LIROperand>();
-        lir().callRuntimeLeaf(compilation.runtime.getRuntimeEntry(CiRuntimeCall.TraceBlockEntry), LIROperandFactory.illegalOperand, LIROperandFactory.illegalOperand, args);
+        lir().callRuntimeLeaf(CiRuntimeCall.TraceBlockEntry, LIROperandFactory.IllegalOperand, LIROperandFactory.IllegalOperand, args);
     }
 
     @Override
@@ -1261,7 +1261,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             setVregFlag(spill, VregFlag.MustStartInMemory);
             lir().move(value, spill);
             lir().volatileMove(spill, tempDouble, BasicType.Long);
-            lir().volatileMove(tempDouble, LIROperandFactory.address(address), BasicType.Long, info);
+            lir().volatileMove(tempDouble, address, BasicType.Long, info);
         } else {
             lir().store(value, address, info);
         }
@@ -1276,7 +1276,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             // SSE0 and SSE1 mode it has to be moved through spill slot but in
             // SSE2+ mode it can be moved directly.
             LIROperand tempDouble = newRegister(BasicType.Double);
-            lir().volatileMove(LIROperandFactory.address(address), tempDouble, BasicType.Long, info);
+            lir().volatileMove(address, tempDouble, BasicType.Long, info);
             lir().volatileMove(tempDouble, result, BasicType.Long);
             if (C1XOptions.SSEVersion < 2) {
                 // no spill slot needed in SSE2 mode because xmm.cpu register move is possible
@@ -1318,11 +1318,11 @@ public final class X86LIRGenerator extends LIRGenerator {
             boolean isObj = (type == BasicType.Jsr || type == BasicType.Object);
             if (isObj) {
                 // Do the pre-write barrier, if any.
-                preBarrier(LIROperandFactory.address(addr), false, null);
+                preBarrier(addr, false, null);
                 lir().move(data, addr);
                 assert src.isRegister() : "must be register";
                 // Seems to be a precise address
-                postBarrier(LIROperandFactory.address(addr), data);
+                postBarrier(addr, data);
             } else {
                 lir().move(data, addr);
             }
@@ -1338,7 +1338,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     @Override
     protected LIROperand receiverOpr() {
         // TODO Auto-generated method stub
-        return null;
+        return compilation.frameMap().receiverOpr();
     }
 
     @Override
@@ -1363,7 +1363,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
             default:
                 Util.shouldNotReachHere();
-                return LIROperandFactory.illegalOperand;
+                return LIROperandFactory.IllegalOperand;
         }
 
         assert opr.basicType == type.basicType : "type mismatch";
