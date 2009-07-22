@@ -27,7 +27,6 @@ import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**

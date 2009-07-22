@@ -20,9 +20,6 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
-import static com.sun.max.vm.compiler.eir.amd64.AMD64EirRegister.General.*;
-import static com.sun.max.vm.compiler.eir.amd64.AMD64EirRegister.XMM.*;
-
 import java.util.*;
 
 import com.sun.c1x.ci.*;
@@ -30,11 +27,9 @@ import com.sun.c1x.target.*;
 import com.sun.c1x.target.x86.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
-import com.sun.max.collect.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.eir.amd64.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.prototype.*;

@@ -22,10 +22,7 @@ package com.sun.c1x.lir;
 
 import java.util.*;
 
-import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
-import com.sun.c1x.lir.OopMapValue.*;
-import com.sun.c1x.util.*;
 
 /**
  * The <code>OopMap</code> class definition.
