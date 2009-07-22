@@ -104,7 +104,7 @@ void log_print_format(const char *format, ...) {
 void log_print_vformat(const char *format, va_list ap) {
 #if !os_GUESTVMXEN
     FILE* out = fileStream == NULL ? stdout : fileStream;
-    vfprintf(fileStream, format, ap);
+    vfprintf(out, format, ap);
 #else
     vprintf(format, ap);
 #endif
