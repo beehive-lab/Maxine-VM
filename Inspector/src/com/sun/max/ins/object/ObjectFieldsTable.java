@@ -153,7 +153,7 @@ public final class ObjectFieldsTable extends InspectorTable {
             objectOrigin = teleObject.getCurrentOrigin();
             if (teleObject.isLive()) {
                 final int oldSelectedRow = getSelectedRow();
-                final int newRow = model.addressToRow(focus().address());
+                final int newRow = model.findRow(focus().address());
                 if (newRow >= 0) {
                     getSelectionModel().setSelectionInterval(newRow, newRow);
                 } else {
@@ -205,6 +205,35 @@ public final class ObjectFieldsTable extends InspectorTable {
                 return ObjectFieldColumnKind.VALUES.get(modelIndex).toolTipText();
             }
         };
+    }
+
+    /**
+     * A column model for object headers, to be used in an {@link ObjectInspector}.
+     * Column selection is driven by choices in the parent {@link ObjectInspector}.
+     * This implementation cannot update column choices dynamically.
+     */
+    private final class ObjectFieldsTableColumnModel extends DefaultTableColumnModel {
+
+        ObjectFieldsTableColumnModel(ObjectInspector objectInspector) {
+            createColumn(ObjectFieldColumnKind.TAG, new TagRenderer(), true);
+            createColumn(ObjectFieldColumnKind.ADDRESS, new AddressRenderer(), objectInspector.showAddresses());
+            createColumn(ObjectFieldColumnKind.OFFSET, new PositionRenderer(), objectInspector.showOffsets());
+            createColumn(ObjectFieldColumnKind.TYPE, new TypeRenderer(), objectInspector.showFieldTypes());
+            createColumn(ObjectFieldColumnKind.NAME, new NameRenderer(), true);
+            createColumn(ObjectFieldColumnKind.VALUE, new ValueRenderer(), true);
+            createColumn(ObjectFieldColumnKind.REGION, new RegionRenderer(), objectInspector.showMemoryRegions());
+        }
+
+        private void createColumn(ObjectFieldColumnKind columnKind, TableCellRenderer renderer, boolean isVisible) {
+            final int col = columnKind.ordinal();
+            columns[col] = new TableColumn(col, 0, renderer, null);
+            columns[col].setHeaderValue(columnKind.label());
+            columns[col].setMinWidth(columnKind.minWidth());
+            if (isVisible) {
+                addColumn(columns[col]);
+            }
+            columns[col].setIdentifier(columnKind);
+        }
     }
 
     /**
@@ -265,7 +294,7 @@ public final class ObjectFieldsTable extends InspectorTable {
             return null;
         }
 
-        public int addressToRow(Address address) {
+        public int findRow(Address address) {
             if (!address.isZero()) {
                 final int offset = address.minus(objectOrigin).toInt();
                 if (offset >= startOffset && offset < endOffset) {
@@ -280,35 +309,6 @@ public final class ObjectFieldsTable extends InspectorTable {
                 }
             }
             return -1;
-        }
-    }
-
-    /**
-     * A column model for object headers, to be used in an {@link ObjectInspector}.
-     * Column selection is driven by choices in the parent {@link ObjectInspector}.
-     * This implementation cannot update column choices dynamically.
-     */
-    private final class ObjectFieldsTableColumnModel extends DefaultTableColumnModel {
-
-        ObjectFieldsTableColumnModel(ObjectInspector objectInspector) {
-            createColumn(ObjectFieldColumnKind.TAG, new TagRenderer(), true);
-            createColumn(ObjectFieldColumnKind.ADDRESS, new AddressRenderer(), objectInspector.showAddresses());
-            createColumn(ObjectFieldColumnKind.OFFSET, new PositionRenderer(), objectInspector.showOffsets());
-            createColumn(ObjectFieldColumnKind.TYPE, new TypeRenderer(), objectInspector.showFieldTypes());
-            createColumn(ObjectFieldColumnKind.NAME, new NameRenderer(), true);
-            createColumn(ObjectFieldColumnKind.VALUE, new ValueRenderer(), true);
-            createColumn(ObjectFieldColumnKind.REGION, new RegionRenderer(), objectInspector.showMemoryRegions());
-        }
-
-        private void createColumn(ObjectFieldColumnKind columnKind, TableCellRenderer renderer, boolean isVisible) {
-            final int col = columnKind.ordinal();
-            columns[col] = new TableColumn(col, 0, renderer, null);
-            columns[col].setHeaderValue(columnKind.label());
-            columns[col].setMinWidth(columnKind.minWidth());
-            if (isVisible) {
-                addColumn(columns[col]);
-            }
-            columns[col].setIdentifier(columnKind);
         }
     }
 

@@ -83,17 +83,17 @@ public abstract class ObjectInspector extends Inspector {
     protected ObjectInspector(final Inspection inspection, ObjectInspectorFactory factory, final TeleObject teleObject) {
         super(inspection);
         this.factory = factory;
-        final ObjectInspectorPreferences preferences = ObjectInspectorPreferences.globalPreferences(inspection);
+        final ObjectInspectorPreferences globalPreferences = ObjectInspectorPreferences.globalPreferences(inspection);
         this.teleObject = teleObject;
         this.currentObjectOrigin = teleObject().getCurrentOrigin();
         Trace.line(1, tracePrefix() + " creating for " + getTextForTitle());
 
-        showHeader = preferences.showHeader();
-        showAddresses = preferences.showAddresses();
-        showOffsets = preferences.showOffsets();
-        showFieldTypes = preferences.showFieldTypes();
-        showMemoryRegions = preferences.showMemoryRegions();
-        hideNullArrayElements = preferences.hideNullArrayElements();
+        showHeader = globalPreferences.showHeader();
+        showAddresses = globalPreferences.showAddresses();
+        showOffsets = globalPreferences.showOffsets();
+        showFieldTypes = globalPreferences.showFieldTypes();
+        showMemoryRegions = globalPreferences.showMemoryRegions();
+        hideNullArrayElements = globalPreferences.hideNullArrayElements();
     }
 
     @Override

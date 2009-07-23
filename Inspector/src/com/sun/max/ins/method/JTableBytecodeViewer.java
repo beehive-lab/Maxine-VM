@@ -166,7 +166,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
     @Override
     protected void setFocusAtRow(int row) {
-        final int position = model.getBytecodeInstruction(row).position();
+        final int position = model.rowToInstruction(row).position();
         inspection.focus().setCodeLocation(maxVM().createCodeLocation(teleClassMethodActor(), position), false);
     }
 
@@ -200,7 +200,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
 
         public Object getValueAt(int row, int col) {
-            final BytecodeInstruction instruction = getBytecodeInstruction(row);
+            final BytecodeInstruction instruction = rowToInstruction(row);
             switch (BytecodeColumnKind.VALUES.get(col)) {
                 case TAG:
                     return null;
@@ -245,7 +245,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             }
         }
 
-        public BytecodeInstruction getBytecodeInstruction(int row) {
+        public BytecodeInstruction rowToInstruction(int row) {
             return bytecodeInstructions.get(row);
         }
 
@@ -253,7 +253,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
          * @param position a position (in bytes) in this block of bytecodes
          * @return the row in this block of bytecodes containing an instruction starting at this position, -1 if none
          */
-        public int getRowAtPosition(int position) {
+        public int findRowAtPosition(int position) {
             for (BytecodeInstruction instruction : bytecodeInstructions) {
                 if (instruction.position() == position) {
                     return instruction.row();
@@ -267,7 +267,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
          * @return the row in this block of bytecodes containing an
          *  instruction whose associated compiled code starts at the address, -1 if none.
          */
-        public int getRowAtAddress(Address address) {
+        public int findRow(Address address) {
             if (haveTargetCodeAddresses()) {
                 for (BytecodeInstruction instruction : bytecodeInstructions) {
                     int row = instruction.row();
@@ -330,7 +330,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 final int selectedRow = getSelectedRow();
                 final BytecodeTableModel bytecodeTableModel = (BytecodeTableModel) getModel();
                 if (selectedRow >= 0 && selectedRow < bytecodeTableModel.getRowCount()) {
-                    final BytecodeInstruction bytecodeInstruction = bytecodeTableModel.getBytecodeInstruction(selectedRow);
+                    final BytecodeInstruction bytecodeInstruction = bytecodeTableModel.rowToInstruction(selectedRow);
                     final Address targetCodeFirstAddress = bytecodeInstruction.targetCodeFirstAddress();
                     final int position = bytecodeInstruction.position();
                     inspection().focus().setCodeLocation(maxVM().createCodeLocation(targetCodeFirstAddress, teleClassMethodActor(), position), true);
@@ -344,7 +344,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             if (teleCodeLocation.hasBytecodeLocation()) {
                 final BytecodeLocation bytecodeLocation = teleCodeLocation.bytecodeLocation();
                 if (bytecodeLocation.classMethodActor() == teleClassMethodActor().classMethodActor()) {
-                    final int row = model.getRowAtPosition(bytecodeLocation.bytecodePosition());
+                    final int row = model.findRowAtPosition(bytecodeLocation.bytecodePosition());
                     if (row >= 0) {
                         if (row != oldSelectedRow) {
                             changeSelection(row, row, false, false);
@@ -355,7 +355,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 }
             } else if (teleCodeLocation.hasTargetCodeLocation()) {
                 if (teleTargetMethod() != null && teleTargetMethod().targetCodeRegion().contains(teleCodeLocation.targetCodeInstructionAddresss())) {
-                    final int row = model.getRowAtAddress(teleCodeLocation.targetCodeInstructionAddresss());
+                    final int row = model.findRow(teleCodeLocation.targetCodeInstructionAddresss());
                     if (row >= 0) {
                         if (row != oldSelectedRow) {
                             changeSelection(row, row, false, false);
