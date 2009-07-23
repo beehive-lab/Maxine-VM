@@ -20,15 +20,22 @@
  */
 package com.sun.c1x.graph;
 
-import java.util.*;
-
 import com.sun.c1x.*;
-import com.sun.c1x.bytecode.*;
+import com.sun.c1x.bytecode.BytecodeLookupSwitch;
+import com.sun.c1x.bytecode.BytecodeStream;
+import com.sun.c1x.bytecode.BytecodeTableSwitch;
+import com.sun.c1x.bytecode.Bytecodes;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.opt.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.opt.Canonicalizer;
+import com.sun.c1x.opt.PhiSimplifier;
+import com.sun.c1x.opt.ValueMap;
+import com.sun.c1x.util.Util;
 import com.sun.c1x.value.*;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * The <code>GraphBuilder</code> class parses the bytecode of a method and builds the IR graph.
@@ -478,52 +485,47 @@ public class GraphBuilder {
         return h.isCatchAll();
     }
 
-    void loadConstant() {
-        CiConstant con = constantPool().lookupConstant(stream().readCPI());
-        ValueType type;
-        if (con.isCiType()) {
-            // this is a load of class constant which might be unresolved
-            CiType citype = con.asCiType();
-            type = new ClassType(citype);
-            if (!citype.isLoaded() || C1XOptions.TestPatching) {
-                push(type.basicType, append(new ResolveClass(citype, curState.copy())));
-            } else {
-                push(type.basicType, append(Constant.forObject(citype.javaClass())));
-            }
-            return;
-        }
+    ConstType convertCiConstant(CiConstant con) {
         switch (con.basicType()) {
             case Boolean:
-                type = ConstType.forBoolean(con.asBoolean());
-                break;
+                return ConstType.forBoolean(con.asBoolean());
             case Char:
-                type = ConstType.forChar(con.asChar());
-                break;
+                return ConstType.forChar(con.asChar());
             case Float:
-                type = ConstType.forFloat(con.asFloat());
-                break;
+                return ConstType.forFloat(con.asFloat());
             case Double:
-                type = ConstType.forDouble(con.asDouble());
-                break;
+                return ConstType.forDouble(con.asDouble());
             case Byte:
-                type = ConstType.forByte(con.asByte());
-                break;
+                return ConstType.forByte(con.asByte());
             case Short:
-                type = ConstType.forShort(con.asShort());
-                break;
+                return ConstType.forShort(con.asShort());
             case Int:
-                type = ConstType.forInt(con.asInt());
-                break;
+                return ConstType.forInt(con.asInt());
             case Long:
-                type = ConstType.forLong(con.asLong());
-                break;
+                return ConstType.forLong(con.asLong());
             case Object:
-                type = ConstType.forObject(con.asObject());
-                break;
+                return ConstType.forObject(con.asObject());
             default:
                 throw new Bailout("invalid constant type on " + con);
         }
-        push(type.basicType.stackType(), appendConstant(type.asConstant()));
+
+    }
+
+    void loadConstant() {
+        CiConstant con = constantPool().lookupConstant(stream().readCPI());
+        if (con.isCiType()) {
+            // this is a load of class constant which might be unresolved
+            CiType citype = con.asCiType();
+            if (!citype.isLoaded() || C1XOptions.TestPatching) {
+                push(BasicType.Object, append(new ResolveClass(citype, curState.copy())));
+            } else {
+                push(BasicType.Object, append(Constant.forObject(citype.javaClass())));
+            }
+            return;
+        }
+
+        ConstType constant = convertCiConstant(con);
+        push(constant.basicType.stackType(), appendConstant(constant));
     }
 
     void loadIndexed(BasicType type) {
@@ -786,7 +788,7 @@ public class GraphBuilder {
         CiField field = constantPool().lookupGetField(stream().readCPI());
         boolean isLoaded = field.isLoaded() && !C1XOptions.TestPatching;
         ValueStack stateCopy = !isLoaded ? curState.copy() : null;
-        LoadField load = new LoadField(apop(), field, false, lockStack(), stateCopy, isLoaded, true);
+        LoadField load = new LoadField(apop(), field, false, lockStack(), stateCopy, isLoaded);
         loadField(field.basicType(), load);
     }
 
@@ -795,7 +797,7 @@ public class GraphBuilder {
         boolean isLoaded = field.isLoaded() && !C1XOptions.TestPatching;
         ValueStack stateCopy = !isLoaded ? curState.copy() : null;
         Instruction value = pop(field.basicType().stackType());
-        storeField(new StoreField(apop(), field, value, false, lockStack(), stateCopy, isLoaded, true));
+        storeField(new StoreField(apop(), field, value, false, lockStack(), stateCopy, isLoaded));
     }
 
     void getStatic() {
@@ -803,9 +805,9 @@ public class GraphBuilder {
         CiType holder = field.holder();
         boolean isLoaded = field.isLoaded() && holder.isLoaded() && !C1XOptions.TestPatching;
         boolean isInitialized = isLoaded && holder.isInitialized();
-        ValueStack stateCopy = !isLoaded ? curState.copy() : null;
-        Instruction holderConstant = append(new Constant(new ClassType(holder), stateCopy));
-        LoadField load = new LoadField(holderConstant, field, true, lockStack(), stateCopy, isLoaded, isInitialized);
+        ValueStack stateCopy = isInitialized ? null : curState.copy();
+        Instruction holderConstant = getStaticContainer(holder, isInitialized);
+        LoadField load = new LoadField(holderConstant, field, true, lockStack(), stateCopy, isLoaded);
         loadField(field.basicType(), load);
     }
 
@@ -814,12 +816,19 @@ public class GraphBuilder {
         CiType holder = field.holder();
         boolean isLoaded = field.isLoaded() && holder.isLoaded() && !C1XOptions.TestPatching;
         boolean isInitialized = isLoaded && holder.isInitialized();
-        ValueStack stateCopy = !isLoaded ? curState.copy() : null;
-        CiConstant staticContainer = holder.getStaticContainer();
-        Instruction holderConstant = append(new Constant(new ClassType(holder), stateCopy));
+        ValueStack stateCopy = isInitialized ? null : curState.copy();
+        Instruction holderConstant = getStaticContainer(holder, isInitialized);
         Instruction value = pop(field.basicType().stackType());
-        StoreField store = new StoreField(holderConstant, field, value, true, lockStack(), stateCopy, isLoaded, isInitialized);
+        StoreField store = new StoreField(holderConstant, field, value, true, lockStack(), stateCopy, isLoaded);
         storeField(store);
+    }
+
+    private Instruction getStaticContainer(CiType holder, boolean isInitialized) {
+        Instruction holderConstant = null;
+        if (isInitialized) {
+            holderConstant = appendConstant(convertCiConstant(holder.getStaticContainer()));
+        }
+        return holderConstant;
     }
 
     private void storeField(StoreField store) {

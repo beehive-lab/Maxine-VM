@@ -20,9 +20,10 @@
  */
 package com.sun.c1x.target.x86;
 
-import com.sun.c1x.asm.*;
-import com.sun.c1x.asm.RelocInfo.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.asm.RelocInfo;
+import com.sun.c1x.asm.RelocInfo.Type;
+import com.sun.c1x.asm.Relocation;
+import com.sun.c1x.util.Util;
 
 
 public class AddressLiteral {

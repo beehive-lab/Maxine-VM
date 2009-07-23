@@ -20,11 +20,11 @@
  */
 package com.sun.c1x.asm;
 
-import java.util.*;
-
-import com.sun.c1x.*;
-import com.sun.c1x.target.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.debug.TTY;
+import com.sun.c1x.target.Register;
+import com.sun.c1x.util.Util;
 
 /**
  * @author Marcelo Cintra
@@ -207,7 +207,7 @@ public abstract class AbstractAssembler {
 
     protected void relocate(int position, Relocation relocation) {
 
-        TTY.println("RELOCATION recorded at position " + position + " " + relocation);
+        //TTY.println("RELOCATION recorded at position " + position + " " + relocation);
         switch (relocation.type()) {
 
         }
@@ -242,7 +242,7 @@ public abstract class AbstractAssembler {
 
     private void recordDataReferenceInCode(int codeOffset, int dataOffset) {
         if (compilation.targetMethod == null) {
-            TTY.println("Record data reference in code: code-offset=%d, data-offset=%d", codeOffset, dataOffset);
+            // TTY.println("Record data reference in code: code-offset=%d, data-offset=%d", codeOffset, dataOffset);
         } else {
             compilation.targetMethod.recordDataReferenceInCode(codeOffset, dataOffset, true);
         }
@@ -307,17 +307,17 @@ public abstract class AbstractAssembler {
 
     public void installTargetMethod() {
         if (compilation.targetMethod == null) {
-            byte[] array = codeBuffer.finished();
-            int length = codeBuffer.position();
-            Util.printBytes(array, length);
+            //byte[] array = codeBuffer.finished();
+            //int length = codeBuffer.position();
+            //Util.printBytes(array, length);
 
-            TTY.println("Disassembled code:");
-            TTY.println(compilation.runtime.disassemble(Arrays.copyOf(array, length)));
+            //TTY.println("Disassembled code:");
+            //TTY.println(compilation.runtime.disassemble(Arrays.copyOf(array, length)));
 
-            array = dataBuffer.finished();
-            length = dataBuffer.position();
-            Util.printBytes(array, length);
-            TTY.println("Frame size: %d", compilation.frameMap().framesize());
+            //array = dataBuffer.finished();
+            //length = dataBuffer.position();
+            //Util.printBytes(array, length);
+            //TTY.println("Frame size: %d", compilation.frameMap().framesize());
 
         } else {
             compilation.targetMethod.setTargetCode(codeBuffer.finished(), codeBuffer.position());

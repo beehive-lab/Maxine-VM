@@ -21,17 +21,24 @@
 
 package com.sun.c1x.target.x86;
 
-import java.util.*;
-
-import com.sun.c1x.*;
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.gen.*;
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.bytecode.Bytecodes;
+import com.sun.c1x.ci.CiRuntimeCall;
+import com.sun.c1x.ci.CiType;
+import com.sun.c1x.debug.TTY;
+import com.sun.c1x.gen.LIRGenerator;
+import com.sun.c1x.gen.LIRItem;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.stub.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.value.BasicType;
+import com.sun.c1x.value.ConstType;
+import com.sun.c1x.value.ValueType;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -96,7 +103,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             // there is no immediate move of word values in asemblerI486.?pp
             return false;
         }
-        if (v instanceof Constant && ((Constant) v).state() == null) {
+        if (v instanceof Constant) {
             // constants of any type can be stored directly, except for
             // unloaded object constants.
             return true;

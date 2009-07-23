@@ -20,9 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.bytecode.Bytecodes;
+import com.sun.c1x.value.ValueStack;
 
 /**
  * The <code>ArithmeticOp</code> class represents arithmetic operations such as addition, subtraction, etc.

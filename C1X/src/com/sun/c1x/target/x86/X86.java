@@ -20,7 +20,10 @@
  */
 package com.sun.c1x.target.x86;
 
-import com.sun.c1x.target.*;
+import com.sun.c1x.target.Architecture;
+import com.sun.c1x.target.Backend;
+import com.sun.c1x.target.Register;
+import com.sun.c1x.target.Target;
 
 /**
  *

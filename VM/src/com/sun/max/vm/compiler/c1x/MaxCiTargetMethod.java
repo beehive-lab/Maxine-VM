@@ -297,9 +297,6 @@ public class MaxCiTargetMethod implements CiTargetMethod {
         ClassMethodActor[] directCallees = processCallSites(stopPositions, bitMap);
         processSafepoints(stopPositions, bitMap);
 
-        processDataPatches(targetBundleLayout);
-        processRefPatches(targetBundleLayout, refLiterals);
-
         // TODO: encode exception handler information
         int[] catchRangePositions = null;
         int[] catchBlockPositions = null;
@@ -325,6 +322,9 @@ public class MaxCiTargetMethod implements CiTargetMethod {
             stackRefMapSize(),
             abi
         );
+        // TODO: patch code and data references
+        processDataPatches(targetBundleLayout);
+        processRefPatches(targetBundleLayout, refLiterals);
     }
 
     private void processRefPatches(TargetBundleLayout bundleLayout, Object[] refLiterals) {

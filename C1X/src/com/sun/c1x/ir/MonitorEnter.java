@@ -20,8 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.value.ValueStack;
 
 /**
  * The <code>MonitorEnter</code> instruction represents the acquisition of a monitor.
@@ -41,7 +40,7 @@ public class MonitorEnter extends AccessMonitor {
     public MonitorEnter(Instruction object, int lockNumber, ValueStack lockStackBefore) {
         super(object, lockNumber);
         this.lockStackBefore = lockStackBefore;
-
+        initFlag(Flag.NeedsNullCheck, !object.isNonNull());
     }
 
     /**

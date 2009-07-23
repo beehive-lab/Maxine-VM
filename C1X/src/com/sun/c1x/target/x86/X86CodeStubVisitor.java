@@ -41,7 +41,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         this.compilation = lirAssembler.compilation;
     }
 
-    @Override
     public void visitArrayCopyStub(ArrayCopyStub stub) {
         // ---------------slow case: call to native-----------------
         lir().bind(stub.entry);
@@ -81,7 +80,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         return masm;
     }
 
-    @Override
     public void visitArrayStoreExceptionStub(ArrayStoreExceptionStub stub) {
         assert lir().rspOffset() == 0 : "frame size should be fixed";
         lir().bind(stub.entry);
@@ -92,7 +90,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         }
     }
 
-    @Override
     public void visitConversionStub(ConversionStub stub) {
         lir().bind(stub.entry);
         assert stub.bytecode == Bytecodes.F2I || stub.bytecode == Bytecodes.D2I : "other conversions do not require stub";
@@ -129,7 +126,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
 
     }
 
-    @Override
     public void visitDivByZeroStub(DivByZeroStub stub) {
         if (stub.offset != -1) {
             compilation.recordImplicitException(stub.offset, masm.offset());
@@ -143,7 +139,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         }
     }
 
-    @Override
     public void visitImplicitNullCheckStub(ImplicitNullCheckStub stub) {
         ce.compilation.recordImplicitException(stub.offset, lir().offset());
         lir().bind(stub.entry);
@@ -154,7 +149,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         }
     }
 
-    @Override
     public void visitMonitorEnterStub(MonitorEnterStub stub) {
         assert lir().rspOffset() == 0 : "frame size should be fixed";
         lir().bind(stub.entry);
@@ -172,7 +166,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         lir().jmp(stub.continuation);
     }
 
-    @Override
     public void visitMonitorExitStub(MonitorExitStub stub) {
         lir().bind(stub.entry);
         if (stub.computeLock) {
@@ -191,7 +184,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         lir().jmp(stub.continuation);
     }
 
-    @Override
     public void visitNewInstanceStub(NewInstanceStub stub) {
         assert lir().rspOffset() == 0 : "frame size should be fixed";
         lir().bind(stub.entry);
@@ -203,7 +195,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         lir().jmp(stub.continuation);
     }
 
-    @Override
     public void visitNewObjectArrayStub(NewObjectArrayStub stub) {
         assert lir().rspOffset() == 0 : "frame size should be fixed";
         lir().bind(stub.entry);
@@ -216,7 +207,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         lir().jmp(stub.continuation);
     }
 
-    @Override
     public void visitNewTypeArrayStub(NewTypeArrayStub stub) {
         assert lir().rspOffset() == 0 : "frame size should be fixed";
         lir().bind(stub.entry);
@@ -229,7 +219,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         lir().jmp(stub.continuation);
     }
 
-    @Override
     public void visitPatchingStub(PatchingStub stub) {
         assert compilation.target.arch.nativeMoveConstInstructionSize <= stub.bytesToCopy && stub.bytesToCopy <= 0xFF :  "not enough room for call";
 
@@ -343,7 +332,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
 //        }
     }
 
-    @Override
     public void visitRangeCheckStub(RangeCheckStub stub) {
         lir().bind(stub.entry);
         // pass the array index on stack because all registers must be preserved
@@ -365,7 +353,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         }
     }
 
-    @Override
     public void visitSimpleExceptionStub(SimpleExceptionStub stub) {
         assert lir().rspOffset() == 0 : "frame size should be fixed";
 

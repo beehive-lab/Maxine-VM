@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.target.x86;
 
-import com.sun.c1x.target.*;
-import com.sun.c1x.target.Register.*;
+import com.sun.c1x.target.Register;
+import com.sun.c1x.target.Register.RegisterFlag;
 
 /**
  *

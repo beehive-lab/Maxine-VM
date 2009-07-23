@@ -20,11 +20,12 @@
  */
 package com.sun.c1x.target;
 
-import com.sun.c1x.*;
-import com.sun.c1x.asm.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.gen.*;
-import com.sun.c1x.lir.*;
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.asm.AbstractAssembler;
+import com.sun.c1x.ci.CiMethod;
+import com.sun.c1x.gen.LIRGenerator;
+import com.sun.c1x.lir.FrameMap;
+import com.sun.c1x.lir.LIRAssembler;
 
 /**
  * The <code>Backend</code> class represents a compiler backend for C1X.

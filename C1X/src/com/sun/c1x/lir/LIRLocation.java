@@ -20,9 +20,9 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.target.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.target.Register;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.value.BasicType;
 
 /**
  * The <code>LIRLocation</code> class represents a LIROperand that is either a stack slot or a CPU register. LIRLocation

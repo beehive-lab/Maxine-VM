@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.value.ConstType;
+import com.sun.c1x.value.ValueType;
 
 /**
  * The <code>Constant</code> instruction represents a constant such as an integer value,
@@ -37,6 +37,7 @@ public class Constant extends Instruction {
      */
     public Constant(ConstType type) {
         super(type);
+        initFlag(Instruction.Flag.NonNull, type.isNonNull());
     }
 
     /**

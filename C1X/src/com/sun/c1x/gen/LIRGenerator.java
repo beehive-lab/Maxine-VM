@@ -20,18 +20,30 @@
  */
 package com.sun.c1x.gen;
 
-import java.util.*;
-
-import com.sun.c1x.*;
-import com.sun.c1x.asm.*;
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.graph.*;
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.asm.Label;
+import com.sun.c1x.bytecode.Bytecodes;
+import com.sun.c1x.ci.CiMethod;
+import com.sun.c1x.ci.CiMethodData;
+import com.sun.c1x.ci.CiRuntimeCall;
+import com.sun.c1x.ci.CiType;
+import com.sun.c1x.debug.TTY;
+import com.sun.c1x.graph.IR;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.stub.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.util.ArrayMap;
+import com.sun.c1x.util.BitMap;
+import com.sun.c1x.util.BitMap2D;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.value.BasicType;
+import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.value.ValueType;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * This class traverses the HIR instructions and generates LIR instructions from them.
@@ -269,13 +281,16 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
     @Override
     public void visitConstant(Constant x) {
-        if (x.state() != null) {
-            // XXX: in the future, no constants will require patching; there will be a ResolveClass instruction
-            // Any constant with a ValueStack requires patching so emit the patch here
-            LIROperand reg = rlockResult(x);
-            CodeEmitInfo info = stateFor(x, x.state());
-            lir.oop2regPatch(null, reg, info);
-        } else if (useCount(x) > 1 && !canInlineAsConstant(x)) {
+//        if (x.state() != null) {
+//            // XXX: in the future, no constants will require patching; there will be a ResolveClass instruction
+//            // Any constant with a ValueStack requires patching so emit the patch here
+//            LIROperand reg = rlockResult(x);
+//            CodeEmitInfo info = stateFor(x, x.state());
+//            lir.oop2regPatch(null, reg, info);
+//        } else
+
+
+        if (useCount(x) > 1 && !canInlineAsConstant(x)) {
             if (!x.isPinned()) {
                 // unpinned constants are handled specially so that they can be
                 // put into registers when they are used multiple times within a

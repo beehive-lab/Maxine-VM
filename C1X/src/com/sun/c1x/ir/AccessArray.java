@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.value.ValueType;
 
 /**
  * The <code>AccessArray</code> class is the base class of all array operations.
@@ -43,6 +43,7 @@ public abstract class AccessArray extends Instruction {
         super(type);
         this.array = array;
         this.lockStack = lockStack;
+        initFlag(Flag.NeedsNullCheck, !array.isNonNull());
         pin();
     }
 
@@ -77,7 +78,7 @@ public abstract class AccessArray extends Instruction {
      */
     @Override
     public boolean canTrap() {
-        return !checkFlag(Flag.NonNull);
+        return needsNullCheck();
     }
 
     /**
