@@ -151,9 +151,17 @@ public class CodeEmitInfo {
     }
 
     public void recordDebugInfo(DebugInformationRecorder recorder, int pcOffset) {
+
+        // TODO: (tw) Check where to generate the oopMap!
+        if (oopMap == null) {
+            return;
+        }
+
         // record the safepoint before recording the debug info for enclosing scopes
         recorder.addSafepoint(pcOffset, oopMap.deepCopy());
-        scopeDebugInfo.recordDebugInfo(recorder, pcOffset);
+        if (scopeDebugInfo != null) {
+            scopeDebugInfo.recordDebugInfo(recorder, pcOffset);
+        }
         recorder.endSafepoint(pcOffset);
     }
 

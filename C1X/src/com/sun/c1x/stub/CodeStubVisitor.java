@@ -18,62 +18,39 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.asm;
+package com.sun.c1x.stub;
 
-import com.sun.c1x.asm.RelocInfo.*;
+/**
+ *
+ * @author Thomas Wuerthinger
+ *
+ */
+public interface CodeStubVisitor {
 
+    void visitArrayCopyStub(ArrayCopyStub arrayCopyStub);
 
-public class CodeSection {
+    void visitArrayStoreExceptionStub(ArrayStoreExceptionStub arrayStoreExceptionStub);
 
-    public int remaining() {
-        // TODO Auto-generated method stub
-        return Integer.MAX_VALUE;
-    }
+    void visitConversionStub(ConversionStub conversionStub);
 
-    public void relocate(Pointer pc, Type polltype) {
-        // TODO Auto-generated method stub
+    void visitDivByZeroStub(DivByZeroStub divByZeroStub);
 
-    }
+    void visitImplicitNullCheckStub(ImplicitNullCheckStub implicitNullCheckStub);
 
-    public void clearMark() {
-        // TODO Auto-generated method stub
+    void visitMonitorEnterStub(MonitorEnterStub monitorEnterStub);
 
-    }
+    void visitMonitorExitStub(MonitorExitStub monitorExitStub);
 
-    public Pointer start() {
-        // TODO Auto-generated method stub
-        return new Pointer(0);
-    }
+    void visitNewInstanceStub(NewInstanceStub visitor);
 
-    public Pointer limit() {
-        // TODO Auto-generated method stub
-        return null;
-    }
+    void visitNewObjectArrayStub(NewObjectArrayStub newObjectArrayStub);
 
-    public Pointer end() {
-        // TODO Auto-generated method stub
-        return new Pointer(0);
-    }
+    void visitNewTypeArrayStub(NewTypeArrayStub newTypeArrayStub);
 
-    public boolean maybeExpandToEnsureRemaining(int requiredSpace) {
-        // TODO Auto-generated method stub
-        return false;
-    }
+    void visitPatchingStub(PatchingStub patchingStub);
 
-    public void setEnd(Pointer codePos) {
-        // TODO Auto-generated method stub
+    void visitRangeCheckStub(RangeCheckStub visitor);
 
-    }
-
-    public Pointer target(Label l, Pointer pointer) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-
-    public boolean isAllocated() {
-        // TODO Auto-generated method stub
-        return false;
-    }
+    void visitSimpleExceptionStub(SimpleExceptionStub simpleExceptionStub);
 
 }

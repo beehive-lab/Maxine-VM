@@ -182,6 +182,6 @@ public class LIRAllocArray extends LIRInstruction {
         tmp4.print(out);
         out.print(" ");
         out.printf("[type:%s] ", type().name());
-        out.printf("[label:%s]", stub.entry().toString());
+        out.printf("[label:%s]", stub.entry.toString());
     }
 }

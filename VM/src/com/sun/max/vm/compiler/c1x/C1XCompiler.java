@@ -164,9 +164,10 @@ public class C1XCompiler extends AbstractVMScheme implements CompilerScheme {
                 // for the closure process
                 targetMap.put(targetMethod.targetMethod, targetMethod);
             }
+            assert targetMethod.targetMethod != null;
             return targetMethod.targetMethod;
         }
-        return null; // compilation failed
+        throw compilation.bailout(); // compilation failed
     }
 
     @PROTOTYPE_ONLY

@@ -446,4 +446,9 @@ public class C1XCompilation {
         // TODO Check what to return here, for now do not collect debug information
         return false;
     }
+
+    public void recordImplicitException(int offset, int offset2) {
+        // TODO Auto-generated method stub
+
+    }
 }

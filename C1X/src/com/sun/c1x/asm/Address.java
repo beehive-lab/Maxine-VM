@@ -88,7 +88,7 @@ public class Address {
         assert !this.index.isValid() == (scale == ScaleFactor.noScale) : "inconsistent Pointer";
     }
 
-    public Address(int displacement, Pointer loc, RelocInfo.Type reloc) {
+    public Address(int displacement, long loc, RelocInfo.Type reloc) {
 
         base = Register.noreg;
         index = Register.noreg;

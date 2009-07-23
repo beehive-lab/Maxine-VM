@@ -32,15 +32,17 @@ import com.sun.c1x.util.*;
  * collected and code is emitted at the end of the method.
  *
  * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
  *
  */
 public abstract class CodeStub {
 
-    protected final Label entry = new Label();            // label at the stub entry point
-    protected final Label continuation = new Label();     // label where stub continues, if any
+    public CodeEmitInfo info;
+    public final Label entry = new Label();            // label at the stub entry point
+    public final Label continuation = new Label();     // label where stub continues, if any
 
-    public CodeStub() {
-
+    public CodeStub(CodeEmitInfo info) {
+        this.info = info;
     }
 
     /**
@@ -52,55 +54,11 @@ public abstract class CodeStub {
     }
 
     /**
-     * Returns the entry label for this code stub.
-     *
-     * @return the entry
-     */
-    public Label entry() {
-        return entry;
-    }
-
-    /**
-     * Returns the continuation for this code stub.
-     *
-     * @return the continuation
-     */
-    public Label continuation() {
-        return continuation;
-    }
-
-    /**
-     *
-     * @return <code>null</code> to mean there is no CodeEmit info at this level
-     */
-    public CodeEmitInfo info() {
-        return null;
-    }
-
-    /**
      * Checks if this is an exception throw code stub.
      *
      * @return false
      */
     public boolean isExceptionThrowStub() {
-        return false;
-    }
-
-    /**
-     * Checks if this is a range check code stub.
-     *
-     * @return false
-     */
-    public boolean isRangeCheck() {
-        return false;
-    }
-
-    /**
-     * Checks if this is a divide by zero code stub.
-     *
-     * @return false
-     */
-    public boolean isDivideByZero() {
         return false;
     }
 
@@ -112,13 +70,14 @@ public abstract class CodeStub {
         }
     }
 
-    public abstract void emitCode(LIRAssembler e);
+    public abstract void accept(CodeStubVisitor visitor);
 
-    public abstract void printName(LogStream out);
+    public void printName(LogStream out) {
+        out.print(name());
+    }
 
     public String name() {
-        // TODO Auto-generated method stub
-        return null;
+        return this.getClass().getSimpleName();
     }
 
 }

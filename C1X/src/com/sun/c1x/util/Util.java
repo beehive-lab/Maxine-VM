@@ -502,15 +502,6 @@ public class Util {
         return 4;
     }
 
-    public static int convertToPointer32(Object obj) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-    public static int convertToPointer64(Object obj) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
     public static boolean is8bit(long l) {
         // TODO Auto-generated method stub
         return false;

@@ -53,6 +53,12 @@ public class X86FrameMap extends FrameMap {
     private static final LIROperand rspOpr64 = asPointerOpr64(X86Register.rsp);
 
 
+    @Override
+    public Register stackRegister() {
+        // TODO Retrieve this from target or runtime!
+        return X86Register.rsp;
+    }
+
     static final LIROperand rspOpr(Architecture arch) {
         if (arch.is32bit()) {
             return rspOpr32;
@@ -103,10 +109,10 @@ public class X86FrameMap extends FrameMap {
     }
 
     static final LIROperand fpu0FloatOpr   = LIROperandFactory.singleLocation(BasicType.Float, X86Register.fpu0);
-    static final LIROperand fpu0DoubleOpr   = LIROperandFactory.singleLocation(BasicType.Double, X86Register.fpu0);
+    static final LIROperand fpu0DoubleOpr   = LIROperandFactory.doubleLocation(BasicType.Double, X86Register.fpu0, X86Register.fpu0);
 
     static final LIROperand xmm0floatOpr = LIROperandFactory.singleLocation(BasicType.Float, X86Register.xmm0);
-    static final LIROperand xmm0doubleOpr = LIROperandFactory.singleLocation(BasicType.Double, X86Register.xmm0);
+    static final LIROperand xmm0doubleOpr = LIROperandFactory.doubleLocation(BasicType.Double, X86Register.xmm0, X86Register.xmm0);
 
     static LIROperand asOopOpr(Register reg) {
         return LIROperandFactory.singleLocation(BasicType.Object, reg);

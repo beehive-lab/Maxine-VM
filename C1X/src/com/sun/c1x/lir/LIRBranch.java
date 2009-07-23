@@ -62,7 +62,7 @@ public class LIRBranch extends LIRInstruction {
      *
      */
     public LIRBranch(LIRCondition cond, BasicType type, CodeStub stub) {
-        this(cond, stub.entry());
+        this(cond, stub.entry);
         this.type = type;
         this.stub = stub;
     }
@@ -174,8 +174,8 @@ public class LIRBranch extends LIRInstruction {
             out.print("[");
             stub().printName(out);
             out.printf(": %s]", stub().toString());
-            if (stub().info() != null) {
-                out.printf(" [bci:%d]", stub().info().bci());
+            if (stub().info != null) {
+                out.printf(" [bci:%d]", stub().info.bci());
             }
         } else {
             out.printf("[label:0x%x] ", label().loc());

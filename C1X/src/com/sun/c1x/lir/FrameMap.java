@@ -140,14 +140,14 @@ public abstract class FrameMap {
         return this.incomingArguments;
     }
 
-    public Address addressForSlot(int singleStackIx) {
-        // TODO Auto-generated method stub
-        return null;
+    public abstract Register stackRegister();
+
+    public Address addressForSlot(int stackSlot) {
+        return addressForSlot(stackSlot, 0);
     }
 
-    public Address addressForSlot(int doubleStackIx, int i) {
-        // TODO Auto-generated method stub
-        return null;
+    public Address addressForSlot(int stackSlot, int offset) {
+        return new Address(stackRegister(), stackSlot * spillSlotSizeInBytes + offset);
     }
 
     public int reservedArgumentAreaSize() {

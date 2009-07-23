@@ -128,6 +128,6 @@ public class LIRLock extends LIRInstruction{
             scratch.print(out);
             out.print(" ");
         }
-        out.printf("[lbl:0x%x]", stub.entry());
+        out.printf("[lbl:0x%x]", stub.entry);
     }
 }

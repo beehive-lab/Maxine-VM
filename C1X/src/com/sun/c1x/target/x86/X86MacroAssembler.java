@@ -371,11 +371,11 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void cmpoop(Address src1, Object obj) {
-        cmpLiteral32(src1, Util.convertToPointer32(obj), Relocation.specForImmediate());
+        cmpLiteral32(src1, compilation.runtime.convertToPointer32(obj), Relocation.specForImmediate());
     }
 
     void cmpoop(Register src1, Object obj) {
-        cmpLiteral32(src1, Util.convertToPointer32(obj), Relocation.specForImmediate());
+        cmpLiteral32(src1, compilation.runtime.convertToPointer32(obj), Relocation.specForImmediate());
     }
 
     void extendSign(Register hi, Register lo) {
@@ -485,9 +485,9 @@ public class X86MacroAssembler extends X86Assembler {
 
     void lea(Register dst, AddressLiteral src) {
         if (compilation.target.arch.is32bit()) {
-            movLiteral32(dst, Util.safeToInt(src.target().value), src.rspec());
+            movLiteral32(dst, Util.safeToInt(src.target()), src.rspec());
         } else if (compilation.target.arch.is64bit()) {
-            movLiteral64(dst, src.target().value, src.rspec());
+            movLiteral64(dst, src.target(), src.rspec());
         } else {
             Util.shouldNotReachHere();
         }
@@ -497,10 +497,10 @@ public class X86MacroAssembler extends X86Assembler {
         if (compilation.target.arch.is32bit()) {
             // leal(dst, asAddress(adr));
             // see note in movl as to why we must use a move
-            movLiteral32(dst, Util.safeToInt(adr.target().value), adr.rspec());
+            movLiteral32(dst, Util.safeToInt(adr.target()), adr.rspec());
         } else if (compilation.target.arch.is64bit()) {
 
-            movLiteral64(rscratch1, adr.target().value, adr.rspec());
+            movLiteral64(rscratch1, adr.target(), adr.rspec());
             movptr(dst, rscratch1);
         } else {
             Util.shouldNotReachHere();
@@ -622,10 +622,10 @@ public class X86MacroAssembler extends X86Assembler {
 
     void movoop(Register dst, Object obj) {
         if (compilation.target.arch.is32bit()) {
-            movLiteral32(dst, Util.convertToPointer32(obj), Relocation.specForImmediate());
+            movLiteral32(dst, compilation.runtime.convertToPointer32(obj), Relocation.specForImmediate());
         } else if (compilation.target.arch.is64bit()) {
 
-            movLiteral64(dst, Util.convertToPointer64(obj), Relocation.specForImmediate());
+            movLiteral64(dst, compilation.runtime.convertToPointer64(obj), Relocation.specForImmediate());
         } else {
             Util.shouldNotReachHere();
         }
@@ -634,9 +634,9 @@ public class X86MacroAssembler extends X86Assembler {
     void movoop(Address dst, Object obj) {
 
         if (compilation.target.arch.is32bit()) {
-            movLiteral32(dst, Util.convertToPointer32(obj), Relocation.specForImmediate());
+            movLiteral32(dst, compilation.runtime.convertToPointer32(obj), Relocation.specForImmediate());
         } else if (compilation.target.arch.is64bit()) {
-            movLiteral64(rscratch1, Util.convertToPointer64(obj), Relocation.specForImmediate());
+            movLiteral64(rscratch1, compilation.runtime.convertToPointer64(obj), Relocation.specForImmediate());
             movq(dst, rscratch1);
         } else {
             Util.shouldNotReachHere();
@@ -647,14 +647,14 @@ public class X86MacroAssembler extends X86Assembler {
 
         if (compilation.target.arch.is32bit()) {
             if (src.isLval()) {
-                movLiteral32(dst, Util.safeToInt(src.target().value), src.rspec());
+                movLiteral32(dst, Util.safeToInt(src.target()), src.rspec());
             } else {
                 movl(dst, asAddress(src));
             }
         } else if (compilation.target.arch.is64bit()) {
 
             if (src.isLval()) {
-                movLiteral64(dst, src.target().value, src.rspec());
+                movLiteral64(dst, src.target(), src.rspec());
             } else {
                 if (reachable(src)) {
                     movq(dst, asAddress(src));
@@ -735,7 +735,7 @@ public class X86MacroAssembler extends X86Assembler {
     void pushoop(Object obj) {
 
         if (compilation.target.arch.is32bit()) {
-            pushLiteral32(Util.convertToPointer32(obj), Relocation.specForImmediate());
+            pushLiteral32(compilation.runtime.convertToPointer32(obj), Relocation.specForImmediate());
         } else if (compilation.target.arch.is64bit()) {
             movoop(rscratch1, obj);
             push(rscratch1);
@@ -748,7 +748,7 @@ public class X86MacroAssembler extends X86Assembler {
 
         if (compilation.target.arch.is32bit()) {
             if (src.isLval()) {
-                pushLiteral32(Util.safeToInt(src.target().value), src.rspec());
+                pushLiteral32(Util.safeToInt(src.target()), src.rspec());
             } else {
                 pushl(asAddress(src));
             }
@@ -859,7 +859,7 @@ public class X86MacroAssembler extends X86Assembler {
         // jmp/call are displacements others are absolute
         assert !adr.isLval() : "must be rval";
         assert reachable(adr) : "must be";
-        return new Address(Util.safeToInt(adr.target().value - pc().value), adr.target(), adr.reloc());
+        return new Address(Util.safeToInt(adr.target() - pc()), adr.target(), adr.reloc());
 
     }
 
@@ -1228,7 +1228,7 @@ public class X86MacroAssembler extends X86Assembler {
     void stop(String msg) {
 
         if (compilation.target.arch.is64bit()) {
-            long rip = pc().value;
+            int rip = pc();
             pusha(); // get regs on stack
             lea(cRarg0, new ExternalAddress(Util.stringToAddress(msg)));
             lea(cRarg1, new InternalAddress(rip));
@@ -1719,7 +1719,7 @@ public class X86MacroAssembler extends X86Assembler {
             }
         } else {
             if (src2.isLval()) {
-                cmpLiteral32(src1, Util.safeToInt(src2.target().value), src2.rspec());
+                cmpLiteral32(src1, Util.safeToInt(src2.target()), src2.rspec());
             } else {
                 cmpl(src1, asAddress(src2));
             }
@@ -1765,7 +1765,7 @@ public class X86MacroAssembler extends X86Assembler {
             movptr(rscratch1, src2);
             cmpq(src1, rscratch1);
         } else {
-            cmpLiteral32(src1, Util.safeToInt(src2.target().value), src2.rspec());
+            cmpLiteral32(src1, Util.safeToInt(src2.target()), src2.rspec());
         }
     }
 
@@ -2136,7 +2136,7 @@ public class X86MacroAssembler extends X86Assembler {
                 relocate(dst.rspec);
                 int shortSize = 2;
                 int longSize = 6;
-                int offs = Util.safeToInt(dst.target().value - codeBuffer.position());
+                int offs = Util.safeToInt(dst.target() - codeBuffer.position());
                 if (dst.reloc() == RelocInfo.Type.none && is8bit(offs - shortSize)) {
                     // 0111 tttn #8-bit disp
                     emitByte(0x70 | cc.value);
@@ -2377,15 +2377,6 @@ public class X86MacroAssembler extends X86Assembler {
             movq(dst, src);
         } else {
             movl(dst, src);
-        }
-    }
-
-    // src should NEVER be a real pointer. Use AddressLiteral for true pointers
-    void movptr(Register dst, Pointer src) {
-        if (compilation.target.arch.is64bit()) {
-            mov64(dst, src.value);
-        } else {
-            movl(dst, Util.safeToInt(src.value));
         }
     }
 
@@ -3049,13 +3040,19 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void checkKlassSubtype(Register subKlass, Register superKlass, Register tempReg, Label lSuccess) {
-        Label lFailure = new Label();
-        checkKlassSubtypeFastPath(subKlass, superKlass, tempReg, lSuccess, lFailure, null, new RegisterOrConstant(-1));
+        // TODO: Also use the fast path!
+        //Label lFailure = new Label();
+        //checkKlassSubtypeFastPath(subKlass, superKlass, tempReg, lSuccess, lFailure, null, new RegisterOrConstant(-1));
         checkKlassSubtypeSlowPath(subKlass, superKlass, tempReg, Register.noreg, lSuccess, null, false);
-        bind(lFailure);
+        //bind(lFailure);
     }
 
     void checkKlassSubtypeFastPath(Register subKlass, Register superKlass, Register tempReg, Label lSuccess, Label lFailure, Label lSlowPath, RegisterOrConstant superCheckOffset) {
+        // TODO: Model the fast path!
+        if (true) {
+            throw Util.unimplemented();
+        }
+
         assert Register.assertDifferentRegisters(subKlass, superKlass, tempReg);
         boolean mustLoadSco = (superCheckOffset.constantOrZero() == -1);
         if (superCheckOffset.isRegister()) {
@@ -3083,18 +3080,6 @@ public class X86MacroAssembler extends X86Assembler {
         int scOffset = (compilation.runtime.headerSize() * wordSize + compilation.runtime.secondarySuperCacheOffsetInBytes());
         int scoOffset = (compilation.runtime.headerSize() * wordSize + compilation.runtime.superCheckOffsetOffsetInBytes());
         Address superCheckOffsetAddr = new Address(superKlass, scoOffset);
-
-        // Hacked jcc : which "knows" that LFallthrough : at least : is in
-        // range of a jccb. If this routine grows larger : reconsider at
-        // least some of these.
-// #define localJcc(assemblerCond, label) \
-// if (&(label) == &LFallthrough) jccb(assemblerCond, label); \
-// else jcc( assemblerCond, label) /omit semi/
-//
-// // Hacked jmp : which may only be used just before LFallthrough.
-// #define finalJmp(label) \
-// if (&(label) == &LFallthrough) { /do nothing/ } \
-// else jmp(label) /omit semi/
 
         // If the pointers are equal : we are done (e.g., String[] elements).
         // This self-check enables sharing of secondary supertype arrays among
@@ -3370,29 +3355,6 @@ public class X86MacroAssembler extends X86Assembler {
         movptr(X86Register.rax, new RuntimeAddress(CiRuntimeCall.VerifyOopSubroutine));
         call(X86Register.rax);
         return true;
-    }
-
-    RegisterOrConstant delayedValueImpl(Pointer delayedValueAddr, Register tmp, int offset) {
-        long value = delayedValueAddr.readPointer();
-        if (value != 0) {
-            return new RegisterOrConstant(value + offset);
-        }
-        // load indirectly to solve generation ordering problem
-        movptr(tmp, new ExternalAddress(delayedValueAddr.value));
-
-        if (C1XOptions.GenerateAssertionCode) {
-            Label l = new Label();
-            testl(tmp, tmp);
-            jccb(Condition.notZero, l);
-            hlt();
-            bind(l);
-        }
-
-        if (offset != 0) {
-            addptr(tmp, offset);
-        }
-
-        return new RegisterOrConstant(tmp);
     }
 
     // registers on entry:
@@ -4129,5 +4091,9 @@ public class X86MacroAssembler extends X86Assembler {
     public int longConstant(long l, int alignment) {
         dataBuffer.align(alignment);
         return dataBuffer.emitLong(l);
+    }
+
+    public void shouldNotReachHere() {
+        stop("should not reach here");
     }
 }

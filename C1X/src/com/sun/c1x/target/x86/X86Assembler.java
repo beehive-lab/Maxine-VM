@@ -343,14 +343,14 @@ public abstract class X86Assembler extends AbstractAssembler {
                 // at the start of the instruction. That needs more correction here.
                 // intptrT disp = target - nextIp;
                 assert instMark() != InvalidInstructionMark : "must be inside InstructionMark";
-                long nextIp = pc().value + Util.sizeofInt() + ripRelativeCorrection;
-                long adjusted = disp;
+                int nextIp = pc() + Util.sizeofInt() + ripRelativeCorrection;
+                int adjusted = disp;
                 // Do rip-rel adjustment for 64bit
                 if (compilation.target.arch.is64bit()) {
                     adjusted -= (nextIp - instMark());
                 }
                 assert isSimm32(adjusted) : "must be 32bit offset (RIP relative Address)";
-                emitData((int) adjusted, rspec, WhichOperand.disp32operand);
+                emitData(adjusted, rspec, WhichOperand.disp32operand);
 
             } else {
                 // 32bit never did this, did everything as the rip-rel/disp code above
@@ -1065,7 +1065,7 @@ public abstract class X86Assembler extends AbstractAssembler {
 
         if (l.isBound()) {
             int longSize = 5;
-            int offs = Util.safeToInt(target(l).value - pc().value);
+            int offs = Util.safeToInt(target(l) - pc());
             assert offs <= 0 : "assembler error";
             this.setInstMark();
             try {
@@ -1111,12 +1111,11 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    void callLiteral(Pointer entry, Relocation rspec) {
-        assert entry != null : "call most probably wrong";
+    void callLiteral(long l, Relocation rspec) {
         this.setInstMark();
         try {
             emitByte(0xE8);
-            long disp = entry.value - (codeBuffer.position() + Util.sizeofInt());
+            long disp = l - (codeBuffer.position() + Util.sizeofInt());
             assert isSimm32(disp) : "must be 32bit offset (call2)";
             // Technically, should use WhichOperand.call32operand, but this format is
             // implied by the fact that we're emitting a call instruction.
@@ -1473,12 +1472,11 @@ public abstract class X86Assembler extends AbstractAssembler {
             relocate(reloc);
             assert (0 <= cc.value) && (cc.value < 16) : "illegal cc";
             if (l.isBound()) {
-                Pointer dst = target(l);
-                assert dst != null : "jcc most probably wrong";
+                int dst = target(l);
 
                 int shortSize = 2;
                 int longSize = 6;
-                long offs = dst.value - codeBuffer.position();
+                long offs = dst - codeBuffer.position();
                 if (reloc.type() == RelocInfo.Type.none && Util.is8bit(offs - shortSize)) {
                     // 0111 tttn #8-bit disp
                     emitByte(0x70 | cc.value);
@@ -1508,9 +1506,9 @@ public abstract class X86Assembler extends AbstractAssembler {
     void jccb(Condition cc, Label l) {
         if (l.isBound()) {
             int shortSize = 2;
-            Pointer entry = target(l);
-            assert Util.is8bit(entry.value - (codeBuffer.position() + shortSize)) : "Dispacement too large for a short jmp";
-            long offs = entry.value - codeBuffer.position();
+            int entry = target(l);
+            assert Util.is8bit(entry - (codeBuffer.position() + shortSize)) : "Dispacement too large for a short jmp";
+            long offs = entry - codeBuffer.position();
             // 0111 tttn #8-bit disp
             emitByte(0x70 | cc.value);
             emitByte((int) ((offs - shortSize) & 0xFF));
@@ -1539,13 +1537,12 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     void jmp(Label l, Relocation reloc) {
         if (l.isBound()) {
-            Pointer entry = target(l);
-            assert entry != null : "jmp most probably wrong";
+            int entry = target(l);
             this.setInstMark();
             try {
                 int shortSize = 2;
                 int longSize = 5;
-                long offs = entry.value - codeBuffer.position();
+                long offs = entry - codeBuffer.position();
                 if (reloc.type() == RelocInfo.Type.none && Util.is8bit(offs - shortSize)) {
                     emitByte(0xEB);
                     emitByte((int) ((offs - shortSize) & 0xFF));
@@ -1579,12 +1576,11 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xE0 | encode);
     }
 
-    void jmpLiteral(Pointer dest, Relocation rspec) {
+    void jmpLiteral(long l, Relocation rspec) {
         this.setInstMark();
         try {
             emitByte(0xE9);
-            assert dest != null : "must have a target";
-            long disp = dest.value - (codeBuffer.position() + Util.sizeofInt());
+            long disp = l - (codeBuffer.position() + Util.sizeofInt());
             assert isSimm32(disp) : "must be 32bit offset (jmp)";
             emitData((int) disp, rspec.type(), WhichOperand.call32operand.ordinal());
         } finally {
@@ -1595,10 +1591,9 @@ public abstract class X86Assembler extends AbstractAssembler {
     void jmpb(Label l) {
         if (l.isBound()) {
             int shortSize = 2;
-            Pointer entry = target(l);
-            assert entry != null : "jmp most probably wrong";
-            assert Util.is8bit((entry.value - codeBuffer.position()) + shortSize) : "Dispacement too large for a short jmp";
-            long offs = entry.value - codeBuffer.position();
+            int entry = target(l);
+            assert Util.is8bit((entry - codeBuffer.position()) + shortSize) : "Dispacement too large for a short jmp";
+            long offs = entry - codeBuffer.position();
             emitByte(0xEB);
             emitByte((int) ((offs - shortSize) & 0xFF));
         } else {
@@ -1979,8 +1974,8 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     void movq(Register dst, Register src) {
-        int encode = prefixqAndEncode(dst.encoding, src.encoding);
-        emitByte(0x8B);
+        int encode = prefixqAndEncode(src.encoding, dst.encoding);
+        emitByte(0x89);
         emitByte(0xC0 | encode);
     }
 
@@ -2129,8 +2124,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    void movswl(Register dst, Address src) { // movsxw
-        assert dst.isXMM();
+    void movswl(Register dst, Address src) {
         this.setInstMark();
         try {
             prefix(src, dst);
@@ -4285,10 +4279,10 @@ public abstract class X86Assembler extends AbstractAssembler {
     void emitData64(long data, Relocation rspec) {
         assert WhichOperand.immOperand.ordinal() == 0 : "default format must be immediate in this file";
         assert instMark() != InvalidInstructionMark : "must be inside InstructionMark";
-        // Do not use Abstractrelocate, which is not intended for
-        // embedded words. Instead, relocate to the enclosing instruction.
-        relocate(instMark(), rspec);
-        assert checkRelocation(rspec, rspec.format());
+        if (rspec != null) {
+            relocate(instMark(), rspec);
+            assert checkRelocation(rspec, rspec.format());
+        }
         emitLong(data);
     }
 
@@ -4344,24 +4338,31 @@ public abstract class X86Assembler extends AbstractAssembler {
         return dstEnc << 3 | srcEnc;
     }
 
-    int prefixqAndEncode(int dstEnc, int srcEnc) {
-        if (dstEnc < 8) {
-            if (srcEnc < 8) {
+    /**
+     * Creates prefix and the encoding of the lower 6 bits of the ModRM-Byte. It emits an operand prefix.
+     * If the given operands exceed 3 bits, the 4th bit is encoded in the prefix.
+     * @param regEnc the encoding of the register part of the ModRM-Byte
+     * @param rmEnc the encoding of the r/m part of the ModRM-Byte
+     * @return the lower 6 bits of the ModRM-Byte that should be emitted
+     */
+    int prefixqAndEncode(int regEnc, int rmEnc) {
+        if (regEnc < 8) {
+            if (rmEnc < 8) {
                 prefix(Prefix.REXW);
             } else {
                 prefix(Prefix.REXWB);
-                srcEnc -= 8;
+                rmEnc -= 8;
             }
         } else {
-            if (srcEnc < 8) {
+            if (rmEnc < 8) {
                 prefix(Prefix.REXWR);
             } else {
                 prefix(Prefix.REXWRB);
-                srcEnc -= 8;
+                rmEnc -= 8;
             }
-            dstEnc -= 8;
+            regEnc -= 8;
         }
-        return dstEnc << 3 | srcEnc;
+        return regEnc << 3 | rmEnc;
     }
 
     void prefix(Register reg) {

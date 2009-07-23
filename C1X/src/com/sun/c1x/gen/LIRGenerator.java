@@ -2064,24 +2064,6 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         }
     }
 
-    protected void newInstance(LIROperand dst, CiType klass, LIROperand scratch1, LIROperand scratch2, LIROperand scratch3, LIROperand scratch4, LIROperand klassReg, CodeEmitInfo info) {
-        jobject2regWithPatching(klassReg, klass, info);
-        // If klass is not loaded we do not know if the klass has finalizers:
-        if (C1XOptions.UseFastNewInstance && klass.isLoaded() && !klass.layoutHelperNeedsSlowPath()) {
-            CiRuntimeCall stubId = klass.isInitialized() ? CiRuntimeCall.FastNewInstance : CiRuntimeCall.FastNewInstanceInitCheck;
-            CodeStub slowPath = new NewInstanceStub(klassReg, dst, klass, info, stubId);
-            assert klass.isLoaded() : "must be loaded";
-            // allocate space for instance
-            assert klass.sizeHelper() >= 0 : "illegal instance size";
-            int instanceSize = Util.align(klass.sizeHelper(), compilation.target.heapAlignment);
-            lir.allocateObject(dst, scratch1, scratch2, scratch3, scratch4, compilation.runtime.headerSize(), instanceSize, klassReg, !klass.isInitialized(), slowPath);
-        } else {
-            CodeStub slowPath = new NewInstanceStub(klassReg, dst, klass, info, CiRuntimeCall.NewInstance);
-            lir.branch(LIRCondition.Always, BasicType.Illegal, slowPath);
-            lir.branchDestination(slowPath.continuation());
-        }
-    }
-
     protected final LIROperand newPointerRegister() {
         // returns a register suitable for doing pointer math
         // XXX: revisit this when there is a basic type for Pointers

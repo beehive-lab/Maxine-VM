@@ -51,9 +51,10 @@ public class LIRLocation extends LIROperand {
      */
     public LIRLocation(BasicType basicType, Register number) {
         super(basicType);
+        assert basicType.size == 1;
         assert number != null;
         this.location1 = number;
-        this.location2 = number;
+        this.location2 = Register.noreg;
         index = 0;
     }
 
@@ -86,6 +87,7 @@ public class LIRLocation extends LIROperand {
      */
     public LIRLocation(BasicType basicType, Register location1, Register location2) {
         super(basicType);
+        assert basicType.size == 2;
         assert location1 != null && location2 != null;
         this.location1 = location1;
         this.location2 = location2;
@@ -149,12 +151,12 @@ public class LIRLocation extends LIROperand {
 
     @Override
     public boolean isSingleCpu() {
-        return !isStack() && basicType.sizeInSlots() == 1;
+        return !isStack() && location2 == Register.noreg && location1.isCpu();
     }
 
     @Override
     public boolean isDoubleCpu() {
-        return !isStack() && basicType.sizeInSlots() == 2;
+        return !isStack() && location2 != Register.noreg && location1.isCpu() && location2.isCpu();
     }
 
     @Override
@@ -229,7 +231,7 @@ public class LIRLocation extends LIROperand {
 
     @Override
     public Register asRegister() {
-        assert location1 == location2;
+        assert location1 == location2 || location2 == Register.noreg;
         return this.location1;
     }
 
@@ -284,6 +286,8 @@ public class LIRLocation extends LIROperand {
         assert this.isFpuRegister() && !this.isVirtualRegister();
         return location2.number;
     }
+
+
 
 
     /**

@@ -48,6 +48,8 @@ public abstract class Architecture {
     public final String name;
     public final BitOrdering bitOrdering;
     public final int framePadding;
+    public final int nativeCallDisplacementOffset;
+    public final int nativeMoveConstInstructionSize;
 
     public static final Architecture findArchitecture(String name) {
         // load and instantiate the backend via reflection
@@ -64,7 +66,7 @@ public abstract class Architecture {
         }
     }
 
-    protected Architecture(String name, int wordSize, String backend, BitOrdering bitOrdering, Register[] registers, final int framePadding) {
+    protected Architecture(String name, int wordSize, String backend, BitOrdering bitOrdering, Register[] registers, final int framePadding, final int nativeCallDisplacementOffset, final int nativeMoveConstInstructionSize) {
         this.name = name;
         this.registers = registers;
         this.wordSize = wordSize;
@@ -73,6 +75,8 @@ public abstract class Architecture {
         this.logBytesPerInt = (int) (java.lang.Math.log(wordSize));
         this.bitOrdering = bitOrdering;
         this.framePadding = framePadding;
+        this.nativeCallDisplacementOffset = nativeCallDisplacementOffset;
+        this.nativeMoveConstInstructionSize = nativeMoveConstInstructionSize;
         switch (bitOrdering) {
             case LittleEndian:
                 loWordOffsetInBytes = 0;

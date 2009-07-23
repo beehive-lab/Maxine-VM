@@ -135,7 +135,7 @@ public class C1XOptions {
     public static boolean PrintIRWithLIR                     = ____;
     public static boolean LIRFillDelaySlots                  = ____;
     public static boolean LIRTraceExecution                  = ____;
-    public static boolean TwoOperandLIRForm                  = ____;
+    public static boolean TwoOperandLIRForm                  = TRUE; // This flag is false for SPARC => probably move it to target
     public static boolean PatchALot                          = ____;
     public static boolean PrintNotLoaded                     = ____;
     public static boolean GenerateSynchronizationCode        = ____;
@@ -150,6 +150,8 @@ public class C1XOptions {
     public static boolean PrintLIR                           = ____;
     public static boolean Verbose                            = ____;
     public static boolean LIRTracePeephole                   = ____;
+
+    public static boolean AvoidUnsupported                   = TRUE; // Bails out when reaching code that is currently not supported
 
     // backend optimization settings
     public static boolean OptimizeControlFlow                = ____;
@@ -170,7 +172,7 @@ public class C1XOptions {
     public static int     StackShadowPages                   = 3;
 
     // Assembler settings
-    public static boolean GenerateAssembly                   = ____;
+    public static boolean GenerateAssembly                   = TRUE;
     public static boolean CommentedAssembly                  = ____;
     public static boolean PrintLIRWithAssembly               = ____;
     public static boolean VerifyOopMaps                      = ____;

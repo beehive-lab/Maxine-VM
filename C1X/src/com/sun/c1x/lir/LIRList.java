@@ -90,7 +90,7 @@ public class LIRList {
     }
 
     public void callOptVirtual(CiMethod method, LIROperand receiver, LIROperand result, CiRuntimeCall dest, List<LIROperand> arguments, CodeEmitInfo info) {
-        append(new LIRJavaCall(LIROpcode.VirtualCall, method, receiver, result, dest, arguments, info));
+        append(new LIRJavaCall(LIROpcode.OptVirtualCall, method, receiver, result, dest, arguments, info));
     }
 
     public void callStatic(CiMethod method, LIROperand result, CiRuntimeCall dest, List<LIROperand> arguments, CodeEmitInfo info) {

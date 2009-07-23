@@ -57,14 +57,6 @@ public abstract class LIROperand {
         return this == ILLEGAL;
     }
 
-    public int lowerRegisterHalf() {
-        throw Util.shouldNotReachHere();
-    }
-
-    public int higherRegisterHalf() {
-        throw Util.shouldNotReachHere();
-    }
-
     public static LIROperand illegalOpr() {
         return ILLEGAL;
     }
@@ -320,12 +312,6 @@ public abstract class LIROperand {
             return asRegisterLo();
         }
         return asRegister();
-    }
-
-
-    // for compatibility with RInfo
-    public int fpu() {
-        return lowerRegisterHalf();
     }
 
     public int asInt() {

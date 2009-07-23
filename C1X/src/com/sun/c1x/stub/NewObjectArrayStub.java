@@ -21,7 +21,6 @@
 package com.sun.c1x.stub;
 
 import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
 
 
 /**
@@ -33,10 +32,9 @@ import com.sun.c1x.util.*;
  */
 public class NewObjectArrayStub extends CodeStub {
 
-    private LIROperand klassReg;
-    private LIROperand length;
-    private LIROperand result;
-    private CodeEmitInfo info;
+    public final LIROperand klassReg;
+    public final LIROperand length;
+    public final LIROperand result;
 
     /**
      * Creates a new instance of <code>NewObjectArrayStub</code>.
@@ -47,22 +45,17 @@ public class NewObjectArrayStub extends CodeStub {
      * @param info
      */
     public NewObjectArrayStub(LIROperand klassReg, LIROperand length, LIROperand result, CodeEmitInfo info) {
-        super();
+        super(info);
         this.klassReg = klassReg;
         this.length = length;
         this.result = result;
-        this.info = info;
     }
 
     @Override
-    public void emitCode(LIRAssembler e) {
-
+    public void accept(CodeStubVisitor visitor) {
+        visitor.visitNewObjectArrayStub(this);
     }
 
-    @Override
-    public CodeEmitInfo info() {
-        return info;
-    }
 
     @Override
     public void visit(LIRVisitState visitor) {
@@ -71,10 +64,5 @@ public class NewObjectArrayStub extends CodeStub {
         visitor.doInput(length);
         assert result.isValid() : "must be valid";
         visitor.doOutput(result);
-    }
-
-    @Override
-    public void printName(LogStream out) {
-        out.print("NewObjectArrayStub");
     }
 }

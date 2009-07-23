@@ -55,13 +55,8 @@ public abstract class AbstractAssembler {
         return 0 <= x && x < 32;
     }
 
-    // Accessors
-    public CodeSection codeSection() {
-        return null;
-    }
-
-    public Pointer pc() {
-        return new Pointer(codeBuffer.position());
+    public int pc() {
+        return codeBuffer.position();
     }
 
     public int offset() {
@@ -107,7 +102,7 @@ public abstract class AbstractAssembler {
         throw Util.unimplemented();
     }
 
-    protected void aByte(int x) {
+    public void aByte(int x) {
         emitByte(x);
     }
 
@@ -221,19 +216,41 @@ public abstract class AbstractAssembler {
 
     protected abstract boolean pdCheckInstructionMark();
 
-    protected Pointer target(Label l) {
-        return codeSection().target(l, pc());
+    protected int target(Label l) {
+
+        int branchPc = pc();
+        if (l.isBound()) {
+            int loc = l.loc();
+            return loc;
+        } else {
+            l.addPatchAt(branchPc);
+
+            // Need to return a pc, doesn't matter what it is since it will be
+            // replaced during resolution later.
+            // Don't return null or badAddress, since branches shouldn't overflow.
+            // Don't return base either because that could overflow displacements
+            // for shorter branches. It will get checked when bound.
+            return branchPc;
+        }
     }
 
     public int doubleConstant(double d) {
         int offset = dataBuffer.emitDouble(d);
-        compilation.targetMethod.recordDataReferenceInCode(lastInstructionStart, offset, true);
+        recordDataReferenceInCode(lastInstructionStart, offset);
         return offset;
+    }
+
+    private void recordDataReferenceInCode(int codeOffset, int dataOffset) {
+        if (compilation.targetMethod == null) {
+            TTY.println("Record data reference in code: code-offset=%d, data-offset=%d", codeOffset, dataOffset);
+        } else {
+            compilation.targetMethod.recordDataReferenceInCode(codeOffset, dataOffset, true);
+        }
     }
 
     public int floatConstant(float f) {
         int offset = dataBuffer.emitFloat(f);
-        compilation.targetMethod.recordDataReferenceInCode(lastInstructionStart, offset, true);
+        recordDataReferenceInCode(lastInstructionStart, offset);
         return offset;
     }
 

@@ -2305,7 +2305,7 @@ public class LinearScan extends RegisterAllocator {
                     if (C1XOptions.SSEVersion >= 2 && compilation.target.arch.isX86()) {
                         assert isXmm(assignedReg) : "no xmm register";
                         assert interval.assignedRegHi() == getAnyreg() : "must not have hi register (double xmm values are stored in one register)";
-                        return LIROperandFactory.singleLocation(BasicType.Double, toRegister(assignedReg));
+                        return LIROperandFactory.doubleLocation(BasicType.Double, toRegister(assignedReg), toRegister(assignedReg));
                     }
 
                     LIROperand result;
@@ -2871,7 +2871,7 @@ public class LinearScan extends RegisterAllocator {
                 }
 
             } else if (opr.isDoubleXmm() && compilation.target.arch.isX86()) {
-                assert opr.fpuRegnrLo() == opr.fpuRegnrHi() : "assumed in calculation";
+                assert opr.asRegisterLo() == opr.asRegisterHi() : "assumed in calculation";
                 CiLocation rnameFirst = opr.asRegister().asVMReg();
                 first = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rnameFirst));
                 // %%% This is probably a waste but we'll keep things as they were for now

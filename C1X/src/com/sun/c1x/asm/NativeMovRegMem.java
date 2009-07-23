@@ -30,7 +30,7 @@ package com.sun.c1x.asm;
  */
 public class NativeMovRegMem {
 
-    public static NativeMovRegMem nativeMoveRegMemAt(Pointer pointer) {
+    public static NativeMovRegMem nativeMoveRegMemAt(int i) {
         return null; // TODO
     }
 
