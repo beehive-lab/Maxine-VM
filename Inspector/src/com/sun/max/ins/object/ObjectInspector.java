@@ -299,6 +299,7 @@ public abstract class ObjectInspector extends Inspector {
                 objectHeaderTable.refresh(force);
             }
         }
+        updateFrameTitle();
         super.refreshView(force);
 
         return true;

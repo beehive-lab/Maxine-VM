@@ -72,9 +72,11 @@ public class RelocatableWatchpointTest2 {
         public SimpleObject(int value1, int value2) {
             this.value1 = value1;
             this.value2 = value2;
+            this.string = new String("test");
         }
 
         public int value1;
         public int value2;
+        public String string;
     }
 }

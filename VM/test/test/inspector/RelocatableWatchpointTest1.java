@@ -47,9 +47,7 @@ public class RelocatableWatchpointTest1 {
     }
 
     public static void relocationTest() {
-        String test = getGarbageMessage();
-        printMessage(test);
-        test = getMessage();
+        String test = getMessage();
         printMessage(test);
         for (int i = 0; i < allocations; i++) {
             final byte[] tmp = new byte[allocationSize];
