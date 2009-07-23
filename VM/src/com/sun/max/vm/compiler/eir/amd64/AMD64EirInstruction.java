@@ -2118,7 +2118,9 @@ public interface AMD64EirInstruction {
 
         @Override
         public void emit(AMD64EirTargetEmitter emitter) {
-            emitter.assembler().mfence();
+            //The following is found to be faster than the more natural: emitter.assembler().mfence();
+            emitter.assembler().lock();
+            emitter.assembler().addl(0, emitter.stackPointer().indirect(), 0);
         }
 
         @Override
