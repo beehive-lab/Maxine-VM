@@ -113,12 +113,13 @@ public class BlockWorkList {
     }
 
     private void grow() {
-        BlockBegin[] nworkList = new BlockBegin[workList.length * 3];
-        System.arraycopy(workList, 0, nworkList, 0, workList.length);
+        int prevLength = workList.length;
+        BlockBegin[] nworkList = new BlockBegin[prevLength * 3];
+        System.arraycopy(workList, 0, nworkList, 0, prevLength);
         workList = nworkList;
 
-        int[] nworkListNumbers = new int[workList.length * 3];
-        System.arraycopy(workListNumbers, 0, nworkListNumbers, 0, workList.length);
+        int[] nworkListNumbers = new int[prevLength * 3];
+        System.arraycopy(workListNumbers, 0, nworkListNumbers, 0, prevLength);
         workListNumbers = nworkListNumbers;
     }
 

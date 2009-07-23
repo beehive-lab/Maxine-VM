@@ -57,7 +57,7 @@ import java.util.*;
 public class NullCheckEliminator extends InstructionVisitor {
 
     final IR ir;
-    BlockWorkList workList;
+    final BlockWorkList workList = new BlockWorkList();
 
     boolean requiresIteration;
 
@@ -169,10 +169,13 @@ public class NullCheckEliminator extends InstructionVisitor {
             index = new HashMap<Instruction, Integer>();
             inBitmaps = new HashMap<BlockBegin, BitMap>();
             outBitmaps = new HashMap<BlockBegin, BitMap>();
+            marked.clear();
             // start off by propagating a new set to the start block
             propagate(new BitMap(32), ir.startBlock);
             while (!workList.isEmpty()) {
-                iterateBlock(workList.removeFromWorkList());
+                BlockBegin begin = workList.removeFromWorkList();
+                marked.remove(begin);
+                iterateBlock(begin);
             }
             // now that the fixed point is reached, reprocess any remaining localUses
             currentUses = null; // the list won't be needed this time
@@ -205,7 +208,7 @@ public class NullCheckEliminator extends InstructionVisitor {
             out = prevMap.copy();
             out.setUnion(localOut);
         }
-        propagateSuccessors(out, block.end().successors()); // propagate {localOut} to successors
+        propagateSuccessors(out, block.end().successors()); // propagate {in} U {localOut} to successors
         propagateSuccessors(prevMap, block.exceptionHandlerBlocks()); // propagate {in} to exception handlers
     }
 
@@ -227,7 +230,8 @@ public class NullCheckEliminator extends InstructionVisitor {
             // perform intersection with previous map
             changed = prevMap.setIntersect(bitMap);
         }
-        if (changed) {
+        if (changed && !marked.contains(block)) {
+            marked.add(block);
             workList.addSorted(block, block.depthFirstNumber());
         }
     }

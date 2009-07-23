@@ -20,9 +20,7 @@
  */
 package com.sun.c1x.stub;
 
-import com.sun.c1x.debug.LogStream;
 import com.sun.c1x.lir.CodeEmitInfo;
-import com.sun.c1x.lir.LIRAssembler;
 import com.sun.c1x.lir.LIRVisitState;
 
 /**

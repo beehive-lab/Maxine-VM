@@ -198,30 +198,32 @@ public class BitMap {
      */
     public boolean setIntersect(BitMap other) {
         boolean same = true;
-        if (low != other.low) {
+        int intx = low & other.low;
+        if (low != intx) {
             same = false;
-            low &= other.low;
+            low = intx;
         }
         int[] oxtra = other.extra;
         if (extra != null && oxtra != null) {
             for (int i = 0; i < extra.length; i++) {
+                int a = extra[i];
                 if (i < oxtra.length) {
                     // zero bits out of this map
-                    int b = oxtra[i];
-                    if (extra[i] != b) {
+                    int ax = a & oxtra[i];
+                    if (a != ax) {
                         same = false;
-                        extra[i] &= b;
+                        extra[i] = ax;
                     }
                 } else {
                     // this bitmap is larger than the specified bitmap; zero remaining bits
-                    if (extra[i] != 0) {
+                    if (a != 0) {
                         same = false;
                         extra[i] = 0;
                     }
                 }
             }
         }
-        return same;
+        return !same;
     }
 
     /**
@@ -365,7 +367,9 @@ public class BitMap {
     public BitMap copy() {
         BitMap n = new BitMap(32);
         n.low = low;
-        n.extra = Arrays.copyOf(extra, extra.length);
+        if (extra != null) {
+            n.extra = Arrays.copyOf(extra, extra.length);
+        }
         n.length = length;
         return n;
     }
