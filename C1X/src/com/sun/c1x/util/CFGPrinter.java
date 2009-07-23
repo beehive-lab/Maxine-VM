@@ -43,6 +43,8 @@ public class CFGPrinter {
 
     private static OutputStream cfgFileStream;
 
+    private CiMethod currentMethod;
+
     /**
      * Gets the output stream  on the file "output.cfg" in the current working directory.
      * This stream is first opened if necessary.
@@ -88,6 +90,8 @@ public class CFGPrinter {
      * @param method the method for which a timestamp will be printed
      */
     public void printCompilation(CiMethod method) {
+        assert currentMethod != method : "may only be called once for each method";
+        currentMethod = method;
         begin("compilation");
         out.print("name \" ").print(Util.format("%H::%n", method, true)).println('"');
         out.print("method \"").print(Util.format("%f %r %H.%n(%p)", method, true)).println('"');
@@ -321,7 +325,8 @@ public class CFGPrinter {
      * @param printHIR if {@code true} the HIR for each instruction in the block will be printed
      * @param printLIR if {@code true} the LIR for each instruction in the block will be printed
      */
-    public void printCFG(BlockMap blockMap, int codeSize, String label, boolean printHIR, boolean printLIR) {
+    public void printCFG(CiMethod method, BlockMap blockMap, int codeSize, String label, boolean printHIR, boolean printLIR) {
+        assert method == this.currentMethod : "compilation section must be printed out before!";
         begin("cfg");
         out.print("name \"").print(label).println('"');
         for (int bci = 0; bci < codeSize; ++bci) {

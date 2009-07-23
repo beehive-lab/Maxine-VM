@@ -26,7 +26,6 @@ import com.sun.max.collect.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.grip.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;

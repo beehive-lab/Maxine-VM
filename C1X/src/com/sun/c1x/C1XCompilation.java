@@ -261,11 +261,8 @@ public class C1XCompilation {
             throw new Bailout("build of BlockMap failed for " + method);
         } else {
             if (C1XOptions.PrintCFGToFile) {
-                OutputStream cfgFileStream = CFGPrinter.cfgFileStream();
-                if (cfgFileStream != null) {
-                    CFGPrinter cfgPrinter = new CFGPrinter(cfgFileStream);
-                    cfgPrinter.printCFG(map, method.codeSize(), "BlockListBuilder " + Util.format("%f %r %H.%n(%p)", method, true), false, false);
-                }
+                CFGPrinter cfgPrinter = this.cfgPrinter();
+                cfgPrinter.printCFG(method, map, method.codeSize(), "BlockListBuilder " + Util.format("%f %r %H.%n(%p)", method, true), false, false);
             }
         }
         map.cleanup();

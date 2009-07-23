@@ -598,7 +598,7 @@ public class InstructionPrinter extends InstructionVisitor {
 
     @Override
     public void visitStoreIndexed(StoreIndexed store) {
-        out.print(store).print('[').print(store.index()).print("] := ").print(store.value()).print(" (").print(store.type().tchar()).print(')');
+        out.print(store.array()).print('[').print(store.index()).print("] := ").print(store.value()).print(" (").print(store.type().tchar()).print(')');
     }
 
     @Override

@@ -32,7 +32,7 @@ import com.sun.c1x.ci.*;
 public class Register {
 
     // Invalid register
-    public static final Register noreg = new Register(-1, "noreg");
+    public static final Register noreg = new Register(-1, -1, "noreg");
 
     public static final int vregBase = 50;
 
@@ -49,11 +49,11 @@ public class Register {
         }
     }
 
-    public Register(int number, String name, RegisterFlag... flags) {
+    public Register(int number, int encoding, String name, RegisterFlag... flags) {
         this.number = number;
         this.name = name;
         this.flags = createMask(flags);
-        this.encoding = number - 1;
+        this.encoding = encoding;
     }
 
     private int createMask(RegisterFlag... flags) {
