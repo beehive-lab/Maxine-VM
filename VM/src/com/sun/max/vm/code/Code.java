@@ -25,8 +25,11 @@ import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.debug.*;
+import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 
@@ -176,6 +179,26 @@ public final class Code {
         codeManager.visitCells(cellVisitor, includeBootCode);
     }
 
+    /**
+     * Calls {@link DebugHeap#verifyRegion(String, Address, Address, MemoryRegion, PointerOffsetVisitor)} for each of the
+     * registered code regions.
+     *
+     * This method can only be called in a {@linkplain MaxineVM#isDebug() debug} VM.
+     *
+     * @param space the address space in which valid objects can be found apart from the boot
+     *            {@linkplain Heap#bootHeapRegion heap} and {@linkplain Code#bootCodeRegion code} regions.
+     * @param verifier a {@link PointerOffsetVisitor} instance that will call
+     *            {@link #verifyGripAtIndex(Address, int, Grip, MemoryRegion, MemoryRegion)} for a reference value denoted by a base
+     *            pointer and offset
+     * @param includeBootCode specifies if the cells in the {@linkplain Code#bootCodeRegion() boot code region} should
+     *            also be verified
+     */
+    public static void verifyRegions(MemoryRegion space, PointerOffsetVisitor verifier, boolean includeBootCode) {
+        for (MemoryRegion region : memoryRegions) {
+            DebugHeap.verifyRegion(region.description(), region.start(), region.mark(), space, verifier);
+        }
+    }
+
     public static Size getCodeSize() {
         return codeManager.getSize();
     }
@@ -191,8 +214,7 @@ public final class Code {
      * @param codeRegion the code region to add
      */
     public static void registerMemoryRegion(CodeRegion codeRegion) {
-        final int nextIndex = memoryRegions.length;
-        memoryRegions = Arrays.append(memoryRegions, new FixedMemoryRegion(codeRegion, "Code-" + nextIndex));
+        memoryRegions = Arrays.append(memoryRegions, codeRegion);
     }
 
     /**

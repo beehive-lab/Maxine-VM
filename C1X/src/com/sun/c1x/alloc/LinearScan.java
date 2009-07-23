@@ -38,7 +38,6 @@ import com.sun.c1x.value.*;
 /**
  *
  * @author Thomas Wuerthinger
- *
  */
 public class LinearScan extends RegisterAllocator {
 
@@ -915,11 +914,11 @@ public class LinearScan extends RegisterAllocator {
             block.setLiveIn(new BitMap(liveSize));
             block.setLiveOut(new BitMap(liveSize));
 
-            Util.traceLinearScan(4, "liveGen  B%d ", block.blockID());
+            Util.traceLinearScan(4, "liveGen  B%d ", block.blockID);
             if (C1XOptions.TraceLinearScanLevel >= 4) {
                 TTY.println(block.liveGen().toString());
             }
-            Util.traceLinearScan(4, "liveKill B%d ", block.blockID());
+            Util.traceLinearScan(4, "liveKill B%d ", block.blockID);
             if (C1XOptions.TraceLinearScanLevel >= 4) {
                 TTY.println(block.liveKill().toString());
             }
@@ -1000,9 +999,9 @@ public class LinearScan extends RegisterAllocator {
                     if (iterationCount == 0 || changeOccurredInBlock) {
                         c = '*';
                     }
-                    TTY.print("(%d) liveIn%c  B%d ", iterationCount, c, block.blockID());
+                    TTY.print("(%d) liveIn%c  B%d ", iterationCount, c, block.blockID);
                     TTY.println(block.liveIn().toString());
-                    TTY.print("(%d) liveOut%c B%d ", iterationCount, c, block.blockID());
+                    TTY.print("(%d) liveOut%c B%d ", iterationCount, c, block.blockID);
                     TTY.println(block.liveOut().toString());
                 }
             }
@@ -1037,17 +1036,17 @@ public class LinearScan extends RegisterAllocator {
 
                 // print some additional information to simplify debugging
                 for (int i = 0; i < ir().startBlock.liveIn().size(); i++) {
-                    if (ir().start().liveIn().get(i)) {
+                    if (ir().startBlock.liveIn().get(i)) {
                         Instruction instr = gen().instructionForVreg(i);
                         TTY.println(" vreg %d (HIR instruction %c%d)", i, instr == null ? ' ' : instr.type().tchar(), instr == null ? 0 : instr.id());
 
                         for (int j = 0; j < numBlocks; j++) {
                             BlockBegin block = blockAt(j);
                             if (block.liveGen().get(i)) {
-                                TTY.println("  used in block B%d", block.blockID());
+                                TTY.println("  used in block B%d", block.blockID);
                             }
                             if (block.liveKill().get(i)) {
-                                TTY.println("  defined in block B%d", block.blockID());
+                                TTY.println("  defined in block B%d", block.blockID);
                             }
                         }
                     }
@@ -1926,7 +1925,7 @@ public class LinearScan extends RegisterAllocator {
 
     void resolveFindInsertPos(BlockBegin fromBlock, BlockBegin toBlock, MoveResolver moveResolver) {
         if (fromBlock.numberOfSux() <= 1) {
-            Util.traceLinearScan(4, "inserting moves at end of fromBlock B%d", fromBlock.blockID());
+            Util.traceLinearScan(4, "inserting moves at end of fromBlock B%d", fromBlock.blockID);
 
             List<LIRInstruction> instructions = fromBlock.lir().instructionsList();
             LIRInstruction instr = instructions.get(instructions.size() - 1);
@@ -1940,7 +1939,7 @@ public class LinearScan extends RegisterAllocator {
             }
 
         } else {
-            Util.traceLinearScan(4, "inserting moves at beginning of toBlock B%d", toBlock.blockID());
+            Util.traceLinearScan(4, "inserting moves at beginning of toBlock B%d", toBlock.blockID);
 
             if (C1XOptions.DetailedAsserts) {
                 assert fromBlock.lir().instructionsList().get(0) instanceof LIRLabel : "block does not start with a label";
@@ -1985,7 +1984,7 @@ public class LinearScan extends RegisterAllocator {
 
                     // prevent optimization of two consecutive blocks
                     if (!blockCompleted.get(pred.linearScanNumber()) && !blockCompleted.get(sux.linearScanNumber())) {
-                        Util.traceLinearScan(3, " optimizing empty block B%d (pred: B%d, sux: B%d)", block.blockID(), pred.blockID(), sux.blockID());
+                        Util.traceLinearScan(3, " optimizing empty block B%d (pred: B%d, sux: B%d)", block.blockID, pred.blockID, sux.blockID);
                         blockCompleted.set(block.linearScanNumber());
 
                         // directly resolve between pred and sux (without looking at the empty block between)
@@ -2010,7 +2009,7 @@ public class LinearScan extends RegisterAllocator {
 
                     // check for duplicate edges between the same blocks (can happen with switch blocks)
                     if (!alreadyResolved.get(toBlock.linearScanNumber())) {
-                        Util.traceLinearScan(3, " processing edge between B%d and B%d", fromBlock.blockID(), toBlock.blockID());
+                        Util.traceLinearScan(3, " processing edge between B%d and B%d", fromBlock.blockID, toBlock.blockID);
                         alreadyResolved.set(toBlock.linearScanNumber());
 
                         // collect all intervals that have been split between fromBlock and toBlock
@@ -2142,7 +2141,7 @@ public class LinearScan extends RegisterAllocator {
     }
 
     void resolveExceptionEdge(ExceptionHandler handler, int throwingOpId, MoveResolver moveResolver) {
-        Util.traceLinearScan(4, "resolving exception handler B%d: throwingOpId=%d", handler.entryBlock().blockID(), throwingOpId);
+        Util.traceLinearScan(4, "resolving exception handler B%d: throwingOpId=%d", handler.entryBlock().blockID, throwingOpId);
 
         assert moveResolver.checkEmpty();
         assert handler.lirOpId() == -1 : "already processed this xhandler";
@@ -3256,7 +3255,7 @@ public class LinearScan extends RegisterAllocator {
             ControlFlowOptimizer.optimize(ir().linearScanOrder());
         }
         // check that cfg is still correct after optimizations
-        assert ir().verify();
+        ir().verifyAndPrint("After LIR optimization");
         printLir(1, "Before Code Generation", false);
         // NOTPRODUCT(LinearScanStatistic.compute(this, statFinal));
         // NOTPRODUCT(totalTimer.endMethod(this));
@@ -3293,7 +3292,7 @@ public class LinearScan extends RegisterAllocator {
             TTY.println("--- Basic Blocks ---");
             for (i = 0; i < blockCount(); i++) {
                 BlockBegin block = blockAt(i);
-                TTY.print("B%d [%d, %d, %d, %d] ", block.blockID(), block.firstLirInstructionId(), block.lastLirInstructionId(), block.loopIndex(), block.loopDepth());
+                TTY.print("B%d [%d, %d, %d, %d] ", block.blockID, block.firstLirInstructionId(), block.lastLirInstructionId(), block.loopIndex(), block.loopDepth());
             }
             TTY.cr();
             TTY.cr();
@@ -3561,7 +3560,7 @@ public class LinearScan extends RegisterAllocator {
 
             // visit all registers where the liveAtEdge bit is set
             for (int r = liveAtEdge.getNextOneOffset(0, size); r < size; r = liveAtEdge.getNextOneOffset(r + 1, size)) {
-                Util.traceLinearScan(4, "checking interval %d of block B%d", r, block.blockID());
+                Util.traceLinearScan(4, "checking interval %d of block B%d", r, block.blockID);
 
                 Instruction value = gen().instructionForVreg(r);
 

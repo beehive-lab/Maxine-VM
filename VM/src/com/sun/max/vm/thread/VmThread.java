@@ -506,7 +506,9 @@ public class VmThread {
         // Add the VM thread locals to the active map
         final VmThread vmThread = VmThreadMap.ACTIVE.addVmThreadLocals(id, enabledVmThreadLocals);
 
-        Heap.initializeVmThread(enabledVmThreadLocals);
+        for (VmThreadLocal threadLocal : VmThreadLocal.valuesNeedingInitialization()) {
+            threadLocal.initialize(MaxineVM.host().phase());
+        }
 
         vmThread.nativeThread = nativeThread;
         vmThread.vmThreadLocals = enabledVmThreadLocals;

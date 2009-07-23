@@ -63,6 +63,6 @@ public class SPARCJitTargetMethod extends JitTargetMethod implements SPARCTarget
 
     @Override
     public Pointer getFramePointer(Pointer cpuStackPointer, Pointer cpuFramePointer, Pointer osSignalIntegerRegisters) {
-        return STACK_BIAS.SPARC_V9.unbias(cpuStackPointer).readWord(SPARCStackFrameLayout.offset_in_saved_window((GPR) abi().framePointer())).asPointer();
+        return StackBias.SPARC_V9.unbias(cpuStackPointer).readWord(SPARCStackFrameLayout.offset_in_saved_window((GPR) abi().framePointer())).asPointer();
     }
 }

@@ -175,7 +175,7 @@ public final class HubInspector extends ObjectInspector {
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected boolean refreshView(boolean force) {
         fieldsPane.refresh(force);
         if (iTablePane != null) {
             iTablePane.refresh(force);
@@ -193,6 +193,7 @@ public final class HubInspector extends ObjectInspector {
             classMethodInspectorMenuItems.refresh(force);
         }
         super.refreshView(force);
+        return true;
     }
 
 

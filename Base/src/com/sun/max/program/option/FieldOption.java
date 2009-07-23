@@ -35,11 +35,13 @@ public class FieldOption<Value_Type> extends Option<Value_Type> {
 
     protected final Object object;
     protected final Field field;
+    protected Value_Type nullValue;
 
     public FieldOption(String name, Object object, Field field, Value_Type defaultValue, Type<Value_Type> type, String help) {
         super(name, defaultValue, type, help);
         this.object = object;
         this.field = field;
+        this.nullValue = defaultValue;
     }
 
     /**
@@ -64,7 +66,11 @@ public class FieldOption<Value_Type> extends Option<Value_Type> {
     @Override
     public void setValue(Value_Type value) {
         try {
-            field.set(object, value);
+            if (value == null) {
+                field.set(object, nullValue);
+            } else {
+                field.set(object, value);
+            }
         } catch (Exception e) {
             throw ProgramError.unexpected("Error updating the value of " + field, e);
         }

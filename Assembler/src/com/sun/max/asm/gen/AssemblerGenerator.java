@@ -46,16 +46,16 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
 
     protected OptionSet options = new OptionSet();
 
-    private final Option<File> outputDirectoryOption = options.newFileOption("d", JavaProject.findSourceDirectory(),
+    public final Option<File> outputDirectoryOption = options.newFileOption("d", JavaProject.findSourceDirectory(),
             "Source directory of the class(es) containing the for generated assembler methods.");
-    private final Option<String> assemblerInterfaceNameOption = options.newStringOption("i", null,
+    public final Option<String> assemblerInterfaceNameOption = options.newStringOption("i", null,
             "Interface used to constrain which assembler methods will be generated. " +
             "If absent, an assembler method is generated for each template in the specification.");
-    private final Option<String> rawAssemblerClassNameOption = options.newStringOption("r", null,
+    public final Option<String> rawAssemblerClassNameOption = options.newStringOption("r", null,
             "Class containing the generated raw assembler methods.");
-    private final Option<String> labelAssemblerClassNameOption = options.newStringOption("l", null,
+    public final Option<String> labelAssemblerClassNameOption = options.newStringOption("l", null,
             "Class containing the generated label assembler methods.");
-    private final Option<Boolean> generateRedundantInstructionsOption = options.newBooleanOption("redundant", false,
+    public final Option<Boolean> generateRedundantInstructionsOption = options.newBooleanOption("redundant", true,
             "Generate assembler methods for redundant templates. Two templates are redundant if they " +
             "both have the same name and operands. Redundant pairs of instructions are assumed to " +
             "implement the same machine instruction semantics but may have different encodings.");
@@ -307,6 +307,8 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
     protected void printExtraMethodJavadoc(IndentWriter writer, Template_Type template, AppendableSequence<String> extraLinks, boolean forLabelAssemblerMethod) {
     }
 
+    private boolean seenNoSuchAssemblerMethodError;
+
     /**
      * Writes the Javadoc comment for an assembler method.
      *
@@ -343,6 +345,12 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
                     }
                     final String exampleInstruction = instruction.toString(addressMapper);
                     writer.println(" * Example disassembly syntax: {@code " + exampleInstruction + "}");
+                } catch (NoSuchAssemblerMethodError e) {
+                    if (!seenNoSuchAssemblerMethodError) {
+                        seenNoSuchAssemblerMethodError = true;
+                        ProgramWarning.message("Once generated assembler has been compiled, re-generate it you want a usage example " +
+                            "in the Javadoc for every generated assembler method");
+                    }
                 } catch (AssemblyException e) {
                     ProgramWarning.message("Error generating example instruction: " + e);
                 }

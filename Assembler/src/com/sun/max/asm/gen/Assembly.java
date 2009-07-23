@@ -105,16 +105,15 @@ public abstract class Assembly<Template_Type extends Template> {
         return call + ")";
     }
 
-    private Method getAssemblerMethod(Assembler assembler, Template_Type template, Class[] parameterTypes) throws AssemblyException {
-        final String name = template.assemblerMethodName();
+    private Method getAssemblerMethod(Assembler assembler, Template_Type template, Class[] parameterTypes) throws NoSuchAssemblerMethodError {
         try {
-            return assembler.getClass().getMethod(name, parameterTypes);
+            return assembler.getClass().getMethod(template.assemblerMethodName(), parameterTypes);
         } catch (NoSuchMethodException e) {
-            throw new AssemblyException("could not find assembler method for template: " + template);
+            throw new NoSuchAssemblerMethodError(e.getMessage(), template);
         }
     }
 
-    private Method getAssemblerMethod(Assembler assembler, Template_Type template, IndexedSequence<Argument> arguments) throws AssemblyException {
+    private Method getAssemblerMethod(Assembler assembler, Template_Type template, IndexedSequence<Argument> arguments) throws NoSuchAssemblerMethodError {
         final Class[] parameterTypes = template.parameterTypes();
         final int index = template.labelParameterIndex();
         if (index >= 0 && arguments.get(index) instanceof Label) {
@@ -127,7 +126,7 @@ public abstract class Assembly<Template_Type extends Template> {
         return template.assemblerMethod;
     }
 
-    public void assemble(Assembler assembler, Template_Type template, IndexedSequence<Argument> arguments) throws AssemblyException {
+    public void assemble(Assembler assembler, Template_Type template, IndexedSequence<Argument> arguments) throws AssemblyException, NoSuchAssemblerMethodError {
         assert arguments.length() == template.parameters().length();
         final Method assemblerMethod = getAssemblerMethod(assembler, template, arguments);
         final Object[] objects = new Object[arguments.length()];

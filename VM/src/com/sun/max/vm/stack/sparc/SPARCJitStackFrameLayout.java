@@ -116,7 +116,7 @@ public class SPARCJitStackFrameLayout extends JitStackFrameLayout {
      * This slot can be accessed by every JITed method using the native frame pointer %i6, which is otherwise unused
      * by JITed code.
      */
-    public static final int OFFSET_TO_FLOATING_POINT_TEMP_AREA = STACK_BIAS.SPARC_V9.stackBias() - FLOATING_POINT_TEMP_AREA_SIZE;
+    public static final int OFFSET_TO_FLOATING_POINT_TEMP_AREA = StackBias.SPARC_V9.stackBias() - FLOATING_POINT_TEMP_AREA_SIZE;
 
     /**
      * Size of the call save area, in number of stack slots. All method invocations to JIT'ed code push a return address

@@ -87,10 +87,11 @@ public final class NativeMethodInspector extends MethodInspector {
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected boolean refreshView(boolean force) {
         if (isShowing() || force) {
             targetCodeViewer.refresh(force);
         }
+        return true;
     }
 
     public void viewConfigurationChanged() {

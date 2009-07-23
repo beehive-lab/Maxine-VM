@@ -481,7 +481,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
                 // This allow JITed code return template to avoid checking whether the caller is an adapter frame when restoring the
                 // their literal base. Instead, they can blindly load at  FP - 8. When the caller is an adapter, this is harmless (it loads
                 // an arbitrary value off the floating point temp area).
-                assembler().add(optimizedCodeFramePointer, STACK_BIAS.SPARC_V9.stackBias(), jitedCodeFramePointer);
+                assembler().add(optimizedCodeFramePointer, StackBias.SPARC_V9.stackBias(), jitedCodeFramePointer);
 
                 final boolean largeFrame = !SPARCAssembler.isSimm13(jitedCodeFrameSize);
                 assembler().call(methodEntryPoint);

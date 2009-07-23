@@ -164,11 +164,11 @@ public abstract class X86Template extends Template implements X86InstructionDesc
     /**
      * @see #computeRedundancyWith(X86Template)
      */
-    public X86Template redundantTo;
+    private X86Template canonicalRepresentative;
 
     @Override
-    public boolean isRedundant() {
-        return redundantTo != null;
+    public Template canonicalRepresentative() {
+        return canonicalRepresentative;
     }
 
     private String canonicalName;
@@ -421,8 +421,8 @@ public abstract class X86Template extends Template implements X86InstructionDesc
      * @return whether this template is redundant with respect to {@code other}
      */
     public boolean computeRedundancyWith(X86Template other) {
-        if (redundantTo != null) {
-            assert redundantTo == other;
+        if (canonicalRepresentative != null) {
+            assert canonicalRepresentative == other;
             return true;
         }
         if (!canonicalName().equals(other.canonicalName())) {
@@ -436,7 +436,8 @@ public abstract class X86Template extends Template implements X86InstructionDesc
                 return false;
             }
         }
-        redundantTo = other;
+
+        canonicalRepresentative = other;
         return true;
     }
 

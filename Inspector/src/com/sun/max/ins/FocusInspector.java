@@ -90,9 +90,10 @@ public final class FocusInspector extends Inspector {
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected boolean refreshView(boolean force) {
         table.refresh(force);
         super.refreshView(force);
+        return true;
     }
 
     @Override
