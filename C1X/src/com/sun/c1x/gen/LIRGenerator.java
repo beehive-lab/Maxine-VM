@@ -261,6 +261,13 @@ public abstract class LIRGenerator extends InstructionVisitor {
     }
 
     @Override
+    public void visitResolveClass(ResolveClass i) {
+        assert i.state() != null;
+
+
+    }
+
+    @Override
     public void visitConstant(Constant x) {
         if (x.state() != null) {
             // XXX: in the future, no constants will require patching; there will be a ResolveClass instruction

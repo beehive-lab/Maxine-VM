@@ -31,8 +31,6 @@ import com.sun.c1x.value.*;
  */
 public class Constant extends Instruction {
 
-    private ValueStack state;
-
     /**
      * Constructs a new instruction representing the specified constant.
      * @param type the constant
@@ -42,55 +40,12 @@ public class Constant extends Instruction {
     }
 
     /**
-     * Constructs a new instruction representing the specified constant, which
-     * may be an unresolved class reference that needs to be resolved.
-     * @param type the constant
-     * @param state the state, needed for deopt/gc in resolution code
-     */
-    public Constant(ClassType type, ValueStack state) {
-        super(type);
-        this.state = state;
-    }
-
-    /**
-     * Gets the state at this constant. This is only non-null if this
-     * constant may require patching.
-     * @return the value stack at this constant
-     */
-    public ValueStack state() {
-        return state;
-    }
-
-    /**
-     * Checks whether this instruction can trap (i.e. cause an exception).
-     * For constants, this can only occur if it is a constant that needs patching,
-     * such as a class constant that must be resolved.
-     * @return <code>true</code> if this instruction can cause a trap
-     */
-    @Override
-    public boolean canTrap() {
-        return state != null;
-    }
-
-    /**
      * Implements half of the visitor pattern for this instruction.
      * @param v the visitor to accept
      */
     @Override
     public void accept(InstructionVisitor v) {
         v.visitConstant(this);
-    }
-
-    /**
-     * Iterates over the "other" values in this instruction. In the case of constants,
-     * this method iterates over any values in the state if this constant may need patching.
-     * @param closure the closure to apply to each value
-     */
-    @Override
-    public void otherValuesDo(InstructionClosure closure) {
-        if (state != null) {
-            state.valuesDo(closure);
-        }
     }
 
     /**

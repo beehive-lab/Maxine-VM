@@ -46,6 +46,8 @@ public abstract class InstructionVisitor {
     }
     public void visitStoreIndexed(StoreIndexed i) {
     }
+    public void visitResolveClass(ResolveClass i) {
+    }
     public void visitNegateOp(NegateOp i) {
     }
     public void visitArithmeticOp(ArithmeticOp i) {

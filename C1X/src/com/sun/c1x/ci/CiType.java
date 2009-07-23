@@ -193,4 +193,6 @@ public interface CiType {
     int superCheckOffset();
 
     Object encoding();
+
+    CiConstant getStaticContainer();
 }

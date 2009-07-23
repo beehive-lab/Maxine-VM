@@ -486,9 +486,11 @@ public class GraphBuilder {
             CiType citype = con.asCiType();
             type = new ClassType(citype);
             if (!citype.isLoaded() || C1XOptions.TestPatching) {
-                push(type.basicType, append(new Constant((ClassType) type, curState.copy())));
-                return;
+                push(type.basicType, append(new ResolveClass(citype, curState.copy())));
+            } else {
+                push(type.basicType, append(Constant.forObject(citype.javaClass())));
             }
+            return;
         }
         switch (con.basicType()) {
             case Boolean:
@@ -813,6 +815,7 @@ public class GraphBuilder {
         boolean isLoaded = field.isLoaded() && holder.isLoaded() && !C1XOptions.TestPatching;
         boolean isInitialized = isLoaded && holder.isInitialized();
         ValueStack stateCopy = !isLoaded ? curState.copy() : null;
+        CiConstant staticContainer = holder.getStaticContainer();
         Instruction holderConstant = append(new Constant(new ClassType(holder), stateCopy));
         Instruction value = pop(field.basicType().stackType());
         StoreField store = new StoreField(holderConstant, field, value, true, lockStack(), stateCopy, isLoaded, isInitialized);

@@ -31,6 +31,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.vm.value.*;
 
 /**
  * The <code>MaxCiType</code> class represents a compiler interface type,
@@ -412,6 +413,11 @@ public class MaxCiType implements CiType {
 
     public int superCheckOffset() {
         throw Util.unimplemented();
+    }
+
+    @Override
+    public CiConstant getStaticContainer() {
+        return new MaxCiConstant(ReferenceValue.from(asClassActor("getStaticContainer()").staticHub()));
     }
 
 }
