@@ -83,8 +83,7 @@ public class GraphBuilder {
         CiMethod method = method();
         if (method.isSynchronized()) {
             // setup and exception handler
-            syncHandler = new BlockBegin(Instruction.SYNCHRONIZATION_ENTRY_BCI);
-            syncHandler.setBlockID(compilation.nextBlockNumber());
+            syncHandler = new BlockBegin(Instruction.SYNCHRONIZATION_ENTRY_BCI, compilation.hir().nextBlockNumber());
             syncHandler.setExceptionEntry();
             syncHandler.setBlockFlag(BlockBegin.BlockFlag.IsOnWorkList);
             syncHandler.setBlockFlag(BlockBegin.BlockFlag.DefaultExceptionHandler);
@@ -176,8 +175,7 @@ public class GraphBuilder {
     }
 
     BlockBegin setupStartBlock(int osrBCI, BlockBegin stdEntry, BlockBegin osrEntry, ValueStack state) {
-        BlockBegin start = new BlockBegin(0);
-        start.setBlockID(compilation.nextBlockNumber());
+        BlockBegin start = new BlockBegin(0, compilation.hir().nextBlockNumber());
 
         BlockBegin newHeaderBlock;
         if (stdEntry.predecessors().size() == 0 && !C1XOptions.ProfileBranches) {
@@ -203,8 +201,7 @@ public class GraphBuilder {
     BlockBegin headerBlock(BlockBegin entry, BlockBegin.BlockFlag f, ValueStack state) {
         assert entry.checkBlockFlag(f);
         // create header block
-        BlockBegin h = new BlockBegin(entry.bci());
-        h.setBlockID(compilation.nextBlockNumber());
+        BlockBegin h = new BlockBegin(entry.bci(), compilation.hir().nextBlockNumber());
         h.setDepthFirstNumber(0);
 
         Instruction l = h;
@@ -1542,8 +1539,7 @@ public class GraphBuilder {
         boolean continuationExisted = true;
         if (continuationBlock == null) {
             // there was not already a block starting at the next BCI
-            continuationBlock = new BlockBegin(nextBCI());
-            continuationBlock.setBlockID(compilation.nextBlockNumber());
+            continuationBlock = new BlockBegin(nextBCI(), compilation.hir().nextBlockNumber());
             continuationBlock.setDepthFirstNumber(0);
             continuationExisted = false;
         }
@@ -1577,8 +1573,7 @@ public class GraphBuilder {
         if (target.isSynchronized()) {
             // lock the receiver object if it is an instance method, the class object otherwise
             lock = synchronizedObject(curState, target);
-            syncHandler = new BlockBegin(Instruction.SYNCHRONIZATION_ENTRY_BCI);
-            syncHandler.setBlockID(compilation.nextBlockNumber());
+            syncHandler = new BlockBegin(Instruction.SYNCHRONIZATION_ENTRY_BCI, compilation.hir().nextBlockNumber());
             inlineSyncEntry(lock, syncHandler);
             scope().computeLockStackSize();
         }
@@ -1752,8 +1747,7 @@ public class GraphBuilder {
         s.next(); // XXX: why go to next bytecode?
 
         // create a new block to contain the OSR setup code
-        ir.osrEntryBlock = new BlockBegin(osrBCI);
-        ir.osrEntryBlock.setBlockID(compilation.nextBlockNumber());
+        ir.osrEntryBlock = new BlockBegin(osrBCI, compilation.hir().nextBlockNumber());
         ir.osrEntryBlock.setOsrEntry(true);
         ir.osrEntryBlock.setDepthFirstNumber(0);
 

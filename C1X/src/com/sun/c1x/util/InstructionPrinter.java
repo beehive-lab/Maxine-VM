@@ -162,9 +162,9 @@ public class InstructionPrinter extends InstructionVisitor {
 
     @Override
     public void visitBase(Base i) {
-        out.print("std entry B").print(i.standardEntry().blockID());
+        out.print("std entry B").print(i.standardEntry().blockID);
         if (i.successors().size() > 1) {
-          out.print(" osr entry B").print(i.osrEntry().blockID());
+            out.print(" osr entry B").print(i.osrEntry().blockID);
         }
     }
 
@@ -172,7 +172,7 @@ public class InstructionPrinter extends InstructionVisitor {
     public void visitBlockBegin(BlockBegin block) {
         // print block id
         BlockEnd end = block.end();
-        out.print("B").print(block.blockID()).print(" ");
+        out.print("B").print(block.blockID).print(" ");
 
         // print flags
         StringBuilder sb = new StringBuilder(8);
@@ -208,28 +208,28 @@ public class InstructionPrinter extends InstructionVisitor {
         if (end != null && end.successors().size() > 0) {
             out.print(" .");
             for (BlockBegin successor : end.successors()) {
-                out.print(" B").print(successor.blockID());
+                out.print(" B").print(successor.blockID);
             }
         }
         // print exception handlers
         if (!block.exceptionHandlers().isEmpty()) {
             out.print(" (xhandlers");
             for (BlockBegin handler : block.exceptionHandlerBlocks()) {
-                out.print(" B").print(handler.blockID());
+                out.print(" B").print(handler.blockID);
             }
             out.print(')');
         }
 
         // print dominator block
         if (block.dominator() != null) {
-            out.print(" dom B").print(block.dominator().blockID());
+            out.print(" dom B").print(block.dominator().blockID);
         }
 
         // print predecessors
         if (!block.predecessors().isEmpty()) {
             out.print(" pred:");
             for (BlockBegin pred : block.predecessors()) {
-                out.print(" B").print(pred.blockID());
+                out.print(" B").print(pred.blockID);
             }
         }
 
@@ -373,7 +373,7 @@ public class InstructionPrinter extends InstructionVisitor {
 
     @Override
     public void visitGoto(Goto go2) {
-        out.print("goto B").print(go2.defaultSuccessor().blockID());
+        out.print("goto B").print(go2.defaultSuccessor().blockID);
         if (go2.isSafepoint()) {
             out.print(" (safepoint)");
         }
@@ -388,9 +388,9 @@ public class InstructionPrinter extends InstructionVisitor {
              print(' ').
              print(i.y()).
              print(" then B").
-             print(i.successors().get(0).blockID()).
+             print(i.successors().get(0).blockID).
              print(" else B").
-             print(i.successors().get(1).blockID());
+             print(i.successors().get(1).blockID);
         if (i.isSafepoint()) {
             out.print(" (safepoint)");
         }
@@ -488,10 +488,10 @@ public class InstructionPrinter extends InstructionVisitor {
         int l = lswitch.numberOfCases();
         for (int i = 0; i < l; i++) {
             INSTRUCTION.advance(out);
-            out.printf("case %5d: B%d%n", lswitch.keyAt(i), lswitch.successors().get(i).blockID());
+            out.printf("case %5d: B%d%n", lswitch.keyAt(i), lswitch.successors().get(i).blockID);
         }
         INSTRUCTION.advance(out);
-        out.print("default   : B").print(lswitch.defaultSuccessor().blockID());
+        out.print("default   : B").print(lswitch.defaultSuccessor().blockID);
 
     }
 
@@ -611,10 +611,10 @@ public class InstructionPrinter extends InstructionVisitor {
         int l = tswitch.numberOfCases();
         for (int i = 0; i < l; i++) {
             INSTRUCTION.advance(out);
-            out.printf("case %5d: B%d%n", tswitch.lowKey() + i, tswitch.successors().get(i).blockID());
+            out.printf("case %5d: B%d%n", tswitch.lowKey() + i, tswitch.successors().get(i).blockID);
         }
         INSTRUCTION.advance(out);
-        out.print("default   : B").print(tswitch.defaultSuccessor().blockID());
+        out.print("default   : B").print(tswitch.defaultSuccessor().blockID);
     }
 
     @Override

@@ -199,7 +199,7 @@ public class ScopeData {
             if (block == null) {
                 BlockBegin p = this.parent.blockAt(bci);
                 if (p != null) {
-                    BlockBegin newBlock = new BlockBegin(p.bci());
+                    BlockBegin newBlock = new BlockBegin(p.bci(), p.blockID);
                     // TODO: get a new block ID for this block
                     newBlock.setDepthFirstNumber(p.depthFirstNumber());
                     newBlock.copyBlockFlags(p);

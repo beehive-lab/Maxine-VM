@@ -34,6 +34,8 @@ public final class Platform {
 
     public final ProcessorKind processorKind;
     public final OperatingSystem operatingSystem;
+
+    /** The number of bytes in a virtual page. */
     public final int pageSize;
 
     public Platform(ProcessorKind processorKind, OperatingSystem operatingSystem, int pageSize) {

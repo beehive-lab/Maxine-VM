@@ -62,7 +62,7 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         if (SPARCAssembler.isSimm13(frameSize)) {
             return DEFAULT_STACK_BANG_OFFSET;
         }
-        return STACK_BIAS.SPARC_V9.stackBias() - frameSize;
+        return StackBias.SPARC_V9.stackBias() - frameSize;
     }
 
     /**
@@ -112,7 +112,7 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
                 } else {
                     asm.setsw(stackBangOffset, frameSizeReg);
                     asm.lduw(stackPointer, frameSizeReg, GPR.G0);
-                    asm.sub(frameSizeReg, STACK_BIAS.SPARC_V9.stackBias(), frameSizeReg);
+                    asm.sub(frameSizeReg, StackBias.SPARC_V9.stackBias(), frameSizeReg);
                 }
                 asm.save(stackPointer, frameSizeReg, stackPointer);
             } catch (AssemblyException e) {

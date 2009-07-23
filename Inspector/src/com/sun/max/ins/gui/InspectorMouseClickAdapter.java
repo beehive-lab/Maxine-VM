@@ -37,9 +37,6 @@ public abstract class InspectorMouseClickAdapter implements MouseListener {
     public final void mouseClicked(MouseEvent mouseEvent) {
         try {
             procedure(mouseEvent);
-            // TODO (mlvdv) why were these here?  needed now?
-//            _inspection.invalidate();
-//            _inspection.repaint();
         } catch (InspectorError inspectorError) {
             inspectorError.display(inspection);
         }
