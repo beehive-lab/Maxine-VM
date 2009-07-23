@@ -77,6 +77,10 @@ public class Invoke extends StateSplit {
         return opcode;
     }
 
+    public boolean isStatic() {
+        return isStatic;
+    }
+
     /**
      * Gets the instruction that produces the receiver object for this invocation, if any.
      *

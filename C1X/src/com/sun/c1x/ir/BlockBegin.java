@@ -100,10 +100,10 @@ public class BlockBegin extends StateSplit {
         linearScanNumber = -1;
         predecessors = new ArrayList<BlockBegin>(2);
         loopIndex = -1;
-        exceptionHandlerBlocks = new ArrayList<BlockBegin>(0);
-        exceptionHandlerStates = new ArrayList<ValueStack>(0);
+        exceptionHandlerBlocks = new ArrayList<BlockBegin>(0); // TODO: allocate lazily
+        exceptionHandlerStates = new ArrayList<ValueStack>(0); // TODO: allocate lazily
         setBCI(bci);
-        lirBlock = new LIRBlock();
+        lirBlock = new LIRBlock(); // TODO: allocate lazily
     }
 
     /**

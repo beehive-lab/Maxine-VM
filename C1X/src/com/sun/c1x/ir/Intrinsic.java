@@ -89,6 +89,10 @@ public class Intrinsic extends StateSplit {
         return lockStack;
     }
 
+    public boolean isStatic() {
+        return isStatic;
+    }
+
     /**
      * Checks whether this intrinsic has a receiver object.
      * @return <code>true</code> if this intrinsic has a receiver object

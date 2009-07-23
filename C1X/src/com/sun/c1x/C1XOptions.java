@@ -113,6 +113,7 @@ public class C1XOptions {
     // global optimization settings
     public static boolean DoGlobalValueNumbering             = ____;
     public static int     MaximumGVNLoopSize                 = 8;
+    public static boolean DoIterativeNullCheckElimination    = ____;
 
     // future settings
     public static boolean DoArrayBoundsCheckElimination      = ____;
@@ -287,6 +288,7 @@ public class C1XOptions {
         DoArrayBoundsCheckElimination      = TRUE;
         DistinguishExceptionHandlerCode    = TRUE;
         DoNullCheckElimination             = TRUE;
+        DoIterativeNullCheckElimination    = TRUE;
         DoProfileGuidedInlining            = TRUE;
         DoTypeFlowAnalysis                 = TRUE;
         DetectCascadingInstanceOf          = TRUE;
