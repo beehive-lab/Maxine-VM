@@ -877,16 +877,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public void initGarbageCollectorDebugging() throws TooManyWatchpointsException, DuplicateWatchpointException {
-        if (false) {
-            try {
-                setWordWatchpoint("GC Start", teleHeapManager.collectionEpochAddress(), true, false, true, false, true);
-                setWordWatchpoint("GC End", teleHeapManager.rootEpochAddress(), true, false, true, false, true);
-            } catch (TooManyWatchpointsException e) {
-                throw e;
-            } catch (DuplicateWatchpointException e) {
-                throw e;
-            }
-        }
+        teleProcess.watchpointFactory().initFactory();
     }
 
     /**
@@ -1295,6 +1286,11 @@ public abstract class TeleVM implements MaxVM {
     public final MaxWatchpoint  setVmThreadLocalWatchpoint(String description, TeleThreadLocalValues teleThreadLocalValues, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc)
         throws TooManyWatchpointsException, DuplicateWatchpointException {
         return teleProcess.watchpointFactory().setVmThreadLocalWatchpoint(description, teleThreadLocalValues, index, after, read, write, exec, gc);
+    }
+
+    public final MaxWatchpoint createInvisibleWatchpoint(String description, MemoryRegion memoryRegion, boolean after, boolean read, boolean write, boolean exec, boolean gc)
+        throws TooManyWatchpointsException, DuplicateWatchpointException {
+        return teleProcess.watchpointFactory().createInvisibleWatchpoint(description, memoryRegion, after, read, write, exec, gc);
     }
 
     /* (non-Javadoc)

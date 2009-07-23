@@ -18,9 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.util;
-
-import com.sun.c1x.ir.*;
+package com.sun.c1x.ir;
 
 /**
  * The <code>InstructionVisitor</code> implements one half of the visitor

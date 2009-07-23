@@ -20,8 +20,9 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.value.BasicType;
+import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.value.ValueType;
 
 /**
  * The <code>StoreIndexed</code> instruction represents a write to an array element.

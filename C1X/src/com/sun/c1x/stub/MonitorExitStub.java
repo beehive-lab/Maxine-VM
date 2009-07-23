@@ -21,7 +21,6 @@
 package com.sun.c1x.stub;
 
 import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
 
 
 /**
@@ -33,23 +32,18 @@ import com.sun.c1x.util.*;
  */
 public class MonitorExitStub extends MonitorAccessStub {
 
-    private boolean computeLock;
-    private int monitorIx;
+    public final boolean computeLock;
+    public final int monitorIx;
 
     public MonitorExitStub(LIROperand lockReg, boolean computeLock, int monitorIx) {
-        super(LIROperandFactory.IllegalOperand, lockReg);
+        super(LIROperandFactory.IllegalOperand, lockReg, null);
         this.computeLock = computeLock;
         this.monitorIx = monitorIx;
     }
 
     @Override
-    public void emitCode(LIRAssembler e) {
-        // TODO: Not implemented yet
-    }
-
-    // TODO: remove it later  - added only to eliminate warnings
-    public int getMonitorIX() {
-        return monitorIx;
+    public void accept(CodeStubVisitor visitor) {
+        visitor.visitMonitorExitStub(this);
     }
 
     @Override
@@ -60,10 +54,5 @@ public class MonitorExitStub extends MonitorAccessStub {
         } else {
             visitor.doInput(lockReg);
         }
-    }
-
-    @Override
-    public void printName(LogStream out) {
-        out.print("MonitorExitStub");
     }
 }

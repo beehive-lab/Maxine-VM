@@ -21,10 +21,14 @@
 
 package com.sun.c1x.ir;
 
-import java.util.*;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.debug.TTY;
+import com.sun.c1x.util.BitMap;
+import com.sun.c1x.util.BitMap2D;
+import com.sun.c1x.util.Util;
 
-import com.sun.c1x.*;
-import com.sun.c1x.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Thomas Wuerthinger

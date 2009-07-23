@@ -20,12 +20,15 @@
  */
 package com.sun.c1x.target.x86;
 
-import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.target.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.ci.CiMethod;
+import com.sun.c1x.lir.FrameMap;
+import com.sun.c1x.lir.LIROperand;
+import com.sun.c1x.lir.LIROperandFactory;
+import com.sun.c1x.target.Architecture;
+import com.sun.c1x.target.Register;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.value.BasicType;
 
 /**
  *
@@ -52,6 +55,12 @@ public class X86FrameMap extends FrameMap {
     private static final LIROperand rspOpr32 = asPointerOpr32(X86Register.rsp);
     private static final LIROperand rspOpr64 = asPointerOpr64(X86Register.rsp);
 
+
+    @Override
+    public Register stackRegister() {
+        // TODO Retrieve this from target or runtime!
+        return X86Register.rsp;
+    }
 
     static final LIROperand rspOpr(Architecture arch) {
         if (arch.is32bit()) {
@@ -103,10 +112,10 @@ public class X86FrameMap extends FrameMap {
     }
 
     static final LIROperand fpu0FloatOpr   = LIROperandFactory.singleLocation(BasicType.Float, X86Register.fpu0);
-    static final LIROperand fpu0DoubleOpr   = LIROperandFactory.singleLocation(BasicType.Double, X86Register.fpu0);
+    static final LIROperand fpu0DoubleOpr   = LIROperandFactory.doubleLocation(BasicType.Double, X86Register.fpu0, X86Register.fpu0);
 
     static final LIROperand xmm0floatOpr = LIROperandFactory.singleLocation(BasicType.Float, X86Register.xmm0);
-    static final LIROperand xmm0doubleOpr = LIROperandFactory.singleLocation(BasicType.Double, X86Register.xmm0);
+    static final LIROperand xmm0doubleOpr = LIROperandFactory.doubleLocation(BasicType.Double, X86Register.xmm0, X86Register.xmm0);
 
     static LIROperand asOopOpr(Register reg) {
         return LIROperandFactory.singleLocation(BasicType.Object, reg);

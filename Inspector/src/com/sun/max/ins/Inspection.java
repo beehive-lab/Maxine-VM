@@ -137,7 +137,7 @@ public final class Inspection {
                 BreakpointsInspector.make(this);
                 focus.setCodeLocation(maxVM.createCodeLocation(focus.thread().instructionPointer()), false);
                 WatchpointsInspector.make(this);
-                //maxVM().initGarbageCollectorDebugging();
+                maxVM().initGarbageCollectorDebugging();
             } catch (Throwable throwable) {
                 System.err.println("Error during initialization");
                 throwable.printStackTrace();

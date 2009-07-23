@@ -20,8 +20,7 @@
  */
 package com.sun.c1x.ci;
 
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.value.BasicType;
 
 /**
  * The <code>CiType</code> interface represents a resolved or unresolved type in the compiler
@@ -40,7 +39,7 @@ public interface CiType {
      *     "I"
      *     "[[B"
      * </pre>
-     * To convert this name to it Java programming language form, use {@link Util#toJavaName(CiType)}.
+     * To convert this name to it Java programming language form, use {@link com.sun.c1x.util.Util#toJavaName(CiType)}.
      *
      * @return the name of this type in internal form
      */

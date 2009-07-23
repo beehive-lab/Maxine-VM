@@ -20,8 +20,9 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.ci.CiMethod;
+import com.sun.c1x.ci.CiType;
+import com.sun.c1x.debug.LogStream;
 
 
 /**

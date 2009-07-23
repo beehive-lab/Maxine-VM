@@ -20,8 +20,9 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.value.BasicType;
+import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.value.ValueType;
 
 /**
  * The <code>AccessIndexed</code> class is the base class of instructions that read or write

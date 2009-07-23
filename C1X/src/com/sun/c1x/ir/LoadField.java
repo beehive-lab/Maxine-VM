@@ -20,9 +20,9 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.ci.CiField;
+import com.sun.c1x.ci.CiType;
+import com.sun.c1x.value.ValueStack;
 
 /**
  * The <code>LoadField</code> instruction a read of a static or instance field.
@@ -39,10 +39,9 @@ public class LoadField extends AccessField {
      * @param lockStack the lock stack
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
-     * @param isInitialized indicates if the class is initialized
      */
-    public LoadField(Instruction object, CiField field, boolean isStatic, ValueStack lockStack, ValueStack stateBefore, boolean isLoaded, boolean isInitialized) {
-        super(object, field, isStatic, lockStack, stateBefore, isLoaded, isInitialized);
+    public LoadField(Instruction object, CiField field, boolean isStatic, ValueStack lockStack, ValueStack stateBefore, boolean isLoaded) {
+        super(object, field, isStatic, lockStack, stateBefore, isLoaded);
     }
 
     /**

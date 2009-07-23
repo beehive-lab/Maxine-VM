@@ -21,7 +21,6 @@
 package com.sun.c1x.stub;
 
 import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
 
 
 /**
@@ -33,40 +32,20 @@ import com.sun.c1x.util.*;
  */
 public class DivByZeroStub extends CodeStub {
 
-    private CodeEmitInfo info;
-    private int offset;
+    public final int offset;
 
     public DivByZeroStub(CodeEmitInfo info) {
         this(-1, info);
     }
 
     public DivByZeroStub(int offset, CodeEmitInfo info) {
-        this.info = info;
+        super(info);
         this.offset = offset;
     }
 
     @Override
-    public void emitCode(LIRAssembler e) {
-        // TODO Not implemented yet
-    }
-
-    /**
-     * Gets the CodeEmitInfo of this class.
-     *
-     * @return the info
-     */
-    @Override
-    public CodeEmitInfo info() {
-        return info;
-    }
-
-    /**
-     * Gets the offset of this class.
-     *
-     * @return the offset
-     */
-    public int offset() {
-        return offset;
+    public void accept(CodeStubVisitor visitor) {
+        visitor.visitDivByZeroStub(this);
     }
 
     @Override
@@ -74,17 +53,8 @@ public class DivByZeroStub extends CodeStub {
         return true;
     }
 
-    public boolean isDivbyzeroStub() {
-        return true;
-    }
-
     @Override
     public void visit(LIRVisitState visitor) {
         visitor.doSlowCase(info);
-    }
-
-    @Override
-    public void printName(LogStream out) {
-        out.print("DivByZeroStub");
     }
 }

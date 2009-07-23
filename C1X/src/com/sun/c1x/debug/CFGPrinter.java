@@ -18,19 +18,27 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.util;
+package com.sun.c1x.debug;
 
-import static com.sun.c1x.ir.Instruction.*;
-
-import java.io.*;
-import java.util.*;
-
-import com.sun.c1x.alloc.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.graph.*;
-import com.sun.c1x.ir.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.alloc.Interval;
+import com.sun.c1x.alloc.LinearScan;
+import com.sun.c1x.ci.CiMethod;
+import com.sun.c1x.graph.BlockMap;
+import com.sun.c1x.ir.BlockBegin;
+import com.sun.c1x.ir.BlockClosure;
+import com.sun.c1x.ir.Instruction;
+import static com.sun.c1x.ir.Instruction.stateString;
+import static com.sun.c1x.ir.Instruction.valueString;
 import com.sun.c1x.lir.LIRList;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.value.ValueStack;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Utility for printing the control flow graph of a method being compiled by C1X at various compilation phases.

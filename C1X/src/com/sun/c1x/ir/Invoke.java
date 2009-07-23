@@ -20,9 +20,9 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.ci.CiMethod;
+import com.sun.c1x.value.BasicType;
+import com.sun.c1x.value.ValueType;
 
 /**
  * The <code>Invoke</code> instruction represents all kinds of method calls.
@@ -63,8 +63,9 @@ public class Invoke extends StateSplit {
         if (target.isLoaded()) {
             setFlag(Flag.TargetIsLoaded);
             initFlag(Flag.TargetIsFinal, target.isFinalMethod());
-            initFlag(Flag.TargetIsStrictfp, target.isStrictFP());
+            initFlag(Flag.TargetIsStrictFP, target.isStrictFP());
         }
+        initFlag(Flag.NeedsNullCheck, !isStatic && !args[0].isNonNull());
     }
 
     /**
@@ -74,6 +75,10 @@ public class Invoke extends StateSplit {
      */
     public int opcode() {
         return opcode;
+    }
+
+    public boolean isStatic() {
+        return isStatic;
     }
 
     /**

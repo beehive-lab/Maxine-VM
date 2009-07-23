@@ -21,9 +21,11 @@
 package com.sun.c1x.stub;
 
 import com.sun.c1x.asm.*;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.target.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.lir.CodeEmitInfo;
+import com.sun.c1x.lir.LIRPatchCode;
+import com.sun.c1x.lir.LIRVisitState;
+import com.sun.c1x.target.Register;
+import com.sun.c1x.util.Util;
 
 
 /**
@@ -42,13 +44,12 @@ public class PatchingStub extends CodeStub {
     }
 
     private PatchID id;
-    private Pointer pcStart;
-    private int bytesToCopy;
+    private int pcStart;
+    public int bytesToCopy;
     private Label patchedCodeEntry;
     private Label patchSiteEntry;
-    private Label patchSiteContinuation;
-    private Register obj;
-    private CodeEmitInfo info;
+    public Label patchSiteContinuation;
+    public Register obj;
     private int oopIndex; // index of the patchable oop in nmethod oop table if needed
     private static int patchInfoOffset;
 
@@ -74,9 +75,9 @@ public class PatchingStub extends CodeStub {
      * @param oopIndex
      */
     public PatchingStub(AbstractAssembler masm, PatchID id, int oopIndex) {
+        super(null);
         this.id = id;
         this.oopIndex = oopIndex;
-        info = null;
         if (masm.compilation.runtime.isMP()) {
             // force alignment of patch sites on MP hardware so we
             // can guarantee atomic writes to the patch site.
@@ -86,11 +87,16 @@ public class PatchingStub extends CodeStub {
         masm.bind(patchSiteEntry);
     }
 
+    private void alignPatchSite(AbstractAssembler masm) {
+        // TODO Auto-generated method stub platform dependent?
+
+    }
+
     public void install(AbstractAssembler masm, LIRPatchCode patchCode, Register obj, CodeEmitInfo info) {
         this.info = info;
         this.obj = obj;
         masm.bind(patchSiteContinuation);
-        bytesToCopy = (int) (masm.pc().address() - pcStart.address());
+        bytesToCopy = masm.pc() - pcStart;
         if (id == PatchID.AccessFieldId) {
             // embed a fixed offset to handle long patches which need to be offset by a word.
             // the patching code will just add the field offset field to this offset so
@@ -118,7 +124,7 @@ public class PatchingStub extends CodeStub {
         } else {
             Util.shouldNotReachHere();
         }
-        assert bytesToCopy <= (masm.pc().address() - pcStart().address()) : "not enough bytes";
+        assert bytesToCopy <= (masm.pc() - pcStart()) : "not enough bytes";
     }
 
     /**
@@ -126,7 +132,7 @@ public class PatchingStub extends CodeStub {
      *
      * @return the pcStart
      */
-    public Pointer pcStart() {
+    public int pcStart() {
         return pcStart;
     }
 
@@ -171,19 +177,8 @@ public class PatchingStub extends CodeStub {
         visitor.doSlowCase(info);
     }
 
-    private void alignPatchSite(AbstractAssembler masm) {
-        // TODO: Platform dependent. Only needed for x86
-    }
-
     @Override
-    public void emitCode(LIRAssembler e) {
-        // TODO Auto-generated method stub
-
+    public void accept(CodeStubVisitor visitor) {
+        visitor.visitPatchingStub(this);
     }
-
-    @Override
-    public void printName(LogStream out) {
-        out.print("PatchingStub");
-    }
-
 }

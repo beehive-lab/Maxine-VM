@@ -18,8 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.util;
-
+package com.sun.c1x.debug;
 
 /**
  * A collection of static methods for printing debug and informational output to a global {@link LogStream}.

@@ -20,7 +20,10 @@
  */
 package com.sun.c1x.target.x86;
 
-import com.sun.c1x.target.*;
+import com.sun.c1x.target.Architecture;
+import com.sun.c1x.target.Backend;
+import com.sun.c1x.target.Register;
+import com.sun.c1x.target.Target;
 
 /**
  *
@@ -29,8 +32,8 @@ import com.sun.c1x.target.*;
  */
 public class X86 extends Architecture {
 
-    public X86(String name, int wordSize, Register[] registers, int framePadding) {
-        super(name, wordSize, "x86", BitOrdering.LittleEndian, registers, framePadding);
+    public X86(String name, int wordSize, Register[] registers, int framePadding, int nativeMoveConstInstructionSize) {
+        super(name, wordSize, "x86", BitOrdering.LittleEndian, registers, framePadding, 1, nativeMoveConstInstructionSize);
     }
 
     @Override

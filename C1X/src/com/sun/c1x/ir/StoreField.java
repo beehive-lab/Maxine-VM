@@ -20,9 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.ci.CiField;
+import com.sun.c1x.value.ValueStack;
 
 /**
  * The <code>StoreField</code> instruction represents a write to a static or instance field.
@@ -41,10 +40,9 @@ public class StoreField extends AccessField {
      * @param lockStack the lock stack
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
-     * @param isInitialized indicates if the class is initialized
      */
-    public StoreField(Instruction object, CiField field, Instruction value, boolean isStatic, ValueStack lockStack, ValueStack stateBefore, boolean isLoaded, boolean isInitialized) {
-        super(object, field, isStatic, lockStack, stateBefore, isLoaded, isInitialized);
+    public StoreField(Instruction object, CiField field, Instruction value, boolean isStatic, ValueStack lockStack, ValueStack stateBefore, boolean isLoaded) {
+        super(object, field, isStatic, lockStack, stateBefore, isLoaded);
         this.value = value;
         setFlag(Flag.NeedsWriteBarrier);
     }
@@ -84,5 +82,4 @@ public class StoreField extends AccessField {
     public void accept(InstructionVisitor v) {
         v.visitStoreField(this);
     }
-
 }

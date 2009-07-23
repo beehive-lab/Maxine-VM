@@ -21,18 +21,28 @@
 
 package com.sun.c1x;
 
-import java.io.*;
-import java.util.*;
-
-import com.sun.c1x.alloc.*;
-import com.sun.c1x.asm.*;
+import com.sun.c1x.alloc.LinearScan;
+import com.sun.c1x.alloc.RegisterAllocator;
+import com.sun.c1x.asm.AbstractAssembler;
+import com.sun.c1x.asm.CodeOffsets;
 import com.sun.c1x.ci.*;
-import com.sun.c1x.gen.*;
-import com.sun.c1x.graph.*;
-import com.sun.c1x.ir.*;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.target.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.debug.CFGPrinter;
+import com.sun.c1x.debug.TTY;
+import com.sun.c1x.gen.LIRGenerator;
+import com.sun.c1x.graph.BlockMap;
+import com.sun.c1x.graph.IR;
+import com.sun.c1x.ir.BlockBegin;
+import com.sun.c1x.ir.ExceptionHandler;
+import com.sun.c1x.ir.Instruction;
+import com.sun.c1x.lir.DebugInformationRecorder;
+import com.sun.c1x.lir.FrameMap;
+import com.sun.c1x.lir.LIRAssembler;
+import com.sun.c1x.target.Target;
+import com.sun.c1x.util.Util;
+
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The <code>Compilation</code> class encapsulates global information about the compilation of a particular method,
@@ -437,5 +447,10 @@ public class C1XCompilation {
     public boolean needsDebugInformation() {
         // TODO Check what to return here, for now do not collect debug information
         return false;
+    }
+
+    public void recordImplicitException(int offset, int offset2) {
+        // TODO Auto-generated method stub
+
     }
 }

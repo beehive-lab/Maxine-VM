@@ -20,16 +20,22 @@
  */
 package com.sun.c1x.lir;
 
-import java.util.*;
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.alloc.LIRInsertionBuffer;
+import com.sun.c1x.asm.Label;
+import com.sun.c1x.ci.CiMethod;
+import com.sun.c1x.ci.CiRuntimeCall;
+import com.sun.c1x.ci.CiType;
+import com.sun.c1x.debug.TTY;
+import com.sun.c1x.ir.BlockBegin;
+import com.sun.c1x.ir.BlockEnd;
+import com.sun.c1x.stub.CodeStub;
+import com.sun.c1x.stub.ConversionStub;
+import com.sun.c1x.value.BasicType;
 
-import com.sun.c1x.*;
-import com.sun.c1x.alloc.*;
-import com.sun.c1x.asm.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ir.*;
-import com.sun.c1x.stub.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -90,7 +96,7 @@ public class LIRList {
     }
 
     public void callOptVirtual(CiMethod method, LIROperand receiver, LIROperand result, CiRuntimeCall dest, List<LIROperand> arguments, CodeEmitInfo info) {
-        append(new LIRJavaCall(LIROpcode.VirtualCall, method, receiver, result, dest, arguments, info));
+        append(new LIRJavaCall(LIROpcode.OptVirtualCall, method, receiver, result, dest, arguments, info));
     }
 
     public void callStatic(CiMethod method, LIROperand result, CiRuntimeCall dest, List<LIROperand> arguments, CodeEmitInfo info) {

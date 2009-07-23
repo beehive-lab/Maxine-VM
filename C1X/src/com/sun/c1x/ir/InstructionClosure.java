@@ -18,46 +18,14 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.asm;
+package com.sun.c1x.ir;
 
 /**
+ * The <code>InstructionClosure</code> interface represents a first-class
+ * function that can be applied to an instruction.
  *
- * @author Thomas Wuerthinger
- *
+ * @author Ben L. Titzer
  */
-public class Pointer {
-
-    public final long value;
-
-    public Pointer(long value) {
-        this.value = value;
-    }
-
-    public boolean smallerThan(Pointer pc) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    public long readPointer() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    /**
-     * @return
-     */
-    public long address() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    /**
-     * @param addr
-     * @param oopMap
-     */
-    public static void memcopy(Pointer dst, Object src, int size) {
-        // TODO Auto-generated method stub
-
-    }
-
+public interface InstructionClosure {
+    Instruction apply(Instruction i);
 }
