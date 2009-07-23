@@ -362,6 +362,15 @@ public class InstructionPrinter extends InstructionVisitor {
     }
 
     @Override
+    public void visitResolveClass(ResolveClass i) {
+        if (!i.ciType.isLoaded()) {
+            out.print("<unloaded> ");
+        }
+
+        out.print("class ").print(i.ciType.name());
+    }
+
+    @Override
     public void visitConvert(Convert convert) {
         out.print(Bytecodes.name(convert.opcode())).print('(').print(convert.value()).print(')');
     }
@@ -600,6 +609,7 @@ public class InstructionPrinter extends InstructionVisitor {
     public void visitStoreIndexed(StoreIndexed store) {
         out.print(store.array()).print('[').print(store.index()).print("] := ").print(store.value()).print(" (").print(store.type().tchar()).print(')');
     }
+
 
     @Override
     public void visitTableSwitch(TableSwitch tswitch) {
