@@ -131,7 +131,7 @@ public class C1XOptions {
     public static int     TraceLinearScanLevel               = 0;
 
     // LIR settings
-    public static boolean GenerateLIR                        = ____;
+    public static boolean GenerateLIR                        = TRUE;
     public static boolean PrintIRWithLIR                     = ____;
     public static boolean LIRFillDelaySlots                  = ____;
     public static boolean LIRTraceExecution                  = ____;

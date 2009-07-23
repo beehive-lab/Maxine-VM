@@ -1512,7 +1512,7 @@ public class X86LIRAssembler extends LIRAssembler {
             Register array = op.array().asRegister();
             Register kRInfo = op.tmp1().asRegister();
             Register klassRInfo = op.tmp2().asRegister();
-            Register rtmp1 = op.tmp3().asRegister();
+            //Register rtmp1 = op.tmp3().asRegister();
 
             CodeStub stub = op.stub();
             Label done = new Label();
