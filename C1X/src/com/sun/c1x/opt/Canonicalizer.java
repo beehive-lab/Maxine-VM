@@ -431,7 +431,7 @@ public class Canonicalizer extends InstructionVisitor {
                 // limit this optimization to the current basic block
                 if (nv != null && inCurrentBlock(v)) {
                     setCanonical(new StoreField(i.object(), i.field(), nv, i.isStatic(),
-                                                i.lockStack(), i.stateBefore(), i.isLoaded(), i.isInitialized()));
+                                                i.lockStack(), i.stateBefore(), i.isLoaded()));
                 }
             }
         }

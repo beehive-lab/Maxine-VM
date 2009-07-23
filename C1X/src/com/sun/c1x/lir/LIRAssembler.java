@@ -25,7 +25,6 @@ import com.sun.c1x.C1XOptions;
 import com.sun.c1x.ExceptionInfo;
 import com.sun.c1x.asm.AbstractAssembler;
 import com.sun.c1x.asm.CodeOffsets;
-import com.sun.c1x.asm.Pointer;
 import com.sun.c1x.bytecode.Bytecodes;
 import com.sun.c1x.ci.CiMethod;
 import com.sun.c1x.ci.CiRuntimeCall;

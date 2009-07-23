@@ -46,16 +46,14 @@ public abstract class Instruction {
     public enum Flag {
         NonNull,
         NeedsNullCheck,
+        NeedsStoreCheck,   // TODO: unused until array store check elimination
+        NeedsWriteBarrier, // TODO: unused until write-barrier elision optimization
         CanTrap,
         DirectCompare,
         IsEliminated, // TODO: scheduled for deletion
-        IsInitialized,
         IsLoaded, // TODO: necessary?
         IsSafepoint,
-        IsStatic,
         IsStrictFP,
-        NeedsStoreCheck,   // TODO: unused until array store check elimination
-        NeedsWriteBarrier, // TODO: unused until write-barrier elision optimization
         PreservesState,
         TargetIsFinal, // TODO: scheduled for deletion
         TargetIsLoaded, // TODO: scheduled for deletion

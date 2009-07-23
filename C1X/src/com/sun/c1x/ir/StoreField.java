@@ -40,10 +40,9 @@ public class StoreField extends AccessField {
      * @param lockStack the lock stack
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
-     * @param isInitialized indicates if the class is initialized
      */
-    public StoreField(Instruction object, CiField field, Instruction value, boolean isStatic, ValueStack lockStack, ValueStack stateBefore, boolean isLoaded, boolean isInitialized) {
-        super(object, field, isStatic, lockStack, stateBefore, isLoaded, isInitialized);
+    public StoreField(Instruction object, CiField field, Instruction value, boolean isStatic, ValueStack lockStack, ValueStack stateBefore, boolean isLoaded) {
+        super(object, field, isStatic, lockStack, stateBefore, isLoaded);
         this.value = value;
         setFlag(Flag.NeedsWriteBarrier);
     }
@@ -83,5 +82,4 @@ public class StoreField extends AccessField {
     public void accept(InstructionVisitor v) {
         v.visitStoreField(this);
     }
-
 }

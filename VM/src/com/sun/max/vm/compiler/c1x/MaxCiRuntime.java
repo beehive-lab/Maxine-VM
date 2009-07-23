@@ -593,19 +593,16 @@ public class MaxCiRuntime implements CiRuntime {
         return "";
     }
 
-    @Override
     public int initThreadOffsetInBytes() {
         // TODO Auto-generated method stub
         return 0;
     }
 
-    @Override
     public int sizeofKlassOopDesc() {
         // TODO Auto-generated method stub
         return 0;
     }
 
-    @Override
     public int convertToPointer32(Object obj) {
         if (obj == nonOopWord) {
             // Return something that is not 0 and does not look like an oop (neither high nor low word).
@@ -616,7 +613,6 @@ public class MaxCiRuntime implements CiRuntime {
         return 0;
     }
 
-    @Override
     public long convertToPointer64(Object obj) {
         if (obj == nonOopWord) {
             // Return something that is not 0 and does not look like an oop (neither high nor low word).
