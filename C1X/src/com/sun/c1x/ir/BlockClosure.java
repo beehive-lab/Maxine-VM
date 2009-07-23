@@ -18,16 +18,15 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.util;
+package com.sun.c1x.ir;
 
 import com.sun.c1x.ir.*;
 
 /**
- * The <code>InstructionClosure</code> interface represents a first-class
- * function that can be applied to an instruction.
+ * The <code>BlockClosure</code> interface represents a closure for iterating over blocks.
  *
  * @author Ben L. Titzer
  */
-public interface InstructionClosure {
-    Instruction apply(Instruction i);
+public interface BlockClosure {
+    void apply(BlockBegin block);
 }

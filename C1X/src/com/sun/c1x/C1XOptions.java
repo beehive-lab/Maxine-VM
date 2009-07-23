@@ -116,6 +116,7 @@ public class C1XOptions {
 
     // future settings
     public static boolean DoArrayBoundsCheckElimination      = ____;
+    public static boolean DoCEElimination                    = ____;
     public static boolean DistinguishExceptionHandlerCode    = ____;
     public static boolean DoNullCheckElimination             = ____;
     public static boolean DoProfileGuidedInlining            = ____;
@@ -282,6 +283,7 @@ public class C1XOptions {
 
         // turn on global optimizations
         DoGlobalValueNumbering             = TRUE;
+        DoCEElimination                    = TRUE;
         DoArrayBoundsCheckElimination      = TRUE;
         DistinguishExceptionHandlerCode    = TRUE;
         DoNullCheckElimination             = TRUE;

@@ -21,7 +21,7 @@
 package com.sun.c1x.stub;
 
 import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.debug.LogStream;
 
 /**
  * The <code>ArrayStoreExceptionStub</code> class definition.
@@ -71,7 +71,7 @@ public class ArrayStoreExceptionStub extends CodeStub {
     }
 
     /* (non-Javadoc)
-     * @see com.sun.c1x.lir.CodeStub#printName(com.sun.c1x.util.LogStream)
+     * @see com.sun.c1x.lir.CodeStub#printName(com.sun.c1x.debug.LogStream)
      */
     @Override
     public void printName(LogStream out) {

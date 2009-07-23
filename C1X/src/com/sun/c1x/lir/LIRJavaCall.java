@@ -23,7 +23,7 @@ package com.sun.c1x.lir;
 import java.util.*;
 
 import com.sun.c1x.ci.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.debug.LogStream;
 
 /**
  * The <code>LIRJavaCall</code> class definition.

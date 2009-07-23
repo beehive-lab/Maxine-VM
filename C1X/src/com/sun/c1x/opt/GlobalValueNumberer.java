@@ -33,7 +33,7 @@ import java.util.HashMap;
  *
  * @author Ben L. Titzer
  */
-public class GlobalValueNumbering {
+public class GlobalValueNumberer {
 
     final IR ir;
     final HashMap<BlockBegin, ValueMap> valueMaps;
@@ -44,7 +44,7 @@ public class GlobalValueNumbering {
      *
      * @param ir the IR on which to perform global value numbering
      */
-    public GlobalValueNumbering(IR ir) {
+    public GlobalValueNumberer(IR ir) {
         this.ir = ir;
         List<BlockBegin> blocks = ir.linearScanOrder();
         valueMaps = new HashMap<BlockBegin, ValueMap>(blocks.size());

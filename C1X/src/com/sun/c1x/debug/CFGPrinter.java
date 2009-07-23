@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.util;
+package com.sun.c1x.debug;
 
 import static com.sun.c1x.ir.Instruction.*;
 
@@ -31,6 +31,10 @@ import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
 import com.sun.c1x.lir.LIRList;
+import com.sun.c1x.debug.TTY;
+import com.sun.c1x.debug.LogStream;
+import com.sun.c1x.debug.InstructionPrinter;
+import com.sun.c1x.util.Util;
 
 /**
  * Utility for printing the control flow graph of a method being compiled by C1X at various compilation phases.

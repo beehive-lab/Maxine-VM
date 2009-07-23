@@ -18,43 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.opt;
+package com.sun.c1x.ir;
 
 import com.sun.c1x.ir.*;
 
 /**
- * The <code>SubstitutionResolver</code> iterates over the instructions of a program and replaces
- * the occurrence of each instruction with its substitution, if it has one.
+ * The <code>InstructionClosure</code> interface represents a first-class
+ * function that can be applied to an instruction.
  *
  * @author Ben L. Titzer
  */
-public class SubstitutionResolver implements BlockClosure, InstructionClosure {
-
-    /**
-     * Creates a new SubstitutionResolver and applies it to each instruction
-     * in the IR graph, starting from the specified block.
-     * @param block the block from which to start substitution
-     */
-    public SubstitutionResolver(BlockBegin block) {
-        block.iteratePreOrder(this);
-    }
-
-    public void apply(BlockBegin block) {
-        Instruction last = null;
-        for (Instruction n = block; n != null; n = last.next()) {
-            n.allValuesDo(this);
-            if (n.subst() != n && last != null) {
-                last.setNext(n.next(), n.next().bci());
-            } else {
-                last = n;
-            }
-        }
-    }
-
-    public Instruction apply(Instruction i) {
-        if (i != null) {
-            return i.subst();
-        }
-        return i;
-    }
+public interface InstructionClosure {
+    Instruction apply(Instruction i);
 }

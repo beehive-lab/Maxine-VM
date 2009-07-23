@@ -21,7 +21,6 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.*;
-import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -61,6 +60,7 @@ public class Intrinsic extends StateSplit {
         initFlag(Flag.PreservesState, preservesState);
         initFlag(Flag.CanTrap, canTrap);
         initFlag(Flag.PinStateSplitConstructor, canTrap);
+        initFlag(Flag.NeedsNullCheck, !isStatic && !arguments[0].isNonNull());
     }
 
     /**

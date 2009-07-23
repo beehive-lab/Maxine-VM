@@ -24,6 +24,7 @@ package com.sun.c1x.target.x86;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.debug.TTY;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.gen.*;

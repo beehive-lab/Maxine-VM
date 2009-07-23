@@ -23,9 +23,10 @@ package com.sun.c1x.ir;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.debug.TTY;
+import com.sun.c1x.debug.InstructionPrinter;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -43,20 +44,21 @@ public abstract class Instruction {
      */
     public enum Flag {
         NonNull,
+        NeedsNullCheck,
         CanTrap,
         DirectCompare,
-        IsEliminated,
+        IsEliminated, // TODO: scheduled for deletion
         IsInitialized,
-        IsLoaded,
+        IsLoaded, // TODO: necessary?
         IsSafepoint,
         IsStatic,
         IsStrictFP,
-        NeedsStoreCheck,
-        NeedsWriteBarrier,
+        NeedsStoreCheck,   // TODO: unused until array store check elimination
+        NeedsWriteBarrier, // TODO: unused until write-barrier elision optimization
         PreservesState,
-        TargetIsFinal,
-        TargetIsLoaded,
-        TargetIsStrictfp,
+        TargetIsFinal, // TODO: scheduled for deletion
+        TargetIsLoaded, // TODO: scheduled for deletion
+        TargetIsStrictFP,
         UnorderedIsTrue,
         NeedsPatching,
         ThrowIncompatibleClassChangeError,
@@ -320,7 +322,7 @@ public abstract class Instruction {
      * @return <code>true</code> if this instruction needs a null check
      */
     public final boolean needsNullCheck() {
-        return !checkFlag(Flag.NonNull);
+        return checkFlag(Flag.NeedsNullCheck);
     }
 
     /**

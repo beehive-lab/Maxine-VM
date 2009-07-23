@@ -21,7 +21,7 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.asm.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.debug.LogStream;
 
 
 /**

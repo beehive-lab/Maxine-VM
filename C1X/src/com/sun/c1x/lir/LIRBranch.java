@@ -25,6 +25,7 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.c1x.debug.LogStream;
 
 /**
  * @author Marcelo Cintra

@@ -18,15 +18,25 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.util;
+package com.sun.c1x.opt;
 
-import com.sun.c1x.ir.*;
+import com.sun.c1x.graph.IR;
 
 /**
- * The <code>BlockClosure</code> interface represents a closure for iterating over blocks.
+ * This class implements a data-flow analysis to remove redundant null checks
+ * and deoptimization info for instructions that cannot ever produce {@code NullPointerException}.
  *
  * @author Ben L. Titzer
  */
-public interface BlockClosure {
-    void apply(BlockBegin block);
+public class NullCheckEliminator {
+
+    final IR ir;
+
+    /**
+     * Creates a new null check eliminator for the specified IR and performs the optimization.
+     * @param ir the IR
+     */
+    public NullCheckEliminator(IR ir) {
+        this.ir = ir;
+    }
 }
