@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.value.ValueType;
 
 /**
  * The <code>Convert</code> class represents a conversion between primitive types.

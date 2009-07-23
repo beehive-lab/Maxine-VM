@@ -20,10 +20,10 @@
  */
 package com.sun.c1x.ir;
 
-import java.util.*;
+import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.value.ValueType;
 
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import java.util.List;
 
 /**
  * The <code>Switch</code> class is the base of both lookup and table switches.

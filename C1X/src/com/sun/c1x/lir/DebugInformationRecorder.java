@@ -20,10 +20,10 @@
  */
 package com.sun.c1x.lir;
 
-import java.util.*;
+import com.sun.c1x.asm.OopRecorder;
+import com.sun.c1x.ci.CiMethod;
 
-import com.sun.c1x.asm.*;
-import com.sun.c1x.ci.*;
+import java.util.List;
 
 /**
  * @author Thomas Wuerthinger

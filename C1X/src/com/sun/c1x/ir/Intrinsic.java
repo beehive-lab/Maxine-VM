@@ -20,9 +20,9 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.C1XIntrinsic;
+import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.value.ValueType;
 
 /**
  * The <code>Intrinsic</code> instruction represents a call to a JDK method
@@ -61,6 +61,7 @@ public class Intrinsic extends StateSplit {
         initFlag(Flag.PreservesState, preservesState);
         initFlag(Flag.CanTrap, canTrap);
         initFlag(Flag.PinStateSplitConstructor, canTrap);
+        initFlag(Flag.NeedsNullCheck, !isStatic && !arguments[0].isNonNull());
     }
 
     /**
@@ -86,6 +87,10 @@ public class Intrinsic extends StateSplit {
     @Override
     public ValueStack lockStack() {
         return lockStack;
+    }
+
+    public boolean isStatic() {
+        return isStatic;
     }
 
     /**

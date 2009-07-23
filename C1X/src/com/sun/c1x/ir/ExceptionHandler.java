@@ -20,10 +20,12 @@
  */
 package com.sun.c1x.ir;
 
-import java.util.*;
+import com.sun.c1x.ci.CiExceptionHandler;
+import com.sun.c1x.ci.CiType;
+import com.sun.c1x.lir.LIRList;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.lir.*;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * The <code>ExceptionHandler</code> class represents an exception handler for a Java bytecode method.
