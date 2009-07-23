@@ -23,6 +23,7 @@ package com.sun.c1x.gen;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.debug.TTY;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;

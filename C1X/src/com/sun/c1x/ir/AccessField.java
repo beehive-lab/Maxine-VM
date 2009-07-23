@@ -22,7 +22,6 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
-import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -66,6 +65,7 @@ public abstract class AccessField extends Instruction {
         initFlag(Flag.IsLoaded, isLoaded);
         initFlag(Flag.IsInitialized, isInitialized);
         initFlag(Flag.IsStatic, isStatic);
+        initFlag(Flag.NeedsNullCheck, !object.isNonNull());
         pin(); // pin memory access instructions
     }
 
@@ -167,7 +167,7 @@ public abstract class AccessField extends Instruction {
      */
     @Override
     public boolean canTrap() {
-        return needsPatching() || (!checkFlag(Flag.IsStatic) && !object.isNonNull());
+        return needsPatching() || needsNullCheck();
     }
 
     /**

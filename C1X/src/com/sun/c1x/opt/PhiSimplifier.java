@@ -21,7 +21,6 @@
 package com.sun.c1x.opt;
 
 import com.sun.c1x.ir.*;
-import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**

@@ -24,6 +24,9 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.debug.TTY;
+import com.sun.c1x.debug.LogStream;
+import com.sun.c1x.debug.InstructionPrinter;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;

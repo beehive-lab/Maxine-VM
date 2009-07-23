@@ -21,7 +21,6 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.ci.*;
-import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -63,8 +62,9 @@ public class Invoke extends StateSplit {
         if (target.isLoaded()) {
             setFlag(Flag.TargetIsLoaded);
             initFlag(Flag.TargetIsFinal, target.isFinalMethod());
-            initFlag(Flag.TargetIsStrictfp, target.isStrictFP());
+            initFlag(Flag.TargetIsStrictFP, target.isStrictFP());
         }
+        initFlag(Flag.NeedsNullCheck, !isStatic && !args[0].isNonNull());
     }
 
     /**

@@ -33,6 +33,8 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.target.*;
 import com.sun.c1x.util.*;
+import com.sun.c1x.debug.TTY;
+import com.sun.c1x.debug.CFGPrinter;
 
 /**
  * The <code>Compilation</code> class encapsulates global information about the compilation of a particular method,

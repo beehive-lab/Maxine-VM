@@ -21,6 +21,7 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.util.*;
+import com.sun.c1x.debug.LogStream;
 
 /**
  * The <code>ScopeValue</code> class definition.
