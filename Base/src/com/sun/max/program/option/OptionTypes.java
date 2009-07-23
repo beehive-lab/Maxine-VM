@@ -327,6 +327,18 @@ public class OptionTypes {
             return "true|false, t|f, y|n";
         }
     };
+    public static final Option.Type<Boolean> BLANK_BOOLEAN_TYPE = new Option.Type<Boolean>(Boolean.class, "boolean") {
+        @Override
+        public Boolean parseValue(String string) {
+            // blank boolean always returns null
+            return null;
+        }
+
+        @Override
+        public String getValueFormat() {
+            return "true|false, t|f, y|n";
+        }
+    };
     public static final Option.Type<File> FILE_TYPE = new Option.Type<File>(File.class, "file") {
         @Override
         public File parseValue(String string) {

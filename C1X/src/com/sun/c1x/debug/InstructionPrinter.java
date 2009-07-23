@@ -18,18 +18,19 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.util;
+package com.sun.c1x.debug;
 
-import static com.sun.c1x.ir.Instruction.*;
-import static com.sun.c1x.util.InstructionPrinter.InstructionLineColumn.*;
-
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
+import com.sun.c1x.bytecode.Bytecodes;
+import com.sun.c1x.ci.CiMethod;
+import static com.sun.c1x.debug.InstructionPrinter.InstructionLineColumn.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.value.*;
+import static com.sun.c1x.ir.Instruction.stateString;
+import com.sun.c1x.value.ConstType;
+import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.value.ValueType;
 
 /**
- * An {@link InstructionVisitor} for {@linkplain #printInstruction(Instruction) printing}
+ * An {@link com.sun.c1x.ir.InstructionVisitor} for {@linkplain #printInstruction(Instruction) printing}
  * an {@link Instruction} as an expression or statement.
  *
  * @author Doug Simon
@@ -341,12 +342,6 @@ public class InstructionPrinter extends InstructionVisitor {
             out.print("null");
         } else if (type.isPrimitive()) {
             out.print(type.asConstant().valueString());
-        } else if (type.isClass()) {
-            ClassType k = (ClassType) type;
-            if (k.ciType().isLoaded()) {
-                out.print("<unloaded> ");
-            }
-            out.print("class ").print(k.ciType().name());
         } else if (type.isObject()) {
             Object object = type.asConstant().asObject();
             if (object instanceof String) {
@@ -359,15 +354,6 @@ public class InstructionPrinter extends InstructionVisitor {
         } else {
             out.print("???");
         }
-    }
-
-    @Override
-    public void visitResolveClass(ResolveClass i) {
-        if (!i.ciType.isLoaded()) {
-            out.print("<unloaded> ");
-        }
-
-        out.print("class ").print(i.ciType.name());
     }
 
     @Override
@@ -607,9 +593,8 @@ public class InstructionPrinter extends InstructionVisitor {
 
     @Override
     public void visitStoreIndexed(StoreIndexed store) {
-        out.print(store.array()).print('[').print(store.index()).print("] := ").print(store.value()).print(" (").print(store.type().tchar()).print(')');
+        out.print(store).print('[').print(store.index()).print("] := ").print(store.value()).print(" (").print(store.type().tchar()).print(')');
     }
-
 
     @Override
     public void visitTableSwitch(TableSwitch tswitch) {

@@ -20,8 +20,6 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.util.*;
-
 /**
  * The <code>MonitorExit</code> instruction represents a monitor release.
  *

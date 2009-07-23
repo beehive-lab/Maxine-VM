@@ -113,9 +113,11 @@ public class C1XOptions {
     // global optimization settings
     public static boolean DoGlobalValueNumbering             = ____;
     public static int     MaximumGVNLoopSize                 = 8;
+    public static boolean DoIterativeNullCheckElimination    = ____;
 
     // future settings
     public static boolean DoArrayBoundsCheckElimination      = ____;
+    public static boolean DoCEElimination                    = ____;
     public static boolean DistinguishExceptionHandlerCode    = ____;
     public static boolean DoNullCheckElimination             = ____;
     public static boolean DoProfileGuidedInlining            = ____;
@@ -143,7 +145,7 @@ public class C1XOptions {
     public static boolean GenerateBoundsChecks               = ____;
     public static boolean GenerateCompilerNullChecks         = ____;
     public static boolean UseTableRanges                     = ____;
-    public static boolean DetailedAsserts                    = TRUE;
+    public static boolean DetailedAsserts                    = ____;
 
     public static boolean ImplicitDiv0Checks                 = ____;
 
@@ -284,9 +286,11 @@ public class C1XOptions {
 
         // turn on global optimizations
         DoGlobalValueNumbering             = TRUE;
+        DoCEElimination                    = TRUE;
         DoArrayBoundsCheckElimination      = TRUE;
         DistinguishExceptionHandlerCode    = TRUE;
         DoNullCheckElimination             = TRUE;
+        DoIterativeNullCheckElimination    = TRUE;
         DoProfileGuidedInlining            = TRUE;
         DoTypeFlowAnalysis                 = TRUE;
         DetectCascadingInstanceOf          = TRUE;

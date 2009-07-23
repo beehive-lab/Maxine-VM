@@ -18,9 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.util;
-
-import com.sun.c1x.ir.*;
+package com.sun.c1x.ir;
 
 /**
  * The <code>InstructionVisitor</code> implements one half of the visitor
@@ -36,6 +34,8 @@ public abstract class InstructionVisitor {
     }
     public void visitConstant(Constant i) {
     }
+    public void visitResolveClass(ResolveClass i) {
+    }
     public void visitLoadField(LoadField i) {
     }
     public void visitStoreField(StoreField i) {
@@ -45,8 +45,6 @@ public abstract class InstructionVisitor {
     public void visitLoadIndexed(LoadIndexed i) {
     }
     public void visitStoreIndexed(StoreIndexed i) {
-    }
-    public void visitResolveClass(ResolveClass i) {
     }
     public void visitNegateOp(NegateOp i) {
     }

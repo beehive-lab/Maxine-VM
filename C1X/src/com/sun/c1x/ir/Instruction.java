@@ -20,13 +20,15 @@
  */
 package com.sun.c1x.ir;
 
-import java.util.*;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.ci.CiType;
+import com.sun.c1x.debug.InstructionPrinter;
+import com.sun.c1x.debug.TTY;
+import com.sun.c1x.lir.LIROperand;
+import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.value.ValueType;
 
-import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import java.util.List;
 
 /**
  * The <code>Instruction</code> class represents a node in the IR. Each instruction
@@ -43,20 +45,18 @@ public abstract class Instruction {
      */
     public enum Flag {
         NonNull,
-        CanTrap,
+        NeedsNullCheck,
+        NeedsStoreCheck,   // TODO: unused until array store check elimination
+        NeedsWriteBarrier, // TODO: unused until write-barrier elision optimization
         DirectCompare,
-        IsEliminated,
-        IsInitialized,
-        IsLoaded,
+        IsEliminated, // TODO: scheduled for deletion
+        IsLoaded, // TODO: necessary?
         IsSafepoint,
-        IsStatic,
         IsStrictFP,
-        NeedsStoreCheck,
-        NeedsWriteBarrier,
         PreservesState,
-        TargetIsFinal,
-        TargetIsLoaded,
-        TargetIsStrictfp,
+        TargetIsFinal, // TODO: scheduled for deletion
+        TargetIsLoaded, // TODO: scheduled for deletion
+        TargetIsStrictFP,
         UnorderedIsTrue,
         NeedsPatching,
         ThrowIncompatibleClassChangeError,
@@ -320,7 +320,7 @@ public abstract class Instruction {
      * @return <code>true</code> if this instruction needs a null check
      */
     public final boolean needsNullCheck() {
-        return !checkFlag(Flag.NonNull);
+        return checkFlag(Flag.NeedsNullCheck);
     }
 
     /**

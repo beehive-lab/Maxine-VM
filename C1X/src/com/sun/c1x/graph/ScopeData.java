@@ -20,13 +20,18 @@
  */
 package com.sun.c1x.graph;
 
-import java.util.*;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.bytecode.BytecodeStream;
+import com.sun.c1x.ci.CiConstantPool;
+import com.sun.c1x.ci.CiExceptionHandler;
+import com.sun.c1x.ir.BlockBegin;
+import com.sun.c1x.ir.ExceptionHandler;
+import com.sun.c1x.ir.IRScope;
+import com.sun.c1x.ir.Instruction;
+import com.sun.c1x.value.ValueStack;
 
-import com.sun.c1x.*;
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ir.*;
-import com.sun.c1x.value.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The <code>ScopeData</code> class represents inlining context when parsing the bytecodes

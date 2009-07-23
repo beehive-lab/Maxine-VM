@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.target;
 
-import com.sun.c1x.value.*;
+import com.sun.c1x.value.BasicType;
 
 /**
  * The <code>Target</code> class represents the target of a compilation, including

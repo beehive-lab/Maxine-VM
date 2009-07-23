@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.debug.TTY;
 
 /**
  * The <code>CompressedWriteStream</code> class definition.

@@ -20,9 +20,11 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.target.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.target.Register;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.value.BasicType;
+import com.sun.c1x.value.ConstType;
+import com.sun.c1x.value.ValueType;
 
 
 /**
@@ -88,16 +90,7 @@ public class LIROperandFactory {
     public static LIROperand valueType(ValueType type) {
 
         if (type.isObject()) {
-            if (type instanceof ClassType) {
-                ClassType c = (ClassType) type;
-                if (!c.isConstant()) {
-                    return oopConst(null);
-                } else {
-                    return oopConst(type.asConstant().asObject());
-                }
-            } else {
-                return oopConst(type.asConstant().asObject());
-            }
+            return oopConst(type.asConstant().asObject());
         } else {
             assert type instanceof ConstType : "ValueType must be an instance of ConstType";
             ConstType c = (ConstType) type;

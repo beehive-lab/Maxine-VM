@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.value;
 
-import com.sun.c1x.util.*;
+import com.sun.c1x.util.Util;
 
 /**
  * The <code>ValueType</code> class represents the type of a value in the IR.
@@ -104,13 +104,6 @@ public class ValueType {
      */
     public final boolean isPrimitive() {
         return isInt() || isFloat() || isLong() || isDouble();
-    }
-
-    /**
-     * Checks if this is {@linkplain ClassType class type}.
-     */
-    public boolean isClass() {
-        return false;
     }
 
     /**

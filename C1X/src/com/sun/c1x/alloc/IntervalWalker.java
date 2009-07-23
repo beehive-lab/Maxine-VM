@@ -20,9 +20,13 @@
  */
 package com.sun.c1x.alloc;
 
-import com.sun.c1x.*;
-import com.sun.c1x.alloc.Interval.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.Bailout;
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.alloc.Interval.IntervalKind;
+import com.sun.c1x.alloc.Interval.IntervalState;
+import com.sun.c1x.alloc.Interval.IntervalUseKind;
+import com.sun.c1x.debug.TTY;
 
 /**
  *

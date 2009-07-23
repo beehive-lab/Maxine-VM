@@ -20,10 +20,10 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.ci.CiField;
+import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.value.ValueType;
 
 /**
  * The <code>AccessField</code> class is the base class of all instructions that access
@@ -36,9 +36,10 @@ public abstract class AccessField extends Instruction {
     Instruction object;
     final int offset;
     final CiField field;
-    final ValueStack stateBefore;
+    ValueStack stateBefore;
     ValueStack lockStack;
     NullCheck explicitNullCheck;
+    boolean isStatic;
 
     /**
      * Constructs a new access field object.
@@ -48,24 +49,23 @@ public abstract class AccessField extends Instruction {
      * @param lockStack the lock stack
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
-     * @param isInitialized indicates if the class is initialized
      */
     public AccessField(Instruction object, CiField field, boolean isStatic,
-                       ValueStack lockStack, ValueStack stateBefore, boolean isLoaded, boolean isInitialized) {
+                       ValueStack lockStack, ValueStack stateBefore, boolean isLoaded) {
         super(ValueType.fromBasicType(field.basicType()));
         this.object = object;
         this.offset = isLoaded ? field.offset() : -1;
         this.field = field;
         this.lockStack = lockStack;
         this.stateBefore = stateBefore;
+        this.isStatic = isStatic;
         if (!isLoaded || (C1XOptions.TestPatching && !field.isVolatile())) {
             // require patching if the field is not loaded (i.e. resolved),
             // or if patch testing is turned on (but not if the field is volatile)
             setFlag(Flag.NeedsPatching);
         }
         initFlag(Flag.IsLoaded, isLoaded);
-        initFlag(Flag.IsInitialized, isInitialized);
-        initFlag(Flag.IsStatic, isStatic);
+        initFlag(Flag.NeedsNullCheck, !object.isNonNull());
         pin(); // pin memory access instructions
     }
 
@@ -99,7 +99,7 @@ public abstract class AccessField extends Instruction {
      * @return <code>true</code> if this field access is to a static field
      */
     public boolean isStatic() {
-        return checkFlag(Flag.IsStatic);
+        return isStatic;
     }
 
     /**
@@ -115,7 +115,7 @@ public abstract class AccessField extends Instruction {
      * @return <code>true</code> if the class is initialized
      */
     public boolean isInitialized() {
-        return checkFlag(Flag.IsInitialized);
+        return !isStatic || isLoaded() && field.holder().isInitialized();
     }
 
     /**
@@ -167,7 +167,7 @@ public abstract class AccessField extends Instruction {
      */
     @Override
     public boolean canTrap() {
-        return needsPatching() || (!checkFlag(Flag.IsStatic) && !object.isNonNull());
+        return needsPatching() || needsNullCheck();
     }
 
     /**
