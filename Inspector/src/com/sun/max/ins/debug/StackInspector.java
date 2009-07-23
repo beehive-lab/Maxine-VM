@@ -474,7 +474,7 @@ public class StackInspector extends Inspector {
             final TextLabel stackPointerLabel = new TextLabel(inspection(), "Stack pointer:", frameClassName);
             final Pointer framePointer = javaStackFrame.framePointer;
             final Pointer stackPointer = javaStackFrame.stackPointer;
-            final STACK_BIAS bias = javaStackFrame.bias();
+            final StackBias bias = javaStackFrame.bias();
 
             header.add(framePointerLabel);
             header.add(new DataLabel.BiasedStackAddressAsHex(inspection(), framePointer, bias));
@@ -579,7 +579,7 @@ public class StackInspector extends Inspector {
             final String name = showSlotAddresses.isSelected() ? stackFrame.slotBase().plus(offset).toHexString() : slot.name;
             slotLabel.setText(name + ":");
             String otherInfo = "";
-            final STACK_BIAS bias = stackFrame.bias();
+            final StackBias bias = stackFrame.bias();
             if (bias.isFramePointerBiased()) {
                 final int biasedOffset = stackFrame.biasedOffset(offset);
                 otherInfo = String.format("(%%fp %+d)", biasedOffset);

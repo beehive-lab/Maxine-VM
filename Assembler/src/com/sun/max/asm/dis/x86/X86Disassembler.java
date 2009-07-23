@@ -282,9 +282,7 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
                             byte[] bytes;
                             if (true) {
                                 final Assembler assembler = createAssembler(currentPosition);
-                                final Class<Template_Type> type = null;
-                                final Template_Type t = StaticLoophole.cast(type, template.redundantTo);
-                                assembly().assemble(assembler, t == null ? template : t, arguments);
+                                assembly().assemble(assembler, template, arguments);
                                 bytes = assembler.toByteArray();
                             } else { // TODO: does not work yet
                                 final X86TemplateAssembler<Template_Type> templateAssembler = new X86TemplateAssembler<Template_Type>(template, addressWidth());
@@ -299,6 +297,9 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
                                 }
                             }
                         }
+                    } catch (NoSuchAssemblerMethodError e) {
+                        // Until the X86TemplateAssembler is complete, only templates for which a generated assembler
+                        // method exists can be disassembled
                     } catch (IOException ioException) {
                         // this one did not work, so loop back up and try another template
                     }

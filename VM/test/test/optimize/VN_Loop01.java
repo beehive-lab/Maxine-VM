@@ -86,10 +86,9 @@ public class VN_Loop01 {
             if (!cond2) {
                 int u = x + c;
                 return t + u;
-            } else {
-                int u = x + c;
-                return t + u;
             }
+            int u = x + c;
+            return t + u;
         }
         return 3;
     }

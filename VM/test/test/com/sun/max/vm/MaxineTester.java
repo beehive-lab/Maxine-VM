@@ -1026,7 +1026,7 @@ public class MaxineTester {
                 }
             }.run(Classpath.fromSystem());
 
-            final int availableProcessors = ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors();
+            final int availableProcessors = Math.min(4, ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors());
             final ExecutorService junitTesterService = Executors.newFixedThreadPool(availableProcessors);
             final CompletionService<Void> junitTesterCompletionService = new ExecutorCompletionService<Void>(junitTesterService);
             for (final String junitTest : junitTests) {

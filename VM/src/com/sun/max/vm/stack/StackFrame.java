@@ -79,11 +79,11 @@ public abstract class StackFrame {
     }
 
     /**
-     * Returns the stack bias used by the stack frame. By default, it returns {@link STACK_BIAS#NONE}.
+     * Returns the stack bias used by the stack frame. By default, it returns {@link StackBias#NONE}.
      * @return a stack bias.
      */
-    public STACK_BIAS bias() {
-        return STACK_BIAS.NONE;
+    public StackBias bias() {
+        return StackBias.NONE;
     }
 
     /**

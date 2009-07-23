@@ -587,9 +587,9 @@ public class OptionSet {
                 FieldOption<Boolean> minusOption = new FieldOption<Boolean>(minusName, object, field, (Boolean) defaultValue, OptionTypes.BOOLEAN_TYPE, help);
                 minusOption.nullValue = false;
                 return addOption(minusOption, Syntax.REQUIRES_BLANK);
-            } else {
-                return addOption(new FieldOption<Boolean>(optionName, object, field, (Boolean) defaultValue, OptionTypes.BOOLEAN_TYPE, help));
             }
+            return addOption(new FieldOption<Boolean>(optionName, object, field, (Boolean) defaultValue, OptionTypes.BOOLEAN_TYPE, help));
+
         } else if (fieldType == int.class) {
             return addOption(new FieldOption<Integer>(optionName, object, field, (Integer) defaultValue, OptionTypes.INT_TYPE, help));
         } else if (fieldType == float.class) {
