@@ -20,7 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.*;
+import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.value.ValueType;
 
 /**
  * The <code>StateSplit</code> class is the abstract base class of all instructions

@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.*;
+import com.sun.c1x.value.ValueType;
 
 /**
  * The <code>ProfileCounter</code> instruction represents instrumentation inserted by the compiler

@@ -20,10 +20,14 @@
  */
 package com.sun.c1x.gen;
 
-import com.sun.c1x.ir.*;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.ir.Constant;
+import com.sun.c1x.ir.Instruction;
+import com.sun.c1x.lir.LIRList;
+import com.sun.c1x.lir.LIROperand;
+import com.sun.c1x.lir.LIROperandFactory;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.value.BasicType;
+import com.sun.c1x.value.ValueType;
 
 /**
  * @author Marcelo Cintra

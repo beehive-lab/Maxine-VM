@@ -20,8 +20,9 @@
  */
 package com.sun.c1x.target.x86;
 
-import com.sun.c1x.asm.*;
-import com.sun.c1x.ci.*;
+import com.sun.c1x.asm.RelocInfo;
+import com.sun.c1x.ci.CiMethod;
+import com.sun.c1x.ci.CiRuntimeCall;
 
 
 public class RuntimeAddress extends AddressLiteral {

@@ -20,7 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.*;
+import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.value.ValueType;
 
 /**
  * The <code>AccessArray</code> class is the base class of all array operations.

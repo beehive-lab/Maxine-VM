@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.*;
+import com.sun.c1x.value.ValueStack;
 
 /**
  * The <code>MonitorEnter</code> instruction represents the acquisition of a monitor.

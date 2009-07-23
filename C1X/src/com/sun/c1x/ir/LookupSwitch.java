@@ -20,9 +20,9 @@
  */
 package com.sun.c1x.ir;
 
-import java.util.*;
+import com.sun.c1x.value.ValueStack;
 
-import com.sun.c1x.value.*;
+import java.util.List;
 
 /**
  * The <code>LookupSwitch</code> instruction represents a lookup switch bytecode, which has a sorted

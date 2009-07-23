@@ -20,12 +20,12 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.asm.*;
-import com.sun.c1x.ir.*;
-import com.sun.c1x.stub.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.asm.Label;
 import com.sun.c1x.debug.LogStream;
+import com.sun.c1x.ir.BlockBegin;
+import com.sun.c1x.stub.CodeStub;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.value.BasicType;
 
 /**
  * @author Marcelo Cintra

@@ -20,8 +20,6 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ir.*;
-
 /**
  * The <code>InstructionVisitor</code> implements one half of the visitor
  * pattern for instructions, allowing clients to implement functionality

@@ -20,9 +20,10 @@
  */
 package com.sun.c1x.asm;
 
-import java.util.*;
-
 import com.sun.c1x.debug.LogStream;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**

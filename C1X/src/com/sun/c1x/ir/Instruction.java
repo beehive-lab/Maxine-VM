@@ -20,14 +20,15 @@
  */
 package com.sun.c1x.ir;
 
-import java.util.*;
-
-import com.sun.c1x.*;
-import com.sun.c1x.debug.TTY;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.ci.CiType;
 import com.sun.c1x.debug.InstructionPrinter;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.debug.TTY;
+import com.sun.c1x.lir.LIROperand;
+import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.value.ValueType;
+
+import java.util.List;
 
 /**
  * The <code>Instruction</code> class represents a node in the IR. Each instruction

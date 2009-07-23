@@ -20,8 +20,6 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ir.*;
-
 /**
  * The <code>InstructionClosure</code> interface represents a first-class
  * function that can be applied to an instruction.

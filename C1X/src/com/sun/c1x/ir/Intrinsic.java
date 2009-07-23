@@ -20,8 +20,9 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.C1XIntrinsic;
+import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.value.ValueType;
 
 /**
  * The <code>Intrinsic</code> instruction represents a call to a JDK method
