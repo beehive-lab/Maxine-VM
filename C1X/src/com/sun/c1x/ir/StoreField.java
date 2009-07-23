@@ -20,9 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.ci.CiField;
+import com.sun.c1x.value.ValueStack;
 
 /**
  * The <code>StoreField</code> instruction represents a write to a static or instance field.

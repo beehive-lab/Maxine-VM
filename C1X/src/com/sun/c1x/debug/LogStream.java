@@ -18,11 +18,12 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.util;
+package com.sun.c1x.debug;
 
-import java.io.*;
+import com.sun.c1x.ir.Instruction;
 
-import com.sun.c1x.ir.*;
+import java.io.OutputStream;
+import java.io.PrintStream;
 
 /**
  * A utility for printing compiler debug and informational output to an output stream.

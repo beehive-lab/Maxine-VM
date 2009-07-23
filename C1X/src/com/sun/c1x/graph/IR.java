@@ -20,13 +20,23 @@
  */
 package com.sun.c1x.graph;
 
-import java.util.*;
-
-import com.sun.c1x.*;
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.debug.BlockPrinter;
+import com.sun.c1x.debug.CFGPrinter;
+import com.sun.c1x.debug.InstructionPrinter;
+import com.sun.c1x.debug.TTY;
+import com.sun.c1x.ir.BlockBegin;
+import com.sun.c1x.ir.ComputeLinearScanOrder;
+import com.sun.c1x.ir.Goto;
+import com.sun.c1x.ir.IRScope;
+import com.sun.c1x.opt.CEEliminator;
+import com.sun.c1x.opt.GlobalValueNumberer;
+import com.sun.c1x.opt.NullCheckEliminator;
 import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.opt.GlobalValueNumbering;
-import com.sun.c1x.ir.*;
-import com.sun.c1x.util.*;
+
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * This class implements the overall container for the HIR (high-level IR) graph
@@ -94,6 +104,12 @@ public class IR {
 
     private void optimize() {
         // do basic optimizations
+        if (C1XOptions.DoCEElimination) {
+            new CEEliminator(this);
+        }
+        if (C1XOptions.DoNullCheckElimination) {
+            new NullCheckEliminator(this);
+        }
     }
 
     private void computeLinearScanOrder() {
@@ -103,7 +119,7 @@ public class IR {
 
         // do more advanced, dominator-based optimizations
         if (C1XOptions.DoGlobalValueNumbering) {
-            new GlobalValueNumbering(this);
+            new GlobalValueNumberer(this);
         }
     }
 

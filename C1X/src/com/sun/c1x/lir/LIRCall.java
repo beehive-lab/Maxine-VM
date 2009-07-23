@@ -20,9 +20,9 @@
  */
 package com.sun.c1x.lir;
 
-import java.util.*;
+import com.sun.c1x.ci.CiRuntimeCall;
 
-import com.sun.c1x.ci.*;
+import java.util.List;
 
 /**
  * The <code>LIRCall</code> class definition.

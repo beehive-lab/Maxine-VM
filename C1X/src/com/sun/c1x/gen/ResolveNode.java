@@ -20,9 +20,10 @@
  */
 package com.sun.c1x.gen;
 
-import java.util.*;
+import com.sun.c1x.lir.LIROperand;
 
-import com.sun.c1x.lir.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * XXX: what does this really mean?

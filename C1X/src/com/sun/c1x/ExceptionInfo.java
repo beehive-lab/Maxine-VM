@@ -20,9 +20,9 @@
  */
 package com.sun.c1x;
 
-import java.util.*;
+import com.sun.c1x.ir.ExceptionHandler;
 
-import com.sun.c1x.ir.*;
+import java.util.List;
 
 /**
  *

@@ -20,9 +20,9 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.ci.CiMethod;
+import com.sun.c1x.ci.CiType;
+import com.sun.c1x.value.ValueType;
 
 /**
  * The <code>ProfileCall</code> instruction representings profiling instruction inserted in the

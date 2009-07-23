@@ -18,36 +18,21 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.c1x.opt;
 
-import com.sun.c1x.C1XOptions;
+import com.sun.c1x.graph.IR;
 
 /**
- * The <code>DebugInfoWriteStream</code> class definition.
+ * This class implements conditional-expression elimination, which replaces some
+ * branching constructs with conditional moves.
  *
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
- *
+ * @author Ben L. Titzer
  */
-public class DebugInfoWriteStream extends CompressedWriteStream {
+public class CEEliminator {
 
-    private DebugInformationRecorder recorder;
+    final IR ir;
 
-    public DebugInformationRecorder recorder() {
-        return recorder;
+    public CEEliminator(IR ir) {
+        this.ir = ir;
     }
-
-    public DebugInfoWriteStream(DebugInformationRecorder recorder, int initialSize) {
-        super(initialSize);
-        this.recorder = recorder;
-    }
-
-    public void writeHandle(Object h) {
-        writeInt(recorder.oopRecorder().findIndex(h));
-    }
-
-    public void writeBci(int bci) {
-        writeInt(bci - C1XOptions.InvocationEntryBci);
-    }
-
 }
