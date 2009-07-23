@@ -532,7 +532,9 @@ public class CompiledPrototype extends Prototype {
                     compilationCompletionService.submit(new Callable<TargetMethod>() {
                         public TargetMethod call() throws Exception {
                             try {
-                                return compilationScheme.synchronousCompile((ClassMethodActor) methodActor, CompilationDirective.DEFAULT);
+                                final TargetMethod result = compilationScheme.synchronousCompile((ClassMethodActor) methodActor, CompilationDirective.DEFAULT);
+                                assert result != null;
+                                return result;
                             } catch (Throwable error) {
                                 throw reportCompilationError(methodActor, error);
                             }
@@ -548,6 +550,7 @@ public class CompiledPrototype extends Prototype {
             }
             try {
                 final TargetMethod targetMethod = compilationCompletionService.take().get();
+                assert targetMethod != null;
                 processNewTargetMethod(targetMethod.compilerScheme(), targetMethod);
             } catch (InterruptedException e) {
                 e.printStackTrace();

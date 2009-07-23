@@ -29,7 +29,6 @@ import java.util.concurrent.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.gui.*;
-import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -101,8 +100,6 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
          */
         private BlockingDeque<TeleEventRequest> requests = new LinkedBlockingDeque<TeleEventRequest>(10);
 
-        private TeleWatchpoint endOfGCWatchpoint = null;
-
         RequestHandlingThread() {
             super("RequestHandlingThread");
             setDaemon(true);
@@ -118,17 +115,12 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             assert thread.state() == ThreadState.WATCHPOINT;
             if (triggeredWatchpointAddress.equals(teleVM().rootEpochAddress())) {
                 // The counter signifying end of a GC has been changed.
-                watchpointFactory().lazyUpdateRelocatableWatchpoint();
+                watchpointFactory().lazyUpdateRelocatableWatchpoints();
                 watchpointFactory().reenableWatchpointsAfterGC();
-                endOfGCWatchpoint.disable();
                 return true;
             } else if (teleVM().isInGC()) {
-                if (endOfGCWatchpoint == null) {
-                    endOfGCWatchpoint = watchpointFactory().createInvisibleWatchpoint("End of GC", new FixedMemoryRegion(teleVM().rootEpochAddress(), Size.fromInt(Pointer.size()), "Root epoch address"), true, false, true, false, true);
-                }
                 // The VM is in GC. Turn Watchpoints off for all objects that are not interested in GC related triggers.
                 if (!watchpointFactory().isInGCMode()) {
-                    endOfGCWatchpoint.enable();
                     watchpointFactory().disableWatchpointsDuringGC();
                     if (!watchpoint.isEnabledDuringGC()) {
                         return true;

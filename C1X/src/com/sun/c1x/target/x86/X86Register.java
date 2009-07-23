@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.target.x86;
 
-import com.sun.c1x.target.*;
-import com.sun.c1x.target.Register.*;
+import com.sun.c1x.target.Register;
+import com.sun.c1x.target.Register.RegisterFlag;
 
 /**
  *
@@ -31,12 +31,14 @@ import com.sun.c1x.target.Register.*;
  */
 public final class X86Register {
 
+    // TODO: Check if on AMD64 every cpu register is a byte register?
+
     // Registers for 32 bit and 64 bit architecture
-    public static final Register rax = new Register(1, "rax", RegisterFlag.CPU);
+    public static final Register rax = new Register(1, "rax", RegisterFlag.CPU, RegisterFlag.Byte);
     public static final Register rcx = new Register(2, "rcx", RegisterFlag.CPU, RegisterFlag.Byte);
     public static final Register rdx = new Register(3, "rdx", RegisterFlag.CPU, RegisterFlag.Byte);
     public static final Register rbx = new Register(4, "rbx", RegisterFlag.CPU, RegisterFlag.Byte);
-    public static final Register rsp = new Register(5, "rsp", RegisterFlag.CPU, RegisterFlag.Byte);
+    public static final Register rsp = new Register(5, "rsp", RegisterFlag.CPU);
     public static final Register rbp = new Register(6, "rbp", RegisterFlag.CPU);
     public static final Register rsi = new Register(7, "rsi", RegisterFlag.CPU);
     public static final Register rdi = new Register(8, "rdi", RegisterFlag.CPU);

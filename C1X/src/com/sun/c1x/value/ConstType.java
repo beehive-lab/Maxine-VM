@@ -69,6 +69,14 @@ public class ConstType extends ValueType {
     }
 
     /**
+     * Checks whether this constant is non-null.
+     * @return {@code true} if this constant is a primitive, or an object constant that is not null
+     */
+    public boolean isNonNull() {
+        return value != null;
+    }
+
+    /**
      * Converts this value type to a string.
      */
     @Override

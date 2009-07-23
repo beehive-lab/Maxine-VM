@@ -20,8 +20,9 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.debug.LogStream;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.value.BasicType;
 
 /**
  * The <code>LIROp1</code> class definition. The LIROp1 instruction has only one input operand.
@@ -77,7 +78,7 @@ public class LIROp1 extends LIRInstruction {
     public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, BasicType type, LIRPatchCode patch, CodeEmitInfo info) {
         super(opcode, result, info);
         this.opr = opr;
-        this.type = BasicType.Illegal;
+        this.type = type;
         this.patch = patch;
         assert isInRange(opcode, LIROpcode.BeginOp1, LIROpcode.EndOp1) : "The " + opcode + " is not a valid LIROp1 opcode";
     }
@@ -143,7 +144,7 @@ public class LIROp1 extends LIRInstruction {
     public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, BasicType type, LIRPatchCode patch, CodeEmitInfo info, LIRMoveKind unaligned) {
         super(opcode, result, info);
         this.opr = opr;
-        this.type = BasicType.Illegal;
+        this.type = type;
         this.patch = patch;
         assert opcode == LIROpcode.Move : "The " + opcode + " is not valid on LIROp1. Opcode must be of type LIROpcode.Move";
         setKind(unaligned);

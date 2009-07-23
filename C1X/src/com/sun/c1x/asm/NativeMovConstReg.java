@@ -34,7 +34,7 @@ public class NativeMovConstReg {
         return null; // TODO Not implemented yet
     }
 
-    public static boolean isNativeMovConstRegAt(Pointer pointer) {
+    public static boolean isNativeMovConstRegAt(int i) {
         return true; // TODO Not implemented yet
     }
 }

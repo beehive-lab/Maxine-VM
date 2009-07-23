@@ -18,18 +18,20 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.util;
+package com.sun.c1x.debug;
 
-import static com.sun.c1x.ir.Instruction.*;
-import static com.sun.c1x.util.InstructionPrinter.InstructionLineColumn.*;
-
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
+import com.sun.c1x.bytecode.Bytecodes;
+import com.sun.c1x.ci.CiMethod;
+import static com.sun.c1x.debug.InstructionPrinter.InstructionLineColumn.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.value.*;
+import static com.sun.c1x.ir.Instruction.stateString;
+import com.sun.c1x.value.ClassType;
+import com.sun.c1x.value.ConstType;
+import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.value.ValueType;
 
 /**
- * An {@link InstructionVisitor} for {@linkplain #printInstruction(Instruction) printing}
+ * An {@link com.sun.c1x.ir.InstructionVisitor} for {@linkplain #printInstruction(Instruction) printing}
  * an {@link Instruction} as an expression or statement.
  *
  * @author Doug Simon

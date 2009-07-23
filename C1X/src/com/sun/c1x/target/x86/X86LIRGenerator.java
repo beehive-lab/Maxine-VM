@@ -21,17 +21,24 @@
 
 package com.sun.c1x.target.x86;
 
-import java.util.*;
-
-import com.sun.c1x.*;
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.gen.*;
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.bytecode.Bytecodes;
+import com.sun.c1x.ci.CiRuntimeCall;
+import com.sun.c1x.ci.CiType;
+import com.sun.c1x.debug.TTY;
+import com.sun.c1x.gen.LIRGenerator;
+import com.sun.c1x.gen.LIRItem;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.stub.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.value.BasicType;
+import com.sun.c1x.value.ConstType;
+import com.sun.c1x.value.ValueType;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -390,8 +397,8 @@ public final class X86LIRGenerator extends LIRGenerator {
                 fpu0 = LIROperandFactory.singleLocation(BasicType.Float, X86Register.fpu0);
                 fpu1 = LIROperandFactory.singleLocation(BasicType.Float, X86Register.fpu1);
             } else {
-                fpu0 = LIROperandFactory.singleLocation(BasicType.Double, X86Register.fpu0);
-                fpu1 = LIROperandFactory.singleLocation(BasicType.Double, X86Register.fpu1);
+                fpu0 = LIROperandFactory.doubleLocation(BasicType.Double, X86Register.fpu0, X86Register.fpu0);
+                fpu1 = LIROperandFactory.doubleLocation(BasicType.Double, X86Register.fpu1, X86Register.fpu1);
             }
             lir().move(right.result(), fpu1); // order of left and right operand is important!
             lir().move(left.result(), fpu0);
@@ -1017,7 +1024,23 @@ public final class X86LIRGenerator extends LIRGenerator {
         }
         CodeEmitInfo info = stateFor(x, x.state());
         LIROperand reg = resultRegisterFor(x.type());
-        newInstance(reg, x.instanceClass(), X86FrameMap.rcxOopOpr, X86FrameMap.rdiOopOpr, X86FrameMap.rsiOopOpr, LIROperandFactory.IllegalOperand, X86FrameMap.rdxOopOpr, info);
+        CiType klass = x.instanceClass();
+        LIROperand klassReg = X86FrameMap.rdxOopOpr;
+        jobject2regWithPatching(klassReg, klass, info);
+        // If klass is not loaded we do not know if the klass has finalizers:
+        if (C1XOptions.UseFastNewInstance && klass.isLoaded() && !klass.layoutHelperNeedsSlowPath()) {
+            CiRuntimeCall stubId = klass.isInitialized() ? CiRuntimeCall.FastNewInstance : CiRuntimeCall.FastNewInstanceInitCheck;
+            CodeStub slowPath = new NewInstanceStub(klassReg, reg, klass, info, stubId);
+            assert klass.isLoaded() : "must be loaded";
+            // allocate space for instance
+            assert klass.sizeHelper() >= 0 : "illegal instance size";
+            int instanceSize = Util.align(klass.sizeHelper(), compilation.target.heapAlignment);
+            lir.allocateObject(reg, X86FrameMap.rcxOopOpr, X86FrameMap.rdiOopOpr, X86FrameMap.rsiOopOpr, LIROperandFactory.IllegalOperand, compilation.runtime.headerSize(), instanceSize, klassReg, !klass.isInitialized(), slowPath);
+        } else {
+            CodeStub slowPath = new NewInstanceStub(klassReg, reg, klass, info, CiRuntimeCall.NewInstance);
+            lir.branch(LIRCondition.Always, BasicType.Illegal, slowPath);
+            lir.branchDestination(slowPath.continuation);
+        }
         LIROperand result = rlockResult(x);
         lir().move(reg, result);
     }

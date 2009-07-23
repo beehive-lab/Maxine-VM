@@ -20,9 +20,12 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.target.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.debug.LogStream;
+import com.sun.c1x.target.Architecture;
+import com.sun.c1x.target.Register;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.value.BasicType;
+import com.sun.c1x.value.ConstType;
 
 /**
  * The <code>LIROperand</code> class represents an operand, either
@@ -55,14 +58,6 @@ public abstract class LIROperand {
 
     public boolean isIllegal() {
         return this == ILLEGAL;
-    }
-
-    public int lowerRegisterHalf() {
-        throw Util.shouldNotReachHere();
-    }
-
-    public int higherRegisterHalf() {
-        throw Util.shouldNotReachHere();
     }
 
     public static LIROperand illegalOpr() {
@@ -320,12 +315,6 @@ public abstract class LIROperand {
             return asRegisterLo();
         }
         return asRegister();
-    }
-
-
-    // for compatibility with RInfo
-    public int fpu() {
-        return lowerRegisterHalf();
     }
 
     public int asInt() {

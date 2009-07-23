@@ -26,6 +26,7 @@ import java.util.*;
 import java.util.jar.*;
 import java.util.zip.*;
 
+import com.sun.c1x.*;
 import com.sun.max.collect.*;
 import com.sun.max.ide.*;
 import com.sun.max.lang.*;
@@ -204,6 +205,8 @@ public final class BinaryImageGenerator {
             TargetMethod.COLLECT_TARGET_METHOD_STATS = statsOption.getValue();
             final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
             Trace.addTo(options);
+
+            options.addFieldOptions(C1XOptions.class, "C1X:");
             options.parseArguments(programArguments);
 
             if (help.getValue()) {
