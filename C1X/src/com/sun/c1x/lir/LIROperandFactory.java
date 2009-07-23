@@ -20,9 +20,12 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.target.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.target.Register;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.value.BasicType;
+import com.sun.c1x.value.ClassType;
+import com.sun.c1x.value.ConstType;
+import com.sun.c1x.value.ValueType;
 
 
 /**

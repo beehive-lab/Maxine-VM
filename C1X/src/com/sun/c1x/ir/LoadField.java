@@ -20,8 +20,9 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.ci.CiField;
+import com.sun.c1x.ci.CiType;
+import com.sun.c1x.value.ValueStack;
 
 /**
  * The <code>LoadField</code> instruction a read of a static or instance field.

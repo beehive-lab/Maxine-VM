@@ -20,7 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.*;
+import com.sun.c1x.value.BasicType;
+import com.sun.c1x.value.ValueType;
 
 /**
  * The <code>UnsafeRawOp</code> class is the base class of all unsafe raw operations.

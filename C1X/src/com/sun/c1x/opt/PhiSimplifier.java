@@ -20,8 +20,11 @@
  */
 package com.sun.c1x.opt;
 
-import com.sun.c1x.ir.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.ir.BlockBegin;
+import com.sun.c1x.ir.BlockClosure;
+import com.sun.c1x.ir.Instruction;
+import com.sun.c1x.ir.Phi;
+import com.sun.c1x.value.ValueStack;
 
 /**
  * The <code>PhiSimplifier</code> class is a helper class that can reduce phi instructions.

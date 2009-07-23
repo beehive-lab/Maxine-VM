@@ -20,15 +20,22 @@
  */
 package com.sun.c1x.graph;
 
-import java.util.*;
-
 import com.sun.c1x.*;
-import com.sun.c1x.bytecode.*;
+import com.sun.c1x.bytecode.BytecodeLookupSwitch;
+import com.sun.c1x.bytecode.BytecodeStream;
+import com.sun.c1x.bytecode.BytecodeTableSwitch;
+import com.sun.c1x.bytecode.Bytecodes;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.opt.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.opt.Canonicalizer;
+import com.sun.c1x.opt.PhiSimplifier;
+import com.sun.c1x.opt.ValueMap;
+import com.sun.c1x.util.Util;
 import com.sun.c1x.value.*;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * The <code>GraphBuilder</code> class parses the bytecode of a method and builds the IR graph.

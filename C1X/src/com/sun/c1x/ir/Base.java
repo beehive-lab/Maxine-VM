@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.*;
+import com.sun.c1x.value.ValueType;
 
 /**
  * The <code>Base</code> instruction represents the entry block of the procedure that has

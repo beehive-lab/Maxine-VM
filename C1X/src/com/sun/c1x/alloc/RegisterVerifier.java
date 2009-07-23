@@ -20,14 +20,18 @@
  */
 package com.sun.c1x.alloc;
 
-import java.util.*;
-
-import com.sun.c1x.*;
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.C1XOptions;
 import com.sun.c1x.debug.TTY;
-import com.sun.c1x.ir.*;
+import com.sun.c1x.ir.BlockBegin;
+import com.sun.c1x.ir.ExceptionHandler;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.target.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.target.Register;
+import com.sun.c1x.util.ArrayMap;
+import com.sun.c1x.util.Util;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *

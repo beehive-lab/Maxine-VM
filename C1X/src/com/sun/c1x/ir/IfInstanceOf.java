@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.ci.CiType;
+import com.sun.c1x.value.ValueType;
 
 /**
  * The <code>IfInstanceOf</code> instruction represents a branch on the outcome of an instanceof test.

@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.opt;
 
-import com.sun.c1x.*;
-import com.sun.c1x.ir.*;
+import com.sun.c1x.C1XMetrics;
+import com.sun.c1x.ir.Instruction;
 
 /**
  * The <code>ValueMap</code> class implements a nested hashtable data structure

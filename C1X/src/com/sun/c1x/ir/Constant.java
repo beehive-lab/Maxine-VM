@@ -20,7 +20,10 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.*;
+import com.sun.c1x.value.ClassType;
+import com.sun.c1x.value.ConstType;
+import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.value.ValueType;
 
 /**
  * The <code>Constant</code> instruction represents a constant such as an integer value,
