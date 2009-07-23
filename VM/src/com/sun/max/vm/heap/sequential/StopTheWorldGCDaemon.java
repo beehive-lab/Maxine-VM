@@ -68,47 +68,31 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
          * on the global GC lock ({@link VmThreadMap#ACTIVE}).
          */
         public void run(Pointer trapState) {
-            if (Safepoint.UseThreadStateWordForGCMutatorSynchronization) {
-                final Pointer vmThreadLocals = Safepoint.getLatchRegister();
-                MUTATOR_STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_JAVA_STOPPING_FOR_GC));
-
-                if (!VmThreadLocal.inJava(vmThreadLocals)) {
-                    FatalError.unexpected("Mutator thread trapped while in native code");
-                }
-                Heap.disableAllocationForCurrentThread();
-                if (!LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).isZero()) {
-                    FatalError.unexpected("Stack reference map preparer should be cleared before GC");
-                }
-
-                VmThreadLocal.prepareStackReferenceMapFromTrap(vmThreadLocals, trapState);
-
-                synchronized (VmThreadMap.ACTIVE) {
-                    // Stops this thread until GC is done.
-                }
-                if (!LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).isZero()) {
-                    FatalError.unexpected("Stack reference map preparer should be cleared after GC");
-                }
-                Heap.enableAllocationForCurrentThread();
-            } else {
-                // note that this procedure always runs with safepoints disabled
-                final Pointer vmThreadLocals = Safepoint.getLatchRegister();
-                if (!VmThreadLocal.inJava(vmThreadLocals)) {
-                    FatalError.unexpected("Mutator thread trapped while in native code");
-                }
-                Heap.disableAllocationForCurrentThread();
-                if (!LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).isZero()) {
-                    FatalError.unexpected("Stack reference map preparer should be cleared before GC");
-                }
-                VmThreadLocal.prepareStackReferenceMapFromTrap(vmThreadLocals, trapState);
-
-                synchronized (VmThreadMap.ACTIVE) {
-                    // Stops this thread until GC is done.
-                }
-                if (!LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).isZero()) {
-                    FatalError.unexpected("Stack reference map preparer should be cleared after GC");
-                }
-                Heap.enableAllocationForCurrentThread();
+            // note that this procedure always runs with safepoints disabled
+            final Pointer vmThreadLocals = Safepoint.getLatchRegister();
+            final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+            Heap.disableAllocationForCurrentThread();
+            if (!VmThreadLocal.inJava(vmThreadLocals)) {
+                FatalError.unexpected("Mutator thread trapped while in native code");
             }
+
+            if (Safepoint.UseCASBasedGCMutatorSynchronization) {
+                enabledVmThreadLocals.setWord(MUTATOR_STATE.index, THREAD_IN_JAVA_STOPPING_FOR_GC);
+            }
+
+            if (!enabledVmThreadLocals.getWord(LOWEST_ACTIVE_STACK_SLOT_ADDRESS.index).isZero()) {
+                FatalError.unexpected("Stack reference map preparer should be cleared before GC");
+            }
+
+            VmThreadLocal.prepareStackReferenceMapFromTrap(vmThreadLocals, trapState);
+
+            synchronized (VmThreadMap.ACTIVE) {
+                // Stops this thread until GC is done.
+            }
+            if (!enabledVmThreadLocals.getWord(LOWEST_ACTIVE_STACK_SLOT_ADDRESS.index).isZero()) {
+                FatalError.unexpected("Stack reference map preparer should be cleared after GC");
+            }
+            Heap.enableAllocationForCurrentThread();
         }
         @Override
         public String toString() {
@@ -184,9 +168,11 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
             // Resets the safepoint latch and resets the safepoint procedure to null
             super.run(vmThreadLocals);
 
-            // This must be last so that a mutator thread trying to return out of native code stays in the spin
-            // loop until its GC & safepoint related state has been completely reset
-            GC_STATE.setVariableWord(vmThreadLocals, Address.zero());
+            if (!Safepoint.UseCASBasedGCMutatorSynchronization) {
+                // This must be last so that a mutator thread trying to return out of native code stays in the spin
+                // loop until its GC & safepoint related state has been completely reset
+                GC_STATE.setVariableWord(vmThreadLocals, Address.zero());
+            }
         }
     }
 
@@ -195,83 +181,51 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
     static class WaitUntilNonMutating implements Pointer.Procedure {
         long stackReferenceMapPreparationTime;
         public void run(Pointer vmThreadLocals) {
-            if (Safepoint.UseThreadStateWordForGCMutatorSynchronization) {
+            if (Safepoint.UseCASBasedGCMutatorSynchronization) {
                 final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-                int currentState;
                 while (true) {
-                    if (enabledVmThreadLocals.readInt(MUTATOR_STATE.offset) == THREAD_IN_GC_FROM_JAVA) {
+                    if (enabledVmThreadLocals.readWord(MUTATOR_STATE.offset).equals(THREAD_IN_GC_FROM_JAVA)) {
                         // Transitioned thread into GC
-                        currentState = THREAD_IN_GC_FROM_JAVA;
                         break;
                     }
-                    if (Safepoint.casMutatorState(enabledVmThreadLocals, THREAD_IN_NATIVE, THREAD_IN_GC_FROM_NATIVE) == THREAD_IN_NATIVE) {
+                    if (Safepoint.casMutatorState(enabledVmThreadLocals, THREAD_IN_NATIVE, THREAD_IN_GC_FROM_NATIVE).equals(THREAD_IN_NATIVE)) {
                         // Transitioned thread into GC
-                        currentState = THREAD_IN_GC_FROM_NATIVE;
                         break;
                     }
-                    try {
-                        // Wait for safepoint to fire
-                        Log.println("Wating in stoptheworlddeamon");
-                        sleep(1);
-                    } catch (InterruptedException interruptedException) {
-                    }
-                }
-
-                if (currentState == THREAD_IN_GC_FROM_NATIVE) {
-                    // Since this thread is in native code it did not get an opportunity to prepare its stack maps,
-                    // so we will take care of that for it now:
-                    stackReferenceMapPreparationTime += VmThreadLocal.prepareStackReferenceMap(vmThreadLocals);
-                } else {
-                    // Threads that hit a safepoint in Java code have prepared *most* of their stack reference map themselves.
-                    // The part of the stack between the trap stub frame and the frame of the JNI stub that enters into the
-                    // native code for blocking on VmThreadMap.ACTIVE's monitor is not yet prepared. Do it now:
-                    final Pointer instructionPointer = LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).asPointer();
-                    if (instructionPointer.isZero()) {
-                        FatalError.unexpected("A mutator thread in Java at safepoint should be stopped in native monitor code");
-                    }
-                    final Pointer stackPointer = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
-                    final Pointer framePointer = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals).asPointer();
-                    final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
-                    final StackReferenceMapPreparer stackReferenceMapPreparer = vmThread.stackReferenceMapPreparer();
-                    stackReferenceMapPreparer.completeStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer);
-                    stackReferenceMapPreparationTime += stackReferenceMapPreparer.preparationTime();
+                    Thread.yield();
                 }
             } else {
-                while (MUTATOR_STATE.getVariableWord(vmThreadLocals).asAddress().toInt() == THREAD_IN_JAVA) {
-                    try {
-                        // Wait for thread to be in native code, either as a result of a safepoint or because
-                        // that's where it was when its GC_STATE flag was set to true.
-                        sleep(1);
-                    } catch (InterruptedException interruptedException) {
-                    }
+                while (MUTATOR_STATE.getVariableWord(vmThreadLocals).equals(THREAD_IN_JAVA)) {
+                    // Wait for thread to be in native code, either as a result of a safepoint or because
+                    // that's where it was when its GC_STATE flag was set to true.
+                    Thread.yield();
                 }
+            }
+            if (Heap.traceGCPhases()) {
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.print("GCDaemon: Stopped mutator thread ");
+                Log.printVmThread(VmThread.fromVmThreadLocals(vmThreadLocals), true);
+                Log.unlock(lockDisabledSafepoints);
+            }
 
-                if (Heap.traceGCPhases()) {
-                    final boolean lockDisabledSafepoints = Log.lock();
-                    Log.print("GCDaemon: Stopped mutator thread ");
-                    Log.printVmThread(VmThread.fromVmThreadLocals(vmThreadLocals), true);
-                    Log.unlock(lockDisabledSafepoints);
+            if (LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).isZero()) {
+                // Since this thread is in native code it did not get an opportunity to prepare any of its stack reference map,
+                // so we will take care of that for it now:
+                stackReferenceMapPreparationTime += VmThreadLocal.prepareStackReferenceMap(vmThreadLocals);
+            } else {
+                // Threads that hit a safepoint in Java code have prepared *most* of their stack reference map themselves.
+                // The part of the stack between the trap stub frame and the frame of the JNI stub that enters into the
+                // native code for blocking on VmThreadMap.ACTIVE's monitor is not yet prepared. Do it now:
+                final Pointer instructionPointer = LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).asPointer();
+                if (instructionPointer.isZero()) {
+                    FatalError.unexpected("A mutator thread in Java at safepoint should be stopped in native monitor code");
                 }
-
-                if (LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).isZero()) {
-                    // Since this thread is in native code it did not get an opportunity to prepare any of its stack reference map,
-                    // so we will take care of that for it now:
-                    stackReferenceMapPreparationTime += VmThreadLocal.prepareStackReferenceMap(vmThreadLocals);
-                } else {
-                    // Threads that hit a safepoint in Java code have prepared *most* of their stack reference map themselves.
-                    // The part of the stack between the trap stub frame and the frame of the JNI stub that enters into the
-                    // native code for blocking on VmThreadMap.ACTIVE's monitor is not yet prepared. Do it now:
-                    final Pointer instructionPointer = LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).asPointer();
-                    if (instructionPointer.isZero()) {
-                        FatalError.unexpected("A mutator thread in Java at safepoint should be stopped in native monitor code");
-                    }
-                    final Pointer stackPointer = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
-                    final Pointer framePointer = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals).asPointer();
-                    final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
-                    final StackReferenceMapPreparer stackReferenceMapPreparer = vmThread.stackReferenceMapPreparer();
-                    stackReferenceMapPreparer.completeStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer);
-                    stackReferenceMapPreparationTime += stackReferenceMapPreparer.preparationTime();
-                }
+                final Pointer stackPointer = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
+                final Pointer framePointer = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals).asPointer();
+                final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
+                final StackReferenceMapPreparer stackReferenceMapPreparer = vmThread.stackReferenceMapPreparer();
+                stackReferenceMapPreparer.completeStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer);
+                stackReferenceMapPreparationTime += stackReferenceMapPreparer.preparationTime();
             }
         }
     }
