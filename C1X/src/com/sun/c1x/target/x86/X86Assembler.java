@@ -1974,8 +1974,8 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     void movq(Register dst, Register src) {
-        int encode = prefixqAndEncode(src.encoding, dst.encoding);
-        emitByte(0x89);
+        int encode = prefixqAndEncode(dst.encoding, src.encoding);
+        emitByte(0x8B);
         emitByte(0xC0 | encode);
     }
 

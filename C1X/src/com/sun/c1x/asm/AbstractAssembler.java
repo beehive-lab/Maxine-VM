@@ -300,7 +300,7 @@ public abstract class AbstractAssembler {
                 off = 2;
             }
 
-            int imm32 = target - (branch + 1 + off);
+            int imm32 = target - (branch + 4 + off);
             codeBuffer.emitInt(imm32, branch + off);
         }
     }

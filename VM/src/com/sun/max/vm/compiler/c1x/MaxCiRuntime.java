@@ -563,7 +563,7 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public String disassemble(byte[] code) {
-        if (MaxineVM.isPrototyping() && false) {
+        if (MaxineVM.isPrototyping()) {
             final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
             writer.flush();
