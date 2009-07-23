@@ -66,7 +66,7 @@ public final class InspectableHeapInfo {
         public RootsMemoryRegion(Address address, Size size) {
             super(address, size);
             setDescription("TeleRoots");
-            mark = end();
+            mark.set(end());
         }
     }
 

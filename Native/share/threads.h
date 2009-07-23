@@ -59,8 +59,6 @@ extern jboolean thread_sleep(jlong numberOfMilliSeconds);
 
 extern void threads_initialize(Address primordialVmThreadLocals, Size vmThreadLocalsSize);
 
-#define STACK_GUARD_PAGES 2
-
 extern ThreadSpecifics thread_currentSpecifics(void);
 
 /**

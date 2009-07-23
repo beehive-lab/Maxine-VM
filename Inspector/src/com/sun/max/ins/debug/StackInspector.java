@@ -323,7 +323,7 @@ public class StackInspector extends Inspector {
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected boolean refreshView(boolean force) {
         if (thread != null && thread.isLive()) {
             final Sequence<StackFrame> frames = thread.frames();
             assert !frames.isEmpty();
@@ -348,6 +348,7 @@ public class StackInspector extends Inspector {
         super.refreshView(force);
         // The title displays thread state, so must be updated.
         updateFrameTitle();
+        return true;
     }
 
     public void viewConfigurationChanged() {
@@ -473,7 +474,7 @@ public class StackInspector extends Inspector {
             final TextLabel stackPointerLabel = new TextLabel(inspection(), "Stack pointer:", frameClassName);
             final Pointer framePointer = javaStackFrame.framePointer;
             final Pointer stackPointer = javaStackFrame.stackPointer;
-            final STACK_BIAS bias = javaStackFrame.bias();
+            final StackBias bias = javaStackFrame.bias();
 
             header.add(framePointerLabel);
             header.add(new DataLabel.BiasedStackAddressAsHex(inspection(), framePointer, bias));
@@ -578,7 +579,7 @@ public class StackInspector extends Inspector {
             final String name = showSlotAddresses.isSelected() ? stackFrame.slotBase().plus(offset).toHexString() : slot.name;
             slotLabel.setText(name + ":");
             String otherInfo = "";
-            final STACK_BIAS bias = stackFrame.bias();
+            final StackBias bias = stackFrame.bias();
             if (bias.isFramePointerBiased()) {
                 final int biasedOffset = stackFrame.biasedOffset(offset);
                 otherInfo = String.format("(%%fp %+d)", biasedOffset);

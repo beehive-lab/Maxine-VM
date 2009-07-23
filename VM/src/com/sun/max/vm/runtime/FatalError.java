@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.max.vm.thread.VmThreadLocal.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.program.ProgramError.*;
@@ -81,7 +83,7 @@ public final class FatalError extends Error {
      *
      * This method never returns normally.
      *
-     * This method does not perform any synchronization or heap allocation.
+     * If {@code throwable == null}, this method does not perform any synchronization or heap allocation.
      *
      * @param message a message describing the error condition. This value may be {@code null}.
      * @param throwable an exception given more detail on the cause of the error condition. This value may be {@code null}.
@@ -114,7 +116,7 @@ public final class FatalError extends Error {
      *
      * This method never returns normally.
      *
-     * This method does not perform any synchronization or heap allocation.
+     * If {@code throwable == null}, this method does not perform any synchronization or heap allocation.
      *
      * @param message a message describing the trap. This value may be {@code null}.
      * @param throwable an exception given more detail on the cause of the error condition. This value may be {@code null}.
@@ -130,20 +132,36 @@ public final class FatalError extends Error {
         Safepoint.disable();
         breakpoint();
 
-        if (ExitingGuard.guard) {
+        if (recursionCount >= MAX_RECURSION_COUNT) {
             Log.println("FATAL VM ERROR: Error occurred while handling previous fatal VM error");
             MaxineVM.native_exit(11);
         }
-        ExitingGuard.guard = true;
+        recursionCount++;
 
         final boolean lockDisabledSafepoints = Log.lock();
-        Log.printVmThread(VmThread.current(), false);
-        Log.print(": FATAL VM ERROR: ");
-        Throw.stackDump(message, VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer());
+        final VmThread vmThread = VmThread.current();
+        vmThread.stackDumpStackFrameWalker().reset();
+
+        Log.println();
+        Log.print("FATAL VM ERROR[");
+        Log.print(recursionCount);
+        Log.print("]: ");
+        if (message != null) {
+            Log.println(message);
+        } else {
+            Log.println();
+        }
+        Log.print("Faulting thread: ");
+        Log.printVmThread(vmThread, true);
+
+        dumpStackAndThreadLocals(VmThread.currentVmThreadLocals());
+
         if (throwable != null) {
-            Log.print("Caused by: ");
+            Log.print("------ Cause Exception ------");
             throwable.printStackTrace(Log.out);
         }
+        VmThreadMap.ACTIVE.forAllVmThreadLocals(null, dumpStackOfNonCurrentThread);
+
         if (!nativeTrapAddress.isZero() || Throw.scanStackOnFatalError.getValue()) {
             final Word highestStackAddress = VmThreadLocal.HIGHEST_STACK_SLOT_ADDRESS.getConstantWord();
             Throw.stackScan("RAW STACK SCAN FOR CODE POINTERS:", VMRegister.getCpuStackPointer(), highestStackAddress.asPointer());
@@ -193,7 +211,37 @@ public final class FatalError extends Error {
         throw unexpected("Unimplemented", Address.zero(), null);
     }
 
-    static class ExitingGuard {
-        static boolean guard;
+    /**
+     * Dumps the stack and thread locals of a given thread to the log stream.
+     *
+     * @param vmThreadLocals VM thread locals of a thread
+     */
+    static void dumpStackAndThreadLocals(Pointer vmThreadLocals) {
+        final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
+        Log.print("------ Stack dump for thread ");
+        Log.printVmThread(vmThread, false);
+        Log.println(" ------");
+        if (vmThreadLocals == VmThread.currentVmThreadLocals()) {
+            Throw.stackDump(null, VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer());
+        } else {
+            Throw.stackDump(null, vmThreadLocals);
+        }
+
+        Log.print("------ Thread locals for thread ");
+        Log.printVmThread(vmThread, false);
+        Log.println(" ------");
+        Log.printVmThreadLocals(vmThreadLocals, true);
     }
+
+    static final class DumpStackOfNonCurrentThread implements Pointer.Procedure {
+        public void run(Pointer vmThreadLocals) {
+            if (SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals) != SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord()) {
+                dumpStackAndThreadLocals(vmThreadLocals);
+            }
+        }
+    }
+
+    private static final DumpStackOfNonCurrentThread dumpStackOfNonCurrentThread = new DumpStackOfNonCurrentThread();
+    private static final int MAX_RECURSION_COUNT = 2;
+    private static int recursionCount;
 }

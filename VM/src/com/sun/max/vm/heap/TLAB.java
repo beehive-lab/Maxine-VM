@@ -47,18 +47,18 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
     private final AtomicWord scavenged = new AtomicWord();
 
     public TLAB() {
-        mark = start();
+        mark.set(start());
     }
 
     public TLAB(Address start, Size size) {
         super(start, size);
-        mark = start();
+        mark.set(start());
 
     }
 
     public TLAB(Size size) {
         super(size);
-        mark = start();
+        mark.set(start());
         setDescription("TLAB");
     }
 
@@ -70,7 +70,7 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
     public void initializeTLAB(Address newAddress) {
         setStart(newAddress);
         setSize(BeltwayHeapSchemeConfiguration.TLAB_SIZE);
-        mark = newAddress;
+        mark.set(newAddress);
         if (MaxineVM.isDebug()) {
             endAllocationMark = end().asPointer().minusWords(4);
         } else {
@@ -85,7 +85,7 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
         // Add one word in case of debugging, because we pass the parameter of the start
         // address without the taking account the debug word
         setSize(size);
-        mark = allocationMark;
+        mark.set(allocationMark);
         previousAllocationMark = allocationMark;
         if (MaxineVM.isDebug()) {
             endAllocationMark = end().asPointer().minusWords(4);
@@ -97,17 +97,17 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
     }
 
     public void undoLastAllocation() {
-        mark = previousAllocationMark;
+        mark.set(previousAllocationMark);
     }
 
     @INLINE
     public final void resetTLAB() {
-        mark = Address.zero();
+        mark.set(Address.zero());
     }
 
     @INLINE
     public final void setAllocationMark(Address allocationMark) {
-        mark = allocationMark;
+        mark.set(allocationMark);
     }
 
     @INLINE
@@ -122,12 +122,12 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
 
     @INLINE
     public final  boolean isSet() {
-        return !mark.isZero();
+        return !mark().isZero();
     }
 
     @INLINE
     public final void unSet() {
-        mark = Address.zero();
+        mark.set(Address.zero());
     }
 
     @INLINE
@@ -163,7 +163,7 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
     @INLINE
     public final Pointer allocate(Size size) {
         Pointer cell;
-        final Pointer oldAllocationMark = mark.asPointer();
+        final Pointer oldAllocationMark = mark();
         if (MaxineVM.isDebug()) {
             cell = oldAllocationMark.plusWords(1);
         } else {
@@ -175,8 +175,8 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
             fillTLAB();
             return Pointer.zero();
         }
-        mark = end;
-        previousAllocationMark = mark;
+        mark.set(end);
+        previousAllocationMark = mark();
         return cell;
     }
 
@@ -192,10 +192,10 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
 
     @INLINE
     public final void fillTLAB() {
-        final Size fillingSize = endAllocationMark.minus(mark).asPointer().asSize();
+        final Size fillingSize = endAllocationMark.minus(mark()).asPointer().asSize();
         endAllocationMark = end();
-        Cell.plantArray(mark.asPointer().plusWords(1), PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub(), fillingSize.toInt());
-        mark = end();
+        Cell.plantArray(mark().plusWords(1), PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub(), fillingSize.toInt());
+        mark.set(end());
     }
 
     public Pointer compareAndSwapScavenge(Pointer suspectedValue, Pointer newValue) {

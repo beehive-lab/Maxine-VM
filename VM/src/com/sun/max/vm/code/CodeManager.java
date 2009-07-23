@@ -84,7 +84,6 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
      * @param numberOfRuntimeCodeRegions the maximum number of code regions that this code manager should manage
      */
     CodeManager(int numberOfRuntimeCodeRegions) {
-        super();
         runtimeCodeRegions = new CodeRegion[numberOfRuntimeCodeRegions];
         for (int i = 0; i < numberOfRuntimeCodeRegions; i++) {
             runtimeCodeRegions[i] = new CodeRegion("Code-" + i);
@@ -132,7 +131,6 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
                     ProgramError.unexpected("could not allocate code");
                 }
             }
-            methodKeyToTargetMethods.add(new MethodActorKey(targetMethod.classMethodActor()), targetMethod);
 
             byte[] code;
             byte[] scalarLiterals = null;
@@ -154,6 +152,8 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
                 }
             }
             targetMethod.setCodeArrays(code, targetBundleLayout.firstElementPointer(start, ArrayField.code), scalarLiterals, referenceLiterals);
+
+            methodKeyToTargetMethods.add(new MethodActorKey(targetMethod.classMethodActor()), targetMethod);
         } finally {
             if (!MaxineVM.isPrototyping() && !wasDisabled) {
                 Safepoint.enable();

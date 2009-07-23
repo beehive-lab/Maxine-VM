@@ -62,6 +62,7 @@ public final class NativeConditionVariable extends ConditionVariable {
         new CriticalNativeMethod(NativeConditionVariable.class, "nativeConditionInitialize");
         new CriticalNativeMethod(NativeConditionVariable.class, "nativeConditionWait");
         new CriticalNativeMethod(NativeConditionVariable.class, "nativeConditionSize");
+        new CriticalNativeMethod(NativeConditionVariable.class, "nativeConditionNotify");
     }
 
     @C_FUNCTION

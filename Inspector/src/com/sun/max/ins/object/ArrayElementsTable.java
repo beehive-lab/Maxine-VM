@@ -162,40 +162,42 @@ public final class ArrayElementsTable extends InspectorTable {
             lastRefreshedState = maxVMState();
             objectOrigin = teleObject.getCurrentOrigin();
             // Update the mapping between array elements and displayed rows.
-            if (objectInspector.hideNullArrayElements()) {
-                final int previousVisibleCount = visibleElementCount;
-                visibleElementCount = 0;
-                for (int index = 0; index < arrayLength; index++) {
-                    if (!maxVM().getElementValue(elementKind, objectReference, index).isZero()) {
-                        rowToElementIndex[visibleElementCount++] = index;
-                    }
-                }
-                if (previousVisibleCount != visibleElementCount) {
-                    model.fireTableDataChanged();
-                }
-            } else {
-                if (visibleElementCount != arrayLength) {
-                    // Previously hiding but no longer; reset map
+            if (teleObject.isLive()) {
+                if (objectInspector.hideNullArrayElements()) {
+                    final int previousVisibleCount = visibleElementCount;
+                    visibleElementCount = 0;
                     for (int index = 0; index < arrayLength; index++) {
-                        rowToElementIndex[index] = index;
+                        if (!maxVM().getElementValue(elementKind, objectReference, index).isZero()) {
+                            rowToElementIndex[visibleElementCount++] = index;
+                        }
                     }
-                    visibleElementCount = arrayLength;
+                    if (previousVisibleCount != visibleElementCount) {
+                        model.fireTableDataChanged();
+                    }
+                } else {
+                    if (visibleElementCount != arrayLength) {
+                        // Previously hiding but no longer; reset map
+                        for (int index = 0; index < arrayLength; index++) {
+                            rowToElementIndex[index] = index;
+                        }
+                        visibleElementCount = arrayLength;
+                    }
                 }
-            }
-            // Update selection, based on global address focus.
-            final int oldSelectedRow = getSelectedRow();
-            final int newRow = model.addressToRow(focus().address());
-            if (newRow >= 0) {
-                getSelectionModel().setSelectionInterval(newRow, newRow);
-            } else {
-                if (oldSelectedRow >= 0) {
-                    getSelectionModel().clearSelection();
+                // Update selection, based on global address focus.
+                final int oldSelectedRow = getSelectedRow();
+                final int newRow = model.addressToRow(focus().address());
+                if (newRow >= 0) {
+                    getSelectionModel().setSelectionInterval(newRow, newRow);
+                } else {
+                    if (oldSelectedRow >= 0) {
+                        getSelectionModel().clearSelection();
+                    }
                 }
-            }
-            //
-            for (TableColumn column : columns) {
-                final Prober prober = (Prober) column.getCellRenderer();
-                prober.refresh(force);
+                //
+                for (TableColumn column : columns) {
+                    final Prober prober = (Prober) column.getCellRenderer();
+                    prober.refresh(force);
+                }
             }
         }
     }

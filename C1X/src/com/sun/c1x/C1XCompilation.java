@@ -65,7 +65,6 @@ public class C1XCompilation {
     boolean hasUnsafeAccess;
     Bailout bailout;
 
-    int totalBlocks = 1;
     int totalInstructions;
     private Instruction currentInstruction;
 
@@ -252,7 +251,7 @@ public class C1XCompilation {
      */
     public BlockMap getBlockMap(CiMethod method, int osrBCI) {
         // XXX: cache the block map for methods that are compiled or inlined often
-        BlockMap map = new BlockMap(method, totalBlocks);
+        BlockMap map = new BlockMap(method, hir.numberOfBlocks());
         boolean isOsrCompilation = false;
         if (osrBCI >= 0) {
             map.addEntrypoint(osrBCI, BlockBegin.BlockFlag.OsrEntry);
@@ -270,7 +269,7 @@ public class C1XCompilation {
             }
         }
         map.cleanup();
-        totalBlocks += map.numberOfBlocks();
+        hir.incrementNumberOfBlocks(map.numberOfBlocks());
         return map;
     }
 
@@ -281,10 +280,6 @@ public class C1XCompilation {
      */
     public int totalInstructions() {
         return totalInstructions;
-    }
-
-    public int nextBlockNumber() {
-        return totalBlocks++;
     }
 
     /**
@@ -334,7 +329,6 @@ public class C1XCompilation {
     }
 
     public void addExceptionHandlersForPco(int pcOffset, List<ExceptionHandler> exceptionHandlers) {
-
         if (C1XOptions.PrintExceptionHandlers && C1XOptions.Verbose) {
             TTY.println("  added exception scope for pco %d", pcOffset);
         }
@@ -401,7 +395,9 @@ public class C1XCompilation {
         if (C1XOptions.GenerateLIR) {
             frameMap = target.backend.newFrameMap(this, method, hir.topScope.numberOfLocks(), hir.topScope.maxStack());
             final LIRGenerator lirGenerator = target.backend.newLIRGenerator(this);
-            hir.iterateLinearScanOrder(lirGenerator);
+            for (BlockBegin begin : hir.linearScanOrder()) {
+                lirGenerator.visitBlock(begin);
+            }
 
             final RegisterAllocator registerAllocator = new LinearScan(this, hir, lirGenerator, frameMap());
             registerAllocator.allocate();
@@ -424,10 +420,6 @@ public class C1XCompilation {
 
             assembler.installTargetMethod();
         }
-    }
-
-    public int numberOfBlocks() {
-        return totalBlocks;
     }
 
     public CFGPrinter cfgPrinter() {

@@ -105,8 +105,9 @@
         <module name="InnerAssignment"/>
         <module name="JUnitTestCase"/>
         <module name="ModifiedControlVariable"/>
-        <module name="MutableException"/>
-        <module name="ParameterAssignment"/>
+        <module name="ParameterAssignment">
+            <property name="severity" value="ignore"/>
+        </module>
         <module name="GenericIllegalRegexp">
             <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Checks for trailing spaces at the end of a line"/>
             <property name="format" value="\s$"/>

@@ -306,6 +306,9 @@ public final class VMConfiguration {
         }
     }
 
+    /**
+     * Use {@link MaxineVM#isDebug()} instead of calling this directly.
+     */
     @FOLD
     public boolean debugging() {
         return buildLevel() == BuildLevel.DEBUG;

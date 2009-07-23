@@ -224,7 +224,7 @@ public final class MemoryWordInspector extends Inspector {
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected boolean refreshView(boolean force) {
         final int wordSize = maxVM().wordSize();
         for (int i = 0; i < numberOfWords; i++) {
             final Address a = address.plus(i * wordSize);
@@ -252,6 +252,7 @@ public final class MemoryWordInspector extends Inspector {
             }
         }
         super.refreshView(force);
+        return true;
     }
 
     @Override

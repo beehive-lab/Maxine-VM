@@ -45,6 +45,10 @@ public class FixedMemoryRegion implements MemoryRegion {
         return end;
     }
 
+    public Pointer mark() {
+        return end().asPointer();
+    }
+
     private String description;
 
     public String description() {

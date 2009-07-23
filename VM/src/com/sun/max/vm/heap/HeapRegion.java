@@ -22,12 +22,26 @@ package com.sun.max.vm.heap;
 
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.debug.*;
 
 /**
  * @author Bernd Mathiske
  */
 public interface HeapRegion extends MemoryRegion {
 
+    /**
+     * Allocates a cell of a requested size from this heap region.
+     * In a {@linkplain MaxineVM#isDebug() debug} build of the VM,
+     * an extra word is reserved just below the cell for the
+     * {@linkplain DebugHeap#adjustForDebugTag(Pointer) debug tag word}.
+     *
+     * Thread safety considerations: The caller(s) are responsible for ensuring that calls to this
+     * method are synchronized. Failure to do so may put the allocation mark in an inconsistent state.
+     *
+     * @param size the requested allocation size which must be {@linkplain Size#isWordAligned() word aligned}
+     * @return the start of the allocated cell or zero if the allocation request could not be satisfied
+     */
     Pointer allocateCell(Size size);
 
 }

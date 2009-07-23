@@ -60,12 +60,11 @@ public class BlockBegin extends StateSplit {
 
     private static final int entryFlags = BlockFlag.StandardEntry.mask() | BlockFlag.OsrEntry.mask() | BlockFlag.ExceptionEntry.mask();
 
-
     private int blockFlags;
     private final List<BlockBegin> predecessors;
     private BlockEnd end;
 
-    private int blockID;
+    public final int blockID;
     private int depthFirstNumber;
     private int linearScanNumber;
     private int loopDepth;
@@ -85,9 +84,11 @@ public class BlockBegin extends StateSplit {
     /**
      * Constructs a new BlockBegin at the specified bytecode index.
      * @param bci the bytecode index of the start
+     * @param blockID the ID of the block
      */
-    public BlockBegin(int bci) {
+    public BlockBegin(int bci, int blockID) {
         super(ValueType.ILLEGAL_TYPE);
+        this.blockID = blockID;
         depthFirstNumber = -1;
         linearScanNumber = -1;
         predecessors = new ArrayList<BlockBegin>(2);
@@ -96,18 +97,6 @@ public class BlockBegin extends StateSplit {
         exceptionHandlerStates = new ArrayList<ValueStack>(0);
         setBCI(bci);
         lirBlock = new LIRBlock();
-    }
-
-    /**
-     * Gets the ID of this block.
-     * @return the id number
-     */
-    public int blockID() {
-        return blockID;
-    }
-
-    public void setBlockID(int i) {
-        blockID = i;
     }
 
     /**
@@ -653,14 +642,6 @@ public class BlockBegin extends StateSplit {
 
     }
 
-    /**
-     * @param exceptionentry
-     * @return
-     */
-    public boolean isSet(BlockFlag flag) {
-        return (blockFlags & flag.mask()) != 0;
-    }
-
     public int numberOfExceptionHandlers() {
         return exceptionHandlerBlocks.size();
     }
@@ -677,25 +658,20 @@ public class BlockBegin extends StateSplit {
         return lirBlock.firstLirInstructionID;
     }
 
-
     public void setFirstLirInstructionId(int firstLirInstructionId) {
         lirBlock.firstLirInstructionID = firstLirInstructionId;
     }
 
-
-
     public int lastLirInstructionId() {
         return lirBlock.lastLirInstructionID;
     }
-
 
     public void setLastLirInstructionId(int lastLirInstructionId) {
         lirBlock.lastLirInstructionID = lastLirInstructionId;
     }
 
     public Iterable<Phi> phis() {
-        // TODO Auto-generated method stub
-        return null;
+        throw Util.unimplemented();
     }
 
     public void setLiveGen(BitMap liveGen) {
