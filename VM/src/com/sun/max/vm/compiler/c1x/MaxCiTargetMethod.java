@@ -72,10 +72,12 @@ public class MaxCiTargetMethod implements CiTargetMethod {
     static class DataPatchSite {
         final int codePos;
         final int dataPos;
+        final boolean relative;
 
-        DataPatchSite(int codePos, int dataPos) {
+        DataPatchSite(int codePos, int dataPos, boolean relative) {
             this.codePos = codePos;
             this.dataPos = dataPos;
+            this.relative = relative;
         }
     }
 
@@ -213,9 +215,10 @@ public class MaxCiTargetMethod implements CiTargetMethod {
      *
      * @param codePosition the position in the code where the data reference occurs
      * @param dataPosition the position in the data which is referred to
+     * @param relative {@code true} if the reference is instruction-relative
      */
-    public void recordDataReferenceInCode(int codePosition, int dataPosition) {
-        dataPatchSites.add(new DataPatchSite(codePosition, dataPosition));
+    public void recordDataReferenceInCode(int codePosition, int dataPosition, boolean relative) {
+        dataPatchSites.add(new DataPatchSite(codePosition, dataPosition, relative));
     }
 
     /**
@@ -439,18 +442,8 @@ public class MaxCiTargetMethod implements CiTargetMethod {
         }
     }
 
-
-    @Override
     public void recordCodeReferenceInData(int codePosition, int dataPosition, boolean relative) {
         // TODO Auto-generated method stub
 
     }
-
-
-    @Override
-    public void recordDataReferenceInCode(int codePosition, int dataPosition, boolean relative) {
-        // TODO Auto-generated method stub
-
-    }
-
 }

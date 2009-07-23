@@ -77,10 +77,14 @@ public final class Trap {
     private static VMBooleanXXOption dumpStackOnTrap =
         register(new VMBooleanXXOption("-XX:-DumpStackOnTrap", "Reports a stack trace for every trap, regardless of the cause."), MaxineVM.Phase.PRISTINE);
 
+    /** The number of bytes reserved in the stack as a guard area. */
+    public static final int stackGuardSize = 12 * Ints.K;
+    // TODO (tw): Check why the LSRA needs the value 12K above. Can probably be reduced after implementing better stack slot sharing.
+
     /**
      * This method is {@linkplain #isTrapStub(MethodActor) known} by the compilation system. In particular, no adapter
      * frame code generated for it. As such, it's entry point is at it's first compiled instruction which corresponds
-     * with it's entry point it it were to be called from C code.
+     * with its entry point it it were to be called from C code.
      */
     private static final CriticalMethod trapStub = new CriticalMethod(Trap.class, "trapStub", null, CallEntryPoint.C_ENTRY_POINT);
 
