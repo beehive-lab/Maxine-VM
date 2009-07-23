@@ -39,10 +39,9 @@ public class LoadField extends AccessField {
      * @param lockStack the lock stack
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
-     * @param isInitialized indicates if the class is initialized
      */
-    public LoadField(Instruction object, CiField field, boolean isStatic, ValueStack lockStack, ValueStack stateBefore, boolean isLoaded, boolean isInitialized) {
-        super(object, field, isStatic, lockStack, stateBefore, isLoaded, isInitialized);
+    public LoadField(Instruction object, CiField field, boolean isStatic, ValueStack lockStack, ValueStack stateBefore, boolean isLoaded) {
+        super(object, field, isStatic, lockStack, stateBefore, isLoaded);
     }
 
     /**

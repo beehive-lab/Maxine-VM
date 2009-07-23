@@ -63,9 +63,9 @@ public class NullCheckEliminator extends InstructionVisitor {
 
     // maps used in first pass
     final HashSet<BlockBegin> marked = new HashSet<BlockBegin>();
-    final HashMap<BlockBegin, HashSet<Instruction>> out = new HashMap<BlockBegin, HashSet<Instruction>>();
-    final HashMap<BlockBegin, HashSet<Instruction>> except = new HashMap<BlockBegin, HashSet<Instruction>>();
-    final HashMap<BlockBegin, List<Instruction>> uses = new HashMap<BlockBegin, List<Instruction>>();
+    final HashMap<BlockBegin, HashSet<Instruction>> localOut = new HashMap<BlockBegin, HashSet<Instruction>>();
+    final HashMap<BlockBegin, HashSet<Instruction>> localExcept = new HashMap<BlockBegin, HashSet<Instruction>>();
+    final HashMap<BlockBegin, List<Instruction>> localUses = new HashMap<BlockBegin, List<Instruction>>();
 
     // maps used only in iteration
     HashMap<Instruction, Integer> index;
@@ -103,14 +103,14 @@ public class NullCheckEliminator extends InstructionVisitor {
 
     private void processBlock(BlockBegin block) {
         // first pass on a block
-        computeFirstInSet(block);
+        computeLocalInSet(block);
         for (Instruction i = block.next(); i != null; i = i.next()) {
             // now visit the instructions in order
             i.accept(this);
         }
         if (!currentUses.isEmpty()) {
-            // remember any uses in this block for later iterative processing
-            uses.put(block, currentUses);
+            // remember any localUses in this block for later iterative processing
+            localUses.put(block, currentUses);
         }
         processSuccessors(block.end().successors());
         processSuccessors(block.exceptionHandlerBlocks());
@@ -125,10 +125,11 @@ public class NullCheckEliminator extends InstructionVisitor {
         }
     }
 
-    private void computeFirstInSet(BlockBegin block) {
-        // compute the first in set based on the out sets of predecessors
+    private void computeLocalInSet(BlockBegin block) {
+        // compute the initial {in} set based on the {localOut} sets of predecessors, if possible
+        currentNonNulls = null;
         currentUses = new ArrayList<Instruction>();
-        HashMap<BlockBegin, HashSet<Instruction>> map = block.isExceptionEntry() ? except : out;
+        HashMap<BlockBegin, HashSet<Instruction>> map = block.isExceptionEntry() ? localExcept : localOut;
         if (block.numberOfPreds() == 0) {
             // no predecessors => start block
             assert block == ir.startBlock;
@@ -144,7 +145,7 @@ public class NullCheckEliminator extends InstructionVisitor {
                 }
             }
             if (currentNonNulls == null) {
-                // all the predecessors have been visited, compute the intersection of their non-nulls
+                // all the predecessors have been visited, compute the intersection of their {localOut} sets
                 currentNonNulls = Util.uncheckedCast(map.get(block.predAt(0)).clone());
                 for (BlockBegin pred : block.predecessors()) {
                     currentNonNulls.retainAll(map.get(pred));
@@ -152,18 +153,18 @@ public class NullCheckEliminator extends InstructionVisitor {
             }
         }
         assert currentNonNulls != null;
-        // if there are exception handlers for this block, then clone the input and put it in the except
+        // if there are exception handlers for this block, then clone {in} and put it in {localExcept}
         if (block.numberOfExceptionHandlers() > 0) {
             HashSet<Instruction> e = Util.uncheckedCast(currentNonNulls.clone());
-            except.put(block, e);
+            localExcept.put(block, e);
         }
-        out.put(block, currentNonNulls);
+        localOut.put(block, currentNonNulls);
     }
 
     private void iterate() {
         // the previous phase calculated all the {locaOut} sets; use iteration to
         // calculate the {in} sets
-        if (uses.size() > 0) {
+        if (localUses.size() > 0) {
             // only perform iterative flow analysis if there are checks remaining to eliminate
             index = new HashMap<Instruction, Integer>();
             inBitmaps = new HashMap<BlockBegin, BitMap>();
@@ -173,10 +174,10 @@ public class NullCheckEliminator extends InstructionVisitor {
             while (!workList.isEmpty()) {
                 iterateBlock(workList.removeFromWorkList());
             }
-            // now that the fixed point is reached, reprocess any remaining uses
+            // now that the fixed point is reached, reprocess any remaining localUses
             currentUses = null; // the list won't be needed this time
-            for (BlockBegin block : uses.keySet()) {
-                reprocessUses(inBitmaps.get(block), uses.get(block));
+            for (BlockBegin block : localUses.keySet()) {
+                reprocessUses(inBitmaps.get(block), localUses.get(block));
             }
         }
     }
@@ -188,7 +189,7 @@ public class NullCheckEliminator extends InstructionVisitor {
         if (localOut == null) {
             // compute {localOut} from the hash set
             localOut = new BitMap(32);
-            for (Instruction i : out.get(block)) {
+            for (Instruction i : this.localOut.get(block)) {
                 int index = makeIndex(i);
                 localOut.grow(index);
                 localOut.set(index);
@@ -204,7 +205,7 @@ public class NullCheckEliminator extends InstructionVisitor {
             out = prevMap.copy();
             out.setUnion(localOut);
         }
-        propagateSuccessors(out, block.end().successors()); // propagate {out} to successors
+        propagateSuccessors(out, block.end().successors()); // propagate {localOut} to successors
         propagateSuccessors(prevMap, block.exceptionHandlerBlocks()); // propagate {in} to exception handlers
     }
 
@@ -347,6 +348,11 @@ public class NullCheckEliminator extends InstructionVisitor {
             // if the object is non null, the result of the cast is as well
             i.setFlag(Instruction.Flag.NonNull);
         }
+    }
+
+    @Override
+    public void visitInstanceOf(InstanceOf i) {
+        processUse(i, i.object(), false); // instanceof can check faster if object is non-null
     }
 
     @Override

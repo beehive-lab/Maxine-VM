@@ -791,7 +791,7 @@ public class GraphBuilder {
         CiField field = constantPool().lookupGetField(stream().readCPI());
         boolean isLoaded = field.isLoaded() && !C1XOptions.TestPatching;
         ValueStack stateCopy = !isLoaded ? curState.copy() : null;
-        LoadField load = new LoadField(apop(), field, false, lockStack(), stateCopy, isLoaded, true);
+        LoadField load = new LoadField(apop(), field, false, lockStack(), stateCopy, isLoaded);
         loadField(field.basicType(), load);
     }
 
@@ -800,17 +800,16 @@ public class GraphBuilder {
         boolean isLoaded = field.isLoaded() && !C1XOptions.TestPatching;
         ValueStack stateCopy = !isLoaded ? curState.copy() : null;
         Instruction value = pop(field.basicType().stackType());
-        storeField(new StoreField(apop(), field, value, false, lockStack(), stateCopy, isLoaded, true));
+        storeField(new StoreField(apop(), field, value, false, lockStack(), stateCopy, isLoaded));
     }
 
     void getStatic() {
         CiField field = constantPool().lookupGetStatic(stream().readCPI());
         CiType holder = field.holder();
         boolean isLoaded = field.isLoaded() && holder.isLoaded() && !C1XOptions.TestPatching;
-        boolean isInitialized = isLoaded && holder.isInitialized();
-        ValueStack stateCopy = !isLoaded ? curState.copy() : null;
+        ValueStack stateCopy = isLoaded ? null : curState.copy();
         Instruction holderConstant = append(new Constant(new ClassType(holder), stateCopy));
-        LoadField load = new LoadField(holderConstant, field, true, lockStack(), stateCopy, isLoaded, isInitialized);
+        LoadField load = new LoadField(holderConstant, field, true, lockStack(), stateCopy, isLoaded);
         loadField(field.basicType(), load);
     }
 
@@ -818,11 +817,10 @@ public class GraphBuilder {
         CiField field = constantPool().lookupPutStatic(stream().readCPI());
         CiType holder = field.holder();
         boolean isLoaded = field.isLoaded() && holder.isLoaded() && !C1XOptions.TestPatching;
-        boolean isInitialized = isLoaded && holder.isInitialized();
-        ValueStack stateCopy = !isLoaded ? curState.copy() : null;
+        ValueStack stateCopy = isLoaded ? null : curState.copy();
         Instruction holderConstant = append(new Constant(new ClassType(holder), stateCopy));
         Instruction value = pop(field.basicType().stackType());
-        StoreField store = new StoreField(holderConstant, field, value, true, lockStack(), stateCopy, isLoaded, isInitialized);
+        StoreField store = new StoreField(holderConstant, field, value, true, lockStack(), stateCopy, isLoaded);
         storeField(store);
     }
 
