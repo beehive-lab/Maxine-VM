@@ -41,6 +41,7 @@ public class Constant extends Instruction {
      */
     public Constant(ConstType type) {
         super(type);
+        initFlag(Instruction.Flag.NonNull, type.isNonNull());
     }
 
     /**
@@ -52,6 +53,7 @@ public class Constant extends Instruction {
     public Constant(ClassType type, ValueStack state) {
         super(type);
         this.state = state;
+        setFlag(Instruction.Flag.NonNull, true); // class constants cannot be null
     }
 
     /**
