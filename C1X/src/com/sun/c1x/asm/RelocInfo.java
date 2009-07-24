@@ -31,6 +31,6 @@ public class RelocInfo {
         none, // Used when no relocation should be generated
         runtimeCallType, // call to fixed external routine
         externalWordType, // reference to fixed external address
-        internalWordType, // reference within the current code blob
+        internalWordType, objectType, // reference within the current code blob
     }
 }

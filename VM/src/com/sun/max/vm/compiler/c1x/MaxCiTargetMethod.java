@@ -324,7 +324,7 @@ public class MaxCiTargetMethod implements CiTargetMethod {
         );
         // TODO: patch code and data references
         processDataPatches(targetBundleLayout);
-        processRefPatches(targetBundleLayout, refLiterals);
+        processRefPatches(targetBundleLayout, targetMethod.referenceLiterals());
     }
 
     private void processRefPatches(TargetBundleLayout bundleLayout, Object[] refLiterals) {
@@ -354,6 +354,25 @@ public class MaxCiTargetMethod implements CiTargetMethod {
 
     private void patchRelativeInstruction(int codePos, Offset relative) {
         // TODO: patch relative load instructions in a platform-dependent way
+        X86InstructionDecoder decoder = new X86InstructionDecoder(targetMethod.code(), true);
+        decoder.decodePosition(codePos);
+        int patchPos = decoder.currentDisplacementPosition();
+        int endOfInstruction = decoder.currentEndOfInstruction();
+        int offset = relative.toInt() - endOfInstruction + codePos;
+        patchDisp32(targetMethod.code(), patchPos, offset);
+    }
+
+    private void patchDisp32(byte[] code, int pos, int b) {
+        assert pos + 4 < code.length;
+        assert code[pos] == 0;
+        assert code[pos + 1] == 0;
+        assert code[pos + 2] == 0;
+        assert code[pos + 3] == 0;
+
+        code[pos++] = (byte) (b & 0xFF);
+        code[pos++] = (byte) ((b >> 8) & 0xFF);
+        code[pos++] = (byte) ((b >> 16) & 0xFF);
+        code[pos++] = (byte) ((b >> 24) & 0xFF);
     }
 
     private void processSafepoints(int[] stopPositions, ByteArrayBitMap bitMap) {
