@@ -60,9 +60,9 @@ public final class InspectableHeapInfo {
      */
     private static int cardTableRatio = 100;
 
-    private static MemoryRegion cardTable = null;
+    private static long cardTableSize = 0;
 
-    private static Pointer cardTablePointer;
+    private static Pointer cardTablePointer = Pointer.zero();
 
     private static int[] cardTableRegions;
 
@@ -87,48 +87,45 @@ public final class InspectableHeapInfo {
         if (rootsRegion == null) {
             final Size size = Size.fromInt(Pointer.size() * MAX_NUMBER_OF_ROOTS);
             rootsPointer = Memory.allocate(size);
-            rootsRegion = new RootsMemoryRegion(rootsPointer, size);//TODO:no new calls in this class
+            rootsRegion = new RootsMemoryRegion(rootsPointer, size); // TODO:no new calls in this class
         }
     }
 
     private static void initCardTable(MemoryRegion[] memoryRegions) {
-        if (cardTable == null) {
-            long cardTableSize = 0;
-            long tmpSize = 0;
-
+        if (cardTablePointer.equals(Pointer.zero())) {
 
             for (MemoryRegion memoryRegion : memoryRegions) {
-                tmpSize += memoryRegion.size().toLong() / cardTableRatio;
-                if (memoryRegion.size().toLong() % cardTableRatio != 0) {
-                    tmpSize += Word.size();
-                }
-
-                cardTableSize += tmpSize;
-                tmpSize = 0;
-
+                cardTableSize += calculateNumberOfCardTableEntries(memoryRegion);
             }
-
             cardTablePointer = Memory.allocate(Size.fromLong(cardTableSize));
-            cardTable = new RootsMemoryRegion(cardTablePointer, Size.fromLong(cardTableSize));//TODO: no new calls in this class
         }
     }
 
+    private static long calculateNumberOfCardTableEntries(MemoryRegion memoryRegion) {
+        long cardTableEntries = 0;
+        cardTableEntries += memoryRegion.size().toLong() / cardTableRatio;
+        if (memoryRegion.size().toLong() % cardTableRatio != 0) {
+            cardTableEntries += Word.size();
+        }
+        return cardTableEntries;
+    }
+
     public void touchCardTableField(Address address) {
-        //do mapping
+        long cardTableEntry = 0;
+
+        for (MemoryRegion memoryRegion : memoryRegions) {
+            if (memoryRegion.contains(address)) {
+                //calculate offset;
+            } else {
+                cardTableEntry += calculateNumberOfCardTableEntries(memoryRegion);
+            }
+        }
     }
 
     private static class RootsMemoryRegion extends RuntimeMemoryRegion {
         public RootsMemoryRegion(Address address, Size size) {
             super(address, size);
             setDescription("TeleRoots");
-            mark.set(end());
-        }
-    }
-
-    private static class CardTableMemoryRegion extends RuntimeMemoryRegion {
-        public CardTableMemoryRegion(Address address, Size size) {
-            super(address, size);
-            setDescription("CardTable");
             mark.set(end());
         }
     }

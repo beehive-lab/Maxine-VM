@@ -398,7 +398,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
 
         public void initFactory() {
             endOfGCWatchpoint = createInvisibleWatchpoint("End of GC", new FixedMemoryRegion(teleProcess.teleVM().rootEpochAddress(), Size.fromInt(Pointer.size()), "Root epoch address"), true, false, true, false, true);
-            endOfGCWatchpoint.enable();//TODO: REMOVE, should be dynamic
+            endOfGCWatchpoint.enable(); // TODO: REMOVE, should be dynamic
         }
 
         public boolean isInGCMode() {
