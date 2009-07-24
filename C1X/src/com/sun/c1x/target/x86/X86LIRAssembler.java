@@ -2882,8 +2882,8 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void icCall(CiMethod method, CiRuntimeCall entry, CodeEmitInfo info) {
+        assert !compilation.runtime.isMP() || (masm().offset() + compilation.target.arch.nativeCallDisplacementOffset + compilation.target.arch.nativeMoveConstInstructionSize) % wordSize == 0 : "must be aligned";
         masm().movoop(ICKlass, compilation.runtime.universeNonOopWord());
-        assert !compilation.runtime.isMP() || (masm().offset() + compilation.target.arch.nativeCallDisplacementOffset) % wordSize == 0 : "must be aligned";
         masm().call(new RuntimeAddress(entry, method));
         addCallInfo(codeOffset(), info);
     }

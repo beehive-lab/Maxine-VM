@@ -106,6 +106,7 @@ public abstract class AbstractAssembler {
         emitByte(x);
     }
 
+
     void aLong(int x) {
         emitInt(x);
     }
@@ -179,6 +180,18 @@ public abstract class AbstractAssembler {
         codeBuffer.emitInt(x);
     }
 
+    protected void recordDataReferenceInCode(int pos, int dataOffset, boolean relative) {
+
+        assert pos >= 0 && dataOffset >= 0;
+
+        if (C1XOptions.TraceRelocation) {
+            TTY.print("Object reference in code: pos = %d, dataOffset = %d, relative = %b", pos, dataOffset, relative);
+        }
+
+        if (compilation.targetMethod != null) {
+            compilation.targetMethod.recordDataReferenceInCode(pos, dataOffset, relative);
+        }
+    }
 
     protected void recordObjectReferenceInCode(Object obj) {
 
@@ -242,21 +255,11 @@ public abstract class AbstractAssembler {
 
     public int doubleConstant(double d) {
         int offset = dataBuffer.emitDouble(d);
-        recordDataReferenceInCode(lastInstructionStart, offset);
         return offset;
-    }
-
-    private void recordDataReferenceInCode(int codeOffset, int dataOffset) {
-        if (compilation.targetMethod == null) {
-            // TTY.println("Record data reference in code: code-offset=%d, data-offset=%d", codeOffset, dataOffset);
-        } else {
-            compilation.targetMethod.recordDataReferenceInCode(codeOffset, dataOffset, true);
-        }
     }
 
     public int floatConstant(float f) {
         int offset = dataBuffer.emitFloat(f);
-        recordDataReferenceInCode(lastInstructionStart, offset);
         return offset;
     }
 

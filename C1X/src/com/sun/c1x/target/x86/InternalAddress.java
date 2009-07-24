@@ -31,5 +31,6 @@ public class InternalAddress extends AddressLiteral {
 
     public InternalAddress(long target) {
         super(target, RelocInfo.Type.internalWordType);
+        assert target >= 0;
     }
 }

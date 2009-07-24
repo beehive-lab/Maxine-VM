@@ -861,7 +861,7 @@ public class X86MacroAssembler extends X86Assembler {
         // jmp/call are displacements others are absolute
         assert !adr.isLval() : "must be rval";
         assert reachable(adr) : "must be";
-        return new Address(Util.safeToInt(adr.target() - pc()), adr.target(), adr.reloc());
+        return new Address(Util.safeToInt(adr.target()), adr.target(), adr.reloc());
 
     }
 

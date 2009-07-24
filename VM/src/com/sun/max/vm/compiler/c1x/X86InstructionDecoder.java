@@ -75,6 +75,8 @@ public class X86InstructionDecoder {
 
     public void decodePosition(int inst) {
 
+        assert inst >= 0 && inst < code.length;
+
         // Decode the given instruction, and return the Pointer of
         // an embedded 32-bit operand word.
 

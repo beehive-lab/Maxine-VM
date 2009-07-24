@@ -218,6 +218,7 @@ public class MaxCiTargetMethod implements CiTargetMethod {
      * @param relative {@code true} if the reference is instruction-relative
      */
     public void recordDataReferenceInCode(int codePosition, int dataPosition, boolean relative) {
+        assert codePosition >= 0 && dataPosition >= 0;
         dataPatchSites.add(new DataPatchSite(codePosition, dataPosition, relative));
     }
 
@@ -462,7 +463,5 @@ public class MaxCiTargetMethod implements CiTargetMethod {
     }
 
     public void recordCodeReferenceInData(int codePosition, int dataPosition, boolean relative) {
-        // TODO Auto-generated method stub
-
     }
 }
