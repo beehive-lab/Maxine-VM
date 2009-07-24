@@ -337,8 +337,14 @@ public abstract class X86Assembler extends AbstractAssembler {
 //                assert isSimm32(adjusted) : "must be 32bit offset (RIP relative Address)";
 //                emitData(adjusted, rspec);
 
-                assert disp == 0;
-                emitData(0, RelocInfo.Type.none);
+                if (rspec.type() == RelocInfo.Type.internalWordType) {
+                    assert disp >= 0;
+                    recordDataReferenceInCode(instMark(), disp, true);
+                    emitData(0, RelocInfo.Type.none);
+                } else {
+                    assert disp == 0;
+                    emitData(0, RelocInfo.Type.none);
+                }
             } else {
                 // 32bit never did this, did everything as the rip-rel/disp code above
                 // [disp] ABSOLUTE
