@@ -28,11 +28,11 @@ import com.sun.max.collect.*;
  * @author Michael Van De Vanter
  */
 public enum MemoryWordsColumnKind {
-    TAG("Tag", "Additional information", false, -1),
-    ADDRESS("Addr.", "Memory address of field", true, -1),
-    POSITION("Pos.", "Relative position of field (bytes)", true, 20),
-    VALUE("Value", "Field value", true, 20),
-    REGION("Region", "Memory region pointed to by value", false, 20);
+    TAG("Tag", "Additional information", true, -1),
+    ADDRESS("Addr.", "Memory address", true, -1),
+    POSITION("Pos.", "Relative position (bytes)", true, 20),
+    VALUE("Value", "Word value", true, 20),
+    REGION("Region", "Memory region pointed to by value", true, 20);
 
     private final String columnLabel;
     private final String toolTipText;

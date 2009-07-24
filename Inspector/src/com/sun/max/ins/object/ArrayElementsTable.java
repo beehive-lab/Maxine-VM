@@ -185,7 +185,7 @@ public final class ArrayElementsTable extends InspectorTable {
                 }
                 // Update selection, based on global address focus.
                 final int oldSelectedRow = getSelectedRow();
-                final int newRow = model.addressToRow(focus().address());
+                final int newRow = model.findRow(focus().address());
                 if (newRow >= 0) {
                     getSelectionModel().setSelectionInterval(newRow, newRow);
                 } else {
@@ -305,7 +305,7 @@ public final class ArrayElementsTable extends InspectorTable {
          * @return the displayed table row that shows the array element at an address;
          * -1 if the address is not in the array, or if that element is currently hidden..
          */
-        public int addressToRow(Address address) {
+        public int findRow(Address address) {
             if (!address.isZero()) {
                 final int offset = address.minus(objectOrigin).minus(startOffset).toInt();
                 if (offset >= 0 && offset < arrayLength * elementSize) {

@@ -17,6 +17,7 @@ generated-classes.jar
 Maxine.ipr
 Maxine.iws
 maxine-tester
+test-logs.zip
 
 # switch to regexp syntax
 syntax: regexp
