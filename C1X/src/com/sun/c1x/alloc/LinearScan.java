@@ -3433,11 +3433,13 @@ public class LinearScan extends RegisterAllocator {
                 int r2 = i2.assignedReg();
                 int r2Hi = i2.assignedRegHi();
                 if (i1.intersects(i2) && (r1 == r2 || r1 == r2Hi || (r1Hi != getAnyreg() && (r1Hi == r2 || r1Hi == r2Hi)))) {
-                    TTY.println("Intervals %d and %d overlap and have the same register assigned", i1.regNum(), i2.regNum());
-                    i1.print(TTY.out, this);
-                    TTY.cr();
-                    i2.print(TTY.out, this);
-                    TTY.cr();
+                    if (C1XOptions.DetailedAsserts) {
+                        TTY.println("Intervals %d and %d overlap and have the same register assigned", i1.regNum(), i2.regNum());
+                        i1.print(TTY.out, this);
+                        TTY.cr();
+                        i2.print(TTY.out, this);
+                        TTY.cr();
+                    }
                     hasError = true;
                 }
             }
