@@ -18,24 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x;
+package test.optimize;
 
-/**
- * The <code>C1XMetrics</code> class contains a number of fields that collect metrics about
- * compilation.
- *
- * @author Ben L. Titzer
+/*
+ * Test case for null check elimination.
+ * @Harness: java
+ * @Runs: 0=23
  */
-public class C1XMetrics {
-    public static int LocalValueNumberHits;
-    public static int GlobalValueNumberHits;
-    public static int ValueMapResizes;
-    public static int InlinedMethods;
-    public static int InlinedIntrinsics;
-    public static int InlinedFinalizerChecks;
-    public static int FoldableMethodsRegistered;
-    public static int MethodsFolded;
-    public static int InlineForcedMethods;
-    public static int NullCheckIterations;
-    public static int NullCheckEliminations;
+public class NCE_04 {
+
+    private static boolean cond = true;
+    public static NCE_04 object = new NCE_04();
+
+    int field1;
+    int field2 = 23;
+
+    public static int test(int arg) {
+        NCE_04 o = object;
+        if (cond) {
+            o.field1 = 22;
+        } else {
+            o.field1 = 11;
+        }
+        // expect non-null
+        return o.field2;
+    }
 }

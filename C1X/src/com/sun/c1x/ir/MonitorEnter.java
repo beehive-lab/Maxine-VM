@@ -40,7 +40,7 @@ public class MonitorEnter extends AccessMonitor {
     public MonitorEnter(Instruction object, int lockNumber, ValueStack lockStackBefore) {
         super(object, lockNumber);
         this.lockStackBefore = lockStackBefore;
-        initFlag(Flag.NeedsNullCheck, !object.isNonNull());
+        setNeedsNullCheck(!object.isNonNull());
     }
 
     /**
