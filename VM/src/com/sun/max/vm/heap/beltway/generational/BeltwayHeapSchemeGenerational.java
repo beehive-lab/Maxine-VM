@@ -59,7 +59,7 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (phase == MaxineVM.Phase.PRISTINE) {
-            InspectableHeapInfo.registerMemoryRegions(getEdenSpace(), getToSpace(), getMatureSpace());
+            InspectableHeapInfo.init(getEdenSpace(), getToSpace(), getMatureSpace());
         } else if (phase == MaxineVM.Phase.RUNNING) {
             beltCollectorGenerational.setBeltwayHeapScheme(this);
             beltCollector.setRunnable(beltCollectorGenerational);

@@ -55,7 +55,7 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
             adjustedCardTableAddress = BeltwayCardRegion.adjustedCardTableBase(cardRegion.cardTableBase().asPointer());
             beltManager.swapBelts(getMatureSpace(), getNurserySpace());
             getMatureSpace().setExpandable(true);
-            InspectableHeapInfo.registerMemoryRegions(getNurserySpace(), getMatureSpace());
+            InspectableHeapInfo.init(getNurserySpace(), getMatureSpace());
             collectorThread.start();
         } else if (phase == MaxineVM.Phase.RUNNING) {
             beltCollectorBA2.setBeltwayHeapScheme(this);
