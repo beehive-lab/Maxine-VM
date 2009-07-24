@@ -41,6 +41,7 @@ public class InstanceOf extends TypeCheck {
      */
     public InstanceOf(CiType targetClass, Instruction object, ValueStack stateBefore) {
         super(targetClass, object, ValueType.INT_TYPE, stateBefore);
+        setNeedsNullCheck(!object.isNonNull());
     }
 
     /**

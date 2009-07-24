@@ -95,7 +95,7 @@ public class IR {
     }
 
     private void buildGraph() {
-        topScope = new IRScope(compilation, null, -1, compilation.method, compilation.osrBCI());
+        topScope = new IRScope(compilation, null, -1, compilation.method, compilation.osrBCI);
 
         // Graph builder must set the startBlock and the osrEntryBlock
         new GraphBuilder(compilation, topScope, this);

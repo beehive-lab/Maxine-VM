@@ -27,6 +27,7 @@ import com.sun.c1x.util.BitMap;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.bytecode.Bytecodes;
 import com.sun.c1x.C1XOptions;
+import com.sun.c1x.C1XMetrics;
 
 import java.util.*;
 
@@ -166,6 +167,7 @@ public class NullCheckEliminator extends InstructionVisitor {
         // calculate the {in} sets
         if (localUses.size() > 0) {
             // only perform iterative flow analysis if there are checks remaining to eliminate
+            C1XMetrics.NullCheckIterations++;
             index = new HashMap<Instruction, Integer>();
             inBitmaps = new HashMap<BlockBegin, BitMap>();
             outBitmaps = new HashMap<BlockBegin, BitMap>();
@@ -273,13 +275,14 @@ public class NullCheckEliminator extends InstructionVisitor {
             // the object itself is known for sure to be non-null, so clear the flag.
             // the flag is usually cleared in the constructor of the use, but
             // later optimizations may more reveal more non-null objects
-            use.clearFlag(Instruction.Flag.NeedsNullCheck);
+            use.setNeedsNullCheck(false);
             return true;
         } else {
             // check if the object is non-null
             if (isNonNull(currentBitMap, currentNonNulls, object)) {
                 // the object is non-null at this site
-                use.clearFlag(Instruction.Flag.NeedsNullCheck);
+                use.setNeedsNullCheck(false);
+                C1XMetrics.NullCheckEliminations++;
                 return true;
             } else {
                 if (implicitCheck) {

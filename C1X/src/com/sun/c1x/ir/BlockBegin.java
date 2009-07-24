@@ -562,6 +562,8 @@ public class BlockBegin extends StateSplit {
         StringBuilder builder = new StringBuilder();
         builder.append("block #");
         builder.append(blockID);
+        builder.append(",");
+        builder.append(depthFirstNumber);
         builder.append(" @ ");
         builder.append(bci());
         builder.append(" [");

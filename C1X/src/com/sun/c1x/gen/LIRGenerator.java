@@ -256,7 +256,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
                 LIROperand lock = newRegister(BasicType.Int);
                 lir.loadStackAddressMonitor(0, lock);
 
-                CodeEmitInfo info = new CodeEmitInfo(C1XCompilation.MethodCompilation.SynchronizationEntryBCI.value, compilation.hir().startBlock.state(), null);
+                CodeEmitInfo info = new CodeEmitInfo(Instruction.SYNCHRONIZATION_ENTRY_BCI, compilation.hir().startBlock.state(), null);
                 CodeStub slowPath = new MonitorEnterStub(obj, lock, info);
 
                 // receiver is guaranteed non-null so don't need CodeEmitInfo
@@ -2211,7 +2211,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             CiMethod method = scope.method;
 
             BitMap liveness = method.liveness(bci);
-            if (bci == C1XCompilation.MethodCompilation.SynchronizationEntryBCI.value) {
+            if (bci == Instruction.SYNCHRONIZATION_ENTRY_BCI) {
                 if (x instanceof ExceptionObject || x instanceof Throw) {
                     // all locals are dead on exit from the synthetic unlocker
                     liveness.clearAll();
