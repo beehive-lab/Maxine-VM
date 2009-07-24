@@ -78,7 +78,7 @@ public class GraphBuilder {
         if (C1XOptions.UseLocalValueNumbering) {
             this.localValueMap = new ValueMap();
         }
-        int osrBCI = compilation.osrBCI();
+        int osrBCI = compilation.osrBCI;
         BlockMap blockMap = compilation.getBlockMap(scope.method, osrBCI);
         BlockBegin start = blockMap.get(0);
 
@@ -1738,7 +1738,7 @@ public class GraphBuilder {
     void setupOsrEntryBlock() {
         assert compilation.isOsrCompilation();
 
-        int osrBCI = compilation.osrBCI();
+        int osrBCI = compilation.osrBCI;
         BytecodeStream s = scopeData.stream;
         CiOsrFrame frame = compilation.getOsrFrame();
         s.setBCI(osrBCI);
@@ -1821,7 +1821,7 @@ public class GraphBuilder {
             if (compilation.isOsrCompilation()
                     && scope().isTopScope()
                     && scopeData.parsingJsr()
-                    && s.currentBCI() == compilation.osrBCI()) {
+                    && s.currentBCI() == compilation.osrBCI) {
                 throw new Bailout("OSR not supported while a JSR is active");
             }
 
