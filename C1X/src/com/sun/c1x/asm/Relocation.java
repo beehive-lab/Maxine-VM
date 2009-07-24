@@ -36,6 +36,10 @@ public class Relocation {
         this.type = type;
     }
 
+    public Relocation(int offset, Object obj) {
+        this.type = Type.objectType;
+    }
+
     public Type type() {
         return type;
     }

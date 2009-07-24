@@ -623,14 +623,15 @@ public class X86MacroAssembler extends X86Assembler {
 
     void movoop(Register dst, Object obj) {
         if (compilation.target.arch.is32bit()) {
-            movLiteral32(dst, compilation.runtime.convertToPointer32(obj), Relocation.specForImmediate());
+            throw Util.unimplemented();
         } else if (compilation.target.arch.is64bit()) {
-
-            movLiteral64(dst, compilation.runtime.convertToPointer64(obj), Relocation.specForImmediate());
+            recordObjectReferenceInCode(obj);
+            this.movq(dst, new Address(new Relocation(offset(), obj)));
         } else {
             Util.shouldNotReachHere();
         }
     }
+
 
     void movoop(Address dst, Object obj) {
 

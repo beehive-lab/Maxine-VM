@@ -417,7 +417,7 @@ public class MaxCiType implements CiType {
 
     @Override
     public CiConstant getStaticContainer() {
-        return new MaxCiConstant(ReferenceValue.from(asClassActor("getStaticContainer()").staticHub()));
+        return new MaxCiConstant(ReferenceValue.from(asClassActor("getStaticContainer()").staticTuple()));
     }
 
 }

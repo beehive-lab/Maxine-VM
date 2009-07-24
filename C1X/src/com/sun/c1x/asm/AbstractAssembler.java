@@ -179,6 +179,18 @@ public abstract class AbstractAssembler {
         codeBuffer.emitInt(x);
     }
 
+
+    protected void recordObjectReferenceInCode(Object obj) {
+
+        if (C1XOptions.TraceRelocation) {
+            TTY.print("Object reference in code: pos = %d, object= %s", offset(), obj.toString());
+        }
+
+        if (compilation.targetMethod != null) {
+            compilation.targetMethod.recordObjectReferenceInCode(offset(), obj);
+        }
+    }
+
     protected void emitLong(long x) {
         codeBuffer.emitLong(x);
     }
@@ -206,12 +218,6 @@ public abstract class AbstractAssembler {
     }
 
     protected void relocate(int position, Relocation relocation) {
-
-        //TTY.println("RELOCATION recorded at position " + position + " " + relocation);
-        switch (relocation.type()) {
-
-        }
-
     }
 
     protected abstract boolean pdCheckInstructionMark();

@@ -192,6 +192,7 @@ public class C1XOptions {
     public static boolean TLABStats                          = ____;
     public static boolean GenerateAssertionCode              = ____;
     public static boolean EmitStaticCallStubs                = ____;
+    public static boolean TraceRelocation                    = ____;
 
     // Profiling settings
 
