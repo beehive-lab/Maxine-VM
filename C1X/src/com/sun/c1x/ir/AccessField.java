@@ -38,7 +38,6 @@ public abstract class AccessField extends Instruction {
     final CiField field;
     ValueStack stateBefore;
     ValueStack lockStack;
-    NullCheck explicitNullCheck;
     boolean isStatic;
 
     /**
@@ -46,17 +45,17 @@ public abstract class AccessField extends Instruction {
      * @param object the instruction producing the receiver object
      * @param field the compiler interface representation of the field
      * @param isStatic indicates if the field is static
-     * @param lockStack the lock stack
+     * @param exceptionState the state if an exception occurs
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
      */
     public AccessField(Instruction object, CiField field, boolean isStatic,
-                       ValueStack lockStack, ValueStack stateBefore, boolean isLoaded) {
+                       ValueStack exceptionState, ValueStack stateBefore, boolean isLoaded) {
         super(ValueType.fromBasicType(field.basicType()));
         this.object = object;
         this.offset = isLoaded ? field.offset() : -1;
         this.field = field;
-        this.lockStack = lockStack;
+        this.lockStack = exceptionState;
         this.stateBefore = stateBefore;
         this.isStatic = isStatic;
         if (!isLoaded || (C1XOptions.TestPatching && !field.isVolatile())) {
@@ -65,8 +64,8 @@ public abstract class AccessField extends Instruction {
             setFlag(Flag.NeedsPatching);
         }
         initFlag(Flag.IsLoaded, isLoaded);
-        initFlag(Flag.NeedsNullCheck, !object.isNonNull());
         pin(); // pin memory access instructions
+        setNeedsNullCheck(!object.isNonNull());
     }
 
     /**
@@ -119,6 +118,25 @@ public abstract class AccessField extends Instruction {
     }
 
     /**
+     * Sets whether this instruction requires a null check.
+     * @param on {@code true} if this instruction requires a null check
+     */
+    public void setNeedsNullCheck(boolean on) {
+        if (on) {
+            assert lockStack != null;
+            setFlag(Instruction.Flag.NeedsNullCheck);
+        } else {
+            // if stateBefore is not null, that may mean the field is unresolved, which
+            // may require resolution, which could throw an exception requiring lockStack
+            if (stateBefore != null) {
+                assert isInitialized();
+                lockStack = null;
+            }
+            clearFlag(Instruction.Flag.NeedsNullCheck);
+        }
+    }
+
+    /**
      * Gets the value stack of the state before this field access.
      * @return the state before this field access
      */
@@ -128,7 +146,6 @@ public abstract class AccessField extends Instruction {
 
     @Override
     public ValueStack lockStack() {
-        // XXX: what is a lock stack?
         return lockStack;
     }
 
@@ -141,15 +158,7 @@ public abstract class AccessField extends Instruction {
      * @return the object representing an explicit null check
      */
     public NullCheck explicitNullCheck() {
-        return explicitNullCheck;
-    }
-
-    /**
-     * Sets the instruction representing an explicit null check for this field access.
-     * @param explicitNullCheck the instruction representing the explicit check
-     */
-    public void setExplicitNullCheck(NullCheck explicitNullCheck) {
-        this.explicitNullCheck = explicitNullCheck;
+        return null;
     }
 
     /**

@@ -31,8 +31,6 @@ import com.sun.c1x.value.ValueStack;
  */
 public class LoadIndexed extends AccessIndexed {
 
-    NullCheck explicitNullCheck;
-
     /**
      * Creates a new LoadIndexed instruction.
      * @param array the instruction producing the array
@@ -50,15 +48,7 @@ public class LoadIndexed extends AccessIndexed {
      * @return the explicit null check instruction
      */
     public NullCheck explicitNullCheck() {
-        return explicitNullCheck;
-    }
-
-    /**
-     * Sets the instruction representing an explicit null check for this instruction.
-     * @param explicitNullCheck the object
-     */
-    public void setExplicitNullCheck(NullCheck explicitNullCheck) {
-        this.explicitNullCheck = explicitNullCheck;
+        return null;
     }
 
     /**

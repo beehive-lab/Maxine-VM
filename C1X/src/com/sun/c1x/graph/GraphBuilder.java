@@ -67,6 +67,7 @@ public class GraphBuilder {
      * Creates a new instance and builds the graph for a the specified IRScope.
      * @param compilation the compilation
      * @param scope the top IRScope
+     * @param ir the IR to build the graph into
      */
     public GraphBuilder(C1XCompilation compilation, IRScope scope, IR ir) {
         this.compilation = compilation;
@@ -381,18 +382,10 @@ public class GraphBuilder {
         return x;
     }
 
-    void nullCheck(Instruction x) {
-        if (x.isNonNull()) {
-            // x is already proven to be non-null
-            return;
-        } else if (x.type().isConstant()) {
-            ConstType con = x.type().asConstant();
-            if (con.isObject() && con.asObject() != null) {
-                // a constant object, and not null
-                return;
-            }
+    void appendNullCheck(Instruction x) {
+        if (!x.isNonNull()) {
+            append(new NullCheck(x, lockStack()));
         }
-        append(new NullCheck(x, lockStack()));
     }
 
     List<ExceptionHandler> handleException(int bci) {
@@ -1527,7 +1520,7 @@ public class GraphBuilder {
         if (!target.isStatic()) {
             // the receiver object must be nullchecked for instance methods
             receiver = args[0];
-            nullCheck(receiver);
+            appendNullCheck(receiver);
         }
 
         if (C1XOptions.ProfileInlinedCalls) {
