@@ -37,4 +37,6 @@ public class C1XMetrics {
     public static int FoldableMethodsRegistered;
     public static int MethodsFolded;
     public static int InlineForcedMethods;
+    public static int NullCheckIterations;
+    public static int NullCheckEliminations;
 }

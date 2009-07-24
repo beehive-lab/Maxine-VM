@@ -260,6 +260,14 @@ public abstract class Instruction {
     }
 
     /**
+     * Sets whether this instruction requires a null check.
+     * @param on {@code true} if this instruction requires a null check
+     */
+    public void setNeedsNullCheck(boolean on) {
+        setFlag(Flag.NeedsNullCheck, on);
+    }
+
+    /**
      * Check whether this instruction has the specified flag set.
      * @param flag the flag to test
      * @return <code>true</code> if this instruction has the flag
