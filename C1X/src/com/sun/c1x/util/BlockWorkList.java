@@ -71,7 +71,9 @@ public class BlockWorkList {
             grow();
         }
         // put the block at the end of the array
-        workList[workListIndex++] = block;
+        workList[workListIndex] = block;
+        workListNumbers[workListIndex] = number;
+        workListIndex++;
         int i = workListIndex - 2;
         // push top towards the beginning of the array
         for (; i >= 0; i--) {

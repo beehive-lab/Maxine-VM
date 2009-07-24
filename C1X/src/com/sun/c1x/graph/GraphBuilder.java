@@ -67,6 +67,7 @@ public class GraphBuilder {
      * Creates a new instance and builds the graph for a the specified IRScope.
      * @param compilation the compilation
      * @param scope the top IRScope
+     * @param ir the IR to build the graph into
      */
     public GraphBuilder(C1XCompilation compilation, IRScope scope, IR ir) {
         this.compilation = compilation;
