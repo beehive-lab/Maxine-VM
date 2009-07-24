@@ -2517,7 +2517,7 @@ public class LinearScan extends RegisterAllocator {
     }
 
     boolean checkStackDepth(CodeEmitInfo info, int stackEnd) {
-        if (info.bci() != C1XCompilation.MethodCompilation.SynchronizationEntryBCI.value && !info.scope().method.isNative()) {
+        if (info.bci() != Instruction.SYNCHRONIZATION_ENTRY_BCI && !info.scope().method.isNative()) {
             int code = info.scope().method.javaCodeAtBci(info.bci());
             switch (code) {
                 case Bytecodes.IFNULL: // fall through
