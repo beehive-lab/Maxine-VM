@@ -28,7 +28,7 @@ import com.sun.max.vm.value.*;
 
 /**
  * Support for injecting fields into JDK classes. The actor for such fields is denoted by having a
- * {@link AttributeHolder#INJECTED} attribute in its {@link FieldActor#flags() flags}.
+ * {@link com.sun.max.vm.actor.member.FieldActor#INJECTED} attribute in its {@link FieldActor#flags() flags}.
  * <p>
  *
  * @author Doug Simon
@@ -37,6 +37,7 @@ public interface InjectedFieldActor<Value_Type extends Value<Value_Type>> {
 
     /**
      * Gets the type descriptor of this injected field's holder.
+     * @return the type descriptor of the holder
      */
     TypeDescriptor holderTypeDescriptor();
 

@@ -51,7 +51,11 @@ import com.sun.max.vm.value.*;
  */
 public class FieldActor extends MemberActor {
 
+    public static final FieldActor[] NONE = {};
+
     public final Kind kind;
+    @CONSTANT
+    private int offset;
 
     public FieldActor(Kind kind,
                     Utf8Constant name,
@@ -112,9 +116,6 @@ public class FieldActor extends MemberActor {
     public ClassActor type() {
         return descriptor().resolve(holder().classLoader);
     }
-
-    @CONSTANT
-    private int offset;
 
     public void setOffset(int offset) {
         this.offset = offset;
@@ -208,10 +209,7 @@ public class FieldActor extends MemberActor {
 
         if (isConstant(flags())) {
             assert MaxineVM.isMaxineClass(holder()) : "@CONSTANT applied to field of non-Maxine class: " + this;
-            if (MaxineVM.isPrototyping()) {
-                return true;
-            }
-            return !isStatic() || holder.isInitialized();
+            return MaxineVM.isPrototyping() || !isStatic() || holder.isInitialized();
         }
         return false;
     }
@@ -242,8 +240,6 @@ public class FieldActor extends MemberActor {
     public String jniSignature() {
         return descriptor().toString();
     }
-
-    public static final FieldActor[] NONE = {};
 
     public void write(DataOutputStream stream) throws IOException {
         FieldID.fromFieldActor(this).write(stream);
