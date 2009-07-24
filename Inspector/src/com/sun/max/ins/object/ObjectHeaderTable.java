@@ -130,7 +130,7 @@ public final class ObjectHeaderTable extends InspectorTable {
             if (teleObject.isLive()) {
                 teleHub = teleObject.getTeleHub();
                 final int oldSelectedRow = getSelectedRow();
-                final int newRow = model.addressToRow(focus().address());
+                final int newRow = model.findRow(focus().address());
                 if (newRow >= 0) {
                     getSelectionModel().setSelectionInterval(newRow, newRow);
                 } else {
@@ -236,7 +236,7 @@ public final class ObjectHeaderTable extends InspectorTable {
             return null;
         }
 
-        public int addressToRow(Address address) {
+        public int findRow(Address address) {
             for (int row = 0; row < headerFields.length(); row++) {
                 if (objectOrigin.plus(teleObject.getHeaderOffset(headerFields.get(row))).equals(address)) {
                     return row;
