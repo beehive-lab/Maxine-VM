@@ -398,6 +398,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
 
         public void initFactory() {
             endOfGCWatchpoint = createInvisibleWatchpoint("End of GC", new FixedMemoryRegion(teleProcess.teleVM().rootEpochAddress(), Size.fromInt(Pointer.size()), "Root epoch address"), true, false, true, false, true);
+            endOfGCWatchpoint.enable();//TODO: REMOVE, should be dynamic
         }
 
         public boolean isInGCMode() {
@@ -428,7 +429,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
             if (result != null) {
                 relocatableWatchpointsCounter++;
                 if (relocatableWatchpointsCounter == 1) {
-                    endOfGCWatchpoint.enable();
+                    //endOfGCWatchpoint.enable();
                 }
             }
             return result;
@@ -695,7 +696,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
 
                     if (teleWatchpoint.getTeleObject() != null) {
                         if (relocatableWatchpointsCounter == 1) {
-                            endOfGCWatchpoint.disable();
+                            //endOfGCWatchpoint.disable();
                         }
                         relocatableWatchpointsCounter--;
                     }
@@ -726,7 +727,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
             ProgramError.check(teleWatchpoint.active, "Attempt to relocate an already deleted watchpoint ");
             TeleObject teleObject = teleWatchpoint.getTeleObject();
 
-            if (teleObject != null) {
+            if (teleObject != null && teleObject.isLive()) {
                 Address newAddress = teleObject.getCurrentOrigin();
 
                 if (removeWatchpoint(teleWatchpoint)) {

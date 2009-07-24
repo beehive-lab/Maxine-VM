@@ -41,6 +41,31 @@ public final class InspectableHeapInfo {
     @INSPECTED
     private static MemoryRegion[] memoryRegions;
 
+    public static final int MAX_NUMBER_OF_ROOTS = Ints.M / 8;
+
+    @INSPECTED
+    public static MemoryRegion rootsRegion = null;
+
+    @INSPECTED
+    public static Pointer rootsPointer = Pointer.zero();
+
+    @INSPECTED
+    private static long rootEpoch;
+
+    @INSPECTED
+    private static long collectionEpoch;
+
+    /**
+     * How many words of the Heap refer to one Word in the card table.
+     */
+    private static int cardTableRatio = 100;
+
+    private static MemoryRegion cardTable = null;
+
+    private static Pointer cardTablePointer;
+
+    private static int[] cardTableRegions;
+
     /**
      * Stores memory allocated by the heap in an location that can
      * be inspected easily.
@@ -49,23 +74,61 @@ public final class InspectableHeapInfo {
      *
      * @param memoryRegions regions allocated by the heap implementation
      */
-    public static void registerMemoryRegions(MemoryRegion... memoryRegions) {
+    public static void init(MemoryRegion... memoryRegions) {
         if (MaxineMessenger.isVmInspected()) {
-            if (rootsRegion == null) {
-                final Size size = Size.fromInt(Pointer.size() * MAX_NUMBER_OF_ROOTS);
-                rootsPointer = Memory.allocate(size);
-                rootsRegion = new RootsMemoryRegion(rootsPointer, size);
-            }
             InspectableHeapInfo.memoryRegions = memoryRegions;
+            initRootsRegion();
+            initCardTable(memoryRegions);
         }
     }
 
-    public static final int MAX_NUMBER_OF_ROOTS = Ints.M / 8;
+
+    private static void initRootsRegion() {
+        if (rootsRegion == null) {
+            final Size size = Size.fromInt(Pointer.size() * MAX_NUMBER_OF_ROOTS);
+            rootsPointer = Memory.allocate(size);
+            rootsRegion = new RootsMemoryRegion(rootsPointer, size);//TODO:no new calls in this class
+        }
+    }
+
+    private static void initCardTable(MemoryRegion[] memoryRegions) {
+        if (cardTable == null) {
+            long cardTableSize = 0;
+            long tmpSize = 0;
+
+
+            for (MemoryRegion memoryRegion : memoryRegions) {
+                tmpSize += memoryRegion.size().toLong() / cardTableRatio;
+                if (memoryRegion.size().toLong() % cardTableRatio != 0) {
+                    tmpSize += Word.size();
+                }
+
+                cardTableSize += tmpSize;
+                tmpSize = 0;
+
+            }
+
+            cardTablePointer = Memory.allocate(Size.fromLong(cardTableSize));
+            cardTable = new RootsMemoryRegion(cardTablePointer, Size.fromLong(cardTableSize));//TODO: no new calls in this class
+        }
+    }
+
+    public void touchCardTableField(Address address) {
+        //do mapping
+    }
 
     private static class RootsMemoryRegion extends RuntimeMemoryRegion {
         public RootsMemoryRegion(Address address, Size size) {
             super(address, size);
             setDescription("TeleRoots");
+            mark.set(end());
+        }
+    }
+
+    private static class CardTableMemoryRegion extends RuntimeMemoryRegion {
+        public CardTableMemoryRegion(Address address, Size size) {
+            super(address, size);
+            setDescription("CardTable");
             mark.set(end());
         }
     }
@@ -80,18 +143,6 @@ public final class InspectableHeapInfo {
     public static Pointer rootsPointer() {
         return rootsPointer;
     }
-
-    @INSPECTED
-    public static MemoryRegion rootsRegion = null;
-
-    @INSPECTED
-    public static Pointer rootsPointer = Pointer.zero();
-
-    @INSPECTED
-    private static long rootEpoch;
-
-    @INSPECTED
-    private static long collectionEpoch;
 
     /**
      * For remote inspection:  records that a GC has begun.
