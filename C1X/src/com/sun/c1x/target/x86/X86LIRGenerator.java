@@ -103,7 +103,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             // there is no immediate move of word values in asemblerI486.?pp
             return false;
         }
-        if (v instanceof Constant && ((Constant) v).state() == null) {
+        if (v instanceof Constant) {
             // constants of any type can be stored directly, except for
             // unloaded object constants.
             return true;

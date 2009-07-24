@@ -273,14 +273,24 @@ public abstract class LIRGenerator extends InstructionVisitor {
     }
 
     @Override
+    public void visitResolveClass(ResolveClass i) {
+        assert i.state() != null;
+
+
+    }
+
+    @Override
     public void visitConstant(Constant x) {
-        if (x.state() != null) {
-            // XXX: in the future, no constants will require patching; there will be a ResolveClass instruction
-            // Any constant with a ValueStack requires patching so emit the patch here
-            LIROperand reg = rlockResult(x);
-            CodeEmitInfo info = stateFor(x, x.state());
-            lir.oop2regPatch(null, reg, info);
-        } else if (useCount(x) > 1 && !canInlineAsConstant(x)) {
+//        if (x.state() != null) {
+//            // XXX: in the future, no constants will require patching; there will be a ResolveClass instruction
+//            // Any constant with a ValueStack requires patching so emit the patch here
+//            LIROperand reg = rlockResult(x);
+//            CodeEmitInfo info = stateFor(x, x.state());
+//            lir.oop2regPatch(null, reg, info);
+//        } else
+
+
+        if (useCount(x) > 1 && !canInlineAsConstant(x)) {
             if (!x.isPinned()) {
                 // unpinned constants are handled specially so that they can be
                 // put into registers when they are used multiple times within a

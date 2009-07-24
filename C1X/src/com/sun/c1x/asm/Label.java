@@ -104,6 +104,11 @@ public class Label {
         }
     }
 
+    @Override
+    public String toString() {
+        return "label";
+    }
+
     public void bindLoc(int codeOffset) {
         this.loc = codeOffset;
     }

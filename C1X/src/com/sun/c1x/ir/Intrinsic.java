@@ -37,6 +37,7 @@ public class Intrinsic extends StateSplit {
     final boolean isStatic;
     Instruction[] arguments;
     ValueStack lockStack;
+    final boolean canTrap;
 
     /**
      * Creates a new Intrinsic instruction.
@@ -59,7 +60,7 @@ public class Intrinsic extends StateSplit {
         // including slow cases--even if it causes a trap. If so, it can still be a candidate
         // for load elimination and common subexpression elimination
         initFlag(Flag.PreservesState, preservesState);
-        initFlag(Flag.CanTrap, canTrap);
+        this.canTrap = canTrap;
         initFlag(Flag.PinStateSplitConstructor, canTrap);
         setNeedsNullCheck(!isStatic && !args[0].isNonNull());
     }
@@ -124,7 +125,7 @@ public class Intrinsic extends StateSplit {
      */
     @Override
     public boolean canTrap() {
-        return checkFlag(Flag.CanTrap);
+        return canTrap;
     }
 
     /**

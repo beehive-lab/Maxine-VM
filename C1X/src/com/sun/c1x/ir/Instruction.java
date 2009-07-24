@@ -48,7 +48,6 @@ public abstract class Instruction {
         NeedsNullCheck,
         NeedsStoreCheck,   // TODO: unused until array store check elimination
         NeedsWriteBarrier, // TODO: unused until write-barrier elision optimization
-        CanTrap,
         DirectCompare,
         IsEliminated, // TODO: scheduled for deletion
         IsLoaded, // TODO: necessary?

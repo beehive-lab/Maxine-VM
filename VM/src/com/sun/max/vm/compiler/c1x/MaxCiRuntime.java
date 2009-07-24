@@ -31,6 +31,7 @@ import com.sun.c1x.value.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.io.*;
+import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -39,7 +40,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
@@ -104,8 +104,14 @@ public class MaxCiRuntime implements CiRuntime {
      * @param javaClass the java class object
      * @return the compiler interface type for the specified class
      */
-    public CiType getType(Class<?> javaClass) {
-        return globalConstantPool.canonicalCiType(ClassActor.fromJava(javaClass));
+    public CiType getType(final Class<?> javaClass) {
+
+        return globalConstantPool.canonicalCiType(MaxineVM.usingTarget(new Function<ClassActor>() {
+            @Override
+            public ClassActor call() throws Exception {
+                return ClassActor.fromJava(javaClass);
+            }
+        }));
     }
 
     /**
@@ -201,7 +207,7 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public int arrayLengthOffsetInBytes() {
-        return Layout.arrayHeaderLayout().arrayLengthOffset();
+        return VMConfiguration.target().layoutScheme().arrayHeaderLayout.arrayLengthOffset();
     }
 
     public boolean dtraceMethodProbes() {
@@ -231,7 +237,7 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public int klassOffsetInBytes() {
-        return Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt();
+        return VMConfiguration.target().layoutScheme().generalLayout.getOffsetFromOrigin(HeaderField.HUB).toInt();
     }
 
     public boolean needsExplicitNullCheck(int offset) {
@@ -270,7 +276,7 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public int arrayBaseOffsetInBytes(BasicType type) {
-        return Layout.layoutScheme().arrayHeaderLayout.headerSize();
+        return VMConfiguration.target().layoutScheme().arrayHeaderLayout.headerSize();
     }
 
     public Register callerSaveFpuRegAt(int i) {

@@ -43,7 +43,7 @@ public class NullCheck extends Instruction {
         super(obj.type().base());
         this.object = obj;
         this.lockStack = lockStack;
-        setFlag(Flag.CanTrap);
+        setFlag(Flag.NeedsNullCheck);
         setFlag(Flag.NonNull);
         setNeedsNullCheck(!obj.isNonNull());
         setFlag(Flag.PinExplicitNullCheck);
@@ -81,20 +81,12 @@ public class NullCheck extends Instruction {
     }
 
     /**
-     * Sets whether this instruction can cause a trap.
-     * @param canTrap <code>true</code> if this instruction can cause a trap
-     */
-    public void setCanTrap(boolean canTrap) {
-        setFlag(Flag.CanTrap, canTrap);
-    }
-
-    /**
      * Checks whether this instruction can cause a trap.
      * @return <code>true</code> if this instruction can cause a trap
      */
     @Override
     public boolean canTrap() {
-        return checkFlag(Flag.CanTrap);
+        return checkFlag(Flag.NeedsNullCheck);
     }
 
     /**

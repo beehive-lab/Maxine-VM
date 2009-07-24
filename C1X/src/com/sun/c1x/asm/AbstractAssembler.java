@@ -106,6 +106,7 @@ public abstract class AbstractAssembler {
         emitByte(x);
     }
 
+
     void aLong(int x) {
         emitInt(x);
     }
@@ -179,6 +180,30 @@ public abstract class AbstractAssembler {
         codeBuffer.emitInt(x);
     }
 
+    protected void recordDataReferenceInCode(int pos, int dataOffset, boolean relative) {
+
+        assert pos >= 0 && dataOffset >= 0;
+
+        if (C1XOptions.TraceRelocation) {
+            TTY.print("Object reference in code: pos = %d, dataOffset = %d, relative = %b", pos, dataOffset, relative);
+        }
+
+        if (compilation.targetMethod != null) {
+            compilation.targetMethod.recordDataReferenceInCode(pos, dataOffset, relative);
+        }
+    }
+
+    protected void recordObjectReferenceInCode(Object obj) {
+
+        if (C1XOptions.TraceRelocation) {
+            TTY.print("Object reference in code: pos = %d, object= %s", offset(), obj.toString());
+        }
+
+        if (compilation.targetMethod != null) {
+            compilation.targetMethod.recordObjectReferenceInCode(offset(), obj);
+        }
+    }
+
     protected void emitLong(long x) {
         codeBuffer.emitLong(x);
     }
@@ -206,12 +231,6 @@ public abstract class AbstractAssembler {
     }
 
     protected void relocate(int position, Relocation relocation) {
-
-        //TTY.println("RELOCATION recorded at position " + position + " " + relocation);
-        switch (relocation.type()) {
-
-        }
-
     }
 
     protected abstract boolean pdCheckInstructionMark();
@@ -236,21 +255,11 @@ public abstract class AbstractAssembler {
 
     public int doubleConstant(double d) {
         int offset = dataBuffer.emitDouble(d);
-        recordDataReferenceInCode(lastInstructionStart, offset);
         return offset;
-    }
-
-    private void recordDataReferenceInCode(int codeOffset, int dataOffset) {
-        if (compilation.targetMethod == null) {
-            // TTY.println("Record data reference in code: code-offset=%d, data-offset=%d", codeOffset, dataOffset);
-        } else {
-            compilation.targetMethod.recordDataReferenceInCode(codeOffset, dataOffset, true);
-        }
     }
 
     public int floatConstant(float f) {
         int offset = dataBuffer.emitFloat(f);
-        recordDataReferenceInCode(lastInstructionStart, offset);
         return offset;
     }
 
@@ -307,15 +316,15 @@ public abstract class AbstractAssembler {
 
     public void installTargetMethod() {
         if (compilation.targetMethod == null) {
-            byte[] array = codeBuffer.finished();
-            int length = codeBuffer.position();
+            //byte[] array = codeBuffer.finished();
+            //int length = codeBuffer.position();
             //Util.printBytes(array, length);
 
             //TTY.println("Disassembled code:");
             //TTY.println(compilation.runtime.disassemble(Arrays.copyOf(array, length)));
 
-            array = dataBuffer.finished();
-            length = dataBuffer.position();
+            //array = dataBuffer.finished();
+            //length = dataBuffer.position();
             //Util.printBytes(array, length);
             //TTY.println("Frame size: %d", compilation.frameMap().framesize());
 

@@ -25,7 +25,6 @@ import com.sun.c1x.ci.CiMethod;
 import static com.sun.c1x.debug.InstructionPrinter.InstructionLineColumn.*;
 import com.sun.c1x.ir.*;
 import static com.sun.c1x.ir.Instruction.stateString;
-import com.sun.c1x.value.ClassType;
 import com.sun.c1x.value.ConstType;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.value.ValueType;
@@ -343,12 +342,6 @@ public class InstructionPrinter extends InstructionVisitor {
             out.print("null");
         } else if (type.isPrimitive()) {
             out.print(type.asConstant().valueString());
-        } else if (type.isClass()) {
-            ClassType k = (ClassType) type;
-            if (k.ciType().isLoaded()) {
-                out.print("<unloaded> ");
-            }
-            out.print("class ").print(k.ciType().name());
         } else if (type.isObject()) {
             Object object = type.asConstant().asObject();
             if (object instanceof String) {

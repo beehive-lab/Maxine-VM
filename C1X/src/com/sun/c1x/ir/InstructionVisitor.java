@@ -34,6 +34,8 @@ public abstract class InstructionVisitor {
     }
     public void visitConstant(Constant i) {
     }
+    public void visitResolveClass(ResolveClass i) {
+    }
     public void visitLoadField(LoadField i) {
     }
     public void visitStoreField(StoreField i) {

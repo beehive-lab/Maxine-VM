@@ -107,13 +107,6 @@ public class ValueType {
     }
 
     /**
-     * Checks if this is {@linkplain ClassType class type}.
-     */
-    public boolean isClass() {
-        return false;
-    }
-
-    /**
      * Checks whether this value type is an object type.
      * @return <code>true</code> if this type is an object
      */
