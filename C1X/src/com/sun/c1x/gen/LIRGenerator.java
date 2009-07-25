@@ -613,7 +613,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         boolean needsRangeCheck = true;
 
         if (useLength) {
-            needsRangeCheck = x.computeNeedsRangeCheck();
+            needsRangeCheck = x.needsRangeCheck();
             if (needsRangeCheck) {
                 length.setInstruction(x.length());
                 length.loadItem();

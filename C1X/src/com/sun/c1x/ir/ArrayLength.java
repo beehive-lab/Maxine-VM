@@ -39,7 +39,9 @@ public class ArrayLength extends AccessArray {
      */
     public ArrayLength(Instruction array, ValueStack lockStack) {
         super(ValueType.INT_TYPE, array, lockStack);
-        setNeedsNullCheck(!array.isNonNull());
+        if (array.isNonNull()) {
+            clearNullCheck();
+        }
     }
 
     /**
@@ -59,18 +61,10 @@ public class ArrayLength extends AccessArray {
         v.visitArrayLength(this);
     }
 
-    /**
-     * Sets whether this instruction requires a null check.
-     * @param on {@code true} if this instruction requires a null check
-     */
-    public void setNeedsNullCheck(boolean on) {
-        if (on) {
-            assert lockStack != null;
-            setFlag(Instruction.Flag.NeedsNullCheck);
-        } else {
-            lockStack = null;
-            clearFlag(Instruction.Flag.NeedsNullCheck);
-        }
+    @Override
+    public void clearNullCheck() {
+        lockStack = null;
+        setFlag(Flag.NoNullCheck);
     }
 
     @Override

@@ -60,7 +60,9 @@ public class Invoke extends StateSplit {
             initFlag(Flag.TargetIsFinal, target.isFinalMethod());
             initFlag(Flag.TargetIsStrictFP, target.isStrictFP());
         }
-        setNeedsNullCheck(!isStatic && !args[0].isNonNull());
+        if (!isStatic && args[0].isNonNull()) {
+            clearNullCheck();
+        }
     }
 
     /**

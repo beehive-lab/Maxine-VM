@@ -275,13 +275,13 @@ public class NullCheckEliminator extends InstructionVisitor {
             // the object itself is known for sure to be non-null, so clear the flag.
             // the flag is usually cleared in the constructor of the use, but
             // later optimizations may more reveal more non-null objects
-            use.setNeedsNullCheck(false);
+            use.clearNullCheck();
             return true;
         } else {
             // check if the object is non-null
             if (isNonNull(currentBitMap, currentNonNulls, object)) {
                 // the object is non-null at this site
-                use.setNeedsNullCheck(false);
+                use.clearNullCheck();
                 C1XMetrics.NullCheckEliminations++;
                 return true;
             } else {

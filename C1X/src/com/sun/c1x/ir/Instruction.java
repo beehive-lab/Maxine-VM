@@ -45,9 +45,10 @@ public abstract class Instruction {
      */
     public enum Flag {
         NonNull,
-        NeedsNullCheck,
-        NeedsStoreCheck,   // TODO: unused until array store check elimination
-        NeedsWriteBarrier, // TODO: unused until write-barrier elision optimization
+        NoNullCheck,
+        NoStoreCheck,
+        NoRangeCheck,
+        NoWriteBarrier,
         DirectCompare,
         IsEliminated, // TODO: scheduled for deletion
         IsLoaded, // TODO: necessary?
@@ -249,12 +250,8 @@ public abstract class Instruction {
         }
     }
 
-    /**
-     * Sets whether this instruction requires a null check.
-     * @param on {@code true} if this instruction requires a null check
-     */
-    public void setNeedsNullCheck(boolean on) {
-        setFlag(Flag.NeedsNullCheck, on);
+    public void clearNullCheck() {
+        clearFlag(Flag.NoNullCheck);
     }
 
     /**
@@ -319,7 +316,7 @@ public abstract class Instruction {
      * @return <code>true</code> if this instruction needs a null check
      */
     public final boolean needsNullCheck() {
-        return checkFlag(Flag.NeedsNullCheck);
+        return !checkFlag(Flag.NoNullCheck);
     }
 
     /**
