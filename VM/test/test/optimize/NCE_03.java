@@ -18,34 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ir;
+package test.optimize;
 
-import com.sun.c1x.value.BasicType;
-
-/**
- * The <code>ShiftOp</code> class represents shift operations.
- *
- * @author Ben L. Titzer
+/*
+ * Test case for null check elimination.
+ * @Harness: java
+ * @Runs: 0=23
  */
-public class ShiftOp extends Op2 {
+public class NCE_03 {
 
-    /**
-     * Creates a new shift operation.
-     * @param opcode the opcode of the shift
-     * @param x the first input value
-     * @param y the second input value
-     */
-    public ShiftOp(int opcode, Instruction x, Instruction y) {
-        super(x.type().base(), opcode, x, y);
-        assert y.type().basicType == BasicType.Int;
-    }
+    private static boolean cond = true;
+    public static NCE_03 object = new NCE_03();
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
-    @Override
-    public void accept(InstructionVisitor v) {
-        v.visitShiftOp(this);
+    int field1;
+    int field2 = 23;
+
+    public static int test(int arg) {
+        NCE_03 o = object;
+        o.field1 = 11;
+        if (cond) {
+            // expect non-null
+            o.field1 = 22;
+        }
+        // expect non-null
+        return o.field2;
     }
 }

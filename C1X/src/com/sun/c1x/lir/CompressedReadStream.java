@@ -62,7 +62,7 @@ public class CompressedReadStream extends CompressedStream {
     }
 
     public boolean readBool() {
-        return (read() != 0) ? true : false;
+        return read() != 0;
     }
 
     public byte readByte() {
@@ -91,9 +91,7 @@ public class CompressedReadStream extends CompressedStream {
     }
 
     public float readFloat() {
-        int rf = readInt();
-        int f = reverseInt(rf);
-        return f;
+        return reverseInt(readInt());
     }
 
     public double readDouble() {
@@ -101,12 +99,12 @@ public class CompressedReadStream extends CompressedStream {
         int rl = readInt();
         int h = reverseInt(rh);
         int l = reverseInt(rl);
-        return h << 32 | (l & (0xffffffff << 32));
+        return h << 32 | (l & (0xffffffff << 32)); // TODO: this shift code is completely wrong
     }
 
     public long readLong() {
         int low = readSignedInt();
         int high = readSignedInt();
-        return high << 32 | (low & (0xffffffff << 32));
+        return high << 32 | (low & (0xffffffff << 32)); // TODO: this shift code is completely wrong
     }
 }

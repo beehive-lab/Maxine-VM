@@ -34,6 +34,7 @@ import com.sun.c1x.value.ValueType;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Collections;
 
 /**
  * The <code>BlockBegin</code> instruction represents the beginning of a basic block,
@@ -43,6 +44,9 @@ import java.util.List;
  * @author Ben L. Titzer
  */
 public class BlockBegin extends StateSplit {
+    // XXX: could use a shared, empty ArrayList
+    private static final List<BlockBegin> NO_HANDLERS = Util.uncheckedCast(Collections.EMPTY_LIST);
+
     /**
      * An enumeration of flags for block entries indicating various things.
      */
@@ -67,11 +71,12 @@ public class BlockBegin extends StateSplit {
 
     private static final int entryFlags = BlockFlag.StandardEntry.mask() | BlockFlag.OsrEntry.mask() | BlockFlag.ExceptionEntry.mask();
 
+    public final int blockID;
+
     private int blockFlags;
     private final List<BlockBegin> predecessors;
     private BlockEnd end;
 
-    public final int blockID;
     private int depthFirstNumber;
     private int linearScanNumber;
     private int loopDepth;
@@ -81,12 +86,8 @@ public class BlockBegin extends StateSplit {
     private List<BlockBegin> exceptionHandlerBlocks;
     private List<ValueStack> exceptionHandlerStates;
 
-    // LIR fields
-    // TODO: initialize / move to LIRBlock?
-    private Label label;
-    private LIRList lir;
-
-    private final LIRBlock lirBlock;
+    // LIR block
+    private LIRBlock lirBlock;
 
     /**
      * Constructs a new BlockBegin at the specified bytecode index.
@@ -100,10 +101,7 @@ public class BlockBegin extends StateSplit {
         linearScanNumber = -1;
         predecessors = new ArrayList<BlockBegin>(2);
         loopIndex = -1;
-        exceptionHandlerBlocks = new ArrayList<BlockBegin>(0); // TODO: allocate lazily
-        exceptionHandlerStates = new ArrayList<ValueStack>(0); // TODO: allocate lazily
         setBCI(bci);
-        lirBlock = new LIRBlock(); // TODO: allocate lazily
     }
 
     /**
@@ -175,7 +173,7 @@ public class BlockBegin extends StateSplit {
      * @return the exception handlers
      */
     public List<BlockBegin> exceptionHandlerBlocks() {
-        return exceptionHandlerBlocks;
+        return exceptionHandlerBlocks == null ? NO_HANDLERS : exceptionHandlerBlocks;
     }
 
     public List<ValueStack> exceptionHandlerStates() {
@@ -218,18 +216,11 @@ public class BlockBegin extends StateSplit {
                 }
             }
             this.end = end;
+            end.setBegin(this);
             for (BlockBegin s : end.successors()) {
                 s.addPredecessor(this);
             }
         }
-    }
-
-    public void setExceptionHandlerBlocks(List<BlockBegin> exceptionHandlers) {
-        this.exceptionHandlerBlocks = exceptionHandlers;
-    }
-
-    public void setExceptionHandlerStates(List<ValueStack> exceptionHandlerStates) {
-        this.exceptionHandlerStates = exceptionHandlerStates;
     }
 
     /**
@@ -295,7 +286,9 @@ public class BlockBegin extends StateSplit {
                 closure.apply(this);
             }
             BlockEnd e = end();
-            iterateReverse(mark, closure, exceptionHandlerBlocks, pre);
+            if (exceptionHandlerBlocks != null) {
+                iterateReverse(mark, closure, exceptionHandlerBlocks, pre);
+            }
             assert e != null : "block must have block end";
             iterateReverse(mark, closure, e.successors(), pre);
             if (!pre) {
@@ -312,7 +305,10 @@ public class BlockBegin extends StateSplit {
 
     public void addExceptionHandler(BlockBegin b) {
         assert b != null && b.checkBlockFlag(BlockBegin.BlockFlag.ExceptionEntry);
-        if (!exceptionHandlerBlocks.contains(b)) {
+        if (exceptionHandlerBlocks == null) {
+            exceptionHandlerBlocks = new ArrayList<BlockBegin>();
+            exceptionHandlerBlocks.add(b);
+        } else if (!exceptionHandlerBlocks.contains(b)) {
             exceptionHandlerBlocks.add(b);
         }
     }
@@ -320,7 +316,7 @@ public class BlockBegin extends StateSplit {
     public int addExceptionState(ValueStack state) {
         assert checkBlockFlag(BlockBegin.BlockFlag.ExceptionEntry);
         if (exceptionHandlerStates == null) {
-            exceptionHandlerStates = new ArrayList<ValueStack>(1);
+            exceptionHandlerStates = new ArrayList<ValueStack>();
         }
         exceptionHandlerStates.add(state);
         return exceptionHandlerStates.size() - 1;
@@ -442,7 +438,7 @@ public class BlockBegin extends StateSplit {
             Instruction x = newState.localAt(i);
             if (x != null) {
                 if (requiresPhi != null) {
-                    if (requiresPhi.get(i) || (x.type().isDoubleWord() && requiresPhi.get(i + 1))) {
+                    if (requiresPhi.get(i) || x.type().isDoubleWord() && requiresPhi.get(i + 1)) {
                         // selectively do a phi
                         newState.setupPhiForLocal(this, i);
                     }
@@ -562,6 +558,8 @@ public class BlockBegin extends StateSplit {
         StringBuilder builder = new StringBuilder();
         builder.append("block #");
         builder.append(blockID);
+        builder.append(",");
+        builder.append(depthFirstNumber);
         builder.append(" @ ");
         builder.append(bci());
         builder.append(" [");
@@ -620,37 +618,34 @@ public class BlockBegin extends StateSplit {
      * @return the label associated with the block, used by the LIR
      */
     public Label label() {
-        if (label == null) {
-            label = new Label();
-        }
-        return label;
+        return lirBlock().label;
     }
 
     public void setLir(LIRList lir) {
-        this.lir = lir;
+        lirBlock().setLir(lir);
     }
 
     public LIRList lir() {
-        return lir;
+        return lirBlock().lir();
+    }
+
+    public LIRBlock lirBlock() {
+        if (lirBlock == null) {
+            lirBlock = new LIRBlock();
+        }
+        return lirBlock;
     }
 
     public int exceptionHandlerPco() {
-        // TODO Auto-generated method stub
-        return 0;
+        return lirBlock == null ? 0 : lirBlock.exceptionHandlerPCO;
     }
 
     public void setExceptionHandlerPco(int codeOffset) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void print(InstructionPrinter ip) {
-        // TODO Auto-generated method stub
-
+        lirBlock().exceptionHandlerPCO = codeOffset;
     }
 
     public int numberOfExceptionHandlers() {
-        return exceptionHandlerBlocks.size();
+        return exceptionHandlerBlocks == null ? 0 : exceptionHandlerBlocks.size();
     }
 
     public BlockBegin exceptionHandlerAt(int i) {

@@ -49,7 +49,7 @@ public class CompressedWriteStream extends CompressedStream {
     }
 
     public void writeBool(boolean value) {
-        write((byte) ((value == true) ? 1 : 0));
+        write((byte) (value ? 1 : 0));
     }
 
     public void writeByte(byte value) {

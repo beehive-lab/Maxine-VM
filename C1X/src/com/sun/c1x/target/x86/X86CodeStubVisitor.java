@@ -34,6 +34,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
     private final X86LIRAssembler ce;
     private final X86MacroAssembler masm;
     private final C1XCompilation compilation;
+    private static final BasicType[] ARRAY_COPY_SIGNATURE = {BasicType.Object, BasicType.Int, BasicType.Object, BasicType.Int, BasicType.Int};
 
     public X86CodeStubVisitor(X86LIRAssembler lirAssembler) {
         this.ce = lirAssembler;
@@ -45,8 +46,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         // ---------------slow case: call to native-----------------
         lir().bind(stub.entry);
 
-        BasicType[] signature = new BasicType[] {BasicType.Object, BasicType.Int, BasicType.Object, BasicType.Int, BasicType.Int};
-        CallingConvention cc = compilation.frameMap().javaCallingConvention(signature, true);
+        CallingConvention cc = compilation.frameMap().javaCallingConvention(ARRAY_COPY_SIGNATURE, true);
 
         // push parameters
         // (src, srcPos, dest, destPos, length)

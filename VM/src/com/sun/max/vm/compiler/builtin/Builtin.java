@@ -30,6 +30,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.type.*;
+import sun.jvm.hotspot.livejvm.BreakpointEvent;
 
 /**
  * @author Bernd Mathiske
@@ -109,8 +110,6 @@ public abstract class Builtin extends IrRoutine implements Comparable<Builtin>, 
 
     /**
      * Assigning the serial numbers alphabetically and thus deterministically facilitates matching builtins between VM and Inspector.
-     *
-     * @see InspectorTransfer
      */
     @PROTOTYPE_ONLY
     public static void initialize() {

@@ -67,6 +67,7 @@ public class GraphBuilder {
      * Creates a new instance and builds the graph for a the specified IRScope.
      * @param compilation the compilation
      * @param scope the top IRScope
+     * @param ir the IR to build the graph into
      */
     public GraphBuilder(C1XCompilation compilation, IRScope scope, IR ir) {
         this.compilation = compilation;
@@ -77,7 +78,7 @@ public class GraphBuilder {
         if (C1XOptions.UseLocalValueNumbering) {
             this.localValueMap = new ValueMap();
         }
-        int osrBCI = compilation.osrBCI();
+        int osrBCI = compilation.osrBCI;
         BlockMap blockMap = compilation.getBlockMap(scope.method, osrBCI);
         BlockBegin start = blockMap.get(0);
 
@@ -381,18 +382,10 @@ public class GraphBuilder {
         return x;
     }
 
-    void nullCheck(Instruction x) {
-        if (x.isNonNull()) {
-            // x is already proven to be non-null
-            return;
-        } else if (x.type().isConstant()) {
-            ConstType con = x.type().asConstant();
-            if (con.isObject() && con.asObject() != null) {
-                // a constant object, and not null
-                return;
-            }
+    void appendNullCheck(Instruction x) {
+        if (!x.isNonNull()) {
+            append(new NullCheck(x, lockStack()));
         }
-        append(new NullCheck(x, lockStack()));
     }
 
     List<ExceptionHandler> handleException(int bci) {
@@ -1280,7 +1273,7 @@ public class GraphBuilder {
             }
 
             if (x instanceof StateSplit) {
-                if (x instanceof Invoke || (x instanceof Intrinsic && !((Intrinsic) x).preservesState())) {
+                if (x instanceof Invoke || x instanceof Intrinsic && !((Intrinsic) x).preservesState()) {
                     // conservatively kill all memory across calls
                     if (memoryMap != null) {
                         memoryMap.kill();
@@ -1534,7 +1527,7 @@ public class GraphBuilder {
         if (!target.isStatic()) {
             // the receiver object must be nullchecked for instance methods
             receiver = args[0];
-            nullCheck(receiver);
+            appendNullCheck(receiver);
         }
 
         if (C1XOptions.ProfileInlinedCalls) {
@@ -1752,7 +1745,7 @@ public class GraphBuilder {
     void setupOsrEntryBlock() {
         assert compilation.isOsrCompilation();
 
-        int osrBCI = compilation.osrBCI();
+        int osrBCI = compilation.osrBCI;
         BytecodeStream s = scopeData.stream;
         CiOsrFrame frame = compilation.getOsrFrame();
         s.setBCI(osrBCI);
@@ -1835,7 +1828,7 @@ public class GraphBuilder {
             if (compilation.isOsrCompilation()
                     && scope().isTopScope()
                     && scopeData.parsingJsr()
-                    && s.currentBCI() == compilation.osrBCI()) {
+                    && s.currentBCI() == compilation.osrBCI) {
                 throw new Bailout("OSR not supported while a JSR is active");
             }
 
