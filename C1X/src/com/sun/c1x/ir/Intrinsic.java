@@ -64,7 +64,9 @@ public class Intrinsic extends StateSplit {
         initFlag(Flag.PreservesState, preservesState);
         this.canTrap = canTrap;
         initFlag(Flag.PinStateSplitConstructor, canTrap);
-        setNeedsNullCheck(!isStatic && !args[0].isNonNull());
+        if (!isStatic && args[0].isNonNull()) {
+            clearNullCheck();
+        }
     }
 
     /**

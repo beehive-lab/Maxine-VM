@@ -237,7 +237,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         index.loadNonconstant();
 
         if (useLength) {
-            needsRangeCheck = x.computeNeedsRangeCheck();
+            needsRangeCheck = x.needsRangeCheck();
             if (needsRangeCheck) {
                 length.setInstruction(x.length());
                 length.loadItem();

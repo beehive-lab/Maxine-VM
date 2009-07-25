@@ -40,7 +40,9 @@ public class MonitorEnter extends AccessMonitor {
     public MonitorEnter(Instruction object, int lockNumber, ValueStack lockStackBefore) {
         super(object, lockNumber);
         this.lockStackBefore = lockStackBefore;
-        setNeedsNullCheck(!object.isNonNull());
+        if (object.isNonNull()) {
+            clearNullCheck();
+        }
     }
 
     /**

@@ -65,7 +65,9 @@ public abstract class AccessField extends Instruction {
         }
         initFlag(Flag.IsLoaded, isLoaded);
         pin(); // pin memory access instructions
-        setNeedsNullCheck(!object.isNonNull());
+        if (object != null && object.isNonNull()) {
+            clearNullCheck();
+        }
     }
 
     /**
@@ -117,23 +119,15 @@ public abstract class AccessField extends Instruction {
         return !isStatic || isLoaded() && field.holder().isInitialized();
     }
 
-    /**
-     * Sets whether this instruction requires a null check.
-     * @param on {@code true} if this instruction requires a null check
-     */
-    public void setNeedsNullCheck(boolean on) {
-        if (on) {
-            assert lockStack != null;
-            setFlag(Instruction.Flag.NeedsNullCheck);
-        } else {
-            // if stateBefore is not null, that may mean the field is unresolved, which
-            // may require resolution, which could throw an exception requiring lockStack
-            if (stateBefore != null) {
-                assert isInitialized();
-                lockStack = null;
-            }
-            clearFlag(Instruction.Flag.NeedsNullCheck);
+    @Override
+    public void clearNullCheck() {
+        // if stateBefore is not null, that may mean the field is unresolved, which
+        // may require resolution, which could throw an exception requiring lockStack
+        if (stateBefore != null) {
+            assert isInitialized();
+            lockStack = null;
         }
+        setFlag(Flag.NoNullCheck);
     }
 
     /**

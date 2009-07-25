@@ -43,7 +43,6 @@ public class NullCheck extends Instruction {
         super(obj.type().base());
         this.object = obj;
         this.lockStack = lockStack;
-        setFlag(Flag.NeedsNullCheck);
         setFlag(Flag.NonNull);
         setNeedsNullCheck(!obj.isNonNull());
         setFlag(Flag.PinExplicitNullCheck);
@@ -73,10 +72,10 @@ public class NullCheck extends Instruction {
     public void setNeedsNullCheck(boolean on) {
         if (on) {
             assert lockStack != null;
-            setFlag(Instruction.Flag.NeedsNullCheck);
+            setFlag(Instruction.Flag.NoNullCheck);
         } else {
             lockStack = null;
-            clearFlag(Instruction.Flag.NeedsNullCheck);
+            clearFlag(Instruction.Flag.NoNullCheck);
         }
     }
 
@@ -86,7 +85,7 @@ public class NullCheck extends Instruction {
      */
     @Override
     public boolean canTrap() {
-        return checkFlag(Flag.NeedsNullCheck);
+        return needsNullCheck();
     }
 
     /**
