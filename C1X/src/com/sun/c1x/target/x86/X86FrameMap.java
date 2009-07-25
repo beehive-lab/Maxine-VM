@@ -62,7 +62,7 @@ public class X86FrameMap extends FrameMap {
         return X86Register.rsp;
     }
 
-    static final LIROperand rspOpr(Architecture arch) {
+    static LIROperand rspOpr(Architecture arch) {
         if (arch.is32bit()) {
             return rspOpr32;
         } else if (arch.is64bit()) {
@@ -89,7 +89,7 @@ public class X86FrameMap extends FrameMap {
     private static final LIROperand long0Opr32 = LIROperandFactory.doubleLocation(BasicType.Long, X86Register.rax, X86Register.rdx);
     private static final LIROperand long0Opr64 = LIROperandFactory.doubleLocation(BasicType.Long, X86Register.rax, X86Register.rax);
 
-    static final LIROperand long0Opr(Architecture arch) {
+    static LIROperand long0Opr(Architecture arch) {
         if (arch.is32bit()) {
             return long0Opr32;
         } else if (arch.is64bit()) {
@@ -101,7 +101,7 @@ public class X86FrameMap extends FrameMap {
 
     private static final LIROperand long1Opr32 = LIROperandFactory.doubleLocation(BasicType.Long, X86Register.rbx, X86Register.rcx);
     private static final LIROperand long1Opr64 = LIROperandFactory.doubleLocation(BasicType.Long, X86Register.rbx, X86Register.rbx);
-    static final LIROperand long1Opr(Architecture arch) {
+    static LIROperand long1Opr(Architecture arch) {
         if (arch.is32bit()) {
             return long1Opr32;
         } else if (arch.is64bit()) {
@@ -133,7 +133,7 @@ public class X86FrameMap extends FrameMap {
         return asLongOpr(reg);
     }
 
-    static final LIROperand asPointerOpr(Register reg, Architecture arch) {
+    static LIROperand asPointerOpr(Register reg, Architecture arch) {
         assert reg != null;
         if (arch.is32bit()) {
             return asPointerOpr32(reg);

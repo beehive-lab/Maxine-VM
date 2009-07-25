@@ -91,7 +91,7 @@ public class MoveResolver {
         for (int i = 0; i < allocator.nofRegs; i++) {
             assert registerBlocked(i) == 0 : "register map must be empty before and after processing";
         }
-        assert multipleReadsAllowed == false : "must have default value";
+        assert !multipleReadsAllowed : "must have default value";
         return true;
     }
 

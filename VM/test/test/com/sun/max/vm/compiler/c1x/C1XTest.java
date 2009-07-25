@@ -180,8 +180,10 @@ public class C1XTest {
             final MaxCiTargetMethod targetMethod = targetOption.getValue() ? new MaxCiTargetMethod((ClassMethodActor) method) : null;
             final C1XCompilation compilation = new C1XCompilation(target, runtime, runtime.getCiMethod(method), targetMethod);
 
-            if (!compilation.compile() && printBailout) {
-                compilation.bailout().printStackTrace(out);
+            if (!compilation.compile()) {
+                if (printBailout) {
+                    compilation.bailout().printStackTrace(out);
+                }
                 return false;
             }
 

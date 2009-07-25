@@ -140,6 +140,9 @@ public class LIRBranch extends LIRInstruction {
             case NotEqual:
                 cond = LIRCondition.Equal;
                 break;
+            case Equal:
+                cond = LIRCondition.NotEqual;
+                break;
             case Less:
                 cond = LIRCondition.GreaterEqual;
                 break;

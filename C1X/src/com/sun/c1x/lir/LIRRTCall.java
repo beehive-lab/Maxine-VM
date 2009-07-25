@@ -96,7 +96,7 @@ public class LIRRTCall extends LIRCall {
      */
     @Override
     public boolean verify() {
-        assert !nameForAddress().equals("<unknown function>") : "unknown function";
+        assert !"<unknown function>".equals(nameForAddress()) : "unknown function";
         return true;
     }
 

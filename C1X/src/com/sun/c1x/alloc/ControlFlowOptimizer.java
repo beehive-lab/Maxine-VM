@@ -119,11 +119,8 @@ public final class ControlFlowOptimizer {
 
         // block must have exactly one successor
 
-        if (instructions.size() == 2 && instructions.get(instructions.size() - 1).info() == null) {
-            return true;
+        return instructions.size() == 2 && instructions.get(instructions.size() - 1).info() == null;
         }
-        return false;
-    }
 
     // substitute branch targets in all branch-instructions of this blocks
     void substituteBranchTarget(BlockBegin block, BlockBegin targetFrom, BlockBegin targetTo) {
@@ -172,7 +169,7 @@ public final class ControlFlowOptimizer {
                 originalPreds.clear();
                 for (j = block.numberOfPreds() - 1; j >= 0; j--) {
                     BlockBegin pred = block.predAt(j);
-                    if (originalPreds.indexOf(pred) == -1) {
+                    if (!originalPreds.contains(pred)) {
                         originalPreds.add(pred);
                     }
                 }
@@ -295,21 +292,21 @@ public final class ControlFlowOptimizer {
 
                 if (instr instanceof LIRBranch) {
 
-                    LIRBranch opBranch = ((LIRBranch) instr);
+                    LIRBranch opBranch = (LIRBranch) instr;
 
-                    assert opBranch.block() == null || code.indexOf(opBranch.block()) != -1 : "branch target not valid";
-                    assert opBranch.ublock() == null || code.indexOf(opBranch.ublock()) != -1 : "branch target not valid";
+                    assert opBranch.block() == null || code.contains(opBranch.block()) : "branch target not valid";
+                    assert opBranch.ublock() == null || code.contains(opBranch.ublock()) : "branch target not valid";
                 }
             }
 
             for (j = 0; j < block.numberOfSux() - 1; j++) {
                 BlockBegin sux = block.suxAt(j);
-                assert code.indexOf(sux) != -1 : "successor not valid";
+                assert code.contains(sux) : "successor not valid";
             }
 
             for (j = 0; j < block.numberOfPreds() - 1; j++) {
                 BlockBegin pred = block.predAt(j);
-                assert code.indexOf(pred) != -1 : "successor not valid";
+                assert code.contains(pred) : "successor not valid";
             }
         }
 

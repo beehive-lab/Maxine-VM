@@ -112,7 +112,6 @@ public class ArithmeticOp extends Op2 {
     }
 
     public boolean isCommutative() {
-        // TODO Auto-generated method stub
-        return false;
+        return Bytecodes.isCommutative(opcode);
     }
 }

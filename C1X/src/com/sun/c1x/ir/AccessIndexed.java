@@ -34,7 +34,7 @@ public abstract class AccessIndexed extends AccessArray {
 
     Instruction index;
     Instruction length;
-    BasicType elementType;
+    final BasicType elementType;
 
     /**
      * Create an new AccessIndexed instruction.

@@ -255,8 +255,7 @@ public abstract class LIRAssembler {
         if (C1XOptions.PrintLIRWithAssembly) {
             // don't print Phi's
             InstructionPrinter ip = new InstructionPrinter(TTY.out, false);
-            block.print(ip);
-
+            ip.printBlock(block);
         }
 
         assert block.lir() != null : "must have LIR";
@@ -395,7 +394,7 @@ public abstract class LIRAssembler {
         if (t == null) {
             return null;
         }
-        for (;;) {
+        while (true) {
             ValueStack tc = t.scope().callerState();
             if (tc == null) {
                 return s;
@@ -418,7 +417,7 @@ public abstract class LIRAssembler {
 
         // Visit scopes from oldest to youngest.
         for (int n = 0;; n++) {
-            int[] sBci = new int[] {bci};
+            int[] sBci = {bci};
             ValueStack s = nthOldest(vstack, n, sBci);
             if (s == null) {
                 break;

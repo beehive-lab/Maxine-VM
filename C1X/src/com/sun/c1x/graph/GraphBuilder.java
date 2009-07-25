@@ -1273,7 +1273,7 @@ public class GraphBuilder {
             }
 
             if (x instanceof StateSplit) {
-                if (x instanceof Invoke || (x instanceof Intrinsic && !((Intrinsic) x).preservesState())) {
+                if (x instanceof Invoke || x instanceof Intrinsic && !((Intrinsic) x).preservesState()) {
                     // conservatively kill all memory across calls
                     if (memoryMap != null) {
                         memoryMap.kill();

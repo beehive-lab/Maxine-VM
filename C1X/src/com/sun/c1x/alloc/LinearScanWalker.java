@@ -788,7 +788,7 @@ public class LinearScanWalker extends IntervalWalker {
             List<Interval> processed = spillIntervals[reg];
             for (int i = 0; i < spillIntervals[regHi].size(); i++) {
                 Interval it = spillIntervals[regHi].get(i);
-                if (processed.indexOf(it) == -1) {
+                if (!processed.contains(it)) {
                     removeFromList(it);
                     splitAndSpillInterval(it);
                 }

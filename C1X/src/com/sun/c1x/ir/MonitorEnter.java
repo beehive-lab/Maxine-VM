@@ -29,7 +29,7 @@ import com.sun.c1x.value.ValueStack;
  */
 public class MonitorEnter extends AccessMonitor {
 
-    ValueStack lockStackBefore;
+    final ValueStack lockStackBefore;
 
     /**
      * Creates a new MonitorEnter instruction.

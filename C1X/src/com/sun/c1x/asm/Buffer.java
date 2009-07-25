@@ -41,7 +41,7 @@ public final class Buffer {
 
     private final BitOrdering bitOrdering;
 
-    public Buffer(Architecture.BitOrdering bitOrdering) {
+    public Buffer(BitOrdering bitOrdering) {
         this.bitOrdering = bitOrdering;
         this.data = new byte[InitialSize];
     }

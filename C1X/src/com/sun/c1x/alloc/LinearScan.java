@@ -3445,7 +3445,7 @@ public class LinearScan extends RegisterAllocator {
             }
         }
 
-        assert hasError == false : "register allocation invalid";
+        assert !hasError : "register allocation invalid";
     }
 
     void verifyNoOopsInFixedIntervals() {

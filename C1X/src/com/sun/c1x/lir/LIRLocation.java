@@ -287,9 +287,6 @@ public class LIRLocation extends LIROperand {
         return location2.number;
     }
 
-
-
-
     /**
      * @return the minimum virtual register value
      */
