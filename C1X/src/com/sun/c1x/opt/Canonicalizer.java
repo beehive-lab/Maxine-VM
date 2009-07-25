@@ -53,7 +53,7 @@ public class Canonicalizer extends InstructionVisitor {
 
     Instruction canonical;
     List<Instruction> extra;
-    int bci;
+    final int bci;
 
     /**
      * Creates a new Canonicalizer for the specified instruction.
@@ -298,8 +298,7 @@ public class Canonicalizer extends InstructionVisitor {
                         return setCanonical(s.x());
                     }
                     // reduce to (e >> (C + K))
-                    Instruction c = islong ? longInstr(y) : intInstr((int) y);
-                    return setCanonical(new ShiftOp(opcode, s.x(), c));
+                    return setCanonical(new ShiftOp(opcode, s.x(), intInstr((int) shift)));
                 }
                 if (s.opcode() == reverse && y == z) {
                     // this is a chained shift of the form (e >> K << K)
@@ -337,7 +336,7 @@ public class Canonicalizer extends InstructionVisitor {
                 }
                 if (y > 0 && (y & y - 1) == 0 && C1XOptions.CanonicalizeMultipliesToShifts) {
                     // strength reduce multiply by power of 2 to shift operation
-                    return setCanonical(new ShiftOp(Bytecodes.LSHL, x, longInstr(Util.log2(y))));
+                    return setCanonical(new ShiftOp(Bytecodes.LSHL, x, intInstr(Util.log2(y))));
                 }
                 return y == 0 ? setLongConstant(0) : null;
             }

@@ -1566,16 +1566,16 @@ public class X86LIRAssembler extends LIRAssembler {
             }
             if (k.isLoaded()) {
                 // TODO: out params?!
-                Register[] tmp1 = new Register[] {kRInfo};
-                Register[] tmp2 = new Register[] {klassRInfo};
+                Register[] tmp1 = {kRInfo};
+                Register[] tmp2 = {klassRInfo};
                 selectDifferentRegisters(obj, dst, tmp1, tmp2);
                 kRInfo = tmp1[0];
                 klassRInfo = tmp2[0];
             } else {
                 rtmp1 = op.tmp3().asRegister();
-                Register[] tmp1 = new Register[] {kRInfo};
-                Register[] tmp2 = new Register[] {klassRInfo};
-                Register[] tmp3 = new Register[] {rtmp1};
+                Register[] tmp1 = {kRInfo};
+                Register[] tmp2 = {klassRInfo};
+                Register[] tmp3 = {rtmp1};
                 selectDifferentRegisters(obj, dst, tmp1, tmp2, tmp3);
                 kRInfo = tmp1[0];
                 klassRInfo = tmp2[0];

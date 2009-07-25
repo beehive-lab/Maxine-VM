@@ -44,14 +44,6 @@ public class LoadIndexed extends AccessIndexed {
     }
 
     /**
-     * Gets the instruction representing an explicit null check for this instruction.
-     * @return the explicit null check instruction
-     */
-    public NullCheck explicitNullCheck() {
-        return null;
-    }
-
-    /**
      * Gets the declared type of this instruction's result.
      * @return the declared type
      */

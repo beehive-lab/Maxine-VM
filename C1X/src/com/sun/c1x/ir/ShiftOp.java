@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.value.BasicType;
+
 /**
  * The <code>ShiftOp</code> class represents shift operations.
  *
@@ -35,6 +37,7 @@ public class ShiftOp extends Op2 {
      */
     public ShiftOp(int opcode, Instruction x, Instruction y) {
         super(x.type().base(), opcode, x, y);
+        assert y.type().basicType == BasicType.Int;
     }
 
     /**

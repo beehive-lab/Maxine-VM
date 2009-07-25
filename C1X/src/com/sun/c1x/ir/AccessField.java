@@ -58,7 +58,7 @@ public abstract class AccessField extends Instruction {
         this.lockStack = exceptionState;
         this.stateBefore = stateBefore;
         this.isStatic = isStatic;
-        if (!isLoaded || (C1XOptions.TestPatching && !field.isVolatile())) {
+        if (!isLoaded || C1XOptions.TestPatching && !field.isVolatile()) {
             // require patching if the field is not loaded (i.e. resolved),
             // or if patch testing is turned on (but not if the field is volatile)
             setFlag(Flag.NeedsPatching);
