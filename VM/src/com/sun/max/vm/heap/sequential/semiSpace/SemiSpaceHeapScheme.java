@@ -209,7 +209,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
             // From now on we can allocate
 
-            InspectableHeapInfo.registerMemoryRegions(toSpace, fromSpace);
+            InspectableHeapInfo.init(toSpace, fromSpace);
         } else if (phase == MaxineVM.Phase.STARTING) {
             final String growPolicy = growPolicyOption.getValue();
             if (growPolicy.equals("Double")) {

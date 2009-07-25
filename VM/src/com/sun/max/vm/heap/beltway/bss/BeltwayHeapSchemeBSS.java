@@ -53,7 +53,7 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (phase == MaxineVM.Phase.PRISTINE) {
-            InspectableHeapInfo.registerMemoryRegions(getToSpace(), getFromSpace());
+            InspectableHeapInfo.init(getToSpace(), getFromSpace());
         } else if (phase == MaxineVM.Phase.RUNNING) {
             beltCollectorBSS.setBeltwayHeapScheme(this);
             beltCollector.setRunnable(beltCollectorBSS);
