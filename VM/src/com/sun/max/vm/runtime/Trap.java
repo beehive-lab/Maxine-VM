@@ -228,9 +228,9 @@ public abstract class Trap {
             }
             Log.print("  Trap number=");
             Log.println(trapNumber);
-            Log.print("  Instruction pointer=0x");
+            Log.print("  Instruction pointer=");
             Log.println(instructionPointer);
-            Log.print("  Fault address=0x");
+            Log.print("  Fault address=");
             Log.println(faultAddress);
             trapStateAccess.logTrapState(trapState);
             if (dumpStackOnTrap.getValue()) {

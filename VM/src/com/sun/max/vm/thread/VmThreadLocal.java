@@ -368,7 +368,6 @@ public class VmThreadLocal {
         if (this == SAFEPOINT_LATCH && SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(vmThreadLocals).equals(vmThreadLocals)) {
             out.print("<trigger latch>");
         } else {
-            out.print("0x");
             out.print(vmThreadLocals.getWord(index));
         }
     }

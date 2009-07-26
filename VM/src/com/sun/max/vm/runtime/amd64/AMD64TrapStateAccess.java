@@ -165,14 +165,14 @@ public final class AMD64TrapStateAccess extends TrapStateAccess {
             if (!value.isZero()) {
                 Log.print("  ");
                 Log.print(gpr);
-                Log.print("=0x");
+                Log.print("=");
                 Log.println(value);
             }
             register = register.plus(Word.size());
         }
-        Log.print("  RIP=0x");
+        Log.print("  RIP=");
         Log.println(getInstructionPointer(trapState));
-        Log.print("  RFLAGS=0x");
+        Log.print("  RFLAGS=");
         final Word flags = trapState.readWord(FLAGS_OFFSET);
         Log.print(flags);
         Log.print(' ');

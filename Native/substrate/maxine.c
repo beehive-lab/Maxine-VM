@@ -374,13 +374,13 @@ int maxine(int argc, char *argv[], char *executablePath) {
             log_exit(1, "Failed to allocate %lu bytes of auxiliary space", auxiliarySpaceSize);
         }
 #if log_LOADER
-        log_println("allocated %lu bytes of auxiliary space at 0x%p\n", image_header()->auxiliarySpaceSize, auxiliarySpace);
+        log_println("allocated %lu bytes of auxiliary space at %p\n", image_header()->auxiliarySpaceSize, auxiliarySpace);
 #endif
         memset((Word) auxiliarySpace, 1, image_header()->auxiliarySpaceSize + REFERENCE_BUFFER_SIZE);
     }
 
 #if log_LOADER
-    log_println("entering Java by calling MaxineVM::run(primordialVmThreadLocals=0x%p, bootHeapRegionStart=0x%p, auxiliarySpace=0x%p, openDynamicLibrary=0x%p, dlsym=0x%p, argc=%d, argv=0x%p)",
+    log_println("entering Java by calling MaxineVM::run(primordialVmThreadLocals=%p, bootHeapRegionStart=%p, auxiliarySpace=%p, openDynamicLibrary=%p, dlsym=%p, argc=%d, argv=%p)",
                     primordialVmThreadLocals, image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, argc, argv);
 #endif
     exitCode = (*method)(primordialVmThreadLocals, image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, dlerror, argc, argv);
