@@ -181,7 +181,7 @@ public final class AMD64TrapStateAccess extends TrapStateAccess {
         boolean seenNonZeroXMM = false;
         for (String xmm : xmmNames) {
             final double value = register.readDouble(0);
-            if (value != 0.0D) {
+            if (value != 0) {
                 if (!seenNonZeroXMM) {
                     Log.println("Non-zero XMM registers:");
                     seenNonZeroXMM = true;
@@ -189,7 +189,10 @@ public final class AMD64TrapStateAccess extends TrapStateAccess {
                 Log.print("  ");
                 Log.print(xmm);
                 Log.print("=");
-                Log.println(value);
+                Log.print(value);
+                Log.print("  {bits: ");
+                Log.print(Address.fromLong(Double.doubleToRawLongBits(value)));
+                Log.println("}");
             }
             register = register.plus(Word.size() * 2);
         }
