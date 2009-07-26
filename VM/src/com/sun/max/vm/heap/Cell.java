@@ -38,6 +38,11 @@ public class Cell {
 
     /**
      * Write an initial array object image into an existing cell.
+     *
+     * @param cell the start address of a cell containing an array
+     * @param size the
+     * @param hub the hub to be written into the hub word of the cell
+     * @param length the number of elements in the array
      */
     @INLINE
     @NO_SAFEPOINTS("avoid inconsistent object contents")
@@ -52,6 +57,10 @@ public class Cell {
 
     /**
      * Write an initial array object image into an existing cell.
+     *
+     * @param cell the start address of a cell containing an array
+     * @param hub the hub to be written into the hub word of the cell
+     * @param length the number of elements in the array
      */
     @INLINE
     @NO_SAFEPOINTS("avoid inconsistent object contents")

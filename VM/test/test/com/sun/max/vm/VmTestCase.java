@@ -18,32 +18,32 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.layout;
+package test.com.sun.max.vm;
 
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.type.*;
+import com.sun.max.ide.*;
+import com.sun.max.platform.*;
 
 /**
- * @author Bernd Mathiske
+ * This class should be subclassed by any test case that uses types in the VM project.
+ * It takes care of boot strapping the environment correctly. In particular, it ensures
+ * that class initialization happens in the right order.
+ *
+ * @author Doug Simon
  */
-public interface ArrayHeaderLayout extends GeneralLayout {
+public abstract class VmTestCase extends MaxTestCase {
 
-    int readLength(Accessor accessor);
+    public VmTestCase() {
+    }
 
-    void writeLength(Accessor accessor, int length);
+    public VmTestCase(String name) {
+        super(name);
+    }
 
-    int arrayLengthOffset();
-
-    /**
-     * Gets the size of the cell required to hold an array of a given kind and length.
-     * The return value accounts for the object header size as well as any padding at the end of the cell
-     * to ensure that the cell size is word aligned.
-     *
-     * @param kind the kind of the elements in the array
-     * @param length the length of an array
-     */
-    Size getArraySize(Kind kind, int length);
-
-    int headerSize();
+    @Override
+    protected void setUp() throws Exception {
+        // This seems to work in terms of triggering class initialization
+        // in the right order...
+        Platform.host();
+    }
 
 }

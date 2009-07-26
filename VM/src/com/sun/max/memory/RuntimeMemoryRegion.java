@@ -85,6 +85,9 @@ public class RuntimeMemoryRegion implements MemoryRegion {
         size = end.minus(start).asSize();
     }
 
+    /**
+     * An optional, short string that describes the role being played by the region, useful for debugging.
+     */
     @INSPECTED
     private String description = "?";
 
@@ -92,6 +95,9 @@ public class RuntimeMemoryRegion implements MemoryRegion {
         return description;
     }
 
+    /**
+     * Sets a description of the role being played by this region.
+     */
     public final void setDescription(String description) {
         this.description = description;
     }

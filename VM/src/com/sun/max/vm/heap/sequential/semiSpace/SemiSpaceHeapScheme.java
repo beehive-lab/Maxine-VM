@@ -291,7 +291,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     private final class GripVerifier extends PointerIndexVisitor implements PointerOffsetVisitor {
         @Override
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
-            visitPointerOffset(pointer, wordIndex * Kind.REFERENCE.width.numberOfBytes);
+            visitPointerOffset(pointer, wordIndex * Word.size());
         }
         public void visitPointerOffset(Pointer pointer, int offset) {
             DebugHeap.verifyGripAtIndex(pointer, offset, pointer.readGrip(offset), toSpace, null);
@@ -307,7 +307,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 VmThreadMap.ACTIVE.forAllVmThreadLocals(null, resetTLAB);
                 if (MaxineVM.isDebug()) {
                     // Pre-verification of the heap.
-                    verifyHeap("before GC");
+                    verifyObjectSpaces("before GC");
                 }
 
                 ++numberOfGarbageCollectionInvocations;
@@ -321,7 +321,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 swapSemiSpaces(); // Swap semi-spaces. From--> To and To-->From
                 stopTimer(clearTimer);
 
-                if (Heap.traceRootScanning()) {
+                if (Heap.traceGCPhases()) {
                     Log.println("Scanning roots...");
                 }
                 startTimer(rootScanTimer);
@@ -365,7 +365,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
 
                 if (MaxineVM.isDebug()) {
-                    verifyHeap("after GC");
+                    verifyObjectSpaces("after GC");
                 }
 
                 InspectableHeapInfo.afterGarbageCollection();
@@ -572,23 +572,12 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         }
     }
 
-    /**
-     * This option exists only to measure the performance effect of using a reference map for the boot heap.
-     */
-    private static final VMBooleanXXOption useBootHeapRefmap = register(new VMBooleanXXOption("-XX:+UseBootHeapRefmap", "Use the boot heap reference map when scanning the boot heap."), MaxineVM.Phase.STARTING);
-
     private void scanBootHeap() {
-        if (useBootHeapRefmap.getValue()) {
-            Heap.bootHeapRegion.visitCells(this);
-        } else {
-            Heap.bootHeapRegion.visitPointers(pointerIndexGripUpdater);
-        }
+        Heap.bootHeapRegion.visitReferences(pointerIndexGripUpdater);
     }
 
     private void scanCode() {
-        // All objects in the boot code region are immutable
-        final boolean includeBootCode = false;
-        Code.visitCells(this, includeBootCode);
+        Code.visitReferences(pointerIndexGripUpdater);
     }
 
     private boolean cannotGrow() {
@@ -802,10 +791,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             final Pointer cell = DebugHeap.adjustForDebugTag(tlab);
             enabledVmThreadLocals.setWord(TLAB_TOP.index, tlabTop);
             enabledVmThreadLocals.setWord(TLAB_MARK.index, cell.plus(size));
-            if (Heap.traceAllocation() || Heap.traceGC()) {
+            if (Heap.traceAllocation()) {
                 final boolean lockDisabledSafepoints = Log.lock();
-                final VmThread vmThread = UnsafeLoophole.cast(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
-                Log.printVmThread(vmThread, false);
+                Log.printVmThread(VmThread.current(), false);
                 Log.print(": Allocated TLAB at ");
                 Log.print(tlab);
                 Log.print(" [TOP=");
@@ -887,7 +875,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         if (!tlabTop.isZero()) {
             final Pointer tlabMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
             final int padWords = DebugHeap.writeCellPadding(tlabMark, tlabTop);
-            if (Heap.traceAllocation() || Heap.traceGC()) {
+            if (Heap.traceAllocation()) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 final VmThread vmThread = UnsafeLoophole.cast(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
                 Log.printVmThread(vmThread, false);
@@ -908,7 +896,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
         public void run(Pointer vmThreadLocals) {
             final Pointer enabledVmThreadLocals = vmThreadLocals.getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
-            if (Heap.traceAllocation() || Heap.traceGC()) {
+            if (Heap.traceAllocation()) {
                 final Pointer tlabTop = enabledVmThreadLocals.getWord(TLAB_TOP.index).asPointer();
                 final Pointer tlabMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
                 final VmThread vmThread = UnsafeLoophole.cast(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
@@ -1010,18 +998,24 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         return false;
     }
 
-    private void verifyHeap(String when) {
+    /**
+     * Verifies invariants for memory spaces (i.e. heap, code caches, thread stacks) that contain
+     * objects and/or object references.
+     *
+     * @param when a description of the current GC phase
+     */
+    private void verifyObjectSpaces(String when) {
         if (Heap.traceGCPhases()) {
-            Log.print("Verifying heap ");
+            Log.print("Verifying object spaces ");
             Log.println(when);
         }
         heapRootsVerifier.run();
 
         DebugHeap.verifyRegion(toSpace.description(), toSpace.start().asPointer(), allocationMark(), toSpace, gripVerifier);
-        Code.verifyRegions(toSpace, gripVerifier, false);
+        Code.visitReferences(gripVerifier);
 
         if (Heap.traceGCPhases()) {
-            Log.print("Verifying heap ");
+            Log.print("Verifying object spaces ");
             Log.print(when);
             Log.println(": DONE");
         }

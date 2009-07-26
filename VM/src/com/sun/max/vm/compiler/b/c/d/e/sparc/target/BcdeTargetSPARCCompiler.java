@@ -361,9 +361,9 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                 // when banging the stack).
                 // We can fish for the caller's instruction pointer in the trapped state, which is located at the
                 // top of the callee stack.
-                final SPARCSafepoint safepoint = (SPARCSafepoint) VMConfiguration.hostOrTarget().safepoint;
-                final Pointer trapState = StackBias.SPARC_V9.unbias(stackFrameWalker.stackPointer()).minus(SPARCSafepoint.TRAP_STATE_SIZE);
-                callerInstructionPointer = safepoint.getCallAddressRegister(trapState);
+                final SPARCTrapStateAccess trapStateAccess = (SPARCTrapStateAccess) TrapStateAccess.instance();
+                final Pointer trapState = StackBias.SPARC_V9.unbias(stackFrameWalker.stackPointer()).minus(SPARCTrapStateAccess.TRAP_STATE_SIZE);
+                callerInstructionPointer = trapStateAccess.getCallAddressRegister(trapState);
             }
         } else {
             callerInstructionPointer = SPARCStackFrameLayout.getCallerPC(stackFrameWalker);

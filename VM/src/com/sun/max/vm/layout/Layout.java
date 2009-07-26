@@ -394,6 +394,9 @@ public final class Layout {
         arrayHeaderLayout().writeLength(origin, hashCode);
     }
 
+    /**
+     * @see ArrayHeaderLayout#getArraySize(Kind, int)
+     */
     @INLINE
     public static Size getArraySize(Kind kind, int length) {
         return arrayHeaderLayout().getArraySize(kind, length);
@@ -796,7 +799,7 @@ public final class Layout {
 
     @UNSAFE
     @FOLD
-    private static WordArrayLayout wordArrayLayout() {
+    public static WordArrayLayout wordArrayLayout() {
         return layoutScheme().wordArrayLayout;
     }
 

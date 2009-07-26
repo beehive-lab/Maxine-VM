@@ -51,7 +51,7 @@ public abstract class Offset extends Word {
         if (Word.isBoxed()) {
             return BoxedOffset.from(value);
         }
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             final long n = value;
             return UnsafeLoophole.longToWord(n);
         }
@@ -63,7 +63,7 @@ public abstract class Offset extends Word {
         if (Word.isBoxed()) {
             return BoxedOffset.from(value);
         }
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return UnsafeLoophole.longToWord(value);
         }
         final int n = (int) value;
@@ -81,7 +81,7 @@ public abstract class Offset extends Word {
             final BoxedOffset box = (BoxedOffset) this;
             return (int) box.nativeWord();
         }
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             final long n = UnsafeLoophole.wordToLong(this);
             return (int) n;
         }
@@ -94,7 +94,7 @@ public abstract class Offset extends Word {
             final BoxedOffset box = (BoxedOffset) this;
             return box.nativeWord();
         }
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return UnsafeLoophole.wordToLong(this);
         }
         return UnsafeLoophole.wordToInt(this);
@@ -120,7 +120,7 @@ public abstract class Offset extends Word {
 
     @INLINE
     public final boolean lessEqual(Offset other) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return toLong() <= other.toLong();
         }
         return toInt() <= other.toInt();
@@ -133,7 +133,7 @@ public abstract class Offset extends Word {
 
     @INLINE
     public final boolean lessThan(Offset other) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return toLong() < other.toLong();
         }
         return toInt() < other.toInt();
@@ -146,7 +146,7 @@ public abstract class Offset extends Word {
 
     @INLINE
     public final boolean greaterEqual(Offset other) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return toLong() >= other.toLong();
         }
         return toInt() >= other.toInt();
@@ -159,7 +159,7 @@ public abstract class Offset extends Word {
 
     @INLINE
     public final boolean greaterThan(Offset other) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return toLong() > other.toLong();
         }
         return toInt() > other.toInt();
@@ -172,7 +172,7 @@ public abstract class Offset extends Word {
 
     @INLINE
     public final Offset negate() {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return fromLong(-toLong());
         }
         return fromInt(-toInt());
@@ -180,7 +180,7 @@ public abstract class Offset extends Word {
 
     @INLINE
     public final boolean isNegative() {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return toLong() < 0L;
         }
         return toInt() < 0;
@@ -188,7 +188,7 @@ public abstract class Offset extends Word {
 
     @INLINE
     public final Offset plus(Offset addend) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return fromLong(toLong() + addend.toLong());
         }
         return fromInt(toInt() + addend.toInt());
@@ -211,7 +211,7 @@ public abstract class Offset extends Word {
 
     @INLINE
     public final Offset minus(Offset subtrahend) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return fromLong(toLong() - subtrahend.toLong());
         }
         return fromInt(toInt() - subtrahend.toInt());
@@ -234,7 +234,7 @@ public abstract class Offset extends Word {
 
     @INLINE
     public final Offset times(Offset factor) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return fromLong(toLong() * factor.toLong());
         }
         return fromInt(toInt() * factor.toInt());
@@ -252,7 +252,7 @@ public abstract class Offset extends Word {
 
     @INLINE
     public final Offset dividedBy(Offset divisor) throws ArithmeticException {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return fromLong(toLong() / divisor.toLong());
         }
         return fromInt(toInt() / divisor.toInt());
@@ -265,7 +265,7 @@ public abstract class Offset extends Word {
 
     @INLINE
     public final Offset remainder(Offset divisor) throws ArithmeticException {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return fromLong(toLong() % divisor.toLong());
         }
         return fromInt(toInt() % divisor.toInt());
@@ -290,7 +290,7 @@ public abstract class Offset extends Word {
 
     @INLINE(override = true)
     public Offset and(Offset operand) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return fromLong(toLong() & operand.toLong());
         }
         return fromInt(toInt() & operand.toInt());
@@ -308,7 +308,7 @@ public abstract class Offset extends Word {
 
     @INLINE(override = true)
     public Offset or(Offset operand) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return fromLong(toLong() | operand.toLong());
         }
         return fromInt(toInt() | operand.toInt());
@@ -326,7 +326,7 @@ public abstract class Offset extends Word {
 
     @INLINE(override = true)
     public Offset not() {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return fromLong(~toLong());
         }
         return fromInt(~toInt());
@@ -350,7 +350,7 @@ public abstract class Offset extends Word {
     }
 
     public final int numberOfEffectiveBits() {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             final long n = toLong();
             if (n >= 0) {
                 return 64 - Long.numberOfLeadingZeros(n);

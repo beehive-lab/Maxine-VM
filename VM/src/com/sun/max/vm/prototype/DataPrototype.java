@@ -281,13 +281,12 @@ public final class DataPrototype extends Prototype {
     }
 
     /**
-     * Creates the reference map covering the objects in the boot heap that contain references that may be modified by
-     * the VM at runtime. The assignment of addresses for the boot heap will have ensured that such mutable objects are
+     * Creates the reference map covering the objects in the boot heap that contain runtime-mutable references.
+     * The assignment of addresses for the boot heap will have ensured that such mutable objects are
      * at the front of the heap, before all non-mutable objects.
      *
      * @param heapRegion the boot heap region
-     * @param mutableHeapObjects the mutable objects in the boot heap which currently the only objects to have been
-     *            allocated cells in the heap
+     * @param mutableHeapObjects the mutable objects in the boot heap
      */
     private void createHeapReferenceMap(BootHeapRegion heapRegion, Sequence<Object> mutableHeapObjects) {
         Trace.begin(1, "createHeapReferenceMap:");
@@ -1112,7 +1111,7 @@ public final class DataPrototype extends Prototype {
     private final boolean debugging;
 
     /**
-     * Create and build a new data prototype from the specifeid graph prototype.
+     * Create and build a new data prototype from the specified graph prototype.
      *
      * @param graphPrototype the graph prototype for which to build the data prototype
      * @param mapFile a file to which to write map information; if {@code null}, no map information will be written

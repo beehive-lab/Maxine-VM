@@ -28,10 +28,12 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.instrument.*;
 import com.sun.max.vm.compiler.tir.*;
 import com.sun.max.vm.jit.*;
-
+import com.sun.max.vm.thread.*;
 
 public class JitTracer extends Tracer {
-    private static ThreadLocal<JitTracer> tracers = new ThreadLocal<JitTracer>() {
+
+
+    private static ObjectThreadLocal<JitTracer> tracers = new ObjectThreadLocal<JitTracer>("JIT_TRACER", "Tracer used for HotPath compiler.") {
         @Override
         protected JitTracer initialValue() {
             return new JitTracer();
@@ -42,6 +44,8 @@ public class JitTracer extends Tracer {
      * @return the {@link JitTracer} object associated with the current thread.
      */
     private static JitTracer current() {
+
+
         return tracers.get();
     }
 

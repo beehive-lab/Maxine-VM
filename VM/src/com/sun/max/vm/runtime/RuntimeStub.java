@@ -38,7 +38,7 @@ public abstract class RuntimeStub extends RuntimeMemoryRegion {
      * The given machine code is copied into the memory managed by the {@linkplain Code code manager}.
      * It's a {@link FatalError} if space for {@code code} cannot be allocated by the code manager.
      *
-     * @param code the machine that is to be copied into the code region
+     * @param code the machine code that is to be copied into the code region
      */
     public RuntimeStub(byte[] code) {
         super(Size.fromInt(code.length));
