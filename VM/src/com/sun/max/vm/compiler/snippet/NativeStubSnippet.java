@@ -130,7 +130,7 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
                         enabledVmThreadLocals.setWord(MUTATOR_STATE.index, THREAD_IN_JAVA);
                         break;
                     }
-                    if (Safepoint.casMutatorState(enabledVmThreadLocals, THREAD_IN_NATIVE, THREAD_IN_JAVA).equals(THREAD_IN_NATIVE)) {
+                    if (enabledVmThreadLocals.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IN_JAVA).equals(THREAD_IN_NATIVE)) {
                         break;
                     }
                     SpecialBuiltin.pause();

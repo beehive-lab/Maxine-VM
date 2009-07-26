@@ -1111,7 +1111,7 @@ public final class DataPrototype extends Prototype {
     private final boolean debugging;
 
     /**
-     * Create and build a new data prototype from the specifeid graph prototype.
+     * Create and build a new data prototype from the specified graph prototype.
      *
      * @param graphPrototype the graph prototype for which to build the data prototype
      * @param mapFile a file to which to write map information; if {@code null}, no map information will be written

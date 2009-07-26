@@ -810,7 +810,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
 
     public static final Kind<WordValue> WORD = new Kind<WordValue>(KindEnum.WORD, "Word", Word.class, Word[].class,
                                                                    WordValue.class, 'W', Word.class, JavaTypeDescriptor.WORD,
-                                                                   Word.width()) {
+                                                                   Word.widthValue()) {
         @Override
         public WordValue readValue(Reference reference, Offset offset) {
             return new WordValue(reference.readWord(offset));
@@ -877,7 +877,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
 
     public static final Kind<ReferenceValue> REFERENCE = new Kind<ReferenceValue>(KindEnum.REFERENCE, "Reference", Object.class, Object[].class,
                                                                                   ReferenceValue.class, 'R', Object.class, JavaTypeDescriptor.REFERENCE,
-                                                                                  Word.width()) {
+                                                                                  Word.widthValue()) {
         @Override
         public ReferenceValue readValue(Reference reference, Offset offset) {
             return ReferenceValue.from(reference.readReference(offset).toJava());

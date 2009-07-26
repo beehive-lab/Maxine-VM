@@ -238,23 +238,17 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
      */
     public static final VmThreadLocal ADJUSTED_CARDTABLE_BASE = new VmThreadLocal("ADJUSTED_CARDTABLE_BASE", Kind.WORD, "Beltway: ->biased card table") {
         @Override
-        public void initialize(com.sun.max.vm.MaxineVM.Phase phase) {
+        public void initialize() {
             final Pointer vmThreadLocals = VmThread.currentVmThreadLocals();
             // enable write barriers by setting the adjusted card table address
-            if (phase.equals(MaxineVM.Phase.RUNNING) || phase.equals(MaxineVM.Phase.STARTING)) {
-                // use the normal card table
-                ADJUSTED_CARDTABLE_BASE.setConstantWord(vmThreadLocals, BeltwayCardRegion.getAdjustedCardTable());
-            } else {
-                // use the primordial card table
-                ADJUSTED_CARDTABLE_BASE.setConstantWord(vmThreadLocals, ADJUSTED_CARDTABLE_BASE.getConstantWord(MaxineVM.primordialVmThreadLocals()));
-            }
+            // use the normal card table
+            ADJUSTED_CARDTABLE_BASE.setConstantWord(vmThreadLocals, BeltwayCardRegion.getAdjustedCardTable());
         }
     };
 
     public void scanBootHeap(RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        cellVisitor.from = from;
-        cellVisitor.to = to;
-        Heap.bootHeapRegion.visitCells(cellVisitor);
+        FatalError.unimplemented();
+        Heap.bootHeapRegion.visitReferences(null);
     }
 
     public void printCardTable() {
@@ -331,9 +325,8 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     }
 
     public void scanCode(RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        cellVisitor.from = from;
-        cellVisitor.to = to;
-        Code.visitCells(cellVisitor, true);
+        FatalError.unimplemented();
+        Code.visitReferences(null);
     }
 
     @INLINE

@@ -23,6 +23,7 @@ package com.sun.max.vm.classfile;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.verifier.*;
 
 /**
@@ -79,32 +80,42 @@ public final class ErrorContext {
     private ErrorContext() {
     }
 
-    private static final ThreadLocal<VariableSequence<Object>> contexts = new ThreadLocal<VariableSequence<Object>>() {
-
+    private static final ObjectThreadLocal<VariableSequence<Object>> ERROR_CONTEXTS = new ObjectThreadLocal<VariableSequence<Object>>("ERROR_CONTEXTS", "Nested error contexts during class loading") {
         @Override
-        protected VariableSequence<Object> initialValue() {
+        protected com.sun.max.collect.VariableSequence<Object> initialValue() {
             return new ArrayListSequence<Object>();
         }
     };
 
+    private static VariableSequence<Object> makeContexts() {
+        return ERROR_CONTEXTS.get();
+    }
+
+    /**
+     * Gets the current error contexts for the current thread.
+     */
     public static Sequence<Object> contexts() {
-        return contexts.get();
+        final VariableSequence<Object> contexts = ERROR_CONTEXTS.getWithoutInitialization();
+        if (contexts == null) {
+            return Sequence.Static.empty(Object.class);
+        }
+        return contexts;
     }
 
     public static void enterContext(Object context) {
-        contexts.get().append(context);
+        makeContexts().append(context);
     }
 
     public static void exitContext() {
         try {
-            contexts.get().removeLast();
+            makeContexts().removeLast();
         } catch (IndexOutOfBoundsException e) {
             ProgramWarning.message("Unstructured use of error contexts");
         }
     }
 
     public static void perform(Object context, Runnable runnable) {
-        final VariableSequence<Object> contextStack = contexts.get();
+        final VariableSequence<Object> contextStack = makeContexts();
         contextStack.append(context);
         try {
             runnable.run();

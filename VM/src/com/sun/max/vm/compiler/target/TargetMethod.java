@@ -280,8 +280,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * Note that unless {@link #areReferenceMapsFinalized()} returns true, the value returned by this method may differ
      * from the value returned by a subsequent call to this method.
      *
-     * @param safepointIndex
-     *                a value between {@code [0 .. numberOfSafepoints())} denoting a safepoint
+     * @param safepointIndex a value between {@code [0 .. numberOfSafepoints())} denoting a safepoint
      * @return the bit map specifying which registers contain object references at the given safepoint position
      */
     public final ByteArrayBitMap registerReferenceMapFor(int safepointIndex) {
@@ -579,6 +578,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * Assigns the arrays co-located in a {@linkplain CodeRegion code region} containing the machine code and related data.
      *
      * @param code the code
+     * @param codeStart the address of the first element of {@code code}
      * @param scalarLiterals the scalar data referenced from {@code code}
      * @param referenceLiterals the reference data referenced from {@code code}
      */
@@ -630,7 +630,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
                                    int frameReferenceMapSize,
                                    TargetABI abi) {
 
-        assert code != null : "Must call setCodeArrays() first";
+        assert !codeStart.isZero() : "Must call setCodeArrays() first";
 
         this.frameSize = frameSize;
         this.frameReferenceMapSize = frameReferenceMapSize;
@@ -708,7 +708,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * {@linkplain #traceExceptionHandlers(IndentWriter) exception handlers}, the
      * {@linkplain #traceDirectCallees(IndentWriter) direct callees}, the #{@linkplain #traceScalarBytes(IndentWriter, TargetBundle) scalar data},
      * the {@linkplain #traceReferenceLiterals(IndentWriter, TargetBundle) reference literals} and the address of the
-     * array contain {@linkplain #code() compiled code}.
+     * array containing the {@linkplain #code() compiled code}.
      *
      * @param writer where the trace is written
      */

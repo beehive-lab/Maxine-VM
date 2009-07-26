@@ -46,11 +46,11 @@ import com.sun.max.vm.thread.*;
  * <p>
  * GC considerations:
  * <p>
- * 1) As all JavaMonitors are GC reachable, so are their bound objects (as this is just a field in the JavaMonitor). So
- * it is preferable to call beforeGarbageCollection() prior to GC, to unbind dead objects.
+ * 1) As all JavaMonitors are GC reachable, so are their bound objects (as this is just a field in the JavaMonitor)
+ * {@link #beforeGarbageCollection()} must be called prior to GC, to unbind dead objects.
  * <p>
  * 2) If the GC moves a bound JavaMonitor, then the bound object's misc word must be updated to point to the moved
- * JavaMonitor. Therefore a post-GC call is required to afterGarbageCollection().
+ * JavaMonitor. Therefore a post-GC call is required to {@link #afterGarbageCollection()}.
  * <p>
  * TODO: (Simon) The terminology of binding/unbinding/hard-binding needs tidying up. The naming conventions
  * are not consistent and in places, misleading.

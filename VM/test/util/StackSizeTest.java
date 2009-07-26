@@ -22,9 +22,9 @@ package util;
 
 import java.io.*;
 
-import junit.framework.*;
+import test.com.sun.max.vm.*;
 
-public class StackSizeTest extends TestCase {
+public class StackSizeTest extends VmTestCase {
 
     public StackSizeTest(String name) {
         super(name);

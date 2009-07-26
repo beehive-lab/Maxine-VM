@@ -276,7 +276,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE(override = true)
     public final byte readByte(Offset offset) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return readByteAtLongOffset(offset.toLong());
         }
         return readByteAtIntOffset(offset.toInt());
@@ -343,7 +343,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final short readShort(Offset offset) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return readShortAtLongOffset(offset.toLong());
         }
         return readShortAtIntOffset(offset.toInt());
@@ -384,7 +384,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final char readChar(Offset offset) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return readCharAtLongOffset(offset.toLong());
         }
         return readCharAtIntOffset(offset.toInt());
@@ -425,7 +425,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final int readInt(Offset offset) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return readIntAtLongOffset(offset.toLong());
         }
         return readIntAtIntOffset(offset.toInt());
@@ -466,7 +466,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final float readFloat(Offset offset) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return readFloatAtLongOffset(offset.toLong());
         }
         return readFloatAtIntOffset(offset.toInt());
@@ -507,7 +507,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final long readLong(Offset offset) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return readLongAtLongOffset(offset.toLong());
         }
         return readLongAtIntOffset(offset.toInt());
@@ -548,7 +548,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final double readDouble(Offset offset) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return readDoubleAtLongOffset(offset.toLong());
         }
         return readDoubleAtIntOffset(offset.toInt());
@@ -589,7 +589,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final Word readWord(Offset offset) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return readWordAtLongOffset(offset.toLong());
         }
         return readWordAtIntOffset(offset.toInt());
@@ -656,7 +656,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final Reference readReference(Offset offset) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return readReferenceAtLongOffset(offset.toLong());
         }
         return readReferenceAtIntOffset(offset.toInt());
@@ -697,7 +697,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final void writeByte(Offset offset, byte value) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             writeByteAtLongOffset(offset.toLong(), value);
         } else {
             writeByteAtIntOffset(offset.toInt(), value);
@@ -766,7 +766,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final void writeShort(Offset offset, short value) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             writeShortAtLongOffset(offset.toLong(), value);
         } else {
             writeShortAtIntOffset(offset.toInt(), value);
@@ -835,7 +835,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final void writeInt(Offset offset, int value) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             writeIntAtLongOffset(offset.toLong(), value);
         } else {
             writeIntAtIntOffset(offset.toInt(), value);
@@ -878,7 +878,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final void writeFloat(Offset offset, float value) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             writeFloatAtLongOffset(offset.toLong(), value);
         } else {
             writeFloatAtIntOffset(offset.toInt(), value);
@@ -921,7 +921,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final void writeLong(Offset offset, long value) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             writeLongAtLongOffset(offset.toLong(), value);
         } else {
             writeLongAtIntOffset(offset.toInt(), value);
@@ -964,7 +964,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final void writeDouble(Offset offset, double value) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             writeDoubleAtLongOffset(offset.toLong(), value);
         } else {
             writeDoubleAtIntOffset(offset.toInt(), value);
@@ -1007,7 +1007,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final void writeWord(Offset offset, Word value) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             writeWordAtLongOffset(offset.toLong(), value);
         } else {
             writeWordAtIntOffset(offset.toInt(), value);
@@ -1076,7 +1076,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final void writeReference(Offset offset, Reference value) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             writeReferenceAtLongOffset(offset.toLong(), value);
         } else {
             writeReferenceAtIntOffset(offset.toInt(), value);
@@ -1130,7 +1130,7 @@ public abstract class Pointer extends Address implements Accessor {
      */
     @INLINE
     public final int compareAndSwapInt(Offset offset, int suspectedValue, int newValue) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return compareAndSwapIntAtLongOffset(offset.toLong(), suspectedValue, newValue);
         }
         return compareAndSwapIntAtIntOffset(offset.toInt(), suspectedValue, newValue);
@@ -1161,7 +1161,7 @@ public abstract class Pointer extends Address implements Accessor {
      */
     @INLINE
     public final Word compareAndSwapWord(Offset offset, Word suspectedValue, Word newValue) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return compareAndSwapWordAtLongOffset(offset.toLong(), suspectedValue, newValue);
         }
         return compareAndSwapWordAtIntOffset(offset.toInt(), suspectedValue, newValue);
@@ -1192,18 +1192,20 @@ public abstract class Pointer extends Address implements Accessor {
      */
     @INLINE
     public final Reference compareAndSwapReference(Offset offset, Reference suspectedValue, Reference newValue) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return compareAndSwapReferenceAtLongOffset(offset.toLong(), suspectedValue, newValue);
         }
         return compareAndSwapReferenceAtIntOffset(offset.toInt(), suspectedValue, newValue);
     }
 
     /**
-     * Sets the bit at the given index, counting bits in the bytes starting from this pointer.
+     * Sets a bit in the bit map whose base is denoted by the value of this pointer.
      *
      * ATTENTION: There is no protection against concurrent access to the affected byte.
      *
      * This method may read the affected byte first, then set the bit in it and then write the byte back.
+     *
+     * @param bitIndex the index of the bit to set
      */
     public void setBit(int bitIndex) {
         final int byteIndex = Unsigned.idiv(bitIndex, Bytes.WIDTH);
@@ -1213,14 +1215,16 @@ public abstract class Pointer extends Address implements Accessor {
     }
 
     /**
-     * Sets the given bits starting from the given bit index, counting bits in the bytes starting from this pointer.
-     * Every 1 in {@code bits} will result in a 1 in memory.
-     * Every 0 in {@code bits} will leave the corresponding memory bit unchanged.
+     * Modifies up to 8 bits in the bit map whose base is denoted by the value of this pointer
+     * by OR'ing in a given 8-bit mask.
      *
      * ATTENTION: There is no protection against concurrent access to affected bytes.
      *
      * This method may read each affected byte first, then set some bits in it and then write the byte back.
      * There are either 1 or 2 affected bytes, depending on alignment of the bit index to bytes in memory.
+     *
+     * @param bitIndex the index of the first bit to set
+     * @param bits a mask of 8 bits OR'ed with the 8 bits in this bit map starting at {@code bitIndex}
      */
     public void setBits(int bitIndex, byte bits) {
         // If we do not mask off the leading bits after a conversion to int right here,

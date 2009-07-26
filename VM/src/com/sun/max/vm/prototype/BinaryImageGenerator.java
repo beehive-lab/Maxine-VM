@@ -480,7 +480,7 @@ public final class BinaryImageGenerator {
         }
         int redundantReferenceLiterals = 0;
         for (Map.Entry<Object, Integer> entry : distribution.asMap().entrySet()) {
-            redundantReferenceLiterals += (entry.getValue() - 1) * Word.width().numberOfBytes;
+            redundantReferenceLiterals += (entry.getValue() - 1) * Word.size();
         }
         out.println("Potential savings from reference literal merging: " + redundantReferenceLiterals + " bytes");
         out.println("Potential savings from compressing reference literal arrays: " + zeroLiterals + " bytes");
@@ -516,7 +516,7 @@ public final class BinaryImageGenerator {
      */
     private static int savingsFrom(int headerSize, Object o) {
         if (o == null) {
-            return Word.width().numberOfBytes + headerSize;
+            return Word.size() + headerSize;
         }
         return headerSize;
     }

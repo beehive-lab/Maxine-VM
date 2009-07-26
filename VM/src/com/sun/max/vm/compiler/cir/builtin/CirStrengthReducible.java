@@ -393,7 +393,7 @@ public abstract class CirStrengthReducible extends CirSpecialBuiltin {
                 if (shift == 0) {
                     return new CirCall(normalContinuation, dividendValue);
                 }
-                final Builtin bltin = (Word.width() == WordWidth.BITS_64) ? JavaBuiltin.LongUnsignedShiftedRight.BUILTIN : JavaBuiltin.IntUnsignedShiftedRight.BUILTIN;
+                final Builtin bltin = (Word.width() == 64) ? JavaBuiltin.LongUnsignedShiftedRight.BUILTIN : JavaBuiltin.IntUnsignedShiftedRight.BUILTIN;
                 return new CirCall(CirBuiltin.get(bltin), dividendValue, new CirConstant(IntValue.from(shift)), normalContinuation, exceptionContinuation);
             }
             assert dividendValue.value().isZero();
@@ -436,7 +436,7 @@ public abstract class CirStrengthReducible extends CirSpecialBuiltin {
                     return new CirCall(normalContinuation, dividendValue);
                 }
                 final int shift = Integer.numberOfTrailingZeros(divisor);
-                final Builtin bltin = (Word.width() == WordWidth.BITS_64) ? JavaBuiltin.LongUnsignedShiftedRight.BUILTIN : JavaBuiltin.IntUnsignedShiftedRight.BUILTIN;
+                final Builtin bltin = (Word.width() == 64) ? JavaBuiltin.LongUnsignedShiftedRight.BUILTIN : JavaBuiltin.IntUnsignedShiftedRight.BUILTIN;
                 return new CirCall(CirBuiltin.get(bltin), dividendValue, new CirConstant(IntValue.from(shift)), normalContinuation, exceptionContinuation);
             }
             assert dividendValue.value().isZero();
@@ -569,7 +569,7 @@ public abstract class CirStrengthReducible extends CirSpecialBuiltin {
                 if (divisor.equals(Address.fromInt(1))) {
                     return new CirCall(normalContinuation, new CirConstant(WordValue.ZERO));
                 }
-                if (Word.width() == WordWidth.BITS_64) {
+                if (Word.width() == 64) {
                     final long mask = divisor.toLong() - 1L;
                     return new CirCall(CirBuiltin.get(JavaBuiltin.LongAnd.BUILTIN), dividendValue, new CirConstant(LongValue.from(mask)), normalContinuation, exceptionContinuation);
                 }
@@ -616,7 +616,7 @@ public abstract class CirStrengthReducible extends CirSpecialBuiltin {
                     return new CirCall(normalContinuation, new CirConstant(IntValue.ZERO));
                 }
                 final CirConstant mask = new CirConstant(IntValue.from(divisor - 1));
-                if (Word.width() == WordWidth.BITS_64) {
+                if (Word.width() == 64) {
                     final CirVariable intDividend = cirOptimizer.cirGenerator().postTranslationVariableFactory().createTemporary(Kind.INT);
                     final CirContinuation continuation = new CirContinuation(intDividend);
                     continuation.setBody(new CirCall(CirBuiltin.get(JavaBuiltin.IntAnd.BUILTIN), intDividend, mask, normalContinuation, exceptionContinuation));
