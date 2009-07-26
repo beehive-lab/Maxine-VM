@@ -225,17 +225,20 @@ public abstract class LocationLabel extends InspectorLabel {
      */
     public static class AsOffset extends LocationLabel {
 
-        public AsOffset(Inspection inspection, int offset, Address origin) {
+        private int indexScalingFactor;
+
+        public AsOffset(Inspection inspection, int offset, Address origin, int indexScalingFactor) {
             super(inspection, offset, origin);
+            this.indexScalingFactor = indexScalingFactor;
             redisplay();
         }
 
         public AsOffset(Inspection inspection, int offset) {
-            this(inspection, offset, Address.zero());
+            this(inspection, offset, Address.zero(), 0);
         }
 
         public AsOffset(Inspection inspection) {
-            this(inspection, 0, Address.zero());
+            this(inspection, 0, Address.zero(), 0);
         }
 
         public void redisplay() {
@@ -248,11 +251,14 @@ public abstract class LocationLabel extends InspectorLabel {
         @Override
         protected void updateText() {
             setText((value >= 0 ? "+" : "") + Integer.toString(value));
-            if (base != null) {
-                setToolTipText("Offset: " + signedLocationText() + ", " + addressText());
-            } else {
-                setToolTipText("Offset: " + signedLocationText());
+            StringBuilder text = new StringBuilder("Offset: ").append(signedLocationText());
+            if (indexScalingFactor != 0) {
+                text.append(", Index: ").append(value / indexScalingFactor);
             }
+            if (base != null) {
+                text.append(", ").append(addressText());
+            }
+            setToolTipText(text.toString());
         }
     }
 

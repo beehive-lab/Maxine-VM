@@ -35,8 +35,8 @@ public enum ThreadLocalsColumnKind {
             return false;
         }
     },
-    ADDRESS("Addr.", "Memory address of field", false, -1),
-    POSITION("Pos.", "Relative position of field (bytes)", false, 20),
+    ADDRESS("Addr.", "Memory address of thread local", false, -1),
+    POSITION("Pos.", "Offset of thread local relative to TLS base (bytes)", true, 20),
     NAME("Field", "Thread local field name", true, -1) {
         @Override
         public boolean canBeMadeInvisible() {
