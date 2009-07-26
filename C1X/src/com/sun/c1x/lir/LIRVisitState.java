@@ -20,11 +20,13 @@
  */
 package com.sun.c1x.lir;
 
-import java.util.*;
+import com.sun.c1x.ir.ExceptionHandler;
+import com.sun.c1x.stub.CodeStub;
+import com.sun.c1x.util.Util;
 
-import com.sun.c1x.ir.*;
-import com.sun.c1x.stub.*;
-import com.sun.c1x.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * The <code>LIRVisitState</code> class definition.

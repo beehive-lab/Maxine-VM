@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.stub.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.debug.LogStream;
+import com.sun.c1x.stub.CodeStub;
 
 
 /**
@@ -167,6 +167,6 @@ public class LIRAllocObj extends LIROp1 {
         out.print(" ");
         out.printf("[obj:%d]", headerSize());
         out.print(" ");
-        out.printf("[lbl:0x%x]", stub().entry());
+        out.printf("[lbl:0x%x]", stub().entry);
     }
 }

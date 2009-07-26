@@ -22,7 +22,6 @@ package com.sun.c1x.stub;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
 
 
 /**
@@ -34,9 +33,8 @@ import com.sun.c1x.util.*;
  */
 public class SimpleExceptionStub extends CodeStub {
 
-    private LIROperand obj;
-    private CiRuntimeCall stub;
-    private CodeEmitInfo info;
+    public final LIROperand obj;
+    public final CiRuntimeCall stub;
 
         /**
      * @param obj
@@ -44,28 +42,14 @@ public class SimpleExceptionStub extends CodeStub {
      * @param info
      */
     public SimpleExceptionStub(LIROperand obj, CiRuntimeCall stub, CodeEmitInfo info) {
-        super();
+        super(info);
         this.obj = obj;
         this.stub = stub;
-        this.info = info;
     }
 
     @Override
-    public void emitCode(LIRAssembler e) {
-    }
-
-    @Override
-    public CodeEmitInfo info() {
-        return info;
-    }
-
-    /**
-     * Gets the stub of this class.
-     *
-     * @return the stub
-     */
-    public CiRuntimeCall getStub() {
-        return stub;
+    public void accept(CodeStubVisitor visitor) {
+        visitor.visitSimpleExceptionStub(this);
     }
 
     @Override
@@ -79,10 +63,5 @@ public class SimpleExceptionStub extends CodeStub {
             visitor.doInput(obj);
         }
         visitor.doSlowCase(info);
-    }
-
-    @Override
-    public void printName(LogStream out) {
-        out.print("SimpleExceptionStub");
     }
 }

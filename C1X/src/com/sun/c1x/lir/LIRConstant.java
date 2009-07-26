@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 
@@ -145,24 +146,18 @@ public class LIRConstant extends LIROperand {
     }
 
     /**
-     * Asserts that a given constant c has type t1 or t2.
-     *
-     * @return the reference to the input constant if succeeded.
-     */
-    public static LIRConstant assertType(LIRConstant c, BasicType t1, BasicType t2) {
-        assert c.type() == t1 || c.type() == t2 : "constant has wrong type";
-        return c;
-    }
-
-    /**
      * Converts a float constant into an int constant.
      *
      * @return the int value of the constant.
      */
     public int asIntBits() {
-        // TODO: floats, longs
-        assertType(this, BasicType.Float, BasicType.Int);
-        return value.asInt();
+        if (this.isFloat()) {
+            return Float.floatToIntBits(this.asFloat());
+        } else if (this.type() == BasicType.Int) {
+            return this.asInt();
+        } else {
+            throw Util.shouldNotReachHere();
+        }
     }
 
     /**

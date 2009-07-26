@@ -85,8 +85,7 @@ public final class WatchpointsTable extends InspectorTable {
                 }
                 super.procedure(mouseEvent);
             }
-        }
-        );
+        });
     }
 
     /**
@@ -153,17 +152,6 @@ public final class WatchpointsTable extends InspectorTable {
      * @author Michael Van De Vanter
      */
     private final class WatchpointsTableModel extends DefaultTableModel {
-
-        MaxWatchpoint rowToWatchpoint(int row) {
-            int count = 0;
-            for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
-                if (count == row) {
-                    return watchpoint;
-                }
-                count++;
-            }
-            throw FatalError.unexpected("WatchpointsInspector.get(" + row + ") failed");
-        }
 
         void refresh() {
             fireTableDataChanged();
@@ -253,6 +241,17 @@ public final class WatchpointsTable extends InspectorTable {
                 default:
                     return MaxWatchpoint.class;
             }
+        }
+
+        MaxWatchpoint rowToWatchpoint(int row) {
+            int count = 0;
+            for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
+                if (count == row) {
+                    return watchpoint;
+                }
+                count++;
+            }
+            throw FatalError.unexpected("WatchpointsInspector.get(" + row + ") failed");
         }
 
         int findRow(MaxWatchpoint findWatchpoint) {

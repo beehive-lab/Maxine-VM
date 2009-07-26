@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
+import java.io.*;
 import java.util.*;
 
 import com.sun.c1x.ci.*;
@@ -27,10 +28,18 @@ import com.sun.c1x.target.*;
 import com.sun.c1x.target.x86.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.max.asm.*;
+import com.sun.max.asm.dis.*;
+import com.sun.max.io.*;
+import com.sun.max.lang.*;
+import com.sun.max.platform.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.layout.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
@@ -45,7 +54,7 @@ import com.sun.max.vm.type.*;
  */
 public class MaxCiRuntime implements CiRuntime {
 
-    private static final Register[] generalParameterRegisters = new Register[]{X86Register.rdi, X86Register.rsi, X86Register.rdx, X86Register.r8, X86Register.r9};
+    private static final Register[] generalParameterRegisters = new Register[]{X86Register.rdi, X86Register.rsi, X86Register.rdx, X86Register.rcx, X86Register.r8, X86Register.r9};
     private static final Register[] xmmParameterRegisters = new Register[]{X86Register.xmm0, X86Register.xmm1, X86Register.xmm2, X86Register.xmm3, X86Register.xmm4, X86Register.xmm5, X86Register.xmm6, X86Register.xmm7};
 
     public static final MaxCiRuntime globalRuntime = new MaxCiRuntime();
@@ -95,8 +104,14 @@ public class MaxCiRuntime implements CiRuntime {
      * @param javaClass the java class object
      * @return the compiler interface type for the specified class
      */
-    public CiType getType(Class<?> javaClass) {
-        return globalConstantPool.canonicalCiType(ClassActor.fromJava(javaClass));
+    public CiType getType(final Class<?> javaClass) {
+
+        return globalConstantPool.canonicalCiType(MaxineVM.usingTarget(new Function<ClassActor>() {
+            @Override
+            public ClassActor call() throws Exception {
+                return ClassActor.fromJava(javaClass);
+            }
+        }));
     }
 
     /**
@@ -192,7 +207,7 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public int arrayLengthOffsetInBytes() {
-        return Layout.arrayHeaderLayout().arrayLengthOffset();
+        return VMConfiguration.target().layoutScheme().arrayHeaderLayout.arrayLengthOffset();
     }
 
     public boolean dtraceMethodProbes() {
@@ -222,7 +237,7 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public int klassOffsetInBytes() {
-        return Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt();
+        return VMConfiguration.target().layoutScheme().generalLayout.getOffsetFromOrigin(HeaderField.HUB).toInt();
     }
 
     public boolean needsExplicitNullCheck(int offset) {
@@ -257,15 +272,11 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public int vtableStartOffset() {
-        return Hub.vTableStartIndex();
+        return Hub.vTableStartIndex() * 8;
     }
 
     public int arrayBaseOffsetInBytes(BasicType type) {
-        return Layout.layoutScheme().arrayHeaderLayout.headerSize();
-    }
-
-    public int nativeCallInstructionSize() {
-        throw Util.unimplemented();
+        return VMConfiguration.target().layoutScheme().arrayHeaderLayout.headerSize();
     }
 
     public Register callerSaveFpuRegAt(int i) {
@@ -321,7 +332,9 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public int elementKlassOffsetInBytes() {
-        throw Util.unimplemented();
+
+        // TODO (tw): Modify maxine such that the element hub can be accessed from the array class hub!
+        return 0;
     }
 
     public long floatSignflipPoolAddress() {
@@ -357,10 +370,6 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public int methodDataNullSeenByteConstant() {
-        throw Util.unimplemented();
-    }
-
-    public int nativeCallDisplacementOffset() {
         throw Util.unimplemented();
     }
 
@@ -404,8 +413,11 @@ public class MaxCiRuntime implements CiRuntime {
         throw Util.unimplemented();
     }
 
+    // Special object whose integer representation must look as different as possible from a real oop
+    private final Object nonOopWord = new Object();
+
     public Object universeNonOopWord() {
-        throw Util.unimplemented();
+        return nonOopWord;
     }
 
     public boolean universeSupportsInlineContigAlloc() {
@@ -502,14 +514,24 @@ public class MaxCiRuntime implements CiRuntime {
                 case Word:
                 case Object:
                     if (currentGeneral < generalParameterRegisters.length) {
-                        result[i] = new CiLocation(generalParameterRegisters[currentGeneral++]);
+                        Register register = generalParameterRegisters[currentGeneral++];
+                        if (kind == BasicType.Long) {
+                            result[i] = new CiLocation(register, register);
+                        } else {
+                            result[i] = new CiLocation(register);
+                        }
                     }
                     break;
 
                 case Float:
                 case Double:
                     if (currentXMM < xmmParameterRegisters.length) {
-                        result[i] = new CiLocation(xmmParameterRegisters[currentXMM++]);
+                        Register register = xmmParameterRegisters[currentXMM++];
+                        if (kind == BasicType.Float) {
+                            result[i] = new CiLocation(register);
+                        } else {
+                            result[i] = new CiLocation(register, register);
+                        }
                     }
                     break;
 
@@ -547,33 +569,63 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public String disassemble(byte[] code) {
-        /*final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
-        writer.flush();
-        final ProcessorKind processorKind = VMConfiguration.target().platform().processorKind;
-        final InlineDataDecoder inlineDataDecoder = null; //InlineDataDecoder.createFrom(teleTargetMethod.getEncodedInlineDataDescriptors());
-        final Pointer startAddress = Pointer.fromInt(0);
-        final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
-            @Override
-            protected String disassembledObjectString(Disassembler disassembler, DisassembledObject disassembledObject) {
-                final String string = super.disassembledObjectString(disassembler, disassembledObject);
-                if (string.startsWith("call ")) {
-                    final BytecodeLocation bytecodeLocation = null; //_teleTargetMethod.getBytecodeLocationFor(startAddress.plus(disassembledObject.startPosition()));
-                    if (bytecodeLocation != null) {
-                        final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
-                        if (methodRef != null) {
-                            final ConstantPool pool = bytecodeLocation.classMethodActor().codeAttribute().constantPool();
-                            return string + " [" + methodRef.holder(pool).toJavaString(false) + "." + methodRef.name(pool) + methodRef.signature(pool).toJavaString(false, false) + "]";
+        if (MaxineVM.isPrototyping()) {
+            final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
+            writer.flush();
+            final ProcessorKind processorKind = VMConfiguration.target().platform().processorKind;
+            final InlineDataDecoder inlineDataDecoder = null; //InlineDataDecoder.createFrom(teleTargetMethod.getEncodedInlineDataDescriptors());
+            final Pointer startAddress = Pointer.fromInt(0);
+            final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
+                @Override
+                protected String disassembledObjectString(Disassembler disassembler, DisassembledObject disassembledObject) {
+                    final String string = super.disassembledObjectString(disassembler, disassembledObject);
+                    if (string.startsWith("call ")) {
+                        final BytecodeLocation bytecodeLocation = null; //_teleTargetMethod.getBytecodeLocationFor(startAddress.plus(disassembledObject.startPosition()));
+                        if (bytecodeLocation != null) {
+                            final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
+                            if (methodRef != null) {
+                                final ConstantPool pool = bytecodeLocation.classMethodActor().codeAttribute().constantPool();
+                                return string + " [" + methodRef.holder(pool).toJavaString(false) + "." + methodRef.name(pool) + methodRef.signature(pool).toJavaString(false, false) + "]";
+                            }
                         }
                     }
+                    return string;
                 }
-                return string;
-            }
-        };
-        Disassemble.disassemble(byteArrayOutputStream, code, processorKind, startAddress, inlineDataDecoder, disassemblyPrinter);
-        return byteArrayOutputStream.toString();*/
-
+            };
+            Disassemble.disassemble(byteArrayOutputStream, code, processorKind, startAddress, inlineDataDecoder, disassemblyPrinter);
+            return byteArrayOutputStream.toString();
+        }
         return "";
+    }
+
+    public int initThreadOffsetInBytes() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public int sizeofKlassOopDesc() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    public int convertToPointer32(Object obj) {
+        if (obj == nonOopWord) {
+            // Return something that is not 0 and does not look like an oop (neither high nor low word).
+            return 1;
+        }
+
+        // TODO: Determine how to get address of an object in Maxine
+        return 0;
+    }
+
+    public long convertToPointer64(Object obj) {
+        if (obj == nonOopWord) {
+            // Return something that is not 0 and does not look like an oop (neither high nor low word).
+            return 1;
+        }
+        // TODO: Determine how to get address of an object in Maxine
+        return 0;
     }
 
 }

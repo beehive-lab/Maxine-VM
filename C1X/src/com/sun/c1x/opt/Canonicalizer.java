@@ -20,15 +20,25 @@
  */
 package com.sun.c1x.opt;
 
-import java.lang.reflect.*;
-import java.util.*;
-
-import com.sun.c1x.*;
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
+import com.sun.c1x.C1XIntrinsic;
+import com.sun.c1x.C1XMetrics;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.bytecode.Bytecodes;
+import com.sun.c1x.ci.CiConstant;
+import com.sun.c1x.ci.CiField;
+import com.sun.c1x.ci.CiMethod;
+import com.sun.c1x.ci.CiType;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.value.BasicType;
+import com.sun.c1x.value.ConstType;
+import com.sun.c1x.value.ValueType;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * The <code>Canonicalizer</code> reduces instructions to a canonical form by folding constants,
@@ -421,7 +431,7 @@ public class Canonicalizer extends InstructionVisitor {
                 // limit this optimization to the current basic block
                 if (nv != null && inCurrentBlock(v)) {
                     setCanonical(new StoreField(i.object(), i.field(), nv, i.isStatic(),
-                                                i.lockStack(), i.stateBefore(), i.isLoaded(), i.isInitialized()));
+                                                i.lockStack(), i.stateBefore(), i.isLoaded()));
                 }
             }
         }

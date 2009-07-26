@@ -20,12 +20,13 @@
  */
 package com.sun.c1x.value;
 
-import java.util.*;
-
-import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
+import com.sun.c1x.Bailout;
+import com.sun.c1x.ci.CiMethod;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.util.Util;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The <code>ValueStack</code> class encapsulates the state of local variables and the stack at a particular point in

@@ -20,9 +20,10 @@
  */
 package com.sun.c1x.alloc;
 
-import java.util.*;
-
 import com.sun.c1x.lir.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *

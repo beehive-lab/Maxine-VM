@@ -18,13 +18,15 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.util;
+package com.sun.c1x.debug;
 
-import static com.sun.c1x.ir.Instruction.*;
-
-import com.sun.c1x.graph.*;
-import com.sun.c1x.ir.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.graph.IR;
+import com.sun.c1x.ir.BlockBegin;
+import com.sun.c1x.ir.BlockClosure;
+import com.sun.c1x.ir.Instruction;
+import static com.sun.c1x.ir.Instruction.valueString;
+import com.sun.c1x.ir.Phi;
+import com.sun.c1x.value.ValueStack;
 
 /**
  * Prints a listing for a {@linkplain BlockBegin block}.
@@ -36,7 +38,7 @@ public class BlockPrinter implements BlockClosure {
     private final InstructionPrinter ip;
     private final boolean cfgOnly;
     private final boolean liveOnly;
-    private final IR ir;
+    final IR ir;
 
     public BlockPrinter(IR ir, InstructionPrinter ip, boolean cfgOnly, boolean liveOnly) {
         this.ir = ir;

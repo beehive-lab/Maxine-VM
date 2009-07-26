@@ -20,11 +20,11 @@
  */
 package com.sun.c1x.asm;
 
-import java.util.*;
-
-import com.sun.c1x.*;
-import com.sun.c1x.target.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.debug.TTY;
+import com.sun.c1x.target.Register;
+import com.sun.c1x.util.Util;
 
 /**
  * @author Marcelo Cintra
@@ -55,13 +55,8 @@ public abstract class AbstractAssembler {
         return 0 <= x && x < 32;
     }
 
-    // Accessors
-    public CodeSection codeSection() {
-        return null;
-    }
-
-    public Pointer pc() {
-        return new Pointer(codeBuffer.position());
+    public int pc() {
+        return codeBuffer.position();
     }
 
     public int offset() {
@@ -107,9 +102,10 @@ public abstract class AbstractAssembler {
         throw Util.unimplemented();
     }
 
-    protected void aByte(int x) {
+    public void aByte(int x) {
         emitByte(x);
     }
+
 
     void aLong(int x) {
         emitInt(x);
@@ -184,6 +180,30 @@ public abstract class AbstractAssembler {
         codeBuffer.emitInt(x);
     }
 
+    protected void recordDataReferenceInCode(int pos, int dataOffset, boolean relative) {
+
+        assert pos >= 0 && dataOffset >= 0;
+
+        if (C1XOptions.TraceRelocation) {
+            TTY.print("Object reference in code: pos = %d, dataOffset = %d, relative = %b", pos, dataOffset, relative);
+        }
+
+        if (compilation.targetMethod != null) {
+            compilation.targetMethod.recordDataReferenceInCode(pos, dataOffset, relative);
+        }
+    }
+
+    protected void recordObjectReferenceInCode(Object obj) {
+
+        if (C1XOptions.TraceRelocation) {
+            TTY.print("Object reference in code: pos = %d, object= %s", offset(), obj.toString());
+        }
+
+        if (compilation.targetMethod != null) {
+            compilation.targetMethod.recordObjectReferenceInCode(offset(), obj);
+        }
+    }
+
     protected void emitLong(long x) {
         codeBuffer.emitLong(x);
     }
@@ -211,29 +231,35 @@ public abstract class AbstractAssembler {
     }
 
     protected void relocate(int position, Relocation relocation) {
-
-        TTY.println("RELOCATION recorded at position " + position + " " + relocation);
-        switch (relocation.type()) {
-
-        }
-
     }
 
     protected abstract boolean pdCheckInstructionMark();
 
-    protected Pointer target(Label l) {
-        return codeSection().target(l, pc());
+    protected int target(Label l) {
+
+        int branchPc = pc();
+        if (l.isBound()) {
+            int loc = l.loc();
+            return loc;
+        } else {
+            l.addPatchAt(branchPc);
+
+            // Need to return a pc, doesn't matter what it is since it will be
+            // replaced during resolution later.
+            // Don't return null or badAddress, since branches shouldn't overflow.
+            // Don't return base either because that could overflow displacements
+            // for shorter branches. It will get checked when bound.
+            return branchPc;
+        }
     }
 
     public int doubleConstant(double d) {
         int offset = dataBuffer.emitDouble(d);
-        compilation.targetMethod.recordDataReferenceInCode(lastInstructionStart, offset, true);
         return offset;
     }
 
     public int floatConstant(float f) {
         int offset = dataBuffer.emitFloat(f);
-        compilation.targetMethod.recordDataReferenceInCode(lastInstructionStart, offset, true);
         return offset;
     }
 
@@ -283,24 +309,24 @@ public abstract class AbstractAssembler {
                 off = 2;
             }
 
-            int imm32 = target - (branch + 1 + off);
+            int imm32 = target - (branch + 4 + off);
             codeBuffer.emitInt(imm32, branch + off);
         }
     }
 
     public void installTargetMethod() {
         if (compilation.targetMethod == null) {
-            byte[] array = codeBuffer.finished();
-            int length = codeBuffer.position();
-            Util.printBytes(array, length);
+            //byte[] array = codeBuffer.finished();
+            //int length = codeBuffer.position();
+            //Util.printBytes(array, length);
 
-            TTY.println("Disassembled code:");
-            TTY.println(compilation.runtime.disassemble(Arrays.copyOf(array, length)));
+            //TTY.println("Disassembled code:");
+            //TTY.println(compilation.runtime.disassemble(Arrays.copyOf(array, length)));
 
-            array = dataBuffer.finished();
-            length = dataBuffer.position();
-            Util.printBytes(array, length);
-            TTY.println("Frame size: %d", compilation.frameMap().framesize());
+            //array = dataBuffer.finished();
+            //length = dataBuffer.position();
+            //Util.printBytes(array, length);
+            //TTY.println("Frame size: %d", compilation.frameMap().framesize());
 
         } else {
             compilation.targetMethod.setTargetCode(codeBuffer.finished(), codeBuffer.position());

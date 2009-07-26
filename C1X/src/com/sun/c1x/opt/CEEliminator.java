@@ -18,62 +18,21 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.asm;
+package com.sun.c1x.opt;
 
-import com.sun.c1x.asm.RelocInfo.*;
+import com.sun.c1x.graph.IR;
 
+/**
+ * This class implements conditional-expression elimination, which replaces some
+ * branching constructs with conditional moves.
+ *
+ * @author Ben L. Titzer
+ */
+public class CEEliminator {
 
-public class CodeSection {
+    final IR ir;
 
-    public int remaining() {
-        // TODO Auto-generated method stub
-        return Integer.MAX_VALUE;
+    public CEEliminator(IR ir) {
+        this.ir = ir;
     }
-
-    public void relocate(Pointer pc, Type polltype) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void clearMark() {
-        // TODO Auto-generated method stub
-
-    }
-
-    public Pointer start() {
-        // TODO Auto-generated method stub
-        return new Pointer(0);
-    }
-
-    public Pointer limit() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public Pointer end() {
-        // TODO Auto-generated method stub
-        return new Pointer(0);
-    }
-
-    public boolean maybeExpandToEnsureRemaining(int requiredSpace) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    public void setEnd(Pointer codePos) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public Pointer target(Label l, Pointer pointer) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-
-    public boolean isAllocated() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
 }

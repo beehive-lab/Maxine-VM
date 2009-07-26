@@ -20,18 +20,30 @@
  */
 package com.sun.c1x.lir;
 
-import java.io.*;
-import java.util.*;
-
-import com.sun.c1x.*;
-import com.sun.c1x.asm.*;
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.ExceptionInfo;
+import com.sun.c1x.asm.AbstractAssembler;
+import com.sun.c1x.asm.CodeOffsets;
+import com.sun.c1x.bytecode.Bytecodes;
+import com.sun.c1x.ci.CiMethod;
+import com.sun.c1x.ci.CiRuntimeCall;
+import com.sun.c1x.debug.InstructionPrinter;
+import com.sun.c1x.debug.LogStream;
+import com.sun.c1x.debug.TTY;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.stub.*;
-import com.sun.c1x.target.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.stub.CodeStub;
+import com.sun.c1x.stub.DivByZeroStub;
+import com.sun.c1x.stub.ImplicitNullCheckStub;
+import com.sun.c1x.stub.PatchingStub;
+import com.sun.c1x.target.Register;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.value.BasicType;
+import com.sun.c1x.value.ValueStack;
+
+import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The <code>LIRAssembler</code> class definition.
@@ -42,18 +54,14 @@ import com.sun.c1x.value.*;
  */
 public abstract class LIRAssembler {
 
-    private AbstractAssembler masm;
+    public final AbstractAssembler asm;
     protected List<CodeStub> slowCaseStubs;
-    protected C1XCompilation compilation;
+    public final C1XCompilation compilation;
     private FrameMap frameMap;
     private BlockBegin currentBlock;
 
     private Instruction pendingNonSafepoint;
     private int pendingNonSafepointOffset;
-
-    protected C1XCompilation compilation() {
-        return compilation;
-    }
 
     // Assert only:
     protected List<BlockBegin> branchTargetBlocks;
@@ -81,23 +89,23 @@ public abstract class LIRAssembler {
     }
 
     protected CiMethod method() {
-        return compilation().method();
+        return compilation.method();
     }
 
     protected CodeOffsets offsets() {
         return compilation.offsets();
     }
 
-    protected void addCallInfoHere(CodeEmitInfo info) {
+    public void addCallInfoHere(CodeEmitInfo info) {
         addCallInfo(codeOffset(), info);
     }
 
     protected void patchingEpilog(PatchingStub patch, LIRPatchCode patchCode, Register obj, CodeEmitInfo info) {
         // we must have enough patching space so that call can be inserted
-        while (masm.pc().value - patch.pcStart().value < compilation.runtime.nativeCallInstructionSize()) {
-            masm.nop();
+        while (asm.pc() - patch.pcStart() < compilation.target.arch.nativeMoveConstInstructionSize) {
+            asm.nop();
         }
-        patch.install(masm, patchCode, obj, info);
+        patch.install(asm, patchCode, obj, info);
         appendPatchingStub(patch);
         assert check(patch, info);
     }
@@ -138,7 +146,7 @@ public abstract class LIRAssembler {
 
     public LIRAssembler(C1XCompilation compilation) {
         this.compilation = compilation;
-        this.masm = compilation.masm();
+        this.asm = compilation.masm();
 
         // TODO: Assign barrier set
         // bs =
@@ -161,12 +169,14 @@ public abstract class LIRAssembler {
             CodeStub s = stubList.get(m);
             if (C1XOptions.CommentedAssembly) {
                 String st = s.name() + " slow case";
-                masm.blockComment(st);
+                asm.blockComment(st);
             }
-            s.emitCode(this);
+            emitCode(s);
             assert s.assertNoUnboundLabels();
         }
     }
+
+    protected abstract void emitCode(CodeStub s);
 
     public void emitSlowCaseStubs() {
         emitStubs(slowCaseStubs);
@@ -177,11 +187,11 @@ public abstract class LIRAssembler {
     }
 
     protected int codeOffset() {
-        return masm.offset();
+        return asm.offset();
     }
 
-    protected Pointer pc() {
-        return masm.pc();
+    protected int pc() {
+        return asm.pc();
     }
 
     public void emitExceptionEntries(List<ExceptionInfo> infoList) {
@@ -199,7 +209,7 @@ public abstract class LIRAssembler {
                     if (handler.entryCode() != null && handler.entryCode().instructionsList().size() > 1) {
                         handler.setEntryPCO(codeOffset());
                         if (C1XOptions.CommentedAssembly) {
-                            masm.blockComment("Exception adapter block");
+                            asm.blockComment("Exception adapter block");
                         }
                         emitLirList(handler.entryCode());
                     } else {
@@ -252,7 +262,7 @@ public abstract class LIRAssembler {
         assert assertFrameSize();
         if (C1XOptions.CommentedAssembly) {
             String st = String.format(" block B%d [%d, %d]", block.blockID, block.bci(), block.end().bci());
-            masm.blockComment(st);
+            asm.blockComment(st);
         }
 
         emitLirList(block.lir());
@@ -279,7 +289,7 @@ public abstract class LIRAssembler {
                     LogStream ls = new LogStream(st);
                     op.printOn(ls);
                     ls.flush();
-                    masm.blockComment(st.toString());
+                    asm.blockComment(st.toString());
                 }
             }
             if (C1XOptions.PrintLIRWithAssembly) {
@@ -290,12 +300,12 @@ public abstract class LIRAssembler {
 
             op.emitCode(this);
 
-            if (compilation().debugInfoRecorder().recordingNonSafepoints()) {
+            if (compilation.debugInfoRecorder().recordingNonSafepoints()) {
                 processDebugInfo(op);
             }
 
             if (C1XOptions.PrintLIRWithAssembly) {
-                masm.decode();
+                asm.decode();
             }
         }
     }
@@ -317,17 +327,17 @@ public abstract class LIRAssembler {
         //masm.codeSection().relocate(pc(), RelocInfo.Type.pollType);
         int pcOffset = codeOffset();
         flushDebugInfo(pcOffset);
-        info.recordDebugInfo(compilation().debugInfoRecorder(), pcOffset);
+        info.recordDebugInfo(compilation.debugInfoRecorder(), pcOffset);
         if (info.exceptionHandlers() != null) {
-            compilation().addExceptionHandlersForPco(pcOffset, info.exceptionHandlers());
+            compilation.addExceptionHandlersForPco(pcOffset, info.exceptionHandlers());
         }
     }
 
     protected void addCallInfo(int pcOffset, CodeEmitInfo cinfo) {
         flushDebugInfo(pcOffset);
-        cinfo.recordDebugInfo(compilation().debugInfoRecorder(), pcOffset);
+        cinfo.recordDebugInfo(compilation.debugInfoRecorder(), pcOffset);
         if (cinfo.exceptionHandlers() != null) {
-            compilation().addExceptionHandlersForPco(pcOffset, cinfo.exceptionHandlers());
+            compilation.addExceptionHandlersForPco(pcOffset, cinfo.exceptionHandlers());
         }
     }
 
@@ -364,7 +374,7 @@ public abstract class LIRAssembler {
             pendingNonSafepoint = null;
         }
         // Remember the debug info.
-        if (pcOffset > compilation().debugInfoRecorder().lastPcOffset()) {
+        if (pcOffset > compilation.debugInfoRecorder().lastPcOffset()) {
             pendingNonSafepoint = src;
             pendingNonSafepointOffset = pcOffset;
         }
@@ -400,7 +410,7 @@ public abstract class LIRAssembler {
         ValueStack vstack = debugInfo(pendingNonSafepoint);
         int bci = pendingNonSafepoint.bci();
 
-        DebugInformationRecorder debugInfo = compilation().debugInfoRecorder();
+        DebugInformationRecorder debugInfo = compilation.debugInfoRecorder();
         assert debugInfo.recordingNonSafepoints() : "sanity";
 
         debugInfo.addNonSafepoint(pcOffset);
@@ -467,7 +477,7 @@ public abstract class LIRAssembler {
                 icCall(op.method(), op.addr, op.info());
                 break;
             case VirtualCall:
-                vtableCall(op.method(), op.vtableOffset(), op.info());
+                vtableCall(op.method(), op.receiver, op.vtableOffset(), op.info());
                 break;
             default:
                 throw Util.shouldNotReachHere();
@@ -478,14 +488,14 @@ public abstract class LIRAssembler {
 
     protected abstract void emitStaticCallStub();
 
-    protected abstract void vtableCall(CiMethod ciMethod, long l, CodeEmitInfo info);
+    protected abstract void vtableCall(CiMethod ciMethod, LIROperand receiver, long l, CodeEmitInfo info);
 
     protected abstract void icCall(CiMethod ciMethod, CiRuntimeCall addr, CodeEmitInfo info);
 
     protected abstract void alignCall(LIROpcode code);
 
     void emitOpLabel(LIRLabel op) {
-        masm.bind(op.label());
+        asm.bind(op.label());
     }
 
     void emitOp1(LIROp1 op) {
@@ -519,8 +529,8 @@ public abstract class LIRAssembler {
                 break;
 
             case Safepoint:
-                if (compilation().debugInfoRecorder().lastPcOffset() == codeOffset()) {
-                    masm.nop();
+                if (compilation.debugInfoRecorder().lastPcOffset() == codeOffset()) {
+                    asm.nop();
                 }
                 safepointPoll(op.inOpr(), op.info());
                 break;
@@ -561,7 +571,7 @@ public abstract class LIRAssembler {
                     addDebugInfoForNullCheckHere(op.info());
 
                     if (op.inOpr().isSingleCpu()) {
-                        masm.nullCheck(op.inOpr().asRegister());
+                        asm.nullCheck(op.inOpr().asRegister());
                     } else {
                         throw Util.shouldNotReachHere();
                     }
@@ -608,14 +618,14 @@ public abstract class LIRAssembler {
         switch (op.code()) {
             case WordAlign: {
                 while (codeOffset() % compilation.target.arch.wordSize != 0) {
-                    masm.nop();
+                    asm.nop();
                 }
                 break;
             }
 
             case Nop:
                 assert op.info() == null : "not supported";
-                masm.nop();
+                asm.nop();
                 break;
 
             case Label:
@@ -627,20 +637,20 @@ public abstract class LIRAssembler {
 
             case StdEntry:
                 // init offsets
-                offsets().setValue(CodeOffsets.Entries.OSREntry, masm.offset());
-                masm.align(compilation.target.codeAlignment);
-                masm.makeOffset(compilation.runtime.codeOffset());
-                if (needsIcache(compilation().method())) {
+                offsets().setValue(CodeOffsets.Entries.OSREntry, asm.offset());
+                asm.align(compilation.target.codeAlignment);
+                asm.makeOffset(compilation.runtime.codeOffset());
+                if (needsIcache(compilation.method())) {
                     checkIcache();
                 }
-                offsets().setValue(CodeOffsets.Entries.VerifiedEntry, masm.offset());
-                masm.verifiedEntry();
+                offsets().setValue(CodeOffsets.Entries.VerifiedEntry, asm.offset());
+                asm.verifiedEntry();
                 buildFrame();
-                offsets().setValue(CodeOffsets.Entries.FrameComplete, masm.offset());
+                offsets().setValue(CodeOffsets.Entries.FrameComplete, asm.offset());
                 break;
 
             case OsrEntry:
-                offsets().setValue(CodeOffsets.Entries.OSREntry, masm.offset());
+                offsets().setValue(CodeOffsets.Entries.OSREntry, asm.offset());
                 osrEntry();
                 break;
 
@@ -787,7 +797,7 @@ public abstract class LIRAssembler {
     protected abstract void compOp(LIRCondition condition, LIROperand inOpr1, LIROperand inOpr2, LIROp2 op);
 
     void buildFrame() {
-        masm.buildFrame(initialFrameSizeInBytes());
+        asm.buildFrame(initialFrameSizeInBytes());
     }
 
     protected abstract int initialFrameSizeInBytes();
@@ -861,7 +871,7 @@ public abstract class LIRAssembler {
 
     protected abstract void reg2reg(LIROperand src, LIROperand dest);
 
-    void verifyOopMap(CodeEmitInfo info) {
+    public void verifyOopMap(CodeEmitInfo info) {
         if (C1XOptions.VerifyOopMaps || C1XOptions.VerifyOops) {
             // TODO: verify oops
 // boolean v = C1XOptions.VerifyOops;

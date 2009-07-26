@@ -20,20 +20,20 @@
  */
 package com.sun.c1x.opt;
 
+import com.sun.c1x.C1XMetrics;
 import com.sun.c1x.graph.IR;
 import com.sun.c1x.ir.BlockBegin;
 import com.sun.c1x.ir.Instruction;
-import com.sun.c1x.C1XMetrics;
 
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Implements global value numbering based on dominators.
  *
  * @author Ben L. Titzer
  */
-public class GlobalValueNumbering {
+public class GlobalValueNumberer {
 
     final IR ir;
     final HashMap<BlockBegin, ValueMap> valueMaps;
@@ -44,7 +44,7 @@ public class GlobalValueNumbering {
      *
      * @param ir the IR on which to perform global value numbering
      */
-    public GlobalValueNumbering(IR ir) {
+    public GlobalValueNumberer(IR ir) {
         this.ir = ir;
         List<BlockBegin> blocks = ir.linearScanOrder();
         valueMaps = new HashMap<BlockBegin, ValueMap>(blocks.size());

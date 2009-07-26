@@ -24,11 +24,14 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.c1x.C1XOptions;
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.vm.value.*;
 
 /**
  * The <code>MaxCiType</code> class represents a compiler interface type,
@@ -79,7 +82,12 @@ public class MaxCiType implements CiType {
         this.constantPool = constantPool;
         if (typeDescriptor instanceof JavaTypeDescriptor.AtomicTypeDescriptor) {
             final JavaTypeDescriptor.AtomicTypeDescriptor atom = (JavaTypeDescriptor.AtomicTypeDescriptor) typeDescriptor;
-            this.classActor = ClassActor.fromJava(atom.javaClass);
+            this.classActor = MaxineVM.usingTarget(new Function<ClassActor>() {
+                @Override
+                public ClassActor call() throws Exception {
+                    return ClassActor.fromJava(atom.javaClass);
+                }
+            });
         }
         this.typeDescriptor = typeDescriptor;
         this.basicType = kindToBasicType(typeDescriptor.toKind());
@@ -251,7 +259,12 @@ public class MaxCiType implements CiType {
      */
     public CiType arrayOf() {
         if (classActor != null) {
-            return constantPool.canonicalCiType(ArrayClassActor.forComponentClassActor(classActor));
+            return constantPool.canonicalCiType(MaxineVM.usingTarget(new Function<ArrayClassActor>() {
+                @Override
+                public ArrayClassActor call() throws Exception {
+                    return ArrayClassActor.forComponentClassActor(classActor);
+                }
+            }));
         }
         return new MaxCiType(constantPool, JavaTypeDescriptor.getArrayDescriptorForDescriptor(typeDescriptor, 1));
     }
@@ -400,6 +413,11 @@ public class MaxCiType implements CiType {
 
     public int superCheckOffset() {
         throw Util.unimplemented();
+    }
+
+    @Override
+    public CiConstant getStaticContainer() {
+        return new MaxCiConstant(ReferenceValue.from(asClassActor("getStaticContainer()").staticTuple()));
     }
 
 }

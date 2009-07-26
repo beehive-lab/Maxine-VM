@@ -18,16 +18,39 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.util;
-
-import com.sun.c1x.ir.*;
+package com.sun.c1x.stub;
 
 /**
- * The <code>InstructionClosure</code> interface represents a first-class
- * function that can be applied to an instruction.
  *
- * @author Ben L. Titzer
+ * @author Thomas Wuerthinger
+ *
  */
-public interface InstructionClosure {
-    Instruction apply(Instruction i);
+public interface CodeStubVisitor {
+
+    void visitArrayCopyStub(ArrayCopyStub arrayCopyStub);
+
+    void visitArrayStoreExceptionStub(ArrayStoreExceptionStub arrayStoreExceptionStub);
+
+    void visitConversionStub(ConversionStub conversionStub);
+
+    void visitDivByZeroStub(DivByZeroStub divByZeroStub);
+
+    void visitImplicitNullCheckStub(ImplicitNullCheckStub implicitNullCheckStub);
+
+    void visitMonitorEnterStub(MonitorEnterStub monitorEnterStub);
+
+    void visitMonitorExitStub(MonitorExitStub monitorExitStub);
+
+    void visitNewInstanceStub(NewInstanceStub visitor);
+
+    void visitNewObjectArrayStub(NewObjectArrayStub newObjectArrayStub);
+
+    void visitNewTypeArrayStub(NewTypeArrayStub newTypeArrayStub);
+
+    void visitPatchingStub(PatchingStub patchingStub);
+
+    void visitRangeCheckStub(RangeCheckStub visitor);
+
+    void visitSimpleExceptionStub(SimpleExceptionStub simpleExceptionStub);
+
 }

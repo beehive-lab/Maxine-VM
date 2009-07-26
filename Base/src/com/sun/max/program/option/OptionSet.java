@@ -577,14 +577,14 @@ public class OptionSet {
         if (fieldType == boolean.class) {
             if (prefix.length() > 0) {
                 // setup a "-prefix+name" option
-                String plusName = prefix + "+" + name;
-                FieldOption<Boolean> plusOption = new FieldOption<Boolean>(plusName, object, field, (Boolean) defaultValue, OptionTypes.BOOLEAN_TYPE, help);
+                String plusName = prefix + ":+" + name;
+                FieldOption<Boolean> plusOption = new FieldOption<Boolean>(plusName, object, field, (Boolean) defaultValue, OptionTypes.BLANK_BOOLEAN_TYPE, help);
                 plusOption.nullValue = true;
                 addOption(plusOption, Syntax.REQUIRES_BLANK);
 
                 // setup a "-prefix-name" option
-                String minusName = prefix + "-" + name;
-                FieldOption<Boolean> minusOption = new FieldOption<Boolean>(minusName, object, field, (Boolean) defaultValue, OptionTypes.BOOLEAN_TYPE, help);
+                String minusName = prefix + ":-" + name;
+                FieldOption<Boolean> minusOption = new FieldOption<Boolean>(minusName, object, field, (Boolean) defaultValue, OptionTypes.BLANK_BOOLEAN_TYPE, help);
                 minusOption.nullValue = false;
                 return addOption(minusOption, Syntax.REQUIRES_BLANK);
             }

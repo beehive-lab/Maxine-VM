@@ -21,7 +21,6 @@
 package com.sun.c1x.stub;
 
 import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
 
 
 /**
@@ -40,7 +39,7 @@ public class ArrayCopyStub extends CodeStub {
      * @param arrayCopy the LIR operation representing the array copy
      */
     public ArrayCopyStub(LIRArrayCopy arrayCopy) {
-        super();
+        super(null);
         this.arrayCopy = arrayCopy;
     }
 
@@ -69,23 +68,13 @@ public class ArrayCopyStub extends CodeStub {
     }
 
     @Override
-    public void emitCode(LIRAssembler e) {
-        // TODO: not implemented yet
-    }
-
-    @Override
-    public CodeEmitInfo info() {
-        return arrayCopy.info();
+    public void accept(CodeStubVisitor visitor) {
+        visitor.visitArrayCopyStub(this);
     }
 
     @Override
     public void visit(LIRVisitState visitor) {
         // don't pass in the code emit info since it's processed in the fast path
         visitor.doSlowCase();
-    }
-
-    @Override
-    public void printName(LogStream out) {
-        out.print("ArrayCopyStub");
     }
 }

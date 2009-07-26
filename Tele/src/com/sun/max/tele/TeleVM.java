@@ -760,6 +760,7 @@ public abstract class TeleVM implements MaxVM {
         final Pointer cell = layoutScheme().generalLayout.originToCell(origin);
         Pointer p = cell;
         if (bootImage.vmConfiguration().debugging()) {
+            // In a debugging build, each object is preceded by an extra tag word
             p = p.minus(Word.size()); // can the tag be accessed?
         }
         if (!containsInHeap(p) && !containsInCode(p)) {
@@ -771,18 +772,23 @@ public abstract class TeleVM implements MaxVM {
         }
         try {
             if (bootImage.vmConfiguration().debugging()) {
+                // Checking is easy in a debugging build; there's a special word preceding each object
                 final Word tag = dataAccess().getWord(cell, 0, -1);
                 return DebugHeap.isValidCellTag(tag);
             }
 
+            // Check the hard way, using none of the higher level services in the Inspector,
+            // since this predicate is necessary to build those services.
+            //
             // Keep following hub pointers until the same hub is traversed twice or
-            // an address outside of heap or code
-            // region(s) is encountered.
-            Word hubWord = layoutScheme().generalLayout.readHubReferenceAsWord(
-                    temporaryRemoteTeleGripFromOrigin(origin));
-            for (int i = 0; i < 3; i++) { // longest expected chain: staticTuple
-                                            // -> staticHub -> dynamicHub ->
-                                            // dynamicHub
+            // an address outside of heap or code region(s) is encountered.
+            //
+           // For all objects other than a {@link StaticTuple}, the maximum chain takes only two hops
+           // find the distinguished object with self-referential hub pointer:  the {@link DynamicHub} for
+            // class {@link DynamicHub}.
+            //          tuple -> dynamicHub of the tuple's class -> dynamicHub of DynamicHub
+            Word hubWord = layoutScheme().generalLayout.readHubReferenceAsWord(temporaryRemoteTeleGripFromOrigin(origin));
+            for (int i = 0; i < 3; i++) {
                 final RemoteTeleGrip hubGrip = createTemporaryRemoteTeleGrip(hubWord);
                 final Pointer hubOrigin = hubGrip.toOrigin();
                 if (!containsInHeap(hubOrigin) && !containsInCode(hubOrigin)) {
@@ -790,7 +796,14 @@ public abstract class TeleVM implements MaxVM {
                 }
                 final Word nextHubWord = layoutScheme().generalLayout.readHubReferenceAsWord(hubGrip);
                 if (nextHubWord.equals(hubWord)) {
-                    return true;
+                    // We arrived at a DynamicHub for the class DynamicHub
+                    if (i < 2) {
+                        // All ordinary cases will have stopped by now
+                        return true;
+                    }
+                    // This longer chain can only happen when we started with a {@link StaticTuple}.
+                    // Perform a more precise test to check for this.
+                    return isStaticTuple(origin);
                 }
                 hubWord = nextHubWord;
             }
@@ -798,6 +811,51 @@ public abstract class TeleVM implements MaxVM {
             return false;
         }
         return false;
+    }
+
+    /**
+     * Low level predicate for identifying the special case of a {@link StaticTuple} in the VM,
+     * using only the most primitive operations, since it is needed for building all the higher-level
+     * services in the Inspector.
+     * <br>
+     * Note that this predicate is not precise; it may very rarely return a false positive.
+     * <br>
+     * The predicate depends on the following chain in the VM heap layout:
+     * <ol>
+     *  <li>The hub of a {@link StaticTuple} points at a {@link StaticHub}</li>
+     *  <li>A field in a {@link StaticHub} points at the {@link ClassActor} for the class being implemented.</li>
+     *  <li>A field in a {@link ClassActor} points at the {@link StaticTuple} for the class being implemented,
+     *  which will point back at the original location if it is in fact a {@link StaticTuple}.</li>
+     *  </ol>
+     *  No type checks are performed, however, since this predicate must not depend on such higher-level information.
+     *
+     * @param origin a memory location in the VM
+     * @return whether the object (probably)  points at an instance of {@link StaticTuple}
+     * @see #isValidOrigin(Pointer)
+     */
+    private boolean isStaticTuple(Pointer origin) {
+        // If this is a {@link StaticTuple} then a field in the header points at a {@link StaticHub}
+        Word staticHubWord = layoutScheme().generalLayout.readHubReferenceAsWord(temporaryRemoteTeleGripFromOrigin(origin));
+        final RemoteTeleGrip staticHubGrip = createTemporaryRemoteTeleGrip(staticHubWord);
+        final Pointer staticHubOrigin = staticHubGrip.toOrigin();
+        if (!containsInHeap(staticHubOrigin) && !containsInCode(staticHubOrigin)) {
+            return false;
+        }
+        // If we really have a {@link StaticHub}, then a known field points at a {@link ClassActor}.
+        final int hubClassActorOffset = fields().Hub_classActor.fieldActor().offset();
+        final Word classActorWord = dataAccess().readWord(staticHubOrigin, hubClassActorOffset);
+        final RemoteTeleGrip classActorGrip = createTemporaryRemoteTeleGrip(classActorWord);
+        final Pointer classActorOrigin = classActorGrip.toOrigin();
+        if (!containsInHeap(classActorOrigin) && !containsInCode(classActorOrigin)) {
+            return false;
+        }
+        // If we really have a {@link ClassActor}, then a known field points at the {@link StaticTuple} for the class.
+        final int classActorStaticTupleOffset = fields().ClassActor_staticTuple.fieldActor().offset();
+        final Word staticTupleWord = dataAccess().readWord(classActorOrigin, classActorStaticTupleOffset);
+        final RemoteTeleGrip staticTupleGrip = createTemporaryRemoteTeleGrip(staticTupleWord);
+        final Pointer staticTupleOrigin = staticTupleGrip.toOrigin();
+        // If we really started with a {@link StaticTuple}, then this field will point at it
+        return staticTupleOrigin.equals(origin);
     }
 
     private boolean isValidGrip(Grip grip) {
@@ -819,16 +877,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public void initGarbageCollectorDebugging() throws TooManyWatchpointsException, DuplicateWatchpointException {
-        if (false) {
-            try {
-                setWordWatchpoint("GC Start", teleHeapManager.collectionEpochAddress(), true, false, true, false, true);
-                setWordWatchpoint("GC End", teleHeapManager.rootEpochAddress(), true, false, true, false, true);
-            } catch (TooManyWatchpointsException e) {
-                throw e;
-            } catch (DuplicateWatchpointException e) {
-                throw e;
-            }
-        }
+        teleProcess.watchpointFactory().initFactory();
     }
 
     /**
@@ -1237,6 +1286,11 @@ public abstract class TeleVM implements MaxVM {
     public final MaxWatchpoint  setVmThreadLocalWatchpoint(String description, TeleThreadLocalValues teleThreadLocalValues, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc)
         throws TooManyWatchpointsException, DuplicateWatchpointException {
         return teleProcess.watchpointFactory().setVmThreadLocalWatchpoint(description, teleThreadLocalValues, index, after, read, write, exec, gc);
+    }
+
+    public final MaxWatchpoint createInvisibleWatchpoint(String description, MemoryRegion memoryRegion, boolean after, boolean read, boolean write, boolean exec, boolean gc)
+        throws TooManyWatchpointsException, DuplicateWatchpointException {
+        return teleProcess.watchpointFactory().createInvisibleWatchpoint(description, memoryRegion, after, read, write, exec, gc);
     }
 
     /* (non-Javadoc)

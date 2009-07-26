@@ -21,7 +21,6 @@
 package com.sun.c1x.stub;
 
 import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
 
 
 /**
@@ -33,8 +32,8 @@ import com.sun.c1x.util.*;
  */
 public abstract class MonitorAccessStub  extends CodeStub {
 
-    protected LIROperand objReg;
-    protected LIROperand lockReg;
+    public final LIROperand objReg;
+    public final LIROperand lockReg;
 
     /**
      * Creates a new <code>MonitorAccessStub</code>.
@@ -42,13 +41,9 @@ public abstract class MonitorAccessStub  extends CodeStub {
      * @param objReg
      * @param lockReg
      */
-    public MonitorAccessStub(LIROperand objReg, LIROperand lockReg) {
+    public MonitorAccessStub(LIROperand objReg, LIROperand lockReg, CodeEmitInfo info) {
+        super(info);
         this.objReg = objReg;
         this.lockReg = lockReg;
-    }
-
-    @Override
-    public void printName(LogStream out) {
-        out.print("MonitorAccessStub");
     }
 }
