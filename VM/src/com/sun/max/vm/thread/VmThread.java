@@ -507,7 +507,7 @@ public class VmThread {
         final VmThread vmThread = VmThreadMap.ACTIVE.addVmThreadLocals(id, enabledVmThreadLocals);
 
         for (VmThreadLocal threadLocal : VmThreadLocal.valuesNeedingInitialization()) {
-            threadLocal.initialize(MaxineVM.host().phase());
+            threadLocal.initialize();
         }
 
         vmThread.nativeThread = nativeThread;

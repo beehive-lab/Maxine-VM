@@ -58,6 +58,8 @@ public class MaxineTester {
     private static final int PROCESS_TIMEOUT = -333;
 
     private static final OptionSet options = new OptionSet();
+    private static final Option<Boolean> singleThreadedOption = options.newBooleanOption("s", false,
+                    "Single threaded. Do not run any tests concurrently.");
     private static final Option<String> outputDirOption = options.newStringOption("output-dir", "maxine-tester",
                     "The output directory for the results of the maxine tester.");
     private static final Option<Integer> imageBuildTimeOutOption = options.newIntegerOption("image-build-timeout", 600,
@@ -1026,27 +1028,35 @@ public class MaxineTester {
                 }
             }.run(Classpath.fromSystem());
 
-            final int availableProcessors = Math.min(4, ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors());
-            final ExecutorService junitTesterService = Executors.newFixedThreadPool(availableProcessors);
-            final CompletionService<Void> junitTesterCompletionService = new ExecutorCompletionService<Void>(junitTesterService);
-            for (final String junitTest : junitTests) {
-                junitTesterCompletionService.submit(new Runnable() {
-                    public void run() {
-                        if (!stopTesting()) {
-                            runWithSerializedOutput(new Runnable() {
-                                public void run() {
-                                    runJUnitTest(outputDir, junitTest);
-                                }
-                            });
-                        }
+            if (singleThreadedOption.getValue()) {
+                for (final String junitTest : junitTests) {
+                    if (!stopTesting()) {
+                        runJUnitTest(outputDir, junitTest);
                     }
-                }, null);
-            }
-            junitTesterService.shutdown();
-            try {
-                junitTesterService.awaitTermination(javaTesterTimeOutOption.getValue() * 2 * junitTests.size(), TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                }
+            } else {
+                final int availableProcessors = Math.min(4, ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors());
+                final ExecutorService junitTesterService = Executors.newFixedThreadPool(availableProcessors);
+                final CompletionService<Void> junitTesterCompletionService = new ExecutorCompletionService<Void>(junitTesterService);
+                for (final String junitTest : junitTests) {
+                    junitTesterCompletionService.submit(new Runnable() {
+                        public void run() {
+                            if (!stopTesting()) {
+                                runWithSerializedOutput(new Runnable() {
+                                    public void run() {
+                                        runJUnitTest(outputDir, junitTest);
+                                    }
+                                });
+                            }
+                        }
+                    }, null);
+                }
+                junitTesterService.shutdown();
+                try {
+                    junitTesterService.awaitTermination(javaTesterTimeOutOption.getValue() * 2 * junitTests.size(), TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
             return true;
         }

@@ -23,7 +23,6 @@ package com.sun.max.vm.stack;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
@@ -258,23 +257,23 @@ public final class StackReferenceMapPreparer {
         preparationTime += timer.getLastElapsedTime();
     }
 
+    @PROTOTYPE_ONLY
+    public static void setVmThreadLocalGCRoots(VmThreadLocal[] vmThreadLocals) {
+        assert vmThreadLocalGCRoots == null : "Cannot overwrite vmThreadLocalGCRoots";
+        for (VmThreadLocal tl : vmThreadLocals) {
+            assert tl.kind == Kind.REFERENCE;
+        }
+        vmThreadLocalGCRoots = vmThreadLocals;
+    }
+
     /**
      * An array of the VM thread locals that are GC roots.
      */
-    private static final VmThreadLocal[] vmThreadLocalGCRoots;
-    static {
-        final AppendableSequence<VmThreadLocal> referenceLocals = new ArrayListSequence<VmThreadLocal>();
-        for (VmThreadLocal local : values()) {
-            if (local.kind == Kind.REFERENCE) {
-                referenceLocals.append(local);
-            }
-        }
-        vmThreadLocalGCRoots = Sequence.Static.toArray(referenceLocals, VmThreadLocal.class);
-    }
+    private static VmThreadLocal[] vmThreadLocalGCRoots;
 
     private void prepareVmThreadLocalsReferenceMap(Pointer vmThreadLocals) {
-        for (VmThreadLocal vmThreadLocal : vmThreadLocalGCRoots) {
-            setReferenceMapBit(vmThreadLocal.pointer(vmThreadLocals));
+        for (VmThreadLocal local : vmThreadLocalGCRoots) {
+            setReferenceMapBit(local.pointer(vmThreadLocals));
         }
     }
 
@@ -362,11 +361,11 @@ public final class StackReferenceMapPreparer {
      * @param trapState the trap state
      */
     public void prepareStackReferenceMapFromTrap(Pointer vmThreadLocals, Pointer trapState) {
-        final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint;
-        final Pointer instructionPointer = safepoint.getInstructionPointer(trapState);
+        final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
+        final Pointer instructionPointer = trapStateAccess.getInstructionPointer(trapState);
         final TargetMethod targetMethod = Code.codePointerToTargetMethod(instructionPointer);
-        final Pointer stackPointer = safepoint.getStackPointer(trapState, targetMethod);
-        final Pointer framePointer = safepoint.getFramePointer(trapState, targetMethod);
+        final Pointer stackPointer = trapStateAccess.getStackPointer(trapState, targetMethod);
+        final Pointer framePointer = trapStateAccess.getFramePointer(trapState, targetMethod);
         prepareStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer, false);
     }
 
@@ -375,7 +374,7 @@ public final class StackReferenceMapPreparer {
      * to a safepoint triggered at a particular instruction. This method fetches the reference map information
      * for the specified method and then copies it over the reference map for this portion of memory.
      *
-     * @param trapState a pointer to the saved register state
+     * @param registerState a pointer to the saved register state
      * @param instructionPointer the instruction pointer at the safepoint trap
      */
     public void prepareRegisterReferenceMap(Pointer registerState, Pointer instructionPointer) {

@@ -188,7 +188,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                         // Transitioned thread into GC
                         break;
                     }
-                    if (Safepoint.casMutatorState(enabledVmThreadLocals, THREAD_IN_NATIVE, THREAD_IN_GC_FROM_NATIVE).equals(THREAD_IN_NATIVE)) {
+                    if (enabledVmThreadLocals.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IN_GC_FROM_NATIVE).equals(THREAD_IN_NATIVE)) {
                         // Transitioned thread into GC
                         break;
                     }
@@ -201,14 +201,22 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                     Thread.yield();
                 }
             }
+
+            final boolean threadWasInNative = LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).isZero();
+
             if (Heap.traceGCPhases()) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("GCDaemon: Stopped mutator thread ");
-                Log.printVmThread(VmThread.fromVmThreadLocals(vmThreadLocals), true);
+                Log.printVmThread(VmThread.fromVmThreadLocals(vmThreadLocals), false);
+                if (threadWasInNative) {
+                    Log.println(" which was in native");
+                } else {
+                    Log.println(" which was in Java");
+                }
                 Log.unlock(lockDisabledSafepoints);
             }
 
-            if (LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).isZero()) {
+            if (threadWasInNative) {
                 // Since this thread is in native code it did not get an opportunity to prepare any of its stack reference map,
                 // so we will take care of that for it now:
                 stackReferenceMapPreparationTime += VmThreadLocal.prepareStackReferenceMap(vmThreadLocals);

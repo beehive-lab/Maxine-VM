@@ -61,7 +61,7 @@ public class WordTest extends WordTestCase {
             if (address.equals(0) || address.equals(addressMax)) {
                 for (WordWidth width : WordWidth.values()) {
                     if (width.numberOfBits == i) {
-                        assertTrue(Word.width().equals(width));
+                        assertTrue(Word.widthValue().equals(width));
                         return;
                     }
                 }

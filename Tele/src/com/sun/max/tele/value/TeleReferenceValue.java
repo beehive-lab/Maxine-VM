@@ -152,12 +152,12 @@ public final class TeleReferenceValue extends ReferenceValue {
 
     @Override
     public WordWidth signedEffectiveWidth() {
-        return Word.width(); // TODO
+        return Word.widthValue();
     }
 
     @Override
     public WordWidth unsignedEffectiveWidth() {
-        return Word.width(); // TODO
+        return Word.widthValue();
     }
 
     @Override

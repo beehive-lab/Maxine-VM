@@ -33,7 +33,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
@@ -42,27 +41,14 @@ import com.sun.max.vm.thread.*;
  * polling at prudently chosen execution points. The polling has the effect of causing
  * a trap.
  *
- * The <i>trap state</i> of the thread is recorded at such a trap and is made available
- * via these methods:
- * <ul>
- * <li>{@link #getInstructionPointer(Pointer)}</li>
- * <li>{@link #getStackPointer(Pointer, TargetMethod)}</li>
- * <li>{@link #getFramePointer(Pointer, TargetMethod)}</li>
- * <li>{@link #getSafepointLatch(Pointer)}</li>
- * <li>{@link #getRegisterState(Pointer)}</li>
- * <li>{@link #getTrapNumber(Pointer)}</li>
- * <li>{@link #setSafepointLatch(Pointer, Pointer)}</li>
- * </ul>
- *
  * @author Bernd Mathiske
+ * @author Doug Simon
+ * @author Hannes Payer
+ * @author Paul Caprioli
  */
 public abstract class Safepoint {
 
-    public static final boolean UseCASBasedGCMutatorSynchronization = true;
-
-    public static Word casMutatorState(Pointer enabledVmThreadLocals, Word suspectedValue, Word newValue) {
-        return enabledVmThreadLocals.compareAndSwapWord(MUTATOR_STATE.offset, suspectedValue, newValue);
-    }
+    public static final boolean UseCASBasedGCMutatorSynchronization = false;
 
     public static final Word THREAD_IN_JAVA = Address.fromInt(0);
     public static final Word THREAD_IN_NATIVE = Address.fromInt(1);
@@ -93,6 +79,7 @@ public abstract class Safepoint {
         }
     }
 
+    @PROTOTYPE_ONLY
     public static Safepoint create(VMConfiguration vmConfiguration) {
         try {
             final String isa = vmConfiguration.platform().processorKind.instructionSet.name();
@@ -231,6 +218,7 @@ public abstract class Safepoint {
 
     public abstract Symbol latchRegister();
 
+    @PROTOTYPE_ONLY
     protected abstract byte[] createCode();
 
     public boolean isAt(Pointer instructionPointer) {
@@ -313,21 +301,4 @@ public abstract class Safepoint {
             reset(vmThreadLocals);
         }
     }
-
-    /**
-     * Reads the value of the instruction pointer saved in a given trap state area.
-     *
-     * @param trapState the block of memory holding the trap state
-     * @return the value of the instruction pointer saved in {@code trapState}
-     */
-    public abstract Pointer getInstructionPointer(Pointer trapState);
-    public abstract void setInstructionPointer(Pointer trapState, Pointer value);
-    public abstract Pointer getStackPointer(Pointer trapState, TargetMethod targetMethod);
-    public abstract Pointer getFramePointer(Pointer trapState, TargetMethod targetMethod);
-    public abstract Pointer getSafepointLatch(Pointer trapState);
-    public abstract void setReturnValue(Pointer trapState, Pointer value);
-    public abstract void setSafepointLatch(Pointer trapState, Pointer value);
-    public abstract int getTrapNumber(Pointer trapState);
-    public abstract Pointer getRegisterState(Pointer trapState);
-    public abstract void setTrapNumber(Pointer trapState, int trapNumber);
 }

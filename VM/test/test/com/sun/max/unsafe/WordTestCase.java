@@ -88,7 +88,7 @@ public abstract class WordTestCase extends MaxTestCase {
 
     @Override
     public void setUp() {
-        wordWidth = Word.width();
+        wordWidth = Word.widthValue();
 
         tiny = 1234; // small enough that _tiny^2 < 32 bits;
 

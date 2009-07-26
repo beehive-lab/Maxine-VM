@@ -250,9 +250,9 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                 Pointer trapState = stackFrameWalker.trapState();
                 if (!trapState.isZero()) {
                     FatalError.check(!targetMethod.classMethodActor().isTrapStub(), "Cannot have a trap in the trapStub");
-                    final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint;
-                    if (Trap.Number.isImplicitException(safepoint.getTrapNumber(trapState))) {
-                        final Address catchAddress = targetMethod.throwAddressToCatchAddress(safepoint.getInstructionPointer(trapState));
+                    final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
+                    if (Trap.Number.isImplicitException(trapStateAccess.getTrapNumber(trapState))) {
+                        final Address catchAddress = targetMethod.throwAddressToCatchAddress(trapStateAccess.getInstructionPointer(trapState));
                         if (catchAddress.isZero()) {
                             // An implicit exception occurred but not in the scope of a local exception handler.
                             // Thus, execution will not resume in this frame and hence no GC roots need to be scanned.
@@ -264,11 +264,11 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                     }
                 } else {
                     if (targetMethod.classMethodActor().isTrapStub()) {
-                        final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint;
-                        trapState = AMD64Safepoint.getTrapStateFromRipPointer(ripPointer);
+                        final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
+                        trapState = AMD64TrapStateAccess.getTrapStateFromRipPointer(ripPointer);
                         stackFrameWalker.setTrapState(trapState);
-                        if (Trap.Number.isImplicitException(safepoint.getTrapNumber(trapState))) {
-                            final Address catchAddress = targetMethod.throwAddressToCatchAddress(safepoint.getInstructionPointer(trapState));
+                        if (Trap.Number.isImplicitException(trapStateAccess.getTrapNumber(trapState))) {
+                            final Address catchAddress = targetMethod.throwAddressToCatchAddress(trapStateAccess.getInstructionPointer(trapState));
                             if (catchAddress.isZero()) {
                                 // An implicit exception occurred but not in the scope of a local exception handler.
                                 // Thus, execution will not resume in this frame and hence no GC roots need to be scanned.
@@ -276,13 +276,13 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                                 // TODO: Get address of safepoint instruction at exception dispatcher site and scan
                                 // the register references based on its Java frame descriptor.
                                 FatalError.unexpected("Cannot reliably find safepoint at exception dispatcher site yet.");
-                                preparer.prepareRegisterReferenceMap(safepoint.getRegisterState(trapState), catchAddress.asPointer());
+                                preparer.prepareRegisterReferenceMap(trapStateAccess.getRegisterState(trapState), catchAddress.asPointer());
                             }
                         } else {
                             // Only scan with references in registers for a caller that did not trap due to an implicit exception.
                             // Find the register state and pass it to the preparer so that it can be covered with the appropriate reference map
                             final Pointer callerInstructionPointer = stackFrameWalker.readWord(ripPointer, 0).asPointer();
-                            preparer.prepareRegisterReferenceMap(safepoint.getRegisterState(trapState), callerInstructionPointer);
+                            preparer.prepareRegisterReferenceMap(trapStateAccess.getRegisterState(trapState), callerInstructionPointer);
                         }
                     }
                 }
@@ -330,7 +330,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
         final Pointer callerFramePointer;
         if (targetMethod.classMethodActor().isTrapStub()) {
             // framePointer is whatever was in the frame pointer register at the time of the trap
-            final Pointer trapState = AMD64Safepoint.getTrapStateFromRipPointer(ripPointer);
+            final Pointer trapState = AMD64TrapStateAccess.getTrapStateFromRipPointer(ripPointer);
             callerFramePointer = stackFrameWalker.readWord(trapState, AMD64GeneralRegister64.RBP.value() * Word.size()).asPointer();
         } else {
             // framePointer == stackPointer for this scheme.

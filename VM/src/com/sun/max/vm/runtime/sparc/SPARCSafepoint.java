@@ -21,23 +21,15 @@
 package com.sun.max.vm.runtime.sparc;
 
 import static com.sun.max.asm.sparc.GPR.*;
-import static com.sun.max.vm.thread.VmThreadLocal.*;
 
-import java.util.*;
-
+import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.sparc.*;
 import com.sun.max.asm.sparc.complete.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
-import com.sun.max.util.Predicate;
 import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.eir.sparc.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.stack.sparc.*;
 
 /**
  * The safepoint implementation for SPARC defines the safepoint code that is injected at safepoint sites,
@@ -74,8 +66,8 @@ public final class SPARCSafepoint extends Safepoint {
 
     private final boolean is32Bit;
 
+    @PROTOTYPE_ONLY
     public SPARCSafepoint(VMConfiguration vmConfiguration) {
-        super();
         is32Bit = vmConfiguration.platform().processorKind.dataModel.wordWidth == WordWidth.BITS_32;
     }
 
@@ -84,41 +76,12 @@ public final class SPARCSafepoint extends Safepoint {
      */
     public static final GPR LATCH_REGISTER = G2;
 
-    public static final Symbolizer<GPR> TRAP_SAVED_GLOBAL_SYMBOLIZER = Symbolizer.Static.fromSymbolizer(GLOBAL_SYMBOLIZER, new com.sun.max.util.Predicate<GPR>() {
-        private final Collection<SPARCEirRegister> reservedGlobalRegisters = SPARCEirABI.integerSystemReservedGlobalRegisters().toCollection();
-        public boolean evaluate(GPR register) {
-            return !reservedGlobalRegisters.contains(SPARCEirRegister.GeneralPurpose.from(register));
-        }
-    });
-
-    public static final int TRAP_STATE_SIZE;
-    public static final int TRAP_NUMBER_OFFSET;
-    public static final int TRAP_RETURN_VALUE_OFFSET;
-    public static final int TRAP_SP_OFFSET;
-    public static final int TRAP_CALL_ADDRESS_OFFSET;
-    public static final int TRAP_LATCH_OFFSET;
-
-    static {
-        final int globalRegisterWords = TRAP_SAVED_GLOBAL_SYMBOLIZER.numberOfValues(); // %g1 to %g5
-        final int outRegisterWords = IN_SYMBOLIZER.numberOfValues();    // %o0 to %o7
-        final int floatingPointRegisterWords = 32; // %f0-%f32
-        final int stateRegisters = 2;
-        TRAP_LATCH_OFFSET = Word.size();
-        // Offset to %o0 in trap state
-        TRAP_RETURN_VALUE_OFFSET =  Word.size() * globalRegisterWords;
-        // Offset to %o6 in trap state.
-        TRAP_SP_OFFSET = Word.size() * (globalRegisterWords + (O6.value() - O0.value()));
-        // Offset to %o7 in trap state
-        TRAP_CALL_ADDRESS_OFFSET = TRAP_SP_OFFSET + Word.size();
-        TRAP_NUMBER_OFFSET = Word.size() * (globalRegisterWords + outRegisterWords + floatingPointRegisterWords + stateRegisters);
-        TRAP_STATE_SIZE = TRAP_NUMBER_OFFSET + Word.size();
-    }
-
     @Override
     public GPR latchRegister() {
         return LATCH_REGISTER;
     }
 
+    @PROTOTYPE_ONLY
     private SPARCAssembler createAssembler() {
         if (is32Bit) {
             return new SPARC32Assembler(0);
@@ -126,6 +89,7 @@ public final class SPARCSafepoint extends Safepoint {
         return new SPARC64Assembler(0);
     }
 
+    @PROTOTYPE_ONLY
     @Override
     protected byte[] createCode() {
         final SPARCAssembler asm = createAssembler();
@@ -140,75 +104,4 @@ public final class SPARCSafepoint extends Safepoint {
             throw ProgramError.unexpected("could not assemble safepoint code");
         }
     }
-
-    private static final Symbolizer<GPR> SIGNAL_INTEGER_REGISTER = Symbolizer.Static.fromSymbolizer(GPR.SYMBOLIZER, new Predicate<GPR>() {
-        public boolean evaluate(GPR register) {
-            return register.isOut() || (register.isGlobal() && register != G0);
-        }
-    });
-
-    @Override
-    public Pointer getInstructionPointer(Pointer trapState) {
-        // We're in the trap stub. The latch register is set to the disabled vm thread locals.
-        return TRAP_INSTRUCTION_POINTER.pointer(Safepoint.getLatchRegister()).readWord(0).asPointer();
-    }
-
-    /**
-     * Set the instruction pointer to which the trap stub should return.
-     */
-    @Override
-    public void setInstructionPointer(Pointer trapState, Pointer value) {
-        TRAP_INSTRUCTION_POINTER.pointer(Safepoint.getLatchRegister()).writeWord(0, value);
-    }
-
-    @Override
-    public void setReturnValue(Pointer trapState, Pointer value) {
-        trapState.writeWord(TRAP_RETURN_VALUE_OFFSET, value);
-    }
-
-    @Override
-    public Pointer getStackPointer(Pointer trapState, TargetMethod targetMethod) {
-        return trapState.readWord(TRAP_SP_OFFSET).asPointer();
-    }
-
-    /**
-     * Get the frame pointer of the trapped frame.
-     */
-    @Override
-    public Pointer getFramePointer(Pointer trapState, TargetMethod targetMethod) {
-        final Pointer registerWindow = getStackPointer(trapState, targetMethod);
-        final GPR framePointerRegister = (GPR) targetMethod.abi().framePointer();
-        return SPARCStackFrameLayout.getRegisterInSavedWindow(registerWindow, framePointerRegister).asPointer();
-    }
-
-    @Override
-    public Pointer getSafepointLatch(Pointer trapState) {
-        return trapState.readWord(TRAP_LATCH_OFFSET).asPointer();
-    }
-
-    @Override
-    public void setSafepointLatch(Pointer trapState, Pointer value) {
-        trapState.writeWord(TRAP_LATCH_OFFSET, value);
-    }
-
-    @Override
-    public Pointer getRegisterState(Pointer trapState) {
-        return trapState;
-    }
-
-    @Override
-    public int getTrapNumber(Pointer trapState) {
-        return trapState.readWord(TRAP_NUMBER_OFFSET).asAddress().toInt();
-    }
-
-    @Override
-    public void setTrapNumber(Pointer trapState, int trapNumber) {
-        trapState.writeWord(TRAP_NUMBER_OFFSET, Address.fromInt(trapNumber));
-    }
-
-    public Pointer getCallAddressRegister(Pointer trapState) {
-        return trapState.readWord(TRAP_CALL_ADDRESS_OFFSET).asPointer();
-    }
-
-
 }

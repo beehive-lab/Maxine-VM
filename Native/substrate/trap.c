@@ -79,6 +79,7 @@ int getTrapNumber(int signal) {
 }
 
 static Address _javaTrapStub;
+static Boolean traceTraps = false;
 
 #if os_GUESTVMXEN
 #define SignalHandlerFunction fault_handler_t
@@ -179,7 +180,6 @@ static Address getFaultAddress(SigInfo * sigInfo, UContext *ucontext) {
 #endif
 }
 
-#if log_TRAP
 char *signalName(int signal) {
     switch (signal) {
     case SIGSEGV: return "SIGSEGV";
@@ -190,7 +190,6 @@ char *signalName(int signal) {
     }
     return NULL;
 }
-#endif
 
 static void blueZoneTrap(ThreadSpecifics threadSpecifics) {
 #if os_GUESTVMXEN
@@ -199,13 +198,14 @@ static void blueZoneTrap(ThreadSpecifics threadSpecifics) {
 }
 
 static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext) {
-#if log_TRAP
-    char *sigName = signalName(signal);
-    if (sigName == NULL) {
-        sigName = "<unknown>";
+    char *sigName;
+    if (traceTraps || log_TRAP) {
+        sigName = signalName(signal);
+        if (sigName == NULL) {
+            sigName = "<unknown>";
+        }
+        log_println("SIGNAL: %0d [%s]", signal, sigName);
     }
-    log_println("SIGNAL: %0d [%s]", signal, sigName);
-#endif
     ThreadSpecifics threadSpecifics = (ThreadSpecifics) thread_currentSpecifics();
     if (threadSpecifics == 0) {
         log_exit(-22, "could not find native thread locals in trap handler");
@@ -259,26 +259,27 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     c_UNIMPLEMENTED();
 #endif
 
-#if log_TRAP
-    if (sigName != NULL) {
-        log_println("thread %d: %s (trapInfo @ %p)", threadSpecifics->id, sigName, trapInfo);
-        log_println("trapInfo[0] (trap number)         = %p", trapInfo[0]);
-        log_println("trapInfo[1] (instruction pointer) = %p", trapInfo[1]);
-        log_println("trapInfo[2] (fault address)       = %p", trapInfo[2]);
-        log_println("trapInfo[3] (safepoint latch)     = %p", trapInfo[3]);
+    if (traceTraps || log_TRAP) {
+        if (sigName != NULL) {
+            log_println("thread %d: %s (trapInfo @ %p)", threadSpecifics->id, sigName, trapInfo);
+            log_println("trapInfo[0] (trap number)         = %p", trapInfo[0]);
+            log_println("trapInfo[1] (instruction pointer) = %p", trapInfo[1]);
+            log_println("trapInfo[2] (fault address)       = %p", trapInfo[2]);
+            log_println("trapInfo[3] (safepoint latch)     = %p", trapInfo[3]);
+        }
+        log_println("SIGNAL: returning to Java trap stub 0x%0lx", _javaTrapStub);
     }
-    log_println("SIGNAL: returning to java trap stub 0x%0lx\n", _javaTrapStub);
-#endif
     setInstructionPointer(ucontext, _javaTrapStub);
 }
 
-void nativeInitialize(Address javaTrapStub) {
+Address nativeInitialize(Address javaTrapStub) {
     _javaTrapStub = javaTrapStub;
     setHandler(SIGSEGV, (SignalHandlerFunction) globalSignalHandler);
     setHandler(SIGBUS, (SignalHandlerFunction) globalSignalHandler);
     setHandler(SIGILL, (SignalHandlerFunction) globalSignalHandler);
     setHandler(SIGFPE, (SignalHandlerFunction) globalSignalHandler);
     setHandler(SIGUSR1, (SignalHandlerFunction) globalSignalHandler);
+    return (Address) &traceTraps;
 }
 
 

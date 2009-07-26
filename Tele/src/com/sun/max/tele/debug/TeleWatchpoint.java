@@ -197,7 +197,11 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         if (teleWatchpointCache == null || teleWatchpointCache.length != size.toInt()) {
             teleWatchpointCache = new byte[size.toInt()];
         }
-        teleWatchpointCache = teleProcess.dataAccess().readFully(start, size.toInt());
+        try {
+            teleWatchpointCache = teleProcess.dataAccess().readFully(start, size.toInt());
+        } catch (DataIOError e) {
+            // Must be a watchpoint in an address space that doesn't (yet?) exist in the VM process.
+        }
     }
 
     public boolean disable() {
