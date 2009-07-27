@@ -30,7 +30,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.type.*;
-import sun.jvm.hotspot.livejvm.BreakpointEvent;
 
 /**
  * @author Bernd Mathiske

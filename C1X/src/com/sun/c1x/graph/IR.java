@@ -88,10 +88,12 @@ public class IR {
     public void build() {
         buildGraph();
         verifyAndPrint("After graph building");
-        optimize();
+        optimize1();
         verifyAndPrint("After optimizations");
         computeLinearScanOrder();
-        verifyAndPrint("Before code generation");
+        verifyAndPrint("After linear scan order");
+        optimize2();
+        verifyAndPrint("After global optimizations");
     }
 
     private void buildGraph() {
@@ -102,7 +104,7 @@ public class IR {
         assert startBlock != null;
     }
 
-    private void optimize() {
+    private void optimize1() {
         // do basic optimizations
         if (C1XOptions.DoCEElimination) {
             new CEEliminator(this);
@@ -116,7 +118,9 @@ public class IR {
         ComputeLinearScanOrder computeLinearScanOrder = new ComputeLinearScanOrder(totalBlocks, startBlock);
         orderedBlocks = computeLinearScanOrder.linearScanOrder();
         computeLinearScanOrder.printBlocks();
+    }
 
+    private void optimize2() {
         // do more advanced, dominator-based optimizations
         if (C1XOptions.DoGlobalValueNumbering) {
             new GlobalValueNumberer(this);
