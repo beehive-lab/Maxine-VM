@@ -135,7 +135,18 @@ void log_print_buffer(const char *buffer) {
 }
 
 void log_print_word(Address address) {
-    log_print_format("%p", address);
+    if (address == 0) {
+        log_print_format("0");
+    } else {
+#if os_SOLARIS
+        /* On Solaris, the %p format specifier does not include the "0x" prefix so
+         * it is added to make the output of log_print_word consistent across all
+         * platforms. */
+        log_print_format("0x%p", address);
+#else
+        log_print_format("%p", address);
+#endif
+    }
 }
 
 void log_print_newline() {
@@ -154,5 +165,4 @@ void log_print_float(float f) {
 void log_print_double(double d) {
 	// TODO: fprintf may not produce exactly the same format of floating point numbers
 	log_print_format("%lf", d);
-
 }

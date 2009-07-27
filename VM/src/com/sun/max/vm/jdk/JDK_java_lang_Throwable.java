@@ -105,7 +105,7 @@ public final class JDK_java_lang_Throwable {
                 continue;
             } else if (atImplicitExceptionThrow) {
                 // if it is an implicit exception, do not look for a java frame descriptor
-                addDefaultStackTraceElement(result, targetMethod.classMethodActor(), -1, stackFrame.instructionPointer.minus(targetMethod.codeStart()).toInt());
+                addStackTraceElement(result, targetMethod.classMethodActor(), -1, stackFrame.instructionPointer.minus(targetMethod.codeStart()).toInt());
                 atImplicitExceptionThrow = false;
                 inFiller = false;
                 continue;
@@ -127,28 +127,27 @@ public final class JDK_java_lang_Throwable {
     private static void addStackTraceElements(List<StackTraceElement> result, TargetMethod targetMethod, StackFrame stackFrame) {
         final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.instructionPointer);
         if (bytecodeLocations == null) {
-            addDefaultStackTraceElement(result, targetMethod.classMethodActor(), -1, stackFrame.instructionPointer.minus(targetMethod.codeStart()).toInt());
+            addStackTraceElement(result, targetMethod.classMethodActor(), -1, stackFrame.instructionPointer.minus(targetMethod.codeStart()).toInt());
         } else {
             while (bytecodeLocations.hasNext()) {
                 final BytecodeLocation bytecodeLocation = bytecodeLocations.next();
                 final ClassMethodActor classMethodActor = bytecodeLocation.classMethodActor();
                 if (classMethodActor.isApplicationVisible()) {
-                    addDefaultStackTraceElement(result, classMethodActor, bytecodeLocation.sourceLineNumber(), -1);
+                    addStackTraceElement(result, classMethodActor, bytecodeLocation.sourceLineNumber(), -1);
                 }
             }
         }
     }
 
     /**
-     * Adds a default stack trace element to the specified result if there is no source information
-     * for the specified class method actor.
+     * Adds a stack trace element to the specified result.
      *
      * @param result a list of stack trace elements that will represent the final result
      * @param classMethodActor the class method actor on the stack
      * @param sourceLineNumber the source line number
      * @param targetMethodOffset the instruction pointer offset within the target method. This value is ignored if {@code sourceLineNumber >= 0}
      */
-    private static void addDefaultStackTraceElement(final List<StackTraceElement> result, final ClassMethodActor classMethodActor, int sourceLineNumber, int targetMethodOffset) {
+    private static void addStackTraceElement(final List<StackTraceElement> result, final ClassMethodActor classMethodActor, int sourceLineNumber, int targetMethodOffset) {
         final ClassActor holder = classMethodActor.holder();
         final String sourceFileName = sourceLineNumber < 0 && targetMethodOffset >= 0 ? holder.sourceFileName + "@" + targetMethodOffset : holder.sourceFileName;
         result.add(new StackTraceElement(holder.name.toString(), classMethodActor.name.toString(), sourceFileName, sourceLineNumber));

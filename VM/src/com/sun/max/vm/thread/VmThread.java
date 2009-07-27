@@ -507,7 +507,7 @@ public class VmThread {
         final VmThread vmThread = VmThreadMap.ACTIVE.addVmThreadLocals(id, enabledVmThreadLocals);
 
         for (VmThreadLocal threadLocal : VmThreadLocal.valuesNeedingInitialization()) {
-            threadLocal.initialize(MaxineVM.host().phase());
+            threadLocal.initialize();
         }
 
         vmThread.nativeThread = nativeThread;
@@ -850,6 +850,7 @@ public class VmThread {
 
     private static final CriticalNativeMethod nonJniNativeSleep = new CriticalNativeMethod(VmThread.class, "nonJniNativeSleep");
     private static final CriticalNativeMethod nativeSleep = new CriticalNativeMethod(VmThread.class, "nativeSleep");
+    private static final CriticalNativeMethod nativeYield = new CriticalNativeMethod(VmThread.class, "nativeYield");
 
     @C_FUNCTION
     private static native void nonJniNativeSleep(long numberOfMilliSeconds);

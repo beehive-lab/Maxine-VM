@@ -84,7 +84,7 @@ public final class AMD64EirEpilogue extends EirEpilogue<AMD64EirInstructionVisit
     }
 
     private void emitTrapStubEpilogue(final AMD64Assembler asm, final AMD64GeneralRegister64 framePointer, final int frameSize) {
-        final int originalFrameSize = frameSize - AMD64Safepoint.TRAP_STATE_SIZE_WITHOUT_RIP;
+        final int originalFrameSize = frameSize - AMD64TrapStateAccess.TRAP_STATE_SIZE_WITHOUT_RIP;
         int offset = originalFrameSize;
         // restore all the general purpose registers
         for (AMD64GeneralRegister64 register : AMD64GeneralRegister64.ENUMERATOR) {

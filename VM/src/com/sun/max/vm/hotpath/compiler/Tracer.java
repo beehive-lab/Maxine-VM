@@ -29,11 +29,11 @@ import com.sun.max.vm.compiler.tir.pipeline.*;
 import com.sun.max.vm.hotpath.*;
 import com.sun.max.vm.hotpath.AsynchronousProfiler.*;
 import com.sun.max.vm.hotpath.compiler.Console.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * This class is responsible for capturing trace events from JITed methods. Each thread has its own
- * tracer object associated with it. For now we are using the JDK {@link ThreadLocal} class to store
- * this object. In the future, we can store this directly into the local space of the current thread.
+ * {@linkplain ObjectThreadLocal thread-local} tracer object associated with it.
  *
  * @author Michael Bebenita
  */

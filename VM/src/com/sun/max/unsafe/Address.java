@@ -64,7 +64,7 @@ public abstract class Address extends Word {
             final long n = longValue & 0xffffffffL;
             return BoxedAddress.from(n);
         }
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             final long longValue = value;
             final long n = longValue & 0xffffffffL;
             return UnsafeLoophole.longToWord(n);
@@ -85,7 +85,7 @@ public abstract class Address extends Word {
             final long n = value;
             return BoxedAddress.from(n);
         }
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             final long n = value;
             return UnsafeLoophole.longToWord(n);
         }
@@ -97,7 +97,7 @@ public abstract class Address extends Word {
         if (Word.isBoxed()) {
             return BoxedAddress.from(value);
         }
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return UnsafeLoophole.longToWord(value);
         }
         final int n = (int) value;
@@ -111,30 +111,30 @@ public abstract class Address extends Word {
 
     public String toUnsignedString(int radix) {
         if (radix == 16) {
-            if (Word.width() == WordWidth.BITS_64) {
+            if (Word.width() == 64) {
                 return Long.toHexString(toLong());
             }
-            assert Word.width() == WordWidth.BITS_32;
+            assert Word.width() == 32;
             return Integer.toHexString(toInt());
         }
         if (radix == 8) {
-            if (Word.width() == WordWidth.BITS_64) {
+            if (Word.width() == 64) {
                 return Long.toOctalString(toLong());
             }
-            assert Word.width() == WordWidth.BITS_32;
+            assert Word.width() == 32;
             return Integer.toOctalString(toInt());
         }
         if (radix == 2) {
-            if (Word.width() == WordWidth.BITS_64) {
+            if (Word.width() == 64) {
                 return Long.toBinaryString(toLong());
             }
-            assert Word.width() == WordWidth.BITS_32;
+            assert Word.width() == 32;
             return Integer.toBinaryString(toInt());
         }
         assert radix == 10;
 
         final long n = toLong();
-        if (Word.width() == WordWidth.BITS_32) {
+        if (Word.width() == 32) {
             if (n <= Integer.MAX_VALUE && n >= 0) {
                 return Integer.toString(toInt());
             }
@@ -161,7 +161,7 @@ public abstract class Address extends Word {
             final UnsafeBox box = (UnsafeBox) this;
             return (int) box.nativeWord();
         }
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             final long n = UnsafeLoophole.wordToLong(this);
             return (int) n;
         }
@@ -174,7 +174,7 @@ public abstract class Address extends Word {
             final UnsafeBox box = (UnsafeBox) this;
             return box.nativeWord();
         }
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return UnsafeLoophole.wordToLong(this);
         }
         return 0xffffffffL & UnsafeLoophole.wordToInt(this);
@@ -400,7 +400,7 @@ public abstract class Address extends Word {
 
     @INLINE(override = true)
     public Address and(Address operand) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return fromLong(toLong() & operand.toLong());
         }
         return fromInt(toInt() & operand.toInt());
@@ -418,7 +418,7 @@ public abstract class Address extends Word {
 
     @INLINE(override = true)
     public Address or(Address operand) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return fromLong(toLong() | operand.toLong());
         }
         return fromInt(toInt() | operand.toInt());
@@ -436,7 +436,7 @@ public abstract class Address extends Word {
 
     @INLINE(override = true)
     public Address not() {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return fromLong(~toLong());
         }
         return fromInt(~toInt());
@@ -444,7 +444,7 @@ public abstract class Address extends Word {
 
     @INLINE(override = true)
     public Address shiftedLeft(int nBits) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return fromLong(toLong() << nBits);
         }
         return fromInt(toInt() << nBits);
@@ -452,7 +452,7 @@ public abstract class Address extends Word {
 
     @INLINE(override = true)
     public Address unsignedShiftedRight(int nBits) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return fromLong(toLong() >>> nBits);
         }
         return fromInt(toInt() >>> nBits);
@@ -460,7 +460,7 @@ public abstract class Address extends Word {
 
     @INLINE(override = true)
     public final int numberOfEffectiveBits() {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return 64 - Long.numberOfLeadingZeros(toLong());
         }
         return 32 - Integer.numberOfLeadingZeros(toInt());

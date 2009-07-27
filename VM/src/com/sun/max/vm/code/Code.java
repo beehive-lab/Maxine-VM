@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.code;
 
+import static com.sun.max.vm.VMOptions.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
@@ -28,8 +30,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.debug.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 
@@ -43,6 +43,8 @@ public final class Code {
 
     private Code() {
     }
+
+    public static final VMBooleanXXOption traceAllocation = register(new VMBooleanXXOption("-XX:-TraceCodeAllocation", "Trace allocation from the code cache."), MaxineVM.Phase.STARTING);
 
     /**
      * The code region that contains the boot code.
@@ -169,34 +171,12 @@ public final class Code {
     }
 
     /**
-     * Visits each cell that is managed by the code manager.
+     * Visits all the references in memory managed by the code manager except for the boot code region.
      *
-     * @param cellVisitor the cell visitor to call back for each cell
-     * @param includeBootCode specifies if the cells in the {@linkplain Code#bootCodeRegion() boot code region} should
-     *            also be visited
+     * @param pointerIndexVisitor the visitor that is notified of each reference in the code cache
      */
-    public static void visitCells(CellVisitor cellVisitor, boolean includeBootCode) {
-        codeManager.visitCells(cellVisitor, includeBootCode);
-    }
-
-    /**
-     * Calls {@link DebugHeap#verifyRegion(String, Address, Address, MemoryRegion, PointerOffsetVisitor)} for each of the
-     * registered code regions.
-     *
-     * This method can only be called in a {@linkplain MaxineVM#isDebug() debug} VM.
-     *
-     * @param space the address space in which valid objects can be found apart from the boot
-     *            {@linkplain Heap#bootHeapRegion heap} and {@linkplain Code#bootCodeRegion code} regions.
-     * @param verifier a {@link PointerOffsetVisitor} instance that will call
-     *            {@link #verifyGripAtIndex(Address, int, Grip, MemoryRegion, MemoryRegion)} for a reference value denoted by a base
-     *            pointer and offset
-     * @param includeBootCode specifies if the cells in the {@linkplain Code#bootCodeRegion() boot code region} should
-     *            also be verified
-     */
-    public static void verifyRegions(MemoryRegion space, PointerOffsetVisitor verifier, boolean includeBootCode) {
-        for (MemoryRegion region : memoryRegions) {
-            DebugHeap.verifyRegion(region.description(), region.start(), region.mark(), space, verifier);
-        }
+    public static void visitReferences(PointerIndexVisitor pointerIndexVisitor) {
+        codeManager.visitReferences(pointerIndexVisitor);
     }
 
     public static Size getCodeSize() {

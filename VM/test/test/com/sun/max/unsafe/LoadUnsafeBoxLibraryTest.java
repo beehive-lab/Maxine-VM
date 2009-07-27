@@ -20,11 +20,11 @@
  */
 package test.com.sun.max.unsafe;
 
-import junit.framework.*;
+import test.com.sun.max.vm.*;
 
 import com.sun.max.vm.prototype.*;
 
-public class LoadUnsafeBoxLibraryTest extends TestCase {
+public class LoadUnsafeBoxLibraryTest extends VmTestCase {
 
     public static void main(String[] args) {
     }

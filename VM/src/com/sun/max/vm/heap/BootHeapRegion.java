@@ -28,7 +28,6 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
@@ -61,7 +60,7 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
         final Pointer address = pointer.plus(offset);
         final int heapWordIndex = address.minus(start()).dividedBy(Word.size()).toInt();
         final Address value = address.readWord(0).asAddress();
-        final int bitsPerMapWord = Word.width().numberOfBits;
+        final int bitsPerMapWord = Word.width();
 
         final boolean isWordTagged;
         final int referenceMapWordIndex = Unsigned.idiv(heapWordIndex, bitsPerMapWord);
@@ -78,13 +77,14 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
             if (!value.isZero() && !contains(value) && !Code.bootCodeRegion.contains(value)) {
                 Log.println("Non-tagged reference in boot heap refers to address neither in boot heap nor boot code region");
                 Log.print("Slot: ");
-                printSlot(heapWordIndex, address);
+                logSlot(heapWordIndex, address);
                 FatalError.unexpected("Non-tagged reference in boot heap refers to address neither in boot heap nor boot code region");
             }
         }
     }
 
-    public void visitPointers(PointerIndexVisitor pointerIndexVisitor) {
+    @Override
+    public void visitReferences(PointerIndexVisitor pointerIndexVisitor) {
         if (referenceMap.isZero()) {
             referenceMap = ArrayAccess.elementPointer(referenceMapBytes, 0);
         }
@@ -99,9 +99,6 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
             Log.print(", mutable references end=");
             Log.println(start().plus(referenceMapWords * Word.size()));
         }
-        if (MaxineVM.isDebug()) {
-            DebugHeap.verifyRegion(description(), start().asPointer(), end(), this, this);
-        }
 
         if (Heap.traceRootScanning()) {
             scanReferenceMap(pointerIndexVisitor, refMap, referenceMapWords, true);
@@ -112,41 +109,6 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
         for (Reference specialReference : specialReferences) {
             SpecialReferenceManager.discoverSpecialReference(Grip.fromJava(specialReference));
         }
-    }
-
-    @INLINE
-    private void scanReferenceMap(PointerIndexVisitor pointerIndexVisitor, Pointer refMap, int refMapWords, boolean tracing) {
-        for (int i = 0; i < refMapWords; ++i) {
-            Address refmapWord = refMap.getWord(i).asAddress();
-            if (!refmapWord.isZero()) {
-                int bitIndex = 0;
-                while (!refmapWord.isZero()) {
-                    if (!refmapWord.and(1).isZero()) {
-                        final int heapWordIndex = (i * Word.width().numberOfBits) + bitIndex;
-                        if (tracing) {
-                            final Pointer address = start().asPointer().plus(heapWordIndex * Word.size());
-                            final Address value = address.readWord(0).asAddress();
-                            if (!value.isZero() && !contains(value) && !Code.bootCodeRegion.contains(value)) {
-                                Log.print("    Slot: ");
-                                printSlot(heapWordIndex, address);
-                            }
-                        }
-                        pointerIndexVisitor.visitPointerIndex(start().asPointer(), heapWordIndex);
-                    }
-                    refmapWord = refmapWord.dividedBy(2);
-                    bitIndex++;
-                }
-            }
-        }
-    }
-
-    private void printSlot(final int heapWordIndex, final Pointer address) {
-        Log.print("index=");
-        Log.print(heapWordIndex);
-        Log.print(", address=");
-        Log.print(address);
-        Log.print(", value=");
-        Log.println(address.readWord(0));
     }
 }
 

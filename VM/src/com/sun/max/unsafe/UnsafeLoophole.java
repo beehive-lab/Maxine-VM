@@ -55,7 +55,7 @@ public final class UnsafeLoophole {
     @UNSAFE_CAST
     public static <Word_Type extends Word> Word_Type intToWord(int value) {
         assert MaxineVM.isPrototyping();
-        ProgramError.check(Word.width() == WordWidth.BITS_32);
+        ProgramError.check(Word.width() == 32);
         final Class<Word_Type> type = null;
         return StaticLoophole.cast(type, nativeIntToWord(value));
     }
@@ -66,7 +66,7 @@ public final class UnsafeLoophole {
     @UNSAFE_CAST
     public static <Word_Type extends Word> Word_Type longToWord(long value) {
         assert MaxineVM.isPrototyping();
-        ProgramError.check(Word.width() == WordWidth.BITS_64);
+        ProgramError.check(Word.width() == 64);
         final Class<Word_Type> type = null;
         return StaticLoophole.cast(type, nativeLongToWord(value));
     }
@@ -77,7 +77,7 @@ public final class UnsafeLoophole {
     @UNSAFE_CAST
     public static int wordToInt(Word word) {
         assert MaxineVM.isPrototyping();
-        ProgramError.check(Word.width() == WordWidth.BITS_32);
+        ProgramError.check(Word.width() == 32);
         return nativeWordToInt(word);
     }
 
@@ -87,7 +87,7 @@ public final class UnsafeLoophole {
     @UNSAFE_CAST
     public static long wordToLong(Word word) {
         assert MaxineVM.isPrototyping();
-        ProgramError.check(Word.width() == WordWidth.BITS_64);
+        ProgramError.check(Word.width() == 64);
         return nativeWordToLong(word);
     }
 
