@@ -21,6 +21,7 @@
 package com.sun.c1x.asm;
 
 import com.sun.c1x.asm.RelocInfo.Type;
+import com.sun.c1x.ci.*;
 
 /**
  *
@@ -31,6 +32,8 @@ public class Relocation {
 
     public static final Relocation none = new Relocation(Type.none);
     private final Type type;
+    public CiRuntimeCall runtimeCall;
+    public CiMethod method;
 
     public Relocation(Type type) {
         this.type = type;
@@ -40,18 +43,19 @@ public class Relocation {
         this.type = Type.objectType;
     }
 
+    public Relocation(CiRuntimeCall runtimeCall) {
+        type = Type.runtimeCallType;
+        this.runtimeCall = runtimeCall;
+    }
+
+    public Relocation(CiRuntimeCall runtimeCall, CiMethod method) {
+        type = Type.runtimeCallType;
+        this.method = method;
+        this.runtimeCall = runtimeCall;
+    }
+
     public Type type() {
         return type;
-    }
-
-    public boolean isCall() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    public boolean isData() {
-        // TODO Auto-generated method stub
-        return false;
     }
 
     public static Relocation specExternalWord(long address) {
@@ -63,8 +67,8 @@ public class Relocation {
         return new Relocation(Type.internalWordType);
     }
 
-    public static Relocation specRuntimeCall() {
-        return specSimple(RelocInfo.Type.runtimeCallType);
+    public static Relocation specRuntimeCall(CiRuntimeCall runtimeCall) {
+        return new Relocation(runtimeCall);
     }
 
     public static Relocation specOptVirtualCallRelocation(long address) {
@@ -89,12 +93,5 @@ public class Relocation {
         // TODO Auto-generated method stub
         return null;
     }
-
-    public int format() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-
 
 }

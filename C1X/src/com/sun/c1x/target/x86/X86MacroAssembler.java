@@ -50,7 +50,6 @@ public class X86MacroAssembler extends X86Assembler {
     final Register jRarg2;
     final Register jRarg3;
     final Register jRarg4;
-    private static final long NULLWORD = 0;
 
     public X86MacroAssembler(C1XCompilation compilation) {
         super(compilation);
@@ -1377,249 +1376,8 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    // Implementation of callVM versions
-
-    void callVM(Register oopResult, CiRuntimeCall entryPoint, boolean checkExceptions) {
-        Label c = new Label();
-        Label e = new Label();
-        call(c);
-        jmp(e);
-
-        bind(c);
-        callVMHelper(oopResult, entryPoint, 0, checkExceptions);
-        ret(0);
-
-        bind(e);
-    }
-
-    void callVM(Register oopResult, CiRuntimeCall entryPoint, Register arg1, boolean checkExceptions) {
-        Label c = new Label();
-        Label e = new Label();
-        call(c);
-        jmp(e);
-
-        bind(c);
-        passArg1(this, arg1);
-        callVMHelper(oopResult, entryPoint, 1, checkExceptions);
-        ret(0);
-
-        bind(e);
-    }
-
-    void callVM(Register oopResult, CiRuntimeCall entryPoint, Register arg1, Register arg2, boolean checkExceptions) {
-        Label c = new Label();
-        Label e = new Label();
-        call(c);
-        jmp(e);
-
-        bind(c);
-
-        assert !compilation.target.arch.is64bit() || arg1 != cRarg2 : "smashed arg";
-
-        passArg2(this, arg2);
-        passArg1(this, arg1);
-        callVMHelper(oopResult, entryPoint, 2, checkExceptions);
-        ret(0);
-
-        bind(e);
-    }
-
-    void callVM(Register oopResult, CiRuntimeCall entryPoint, Register arg1, Register arg2, Register arg3, boolean checkExceptions) {
-        Label c = new Label();
-        Label e = new Label();
-        call(c);
-        jmp(e);
-
-        bind(c);
-
-        assert !compilation.target.arch.is64bit() || arg1 != cRarg3 : "smashed arg";
-        assert !compilation.target.arch.is64bit() || arg2 != cRarg3 : "smashed arg";
-        passArg3(this, arg3);
-
-        assert !compilation.target.arch.is64bit() || arg1 != cRarg2 : "smashed arg";
-        passArg2(this, arg2);
-
-        passArg1(this, arg1);
-        callVMHelper(oopResult, entryPoint, 3, checkExceptions);
-        ret(0);
-
-        bind(e);
-    }
-
-    void callVM(Register oopResult, Register lastJavaSp, CiRuntimeCall entryPoint, int numberOfArguments, boolean checkExceptions) {
-        Register thread = (compilation.target.arch.is64bit()) ? X86FrameMap.r15thread : Register.noreg;
-        callVMBase(oopResult, thread, lastJavaSp, entryPoint, numberOfArguments, checkExceptions);
-    }
-
-    void callVM(Register oopResult, Register lastJavaSp, CiRuntimeCall entryPoint, Register arg1, boolean checkExceptions) {
-        passArg1(this, arg1);
-        callVM(oopResult, lastJavaSp, entryPoint, 1, checkExceptions);
-    }
-
-    void callVM(Register oopResult, Register lastJavaSp, CiRuntimeCall entryPoint, Register arg1, Register arg2, boolean checkExceptions) {
-
-        assert !compilation.target.arch.is64bit() || arg1 != cRarg2 : "smashed arg";
-        passArg2(this, arg2);
-        passArg1(this, arg1);
-        callVM(oopResult, lastJavaSp, entryPoint, 2, checkExceptions);
-    }
-
-    void callVM(Register oopResult, Register lastJavaSp, CiRuntimeCall entryPoint, Register arg1, Register arg2, Register arg3, boolean checkExceptions) {
-        assert !compilation.target.arch.is64bit() || arg1 != cRarg3 : "smashed arg";
-        assert !compilation.target.arch.is64bit() || arg2 != cRarg3 : "smashed arg";
-        passArg3(this, arg3);
-        assert !compilation.target.arch.is64bit() || arg1 != cRarg2 : "smashed arg";
-        passArg2(this, arg2);
-        passArg1(this, arg1);
-        callVM(oopResult, lastJavaSp, entryPoint, 3, checkExceptions);
-    }
-
-    void callVMBase(Register oopResult, Register javaThread, Register lastJavaSp, CiRuntimeCall entryPoint, int numberOfArguments, boolean checkExceptions) {
-        // determine javaThread register
-        if (!javaThread.isValid()) {
-
-            if (compilation.target.arch.is64bit()) {
-                javaThread = X86FrameMap.r15thread;
-            } else {
-                javaThread = X86Register.rdi;
-                getThread(javaThread);
-            }
-        }
-        // determine lastJavaSp register
-        if (!lastJavaSp.isValid()) {
-            lastJavaSp = X86Register.rsp;
-        }
-        // debugging support
-        assert numberOfArguments >= 0 : "cannot have negative number of arguments";
-        assert !compilation.target.arch.is64bit() || javaThread == X86FrameMap.r15thread : "unexpected register";
-        assert javaThread != oopResult : "cannot use the same register for javaThread & oopResult";
-        assert javaThread != lastJavaSp : "cannot use the same register for javaThread & lastJavaSp";
-
-        // push java thread (becomes first argument of C function)
-
-        if (compilation.target.arch.is64bit()) {
-            mov(cRarg0, X86FrameMap.r15thread);
-        } else {
-            push(javaThread);
-            numberOfArguments++;
-        }
-        // set last Java frame before call
-        assert lastJavaSp != X86Register.rbp : "can't use ebp/X86Register.rbp";
-
-        // Only interpreter should have to set fp
-        setLastJavaFrame(javaThread, lastJavaSp, X86Register.rbp, null);
-
-        // do the call : remove parameters
-        callVMLeafBase(entryPoint, numberOfArguments);
-
-        // restore the thread (cannot use the pushed argument since arguments
-        // may be overwritten by C code generated by an optimizing compiler);
-        // however can use the register value directly if it is callee saved.
-        if (compilation.target.arch.is64bit() || javaThread == X86Register.rdi || javaThread == X86Register.rsi) {
-            // X86Register.rdi & X86Register.rsi (also r15) are callee saved . nothing to do
-
-            if (C1XOptions.GenerateAssertionCode) {
-                Util.guarantee(javaThread != X86Register.rax, "change this code");
-                push(X86Register.rax);
-                Label l = new Label();
-                getThread(X86Register.rax);
-                cmpptr(javaThread, X86Register.rax);
-                jcc(X86Assembler.Condition.equal, l);
-                stop("callVMBase: X86Register.rdi not callee saved?");
-                bind(l);
-                pop(X86Register.rax);
-            }
-        } else {
-            getThread(javaThread);
-        }
-        // reset last Java frame
-        // Only interpreter should have to clear fp
-        resetLastJavaFrame(javaThread, true, false);
-
-        // #ifndef CCINTERP
-        // C++ interp handles this in the interpreter
-        checkAndHandlePopframe(javaThread);
-        checkAndHandleEarlyret(javaThread);
-
-        if (checkExceptions) {
-            // check for pending exceptions (javaThread is set upon return)
-            cmpptr(new Address(javaThread, compilation.runtime.threadPendingExceptionOffset()), (int) NULLWORD);
-            if (!compilation.target.arch.is64bit()) {
-                jumpCc(X86Assembler.Condition.notEqual, new RuntimeAddress(CiRuntimeCall.ForwardException));
-            } else {
-                // This used to conditionally jump to forwardException however it is
-                // possible if we relocate that the branch will not reach. So we must jump
-                // around so we can always reach
-
-                Label ok = new Label();
-                jcc(X86Assembler.Condition.equal, ok);
-                jump(new RuntimeAddress(CiRuntimeCall.ForwardException));
-                bind(ok);
-            }
-        }
-
-        // get oop result if there is one and reset the value in the thread
-        if (oopResult.isValid()) {
-            movptr(oopResult, new Address(javaThread, compilation.runtime.threadVmResultOffset()));
-            movptr(new Address(javaThread, compilation.runtime.threadVmResultOffset()), NULLWORD);
-            verifyOop(oopResult, "broken oop in callVMBase");
-        }
-    }
-
-    void callVMHelper(Register oopResult, CiRuntimeCall entryPoint, int numberOfArguments, boolean checkExceptions) {
-
-        // Calculate the value for lastJavaSp
-        // somewhat subtle. callVM does an intermediate call
-        // which places a return Address on the stack just under the
-        // stack pointer as the user finsihed with it. This allows
-        // use to retrieve lastJavaPc from lastJavaSp[-1].
-        // On 32bit we then have to push additional args on the stack to accomplish
-        // the actual requested call. On 64bit callVM only can use register args
-        // so the only extra space is the return Address that callVM created.
-        // This hopefully explains the calculations here.
-
-        if (compilation.target.arch.is64bit()) {
-            // We've pushed one Address : correct lastJavaSp
-            lea(X86Register.rax, new Address(X86Register.rsp, compilation.target.arch.wordSize));
-        } else {
-            lea(X86Register.rax, new Address(X86Register.rsp, (1 + numberOfArguments) * wordSize));
-        }
-
-        callVMBase(oopResult, Register.noreg, X86Register.rax, entryPoint, numberOfArguments, checkExceptions);
-
-    }
-
     void callVMLeaf(CiRuntimeCall entryPoint, int numberOfArguments) {
         callVMLeafBase(entryPoint, numberOfArguments);
-    }
-
-    void callVMLeaf(CiRuntimeCall entryPoint, Register arg0) {
-        passArg0(this, arg0);
-        callVMLeaf(entryPoint, 1);
-    }
-
-    void callVMLeaf(CiRuntimeCall entryPoint, Register arg0, Register arg1) {
-
-        assert !compilation.target.arch.is64bit() || arg0 != cRarg1 : "smashed arg";
-        passArg1(this, arg1);
-        passArg0(this, arg0);
-        callVMLeaf(entryPoint, 2);
-    }
-
-    void callVMLeaf(CiRuntimeCall entryPoint, Register arg0, Register arg1, Register arg2) {
-        assert !compilation.target.arch.is64bit() || arg0 != cRarg2 : "smashed arg";
-        assert !compilation.target.arch.is64bit() || arg1 != cRarg2 : "smashed arg";
-        passArg2(this, arg2);
-        assert !compilation.target.arch.is64bit() || arg0 != cRarg1 : "smashed arg";
-        passArg1(this, arg1);
-        passArg0(this, arg0);
-        callVMLeaf(entryPoint, 3);
-    }
-
-    void checkAndHandleEarlyret(Register javaThread) {
-    }
-
-    void checkAndHandlePopframe(Register javaThread) {
     }
 
     void cmp32(AddressLiteral src1, int imm) {
@@ -3245,15 +3003,6 @@ public class X86MacroAssembler extends X86Assembler {
             pushedRdi = true;
         }
 
-        // TODO: Check what to do with this!
-// #ifndef PRODUCT
-// int pstCounter = &SharedRuntime.partialSubtypeCtr;
-// ExternalAddress pstCounterAddr((Address) pstCounter);
-// NOTLP64( incrementl(pstCounterAddr) );
-// LP64ONLY( lea(X86Register.rcx, pstCounterAddr) );
-// LP64ONLY( incrementl(new Address(X86Register.rcx, 0)) );
-// #endif //PRODUCT
-
         // We will consult the secondary-super array.
         movptr(X86Register.rdi, secondarySupersAddr);
         // Load the array length. (Positive movl does right thing on LP64.)
@@ -3804,11 +3553,6 @@ public class X86MacroAssembler extends X86Assembler {
         Register lenZero = len;
         initializeBody(obj, arrSize, headerSize * wordSize, lenZero);
 
-        if (compilation.runtime.dtraceAllocProbes()) {
-            assert obj == X86Register.rax : "must be";
-            call(new RuntimeAddress(CiRuntimeCall.DtraceObjectAlloc));
-        }
-
         verifyOop(obj);
     }
 
@@ -3943,11 +3687,6 @@ public class X86MacroAssembler extends X86Assembler {
             decrement(index, 1);
             jcc(X86Assembler.Condition.notZero, loop);
 
-        }
-
-        if (compilation.runtime.dtraceAllocProbes()) {
-            assert obj == X86Register.rax : "must be";
-            call(new RuntimeAddress(CiRuntimeCall.DtraceObjectAlloc));
         }
 
         verifyOop(obj);

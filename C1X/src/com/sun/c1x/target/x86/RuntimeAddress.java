@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.target.x86;
 
-import com.sun.c1x.asm.RelocInfo;
+import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.CiMethod;
 import com.sun.c1x.ci.CiRuntimeCall;
 
@@ -31,13 +31,13 @@ public class RuntimeAddress extends AddressLiteral {
     public final CiMethod method;
 
     public RuntimeAddress(CiRuntimeCall runtimeCall) {
-        super(0, RelocInfo.Type.runtimeCallType);
+        super(new Relocation(runtimeCall));
         this.runtimeCall = runtimeCall;
         this.method = null;
     }
 
     public RuntimeAddress(CiRuntimeCall runtimeCall, CiMethod method) {
-        super(0, RelocInfo.Type.runtimeCallType);
+        super(new Relocation(runtimeCall, method));
         this.runtimeCall = runtimeCall;
         this.method = method;
     }

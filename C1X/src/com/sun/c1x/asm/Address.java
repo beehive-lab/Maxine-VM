@@ -111,9 +111,7 @@ public class Address {
                 rspec = Relocation.specInternalWord(loc);
                 break;
             case runtimeCallType:
-                // HMM
-                rspec = Relocation.specRuntimeCall();
-                break;
+                throw Util.shouldNotReachHere();
             case none:
                 rspec = null;
                 break;

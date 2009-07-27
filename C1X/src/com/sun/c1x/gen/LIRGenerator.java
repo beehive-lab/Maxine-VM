@@ -231,14 +231,6 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
 
         final CiMethod method = compilation.method;
-        if (compilation.runtime.dtraceMethodProbes()) {
-            List<LIROperand> arguments = new ArrayList<LIROperand>(2);
-            arguments.add(getThreadPointer());
-            LIROperand meth = newRegister(BasicType.Object);
-            lir.oop2reg(method, meth);
-            arguments.add(meth);
-            callRuntime(BASIC_TYPES_INT_OBJECT, arguments, CiRuntimeCall.DTraceMethodEntry, ValueType.VOID_TYPE, null);
-        }
 
         if (method.isSynchronized()) {
             LIROperand obj;

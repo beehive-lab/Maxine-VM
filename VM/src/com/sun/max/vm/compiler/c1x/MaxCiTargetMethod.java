@@ -29,6 +29,7 @@ import com.sun.max.vm.code.Code;
 import com.sun.max.vm.VMConfiguration;
 import com.sun.max.collect.AppendableSequence;
 import com.sun.max.annotate.PROTOTYPE_ONLY;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 
 import java.util.ArrayList;
@@ -422,8 +423,15 @@ public class MaxCiTargetMethod implements CiTargetMethod {
             final MaxCiMethod maxMethod = (MaxCiMethod) method;
             return maxMethod.asClassMethodActor("directCall()");
         }
-        // TODO: get the class method actor for a runtime method call
-        return null;
+
+        assert runtimeCall != null : "A call can either be a call to a method or a runtime call";
+
+        switch(runtimeCall) {
+
+            default:
+                Trace.line(1, "WARNING: Unknown runtime call to " + runtimeCall.name());
+                return null;
+        }
     }
 
     private void setBits(ByteArrayBitMap bitMap, boolean[] stackMap) {

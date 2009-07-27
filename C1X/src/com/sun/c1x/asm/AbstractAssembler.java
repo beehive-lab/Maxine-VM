@@ -22,6 +22,8 @@ package com.sun.c1x.asm;
 
 import com.sun.c1x.C1XCompilation;
 import com.sun.c1x.C1XOptions;
+import com.sun.c1x.asm.RelocInfo.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.TTY;
 import com.sun.c1x.target.Register;
 import com.sun.c1x.util.Util;
@@ -180,6 +182,19 @@ public abstract class AbstractAssembler {
         codeBuffer.emitInt(x);
     }
 
+    protected void recordRuntimeCall(int pos, CiRuntimeCall call, boolean[] stackMap) {
+
+        assert pos >= 0 && call != null && stackMap != null;
+
+        if (C1XOptions.TraceRelocation) {
+            TTY.print("Runtime call: pos = %d, name = %s, stackMap.length = %d", pos, call.name(), stackMap.length);
+        }
+
+        if (compilation.targetMethod != null) {
+            compilation.targetMethod.recordRuntimeCall(pos, call, stackMap);
+        }
+    }
+
     protected void recordDataReferenceInCode(int pos, int dataOffset, boolean relative) {
 
         assert pos >= 0 && dataOffset >= 0;
@@ -231,6 +246,11 @@ public abstract class AbstractAssembler {
     }
 
     protected void relocate(int position, Relocation relocation) {
+        if (relocation.type() == Type.runtimeCallType) {
+            recordRuntimeCall(position, relocation.runtimeCall, new boolean[]{});
+        } else {
+            throw Util.shouldNotReachHere();
+        }
     }
 
     protected abstract boolean pdCheckInstructionMark();

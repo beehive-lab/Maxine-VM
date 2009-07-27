@@ -32,6 +32,12 @@ public class AddressLiteral {
     public final Relocation rspec;
     public final boolean isLval;
 
+    public AddressLiteral(Relocation rspec) {
+        this.rspec = rspec;
+        this.target = 0;
+        this.isLval = false;
+    }
+
     public AddressLiteral(long address, Type relocationType) {
         isLval = false;
         this.target = address;
@@ -43,18 +49,13 @@ public class AddressLiteral {
           rspec = Relocation.specInternalWord(address);
           break;
         case runtimeCallType:
-          rspec = Relocation.specRuntimeCall();
-          break;
+            throw Util.shouldNotReachHere();
         case none:
             rspec = null;
           break;
         default:
           throw Util.shouldNotReachHere();
         }
-    }
-
-    public AddressLiteral(Relocation reloc) {
-        this(0, reloc, false);
     }
 
     public AddressLiteral(long address, Relocation rspec) {

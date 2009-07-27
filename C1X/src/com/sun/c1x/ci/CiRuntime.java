@@ -147,12 +147,6 @@ public interface CiRuntime {
     boolean jvmtiCanPostExceptions();
 
     /**
-     * Checks wheter the dtrace method runtime stub should be called at method entry.
-     * @return true if the runtime stub should be called, false otherwise
-     */
-    boolean dtraceMethodProbes();
-
-    /**
      * Byte offset of the virtual method table of an internal class object.
      * @return the virtual method table offset in bytes
      */
@@ -281,8 +275,6 @@ public interface CiRuntime {
     int klassPartOffsetInBytes();
 
     int getMinObjAlignmentInBytesMask();
-
-    boolean dtraceAllocProbes();
 
     int instanceOopDescBaseOffsetInBytes();
 

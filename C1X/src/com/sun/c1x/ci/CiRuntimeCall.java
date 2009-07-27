@@ -28,7 +28,6 @@ package com.sun.c1x.ci;
 public enum CiRuntimeCall {
 
     // C1Runtime
-    DtraceObjectAlloc,
     UnwindException,
     ForwardException,
     ThrowRangeCheckFailed,

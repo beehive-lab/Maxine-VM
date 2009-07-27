@@ -650,9 +650,6 @@ public abstract class X86Assembler extends AbstractAssembler {
             emitByte(0xE8);
             long disp = l - (codeBuffer.position() + Util.sizeofInt());
             assert isSimm32(disp) : "must be 32bit offset (call2)";
-            // Technically, should use WhichOperand.call32operand, but this format is
-            // implied by the fact that we're emitting a call instruction.
-
             emitData((int) disp, rspec);
         } finally {
             this.clearInstMark();

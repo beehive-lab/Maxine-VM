@@ -156,7 +156,7 @@ public class C1XOptions {
     public static boolean AvoidUnsupported                   = TRUE; // Bails out when reaching code that is currently not supported
 
     // backend optimization settings
-    public static boolean OptimizeControlFlow                = ____;
+    public static boolean OptimizeControlFlow                = TRUE;
     public static boolean OptimizeMoves                      = ____;
 
     // Runtime settings
