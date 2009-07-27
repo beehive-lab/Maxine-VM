@@ -22,10 +22,7 @@ package com.sun.c1x.graph;
 
 import com.sun.c1x.C1XCompilation;
 import com.sun.c1x.C1XOptions;
-import com.sun.c1x.debug.BlockPrinter;
-import com.sun.c1x.debug.CFGPrinter;
-import com.sun.c1x.debug.InstructionPrinter;
-import com.sun.c1x.debug.TTY;
+import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.BlockBegin;
 import com.sun.c1x.ir.ComputeLinearScanOrder;
 import com.sun.c1x.ir.Goto;
@@ -34,7 +31,6 @@ import com.sun.c1x.opt.CEEliminator;
 import com.sun.c1x.opt.GlobalValueNumberer;
 import com.sun.c1x.opt.NullCheckEliminator;
 import com.sun.c1x.value.ValueStack;
-
 import java.util.Iterator;
 import java.util.List;
 
@@ -102,6 +98,7 @@ public class IR {
         // Graph builder must set the startBlock and the osrEntryBlock
         new GraphBuilder(compilation, topScope, this);
         assert startBlock != null;
+
     }
 
     private void optimize1() {
@@ -147,21 +144,18 @@ public class IR {
      * @param phase the name of the phase for printing
      */
     public void verifyAndPrint(String phase) {
+        if (C1XOptions.TypeChecking) {
+            startBlock.iteratePreOrder(new IRChecker(this));
+        }
         CFGPrinter cfgPrinter = compilation.cfgPrinter();
         if (C1XOptions.PrintCFGToFile && cfgPrinter != null) {
             cfgPrinter.printCFG(startBlock, phase, true, false);
         }
 
-        if (C1XOptions.PrintCFG) {
-            TTY.println(phase);
-            print(true);
-        }
-
-        if (C1XOptions.PrintIR) {
+         if (C1XOptions.PrintIR) {
             TTY.println(phase);
             print(false);
         }
-        // TODO: run verification
     }
 
     public int numLoops() {

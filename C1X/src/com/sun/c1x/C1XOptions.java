@@ -62,6 +62,7 @@ public class C1XOptions {
     public static boolean PrintCFG                           = ____;
     public static boolean PrintCompilation                   = ____;
     public static boolean PrintExceptionHandlers             = ____;
+    public static boolean TypeChecking                       = ____;
 
     // canonicalizer settings
     public static boolean CanonicalizeInstructions           = TRUE;
@@ -259,7 +260,7 @@ public class C1XOptions {
         DoArrayBoundsCheckElimination      = ____;
         DistinguishExceptionHandlerCode    = ____;
         DoNullCheckElimination             = TRUE;
-        DoIterativeNullCheckElimination    = ____; // don't iterate NCE        
+        DoIterativeNullCheckElimination    = ____; // don't iterate NCE
         DoProfileGuidedInlining            = ____;
         DoTypeFlowAnalysis                 = ____;
     }

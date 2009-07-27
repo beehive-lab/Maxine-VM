@@ -33,7 +33,7 @@ public class OsrEntry extends Instruction {
      * Constructs a new OsrEntry instruction.
      */
     public OsrEntry() {
-        // XXX: an OSR takes what as input? A pointer to the stack frame?
+        // TODO: this should be a BasicType.Word
         super(ValueType.JSR_TYPE);
         pin();
     }
