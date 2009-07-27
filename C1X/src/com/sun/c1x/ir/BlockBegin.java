@@ -23,7 +23,6 @@ package com.sun.c1x.ir;
 import com.sun.c1x.Bailout;
 import com.sun.c1x.C1XOptions;
 import com.sun.c1x.asm.Label;
-import com.sun.c1x.debug.InstructionPrinter;
 import com.sun.c1x.lir.LIRBlock;
 import com.sun.c1x.lir.LIRList;
 import com.sun.c1x.util.BitMap;

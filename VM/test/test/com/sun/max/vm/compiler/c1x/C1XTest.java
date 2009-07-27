@@ -179,8 +179,9 @@ public class C1XTest {
             final long startNs = System.nanoTime();
             final MaxCiTargetMethod targetMethod = targetOption.getValue() ? new MaxCiTargetMethod((ClassMethodActor) method) : null;
             final C1XCompilation compilation = new C1XCompilation(target, runtime, runtime.getCiMethod(method), targetMethod);
-
-            if (!compilation.compile()) {
+            boolean result = compilation.compile();
+            long timeNs = System.nanoTime() - startNs;
+            if (!result) {
                 if (printBailout) {
                     compilation.bailout().printStackTrace(out);
                 }
@@ -189,7 +190,7 @@ public class C1XTest {
 
             if (!warmup) {
                 // record the time for successful compilations
-                recordTime(method, compilation.totalInstructions(), System.nanoTime() - startNs);
+                recordTime(method, compilation.totalInstructions(), timeNs);
             }
             return true;
         }

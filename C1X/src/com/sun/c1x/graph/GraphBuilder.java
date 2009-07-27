@@ -49,19 +49,17 @@ public class GraphBuilder {
     final IR ir;
     final C1XCompilation compilation;
 
-    // for each instance of GraphBuilder
+    final ValueMap localValueMap;          // map of values for local value numbering
+    final MemoryMap memoryMap;             // map of field values for local load elimination
     ScopeData scopeData;                   // Per-scope data; used for inlining
-    ValueMap localValueMap;                // map of values for local value numbering
-    MemoryBuffer memoryMap;
-    int instrCount;                        // for bailing out in pathological jsr/ret cases
-    ValueStack initialState;               // The state for the start block
-
     BlockBegin curBlock;                   // the current block
     ValueStack curState;                   // the current execution state
-    ValueStack exceptionState;             // state that will be used by handle_exception
     Instruction lastInstr;                 // the last instruction added
-    boolean skipBlock;                     // skip processing of the rest of this block
+    int instrCount;                        // for bailing out in pathological jsr/ret cases
 
+    ValueStack initialState;               // The state for the start block
+    ValueStack exceptionState;             // state that will be used by handleException
+    boolean skipBlock;                     // skip processing of the rest of this block
 
     /**
      * Creates a new instance and builds the graph for a the specified IRScope.
@@ -72,12 +70,8 @@ public class GraphBuilder {
     public GraphBuilder(C1XCompilation compilation, IRScope scope, IR ir) {
         this.compilation = compilation;
         this.ir = ir;
-        if (C1XOptions.EliminateFieldAccess) {
-            this.memoryMap = new MemoryBuffer();
-        }
-        if (C1XOptions.UseLocalValueNumbering) {
-            this.localValueMap = new ValueMap();
-        }
+        this.memoryMap = C1XOptions.EliminateFieldAccess ? new MemoryMap() : null;
+        this.localValueMap = C1XOptions.UseLocalValueNumbering ? new ValueMap() : null;
         int osrBCI = compilation.osrBCI;
         BlockMap blockMap = compilation.getBlockMap(scope.method, osrBCI);
         BlockBegin start = blockMap.get(0);
@@ -91,7 +85,7 @@ public class GraphBuilder {
         CiMethod method = method();
         if (method.isSynchronized()) {
             // setup and exception handler
-            syncHandler = new BlockBegin(Instruction.SYNCHRONIZATION_ENTRY_BCI, compilation.hir().nextBlockNumber());
+            syncHandler = new BlockBegin(Instruction.SYNCHRONIZATION_ENTRY_BCI, ir.nextBlockNumber());
             syncHandler.setExceptionEntry();
             syncHandler.setBlockFlag(BlockBegin.BlockFlag.IsOnWorkList);
             syncHandler.setBlockFlag(BlockBegin.BlockFlag.DefaultExceptionHandler);
@@ -183,7 +177,7 @@ public class GraphBuilder {
     }
 
     BlockBegin setupStartBlock(int osrBCI, BlockBegin stdEntry, BlockBegin osrEntry, ValueStack state) {
-        BlockBegin start = new BlockBegin(0, compilation.hir().nextBlockNumber());
+        BlockBegin start = new BlockBegin(0, ir.nextBlockNumber());
 
         BlockBegin newHeaderBlock;
         if (stdEntry.predecessors().size() == 0 && !C1XOptions.ProfileBranches) {
@@ -209,7 +203,7 @@ public class GraphBuilder {
     BlockBegin headerBlock(BlockBegin entry, BlockBegin.BlockFlag f, ValueStack state) {
         assert entry.checkBlockFlag(f);
         // create header block
-        BlockBegin h = new BlockBegin(entry.bci(), compilation.hir().nextBlockNumber());
+        BlockBegin h = new BlockBegin(entry.bci(), ir.nextBlockNumber());
         h.setDepthFirstNumber(0);
 
         Instruction l = h;
@@ -1544,7 +1538,7 @@ public class GraphBuilder {
         boolean continuationExisted = true;
         if (continuationBlock == null) {
             // there was not already a block starting at the next BCI
-            continuationBlock = new BlockBegin(nextBCI(), compilation.hir().nextBlockNumber());
+            continuationBlock = new BlockBegin(nextBCI(), ir.nextBlockNumber());
             continuationBlock.setDepthFirstNumber(0);
             continuationExisted = false;
         }
@@ -1578,7 +1572,7 @@ public class GraphBuilder {
         if (target.isSynchronized()) {
             // lock the receiver object if it is an instance method, the class object otherwise
             lock = synchronizedObject(curState, target);
-            syncHandler = new BlockBegin(Instruction.SYNCHRONIZATION_ENTRY_BCI, compilation.hir().nextBlockNumber());
+            syncHandler = new BlockBegin(Instruction.SYNCHRONIZATION_ENTRY_BCI, ir.nextBlockNumber());
             inlineSyncEntry(lock, syncHandler);
             scope().computeLockStackSize();
         }
@@ -1752,7 +1746,7 @@ public class GraphBuilder {
         s.next(); // XXX: why go to next bytecode?
 
         // create a new block to contain the OSR setup code
-        ir.osrEntryBlock = new BlockBegin(osrBCI, compilation.hir().nextBlockNumber());
+        ir.osrEntryBlock = new BlockBegin(osrBCI, ir.nextBlockNumber());
         ir.osrEntryBlock.setOsrEntry(true);
         ir.osrEntryBlock.setDepthFirstNumber(0);
 
