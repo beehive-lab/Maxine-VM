@@ -156,7 +156,7 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
         }
 
         final Pointer refMap = referenceMap;
-        final int referenceMapWords = Unsigned.idiv(referenceMapEndBitIndex + (Word.width() - 1), Word.size());
+        final int referenceMapWords = Unsigned.idiv(referenceMapEndBitIndex + (Word.width() - 1), Word.width());
         if (Heap.traceRootScanning()) {
             Log.print("Scanning references in code region ");
             Log.print(description());
@@ -167,7 +167,6 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
             Log.print(", references end=");
             Log.println(start().plus(referenceMapWords * Word.size()));
         }
-
         if (Heap.traceRootScanning()) {
             scanReferenceMap(pointerIndexVisitor, refMap, referenceMapWords, true);
         } else {
