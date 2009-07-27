@@ -241,7 +241,7 @@ public class C1XOptions {
         AlwaysCSEArrayLength               = ____;
 
         // turn on state merging optimizations
-        MergeEquivalentConstants           = TRUE;
+        MergeEquivalentConstants           = ____;
         ComputeStoresInLoops               = TRUE;
         SimplifyPhis                       = TRUE;
 
@@ -259,7 +259,7 @@ public class C1XOptions {
         DoArrayBoundsCheckElimination      = ____;
         DistinguishExceptionHandlerCode    = ____;
         DoNullCheckElimination             = TRUE;
-        DoIterativeNullCheckElimination    = ____; // don't iterate NCE        
+        DoIterativeNullCheckElimination    = ____; // don't iterate NCE
         DoProfileGuidedInlining            = ____;
         DoTypeFlowAnalysis                 = ____;
     }

@@ -21,6 +21,8 @@
 package com.sun.c1x.value;
 
 import com.sun.c1x.Bailout;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.C1XMetrics;
 import com.sun.c1x.ci.CiMethod;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.Util;
@@ -673,10 +675,25 @@ public class ValueStack {
         for (int i = 0; i < valuesSize(); i++) {
             Instruction x = values[i];
             Instruction y = other.values[i];
+            // XXX: profile each of these branches and reorder tests appropriately
             if (x != null && x != y) {
-                // XXX: merging of constants would be possible here?
                 if (x instanceof Phi && ((Phi) x).block() == block) {
                     continue; // phi already exists, continue
+                }
+                if (C1XOptions.MergeEquivalentConstants) {
+                    // check to see if x and y are the same constant
+                    if (y != null) {
+                        ValueType xt = x.type();
+                        if (xt.isConstant()) {
+                            C1XMetrics.EquivalentConstantsChecked++;
+                            ValueType yt = y.type();
+                            if (yt.isConstant() && xt.asConstant().equivalent(yt)) {
+                                // x and y are equivalent constants
+                                C1XMetrics.EquivalentConstantsMerged++;
+                                continue;
+                            }
+                        }
+                    }
                 }
                 if (i < maxLocals) {
                     // this a local
