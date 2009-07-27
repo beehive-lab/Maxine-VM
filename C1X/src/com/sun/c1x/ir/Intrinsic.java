@@ -35,25 +35,25 @@ public class Intrinsic extends StateSplit {
 
     final C1XIntrinsic intrinsic;
     final boolean isStatic;
-    Instruction[] arguments;
-    ValueStack lockStack;
+    final Instruction[] arguments;
+    final ValueStack lockStack;
     final boolean canTrap;
 
     /**
      * Creates a new Intrinsic instruction.
      * @param type the result type of the instruction
      * @param intrinsic the actual intrinsic
-     * @param arguments the arguments to the call (including the receiver object)
+     * @param args the arguments to the call (including the receiver object)
      * @param isStatic <code>true</code> if this method is static
      * @param lockStack the lock stack
      * @param preservesState <code>true</code> if the implementation of this intrinsic preserves register state
      * @param canTrap <code>true</code> if this intrinsic can cause a trap
      */
-    public Intrinsic(ValueType type, C1XIntrinsic intrinsic, Instruction[] arguments, boolean isStatic,
+    public Intrinsic(ValueType type, C1XIntrinsic intrinsic, Instruction[] args, boolean isStatic,
                      ValueStack lockStack, boolean preservesState, boolean canTrap) {
         super(type);
         this.intrinsic = intrinsic;
-        this.arguments = arguments;
+        this.arguments = args;
         this.lockStack = lockStack;
         this.isStatic = isStatic;
         // Preserves state means that the intrinsic preserves register state across all cases,
@@ -62,7 +62,9 @@ public class Intrinsic extends StateSplit {
         initFlag(Flag.PreservesState, preservesState);
         this.canTrap = canTrap;
         initFlag(Flag.PinStateSplitConstructor, canTrap);
-        initFlag(Flag.NeedsNullCheck, !isStatic && !arguments[0].isNonNull());
+        if (!isStatic && args[0].isNonNull()) {
+            clearNullCheck();
+        }
     }
 
     /**

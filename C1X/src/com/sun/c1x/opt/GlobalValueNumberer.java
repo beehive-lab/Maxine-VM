@@ -87,6 +87,7 @@ public class GlobalValueNumberer {
                     C1XMetrics.GlobalValueNumberHits++;
                     assert !f.hasSubst() : "can't have a substitution";
                     instr.setSubst(f);
+                    f.setFlag(Instruction.Flag.PinGlobalValueNumbering);
                     substCount++;
                 }
             }

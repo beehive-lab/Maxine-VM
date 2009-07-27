@@ -2517,7 +2517,7 @@ public class LinearScan extends RegisterAllocator {
     }
 
     boolean checkStackDepth(CodeEmitInfo info, int stackEnd) {
-        if (info.bci() != C1XCompilation.MethodCompilation.SynchronizationEntryBCI.value && !info.scope().method.isNative()) {
+        if (info.bci() != Instruction.SYNCHRONIZATION_ENTRY_BCI && !info.scope().method.isNative()) {
             int code = info.scope().method.javaCodeAtBci(info.bci());
             switch (code) {
                 case Bytecodes.IFNULL: // fall through
@@ -3433,17 +3433,19 @@ public class LinearScan extends RegisterAllocator {
                 int r2 = i2.assignedReg();
                 int r2Hi = i2.assignedRegHi();
                 if (i1.intersects(i2) && (r1 == r2 || r1 == r2Hi || (r1Hi != getAnyreg() && (r1Hi == r2 || r1Hi == r2Hi)))) {
-                    TTY.println("Intervals %d and %d overlap and have the same register assigned", i1.regNum(), i2.regNum());
-                    i1.print(TTY.out, this);
-                    TTY.cr();
-                    i2.print(TTY.out, this);
-                    TTY.cr();
+                    if (C1XOptions.DetailedAsserts) {
+                        TTY.println("Intervals %d and %d overlap and have the same register assigned", i1.regNum(), i2.regNum());
+                        i1.print(TTY.out, this);
+                        TTY.cr();
+                        i2.print(TTY.out, this);
+                        TTY.cr();
+                    }
                     hasError = true;
                 }
             }
         }
 
-        assert hasError == false : "register allocation invalid";
+        assert !hasError : "register allocation invalid";
     }
 
     void verifyNoOopsInFixedIntervals() {

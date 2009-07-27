@@ -239,8 +239,7 @@ public abstract class AbstractAssembler {
 
         int branchPc = pc();
         if (l.isBound()) {
-            int loc = l.loc();
-            return loc;
+            return l.loc();
         } else {
             l.addPatchAt(branchPc);
 
@@ -254,13 +253,11 @@ public abstract class AbstractAssembler {
     }
 
     public int doubleConstant(double d) {
-        int offset = dataBuffer.emitDouble(d);
-        return offset;
+        return dataBuffer.emitDouble(d);
     }
 
     public int floatConstant(float f) {
-        int offset = dataBuffer.emitFloat(f);
-        return offset;
+        return dataBuffer.emitFloat(f);
     }
 
     public abstract void nop();

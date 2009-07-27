@@ -44,7 +44,7 @@ public class StoreField extends AccessField {
     public StoreField(Instruction object, CiField field, Instruction value, boolean isStatic, ValueStack lockStack, ValueStack stateBefore, boolean isLoaded) {
         super(object, field, isStatic, lockStack, stateBefore, isLoaded);
         this.value = value;
-        setFlag(Flag.NeedsWriteBarrier);
+        setFlag(Flag.NoWriteBarrier);
     }
 
     /**
@@ -60,7 +60,7 @@ public class StoreField extends AccessField {
      * @return <code>true</code> if this instruction needs a write barrier
      */
     public boolean needsWriteBarrier() {
-        return checkFlag(Flag.NeedsWriteBarrier);
+        return checkFlag(Flag.NoWriteBarrier);
     }
 
     /**

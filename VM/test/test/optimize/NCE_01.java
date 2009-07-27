@@ -18,37 +18,24 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package test.optimize;
 
-import com.sun.c1x.util.BitMap;
-import com.sun.c1x.asm.Label;
-
-/**
- * The <code>LIRBlock</code> class definition.
- *
- * @author Ben L. Titzer
+/*
+ * Test case for null check elimination.
+ * @Harness: java
+ * @Runs: 0=23
  */
-public class LIRBlock {
+public class NCE_01 {
 
-    public final Label label = new Label();
-    private LIRList lir;
+    public static NCE_01 object = new NCE_01();
 
-    public BitMap liveIn;
-    public BitMap liveOut;
-    public BitMap liveGen;
-    public BitMap liveKill;
+    int field1 = 22;
+    int field2 = 23;
 
-    public BitMap fpuRegisterUsage;
-    public int[] fpuStackState;
-    public int firstLirInstructionID;
-    public int lastLirInstructionID;
-    public int exceptionHandlerPCO;
-
-    public LIRList lir() {
-        return lir;
-    }
-
-    public void setLir(LIRList lir) {
-        this.lir = lir;
+    public static int test(int arg) {
+        NCE_01 o = object;
+        int i = o.field1;
+        // expected null check elimination here
+        return o.field2;
     }
 }

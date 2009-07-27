@@ -165,8 +165,7 @@ public abstract class LIRAssembler {
     }
 
     void emitStubs(List<CodeStub> stubList) {
-        for (int m = 0; m < stubList.size(); m++) {
-            CodeStub s = stubList.get(m);
+        for (CodeStub s : stubList) {
             if (C1XOptions.CommentedAssembly) {
                 String st = s.name() + " slow case";
                 asm.blockComment(st);
@@ -195,14 +194,16 @@ public abstract class LIRAssembler {
     }
 
     public void emitExceptionEntries(List<ExceptionInfo> infoList) {
-        for (int i = 0; i < infoList.size(); i++) {
-            List<ExceptionHandler> handlers = infoList.get(i).exceptionHandlers();
+        if (infoList == null) {
+            return;
+        }
+        for (ExceptionInfo ilist : infoList) {
+            List<ExceptionHandler> handlers = ilist.exceptionHandlers();
 
-            for (int j = 0; j < handlers.size(); j++) {
-                ExceptionHandler handler = handlers.get(j);
+            for (ExceptionHandler handler : handlers) {
                 assert handler.lirOpId() != -1 : "handler not processed by LinearScan";
                 assert handler.entryCode() == null || handler.entryCode().instructionsList().get(handler.entryCode().instructionsList().size() - 1).code() == LIROpcode.Branch ||
-                                handler.entryCode().instructionsList().get(handler.entryCode().instructionsList().size() - 1).code() == LIROpcode.DelaySlot : "last operation must be branch";
+                        handler.entryCode().instructionsList().get(handler.entryCode().instructionsList().size() - 1).code() == LIROpcode.DelaySlot : "last operation must be branch";
 
                 if (handler.entryPCO() == -1) {
                     // entry code not emitted yet
@@ -254,8 +255,7 @@ public abstract class LIRAssembler {
         if (C1XOptions.PrintLIRWithAssembly) {
             // don't print Phi's
             InstructionPrinter ip = new InstructionPrinter(TTY.out, false);
-            block.print(ip);
-
+            ip.printBlock(block);
         }
 
         assert block.lir() != null : "must have LIR";
@@ -394,7 +394,7 @@ public abstract class LIRAssembler {
         if (t == null) {
             return null;
         }
-        for (;;) {
+        while (true) {
             ValueStack tc = t.scope().callerState();
             if (tc == null) {
                 return s;
@@ -417,7 +417,7 @@ public abstract class LIRAssembler {
 
         // Visit scopes from oldest to youngest.
         for (int n = 0;; n++) {
-            int[] sBci = new int[] {bci};
+            int[] sBci = {bci};
             ValueStack s = nthOldest(vstack, n, sBci);
             if (s == null) {
                 break;

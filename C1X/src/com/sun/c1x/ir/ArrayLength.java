@@ -32,8 +32,6 @@ import com.sun.c1x.value.ValueType;
  */
 public class ArrayLength extends AccessArray {
 
-    NullCheck explicitNullCheck;
-
     /**
      * Constructs a new ArrayLength instruction.
      * @param array the instruction producing the array
@@ -41,6 +39,9 @@ public class ArrayLength extends AccessArray {
      */
     public ArrayLength(Instruction array, ValueStack lockStack) {
         super(ValueType.INT_TYPE, array, lockStack);
+        if (array.isNonNull()) {
+            clearNullCheck();
+        }
     }
 
     /**
@@ -48,15 +49,7 @@ public class ArrayLength extends AccessArray {
      * @return the explicit null check object
      */
     public NullCheck explicitNullCheck() {
-        return explicitNullCheck;
-    }
-
-    /**
-     * Sets the instruction representing an explicit null check for this instruction.
-     * @param explicitNullCheck the instruction representing an explicit null check
-     */
-    public void setExplicitNullCheck(NullCheck explicitNullCheck) {
-        this.explicitNullCheck = explicitNullCheck;
+        return null;
     }
 
     /**
@@ -66,6 +59,12 @@ public class ArrayLength extends AccessArray {
     @Override
     public void accept(InstructionVisitor v) {
         v.visitArrayLength(this);
+    }
+
+    @Override
+    public void clearNullCheck() {
+        lockStack = null;
+        setFlag(Flag.NoNullCheck);
     }
 
     @Override

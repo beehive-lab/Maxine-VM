@@ -51,7 +51,7 @@ public abstract class Architecture {
     public final int nativeCallDisplacementOffset;
     public final int nativeMoveConstInstructionSize;
 
-    public static final Architecture findArchitecture(String name) {
+    public static Architecture findArchitecture(String name) {
         // load and instantiate the backend via reflection
         String className = "com.sun.c1x.target." + name.toUpperCase();
         try {
@@ -72,7 +72,7 @@ public abstract class Architecture {
         this.wordSize = wordSize;
         this.backend = backend;
         this.bitsPerWord = wordSize * 8;
-        this.logBytesPerInt = (int) (java.lang.Math.log(wordSize));
+        this.logBytesPerInt = (int) (Math.log(wordSize));
         this.bitOrdering = bitOrdering;
         this.framePadding = framePadding;
         this.nativeCallDisplacementOffset = nativeCallDisplacementOffset;
@@ -130,7 +130,7 @@ public abstract class Architecture {
      * @return <code>true</code> if the backend of this architecture is x86
      */
     public boolean isX86() {
-        return backend.equals("x86");
+        return "x86".equals(backend);
     }
 
     /**
@@ -139,6 +139,6 @@ public abstract class Architecture {
      * @return <code>true</code> if the backend of this architecture is SPARC
      */
     public boolean isSPARC() {
-        return backend.equals("SPARC");
+        return "SPARC".equals(backend);
     }
 }
