@@ -30,11 +30,12 @@ public class C1XMetrics {
     public static int LocalValueNumberHits;
     public static int GlobalValueNumberHits;
     public static int ValueMapResizes;
-    public static int ValueMapKills;
     public static int InlinedMethods;
     public static int InlinedIntrinsics;
     public static int InlinedFinalizerChecks;
     public static int FoldableMethodsRegistered;
     public static int MethodsFolded;
     public static int InlineForcedMethods;
+    public static int NullCheckIterations;
+    public static int NullCheckEliminations;
 }

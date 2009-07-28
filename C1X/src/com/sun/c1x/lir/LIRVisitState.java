@@ -38,7 +38,7 @@ import java.util.List;
 public class LIRVisitState {
 
     public enum OperandMode {
-        InputMode, TempMode, OutputMode;
+        InputMode, TempMode, OutputMode
     }
 
     public static final int MAXNUMBEROFOPERANDS = 14;

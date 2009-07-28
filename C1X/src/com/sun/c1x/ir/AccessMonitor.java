@@ -30,7 +30,7 @@ import com.sun.c1x.value.ValueType;
 public abstract class AccessMonitor extends StateSplit {
 
     Instruction object;
-    int lockNumber;
+    final int lockNumber;
 
     /**
      * Creates a new AccessMonitor instruction.
