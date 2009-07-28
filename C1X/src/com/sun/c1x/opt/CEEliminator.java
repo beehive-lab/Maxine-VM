@@ -72,7 +72,9 @@ public class CEEliminator implements BlockClosure {
 
         // check that the if's operands are of int or object type
         ValueType ifType = curIf.x().type();
-        if (!ifType.isInt() && !ifType.isObject()) return;
+        if (!ifType.isInt() && !ifType.isObject()) {
+            return;
+        }
 
         BlockBegin tBlock = curIf.trueSuccessor();
         BlockBegin fBlock = curIf.falseSuccessor();
@@ -100,17 +102,25 @@ public class CEEliminator implements BlockClosure {
 
         // check that both gotos merge into the same block
         BlockBegin sux = tGoto.defaultSuccessor();
-        if (sux != fGoto.defaultSuccessor()) return;
+        if (sux != fGoto.defaultSuccessor()) {
+            return;
+        }
 
         // check that at least one word was pushed on suxState
         ValueStack suxState = sux.state();
-        if (suxState.stackSize() <= curIf.state().stackSize()) return;
+        if (suxState.stackSize() <= curIf.state().stackSize()) {
+            return;
+        }
 
         // check that phi function is present at end of successor stack and that
         // only this phi was pushed on the stack
         Instruction suxPhi = suxState.stackAt(curIf.state().stackSize());
-        if (suxPhi == null || !(suxPhi instanceof Phi) || ((Phi) suxPhi).block() != sux) return;
-        if (suxPhi.type().size() != suxState.stackSize() - curIf.state().stackSize()) return;
+        if (suxPhi == null || !(suxPhi instanceof Phi) || ((Phi) suxPhi).block() != sux) {
+            return;
+        }
+        if (suxPhi.type().size() != suxState.stackSize() - curIf.state().stackSize()) {
+            return;
+        }
 
         // get the values that were pushed in the true- and false-branch
         Instruction tValue = tGoto.state().stackAt(curIf.state().stackSize());
@@ -197,10 +207,10 @@ public class CEEliminator implements BlockClosure {
         block.setEnd(newGoto);
 
         // substitute the phi if possible
-        Phi sux_phi2 = (Phi) suxPhi;
-        if (sux_phi2.operandCount() == 1) {
+        Phi suxAsPhi = (Phi) suxPhi;
+        if (suxAsPhi.operandCount() == 1) {
             // if the successor block now has only one predecessor
-            assert sux_phi2.operandAt(0) == result : "screwed up phi";
+            assert suxAsPhi.operandAt(0) == result : "screwed up phi";
             suxPhi.setSubst(result);
             hasSubstitution = true;
 
