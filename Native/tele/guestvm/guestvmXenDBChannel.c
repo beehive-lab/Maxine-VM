@@ -303,6 +303,7 @@ out:
     threads = gather_threads(&num_threads);
     trace_threads(threads, num_threads);
     threads_at_rest = threads;
+    num_threads_at_rest = num_threads;
     return 0;
 }
 
