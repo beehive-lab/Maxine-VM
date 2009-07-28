@@ -206,6 +206,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             allocationMark.set(toSpace.start());
             top = toSpace.end().minus(safetyZoneSize);
 
+            if (MaxineVM.isDebug()) {
+                zapRegion(toSpace, "at GC initialization");
+            }
 
             // From now on we can allocate
 
@@ -308,6 +311,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 if (MaxineVM.isDebug()) {
                     // Pre-verification of the heap.
                     verifyObjectSpaces("before GC");
+                    zapRegion(fromSpace, "before GC");
                 }
 
                 ++numberOfGarbageCollectionInvocations;
@@ -366,6 +370,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
                 if (MaxineVM.isDebug()) {
                     verifyObjectSpaces("after GC");
+                    zapRegion(fromSpace, "after GC");
                 }
 
                 InspectableHeapInfo.afterGarbageCollection();
@@ -1019,6 +1024,16 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             Log.print(when);
             Log.println(": DONE");
         }
+    }
+
+    private void zapRegion(MemoryRegion region, String when) {
+        if (Heap.traceGCPhases()) {
+            Log.print("Zapping region ");
+            Log.print(region.description());
+            Log.print(' ');
+            Log.println(when);
+        }
+        Memory.setWords(region.start().asPointer(), region.size().dividedBy(Word.size()).toInt(), Address.fromLong(0xDEADBEEFCAFEBABEL));
     }
 
     private void logSpaces() {

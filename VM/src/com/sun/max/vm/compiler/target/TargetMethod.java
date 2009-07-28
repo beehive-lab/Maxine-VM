@@ -48,6 +48,7 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.JavaStackFrameLayout.*;
 import com.sun.max.vm.template.*;
+import com.sun.max.vm.type.*;
 
 /**
  * A collection of objects that represent the compiled target code
@@ -58,7 +59,6 @@ import com.sun.max.vm.template.*;
  */
 public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMethod {
 
-    public static final int REFERENCE_RETURN_FLAG = 0x80000000;
     @PROTOTYPE_ONLY
     public static boolean COLLECT_TARGET_METHOD_STATS;
 
@@ -210,8 +210,10 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      *   +-----------------------------+
      *
      * </pre>
+     * The methods and constants defined in {@link StopPositions} should be used to decode the entries of this array.
      *
      * @see StopType
+     * @see StopPositions
      */
     public final int[] stopPositions() {
         return stopPositions;
@@ -221,12 +223,32 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return stopPositions == null ? 0 : stopPositions.length;
     }
 
+    /**
+     * Gets the position of a given stop in this target method.
+     *
+     * @param stopIndex an index into the {@link #stopPositions()} array
+     * @return
+     */
     public final int stopPosition(int stopIndex) {
-        return stopPositions[stopIndex] & ~REFERENCE_RETURN_FLAG;
+        return StopPositions.get(stopPositions, stopIndex);
     }
 
+    /**
+     * Determines if a given stop denotes a call whose return type is a {@linkplain Kind#REFERENCE reference} type.
+     *
+     * @param stopIndex an index into the {@link #stopPositions()} array
+     */
     public final boolean isReferenceCall(int stopIndex) {
-        return (stopPositions[stopIndex] & REFERENCE_RETURN_FLAG) != 0;
+        return StopPositions.isReferenceCall(stopPositions, stopIndex);
+    }
+
+    /**
+     * Determines if a given stop denotes a native function call.
+     *
+     * @param stopIndex an index into the {@link #stopPositions()} array
+     */
+    public final boolean isNativeFunctionCall(int stopIndex) {
+        return StopPositions.isNativeFunctionCall(stopPositions, stopIndex);
     }
 
     /**
@@ -1021,18 +1043,22 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     /**
      * Gets the position of the next call (direct or indirect) in this target method after a given position.
      *
-     * @return {@link Pointer#zero()} if no call exists in this target method after {@code instructionPointer}
+     * @param targetCodePosition the position from which to start searching
+     * @param nativeFunctionCall if {@code true}, then the search is refined to only consider
+     *            {@linkplain #isNativeFunctionCall(int) native function calls}.
+     *
+     * @return -1 if the search fails
      */
-    public int findNextCall(int targetCodePosition) {
+    public int findNextCall(int targetCodePosition, boolean nativeFunctionCall) {
         if (stopPositions == null || targetCodePosition < 0 || targetCodePosition > code.length) {
             return -1;
         }
 
         int closestCallPosition = Integer.MAX_VALUE;
         final int numberOfCalls = numberOfDirectCalls() + numberOfIndirectCalls();
-        for (int i = 0; i < numberOfCalls; i++) {
-            final int callPosition = stopPosition(i);
-            if (callPosition > targetCodePosition && callPosition < closestCallPosition) {
+        for (int stopIndex = 0; stopIndex < numberOfCalls; stopIndex++) {
+            final int callPosition = stopPosition(stopIndex);
+            if (callPosition > targetCodePosition && callPosition < closestCallPosition && (!nativeFunctionCall || isNativeFunctionCall(stopIndex))) {
                 closestCallPosition = callPosition;
             }
         }

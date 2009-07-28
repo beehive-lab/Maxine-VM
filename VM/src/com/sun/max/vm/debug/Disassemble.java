@@ -106,15 +106,18 @@ public final class Disassemble {
         final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
             @Override
             protected String disassembledObjectString(Disassembler disassembler, DisassembledObject disassembledObject) {
-                final String string = super.disassembledObjectString(disassembler, disassembledObject);
+                String string = super.disassembledObjectString(disassembler, disassembledObject);
                 if (string.startsWith("call ")) {
                     final BytecodeLocation bytecodeLocation = targetMethod.getBytecodeLocationFor(startAddress.plus(disassembledObject.startPosition()));
                     if (bytecodeLocation != null) {
                         final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
                         if (methodRef != null) {
                             final ConstantPool pool = bytecodeLocation.classMethodActor().codeAttribute().constantPool();
-                            return string + " [" + methodRef.holder(pool).toJavaString(false) + "." + methodRef.name(pool) + methodRef.signature(pool).toJavaString(false, false) + "]";
+                            string += " [" + methodRef.holder(pool).toJavaString(false) + "." + methodRef.name(pool) + methodRef.signature(pool).toJavaString(false, false) + "]";
                         }
+                    }
+                    if (StopPositions.isNativeFunctionCallPosition(targetMethod.stopPositions(),  disassembledObject.startPosition())) {
+                        string += " <native function call>";
                     }
                 }
                 return string;

@@ -431,14 +431,6 @@ public class VmThread {
         return UnsafeLoophole.cast(VM_THREAD.getConstantReference().toJava());
     }
 
-    @INLINE
-    public static VmThread current(Pointer vmThreadLocals) {
-        if (MaxineVM.isPrototyping()) {
-            return mainVMThread;
-        }
-        return UnsafeLoophole.cast(VmThreadLocal.VM_THREAD.getConstantReference(vmThreadLocals).toJava());
-    }
-
     private static void executeRunnable(VmThread vmThread) throws Throwable {
         try {
             if (vmThread == mainVMThread) {
@@ -730,7 +722,11 @@ public class VmThread {
         return fromVmThreadLocals(vmThreadLocals);
     }
 
-    public static VmThread fromVmThreadLocals(final Pointer vmThreadLocals) {
+    @INLINE
+    public static VmThread fromVmThreadLocals(Pointer vmThreadLocals) {
+        if (MaxineVM.isPrototyping()) {
+            return mainVMThread;
+        }
         return UnsafeLoophole.cast(VM_THREAD.getConstantReference(vmThreadLocals).toJava());
     }
 
