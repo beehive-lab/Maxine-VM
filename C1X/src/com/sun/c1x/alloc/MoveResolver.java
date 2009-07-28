@@ -20,11 +20,16 @@
  */
 package com.sun.c1x.alloc;
 
-import java.util.*;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.debug.TTY;
+import com.sun.c1x.lir.LIRList;
+import com.sun.c1x.lir.LIROperand;
+import com.sun.c1x.lir.LIROperandFactory;
+import com.sun.c1x.util.BitMap;
+import com.sun.c1x.util.Util;
 
-import com.sun.c1x.*;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -86,7 +91,7 @@ public class MoveResolver {
         for (int i = 0; i < allocator.nofRegs; i++) {
             assert registerBlocked(i) == 0 : "register map must be empty before and after processing";
         }
-        assert multipleReadsAllowed == false : "must have default value";
+        assert !multipleReadsAllowed : "must have default value";
         return true;
     }
 
@@ -261,7 +266,7 @@ public class MoveResolver {
     }
 
     void resolveMappings() {
-        Util.traceLinearScan(4, "MoveResolver: resolving mappings for Block B%d, index %d", insertList.block() != null ? insertList.block().blockID() : -1, insertIdx);
+        Util.traceLinearScan(4, "MoveResolver: resolving mappings for Block B%d, index %d", insertList.block() != null ? insertList.block().blockID : -1, insertIdx);
         assert verifyBeforeResolve();
 
         // Block all registers that are used as input operands of a move.
@@ -345,7 +350,7 @@ public class MoveResolver {
     }
 
     void setInsertPosition(LIRList insertList, int insertIdx) {
-        Util.traceLinearScan(4, "MoveResolver: setting insert position to Block B%d, index %d", insertList.block() != null ? insertList.block().blockID() : -1, insertIdx);
+        Util.traceLinearScan(4, "MoveResolver: setting insert position to Block B%d, index %d", insertList.block() != null ? insertList.block().blockID : -1, insertIdx);
         assert this.insertList == null && this.insertIdx == -1 : "use moveInsertPosition instead of setInsertPosition when data already set";
 
         createInsertionBuffer(insertList);
@@ -354,7 +359,7 @@ public class MoveResolver {
     }
 
     void moveInsertPosition(LIRList insertList, int insertIdx) {
-        Util.traceLinearScan(4, "MoveResolver: moving insert position to Block B%d, index %d", (insertList != null && insertList.block() != null) ? insertList.block().blockID() : -1, insertIdx);
+        Util.traceLinearScan(4, "MoveResolver: moving insert position to Block B%d, index %d", (insertList != null && insertList.block() != null) ? insertList.block().blockID : -1, insertIdx);
 
         if (this.insertList != null && (this.insertList != insertList || this.insertIdx != insertIdx)) {
             // insert position changed . resolve current mappings

@@ -21,7 +21,6 @@
 package com.sun.max.vm.monitor.modal.schemes;
 
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -66,7 +65,7 @@ public abstract class ModalMonitorScheme extends AbstractMonitorScheme {
     @Override
     public void initialize(MaxineVM.Phase phase) {
         if (MaxineVM.isPrototyping()) {
-            ProgramError.check(Word.width() == WordWidth.BITS_64, "ModalMonitorScheme requires a 64-bit word.");
+            ProgramError.check(Word.width() == 64, "ModalMonitorScheme requires a 64-bit word.");
         }
         ModeHandler handler = entryHandler;
         while (handler != null) {

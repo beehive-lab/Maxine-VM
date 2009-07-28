@@ -183,6 +183,7 @@ public final class MaxineVM {
         target = vm;
     }
 
+    @PROTOTYPE_ONLY
     private static ThreadLocal<MaxineVM> hostOrTarget = new ThreadLocal<MaxineVM>() {
         @Override
         protected synchronized MaxineVM initialValue() {
@@ -195,10 +196,14 @@ public final class MaxineVM {
      * configuration.
      */
     public static void usingTarget(Runnable runnable) {
-        final MaxineVM vm = hostOrTarget.get();
-        hostOrTarget.set(target());
-        runnable.run();
-        hostOrTarget.set(vm);
+        if (isPrototyping()) {
+            final MaxineVM vm = hostOrTarget.get();
+            hostOrTarget.set(target());
+            runnable.run();
+            hostOrTarget.set(vm);
+        } else {
+            runnable.run();
+        }
     }
 
     /**
@@ -206,8 +211,20 @@ public final class MaxineVM {
      * configuration.
      */
     public static <Result_Type> Result_Type usingTarget(Function<Result_Type> function) {
-        final MaxineVM vm = hostOrTarget.get();
-        hostOrTarget.set(target());
+        if (isPrototyping()) {
+            final MaxineVM vm = hostOrTarget.get();
+            hostOrTarget.set(target());
+            try {
+                return function.call();
+            } catch (RuntimeException runtimeException) {
+                // rethrow runtime exceptions.
+                throw runtimeException;
+            } catch (Exception exception) {
+                throw ProgramError.unexpected(exception);
+            } finally {
+                hostOrTarget.set(vm);
+            }
+        }
         try {
             return function.call();
         } catch (RuntimeException runtimeException) {
@@ -215,8 +232,6 @@ public final class MaxineVM {
             throw runtimeException;
         } catch (Exception exception) {
             throw ProgramError.unexpected(exception);
-        } finally {
-            hostOrTarget.set(vm);
         }
     }
 
@@ -224,21 +239,26 @@ public final class MaxineVM {
      * Runs a given function that may throw a checked exception in the context of the target VM configuration.
      */
     public static <Result_Type> Result_Type usingTargetWithException(Function<Result_Type> function) throws Exception {
-        final MaxineVM vm = hostOrTarget.get();
-        hostOrTarget.set(target());
-        try {
-            return function.call();
-        } finally {
-            hostOrTarget.set(vm);
+        if (isPrototyping()) {
+            final MaxineVM vm = hostOrTarget.get();
+            hostOrTarget.set(target());
+            try {
+                return function.call();
+            } finally {
+                hostOrTarget.set(vm);
+            }
         }
+        return function.call();
     }
 
+    @PROTOTYPE_ONLY
     private static MaxineVM globalHostOrTarget = null;
 
     /**
      * The MaxineInspector uses this to direct all AWT event threads to use a certain VM without the need to wrap all
      * event listeners in VM.usingTarget().
      */
+    @PROTOTYPE_ONLY
     public static void setGlobalHostOrTarget(MaxineVM vm) {
         globalHostOrTarget = vm;
     }
@@ -246,10 +266,13 @@ public final class MaxineVM {
     @UNSAFE
     @FOLD
     public static MaxineVM hostOrTarget() {
-        if (globalHostOrTarget != null) {
-            return globalHostOrTarget;
+        if (isPrototyping()) {
+            if (globalHostOrTarget != null) {
+                return globalHostOrTarget;
+            }
+            return hostOrTarget.get();
         }
-        return hostOrTarget.get();
+        return host;
     }
 
     // Substituted by isPrototyping_()

@@ -21,7 +21,6 @@
 package com.sun.c1x.stub;
 
 import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
 
 
 /**
@@ -33,8 +32,6 @@ import com.sun.c1x.util.*;
  */
 public class MonitorEnterStub extends MonitorAccessStub {
 
-    private CodeEmitInfo info;
-
     /**
      * Creates a new instance of <code>MonitorEnterStub</code>.
      *
@@ -43,18 +40,12 @@ public class MonitorEnterStub extends MonitorAccessStub {
      * @param info the debug information for this code stub
      */
     public MonitorEnterStub(LIROperand objReg, LIROperand lockReg, CodeEmitInfo info) {
-        super(objReg, lockReg);
-        this.info = info;
+        super(objReg, lockReg, info);
     }
 
     @Override
-    public void emitCode(LIRAssembler e) {
-        // TODO: not implemented yet
-    }
-
-    @Override
-    public CodeEmitInfo info() {
-        return info;
+    public void accept(CodeStubVisitor visitor) {
+        visitor.visitMonitorEnterStub(this);
     }
 
     @Override
@@ -62,10 +53,5 @@ public class MonitorEnterStub extends MonitorAccessStub {
         visitor.doInput(objReg);
         visitor.doInput(lockReg);
         visitor.doSlowCase(info);
-    }
-
-    @Override
-    public void printName(LogStream out) {
-        out.print("MonitorEnterStub");
     }
 }

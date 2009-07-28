@@ -20,25 +20,32 @@
  */
 package com.sun.c1x.alloc;
 
-import java.util.*;
-
-import com.sun.c1x.*;
-import com.sun.c1x.alloc.Interval.*;
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.gen.*;
-import com.sun.c1x.graph.*;
+import com.sun.c1x.Bailout;
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.alloc.Interval.IntervalKind;
+import com.sun.c1x.alloc.Interval.IntervalSpillState;
+import com.sun.c1x.alloc.Interval.IntervalUseKind;
+import com.sun.c1x.bytecode.Bytecodes;
+import com.sun.c1x.ci.CiLocation;
+import com.sun.c1x.debug.TTY;
+import com.sun.c1x.gen.LIRGenerator;
+import com.sun.c1x.graph.IR;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.ir.BlockBegin.*;
+import com.sun.c1x.ir.BlockBegin.BlockFlag;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.target.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.target.Register;
+import com.sun.c1x.util.BitMap;
+import com.sun.c1x.util.BitMap2D;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.value.BasicType;
+import com.sun.c1x.value.ValueStack;
+
+import java.util.*;
 
 /**
  *
  * @author Thomas Wuerthinger
- *
  */
 public class LinearScan extends RegisterAllocator {
 
@@ -915,11 +922,11 @@ public class LinearScan extends RegisterAllocator {
             block.setLiveIn(new BitMap(liveSize));
             block.setLiveOut(new BitMap(liveSize));
 
-            Util.traceLinearScan(4, "liveGen  B%d ", block.blockID());
+            Util.traceLinearScan(4, "liveGen  B%d ", block.blockID);
             if (C1XOptions.TraceLinearScanLevel >= 4) {
                 TTY.println(block.liveGen().toString());
             }
-            Util.traceLinearScan(4, "liveKill B%d ", block.blockID());
+            Util.traceLinearScan(4, "liveKill B%d ", block.blockID);
             if (C1XOptions.TraceLinearScanLevel >= 4) {
                 TTY.println(block.liveKill().toString());
             }
@@ -1000,9 +1007,9 @@ public class LinearScan extends RegisterAllocator {
                     if (iterationCount == 0 || changeOccurredInBlock) {
                         c = '*';
                     }
-                    TTY.print("(%d) liveIn%c  B%d ", iterationCount, c, block.blockID());
+                    TTY.print("(%d) liveIn%c  B%d ", iterationCount, c, block.blockID);
                     TTY.println(block.liveIn().toString());
-                    TTY.print("(%d) liveOut%c B%d ", iterationCount, c, block.blockID());
+                    TTY.print("(%d) liveOut%c B%d ", iterationCount, c, block.blockID);
                     TTY.println(block.liveOut().toString());
                 }
             }
@@ -1037,17 +1044,17 @@ public class LinearScan extends RegisterAllocator {
 
                 // print some additional information to simplify debugging
                 for (int i = 0; i < ir().startBlock.liveIn().size(); i++) {
-                    if (ir().start().liveIn().get(i)) {
+                    if (ir().startBlock.liveIn().get(i)) {
                         Instruction instr = gen().instructionForVreg(i);
                         TTY.println(" vreg %d (HIR instruction %c%d)", i, instr == null ? ' ' : instr.type().tchar(), instr == null ? 0 : instr.id());
 
                         for (int j = 0; j < numBlocks; j++) {
                             BlockBegin block = blockAt(j);
                             if (block.liveGen().get(i)) {
-                                TTY.println("  used in block B%d", block.blockID());
+                                TTY.println("  used in block B%d", block.blockID);
                             }
                             if (block.liveKill().get(i)) {
-                                TTY.println("  defined in block B%d", block.blockID());
+                                TTY.println("  defined in block B%d", block.blockID);
                             }
                         }
                     }
@@ -1926,7 +1933,7 @@ public class LinearScan extends RegisterAllocator {
 
     void resolveFindInsertPos(BlockBegin fromBlock, BlockBegin toBlock, MoveResolver moveResolver) {
         if (fromBlock.numberOfSux() <= 1) {
-            Util.traceLinearScan(4, "inserting moves at end of fromBlock B%d", fromBlock.blockID());
+            Util.traceLinearScan(4, "inserting moves at end of fromBlock B%d", fromBlock.blockID);
 
             List<LIRInstruction> instructions = fromBlock.lir().instructionsList();
             LIRInstruction instr = instructions.get(instructions.size() - 1);
@@ -1940,7 +1947,7 @@ public class LinearScan extends RegisterAllocator {
             }
 
         } else {
-            Util.traceLinearScan(4, "inserting moves at beginning of toBlock B%d", toBlock.blockID());
+            Util.traceLinearScan(4, "inserting moves at beginning of toBlock B%d", toBlock.blockID);
 
             if (C1XOptions.DetailedAsserts) {
                 assert fromBlock.lir().instructionsList().get(0) instanceof LIRLabel : "block does not start with a label";
@@ -1985,7 +1992,7 @@ public class LinearScan extends RegisterAllocator {
 
                     // prevent optimization of two consecutive blocks
                     if (!blockCompleted.get(pred.linearScanNumber()) && !blockCompleted.get(sux.linearScanNumber())) {
-                        Util.traceLinearScan(3, " optimizing empty block B%d (pred: B%d, sux: B%d)", block.blockID(), pred.blockID(), sux.blockID());
+                        Util.traceLinearScan(3, " optimizing empty block B%d (pred: B%d, sux: B%d)", block.blockID, pred.blockID, sux.blockID);
                         blockCompleted.set(block.linearScanNumber());
 
                         // directly resolve between pred and sux (without looking at the empty block between)
@@ -2010,7 +2017,7 @@ public class LinearScan extends RegisterAllocator {
 
                     // check for duplicate edges between the same blocks (can happen with switch blocks)
                     if (!alreadyResolved.get(toBlock.linearScanNumber())) {
-                        Util.traceLinearScan(3, " processing edge between B%d and B%d", fromBlock.blockID(), toBlock.blockID());
+                        Util.traceLinearScan(3, " processing edge between B%d and B%d", fromBlock.blockID, toBlock.blockID);
                         alreadyResolved.set(toBlock.linearScanNumber());
 
                         // collect all intervals that have been split between fromBlock and toBlock
@@ -2142,7 +2149,7 @@ public class LinearScan extends RegisterAllocator {
     }
 
     void resolveExceptionEdge(ExceptionHandler handler, int throwingOpId, MoveResolver moveResolver) {
-        Util.traceLinearScan(4, "resolving exception handler B%d: throwingOpId=%d", handler.entryBlock().blockID(), throwingOpId);
+        Util.traceLinearScan(4, "resolving exception handler B%d: throwingOpId=%d", handler.entryBlock().blockID, throwingOpId);
 
         assert moveResolver.checkEmpty();
         assert handler.lirOpId() == -1 : "already processed this xhandler";
@@ -2305,7 +2312,7 @@ public class LinearScan extends RegisterAllocator {
                     if (C1XOptions.SSEVersion >= 2 && compilation.target.arch.isX86()) {
                         assert isXmm(assignedReg) : "no xmm register";
                         assert interval.assignedRegHi() == getAnyreg() : "must not have hi register (double xmm values are stored in one register)";
-                        return LIROperandFactory.singleLocation(BasicType.Double, toRegister(assignedReg));
+                        return LIROperandFactory.doubleLocation(BasicType.Double, toRegister(assignedReg), toRegister(assignedReg));
                     }
 
                     LIROperand result;
@@ -2510,7 +2517,7 @@ public class LinearScan extends RegisterAllocator {
     }
 
     boolean checkStackDepth(CodeEmitInfo info, int stackEnd) {
-        if (info.bci() != C1XCompilation.MethodCompilation.SynchronizationEntryBCI.value && !info.scope().method.isNative()) {
+        if (info.bci() != Instruction.SYNCHRONIZATION_ENTRY_BCI && !info.scope().method.isNative()) {
             int code = info.scope().method.javaCodeAtBci(info.bci());
             switch (code) {
                 case Bytecodes.IFNULL: // fall through
@@ -2871,7 +2878,7 @@ public class LinearScan extends RegisterAllocator {
                 }
 
             } else if (opr.isDoubleXmm() && compilation.target.arch.isX86()) {
-                assert opr.fpuRegnrLo() == opr.fpuRegnrHi() : "assumed in calculation";
+                assert opr.asRegisterLo() == opr.asRegisterHi() : "assumed in calculation";
                 CiLocation rnameFirst = opr.asRegister().asVMReg();
                 first = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rnameFirst));
                 // %%% This is probably a waste but we'll keep things as they were for now
@@ -3256,7 +3263,7 @@ public class LinearScan extends RegisterAllocator {
             ControlFlowOptimizer.optimize(ir().linearScanOrder());
         }
         // check that cfg is still correct after optimizations
-        assert ir().verify();
+        ir().verifyAndPrint("After LIR optimization");
         printLir(1, "Before Code Generation", false);
         // NOTPRODUCT(LinearScanStatistic.compute(this, statFinal));
         // NOTPRODUCT(totalTimer.endMethod(this));
@@ -3293,7 +3300,7 @@ public class LinearScan extends RegisterAllocator {
             TTY.println("--- Basic Blocks ---");
             for (i = 0; i < blockCount(); i++) {
                 BlockBegin block = blockAt(i);
-                TTY.print("B%d [%d, %d, %d, %d] ", block.blockID(), block.firstLirInstructionId(), block.lastLirInstructionId(), block.loopIndex(), block.loopDepth());
+                TTY.print("B%d [%d, %d, %d, %d] ", block.blockID, block.firstLirInstructionId(), block.lastLirInstructionId(), block.loopIndex(), block.loopDepth());
             }
             TTY.cr();
             TTY.cr();
@@ -3426,17 +3433,19 @@ public class LinearScan extends RegisterAllocator {
                 int r2 = i2.assignedReg();
                 int r2Hi = i2.assignedRegHi();
                 if (i1.intersects(i2) && (r1 == r2 || r1 == r2Hi || (r1Hi != getAnyreg() && (r1Hi == r2 || r1Hi == r2Hi)))) {
-                    TTY.println("Intervals %d and %d overlap and have the same register assigned", i1.regNum(), i2.regNum());
-                    i1.print(TTY.out, this);
-                    TTY.cr();
-                    i2.print(TTY.out, this);
-                    TTY.cr();
+                    if (C1XOptions.DetailedAsserts) {
+                        TTY.println("Intervals %d and %d overlap and have the same register assigned", i1.regNum(), i2.regNum());
+                        i1.print(TTY.out, this);
+                        TTY.cr();
+                        i2.print(TTY.out, this);
+                        TTY.cr();
+                    }
                     hasError = true;
                 }
             }
         }
 
-        assert hasError == false : "register allocation invalid";
+        assert !hasError : "register allocation invalid";
     }
 
     void verifyNoOopsInFixedIntervals() {
@@ -3561,7 +3570,7 @@ public class LinearScan extends RegisterAllocator {
 
             // visit all registers where the liveAtEdge bit is set
             for (int r = liveAtEdge.getNextOneOffset(0, size); r < size; r = liveAtEdge.getNextOneOffset(r + 1, size)) {
-                Util.traceLinearScan(4, "checking interval %d of block B%d", r, block.blockID());
+                Util.traceLinearScan(4, "checking interval %d of block B%d", r, block.blockID);
 
                 Instruction value = gen().instructionForVreg(r);
 

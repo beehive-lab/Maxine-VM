@@ -80,7 +80,7 @@ public class C1XTest {
 
     static {
         // add all the fields from C1XOptions as options
-        options.addFieldOptions(C1XOptions.class, "XX:-");
+        options.addFieldOptions(C1XOptions.class, "XX");
         // add a special option "c1x-optlevel" which adjusts the optimization level
         options.addOption(new Option<Integer>("c1x-optlevel", -1, OptionTypes.INT_TYPE, "Set the overall optimization level of C1X (-1 to use default settings)") {
             @Override
@@ -179,15 +179,18 @@ public class C1XTest {
             final long startNs = System.nanoTime();
             final MaxCiTargetMethod targetMethod = targetOption.getValue() ? new MaxCiTargetMethod((ClassMethodActor) method) : null;
             final C1XCompilation compilation = new C1XCompilation(target, runtime, runtime.getCiMethod(method), targetMethod);
-
-            if (!compilation.compile() && printBailout) {
-                compilation.bailout().printStackTrace(out);
+            boolean result = compilation.compile();
+            long timeNs = System.nanoTime() - startNs;
+            if (!result) {
+                if (printBailout) {
+                    compilation.bailout().printStackTrace(out);
+                }
                 return false;
             }
 
             if (!warmup) {
                 // record the time for successful compilations
-                recordTime(method, compilation.totalInstructions(), System.nanoTime() - startNs);
+                recordTime(method, compilation.totalInstructions(), timeNs);
             }
             return true;
         }

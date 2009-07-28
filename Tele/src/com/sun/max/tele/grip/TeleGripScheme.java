@@ -107,9 +107,10 @@ public abstract class TeleGripScheme extends AbstractVMScheme implements GripSch
             } else {
                 remoteTeleGrip = new CanonicalConstantTeleGrip(this, rawGrip);
             }
+            rawGripToRemoteTeleGrip.put(rawGrip.toLong(), new WeakReference<RemoteTeleGrip>(remoteTeleGrip));
         }
 
-        rawGripToRemoteTeleGrip.put(rawGrip.toLong(), new WeakReference<RemoteTeleGrip>(remoteTeleGrip));
+
         return remoteTeleGrip;
     }
 

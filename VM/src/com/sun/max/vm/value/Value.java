@@ -442,9 +442,20 @@ public abstract class Value<Value_Type extends Value<Value_Type>> implements Cla
         throw illegalConversion("word");
     }
 
-
+    /**
+     * Gets the minimal word width required to represent all the non-one bits in this value,
+     * plus one sign bit. For non-constant values (e.g. reference values that may be updated by
+     * a GC), the return width can be conservative. That is, it may the {@linkplain Kind#width width}
+     * of this value's {@linkplain #kind() kind}.
+     */
     public abstract WordWidth signedEffectiveWidth();
 
+    /**
+     * Gets the minimal word width required to represent all the non-zero bits in this value.
+     * For non-constant values (e.g. reference values that may be updated by
+     * a GC), the return width can be conservative. That is, it may the {@linkplain Kind#width width}
+     * of this value's {@linkplain #kind() kind}.
+     */
     public abstract WordWidth unsignedEffectiveWidth();
 
     public abstract byte[] toBytes(DataModel dataModel);

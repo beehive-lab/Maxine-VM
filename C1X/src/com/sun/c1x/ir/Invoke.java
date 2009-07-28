@@ -20,9 +20,10 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.ci.CiMethod;
+import com.sun.c1x.value.BasicType;
+import com.sun.c1x.value.ValueType;
+import com.sun.c1x.util.Util;
 
 /**
  * The <code>Invoke</code> instruction represents all kinds of method calls.
@@ -32,26 +33,20 @@ import com.sun.c1x.value.*;
 public class Invoke extends StateSplit {
 
     final int opcode;
-    Instruction[] arguments;
-    int vtableIndex;
+    final Instruction[] arguments;
+    final int vtableIndex;
     final boolean isStatic;
     final CiMethod target;
 
     /**
      * Constructs a new Invoke instruction.
      *
-     * @param opcode
-     *            the opcode of the invoke
-     * @param result
-     *            the result type
-     * @param args
-     *            the list of instructions producing arguments to the invocation, including the receiver object
-     * @param isStatic
-     *            {@code true} if this call is static (no receiver object)
-     * @param vtableIndex
-     *            the vtable index for a virtual or interface call
-     * @param target
-     *            the target method being called
+     * @param opcode the opcode of the invoke
+     * @param result the result type
+     * @param args the list of instructions producing arguments to the invocation, including the receiver object
+     * @param isStatic {@code true} if this call is static (no receiver object)
+     * @param vtableIndex the vtable index for a virtual or interface call
+     * @param target the target method being called
      */
     public Invoke(int opcode, ValueType result, Instruction[] args, boolean isStatic, int vtableIndex, CiMethod target) {
         super(result);
@@ -63,13 +58,15 @@ public class Invoke extends StateSplit {
         if (target.isLoaded()) {
             setFlag(Flag.TargetIsLoaded);
             initFlag(Flag.TargetIsFinal, target.isFinalMethod());
-            initFlag(Flag.TargetIsStrictfp, target.isStrictFP());
+            initFlag(Flag.TargetIsStrictFP, target.isStrictFP());
+        }
+        if (!isStatic && args[0].isNonNull()) {
+            clearNullCheck();
         }
     }
 
     /**
      * Gets the opcode of this invoke instruction.
-     *
      * @return the opcode
      */
     public int opcode() {
@@ -77,8 +74,15 @@ public class Invoke extends StateSplit {
     }
 
     /**
+     * Checks whether this is an invocation of a static method.
+     * @return {@code true} if the invocation is a static invocation
+     */
+    public boolean isStatic() {
+        return isStatic;
+    }
+
+    /**
      * Gets the instruction that produces the receiver object for this invocation, if any.
-     *
      * @return the instruction that produces the receiver object for this invocation if any, <code>null</code> if this
      *         invocation does not take a receiver object
      */
@@ -89,7 +93,6 @@ public class Invoke extends StateSplit {
 
     /**
      * Gets the virtual table index for a virtual invocation.
-     *
      * @return the virtual table index
      */
     public int vtableIndex() {
@@ -98,7 +101,6 @@ public class Invoke extends StateSplit {
 
     /**
      * Gets the target method for this invocation instruction.
-     *
      * @return the target method
      */
     public CiMethod target() {
@@ -107,7 +109,6 @@ public class Invoke extends StateSplit {
 
     /**
      * Gets the list of instructions that produce input for this instruction.
-     *
      * @return the list of instructions that produce input
      */
     public Instruction[] arguments() {
@@ -116,7 +117,6 @@ public class Invoke extends StateSplit {
 
     /**
      * Checks whether this instruction can trap.
-     *
      * @return <code>true</code>, conservatively assuming the called method may throw an exception
      */
     @Override
@@ -126,7 +126,6 @@ public class Invoke extends StateSplit {
 
     /**
      * Checks whether this invocation has a receiver object.
-     *
      * @return <code>true</code> if this invocation has a receiver object; <code>false</code> otherwise, if this is a
      *         static call
      */
@@ -136,9 +135,7 @@ public class Invoke extends StateSplit {
 
     /**
      * Iterates over the input values to this instruction.
-     *
-     * @param closure
-     *            the closure to apply to each instruction
+     * @param closure the closure to apply to each instruction
      */
     @Override
     public void inputValuesDo(InstructionClosure closure) {
@@ -153,8 +150,7 @@ public class Invoke extends StateSplit {
     /**
      * Implements this instruction's half of the visitor pattern.
      *
-     * @param v
-     *            the visitor to accept
+     * @param v the visitor to accept
      */
     @Override
     public void accept(InstructionVisitor v) {
@@ -162,10 +158,6 @@ public class Invoke extends StateSplit {
     }
 
     public BasicType[] signature() {
-        final BasicType[] result = new BasicType[this.arguments.length];
-        for (int i = 0; i < arguments.length; i++) {
-            result[i] = arguments[i].type().basicType;
-        }
-        return result;
+        return Util.signatureToBasicTypes(target.signatureType(), !isStatic);
     }
 }

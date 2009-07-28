@@ -65,7 +65,7 @@ public final class SPARCEirEpilogue extends EirEpilogue<SPARCEirInstructionVisit
         asm.ldx(latchRegister, VmThreadLocal.TRAP_INSTRUCTION_POINTER.offset, returnAddressRegister);
 
         // restore all the general purpose registers not in the register windows
-        for (GPR register : SPARCSafepoint.TRAP_SAVED_GLOBAL_SYMBOLIZER) {
+        for (GPR register : SPARCTrapStateAccess.TRAP_SAVED_GLOBAL_SYMBOLIZER) {
             asm.ldx(stackPointer, offset, register);
             offset += wordSize;
         }

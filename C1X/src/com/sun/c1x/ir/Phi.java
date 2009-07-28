@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.value.ValueType;
 
 /**
  * The <code>Phi</code> instruction represents the merging of dataflow
@@ -145,7 +145,7 @@ public class Phi extends Instruction {
      */
     public void makeIllegal() {
         setPhiFlag(PhiFlag.CannotSimplify);
-        setType(ValueType.ILLEGAL_TYPE);
+        valueType = ValueType.ILLEGAL_TYPE;
     }
 
     /**

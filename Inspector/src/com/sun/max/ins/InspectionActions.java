@@ -2626,6 +2626,85 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
+     * Action: create a memory watchpoint, interactive if no location specified.
+     */
+    final class SetRegionWatchpointAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Watch memory region";
+        private final MemoryRegion memoryRegion;
+
+        SetRegionWatchpointAction() {
+            super(inspection(), "Watch memory region...");
+            this.memoryRegion = null;
+            setEnabled(true);
+        }
+
+        SetRegionWatchpointAction(MemoryRegion memoryRegion, String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            this.memoryRegion = memoryRegion;
+            setEnabled(maxVM().findWatchpoint(memoryRegion) == null);
+        }
+
+        @Override
+        protected void procedure() {
+            if (memoryRegion != null) {
+                setWatchpoint(memoryRegion, "");
+            } else {
+                // TODO (mlvdv) Generalize AddressInputDialog for a Region
+                new AddressInputDialog(inspection(), maxVM().bootImageStart(), "Watch memory...", "Watch") {
+                    @Override
+                    public void entered(Address address) {
+                        setWatchpoint(new FixedMemoryRegion(address, Size.fromInt(maxVM().wordSize()), ""), "User specified region");
+                    }
+                };
+            }
+        }
+
+        private void setWatchpoint(MemoryRegion memoryRegion, String description) {
+            final WatchpointsViewPreferences prefs = WatchpointsViewPreferences.globalPreferences(inspection());
+            try {
+                final MaxWatchpoint watchpoint
+                    = maxVM().setRegionWatchpoint(description, memoryRegion, true, prefs.read(), prefs.write(), prefs.exec(), prefs.enableDuringGC());
+                if (watchpoint == null) {
+                    gui().errorMessage("Watchpoint creation failed");
+                } else {
+                    inspection().focus().setWatchpoint(watchpoint);
+                }
+            } catch (TooManyWatchpointsException tooManyWatchpointsException) {
+                gui().errorMessage(tooManyWatchpointsException.getMessage());
+            } catch (DuplicateWatchpointException duplicateWatchpointException) {
+                gui().errorMessage(duplicateWatchpointException.getMessage());
+            }
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(inspection().hasProcess()  && maxVM().watchpointsEnabled());
+        }
+    }
+
+    private final SetRegionWatchpointAction setRegionWatchpointAction = new SetRegionWatchpointAction();
+
+    /**
+     * @return an interactive Action that will create a memory  watchpoint in the VM.
+     */
+    public final InspectorAction setRegionWatchpoint() {
+        return setRegionWatchpointAction;
+    }
+
+    /**
+     * Creates an action that will create a memory watchpoint.
+     *
+     * @param memoryRegion an area of memory in the VM
+     * @param string a title for the action, use default name if null
+     * @return an Action that will set a memory watchpoint at the address.
+     */
+    public final InspectorAction setRegionWatchpoint(MemoryRegion memoryRegion, String string) {
+        return new SetRegionWatchpointAction(memoryRegion, string);
+    }
+
+
+     /**
      * Action: create an object memory watchpoint.
      */
     final class SetObjectWatchpointAction extends InspectorAction {

@@ -20,10 +20,12 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.util.*;
+import com.sun.c1x.debug.LogStream;
+import com.sun.c1x.util.Util;
 
 /**
  * The <code>ScopeValue</code> class definition.
+ * TODO: delete this class and use ConstType instances instead
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
@@ -32,7 +34,13 @@ import com.sun.c1x.util.*;
 public abstract class ScopeValue {
 
     public enum ScopeValueCode {
-        LocationCode, ConstantIntCode, ConstantOopCode, ConstantLongCode, ConstantDoubleCode, ObjectCode, ObjectIdCode;
+        LocationCode,
+        ConstantIntCode,
+        ConstantOopCode,
+        ConstantLongCode,
+        ConstantDoubleCode,
+        ObjectCode,
+        ObjectIdCode;
 
         public static ScopeValueCode fromInt(int value) {
             switch (value) {

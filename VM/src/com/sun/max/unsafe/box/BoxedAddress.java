@@ -20,7 +20,6 @@
  */
 package com.sun.max.unsafe.box;
 
-import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -70,7 +69,7 @@ public final class BoxedAddress extends Address implements UnsafeBox {
     }
 
     private BoxedAddress(long value) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             nativeWord = value;
         } else {
             nativeWord = value & BoxedWord.INT_MASK;

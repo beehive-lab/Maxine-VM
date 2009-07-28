@@ -20,10 +20,11 @@
  */
 package com.sun.c1x.target.x86;
 
-import com.sun.c1x.*;
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.C1XOptions;
 import com.sun.c1x.asm.*;
-import com.sun.c1x.target.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.target.Register;
+import com.sun.c1x.util.Util;
 
 /**
  *
@@ -137,17 +138,9 @@ public abstract class X86Assembler extends AbstractAssembler {
         public static final int REXWRXB = 0x4F;
     }
 
-    private void emitData(int disp, Relocation rspec, WhichOperand disp32operand) {
-        emitData(disp, rspec, disp32operand.ordinal());
-
-    }
-
     enum WhichOperand {
         // input to locateOperand, and format code for relocations
-        immOperand, // embedded 32-bit|64-bit immediate operand
-        disp32operand, // embedded 32-bit displacement or Address
-        call32operand, // embedded 32-bit self-relative displacement
-        endPcOperand
+        disp32operand
     }
 
     public X86Assembler(C1XCompilation compilation) {
@@ -160,28 +153,20 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     // make this go away someday
-    void emitData(int data, RelocInfo.Type rtype, int format) {
+    void emitData(int data, RelocInfo.Type rtype) {
         if (rtype == RelocInfo.Type.none) {
             emitInt(data);
         } else {
-            emitData(data, Relocation.specSimple(rtype), format);
+            emitData(data, Relocation.specSimple(rtype));
         }
     }
 
-    void emitData(int data, Relocation rspec, int format) {
-        assert WhichOperand.immOperand.ordinal() == 0 : "default format must be immediate in this file";
+    void emitData(int data, Relocation rspec) {
         assert instMark() != InvalidInstructionMark : "must be inside InstructionMark";
         if (rspec.type() != RelocInfo.Type.none) {
-            assert checkRelocation(rspec, format);
             // Do not use AbstractAssembler.relocate, which is not intended for
             // embedded words. Instead, relocate to the enclosing instruction.
-
-            // hack. call32 is too wide for mask so use disp32
-            if (format == WhichOperand.call32operand.ordinal()) {
-                relocate(instMark(), rspec); //, WhichOperand.disp32operand.ordinal());
-            } else {
-                relocate(instMark(), rspec); //, format);
-            }
+            relocate(instMark(), rspec);
         }
         emitInt(data);
     }
@@ -281,7 +266,7 @@ public abstract class X86Assembler extends AbstractAssembler {
                     assert index != X86Register.rsp : "illegal addressing mode";
                     emitByte(0x84 | regenc);
                     emitByte(scale.value << 6 | indexenc | baseenc);
-                    emitData(disp, rspec, WhichOperand.disp32operand.ordinal());
+                    emitData(disp, rspec);
                 }
             } else if (base == X86Register.rsp || (compilation.target.arch.is64bit() && base == X86Register.r12)) {
                 // [rsp + disp]
@@ -301,7 +286,7 @@ public abstract class X86Assembler extends AbstractAssembler {
                     // [10 reg 100][00 100 100] disp32
                     emitByte(0x84 | regenc);
                     emitByte(0x24);
-                    emitData(disp, rspec, WhichOperand.disp32operand.ordinal());
+                    emitData(disp, rspec);
                 }
             } else {
                 // [base + disp]
@@ -319,7 +304,7 @@ public abstract class X86Assembler extends AbstractAssembler {
                     // [base + disp32]
                     // [10 reg base] disp32
                     emitByte(0x80 | regenc | baseenc);
-                    emitData(disp, rspec, WhichOperand.disp32operand);
+                    emitData(disp, rspec);
                 }
             }
         } else {
@@ -330,7 +315,7 @@ public abstract class X86Assembler extends AbstractAssembler {
                 assert index != X86Register.rsp : "illegal addressing mode";
                 emitByte(0x04 | regenc);
                 emitByte(scale.value << 6 | indexenc | 0x05);
-                emitData(disp, rspec, WhichOperand.disp32operand);
+                emitData(disp, rspec);
             } else if (rtype != RelocInfo.Type.none) {
                 // [disp] (64bit) RIP-RELATemitOperandIVE (32bit) abs
                 // [00 000 101] disp32
@@ -342,23 +327,31 @@ public abstract class X86Assembler extends AbstractAssembler {
                 // disp was created by converting the target Address minus the pc
                 // at the start of the instruction. That needs more correction here.
                 // intptrT disp = target - nextIp;
-                assert instMark() != InvalidInstructionMark : "must be inside InstructionMark";
-                long nextIp = pc().value + Util.sizeofInt() + ripRelativeCorrection;
-                long adjusted = disp;
-                // Do rip-rel adjustment for 64bit
-                if (compilation.target.arch.is64bit()) {
-                    adjusted -= (nextIp - instMark());
-                }
-                assert isSimm32(adjusted) : "must be 32bit offset (RIP relative Address)";
-                emitData((int) adjusted, rspec, WhichOperand.disp32operand);
+//                assert instMark() != InvalidInstructionMark : "must be inside InstructionMark";
+//                int nextIp = pc() + Util.sizeofInt() + ripRelativeCorrection;
+//                int adjusted = disp;
+//                // Do rip-rel adjustment for 64bit
+//                if (compilation.target.arch.is64bit()) {
+//                    adjusted -= (nextIp - instMark());
+//                }
+//                assert isSimm32(adjusted) : "must be 32bit offset (RIP relative Address)";
+//                emitData(adjusted, rspec);
 
+                if (rspec.type() == RelocInfo.Type.internalWordType) {
+                    assert disp >= 0;
+                    recordDataReferenceInCode(instMark(), disp, true);
+                    emitData(0, RelocInfo.Type.none);
+                } else {
+                    assert disp == 0;
+                    emitData(0, RelocInfo.Type.none);
+                }
             } else {
                 // 32bit never did this, did everything as the rip-rel/disp code above
                 // [disp] ABSOLUTE
                 // [00 reg 100][00 100 101] disp32
                 emitByte(0x04 | regenc);
                 emitByte(0x25);
-                emitData(disp, rspec, WhichOperand.disp32operand);
+                emitData(disp, rspec);
             }
         }
     }
@@ -367,461 +360,6 @@ public abstract class X86Assembler extends AbstractAssembler {
         return adjusted == (int) adjusted;
     }
 
-    int locateOperand(int inst, WhichOperand which) {
-
-        // Decode the given instruction, and return the Pointer of
-        // an embedded 32-bit operand word.
-
-        // If "which" is WhichOperand.disp32operand, selects the displacement portion
-        // of an effective Pointer specifier.
-        // If "which" is imm64Operand, selects the trailing immediate constant.
-        // If "which" is WhichOperand.call32operand, selects the displacement of a call or jump.
-        // Caller is responsible for ensuring that there is such an operand,
-        // and that it is 32/64 bits wide.
-
-        // If "which" is endPcOperand, find the end of the instruction.
-
-        int ip = inst;
-        boolean is64bit = false;
-
-        boolean hasDisp32 = false;
-        int tailSize = 0; // other random bytes (#32, #16, etc.) at end of insn
-
-        boolean againAfterPrefix = true;
-
-        while (againAfterPrefix) {
-            againAfterPrefix = false;
-            switch (0xFF & codeBuffer.getByte(ip++)) {
-
-                // These convenience macros generate groups of "case" labels for the switch.
-
-                case X86Assembler.Prefix.CSSegment:
-                case X86Assembler.Prefix.SSSegment:
-                case X86Assembler.Prefix.DSSegment:
-                case X86Assembler.Prefix.ESSegment:
-                case X86Assembler.Prefix.FSSegment:
-                case X86Assembler.Prefix.GSSegment:
-                    // Seems dubious
-                    assert !compilation.target.arch.is64bit() : "shouldn't have that prefix";
-                    assert ip == inst + 1 : "only one prefix allowed";
-                    againAfterPrefix = true;
-                    break;
-
-                case 0x67:
-                case X86Assembler.Prefix.REX:
-                case X86Assembler.Prefix.REXB:
-                case X86Assembler.Prefix.REXX:
-                case X86Assembler.Prefix.REXXB:
-                case X86Assembler.Prefix.REXR:
-                case X86Assembler.Prefix.REXRB:
-                case X86Assembler.Prefix.REXRX:
-                case X86Assembler.Prefix.REXRXB:
-                    assert compilation.target.arch.is64bit() : "64bit prefixes";
-                    againAfterPrefix = true;
-                    break;
-
-                case X86Assembler.Prefix.REXW:
-                case X86Assembler.Prefix.REXWB:
-                case X86Assembler.Prefix.REXWX:
-                case X86Assembler.Prefix.REXWXB:
-                case X86Assembler.Prefix.REXWR:
-                case X86Assembler.Prefix.REXWRB:
-                case X86Assembler.Prefix.REXWRX:
-                case X86Assembler.Prefix.REXWRXB:
-                    assert compilation.target.arch.is64bit() : "64bit prefixes";
-                    is64bit = true;
-                    againAfterPrefix = true;
-                    break;
-
-                case 0xFF: // pushq a; decl a; incl a; call a; jmp a
-                case 0x88: // movb a, r
-                case 0x89: // movl a, r
-                case 0x8A: // movb r, a
-                case 0x8B: // movl r, a
-                case 0x8F: // popl a
-                    hasDisp32 = true;
-                    break;
-
-                case 0x68: // pushq #32
-                    if (which == WhichOperand.endPcOperand) {
-                        return ip + 4;
-                    }
-                    assert which == WhichOperand.immOperand && !is64bit : "pushl has no disp32 or 64bit immediate";
-                    return ip; // not produced by emitOperand
-
-                case 0x66: // movw ... (size prefix)
-                    boolean againAfterSizePrefix2 = true;
-                    while (againAfterSizePrefix2) {
-                        againAfterSizePrefix2 = false;
-                        switch (0xFF & codeBuffer.getByte(ip++)) {
-                            case X86Assembler.Prefix.REX:
-                            case X86Assembler.Prefix.REXB:
-                            case X86Assembler.Prefix.REXX:
-                            case X86Assembler.Prefix.REXXB:
-                            case X86Assembler.Prefix.REXR:
-                            case X86Assembler.Prefix.REXRB:
-                            case X86Assembler.Prefix.REXRX:
-                            case X86Assembler.Prefix.REXRXB:
-                            case X86Assembler.Prefix.REXW:
-                            case X86Assembler.Prefix.REXWB:
-                            case X86Assembler.Prefix.REXWX:
-                            case X86Assembler.Prefix.REXWXB:
-                            case X86Assembler.Prefix.REXWR:
-                            case X86Assembler.Prefix.REXWRB:
-                            case X86Assembler.Prefix.REXWRX:
-                            case X86Assembler.Prefix.REXWRXB:
-                                assert compilation.target.arch.is64bit() : "64bit prefix found";
-                                againAfterSizePrefix2 = true;
-                                break;
-                            case 0x8B: // movw r, a
-                            case 0x89: // movw a, r
-                                hasDisp32 = true;
-                                break;
-                            case 0xC7: // movw a, #16
-                                hasDisp32 = true;
-                                tailSize = 2; // the imm16
-                                break;
-                            case 0x0F: // several SSE/SSE2 variants
-                                ip--; // reparse the 0x0F
-                                againAfterPrefix = true;
-                                break;
-                            default:
-                                Util.shouldNotReachHere();
-                        }
-                    }
-                    break;
-
-                case 0xB8: // movl/q r, #32/#64(oop?)
-                case 0xB9:
-                case 0xBA:
-                case 0xBB:
-                case 0xBC:
-                case 0xBD:
-                case 0xBE:
-                case 0xBF:
-                    if (which == WhichOperand.endPcOperand) {
-                        return ip + (is64bit ? 8 : 4);
-                    }
-                    // these assert are somewhat nonsensical
-                    assert compilation.target.arch.is64bit() || which == WhichOperand.immOperand || which == WhichOperand.disp32operand : "";
-                    assert !compilation.target.arch.is64bit() || (which == WhichOperand.call32operand || which == WhichOperand.immOperand) && is64bit;
-                    return ip;
-
-                case 0x69: // imul r, a, #32
-                case 0xC7: // movl a, #32(oop?)
-                    tailSize = 4;
-                    hasDisp32 = true; // has both kinds of operands!
-                    break;
-
-                case 0x0F: // movx..., etc.
-                    switch (0xFF & codeBuffer.getByte(ip++)) {
-                        case 0x12: // movlps
-                        case 0x28: // movaps
-                        case 0x2E: // ucomiss
-                        case 0x2F: // comiss
-                        case 0x54: // andps
-                        case 0x55: // andnps
-                        case 0x56: // orps
-                        case 0x57: // xorps
-                        case 0x6E: // movd
-                        case 0x7E: // movd
-                        case 0xAE: // ldmxcsr a
-                            // 64bit side says it these have both operands but that doesn't
-                            // appear to be true
-                            hasDisp32 = true;
-                            break;
-
-                        case 0xAD: // shrd r, a, %cl
-                        case 0xAF: // imul r, a
-                        case 0xBE: // movsbl r, a (movsxb)
-                        case 0xBF: // movswl r, a (movsxw)
-                        case 0xB6: // movzbl r, a (movzxb)
-                        case 0xB7: // movzwl r, a (movzxw)
-                        case 0x40: // cmovl cc, r, a
-                        case 0x41:
-                        case 0x42:
-                        case 0x43:
-                        case 0x44:
-                        case 0x45:
-                        case 0x46:
-                        case 0x47:
-                        case 0x48:
-                        case 0x49:
-                        case 0x4A:
-                        case 0x4B:
-                        case 0x4C:
-                        case 0x4D:
-                        case 0x4E:
-                        case 0x4F:
-                        case 0xB0: // cmpxchgb
-                        case 0xB1: // cmpxchg
-                        case 0xC1: // xaddl
-                        case 0xC7: // cmpxchg8
-                        case 0x90: // setcc a
-                        case 0x91:
-                        case 0x92:
-                        case 0x93:
-                        case 0x94:
-                        case 0x95:
-                        case 0x96:
-                        case 0x97:
-                        case 0x98:
-                        case 0x99:
-                        case 0x9A:
-                        case 0x9B:
-                        case 0x9C:
-                        case 0x9D:
-                        case 0x9E:
-                        case 0x9F:
-                            hasDisp32 = true;
-                            // fall out of the switch to decode the Pointer
-                            break;
-
-                        case 0xAC: // shrd r, a, #8
-                            hasDisp32 = true;
-                            tailSize = 1; // the imm8
-                            break;
-
-                        case 0x80: // jcc rdisp32
-                        case 0x81:
-                        case 0x82:
-                        case 0x83:
-                        case 0x84:
-                        case 0x85:
-                        case 0x86:
-                        case 0x87:
-                        case 0x88:
-                        case 0x89:
-                        case 0x8A:
-                        case 0x8B:
-                        case 0x8C:
-                        case 0x8D:
-                        case 0x8E:
-                        case 0x8F:
-                            if (which == WhichOperand.endPcOperand) {
-                                return ip + 4;
-                            }
-                            assert which == WhichOperand.call32operand : "jcc has no disp32 or imm";
-                            return ip;
-                        default:
-                            Util.shouldNotReachHere();
-                    }
-                    break;
-
-                case 0x81: // addl a, #32; addl r, #32
-                    // also: orl, adcl, sbbl, andl, subl, xorl, cmpl
-                    // on 32bit in the case of cmpl, the imm might be an oop
-                    tailSize = 4;
-                    hasDisp32 = true; // has both kinds of operands!
-                    break;
-
-                case 0x83: // addl a, #8; addl r, #8
-                    // also: orl, adcl, sbbl, andl, subl, xorl, cmpl
-                    hasDisp32 = true; // has both kinds of operands!
-                    tailSize = 1;
-                    break;
-
-                case 0x9B:
-                    switch (0xFF & codeBuffer.getByte(ip++)) {
-                        case 0xD9: // fnstcw a
-                            hasDisp32 = true;
-                            break;
-                        default:
-                            Util.shouldNotReachHere();
-                    }
-                    break;
-
-                case 0x00: // addb a, r; addl a, r; addb r, a; addl r, a
-                case 0x01:
-                case 0x02:
-                case 0x03:
-                case 0x10: // adc...
-                case 0x11:
-                case 0x12:
-                case 0x13:
-                case 0x20: // and...
-                case 0x21:
-                case 0x22:
-                case 0x23:
-                case 0x30: // xor...
-                case 0x31:
-                case 0x32:
-                case 0x33:
-                case 0x08: // or...
-                case 0x09:
-                case 0x0a:
-                case 0x0b:
-                case 0x18: // sbb...
-                case 0x19:
-                case 0x1a:
-                case 0x1b:
-                case 0x28: // sub...
-                case 0x29:
-                case 0x2a:
-                case 0x2b:
-                case 0xF7: // mull a
-                case 0x8D: // lea r, a
-                case 0x87: // xchg r, a
-                case 0x38: // cmp...
-                case 0x39:
-                case 0x3a:
-                case 0x3b:
-                case 0x85: // test r, a
-                    hasDisp32 = true; // has both kinds of operands!
-                    break;
-
-                case 0xC1: // sal a, #8; sar a, #8; shl a, #8; shr a, #8
-                case 0xC6: // movb a, #8
-                case 0x80: // cmpb a, #8
-                case 0x6B: // imul r, a, #8
-                    hasDisp32 = true; // has both kinds of operands!
-                    tailSize = 1; // the imm8
-                    break;
-
-                case 0xE8: // call rdisp32
-                case 0xE9: // jmp rdisp32
-                    if (which == WhichOperand.endPcOperand) {
-                        return ip + 4;
-                    }
-                    assert which == WhichOperand.call32operand : "call has no disp32 or imm";
-                    return ip;
-
-                case 0xD1: // sal a, 1; sar a, 1; shl a, 1; shr a, 1
-                case 0xD3: // sal a, %cl; sar a, %cl; shl a, %cl; shr a, %cl
-                case 0xD9: // fldS a; fstS a; fstpS a; fldcw a
-                case 0xDD: // fldD a; fstD a; fstpD a
-                case 0xDB: // fildS a; fistpS a; fldX a; fstpX a
-                case 0xDF: // fildD a; fistpD a
-                case 0xD8: // faddS a; fsubrS a; fmulS a; fdivrS a; fcompS a
-                case 0xDC: // faddD a; fsubrD a; fmulD a; fdivrD a; fcompD a
-                case 0xDE: // faddpD a; fsubrpD a; fmulpD a; fdivrpD a; fcomppD a
-                    hasDisp32 = true;
-                    break;
-
-                case 0xF0: // Lock
-                    assert compilation.runtime.isMP() : "only on MP";
-                    againAfterPrefix = true;
-                    break;
-
-                case 0xF3: // For SSE
-                case 0xF2: // For SSE2
-                    switch (0xFF & codeBuffer.getByte(ip++)) {
-                        case X86Assembler.Prefix.REX:
-                        case X86Assembler.Prefix.REXB:
-                        case X86Assembler.Prefix.REXX:
-                        case X86Assembler.Prefix.REXXB:
-                        case X86Assembler.Prefix.REXR:
-                        case X86Assembler.Prefix.REXRB:
-                        case X86Assembler.Prefix.REXRX:
-                        case X86Assembler.Prefix.REXRXB:
-                        case X86Assembler.Prefix.REXW:
-                        case X86Assembler.Prefix.REXWB:
-                        case X86Assembler.Prefix.REXWX:
-                        case X86Assembler.Prefix.REXWXB:
-                        case X86Assembler.Prefix.REXWR:
-                        case X86Assembler.Prefix.REXWRB:
-                        case X86Assembler.Prefix.REXWRX:
-                        case X86Assembler.Prefix.REXWRXB:
-                            assert compilation.target.arch.is64bit() : "found 64bit prefix";
-                            ip++;
-                            // fall through
-                        default:
-                            ip++;
-                    }
-                    hasDisp32 = true; // has both kinds of operands!
-                    break;
-
-                default:
-                    Util.shouldNotReachHere();
-
-            }
-
-            assert which != WhichOperand.call32operand : "instruction is not a call :  jmp :  or jcc";
-            assert !compilation.target.arch.is64bit() || which != WhichOperand.immOperand : "instruction is not a movq reg :  imm64";
-            // assert which != WhichOperand.immOperand || hasImm32 : "instruction has no imm32 field";
-            assert compilation.target.arch.is64bit() || which != WhichOperand.immOperand || hasDisp32 : "instruction has no imm32 field";
-            assert which != WhichOperand.disp32operand || hasDisp32 : "instruction has no disp32 field";
-
-            // parse the output of emitOperand
-            int op2 = 0xFF & codeBuffer.getByte(ip++);
-            int base = op2 & 0x07;
-            int op3 = -1;
-            int b100 = 4;
-            int b101 = 5;
-            if (base == b100 && (op2 >> 6) != 3) {
-                op3 = 0xFF & codeBuffer.getByte(ip++);
-                base = op3 & 0x07; // refetch the base
-            }
-            // now ip points at the disp (if any)
-
-            switch (op2 >> 6) {
-                case 0:
-                    // [00 reg 100][ss index base]
-                    // [00 reg 100][00 100 esp]
-                    // [00 reg base]
-                    // [00 reg 100][ss index 101][disp32]
-                    // [00 reg 101] [disp32]
-
-                    if (base == b101) {
-                        if (which == WhichOperand.disp32operand) {
-                            return ip; // caller wants the disp32
-                        }
-                        ip += 4; // skip the disp32
-                    }
-                    break;
-
-                case 1:
-                    // [01 reg 100][ss index base][disp8]
-                    // [01 reg 100][00 100 esp][disp8]
-                    // [01 reg base] [disp8]
-                    ip += 1; // skip the disp8
-                    break;
-
-                case 2:
-                    // [10 reg 100][ss index base][disp32]
-                    // [10 reg 100][00 100 esp][disp32]
-                    // [10 reg base] [disp32]
-                    if (which == WhichOperand.disp32operand) {
-                        return ip; // caller wants the disp32
-                    }
-                    ip += 4; // skip the disp32
-                    break;
-
-                case 3:
-                    // [11 reg base] (not a memory addressing mode)
-                    break;
-            }
-        }
-
-        if (which == WhichOperand.endPcOperand) {
-            return ip + tailSize;
-        }
-
-        assert compilation.target.arch.is64bit() || which == WhichOperand.immOperand : "instruction has only an imm field";
-        return ip;
-    }
-
-    boolean checkRelocation(Relocation rspec, int format) {
-        /*int inst = instMark();
-        assert inst != InvalidInstructionMark && inst < pc().value : "must point to beginning of instruction";
-        int opnd;
-
-        Relocation r = rspec;
-        if (r.type() == RelocInfo.Type.none) {
-            return true;
-        } else if (r.isCall() || format == WhichOperand.call32operand.ordinal()) {
-            opnd = locateOperand(inst, WhichOperand.call32operand);
-        } else if (r.isData()) {
-            assert format == WhichOperand.immOperand.ordinal() || format == WhichOperand.disp32operand.ordinal() ||
-                            (!compilation.target.arch.is64bit()) : "format ok";
-            opnd = locateOperand(inst, WhichOperand.values()[format]);
-        } else {
-            assert format == WhichOperand.immOperand.ordinal() : "cannot specify a format";
-            return true;
-        }
-        assert opnd == pc().value : "must put operand where relocs can find it";*/
-        return true;
-    }
 
     void emitOperand32(Register reg, Address adr) {
         assert reg.encoding < 8 : "no extended registers";
@@ -1057,21 +595,16 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     void call(Label l) {
-        // suspect disp32 is always good
-        int operand = WhichOperand.disp32operand.ordinal();
-        if (!compilation.target.arch.is64bit()) {
-            operand = WhichOperand.immOperand.ordinal();
-        }
 
         if (l.isBound()) {
             int longSize = 5;
-            int offs = Util.safeToInt(target(l).value - pc().value);
+            int offs = Util.safeToInt(target(l) - pc());
             assert offs <= 0 : "assembler error";
             this.setInstMark();
             try {
                 // 1110 1000 #32-bit disp
                 emitByte(0xE8);
-                emitData(offs - longSize, RelocInfo.Type.none, operand);
+                emitData(offs - longSize, RelocInfo.Type.none);
             } finally {
                 this.clearInstMark();
             }
@@ -1082,7 +615,7 @@ public abstract class X86Assembler extends AbstractAssembler {
                 l.addPatchAt(offset());
 
                 emitByte(0xE8);
-                emitData(0, RelocInfo.Type.none, operand);
+                emitData(0, RelocInfo.Type.none);
             } finally {
                 this.clearInstMark();
             }
@@ -1111,21 +644,16 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    void callLiteral(Pointer entry, Relocation rspec) {
-        assert entry != null : "call most probably wrong";
+    void callLiteral(long l, Relocation rspec) {
         this.setInstMark();
         try {
             emitByte(0xE8);
-            long disp = entry.value - (codeBuffer.position() + Util.sizeofInt());
+            long disp = l - (codeBuffer.position() + Util.sizeofInt());
             assert isSimm32(disp) : "must be 32bit offset (call2)";
             // Technically, should use WhichOperand.call32operand, but this format is
             // implied by the fact that we're emitting a call instruction.
 
-            WhichOperand operand = WhichOperand.disp32operand;
-            if (!compilation.target.arch.is64bit()) {
-                operand = WhichOperand.call32operand;
-            }
-            emitData((int) disp, rspec, operand);
+            emitData((int) disp, rspec);
         } finally {
             this.clearInstMark();
         }
@@ -1473,12 +1001,11 @@ public abstract class X86Assembler extends AbstractAssembler {
             relocate(reloc);
             assert (0 <= cc.value) && (cc.value < 16) : "illegal cc";
             if (l.isBound()) {
-                Pointer dst = target(l);
-                assert dst != null : "jcc most probably wrong";
+                int dst = target(l);
 
                 int shortSize = 2;
                 int longSize = 6;
-                long offs = dst.value - codeBuffer.position();
+                long offs = dst - codeBuffer.position();
                 if (reloc.type() == RelocInfo.Type.none && Util.is8bit(offs - shortSize)) {
                     // 0111 tttn #8-bit disp
                     emitByte(0x70 | cc.value);
@@ -1508,9 +1035,9 @@ public abstract class X86Assembler extends AbstractAssembler {
     void jccb(Condition cc, Label l) {
         if (l.isBound()) {
             int shortSize = 2;
-            Pointer entry = target(l);
-            assert Util.is8bit(entry.value - (codeBuffer.position() + shortSize)) : "Dispacement too large for a short jmp";
-            long offs = entry.value - codeBuffer.position();
+            int entry = target(l);
+            assert Util.is8bit(entry - (codeBuffer.position() + shortSize)) : "Dispacement too large for a short jmp";
+            long offs = entry - codeBuffer.position();
             // 0111 tttn #8-bit disp
             emitByte(0x70 | cc.value);
             emitByte((int) ((offs - shortSize) & 0xFF));
@@ -1539,13 +1066,12 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     void jmp(Label l, Relocation reloc) {
         if (l.isBound()) {
-            Pointer entry = target(l);
-            assert entry != null : "jmp most probably wrong";
+            int entry = target(l);
             this.setInstMark();
             try {
                 int shortSize = 2;
                 int longSize = 5;
-                long offs = entry.value - codeBuffer.position();
+                long offs = entry - codeBuffer.position();
                 if (reloc.type() == RelocInfo.Type.none && Util.is8bit(offs - shortSize)) {
                     emitByte(0xEB);
                     emitByte((int) ((offs - shortSize) & 0xFF));
@@ -1579,14 +1105,13 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xE0 | encode);
     }
 
-    void jmpLiteral(Pointer dest, Relocation rspec) {
+    void jmpLiteral(long l, Relocation rspec) {
         this.setInstMark();
         try {
             emitByte(0xE9);
-            assert dest != null : "must have a target";
-            long disp = dest.value - (codeBuffer.position() + Util.sizeofInt());
+            long disp = l - (codeBuffer.position() + Util.sizeofInt());
             assert isSimm32(disp) : "must be 32bit offset (jmp)";
-            emitData((int) disp, rspec.type(), WhichOperand.call32operand.ordinal());
+            emitData((int) disp, rspec.type());
         } finally {
             this.clearInstMark();
         }
@@ -1595,10 +1120,9 @@ public abstract class X86Assembler extends AbstractAssembler {
     void jmpb(Label l) {
         if (l.isBound()) {
             int shortSize = 2;
-            Pointer entry = target(l);
-            assert entry != null : "jmp most probably wrong";
-            assert Util.is8bit((entry.value - codeBuffer.position()) + shortSize) : "Dispacement too large for a short jmp";
-            long offs = entry.value - codeBuffer.position();
+            int entry = target(l);
+            assert Util.is8bit((entry - codeBuffer.position()) + shortSize) : "Dispacement too large for a short jmp";
+            long offs = entry - codeBuffer.position();
             emitByte(0xEB);
             emitByte((int) ((offs - shortSize) & 0xFF));
         } else {
@@ -2129,8 +1653,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    void movswl(Register dst, Address src) { // movsxw
-        assert dst.isXMM();
+    void movswl(Register dst, Address src) {
         this.setInstMark();
         try {
             prefix(src, dst);
@@ -3452,7 +2975,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         try {
             emitByte(0x81);
             emitByte(0xF8 | src1.encoding);
-            emitData(imm32, rspec, 0);
+            emitData(imm32, rspec);
         } finally {
             this.clearInstMark();
         }
@@ -3465,7 +2988,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         try {
             emitByte(0x81);
             emitOperand(X86Register.rdi, src1);
-            emitData(imm32, rspec, 0);
+            emitData(imm32, rspec);
         } finally {
             this.clearInstMark();
         }
@@ -4081,7 +3604,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         try {
             emitByte(0xC7);
             emitOperand(X86Register.rax, dst);
-            emitData(imm32, rspec, 0);
+            emitData(imm32, rspec);
         } finally {
             this.clearInstMark();
         }
@@ -4093,7 +3616,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         try {
             int encode = prefixAndEncode(dst.encoding);
             emitByte(0xB8 | encode);
-            emitData(imm32, rspec, 0);
+            emitData(imm32, rspec);
         } finally {
             this.clearInstMark();
         }
@@ -4134,7 +3657,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         this.setInstMark();
         try {
             emitByte(0x68);
-            emitData(imm32, rspec, 0);
+            emitData(imm32, rspec);
         } finally {
             this.clearInstMark();
         }
@@ -4283,12 +3806,10 @@ public abstract class X86Assembler extends AbstractAssembler {
 
 
     void emitData64(long data, Relocation rspec) {
-        assert WhichOperand.immOperand.ordinal() == 0 : "default format must be immediate in this file";
         assert instMark() != InvalidInstructionMark : "must be inside InstructionMark";
-        // Do not use Abstractrelocate, which is not intended for
-        // embedded words. Instead, relocate to the enclosing instruction.
-        relocate(instMark(), rspec);
-        assert checkRelocation(rspec, rspec.format());
+        if (rspec != null) {
+            relocate(instMark(), rspec);
+        }
         emitLong(data);
     }
 
@@ -4344,24 +3865,31 @@ public abstract class X86Assembler extends AbstractAssembler {
         return dstEnc << 3 | srcEnc;
     }
 
-    int prefixqAndEncode(int dstEnc, int srcEnc) {
-        if (dstEnc < 8) {
-            if (srcEnc < 8) {
+    /**
+     * Creates prefix and the encoding of the lower 6 bits of the ModRM-Byte. It emits an operand prefix.
+     * If the given operands exceed 3 bits, the 4th bit is encoded in the prefix.
+     * @param regEnc the encoding of the register part of the ModRM-Byte
+     * @param rmEnc the encoding of the r/m part of the ModRM-Byte
+     * @return the lower 6 bits of the ModRM-Byte that should be emitted
+     */
+    int prefixqAndEncode(int regEnc, int rmEnc) {
+        if (regEnc < 8) {
+            if (rmEnc < 8) {
                 prefix(Prefix.REXW);
             } else {
                 prefix(Prefix.REXWB);
-                srcEnc -= 8;
+                rmEnc -= 8;
             }
         } else {
-            if (srcEnc < 8) {
+            if (rmEnc < 8) {
                 prefix(Prefix.REXWR);
             } else {
                 prefix(Prefix.REXWRB);
-                srcEnc -= 8;
+                rmEnc -= 8;
             }
-            dstEnc -= 8;
+            regEnc -= 8;
         }
-        return dstEnc << 3 | srcEnc;
+        return regEnc << 3 | rmEnc;
     }
 
     void prefix(Register reg) {

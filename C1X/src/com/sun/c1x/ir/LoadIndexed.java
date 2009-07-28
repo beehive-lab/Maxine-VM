@@ -20,9 +20,9 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.ci.CiType;
+import com.sun.c1x.value.BasicType;
+import com.sun.c1x.value.ValueStack;
 
 /**
  * The <code>LoadIndexed</code> instruction represents a read from an element of an array.
@@ -30,8 +30,6 @@ import com.sun.c1x.value.*;
  * @author Ben L. Titzer
  */
 public class LoadIndexed extends AccessIndexed {
-
-    NullCheck explicitNullCheck;
 
     /**
      * Creates a new LoadIndexed instruction.
@@ -43,22 +41,6 @@ public class LoadIndexed extends AccessIndexed {
      */
     public LoadIndexed(Instruction array, Instruction index, Instruction length, BasicType elementType, ValueStack lockStack) {
         super(array, index, length, elementType, lockStack);
-    }
-
-    /**
-     * Gets the instruction representing an explicit null check for this instruction.
-     * @return the explicit null check instruction
-     */
-    public NullCheck explicitNullCheck() {
-        return explicitNullCheck;
-    }
-
-    /**
-     * Sets the instruction representing an explicit null check for this instruction.
-     * @param explicitNullCheck the object
-     */
-    public void setExplicitNullCheck(NullCheck explicitNullCheck) {
-        this.explicitNullCheck = explicitNullCheck;
     }
 
     /**

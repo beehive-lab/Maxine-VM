@@ -20,11 +20,12 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.asm.*;
-import com.sun.c1x.ir.*;
-import com.sun.c1x.stub.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.asm.Label;
+import com.sun.c1x.debug.LogStream;
+import com.sun.c1x.ir.BlockBegin;
+import com.sun.c1x.stub.CodeStub;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.value.BasicType;
 
 /**
  * @author Marcelo Cintra
@@ -62,7 +63,7 @@ public class LIRBranch extends LIRInstruction {
      *
      */
     public LIRBranch(LIRCondition cond, BasicType type, CodeStub stub) {
-        this(cond, stub.entry());
+        this(cond, stub.entry);
         this.type = type;
         this.stub = stub;
     }
@@ -139,6 +140,9 @@ public class LIRBranch extends LIRInstruction {
             case NotEqual:
                 cond = LIRCondition.Equal;
                 break;
+            case Equal:
+                cond = LIRCondition.NotEqual;
+                break;
             case Less:
                 cond = LIRCondition.GreaterEqual;
                 break;
@@ -169,19 +173,19 @@ public class LIRBranch extends LIRInstruction {
         printCondition(out, cond());
         out.print(" ");
         if (block() != null) {
-            out.printf("[B%d] ", block().blockID());
+            out.printf("[B%d] ", block().blockID);
         } else if (stub() != null) {
             out.print("[");
             stub().printName(out);
             out.printf(": %s]", stub().toString());
-            if (stub().info() != null) {
-                out.printf(" [bci:%d]", stub().info().bci());
+            if (stub().info != null) {
+                out.printf(" [bci:%d]", stub().info.bci());
             }
         } else {
             out.printf("[label:0x%x] ", label().loc());
         }
         if (ublock() != null) {
-            out.printf("unordered: [B%d] ", ublock().blockID());
+            out.printf("unordered: [B%d] ", ublock().blockID);
         }
     }
 }

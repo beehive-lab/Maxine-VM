@@ -18,62 +18,24 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.asm;
+package test.optimize;
 
-import com.sun.c1x.asm.RelocInfo.*;
+/*
+ * Test case for null check elimination.
+ * @Harness: java
+ * @Runs: 0=45
+ */
+public class NCE_01 {
 
+    public static NCE_01 object = new NCE_01();
 
-public class CodeSection {
+    int field1 = 22;
+    int field2 = 23;
 
-    public int remaining() {
-        // TODO Auto-generated method stub
-        return Integer.MAX_VALUE;
+    public static int test(int arg) {
+        NCE_01 o = object;
+        int i = o.field1;
+        // expected null check elimination here
+        return o.field2 + i;
     }
-
-    public void relocate(Pointer pc, Type polltype) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void clearMark() {
-        // TODO Auto-generated method stub
-
-    }
-
-    public Pointer start() {
-        // TODO Auto-generated method stub
-        return new Pointer(0);
-    }
-
-    public Pointer limit() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public Pointer end() {
-        // TODO Auto-generated method stub
-        return new Pointer(0);
-    }
-
-    public boolean maybeExpandToEnsureRemaining(int requiredSpace) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    public void setEnd(Pointer codePos) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public Pointer target(Label l, Pointer pointer) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-
-    public boolean isAllocated() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
 }

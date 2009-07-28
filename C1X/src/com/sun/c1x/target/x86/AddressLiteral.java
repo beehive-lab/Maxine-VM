@@ -20,9 +20,10 @@
  */
 package com.sun.c1x.target.x86;
 
-import com.sun.c1x.asm.*;
-import com.sun.c1x.asm.RelocInfo.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.asm.RelocInfo;
+import com.sun.c1x.asm.RelocInfo.Type;
+import com.sun.c1x.asm.Relocation;
+import com.sun.c1x.util.Util;
 
 
 public class AddressLiteral {
@@ -36,10 +37,10 @@ public class AddressLiteral {
         this.target = address;
         switch (relocationType) {
         case externalWordType:
-          rspec = Relocation.specExternalWord(new Pointer(address));
+          rspec = Relocation.specExternalWord(address);
           break;
         case internalWordType:
-          rspec = Relocation.specInternalWord(new Pointer(address));
+          rspec = Relocation.specInternalWord(address);
           break;
         case runtimeCallType:
           rspec = Relocation.specRuntimeCall();
@@ -79,8 +80,8 @@ public class AddressLiteral {
         return isLval;
     }
 
-    public Pointer target() {
-        return new Pointer(target);
+    public long target() {
+        return target;
     }
 
     public Relocation rspec() {

@@ -20,18 +20,30 @@
  */
 package com.sun.c1x.gen;
 
-import java.util.*;
-
-import com.sun.c1x.*;
-import com.sun.c1x.asm.*;
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.graph.*;
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.asm.Label;
+import com.sun.c1x.bytecode.Bytecodes;
+import com.sun.c1x.ci.CiMethod;
+import com.sun.c1x.ci.CiMethodData;
+import com.sun.c1x.ci.CiRuntimeCall;
+import com.sun.c1x.ci.CiType;
+import com.sun.c1x.debug.TTY;
+import com.sun.c1x.graph.IR;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.stub.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.util.ArrayMap;
+import com.sun.c1x.util.BitMap;
+import com.sun.c1x.util.BitMap2D;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.value.BasicType;
+import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.value.ValueType;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * This class traverses the HIR instructions and generates LIR instructions from them.
@@ -40,7 +52,9 @@ import com.sun.c1x.value.*;
  * @author Thomas Wuerthinger
  *
  */
-public abstract class LIRGenerator extends InstructionVisitor implements BlockClosure {
+public abstract class LIRGenerator extends InstructionVisitor {
+    private static final BasicType[] BASIC_TYPES_INT_OBJECT = {BasicType.Int /* thread */, BasicType.Object /* methodOop*/};
+    private static final BasicType[] BASIC_TYPES_OBJECT = {BasicType.Object};
 
     // the range of values in a lookupswitch or tableswitch statement
     private static final class SwitchRange {
@@ -53,7 +67,7 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
             this.highKey = lowKey;
             this.sux = sux;
         }
-    };
+    }
 
     // Flags that can be set on vregs
     public enum VregFlag {
@@ -64,6 +78,7 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
     }
 
     protected final C1XCompilation compilation;
+    protected final HashMap<Instruction, Integer> useCounts = new HashMap<Instruction, Integer>(30);
     PhiResolver.PhiResolverState resolverState;
     private BlockBegin currentBlock;
     private int virtualRegisterNumber;
@@ -94,7 +109,23 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
         return lir;
     }
 
-    public void apply(BlockBegin block) {
+    public int useCount(Instruction x) {
+        Integer result = useCounts.get(x);
+        if (result != null) {
+            return result;
+        }
+        return 0;
+    }
+
+    public boolean hasUses(Instruction x) {
+        return useCount(x) > 0;
+    }
+
+    public boolean isRoot(Instruction x) {
+        return x.isPinned() || useCount(x) > 1;
+    }
+
+    public void visitBlock(BlockBegin block) {
         blockDoProlog(block);
         this.currentBlock = block;
 
@@ -120,10 +151,7 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
     }
 
     public boolean isVregFlagSet(int vregNum, VregFlag f) {
-        if (!vregFlags.isValidIndex(vregNum, f.ordinal())) {
-            return false;
-        }
-        return vregFlags.at(vregNum, f.ordinal());
+        return vregFlags.isValidIndex(vregNum, f.ordinal()) && vregFlags.at(vregNum, f.ordinal());
     }
 
     public boolean isVregFlagSet(LIROperand opr, VregFlag f) {
@@ -204,14 +232,12 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
 
         final CiMethod method = compilation.method;
         if (compilation.runtime.dtraceMethodProbes()) {
-            BasicType[] signature = new BasicType[] {BasicType.Int, // thread
-                            BasicType.Object}; // methodOop
             List<LIROperand> arguments = new ArrayList<LIROperand>(2);
             arguments.add(getThreadPointer());
             LIROperand meth = newRegister(BasicType.Object);
             lir.oop2reg(method, meth);
             arguments.add(meth);
-            callRuntime(signature, arguments, CiRuntimeCall.DTraceMethodEntry, ValueType.VOID_TYPE, null);
+            callRuntime(BASIC_TYPES_INT_OBJECT, arguments, CiRuntimeCall.DTraceMethodEntry, ValueType.VOID_TYPE, null);
         }
 
         if (method.isSynchronized()) {
@@ -230,7 +256,7 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
                 LIROperand lock = newRegister(BasicType.Int);
                 lir.loadStackAddressMonitor(0, lock);
 
-                CodeEmitInfo info = new CodeEmitInfo(C1XCompilation.MethodCompilation.SynchronizationEntryBCI.value, compilation.hir().startBlock.state(), null);
+                CodeEmitInfo info = new CodeEmitInfo(Instruction.SYNCHRONIZATION_ENTRY_BCI, compilation.hir().startBlock.state(), null);
                 CodeStub slowPath = new MonitorEnterStub(obj, lock, info);
 
                 // receiver is guaranteed non-null so don't need CodeEmitInfo
@@ -247,14 +273,24 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
     }
 
     @Override
+    public void visitResolveClass(ResolveClass i) {
+        assert i.state() != null;
+
+
+    }
+
+    @Override
     public void visitConstant(Constant x) {
-        if (x.state() != null) {
-            // XXX: in the future, no constants will require patching; there will be a ResolveClass instruction
-            // Any constant with a ValueStack requires patching so emit the patch here
-            LIROperand reg = rlockResult(x);
-            CodeEmitInfo info = stateFor(x, x.state());
-            lir.oop2regPatch(null, reg, info);
-        } else if (compilation.hir().useCount(x) > 1 && !canInlineAsConstant(x)) {
+//        if (x.state() != null) {
+//            // XXX: in the future, no constants will require patching; there will be a ResolveClass instruction
+//            // Any constant with a ValueStack requires patching so emit the patch here
+//            LIROperand reg = rlockResult(x);
+//            CodeEmitInfo info = stateFor(x, x.state());
+//            lir.oop2regPatch(null, reg, info);
+//        } else
+
+
+        if (useCount(x) > 1 && !canInlineAsConstant(x)) {
             if (!x.isPinned()) {
                 // unpinned constants are handled specially so that they can be
                 // put into registers when they are used multiple times within a
@@ -577,7 +613,7 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
         boolean needsRangeCheck = true;
 
         if (useLength) {
-            needsRangeCheck = x.computeNeedsRangeCheck();
+            needsRangeCheck = x.needsRangeCheck();
             if (needsRangeCheck) {
                 length.setInstruction(x.length());
                 length.loadItem();
@@ -595,12 +631,7 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
         CodeEmitInfo rangeCheckInfo = stateFor(x);
         CodeEmitInfo nullCheckInfo = null;
         if (x.needsNullCheck()) {
-            NullCheck nc = x.explicitNullCheck();
-            if (nc != null) {
-                nullCheckInfo = stateFor(nc);
-            } else {
-                nullCheckInfo = rangeCheckInfo;
-            }
+            nullCheckInfo = rangeCheckInfo;
         }
 
         // emit array address setup early so it schedules better
@@ -1150,6 +1181,7 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
     }
 
     LIROperand forceToSpill(LIROperand value, BasicType t) {
+        assert value.isValid() : "value should not be illegal";
         assert t.size == value.type().size : "size mismatch";
         if (!value.isRegister()) {
             // force into a register
@@ -1346,11 +1378,10 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
         LIRItem receiver = new LIRItem(x.argumentAt(0), this);
 
         receiver.loadItem();
-        BasicType[] signature = new BasicType[] {BasicType.Object};
         List<LIROperand> args = new ArrayList<LIROperand>();
         args.add(receiver.result());
         CodeEmitInfo info = stateFor(x, x.state());
-        callRuntime(signature, args, CiRuntimeCall.RegisterFinalizer, ValueType.VOID_TYPE, info);
+        callRuntime(BASIC_TYPES_OBJECT, args, CiRuntimeCall.RegisterFinalizer, ValueType.VOID_TYPE, info);
 
         setNoResult(x);
     }
@@ -1806,7 +1837,7 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
     LIROperand callRuntime(Instruction arg1, CiRuntimeCall entry, ValueType resultType, CodeEmitInfo info) {
         List<LIRItem> args = new ArrayList<LIRItem>(1);
         args.add(new LIRItem(arg1, this));
-        BasicType[] signature = new BasicType[] {arg1.type().basicType};
+        BasicType[] signature = {arg1.type().basicType};
         return callRuntimeWithItems(signature, args, entry, resultType, info);
     }
 
@@ -1816,7 +1847,7 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
         args.add(new LIRItem(arg1, this));
         args.add(new LIRItem(arg2, this));
 
-        BasicType[] signature = new BasicType[] {arg1.type().basicType, arg2.type().basicType};
+        BasicType[] signature = {arg1.type().basicType, arg2.type().basicType};
         return callRuntimeWithItems(signature, args, entry, resultType, info);
     }
 
@@ -1892,7 +1923,7 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
 
             instr.accept(this);
 
-            assert !compilation.hir().hasUses(instr) || instr.operand().isValid() || instr instanceof Constant || compilation.bailout() != null : "invalid item set";
+            assert !hasUses(instr) || instr.operand().isValid() || instr instanceof Constant || compilation.bailout() != null : "invalid item set";
         } finally {
             compilation.setCurrentInstruction(prev);
         }
@@ -1912,15 +1943,17 @@ public abstract class LIRGenerator extends InstructionVisitor implements BlockCl
         incrementInvocationCounter(info, true);
     }
 
-void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
+    void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         if (C1XOptions.ProfileInlinedCalls) {
             // TODO: For tiered compilation C1X has code here, probably not necessary.
         }
     }
 
     void init() {
-        // TODO Check what to do with this!
-        // _bs = Universe::heap()->barrier_set();
+        UseCountComputer useCountComputer = new UseCountComputer(useCounts);
+        for (BlockBegin begin : ir.linearScanOrder()) {
+            useCountComputer.visitBlock(begin);
+        }
     }
 
     protected void jobject2regWithPatching(LIROperand r, Object obj, CodeEmitInfo info) {
@@ -2064,24 +2097,6 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
         }
     }
 
-    protected void newInstance(LIROperand dst, CiType klass, LIROperand scratch1, LIROperand scratch2, LIROperand scratch3, LIROperand scratch4, LIROperand klassReg, CodeEmitInfo info) {
-        jobject2regWithPatching(klassReg, klass, info);
-        // If klass is not loaded we do not know if the klass has finalizers:
-        if (C1XOptions.UseFastNewInstance && klass.isLoaded() && !klass.layoutHelperNeedsSlowPath()) {
-            CiRuntimeCall stubId = klass.isInitialized() ? CiRuntimeCall.FastNewInstance : CiRuntimeCall.FastNewInstanceInitCheck;
-            CodeStub slowPath = new NewInstanceStub(klassReg, dst, klass, info, stubId);
-            assert klass.isLoaded() : "must be loaded";
-            // allocate space for instance
-            assert klass.sizeHelper() >= 0 : "illegal instance size";
-            int instanceSize = Util.align(klass.sizeHelper(), compilation.target.heapAlignment);
-            lir.allocateObject(dst, scratch1, scratch2, scratch3, scratch4, compilation.runtime.headerSize(), instanceSize, klassReg, !klass.isInitialized(), slowPath);
-        } else {
-            CodeStub slowPath = new NewInstanceStub(klassReg, dst, klass, info, CiRuntimeCall.NewInstance);
-            lir.branch(LIRCondition.Always, BasicType.Illegal, slowPath);
-            lir.branchDestination(slowPath.continuation());
-        }
-    }
-
     protected final LIROperand newPointerRegister() {
         // returns a register suitable for doing pointer math
         // XXX: revisit this when there is a basic type for Pointers
@@ -2123,7 +2138,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
     }
 
     protected void setNoResult(Instruction x) {
-        assert !compilation.hir().hasUses(x) : "can't have use";
+        assert !hasUses(x) : "can't have use";
         x.clearOperand();
     }
 
@@ -2191,7 +2206,7 @@ void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
             CiMethod method = scope.method;
 
             BitMap liveness = method.liveness(bci);
-            if (bci == C1XCompilation.MethodCompilation.SynchronizationEntryBCI.value) {
+            if (bci == Instruction.SYNCHRONIZATION_ENTRY_BCI) {
                 if (x instanceof ExceptionObject || x instanceof Throw) {
                     // all locals are dead on exit from the synthetic unlocker
                     liveness.clearAll();

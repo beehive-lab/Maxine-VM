@@ -21,7 +21,6 @@
 package com.sun.c1x.stub;
 
 import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
 
 
 /**
@@ -33,8 +32,7 @@ import com.sun.c1x.util.*;
  */
 public class ImplicitNullCheckStub extends CodeStub {
 
-    private CodeEmitInfo info;
-    private int offset;
+    public final int offset;
 
     /**
      * Creates a new instance of <code>ImplicitNullCheckStub</code>.
@@ -43,22 +41,8 @@ public class ImplicitNullCheckStub extends CodeStub {
      * @param info the debug information associated to this code stub
      */
     public ImplicitNullCheckStub(int offset, CodeEmitInfo info) {
+        super(info);
         this.offset = offset;
-        this.info = info;
-    }
-
-    @Override
-    public CodeEmitInfo info() {
-        return info;
-    }
-
-    /**
-     * Gets the offset of this class.
-     *
-     * @return the offset
-     */
-    public int offset() {
-        return offset;
     }
 
     @Override
@@ -72,13 +56,7 @@ public class ImplicitNullCheckStub extends CodeStub {
     }
 
     @Override
-    public void printName(LogStream out) {
-        out.print("ImplicitNullCheckStub");
-    }
-
-    @Override
-    public void emitCode(LIRAssembler e) {
-        // TODO Auto-generated method stub
-
+    public void accept(CodeStubVisitor visitor) {
+        visitor.visitImplicitNullCheckStub(this);
     }
 }

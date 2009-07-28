@@ -20,13 +20,24 @@
  */
 package com.sun.c1x.graph;
 
-import java.util.*;
+import com.sun.c1x.C1XIntrinsic;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.bytecode.BytecodeLookupSwitch;
+import com.sun.c1x.bytecode.BytecodeSwitch;
+import com.sun.c1x.bytecode.BytecodeTableSwitch;
+import com.sun.c1x.bytecode.Bytecodes;
+import com.sun.c1x.ci.CiExceptionHandler;
+import com.sun.c1x.ci.CiMethod;
+import com.sun.c1x.ir.BlockBegin;
+import com.sun.c1x.util.ArrayMap;
+import com.sun.c1x.util.BitMap;
+import com.sun.c1x.util.Bytes;
+import com.sun.c1x.util.Util;
 
-import com.sun.c1x.*;
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ir.*;
-import com.sun.c1x.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * The <code>BlockMap</code> class builds a mapping between bytecodes and basic blocks
@@ -85,7 +96,7 @@ public class BlockMap {
 
         Iterable<BlockBegin> getHandlers(BlockBegin block) {
             // lookup handlers for the basic block
-            HashSet<BlockBegin> set = handlerMap.get(block.blockID());
+            HashSet<BlockBegin> set = handlerMap.get(block.blockID);
             return set == null ? NONE_LIST : set;
         }
 
@@ -98,10 +109,10 @@ public class BlockMap {
 
         void addHandler(BlockBegin block, BlockBegin handler) {
             // add a handler to a basic block, creating the set if necessary
-            HashSet<BlockBegin> set = handlerMap.get(block.blockID());
+            HashSet<BlockBegin> set = handlerMap.get(block.blockID);
             if (set == null) {
                 set = new HashSet<BlockBegin>();
-                handlerMap.put(block.blockID(), set);
+                handlerMap.put(block.blockID, set);
             }
             set.add(handler);
         }
@@ -160,8 +171,7 @@ public class BlockMap {
     BlockBegin make(int bci) {
         BlockBegin block = blockMap[bci];
         if (block == null) {
-            block = new BlockBegin(bci);
-            block.setBlockID(blockNum++);
+            block = new BlockBegin(bci, blockNum++);
             blockMap[bci] = block;
         }
         return block;
@@ -407,7 +417,7 @@ public class BlockMap {
 
     boolean numberBlock(BlockBegin block, BitMap visited, BitMap active) {
         // number a block with its reverse post-order traversal number
-        int blockIndex = block.blockID() - firstBlock;
+        int blockIndex = block.blockID - firstBlock;
 
         if (visited.get(blockIndex)) {
             if (active.get(blockIndex)) {

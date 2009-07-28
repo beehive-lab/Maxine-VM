@@ -492,7 +492,7 @@ public final class JDK_java_lang_System {
             case IA32:
                 return "x86";
             case SPARC:
-                return (Word.width() == WordWidth.BITS_64) ? "sparcv9" : "sparc";
+                return (Word.width() == 64) ? "sparcv9" : "sparc";
             case PPC:
                 FatalError.unimplemented();
                 break;
@@ -514,7 +514,7 @@ public final class JDK_java_lang_System {
             case IA32:
                 return "x86";
             case SPARC:
-                return (Word.width() == WordWidth.BITS_64) ? "sparcv9" : "sparc";
+                return (Word.width() == 64) ? "sparcv9" : "sparc";
             case PPC:
                 FatalError.unimplemented();
                 break;
@@ -638,7 +638,7 @@ public final class JDK_java_lang_System {
         setIfAbsent(properties, "java.vm.version", MaxineVM.version());
         setIfAbsent(properties, "java.vm.info", VMConfiguration.hostOrTarget().compilationScheme().mode().name().toLowerCase() + " mode");
 
-        setIfAbsent(properties, "sun.arch.data.model", Integer.toString(Word.width().numberOfBits));
+        setIfAbsent(properties, "sun.arch.data.model", Integer.toString(Word.width()));
         setIfAbsent(properties, "sun.cpu.endian", Word.endianness().name().toLowerCase());
 
         switch (Platform.hostOrTarget().processorKind.dataModel.endianness) {

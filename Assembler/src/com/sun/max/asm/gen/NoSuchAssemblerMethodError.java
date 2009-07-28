@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,15 +18,25 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.util;
+package com.sun.max.asm.gen;
 
-import com.sun.c1x.ir.*;
+import com.sun.max.asm.*;
 
 /**
- * The <code>BlockClosure</code> interface represents a closure for iterating over blocks.
+ * Thrown when {@link Assembly#assemble(Assembler, Template, com.sun.max.collect.IndexedSequence)} cannot assemble
+ * a template and a set of arguments because the given assembler does not include a method generated from the
+ * template. This will be the case if {@linkplain Template#isRedundant() redundant} templates were
+ * {@linkplain AssemblerGenerator#generateRedundantInstructionsOption ignored} when the assembler was generated.
+ * A disassembler always works with the complete set of redundant templates.
  *
- * @author Ben L. Titzer
+ * @author Doug Simon
  */
-public interface BlockClosure {
-    void apply(BlockBegin block);
+public class NoSuchAssemblerMethodError extends NoSuchMethodError {
+
+    public final Template template;
+
+    public NoSuchAssemblerMethodError(String message, Template template) {
+        super(message);
+        this.template = template;
+    }
 }

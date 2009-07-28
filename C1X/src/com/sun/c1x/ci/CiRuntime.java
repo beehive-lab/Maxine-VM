@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.ci;
 
-import com.sun.c1x.target.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.target.Register;
+import com.sun.c1x.value.BasicType;
 
 /**
  * The <code>CiRuntime</code> class provides the major interface between the compiler and the
@@ -179,9 +179,6 @@ public interface CiRuntime {
 
     int arrayBaseOffsetInBytes(BasicType type);
 
-    // C1 Ref: NativeCall.instructionSize
-    int nativeCallInstructionSize();
-
     int sunMiscAtomicLongCSImplValueOffset();
 
     Register callerSaveFpuRegAt(int i);
@@ -221,8 +218,6 @@ public interface CiRuntime {
     int secondarySuperCacheOffsetInBytes();
 
     long doubleSignmaskPoolAddress();
-
-    int nativeCallDisplacementOffset();
 
     Object universeNonOopWord();
 
@@ -302,5 +297,13 @@ public interface CiRuntime {
     String disassemble(byte[] copyOf);
 
     CiLocation receiverLocation();
+
+    int sizeofKlassOopDesc();
+
+    int initThreadOffsetInBytes();
+
+    int convertToPointer32(Object obj);
+
+    long convertToPointer64(Object obj);
 
 }

@@ -393,15 +393,15 @@ public abstract class DataLabel extends InspectorLabel {
 
     public static final class BiasedStackAddressAsHex extends AddressAsHex {
         boolean biased;
-        final STACK_BIAS bias;
-        public BiasedStackAddressAsHex(Inspection inspection, Address address, STACK_BIAS bias) {
+        final StackBias bias;
+        public BiasedStackAddressAsHex(Inspection inspection, Address address, StackBias bias) {
             super(inspection, address, null);
             this.bias = bias;
             biased = true;
         }
 
         private boolean useBias() {
-            return bias != null && !bias.equals(STACK_BIAS.NONE);
+            return bias != null && !bias.equals(StackBias.NONE);
         }
         @Override
         public void changeBiasState() {

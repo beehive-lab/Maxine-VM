@@ -20,9 +20,11 @@
  */
 package com.sun.c1x.gen;
 
-import java.util.*;
+import com.sun.c1x.lir.LIROperand;
+import com.sun.c1x.lir.LIROperandFactory;
 
-import com.sun.c1x.lir.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Converts the HIR program's Phi instructions into moves.
@@ -39,9 +41,6 @@ public class PhiResolver {
         private List<ResolveNode> otherOperands;
         private ResolveNode[] vregTable;
 
-        public PhiResolverState() {
-        }
-
         void reset(int maxVregs) {
             virtualOperands = new ArrayList<ResolveNode>(maxVregs);
             otherOperands = new ArrayList<ResolveNode>(maxVregs);
@@ -50,8 +49,8 @@ public class PhiResolver {
         }
     }
 
-    private LIRGenerator gen;
-    private PhiResolverState state;
+    private final LIRGenerator gen;
+    private final PhiResolverState state;
 
     private ResolveNode loop;
     private LIROperand temp;

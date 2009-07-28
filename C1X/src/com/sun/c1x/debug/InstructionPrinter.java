@@ -18,23 +18,59 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.util;
+package com.sun.c1x.debug;
 
-import static com.sun.c1x.ir.Instruction.*;
-import static com.sun.c1x.util.InstructionPrinter.InstructionLineColumn.*;
-
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
+import com.sun.c1x.bytecode.Bytecodes;
+import com.sun.c1x.ci.CiMethod;
+import static com.sun.c1x.debug.InstructionPrinter.InstructionLineColumn.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.value.ConstType;
+import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.value.ValueType;
 
 /**
- * An {@link InstructionVisitor} for {@linkplain #printInstruction(Instruction) printing}
+ * An {@link com.sun.c1x.ir.InstructionVisitor} for {@linkplain #printInstruction(Instruction) printing}
  * an {@link Instruction} as an expression or statement.
  *
  * @author Doug Simon
  */
 public class InstructionPrinter extends InstructionVisitor {
+    /**
+     * Formats a given instruction as value is a {@linkplain com.sun.c1x.value.ValueStack frame state}. If the instruction is a phi defined at a given
+     * block, its {@linkplain com.sun.c1x.ir.Phi#operand() operands} are appended to the returned string.
+     *
+     * @param index the index of the value in the frame state
+     * @param value the frame state value
+     * @param block if {@code value} is a phi, then its operands are formatted if {@code block} is its
+     *            {@linkplain com.sun.c1x.ir.Phi#block() join point}
+     * @return the instruction representation as a string
+     */
+    public static String stateString(int index, Instruction value, BlockBegin block) {
+        StringBuilder sb = new StringBuilder(30);
+        sb.append(String.format("%2d  %s", index, Instruction.valueString(value)));
+        if (value instanceof Phi) {
+            Phi phi = (Phi) value;
+            // print phi operands
+            if (phi.block() == block) {
+                sb.append(" [");
+                for (int j = 0; j < phi.operandCount(); j++) {
+                    sb.append(' ');
+                    Instruction operand = phi.operandAt(j);
+                    if (operand != null) {
+                        sb.append(Instruction.valueString(operand));
+                    } else {
+                        sb.append("NULL");
+                    }
+                }
+                sb.append("] ");
+            }
+        }
+        if (value != value.subst()) {
+            sb.append("alias ").append(Instruction.valueString(value.subst()));
+        }
+        return sb.toString();
+    }
+
     /**
      * The columns printed in a tabulated instruction
      * {@linkplain InstructionPrinter#printInstructionListing(Instruction) listing}.
@@ -111,6 +147,10 @@ public class InstructionPrinter extends InstructionVisitor {
         instruction.accept(this);
     }
 
+    public void printBlock(BlockBegin block) {
+        block.accept(this); // TODO: maybe we don't need to print out the whole block
+    }
+
     /**
      * Prints a header for the tabulated data printed by {@link #printInstructionListing(Instruction)}.
      */
@@ -162,9 +202,9 @@ public class InstructionPrinter extends InstructionVisitor {
 
     @Override
     public void visitBase(Base i) {
-        out.print("std entry B").print(i.standardEntry().blockID());
+        out.print("std entry B").print(i.standardEntry().blockID);
         if (i.successors().size() > 1) {
-          out.print(" osr entry B").print(i.osrEntry().blockID());
+            out.print(" osr entry B").print(i.osrEntry().blockID);
         }
     }
 
@@ -172,7 +212,7 @@ public class InstructionPrinter extends InstructionVisitor {
     public void visitBlockBegin(BlockBegin block) {
         // print block id
         BlockEnd end = block.end();
-        out.print("B").print(block.blockID()).print(" ");
+        out.print("B").print(block.blockID).print(" ");
 
         // print flags
         StringBuilder sb = new StringBuilder(8);
@@ -202,34 +242,34 @@ public class InstructionPrinter extends InstructionVisitor {
         }
 
         // print block bci range
-        out.print('[').print(block.bci()).print(", ").print((end == null ? -1 : end.bci())).print(']');
+        out.print('[').print(block.bci()).print(", ").print(end == null ? -1 : end.bci()).print(']');
 
         // print block successors
         if (end != null && end.successors().size() > 0) {
             out.print(" .");
             for (BlockBegin successor : end.successors()) {
-                out.print(" B").print(successor.blockID());
+                out.print(" B").print(successor.blockID);
             }
         }
         // print exception handlers
         if (!block.exceptionHandlers().isEmpty()) {
             out.print(" (xhandlers");
             for (BlockBegin handler : block.exceptionHandlerBlocks()) {
-                out.print(" B").print(handler.blockID());
+                out.print(" B").print(handler.blockID);
             }
             out.print(')');
         }
 
         // print dominator block
         if (block.dominator() != null) {
-            out.print(" dom B").print(block.dominator().blockID());
+            out.print(" dom B").print(block.dominator().blockID);
         }
 
         // print predecessors
         if (!block.predecessors().isEmpty()) {
             out.print(" pred:");
             for (BlockBegin pred : block.predecessors()) {
-                out.print(" B").print(pred.blockID());
+                out.print(" B").print(pred.blockID);
             }
         }
 
@@ -341,12 +381,6 @@ public class InstructionPrinter extends InstructionVisitor {
             out.print("null");
         } else if (type.isPrimitive()) {
             out.print(type.asConstant().valueString());
-        } else if (type.isClass()) {
-            ClassType k = (ClassType) type;
-            if (k.ciType().isLoaded()) {
-                out.print("<unloaded> ");
-            }
-            out.print("class ").print(k.ciType().name());
         } else if (type.isObject()) {
             Object object = type.asConstant().asObject();
             if (object instanceof String) {
@@ -373,7 +407,7 @@ public class InstructionPrinter extends InstructionVisitor {
 
     @Override
     public void visitGoto(Goto go2) {
-        out.print("goto B").print(go2.defaultSuccessor().blockID());
+        out.print("goto B").print(go2.defaultSuccessor().blockID);
         if (go2.isSafepoint()) {
             out.print(" (safepoint)");
         }
@@ -388,9 +422,9 @@ public class InstructionPrinter extends InstructionVisitor {
              print(' ').
              print(i.y()).
              print(" then B").
-             print(i.successors().get(0).blockID()).
+             print(i.successors().get(0).blockID).
              print(" else B").
-             print(i.successors().get(1).blockID());
+             print(i.successors().get(1).blockID);
         if (i.isSafepoint()) {
             out.print(" (safepoint)");
         }
@@ -488,10 +522,10 @@ public class InstructionPrinter extends InstructionVisitor {
         int l = lswitch.numberOfCases();
         for (int i = 0; i < l; i++) {
             INSTRUCTION.advance(out);
-            out.printf("case %5d: B%d%n", lswitch.keyAt(i), lswitch.successors().get(i).blockID());
+            out.printf("case %5d: B%d%n", lswitch.keyAt(i), lswitch.successors().get(i).blockID);
         }
         INSTRUCTION.advance(out);
-        out.print("default   : B").print(lswitch.defaultSuccessor().blockID());
+        out.print("default   : B").print(lswitch.defaultSuccessor().blockID);
 
     }
 
@@ -611,10 +645,10 @@ public class InstructionPrinter extends InstructionVisitor {
         int l = tswitch.numberOfCases();
         for (int i = 0; i < l; i++) {
             INSTRUCTION.advance(out);
-            out.printf("case %5d: B%d%n", tswitch.lowKey() + i, tswitch.successors().get(i).blockID());
+            out.printf("case %5d: B%d%n", tswitch.lowKey() + i, tswitch.successors().get(i).blockID);
         }
         INSTRUCTION.advance(out);
-        out.print("default   : B").print(tswitch.defaultSuccessor().blockID());
+        out.print("default   : B").print(tswitch.defaultSuccessor().blockID);
     }
 
     @Override

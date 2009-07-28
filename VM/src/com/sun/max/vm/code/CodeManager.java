@@ -34,6 +34,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * Target machine code cache management.
@@ -112,53 +113,76 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
     /**
      * Allocates memory in a code region for the code-related arrays of a given target method
      * and {@linkplain TargetMethod#setCodeArrays(byte[], byte[], Object[]) initializes} them.
-     * Once initialized, the
      *
      * @param targetBundleLayout describes the layout of the arrays in the allocate space
      * @param targetMethod the target method for which the code-related arrays are allocated
      */
     synchronized void allocate(TargetBundleLayout targetBundleLayout, TargetMethod targetMethod) {
-        // Object allocation an initialization must be atomic with respect to GC
-        final boolean wasDisabled = !MaxineVM.isPrototyping() && Safepoint.disable();
-        try {
-            final Size bundleSize = targetBundleLayout.bundleSize();
-            Pointer start = currentCodeRegion.allocateTargetMethod(targetMethod, bundleSize);
+        final Size bundleSize = targetBundleLayout.bundleSize();
+        Pointer start = currentCodeRegion.allocateTargetMethod(targetMethod, bundleSize);
+        if (start.isZero()) {
+            currentCodeRegion = makeFreeCodeRegion();
+            Code.registerMemoryRegion(currentCodeRegion);
+            start = currentCodeRegion.allocateTargetMethod(targetMethod, bundleSize);
             if (start.isZero()) {
-                currentCodeRegion = makeFreeCodeRegion();
-                Code.registerMemoryRegion(currentCodeRegion);
-                start = currentCodeRegion.allocateTargetMethod(targetMethod, bundleSize);
-                if (start.isZero()) {
-                    ProgramError.unexpected("could not allocate code");
-                }
-            }
-
-            byte[] code;
-            byte[] scalarLiterals = null;
-            Object[] referenceLiterals = null;
-            int codeLength = targetBundleLayout.length(ArrayField.code);
-            int scalarLiteralsLength = targetBundleLayout.length(ArrayField.scalarLiterals);
-            int referenceLiteralsLength = targetBundleLayout.length(ArrayField.referenceLiterals);
-            if (MaxineVM.isPrototyping()) {
-                code = new byte[codeLength];
-                scalarLiterals = scalarLiteralsLength == 0 ? null : new byte[scalarLiteralsLength];
-                referenceLiterals = referenceLiteralsLength == 0 ? null : new Object[referenceLiteralsLength];
-            } else {
-                code = (byte[]) Cell.plantArray(targetBundleLayout.cell(start, ArrayField.code), PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub(), codeLength);
-                if (scalarLiteralsLength != 0) {
-                    scalarLiterals = (byte[]) Cell.plantArray(targetBundleLayout.cell(start, ArrayField.scalarLiterals), PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub(), scalarLiteralsLength);
-                }
-                if (referenceLiteralsLength != 0) {
-                    referenceLiterals = (Object[]) Cell.plantArray(targetBundleLayout.cell(start, ArrayField.referenceLiterals), ClassActor.fromJava(Object[].class).dynamicHub(), referenceLiteralsLength);
-                }
-            }
-            targetMethod.setCodeArrays(code, targetBundleLayout.firstElementPointer(start, ArrayField.code), scalarLiterals, referenceLiterals);
-
-            methodKeyToTargetMethods.add(new MethodActorKey(targetMethod.classMethodActor()), targetMethod);
-        } finally {
-            if (!MaxineVM.isPrototyping() && !wasDisabled) {
-                Safepoint.enable();
+                ProgramError.unexpected("could not allocate code");
             }
         }
+
+        byte[] code;
+        byte[] scalarLiterals = null;
+        Object[] referenceLiterals = null;
+        int codeLength = targetBundleLayout.length(ArrayField.code);
+        int scalarLiteralsLength = targetBundleLayout.length(ArrayField.scalarLiterals);
+        int referenceLiteralsLength = targetBundleLayout.length(ArrayField.referenceLiterals);
+        if (MaxineVM.isPrototyping()) {
+            code = new byte[codeLength];
+            scalarLiterals = scalarLiteralsLength == 0 ? null : new byte[scalarLiteralsLength];
+            referenceLiterals = referenceLiteralsLength == 0 ? null : new Object[referenceLiteralsLength];
+        } else {
+            final Pointer codeCell = targetBundleLayout.cell(start, ArrayField.code);
+            code = (byte[]) Cell.plantArray(codeCell, PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub(), codeLength);
+            if (scalarLiteralsLength != 0) {
+                final Pointer scalarLiteralsCell = targetBundleLayout.cell(start, ArrayField.scalarLiterals);
+                scalarLiterals = (byte[]) Cell.plantArray(scalarLiteralsCell, PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub(), scalarLiteralsLength);
+            }
+            if (referenceLiteralsLength != 0) {
+                final Pointer referenceLiteralsCell = targetBundleLayout.cell(start, ArrayField.referenceLiterals);
+                referenceLiterals = (Object[]) Cell.plantArray(referenceLiteralsCell, ClassActor.fromJava(Object[].class).dynamicHub(), referenceLiteralsLength);
+                currentCodeRegion.setReferenceMapBits(targetBundleLayout.firstElementPointer(start, ArrayField.referenceLiterals), referenceLiteralsLength);
+            }
+            if (Code.traceAllocation.getValue()) {
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.printVmThread(VmThread.current(), false);
+                Log.print(": Code arrays: code=[");
+                Log.print(codeCell);
+                Log.print(" - ");
+                Log.print(targetBundleLayout.cellEnd(start, ArrayField.code));
+                Log.print("], scalarLiterals=");
+                if (scalarLiteralsLength > 0) {
+                    Log.print(targetBundleLayout.cell(start, ArrayField.scalarLiterals));
+                    Log.print(" - ");
+                    Log.print(targetBundleLayout.cellEnd(start, ArrayField.scalarLiterals));
+                    Log.print("], referenceLiterals=");
+                } else {
+                    Log.print("0, referenceLiterals=");
+                }
+                if (referenceLiteralsLength > 0) {
+                    Log.print(targetBundleLayout.cell(start, ArrayField.referenceLiterals));
+                    Log.print(" - ");
+                    Log.print(targetBundleLayout.cellEnd(start, ArrayField.referenceLiterals));
+                    Log.println("]");
+                } else {
+                    Log.println(0);
+                }
+                Log.unlock(lockDisabledSafepoints);
+            }
+        }
+
+        final Pointer codeStart = targetBundleLayout.firstElementPointer(start, ArrayField.code);
+        targetMethod.setCodeArrays(code, codeStart, scalarLiterals, referenceLiterals);
+
+        methodKeyToTargetMethods.add(new MethodActorKey(targetMethod.classMethodActor()), targetMethod);
     }
 
     /**
@@ -257,19 +281,14 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
     }
 
     /**
-     * Visit the cells in all the code regions in this code manager.
+     * Visits all the references in memory managed by this code manager except for the boot code region.
      *
-     * @param cellVisitor the visitor to call back for each cell in each region
-     * @param includeBootCode specifies if the cells in the {@linkplain Code#bootCodeRegion() boot code region} should
-     *            also be visited
+     * @param pointerIndexVisitor the visitor that is notified of each reference in the code cache
      */
-    void visitCells(CellVisitor cellVisitor, boolean includeBootCode) {
-        if (includeBootCode) {
-            Code.bootCodeRegion.visitCells(cellVisitor);
-        }
+    public void visitReferences(PointerIndexVisitor pointerIndexVisitor) {
         for (CodeRegion codeRegion : runtimeCodeRegions) {
             if (codeRegion != null) {
-                codeRegion.visitCells(cellVisitor);
+                codeRegion.visitReferences(pointerIndexVisitor);
             }
         }
     }

@@ -20,10 +20,10 @@
  */
 package com.sun.c1x.lir;
 
-import java.util.*;
+import com.sun.c1x.ci.CiRuntimeCall;
+import com.sun.c1x.debug.LogStream;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.util.*;
+import java.util.List;
 
 /**
  * The <code>LIRRTCall</code> class definition.
@@ -96,7 +96,7 @@ public class LIRRTCall extends LIRCall {
      */
     @Override
     public boolean verify() {
-        assert !nameForAddress().equals("<unknown function>") : "unknown function";
+        assert !"<unknown function>".equals(nameForAddress()) : "unknown function";
         return true;
     }
 

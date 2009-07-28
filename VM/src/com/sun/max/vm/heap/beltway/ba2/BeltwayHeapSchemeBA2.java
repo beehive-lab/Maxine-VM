@@ -56,7 +56,7 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
             beltManager.swapBelts(getMatureSpace(), getNurserySpace());
             getMatureSpace().setExpandable(true);
             tlabAllocationBelt = getNurserySpace();
-            InspectableHeapInfo.registerMemoryRegions(getNurserySpace(), getMatureSpace());
+            InspectableHeapInfo.init(getNurserySpace(), getMatureSpace());
             collectorThread.start();
         } else if (phase == MaxineVM.Phase.RUNNING) {
             beltCollectorBA2.setBeltwayHeapScheme(this);

@@ -20,8 +20,9 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.value.BasicType;
+import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.value.ValueType;
 
 /**
  * The <code>StoreIndexed</code> instruction represents a write to an array element.
@@ -45,8 +46,8 @@ public class StoreIndexed extends AccessIndexed {
         super(array, index, length, elementType, lockStack);
         this.value = value;
         if (ValueType.fromBasicType(elementType).isObject()) {
-            setFlag(Flag.NeedsWriteBarrier);
-            setFlag(Flag.NeedsStoreCheck);
+            setFlag(Flag.NoWriteBarrier);
+            setFlag(Flag.NoStoreCheck);
         }
     }
 
@@ -71,7 +72,7 @@ public class StoreIndexed extends AccessIndexed {
      * @return <code>true</code> if this instruction needs a write barrier
      */
     public boolean needsWriteBarrier() {
-        return checkFlag(Flag.NeedsWriteBarrier);
+        return checkFlag(Flag.NoWriteBarrier);
     }
 
     /**
@@ -79,7 +80,7 @@ public class StoreIndexed extends AccessIndexed {
      * @return <code>true</code> if this instruction needs a store check
      */
     public boolean needsStoreCheck() {
-        return checkFlag(Flag.NeedsStoreCheck);
+        return checkFlag(Flag.NoStoreCheck);
     }
 
     /**

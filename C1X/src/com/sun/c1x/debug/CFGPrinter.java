@@ -18,18 +18,26 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.util;
+package com.sun.c1x.debug;
 
-import static com.sun.c1x.ir.Instruction.*;
+import com.sun.c1x.alloc.Interval;
+import com.sun.c1x.alloc.LinearScan;
+import com.sun.c1x.ci.CiMethod;
+import com.sun.c1x.graph.BlockMap;
+import com.sun.c1x.ir.BlockBegin;
+import com.sun.c1x.ir.BlockClosure;
+import com.sun.c1x.ir.Instruction;
+import static com.sun.c1x.ir.Instruction.valueString;
+import com.sun.c1x.lir.LIRList;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.value.ValueStack;
 
-import java.io.*;
-import java.util.*;
-
-import com.sun.c1x.alloc.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.graph.*;
-import com.sun.c1x.ir.*;
-import com.sun.c1x.value.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Utility for printing the control flow graph of a method being compiled by C1X at various compilation phases.
@@ -41,6 +49,8 @@ import com.sun.c1x.value.*;
 public class CFGPrinter {
 
     private static OutputStream cfgFileStream;
+
+    private CiMethod currentMethod;
 
     /**
      * Gets the output stream  on the file "output.cfg" in the current working directory.
@@ -87,6 +97,7 @@ public class CFGPrinter {
      * @param method the method for which a timestamp will be printed
      */
     public void printCompilation(CiMethod method) {
+        currentMethod = method;
         begin("compilation");
         out.print("name \" ").print(Util.format("%H::%n", method, true)).println('"');
         out.print("method \"").print(Util.format("%f %r %H.%n(%p)", method, true)).println('"');
@@ -106,25 +117,26 @@ public class CFGPrinter {
     void printBlock(BlockBegin block, List<BlockBegin> successors, Iterable<BlockBegin> handlers, boolean printHIR, boolean printLIR) {
         begin("block");
 
-        out.print("name \"B").print(block.blockID()).println('"');
+        out.print("name \"B").print(block.blockID).println('"');
         out.print("from_bci ").println(block.bci());
         out.print("to_bci ").println(block.end() == null ? -1 : block.end().bci());
+        out.print("dfn ").println(block.depthFirstNumber());
 
         out.print("predecessors ");
         for (BlockBegin pred : block.predecessors()) {
-          out.print("\"B").print(pred.blockID()).print("\" ");
+            out.print("\"B").print(pred.blockID).print("\" ");
         }
         out.println();
 
         out.print("successors ");
         for (BlockBegin succ : successors) {
-            out.print("\"B").print(succ.blockID()).print("\" ");
+            out.print("\"B").print(succ.blockID).print("\" ");
         }
         out.println();
 
         out.print("xhandlers");
         for (BlockBegin handler : handlers) {
-            out.print("\"B").print(handler.blockID()).print("\" ");
+            out.print("\"B").print(handler.blockID).print("\" ");
         }
         out.println();
 
@@ -159,7 +171,7 @@ public class CFGPrinter {
         out.println();
 
         if (block.dominator() != null) {
-            out.print("dominator \"B").print(block.dominator().blockID()).println('"');
+            out.print("dominator \"B").print(block.dominator().blockID).println('"');
         }
         if (block.loopIndex() != -1) {
             out.print("loop_index ").println(block.loopIndex());
@@ -204,7 +216,7 @@ public class CFGPrinter {
           while (i < state.stackSize()) {
               Instruction value = state.stackAt(i);
               out.disableIndentation();
-              out.print(stateString(i, value, block));
+              out.print(InstructionPrinter.stateString(i, value, block));
               printLirOperand(value);
               out.println();
               out.enableIndentation();
@@ -220,7 +232,7 @@ public class CFGPrinter {
             for (int i = 0; i < state.locksSize(); ++i) {
                 Instruction value = state.lockAt(i);
                 out.disableIndentation();
-                out.print(stateString(i, value, block));
+                out.print(InstructionPrinter.stateString(i, value, block));
                 printLirOperand(value);
                 out.println();
                 out.enableIndentation();
@@ -237,7 +249,7 @@ public class CFGPrinter {
                 Instruction value = state.localAt(i);
                 if (value != null) {
                     out.disableIndentation();
-                    out.print(stateString(i, value, block));
+                    out.print(InstructionPrinter.stateString(i, value, block));
                     printLirOperand(value);
                     out.println();
                     out.enableIndentation();
@@ -273,23 +285,24 @@ public class CFGPrinter {
     /**
      * Prints the LIR for each instruction in a given block.
      *
-     * @param block
+     * @param block the block to print
      */
     private void printLIR(BlockBegin block) {
-        begin("LIR");
-        for (int i = 0; i < block.lir().length(); i++) {
-            block.lir().at(i).printOn(out);
-            out.println(" <|@ ");
+        LIRList lir = block.lir();
+        if (lir != null) {
+            begin("LIR");
+            for (int i = 0; i < lir.length(); i++) {
+                lir.at(i).printOn(out);
+                out.println(" <|@ ");
+            }
+            end("LIR");
         }
-        end("LIR");
     }
 
     private void printLirOperand(Instruction i) {
-        /* TODO: Uncomment (and fix) once LIR is implemented
         if (i.operand().isVirtual()) {
-            _out.print(" \"").print(i.lirOperand()).print("\" ");
+            out.print(" \"").print(i.operand().toString()).print("\" ");
         }
-        */
     }
 
     /**
@@ -319,7 +332,8 @@ public class CFGPrinter {
      * @param printHIR if {@code true} the HIR for each instruction in the block will be printed
      * @param printLIR if {@code true} the LIR for each instruction in the block will be printed
      */
-    public void printCFG(BlockMap blockMap, int codeSize, String label, boolean printHIR, boolean printLIR) {
+    public void printCFG(CiMethod method, BlockMap blockMap, int codeSize, String label, boolean printHIR, boolean printLIR) {
+        assert method == currentMethod;
         begin("cfg");
         out.print("name \"").print(label).println('"');
         for (int bci = 0; bci < codeSize; ++bci) {

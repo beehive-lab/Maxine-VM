@@ -20,9 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.ci.CiType;
+import com.sun.c1x.value.ValueStack;
 
 /**
  * The <code>NewMultiArray</code> instruction represents an allocation of a multi-dimensional object
@@ -31,8 +30,8 @@ import com.sun.c1x.value.*;
  * @author Ben L. Titzer
  */
 public class NewMultiArray extends NewArray {
-    CiType elementType;
-    Instruction[] dimensions;
+    final CiType elementType;
+    final Instruction[] dimensions;
 
     /**
      * Constructs a new NewMultiArray instruction.

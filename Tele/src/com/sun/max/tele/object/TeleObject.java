@@ -109,12 +109,8 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     }
 
     protected void refresh(long processEpoch) {
-        /*TeleGrip grip = reference().grip();
-        if (grip instanceof MutableTeleGrip) {
-            MutableTeleGrip mGrip = (MutableTeleGrip) grip;
-            if (mGrip.raw().equals(Word.zero())) {
-                live = false;
-            }
+        /*if (reference.toOrigin().equals(Pointer.zero())) {
+            live = false;
         }*/
     }
 

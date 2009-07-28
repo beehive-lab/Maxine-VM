@@ -20,10 +20,10 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.ci.CiField;
+import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.value.ValueType;
 
 /**
  * The <code>AccessField</code> class is the base class of all instructions that access
@@ -36,37 +36,38 @@ public abstract class AccessField extends Instruction {
     Instruction object;
     final int offset;
     final CiField field;
-    final ValueStack stateBefore;
+    ValueStack stateBefore;
     ValueStack lockStack;
-    NullCheck explicitNullCheck;
+    boolean isStatic;
 
     /**
      * Constructs a new access field object.
      * @param object the instruction producing the receiver object
      * @param field the compiler interface representation of the field
      * @param isStatic indicates if the field is static
-     * @param lockStack the lock stack
+     * @param exceptionState the state if an exception occurs
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
-     * @param isInitialized indicates if the class is initialized
      */
     public AccessField(Instruction object, CiField field, boolean isStatic,
-                       ValueStack lockStack, ValueStack stateBefore, boolean isLoaded, boolean isInitialized) {
+                       ValueStack exceptionState, ValueStack stateBefore, boolean isLoaded) {
         super(ValueType.fromBasicType(field.basicType()));
         this.object = object;
         this.offset = isLoaded ? field.offset() : -1;
         this.field = field;
-        this.lockStack = lockStack;
+        this.lockStack = exceptionState;
         this.stateBefore = stateBefore;
-        if (!isLoaded || (C1XOptions.TestPatching && !field.isVolatile())) {
+        this.isStatic = isStatic;
+        if (!isLoaded || C1XOptions.TestPatching && !field.isVolatile()) {
             // require patching if the field is not loaded (i.e. resolved),
             // or if patch testing is turned on (but not if the field is volatile)
             setFlag(Flag.NeedsPatching);
         }
         initFlag(Flag.IsLoaded, isLoaded);
-        initFlag(Flag.IsInitialized, isInitialized);
-        initFlag(Flag.IsStatic, isStatic);
         pin(); // pin memory access instructions
+        if (object != null && object.isNonNull()) {
+            clearNullCheck();
+        }
     }
 
     /**
@@ -99,7 +100,7 @@ public abstract class AccessField extends Instruction {
      * @return <code>true</code> if this field access is to a static field
      */
     public boolean isStatic() {
-        return checkFlag(Flag.IsStatic);
+        return isStatic;
     }
 
     /**
@@ -115,7 +116,18 @@ public abstract class AccessField extends Instruction {
      * @return <code>true</code> if the class is initialized
      */
     public boolean isInitialized() {
-        return checkFlag(Flag.IsInitialized);
+        return !isStatic || isLoaded() && field.holder().isInitialized();
+    }
+
+    @Override
+    public void clearNullCheck() {
+        // if stateBefore is not null, that may mean the field is unresolved, which
+        // may require resolution, which could throw an exception requiring lockStack
+        if (stateBefore != null) {
+            assert isInitialized();
+            lockStack = null;
+        }
+        setFlag(Flag.NoNullCheck);
     }
 
     /**
@@ -128,7 +140,6 @@ public abstract class AccessField extends Instruction {
 
     @Override
     public ValueStack lockStack() {
-        // XXX: what is a lock stack?
         return lockStack;
     }
 
@@ -141,15 +152,7 @@ public abstract class AccessField extends Instruction {
      * @return the object representing an explicit null check
      */
     public NullCheck explicitNullCheck() {
-        return explicitNullCheck;
-    }
-
-    /**
-     * Sets the instruction representing an explicit null check for this field access.
-     * @param explicitNullCheck the instruction representing the explicit check
-     */
-    public void setExplicitNullCheck(NullCheck explicitNullCheck) {
-        this.explicitNullCheck = explicitNullCheck;
+        return null;
     }
 
     /**
@@ -167,7 +170,7 @@ public abstract class AccessField extends Instruction {
      */
     @Override
     public boolean canTrap() {
-        return needsPatching() || (!checkFlag(Flag.IsStatic) && !object.isNonNull());
+        return needsPatching() || needsNullCheck();
     }
 
     /**

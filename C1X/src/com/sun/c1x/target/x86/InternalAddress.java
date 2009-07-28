@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.target.x86;
 
-import com.sun.c1x.asm.*;
+import com.sun.c1x.asm.RelocInfo;
 
 /**
  *
@@ -31,5 +31,6 @@ public class InternalAddress extends AddressLiteral {
 
     public InternalAddress(long target) {
         super(target, RelocInfo.Type.internalWordType);
+        assert target >= 0;
     }
 }

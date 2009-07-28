@@ -20,18 +20,30 @@
  */
 package com.sun.c1x.lir;
 
-import java.io.*;
-import java.util.*;
-
-import com.sun.c1x.*;
-import com.sun.c1x.asm.*;
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.ExceptionInfo;
+import com.sun.c1x.asm.AbstractAssembler;
+import com.sun.c1x.asm.CodeOffsets;
+import com.sun.c1x.bytecode.Bytecodes;
+import com.sun.c1x.ci.CiMethod;
+import com.sun.c1x.ci.CiRuntimeCall;
+import com.sun.c1x.debug.InstructionPrinter;
+import com.sun.c1x.debug.LogStream;
+import com.sun.c1x.debug.TTY;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.stub.*;
-import com.sun.c1x.target.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.stub.CodeStub;
+import com.sun.c1x.stub.DivByZeroStub;
+import com.sun.c1x.stub.ImplicitNullCheckStub;
+import com.sun.c1x.stub.PatchingStub;
+import com.sun.c1x.target.Register;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.value.BasicType;
+import com.sun.c1x.value.ValueStack;
+
+import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The <code>LIRAssembler</code> class definition.
@@ -42,18 +54,14 @@ import com.sun.c1x.value.*;
  */
 public abstract class LIRAssembler {
 
-    private AbstractAssembler masm;
+    public final AbstractAssembler asm;
     protected List<CodeStub> slowCaseStubs;
-    protected C1XCompilation compilation;
+    public final C1XCompilation compilation;
     private FrameMap frameMap;
     private BlockBegin currentBlock;
 
     private Instruction pendingNonSafepoint;
     private int pendingNonSafepointOffset;
-
-    protected C1XCompilation compilation() {
-        return compilation;
-    }
 
     // Assert only:
     protected List<BlockBegin> branchTargetBlocks;
@@ -81,23 +89,23 @@ public abstract class LIRAssembler {
     }
 
     protected CiMethod method() {
-        return compilation().method();
+        return compilation.method();
     }
 
     protected CodeOffsets offsets() {
         return compilation.offsets();
     }
 
-    protected void addCallInfoHere(CodeEmitInfo info) {
+    public void addCallInfoHere(CodeEmitInfo info) {
         addCallInfo(codeOffset(), info);
     }
 
     protected void patchingEpilog(PatchingStub patch, LIRPatchCode patchCode, Register obj, CodeEmitInfo info) {
         // we must have enough patching space so that call can be inserted
-        while (masm.pc().value - patch.pcStart().value < compilation.runtime.nativeCallInstructionSize()) {
-            masm.nop();
+        while (asm.pc() - patch.pcStart() < compilation.target.arch.nativeMoveConstInstructionSize) {
+            asm.nop();
         }
-        patch.install(masm, patchCode, obj, info);
+        patch.install(asm, patchCode, obj, info);
         appendPatchingStub(patch);
         assert check(patch, info);
     }
@@ -138,7 +146,7 @@ public abstract class LIRAssembler {
 
     public LIRAssembler(C1XCompilation compilation) {
         this.compilation = compilation;
-        this.masm = compilation.masm();
+        this.asm = compilation.masm();
 
         // TODO: Assign barrier set
         // bs =
@@ -157,16 +165,17 @@ public abstract class LIRAssembler {
     }
 
     void emitStubs(List<CodeStub> stubList) {
-        for (int m = 0; m < stubList.size(); m++) {
-            CodeStub s = stubList.get(m);
+        for (CodeStub s : stubList) {
             if (C1XOptions.CommentedAssembly) {
                 String st = s.name() + " slow case";
-                masm.blockComment(st);
+                asm.blockComment(st);
             }
-            s.emitCode(this);
+            emitCode(s);
             assert s.assertNoUnboundLabels();
         }
     }
+
+    protected abstract void emitCode(CodeStub s);
 
     public void emitSlowCaseStubs() {
         emitStubs(slowCaseStubs);
@@ -177,29 +186,31 @@ public abstract class LIRAssembler {
     }
 
     protected int codeOffset() {
-        return masm.offset();
+        return asm.offset();
     }
 
-    protected Pointer pc() {
-        return masm.pc();
+    protected int pc() {
+        return asm.pc();
     }
 
     public void emitExceptionEntries(List<ExceptionInfo> infoList) {
-        for (int i = 0; i < infoList.size(); i++) {
-            List<ExceptionHandler> handlers = infoList.get(i).exceptionHandlers();
+        if (infoList == null) {
+            return;
+        }
+        for (ExceptionInfo ilist : infoList) {
+            List<ExceptionHandler> handlers = ilist.exceptionHandlers();
 
-            for (int j = 0; j < handlers.size(); j++) {
-                ExceptionHandler handler = handlers.get(j);
+            for (ExceptionHandler handler : handlers) {
                 assert handler.lirOpId() != -1 : "handler not processed by LinearScan";
                 assert handler.entryCode() == null || handler.entryCode().instructionsList().get(handler.entryCode().instructionsList().size() - 1).code() == LIROpcode.Branch ||
-                                handler.entryCode().instructionsList().get(handler.entryCode().instructionsList().size() - 1).code() == LIROpcode.DelaySlot : "last operation must be branch";
+                        handler.entryCode().instructionsList().get(handler.entryCode().instructionsList().size() - 1).code() == LIROpcode.DelaySlot : "last operation must be branch";
 
                 if (handler.entryPCO() == -1) {
                     // entry code not emitted yet
                     if (handler.entryCode() != null && handler.entryCode().instructionsList().size() > 1) {
                         handler.setEntryPCO(codeOffset());
                         if (C1XOptions.CommentedAssembly) {
-                            masm.blockComment("Exception adapter block");
+                            asm.blockComment("Exception adapter block");
                         }
                         emitLirList(handler.entryCode());
                     } else {
@@ -244,15 +255,14 @@ public abstract class LIRAssembler {
         if (C1XOptions.PrintLIRWithAssembly) {
             // don't print Phi's
             InstructionPrinter ip = new InstructionPrinter(TTY.out, false);
-            block.print(ip);
-
+            ip.printBlock(block);
         }
 
         assert block.lir() != null : "must have LIR";
         assert assertFrameSize();
         if (C1XOptions.CommentedAssembly) {
-            String st = String.format(" block B%d [%d, %d]", block.blockID(), block.bci(), block.end().bci());
-            masm.blockComment(st);
+            String st = String.format(" block B%d [%d, %d]", block.blockID, block.bci(), block.end().bci());
+            asm.blockComment(st);
         }
 
         emitLirList(block.lir());
@@ -279,7 +289,7 @@ public abstract class LIRAssembler {
                     LogStream ls = new LogStream(st);
                     op.printOn(ls);
                     ls.flush();
-                    masm.blockComment(st.toString());
+                    asm.blockComment(st.toString());
                 }
             }
             if (C1XOptions.PrintLIRWithAssembly) {
@@ -290,12 +300,12 @@ public abstract class LIRAssembler {
 
             op.emitCode(this);
 
-            if (compilation().debugInfoRecorder().recordingNonSafepoints()) {
+            if (compilation.debugInfoRecorder().recordingNonSafepoints()) {
                 processDebugInfo(op);
             }
 
             if (C1XOptions.PrintLIRWithAssembly) {
-                masm.decode();
+                asm.decode();
             }
         }
     }
@@ -304,7 +314,7 @@ public abstract class LIRAssembler {
 
         for (int i = 0; i < branchTargetBlocks.size() - 1; i++) {
             if (!branchTargetBlocks.get(i).label().isBound()) {
-                TTY.println(String.format("label of block B%d is not bound", branchTargetBlocks.get(i).blockID()));
+                TTY.println(String.format("label of block B%d is not bound", branchTargetBlocks.get(i).blockID));
                 assert false : "unbound label";
             }
         }
@@ -317,17 +327,17 @@ public abstract class LIRAssembler {
         //masm.codeSection().relocate(pc(), RelocInfo.Type.pollType);
         int pcOffset = codeOffset();
         flushDebugInfo(pcOffset);
-        info.recordDebugInfo(compilation().debugInfoRecorder(), pcOffset);
+        info.recordDebugInfo(compilation.debugInfoRecorder(), pcOffset);
         if (info.exceptionHandlers() != null) {
-            compilation().addExceptionHandlersForPco(pcOffset, info.exceptionHandlers());
+            compilation.addExceptionHandlersForPco(pcOffset, info.exceptionHandlers());
         }
     }
 
     protected void addCallInfo(int pcOffset, CodeEmitInfo cinfo) {
         flushDebugInfo(pcOffset);
-        cinfo.recordDebugInfo(compilation().debugInfoRecorder(), pcOffset);
+        cinfo.recordDebugInfo(compilation.debugInfoRecorder(), pcOffset);
         if (cinfo.exceptionHandlers() != null) {
-            compilation().addExceptionHandlersForPco(pcOffset, cinfo.exceptionHandlers());
+            compilation.addExceptionHandlersForPco(pcOffset, cinfo.exceptionHandlers());
         }
     }
 
@@ -364,7 +374,7 @@ public abstract class LIRAssembler {
             pendingNonSafepoint = null;
         }
         // Remember the debug info.
-        if (pcOffset > compilation().debugInfoRecorder().lastPcOffset()) {
+        if (pcOffset > compilation.debugInfoRecorder().lastPcOffset()) {
             pendingNonSafepoint = src;
             pendingNonSafepointOffset = pcOffset;
         }
@@ -384,7 +394,7 @@ public abstract class LIRAssembler {
         if (t == null) {
             return null;
         }
-        for (;;) {
+        while (true) {
             ValueStack tc = t.scope().callerState();
             if (tc == null) {
                 return s;
@@ -400,14 +410,14 @@ public abstract class LIRAssembler {
         ValueStack vstack = debugInfo(pendingNonSafepoint);
         int bci = pendingNonSafepoint.bci();
 
-        DebugInformationRecorder debugInfo = compilation().debugInfoRecorder();
+        DebugInformationRecorder debugInfo = compilation.debugInfoRecorder();
         assert debugInfo.recordingNonSafepoints() : "sanity";
 
         debugInfo.addNonSafepoint(pcOffset);
 
         // Visit scopes from oldest to youngest.
         for (int n = 0;; n++) {
-            int[] sBci = new int[] {bci};
+            int[] sBci = {bci};
             ValueStack s = nthOldest(vstack, n, sBci);
             if (s == null) {
                 break;
@@ -467,7 +477,7 @@ public abstract class LIRAssembler {
                 icCall(op.method(), op.addr, op.info());
                 break;
             case VirtualCall:
-                vtableCall(op.method(), op.vtableOffset(), op.info());
+                vtableCall(op.method(), op.receiver, op.vtableOffset(), op.info());
                 break;
             default:
                 throw Util.shouldNotReachHere();
@@ -478,14 +488,14 @@ public abstract class LIRAssembler {
 
     protected abstract void emitStaticCallStub();
 
-    protected abstract void vtableCall(CiMethod ciMethod, long l, CodeEmitInfo info);
+    protected abstract void vtableCall(CiMethod ciMethod, LIROperand receiver, long l, CodeEmitInfo info);
 
     protected abstract void icCall(CiMethod ciMethod, CiRuntimeCall addr, CodeEmitInfo info);
 
     protected abstract void alignCall(LIROpcode code);
 
     void emitOpLabel(LIRLabel op) {
-        masm.bind(op.label());
+        asm.bind(op.label());
     }
 
     void emitOp1(LIROp1 op) {
@@ -519,8 +529,8 @@ public abstract class LIRAssembler {
                 break;
 
             case Safepoint:
-                if (compilation().debugInfoRecorder().lastPcOffset() == codeOffset()) {
-                    masm.nop();
+                if (compilation.debugInfoRecorder().lastPcOffset() == codeOffset()) {
+                    asm.nop();
                 }
                 safepointPoll(op.inOpr(), op.info());
                 break;
@@ -561,7 +571,7 @@ public abstract class LIRAssembler {
                     addDebugInfoForNullCheckHere(op.info());
 
                     if (op.inOpr().isSingleCpu()) {
-                        masm.nullCheck(op.inOpr().asRegister());
+                        asm.nullCheck(op.inOpr().asRegister());
                     } else {
                         throw Util.shouldNotReachHere();
                     }
@@ -608,14 +618,14 @@ public abstract class LIRAssembler {
         switch (op.code()) {
             case WordAlign: {
                 while (codeOffset() % compilation.target.arch.wordSize != 0) {
-                    masm.nop();
+                    asm.nop();
                 }
                 break;
             }
 
             case Nop:
                 assert op.info() == null : "not supported";
-                masm.nop();
+                asm.nop();
                 break;
 
             case Label:
@@ -627,20 +637,20 @@ public abstract class LIRAssembler {
 
             case StdEntry:
                 // init offsets
-                offsets().setValue(CodeOffsets.Entries.OSREntry, masm.offset());
-                masm.align(compilation.target.codeAlignment);
-                masm.makeOffset(compilation.runtime.codeOffset());
-                if (needsIcache(compilation().method())) {
+                offsets().setValue(CodeOffsets.Entries.OSREntry, asm.offset());
+                asm.align(compilation.target.codeAlignment);
+                asm.makeOffset(compilation.runtime.codeOffset());
+                if (needsIcache(compilation.method())) {
                     checkIcache();
                 }
-                offsets().setValue(CodeOffsets.Entries.VerifiedEntry, masm.offset());
-                masm.verifiedEntry();
+                offsets().setValue(CodeOffsets.Entries.VerifiedEntry, asm.offset());
+                asm.verifiedEntry();
                 buildFrame();
-                offsets().setValue(CodeOffsets.Entries.FrameComplete, masm.offset());
+                offsets().setValue(CodeOffsets.Entries.FrameComplete, asm.offset());
                 break;
 
             case OsrEntry:
-                offsets().setValue(CodeOffsets.Entries.OSREntry, masm.offset());
+                offsets().setValue(CodeOffsets.Entries.OSREntry, asm.offset());
                 osrEntry();
                 break;
 
@@ -787,7 +797,7 @@ public abstract class LIRAssembler {
     protected abstract void compOp(LIRCondition condition, LIROperand inOpr1, LIROperand inOpr2, LIROp2 op);
 
     void buildFrame() {
-        masm.buildFrame(initialFrameSizeInBytes());
+        asm.buildFrame(initialFrameSizeInBytes());
     }
 
     protected abstract int initialFrameSizeInBytes();
@@ -861,7 +871,7 @@ public abstract class LIRAssembler {
 
     protected abstract void reg2reg(LIROperand src, LIROperand dest);
 
-    void verifyOopMap(CodeEmitInfo info) {
+    public void verifyOopMap(CodeEmitInfo info) {
         if (C1XOptions.VerifyOopMaps || C1XOptions.VerifyOops) {
             // TODO: verify oops
 // boolean v = C1XOptions.VerifyOops;

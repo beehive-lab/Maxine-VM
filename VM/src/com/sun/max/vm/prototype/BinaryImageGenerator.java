@@ -26,6 +26,7 @@ import java.util.*;
 import java.util.jar.*;
 import java.util.zip.*;
 
+import com.sun.c1x.*;
 import com.sun.max.collect.*;
 import com.sun.max.ide.*;
 import com.sun.max.lang.*;
@@ -204,6 +205,8 @@ public final class BinaryImageGenerator {
             TargetMethod.COLLECT_TARGET_METHOD_STATS = statsOption.getValue();
             final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
             Trace.addTo(options);
+
+            options.addFieldOptions(C1XOptions.class, "C1X:");
             options.parseArguments(programArguments);
 
             if (help.getValue()) {
@@ -480,7 +483,7 @@ public final class BinaryImageGenerator {
         }
         int redundantReferenceLiterals = 0;
         for (Map.Entry<Object, Integer> entry : distribution.asMap().entrySet()) {
-            redundantReferenceLiterals += (entry.getValue() - 1) * Word.width().numberOfBytes;
+            redundantReferenceLiterals += (entry.getValue() - 1) * Word.size();
         }
         out.println("Potential savings from reference literal merging: " + redundantReferenceLiterals + " bytes");
         out.println("Potential savings from compressing reference literal arrays: " + zeroLiterals + " bytes");
@@ -516,7 +519,7 @@ public final class BinaryImageGenerator {
      */
     private static int savingsFrom(int headerSize, Object o) {
         if (o == null) {
-            return Word.width().numberOfBytes + headerSize;
+            return Word.size() + headerSize;
         }
         return headerSize;
     }

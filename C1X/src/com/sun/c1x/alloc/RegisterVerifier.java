@@ -20,13 +20,18 @@
  */
 package com.sun.c1x.alloc;
 
-import java.util.*;
-
-import com.sun.c1x.*;
-import com.sun.c1x.ir.*;
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.debug.TTY;
+import com.sun.c1x.ir.BlockBegin;
+import com.sun.c1x.ir.ExceptionHandler;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.target.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.target.Register;
+import com.sun.c1x.util.ArrayMap;
+import com.sun.c1x.util.Util;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -59,11 +64,11 @@ public class RegisterVerifier {
 
     // accessors
     List<Interval> stateForBlock(BlockBegin block) {
-        return savedStates.get(block.blockID());
+        return savedStates.get(block.blockID);
     }
 
     void setStateForBlock(BlockBegin block, List<Interval> savedState) {
-        savedStates.put(block.blockID(), savedState);
+        savedStates.put(block.blockID, savedState);
     }
 
     void addToWorkList(BlockBegin block) {
@@ -115,7 +120,7 @@ public class RegisterVerifier {
     void processBlock(BlockBegin block) {
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.println();
-            TTY.println("processBlock B%d", block.blockID());
+            TTY.println("processBlock B%d", block.blockID);
         }
 
         // must copy state because it is modified
@@ -145,7 +150,7 @@ public class RegisterVerifier {
     }
 
     void processXhandler(ExceptionHandler xhandler, List<Interval> inputState) {
-        Util.traceLinearScan(2, "processXhandler B%d", xhandler.entryBlock().blockID());
+        Util.traceLinearScan(2, "processXhandler B%d", xhandler.entryBlock().blockID);
 
         // must copy state because it is modified
         inputState = copy(inputState);
@@ -175,23 +180,23 @@ public class RegisterVerifier {
                         savedStateCorrect = false;
                         savedState.set(i, null);
 
-                        Util.traceLinearScan(4, "processSuccessor B%d: invalidating slot %d", block.blockID(), i);
+                        Util.traceLinearScan(4, "processSuccessor B%d: invalidating slot %d", block.blockID, i);
                     }
                 }
             }
 
             if (savedStateCorrect) {
                 // already processed block with correct inputState
-                Util.traceLinearScan(2, "processSuccessor B%d: previous visit already correct", block.blockID());
+                Util.traceLinearScan(2, "processSuccessor B%d: previous visit already correct", block.blockID);
             } else {
                 // must re-visit this block
-                Util.traceLinearScan(2, "processSuccessor B%d: must re-visit because input state changed", block.blockID());
+                Util.traceLinearScan(2, "processSuccessor B%d: must re-visit because input state changed", block.blockID);
                 addToWorkList(block);
             }
 
         } else {
             // block was not processed before, so set initial inputState
-            Util.traceLinearScan(2, "processSuccessor B%d: initial visit", block.blockID());
+            Util.traceLinearScan(2, "processSuccessor B%d: initial visit", block.blockID);
 
             setStateForBlock(block, copy(inputState));
             addToWorkList(block);
@@ -219,7 +224,9 @@ public class RegisterVerifier {
     boolean checkState(List<Interval> inputState, int reg, Interval interval) {
         if (reg != LinearScan.getAnyreg() && reg < stateSize()) {
             if (inputState.get(reg) != interval) {
-                TTY.println("!! Error in register allocation: register %d does not contain interval %d but interval %d", reg, interval.regNum(), inputState.get(reg));
+                if (C1XOptions.DetailedAsserts) {
+                    TTY.println("!! Error in register allocation: register %d does not contain interval %d but interval %d", reg, interval.regNum(), inputState.get(reg));
+                }
                 return false;
             }
         }

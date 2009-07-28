@@ -37,7 +37,7 @@ public final class Exceptions {
     /**
      * Tests a given exception to see if it is an instance of a given exception type, casting and throwing it if true.
      */
-    public static <Exception_Type extends Exception> void throwIfInstanceOf(Class<Exception_Type> exceptionType,  Exception exception) throws Exception_Type {
+    public static <Exception_Type extends Throwable> void throwIfInstanceOf(Class<Exception_Type> exceptionType,  Exception exception) throws Exception_Type {
         if (exceptionType.isInstance(exception)) {
             throw exceptionType.cast(exception);
         }
@@ -52,7 +52,7 @@ public final class Exceptions {
      * This method declares a return type simply so that a call to this method can be the expression to a throw
      * instruction.
      */
-    public static <Exception_Type extends Exception> Exception_Type cast(Class<Exception_Type> exceptionType,  Throwable exception) throws Exception_Type {
+    public static <Exception_Type extends Throwable> Exception_Type cast(Class<Exception_Type> exceptionType,  Throwable exception) throws Exception_Type {
         if (exceptionType.isInstance(exception)) {
             throw exceptionType.cast(exception);
         }
@@ -74,7 +74,7 @@ public final class Exceptions {
      * This method declares a return type simply so that a call to this method can be the expression to a throw
      * instruction.
      */
-    public static <Exception_Type1 extends Exception, Exception_Type2 extends Exception>
+    public static <Exception_Type1 extends Throwable, Exception_Type2 extends Throwable>
     Exception_Type1 cast(Class<Exception_Type1> exceptionType1, Class<Exception_Type2> exceptionType2,  Throwable exception) throws Exception_Type1, Exception_Type2 {
         if (exceptionType1.isInstance(exception)) {
             throw exceptionType1.cast(exception);

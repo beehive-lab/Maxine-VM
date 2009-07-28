@@ -20,10 +20,12 @@
  */
 package com.sun.c1x.ir;
 
-import java.util.*;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.value.ValueType;
 
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The <code>BlockEnd</code> instruction is a base class for all instructions that end a basic
@@ -77,12 +79,12 @@ public abstract class BlockEnd extends StateSplit {
     }
 
     /**
-     * Sets the basic block beginning for this block end. Note that this
-     * method copies the successors from that basic block for the successors
-     * of this basic block.
+     * Sets the basic block beginning for this block end. This should only
+     * be called from {@link BlockBegin}.
+     *
      * @param block the beginning of this basic block
      */
-    public void setBegin(BlockBegin block) {
+    void setBegin(BlockBegin block) {
         begin = block;
     }
 

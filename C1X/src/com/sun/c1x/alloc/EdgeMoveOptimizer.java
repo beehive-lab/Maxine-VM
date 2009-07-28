@@ -20,12 +20,14 @@
  */
 package com.sun.c1x.alloc;
 
-import java.util.*;
-
-import com.sun.c1x.*;
-import com.sun.c1x.ir.*;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.debug.TTY;
+import com.sun.c1x.ir.BlockBegin;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.util.Util;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -131,7 +133,7 @@ public final class EdgeMoveOptimizer {
     }
 
     void optimizeMovesAtBlockEnd(BlockBegin block) {
-        Util.traceLinearScan(4, "optimizing moves at end of block B%d", block.blockID());
+        Util.traceLinearScan(4, "optimizing moves at end of block B%d", block.blockID);
 
         if (block.isPredecessor(block)) {
             // currently we can't handle this correctly.
@@ -197,7 +199,7 @@ public final class EdgeMoveOptimizer {
     }
 
     void optimizeMovesAtBlockBegin(BlockBegin block) {
-        Util.traceLinearScan(4, "optimization moves at begin of block B%d", block.blockID());
+        Util.traceLinearScan(4, "optimization moves at begin of block B%d", block.blockID);
 
         initInstructions();
         int numSux = block.numberOfSux();

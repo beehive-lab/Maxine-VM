@@ -20,9 +20,10 @@
  */
 package com.sun.c1x.asm;
 
-import java.util.*;
+import com.sun.c1x.debug.LogStream;
 
-import com.sun.c1x.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -101,6 +102,11 @@ public class Label {
         for (int branchLoc : patchOverflow) {
             masm.pdPatchInstruction(branchLoc, target);
         }
+    }
+
+    @Override
+    public String toString() {
+        return "label";
     }
 
     public void bindLoc(int codeOffset) {

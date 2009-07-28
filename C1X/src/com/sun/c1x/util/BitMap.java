@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.util;
 
+import java.util.Arrays;
+
 /**
  * The <code>BitMap</code> class implements a bitmap that stores a single bit for
  * a range of integers (0-n).
@@ -29,7 +31,7 @@ package com.sun.c1x.util;
  */
 public class BitMap {
 
-    private final int length;
+    private int length;
     private int low;
     private int[] extra;
 
@@ -56,6 +58,39 @@ public class BitMap {
             int index = bitInWord(i);
             extra[pos] |= 1 << index;
         }
+    }
+
+    /**
+     * Grows this bitmap to a new length, appending necessary zero bits.
+     * @param newLength the new length of the bitmap
+     */
+    public void grow(int newLength) {
+        if (newLength > length) {
+            // grow this bitmap to the new length
+            int newSize = newLength >> 5;
+            if (newLength > 0) {
+                if (extra == null) {
+                    // extra just needs to be allocated now
+                    extra = new int[newSize];
+                } else {
+                    if (extra.length < newSize) {
+                        // extra needs to be copied
+                        int[] newExtra = new int[newSize];
+                        for (int i = 0; i < extra.length; i++) {
+                            newExtra[i] = extra[i];
+                        }
+                        extra = newExtra;
+                    } else {
+                        // nothing to do, extra is already the right size
+                    }
+                }
+            }
+            length = newLength;
+        }
+    }
+
+    public int length() {
+        return length;
     }
 
     private int bitInWord(int i) {
@@ -122,6 +157,23 @@ public class BitMap {
     }
 
     /**
+     * Gets the value of the bit at the specified index, returning {@code false} if the
+     * bitmap does not cover the specified index.
+     *
+     * @param i the index of the bit to get
+     * @return <code>true</code> if the bit at the specified position is <code>1</code>
+     */
+    public boolean getDefault(int i) {
+        if (checkIndexLow(i) < 32) {
+            return ((low >> i) & 1) != 0;
+        }
+        int pos = wordIndex(i);
+        int index = bitInWord(i);
+        int bits = extra[pos];
+        return ((bits >> index) & 1) != 0;
+    }
+
+    /**
      * Performs the union operation on this bitmap with the specified bitmap. That is, all bits set in either of the two
      * bitmaps will be set in this bitmap following this operation.
      *
@@ -138,6 +190,43 @@ public class BitMap {
     }
 
     /**
+     * Performs the union operation on this bitmap with the specified bitmap. That is, a bit is set in this
+     * bitmap if and only if it is set in both this bitmap and the specified bitmap.
+     *
+     * @param other the other bitmap for this operation
+     * @return {@code true} if any bits were cleared as a result of this operation
+     */
+    public boolean setIntersect(BitMap other) {
+        boolean same = true;
+        int intx = low & other.low;
+        if (low != intx) {
+            same = false;
+            low = intx;
+        }
+        int[] oxtra = other.extra;
+        if (extra != null && oxtra != null) {
+            for (int i = 0; i < extra.length; i++) {
+                int a = extra[i];
+                if (i < oxtra.length) {
+                    // zero bits out of this map
+                    int ax = a & oxtra[i];
+                    if (a != ax) {
+                        same = false;
+                        extra[i] = ax;
+                    }
+                } else {
+                    // this bitmap is larger than the specified bitmap; zero remaining bits
+                    if (a != 0) {
+                        same = false;
+                        extra[i] = 0;
+                    }
+                }
+            }
+        }
+        return !same;
+    }
+
+    /**
      * Gets the size of this bitmap in bits.
      *
      * @return the size of this bitmap
@@ -148,6 +237,13 @@ public class BitMap {
 
     private int checkIndex(int i) {
         if (i < 0 || i >= length) {
+            throw new IndexOutOfBoundsException();
+        }
+        return i;
+    }
+
+    private int checkIndexLow(int i) {
+        if (i < 0) {
             throw new IndexOutOfBoundsException();
         }
         return i;
@@ -266,5 +362,15 @@ public class BitMap {
         }
         res.append("]");
         return res.toString();
+    }
+
+    public BitMap copy() {
+        BitMap n = new BitMap(32);
+        n.low = low;
+        if (extra != null) {
+            n.extra = Arrays.copyOf(extra, extra.length);
+        }
+        n.length = length;
+        return n;
     }
 }

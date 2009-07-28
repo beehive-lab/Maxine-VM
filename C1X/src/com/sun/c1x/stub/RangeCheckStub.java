@@ -21,7 +21,6 @@
 package com.sun.c1x.stub;
 
 import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
 
 /**
  * @author Marcelo Cintra
@@ -30,38 +29,22 @@ import com.sun.c1x.util.*;
  */
 public class RangeCheckStub extends CodeStub {
 
-    private CodeEmitInfo info;
-    private LIROperand index;
-    private boolean throwIndexOutOfBoundsException;
+    public final LIROperand index;
+    public final boolean throwIndexOutOfBoundsException;
 
     public RangeCheckStub(CodeEmitInfo rangeCheckInfo, LIROperand index) {
         this(rangeCheckInfo, index, false);
     }
 
     public RangeCheckStub(CodeEmitInfo info, LIROperand index, boolean throwIndexOutOfBoundsException) {
-        this.info = info;
+        super(info);
         this.index = index;
         this.throwIndexOutOfBoundsException = throwIndexOutOfBoundsException;
     }
 
     @Override
-    public void emitCode(LIRAssembler e) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public CodeEmitInfo info() {
-        return info;
-    }
-
-    /**
-     * Gets the throwIndexOutOfBoundsException of this class.
-     *
-     * @return the throwIndexOutOfBoundsException
-     */
-    public boolean isThrowIndexOutOfBoundsException() {
-        return throwIndexOutOfBoundsException;
+    public void accept(CodeStubVisitor visitor) {
+        visitor.visitRangeCheckStub(this);
     }
 
     @Override
@@ -69,19 +52,9 @@ public class RangeCheckStub extends CodeStub {
         return true;
     }
 
-    public boolean isRangeCheckStub() {
-        return true;
-    }
-
     @Override
     public void visit(LIRVisitState visitor) {
         visitor.doSlowCase(info);
         visitor.doInput(index);
-    }
-
-    @Override
-    public void printName(LogStream out) {
-        out.print("RangeCheckStub");
-
     }
 }

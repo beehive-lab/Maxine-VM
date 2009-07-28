@@ -334,7 +334,11 @@ public abstract class StackFrameWalker {
             final int nativeFunctionCallPosition = nativeStubTargetMethod.findNextCall(targetCodePosition);
             final Pointer nativeFunctionCall = nativeFunctionCallPosition < 0 ? Pointer.zero() : nativeStubTargetMethod.codeStart().plus(nativeFunctionCallPosition);
             if (!nativeFunctionCall.isZero()) {
-                return nativeFunctionCall;
+                // The returned instruction pointer must be one past the actual address of the
+                // native function call. This makes it match the pattern expected by the
+                // StackReferenceMapPreparer when the instruction pointer in all but the
+                // top frame is past the address of the call.
+                return nativeFunctionCall.plus(1);
             }
         }
         if (fatalIfNotFound) {
@@ -420,6 +424,10 @@ public abstract class StackFrameWalker {
         return calleeStackFrame;
     }
 
+    /**
+     * Determines if the thread is executing in native code based on the
+     * value of {@link VmThreadLocal#LAST_JAVA_CALLER_INSTRUCTION_POINTER}.
+     */
     public abstract boolean isThreadInNative();
 
     public abstract TargetMethod targetMethodFor(Pointer instructionPointer);

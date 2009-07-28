@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.asm;
 
-import com.sun.c1x.asm.RelocInfo.*;
+import com.sun.c1x.asm.RelocInfo.Type;
 
 /**
  *
@@ -34,6 +34,10 @@ public class Relocation {
 
     public Relocation(Type type) {
         this.type = type;
+    }
+
+    public Relocation(int offset, Object obj) {
+        this.type = Type.objectType;
     }
 
     public Type type() {
@@ -50,23 +54,17 @@ public class Relocation {
         return false;
     }
 
-    public static Relocation specExternalWord(Pointer loc) {
+    public static Relocation specExternalWord(long address) {
         // TODO Auto-generated method stub
         return null;
     }
 
-    public static Relocation specInternalWord(Pointer loc) {
-        // TODO Auto-generated method stub
-        return null;
+    public static Relocation specInternalWord(long address) {
+        return new Relocation(Type.internalWordType);
     }
 
     public static Relocation specRuntimeCall() {
         return specSimple(RelocInfo.Type.runtimeCallType);
-    }
-
-    public static Relocation specSimple(Pointer loc) {
-        // TODO Auto-generated method stub
-        return null;
     }
 
     public static Relocation specOptVirtualCallRelocation(long address) {
@@ -85,11 +83,6 @@ public class Relocation {
             return Relocation.none;
         }
         return new Relocation(rtype);
-    }
-
-    public static Relocation virtualCallRelocationSpec(Pointer pc) {
-        // TODO Auto-generated method stub
-        return null;
     }
 
     public static Relocation specForImmediate() {

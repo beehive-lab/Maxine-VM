@@ -20,10 +20,9 @@
  */
 package com.sun.c1x.ir;
 
-import java.util.*;
+import com.sun.c1x.value.ValueStack;
 
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import java.util.List;
 
 /**
  * The <code>LookupSwitch</code> instruction represents a lookup switch bytecode, which has a sorted
@@ -36,7 +35,7 @@ public class LookupSwitch extends Switch {
     final int[] keys;
 
     /**
-     * Constructs a new TableSwitch instruction.
+     * Constructs a new LookupSwitch instruction.
      * @param value the instruction producing the value being switched on
      * @param successors the list of successors
      * @param keys the list of keys, sorted
@@ -55,6 +54,10 @@ public class LookupSwitch extends Switch {
      */
     public int keyAt(int i) {
         return keys[i];
+    }
+
+    public int keysLength() {
+        return keys.length;
     }
 
     /**

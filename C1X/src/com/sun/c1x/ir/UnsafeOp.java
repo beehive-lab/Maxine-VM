@@ -20,7 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.*;
+import com.sun.c1x.value.BasicType;
+import com.sun.c1x.value.ValueType;
 
 /**
  * The <code>UnsafeOp</code> class is the base of all unsafe operations.
@@ -28,7 +29,7 @@ import com.sun.c1x.value.*;
  * @author Ben L. Titzer
  */
 public abstract class UnsafeOp extends Instruction {
-    BasicType basicType;
+    final BasicType basicType;
 
     /**
      * Creates a new UnsafeOp instruction.

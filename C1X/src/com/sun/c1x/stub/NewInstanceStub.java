@@ -22,7 +22,6 @@ package com.sun.c1x.stub;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
 
 
 /**
@@ -34,15 +33,11 @@ import com.sun.c1x.util.*;
  */
 public class NewInstanceStub extends CodeStub {
 
-    private CiType klass;
-    private LIROperand klassReg;
-    private LIROperand result;
-    private CodeEmitInfo info;
-    private CiRuntimeCall stubId;
+    public final CiType klass;
+    public final LIROperand klassReg;
+    public final LIROperand result;
+    public final CiRuntimeCall stubId;
 
-//        public NewInstanceStub(LIROperand klassReg, LIROperand dst, CiType klass, CodeEmitInfo info, CiRuntimeCall stubId) {
-//           // TODO Auto-generated constructor stub
-//       }
 
     /**
      * @param klass
@@ -52,40 +47,16 @@ public class NewInstanceStub extends CodeStub {
      * @param stubId
      */
     public NewInstanceStub(LIROperand klassReg, LIROperand result, CiType klass, CodeEmitInfo info, CiRuntimeCall stubId) {
-        super();
+        super(info);
         this.klass = klass;
         this.klassReg = klassReg;
         this.result = result;
-        this.info = info;
         this.stubId = stubId;
     }
 
     @Override
-    public void emitCode(LIRAssembler e) {
-
-    }
-
-    @Override
-    public CodeEmitInfo info() {
-        return info;
-    }
-
-    /**
-     * Gets the klass of this class.
-     *
-     * @return the klass
-     */
-    public CiType getKlass() {
-        return klass;
-    }
-
-    /**
-     * Gets the stubId of this class.
-     *
-     * @return the stubId
-     */
-    public CiRuntimeCall getStubId() {
-        return stubId;
+    public void accept(CodeStubVisitor visitor) {
+        visitor.visitNewInstanceStub(this);
     }
 
     @Override
@@ -93,10 +64,5 @@ public class NewInstanceStub extends CodeStub {
         visitor.doSlowCase(info);
         visitor.doInput(klassReg);
         visitor.doOutput(result);
-    }
-
-    @Override
-    public void printName(LogStream out) {
-        out.print("NewInstanceStub");
     }
 }

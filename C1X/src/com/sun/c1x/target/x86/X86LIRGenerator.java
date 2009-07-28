@@ -21,17 +21,24 @@
 
 package com.sun.c1x.target.x86;
 
-import java.util.*;
-
-import com.sun.c1x.*;
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.gen.*;
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.bytecode.Bytecodes;
+import com.sun.c1x.ci.CiRuntimeCall;
+import com.sun.c1x.ci.CiType;
+import com.sun.c1x.debug.TTY;
+import com.sun.c1x.gen.LIRGenerator;
+import com.sun.c1x.gen.LIRItem;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.stub.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.value.BasicType;
+import com.sun.c1x.value.ConstType;
+import com.sun.c1x.value.ValueType;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -39,6 +46,7 @@ import com.sun.c1x.value.*;
  *
  */
 public final class X86LIRGenerator extends LIRGenerator {
+    private static final BasicType[] BASIC_TYPES_LONG_LONG = {BasicType.Long, BasicType.Long};
 
     public X86LIRGenerator(C1XCompilation compilation) {
         super(compilation);
@@ -96,12 +104,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             // there is no immediate move of word values in asemblerI486.?pp
             return false;
         }
-        if (v instanceof Constant && ((Constant) v).state() == null) {
-            // constants of any type can be stored directly, except for
-            // unloaded object constants.
-            return true;
-        }
-        return false;
+        return v instanceof Constant;
     }
 
     @Override
@@ -219,7 +222,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitStoreIndexed(StoreIndexed x) {
-        assert x.isRoot(compilation) : "";
+        assert isRoot(x) : "";
         boolean needsRangeCheck = true;
         boolean useLength = x.length() != null;
         boolean objStore = x.elementType() == BasicType.Jsr || x.elementType() == BasicType.Object;
@@ -234,7 +237,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         index.loadNonconstant();
 
         if (useLength) {
-            needsRangeCheck = x.computeNeedsRangeCheck();
+            needsRangeCheck = x.needsRangeCheck();
             if (needsRangeCheck) {
                 length.setInstruction(x.length());
                 length.loadItem();
@@ -293,7 +296,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitMonitorEnter(MonitorEnter x) {
-        assert x.isRoot(compilation) : "";
+        assert isRoot(x) : "";
         LIRItem obj = new LIRItem(x.object(), this);
         obj.loadItem();
 
@@ -319,7 +322,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitMonitorExit(MonitorExit x) {
-        assert x.isRoot(compilation) : "";
+        assert isRoot(x) : "";
 
         LIRItem obj = new LIRItem(x.object(), this);
         obj.dontLoadItem();
@@ -390,8 +393,8 @@ public final class X86LIRGenerator extends LIRGenerator {
                 fpu0 = LIROperandFactory.singleLocation(BasicType.Float, X86Register.fpu0);
                 fpu1 = LIROperandFactory.singleLocation(BasicType.Float, X86Register.fpu1);
             } else {
-                fpu0 = LIROperandFactory.singleLocation(BasicType.Double, X86Register.fpu0);
-                fpu1 = LIROperandFactory.singleLocation(BasicType.Double, X86Register.fpu1);
+                fpu0 = LIROperandFactory.doubleLocation(BasicType.Double, X86Register.fpu0, X86Register.fpu0);
+                fpu1 = LIROperandFactory.doubleLocation(BasicType.Double, X86Register.fpu1, X86Register.fpu1);
             }
             lir().move(right.result(), fpu1); // order of left and right operand is important!
             lir().move(left.result(), fpu0);
@@ -415,8 +418,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             // the check for division by zero destroys the right operand
             right.setDestroysRegister();
 
-            BasicType[] signature = new BasicType[] {BasicType.Long, BasicType.Long};
-            CallingConvention cc = compilation.frameMap().runtimeCallingConvention(signature);
+            CallingConvention cc = compilation.frameMap().runtimeCallingConvention(BASIC_TYPES_LONG_LONG);
 
             // check for division by zero (destroys registers of right operand!)
             CodeEmitInfo info = stateFor(x);
@@ -580,7 +582,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     public void visitArithmeticOp(ArithmeticOp x) {
         // when an operand with use count 1 is the left operand, then it is
         // likely that no move for 2-operand-LIR-form is necessary
-        if (x.isCommutative() && !(x.y() instanceof Constant) && ir.useCount(x.x()) > ir.useCount(x.y())) {
+        if (x.isCommutative() && !(x.y() instanceof Constant) && useCount(x.x()) > useCount(x.y())) {
             x.swapOperands();
         }
 
@@ -597,7 +599,7 @@ public final class X86LIRGenerator extends LIRGenerator {
                 visitArithmeticOpInt(x);
                 return;
         }
-        Util.shouldNotReachHere();
+        throw Util.shouldNotReachHere();
     }
 
     @Override
@@ -623,7 +625,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     public void visitLogicOp(LogicOp x) {
         // when an operand with use count 1 is the left operand, then it is
         // likely that no move for 2-operand-LIR-form is necessary
-        if (x.isCommutative() && (!(x.y() instanceof Constant)) && ir.useCount(x.x()) > ir.useCount(x.y())) {
+        if (x.isCommutative() && (!(x.y() instanceof Constant)) && useCount(x.x()) > useCount(x.y())) {
             x.swapOperands();
         }
 
@@ -988,7 +990,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             lir().move(input, convInput);
         }
 
-        assert fixedResult == false || roundResult == false : "cannot set both";
+        assert !fixedResult || !roundResult : "cannot set both";
         if (fixedResult) {
             convResult = fixedRegisterFor(result.type());
         } else if (roundResult) {
@@ -1017,7 +1019,23 @@ public final class X86LIRGenerator extends LIRGenerator {
         }
         CodeEmitInfo info = stateFor(x, x.state());
         LIROperand reg = resultRegisterFor(x.type());
-        newInstance(reg, x.instanceClass(), X86FrameMap.rcxOopOpr, X86FrameMap.rdiOopOpr, X86FrameMap.rsiOopOpr, LIROperandFactory.IllegalOperand, X86FrameMap.rdxOopOpr, info);
+        CiType klass = x.instanceClass();
+        LIROperand klassReg = X86FrameMap.rdxOopOpr;
+        jobject2regWithPatching(klassReg, klass, info);
+        // If klass is not loaded we do not know if the klass has finalizers:
+        if (C1XOptions.UseFastNewInstance && klass.isLoaded() && !klass.layoutHelperNeedsSlowPath()) {
+            CiRuntimeCall stubId = klass.isInitialized() ? CiRuntimeCall.FastNewInstance : CiRuntimeCall.FastNewInstanceInitCheck;
+            CodeStub slowPath = new NewInstanceStub(klassReg, reg, klass, info, stubId);
+            assert klass.isLoaded() : "must be loaded";
+            // allocate space for instance
+            assert klass.sizeHelper() >= 0 : "illegal instance size";
+            int instanceSize = Util.align(klass.sizeHelper(), compilation.target.heapAlignment);
+            lir.allocateObject(reg, X86FrameMap.rcxOopOpr, X86FrameMap.rdiOopOpr, X86FrameMap.rsiOopOpr, LIROperandFactory.IllegalOperand, compilation.runtime.headerSize(), instanceSize, klassReg, !klass.isInitialized(), slowPath);
+        } else {
+            CodeStub slowPath = new NewInstanceStub(klassReg, reg, klass, info, CiRuntimeCall.NewInstance);
+            lir.branch(LIRCondition.Always, BasicType.Illegal, slowPath);
+            lir.branchDestination(slowPath.continuation);
+        }
         LIROperand result = rlockResult(x);
         lir().move(reg, result);
     }

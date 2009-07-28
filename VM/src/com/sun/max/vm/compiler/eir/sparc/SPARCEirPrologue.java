@@ -62,7 +62,7 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         if (SPARCAssembler.isSimm13(frameSize)) {
             return DEFAULT_STACK_BANG_OFFSET;
         }
-        return STACK_BIAS.SPARC_V9.stackBias() - frameSize;
+        return StackBias.SPARC_V9.stackBias() - frameSize;
     }
 
     /**
@@ -112,7 +112,7 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
                 } else {
                     asm.setsw(stackBangOffset, frameSizeReg);
                     asm.lduw(stackPointer, frameSizeReg, GPR.G0);
-                    asm.sub(frameSizeReg, STACK_BIAS.SPARC_V9.stackBias(), frameSizeReg);
+                    asm.sub(frameSizeReg, StackBias.SPARC_V9.stackBias(), frameSizeReg);
                 }
                 asm.save(stackPointer, frameSizeReg, stackPointer);
             } catch (AssemblyException e) {
@@ -124,7 +124,7 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         // Note: the safepoint latch register is already set to the disabled state (the C code in trap.c took care of that)
         // The value of the latch register at the trap instruction is stored in the trap state.
         final GPR latchRegister = SPARCSafepoint.LATCH_REGISTER;
-        final int frameSize = eirMethod().frameSize() + SPARCSafepoint.TRAP_STATE_SIZE;
+        final int frameSize = eirMethod().frameSize() + SPARCTrapStateAccess.TRAP_STATE_SIZE;
         final GPR scratchRegister = GPR.L0;
         final GPR scratchRegister2 = GPR.L1;
         assert SPARCAssembler.isSimm13(frameSize);
@@ -145,7 +145,7 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         // We want to copy into the trap state the value of the latch register at the instruction that causes the trap.
         asm.ldx(latchRegister, VmThreadLocal.TRAP_LATCH_REGISTER.offset, scratchRegister);
 
-        for (GPR register :  SPARCSafepoint.TRAP_SAVED_GLOBAL_SYMBOLIZER) {
+        for (GPR register :  SPARCTrapStateAccess.TRAP_SAVED_GLOBAL_SYMBOLIZER) {
             if (register == latchRegister) {
                 asm.stx(scratchRegister, stackPointer, offset);
             } else {

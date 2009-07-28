@@ -20,8 +20,9 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.ci.CiLocation;
+import com.sun.c1x.debug.LogStream;
+import com.sun.c1x.util.Util;
 
 
 /**
@@ -48,7 +49,7 @@ public class Location {
             }
             return null;
         }
-    };
+    }
 
     public enum LocationType {
         Invalid,        // Invalid location
@@ -86,7 +87,7 @@ public class Location {
             }
             return null;
         }
-    };
+    }
 
     private enum LocationMask{
         TypeMask(0x0F),
@@ -101,7 +102,7 @@ public class Location {
         LocationMask(final int value) {
             this.value = value;
         }
-      };
+      }
 
     // Stack location Factory. Offset is 4-byte aligned; remove low bits
     static Location newStkLoc(LocationType t, int offset, int logBytesPerInt) {
@@ -271,10 +272,7 @@ public class Location {
     }
 
     public boolean legalOffsetInBytes(int offsetInBytes, int wordSize) {
-        if ((offsetInBytes % wordSize) != 0) {
-            return false;
-        }
-        return true;
+        return (offsetInBytes % wordSize) == 0;
     }
 
     /**

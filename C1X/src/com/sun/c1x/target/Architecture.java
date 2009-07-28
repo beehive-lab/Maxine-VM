@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.target;
 
-import com.sun.c1x.util.*;
+import com.sun.c1x.util.Util;
 
 /**
  * The <code>Architecture</code> class represents a CPU architecture that is supported by
@@ -48,8 +48,10 @@ public abstract class Architecture {
     public final String name;
     public final BitOrdering bitOrdering;
     public final int framePadding;
+    public final int nativeCallDisplacementOffset;
+    public final int nativeMoveConstInstructionSize;
 
-    public static final Architecture findArchitecture(String name) {
+    public static Architecture findArchitecture(String name) {
         // load and instantiate the backend via reflection
         String className = "com.sun.c1x.target." + name.toUpperCase();
         try {
@@ -64,15 +66,17 @@ public abstract class Architecture {
         }
     }
 
-    protected Architecture(String name, int wordSize, String backend, BitOrdering bitOrdering, Register[] registers, final int framePadding) {
+    protected Architecture(String name, int wordSize, String backend, BitOrdering bitOrdering, Register[] registers, final int framePadding, final int nativeCallDisplacementOffset, final int nativeMoveConstInstructionSize) {
         this.name = name;
         this.registers = registers;
         this.wordSize = wordSize;
         this.backend = backend;
         this.bitsPerWord = wordSize * 8;
-        this.logBytesPerInt = (int) (java.lang.Math.log(wordSize));
+        this.logBytesPerInt = (int) (Math.log(wordSize));
         this.bitOrdering = bitOrdering;
         this.framePadding = framePadding;
+        this.nativeCallDisplacementOffset = nativeCallDisplacementOffset;
+        this.nativeMoveConstInstructionSize = nativeMoveConstInstructionSize;
         switch (bitOrdering) {
             case LittleEndian:
                 loWordOffsetInBytes = 0;
@@ -126,7 +130,7 @@ public abstract class Architecture {
      * @return <code>true</code> if the backend of this architecture is x86
      */
     public boolean isX86() {
-        return backend.equals("x86");
+        return "x86".equals(backend);
     }
 
     /**
@@ -135,6 +139,6 @@ public abstract class Architecture {
      * @return <code>true</code> if the backend of this architecture is SPARC
      */
     public boolean isSPARC() {
-        return backend.equals("SPARC");
+        return "SPARC".equals(backend);
     }
 }

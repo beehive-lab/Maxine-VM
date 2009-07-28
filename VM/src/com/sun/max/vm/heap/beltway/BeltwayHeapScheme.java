@@ -240,23 +240,22 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB implements He
      */
     public static final VmThreadLocal ADJUSTED_CARDTABLE_BASE = new VmThreadLocal("ADJUSTED_CARDTABLE_BASE", Kind.WORD, "Beltway: ->biased card table") {
         @Override
-        public void initialize(com.sun.max.vm.MaxineVM.Phase phase) {
+        public void initialize() {
             final Pointer vmThreadLocals = VmThread.currentVmThreadLocals();
             // enable write barriers by setting the adjusted card table address
-            if (phase.equals(MaxineVM.Phase.RUNNING) || phase.equals(MaxineVM.Phase.STARTING)) {
-                // use the normal card table
-                ADJUSTED_CARDTABLE_BASE.setConstantWord(vmThreadLocals, BeltwayCardRegion.getAdjustedCardTable());
-            } else {
-                // use the primordial card table
-                ADJUSTED_CARDTABLE_BASE.setConstantWord(vmThreadLocals, ADJUSTED_CARDTABLE_BASE.getConstantWord(MaxineVM.primordialVmThreadLocals()));
-            }
+            // use the normal card table
+            ADJUSTED_CARDTABLE_BASE.setConstantWord(vmThreadLocals, BeltwayCardRegion.getAdjustedCardTable());
         }
     };
 
-    public void scanBootHeap(Belt from, Belt to) {
+    public void scanBootHeap(RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
+        FatalError.unimplemented();
+        Heap.bootHeapRegion.visitReferences(null);
+/*
         bootHeapCellVisitor.from = from;
         bootHeapCellVisitor.to = to;
         Heap.bootHeapRegion.visitCells(bootHeapCellVisitor);
+*/
     }
 
     public void printCardTable() {
@@ -332,12 +331,18 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB implements He
     public final void evacuate(Belt from, Belt to) {
         to.evacuate(cellVisitor, copyAction, from);
     }
-
+/*
     public void scanCode(Belt from, Belt to) {
         bootHeapCellVisitor.from = from;
         bootHeapCellVisitor.to = to;
         Code.visitCells(bootHeapCellVisitor, true);
     }
+*/
+    public void scanCode(RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
+        FatalError.unimplemented();
+        Code.visitReferences(null);
+   }
+
 
     @INLINE
     public final Pointer gcBumpAllocate(RuntimeMemoryRegion belt, Size size) {

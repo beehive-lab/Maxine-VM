@@ -196,8 +196,8 @@ public final class TargetBundleLayout {
     /**
      * Gets the address of the cell containing the array in this target bundle referenced by a given field.
      *
-     * @param field the field for which the cell address is being requested
      * @param start the start address of the target bundle
+     * @param field the field for which the cell address is being requested
      * @return the address of the cell containing the array referenced {@code field}
      * @throws IllegalArgumentException if no cell has been allocated for {@code field} in this target bundle
      */
@@ -208,8 +208,8 @@ public final class TargetBundleLayout {
     /**
      * Gets the address of the end of the cell containing the array in this target bundle referenced by a given field.
      *
-     * @param field the field for which the cell end address is being requested
      * @param start the start address of the target bundle
+     * @param field the field for which the cell end address is being requested
      * @return the address of the end of the cell containing the array referenced {@code field}
      * @throws IllegalArgumentException if no cell has been allocated for {@code field} in this target bundle
      */
@@ -220,8 +220,8 @@ public final class TargetBundleLayout {
     /**
      * Gets the address of the first element in the array in this target bundle referenced by a given field.
      *
-     * @param field the field for which the cell end address is being requested
      * @param start the start address of the target bundle
+     * @param field the field for which the cell end address is being requested
      * @return the address of the end of the cell containing the array referenced {@code field}
      * @throws IllegalArgumentException if no cell has been allocated for {@code field} in this target bundle
      */

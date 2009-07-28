@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.stub.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.debug.LogStream;
+import com.sun.c1x.stub.CodeStub;
 
 
 /**
@@ -128,6 +128,6 @@ public class LIRLock extends LIRInstruction{
             scratch.print(out);
             out.print(" ");
         }
-        out.printf("[lbl:0x%x]", stub.entry());
+        out.printf("[lbl:0x%x]", stub.entry);
     }
 }

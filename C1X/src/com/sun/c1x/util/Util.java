@@ -20,11 +20,18 @@
  */
 package com.sun.c1x.util;
 
-import java.util.*;
+import com.sun.c1x.Bailout;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.ci.CiField;
+import com.sun.c1x.ci.CiMethod;
+import com.sun.c1x.ci.CiSignature;
+import com.sun.c1x.ci.CiType;
+import com.sun.c1x.debug.TTY;
+import com.sun.c1x.value.BasicType;
 
-import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.value.*;
+import java.util.IllegalFormatException;
+import java.util.List;
+import java.util.UnknownFormatConversionException;
 
 /**
  * The <code>Util</code> class contains a motley collection of utility methods used throughout the compiler.
@@ -502,18 +509,8 @@ public class Util {
         return 4;
     }
 
-    public static int convertToPointer32(Object obj) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-    public static int convertToPointer64(Object obj) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
     public static boolean is8bit(long l) {
-        // TODO Auto-generated method stub
-        return false;
+        return l < 128 || l >= -128;
     }
 
     public static void warning(String string) {
@@ -544,25 +541,6 @@ public class Util {
     }
 
     public static long stringToAddress(String b) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    public static void needsCleanUp() {
-        // TODO Auto-generated method stub
-
-    }
-
-    public static int sizeofJdouble() {
-        return 8;
-    }
-
-    public static int heapWordsPerLong() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    public static int bytesPerLong() {
         // TODO Auto-generated method stub
         return 0;
     }
@@ -601,5 +579,22 @@ public class Util {
                 TTY.println();
             }
         }
+    }
+
+    public static BasicType[] signatureToBasicTypes(CiSignature signature, boolean withReceiver) {
+        int args = signature.argumentCount(false);
+        BasicType[] result;
+        int i = 0;
+        if (withReceiver) {
+            result = new BasicType[args + 1];
+            result[0] = BasicType.Object;
+            i = 1;
+        } else {
+            result = new BasicType[args];
+        }
+        for (int j = 0; j < args; j++) {
+            result[i + j] = signature.argumentBasicTypeAt(j);
+        }
+        return result;
     }
 }

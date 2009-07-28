@@ -20,13 +20,15 @@
  */
 package com.sun.c1x.ir;
 
-import java.util.*;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.ci.CiType;
+import com.sun.c1x.debug.InstructionPrinter;
+import com.sun.c1x.debug.TTY;
+import com.sun.c1x.lir.LIROperand;
+import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.value.ValueType;
 
-import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import java.util.List;
 
 /**
  * The <code>Instruction</code> class represents a node in the IR. Each instruction
@@ -43,20 +45,19 @@ public abstract class Instruction {
      */
     public enum Flag {
         NonNull,
-        CanTrap,
+        NoNullCheck,
+        NoStoreCheck,
+        NoRangeCheck,
+        NoWriteBarrier,
         DirectCompare,
-        IsEliminated,
-        IsInitialized,
-        IsLoaded,
+        IsEliminated, // TODO: scheduled for deletion
+        IsLoaded, // TODO: necessary?
         IsSafepoint,
-        IsStatic,
         IsStrictFP,
-        NeedsStoreCheck,
-        NeedsWriteBarrier,
         PreservesState,
-        TargetIsFinal,
-        TargetIsLoaded,
-        TargetIsStrictfp,
+        TargetIsFinal, // TODO: scheduled for deletion
+        TargetIsLoaded, // TODO: scheduled for deletion
+        TargetIsStrictFP,
         UnorderedIsTrue,
         NeedsPatching,
         ThrowIncompatibleClassChangeError,
@@ -84,7 +85,7 @@ public abstract class Instruction {
     private final int id;
     private int bci;
     private int flags;
-    private ValueType valueType;
+    protected ValueType valueType;
     private Instruction next;
     private Instruction subst;
 
@@ -153,15 +154,6 @@ public abstract class Instruction {
      */
     public final ValueType type() {
         return valueType;
-    }
-
-    /**
-     * Sets the value type of this instruction.
-     * @param type the new value type for this instruction
-     */
-    public final void setType(ValueType type) {
-        assert type != null;
-        valueType = type;
     }
 
     /**
@@ -258,6 +250,10 @@ public abstract class Instruction {
         }
     }
 
+    public void clearNullCheck() {
+        clearFlag(Flag.NoNullCheck);
+    }
+
     /**
      * Check whether this instruction has the specified flag set.
      * @param flag the flag to test
@@ -320,7 +316,7 @@ public abstract class Instruction {
      * @return <code>true</code> if this instruction needs a null check
      */
     public final boolean needsNullCheck() {
-        return !checkFlag(Flag.NonNull);
+        return !checkFlag(Flag.NoNullCheck);
     }
 
     /**
@@ -478,42 +474,6 @@ public abstract class Instruction {
     }
 
     /**
-     * Formats a given instruction as value is a {@linkplain ValueStack frame state}. If the instruction is a phi defined at a given
-     * block, its {@linkplain Phi#operand() operands} are appended to the returned string.
-     *
-     * @param index the index of the value in the frame state
-     * @param value the frame state value
-     * @param block if {@code value} is a phi, then its operands are formatted if {@code block} is its
-     *            {@linkplain Phi#block() join point}
-     * @return the instruction representation as a string
-     */
-    public static String stateString(int index, Instruction value, BlockBegin block) {
-        StringBuilder sb = new StringBuilder(30);
-        sb.append(String.format("%2d  %s", index, valueString(value)));
-        if (value instanceof Phi) {
-            Phi phi = (Phi) value;
-            // print phi operands
-            if (phi.block() == block) {
-                sb.append(" [");
-                for (int j = 0; j < phi.operandCount(); j++) {
-                    sb.append(' ');
-                    Instruction operand = phi.operandAt(j);
-                    if (operand != null) {
-                        sb.append(valueString(operand));
-                    } else {
-                        sb.append("NULL");
-                    }
-                }
-                sb.append("] ");
-            }
-        }
-        if (value != value.subst()) {
-            sb.append("alias ").append(valueString(value.subst()));
-        }
-        return sb.toString();
-    }
-
-    /**
      * Converts a given instruction to a value string. The representation of an instruction as
      * a value is formed by concatenating the {@linkplain com.sun.c1x.value.ValueType#tchar() character} denoting its
      * {@linkplain com.sun.c1x.ir.Instruction#type() type} and its {@linkplain com.sun.c1x.ir.Instruction#id()}. For example,
@@ -532,11 +492,6 @@ public abstract class Instruction {
      */
     public ValueStack lockStack() {
         return null;
-    }
-
-
-    public boolean isRoot(C1XCompilation compilation) {
-        return isPinned() || compilation.hir().useCount(this) > 1;
     }
 
     public void printLine() {

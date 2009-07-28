@@ -72,10 +72,12 @@ public class MaxCiTargetMethod implements CiTargetMethod {
     static class DataPatchSite {
         final int codePos;
         final int dataPos;
+        final boolean relative;
 
-        DataPatchSite(int codePos, int dataPos) {
+        DataPatchSite(int codePos, int dataPos, boolean relative) {
             this.codePos = codePos;
             this.dataPos = dataPos;
+            this.relative = relative;
         }
     }
 
@@ -213,9 +215,11 @@ public class MaxCiTargetMethod implements CiTargetMethod {
      *
      * @param codePosition the position in the code where the data reference occurs
      * @param dataPosition the position in the data which is referred to
+     * @param relative {@code true} if the reference is instruction-relative
      */
-    public void recordDataReferenceInCode(int codePosition, int dataPosition) {
-        dataPatchSites.add(new DataPatchSite(codePosition, dataPosition));
+    public void recordDataReferenceInCode(int codePosition, int dataPosition, boolean relative) {
+        assert codePosition >= 0 && dataPosition >= 0;
+        dataPatchSites.add(new DataPatchSite(codePosition, dataPosition, relative));
     }
 
     /**
@@ -294,9 +298,6 @@ public class MaxCiTargetMethod implements CiTargetMethod {
         ClassMethodActor[] directCallees = processCallSites(stopPositions, bitMap);
         processSafepoints(stopPositions, bitMap);
 
-        processDataPatches(targetBundleLayout);
-        processRefPatches(targetBundleLayout, refLiterals);
-
         // TODO: encode exception handler information
         int[] catchRangePositions = null;
         int[] catchBlockPositions = null;
@@ -322,6 +323,9 @@ public class MaxCiTargetMethod implements CiTargetMethod {
             stackRefMapSize(),
             abi
         );
+        // TODO: patch code and data references
+        processDataPatches(targetBundleLayout);
+        processRefPatches(targetBundleLayout, targetMethod.referenceLiterals());
     }
 
     private void processRefPatches(TargetBundleLayout bundleLayout, Object[] refLiterals) {
@@ -351,6 +355,25 @@ public class MaxCiTargetMethod implements CiTargetMethod {
 
     private void patchRelativeInstruction(int codePos, Offset relative) {
         // TODO: patch relative load instructions in a platform-dependent way
+        X86InstructionDecoder decoder = new X86InstructionDecoder(targetMethod.code(), true);
+        decoder.decodePosition(codePos);
+        int patchPos = decoder.currentDisplacementPosition();
+        int endOfInstruction = decoder.currentEndOfInstruction();
+        int offset = relative.toInt() - endOfInstruction + codePos;
+        patchDisp32(targetMethod.code(), patchPos, offset);
+    }
+
+    private void patchDisp32(byte[] code, int pos, int b) {
+        assert pos + 4 < code.length;
+        assert code[pos] == 0;
+        assert code[pos + 1] == 0;
+        assert code[pos + 2] == 0;
+        assert code[pos + 3] == 0;
+
+        code[pos++] = (byte) (b & 0xFF);
+        code[pos++] = (byte) ((b >> 8) & 0xFF);
+        code[pos++] = (byte) ((b >> 16) & 0xFF);
+        code[pos++] = (byte) ((b >> 24) & 0xFF);
     }
 
     private void processSafepoints(int[] stopPositions, ByteArrayBitMap bitMap) {
@@ -439,18 +462,6 @@ public class MaxCiTargetMethod implements CiTargetMethod {
         }
     }
 
-
-    @Override
     public void recordCodeReferenceInData(int codePosition, int dataPosition, boolean relative) {
-        // TODO Auto-generated method stub
-
     }
-
-
-    @Override
-    public void recordDataReferenceInCode(int codePosition, int dataPosition, boolean relative) {
-        // TODO Auto-generated method stub
-
-    }
-
 }

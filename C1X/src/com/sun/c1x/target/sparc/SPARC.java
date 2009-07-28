@@ -20,8 +20,11 @@
  */
 package com.sun.c1x.target.sparc;
 
-import com.sun.c1x.target.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.target.Architecture;
+import com.sun.c1x.target.Backend;
+import com.sun.c1x.target.Register;
+import com.sun.c1x.target.Target;
+import com.sun.c1x.util.Util;
 
 /**
  *
@@ -31,7 +34,7 @@ import com.sun.c1x.util.*;
 public class SPARC extends Architecture {
 
     protected SPARC(String name, int wordSize, Register[] registers) {
-        super(name, wordSize, "sparc", BitOrdering.BigEndian, registers, 0);
+        super(name, wordSize, "sparc", BitOrdering.BigEndian, registers, 0, 0, 8);
     }
 
     @Override

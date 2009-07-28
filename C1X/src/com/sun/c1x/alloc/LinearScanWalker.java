@@ -20,15 +20,21 @@
  */
 package com.sun.c1x.alloc;
 
-import java.util.*;
-
-import com.sun.c1x.*;
-import com.sun.c1x.alloc.Interval.*;
-import com.sun.c1x.gen.*;
-import com.sun.c1x.ir.*;
+import com.sun.c1x.Bailout;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.alloc.Interval.IntervalKind;
+import com.sun.c1x.alloc.Interval.IntervalSpillState;
+import com.sun.c1x.alloc.Interval.IntervalState;
+import com.sun.c1x.alloc.Interval.IntervalUseKind;
+import com.sun.c1x.debug.TTY;
+import com.sun.c1x.gen.LIRGenerator;
+import com.sun.c1x.ir.BlockBegin;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.value.BasicType;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -329,7 +335,7 @@ public class LinearScanWalker extends IntervalWalker {
 
             } else {
                 // seach optimal block boundary between minSplitPos and maxSplitPos
-                Util.traceLinearScan(4, "      moving split pos to optimal block boundary between block B%d and B%d", minBlock.blockID(), maxBlock.blockID());
+                Util.traceLinearScan(4, "      moving split pos to optimal block boundary between block B%d and B%d", minBlock.blockID, maxBlock.blockID);
 
                 if (doLoopOptimization) {
                     // Loop optimization: if a loop-end marker is found between min- and max-position :
@@ -346,8 +352,8 @@ public class LinearScanWalker extends IntervalWalker {
                         // of the interval (normally, only mustHaveRegister causes a reloading)
                         BlockBegin loopBlock = allocator().blockOfOpWithId(loopEndPos);
 
-                        Util.traceLinearScan(4, "      interval is used in loop that ends in block B%d, so trying to move maxBlock back from B%d to B%d", loopBlock.blockID(), maxBlock.blockID(),
-                                        loopBlock.blockID());
+                        Util.traceLinearScan(4, "      interval is used in loop that ends in block B%d, so trying to move maxBlock back from B%d to B%d", loopBlock.blockID, maxBlock.blockID,
+                                loopBlock.blockID);
                         assert loopBlock != minBlock : "loopBlock and minBlock must be different because block boundary is needed between";
 
                         optimalSplitPos = findOptimalSplitPos(minBlock, loopBlock, loopBlock.lastLirInstructionId() + 2);
@@ -782,7 +788,7 @@ public class LinearScanWalker extends IntervalWalker {
             List<Interval> processed = spillIntervals[reg];
             for (int i = 0; i < spillIntervals[regHi].size(); i++) {
                 Interval it = spillIntervals[regHi].get(i);
-                if (processed.indexOf(it) == -1) {
+                if (!processed.contains(it)) {
                     removeFromList(it);
                     splitAndSpillInterval(it);
                 }

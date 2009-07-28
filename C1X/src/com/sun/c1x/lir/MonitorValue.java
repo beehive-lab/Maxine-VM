@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.util.*;
+import com.sun.c1x.debug.LogStream;
 
 /**
  * The <code>MonitorValue</code> class definition.
@@ -49,7 +49,7 @@ public class MonitorValue extends ScopeValue {
     public MonitorValue(DebugInfoReadStream stream) {
         basicLock = new Location(stream);
         owner = ScopeValue.readFrom(stream);
-        eliminated = (stream.readBool() != false);
+        eliminated = stream.readBool();
     }
 
     // Accessors

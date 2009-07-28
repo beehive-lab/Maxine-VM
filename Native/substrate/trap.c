@@ -21,6 +21,7 @@
 /**
  * @author Bernd Mathiske
  * @author Laurent Daynes
+ * @author Paul Caprioli
  */
 
 #if !os_GUESTVMXEN
@@ -78,6 +79,7 @@ int getTrapNumber(int signal) {
 }
 
 static Address _javaTrapStub;
+static Boolean traceTraps = false;
 
 #if os_GUESTVMXEN
 #define SignalHandlerFunction fault_handler_t
@@ -148,6 +150,7 @@ static void setInstructionPointer(UContext *ucontext, Address stub) {
 #endif
 }
 
+#if 0
 static Address getStackPointer(UContext *ucontext) {
 #if os_SOLARIS
   return ucontext->uc_mcontext.gregs[REG_SP];
@@ -167,6 +170,7 @@ static Address getStackPointer(UContext *ucontext) {
         c_UNIMPLEMENTED();
 #endif
 }
+#endif
 
 static Address getFaultAddress(SigInfo * sigInfo, UContext *ucontext) {
 #if (os_DARWIN || os_SOLARIS || os_LINUX )
@@ -176,7 +180,6 @@ static Address getFaultAddress(SigInfo * sigInfo, UContext *ucontext) {
 #endif
 }
 
-#if log_TRAP
 char *signalName(int signal) {
     switch (signal) {
     case SIGSEGV: return "SIGSEGV";
@@ -187,7 +190,6 @@ char *signalName(int signal) {
     }
     return NULL;
 }
-#endif
 
 static void blueZoneTrap(ThreadSpecifics threadSpecifics) {
 #if os_GUESTVMXEN
@@ -195,19 +197,15 @@ static void blueZoneTrap(ThreadSpecifics threadSpecifics) {
 #endif
 }
 
-static int isInGuardZone(Address address, Address zoneBegin) {
-    /* return true if the address is in the zone, or is within N pages of the zone */
-    return address >= zoneBegin && (address - zoneBegin) < ((1 + STACK_GUARD_PAGES) * virtualMemory_getPageSize());
-}
-
 static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext) {
-#if log_TRAP
-    char *sigName = signalName(signal);
-    if (sigName == NULL) {
-        sigName = "<unknown>";
+    char *sigName;
+    if (traceTraps || log_TRAP) {
+        sigName = signalName(signal);
+        if (sigName == NULL) {
+            sigName = "<unknown>";
+        }
+        log_println("SIGNAL: %0d [%s]", signal, sigName);
     }
-    log_println("SIGNAL: %0d [%s]", signal, sigName);
-#endif
     ThreadSpecifics threadSpecifics = (ThreadSpecifics) thread_currentSpecifics();
     if (threadSpecifics == 0) {
         log_exit(-22, "could not find native thread locals in trap handler");
@@ -223,30 +221,26 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     }
 
     int trapNumber = getTrapNumber(signal);
-    Word *stackPointer = (Word *)getStackPointer(ucontext);
-
-
-    if (isInGuardZone((Address)stackPointer, threadSpecifics->stackRedZone)) {
-    	/* if the stack pointer is in the red zone, (we shouldn't be alive) */
-        log_exit(-20, "SIGSEGV: (stack pointer is in fatal red zone)");
-    } else if (isInGuardZone((Address)stackPointer, threadSpecifics->stackYellowZone)) {
-        /* if the stack pointer is in the yellow zone, assume this is a stack fault */
-    	virtualMemory_unprotectPage(threadSpecifics->stackYellowZone);
-        trapNumber = STACK_FAULT;
-    } else  if (isInGuardZone((Address)stackPointer, threadSpecifics->stackBlueZone)) {
-    	/* need to map more of the stack? */
-    	blueZoneTrap(threadSpecifics);
-    	return;
-    } else if (stackPointer == 0) {
-        /* if the stack pointer is zero, (we shouldn't be alive) */
-        log_exit(-19, "SIGSEGV: (stack pointer is zero)");
+    Address faultAddress = getFaultAddress(signalInfo, ucontext);
+    if (faultAddress >= threadSpecifics->stackRedZone && faultAddress < threadSpecifics->stackBase + threadSpecifics->stackSize) {
+        if (faultAddress < threadSpecifics->stackYellowZone) {
+            /* The faultAddress is in the red zone; we shouldn't be alive. */
+            log_exit(-20, "SIGSEGV: Address %p is in stack red zone.");
+        } else if (faultAddress < threadSpecifics->stackYellowZone + virtualMemory_getPageSize()) {
+            /* the faultAddress is in the yellow zone; assume this is a stack fault. */
+            virtualMemory_unprotectPage(threadSpecifics->stackYellowZone);
+            trapNumber = STACK_FAULT;
+        } else {
+            blueZoneTrap(threadSpecifics);
+            return;
+        }
     }
 
     /* save the trap information in the disabled vm thread locals */
     Address *trapInfo = (Address*) (disabledVmThreadLocals + image_header()->vmThreadLocalsTrapNumberOffset);
     trapInfo[0] = trapNumber;
     trapInfo[1] = getInstructionPointer(ucontext);
-    trapInfo[2] = getFaultAddress(signalInfo, ucontext);
+    trapInfo[2] = faultAddress;
 #if os_SOLARIS && isa_SPARC
 	 /* save the value of the safepoint latch at the trapped instruction */
 	 trapInfo[3] = ucontext->uc_mcontext.gregs[REG_G2];
@@ -265,26 +259,27 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     c_UNIMPLEMENTED();
 #endif
 
-#if log_TRAP
-    if (sigName != NULL) {
-        log_println("thread %d: %s (trapInfo @ %p)", threadSpecifics->id, sigName, trapInfo);
-        log_println("trapInfo[0] (trap number)         = %p", trapInfo[0]);
-        log_println("trapInfo[1] (instruction pointer) = %p", trapInfo[1]);
-        log_println("trapInfo[2] (fault address)       = %p", trapInfo[2]);
-        log_println("trapInfo[3] (safepoint latch)     = %p", trapInfo[3]);
+    if (traceTraps || log_TRAP) {
+        if (sigName != NULL) {
+            log_println("thread %d: %s (trapInfo @ %p)", threadSpecifics->id, sigName, trapInfo);
+            log_println("trapInfo[0] (trap number)         = %p", trapInfo[0]);
+            log_println("trapInfo[1] (instruction pointer) = %p", trapInfo[1]);
+            log_println("trapInfo[2] (fault address)       = %p", trapInfo[2]);
+            log_println("trapInfo[3] (safepoint latch)     = %p", trapInfo[3]);
+        }
+        log_println("SIGNAL: returning to Java trap stub 0x%0lx", _javaTrapStub);
     }
-    log_println("SIGNAL: returning to java trap stub 0x%0lx\n", _javaTrapStub);
-#endif
     setInstructionPointer(ucontext, _javaTrapStub);
 }
 
-void nativeInitialize(Address javaTrapStub) {
+Address nativeInitialize(Address javaTrapStub) {
     _javaTrapStub = javaTrapStub;
     setHandler(SIGSEGV, (SignalHandlerFunction) globalSignalHandler);
     setHandler(SIGBUS, (SignalHandlerFunction) globalSignalHandler);
     setHandler(SIGILL, (SignalHandlerFunction) globalSignalHandler);
     setHandler(SIGFPE, (SignalHandlerFunction) globalSignalHandler);
     setHandler(SIGUSR1, (SignalHandlerFunction) globalSignalHandler);
+    return (Address) &traceTraps;
 }
 
 

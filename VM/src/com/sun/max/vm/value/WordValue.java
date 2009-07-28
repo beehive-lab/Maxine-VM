@@ -159,7 +159,7 @@ public final class WordValue extends Value<WordValue> {
 
     @Override
     public long unboxLong() {
-        if (WordWidth.BITS_64 == Word.width()) {
+        if (64 == Word.width()) {
             return toLong();
         }
         return super.unboxLong();
@@ -167,7 +167,7 @@ public final class WordValue extends Value<WordValue> {
 
     @Override
     public int unboxInt() {
-        if (WordWidth.BITS_32 == Word.width()) {
+        if (32 == Word.width()) {
             return toInt();
         }
         return super.unboxInt();

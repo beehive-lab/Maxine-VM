@@ -33,7 +33,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
@@ -42,34 +41,21 @@ import com.sun.max.vm.thread.*;
  * polling at prudently chosen execution points. The polling has the effect of causing
  * a trap.
  *
- * The <i>trap state</i> of the thread is recorded at such a trap and is made available
- * via these methods:
- * <ul>
- * <li>{@link #getInstructionPointer(Pointer)}</li>
- * <li>{@link #getStackPointer(Pointer, TargetMethod)}</li>
- * <li>{@link #getFramePointer(Pointer, TargetMethod)}</li>
- * <li>{@link #getSafepointLatch(Pointer)}</li>
- * <li>{@link #getRegisterState(Pointer)}</li>
- * <li>{@link #getTrapNumber(Pointer)}</li>
- * <li>{@link #setSafepointLatch(Pointer, Pointer)}</li>
- * </ul>
- *
  * @author Bernd Mathiske
+ * @author Doug Simon
+ * @author Hannes Payer
+ * @author Paul Caprioli
  */
 public abstract class Safepoint {
 
-    public static final boolean UseThreadStateWordForGCMutatorSynchronization = false;
+    public static final boolean UseCASBasedGCMutatorSynchronization = false;
 
-    public static int casMutatorState(Pointer enabledVmThreadLocals, int suspectedValue, int newValue) {
-        return enabledVmThreadLocals.compareAndSwapInt(MUTATOR_STATE.offset, suspectedValue, newValue);
-    }
-
-    public static final int THREAD_IN_JAVA = 0;
-    public static final int THREAD_IN_NATIVE = 1;
-    public static final int THREAD_IN_JAVA_STOPPING_FOR_GC = 2;
-    public static final int THREAD_IN_GC_FROM_JAVA = 3;
-    public static final int THREAD_IN_GC_FROM_NATIVE = 4;
-    public static final int THREAD_IN_GC_FROM_JAVA_DONE = 5;
+    public static final Word THREAD_IN_JAVA = Address.fromInt(0);
+    public static final Word THREAD_IN_NATIVE = Address.fromInt(1);
+    public static final Word THREAD_IN_JAVA_STOPPING_FOR_GC = Address.fromInt(2);
+    public static final Word THREAD_IN_GC_FROM_JAVA = Address.fromInt(3);
+    public static final Word THREAD_IN_GC_FROM_NATIVE = Address.fromInt(4);
+    public static final Word THREAD_IN_GC_FROM_JAVA_DONE = Address.fromInt(5);
 
     public enum State implements PoolObject {
         ENABLED(SAFEPOINTS_ENABLED_THREAD_LOCALS),
@@ -93,6 +79,7 @@ public abstract class Safepoint {
         }
     }
 
+    @PROTOTYPE_ONLY
     public static Safepoint create(VMConfiguration vmConfiguration) {
         try {
             final String isa = vmConfiguration.platform().processorKind.instructionSet.name();
@@ -150,17 +137,16 @@ public abstract class Safepoint {
      *            thread locals can be obtained
      */
     public static void reset(Pointer vmThreadLocals) {
-        if (UseThreadStateWordForGCMutatorSynchronization) {
-            final int state = MUTATOR_STATE.getVariableWord(vmThreadLocals).asAddress().toInt();
-            if (state == THREAD_IN_GC_FROM_NATIVE) {
-                MUTATOR_STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_NATIVE));
-                Log.println("RESET TO THREAD IN NATIVE");
+        if (UseCASBasedGCMutatorSynchronization) {
+            final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+            Word state = enabledVmThreadLocals.getWord(MUTATOR_STATE.index);
+            if (state.equals(THREAD_IN_GC_FROM_JAVA)) {
+                enabledVmThreadLocals.setWord(MUTATOR_STATE.index, THREAD_IN_GC_FROM_JAVA_DONE);
             } else {
-                if (state != THREAD_IN_GC_FROM_JAVA) {
-                    reportIllegalThreadState("While resetting safepoints", state);
+                if (!state.equals(THREAD_IN_GC_FROM_NATIVE)) {
+                    FatalError.unexpected("Encountered thread in illegal state");
                 }
-                MUTATOR_STATE.setVariableWord(vmThreadLocals, Address.fromInt(THREAD_IN_GC_FROM_JAVA_DONE));
-                Log.println("RESET TO THREAD IN GCJAVADONE");
+                enabledVmThreadLocals.setWord(MUTATOR_STATE.index, THREAD_IN_NATIVE);
             }
         }
         SAFEPOINT_LATCH.setVariableWord(vmThreadLocals, SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals));
@@ -232,6 +218,7 @@ public abstract class Safepoint {
 
     public abstract Symbol latchRegister();
 
+    @PROTOTYPE_ONLY
     protected abstract byte[] createCode();
 
     public boolean isAt(Pointer instructionPointer) {
@@ -313,29 +300,5 @@ public abstract class Safepoint {
             cancelProcedure(vmThreadLocals);
             reset(vmThreadLocals);
         }
-    }
-
-    /**
-     * Reads the value of the instruction pointer saved in a given trap state area.
-     *
-     * @param trapState the block of memory holding the trap state
-     * @return the value of the instruction pointer saved in {@code trapState}
-     */
-    public abstract Pointer getInstructionPointer(Pointer trapState);
-    public abstract void setInstructionPointer(Pointer trapState, Pointer value);
-    public abstract Pointer getStackPointer(Pointer trapState, TargetMethod targetMethod);
-    public abstract Pointer getFramePointer(Pointer trapState, TargetMethod targetMethod);
-    public abstract Pointer getSafepointLatch(Pointer trapState);
-    public abstract void setReturnValue(Pointer trapState, Pointer value);
-    public abstract void setSafepointLatch(Pointer trapState, Pointer value);
-    public abstract int getTrapNumber(Pointer trapState);
-    public abstract Pointer getRegisterState(Pointer trapState);
-    public abstract void setTrapNumber(Pointer trapState, int trapNumber);
-
-    public static void reportIllegalThreadState(String context, int oldValue) {
-        Log.print(context);
-        Log.print(" encountered thread in illegal state: ");
-        Log.println(oldValue);
-        FatalError.unexpected("Encountered thread in illegal state");
     }
 }

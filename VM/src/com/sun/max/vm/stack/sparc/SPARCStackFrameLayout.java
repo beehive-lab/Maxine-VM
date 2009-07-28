@@ -52,7 +52,7 @@ public class SPARCStackFrameLayout {
      * Every stack frame must have a 16-extended word save area for the in and local register, in
      * case of window overflow or underflow.
      * This save area always must exist at %sp plus a BIAS of 2047 (0x7ff).
-     * @see STACK_BIAS
+     * @see StackBias
      */
     public static final int SAVED_AREA = 16 * Word.size();
 

@@ -20,79 +20,34 @@
  */
 package com.sun.c1x.stub;
 
-import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.lir.CodeEmitInfo;
+import com.sun.c1x.lir.LIRVisitState;
 
 /**
  * The <code>ArrayStoreExceptionStub</code> class definition.
  *
  * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
  *
  */
 public class ArrayStoreExceptionStub extends CodeStub {
 
-    private CodeEmitInfo info;
-
-    /**
-     * @param info
-     */
     public ArrayStoreExceptionStub(CodeEmitInfo info) {
-        super();
-        this.info = info;
+        super(info);
     }
 
-    /**
-     * Gets the info of this class.
-     *
-     * @return the info
-     */
-    @Override
-    public CodeEmitInfo info() {
-        return info;
-    }
-
-    /* (non-Javadoc)
-     * @see com.sun.c1x.lir.CodeStub#visit(com.sun.c1x.lir.LIRVisitState)
-     */
     @Override
     public void visit(LIRVisitState visitor) {
         visitor.doSlowCase();
     }
 
-    /**
-     * Emit the code stub for an array store exception.
-     *
-     * @param masm the target assembler
-     */
     @Override
-    public void emitCode(LIRAssembler masm) {
-        // TODO Auto-generated method stub
-
+    public void accept(CodeStubVisitor visitor) {
+        visitor.visitArrayStoreExceptionStub(this);
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.c1x.lir.CodeStub#printName(com.sun.c1x.util.LogStream)
-     */
     @Override
-    public void printName(LogStream out) {
-        out.print("ArrayStoreExceptionStub");
+    public boolean isExceptionThrowStub() {
+        return true;
     }
-
-
-
-
-//    private:
-//        CodeEmitInfo* _info;
-//
-//       public:
-//        ArrayStoreExceptionStub(CodeEmitInfo* info);
-//        virtual void emit_code(LIR_Assembler* emit);
-//        virtual CodeEmitInfo* info() const             { return _info; }
-//        virtual bool is_exception_throw_stub() const   { return true; }
-//        virtual void visit(LIR_OpVisitState* visitor) {
-//          visitor->do_slow_case(_info);
-//        }
-//      #ifndef PRODUCT
-//        virtual void print_name(outputStream* out) const { out->print("ArrayStoreExceptionStub"); }
-//      #endif // PRODUCT
 }

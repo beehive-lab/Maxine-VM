@@ -53,7 +53,7 @@ public class OptionTypes {
 
         @Override
         public String getValueFormat() {
-            return "<n>";
+            return "<long>";
         }
     }
 
@@ -272,7 +272,7 @@ public class OptionTypes {
 
         @Override
         public String getValueFormat() {
-            return "<n>";
+            return "<double>";
         }
     };
     public static final Option.Type<Float> FLOAT_TYPE = new Option.Type<Float>(Float.class, "float") {
@@ -290,7 +290,7 @@ public class OptionTypes {
 
         @Override
         public String getValueFormat() {
-            return "<n>";
+            return "<float>";
         }
     };
     public static final Option.Type<Integer> INT_TYPE = new Option.Type<Integer>(Integer.class, "int") {
@@ -308,7 +308,7 @@ public class OptionTypes {
 
         @Override
         public String getValueFormat() {
-            return "<n>";
+            return "<int>";
         }
     };
     public static final Option.Type<Boolean> BOOLEAN_TYPE = new Option.Type<Boolean>(Boolean.class, "boolean") {
@@ -320,6 +320,18 @@ public class OptionTypes {
                 return Boolean.FALSE;
             }
             throw new Option.Error("invalid boolean value: " + string);
+        }
+
+        @Override
+        public String getValueFormat() {
+            return "true|false, t|f, y|n";
+        }
+    };
+    public static final Option.Type<Boolean> BLANK_BOOLEAN_TYPE = new Option.Type<Boolean>(Boolean.class, "boolean") {
+        @Override
+        public Boolean parseValue(String string) {
+            // blank boolean always returns null
+            return null;
         }
 
         @Override

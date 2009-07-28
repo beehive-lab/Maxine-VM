@@ -23,7 +23,8 @@ package com.sun.max.vm.object.host;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.c1x.util.*;
+import com.sun.c1x.debug.TTY;
+import com.sun.c1x.debug.LogStream;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;

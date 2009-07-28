@@ -29,6 +29,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.asm.amd64.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.thread.*;
 
@@ -63,11 +64,8 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
                     asm.subq(framePointer, frameSize);
                 }
                 if (STACK_BANGING) {
-                    // emit a read of the stack 2 pages down to trigger a stack overflow earlier
-                    // TODO (tw): Check why the LSRA needs the value 3 here. Can probably be removed after implementing better stack slot sharing.
-                    asm.mov(emitter.scratchRegister(), -3 * emitter.abi().vmConfiguration().platform().pageSize, emitter.stackPointer().indirect());
-                    //asm.mov(emitter.scratchRegister(), -2 * emitter.abi().vmConfiguration().platform().pageSize(), emitter.stackPointer().indirect());
-
+                    // emit a read of the stack stackGuardSize bytes down to trigger a stack overflow earlier than would otherwise occur.
+                    asm.mov(emitter.scratchRegister(), -Trap.stackGuardSize, emitter.stackPointer().indirect());
                 }
             }
         }
@@ -77,8 +75,8 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
         final AMD64GeneralRegister64 latchRegister = AMD64Safepoint.LATCH_REGISTER;
         final AMD64GeneralRegister64 scratchRegister = AMD64GeneralRegister64.R11;
         // expand the frame size for this method to allow for the saved register state
-        final int frameSize = originalFrameSize + AMD64Safepoint.TRAP_STATE_SIZE_WITHOUT_RIP;
-        final int endOfFrame = originalFrameSize + AMD64Safepoint.TRAP_STATE_SIZE_WITH_RIP;
+        final int frameSize = originalFrameSize + AMD64TrapStateAccess.TRAP_STATE_SIZE_WITHOUT_RIP;
+        final int endOfFrame = originalFrameSize + AMD64TrapStateAccess.TRAP_STATE_SIZE_WITH_RIP;
         eirMethod.setFrameSize(frameSize);
 
         // the very first instruction must save the flags.
@@ -115,9 +113,9 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
 
         // save the trap number
         asm.mov(scratchRegister, VmThreadLocal.TRAP_NUMBER.offset, latchRegister.indirect());
-        asm.mov(originalFrameSize + AMD64Safepoint.TRAP_NUMBER_OFFSET, framePointer.indirect(), scratchRegister);
+        asm.mov(originalFrameSize + AMD64TrapStateAccess.TRAP_NUMBER_OFFSET, framePointer.indirect(), scratchRegister);
 
-        // now load the trap parameter information into registers from the vm thread locals
+        // now load the trap parameter information into registers from the VM thread locals
         final TargetABI targetABI = VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI();
         final IndexedSequence parameterRegisters = targetABI.integerIncomingParameterRegisters();
         // load the trap number into the first parameter register

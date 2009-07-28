@@ -59,7 +59,7 @@ public final class DebugHeap {
 
     @INLINE
     private static Word tagWord() {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return Address.fromLong(LONG_OBJECT_TAG);
         }
         return Address.fromInt(INT_OBJECT_TAG);
@@ -67,7 +67,7 @@ public final class DebugHeap {
 
     @INLINE
     private static Word padWord() {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return Address.fromLong(LONG_OBJECT_PAD);
         }
         return Address.fromInt(INT_OBJECT_PAD);

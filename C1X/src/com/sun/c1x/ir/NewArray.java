@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.value.ValueType;
 
 /**
  * The <code>NewArray</code> class is the base of all instructions that allocate arrays.
@@ -31,7 +31,7 @@ import com.sun.c1x.value.*;
 public abstract class NewArray extends StateSplit {
 
     Instruction length;
-    ValueStack stateBefore;
+    final ValueStack stateBefore;
 
     /**
      * Constructs a new NewArray instruction.

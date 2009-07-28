@@ -20,8 +20,10 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.ci.CiLocation;
+import com.sun.c1x.debug.LogStream;
+import com.sun.c1x.debug.TTY;
+import com.sun.c1x.util.Util;
 
 /**
  * The <code>OopMapValue</code> class definition.
