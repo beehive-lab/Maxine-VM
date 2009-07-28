@@ -100,7 +100,7 @@ public class EirMethod extends AbstractIrMethod {
 
     /**
      * Gets the size of the stack frame used for the local variables in
-     * the method being generated. The stack pointer is decremented/incremeted
+     * the method being generated. The stack pointer is decremented/incremented
      * by this amount when entering/leaving the method.
      */
     public int frameSize() {
