@@ -274,7 +274,7 @@ public class C1XOptions {
         AlwaysCSEArrayLength               = TRUE;
 
         // turn on state merging optimizations
-        MergeEquivalentConstants           = TRUE;
+        MergeEquivalentConstants           = ____;
         ComputeStoresInLoops               = TRUE;
         SimplifyPhis                       = TRUE;
 
