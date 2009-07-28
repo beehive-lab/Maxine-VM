@@ -41,4 +41,5 @@ public class C1XMetrics {
     public static int NullChecksRedundant;
     public static int EquivalentConstantsMerged;
     public static int EquivalentConstantsChecked;
+    public static int ConditionalEliminations;
 }
