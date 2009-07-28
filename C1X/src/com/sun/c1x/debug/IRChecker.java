@@ -22,7 +22,6 @@ package com.sun.c1x.debug;
 
 import java.util.*;
 
-import com.sun.c1x.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
@@ -747,8 +746,8 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
             fail("Instruction NewMultiArray must have more than 1 dimension");
         }
 
-        for (int j = 0; j < dimensions.length; j++) {
-            assertBasicType(dimensions[j], BasicType.Int);
+        for (Instruction dim : dimensions) {
+            assertBasicType(dim, BasicType.Int);
         }
     }
 
@@ -889,8 +888,7 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
 
     private void assertInstanceType(CiType ciType) {
         if (ciType != null && ciType.isLoaded()) {
-            if (ciType.isArrayKlass() || ciType.isInterface()) {
-                // TODO: check also against primitive classes
+            if (ciType.isArrayKlass() || ciType.isInterface() || ciType.basicType().isPrimitiveType()) {
                 fail("CiType " + ciType + " must be an instance class");
             }
         }
@@ -906,8 +904,7 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
 
     private void assertNotPrimitive(CiType ciType) {
         if (ciType != null && ciType.isLoaded()) {
-            if (false) {
-                // TODO: check for primitive
+            if (ciType.basicType().isPrimitiveType()) {
                 fail("CiType " + ciType + " must not be a primitive");
             }
         }
