@@ -24,6 +24,7 @@ import com.sun.c1x.bytecode.Bytecodes;
 import com.sun.c1x.util.Util;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.value.ValueType;
+import com.sun.c1x.C1XMetrics;
 
 /**
  * The <code>ArrayLength</code> instruction gets the length of an array.
@@ -41,6 +42,7 @@ public class ArrayLength extends AccessArray {
         super(ValueType.INT_TYPE, array, lockStack);
         if (array.isNonNull()) {
             clearNullCheck();
+            C1XMetrics.NullChecksRedundant++;
         }
     }
 

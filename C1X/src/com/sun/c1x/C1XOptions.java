@@ -63,6 +63,7 @@ public class C1XOptions {
     public static boolean PrintCompilation                   = ____;
     public static boolean PrintExceptionHandlers             = ____;
     public static boolean TypeChecking                       = ____;
+    public static boolean FatalUnimplemented                 = ____;
 
     // canonicalizer settings
     public static boolean CanonicalizeInstructions           = TRUE;
@@ -119,6 +120,7 @@ public class C1XOptions {
     // future settings
     public static boolean DoArrayBoundsCheckElimination      = ____;
     public static boolean DoCEElimination                    = ____;
+    public static boolean DoBlockMerging                     = ____;
     public static boolean DistinguishExceptionHandlerCode    = ____;
     public static boolean DoNullCheckElimination             = ____;
     public static boolean DoProfileGuidedInlining            = ____;
@@ -242,7 +244,7 @@ public class C1XOptions {
         AlwaysCSEArrayLength               = ____;
 
         // turn on state merging optimizations
-        MergeEquivalentConstants           = TRUE;
+        MergeEquivalentConstants           = ____;
         ComputeStoresInLoops               = TRUE;
         SimplifyPhis                       = TRUE;
 
@@ -257,6 +259,8 @@ public class C1XOptions {
 
         // turn off global optimizations, except null check elimination
         DoGlobalValueNumbering             = ____;
+        DoCEElimination                    = ____;
+        DoBlockMerging                     = ____;
         DoArrayBoundsCheckElimination      = ____;
         DistinguishExceptionHandlerCode    = ____;
         DoNullCheckElimination             = TRUE;
@@ -290,6 +294,7 @@ public class C1XOptions {
         // turn on global optimizations
         DoGlobalValueNumbering             = TRUE;
         DoCEElimination                    = TRUE;
+        DoBlockMerging                     = TRUE;
         DoArrayBoundsCheckElimination      = TRUE;
         DistinguishExceptionHandlerCode    = TRUE;
         DoNullCheckElimination             = TRUE;
