@@ -20,13 +20,11 @@
  */
 package com.sun.max.vm.heap.beltway;
 
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
 
 /**
  * @author Christos Kotselidis
@@ -34,23 +32,25 @@ import com.sun.max.vm.thread.*;
 
 public class BeltwayCollectorThread extends Thread {
 
-    public volatile boolean scavenge = false;
-    private BeltwayHeapScheme beltwayHeapScheme;
-
-    // The current working TLAB
-    private RuntimeMemoryRegion from;
-    private RuntimeMemoryRegion to;
     private static volatile int runningGCThreads = 0;
-    private int id;
     private static volatile boolean start = false;
     public static final Object callerToken = new Object();
     public static Object[] tokens = new Object[BeltwayConfiguration.numberOfGCThreads];
-    private TLAB currentTLAB;
+
     static {
         for (int i = 0; i < BeltwayConfiguration.numberOfGCThreads; i++) {
             tokens[i] = new Object();
         }
     }
+
+    public volatile boolean scavenge = false;
+    private BeltwayHeapScheme beltwayHeapScheme;
+
+    // The current working TLAB
+    private Belt from;
+    private Belt to;
+    private int id;
+    private BeltTLAB currentTLAB;
 
     public BeltwayCollectorThread(int id) {
         synchronized (tokens[id]) {
@@ -62,7 +62,6 @@ public class BeltwayCollectorThread extends Thread {
                 ProgramError.unexpected();
             }
         }
-
     }
 
     @Override
@@ -134,17 +133,20 @@ public class BeltwayCollectorThread extends Thread {
         }
     }
 
-    public void initialize(BeltwayHeapScheme beltwayHeapScheme, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
+    public void initialize(BeltwayHeapScheme beltwayHeapScheme, Belt from, Belt to) {
         this.beltwayHeapScheme = beltwayHeapScheme;
         this.from = from;
         this.to = to;
         setScavenging(true);
     }
 
-    public void scavenge(RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        final Pointer searchAddress = ((Belt) to).getPrevAllocationMark().asPointer();
+    public void scavenge(Belt from, Belt to) {
+        final Pointer searchAddress = to.getPrevAllocationMark().asPointer();
         final int searchIndex = SideTable.getChunkIndexFromHeapAddress(searchAddress);
         final int stopSearchIndex = SideTable.getChunkIndexFromHeapAddress(to.end());
+        final BeltCellVisitor cellVisitor = ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).cellVisitor();
+        final Action action = ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).copyAction();
+
         Pointer startScavengingAddress = beltwayHeapScheme.getNextAvailableGCTask(searchIndex, stopSearchIndex);
         while (!startScavengingAddress.isZero()) {
             final Pointer endScavengingAddress = beltwayHeapScheme.getGCTLABEndFromStart(startScavengingAddress);
@@ -159,12 +161,12 @@ public class BeltwayCollectorThread extends Thread {
             //Debug.println(endScavengingAddress);
             //Debug.unlock();
 
-            BeltwayCellVisitorImpl.linearVisitAllCellsTLAB(((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).beltwayCellVisitor(), ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).getAction(), startScavengingAddress,
+            BeltwayCellVisitorImpl.linearVisitAllCellsTLAB(((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).cellVisitor(), ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).copyAction(), startScavengingAddress,
                             endScavengingAddress, from, to);
             startScavengingAddress = beltwayHeapScheme.getNextAvailableGCTask(searchIndex, stopSearchIndex);
         }
 
-        currentTLAB = VmThread.current().getTLAB();
+        // currentTLAB = VmThread.current().getTLAB();
         while (!SideTable.isScavenged(SideTable.getChunkIndexFromHeapAddress(currentTLAB.start()))) {
             SideTable.markScavengeSideTable(currentTLAB.start());
             //final Pointer endScavengingAddress = _currentTLAB.end().asPointer();
@@ -178,11 +180,11 @@ public class BeltwayCollectorThread extends Thread {
             //Debug.println(endScavengingAddress);
             //Debug.unlock();
 
-            BeltwayCellVisitorImpl.linearVisitTLAB(currentTLAB, ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).beltwayCellVisitor(), ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).getAction(), from, to);
-            final TLAB newTLAB = VmThread.current().getTLAB();
+            BeltwayCellVisitorImpl.linearVisitTLAB(currentTLAB, cellVisitor, action, from, to);
+           /* final BeltTLAB newTLAB = VmThread.current().getTLAB();
             if (!newTLAB.start().equals(currentTLAB.start())) {
                 currentTLAB = newTLAB;
-            }
+            }*/
         }
 
     }
@@ -195,7 +197,7 @@ public class BeltwayCollectorThread extends Thread {
         this.scavenge = scavenge;
     }
 
-    public TLAB getScavengeTLAB() {
+    public BeltTLAB getScavengeTLAB() {
         return currentTLAB;
     }
 }

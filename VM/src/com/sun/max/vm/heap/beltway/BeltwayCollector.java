@@ -20,6 +20,10 @@
  */
 package com.sun.max.vm.heap.beltway;
 
+import com.sun.max.vm.*;
+import com.sun.max.vm.heap.*;
+import com.sun.max.vm.monitor.*;
+
 /**
  * This class defines a specialized over the generic Collector Runnable which performs "an action" over a "a space".
  *
@@ -31,6 +35,8 @@ public class BeltwayCollector implements Runnable {
     protected Runnable gcImpl;
 
     private BeltwayHeapScheme beltwayHeapScheme;
+
+    protected final MonitorScheme monitorScheme = VMConfiguration.target().monitorScheme();
 
     public BeltwayCollector() {
     }
@@ -54,5 +60,31 @@ public class BeltwayCollector implements Runnable {
     protected void verifyBelt(Belt belt) {
         beltwayHeapScheme.getVerifier().verifyHeap(belt.start(), belt.getAllocationMark(), beltwayHeapScheme.getBeltManager().getApplicationHeap());
     }
+
+    /**
+     * Scavenge the stacks, boot, code root for the "scanned" belt and evacuate objects to the "evacuation" belt.
+     *
+     * @param scanned
+     * @param evacuation
+     */
+    protected void scavengeBeltRoot(Belt scanned, Belt evacuation) {
+        final BeltwayHeapScheme beltwayHeapSchemeGen = getBeltwayHeapScheme();
+        if (Heap.verbose()) {
+            Log.println("Scan Roots ");
+        }
+
+        beltwayHeapSchemeGen.getRootScannerUpdater().run(scanned, evacuation);
+
+        if (Heap.verbose()) {
+            Log.println("Scan Boot Heap");
+        }
+
+        beltwayHeapSchemeGen.scanBootHeap(scanned, evacuation);
+        if (Heap.verbose()) {
+            Log.println("Scan Code");
+        }
+        beltwayHeapSchemeGen.scanCode(scanned, evacuation);
+    }
+
 
 }

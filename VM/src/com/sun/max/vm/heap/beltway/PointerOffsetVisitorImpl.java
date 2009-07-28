@@ -23,13 +23,14 @@ package com.sun.max.vm.heap.beltway;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.grip.*;
-
+/**
+ *
+ *
+ * @author Laurent Daynes
+ */
 public class PointerOffsetVisitorImpl implements BeltWayPointerOffsetVisitor {
 
-    private Action actionImpl;
-
-    public PointerOffsetVisitorImpl() {
-    }
+    private final Action actionImpl;
 
     public PointerOffsetVisitorImpl(Action actionImpl) {
         this.actionImpl = actionImpl;
@@ -43,10 +44,6 @@ public class PointerOffsetVisitorImpl implements BeltWayPointerOffsetVisitor {
                 pointer.writeGrip(offset, newGrip);
             }
         }
-    }
-
-    public void visitPointerOffset(Pointer pointer, int offset) {
-
     }
 
 }

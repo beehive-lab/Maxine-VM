@@ -22,33 +22,24 @@ package com.sun.max.vm.heap.beltway;
 
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.thread.*;
 
 /**
  * @author Christos Kotselidis
  */
 
-public class BeltwayCellVisitorImpl implements BeltWayCellVisitor {
+public class BeltwayCellVisitorImpl implements BeltCellVisitor {
+    final BeltWayPointerOffsetVisitor pointerOffsetGripUpdater;
 
-    public BeltwayCellVisitorImpl() {
-
+    public BeltwayCellVisitorImpl(BeltWayPointerOffsetVisitor pointerOffsetGripUpdater) {
+        this.pointerOffsetGripUpdater = pointerOffsetGripUpdater;
     }
 
-    public static void linearVisitAllCells(BeltWayCellVisitor cellVisitor, Action action, RuntimeMemoryRegion source, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        Pointer cell = source.start().asPointer();
-        while (cell.lessThan(source.getAllocationMark())) {
-            cell = DebugHeap.checkDebugCellTag(from.start(), cell);
-            cell = cellVisitor.visitCell(cell, action, from, to);
-        }
-    }
-
-    public static void linearVisitTLAB(TLAB tlab, BeltWayCellVisitor cellVisitor, Action action, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
+    public static void linearVisitTLAB(BeltTLAB tlab, BeltCellVisitor cellVisitor, Action action, Belt from, Belt to) {
         Pointer cell = tlab.start().asPointer();
         final Pointer initialEnd = tlab.end().asPointer();
         while (cell.lessThan(tlab.getAllocationMark()) && cell.lessThan(initialEnd)) {
@@ -57,18 +48,18 @@ public class BeltwayCellVisitorImpl implements BeltWayCellVisitor {
         }
     }
 
-    public static void linearVisitAllCellsTLAB(BeltWayCellVisitor cellVisitor, Action action, Pointer tlabStart, Pointer tlabEnd, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
+    public static void linearVisitAllCellsTLAB(BeltCellVisitor cellVisitor, Action action, Pointer tlabStart, Pointer tlabEnd, Belt from, Belt to) {
         Pointer cell = tlabStart;
         while (cell.lessThan(tlabEnd)) {
             cell = DebugHeap.checkDebugCellTag(from.start(), cell);
             cell = cellVisitor.visitCell(cell, action, from, to);
         }
     }
-
+/*
     public static void linearVisitAllCellsBelt(BeltWayCellVisitor cellVisitor, Action action, Belt source, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         Pointer cell = source.start().asPointer();
         VmThread thread = VmThread.current();
-        TLAB currentTLAB = thread.getTLAB();
+        BeltTLAB currentTLAB = thread.getTLAB();
         while (cell.lessThan(currentTLAB.getAllocationMark())) {
             cell = DebugHeap.checkDebugCellTag(from.start(), cell);
             cell = cellVisitor.visitCell(cell, action, from, to);
@@ -76,7 +67,7 @@ public class BeltwayCellVisitorImpl implements BeltWayCellVisitor {
             currentTLAB = thread.getTLAB();
         }
     }
-
+*/
     public static void visitOriginOffsets(Hub hub, Pointer origin, BeltWayPointerOffsetVisitor offsetVisitor, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         final int n = hub.referenceMapStartIndex + hub.referenceMapLength;
         for (int i = hub.referenceMapStartIndex; i < n; i++) {
@@ -85,7 +76,7 @@ public class BeltwayCellVisitorImpl implements BeltWayCellVisitor {
         }
     }
 
-    public Pointer visitCell(Pointer cell, Action action, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
+    public Pointer visitCell(Pointer cell, Action action, Belt from, Belt to) {
         final Pointer origin = Layout.cellToOrigin(cell);
 
         final Grip oldHubGrip = Layout.readHubGrip(origin); // Reads the hub-Grip of the previously retrieved object.
@@ -100,18 +91,18 @@ public class BeltwayCellVisitorImpl implements BeltWayCellVisitor {
         final SpecificLayout specificLayout = hub.specificLayout;
 
         if (specificLayout.isTupleLayout()) {
-            visitOriginOffsets(hub, origin, ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).pointerOffsetGripUpdater(), from, to);
+            visitOriginOffsets(hub, origin, pointerOffsetGripUpdater, from, to);
             return cell.plus(hub.tupleSize);
         }
         if (specificLayout.isHybridLayout()) {
-            visitOriginOffsets(hub, origin, ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).pointerOffsetGripUpdater(), from, to);
+            visitOriginOffsets(hub, origin, pointerOffsetGripUpdater, from, to);
         } else if (specificLayout.isReferenceArrayLayout()) {
             scanReferenceArray(action, origin, from, to);
         }
         return cell.plus(Layout.size(origin));
     }
 
-    private static void scanReferenceArray(Action action, Pointer origin, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
+    private static void scanReferenceArray(Action action, Pointer origin, Belt from, Belt to) {
         final int length = Layout.readArrayLength(origin);
         for (int index = 0; index < length; index++) {
             final Grip oldGrip = Layout.getGrip(origin, index);

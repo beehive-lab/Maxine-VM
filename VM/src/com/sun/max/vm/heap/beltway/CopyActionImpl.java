@@ -29,17 +29,36 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 
 /**
+ * A closure for evacuating an object to a belt.
+ * The closure assume single-threaded evacuation and perform a non-synchronized bump allocation
+ * to allocate space in the evacuation belt.
+ *
  * @author Christos Kotselidis
  */
 
 public class CopyActionImpl implements Action {
 
-    private static Verify verifyAction = new VerifyActionImpl();
+    private final Verify verifyAction;
+
+    private BeltwayHeapScheme heapScheme;
+
+    public CopyActionImpl(Verify verifyAction) {
+        this.verifyAction = verifyAction;
+    }
+
+    /**
+     * Initialize the heap scheme this closure is being used by.
+     * This needs to be decoupled from the constructor because the closure is typically created at prototyping time
+     * before the heap scheme might be created.
+     */
+    public void initialize(BeltwayHeapScheme heapScheme) {
+        this.heapScheme = heapScheme;
+    }
 
     public Grip doAction(Grip origin, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         final Pointer fromOrigin = origin.toOrigin();
         if (MaxineVM.isDebug()) {
-            if (!VMConfiguration.hostOrTarget().heapScheme().contains(fromOrigin)) {
+            if (!heapScheme.contains(fromOrigin)) {
                 Log.print("invalid grip: ");
                 Log.println(origin.toOrigin().asAddress());
                 FatalError.unexpected("invalid grip");
@@ -55,7 +74,8 @@ public class CopyActionImpl implements Action {
             }
             final Pointer fromCell = Layout.originToCell(fromOrigin);
             final Size size = Layout.size(fromOrigin);
-            final Pointer toCell = ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).gcAllocate(to, size);
+            final Belt evacuationBelt = (Belt) to;
+            final Pointer toCell = evacuationBelt.bumpAllocate(size);
             if (toCell.isZero()) {
                 throw BeltwayHeapScheme.outOfMemoryError;
             }

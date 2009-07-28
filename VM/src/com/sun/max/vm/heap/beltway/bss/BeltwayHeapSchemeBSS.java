@@ -38,7 +38,7 @@ import com.sun.max.vm.tele.*;
 public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
 
     private static int[] DEFAULT_BELT_HEAP_PERCENTAGE = new int[] {50, 50};
-    protected static BeltwaySSCollector beltCollectorBSS = new BeltwaySSCollector();
+    final  BeltwaySSCollector beltCollectorBSS = new BeltwaySSCollector();
 
     public BeltwayHeapSchemeBSS(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -54,6 +54,7 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
         super.initialize(phase);
         if (phase == MaxineVM.Phase.PRISTINE) {
             InspectableHeapInfo.init(getToSpace(), getFromSpace());
+            tlabAllocationBelt = getFromSpace();
         } else if (phase == MaxineVM.Phase.RUNNING) {
             beltCollectorBSS.setBeltwayHeapScheme(this);
             beltCollector.setRunnable(beltCollectorBSS);
@@ -81,18 +82,6 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
             return true;
         }
         return false;
-    }
-
-    @INLINE(override = true)
-    @NO_SAFEPOINTS("TODO")
-    public Pointer allocate(Size size) {
-        if (!MaxineVM.isRunning()) {
-            return bumpAllocateSlowPath(getFromSpace(), size);
-        }
-        if (BeltwayConfiguration.useTLABS) {
-            return tlabAllocate(getFromSpace(), size);
-        }
-        return heapAllocate(getFromSpace(), size);
     }
 
     private Size immediateFreeSpace() {

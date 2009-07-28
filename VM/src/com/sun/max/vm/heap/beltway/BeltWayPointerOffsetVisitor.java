@@ -26,9 +26,14 @@ import com.sun.max.unsafe.*;
 /**
  * @author Bernd Mathiske
  */
-public interface BeltWayPointerOffsetVisitor extends Visitor{
-
+public interface BeltWayPointerOffsetVisitor extends Visitor {
+    /**
+     * Visit reference located at address pointer + offset in Belt from.
+     *
+     * @param pointer
+     * @param offset
+     * @param from
+     * @param to
+     */
     void visitPointerOffset(Pointer pointer, int offset, RuntimeMemoryRegion from, RuntimeMemoryRegion to);
-    void visitPointerOffset(Pointer pointer, int offset);
-
 }
