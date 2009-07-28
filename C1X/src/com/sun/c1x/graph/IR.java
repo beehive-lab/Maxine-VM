@@ -30,6 +30,7 @@ import com.sun.c1x.ir.IRScope;
 import com.sun.c1x.opt.CEEliminator;
 import com.sun.c1x.opt.GlobalValueNumberer;
 import com.sun.c1x.opt.NullCheckEliminator;
+import com.sun.c1x.opt.BlockMerger;
 import com.sun.c1x.value.ValueStack;
 import java.util.Iterator;
 import java.util.List;
@@ -105,6 +106,9 @@ public class IR {
         // do basic optimizations
         if (C1XOptions.DoCEElimination) {
             new CEEliminator(this);
+        }
+        if (C1XOptions.DoBlockMerging) {
+            new BlockMerger(this);
         }
         if (C1XOptions.DoNullCheckElimination) {
             new NullCheckEliminator(this);

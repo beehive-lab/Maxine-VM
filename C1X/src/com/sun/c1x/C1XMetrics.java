@@ -42,4 +42,6 @@ public class C1XMetrics {
     public static int EquivalentConstantsMerged;
     public static int EquivalentConstantsChecked;
     public static int ConditionalEliminations;
+    public static int BlocksMerged;
+    public static int NestedIfOpsRemoved;
 }
