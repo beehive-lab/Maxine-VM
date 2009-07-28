@@ -35,17 +35,35 @@ import com.sun.max.vm.tele.*;
 
 public class BeltwayBA2Collector extends BeltwayCollector {
 
-    public static long minorCollections = 0;
     public static long majorCollections = 0;
-
-    public BeltwayBA2Collector() {
-    }
 
     @Override
     public void run() {
     }
 
-    private final Runnable majorGC = new Runnable() {
+    class FullGCCollector implements Runnable {
+        private void printDebugInfo(Belt matureSpaceBeforeAllocation, Belt matureSpaceReserve) {
+            Log.print("matureSpaceBeforeAllocation start: ");
+            Log.println(matureSpaceBeforeAllocation.start());
+            Log.print("matureSpaceBeforeAllocation Mark: ");
+            Log.println(matureSpaceBeforeAllocation.getAllocationMark());
+            Log.print("matureSpaceBeforeAllocation Space End: ");
+            Log.println(matureSpaceBeforeAllocation.end());
+            Log.print("matureSpaceReserve Space Start: ");
+            Log.println(matureSpaceReserve.start());
+            Log.print("matureSpaceReserve Space Allocation Mark: ");
+            Log.println(matureSpaceReserve.getAllocationMark());
+            Log.print("matureSpaceReserve Space End: ");
+            Log.println(matureSpaceReserve.end());
+        }
+
+        /**
+         * Evacuate remaining objects of the ¨from " belt reachable from the "to" belt.
+         */
+        protected void evacuateFollowers(Belt from, Belt to) {
+            getBeltwayHeapScheme().evacuate(from, to);
+            // beltwayHeapSchemeBA2.fillLastTLAB(); FIXME: do we need this ?
+        }
 
         public void run() {
             majorCollections++;
@@ -70,47 +88,13 @@ public class BeltwayBA2Collector extends BeltwayCollector {
             matureSpaceReserve.setEnd(matureSpaceEnd);
 
             if (Heap.verbose()) {
-                Log.print("matureSpaceBeforeAllocation start: ");
-                Log.println(matureSpaceBeforeAllocation.start());
-                Log.print("matureSpaceBeforeAllocation Mark: ");
-                Log.println(matureSpaceBeforeAllocation.getAllocationMark());
-                Log.print("matureSpaceBeforeAllocation Space End: ");
-                Log.println(matureSpaceBeforeAllocation.end());
-                Log.print("matureSpaceReserve Space Start: ");
-                Log.println(matureSpaceReserve.start());
-                Log.print("matureSpaceReserve Space Allocation Mark: ");
-                Log.println(matureSpaceReserve.getAllocationMark());
-                Log.print("matureSpaceReserve Space End: ");
-                Log.println(matureSpaceReserve.end());
-                Log.println("Scan roots ");
+                printDebugInfo(matureSpaceBeforeAllocation, matureSpaceReserve);
             }
             // Start scanning the reachable objects from my roots.
             beltwayHeapSchemeBA2.getRootScannerUpdater().setFromSpace(matureSpaceBeforeAllocation);
             beltwayHeapSchemeBA2.getRootScannerUpdater().setToSpace(matureSpaceReserve);
-            beltwayHeapSchemeBA2.getRootScannerUpdater().run();
 
-            if (Heap.verbose()) {
-                Log.print("matureSpaceReserve Space Start: ");
-                Log.println(matureSpaceReserve.start());
-                Log.print("matureSpaceReserve Space Allocation Mark: ");
-                Log.println(matureSpaceReserve.getAllocationMark());
-                Log.print("matureSpaceReserve Space End: ");
-                Log.println(matureSpaceReserve.end());
-                Log.println("Scan Boot");
-            }
-            beltwayHeapSchemeBA2.scanBootHeap(matureSpaceBeforeAllocation, matureSpaceReserve);
-
-            if (Heap.verbose()) {
-                Log.print("matureSpaceReserve Space Start: ");
-                Log.println(matureSpaceReserve.start());
-                Log.print("matureSpaceReserve Space Allocation Mark: ");
-                Log.println(matureSpaceReserve.getAllocationMark());
-                Log.print("matureSpaceReserve Space End: ");
-                Log.println(matureSpaceReserve.end());
-                Log.println("Scan code");
-
-            }
-            beltwayHeapSchemeBA2.scanCode(matureSpaceBeforeAllocation, matureSpaceReserve);
+            scavengeBeltRoot(matureSpaceBeforeAllocation, matureSpaceReserve);
 
             if (Heap.verbose()) {
                 Log.print("matureSpaceReserve Space Start: ");
@@ -121,42 +105,12 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                 Log.println(matureSpaceReserve.end());
                 Log.println("Move Reachable");
             }
-
-            if (BeltwayConfiguration.parallelScavenging) {
-                beltwayHeapSchemeBA2.fillLastTLAB();
-                beltwayHeapSchemeBA2.markSideTableLastTLAB();
-                BeltwayHeapScheme.inScavenging = true;
-                beltwayHeapSchemeBA2.initializeGCThreads(beltwayHeapSchemeBA2, matureSpaceBeforeAllocation, matureSpaceReserve);
-                VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
-                if (Heap.verbose()) {
-                    Log.println("Start Threads");
-                }
-
-                beltwayHeapSchemeBA2.startGCThreads();
-                BeltwayHeapScheme.inScavenging = false;
-                if (Heap.verbose()) {
-                    Log.println("Join Threads");
-                }
-            } else {
-                beltwayHeapSchemeBA2.linearScanRegionBelt(matureSpaceReserve, matureSpaceBeforeAllocation, matureSpaceReserve);
-                beltwayHeapSchemeBA2.fillLastTLAB();
-            }
+            evacuateFollowers(matureSpaceBeforeAllocation, matureSpaceReserve);
 
             matureSpaceReserve.setEnd(matureSpaceReserve.getAllocationMark());
 
             if (Heap.verbose()) {
-                Log.print("matureSpaceBeforeAllocation start: ");
-                Log.println(matureSpaceBeforeAllocation.start());
-                Log.print("matureSpaceBeforeAllocation Mark: ");
-                Log.println(matureSpaceBeforeAllocation.getAllocationMark());
-                Log.print("matureSpaceBeforeAllocation Space End: ");
-                Log.println(matureSpaceBeforeAllocation.end());
-                Log.print("matureSpaceReserve Space Start: ");
-                Log.println(matureSpaceReserve.start());
-                Log.print("matureSpaceReserve Space Allocation Mark: ");
-                Log.println(matureSpaceReserve.getAllocationMark());
-                Log.print("matureSpaceReserve Space End: ");
-                Log.println(matureSpaceReserve.end());
+                printDebugInfo(matureSpaceBeforeAllocation, matureSpaceReserve);
             }
 
             matureSpace.resetAllocationMark();
@@ -178,57 +132,25 @@ public class BeltwayBA2Collector extends BeltwayCollector {
 
                 if (Heap.verbose()) {
                     Log.println("Compaction ");
-                    Log.println("Scan roots ");
                 }
                 // Start scanning the reachable objects from my roots.
                 beltwayHeapSchemeBA2.getRootScannerUpdater().setToSpace(matureSpace);
                 beltwayHeapSchemeBA2.getRootScannerUpdater().setFromSpace(matureSpaceReserve);
-                beltwayHeapSchemeBA2.getRootScannerUpdater().run();
 
+                scavengeBeltRoot(matureSpaceReserve, matureSpace);
                 if (Heap.verbose()) {
-                    Log.println("Scan Boot");
+                    Log.println("Evacuate Followers");
                 }
 
-                beltwayHeapSchemeBA2.scanBootHeap(matureSpaceReserve, matureSpace);
-
-                if (Heap.verbose()) {
-                    Log.println("Scan code");
-                }
-
-                beltwayHeapSchemeBA2.scanCode(matureSpaceReserve, beltwayHeapSchemeBA2.getMatureSpace());
-                if (Heap.verbose()) {
-                    Log.println("Move Reachable");
-                }
-
-                if (BeltwayConfiguration.parallelScavenging) {
-                    beltwayHeapSchemeBA2.fillLastTLAB();
-                    beltwayHeapSchemeBA2.markSideTableLastTLAB();
-                    BeltwayHeapScheme.inScavenging = true;
-                    beltwayHeapSchemeBA2.initializeGCThreads(beltwayHeapSchemeBA2, matureSpaceReserve, matureSpace);
-                    VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
-                    if (Heap.verbose()) {
-                        Log.println("Start Threads");
-                    }
-
-                    beltwayHeapSchemeBA2.startGCThreads();
-                    BeltwayHeapScheme.inScavenging = false;
-                    if (Heap.verbose()) {
-                        Log.println("Join Threads");
-                    }
-                } else {
-                    beltwayHeapSchemeBA2.linearScanRegionBelt(matureSpace, matureSpaceReserve, matureSpace);
-                    beltwayHeapSchemeBA2.fillLastTLAB();
-                }
+                evacuateFollowers(matureSpaceReserve, matureSpace);
 
                 BeltwayHeapSchemeBA2.sideTable.restoreAllChunkSlots();
-
 
                 if (Heap.verbose()) {
                     Log.println("Reset Nursery Space Allocation Mark");
                 }
                 InspectableHeapInfo.afterGarbageCollection();
-                VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
-
+                monitorScheme.afterGarbageCollection();
 
                 if (Heap.verbose()) {
                     final Belt nurserySpace = beltwayHeapSchemeBA2.getNurserySpace();
@@ -251,17 +173,40 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                 BeltwayHeapScheme.outOfMemory = true;
             }
         }
-    };
-
-    public Runnable getMinorGC() {
-        return minorGC;
     }
 
-    public Runnable getMajorGC() {
-        return majorGC;
-    }
+    class MinorGCCollector implements Runnable {
+        public long minorCollections = 0;
+        final Belt nurserySpace;
+        final Belt matureSpace;
 
-    private final Runnable minorGC = new Runnable() {
+        MinorGCCollector() {
+            final BeltwayHeapSchemeBA2 beltwayHeapSchemeBA2 = (BeltwayHeapSchemeBA2) getBeltwayHeapScheme();
+            nurserySpace =  beltwayHeapSchemeBA2.getNurserySpace();
+            matureSpace =  beltwayHeapSchemeBA2.getMatureSpace();
+        }
+
+        private void printHeapDebugInfo() {
+            Log.print("Nursery Space Start: ");
+            Log.println(nurserySpace.start());
+            Log.print("Nursery Space Allocation Mark: ");
+            Log.println(nurserySpace.getAllocationMark());
+            Log.print("Nursery Space End: ");
+            Log.println(nurserySpace.end());
+            Log.print("Mature Space Start: ");
+            Log.println(matureSpace.start());
+            Log.print("Mature Space Allocation Mark: ");
+            Log.println(matureSpace.getAllocationMark());
+            Log.print("Mature Space End: ");
+            Log.println(matureSpace.end());
+        }
+
+        protected void evacuateFollowers() {
+            if (Heap.verbose()) {
+                Log.println("Evacuate Followers");
+            }
+            getBeltwayHeapScheme().evacuate(nurserySpace, matureSpace);
+        }
 
         public void run() {
             minorCollections++;
@@ -269,89 +214,36 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                 Log.print("Minor Collection: ");
                 Log.println(minorCollections);
             }
-            final BeltwayHeapSchemeBA2 beltwayHeapSchemeBA2 = (BeltwayHeapSchemeBA2) getBeltwayHeapScheme();
-            final Belt nurserySpace =  beltwayHeapSchemeBA2.getNurserySpace();
-            final Belt matureSpace =  beltwayHeapSchemeBA2.getMatureSpace();
             matureSpace.setAllocationMarkSnapshot();
 
             if (Heap.verbose()) {
-                Log.print("Nursery Space Start: ");
-                Log.println(nurserySpace.start());
-                Log.print("Nursery Space Allocation Mark: ");
-                Log.println(nurserySpace.getAllocationMark());
-                Log.print("Nursery Space End: ");
-                Log.println(nurserySpace.end());
-                Log.print("Mature Space Start: ");
-                Log.println(matureSpace.start());
-                Log.print("Mature Space Allocation Mark: ");
-                Log.println(matureSpace.getAllocationMark());
-                Log.print("Mature Space End: ");
-                Log.println(matureSpace.end());
+                printHeapDebugInfo();
                 Log.println("Verify Nursery:");
             }
             verifyBelt(nurserySpace);
             InspectableHeapInfo.beforeGarbageCollection();
-            VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
+            monitorScheme.beforeGarbageCollection();
 
-            if (Heap.verbose()) {
-                Log.println("Scan Roots ");
-            }
-            beltwayHeapSchemeBA2.getRootScannerUpdater().setFromSpace(nurserySpace);
-            beltwayHeapSchemeBA2.getRootScannerUpdater().setToSpace(matureSpace);
-            beltwayHeapSchemeBA2.getRootScannerUpdater().run();
-
-            if (Heap.verbose()) {
-                Log.println("Scan Boot Heap");
-            }
-
-            beltwayHeapSchemeBA2.scanBootHeap(nurserySpace, matureSpace);
-
-            if (Heap.verbose()) {
-                Log.println("Scan Code");
-            }
-
-            beltwayHeapSchemeBA2.scanCode(nurserySpace, matureSpace);
+            getBeltwayHeapScheme().getRootScannerUpdater().setFromSpace(nurserySpace);
+            getBeltwayHeapScheme().getRootScannerUpdater().setToSpace(matureSpace);
+            scavengeBeltRoot(nurserySpace, matureSpace);
 
             if (Heap.verbose()) {
                 Log.println("Scan Cards");
             }
 
-            beltwayHeapSchemeBA2.scanCards(matureSpace, nurserySpace, matureSpace);
+            getBeltwayHeapScheme().scanCardAndEvacuate(matureSpace, nurserySpace);
 
-            if (Heap.verbose()) {
-                Log.println("Scavenge");
-            }
-            if (BeltwayConfiguration.parallelScavenging) {
-                beltwayHeapSchemeBA2.fillLastTLAB();
-                beltwayHeapSchemeBA2.markSideTableLastTLAB();
-                BeltwayHeapScheme.inScavenging = true;
-                beltwayHeapSchemeBA2.initializeGCThreads(beltwayHeapSchemeBA2, nurserySpace, matureSpace);
-                VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
-                if (Heap.verbose()) {
-                    Log.println("Start Threads");
-                }
-
-                beltwayHeapSchemeBA2.startGCThreads();
-                BeltwayHeapScheme.inScavenging = false;
-                if (Heap.verbose()) {
-                    Log.println("Join Threads");
-                }
-            } else {
-                beltwayHeapSchemeBA2.linearScanRegionBelt(matureSpace, nurserySpace, matureSpace);
-                beltwayHeapSchemeBA2.fillLastTLAB();
-            }
+            evacuateFollowers();
+            // beltwayHeapSchemeBA2.fillLastTLAB(); FIXME: do we need this ?
 
             BeltwayHeapSchemeBA2.sideTable.restoreAllChunkSlots();
-
-            // TODO: Delete
-            //Debug.println("Wipe Eden");
-            //beltwayHeapSchemeBA2.wipeMemory(nurserySpace);
 
             if (Heap.verbose()) {
                 Log.println("Reset Nursery Space Allocation Mark");
             }
             nurserySpace.resetAllocationMark();
-            VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
+            monitorScheme.afterGarbageCollection();
 
             if (Heap.verbose()) {
                 Log.print("Mature Space Start: ");
@@ -367,25 +259,74 @@ public class BeltwayBA2Collector extends BeltwayCollector {
             InspectableHeapInfo.afterGarbageCollection();
 
             if (Heap.verbose()) {
-                Log.print("Nursery Space Start: ");
-                Log.println(nurserySpace.start());
-                Log.print("Nursery Space Allocation Mark: ");
-                Log.println(nurserySpace.getAllocationMark());
-                Log.print("Nursery Space End: ");
-                Log.println(nurserySpace.end());
-                Log.print("Mature Space Start: ");
-                Log.println(matureSpace.start());
-                Log.print("Mature Space Allocation Mark: ");
-                Log.println(matureSpace.getAllocationMark());
-                Log.print("Mature Space End: ");
-                Log.println(matureSpace.end());
-            }
-
-            if (Heap.verbose()) {
+                printHeapDebugInfo();
                 Log.print("End of Minor Collection: ");
                 Log.println(minorCollections);
             }
         }
-    };
+    }
 
+    class ParFullGCCollector extends FullGCCollector {
+
+        @Override
+        protected void evacuateFollowers(Belt from, Belt to) {
+            final BeltwayHeapSchemeBA2 beltwayHeapSchemeBA2 = (BeltwayHeapSchemeBA2) getBeltwayHeapScheme();
+            beltwayHeapSchemeBA2.fillLastTLAB();
+            //beltwayHeapSchemeBA2.markSideTableLastTLAB();
+            BeltwayHeapScheme.inScavenging = true;
+            beltwayHeapSchemeBA2.initializeGCThreads(beltwayHeapSchemeBA2, from, to);
+            VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
+            if (Heap.verbose()) {
+                Log.println("Start Threads");
+            }
+
+            beltwayHeapSchemeBA2.startGCThreads();
+            BeltwayHeapScheme.inScavenging = false;
+            if (Heap.verbose()) {
+                Log.println("Join Threads");
+            }
+        }
+    }
+
+    class ParMinorGCCollector  extends MinorGCCollector {
+        final BeltwayHeapSchemeBA2 beltwayHeapSchemeBA2 = (BeltwayHeapSchemeBA2) getBeltwayHeapScheme();
+
+        @Override
+        protected void evacuateFollowers() {
+            if (Heap.verbose()) {
+                Log.println("Evacuate Followers");
+            }
+            beltwayHeapSchemeBA2.fillLastTLAB();
+            // beltwayHeapSchemeBA2.markSideTableLastTLAB();
+            BeltwayHeapScheme.inScavenging = true;
+            beltwayHeapSchemeBA2.initializeGCThreads(beltwayHeapSchemeBA2, nurserySpace, matureSpace);
+            VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
+            if (Heap.verbose()) {
+                Log.println("Start Threads");
+            }
+
+            beltwayHeapSchemeBA2.startGCThreads();
+            BeltwayHeapScheme.inScavenging = false;
+            if (Heap.verbose()) {
+                Log.println("Join Threads");
+            }
+            getBeltwayHeapScheme().evacuate(nurserySpace, matureSpace);
+        }
+    }
+
+    final Runnable minorGCCollector;
+    final Runnable fullGCCollector;
+
+    public Runnable getMinorGC() {
+        return minorGCCollector;
+    }
+
+    public Runnable getMajorGC() {
+        return fullGCCollector;
+    }
+
+    public BeltwayBA2Collector() {
+        minorGCCollector =  BeltwayConfiguration.parallelScavenging ? new ParMinorGCCollector() : new MinorGCCollector();
+        fullGCCollector =  BeltwayConfiguration.parallelScavenging ? new ParFullGCCollector() : new FullGCCollector();
+    }
 }

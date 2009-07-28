@@ -169,7 +169,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         "The size of thread-local allocation buffers."), MaxineVM.Phase.PRISTINE);
 
     /**
-     * A VM option for disabling use of TLABs.
+     * A VM option for forcing a GC before allocation. Ignored if useTLABOption is on.
      */
     private static final VMBooleanXXOption excessiveGCOption = register(new VMBooleanXXOption("-XX:-ExcessiveGC",
         "Perform a garbage collection before every allocation. This is ignored if " + useTLABOption + " is specified."), MaxineVM.Phase.PRISTINE);
@@ -749,7 +749,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      *
      * @param size the size of memory chunk to be allocated
      * @return an allocated chunk of memory {@code size} bytes in size
-     * @throws OutOfMemoryError if the allocation request cannot be satified
+     * @throws OutOfMemoryError if the allocation request cannot be satisfied.
      */
     @INLINE
     private Pointer allocate(Size size) {
@@ -772,6 +772,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      * @param size the requested allocation size
      * @return the address of the allocated cell. Space for the {@linkplain DebugHeap#writeCellTag(Pointer) debug tag}
      *         will have been reserved immediately before the allocated cell.
+     * @throws OutOfMemoryError if the allocation request cannot be satisfied.
      */
     @NEVER_INLINE
     private Pointer allocateSlowPath(Size size) {
@@ -831,6 +832,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      *
      * @param size the requested cell size to be allocated
      * @param adjustForDebugTag specifies if an extra word is to be reserved before the cell for the debug tag word
+     * @throws OutOfMemoryError if the allocation request cannot be satisfied.
      */
     @NEVER_INLINE
     private Pointer retryAllocate(Size size, boolean adjustForDebugTag) {

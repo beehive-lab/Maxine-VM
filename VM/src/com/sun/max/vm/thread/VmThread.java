@@ -139,8 +139,6 @@ public class VmThread {
     private int id;
     private int parkState;
 
-    private TLAB tlab = new TLAB();
-
     private Address guardPage = Address.zero();
 
     @CONSTANT
@@ -211,9 +209,6 @@ public class VmThread {
         this.state = state;
     }
 
-    public void setTLAB(TLAB tlab) {
-        this.tlab = tlab;
-    }
 
     public Thread javaThread() {
         return javaThread;
@@ -902,12 +897,6 @@ public class VmThread {
     @Override
     public String toString() {
         return "VM" + javaThread;
-    }
-
-    // GC support:
-
-    public TLAB getTLAB() {
-        return tlab;
     }
 
     public  Address guardPage() {

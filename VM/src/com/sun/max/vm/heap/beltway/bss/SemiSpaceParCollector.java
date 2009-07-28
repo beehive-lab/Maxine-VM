@@ -18,32 +18,36 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.heap.beltway;
+package com.sun.max.vm.heap.beltway.bss;
 
-import com.sun.max.memory.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.grip.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.beltway.*;
+
 /**
+ * Parallel version of the beltway semi-space collector.
+ * Just spawns GC thread to evacuate followers.
  *
- *
- * @author Laurent Daynes
+ * @author Laurent Daynes.
  */
-public class PointerOffsetVisitorImpl implements BeltWayPointerOffsetVisitor {
+public class SemiSpaceParCollector extends BeltwaySSCollector {
 
-    private final Action actionImpl;
+    @Override
+    protected void evacuateFollowers(Belt fromSpace, Belt toSpace) {
+        final BeltwayHeapScheme heapScheme = getBeltwayHeapScheme();
+        if (Heap.verbose()) {
+            Log.println("Evacuate reachable...");
+        }
+        // heapScheme.fillLastTLAB();  FIXME: revisit this!!!
+        heapScheme.initializeGCThreads(heapScheme, fromSpace, toSpace);
+        if (Heap.verbose()) {
+            Log.println("Start Threads");
+        }
 
-    public PointerOffsetVisitorImpl(Action actionImpl) {
-        this.actionImpl = actionImpl;
-    }
+        heapScheme.startGCThreads();
 
-    public void visitPointerOffset(Pointer pointer, int offset, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        final Grip oldGrip = pointer.readGrip(offset);
-        final Grip newGrip = actionImpl.doAction(oldGrip, from, to);
-        if (newGrip != null) {
-            if (newGrip != oldGrip) {
-                pointer.writeGrip(offset, newGrip);
-            }
+        if (Heap.verbose()) {
+            Log.println("Join Threads");
         }
     }
-
 }
