@@ -21,6 +21,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.C1XIntrinsic;
+import com.sun.c1x.C1XMetrics;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.value.ValueType;
 
@@ -64,6 +65,7 @@ public class Intrinsic extends StateSplit {
         initFlag(Flag.PinStateSplitConstructor, canTrap);
         if (!isStatic && args[0].isNonNull()) {
             clearNullCheck();
+            C1XMetrics.NullChecksRedundant++;
         }
     }
 
