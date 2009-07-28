@@ -23,7 +23,7 @@ package test.optimize;
 /*
  * Test case for null check elimination.
  * @Harness: java
- * @Runs: 0=23
+ * @Runs: 0=45
  */
 public class NCE_01 {
 
@@ -36,6 +36,6 @@ public class NCE_01 {
         NCE_01 o = object;
         int i = o.field1;
         // expected null check elimination here
-        return o.field2;
+        return o.field2 + i;
     }
 }
