@@ -515,7 +515,8 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
         List<BlockBegin> preds = i.predecessors();
         assertNonNull(preds, "Predecessor list does not exist");
         for (BlockBegin pred : preds) {
-            if (!pred.end().successors().contains(i)) {
+            List<BlockBegin> succ = i.isExceptionEntry() ? pred.exceptionHandlerBlocks() : pred.end().successors();
+            if (!succ.contains(i)) {
                 fail("Predecessor block does not have this block in its successor list");
             }
         }
@@ -722,9 +723,9 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
                 assertBasicType(args[j], BasicType.Object);
             } else {
                 BasicType basicType = signatureType.argumentBasicTypeAt(k);
-                assertBasicType(args[j], basicType);
+                assertBasicType(args[j], basicType.stackType());
                 if (basicType.sizeInSlots() == 2) {
-                    assertNull(args[j + 1] == null, "Second slot of a double operand must be null");
+                    assertNull(args[j + 1], "Second slot of a double operand must be null");
                     j = j + 1;
                 }
                 k = k + 1;
@@ -866,7 +867,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      * perform type checking and validation.
      * @param block the block with HIR instructions
      */
-    @Override
     public void apply(BlockBegin block) {
         for (Instruction instr = block; instr != null; instr = instr.next()) {
             instr.accept(this);
