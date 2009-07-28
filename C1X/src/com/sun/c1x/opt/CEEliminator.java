@@ -64,22 +64,18 @@ public class CEEliminator implements BlockClosure {
     }
 
     public void apply(BlockBegin block) {
-        // 1) find conditional expression
-        // check if block ends with an If
+        // 1) check that block ends with an If
         if (!(block.end() instanceof If)) {
             return;
         }
-        If if_ = (If) block.end();
+        If curIf = (If) block.end();
 
-        // check if If works on int or object types
-        // (we cannot handle If's working on long, float or doubles yet,
-        // since IfOp doesn't support them - these If's show up if cmp
-        // operations followed by If's are eliminated)
-        ValueType ifType = if_.x().type();
+        // check that the if's operands are of int or object type
+        ValueType ifType = curIf.x().type();
         if (!ifType.isInt() && !ifType.isObject()) return;
 
-        BlockBegin tBlock = if_.trueSuccessor();
-        BlockBegin fBlock = if_.falseSuccessor();
+        BlockBegin tBlock = curIf.trueSuccessor();
+        BlockBegin fBlock = curIf.falseSuccessor();
         Instruction tCur = tBlock.next();
         Instruction fCur = fBlock.next();
 
@@ -95,30 +91,30 @@ public class CEEliminator implements BlockClosure {
             fCur = fCur.next();
         }
 
-        // check if both branches end with a goto
+        // check that both branches end with a goto
         if (!(tCur instanceof Goto) || !(fCur instanceof Goto)) {
             return;
         }
         Goto tGoto = (Goto) tCur;
         Goto fGoto = (Goto) fCur;
 
-        // check if both gotos merge into the same block
+        // check that both gotos merge into the same block
         BlockBegin sux = tGoto.defaultSuccessor();
         if (sux != fGoto.defaultSuccessor()) return;
 
-        // check if at least one word was pushed on suxState
+        // check that at least one word was pushed on suxState
         ValueStack suxState = sux.state();
-        if (suxState.stackSize() <= if_.state().stackSize()) return;
+        if (suxState.stackSize() <= curIf.state().stackSize()) return;
 
-        // check if phi function is present at end of successor stack and that
+        // check that phi function is present at end of successor stack and that
         // only this phi was pushed on the stack
-        Instruction suxPhi = suxState.stackAt(if_.state().stackSize());
+        Instruction suxPhi = suxState.stackAt(curIf.state().stackSize());
         if (suxPhi == null || !(suxPhi instanceof Phi) || ((Phi) suxPhi).block() != sux) return;
-        if (suxPhi.type().size() != suxState.stackSize() - if_.state().stackSize()) return;
+        if (suxPhi.type().size() != suxState.stackSize() - curIf.state().stackSize()) return;
 
         // get the values that were pushed in the true- and false-branch
-        Instruction tValue = tGoto.state().stackAt(if_.state().stackSize());
-        Instruction fValue = fGoto.state().stackAt(if_.state().stackSize());
+        Instruction tValue = tGoto.state().stackAt(curIf.state().stackSize());
+        Instruction fValue = fGoto.state().stackAt(curIf.state().stackSize());
 
         assert tValue.type().base() == fValue.type().base() : "incompatible types";
 
@@ -136,7 +132,7 @@ public class CEEliminator implements BlockClosure {
                 return;
             }
         }
-        // true and false blocks can't have phis
+        // check that true and false blocks don't have phis
         for (Instruction i : tBlock.state().allPhis()) {
             return;
         }
@@ -144,11 +140,10 @@ public class CEEliminator implements BlockClosure {
             return;
         }
 
-        // 2) substitute conditional expression
-        //    with an IfOp followed by a Goto
-        // cut if_ away and get node before
-        Instruction ifPrev = if_.prev(block);
-        int bci = if_.bci();
+        // 2) cut off the original if and replace with constants and a Goto
+        // cut curIf away and get node before
+        Instruction ifPrev = curIf.prev(block);
+        int bci = curIf.bci();
 
         // append constants of true- and false-block if necessary
         // clone constants because original block must not be destroyed
@@ -165,52 +160,53 @@ public class CEEliminator implements BlockClosure {
         // it is very unlikely that the condition can be statically decided
         // (this was checked previously by the Canonicalizer), so always
         // append IfOp
-        Instruction result = new IfOp(if_.x(), if_.condition(), if_.y(), tValue, fValue);
+        Instruction result = new IfOp(curIf.x(), curIf.condition(), curIf.y(), tValue, fValue);
         ifPrev = ifPrev.setNext(result, bci);
 
         // append Goto to successor
-        ValueStack state_before = if_.isSafepoint() ? if_.stateBefore() : null;
-        Goto goto_ = new Goto(sux, state_before, if_.isSafepoint() || tGoto.isSafepoint() || fGoto.isSafepoint());
+        ValueStack stateBefore = curIf.isSafepoint() ? curIf.stateBefore() : null;
+        Goto newGoto = new Goto(sux, stateBefore, curIf.isSafepoint() || tGoto.isSafepoint() || fGoto.isSafepoint());
 
         // prepare state for Goto
-        ValueStack goto_state = if_.state();
-        while (suxState.scope() != goto_state.scope()) {
-            goto_state = goto_state.popScope();
-            assert goto_state != null : "states do not match up";
+        ValueStack gotoState = curIf.state();
+        while (suxState.scope() != gotoState.scope()) {
+            gotoState = gotoState.popScope();
+            assert gotoState != null : "states do not match up";
         }
-        goto_state = goto_state.copy();
-        goto_state.push(result.type().basicType, result);
-        assert goto_state.isSameAcrossScopes(suxState) : "states must match now";
-        goto_.setState(goto_state);
+        gotoState = gotoState.copy();
+        gotoState.push(result.type().basicType, result);
+        assert gotoState.isSameAcrossScopes(suxState) : "states must match now";
+        newGoto.setState(gotoState);
 
         // Steal the bci for the goto from the sux
-        ifPrev = ifPrev.setNext(goto_, sux.bci());
+        ifPrev = ifPrev.setNext(newGoto, sux.bci());
 
         // Adjust control flow graph
         BlockUtil.disconnectEdge(block, tBlock);
         BlockUtil.disconnectEdge(block, fBlock);
         if (tBlock.numberOfPreds() == 0) {
-            BlockUtil.disconnectEdge(tBlock, sux);
+            BlockUtil.disconnectEdge(tBlock, sux); // tBlock is now unreachable
         }
         adjustExceptionEdges(block, tBlock);
         if (fBlock.numberOfPreds() == 0) {
-            BlockUtil.disconnectEdge(fBlock, sux);
+            BlockUtil.disconnectEdge(fBlock, sux); // fBlock is now unreachable
         }
         adjustExceptionEdges(block, fBlock);
 
         // update block end
-        block.setEnd(goto_);
+        block.setEnd(newGoto);
 
         // substitute the phi if possible
         Phi sux_phi2 = (Phi) suxPhi;
         if (sux_phi2.operandCount() == 1) {
+            // if the successor block now has only one predecessor
             assert sux_phi2.operandAt(0) == result : "screwed up phi";
             suxPhi.setSubst(result);
             hasSubstitution = true;
-        }
 
-        // 3) successfully eliminated a conditional expression
-        C1XMetrics.ConditionalEliminations++;
+            // 3) successfully eliminated a conditional expression
+            C1XMetrics.ConditionalEliminations++;
+        }
     }
 
 

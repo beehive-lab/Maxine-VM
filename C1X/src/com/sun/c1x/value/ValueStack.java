@@ -697,7 +697,7 @@ public class ValueStack {
                 }
                 if (i < maxLocals) {
                     // this a local
-                    if (y == null || typeMismatch(x, y)) {
+                    if (typeMismatch(x, y)) {
                         invalidateLocal(i); // it has become invalid
                     } else {
                         setupPhiForLocal(block, i); // it needs a phi
