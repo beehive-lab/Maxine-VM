@@ -55,7 +55,7 @@ public abstract class StackFrameWalker {
     }
 
     /**
-     * Constants deonting the finite set of reasons for which a stack walk can be performed.
+     * Constants denoting the finite set of reasons for which a stack walk can be performed.
      * Every implementation of {@link DynamicCompilerScheme#walkFrame(StackFrameWalker, boolean, TargetMethod, Purpose, Object)}
      * must deal with each type of stack walk.
      *
@@ -139,7 +139,6 @@ public abstract class StackFrameWalker {
         TargetMethod lastJavaCallee = null;
         Pointer lastJavaCalleeStackPointer = Pointer.zero();
         Pointer lastJavaCalleeFramePointer = Pointer.zero();
-
         while (!this.stackPointer.isZero()) {
             final TargetMethod targetMethod = targetMethodFor(this.instructionPointer);
             if (targetMethod != null && (!inNative || purpose == INSPECTING || purpose == RAW_INSPECTING)) {
@@ -569,18 +568,18 @@ public abstract class StackFrameWalker {
     public abstract Word readFramelessCallAddressRegister(TargetABI targetABI);
 
     /**
-     * Reads the value of a given VM thread local from the safepoints-enabled thread locals.
+     * Reads the value of a given VM thread local from the safepoint-enabled thread locals.
      *
      * @param local the VM thread local to read
-     * @return the value (as a word) of {@code local} in the safepoints-enabled thread locals
+     * @return the value (as a word) of {@code local} in the safepoint-enabled thread locals
      */
     public abstract Word readWord(VmThreadLocal local);
 
     /**
-     * Reads the value of a given VM thread local from the safepoints-enabled thread locals.
+     * Reads the value of a given VM thread local from the safepoint-enabled thread locals.
      *
      * @param local the VM thread local to read
-     * @return the value (as a pointer) of {@code local} in the safepoints-enabled thread locals
+     * @return the value (as a pointer) of {@code local} in the safepoint-enabled thread locals
      */
     public Pointer readPointer(VmThreadLocal local) {
         return readWord(local).asPointer();

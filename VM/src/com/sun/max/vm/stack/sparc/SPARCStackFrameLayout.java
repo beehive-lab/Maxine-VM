@@ -44,7 +44,8 @@ public class SPARCStackFrameLayout {
     /**
      * Stack bias defined by the Solaris SPARC 64-bits system V ABI.
      * The BIAS must be added to the %sp register to obtain the actual top of the stack frame.
-     * The BIAS simplifies the job of the OS to figure out whether code that runs is 64-bits or 32-bits.
+     * The BIAS exists to distinguish 64-bit code from 32-bit code.
+     * See /usr/include/sys/stack.h on a Solaris/SPARC system.
      */
     public static final int STACK_BIAS = 2047;
 
