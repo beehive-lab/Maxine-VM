@@ -21,6 +21,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.C1XMetrics;
 
 /**
  * The <code>MonitorEnter</code> instruction represents the acquisition of a monitor.
@@ -42,6 +43,7 @@ public class MonitorEnter extends AccessMonitor {
         this.lockStackBefore = lockStackBefore;
         if (object.isNonNull()) {
             clearNullCheck();
+            C1XMetrics.NullChecksRedundant++;
         }
     }
 
