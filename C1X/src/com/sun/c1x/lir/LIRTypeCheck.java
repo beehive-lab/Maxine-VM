@@ -53,9 +53,9 @@ public class LIRTypeCheck extends LIRInstruction {
     /**
      * Constructs a new TypeCheck instruction.
      *
-     * @param object
+     * @param opcode
      * @param result
-     * @param array
+     * @param object
      * @param tmp1
      * @param tmp2
      * @param tmp3
@@ -83,7 +83,7 @@ public class LIRTypeCheck extends LIRInstruction {
         this.profiledBci = profiledBci;
 
         if (opcode == LIROpcode.CheckCast) {
-            assert this.infoForException != null : "infoForExeception must not be null. CheckCast throws exceptions.";
+            assert this.infoForException != null : "infoForException must not be null. CheckCast throws exceptions.";
         } else if (opcode == LIROpcode.InstanceOf) {
             assert this.infoForException == null : "infoForExeception must be null. Instanceof throws no exceptions.";
         } else {

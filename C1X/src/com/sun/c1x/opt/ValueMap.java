@@ -37,7 +37,7 @@ public class ValueMap {
         final ValueMap map;
         final int valueNumber;
         final Instruction value;
-        Link next;
+        final Link next;
 
         Link(ValueMap map, int valueNumber, Instruction value, Link next) {
             this.map = map;

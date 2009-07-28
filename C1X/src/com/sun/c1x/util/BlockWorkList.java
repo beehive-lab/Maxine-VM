@@ -71,18 +71,20 @@ public class BlockWorkList {
             grow();
         }
         // put the block at the end of the array
-        workList[workListIndex++] = block;
+        workList[workListIndex] = block;
+        workListNumbers[workListIndex] = number;
+        workListIndex++;
         int i = workListIndex - 2;
-        // push top towards the beginning of the array
+        // push block towards the beginning of the array
         for (; i >= 0; i--) {
             int n = workListNumbers[i];
             if (n >= number) {
                 break; // already in the right position
             }
             workList[i + 1] = workList[i]; // bubble b down by one
-            workList[i] = block;           // and overwrite it with top
+            workList[i] = block;           // and overwrite its place with block
             workListNumbers[i + 1] = n;    // bubble n down by one
-            workListNumbers[i] = number;      // and overwrite it with number
+            workListNumbers[i] = number;   // and overwrite its place with number
         }
     }
 

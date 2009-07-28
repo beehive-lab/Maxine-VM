@@ -46,6 +46,7 @@ import java.util.List;
  *
  */
 public final class X86LIRGenerator extends LIRGenerator {
+    private static final BasicType[] BASIC_TYPES_LONG_LONG = {BasicType.Long, BasicType.Long};
 
     public X86LIRGenerator(C1XCompilation compilation) {
         super(compilation);
@@ -103,12 +104,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             // there is no immediate move of word values in asemblerI486.?pp
             return false;
         }
-        if (v instanceof Constant) {
-            // constants of any type can be stored directly, except for
-            // unloaded object constants.
-            return true;
-        }
-        return false;
+        return v instanceof Constant;
     }
 
     @Override
@@ -241,7 +237,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         index.loadNonconstant();
 
         if (useLength) {
-            needsRangeCheck = x.computeNeedsRangeCheck();
+            needsRangeCheck = x.needsRangeCheck();
             if (needsRangeCheck) {
                 length.setInstruction(x.length());
                 length.loadItem();
@@ -422,8 +418,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             // the check for division by zero destroys the right operand
             right.setDestroysRegister();
 
-            BasicType[] signature = new BasicType[] {BasicType.Long, BasicType.Long};
-            CallingConvention cc = compilation.frameMap().runtimeCallingConvention(signature);
+            CallingConvention cc = compilation.frameMap().runtimeCallingConvention(BASIC_TYPES_LONG_LONG);
 
             // check for division by zero (destroys registers of right operand!)
             CodeEmitInfo info = stateFor(x);
@@ -995,7 +990,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             lir().move(input, convInput);
         }
 
-        assert fixedResult == false || roundResult == false : "cannot set both";
+        assert !fixedResult || !roundResult : "cannot set both";
         if (fixedResult) {
             convResult = fixedRegisterFor(result.type());
         } else if (roundResult) {

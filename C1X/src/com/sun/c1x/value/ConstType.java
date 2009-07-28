@@ -31,20 +31,20 @@ package com.sun.c1x.value;
 public class ConstType extends ValueType {
 
     public static final ConstType NULL_OBJECT = new ConstType(BasicType.Object, null);
-    public static final ConstType INT_MINUS_1 = ConstType.forInt(-1);
-    public static final ConstType INT_0 = ConstType.forInt(0);
-    public static final ConstType INT_1 = ConstType.forInt(1);
-    public static final ConstType INT_2 = ConstType.forInt(2);
-    public static final ConstType INT_3 = ConstType.forInt(3);
-    public static final ConstType INT_4 = ConstType.forInt(4);
-    public static final ConstType INT_5 = ConstType.forInt(5);
-    public static final ConstType LONG_0 = ConstType.forLong(0);
-    public static final ConstType LONG_1 = ConstType.forLong(1);
-    public static final ConstType FLOAT_0 = ConstType.forFloat(0);
-    public static final ConstType FLOAT_1 = ConstType.forFloat(1);
-    public static final ConstType FLOAT_2 = ConstType.forFloat(2);
-    public static final ConstType DOUBLE_0 = ConstType.forDouble(0);
-    public static final ConstType DOUBLE_1 = ConstType.forDouble(1);
+    public static final ConstType INT_MINUS_1 = forInt(-1);
+    public static final ConstType INT_0 = forInt(0);
+    public static final ConstType INT_1 = forInt(1);
+    public static final ConstType INT_2 = forInt(2);
+    public static final ConstType INT_3 = forInt(3);
+    public static final ConstType INT_4 = forInt(4);
+    public static final ConstType INT_5 = forInt(5);
+    public static final ConstType LONG_0 = forLong(0);
+    public static final ConstType LONG_1 = forLong(1);
+    public static final ConstType FLOAT_0 = forFloat(0);
+    public static final ConstType FLOAT_1 = forFloat(1);
+    public static final ConstType FLOAT_2 = forFloat(2);
+    public static final ConstType DOUBLE_0 = forDouble(0);
+    public static final ConstType DOUBLE_1 = forDouble(1);
 
     private final Object value;
 
@@ -103,21 +103,19 @@ public class ConstType extends ValueType {
     }
 
     public boolean equivalent(ValueType other) {
-        if (other == this) {
-            return true;
+        return other == this || other instanceof ConstType && valueEqual((ConstType) other);
+    }
+
+    private boolean valueEqual(ConstType cother) {
+        // must have equivalent tags to be equal
+        if (basicType != cother.basicType) {
+            return false;
         }
-        if (other instanceof ConstType) {
-            ConstType cother = (ConstType) other;
-            // must have equivalent tags to be equal
-            if (basicType != cother.basicType) {
-                return false;
-            }
-            // use == for object references and .equals() for boxed types
-            if (value == cother.value) {
-                return true;
-            } else if (!isObject() && value != null && value.equals(cother.value)) {
-                return true;
-            }
+        // use == for object references and .equals() for boxed types
+        if (value == cother.value) {
+            return true;
+        } else if (!isObject() && value != null && value.equals(cother.value)) {
+            return true;
         }
         return false;
     }
@@ -141,7 +139,7 @@ public class ConstType extends ValueType {
                 return (Character) value;
             }
             if (value instanceof Boolean) {
-                return ((Boolean) value) ? 1 : 0; // note that we allow Boolean values to be used as ints
+                return (Boolean) value ? 1 : 0; // note that we allow Boolean values to be used as ints
             }
         }
         throw new Error("Invalid constant");
@@ -169,7 +167,7 @@ public class ConstType extends ValueType {
                 return (Character) value;
             }
             if (value instanceof Boolean) {
-                return ((Boolean) value) ? 1 : 0; // note that we allow Boolean values to be used as ints
+                return (Boolean) value ? 1 : 0; // note that we allow Boolean values to be used as ints
             }
         }
         throw new Error("Invalid constant");
@@ -235,7 +233,7 @@ public class ConstType extends ValueType {
      */
     @Override
     public boolean equals(Object o) {
-        return o instanceof ConstType && equivalent((ConstType) o);
+        return o == this || o instanceof ConstType && valueEqual((ConstType) o);
     }
 
     /**

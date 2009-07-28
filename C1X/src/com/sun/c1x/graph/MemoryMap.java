@@ -41,7 +41,7 @@ import java.util.IdentityHashMap;
  *
  * @author Ben L. Titzer
  */
-public class MemoryBuffer {
+public class MemoryMap {
 
     private final HashMap<CiField, Instruction> objectMap = new HashMap<CiField, Instruction>();
     private final HashMap<CiField, Instruction> valueMap = new HashMap<CiField, Instruction>();

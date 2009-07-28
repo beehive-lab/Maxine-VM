@@ -30,7 +30,7 @@ import com.sun.c1x.value.BasicType;
  */
 public class UnsafeGetRaw extends UnsafeRawOp {
 
-    boolean mayBeUnaligned;
+    final boolean mayBeUnaligned;
 
     /**
      * Constructs a new UnsafeGetRaw instruction.

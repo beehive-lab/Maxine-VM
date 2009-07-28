@@ -45,6 +45,7 @@ public class CheckCast extends TypeCheck {
      */
     public CheckCast(CiType targetClass, Instruction object, ValueStack stateBefore) {
         super(targetClass, object, ValueType.OBJECT_TYPE, stateBefore);
+        initFlag(Flag.NonNull, object.isNonNull());
     }
 
     /**

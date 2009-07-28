@@ -29,7 +29,7 @@ import com.sun.c1x.value.ValueType;
  * @author Ben L. Titzer
  */
 public abstract class UnsafeOp extends Instruction {
-    BasicType basicType;
+    final BasicType basicType;
 
     /**
      * Creates a new UnsafeOp instruction.

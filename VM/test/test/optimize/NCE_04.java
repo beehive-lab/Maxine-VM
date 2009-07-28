@@ -18,32 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ir;
+package test.optimize;
 
-import com.sun.c1x.value.ValueType;
-
-/**
- * The <code>OsrEntry</code> instruction represents the entrypoint for an OSR.
- *
- * @author Ben L. Titzer
+/*
+ * Test case for null check elimination.
+ * @Harness: java
+ * @Runs: 0=23
  */
-public class OsrEntry extends Instruction {
+public class NCE_04 {
 
-    /**
-     * Constructs a new OsrEntry instruction.
-     */
-    public OsrEntry() {
-        // TODO: this should be a BasicType.Word
-        super(ValueType.JSR_TYPE);
-        pin();
-    }
+    private static boolean cond = true;
+    public static NCE_04 object = new NCE_04();
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
-    @Override
-    public void accept(InstructionVisitor v) {
-        v.visitOsrEntry(this);
+    int field1;
+    int field2 = 23;
+
+    public static int test(int arg) {
+        NCE_04 o = object;
+        if (cond) {
+            o.field1 = 22;
+        } else {
+            o.field1 = 11;
+        }
+        // expect non-null
+        return o.field2;
     }
 }

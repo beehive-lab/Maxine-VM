@@ -31,7 +31,7 @@ import com.sun.c1x.value.ValueType;
 public abstract class NewArray extends StateSplit {
 
     Instruction length;
-    ValueStack stateBefore;
+    final ValueStack stateBefore;
 
     /**
      * Constructs a new NewArray instruction.

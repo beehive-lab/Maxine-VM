@@ -132,7 +132,7 @@ public class LIRConstant extends LIROperand {
      */
     public int asIntHi() {
         assertType(this, BasicType.Long);
-        return (int) value.asLong() >> 32;
+        return (int) (value.asLong() >> 32);
     }
 
     /**
