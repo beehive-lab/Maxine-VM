@@ -312,31 +312,29 @@ public abstract class StackFrameWalker {
     }
 
     /**
-     * Gets the address of the call to the native function in a {@linkplain NativeStubGenerator native stub}. That is,
-     * this method gets the address of the instruction to which the native code will return.
-     *
-     * Finding this address relies on the invariant that the next {@linkplain StopType stop} after the instruction
-     * pointer recorded by the {@linkplain NativeCallPrologue native call prologue} is for the call to the native
-     * function.
+     * Gets an address corresponding to a native function call in a {@linkplain NativeStubGenerator native stub}.
+     * If the native function call is found, then the address returned is actually one byte past the start of the
+     * call instruction. This makes it consistent with walking up through a call in general where the instruction
+     * pointer obtained for a caller's frame is actually the return address which is always greater than the
+     * address of the call instruction itself.
      *
      * @param instructionPointer the instruction pointer in a native stub as saved by {@link NativeCallPrologue} or
      *            {@link NativeCallPrologueForC}
-     * @param fatalIfNotFound specifies whether a {@linkplain FatalError fatal error} should be raised if no call
-     *            instruction can be found after {@code instructionPointer}. If this value is false and no call
-     *            instruction is found, then {@code instructionPointer} is returned.
-     * @return the address of the first call instruction after {@code instructionPointer}
+     * @param fatalIfNotFound specifies whether a {@linkplain FatalError fatal error} should be raised if the native
+     *            stub has no {@linkplain TargetMethod#isNativeFunctionCall(int)} just after {@code instructionPointer}.
+     *            If this value is false and the search fails, then {@code instructionPointer} is returned.
+     * @return the address of the second byte of the native function call after {@code instructionPointer} or zero if no such call exists
      */
     private Pointer getNativeFunctionCallInstructionPointerInNativeStub(Pointer instructionPointer, boolean fatalIfNotFound) {
         final TargetMethod nativeStubTargetMethod = targetMethodFor(instructionPointer);
-        //FatalError.check(nativeStubTargetMethod.classMethodActor().isNative(), "Instruction pointer not within a native stub");
         if (nativeStubTargetMethod != null) {
             final int targetCodePosition = nativeStubTargetMethod.targetCodePositionFor(instructionPointer);
-            final int nativeFunctionCallPosition = nativeStubTargetMethod.findNextCall(targetCodePosition);
+            final int nativeFunctionCallPosition = nativeStubTargetMethod.findNextCall(targetCodePosition, true);
             final Pointer nativeFunctionCall = nativeFunctionCallPosition < 0 ? Pointer.zero() : nativeStubTargetMethod.codeStart().plus(nativeFunctionCallPosition);
             if (!nativeFunctionCall.isZero()) {
                 // The returned instruction pointer must be one past the actual address of the
                 // native function call. This makes it match the pattern expected by the
-                // StackReferenceMapPreparer when the instruction pointer in all but the
+                // StackReferenceMapPreparer where the instruction pointer in all but the
                 // top frame is past the address of the call.
                 return nativeFunctionCall.plus(1);
             }

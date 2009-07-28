@@ -611,8 +611,8 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
             final Assembler assembler = createTestAssembler();
             assembly().assemble(assembler, template, argumentList);
             final byte[] internalResult = assembler.toByteArray();
-            if (Trace.hasLevel(1)) {
-                Trace.line(1, "assembleInternally[" + testCaseNumber + "]: " + assembly().createMethodCallString(template, argumentList) + " = " + DisassembledInstruction.toHexString(internalResult));
+            if (Trace.hasLevel(3)) {
+                Trace.line(3, "assembleInternally[" + testCaseNumber + "]: " + assembly().createMethodCallString(template, argumentList) + " = " + DisassembledInstruction.toHexString(internalResult));
             }
             if (components.contains(AssemblyTestComponent.DISASSEMBLER) && template.isDisassemblable() &&
                     !findExcludedDisassemblerTestArgument(template.parameters(), argumentList)) {

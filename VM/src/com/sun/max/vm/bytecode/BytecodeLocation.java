@@ -102,13 +102,6 @@ public class BytecodeLocation {
     }
 
     /**
-     * Determines if this bytecode location denotes a {@link Bytecode#CALLNATIVE} instruction.
-     */
-    public boolean isNativeCall() {
-        return getBytecode() == Bytecode.CALLNATIVE;
-    }
-
-    /**
      * Gets a {@link StackTraceElement} object derived from this frame descriptor describing the corresponding source code location.
      */
     public StackTraceElement toStackTraceElement() {

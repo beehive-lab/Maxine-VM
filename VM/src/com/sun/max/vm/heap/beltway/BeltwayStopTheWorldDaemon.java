@@ -110,7 +110,7 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
 
         public void run(Pointer localSpace) {
             if (!localSpace.isZero()) {
-                final VmThread thread = VmThread.current(localSpace);
+                final VmThread thread = VmThread.fromVmThreadLocals(localSpace);
                 if (thread != null) {
                     final TLAB tlab = thread.getTLAB();
                     if (!tlab.isFull()) {
@@ -170,7 +170,7 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
     private static final Pointer.Predicate isNotGCThreadLocalsOrCurrent = new Pointer.Predicate() {
         public boolean evaluate(Pointer vmThreadLocals) {
             if (vmThreadLocals != VmThread.current().vmThreadLocals()) {
-                final Thread javaThread = VmThread.current(vmThreadLocals).javaThread();
+                final Thread javaThread = VmThread.fromVmThreadLocals(vmThreadLocals).javaThread();
                 return !(javaThread instanceof BeltwayStopTheWorldDaemon) && !(javaThread instanceof BeltwayCollectorThread);
             }
             return false;
@@ -179,7 +179,7 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
 
     private static final Pointer.Predicate isGCThread = new Pointer.Predicate() {
         public boolean evaluate(Pointer vmThreadLocals) {
-            final Thread javaThread = VmThread.current(vmThreadLocals).javaThread();
+            final Thread javaThread = VmThread.fromVmThreadLocals(vmThreadLocals).javaThread();
             return javaThread instanceof BeltwayCollectorThread;
         }
     };
