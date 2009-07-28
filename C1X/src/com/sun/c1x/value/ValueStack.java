@@ -762,10 +762,11 @@ public class ValueStack {
      * @return an iterator over all phis
      */
     public Iterable<Phi> allPhis() {
-
         final List<Phi> phis = new ArrayList<Phi>();
 
-        for (Instruction instr : allStateValues()) {
+        int max = this.valuesSize();
+        for (int i = 0; i < max; i++) {
+            Instruction instr = values[i];
             if (instr instanceof Phi) {
                 phis.add((Phi) instr);
             }
@@ -779,17 +780,13 @@ public class ValueStack {
      * @return an interator over all state values
      */
     public Iterable<Instruction> allStateValues() {
-        final List<Instruction> result = new ArrayList<Instruction>();
+        // XXX: this can be implemented more efficiently with an iterator over the
+        // values in the array, instead of copying them into an array list
+        int max = this.valuesSize();
+        List<Instruction> result = new ArrayList<Instruction>(max);
 
-        for (int i = 0; i < this.stackSize(); i++) {
-            final Instruction instr = this.stackAt(i);
-            if (instr != null) {
-                result.add(instr);
-            }
-        }
-
-        for (int i = 0; i < this.localsSize(); i++) {
-            final Instruction instr = this.localAt(i);
+        for (int i = 0; i < max; i++) {
+            Instruction instr = values[i];
             if (instr != null) {
                 result.add(instr);
             }

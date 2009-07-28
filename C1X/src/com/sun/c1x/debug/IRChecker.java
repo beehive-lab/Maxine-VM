@@ -197,7 +197,10 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
         }
 
         assertLegal(i);
-        assertBasicType(i, i.x().type().meet(i.y().type()).basicType);
+        if (i.x().type().basicType != i.y().type().basicType) {
+            fail("Operands to IfOp do not have the same basic type");
+        }
+        assertBasicType(i, i.trueValue().type().meet(i.falseValue().type()).basicType);
     }
 
     /**
