@@ -35,6 +35,7 @@ import com.sun.max.program.*;
  * @author Dave Ungar
  * @author Adam Spitz
  * @author Greg Wright
+ * @author Paul Caprioli
  */
 public abstract class SPARCAssembler extends SPARCLabelAssembler {
 
@@ -51,7 +52,7 @@ public abstract class SPARCAssembler extends SPARCLabelAssembler {
 
     @Override
     protected void emitPadding(int numberOfBytes) throws AssemblyException {
-        if ((numberOfBytes % 4) != 0) {
+        if ((numberOfBytes & 0x3) != 0) {
             throw new AssemblyException("Cannot pad instruction stream with a number of bytes not divisble by 4");
         }
         for (int i = 0; i < numberOfBytes >> 2; i++) {
@@ -106,9 +107,7 @@ public abstract class SPARCAssembler extends SPARCLabelAssembler {
             return 1;
         } else if (-4096 <= imm && imm <= 4095) {
             return 1;
-        } else if (imm < 0 && lo(imm) == 0) {
-            return 2;
-        } else if (imm >= 0) {
+        } else if (imm >= 0 || lo(imm) == 0) {
             return 2;
         } else {
             return 3;
@@ -124,6 +123,7 @@ public abstract class SPARCAssembler extends SPARCLabelAssembler {
             return 2;
         }
     }
+
     // Complex synthetic instructions according to appendix G3 of the SPARC Architecture Manual V9:
 
     public void setuw(int imm, GPR rd) throws AssemblyException {
