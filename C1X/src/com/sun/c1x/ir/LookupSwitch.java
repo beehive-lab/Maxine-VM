@@ -35,7 +35,7 @@ public class LookupSwitch extends Switch {
     final int[] keys;
 
     /**
-     * Constructs a new TableSwitch instruction.
+     * Constructs a new LookupSwitch instruction.
      * @param value the instruction producing the value being switched on
      * @param successors the list of successors
      * @param keys the list of keys, sorted
@@ -54,6 +54,10 @@ public class LookupSwitch extends Switch {
      */
     public int keyAt(int i) {
         return keys[i];
+    }
+
+    public int keysLength() {
+        return keys.length;
     }
 
     /**

@@ -34,7 +34,7 @@ public abstract class AccessIndexed extends AccessArray {
 
     Instruction index;
     Instruction length;
-    BasicType elementType;
+    final BasicType elementType;
 
     /**
      * Create an new AccessIndexed instruction.
@@ -76,12 +76,11 @@ public abstract class AccessIndexed extends AccessArray {
     }
 
     /**
-     * Computes whether the instruction requires a range check. The conservative assumption
-     * is to always require it.
-     * @return <code>true</code> if a range check is required for this instruction
+     * Computes whether the instruction requires a range check.
+     * @return {@code true} if a range check is required for this instruction
      */
-    public boolean computeNeedsRangeCheck() {
-        return true;
+    public boolean needsRangeCheck() {
+        return !checkFlag(Instruction.Flag.NoRangeCheck);
     }
 
     /**

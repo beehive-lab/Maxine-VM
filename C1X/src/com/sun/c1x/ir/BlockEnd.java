@@ -79,12 +79,12 @@ public abstract class BlockEnd extends StateSplit {
     }
 
     /**
-     * Sets the basic block beginning for this block end. Note that this
-     * method copies the successors from that basic block for the successors
-     * of this basic block.
+     * Sets the basic block beginning for this block end. This should only
+     * be called from {@link BlockBegin}.
+     *
      * @param block the beginning of this basic block
      */
-    public void setBegin(BlockBegin block) {
+    void setBegin(BlockBegin block) {
         begin = block;
     }
 

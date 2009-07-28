@@ -53,6 +53,8 @@ import java.util.List;
  *
  */
 public abstract class LIRGenerator extends InstructionVisitor {
+    private static final BasicType[] BASIC_TYPES_INT_OBJECT = {BasicType.Int /* thread */, BasicType.Object /* methodOop*/};
+    private static final BasicType[] BASIC_TYPES_OBJECT = {BasicType.Object};
 
     // the range of values in a lookupswitch or tableswitch statement
     private static final class SwitchRange {
@@ -230,14 +232,12 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
         final CiMethod method = compilation.method;
         if (compilation.runtime.dtraceMethodProbes()) {
-            BasicType[] signature = new BasicType[] {BasicType.Int, // thread
-                            BasicType.Object}; // methodOop
             List<LIROperand> arguments = new ArrayList<LIROperand>(2);
             arguments.add(getThreadPointer());
             LIROperand meth = newRegister(BasicType.Object);
             lir.oop2reg(method, meth);
             arguments.add(meth);
-            callRuntime(signature, arguments, CiRuntimeCall.DTraceMethodEntry, ValueType.VOID_TYPE, null);
+            callRuntime(BASIC_TYPES_INT_OBJECT, arguments, CiRuntimeCall.DTraceMethodEntry, ValueType.VOID_TYPE, null);
         }
 
         if (method.isSynchronized()) {
@@ -256,7 +256,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
                 LIROperand lock = newRegister(BasicType.Int);
                 lir.loadStackAddressMonitor(0, lock);
 
-                CodeEmitInfo info = new CodeEmitInfo(C1XCompilation.MethodCompilation.SynchronizationEntryBCI.value, compilation.hir().startBlock.state(), null);
+                CodeEmitInfo info = new CodeEmitInfo(Instruction.SYNCHRONIZATION_ENTRY_BCI, compilation.hir().startBlock.state(), null);
                 CodeStub slowPath = new MonitorEnterStub(obj, lock, info);
 
                 // receiver is guaranteed non-null so don't need CodeEmitInfo
@@ -613,7 +613,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         boolean needsRangeCheck = true;
 
         if (useLength) {
-            needsRangeCheck = x.computeNeedsRangeCheck();
+            needsRangeCheck = x.needsRangeCheck();
             if (needsRangeCheck) {
                 length.setInstruction(x.length());
                 length.loadItem();
@@ -631,12 +631,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         CodeEmitInfo rangeCheckInfo = stateFor(x);
         CodeEmitInfo nullCheckInfo = null;
         if (x.needsNullCheck()) {
-            NullCheck nc = x.explicitNullCheck();
-            if (nc != null) {
-                nullCheckInfo = stateFor(nc);
-            } else {
-                nullCheckInfo = rangeCheckInfo;
-            }
+            nullCheckInfo = rangeCheckInfo;
         }
 
         // emit array address setup early so it schedules better
@@ -1186,6 +1181,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
     }
 
     LIROperand forceToSpill(LIROperand value, BasicType t) {
+        assert value.isValid() : "value should not be illegal";
         assert t.size == value.type().size : "size mismatch";
         if (!value.isRegister()) {
             // force into a register
@@ -1382,11 +1378,10 @@ public abstract class LIRGenerator extends InstructionVisitor {
         LIRItem receiver = new LIRItem(x.argumentAt(0), this);
 
         receiver.loadItem();
-        BasicType[] signature = new BasicType[] {BasicType.Object};
         List<LIROperand> args = new ArrayList<LIROperand>();
         args.add(receiver.result());
         CodeEmitInfo info = stateFor(x, x.state());
-        callRuntime(signature, args, CiRuntimeCall.RegisterFinalizer, ValueType.VOID_TYPE, info);
+        callRuntime(BASIC_TYPES_OBJECT, args, CiRuntimeCall.RegisterFinalizer, ValueType.VOID_TYPE, info);
 
         setNoResult(x);
     }
@@ -1842,7 +1837,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
     LIROperand callRuntime(Instruction arg1, CiRuntimeCall entry, ValueType resultType, CodeEmitInfo info) {
         List<LIRItem> args = new ArrayList<LIRItem>(1);
         args.add(new LIRItem(arg1, this));
-        BasicType[] signature = new BasicType[] {arg1.type().basicType};
+        BasicType[] signature = {arg1.type().basicType};
         return callRuntimeWithItems(signature, args, entry, resultType, info);
     }
 
@@ -1852,7 +1847,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         args.add(new LIRItem(arg1, this));
         args.add(new LIRItem(arg2, this));
 
-        BasicType[] signature = new BasicType[] {arg1.type().basicType, arg2.type().basicType};
+        BasicType[] signature = {arg1.type().basicType, arg2.type().basicType};
         return callRuntimeWithItems(signature, args, entry, resultType, info);
     }
 
@@ -2211,7 +2206,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             CiMethod method = scope.method;
 
             BitMap liveness = method.liveness(bci);
-            if (bci == C1XCompilation.MethodCompilation.SynchronizationEntryBCI.value) {
+            if (bci == Instruction.SYNCHRONIZATION_ENTRY_BCI) {
                 if (x instanceof ExceptionObject || x instanceof Throw) {
                     // all locals are dead on exit from the synthetic unlocker
                     liveness.clearAll();

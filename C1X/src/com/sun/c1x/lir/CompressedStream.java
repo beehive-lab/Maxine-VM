@@ -37,7 +37,7 @@ public class CompressedStream {
     protected enum Encoding {
         // Constants for UNSIGNED5 coding of Pack200
         LgH(6), H(1 << Encoding.LgH.value), // number of high codes (64)
-        L((1 << Integer.SIZE) - H.value), // number of low codes (192) TODO: using target specific
+        L((1 << Integer.SIZE) - H.value), // number of low codes (192) TODO: incorrect shift
                                                             // information
         MAXI(4); // bytes are numbered in (0..4), max 5 bytes
 

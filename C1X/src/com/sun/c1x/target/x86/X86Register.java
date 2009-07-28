@@ -43,7 +43,7 @@ public final class X86Register {
     public static final Register rsi = new Register(7, 6, "rsi", RegisterFlag.CPU);
     public static final Register rdi = new Register(8, 7, "rdi", RegisterFlag.CPU);
 
-    public static final Register[] cpuRegisters = new Register[]{rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi};
+    public static final Register[] cpuRegisters = {rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi};
 
     // CPU registers only on 64 bit architecture
     public static final Register r8 = new Register(9, 8, "r8", RegisterFlag.CPU);
@@ -54,7 +54,7 @@ public final class X86Register {
     public static final Register r13 = new Register(14, 13, "r13", RegisterFlag.CPU);
     public static final Register r14 = new Register(15, 14, "r14", RegisterFlag.CPU);
     public static final Register r15 = new Register(16, 15, "r15", RegisterFlag.CPU);
-    public static final Register[] cpuRegisters64 = new Register[]{rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi, r8, r9, r10, r11, r12, r13, r14, r15};
+    public static final Register[] cpuRegisters64 = {rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi, r8, r9, r10, r11, r12, r13, r14, r15};
 
     // Floating point registers
     public static final Register fpu0 = new Register(17, -1, "fpu0", RegisterFlag.FPU);
@@ -65,7 +65,7 @@ public final class X86Register {
     public static final Register fpu5 = new Register(22, -1, "fpu5", RegisterFlag.FPU);
     public static final Register fpu6 = new Register(23, -1, "fpu6", RegisterFlag.FPU);
     public static final Register fpu7 = new Register(24, -1, "fpu7", RegisterFlag.FPU);
-    public static final Register[] fpuRegisters = new Register[]{fpu0, fpu1, fpu2, fpu3, fpu4, fpu5, fpu6, fpu7};
+    public static final Register[] fpuRegisters = {fpu0, fpu1, fpu2, fpu3, fpu4, fpu5, fpu6, fpu7};
 
     // XMM registers
     public static final Register xmm0 = new Register(25, 0, "xmm0", RegisterFlag.XMM);
@@ -76,7 +76,7 @@ public final class X86Register {
     public static final Register xmm5 = new Register(30, 5, "xmm5", RegisterFlag.XMM);
     public static final Register xmm6 = new Register(31, 6, "xmm6", RegisterFlag.XMM);
     public static final Register xmm7 = new Register(32, 7, "xmm7", RegisterFlag.XMM);
-    public static final Register[] xmmRegisters = new Register[]{xmm0, xmm1, xmm2, xmm3, xmm4, xmm6, xmm7};
+    public static final Register[] xmmRegisters = {xmm0, xmm1, xmm2, xmm3, xmm4, xmm6, xmm7};
 
     // XMM registers only on 64 bit architecture
     public static final Register xmm8 = new Register(33, 8, "xmm8", RegisterFlag.XMM);
@@ -87,9 +87,9 @@ public final class X86Register {
     public static final Register xmm13 = new Register(38, 13, "xmm13", RegisterFlag.XMM);
     public static final Register xmm14 = new Register(39, 14, "xmm14", RegisterFlag.XMM);
     public static final Register xmm15 = new Register(40, 15, "xmm15", RegisterFlag.XMM);
-    public static final Register[] xmmRegisters64 = new Register[]{xmm0, xmm1, xmm2, xmm3, xmm4, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14};
-    public static final Register[] allRegisters = new Register[]{rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi, fpu0, fpu1, fpu2, fpu3, fpu4, fpu5, fpu6, fpu7, xmm0, xmm1, xmm2, xmm3, xmm4, xmm6, xmm7};
-    public static final Register[] allRegisters64 = new Register[] {rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi, r8, r9, r10, r11, r12, r13, r14, r15, fpu0, fpu1, fpu2, fpu3, fpu4, fpu5, fpu6,
+    public static final Register[] xmmRegisters64 = {xmm0, xmm1, xmm2, xmm3, xmm4, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14};
+    public static final Register[] allRegisters = {rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi, fpu0, fpu1, fpu2, fpu3, fpu4, fpu5, fpu6, fpu7, xmm0, xmm1, xmm2, xmm3, xmm4, xmm6, xmm7};
+    public static final Register[] allRegisters64 = {rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi, r8, r9, r10, r11, r12, r13, r14, r15, fpu0, fpu1, fpu2, fpu3, fpu4, fpu5, fpu6,
                     fpu7, xmm0, xmm1, xmm2, xmm3, xmm4, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14};
 
 

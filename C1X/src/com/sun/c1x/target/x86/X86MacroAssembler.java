@@ -1099,10 +1099,8 @@ public class X86MacroAssembler extends X86Assembler {
         }
         if (value == 1 && C1XOptions.UseIncDec) {
             decq(reg);
-            return;
         } else {
             subq(reg, value);
-            return;
         }
     }
 
@@ -2907,18 +2905,18 @@ public class X86MacroAssembler extends X86Assembler {
             // Must preserve all other FPU regs (could alternatively convert
             // SharedRuntime.dsin and dcos into assembly routines known not to trash
             // FPU state, but can not trust C compiler)
-            Util.needsCleanUp();
+            needsCleanUp();
             // NOTE that in this case we also push the incoming argument to
             // the stack and restore it later; we also use this stack slot to
             // hold the return value from dsin or dcos.
             for (int i = 0; i < numFpuRegsInUse; i++) {
-                subptr(X86Register.rsp, Util.sizeofJdouble());
+                subptr(X86Register.rsp, sizeofDouble());
                 fstpD(new Address(X86Register.rsp, 0));
             }
-            incomingArgumentAndReturnValueOffset = Util.sizeofJdouble() * (numFpuRegsInUse - 1);
+            incomingArgumentAndReturnValueOffset = sizeofDouble() * (numFpuRegsInUse - 1);
             fldD(new Address(X86Register.rsp, incomingArgumentAndReturnValueOffset));
         }
-        subptr(X86Register.rsp, Util.sizeofJdouble());
+        subptr(X86Register.rsp, sizeofDouble());
         fstpD(new Address(X86Register.rsp, 0));
         if (compilation.target.arch.is64bit()) {
             movdbl(X86Register.xmm0, new Address(X86Register.rsp, 0));
@@ -2929,7 +2927,7 @@ public class X86MacroAssembler extends X86Assembler {
         // callVMLeafBase is perfectly safe and will
         // do proper 64bit abi
 
-        Util.needsCleanUp();
+        needsCleanUp();
         // Need to add stack banging before this runtime call if it needs to
         // be taken; however : there is no generic stack banging routine at
         // the MacroAssembler level
@@ -2951,13 +2949,13 @@ public class X86MacroAssembler extends X86Assembler {
             movsd(new Address(X86Register.rsp, 0), X86Register.xmm0);
             fldD(new Address(X86Register.rsp, 0));
         }
-        addptr(X86Register.rsp, Util.sizeofJdouble());
+        addptr(X86Register.rsp, sizeofDouble());
         if (numFpuRegsInUse > 1) {
             // Must save return value to stack and then restore entire FPU stack
             fstpD(new Address(X86Register.rsp, incomingArgumentAndReturnValueOffset));
             for (int i = 0; i < numFpuRegsInUse; i++) {
                 fldD(new Address(X86Register.rsp, 0));
-                addptr(X86Register.rsp, Util.sizeofJdouble());
+                addptr(X86Register.rsp, sizeofDouble());
             }
         }
         popa();
@@ -2991,10 +2989,10 @@ public class X86MacroAssembler extends X86Assembler {
 
         // %%% Could store the aligned : prescaled offset in the klassoop.
         lea(scanTemp, new Address(recvKlass, scanTemp, timesVteScale, vtableBase));
-        if (Util.heapWordsPerLong() > 1) {
+        if (heapWordsPerLong() > 1) {
             // Round up to alignObjectOffset boundary
             // see code for instanceKlass.startOfItable!
-            roundTo(scanTemp, Util.bytesPerLong());
+            roundTo(scanTemp, sizeofLong());
         }
 
         // Adjust recvKlass by scaled itableIndex : so we can free itableIndex.
@@ -4097,5 +4095,22 @@ public class X86MacroAssembler extends X86Assembler {
 
     public void shouldNotReachHere() {
         stop("should not reach here");
+    }
+
+    public static void needsCleanUp() {
+        // TODO Auto-generated method stub
+
+    }
+
+    public static int sizeofDouble() {
+        return 8;
+    }
+
+    public static int sizeofLong() {
+        return 8; // TODO: move this method
+    }
+
+    public int heapWordsPerLong() {
+        return 8 / compilation.target.arch.wordSize;
     }
 }

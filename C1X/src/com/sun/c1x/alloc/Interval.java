@@ -57,7 +57,7 @@ public class Interval {
 
     enum IntervalKind {
         fixedKind, // interval pre-colored by LIR_Generator
-        anyKind; // no register/memory allocated by LIR_Generator
+        anyKind // no register/memory allocated by LIR_Generator
     }
 
     // during linear scan an interval is in one of four states in
@@ -823,7 +823,7 @@ public class Interval {
             opr.print(out);
             out.print("\" ");
         }
-        out.printf("%d %d ", splitParent().regNum(), (registerHint(false, allocator) != null ? registerHint(false, allocator).regNum() : -1));
+        out.printf("%d %d ", splitParent().regNum(), registerHint(false, allocator) != null ? registerHint(false, allocator).regNum() : -1);
 
         // print ranges
         Range cur = first;

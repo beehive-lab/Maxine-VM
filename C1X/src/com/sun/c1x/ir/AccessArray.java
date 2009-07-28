@@ -43,7 +43,9 @@ public abstract class AccessArray extends Instruction {
         super(type);
         this.array = array;
         this.lockStack = lockStack;
-        initFlag(Flag.NeedsNullCheck, !array.isNonNull());
+        if (array.isNonNull()) {
+            clearNullCheck();
+        }
         pin();
     }
 
