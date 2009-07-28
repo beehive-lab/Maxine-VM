@@ -38,4 +38,10 @@ public class C1XMetrics {
     public static int InlineForcedMethods;
     public static int NullCheckIterations;
     public static int NullCheckEliminations;
+    public static int NullChecksRedundant;
+    public static int EquivalentConstantsMerged;
+    public static int EquivalentConstantsChecked;
+    public static int ConditionalEliminations;
+    public static int BlocksMerged;
+    public static int NestedIfOpsRemoved;
 }

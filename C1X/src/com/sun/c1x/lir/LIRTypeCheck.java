@@ -94,20 +94,18 @@ public class LIRTypeCheck extends LIRInstruction {
     /**
      * Constructs a new TypeCheck instruction.
      *
+     * @param opcode
      * @param object
      * @param array
-     * @param klass
      * @param tmp1
      * @param tmp2
      * @param tmp3
-     * @param fastCheck
-     * @param infoForPatch
      * @param infoForException
-     * @param stub
      * @param profiledMethod
      * @param profiledBci
      */
-    public LIRTypeCheck(LIROpcode opcode, LIROperand object, LIROperand array, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3,
+    public LIRTypeCheck(LIROpcode opcode, LIROperand object, LIROperand array,
+                        LIROperand tmp1, LIROperand tmp2, LIROperand tmp3,
                         CodeEmitInfo infoForException, CiMethod profiledMethod, int profiledBci) {
         super(opcode, LIROperandFactory.IllegalOperand, null);
         this.object = object;
