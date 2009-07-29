@@ -21,6 +21,7 @@
 package com.sun.c1x.asm;
 
 import com.sun.c1x.asm.RelocInfo.Type;
+import com.sun.c1x.util.Util;
 
 /**
  *
@@ -45,18 +46,15 @@ public class Relocation {
     }
 
     public boolean isCall() {
-        // TODO Auto-generated method stub
-        return false;
+        return Util.nonFatalUnimplemented(false);
     }
 
     public boolean isData() {
-        // TODO Auto-generated method stub
-        return false;
+        return Util.nonFatalUnimplemented(false);
     }
 
     public static Relocation specExternalWord(long address) {
-        // TODO Auto-generated method stub
-        return null;
+        return Util.nonFatalUnimplemented(null);
     }
 
     public static Relocation specInternalWord(long address) {
@@ -68,13 +66,11 @@ public class Relocation {
     }
 
     public static Relocation specOptVirtualCallRelocation(long address) {
-        // TODO Auto-generated method stub
-        return null;
+        return Util.nonFatalUnimplemented(null);
     }
 
     public static Relocation specStaticCallRelocation(long address) {
-        // TODO Auto-generated method stub
-        return null;
+        return Util.nonFatalUnimplemented(null);
     }
 
     // make a generic relocation for a given type (if possible)
@@ -86,13 +82,11 @@ public class Relocation {
     }
 
     public static Relocation specForImmediate() {
-        // TODO Auto-generated method stub
-        return null;
+        return Util.nonFatalUnimplemented(null);
     }
 
     public int format() {
-        // TODO Auto-generated method stub
-        return 0;
+        return Util.nonFatalUnimplemented(0);
     }
 
 
