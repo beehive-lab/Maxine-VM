@@ -76,7 +76,6 @@ public class DisassembledInstruction implements DisassembledObject {
         return template;
     }
 
-    @Override
     public boolean isCode() {
         return true;
     }
@@ -90,7 +89,6 @@ public class DisassembledInstruction implements DisassembledObject {
         return toString(disassembler.addressMapper());
     }
 
-    @Override
     public String mnemonic() {
         return disassembler.mnemonic(this);
     }

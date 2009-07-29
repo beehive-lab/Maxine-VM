@@ -275,8 +275,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     }
 
     private final class PointerIndexGripUpdater implements PointerIndexVisitor {
-
-        @Override
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
             final Grip oldGrip = pointer.getGrip(wordIndex);
             final Grip newGrip = mapGrip(oldGrip);

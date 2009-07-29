@@ -330,7 +330,6 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     }
 
     private final class PointerIndexGripVerifier implements PointerIndexVisitor {
-        @Override
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
             DebugHeap.verifyGripAtIndex(pointer, wordIndex * Kind.REFERENCE.width.numberOfBytes, pointer.getGrip(wordIndex), space, null);
         }

@@ -2860,13 +2860,6 @@ public class X86MacroAssembler extends X86Assembler {
         stop("should not reach here");
     }
 
-<<<<<<< local
-=======
-    public static void needsCleanUp() {
-        Util.nonFatalUnimplemented();
-    }
-
->>>>>>> other
     public static int sizeofDouble() {
         return 8;
     }

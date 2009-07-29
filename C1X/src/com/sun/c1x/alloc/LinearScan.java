@@ -3034,13 +3034,6 @@ public class LinearScan extends RegisterAllocator {
         }
     }
 
-<<<<<<< local
-=======
-    private boolean useFpuStackAllocation() {
-        return Util.nonFatalUnimplemented(false);
-    }
-
->>>>>>> other
     void assignRegNum() {
         // TIMELINEARSCAN(timerAssignRegNum);
 

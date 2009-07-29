@@ -121,6 +121,7 @@ public class C1XOptions {
     public static boolean DoArrayBoundsCheckElimination      = ____;
     public static boolean DoCEElimination                    = ____;
     public static boolean DoBlockMerging                     = ____;
+    public static boolean DoBlockSkipping                    = ____;
     public static boolean DistinguishExceptionHandlerCode    = ____;
     public static boolean DoNullCheckElimination             = ____;
     public static boolean DoProfileGuidedInlining            = ____;
@@ -297,6 +298,7 @@ public class C1XOptions {
         DoGlobalValueNumbering             = TRUE;
         DoCEElimination                    = TRUE;
         DoBlockMerging                     = TRUE;
+        DoBlockSkipping                    = TRUE;
         DoArrayBoundsCheckElimination      = TRUE;
         DistinguishExceptionHandlerCode    = TRUE;
         DoNullCheckElimination             = TRUE;
