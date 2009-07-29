@@ -318,9 +318,14 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
     @Override
     public void visitLoadField(LoadField i) {
         assertBasicType(i, i.field().basicType().stackType());
-        assertBasicType(i.object(), BasicType.Object);
-        assertInstanceType(i.object().declaredType());
-        assertInstanceType(i.object().exactType());
+        Instruction object = i.object();
+        if (object != null) {
+            assertBasicType(object, BasicType.Object);
+            assertInstanceType(object.declaredType());
+            assertInstanceType(object.exactType());
+        } else if (!i.isStatic()) {
+            fail("LoadField of instance field should not have null object");
+        }
     }
 
     /**
@@ -330,9 +335,14 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
     @Override
     public void visitStoreField(StoreField i) {
         assertBasicType(i.value(), i.field().basicType().stackType());
-        assertBasicType(i.object(), BasicType.Object);
-        assertInstanceType(i.object().declaredType());
-        assertInstanceType(i.object().exactType());
+        Instruction object = i.object();
+        if (object != null) {
+            assertBasicType(object, BasicType.Object);
+            assertInstanceType(object.declaredType());
+            assertInstanceType(object.exactType());
+        } else if (!i.isStatic()) {
+            fail("StoreField of instance field should not have null object");
+        }
     }
 
     /**

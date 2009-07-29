@@ -22,28 +22,13 @@ package test.bytecode;
 
 /*
  * @Harness: java
- * @Runs: 1 = 3; 2 = 4; 3 = 5; 4 = 42
+ * @Runs: 0 = null; 1 = null; 2 = ""
  */
-public class BC_arraylength {
+public class BC_aaload_1 {
 
-    static int[] array1 = {1, 2, 3};
-    static char[] array2 = {'a', 'b', 'c', 'd'};
-    static Object[] array3 = new Object[5];
-    static Object[][] array4 = new Object[5][5];
+    static Object[][] array = {{null}, {null}, {""}};
 
-    public static int test(int arg) {
-        if (arg == 1) {
-            return array1.length;
-        }
-        if (arg == 2) {
-            return array2.length;
-        }
-        if (arg == 3) {
-            return array3.length;
-        }
-        if (arg == 4) {
-            return array4[0].length;
-        }
-        return 42;
+    public static Object test(int arg) {
+        return array[arg][0];
     }
 }
