@@ -68,7 +68,6 @@ public class AddressLiteral {
     }
 
     public AddressLiteral addr() {
-        // TODO Auto-generated method stub
         return new AddressLiteral(target, rspec, true);
     }
 

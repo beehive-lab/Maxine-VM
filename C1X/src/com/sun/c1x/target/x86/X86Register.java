@@ -22,6 +22,7 @@ package com.sun.c1x.target.x86;
 
 import com.sun.c1x.target.Register;
 import com.sun.c1x.target.Register.RegisterFlag;
+import com.sun.c1x.util.Util;
 
 /**
  *
@@ -94,12 +95,10 @@ public final class X86Register {
 
 
     public int encoding() {
-        // TODO Auto-generated method stub
-        return 0;
+        return Util.nonFatalUnimplemented(0);
     }
 
     public static Register fromEncoding(int i) {
-        // TODO Auto-generated method stub
-        return null;
+        return Util.nonFatalUnimplemented(null);
     }
 }

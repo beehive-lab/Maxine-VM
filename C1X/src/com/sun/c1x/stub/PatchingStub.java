@@ -88,8 +88,7 @@ public class PatchingStub extends CodeStub {
     }
 
     private void alignPatchSite(AbstractAssembler masm) {
-        // TODO Auto-generated method stub platform dependent?
-
+        Util.nonFatalUnimplemented();
     }
 
     public void install(AbstractAssembler masm, LIRPatchCode patchCode, Register obj, CodeEmitInfo info) {
