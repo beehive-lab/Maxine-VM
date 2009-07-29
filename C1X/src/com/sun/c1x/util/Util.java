@@ -63,6 +63,16 @@ public class Util {
         return false;
     }
 
+    public static <T> boolean replaceAllInList(T a, T b, List<T> list) {
+        final int max = list.size();
+        for (int i = 0; i < max; i++) {
+            if (list.get(i) == a) {
+                list.set(i, b);
+            }
+        }
+        return false;
+    }
+
     /**
      * Checks whether the specified integer is a power of two.
      *

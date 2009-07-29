@@ -116,6 +116,12 @@ public class IR {
     }
 
     private void computeLinearScanOrder() {
+        CriticalEdgeFinder finder = new CriticalEdgeFinder(this);
+        startBlock.iteratePreOrder(finder);
+        finder.splitCriticalEdges();
+
+        verifyAndPrint("After critical edge splitting");
+
         ComputeLinearScanOrder computeLinearScanOrder = new ComputeLinearScanOrder(totalBlocks, startBlock);
         orderedBlocks = computeLinearScanOrder.linearScanOrder();
         computeLinearScanOrder.printBlocks();
@@ -170,14 +176,11 @@ public class IR {
     /**
      * Creates and inserts a new block between this block and the specified successor,
      * altering the successor and predecessor lists of involved blocks appropriately.
-     * Note that this method only splits the first occurrence of any edges between
-     * these two blocks (a block that ends in a switch may have multiple edges between
-     * the source and target).
      * @param source the source of the edge
      * @param target the successor before which to insert a block
      * @return the new block inserted
      */
-    public BlockBegin splitFirstEdge(BlockBegin source, BlockBegin target) {
+    public BlockBegin splitEdge(BlockBegin source, BlockBegin target) {
         int bci;
         if (target.predecessors().size() == 1) {
             bci = target.bci();
@@ -211,15 +214,16 @@ public class IR {
         // the successor could be the target of a switch so it might have
         // multiple copies of this predecessor, so substitute the new_sux
         // for the first and delete the rest.
-        // XXX: wtf? why delete other occurrences?
         List<BlockBegin> list = target.predecessors();
         int x = list.indexOf(source);
         assert x >= 0;
         list.set(x, newSucc);
+        newSucc.addPredecessor(source);
         Iterator<BlockBegin> iterator = list.iterator();
         while (iterator.hasNext()) {
             if (iterator.next() == source) {
                 iterator.remove();
+                newSucc.addPredecessor(source);
             }
         }
         return newSucc;
