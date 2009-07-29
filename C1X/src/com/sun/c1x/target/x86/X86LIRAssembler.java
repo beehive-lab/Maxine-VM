@@ -37,6 +37,7 @@ import com.sun.c1x.stub.MonitorAccessStub;
 import com.sun.c1x.stub.MonitorExitStub;
 import com.sun.c1x.stub.PatchingStub;
 import com.sun.c1x.target.Register;
+import com.sun.c1x.target.x86.X86Assembler.*;
 import com.sun.c1x.util.Util;
 import com.sun.c1x.value.BasicType;
 import com.sun.c1x.value.ValueStack;
@@ -46,14 +47,20 @@ import java.util.List;
 public class X86LIRAssembler extends LIRAssembler {
 
     private static final long NULLWORD = 0;
-    private static final Register ICKlass = X86Register.rax;
-    private static final Register SYNCHeader = X86Register.rax;
-    private static final Register SHIFTCount = X86Register.rcx;
+    private static final Register ICKlass = X86.rax;
+    private static final Register SYNCHeader = X86.rax;
+    private static final Register SHIFTCount = X86.rcx;
 
     private static final int FloatConstantAlignment = 16;
     private static final long FloatSignFlip = 0x8000000080000000L;
     private static final long DoubleSignFlip = 0x8000000000000000L;
     private static final long DoubleSignMask = 0x7FFFFFFFFFFFFFFFL;
+    private static final float MAX_FLOAT_VALUE_INTEGER = -1 >>> 1;
+    private static final float MAX_FLOAT_VALUE_LONG = ((long) -1) >>> 1;
+    private static final double MAX_DOUBLE_VALUE_INTEGER = -1 >>> 1;
+    private static final double MAX_DOUBLE_VALUE_LONG = ((long) -1) >>> 1;
+    private static final int MAX_INT_VALUE = -1 >>> 1;
+    private static final int MAX_LONG_VALUE = -1 >>> 1;
 
     X86MacroAssembler masm;
 
@@ -88,50 +95,9 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void set_24bitFPU() {
-
-        masm().fldcw(new RuntimeAddress(CiRuntimeCall.FpuCntrlWrd_24));
-
-    }
-
-    @Override
-    protected void resetFPU() {
-        masm().fldcw(new RuntimeAddress(CiRuntimeCall.FpuCntrlWrdStd));
-    }
-
-    @Override
-    protected void fpop() {
-        masm().fpop();
-    }
-
-    @Override
-    protected void fxch(int i) {
-        masm().fxch(i);
-    }
-
-    @Override
-    protected void fld(int i) {
-        masm().fldS(i);
-    }
-
-    @Override
-    protected void ffree(int i) {
-        masm().ffree(i);
-    }
-
-    @Override
-    protected void breakpoint() {
-        masm().int3();
-    }
-
-    protected static Register asRegister(LIROperand opr) {
-        return opr.asRegister();
-    }
-
-    @Override
     protected void push(LIROperand opr) {
         if (opr.isSingleCpu()) {
-            masm().pushReg(asRegister(opr));
+            masm().pushReg(opr.asRegister());
         } else if (opr.isDoubleCpu()) {
             if (!compilation.target.arch.is64bit()) {
                 masm().pushReg(opr.asRegisterHi());
@@ -142,7 +108,7 @@ public class X86LIRAssembler extends LIRAssembler {
         } else if (opr.isConstant()) {
             LIRConstant constOpr = opr.asConstantPtr();
             if (constOpr.type() == BasicType.Object) {
-                masm().pushOop(constOpr.asJobject());
+                masm().pushOop(constOpr.asObject());
             } else if (constOpr.type() == BasicType.Int) {
                 masm().pushJint(constOpr.asInt());
             } else {
@@ -174,14 +140,15 @@ public class X86LIRAssembler extends LIRAssembler {
     private Address asAddress(LIRAddress addr, Register tmp) {
         if (addr.base().isIllegal()) {
             assert addr.index().isIllegal() : "must be illegal too";
-            AddressLiteral laddr = new AddressLiteral(addr.displacement(), RelocInfo.Type.none);
-            if (!masm().reachable(laddr)) {
-                masm().movptr(tmp, laddr.addr());
-                Address res = new Address(tmp, 0);
-                return res;
-            } else {
-                return masm().asAddress(laddr);
-            }
+            assert false : "(tw) should not occur?";
+//            AddressLiteral laddr = new AddressLiteral(addr.displacement(), RelocInfo.Type.none);
+//            if (!masm().reachable(laddr)) {
+//                masm().movptr(tmp, laddr.addr());
+//                Address res = new Address(tmp, 0);
+//                return res;
+//            } else {
+//                return masm().asAddress(laddr);
+//            }
         }
 
         Register base = addr.base().asPointerRegister(compilation.target.arch);
@@ -205,17 +172,8 @@ public class X86LIRAssembler extends LIRAssembler {
         return X86FrameMap.asPointerOpr(compilation.runtime.javaCallingConventionReceiverRegister(), compilation.target.arch);
     }
 
-    LIROperand incomingReceiverOpr() {
-        return receiverOpr();
-    }
-
     private LIROperand osrBufferPointer() {
         return X86FrameMap.asPointerOpr(receiverOpr().asRegister(), compilation.target.arch);
-    }
-
-    @Override
-    protected void emitLabel(LIRLabel op) {
-        masm.bind(op.label());
     }
 
     @Override
@@ -270,10 +228,10 @@ public class X86LIRAssembler extends LIRAssembler {
                 masm().stop("locked object is null");
                 masm().bind(l);
             }
-            masm().movptr(X86Register.rbx, new Address(osrBuf, slotOffset + compilation.runtime.basicObjectLockOffsetInBytes()));
-            masm().movptr(frameMap().addressForMonitorLock(i), X86Register.rbx);
-            masm().movptr(X86Register.rbx, new Address(osrBuf, slotOffset + compilation.runtime.basicObjectObjOffsetInBytes()));
-            masm().movptr(frameMap().addressForMonitorObject(i), X86Register.rbx);
+            masm().movptr(X86.rbx, new Address(osrBuf, slotOffset + compilation.runtime.basicObjectLockOffsetInBytes()));
+            masm().movptr(frameMap().addressForMonitorLock(i), X86.rbx);
+            masm().movptr(X86.rbx, new Address(osrBuf, slotOffset + compilation.runtime.basicObjectObjOffsetInBytes()));
+            masm().movptr(frameMap().addressForMonitorObject(i), X86.rbx);
         }
     }
 
@@ -296,7 +254,7 @@ public class X86LIRAssembler extends LIRAssembler {
         }
         int offset = masm().offset();
         masm().inlineCacheCheck(receiver, ICKlass);
-        assert masm().offset() % compilation.target.codeAlignment == 0 || C1XOptions.VerifyOops : "alignment must be correct";
+        //assert masm().offset() % compilation.target.codeAlignment == 0 || C1XOptions.VerifyOops : "alignment must be correct";
         if (C1XOptions.VerifyOops) {
             // force alignment after the cache check.
             // It's been verified to be aligned if !VerifyOops
@@ -312,7 +270,7 @@ public class X86LIRAssembler extends LIRAssembler {
             // and cannot block => no GC can happen
             // The slow case (MonitorAccessStub) uses the first two stack slots
             // ([esp+0] and [esp+4]), therefore we store the exception at [esp+8]
-            masm().movptr(new Address(X86Register.rsp, 2 * compilation.target.arch.wordSize), exception);
+            masm().movptr(new Address(X86.rsp, 2 * compilation.target.arch.wordSize), exception);
         }
 
         Register objReg = objOpr.asRegister();
@@ -350,7 +308,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
         if (exception.isValid()) {
             // restore exception
-            masm().movptr(exception, new Address(X86Register.rsp, 2 * compilation.target.arch.wordSize));
+            masm().movptr(exception, new Address(X86.rsp, 2 * compilation.target.arch.wordSize));
         }
     }
 
@@ -394,10 +352,10 @@ public class X86LIRAssembler extends LIRAssembler {
             masm().invalidateRegisters(false, true, true, false, true, true);
 
             // check that there is really an exception
-            masm().verifyNotNullOop(X86Register.rax);
+            masm().verifyNotNullOop(X86.rax);
 
             // search an exception handler (rax: exception oop, rdx: throwing pc)
-            masm().call(new RuntimeAddress(CiRuntimeCall.HandleExceptionNofpu));
+            masm().callRuntime(CiRuntimeCall.HandleException);
 
             // if the call returns here : then the exception handler for particular
             // exception doesn't exist . unwind activation and forward exception to caller
@@ -408,18 +366,18 @@ public class X86LIRAssembler extends LIRAssembler {
         masm().invalidateRegisters(false, true, true, true, true, true);
 
         // check that there is really an exception
-        masm().verifyNotNullOop(X86Register.rax);
+        masm().verifyNotNullOop(X86.rax);
 
         // unlock the receiver/klass if necessary
         // rax : : exception
         CiMethod method = compilation.method();
         if (method.isSynchronized() && C1XOptions.GenerateSynchronizationCode) {
-            monitorexit(X86FrameMap.rbxOopOpr, X86FrameMap.rcxOpr, SYNCHeader, 0, X86Register.rax);
+            monitorexit(X86FrameMap.rbxOopOpr, X86FrameMap.rcxOpr, SYNCHeader, 0, X86.rax);
         }
 
         // unwind activation and forward exception to caller
         // rax : : exception
-        masm().jump(new RuntimeAddress(CiRuntimeCall.UnwindException));
+        masm().callRuntime(CiRuntimeCall.UnwindException);
 
         assert codeOffset() - offset <= exceptionHandlerSize : "overflow";
 
@@ -431,9 +389,9 @@ public class X86LIRAssembler extends LIRAssembler {
     @Override
     protected void returnOp(LIROperand result) {
 
-        assert result.isIllegal() || !result.isSingleCpu() || result.asRegister() == X86Register.rax : "word returns are in rax : ";
+        assert result.isIllegal() || !result.isSingleCpu() || result.asRegister() == X86.rax : "word returns are in rax : ";
         if (!result.isIllegal() && result.isFloatKind() && !result.isXmmRegister()) {
-            assert result.asRegisterLo() == X86Register.fpu0 : "result must already be on TOS";
+            assert false : "no fpu stack";
         }
 
         // Pop the stack before the safepoint code
@@ -449,7 +407,7 @@ public class X86LIRAssembler extends LIRAssembler {
         // goes to the movq that loads the address and not the faulting instruction
         // which breaks the signal handler code
 
-        // lir().test32(X86Register.rax, pollingPage);
+        // lir().test32(X86.rax, pollingPage);
 
         masm().ret(0);
     }
@@ -472,7 +430,7 @@ public class X86LIRAssembler extends LIRAssembler {
 // // goes to the movq that loads the address and not the faulting instruction
 // // which breaks the signal handler code
 //
-// masm().test32(X86Register.rax, pollingPage);
+// masm().test32(X86.rax, pollingPage);
     }
 
     private void moveRegs(Register fromReg, Register toReg) {
@@ -521,49 +479,33 @@ public class X86LIRAssembler extends LIRAssembler {
                 if (patchCode != LIRPatchCode.PatchNone) {
                     jobject2regWithPatching(dest.asRegister(), info);
                 } else {
-                    masm().movoop(dest.asRegister(), c.asJobject());
+                    masm().movoop(dest.asRegister(), c.asObject());
                 }
                 break;
             }
 
             case Float: {
                 if (dest.isSingleXmm()) {
-                    if (c.isZeroFloat()) {
+                    if (c.asFloat() == 0.0f) {
                         masm().xorps(asXmmFloatReg(dest), asXmmFloatReg(dest));
                     } else {
-                        masm().movflt(asXmmFloatReg(dest), new InternalAddress(masm().floatConstant(c.asJfloat())));
+                        masm().movflt(asXmmFloatReg(dest), masm().floatConstant(c.asFloat()));
                     }
                 } else {
-                    assert dest.isSingleFpu() : "must be";
-                    assert dest.fpuRegnr() == 0 : "dest must be TOS";
-                    if (c.isZeroFloat()) {
-                        masm().fldz();
-                    } else if (c.isOneFloat()) {
-                        masm().fld1();
-                    } else {
-                        masm().fldS(new InternalAddress(masm().floatConstant(c.asJfloat())));
-                    }
+                    assert false : "no fpu stack";
                 }
                 break;
             }
 
             case Double: {
                 if (dest.isDoubleXmm()) {
-                    if (c.isZeroDouble()) {
+                    if (c.asDouble() == 0.0d) {
                         masm().xorpd(asXmmDoubleReg(dest), asXmmDoubleReg(dest));
                     } else {
-                        masm().movdbl(asXmmDoubleReg(dest), new InternalAddress(masm().doubleConstant(c.asJdouble())));
+                        masm().movdbl(asXmmDoubleReg(dest), masm().doubleConstant(c.asDouble()));
                     }
                 } else {
-                    assert dest.isDoubleFpu() : "must be";
-                    assert dest.asRegisterLo() == X86Register.fpu0 : "dest must be TOS";
-                    if (c.isZeroDouble()) {
-                        masm().fldz();
-                    } else if (c.isOneDouble()) {
-                        masm().fld1();
-                    } else {
-                        masm().fldD(new InternalAddress(masm().doubleConstant(c.asJdouble())));
-                    }
+                    assert false : "no fpu stack";
                 }
                 break;
             }
@@ -586,7 +528,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 break;
 
             case Object:
-                masm().movoop(frameMap().addressForSlot(dest.singleStackIx()), c.asJobject());
+                masm().movoop(frameMap().addressForSlot(dest.singleStackIx()), c.asObject());
                 break;
 
             case Long: // fall through
@@ -620,14 +562,14 @@ public class X86LIRAssembler extends LIRAssembler {
                 break;
 
             case Object: // fall through
-                if (c.asJobject() == null) {
+                if (c.asObject() == null) {
                     masm().movptr(asAddress(addr), NULLWORD);
                 } else {
                     if (isLiteralAddress(addr)) {
-                        masm().movoop(asAddress(addr, Register.noreg), c.asJobject());
+                        masm().movoop(asAddress(addr, Register.noreg), c.asObject());
                         throw Util.shouldNotReachHere();
                     } else {
-                        masm().movoop(asAddress(addr), c.asJobject());
+                        masm().movoop(asAddress(addr), c.asObject());
                     }
                 }
                 break;
@@ -640,9 +582,9 @@ public class X86LIRAssembler extends LIRAssembler {
                         masm().movptr(asAddress(addr, X86FrameMap.r15thread), c.asLongBits());
                         throw Util.shouldNotReachHere();
                     } else {
-                        masm().movptr(X86Register.r10, c.asLongBits());
+                        masm().movptr(X86.r10, c.asLongBits());
                         nullCheckHere = codeOffset();
-                        masm().movptr(asAddressLo(addr), X86Register.r10);
+                        masm().movptr(asAddressLo(addr), X86.r10);
                     }
                 } else {
                     // Always reachable in 32bit so this doesn't produce useless move literal
@@ -733,22 +675,6 @@ public class X86LIRAssembler extends LIRAssembler {
                     moveRegs(fHi, tHi);
                 }
             }
-
-            // special moves from fpu-register to xmm-register
-            // necessary for method results
-        } else if (src.isSingleXmm() && !dest.isSingleXmm()) {
-            masm().movflt(new Address(X86Register.rsp, 0), asXmmFloatReg(src));
-            masm().fldS(new Address(X86Register.rsp, 0));
-        } else if (src.isDoubleXmm() && !dest.isDoubleXmm()) {
-            masm().movdbl(new Address(X86Register.rsp, 0), asXmmDoubleReg(src));
-            masm().fldD(new Address(X86Register.rsp, 0));
-        } else if (dest.isSingleXmm() && !src.isSingleXmm()) {
-            masm().fstpS(new Address(X86Register.rsp, 0));
-            masm().movflt(asXmmFloatReg(dest), new Address(X86Register.rsp, 0));
-        } else if (dest.isDoubleXmm() && !src.isDoubleXmm()) {
-            masm().fstpD(new Address(X86Register.rsp, 0));
-            masm().movdbl(asXmmDoubleReg(dest), new Address(X86Register.rsp, 0));
-
             // move between xmm-registers
         } else if (dest.isSingleXmm()) {
             assert src.isSingleXmm() : "must match";
@@ -756,18 +682,13 @@ public class X86LIRAssembler extends LIRAssembler {
         } else if (dest.isDoubleXmm()) {
             assert src.isDoubleXmm() : "must match";
             masm().movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(src));
-
-            // move between fpu-registers (no instruction necessary because of fpu-stack)
-        } else if (dest.isSingleFpu() || dest.isDoubleFpu()) {
-            assert src.isSingleFpu() || src.isDoubleFpu() : "must match";
-            assert src.equals(dest) : "currently should be nothing to do";
         } else {
             throw Util.shouldNotReachHere();
         }
     }
 
     @Override
-    protected void reg2stack(LIROperand src, LIROperand dest, BasicType type, boolean popFpuStack) {
+    protected void reg2stack(LIROperand src, LIROperand dest, BasicType type) {
         assert src.isRegister() : "should not call otherwise";
         assert dest.isStack() : "should not call otherwise";
 
@@ -800,31 +721,13 @@ public class X86LIRAssembler extends LIRAssembler {
             Address dstAddr = frameMap().addressForSlot(dest.doubleStackIx());
             masm().movdbl(dstAddr, asXmmDoubleReg(src));
 
-        } else if (src.isSingleFpu()) {
-            assert src.fpuRegnr() == 0 : "argument must be on TOS";
-            Address dstAddr = frameMap().addressForSlot(dest.singleStackIx());
-            if (popFpuStack) {
-                masm().fstpS(dstAddr);
-            } else {
-                masm().fstS(dstAddr);
-            }
-
-        } else if (src.isDoubleFpu()) {
-            assert src.asRegisterLo() == X86Register.fpu0 : "argument must be on TOS";
-            Address dstAddr = frameMap().addressForSlot(dest.doubleStackIx());
-            if (popFpuStack) {
-                masm().fstpD(dstAddr);
-            } else {
-                masm().fstD(dstAddr);
-            }
-
         } else {
             throw Util.shouldNotReachHere();
         }
     }
 
     @Override
-    protected void reg2mem(LIROperand src, LIROperand dest, BasicType type, LIRPatchCode patchCode, CodeEmitInfo info, boolean popFpuStack, boolean unaligned) {
+    protected void reg2mem(LIROperand src, LIROperand dest, BasicType type, LIRPatchCode patchCode, CodeEmitInfo info, boolean unaligned) {
         LIRAddress toAddr = dest.asAddressPtr();
         PatchingStub patch = null;
 
@@ -845,13 +748,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 if (src.isSingleXmm()) {
                     masm().movflt(asAddress(toAddr), asXmmFloatReg(src));
                 } else {
-                    assert src.isSingleFpu() : "must be";
-                    assert src.fpuRegnr() == 0 : "argument must be on TOS";
-                    if (popFpuStack) {
-                        masm().fstpS(asAddress(toAddr));
-                    } else {
-                        masm().fstS(asAddress(toAddr));
-                    }
+                    assert false : "no fpu stack";
                 }
                 break;
             }
@@ -860,13 +757,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 if (src.isDoubleXmm()) {
                     masm().movdbl(asAddress(toAddr), asXmmDoubleReg(src));
                 } else {
-                    assert src.isDoubleFpu() : "must be";
-                    assert src.asRegisterLo() == X86Register.fpu0 : "argument must be on TOS";
-                    if (popFpuStack) {
-                        masm().fstpD(asAddress(toAddr));
-                    } else {
-                        masm().fstD(asAddress(toAddr));
-                    }
+                    assert false : "no fpu stack";
                 }
                 break;
             }
@@ -976,16 +867,6 @@ public class X86LIRAssembler extends LIRAssembler {
             Address srcAddr = frameMap().addressForSlot(src.doubleStackIx());
             masm().movdbl(asXmmDoubleReg(dest), srcAddr);
 
-        } else if (dest.isSingleFpu()) {
-            assert dest.fpuRegnr() == 0 : "dest must be TOS";
-            Address srcAddr = frameMap().addressForSlot(src.singleStackIx());
-            masm().fldS(srcAddr);
-
-        } else if (dest.isDoubleFpu()) {
-            assert dest.asRegisterLo() == X86Register.fpu0 : "dest must be TOS";
-            Address srcAddr = frameMap().addressForSlot(src.doubleStackIx());
-            masm().fldD(srcAddr);
-
         } else {
             throw Util.shouldNotReachHere();
         }
@@ -1061,9 +942,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 if (dest.isSingleXmm()) {
                     masm().movflt(asXmmFloatReg(dest), fromAddr);
                 } else {
-                    assert dest.isSingleFpu() : "must be";
-                    assert dest.fpuRegnr() == 0 : "dest must be TOS";
-                    masm().fldS(fromAddr);
+                    Util.shouldNotReachHere();
                 }
                 break;
             }
@@ -1072,9 +951,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 if (dest.isDoubleXmm()) {
                     masm().movdbl(asXmmDoubleReg(dest), fromAddr);
                 } else {
-                    assert dest.isDoubleFpu() : "must be";
-                    assert dest.asRegisterLo() == X86Register.fpu0 : "dest must be TOS";
-                    masm().fldD(fromAddr);
+                    assert false : "no fpu stack";
                 }
                 break;
             }
@@ -1341,8 +1218,9 @@ public class X86LIRAssembler extends LIRAssembler {
     protected void emitConvert(LIRConvert op) {
         LIROperand src = op.inOpr();
         LIROperand dest = op.resultOpr();
-
-        switch (op.bytecode()) {
+        Label biggerMaxValue = new Label();
+        Label endLabel = new Label();
+        switch (op.bytecode) {
             case Bytecodes.I2L:
                 if (compilation.target.arch.is64bit()) {
                     masm().movl2ptr(dest.asRegisterLo(), src.asRegister());
@@ -1379,8 +1257,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 } else if (dest.isDoubleXmm()) {
                     masm().cvtss2sd(asXmmDoubleReg(dest), asXmmFloatReg(src));
                 } else {
-                    assert src.equals(dest) : "register must be equal";
-                    // do nothing (float result is rounded later through spilling)
+                    assert false : "no fpu stack";
                 }
                 break;
 
@@ -1391,60 +1268,67 @@ public class X86LIRAssembler extends LIRAssembler {
                 } else if (dest.isDoubleXmm()) {
                     masm().cvtsi2sdl(asXmmDoubleReg(dest), src.asRegister());
                 } else {
-                    assert dest.asRegisterLo() == X86Register.fpu0 : "result must be on TOS";
-                    masm().movl(new Address(X86Register.rsp, 0), src.asRegister());
-                    masm().fildS(new Address(X86Register.rsp, 0));
+                    assert false : "no fpu stack";
                 }
                 break;
 
             case Bytecodes.F2I:
-            case Bytecodes.D2I:
-                if (src.isSingleXmm()) {
-                    masm().cvttss2sil(dest.asRegister(), asXmmFloatReg(src));
-                } else if (src.isDoubleXmm()) {
-                    masm().cvttsd2sil(dest.asRegister(), asXmmDoubleReg(src));
-                } else {
-                    assert src.asRegisterLo() == X86Register.fpu0 : "input must be on TOS";
-                    masm().fldcw(new RuntimeAddress(CiRuntimeCall.FpuCntrlWrdTrunc));
-                    masm().fistS(new Address(X86Register.rsp, 0));
-                    masm().movl(dest.asRegister(), new Address(X86Register.rsp, 0));
-                    masm().fldcw(new RuntimeAddress(CiRuntimeCall.FpuCntrlWrdStd));
-                }
+                assert src.isSingleXmm() && dest.isRegister() : "must both be XMM register (no fpu stack)";
+                masm().ucomiss(src.asRegister(), masm().floatConstant(MAX_FLOAT_VALUE_INTEGER));
+                masm().jcc(Condition.aboveEqual, biggerMaxValue);
+                masm().cvttss2sil(dest.asRegister(), asXmmFloatReg(src));
+                masm().jmp(endLabel);
+                masm().bind(biggerMaxValue);
+                masm().movl(dest.asRegister(), MAX_INT_VALUE);
+                masm().bind(endLabel);
+                break;
 
-                // IA32 conversion instructions do not match JLS for overflow, underflow and NaN . fixup in stub
-                assert op.stub() != null : "stub required";
-                masm().cmpl(dest.asRegister(), 0x80000000);
-                masm().jcc(X86Assembler.Condition.equal, op.stub().entry);
-                masm().bind(op.stub().continuation);
+            case Bytecodes.D2I:
+                assert src.isDoubleXmm() && dest.isRegister() : "must both be XMM register (no fpu stack)";
+                masm().ucomisd(src.asRegister(), masm().doubleConstant(MAX_DOUBLE_VALUE_INTEGER));
+                masm().jcc(Condition.aboveEqual, biggerMaxValue);
+                masm().cvttsd2sil(dest.asRegister(), asXmmDoubleReg(src));
+                masm().jmp(endLabel);
+                masm().bind(biggerMaxValue);
+                masm().movl(dest.asRegister(), MAX_INT_VALUE);
+                masm().bind(endLabel);
                 break;
 
             case Bytecodes.L2F:
-            case Bytecodes.L2D:
-                assert !dest.isXmmRegister() : "result in xmm register not supported (no SSE instruction present)";
-                assert dest.asRegisterLo() == X86Register.fpu0 : "result must be on TOS";
+                masm().cvtsi2ssq(asXmmFloatReg(dest), src.asRegister());
+                break;
 
-                masm().movptr(new Address(X86Register.rsp, 0), src.asRegisterLo());
-                if (!compilation.target.arch.is64bit()) {
-                    masm().movl(new Address(X86Register.rsp, wordSize), src.asRegisterHi());
-                }
-                masm().fildD(new Address(X86Register.rsp, 0));
-                // float result is rounded later through spilling
+            case Bytecodes.L2D:
+                masm().cvtsi2sdq(asXmmDoubleReg(dest), src.asRegister());
                 break;
 
             case Bytecodes.F2L:
-            case Bytecodes.D2L:
-                assert !src.isXmmRegister() : "input in xmm register not supported (no SSE instruction present)";
-                assert src.asRegisterLo() == X86Register.fpu0 : "input must be on TOS";
-                assert dest == X86FrameMap.long0Opr(compilation.target.arch) : "runtime stub places result in these registers";
+                assert src.isSingleXmm() && dest.isDoubleCpu() : "must both be XMM register (no fpu stack)";
+                masm().ucomisd(src.asRegister(), masm().floatConstant(MAX_FLOAT_VALUE_LONG));
+                masm().jcc(Condition.aboveEqual, biggerMaxValue);
+                masm().cvttss2siq(dest.asRegister(), asXmmFloatReg(src));
+                masm().jmp(endLabel);
+                masm().bind(biggerMaxValue);
+                masm().movl(dest.asRegister(), MAX_LONG_VALUE);
+                masm().bind(endLabel);
+                break;
 
-                // instruction sequence too long to inline it here
-                masm().call(new RuntimeAddress(CiRuntimeCall.Fpu2longStub));
+            case Bytecodes.D2L:
+                assert src.isDoubleXmm() && dest.isDoubleCpu() : "must both be XMM register (no fpu stack)";
+                masm().ucomisd(src.asRegister(), masm().doubleConstant(MAX_DOUBLE_VALUE_LONG));
+                masm().jcc(Condition.aboveEqual, biggerMaxValue);
+                masm().cvttsd2siq(dest.asRegister(), asXmmDoubleReg(src));
+                masm().jmp(endLabel);
+                masm().bind(biggerMaxValue);
+                masm().movl(dest.asRegister(), MAX_LONG_VALUE);
+                masm().bind(endLabel);
                 break;
 
             default:
                 throw Util.shouldNotReachHere();
         }
     }
+
 
     @Override
     protected void emitAllocObj(LIRAllocObj op) {
@@ -1510,10 +1394,9 @@ public class X86LIRAssembler extends LIRAssembler {
     protected void emitTypeCheck(LIRTypeCheck op) {
 
         // TODO: Make this work with Maxine while preserving the general semantics
-        //if (C1XOptions.AvoidUnsupported) {
-        //    throw new Bailout("Currently cannot emit a type check!");
-        //}
-
+        // if (C1XOptions.AvoidUnsupported) {
+        // throw new Bailout("Currently cannot emit a type check!");
+        // }
 
         LIROpcode code = op.code();
         if (code == LIROpcode.StoreCheck) {
@@ -1521,7 +1404,7 @@ public class X86LIRAssembler extends LIRAssembler {
             Register array = op.array().asRegister();
             Register kRInfo = op.tmp1().asRegister();
             Register klassRInfo = op.tmp2().asRegister();
-            //Register rtmp1 = op.tmp3().asRegister();
+            // Register rtmp1 = op.tmp3().asRegister();
 
             CodeStub stub = op.stub();
             Label done = new Label();
@@ -1536,12 +1419,13 @@ public class X86LIRAssembler extends LIRAssembler {
 
             // TODO: enable the fast path!
             // perform the fast part of the checking logic
-            //masm().checkKlassSubtypeFastPath(klassRInfo, kRInfo, rtmp1, done, stub.entry, null, new RegisterOrConstant(-1));
+            // masm().checkKlassSubtypeFastPath(klassRInfo, kRInfo, rtmp1, done, stub.entry, null, new
+            // RegisterOrConstant(-1));
 
             // call out-of-line instance of lir(). checkKlassSubtypeSlowPath(...):
             masm().push(klassRInfo);
             masm().push(kRInfo);
-            masm().call(new RuntimeAddress(CiRuntimeCall.SlowSubtypeCheck));
+            masm().callRuntime(CiRuntimeCall.SlowSubtypeCheck);
             masm().pop(klassRInfo);
             masm().pop(kRInfo);
             // result is a boolean
@@ -1643,7 +1527,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 // get object class
                 // not a safepoint as obj null check happens earlier
                 masm().movptr(klassRInfo, new Address(obj, compilation.runtime.klassOffsetInBytes()));
-                if (k.isLoaded()) {
+                if (k.isLoaded() && C1XOptions.FastPathTypeCheck) {
                     // See if we get an immediate positive hit
                     if (compilation.target.arch.is64bit()) {
                         masm().cmpptr(kRInfo, new Address(klassRInfo, k.superCheckOffset()));
@@ -1669,7 +1553,7 @@ public class X86LIRAssembler extends LIRAssembler {
                         } else {
                             masm().pushoop(k);
                         }
-                        masm().call(new RuntimeAddress(CiRuntimeCall.SlowSubtypeCheck));
+                        masm().callRuntime(CiRuntimeCall.SlowSubtypeCheck);
                         masm().pop(klassRInfo);
                         masm().pop(klassRInfo);
                         // result is a boolean
@@ -1679,11 +1563,11 @@ public class X86LIRAssembler extends LIRAssembler {
                     masm().bind(done);
                 } else {
                     // perform the fast part of the checking logic
-                    masm().checkKlassSubtypeFastPath(klassRInfo, kRInfo, rtmp1, done, stub.entry, null, new RegisterOrConstant(-1));
+                    //masm().checkKlassSubtypeFastPath(klassRInfo, kRInfo, rtmp1, done, stub.entry, null, new RegisterOrConstant(-1));
                     // call out-of-line instance of lir(). checkKlassSubtypeSlowPath(...):
                     masm().push(klassRInfo);
                     masm().push(kRInfo);
-                    masm().call(new RuntimeAddress(CiRuntimeCall.SlowSubtypeCheck));
+                    masm().callRuntime(CiRuntimeCall.SlowSubtypeCheck);
                     masm().pop(klassRInfo);
                     masm().pop(kRInfo);
                     // result is a boolean
@@ -1751,7 +1635,7 @@ public class X86LIRAssembler extends LIRAssembler {
                         masm().jcc(X86Assembler.Condition.equal, one);
                         masm().push(klassRInfo);
                         masm().pushoop(k);
-                        masm().call(new RuntimeAddress(CiRuntimeCall.SlowSubtypeCheck));
+                        masm().callRuntime(CiRuntimeCall.SlowSubtypeCheck);
                         masm().pop(klassRInfo);
                         masm().pop(dst);
                         masm().jmp(done);
@@ -1761,11 +1645,11 @@ public class X86LIRAssembler extends LIRAssembler {
                     assert dst != klassRInfo && dst != kRInfo : "need 3 registers";
 
                     // perform the fast part of the checking logic
-                    masm().checkKlassSubtypeFastPath(klassRInfo, kRInfo, dst, one, zero, null, new RegisterOrConstant(-1));
+                    //masm().checkKlassSubtypeFastPath(klassRInfo, kRInfo, dst, one, zero, null, new RegisterOrConstant(-1));
                     // call out-of-line instance of lir(). checkKlassSubtypeSlowPath(...):
                     masm().push(klassRInfo);
                     masm().push(kRInfo);
-                    masm().call(new RuntimeAddress(CiRuntimeCall.SlowSubtypeCheck));
+                    masm().callRuntime(CiRuntimeCall.SlowSubtypeCheck);
                     masm().pop(klassRInfo);
                     masm().pop(dst);
                     masm().jmp(done);
@@ -1785,10 +1669,10 @@ public class X86LIRAssembler extends LIRAssembler {
     @Override
     protected void emitCompareAndSwap(LIRCompareAndSwap op) {
         if (!compilation.target.arch.is64bit() && op.code() == LIROpcode.CasLong && compilation.target.supportsCx8()) {
-            assert op.cmpValue().asRegisterLo() == X86Register.rax : "wrong register";
-            assert op.cmpValue().asRegisterHi() == X86Register.rdx : "wrong register";
-            assert op.newValue().asRegisterLo() == X86Register.rbx : "wrong register";
-            assert op.newValue().asRegisterHi() == X86Register.rcx : "wrong register";
+            assert op.cmpValue().asRegisterLo() == X86.rax : "wrong register";
+            assert op.cmpValue().asRegisterHi() == X86.rdx : "wrong register";
+            assert op.newValue().asRegisterLo() == X86.rbx : "wrong register";
+            assert op.newValue().asRegisterHi() == X86.rcx : "wrong register";
             Register addr = op.address().asRegister();
             if (compilation.runtime.isMP()) {
                 masm().lock();
@@ -1800,7 +1684,7 @@ public class X86LIRAssembler extends LIRAssembler {
             Register addr = ((op.address().isSingleCpu() ? op.address().asRegister() : op.address().asRegisterLo()));
             Register newval = op.newValue().asRegister();
             Register cmpval = op.cmpValue().asRegister();
-            assert cmpval == X86Register.rax : "wrong register";
+            assert cmpval == X86.rax : "wrong register";
             assert newval != null : "new val must be register";
             assert cmpval != newval : "cmp and new values must be in different registers";
             assert cmpval != addr : "cmp and addr must be in different registers";
@@ -1819,7 +1703,7 @@ public class X86LIRAssembler extends LIRAssembler {
             Register addr = (op.address().isSingleCpu() ? op.address().asRegister() : op.address().asRegisterLo());
             Register newval = op.newValue().asRegisterLo();
             Register cmpval = op.cmpValue().asRegisterLo();
-            assert cmpval == X86Register.rax : "wrong register";
+            assert cmpval == X86.rax : "wrong register";
             assert newval != null : "new val must be register";
             assert cmpval != newval : "cmp and new values must be in different registers";
             assert cmpval != addr : "cmp and addr must be in different registers";
@@ -1924,7 +1808,7 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void arithOp(LIROpcode code, LIROperand left, LIROperand right, LIROperand dest, CodeEmitInfo info, boolean popFpuStack) {
+    protected void arithOp(LIROpcode code, LIROperand left, LIROperand right, LIROperand dest, CodeEmitInfo info) {
         assert info == null : "should never be used :  idiv/irem and ldiv/lrem not handled by this method";
 
         if (left.isSingleCpu()) {
@@ -2010,7 +1894,7 @@ public class X86LIRAssembler extends LIRAssembler {
                         if (compilation.target.arch.is64bit()) {
                             masm().imulq(lregLo, rregLo);
                         } else {
-                            assert lregLo == X86Register.rax && lregHi == X86Register.rdx : "must be";
+                            assert lregLo == X86.rax && lregHi == X86.rdx : "must be";
                             masm().imull(lregHi, rregLo);
                             masm().imull(rregHi, lregLo);
                             masm().addl(rregHi, lregHi);
@@ -2026,13 +1910,13 @@ public class X86LIRAssembler extends LIRAssembler {
                 // cpu register - constant
                 if (compilation.target.arch.is64bit()) {
                     long c = right.asConstantPtr().asLongBits();
-                    masm().movptr(X86Register.r10, c);
+                    masm().movptr(X86.r10, c);
                     switch (code) {
                         case Add:
-                            masm().addptr(lregLo, X86Register.r10);
+                            masm().addptr(lregLo, X86.r10);
                             break;
                         case Sub:
-                            masm().subptr(lregLo, X86Register.r10);
+                            masm().subptr(lregLo, X86.r10);
                             break;
                         default:
                             throw Util.shouldNotReachHere();
@@ -2073,11 +1957,9 @@ public class X86LIRAssembler extends LIRAssembler {
                     case Sub:
                         masm().subss(lreg, rreg);
                         break;
-                    case MulStrictFp: // fall through
                     case Mul:
                         masm().mulss(lreg, rreg);
                         break;
-                    case DivStrictFp: // fall through
                     case Div:
                         masm().divss(lreg, rreg);
                         break;
@@ -2089,8 +1971,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 if (right.isSingleStack()) {
                     raddr = frameMap().addressForSlot(right.singleStackIx());
                 } else if (right.isConstant()) {
-                    // hack for now
-                    raddr = masm().asAddress(new InternalAddress(masm().floatConstant(right.asJfloat())));
+                    raddr = masm().floatConstant(((LIRConstant) right).asFloat());
                 } else {
                     throw Util.shouldNotReachHere();
                 }
@@ -2101,11 +1982,9 @@ public class X86LIRAssembler extends LIRAssembler {
                     case Sub:
                         masm().subss(lreg, raddr);
                         break;
-                    case MulStrictFp: // fall through
                     case Mul:
                         masm().mulss(lreg, raddr);
                         break;
-                    case DivStrictFp: // fall through
                     case Div:
                         masm().divss(lreg, raddr);
                         break;
@@ -2129,11 +2008,9 @@ public class X86LIRAssembler extends LIRAssembler {
                     case Sub:
                         masm().subsd(lreg, rreg);
                         break;
-                    case MulStrictFp: // fall through
                     case Mul:
                         masm().mulsd(lreg, rreg);
                         break;
-                    case DivStrictFp: // fall through
                     case Div:
                         masm().divsd(lreg, rreg);
                         break;
@@ -2146,7 +2023,7 @@ public class X86LIRAssembler extends LIRAssembler {
                     raddr = frameMap().addressForSlot(right.doubleStackIx());
                 } else if (right.isConstant()) {
                     // hack for now
-                    raddr = masm().asAddress(new InternalAddress(masm().doubleConstant(right.asJdouble())));
+                    raddr = masm().doubleConstant(((LIRConstant) right).asDouble());
                 } else {
                     throw Util.shouldNotReachHere();
                 }
@@ -2157,110 +2034,15 @@ public class X86LIRAssembler extends LIRAssembler {
                     case Sub:
                         masm().subsd(lreg, raddr);
                         break;
-                    case MulStrictFp: // fall through
                     case Mul:
                         masm().mulsd(lreg, raddr);
                         break;
-                    case DivStrictFp: // fall through
                     case Div:
                         masm().divsd(lreg, raddr);
                         break;
                     default:
                         throw Util.shouldNotReachHere();
                 }
-            }
-
-        } else if (left.isSingleFpu()) {
-            assert dest.isSingleFpu() : "fpu stack allocation required";
-
-            if (right.isSingleFpu()) {
-                arithFpuImplementation(code, left.fpuRegnr() - X86Register.fpu0.number, right.fpuRegnr() - X86Register.fpu0.number, dest.fpuRegnr() - X86Register.fpu0.number, popFpuStack);
-
-            } else {
-                assert left.fpuRegnr() == 0 : "left must be on TOS";
-                assert dest.fpuRegnr() == 0 : "dest must be on TOS";
-
-                Address raddr;
-                if (right.isSingleStack()) {
-                    raddr = frameMap().addressForSlot(right.singleStackIx());
-                } else if (right.isConstant()) {
-                    int constAddr = masm().floatConstant(right.asJfloat());
-                    // hack for now
-                    raddr = masm().asAddress(new InternalAddress(constAddr));
-                } else {
-                    throw Util.shouldNotReachHere();
-                }
-
-                switch (code) {
-                    case Add:
-                        masm().faddS(raddr);
-                        break;
-                    case Sub:
-                        masm().fsubS(raddr);
-                        break;
-                    case MulStrictFp: // fall through
-                    case Mul:
-                        masm().fmulS(raddr);
-                        break;
-                    case DivStrictFp: // fall through
-                    case Div:
-                        masm().fdivS(raddr);
-                        break;
-                    default:
-                        throw Util.shouldNotReachHere();
-                }
-            }
-
-        } else if (left.isDoubleFpu()) {
-            assert dest.isDoubleFpu() : "fpu stack allocation required";
-
-            if (code == LIROpcode.MulStrictFp || code == LIROpcode.DivStrictFp) {
-                // Double values require special handling for strictfp mul/div on x86
-                masm().fldX(new RuntimeAddress(CiRuntimeCall.AddrFpuSubnormalBias1));
-                masm().fmulp(left.fpuRegnrLo() + 1 - X86Register.fpu0.number);
-            }
-
-            if (right.isDoubleFpu()) {
-                arithFpuImplementation(code, left.fpuRegnrLo() - X86Register.fpu0.number, right.fpuRegnrLo() - X86Register.fpu0.number, dest.fpuRegnrLo() - X86Register.fpu0.number, popFpuStack);
-
-            } else {
-                assert left.asRegisterLo() == X86Register.fpu0 : "left must be on TOS";
-                assert dest.asRegisterLo() == X86Register.fpu0 : "dest must be on TOS";
-
-                Address raddr;
-                if (right.isDoubleStack()) {
-                    raddr = frameMap().addressForSlot(right.doubleStackIx());
-                } else if (right.isConstant()) {
-                    // hack for now
-                    raddr = masm().asAddress(new InternalAddress(masm().doubleConstant(right.asJdouble())));
-                } else {
-                    throw Util.shouldNotReachHere();
-                }
-
-                switch (code) {
-                    case Add:
-                        masm().faddD(raddr);
-                        break;
-                    case Sub:
-                        masm().fsubD(raddr);
-                        break;
-                    case MulStrictFp: // fall through
-                    case Mul:
-                        masm().fmulD(raddr);
-                        break;
-                    case DivStrictFp: // fall through
-                    case Div:
-                        masm().fdivD(raddr);
-                        break;
-                    default:
-                        throw Util.shouldNotReachHere();
-                }
-            }
-
-            if (code == LIROpcode.MulStrictFp || code == LIROpcode.DivStrictFp) {
-                // Double values require special handling for strictfp mul/div on x86
-                masm().fldX(new RuntimeAddress(CiRuntimeCall.AddrFpuSubnormalBias2));
-                masm().fmulp(dest.fpuRegnrLo() + 1);
             }
 
         } else if (left.isSingleStack() || left.isAddress()) {
@@ -2310,88 +2092,6 @@ public class X86LIRAssembler extends LIRAssembler {
         }
     }
 
-    private void arithFpuImplementation(LIROpcode code, int leftIndex, int rightIndex, int destIndex, boolean popFpuStack) {
-        assert popFpuStack || (leftIndex == destIndex || rightIndex == destIndex) : "invalid LIR";
-        assert !popFpuStack || (leftIndex - 1 == destIndex || rightIndex - 1 == destIndex) : "invalid LIR";
-        assert leftIndex == 0 || rightIndex == 0 : "either must be on top of stack";
-
-        boolean leftIsTos = (leftIndex == 0);
-        boolean destIsTos = (destIndex == 0);
-        int nonTosIndex = (leftIsTos ? rightIndex : leftIndex);
-
-        switch (code) {
-            case Add:
-                if (popFpuStack) {
-                    masm().faddp(nonTosIndex);
-                } else if (destIsTos) {
-                    masm().fadd(nonTosIndex);
-                } else {
-                    masm().fadda(nonTosIndex);
-                }
-                break;
-
-            case Sub:
-                if (leftIsTos) {
-                    if (popFpuStack) {
-                        masm().fsubrp(nonTosIndex);
-                    } else if (destIsTos) {
-                        masm().fsub(nonTosIndex);
-                    } else {
-                        masm().fsubra(nonTosIndex);
-                    }
-                } else {
-                    if (popFpuStack) {
-                        masm().fsubp(nonTosIndex);
-                    } else if (destIsTos) {
-                        masm().fsubr(nonTosIndex);
-                    } else {
-                        masm().fsuba(nonTosIndex);
-                    }
-                }
-                break;
-
-            case MulStrictFp: // fall through
-            case Mul:
-                if (popFpuStack) {
-                    masm().fmulp(nonTosIndex);
-                } else if (destIsTos) {
-                    masm().fmul(nonTosIndex);
-                } else {
-                    masm().fmula(nonTosIndex);
-                }
-                break;
-
-            case DivStrictFp: // fall through
-            case Div:
-                if (leftIsTos) {
-                    if (popFpuStack) {
-                        masm().fdivrp(nonTosIndex);
-                    } else if (destIsTos) {
-                        masm().fdiv(nonTosIndex);
-                    } else {
-                        masm().fdivra(nonTosIndex);
-                    }
-                } else {
-                    if (popFpuStack) {
-                        masm().fdivp(nonTosIndex);
-                    } else if (destIsTos) {
-                        masm().fdivr(nonTosIndex);
-                    } else {
-                        masm().fdiva(nonTosIndex);
-                    }
-                }
-                break;
-
-            case Rem:
-                assert leftIsTos && destIsTos && rightIndex == 1 : "must be guaranteed by FPU stack allocation";
-                masm().fremr(Register.noreg);
-                break;
-
-            default:
-                throw Util.shouldNotReachHere();
-        }
-    }
-
     @Override
     protected void intrinsicOp(LIROpcode code, LIROperand value, LIROperand unused, LIROperand dest, LIROp2 op) {
 
@@ -2401,48 +2101,18 @@ public class X86LIRAssembler extends LIRAssembler {
                     if (asXmmDoubleReg(dest) != asXmmDoubleReg(value)) {
                         masm().movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(value));
                     }
-                    masm().andpd(asXmmDoubleReg(dest), new InternalAddress(masm().longConstant(DoubleSignMask, FloatConstantAlignment)));
+                    masm().andpd(asXmmDoubleReg(dest), masm().longConstant(DoubleSignMask, FloatConstantAlignment));
                     break;
 
                 case Sqrt:
                     masm().sqrtsd(asXmmDoubleReg(dest), asXmmDoubleReg(value));
                     break;
+
                 // all other intrinsics are not available in the SSE instruction set, so FPU is used
                 default:
                     throw Util.shouldNotReachHere();
             }
 
-        } else if (value.isDoubleFpu()) {
-            assert value.asRegisterLo() == X86Register.fpu0 && dest.asRegisterLo() == X86Register.fpu0 : "both must be on TOS";
-            switch (code) {
-                case Log:
-                    masm().flog();
-                    break;
-                case Log10:
-                    masm().flog10();
-                    break;
-                case Abs:
-                    masm().fabs();
-                    break;
-                case Sqrt:
-                    masm().fsqrt();
-                    break;
-                case Sin:
-                    // Should consider not saving rbx, if not necessary
-                    masm().trigfunc('s', op.fpuStackSize());
-                    break;
-                case Cos:
-                    // Should consider not saving rbx, if not necessary
-                    assert op.fpuStackSize() <= 6 : "sin and cos need two free stack slots";
-                    masm().trigfunc('c', op.fpuStackSize());
-                    break;
-                case Tan:
-                    // Should consider not saving rbx, if not necessary
-                    masm().trigfunc('t', op.fpuStackSize());
-                    break;
-                default:
-                    throw Util.shouldNotReachHere();
-            }
         } else {
             throw Util.shouldNotReachHere();
         }
@@ -2606,14 +2276,14 @@ public class X86LIRAssembler extends LIRAssembler {
             int divisor = right.asConstantPtr().asInt();
             assert divisor > 0 && Util.isPowerOf2(divisor) : "must be";
             if (code == LIROpcode.Div) {
-                assert lreg == X86Register.rax : "must be rax : ";
-                assert temp.asRegister() == X86Register.rdx : "tmp register must be rdx";
+                assert lreg == X86.rax : "must be rax : ";
+                assert temp.asRegister() == X86.rdx : "tmp register must be rdx";
                 masm().cdql(); // sign extend into rdx:rax
                 if (divisor == 2) {
-                    masm().subl(lreg, X86Register.rdx);
+                    masm().subl(lreg, X86.rdx);
                 } else {
-                    masm().andl(X86Register.rdx, divisor - 1);
-                    masm().addl(lreg, X86Register.rdx);
+                    masm().andl(X86.rdx, divisor - 1);
+                    masm().addl(lreg, X86.rdx);
                 }
                 masm().sarl(lreg, Util.log2(divisor));
                 moveRegs(lreg, dreg);
@@ -2631,18 +2301,18 @@ public class X86LIRAssembler extends LIRAssembler {
             }
         } else {
             Register rreg = right.asRegister();
-            assert lreg == X86Register.rax : "left register must be rax : ";
-            assert rreg != X86Register.rdx : "right register must not be rdx";
-            assert temp.asRegister() == X86Register.rdx : "tmp register must be rdx";
+            assert lreg == X86.rax : "left register must be rax : ";
+            assert rreg != X86.rdx : "right register must not be rdx";
+            assert temp.asRegister() == X86.rdx : "tmp register must be rdx";
 
-            moveRegs(lreg, X86Register.rax);
+            moveRegs(lreg, X86.rax);
 
             int idivlOffset = masm().correctedIdivl(rreg);
             addDebugInfoForDiv0(idivlOffset, info);
             if (code == LIROpcode.Rem) {
-                moveRegs(X86Register.rdx, dreg); // result is in rdx
+                moveRegs(X86.rdx, dreg); // result is in rdx
             } else {
-                moveRegs(X86Register.rax, dreg);
+                moveRegs(X86.rax, dreg);
             }
         }
     }
@@ -2673,7 +2343,7 @@ public class X86LIRAssembler extends LIRAssembler {
                     masm().cmpl(reg1, c.asInt());
                 } else if (c.type() == BasicType.Object) {
                     // In 64bit oops are single register
-                    Object o = c.asJobject();
+                    Object o = c.asObject();
                     if (o == null) {
                         masm().cmpptr(reg1, (int) NULLWORD);
                     } else {
@@ -2681,7 +2351,7 @@ public class X86LIRAssembler extends LIRAssembler {
                             masm().movoop(rscratch1, o);
                             masm().cmpptr(reg1, rscratch1);
                         } else {
-                            masm().cmpoop(reg1, c.asJobject());
+                            masm().cmpoop(reg1, c.asObject());
                         }
                     }
                 } else {
@@ -2689,7 +2359,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 }
                 // cpu register - address
             } else if (opr2.isAddress()) {
-                if (op.info() != null) {
+                if (op != null && op.info() != null) {
                     addDebugInfoForNullCheckHere(op.info());
                 }
                 masm().cmpl(reg1, asAddress(opr2.asAddressPtr()));
@@ -2737,10 +2407,10 @@ public class X86LIRAssembler extends LIRAssembler {
                 masm().ucomiss(reg1, frameMap().addressForSlot(opr2.singleStackIx()));
             } else if (opr2.isConstant()) {
                 // xmm register - constant
-                masm().ucomiss(reg1, new InternalAddress(masm().floatConstant(opr2.asJfloat())));
+                masm().ucomiss(reg1, masm().floatConstant(((LIRConstant) opr2).asFloat()));
             } else if (opr2.isAddress()) {
                 // xmm register - address
-                if (op.info() != null) {
+                if (op != null && op.info() != null) {
                     addDebugInfoForNullCheckHere(op.info());
                 }
                 masm().ucomiss(reg1, asAddress(opr2.asAddressPtr()));
@@ -2759,32 +2429,26 @@ public class X86LIRAssembler extends LIRAssembler {
                 masm().ucomisd(reg1, frameMap().addressForSlot(opr2.doubleStackIx()));
             } else if (opr2.isConstant()) {
                 // xmm register - constant
-                masm().ucomisd(reg1, new InternalAddress(masm().doubleConstant(opr2.asJdouble())));
+                masm().ucomisd(reg1, masm().doubleConstant(((LIRConstant) opr2).asDouble()));
             } else if (opr2.isAddress()) {
                 // xmm register - address
-                if (op.info() != null) {
+                if (op != null && op.info() != null) {
                     addDebugInfoForNullCheckHere(op.info());
                 }
                 masm().ucomisd(reg1, asAddress(opr2.asAddress()));
             } else {
                 throw Util.shouldNotReachHere();
             }
-
-        } else if (opr1.isSingleFpu() || opr1.isDoubleFpu()) {
-            assert opr1.isFpuRegister() && opr1.asRegisterLo() == X86Register.fpu0 : "currently left-hand side must be on TOS (relax this restriction)";
-            assert opr2.isFpuRegister() : "both must be registers";
-            masm().fcmp(Register.noreg, opr2.asRegisterLo().number - X86Register.fpu0.number, op.fpuPopCount() > 0, op.fpuPopCount() > 1);
-
         } else if (opr1.isAddress() && opr2.isConstant()) {
             LIRConstant c = opr2.asConstantPtr();
 
             if (compilation.target.arch.is64bit()) {
                 if (c.type() == BasicType.Object) {
                     assert condition == LIRCondition.Equal || condition == LIRCondition.NotEqual : "need to reverse";
-                    masm().movoop(rscratch1, c.asJobject());
+                    masm().movoop(rscratch1, c.asObject());
                 }
             }
-            if (op.info() != null) {
+            if (op != null && op.info() != null) {
                 addDebugInfoForNullCheckHere(op.info());
             }
             // special case: address - constant
@@ -2794,10 +2458,10 @@ public class X86LIRAssembler extends LIRAssembler {
             } else if (c.type() == BasicType.Object) {
                 if (compilation.target.arch.is64bit()) {
                     // %%% Make this explode if addr isn't reachable until we figure out a
-                    // better strategy by giving X86Register.noreg as the temp for asAddress
+                    // better strategy by giving X86.noreg as the temp for asAddress
                     masm().cmpptr(rscratch1, asAddress(addr, Register.noreg));
                 } else {
-                    masm().cmpoop(asAddress(addr), c.asJobject());
+                    masm().cmpoop(asAddress(addr), c.asObject());
                 }
             } else {
                 throw Util.shouldNotReachHere();
@@ -2819,11 +2483,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 masm().cmpsd2int(asXmmDoubleReg(left), asXmmDoubleReg(right), dst.asRegister(), code == LIROpcode.Ucmpfd2i);
 
             } else {
-                assert left.isSingleFpu() || left.isDoubleFpu() : "must be";
-                assert right.isSingleFpu() || right.isDoubleFpu() : "must match";
-
-                assert left.asRegisterLo() == X86Register.fpu0 : "left must be on TOS";
-                masm().fcmp2int(dst.asRegister(), code == LIROpcode.Ucmpfd2i, right.asRegisterLo().number - X86Register.fpu0.number, op.fpuPopCount() > 0, op.fpuPopCount() > 1);
+                assert false : "no fpu stack";
             }
         } else {
             assert code == LIROpcode.Cmpl2i;
@@ -2876,7 +2536,7 @@ public class X86LIRAssembler extends LIRAssembler {
     @Override
     protected void call(CiMethod method, CiRuntimeCall entry, CodeEmitInfo info) {
         assert !compilation.runtime.isMP() || (masm().offset() + compilation.target.arch.nativeCallDisplacementOffset) % wordSize == 0 : "must be aligned";
-        masm().call(new RuntimeAddress(entry, method));
+        masm().callRuntime(entry, method);
         addCallInfo(codeOffset(), info);
     }
 
@@ -2884,7 +2544,7 @@ public class X86LIRAssembler extends LIRAssembler {
     protected void icCall(CiMethod method, CiRuntimeCall entry, CodeEmitInfo info) {
         assert !compilation.runtime.isMP() || (masm().offset() + compilation.target.arch.nativeCallDisplacementOffset + compilation.target.arch.nativeMoveConstInstructionSize) % wordSize == 0 : "must be aligned";
         masm().movoop(ICKlass, compilation.runtime.universeNonOopWord());
-        masm().call(new RuntimeAddress(entry, method));
+        masm().callRuntime(entry, method);
         addCallInfo(codeOffset(), info);
     }
 
@@ -2923,7 +2583,7 @@ public class X86LIRAssembler extends LIRAssembler {
 // }
 // }
 // masm().relocate(Relocation.staticStubRelocationSpec(callPc));
-// masm().movoop(X86Register.rbx, null);
+// masm().movoop(X86.rbx, null);
 // // must be set to -1 at code generation time
 // assert !compilation.runtime.isMP() || ((masm().offset() + 1) % wordSize) == 0 : "must be aligned on MP";
 // // On 64bit this will die since it will take a movq & jmp, must be only a jmp
@@ -2935,8 +2595,8 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void throwOp(LIROperand exceptionPC, LIROperand exceptionOop, CodeEmitInfo info, boolean unwind) {
-        assert exceptionOop.asRegister() == X86Register.rax : "must match";
-        assert unwind || exceptionPC.asRegister() == X86Register.rdx : "must match";
+        assert exceptionOop.asRegister() == X86.rax : "must match";
+        assert unwind || exceptionPC.asRegister() == X86.rdx : "must match";
 
         // exception object is not added to oop map by LinearScan
         // (LinearScan assumes that no oops are in fixed registers)
@@ -2947,21 +2607,16 @@ public class X86LIRAssembler extends LIRAssembler {
             // get current pc information
             // pc is only needed if the method has an exception handler, the unwind code does not need it.
             int pcForAthrowOffset = masm().offset();
-            InternalAddress pcForAthrow = new InternalAddress(masm().pc());
-            masm().lea(exceptionPC.asRegister(), pcForAthrow);
+            masm().movl(exceptionPC.asRegister(), masm().pc());
             addCallInfo(pcForAthrowOffset, info); // for exception handler
 
-            masm().verifyNotNullOop(X86Register.rax);
+            masm().verifyNotNullOop(X86.rax);
             // search an exception handler (rax: exception oop, rdx: throwing pc)
-            if (compilation.hasFpuCode()) {
-                unwindId = CiRuntimeCall.HandleException;
-            } else {
-                unwindId = CiRuntimeCall.HandleExceptionNofpu;
-            }
+            unwindId = CiRuntimeCall.HandleException;
         } else {
             unwindId = CiRuntimeCall.UnwindException;
         }
-        masm().call(new RuntimeAddress(unwindId));
+        masm().callRuntime(unwindId);
 
         // enough room for two byte trap
         masm().nop();
@@ -3089,21 +2744,21 @@ public class X86LIRAssembler extends LIRAssembler {
         assert offsetFromRspInWords >= 0 : "invalid offset from rsp";
         int offsetFromRspInBytes = offsetFromRspInWords * compilation.target.arch.wordSize;
         assert offsetFromRspInBytes < frameMap().reservedArgumentAreaSize() : "invalid offset";
-        masm().movptr(new Address(X86Register.rsp, offsetFromRspInBytes), r);
+        masm().movptr(new Address(X86.rsp, offsetFromRspInBytes), r);
     }
 
     void storeParameter(int c, int offsetFromRspInWords) {
         assert offsetFromRspInWords >= 0 : "invalid offset from rsp";
         int offsetFromRspInBytes = offsetFromRspInWords * compilation.target.arch.wordSize;
         assert offsetFromRspInBytes < frameMap().reservedArgumentAreaSize() : "invalid offset";
-        masm().movptr(new Address(X86Register.rsp, offsetFromRspInBytes), c);
+        masm().movptr(new Address(X86.rsp, offsetFromRspInBytes), c);
     }
 
     void storeParameter(Object o, int offsetFromRspInWords) {
         assert offsetFromRspInWords >= 0 : "invalid offset from rsp";
         int offsetFromRspInBytes = offsetFromRspInWords * compilation.target.arch.wordSize;
         assert offsetFromRspInBytes < frameMap().reservedArgumentAreaSize() : "invalid offset";
-        masm().movoop(new Address(X86Register.rsp, offsetFromRspInBytes), o);
+        masm().movoop(new Address(X86.rsp, offsetFromRspInBytes), o);
     }
 
     @Override
@@ -3138,7 +2793,7 @@ public class X86LIRAssembler extends LIRAssembler {
             // these are just temporary placements until we need to reload
             storeParameter(srcPos, 3);
             storeParameter(src, 4);
-            assert compilation.target.arch.is64bit() || (src == X86Register.rcx && srcPos == X86Register.rdx) : "mismatch in calling convention";
+            assert compilation.target.arch.is64bit() || (src == X86.rcx && srcPos == X86.rdx) : "mismatch in calling convention";
 
             CiRuntimeCall entry = CiRuntimeCall.ArrayCopy;
 
@@ -3156,34 +2811,28 @@ public class X86LIRAssembler extends LIRAssembler {
                 masm().mov(masm.cRarg3, masm.jRarg3);
                 if (compilation.target.isWindows()) {
                     // Allocate abi space for args but be sure to keep stack aligned
-                    masm().subptr(X86Register.rsp, 6 * compilation.target.arch.wordSize);
+                    masm().subptr(X86.rsp, 6 * compilation.target.arch.wordSize);
                     storeParameter(masm.jRarg4, 4);
-                    masm().call(new RuntimeAddress(entry));
-                    masm().addptr(X86Register.rsp, 6 * compilation.target.arch.wordSize);
+                    masm().callRuntime(entry);
+                    masm().addptr(X86.rsp, 6 * compilation.target.arch.wordSize);
                 } else {
                     masm().mov(masm.cRarg4, masm.jRarg4);
-                    masm().call(new RuntimeAddress(entry));
+                    masm().callRuntime(entry);
                 }
             } else {
-                masm().push(length);
-                masm().push(dstPos);
-                masm().push(dst);
-                masm().push(srcPos);
-                masm().push(src);
-                masm().callVMLeaf(entry, 5); // removes pushed parameter from the stack
-
+                throw Util.unimplemented();
             }
 
-            masm().cmpl(X86Register.rax, 0);
+            masm().cmpl(X86.rax, 0);
             masm().jcc(X86Assembler.Condition.equal, stub.continuation);
 
             // Reload values from the stack so they are where the stub
             // expects them.
-            masm().movptr(dst, new Address(X86Register.rsp, 0 * wordSize));
-            masm().movptr(dstPos, new Address(X86Register.rsp, 1 * wordSize));
-            masm().movptr(length, new Address(X86Register.rsp, 2 * wordSize));
-            masm().movptr(srcPos, new Address(X86Register.rsp, 3 * wordSize));
-            masm().movptr(src, new Address(X86Register.rsp, 4 * wordSize));
+            masm().movptr(dst, new Address(X86.rsp, 0 * wordSize));
+            masm().movptr(dstPos, new Address(X86.rsp, 1 * wordSize));
+            masm().movptr(length, new Address(X86.rsp, 2 * wordSize));
+            masm().movptr(srcPos, new Address(X86.rsp, 3 * wordSize));
+            masm().movptr(src, new Address(X86.rsp, 4 * wordSize));
             masm().jmp(stub.entry);
 
             masm().bind(stub.continuation);
@@ -3313,9 +2962,9 @@ public class X86LIRAssembler extends LIRAssembler {
             storeParameter(length, 2);
         }
         if (basicType == BasicType.Object) {
-            masm().callVMLeaf(CiRuntimeCall.OopArrayCopy, 0);
+            masm().callRuntime(CiRuntimeCall.OopArrayCopy);
         } else {
-            masm().callVMLeaf(CiRuntimeCall.PrimitiveArrayCopy, 0);
+            masm().callRuntime(CiRuntimeCall.PrimitiveArrayCopy);
         }
 
         masm().bind(stub.continuation);
@@ -3480,18 +3129,13 @@ public class X86LIRAssembler extends LIRAssembler {
             if (asXmmFloatReg(left) != asXmmFloatReg(dest)) {
                 masm().movflt(asXmmFloatReg(dest), asXmmFloatReg(left));
             }
-            masm().xorps(asXmmFloatReg(dest), new InternalAddress(masm.longConstant(FloatSignFlip, FloatConstantAlignment)));
+            masm().xorps(asXmmFloatReg(dest), masm.longConstant(FloatSignFlip, FloatConstantAlignment));
 
         } else if (dest.isDoubleXmm()) {
             if (asXmmDoubleReg(left) != asXmmDoubleReg(dest)) {
                 masm().movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(left));
             }
-            masm().xorpd(asXmmDoubleReg(dest), new InternalAddress(masm.longConstant(DoubleSignFlip, FloatConstantAlignment)));
-
-        } else if (left.isSingleFpu() || left.isDoubleFpu()) {
-            assert left.asRegisterLo() == X86Register.fpu0 : "arg must be on TOS";
-            assert dest.asRegisterLo() == X86Register.fpu0 : "dest must be TOS";
-            masm().fchs();
+            masm().xorpd(asXmmDoubleReg(dest), masm.longConstant(DoubleSignFlip, FloatConstantAlignment));
 
         } else {
             throw Util.shouldNotReachHere();
@@ -3507,8 +3151,8 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void rtCall(LIROperand result, CiRuntimeCall dest, List<LIROperand> args, LIROperand tmp, CodeEmitInfo info) {
-        assert !tmp.isValid() : "don't need temporary";
-        masm().call(new RuntimeAddress(dest));
+        assert !tmp.isValid() : "don't need temporary on X86, so should be invalid";
+        masm().callRuntime(dest);
         if (info != null) {
             addCallInfoHere(info);
         }
@@ -3548,25 +3192,6 @@ public class X86LIRAssembler extends LIRAssembler {
                 throw Util.shouldNotReachHere();
             }
 
-        } else if (src.isDoubleFpu()) {
-            assert src.asRegisterLo() == X86Register.fpu0 : "must be TOS";
-            if (dest.isDoubleStack()) {
-                masm().fistpD(frameMap().addressForSlot(dest.doubleStackIx()));
-            } else if (dest.isAddress()) {
-                masm().fistpD(asAddress(dest.asAddressPtr()));
-            } else {
-                throw Util.shouldNotReachHere();
-            }
-
-        } else if (dest.isDoubleFpu()) {
-            assert dest.asRegisterLo() == X86Register.fpu0 : "must be TOS";
-            if (src.isDoubleStack()) {
-                masm().fildD(frameMap().addressForSlot(src.doubleStackIx()));
-            } else if (src.isAddress()) {
-                masm().fildD(asAddress(src.asAddressPtr()));
-            } else {
-                throw Util.shouldNotReachHere();
-            }
         } else {
             throw Util.shouldNotReachHere();
         }
@@ -3647,12 +3272,9 @@ public class X86LIRAssembler extends LIRAssembler {
             case Add:
             case Sub:
             case Mul:
-            case MulStrictFp:
             case Div:
-            case DivStrictFp:
             case Rem:
-                assert op.fpuPopCount() < 2 : "";
-                arithOp(op.code(), op.inOpr1(), op.inOpr2(), op.resultOpr(), op.info(), op.fpuPopCount() == 1);
+                arithOp(op.code(), op.inOpr1(), op.inOpr2(), op.resultOpr(), op.info());
                 break;
 
             case Abs:

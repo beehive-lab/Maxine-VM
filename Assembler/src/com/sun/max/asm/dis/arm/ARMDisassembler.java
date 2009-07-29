@@ -23,8 +23,10 @@ package com.sun.max.asm.dis.arm;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.arm.complete.*;
+import com.sun.max.asm.dis.*;
 import com.sun.max.asm.dis.risc.*;
 import com.sun.max.asm.gen.*;
+import com.sun.max.asm.gen.risc.*;
 import com.sun.max.asm.gen.risc.arm.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
@@ -32,7 +34,7 @@ import com.sun.max.lang.*;
 /**
  * @author Sumeet Panchal
  */
-public class ARMDisassembler extends RiscDisassembler<ARMTemplate, ARMDisassembledInstruction>{
+public class ARMDisassembler extends RiscDisassembler{
 
     public ARMDisassembler(int startAddress, InlineDataDecoder inlineDataDecoder) {
         super(new Immediate32Argument(startAddress), ARMAssembly.ASSEMBLY, Endianness.BIG, inlineDataDecoder);
@@ -44,12 +46,7 @@ public class ARMDisassembler extends RiscDisassembler<ARMTemplate, ARMDisassembl
     }
 
     @Override
-    protected ARMDisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, ARMTemplate template, IndexedSequence<Argument> arguments) {
-        return new ARMDisassembledInstruction(this, position, bytes, template, arguments);
-    }
-
-    @Override
-    protected ARMTemplate createInlineDataTemplate(InstructionDescription instructionDescription) {
-        return new ARMTemplate(instructionDescription);
+    protected DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, RiscTemplate template, IndexedSequence<Argument> arguments) {
+        return new DisassembledInstruction(this, position, bytes, template, arguments);
     }
 }

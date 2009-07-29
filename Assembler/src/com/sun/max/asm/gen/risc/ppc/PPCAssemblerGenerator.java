@@ -33,14 +33,14 @@ import com.sun.max.collect.*;
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public final class PPCAssemblerGenerator extends RiscAssemblerGenerator<PPCTemplate> {
+public final class PPCAssemblerGenerator extends RiscAssemblerGenerator<RiscTemplate> {
 
     private PPCAssemblerGenerator() {
         super(PPCAssembly.ASSEMBLY);
     }
 
     @Override
-    protected String getJavadocManualReference(PPCTemplate template) {
+    protected String getJavadocManualReference(RiscTemplate template) {
         String section = template.instructionDescription().architectureManualSection();
         if (section.indexOf("[Book ") == -1) {
             section += " [Book 1]";
@@ -55,10 +55,7 @@ public final class PPCAssemblerGenerator extends RiscAssemblerGenerator<PPCTempl
     }
 
     @Override
-    protected DisassembledInstruction generateExampleInstruction(PPCTemplate template, IndexedSequence<Argument> arguments) throws AssemblyException {
-//        final PPCAssembler assembler = new PPC32Assembler(0);
-//        assembly().assemble(assembler, template, arguments);
-//        final byte[] bytes = assembler.toByteArray();
-        return new PPC32DisassembledInstruction(new PPC32Disassembler(0, null), 0, new byte[] {0, 0, 0, 0}, template, arguments);
+    protected DisassembledInstruction generateExampleInstruction(RiscTemplate template, IndexedSequence<Argument> arguments) throws AssemblyException {
+        return new DisassembledInstruction(new PPC32Disassembler(0, null), 0, new byte[] {0, 0, 0, 0}, template, arguments);
     }
 }

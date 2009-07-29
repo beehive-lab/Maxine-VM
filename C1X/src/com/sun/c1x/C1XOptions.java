@@ -149,6 +149,7 @@ public class C1XOptions {
     public static boolean GenerateCompilerNullChecks         = ____;
     public static boolean UseTableRanges                     = ____;
     public static boolean DetailedAsserts                    = ____;
+    public static boolean FastPathTypeCheck                  = ____;
 
     public static boolean ImplicitDiv0Checks                 = ____;
 
@@ -159,7 +160,7 @@ public class C1XOptions {
     public static boolean AvoidUnsupported                   = TRUE; // Bails out when reaching code that is currently not supported
 
     // backend optimization settings
-    public static boolean OptimizeControlFlow                = ____;
+    public static boolean OptimizeControlFlow                = TRUE;
     public static boolean OptimizeMoves                      = ____;
 
     // Runtime settings
@@ -187,7 +188,6 @@ public class C1XOptions {
     public static boolean UseNormalNop                       = TRUE;
     public static boolean UseAddressNop                      = TRUE;
     public static boolean ForceUnreachable                   = ____;
-    public static boolean PrintBiasedLockingStatistics       = ____;
     public static boolean UseIncDec                          = ____;
     public static boolean UseXmmLoadAndClearUpper            = ____;
     public static boolean UseXmmRegToRegMoveAll              = ____;

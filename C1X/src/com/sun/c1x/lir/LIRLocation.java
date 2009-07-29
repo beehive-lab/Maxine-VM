@@ -136,7 +136,7 @@ public class LIRLocation extends LIROperand {
 
     @Override
     public boolean isCpuRegister() {
-        return !isStack();
+        return !isStack() && !location1.isXMM();
     }
 
     @Override
@@ -157,31 +157,6 @@ public class LIRLocation extends LIROperand {
     @Override
     public boolean isDoubleCpu() {
         return !isStack() && location2 != Register.noreg && location1.isCpu() && location2.isCpu();
-    }
-
-    @Override
-    public boolean isFpuRegister() {
-        return !isStack() && isFloatType();
-    }
-
-    @Override
-    public boolean isVirtualFpu() {
-        return isVirtualCpu() && isFloatType();
-    }
-
-    @Override
-    public boolean isFixedFpu() {
-        return isFixedCpu() && isFloatType();
-    }
-
-    @Override
-    public boolean isSingleFpu() {
-        return !isStack() && basicType == BasicType.Float;
-    }
-
-    @Override
-    public boolean isDoubleFpu() {
-        return !isStack() && basicType == BasicType.Double;
     }
 
     @Override
@@ -253,37 +228,19 @@ public class LIRLocation extends LIROperand {
 
     @Override
     public int cpuRegnr() {
-        assert this.isCpuRegister() && !this.isVirtualRegister();
+        assert this.isRegister() && !this.isVirtualRegister();
         return location1.number;
     }
 
     @Override
     public int cpuRegnrLo() {
-        assert this.isCpuRegister() && !this.isVirtualRegister();
+        assert this.isRegister() && !this.isVirtualRegister();
         return location1.number;
     }
 
     @Override
     public int cpuRegnrHi() {
-        assert this.isCpuRegister() && !this.isVirtualRegister();
-        return location2.number;
-    }
-
-    @Override
-    public int fpuRegnr() {
-        assert this.isFpuRegister() && !this.isVirtualRegister();
-        return location1.number;
-    }
-
-    @Override
-    public int fpuRegnrLo() {
-        assert this.isFpuRegister() && !this.isVirtualRegister();
-        return location1.number;
-    }
-
-    @Override
-    public int fpuRegnrHi() {
-        assert this.isFpuRegister() && !this.isVirtualRegister();
+        assert this.isRegister() && !this.isVirtualRegister();
         return location2.number;
     }
 
@@ -292,13 +249,6 @@ public class LIRLocation extends LIROperand {
      */
     public static int virtualRegisterBase() {
         return Register.vregBase;
-    }
-
-    /**
-     * @return <code>true</code> if this location is a floating point value
-     */
-    private boolean isFloatType() {
-        return (basicType == BasicType.Float || basicType == BasicType.Double);
     }
 
     public void changeTo(LIROperand newValues) {

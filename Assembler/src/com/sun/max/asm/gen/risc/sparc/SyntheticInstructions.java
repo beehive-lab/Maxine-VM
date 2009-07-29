@@ -27,12 +27,13 @@ import static com.sun.max.asm.sparc.BranchPredictionBit.*;
 import static com.sun.max.asm.sparc.GPR.*;
 import static com.sun.max.asm.sparc.ICCOperand.*;
 
+import com.sun.max.asm.gen.risc.*;
 import com.sun.max.asm.sparc.*;
 import com.sun.max.asm.sparc.complete.*;
 
 /**
  * Simple synthetic SPARC instructions.
- * 
+ *
  * @see SPARCAssembler
  *
  * @author Bernd Mathiske
@@ -91,7 +92,7 @@ class SyntheticInstructions extends SPARCInstructionDescriptionCreator {
         synthesize("mov", "wr", rs1(G0), makePredicate(getPredicateMethod(StateRegister.class, "isYorASR"), rd_state));
     }
 
-    SyntheticInstructions(SPARCTemplateCreator creator) {
+    SyntheticInstructions(RiscTemplateCreator creator) {
         super(creator);
 
         setCurrentArchitectureManualSection("A.39");

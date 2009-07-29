@@ -20,14 +20,13 @@
  */
 package com.sun.max.asm;
 
-
 /**
  * @author Bernd Mathiske
  */
 public abstract class BigEndianAssembler extends Assembler {
 
     protected BigEndianAssembler() {
-        super();
+        super((byte) 0, false);
     }
 
     @Override

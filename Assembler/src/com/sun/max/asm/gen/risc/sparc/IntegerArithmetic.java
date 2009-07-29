@@ -22,6 +22,8 @@ package com.sun.max.asm.gen.risc.sparc;
 
 import static com.sun.max.asm.gen.risc.sparc.SPARCFields.*;
 
+import com.sun.max.asm.gen.risc.*;
+
 /**
  * @author Bernd Mathiske
  * @author Dave Ungar
@@ -133,7 +135,7 @@ class IntegerArithmetic extends SPARCInstructionDescriptionCreator {
         }
     }
 
-    IntegerArithmetic(SPARCTemplateCreator templateCreator) {
+    IntegerArithmetic(RiscTemplateCreator templateCreator) {
         super(templateCreator);
 
         setCurrentArchitectureManualSection("A.2");

@@ -35,7 +35,7 @@ import com.sun.max.lang.*;
 /**
  * @author Bernd Mathiske
  */
-public class AMD64AssemblyTester extends X86AssemblyTester<AMD64Template, AMD64DisassembledInstruction> {
+public class AMD64AssemblyTester extends X86AssemblyTester<AMD64Template> {
 
     public AMD64AssemblyTester(EnumSet<AssemblyTestComponent> components) {
         super(AMD64Assembly.ASSEMBLY, WordWidth.BITS_64, components);

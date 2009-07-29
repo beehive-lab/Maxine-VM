@@ -659,7 +659,7 @@ public class LinearScanWalker extends IntervalWalker {
             hintReg = registerHint.assignedReg();
             hintRegHi = registerHint.assignedRegHi();
 
-            if (allocator().isPrecoloredCpuInterval.apply(registerHint)) {
+            if (allocator().isPrecoloredInterval.apply(registerHint)) {
                 assert hintReg != LinearScan.getAnyreg() && hintRegHi == LinearScan.getAnyreg() : "must be for fixed intervals";
                 hintRegHi = hintReg + 1; // connect e.g. eax-edx
             }
@@ -935,8 +935,7 @@ public class LinearScanWalker extends IntervalWalker {
         if (pdInitRegsForAlloc(cur)) {
             // the appropriate register range was selected.
         } else if (type == BasicType.Float || type == BasicType.Double) {
-            firstReg = allocator.pdFirstFpuReg;
-            lastReg = allocator.pdLastFpuReg;
+            assert false : "should not reach here!";
         } else {
             firstReg = allocator.pdFirstCpuReg;
             lastReg = allocator.pdLastCpuReg;
@@ -954,7 +953,7 @@ public class LinearScanWalker extends IntervalWalker {
             firstReg = allocator.pdFirstByteReg;
             lastReg = allocator.pdLastByteReg;
             return true;
-        } else if ((C1XOptions.SSEVersion >= 1 && cur.type() == BasicType.Float) || (C1XOptions.SSEVersion >= 2 && cur.type() == BasicType.Double)) {
+        } else if (cur.type() == BasicType.Float || cur.type() == BasicType.Double) {
             firstReg = allocator.pdFirstXmmReg;
             lastReg = allocator.pdLastXmmReg;
             return true;

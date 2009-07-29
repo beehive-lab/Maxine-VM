@@ -24,7 +24,6 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.max.asm.*;
-import com.sun.max.asm.dis.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.x86.*;
 import com.sun.max.collect.*;
@@ -35,8 +34,8 @@ import com.sun.max.util.*;
 /**
  * @author Bernd Mathiske
  */
-public abstract class X86AssemblyTester<Template_Type extends X86Template, DisassembledInstruction_Type extends DisassembledInstruction<Template_Type>>
-                          extends AssemblyTester<Template_Type, DisassembledInstruction_Type> {
+public abstract class X86AssemblyTester<Template_Type extends X86Template>
+                          extends AssemblyTester<Template_Type> {
 
     public X86AssemblyTester(Assembly<Template_Type> assembly, WordWidth addressWidth, EnumSet<AssemblyTestComponent> components) {
         super(assembly, addressWidth, components);
