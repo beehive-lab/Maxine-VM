@@ -38,7 +38,7 @@ import com.sun.max.vm.tele.*;
 public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
 
     private static int[] DEFAULT_BELT_HEAP_PERCENTAGE = new int[] {50, 50};
-    protected static BeltwaySSCollector beltCollectorBSS = new BeltwaySSCollector();
+    final  BeltwaySSCollector beltCollectorBSS = new BeltwaySSCollector();
 
     public BeltwayHeapSchemeBSS(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -53,13 +53,12 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (phase == MaxineVM.Phase.PRISTINE) {
-            InspectableHeapInfo.registerMemoryRegions(getToSpace(), getFromSpace());
+            InspectableHeapInfo.init(getToSpace(), getFromSpace());
+            tlabAllocationBelt = getFromSpace();
         } else if (phase == MaxineVM.Phase.RUNNING) {
             beltCollectorBSS.setBeltwayHeapScheme(this);
             beltCollector.setRunnable(beltCollectorBSS);
-            heapVerifier.initialize(this);
-            heapVerifier.getRootsVerifier().setFromSpace(beltManager.getApplicationHeap());
-            heapVerifier.getRootsVerifier().setToSpace(getToSpace());
+            heapVerifier.initialize(beltManager.getApplicationHeap(), getToSpace());
             HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "Scavenge");
         }
     }
@@ -81,18 +80,6 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
             return true;
         }
         return false;
-    }
-
-    @INLINE(override = true)
-    @NO_SAFEPOINTS("TODO")
-    public Pointer allocate(Size size) {
-        if (!MaxineVM.isRunning()) {
-            return bumpAllocateSlowPath(getFromSpace(), size);
-        }
-        if (BeltwayConfiguration.useTLABS) {
-            return tlabAllocate(getFromSpace(), size);
-        }
-        return heapAllocate(getFromSpace(), size);
     }
 
     private Size immediateFreeSpace() {

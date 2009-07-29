@@ -33,7 +33,7 @@ public abstract class TypeCheck extends StateSplit {
 
     final CiType targetClass;
     Instruction object;
-    ValueStack stateBefore;
+    final ValueStack stateBefore;
 
     /**
      * Creates a new TypeCheck instruction.

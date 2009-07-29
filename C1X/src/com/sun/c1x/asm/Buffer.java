@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.asm;
 
-import com.sun.c1x.target.Architecture;
 import com.sun.c1x.target.Architecture.BitOrdering;
 import com.sun.c1x.util.Bytes;
 import com.sun.c1x.util.Util;
@@ -41,7 +40,7 @@ public final class Buffer {
 
     private final BitOrdering bitOrdering;
 
-    public Buffer(Architecture.BitOrdering bitOrdering) {
+    public Buffer(BitOrdering bitOrdering) {
         this.bitOrdering = bitOrdering;
         this.data = new byte[InitialSize];
     }

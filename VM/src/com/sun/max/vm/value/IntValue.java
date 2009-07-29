@@ -190,7 +190,7 @@ public final class IntValue extends PrimitiveValue<IntValue> {
 
     @Override
     public Word unboxWord() {
-        if (WordWidth.BITS_32 == Word.width()) {
+        if (32 == Word.width()) {
             return toWord();
         }
         return super.unboxWord();

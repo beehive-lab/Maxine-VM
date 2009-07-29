@@ -1380,7 +1380,7 @@ class DirToSPARCEirBuiltinTranslation extends DirToEirBuiltinTranslation {
         addInstruction(new SPARCEirInstruction.ADD_I64(eirBlock(), registerPointerValue, delta));
     }
 
-    private static final LongValue STACK_SLOT_SIZE = LongValue.from(Word.width().numberOfBytes);
+    private static final LongValue STACK_SLOT_SIZE = LongValue.from(Word.size());
 
     @Override
     public void visitGetFloatingPointRegister(GetFloatingPointRegister builtin, DirValue dirResult, DirValue[] dirArguments) {

@@ -63,6 +63,11 @@ public class X86InstructionHeader {
     }
 
     @Override
+    public String toString() {
+        return String.format("Instruction header: rexPrefix=%s, instructionSelectionPrefix=%s, opcode1=%s, opcode2=%s, hasAddressSizePrefix=%b", rexPrefix, instructionSelectionPrefix, opcode1, opcode2, hasAddressSizePrefix);
+    }
+
+    @Override
     public int hashCode() {
         int result = hasAddressSizePrefix ? -1 : 1;
         if (instructionSelectionPrefix != null) {
@@ -86,13 +91,13 @@ public class X86InstructionHeader {
         return result;
     }
 
-    public static <Template_Type extends X86Template> Map<X86InstructionHeader, AppendableSequence<Template_Type>> createMapping(Assembly<Template_Type> assembly, WordWidth addressWidth) {
-        final Map<X86InstructionHeader, AppendableSequence<Template_Type>> result = new HashMap<X86InstructionHeader, AppendableSequence<Template_Type>>();
-        for (Template_Type template : assembly.templates()) {
+    public static Map<X86InstructionHeader, AppendableSequence<X86Template>> createMapping(Assembly<? extends X86Template> assembly, WordWidth addressWidth) {
+        final Map<X86InstructionHeader, AppendableSequence<X86Template>> result = new HashMap<X86InstructionHeader, AppendableSequence<X86Template>>();
+        for (X86Template template : assembly.templates()) {
             X86InstructionHeader header = new X86InstructionHeader(addressWidth, template);
-            AppendableSequence<Template_Type> matchingTemplates = result.get(header);
+            AppendableSequence<X86Template> matchingTemplates = result.get(header);
             if (matchingTemplates == null) {
-                matchingTemplates = new LinkSequence<Template_Type>();
+                matchingTemplates = new LinkSequence<X86Template>();
                 result.put(header, matchingTemplates);
             }
             matchingTemplates.append(template);

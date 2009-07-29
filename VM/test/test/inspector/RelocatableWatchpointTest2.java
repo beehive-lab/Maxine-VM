@@ -38,6 +38,10 @@ public class RelocatableWatchpointTest2 {
         return new SimpleObject(100, 200);
     }
 
+    public static SimpleObject2 getSimpleObject2() {
+        return new SimpleObject2(1, 2);
+    }
+
     public static SimpleObject getGarbageSimpleObject() {
         return new SimpleObject(10, 20);
     }
@@ -46,21 +50,26 @@ public class RelocatableWatchpointTest2 {
         System.out.println(simpleObject.value1 + " " + simpleObject.value2);
     }
 
+    public static void printMessage(SimpleObject2 simpleObject) {
+        System.out.println(simpleObject.value1 + " " + simpleObject.value2);
+    }
+
     public static void relocationTest() {
         SimpleObject test = getGarbageSimpleObject();
-        printMessage(test);
-        test = getSimpleObject();
-        printMessage(test);
+        SimpleObject test1 = getSimpleObject();
         for (int i = 0; i < allocations; i++) {
             final byte[] tmp = new byte[allocationSize];
             tmp[0] = 1;
         }
         printMessage(test);
+        printMessage(test1);
         for (int i = 0; i < allocations; i++) {
             final byte[] tmp = new byte[allocationSize];
             tmp[0] = 1;
         }
         printMessage(test);
+        printMessage(test1);
+        System.out.println("program end");
     }
 
     public static void main(String[] args) {
@@ -72,11 +81,24 @@ public class RelocatableWatchpointTest2 {
         public SimpleObject(int value1, int value2) {
             this.value1 = value1;
             this.value2 = value2;
-            this.string = new String("test");
+            //this.string = new String("test");
         }
 
         public int value1;
         public int value2;
-        public String string;
+        //public String string;
+    }
+
+    private static class SimpleObject2 {
+
+        public SimpleObject2(long value1, long value2) {
+            this.value1 = value1;
+            this.value2 = value2;
+            //this.string = new String("test");
+        }
+
+        public long value1;
+        public long value2;
+        //public String string;
     }
 }

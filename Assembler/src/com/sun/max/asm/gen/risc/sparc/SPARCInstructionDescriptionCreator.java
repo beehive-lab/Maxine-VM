@@ -29,7 +29,7 @@ import com.sun.max.asm.gen.risc.*;
 
 public abstract class SPARCInstructionDescriptionCreator extends RiscInstructionDescriptionCreator {
 
-    protected SPARCInstructionDescriptionCreator(SPARCTemplateCreator templateCreator) {
+    protected SPARCInstructionDescriptionCreator(RiscTemplateCreator templateCreator) {
         super(SPARCAssembly.ASSEMBLY, templateCreator);
     }
 

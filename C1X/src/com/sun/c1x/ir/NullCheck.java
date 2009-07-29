@@ -43,8 +43,8 @@ public class NullCheck extends Instruction {
         super(obj.type().base());
         this.object = obj;
         this.lockStack = lockStack;
-        setFlag(Flag.CanTrap);
         setFlag(Flag.NonNull);
+        setNeedsNullCheck(!obj.isNonNull());
         setFlag(Flag.PinExplicitNullCheck);
     }
 
@@ -66,19 +66,17 @@ public class NullCheck extends Instruction {
     }
 
     /**
-     * Sets the lock stack.
-     * @param lockStack the lock stack
+     * Sets whether this instruction requires a null check.
+     * @param on {@code true} if this instruction requires a null check
      */
-    public void setLockStack(ValueStack lockStack) {
-        this.lockStack = lockStack;
-    }
-
-    /**
-     * Sets whether this instruction can cause a trap.
-     * @param canTrap <code>true</code> if this instruction can cause a trap
-     */
-    public void setCanTrap(boolean canTrap) {
-        setFlag(Flag.CanTrap, canTrap);
+    public void setNeedsNullCheck(boolean on) {
+        if (on) {
+            assert lockStack != null;
+            setFlag(Instruction.Flag.NoNullCheck);
+        } else {
+            lockStack = null;
+            clearFlag(Instruction.Flag.NoNullCheck);
+        }
     }
 
     /**
@@ -87,7 +85,7 @@ public class NullCheck extends Instruction {
      */
     @Override
     public boolean canTrap() {
-        return checkFlag(Flag.CanTrap);
+        return needsNullCheck();
     }
 
     /**

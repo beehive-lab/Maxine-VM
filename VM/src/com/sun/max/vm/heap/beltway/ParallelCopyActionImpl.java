@@ -26,45 +26,42 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
 
 /**
  * @author Christos Kotselidis
  */
-public class ParallelCopyActionImpl implements Action {
+public class ParallelCopyActionImpl extends CopyActionImpl {
 
-    private static Verify verifyAction = new VerifyActionImpl();
+    public ParallelCopyActionImpl(Verify verifyAction) {
+        super(verifyAction);
+    }
 
-    public Grip doAction(Grip origin, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
+    // FIXME: need to devirtualize this for performance reason...
+    @Override
+    public Grip doAction(Grip origin) {
         final Pointer fromOrigin = origin.toOrigin();
         if (MaxineVM.isDebug()) {
-            if (!VMConfiguration.hostOrTarget().heapScheme().contains(fromOrigin)) {
-                Log.print("invalid grip: ");
-                Log.println(origin.toOrigin().asAddress());
-                FatalError.unexpected("invalid grip");
-            }
-
-            verifyAction.checkGripTag(origin);
+            verify(origin);
         }
         if (from.contains(fromOrigin)) {
             final Grip forwardGrip = Layout.readForwardGrip(fromOrigin);
             if (!forwardGrip.isZero()) {
                 return forwardGrip;
             }
-            final Grip forwardGripValue = Layout.readForwardGripValue(fromOrigin);
             final Pointer fromCell = Layout.originToCell(fromOrigin);
             final Size size = Layout.size(fromOrigin);
-            final Pointer toCell = ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).gcAllocate(to, size);
-            if (MaxineVM.isDebug()) {
-                DebugHeap.writeCellTag(toCell);
-            }
+            final Pointer toCell = heapScheme.gcTlabAllocate(to, size);
+            DebugHeap.writeCellTag(toCell);
             Memory.copyBytes(fromCell, toCell, size);
             final Pointer toOrigin = Layout.cellToOrigin(toCell);
             final Grip toGrip = Grip.fromOrigin(toOrigin);
+
+            final Grip forwardGripValue = Layout.readForwardGripValue(fromOrigin);
+
             if ((Layout.compareAndSwapForwardGrip(fromOrigin, forwardGripValue, toGrip)) != forwardGripValue) {
                 //Debug.println("Conflict in CAS forward Grip");
-                VmThread.current().getTLAB().undoLastAllocation();
+                // FIXME: BELTWAY.
+                //VmThread.current().getTLAB().undoLastAllocation();
                 return Layout.readForwardGrip(fromOrigin);
             }
             return toGrip;

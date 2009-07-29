@@ -18,19 +18,32 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.heap.beltway;
+package test.com.sun.max.vm;
 
-import com.sun.max.memory.*;
-import com.sun.max.unsafe.*;
+import com.sun.max.ide.*;
+import com.sun.max.platform.*;
 
 /**
+ * This class should be subclassed by any test case that uses types in the VM project.
+ * It takes care of boot strapping the environment correctly. In particular, it ensures
+ * that class initialization happens in the right order.
  *
+ * @author Doug Simon
  */
-public interface BeltWayCellVisitor extends Visitor{
+public abstract class VmTestCase extends MaxTestCase {
 
-    /**
-     * @param cell the cell to be visited
-     * @return the adjacent next cell
-     */
-    Pointer visitCell(Pointer cell, Action action, RuntimeMemoryRegion from, RuntimeMemoryRegion to);
+    public VmTestCase() {
+    }
+
+    public VmTestCase(String name) {
+        super(name);
+    }
+
+    @Override
+    protected void setUp() throws Exception {
+        // This seems to work in terms of triggering class initialization
+        // in the right order...
+        Platform.host();
+    }
+
 }

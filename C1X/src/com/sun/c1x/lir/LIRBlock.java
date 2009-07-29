@@ -21,6 +21,7 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.util.BitMap;
+import com.sun.c1x.asm.Label;
 
 /**
  * The <code>LIRBlock</code> class definition.
@@ -28,6 +29,9 @@ import com.sun.c1x.util.BitMap;
  * @author Ben L. Titzer
  */
 public class LIRBlock {
+
+    public final Label label = new Label();
+    private LIRList lir;
 
     public BitMap liveIn;
     public BitMap liveOut;
@@ -39,4 +43,12 @@ public class LIRBlock {
     public int firstLirInstructionID;
     public int lastLirInstructionID;
     public int exceptionHandlerPCO;
+
+    public LIRList lir() {
+        return lir;
+    }
+
+    public void setLir(LIRList lir) {
+        this.lir = lir;
+    }
 }

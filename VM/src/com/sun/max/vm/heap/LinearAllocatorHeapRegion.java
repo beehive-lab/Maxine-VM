@@ -20,12 +20,15 @@
  */
 package com.sun.max.vm.heap;
 
+import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * @author Bernd Mathiske
@@ -63,7 +66,7 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
      * Thread safety considerations: The caller(s) are responsible for ensuring that calls to this
      * method are synchronized. Failure to do so will leave the {@link #mark()} in an inconsistent state.
      *
-     * @param size the requested cell size to be allocated
+     * @param size the requested cell size to be allocated. This value must be {@linkplain Address#isWordAligned() word aligned}.
      * @param adjustForDebugTag specifies if an extra word is to be reserved before the cell for the debug tag word
      * @return
      */
@@ -96,10 +99,27 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
      * memory initialization of any kind is performed and the object's cell space is not extended by any extra
      * administrative data such as debug tags.
      *
+     * @param purpose if non-null, then a log message is printed upon successful allocation. This value describes what
+     *            the allocated memory is being used for
+     * @param size the size of the allocation request
      * @return start address of allocated space
      */
-    public Pointer allocateSpace(Size spaceSize) {
-        return allocate(spaceSize, false);
+    public Pointer allocateSpace(String purpose, Size size) {
+        final Pointer cell = allocate(size.wordAligned(), false);
+        if (!cell.isZero() && purpose != null) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.printVmThread(VmThread.current(), false);
+            Log.print(": Allocated chunk at ");
+            Log.print(cell);
+            Log.print(" of size ");
+            Log.print(size.wordAligned().toInt());
+            Log.print(" from ");
+            Log.print(description());
+            Log.print(" for ");
+            Log.println(purpose);
+            Log.unlock(lockDisabledSafepoints);
+        }
+        return cell;
     }
 
     /**
@@ -109,15 +129,53 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
         setSize(getAllocationMark().minus(start()).asSize());
     }
 
-    public void visitCells(CellVisitor cellVisitor) {
-        Pointer cell = start().asPointer();
-        while (cell.lessThan(mark())) {
-            cell = DebugHeap.skipCellPadding(cell);
-            if (cell.greaterEqual(mark())) {
-                break;
+    /**
+     * Visits all the references in this region with a given visitor.
+     * This method does nothing if this region does not track internal references.
+     *
+     * @param pointerIndexVisitor the visitor that is notified of each reference in this region
+     */
+    public void visitReferences(PointerIndexVisitor pointerIndexVisitor) {
+    }
+
+    @INLINE
+    protected final void scanReferenceMap(PointerIndexVisitor pointerIndexVisitor, Pointer refMap, int refMapWords, boolean tracing) {
+        for (int i = 0; i < refMapWords; ++i) {
+            Address refmapWord = refMap.getWord(i).asAddress();
+            if (!refmapWord.isZero()) {
+                int bitIndex = 0;
+                while (!refmapWord.isZero()) {
+                    if (!refmapWord.and(1).isZero()) {
+                        final int regionWordIndex = (i * Word.width()) + bitIndex;
+                        if (tracing) {
+                            final Pointer address = start().asPointer().plus(regionWordIndex * Word.size());
+                            final Address value = address.readWord(0).asAddress();
+                            if (!value.isZero() && !contains(value) && !Code.bootCodeRegion.contains(value)) {
+                                Log.print("    Slot: ");
+                                logSlot(regionWordIndex, address);
+                            }
+                        }
+                        pointerIndexVisitor.visitPointerIndex(start().asPointer(), regionWordIndex);
+                    }
+                    refmapWord = refmapWord.dividedBy(2);
+                    bitIndex++;
+                }
             }
-            cell = DebugHeap.checkDebugCellTag(start(), cell);
-            cell = cellVisitor.visitCell(cell);
         }
+    }
+
+    /**
+     * Prints the region-start relative index, absolute address and value of a word within a memory region.
+     *
+     * @param regionWordIndex the index of the word in a region relative to the start of the region
+     * @param address the absolute address of a word within a region
+     */
+    protected static void logSlot(final int regionWordIndex, final Pointer address) {
+        Log.print("index=");
+        Log.print(regionWordIndex);
+        Log.print(", address=");
+        Log.print(address);
+        Log.print(", value=");
+        Log.println(address.readWord(0));
     }
 }

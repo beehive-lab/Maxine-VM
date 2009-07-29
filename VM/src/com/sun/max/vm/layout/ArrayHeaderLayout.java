@@ -34,6 +34,14 @@ public interface ArrayHeaderLayout extends GeneralLayout {
 
     int arrayLengthOffset();
 
+    /**
+     * Gets the size of the cell required to hold an array of a given kind and length.
+     * The return value accounts for the object header size as well as any padding at the end of the cell
+     * to ensure that the cell size is word aligned.
+     *
+     * @param kind the kind of the elements in the array
+     * @param length the length of an array
+     */
     Size getArraySize(Kind kind, int length);
 
     int headerSize();

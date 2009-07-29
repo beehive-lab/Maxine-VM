@@ -415,13 +415,13 @@ public class ComputeLinearScanOrder {
             return false;
         }
 
-        assert linearScanOrder.indexOf(cur) == -1 : "block already processed (block can be ready only once)";
-        assert workList.indexOf(cur) == -1 : "block already in work-list (block can be ready only once)";
+        assert !linearScanOrder.contains(cur) : "block already processed (block can be ready only once)";
+        assert !workList.contains(cur) : "block already in work-list (block can be ready only once)";
         return true;
     }
 
     void sortIntoWorkList(BlockBegin cur) {
-        assert workList.indexOf(cur) == -1 : "block already in work list";
+        assert !workList.contains(cur) : "block already in work list";
 
         int curWeight = computeWeight(cur);
 
@@ -457,7 +457,7 @@ public class ComputeLinearScanOrder {
 
     void appendBlock(BlockBegin cur) {
         Util.traceLinearScan(3, "appending block B%d (weight 0x%6x) to linear-scan order", cur.blockID, cur.linearScanNumber());
-        assert linearScanOrder.indexOf(cur) == -1 : "cannot add the same block twice";
+        assert !linearScanOrder.contains(cur) : "cannot add the same block twice";
 
         // currently, the linear scan order and code emit order are equal.
         // therefore the linearScanNumber and the weight of a block must also

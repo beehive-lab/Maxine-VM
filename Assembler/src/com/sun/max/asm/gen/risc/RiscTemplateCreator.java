@@ -27,7 +27,6 @@ import java.util.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.field.*;
 import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 import com.sun.max.program.*;
 
 /**
@@ -35,33 +34,34 @@ import com.sun.max.program.*;
  *
  * @author Bernd Mathiske
  */
-public abstract class RiscTemplateCreator<Template_Type extends RiscTemplate> {
+public class RiscTemplateCreator {
 
-    protected RiscTemplateCreator() {
+    public RiscTemplateCreator() {
     }
 
-    private AppendableSequence<Template_Type> templates = new LinkSequence<Template_Type>();
+    private AppendableSequence<RiscTemplate> templates = new LinkSequence<RiscTemplate>();
 
-    public Sequence<Template_Type> templates() {
+    public Sequence<RiscTemplate> templates() {
         return templates;
     }
 
-    protected abstract Template_Type createTemplate(InstructionDescription instructionDescription);
+    protected RiscTemplate createTemplate(InstructionDescription instructionDescription) {
+        return new RiscTemplate(instructionDescription);
+    }
 
-    public Sequence<Template_Type> createOptionTemplates(Sequence<Template_Type> templateList, OptionField optionField) {
-        final Class<Template_Type> templateType = null;
-        final AppendableSequence<Template_Type> newTemplates = new LinkSequence<Template_Type>();
-        for (Template_Type template : templateList) {
-            Template_Type canonicalRepresentative = null;
+    public Sequence<RiscTemplate> createOptionTemplates(Sequence<RiscTemplate> templateList, OptionField optionField) {
+        final AppendableSequence<RiscTemplate> newTemplates = new LinkSequence<RiscTemplate>();
+        for (RiscTemplate template : templateList) {
+            RiscTemplate canonicalRepresentative = null;
             if (optionField.defaultOption() != null) {
-                canonicalRepresentative = StaticLoophole.cast(templateType, template.clone());
+                canonicalRepresentative = (RiscTemplate) template.clone();
                 canonicalRepresentative.organizeOption(optionField.defaultOption(), null);
             }
             for (Option option : optionField.options()) {
                 if (option.equals(optionField.defaultOption())) {
                     newTemplates.append(canonicalRepresentative);
                 } else {
-                    final Template_Type templateWithOption = StaticLoophole.cast(templateType, template.clone());
+                    final RiscTemplate templateWithOption = (RiscTemplate) template.clone();
                     templateWithOption.organizeOption(option, canonicalRepresentative);
                     newTemplates.append(templateWithOption);
                 }
@@ -71,25 +71,25 @@ public abstract class RiscTemplateCreator<Template_Type extends RiscTemplate> {
     }
 
     private int serial;
-    private Bag<String, Template_Type, Sequence<Template_Type>> nameToTemplates = new SequenceBag<String, Template_Type>(HASHED);
+    private Bag<String, RiscTemplate, Sequence<RiscTemplate>> nameToTemplates = new SequenceBag<String, RiscTemplate>(HASHED);
 
-    public Sequence<Template_Type> nameToTemplates(String name) {
+    public Sequence<RiscTemplate> nameToTemplates(String name) {
         return nameToTemplates.get(name);
     }
 
     public void createTemplates(RiscInstructionDescriptionCreator instructionDescriptionCreator) {
-        final AppendableSequence<Template_Type> initialTemplates = new LinkSequence<Template_Type>();
+        final AppendableSequence<RiscTemplate> initialTemplates = new LinkSequence<RiscTemplate>();
         for (InstructionDescription instructionDescription : instructionDescriptionCreator.instructionDescriptions()) {
-            final Template_Type template = createTemplate(instructionDescription);
+            final RiscTemplate template = createTemplate(instructionDescription);
             initialTemplates.append(template);
             RiscInstructionDescriptionVisitor.Static.visitInstructionDescription(template, instructionDescription);
         }
-        for (Template_Type initialTemplate : initialTemplates) {
-            Sequence<Template_Type> newTemplates = new LinkSequence<Template_Type>(initialTemplate);
+        for (RiscTemplate initialTemplate : initialTemplates) {
+            Sequence<RiscTemplate> newTemplates = new LinkSequence<RiscTemplate>(initialTemplate);
             for (OptionField optionField : initialTemplate.optionFields()) {
                 newTemplates = createOptionTemplates(newTemplates, optionField);
             }
-            for (Template_Type template : newTemplates) {
+            for (RiscTemplate template : newTemplates) {
                 serial++;
                 template.setSerial(serial);
                 templates.append(template);
@@ -98,9 +98,9 @@ public abstract class RiscTemplateCreator<Template_Type extends RiscTemplate> {
                 // Create the link to the non-synthetic instruction from which a synthetic instruction is derived.
                 if (template.instructionDescription().isSynthetic()) {
                     boolean found = false;
-                    final Iterator<Template_Type> iterator = nameToTemplates.iterator();
+                    final Iterator<RiscTemplate> iterator = nameToTemplates.iterator();
                     while (iterator.hasNext() && !found) {
-                        final Template_Type rawTemplate = iterator.next();
+                        final RiscTemplate rawTemplate = iterator.next();
                         if (!rawTemplate.instructionDescription().isSynthetic() && (template.opcodeMask() & rawTemplate.opcodeMask()) == rawTemplate.opcodeMask() &&
                                         (template.opcode() & rawTemplate.opcodeMask()) == rawTemplate.opcode()) {
                             template.setSynthesizedFrom(rawTemplate);

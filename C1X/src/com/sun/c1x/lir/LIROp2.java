@@ -32,7 +32,6 @@ import com.sun.c1x.value.BasicType;
  */
 public class LIROp2 extends LIRInstruction {
 
-    private int fpuStackSize;     // used for sin/cos implementation on Intel
     protected LIROperand opr1;
     LIROperand opr2;
     BasicType type;
@@ -54,7 +53,6 @@ public class LIROp2 extends LIRInstruction {
         this.opr2 = opr2;
         this.type = BasicType.Illegal;
         this.condition = condition;
-        this.fpuStackSize = 0;
         this.tmp = LIROperandFactory.IllegalOperand;
         assert opcode == LIROpcode.Cmp : "Instruction opcode should be of type LIROpcode.Cmp";
     }
@@ -74,7 +72,6 @@ public class LIROp2 extends LIRInstruction {
         this.opr2 = opr2;
         this.type = BasicType.Illegal;
         this.condition = condition;
-        this.fpuStackSize = 0;
         this.tmp = LIROperandFactory.IllegalOperand;
         assert opcode == LIROpcode.Cmove : "Instruction opcode should be of type LIROpcode.Cmove";
     }
@@ -95,7 +92,6 @@ public class LIROp2 extends LIRInstruction {
         this.opr2 = opr2;
         this.type = type;
         this.condition = LIRCondition.Unknown;
-        this.fpuStackSize = 0;
         this.tmp = LIROperandFactory.IllegalOperand;
         assert opcode != LIROpcode.Cmp && isInRange(opcode, LIROpcode.BeginOp2, LIROpcode.EndOp2) : "The " + opcode + " is not a valid LIROp2 opcode";
     }
@@ -151,7 +147,6 @@ public class LIROp2 extends LIRInstruction {
         this.opr2 = opr2;
         this.type = BasicType.Illegal;
         this.condition = LIRCondition.Unknown;
-        this.fpuStackSize = 0;
         this.tmp = tmp;
         assert opcode != LIROpcode.Cmp && isInRange(opcode, LIROpcode.BeginOp2, LIROpcode.EndOp2) : "The " + opcode + " is not a valid LIROp2 opcode";
     }
@@ -202,14 +197,6 @@ public class LIROp2 extends LIRInstruction {
     public LIRCondition condition() {
         assert code() == LIROpcode.Cmp || code() == LIROpcode.Cmove : "Field access only valid for cmp and cmove";
         return condition;
-    }
-
-    public void setFpuStackSize(int fpuStackSize) {
-        this.fpuStackSize = fpuStackSize;
-    }
-
-    public int fpuStackSize() {
-        return fpuStackSize;
     }
 
     public void setOpr1(LIROperand opr1) {

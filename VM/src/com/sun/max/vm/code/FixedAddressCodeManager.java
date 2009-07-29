@@ -66,9 +66,7 @@ public class FixedAddressCodeManager extends CodeManager {
                 if (!VirtualMemory.allocateAtFixedAddress(address, size, VirtualMemory.Type.CODE)) {
                     ProgramError.unexpected("could not allocate runtime code region");
                 }
-                codeRegion.setStart(address);
-                codeRegion.setMark(address);
-                codeRegion.setSize(size);
+                codeRegion.bind(address, size);
                 return codeRegion;
             }
         }

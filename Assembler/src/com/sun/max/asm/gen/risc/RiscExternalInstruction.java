@@ -51,7 +51,7 @@ import com.sun.max.lang.*;
  * @author Doug Simon
  * @author Greg Wright
  */
-public abstract class RiscExternalInstruction implements RiscInstructionDescriptionVisitor {
+public class RiscExternalInstruction implements RiscInstructionDescriptionVisitor {
 
     protected final RiscTemplate template;
     protected final Queue<Argument> arguments;
@@ -106,15 +106,6 @@ public abstract class RiscExternalInstruction implements RiscInstructionDescript
         operandsString += s;
     }
 
-    protected abstract boolean isAbsoluteBranch();
-
-    /**
-     * @return the symbol used to represent the value of the current location counter
-     */
-    protected String locationCounterSymbol() {
-        return ".";
-    }
-
     private void printBranchDisplacement(ImmediateArgument immediateArgument) {
         final int delta = (int) immediateArgument.asLong();
         if (address != null) {
@@ -124,9 +115,8 @@ public abstract class RiscExternalInstruction implements RiscInstructionDescript
                 print(label.name() + ": ");
             }
         } else {
-            if (!isAbsoluteBranch()) {
-                print(locationCounterSymbol() + " ");
-            }
+            // (tw) No longer checked for absolute branch, always print "."
+            print(". ");
         }
         if (delta >= 0) {
             print("+");

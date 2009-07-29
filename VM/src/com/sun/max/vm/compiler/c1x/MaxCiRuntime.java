@@ -31,6 +31,7 @@ import com.sun.c1x.value.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.io.*;
+import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -39,7 +40,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
@@ -54,8 +54,8 @@ import com.sun.max.vm.type.*;
  */
 public class MaxCiRuntime implements CiRuntime {
 
-    private static final Register[] generalParameterRegisters = new Register[]{X86Register.rdi, X86Register.rsi, X86Register.rdx, X86Register.rcx, X86Register.r8, X86Register.r9};
-    private static final Register[] xmmParameterRegisters = new Register[]{X86Register.xmm0, X86Register.xmm1, X86Register.xmm2, X86Register.xmm3, X86Register.xmm4, X86Register.xmm5, X86Register.xmm6, X86Register.xmm7};
+    private static final Register[] generalParameterRegisters = new Register[]{X86.rdi, X86.rsi, X86.rdx, X86.rcx, X86.r8, X86.r9};
+    private static final Register[] xmmParameterRegisters = new Register[]{X86.xmm0, X86.xmm1, X86.xmm2, X86.xmm3, X86.xmm4, X86.xmm5, X86.xmm6, X86.xmm7};
 
     public static final MaxCiRuntime globalRuntime = new MaxCiRuntime();
 
@@ -104,8 +104,12 @@ public class MaxCiRuntime implements CiRuntime {
      * @param javaClass the java class object
      * @return the compiler interface type for the specified class
      */
-    public CiType getType(Class<?> javaClass) {
-        return globalConstantPool.canonicalCiType(ClassActor.fromJava(javaClass));
+    public CiType getType(final Class<?> javaClass) {
+        return globalConstantPool.canonicalCiType(MaxineVM.usingTarget(new Function<ClassActor>() {
+            public ClassActor call() throws Exception {
+                return ClassActor.fromJava(javaClass);
+            }
+        }));
     }
 
     /**
@@ -162,17 +166,17 @@ public class MaxCiRuntime implements CiRuntime {
         // TODO: move this out of the compiler interface
         switch(i) {
             case 0:
-                return X86Register.rdi;
+                return X86.rdi;
             case 1:
-                return X86Register.rsi;
+                return X86.rsi;
             case 2:
-                return X86Register.rdx;
+                return X86.rdx;
             case 3:
-                return X86Register.rcx;
+                return X86.rcx;
             case 4:
-                return X86Register.r8;
+                return X86.r8;
             case 5:
-                return X86Register.r9;
+                return X86.r9;
         }
         Util.unimplemented();
         throw Util.shouldNotReachHere();
@@ -201,7 +205,7 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public int arrayLengthOffsetInBytes() {
-        return Layout.arrayHeaderLayout().arrayLengthOffset();
+        return VMConfiguration.target().layoutScheme().arrayHeaderLayout.arrayLengthOffset();
     }
 
     public boolean dtraceMethodProbes() {
@@ -231,7 +235,7 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public int klassOffsetInBytes() {
-        return Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt();
+        return VMConfiguration.target().layoutScheme().generalLayout.getOffsetFromOrigin(HeaderField.HUB).toInt();
     }
 
     public boolean needsExplicitNullCheck(int offset) {
@@ -270,7 +274,7 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public int arrayBaseOffsetInBytes(BasicType type) {
-        return Layout.layoutScheme().arrayHeaderLayout.headerSize();
+        return VMConfiguration.target().layoutScheme().arrayHeaderLayout.headerSize();
     }
 
     public Register callerSaveFpuRegAt(int i) {
@@ -356,7 +360,7 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public Register javaCallingConventionReceiverRegister() {
-        return X86Register.rax;
+        return X86.rax;
     }
 
     public int markOffsetInBytes() {
@@ -423,10 +427,6 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public int biasedLockPattern() {
-        throw Util.unimplemented();
-    }
-
-    public long biasedLockingFastPathEntryCountAddr() {
         throw Util.unimplemented();
     }
 

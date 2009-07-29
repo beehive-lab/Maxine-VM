@@ -22,6 +22,8 @@ package com.sun.max.asm.gen.risc.sparc;
 
 import static com.sun.max.asm.gen.risc.sparc.SPARCFields.*;
 
+import com.sun.max.asm.gen.risc.*;
+
 /**
  * @author Bernd Mathiske
  * @author Dave Ungar
@@ -34,7 +36,7 @@ public class ImplementationDependent extends SPARCInstructionDescriptionCreator 
         define("impdep2", op(0x2), op3(0x37), impl_dep);
     }
 
-    ImplementationDependent(SPARCTemplateCreator templateCreator) {
+    ImplementationDependent(RiscTemplateCreator templateCreator) {
         super(templateCreator);
 
         setCurrentArchitectureManualSection("A.23");

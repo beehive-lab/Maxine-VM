@@ -40,6 +40,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -345,6 +346,9 @@ public class JavaPrototype extends Prototype {
                     ClassActor.prohibitPackagePrefix(new com.sun.max.Package());
 
                     UNSAFE.Static.determineMethods();
+
+                    VmThreadLocal.completeInitialization();
+
                 } else {
                     vmConfiguration.initializeSchemes(MaxineVM.Phase.PROTOTYPING);
                 }

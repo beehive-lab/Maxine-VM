@@ -197,7 +197,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
             // For debugging
             space.setAllocationMark(allocationMark());
 
-            InspectableHeapInfo.registerMemoryRegions(space);
+            InspectableHeapInfo.init(space);
         } else if (phase == MaxineVM.Phase.STARTING) {
             collectorThread = new StopTheWorldGCDaemon("GC", collect);
             collectorThread.start();
@@ -329,7 +329,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
         }
     }
 
-    private final class PointerIndexGripVerifier extends PointerIndexVisitor {
+    private final class PointerIndexGripVerifier implements PointerIndexVisitor {
         @Override
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
             DebugHeap.verifyGripAtIndex(pointer, wordIndex * Kind.REFERENCE.width.numberOfBytes, pointer.getGrip(wordIndex), space, null);

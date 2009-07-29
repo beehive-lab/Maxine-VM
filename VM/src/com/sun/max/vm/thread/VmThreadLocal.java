@@ -90,11 +90,8 @@ public class VmThreadLocal {
 
     private static final AppendableIndexedSequence<VmThreadLocal> values = new ArrayListSequence<VmThreadLocal>();
 
-    @PROTOTYPE_ONLY
-    private static int valuesExposed = -1;
-
     /**
-     * Must be first as needed by {@link Safepoint#initialize(Pointer)}.
+     * Must be first as needed by {@link Safepoint#initializePrimordial(Pointer)}.
      */
     public static final VmThreadLocal SAFEPOINT_LATCH = new VmThreadLocal("SAFEPOINT_LATCH", Kind.WORD, "");
 
@@ -114,7 +111,7 @@ public class VmThreadLocal {
 
     /**
      * The {@linkplain VmThread#currentVmThreadLocals() current} thread local storage when safepoints for the thread are
-     * {@linkplain Safepoint#trigger(Pointer, Word, Word) triggered}.
+     * {@linkplain Safepoint#trigger(Pointer) triggered}.
      */
     public static final VmThreadLocal SAFEPOINTS_TRIGGERED_THREAD_LOCALS
         = new VmThreadLocal("SAFEPOINTS_TRIGGERED_THREAD_LOCALS", Kind.WORD, "points to TLS used when safepoints triggered");
@@ -278,27 +275,6 @@ public class VmThreadLocal {
      * Gets the complete set of declared VM thread locals.
      */
     public static IndexedSequence<VmThreadLocal> values() {
-        if (MaxineVM.isPrototyping()) {
-            // Initialize this information while we're at it.
-            valuesNeedingInitialization();
-
-            return prototypeValues();
-        }
-        return values;
-    }
-
-    /**
-     * Helper method to ensure that neither {@link #values()} nor {@link #threadLocalStorageSize()} is called
-     * until all VM thread locals have been declared.
-     */
-    @PROTOTYPE_ONLY
-    private static IndexedSequence<VmThreadLocal> prototypeValues() {
-        final IndexedSequence<VmThreadLocal> values = VmThreadLocal.values;
-        if (valuesExposed == -1) {
-            valuesExposed = values.length();
-        } else {
-            FatalError.check(valuesExposed == values.length(), "VM thread local sequence exposed before initialization completed");
-        }
         return values;
     }
 
@@ -308,22 +284,33 @@ public class VmThreadLocal {
      * Gets the array of VM thread locals whose class overrides {@link #initialize(com.sun.max.vm.MaxineVM.Phase)}.
      */
     static VmThreadLocal[] valuesNeedingInitialization() {
-        if (MaxineVM.isPrototyping() && valuesNeedingInitialization == null) {
-            try {
-                final AppendableSequence<VmThreadLocal> valuesNeedingInitialization = new ArrayListSequence<VmThreadLocal>();
-                IndexedSequence<VmThreadLocal> values = prototypeValues();
-                final Method emptyInitializeMethod = VmThreadLocal.class.getMethod("initialize", MaxineVM.Phase.class);
-                for (VmThreadLocal value : values) {
-                    if (!emptyInitializeMethod.equals(value.getClass().getMethod("initialize", MaxineVM.Phase.class))) {
-                        valuesNeedingInitialization.append(value);
-                    }
-                }
-                VmThreadLocal.valuesNeedingInitialization = Sequence.Static.toArray(valuesNeedingInitialization, VmThreadLocal.class);
-            } catch (NoSuchMethodException e) {
-                throw ProgramError.unexpected(e);
-            }
-        }
         return valuesNeedingInitialization;
+    }
+
+    /**
+     * Performs various initialization that can only be done once all the VM thread locals have
+     * been created and registered with this class.
+     */
+    @PROTOTYPE_ONLY
+    public static void completeInitialization() {
+        assert valuesNeedingInitialization == null : "Cannot call completeInitialization() more than once";
+        final AppendableSequence<VmThreadLocal> referenceVmThreadLocals = new ArrayListSequence<VmThreadLocal>();
+        try {
+            final AppendableSequence<VmThreadLocal> valuesNeedingInitialization = new ArrayListSequence<VmThreadLocal>();
+            final Method emptyInitializeMethod = VmThreadLocal.class.getMethod("initialize");
+            for (VmThreadLocal value : values) {
+                if (!emptyInitializeMethod.equals(value.getClass().getMethod("initialize"))) {
+                    valuesNeedingInitialization.append(value);
+                }
+                if (value.kind == Kind.REFERENCE) {
+                    referenceVmThreadLocals.append(value);
+                }
+            }
+            VmThreadLocal.valuesNeedingInitialization = Sequence.Static.toArray(valuesNeedingInitialization, VmThreadLocal.class);
+        } catch (NoSuchMethodException e) {
+            throw ProgramError.unexpected(e);
+        }
+        StackReferenceMapPreparer.setVmThreadLocalGCRoots(Sequence.Static.toArray(referenceVmThreadLocals, VmThreadLocal.class));
     }
 
     /**
@@ -348,7 +335,6 @@ public class VmThreadLocal {
      * This value is guaranteed to be word-aligned
      */
     public static Size threadLocalStorageSize() {
-        final IndexedSequence<VmThreadLocal> values = MaxineVM.isPrototyping() ? prototypeValues() : VmThreadLocal.values;
         return Size.fromInt(values.length() * Word.size());
     }
 
@@ -382,7 +368,6 @@ public class VmThreadLocal {
         if (this == SAFEPOINT_LATCH && SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(vmThreadLocals).equals(vmThreadLocals)) {
             out.print("<trigger latch>");
         } else {
-            out.print("0x");
             out.print(vmThreadLocals.getWord(index));
         }
     }
@@ -393,7 +378,7 @@ public class VmThreadLocal {
      *
      * The set of VM thread locals that override this method can be obtained via {@link #valuesNeedingInitialization()}.
      */
-    public void initialize(MaxineVM.Phase phase) {
+    public void initialize() {
     }
 
     /**

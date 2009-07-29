@@ -53,7 +53,7 @@ public class ImmediateConstantModifier extends ConstantModifier {
         }
     }
     /**
-     * @param code bytes buffer containing a copy of the original code annotated with this displacement modifier
+     * @param codeRegion byte buffer containing a copy of the original code annotated with this displacement modifier
      * @param offsetToCode offset to the first byte of a copy of the original target code annotated with this displacement modifier
      * @param byteValue new constant value to replace the original one
      */
@@ -71,7 +71,7 @@ public class ImmediateConstantModifier extends ConstantModifier {
     }
 
     /**
-     * @param code bytes buffer containing a copy of the original code annotated with this displacement modifier
+     * @param codeRegion byte buffer containing a copy of the original code annotated with this displacement modifier
      * @param offsetToCode offset to the first byte of a copy of the original target code annotated with this displacement modifier
      * @param intValue new constant value to replace the original one
      */
@@ -91,7 +91,7 @@ public class ImmediateConstantModifier extends ConstantModifier {
         fix(code, 0, longValue);
     }
     /**
-     * @param code bytes buffer containing a copy of the original code annotated with this displacement modifier
+     * @param codeRegion byte buffer containing a copy of the original code annotated with this displacement modifier
      * @param offsetToCode offset to the first byte of a copy of the original target code annotated with this displacement modifier
      * @param byteValue new constant value to replace the original one
      */
