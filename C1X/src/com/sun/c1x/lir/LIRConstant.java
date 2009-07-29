@@ -181,8 +181,6 @@ public class LIRConstant extends LIROperand {
       }
     }
 
-<<<<<<< local
-=======
     /**
      * Checks if the float constant has the value 0.0f.
      * @return true if the constant is zero, false otherwise.
@@ -215,22 +213,18 @@ public class LIRConstant extends LIROperand {
         return asDouble() == 1.0;
       }
 
-    @Override
     public float asJfloat() {
         return this.asFloat();
     }
 
-    @Override
     public double asJdouble() {
         return this.asDouble();
     }
 
-    @Override
     public Object asJobject() {
         return this.asObject();
     }
 
->>>>>>> other
     @Override
     public String valueToString() {
         switch (type()) {

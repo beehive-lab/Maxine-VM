@@ -50,35 +50,71 @@ public class BlockMerger implements BlockClosure {
         BlockEnd oldEnd = block.end();
         BlockEnd newEnd = oldEnd;
         if (oldEnd instanceof Goto) {
-            assert oldEnd.successors().size() == 1 : "end must have exactly one successor";
             BlockBegin sux = oldEnd.defaultSuccessor();
-            if (sux.numberOfPreds() == 1 && !sux.isEntryBlock() && !oldEnd.isSafepoint()) {
-                // merge the two blocks
-                if (C1XOptions.DetailedAsserts) {
-                    verifyStates(block, sux);
-                }
 
-                // find instruction before oldEnd & append first instruction of sux block
-                Instruction prev = oldEnd.prev(block);
-                Instruction next = sux.next();
-                assert !(prev instanceof BlockEnd) : "must not be a BlockEnd";
-                prev.setNext(next, next.bci());
-                BlockUtil.disconnectFromGraph(sux);
-                newEnd = sux.end();
-                block.setEnd(newEnd);
-                // add exception handlers of deleted block, if any
-                for (BlockBegin xhandler : sux.exceptionHandlerBlocks()) {
-                    block.addExceptionHandler(xhandler);
+            assert oldEnd.successors().size() == 1 : "end must have exactly one successor";
+            assert !sux.isExceptionEntry() : "should not have Goto to exception entry";
 
-                    // also substitute predecessor of exception handler
-                    assert xhandler.isPredecessor(sux) : "missing predecessor";
-                    xhandler.removePredecessor(sux);
-                    if (!xhandler.isPredecessor(block)) {
-                        xhandler.addPredecessor(block);
+            if (!oldEnd.isSafepoint() && !sux.isEntryBlock()) {
+                if (sux.numberOfPreds() == 1) {
+                    // the successor has only one predecessor, merge it into this block
+                    if (C1XOptions.DetailedAsserts) {
+                        verifyStates(block, sux);
                     }
-                }
 
-                C1XMetrics.BlocksMerged++;
+                    // find instruction before oldEnd & append first instruction of sux block
+                    Instruction prev = oldEnd.prev(block);
+                    Instruction next = sux.next();
+                    assert !(prev instanceof BlockEnd) : "must not be a BlockEnd";
+                    prev.setNext(next, next.bci());
+                    BlockUtil.disconnectFromGraph(sux);
+                    newEnd = sux.end();
+                    block.setEnd(newEnd);
+                    // add exception handlers of deleted block, if any
+                    for (BlockBegin xhandler : sux.exceptionHandlerBlocks()) {
+                        block.addExceptionHandler(xhandler);
+
+                        // also substitute predecessor of exception handler
+                        assert xhandler.isPredecessor(sux) : "missing predecessor";
+                        xhandler.removePredecessor(sux);
+                        if (!xhandler.isPredecessor(block)) {
+                            xhandler.addPredecessor(block);
+                        }
+                    }
+
+                    C1XMetrics.BlocksMerged++;
+                } else if (C1XOptions.DoBlockSkipping && block.next() == oldEnd) {
+                    // the successor has multiple predecessors, but this block is empty
+                    for (Phi phi : sux.state().allPhis()) {
+                        // check that the incoming value for any phis at the successor
+                        // is the same at this block and this block's predecessor
+                        Instruction oldEndValue = phi.operandIn(oldEnd.state());
+                        if (oldEndValue instanceof Phi) {
+                            BlockBegin phiBlock = ((Phi) oldEndValue).block();
+                            if (phiBlock == block || phiBlock == sux) {
+                                // this block already has a phi for the phi
+                                continue;
+                            }
+                        }
+                        for (BlockBegin pred : block.predecessors()) {
+                            // somehow there was not a phi but the incoming values are not equal??
+                            if (!Instruction.equivalent(oldEndValue, phi.operandIn(pred.end().state()), C1XOptions.MergeEquivalentConstants)) {
+                                return false;
+                            }
+                        }
+                    }
+                    sux.removePredecessor(block); // remove this block from the successor
+                    for (BlockBegin pred : block.predecessors()) {
+                        // substitute the new successor for this block in each predecessor
+                        pred.substituteSux(block, sux);
+                        // and add each predecessor to the successor
+                        sux.addPredecessor(pred);
+                    }
+                    // this block is now disconnected; remove all its incoming and outgoing edges
+                    block.predecessors().clear();
+                    oldEnd.successors().clear();
+                    C1XMetrics.BlocksSkipped++;
+                }
             }
         }
         if (newEnd instanceof If) {
