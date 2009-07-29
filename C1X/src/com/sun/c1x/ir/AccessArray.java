@@ -22,6 +22,7 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.value.ValueType;
+import com.sun.c1x.C1XMetrics;
 
 /**
  * The <code>AccessArray</code> class is the base class of all array operations.
@@ -45,6 +46,7 @@ public abstract class AccessArray extends Instruction {
         this.lockStack = lockStack;
         if (array.isNonNull()) {
             clearNullCheck();
+            C1XMetrics.NullChecksRedundant++;
         }
         pin();
     }

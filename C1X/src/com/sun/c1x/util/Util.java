@@ -42,6 +42,7 @@ import java.util.UnknownFormatConversionException;
 public class Util {
 
     public static final int K = 1024;
+    public static final int M = 1024 * 1024;
 
     public static RuntimeException unimplemented() {
         throw new Error("unimplemented");
@@ -499,6 +500,7 @@ public class Util {
     public static void breakpoint() {
         // do nothing.
     }
+
     public static void guarantee(boolean b, String string) {
         if (!b) {
             throw new Bailout(string);
@@ -510,7 +512,7 @@ public class Util {
     }
 
     public static boolean is8bit(long l) {
-        return l < 128 || l >= -128;
+        return l < 128 && l >= -128;
     }
 
     public static void warning(String string) {
@@ -536,13 +538,11 @@ public class Util {
     }
 
     public static int sizeofOopDesc() {
-        // TODO Auto-generated method stub
-        return 0;
+        return nonFatalUnimplemented(0);
     }
 
     public static long stringToAddress(String b) {
-        // TODO Auto-generated method stub
-        return 0;
+        return nonFatalUnimplemented(0);
     }
 
     public static boolean traceLinearScan(int level, String string, Object...objects) {
@@ -596,5 +596,26 @@ public class Util {
             result[i + j] = signature.argumentBasicTypeAt(j);
         }
         return result;
+    }
+
+    public static <T> T nonFatalUnimplemented(T val) {
+        if (C1XOptions.FatalUnimplemented) {
+            throw new Error("unimplemented");
+        }
+        return val;
+    }
+
+    public static int nonFatalUnimplemented(int val) {
+        if (C1XOptions.FatalUnimplemented) {
+            throw new Error("unimplemented");
+        }
+        return val;
+    }
+
+    public static boolean nonFatalUnimplemented(boolean val) {
+        if (C1XOptions.FatalUnimplemented) {
+            throw new Error("unimplemented");
+        }
+        return val;
     }
 }

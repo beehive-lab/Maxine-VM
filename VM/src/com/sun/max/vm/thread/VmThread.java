@@ -98,23 +98,6 @@ import com.sun.max.vm.type.*;
 public class VmThread {
 
     /**
-     * The amount of stack required to {@linkplain #reprotectGuardPage(Throwable) reset} the
-     * {@linkplain #guardPage() guard page} after unwinding a stack while raising a {@code StackOverflowError}.
-     */
-    public static final int MIN_STACK_SPACE_FOR_GUARD_PAGE_RESETTING = 200;
-
-    @INLINE
-    public static boolean traceThreads() {
-        return traceThreadsOption.getValue();
-    }
-
-    private static final VMBooleanXXOption traceThreadsOption = register(new VMBooleanXXOption("-XX:-TraceThreads", "Trace thread management activity for debugging purposes."), MaxineVM.Phase.PRISTINE);
-
-    private static final Size DEFAULT_STACK_SIZE = Size.M;
-
-    private static final VMSizeOption stackSizeOption = register(new VMSizeOption("-Xss", DEFAULT_STACK_SIZE, "Stack size of new threads."), MaxineVM.Phase.PRISTINE);
-
-    /**
      * The signature of {@link #run(int, Address, Pointer, Pointer, Pointer, Pointer, Pointer, Pointer, Pointer, Pointer)}.
      */
     public static final SignatureDescriptor RUN_METHOD_SIGNATURE;
@@ -128,6 +111,23 @@ public class VmThread {
             }
         }
         RUN_METHOD_SIGNATURE = SignatureDescriptor.create(runMethod.getReturnType(), runMethod.getParameterTypes());
+    }
+
+    /**
+     * The amount of stack required to {@linkplain #reprotectGuardPage(Throwable) reset} the
+     * {@linkplain #guardPage() guard page} after unwinding a stack while raising a {@code StackOverflowError}.
+     */
+    private static final int MIN_STACK_SPACE_FOR_GUARD_PAGE_RESETTING = 200;
+
+    private static final VMBooleanXXOption traceThreadsOption = register(new VMBooleanXXOption("-XX:-TraceThreads", "Trace thread management activity for debugging purposes."), MaxineVM.Phase.PRISTINE);
+
+    private static final Size DEFAULT_STACK_SIZE = Size.M;
+
+    private static final VMSizeOption stackSizeOption = register(new VMSizeOption("-Xss", DEFAULT_STACK_SIZE, "Stack size of new threads."), MaxineVM.Phase.PRISTINE);
+
+    @INLINE
+    public static boolean traceThreads() {
+        return traceThreadsOption.getValue();
     }
 
 
@@ -155,7 +155,7 @@ public class VmThread {
     private final VmStackFrameWalker stackFrameWalker = new VmStackFrameWalker(Pointer.zero());
 
     /**
-     * Gets a pre-allocated, thread local object that can be used to walk the frames in this thread's stack.
+     * Gets a preallocated, thread local object that can be used to walk the frames in this thread's stack.
      *
      * <b>This must only be used when {@linkplain Throw#raise(Object, Pointer, Pointer, Pointer) throwing an exception}
      * or {@linkplain StackReferenceMapPreparer preparing} a stack reference map.
@@ -169,7 +169,7 @@ public class VmThread {
     private final VmStackFrameWalker stackDumpStackFrameWalker = new VmStackFrameWalker(Pointer.zero());
 
     /**
-     * Gets a pre-allocated, thread local object that can be used to log a stack dump without incurring any allocation.
+     * Gets a preallocated, thread local object that can be used to log a stack dump without incurring any allocation.
      */
     public VmStackFrameWalker stackDumpStackFrameWalker() {
         FatalError.check(stackDumpStackFrameWalker != null, "Thread-local stack frame walker cannot be null for a running thread");

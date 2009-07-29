@@ -21,6 +21,8 @@
 package com.sun.c1x.value;
 
 import com.sun.c1x.Bailout;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.C1XMetrics;
 import com.sun.c1x.ci.CiMethod;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.Util;
@@ -673,14 +675,29 @@ public class ValueStack {
         for (int i = 0; i < valuesSize(); i++) {
             Instruction x = values[i];
             Instruction y = other.values[i];
+            // XXX: profile each of these branches and reorder tests appropriately
             if (x != null && x != y) {
-                // XXX: merging of constants would be possible here?
                 if (x instanceof Phi && ((Phi) x).block() == block) {
                     continue; // phi already exists, continue
                 }
+                if (C1XOptions.MergeEquivalentConstants) {
+                    // check to see if x and y are the same constant
+                    if (y != null) {
+                        ValueType xt = x.type();
+                        if (xt.isConstant()) {
+                            C1XMetrics.EquivalentConstantsChecked++;
+                            ValueType yt = y.type();
+                            if (yt.isConstant() && xt.asConstant().equivalent(yt)) {
+                                // x and y are equivalent constants
+                                C1XMetrics.EquivalentConstantsMerged++;
+                                continue;
+                            }
+                        }
+                    }
+                }
                 if (i < maxLocals) {
                     // this a local
-                    if (y == null || typeMismatch(x, y)) {
+                    if (typeMismatch(x, y)) {
                         invalidateLocal(i); // it has become invalid
                     } else {
                         setupPhiForLocal(block, i); // it needs a phi
@@ -745,10 +762,11 @@ public class ValueStack {
      * @return an iterator over all phis
      */
     public Iterable<Phi> allPhis() {
-
         final List<Phi> phis = new ArrayList<Phi>();
 
-        for (Instruction instr : allStateValues()) {
+        int max = this.valuesSize();
+        for (int i = 0; i < max; i++) {
+            Instruction instr = values[i];
             if (instr instanceof Phi) {
                 phis.add((Phi) instr);
             }
@@ -762,17 +780,13 @@ public class ValueStack {
      * @return an interator over all state values
      */
     public Iterable<Instruction> allStateValues() {
-        final List<Instruction> result = new ArrayList<Instruction>();
+        // XXX: this can be implemented more efficiently with an iterator over the
+        // values in the array, instead of copying them into an array list
+        int max = this.valuesSize();
+        List<Instruction> result = new ArrayList<Instruction>(max);
 
-        for (int i = 0; i < this.stackSize(); i++) {
-            final Instruction instr = this.stackAt(i);
-            if (instr != null) {
-                result.add(instr);
-            }
-        }
-
-        for (int i = 0; i < this.localsSize(); i++) {
-            final Instruction instr = this.localAt(i);
+        for (int i = 0; i < max; i++) {
+            Instruction instr = values[i];
             if (instr != null) {
                 result.add(instr);
             }

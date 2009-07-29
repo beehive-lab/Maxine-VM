@@ -24,6 +24,7 @@ import com.sun.c1x.ci.CiMethod;
 import com.sun.c1x.value.BasicType;
 import com.sun.c1x.value.ValueType;
 import com.sun.c1x.util.Util;
+import com.sun.c1x.C1XMetrics;
 
 /**
  * The <code>Invoke</code> instruction represents all kinds of method calls.
@@ -62,6 +63,7 @@ public class Invoke extends StateSplit {
         }
         if (!isStatic && args[0].isNonNull()) {
             clearNullCheck();
+            C1XMetrics.NullChecksRedundant++;
         }
     }
 

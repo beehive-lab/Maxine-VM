@@ -51,7 +51,6 @@ import java.util.*;
  *
  */
 public abstract class LIRGenerator extends InstructionVisitor {
-    private static final BasicType[] BASIC_TYPES_INT_OBJECT = {BasicType.Int /* thread */, BasicType.Object /* methodOop*/};
     private static final BasicType[] BASIC_TYPES_OBJECT = {BasicType.Object};
 
     // the range of values in a lookupswitch or tableswitch statement

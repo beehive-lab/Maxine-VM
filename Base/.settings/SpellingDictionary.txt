@@ -25,13 +25,24 @@ solaris
 linux
 unix
 abi
+appendable
+bytecode
 callee
+deoptimization
+deoptimize
 emitting
 epilogue
+inline
+inlined
+iterable
 jit
 nop
+nops
+payload
+primordial
 safepoint
 scalability
+struct
 throwable
 trampoline
 

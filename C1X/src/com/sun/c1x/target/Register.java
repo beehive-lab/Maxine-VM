@@ -21,6 +21,7 @@
 package com.sun.c1x.target;
 
 import com.sun.c1x.ci.CiLocation;
+import com.sun.c1x.util.Util;
 
 /**
  * The <code>Register</code> class definition.
@@ -77,8 +78,7 @@ public final class Register {
     }
 
     public CiLocation asVMReg() {
-        // TODO Auto-generated method stub
-        return null;
+        return Util.nonFatalUnimplemented(null);
     }
 
     public boolean isCpu() {

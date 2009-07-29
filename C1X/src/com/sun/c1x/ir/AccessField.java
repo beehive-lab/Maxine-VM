@@ -21,6 +21,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.C1XOptions;
+import com.sun.c1x.C1XMetrics;
 import com.sun.c1x.ci.CiField;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.value.ValueType;
@@ -67,6 +68,7 @@ public abstract class AccessField extends Instruction {
         pin(); // pin memory access instructions
         if (object != null && object.isNonNull()) {
             clearNullCheck();
+            C1XMetrics.NullChecksRedundant++;
         }
     }
 
