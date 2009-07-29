@@ -228,6 +228,8 @@ public class C1XOptions {
         OptimizeMoves                      = ____;
 
         DoGlobalValueNumbering             = ____;
+        DoCEElimination                    = ____;
+        DoBlockMerging                     = ____;
         DoArrayBoundsCheckElimination      = ____;
         DistinguishExceptionHandlerCode    = ____;
         DoNullCheckElimination             = ____;
@@ -278,7 +280,7 @@ public class C1XOptions {
         AlwaysCSEArrayLength               = TRUE;
 
         // turn on state merging optimizations
-        MergeEquivalentConstants           = TRUE;
+        MergeEquivalentConstants           = ____;
         ComputeStoresInLoops               = TRUE;
         SimplifyPhis                       = TRUE;
 

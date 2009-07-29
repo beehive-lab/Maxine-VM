@@ -181,6 +181,56 @@ public class LIRConstant extends LIROperand {
       }
     }
 
+<<<<<<< local
+=======
+    /**
+     * Checks if the float constant has the value 0.0f.
+     * @return true if the constant is zero, false otherwise.
+     */
+    public boolean isZeroFloat() {
+        return asFloat() == 0.0f;
+      }
+
+    /**
+     * Checks if the float constant has the value 1.0f.
+     * @return true if the constant is 1.0, false otherwise.
+     */
+    public boolean isOneFloat() {
+        return asFloat() == 1.0f;
+      }
+
+    /**
+     * Checks if the double constant has the value 0.0.
+     * @return true if the constant is zero, false otherwise.
+     */
+    public boolean isZeroDouble() {
+        return asDouble() == 0.0;
+    }
+
+    /**
+     * Checks if the double constant has the value 1.0.
+     * @return true if the constant is zero, false otherwise.
+     */
+    public boolean isOneDouble() {
+        return asDouble() == 1.0;
+      }
+
+    @Override
+    public float asJfloat() {
+        return this.asFloat();
+    }
+
+    @Override
+    public double asJdouble() {
+        return this.asDouble();
+    }
+
+    @Override
+    public Object asJobject() {
+        return this.asObject();
+    }
+
+>>>>>>> other
     @Override
     public String valueToString() {
         switch (type()) {

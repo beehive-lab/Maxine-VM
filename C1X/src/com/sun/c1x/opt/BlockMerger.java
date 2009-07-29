@@ -50,7 +50,7 @@ public class BlockMerger implements BlockClosure {
         BlockEnd oldEnd = block.end();
         BlockEnd newEnd = oldEnd;
         if (oldEnd instanceof Goto) {
-            assert oldEnd.successors().size() == 1 : "oldEnd must have exactly one successor";
+            assert oldEnd.successors().size() == 1 : "end must have exactly one successor";
             BlockBegin sux = oldEnd.defaultSuccessor();
             if (sux.numberOfPreds() == 1 && !sux.isEntryBlock() && !oldEnd.isSafepoint()) {
                 // merge the two blocks

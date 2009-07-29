@@ -2527,8 +2527,7 @@ public class LinearScan extends RegisterAllocator {
     }
 
     private boolean isCallerSave(int assignedReg) {
-        // TODO Auto-generated method stub
-        return false;
+        return Util.nonFatalUnimplemented(false);
     }
 
     void computeOopMap(IntervalWalker iw, LIRVisitState visitor, LIRInstruction op) {
@@ -2785,8 +2784,7 @@ public class LinearScan extends RegisterAllocator {
     }
 
     private CiLocation nextLocation(CiLocation rnameFirst) {
-        // TODO Auto-generated method stub
-        return null;
+        return Util.nonFatalUnimplemented(null);
     }
 
     int appendScopeValue(int opId, Instruction value, List<ScopeValue> scopeValues) {
@@ -3036,6 +3034,13 @@ public class LinearScan extends RegisterAllocator {
         }
     }
 
+<<<<<<< local
+=======
+    private boolean useFpuStackAllocation() {
+        return Util.nonFatalUnimplemented(false);
+    }
+
+>>>>>>> other
     void assignRegNum() {
         // TIMELINEARSCAN(timerAssignRegNum);
 
@@ -3447,8 +3452,7 @@ public class LinearScan extends RegisterAllocator {
 
     // TODO: Platform specific!!
     public boolean requiresAdjacentRegs(BasicType type) {
-        // TODO Auto-generated method stub
-        return false;
+        return Util.nonFatalUnimplemented(false);
     }
 
     static int getAnyreg() {
