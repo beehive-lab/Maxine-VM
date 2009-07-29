@@ -62,7 +62,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
             }
         }
         /**
-         * Evacuate remaining objects of the ¨from " belt reachable from the "to" belt.
+         * Evacuate remaining objects of the "from" belt reachable from the "to" belt.
          */
         protected void evacuateFollowers(Belt from, Belt to) {
             getBeltwayHeapScheme().evacuate(from, to);
