@@ -144,8 +144,7 @@ public class BeltwayCollectorThread extends Thread {
         final Pointer searchAddress = to.getPrevAllocationMark().asPointer();
         final int searchIndex = SideTable.getChunkIndexFromHeapAddress(searchAddress);
         final int stopSearchIndex = SideTable.getChunkIndexFromHeapAddress(to.end());
-        final BeltCellVisitor cellVisitor = ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).cellVisitor();
-        final Action action = ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).copyAction();
+        final BeltCellVisitor cellVisitor = beltwayHeapScheme.cellVisitor();
 
         Pointer startScavengingAddress = beltwayHeapScheme.getNextAvailableGCTask(searchIndex, stopSearchIndex);
         while (!startScavengingAddress.isZero()) {
@@ -161,8 +160,7 @@ public class BeltwayCollectorThread extends Thread {
             //Debug.println(endScavengingAddress);
             //Debug.unlock();
 
-            BeltwayCellVisitorImpl.linearVisitAllCellsTLAB(((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).cellVisitor(), ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).copyAction(), startScavengingAddress,
-                            endScavengingAddress, from, to);
+            BeltwayCellVisitorImpl.linearVisitAllCellsTLAB(cellVisitor, startScavengingAddress, endScavengingAddress, from, to);
             startScavengingAddress = beltwayHeapScheme.getNextAvailableGCTask(searchIndex, stopSearchIndex);
         }
 
@@ -180,7 +178,7 @@ public class BeltwayCollectorThread extends Thread {
             //Debug.println(endScavengingAddress);
             //Debug.unlock();
 
-            BeltwayCellVisitorImpl.linearVisitTLAB(currentTLAB, cellVisitor, action, from, to);
+            BeltwayCellVisitorImpl.linearVisitTLAB(currentTLAB, cellVisitor, from, to);
            /* final BeltTLAB newTLAB = VmThread.current().getTLAB();
             if (!newTLAB.start().equals(currentTLAB.start())) {
                 currentTLAB = newTLAB;

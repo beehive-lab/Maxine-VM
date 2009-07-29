@@ -26,35 +26,22 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * @author Christos Kotselidis
  */
-public class ParallelCopyActionImpl implements Action {
-
-    private final Verify verifyAction;
-
-    private BeltwayHeapScheme heapScheme;
+public class ParallelCopyActionImpl extends CopyActionImpl {
 
     public ParallelCopyActionImpl(Verify verifyAction) {
-        this.verifyAction = verifyAction;
+        super(verifyAction);
     }
 
-    public void initialize(BeltwayHeapScheme heapScheme) {
-        this.heapScheme = heapScheme;
-    }
-
-    public Grip doAction(Grip origin, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
+    // FIXME: need to devirtualize this for performance reason...
+    @Override
+    public Grip doAction(Grip origin) {
         final Pointer fromOrigin = origin.toOrigin();
         if (MaxineVM.isDebug()) {
-            if (!heapScheme.contains(fromOrigin)) {
-                Log.print("invalid grip: ");
-                Log.println(origin.toOrigin().asAddress());
-                FatalError.unexpected("invalid grip");
-            }
-
-            verifyAction.checkGripTag(origin);
+            verify(origin);
         }
         if (from.contains(fromOrigin)) {
             final Grip forwardGrip = Layout.readForwardGrip(fromOrigin);

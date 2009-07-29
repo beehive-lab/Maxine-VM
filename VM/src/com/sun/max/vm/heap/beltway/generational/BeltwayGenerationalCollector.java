@@ -108,10 +108,10 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
         }
 
         public void run() {
-            final BeltwayHeapSchemeGenerational beltwayHeapSchemeGen = (BeltwayHeapSchemeGenerational) getBeltwayHeapScheme();
-            final Belt matureSpace = beltwayHeapSchemeGen.getMatureSpace();
-            final Belt toSpace = beltwayHeapSchemeGen.getToSpace();
-            final Belt edenSpace = beltwayHeapSchemeGen.getEdenSpace();
+            final BeltwayHeapSchemeGenerational heapScheme = (BeltwayHeapSchemeGenerational) getBeltwayHeapScheme();
+            final Belt matureSpace = heapScheme.getMatureSpace();
+            final Belt toSpace = heapScheme.getToSpace();
+            final Belt edenSpace = heapScheme.getEdenSpace();
             prologue();
 
             if (Heap.verbose()) {
@@ -126,7 +126,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
             }
             edenSpace.setExpandable(true);
 
-            scavengeBeltRoot(matureSpace, edenSpace);
+            heapScheme.scavengeRoot(matureSpace, edenSpace);
 
             if (Heap.verbose()) {
                 Log.print("Evacuate Followers");
@@ -151,7 +151,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 throw BeltwayHeapScheme.outOfMemoryError;
             }
             edenSpace.setEnd(edenSpace.getAllocationMark());
-            scavengeBeltRoot(edenSpace, matureSpace);
+            heapScheme.scavengeRoot(edenSpace, matureSpace);
 
             if (Heap.verbose()) {
                 Log.println("Move Reachable");
@@ -179,9 +179,9 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
             super("To");
         }
         public void run() {
-            final BeltwayHeapSchemeGenerational beltwayHeapSchemeGen = (BeltwayHeapSchemeGenerational) getBeltwayHeapScheme();
-            final Belt matureSpace = beltwayHeapSchemeGen.getMatureSpace();
-            final Belt toSpace = beltwayHeapSchemeGen.getToSpace();
+            final BeltwayHeapSchemeGenerational heapScheme = (BeltwayHeapSchemeGenerational) getBeltwayHeapScheme();
+            final Belt matureSpace = heapScheme.getMatureSpace();
+            final Belt toSpace = heapScheme.getToSpace();
             prologue();
 
             if (Heap.verbose()) {
@@ -195,13 +195,13 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
 
             matureSpace.setAllocationMarkSnapshot();
             monitorScheme.beforeGarbageCollection();
-            scavengeBeltRoot(toSpace, matureSpace);
+            heapScheme.scavengeRoot(toSpace, matureSpace);
 
             if (Heap.verbose()) {
                 Log.println("Scan cards");
             }
 
-            beltwayHeapSchemeGen.scanCardAndEvacuate(matureSpace, toSpace);
+            heapScheme.scanCardAndEvacuate(matureSpace, toSpace);
 
             if (Heap.verbose()) {
                 Log.println("Promote Reachable Objects");
@@ -209,7 +209,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
 
             evacuateFollowers(toSpace, matureSpace);
 
-            BeltwayHeapSchemeGenerational.sideTable.restoreAllChunkSlots();
+            heapScheme.sideTable.restoreAllChunkSlots();
 
             toSpace.resetAllocationMark();
             monitorScheme.afterGarbageCollection();
@@ -230,10 +230,10 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
         }
 
         public void run() {
-            final BeltwayHeapSchemeGenerational beltwayHeapSchemeGen = (BeltwayHeapSchemeGenerational) getBeltwayHeapScheme();
-            final Belt matureSpace = beltwayHeapSchemeGen.getMatureSpace();
-            final Belt toSpace = beltwayHeapSchemeGen.getToSpace();
-            final Belt edenSpace = beltwayHeapSchemeGen.getEdenSpace();
+            final BeltwayHeapSchemeGenerational heapScheme = (BeltwayHeapSchemeGenerational) getBeltwayHeapScheme();
+            final Belt matureSpace = heapScheme.getMatureSpace();
+            final Belt toSpace = heapScheme.getToSpace();
+            final Belt edenSpace = heapScheme.getEdenSpace();
             prologue();
 
             if (Heap.verbose()) {
@@ -248,21 +248,21 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
             toSpace.setAllocationMarkSnapshot();
 
             monitorScheme.beforeGarbageCollection();
-            scavengeBeltRoot(edenSpace, toSpace);
+            heapScheme.scavengeRoot(edenSpace, toSpace);
 
             if (Heap.verbose()) {
                 Log.println("Scan cards");
             }
 
-            beltwayHeapSchemeGen.scanCardAndEvacuate(toSpace, edenSpace);
-            beltwayHeapSchemeGen.scanCardAndEvacuate(matureSpace, edenSpace);
+            heapScheme.scanCardAndEvacuate(toSpace, edenSpace);
+            heapScheme.scanCardAndEvacuate(matureSpace, edenSpace);
 
             if (Heap.verbose()) {
                 Log.println("Evacuate Followers");
             }
             evacuateFollowers(edenSpace, toSpace);
 
-            BeltwayHeapSchemeGenerational.sideTable.restoreAllChunkSlots();
+            heapScheme.sideTable.restoreAllChunkSlots();
 
             if (Heap.verbose()) {
                 Log.println("Reset Nursery Space Allocation Mark");

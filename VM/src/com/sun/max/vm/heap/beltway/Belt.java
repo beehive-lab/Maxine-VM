@@ -31,7 +31,7 @@ import com.sun.max.vm.runtime.*;
 /**
  * @author Christos Kotselidis
  */
-public class Belt extends RuntimeMemoryRegion implements Visitor {
+public class Belt extends RuntimeMemoryRegion {
 
     /**
      * The relative order of a belt. Always starts from Zero (0). The lower the value, the older
@@ -356,11 +356,11 @@ public class Belt extends RuntimeMemoryRegion implements Visitor {
      * @param action the copy action used to evacuate objects into this belt
      * @param from the belt that contains the objects that will be evacuated into this belt.
      */
-    public final void evacuate(BeltCellVisitor cellVisitor, Action action, Belt from) {
+    public final void evacuate(BeltCellVisitor cellVisitor, Belt from) {
         Pointer cell = start().asPointer();
         while (cell.lessThan(getAllocationMark())) {
             cell = DebugHeap.checkDebugCellTag(from.start(), cell);
-            cell = cellVisitor.visitCell(cell, action, from, this);
+            cell = cellVisitor.visitCell(cell);
         }
     }
 }
