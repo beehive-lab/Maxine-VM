@@ -61,9 +61,7 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
         } else if (phase == MaxineVM.Phase.RUNNING) {
             beltCollectorBA2.setBeltwayHeapScheme(this);
             beltCollector.setRunnable(beltCollectorBA2);
-            heapVerifier.initialize(this);
-            heapVerifier.getRootsVerifier().setFromSpace(beltManager.getApplicationHeap());
-            heapVerifier.getRootsVerifier().setToSpace(getMatureSpace());
+            heapVerifier.initialize(beltManager.getApplicationHeap(), getMatureSpace());
             if (Heap.verbose()) {
                 HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "NurserySpaceGC", "MatureSpaceGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "CardScan", "Scavenge");
             }

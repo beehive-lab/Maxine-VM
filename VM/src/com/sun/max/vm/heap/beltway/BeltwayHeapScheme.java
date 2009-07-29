@@ -35,6 +35,10 @@ import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
+ * An heap scheme for beltway collectors.
+ * The scheme gathers a number of statically allocated objects so as to avoid dynamic allocation during GC
+ * (although it is possible for the GC to allocate objects directly in the evacuation belts as beltway collectors are primarily copying GC).
+ *
  * @author Christos Kotselidis
  */
 public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB implements HeapScheme {
@@ -43,82 +47,92 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB implements He
 
     /**
      * Closure for evacuating object from a belt to another belt in a single-threaded GC.
+     * The source and destination belt should be properly initialized before using the closure.
      */
-    private static final Action evacuationClosure = new CopyActionImpl(verifyAction);
+    private static final Action singleThreadedEvacuationClosure = new CopyActionImpl(verifyAction);
 
     /**
      * Closure for evacuating object from a belt to another belt in a parallel GC (i.e., with potentially multiple thread evacuating objects).
+     * Although the closure can be used by multiple thread simultaneously, all the threads must operate on the same source and destination belts.
      */
-    private static final Action concurrentEvacuationClosure = new ParallelCopyActionImpl(verifyAction);
+    private static final Action parallelEvacuationClosure = new ParallelCopyActionImpl(verifyAction);
 
-    protected Action copyAction;
+    /**
+     * The evacuation closure used by the heap scheme. It's either one of singleThreadedEvacuationClosure parallelEvacuationClosure depending on
+     * the Beltway configuration.
+     */
+    protected Action evacuationClosure;
 
+    private final PointerVisitor pointerVisitorGripVerifier = new PointerVisitor(verifyAction);
 
-    private final BeltWayPointerOffsetVisitor pointerOffsetGripVerifier = new PointerOffsetVisitorImpl(verifyAction);
-    private final BeltWayPointerIndexVisitor pointerIndexGripVerifier = new PointerIndexVisitorImpl(verifyAction);
+    private final PointerVisitor pointerVisitorGripUpdater = new PointerVisitor(evacuationClosure);
 
-    private final BeltWayPointerOffsetVisitor pointerOffsetGripUpdater = new PointerOffsetVisitorImpl(copyAction);
-    private final BeltWayPointerIndexVisitor pointerIndexGripUpdater = new PointerIndexVisitorImpl(copyAction);
+    protected final BeltCellVisitor cellVisitor = new BeltwayCellVisitorImpl(pointerVisitorGripUpdater);
 
-    protected final BeltCellVisitor cellVisitor = new BeltwayCellVisitorImpl(pointerOffsetGripVerifier);
-
-    public BeltCellVisitor cellVisitor() {
-        return cellVisitor;
-    }
-
-    public Action copyAction() {
-        return copyAction;
-    }
-
-    public BeltWayPointerOffsetVisitor pointerOffsetGripVerifier() {
-        return pointerOffsetGripVerifier;
-    }
-
-    public BeltWayPointerIndexVisitor pointerIndexGripVerifier() {
-        return pointerIndexGripVerifier;
-    }
-
-    public BeltWayPointerIndexVisitor pointerIndexGripUpdater() {
-        return pointerIndexGripUpdater;
-    }
-
-    public BeltWayPointerOffsetVisitor pointerOffsetGripUpdater() {
-        return pointerOffsetGripUpdater;
-    }
+    public final BeltwayHeapVerifier heapVerifier = new BeltwayHeapVerifier(pointerVisitorGripUpdater);
 
     protected final BeltwayCardRegion cardRegion = new BeltwayCardRegion();
 
-    @INLINE
-    public final int adjustedCardTableShift() {
-        return BeltwayCardRegion.CARD_SHIFT;
-    }
+    private final StacksAndMonitorsScanner stackAndMonitorGripUpdater = new StacksAndMonitorsScanner(pointerVisitorGripUpdater);
 
-    public static final SideTable sideTable = new SideTable();
+    /**
+     * Side table for the heap. Keeps track of the address to the first object in a card to enable
+     * walking an arbitrarily chosen card.
+     */
+    public final SideTable sideTable = new SideTable();
+
     protected Address adjustedCardTableAddress = Address.zero();
-
-    public static final BeltwayHeapVerifier heapVerifier = new BeltwayHeapVerifier();
-
-    private static final BeltwaySequentialHeapRootsScanner heapRootsScanner = new BeltwaySequentialHeapRootsScanner();
-    public static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError();
 
     protected BeltwayConfiguration beltwayConfiguration;
     protected BeltManager beltManager;
     protected BeltwayCollector beltCollector;
     protected static BeltwayStopTheWorldDaemon collectorThread;
 
+
+    public static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError();
     public static boolean outOfMemory = false;
+
+    // Support for parallel collections
 
     public static BeltwayCollectorThread[] gcThreads = new BeltwayCollectorThread[BeltwayConfiguration.numberOfGCThreads];
     public static int lastThreadAllocated;
-
     public static volatile long allocatedTLABS = 0;
     public static Object tlabCounterMutex = new Object();
     public static volatile long retrievedTLABS = 0;
     public static Object tlabRetrieveMutex = new Object();
     public static boolean inGC = false;
     public static boolean inScavenging = false;
-
     public static BeltTLAB[] scavengerTLABs = new BeltTLAB[BeltwayConfiguration.numberOfGCThreads + 1];
+
+
+    public BeltCellVisitor cellVisitor() {
+        return cellVisitor;
+    }
+
+    public Action copyAction() {
+        return evacuationClosure;
+    }
+
+    public PointerOffsetVisitor pointerOffsetGripVerifier() {
+        return pointerVisitorGripVerifier;
+    }
+
+    public PointerIndexVisitor pointerIndexGripVerifier() {
+        return pointerVisitorGripVerifier;
+    }
+
+    public PointerIndexVisitor pointerIndexGripUpdater() {
+        return pointerVisitorGripUpdater;
+    }
+
+    public PointerOffsetVisitor pointerOffsetGripUpdater() {
+        return pointerVisitorGripUpdater;
+    }
+
+    @INLINE
+    public final int adjustedCardTableShift() {
+        return BeltwayCardRegion.CARD_SHIFT;
+    }
 
     public BeltwayHeapScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -143,7 +157,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB implements He
             final Address address = allocateMemory(heapSize);
             final int [] defaultBeltHeapPercentage = defaultBeltHeapPercentage();
             beltwayConfiguration.initializeBeltWayConfiguration(address, heapSize,  defaultBeltHeapPercentage.length, defaultBeltHeapPercentage);
-            copyAction = BeltwayConfiguration.parallelScavenging ?  concurrentEvacuationClosure : evacuationClosure;
+            //copyAction = BeltwayConfiguration.parallelScavenging ?  concurrentEvacuationClosure : evacuationClosure;
             beltManager.initializeBelts();
             if (Heap.verbose()) {
                 beltManager.printBeltsInfo();
@@ -180,19 +194,29 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB implements He
         return beltManager;
     }
 
-    @INLINE
-    public final BeltwaySequentialHeapRootsScanner getRootScannerVerifier() {
-        heapRootsScanner.setBeltwayPointerIndexVisitor(pointerIndexGripVerifier());
-        return heapRootsScanner;
-    }
+    /**
+     * Single-threaded scan the heap roots, looking for references to objects of the "from" belt and evacuating them to the "to" belt.
+     *
+     * @param from the belt whose objects are being evacuated
+     * @param to the belt where the objects are evacuated to
+     */
+    public void scavengeRoot(Belt from, Belt to) {
+        pointerVisitorGripUpdater.action.init(from, to);
 
-    public final BeltwaySequentialHeapRootsScanner getRootScannerUpdater() {
-        heapRootsScanner.setBeltwayPointerIndexVisitor(pointerIndexGripUpdater());
-        return heapRootsScanner;
-    }
+        if (Heap.verbose()) {
+            Log.println("Scan Roots ");
+        }
+        stackAndMonitorGripUpdater.run();
 
-    public final BeltwayHeapVerifier getVerifier() {
-        return heapVerifier;
+        if (Heap.verbose()) {
+            Log.println("Scan Boot Heap");
+        }
+        Heap.bootHeapRegion.visitReferences(pointerVisitorGripUpdater);
+
+        if (Heap.verbose()) {
+            Log.println("Scan Code");
+        }
+        Code.visitReferences(pointerVisitorGripUpdater);
     }
 
     protected Size calculateHeapSize() {
@@ -224,17 +248,6 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB implements He
         }
     }
 
-    private class BootHeapCellVisitor implements CellVisitor {
-        Belt from;
-        Belt to;
-
-        public Pointer visitCell(Pointer cell) {
-            return cellVisitor().visitCell(cell, copyAction, from, to);
-        }
-    }
-
-    private final BootHeapCellVisitor bootHeapCellVisitor = new BootHeapCellVisitor();
-
     /**
      * Holds the biased card table address.
      */
@@ -247,16 +260,6 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB implements He
             ADJUSTED_CARDTABLE_BASE.setConstantWord(vmThreadLocals, BeltwayCardRegion.getAdjustedCardTable());
         }
     };
-
-    public void scanBootHeap(RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        FatalError.unimplemented();
-        Heap.bootHeapRegion.visitReferences(null);
-/*
-        bootHeapCellVisitor.from = from;
-        bootHeapCellVisitor.to = to;
-        Heap.bootHeapRegion.visitCells(bootHeapCellVisitor);
-*/
-    }
 
     public void printCardTable() {
         final int startCardIndex = cardRegion.getCardIndexFromHeapAddress(Heap.bootHeapRegion.start());
@@ -302,11 +305,10 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB implements He
                 final Pointer gcTLABStart = getGCTLABStartFromAddress(heapStartAddress);
                 if (!gcTLABStart.isZero()) {
                     final Pointer gcTLABEnd = getGCTLABEndFromStart(gcTLABStart);
-                    BeltwayCellVisitorImpl.linearVisitAllCellsTLAB(cellVisitor(), copyAction, gcTLABStart, gcTLABEnd, from, to);
+                    BeltwayCellVisitorImpl.linearVisitAllCellsTLAB(cellVisitor(), gcTLABStart, gcTLABEnd, from, to);
                     SideTable.markScavengeSideTable(gcTLABStart);
                 }
             }
-
         }
     }
 
@@ -329,20 +331,9 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB implements He
     }
 
     public final void evacuate(Belt from, Belt to) {
-        to.evacuate(cellVisitor, copyAction, from);
+        cellVisitor.init(from, to);
+        to.evacuate(cellVisitor, from);
     }
-/*
-    public void scanCode(Belt from, Belt to) {
-        bootHeapCellVisitor.from = from;
-        bootHeapCellVisitor.to = to;
-        Code.visitCells(bootHeapCellVisitor, true);
-    }
-*/
-    public void scanCode(RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        FatalError.unimplemented();
-        Code.visitReferences(null);
-   }
-
 
     @INLINE
     public final Pointer gcBumpAllocate(RuntimeMemoryRegion belt, Size size) {

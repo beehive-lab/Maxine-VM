@@ -66,9 +66,7 @@ public class BeltwaySSCollector extends BeltwayCollector {
         monitorScheme.beforeGarbageCollection();
 
         // Start scanning the reachable objects from roots.
-        heapScheme.getRootScannerUpdater().setFromSpace(fromSpace);
-        heapScheme.getRootScannerUpdater().setToSpace(toSpace);
-        scavengeBeltRoot(fromSpace, toSpace);
+        heapScheme.scavengeRoot(fromSpace, toSpace);
 
         // Evacuate all remaining objects reachable
         evacuateFollowers(fromSpace, toSpace);

@@ -206,9 +206,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             allocationMark.set(toSpace.start());
             top = toSpace.end().minus(safetyZoneSize);
 
-
             // From now on we can allocate
-
             InspectableHeapInfo.init(toSpace, fromSpace);
         } else if (phase == MaxineVM.Phase.STARTING) {
             final String growPolicy = growPolicyOption.getValue();
@@ -276,7 +274,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         }
     }
 
-    private final class PointerIndexGripUpdater extends PointerIndexVisitor {
+    private final class PointerIndexGripUpdater implements PointerIndexVisitor {
 
         @Override
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
@@ -288,8 +286,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         }
     }
 
-    private final class GripVerifier extends PointerIndexVisitor implements PointerOffsetVisitor {
-        @Override
+    private final class GripVerifier   implements PointerIndexVisitor, PointerOffsetVisitor {
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
             visitPointerOffset(pointer, wordIndex * Word.size());
         }

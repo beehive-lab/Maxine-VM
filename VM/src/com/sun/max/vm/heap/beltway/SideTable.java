@@ -138,7 +138,7 @@ public class SideTable {
         region.setSize(size);
         SideTable.sideTableStart = sideTableStart;
         // calculate the integral number of chunks in the specified size.
-        final long numberOfChunks = size.roundedUpBy(CHUNK_SIZE.toInt()).toLong() /  CHUNK_SIZE.toLong();
+        final long numberOfChunks = size.roundedUpBy(CHUNK_SIZE.toInt()).toLong() >> CHUNK_SHIFT;
         sideTableSize = Size.fromLong(numberOfChunks * CHUNK_SLOT_LENGTH);
 
         if (Heap.verbose()) {

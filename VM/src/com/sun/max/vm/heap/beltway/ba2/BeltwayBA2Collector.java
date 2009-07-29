@@ -35,28 +35,32 @@ import com.sun.max.vm.tele.*;
 
 public class BeltwayBA2Collector extends BeltwayCollector {
 
-    public static long majorCollections = 0;
-
     @Override
     public void run() {
     }
 
-    class FullGCCollector implements Runnable {
-        private void printDebugInfo(Belt matureSpaceBeforeAllocation, Belt matureSpaceReserve) {
-            Log.print("matureSpaceBeforeAllocation start: ");
-            Log.println(matureSpaceBeforeAllocation.start());
-            Log.print("matureSpaceBeforeAllocation Mark: ");
-            Log.println(matureSpaceBeforeAllocation.getAllocationMark());
-            Log.print("matureSpaceBeforeAllocation Space End: ");
-            Log.println(matureSpaceBeforeAllocation.end());
-            Log.print("matureSpaceReserve Space Start: ");
-            Log.println(matureSpaceReserve.start());
-            Log.print("matureSpaceReserve Space Allocation Mark: ");
-            Log.println(matureSpaceReserve.getAllocationMark());
-            Log.print("matureSpaceReserve Space End: ");
-            Log.println(matureSpaceReserve.end());
+    class BA2Collector {
+        long  numCollections = 0;
+        final Belt nurserySpace;
+        final Belt matureSpace;
+        final BeltwayHeapSchemeBA2 heapScheme;
+        final String collectorName;
+
+        BA2Collector(String collectorName) {
+            heapScheme = (BeltwayHeapSchemeBA2) getBeltwayHeapScheme();
+            nurserySpace =  heapScheme.getNurserySpace();
+            matureSpace =  heapScheme.getMatureSpace();
+            this.collectorName = collectorName;
         }
 
+        void prologue() {
+            numCollections++;
+            if (Heap.verbose()) {
+                Log.print(collectorName);
+                Log.print(" Collection: ");
+                Log.println(numCollections);
+            }
+        }
         /**
          * Evacuate remaining objects of the ¨from " belt reachable from the "to" belt.
          */
@@ -65,86 +69,86 @@ public class BeltwayBA2Collector extends BeltwayCollector {
             // beltwayHeapSchemeBA2.fillLastTLAB(); FIXME: do we need this ?
         }
 
+        void printBeltInfo(String beltName, Belt belt) {
+            Log.print(beltName);
+            Log.print(" start: ");
+            Log.println(belt.start());
+            Log.print(beltName);
+            Log.print(" Mark: ");
+            Log.println(belt.getAllocationMark());
+            Log.print(beltName);
+            Log.print(" Space End: ");
+            Log.println(belt.end());
+        }
+    }
+
+    class FullGCCollector extends BA2Collector implements Runnable {
+        FullGCCollector() {
+            super("Major");
+        }
+
         public void run() {
-            majorCollections++;
-            if (Heap.verbose()) {
-                Log.print("Major Collection: ");
-                Log.println(majorCollections);
-            }
-            final BeltwayHeapSchemeBA2 beltwayHeapSchemeBA2 = (BeltwayHeapSchemeBA2) getBeltwayHeapScheme();
+            prologue();
             if (Heap.verbose()) {
                 Log.println("Verify Mature Space: ");
             }
-            final Belt matureSpace = beltwayHeapSchemeBA2.getMatureSpace();
             verifyBelt(matureSpace);
             InspectableHeapInfo.beforeGarbageCollection();
 
-            VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
+            monitorScheme.beforeGarbageCollection();
 
             final Pointer matureSpaceEnd = matureSpace.end().asPointer();
-            final Belt matureSpaceBeforeAllocation = beltwayHeapSchemeBA2.getBeltManager().getBeltBeforeLastAllocation(matureSpace);
-            final Belt matureSpaceReserve = beltwayHeapSchemeBA2.getBeltManager().getRemainingOverlappingBelt(matureSpace);
+            final Belt matureSpaceBeforeAllocation = heapScheme.getBeltManager().getBeltBeforeLastAllocation(matureSpace);
+            final Belt matureSpaceReserve = heapScheme.getBeltManager().getRemainingOverlappingBelt(matureSpace);
             matureSpaceReserve.setExpandable(true);
             matureSpaceReserve.setEnd(matureSpaceEnd);
 
             if (Heap.verbose()) {
-                printDebugInfo(matureSpaceBeforeAllocation, matureSpaceReserve);
+                printBeltInfo("matureSpaceBeforeAllocation", matureSpaceBeforeAllocation);
+                printBeltInfo("matureSpaceReserve", matureSpaceReserve);
             }
-            // Start scanning the reachable objects from my roots.
-            beltwayHeapSchemeBA2.getRootScannerUpdater().setFromSpace(matureSpaceBeforeAllocation);
-            beltwayHeapSchemeBA2.getRootScannerUpdater().setToSpace(matureSpaceReserve);
 
-            scavengeBeltRoot(matureSpaceBeforeAllocation, matureSpaceReserve);
+            // Start scanning the reachable objects from my roots.
+            heapScheme.scavengeRoot(matureSpaceBeforeAllocation, matureSpaceReserve);
 
             if (Heap.verbose()) {
-                Log.print("matureSpaceReserve Space Start: ");
-                Log.println(matureSpaceReserve.start());
-                Log.print("matureSpaceReserve Space Allocation Mark: ");
-                Log.println(matureSpaceReserve.getAllocationMark());
-                Log.print("matureSpaceReserve Space End: ");
-                Log.println(matureSpaceReserve.end());
-                Log.println("Move Reachable");
+                printBeltInfo("matureSpaceReserve", matureSpaceReserve);
+                Log.println("Evacuate Followers");
             }
             evacuateFollowers(matureSpaceBeforeAllocation, matureSpaceReserve);
 
             matureSpaceReserve.setEnd(matureSpaceReserve.getAllocationMark());
 
             if (Heap.verbose()) {
-                printDebugInfo(matureSpaceBeforeAllocation, matureSpaceReserve);
+                printBeltInfo("matureSpaceBeforeAllocation", matureSpaceBeforeAllocation);
+                printBeltInfo("matureSpaceReserve", matureSpaceReserve);
             }
 
             matureSpace.resetAllocationMark();
             matureSpace.setEnd(matureSpaceEnd);
             if (Heap.verbose()) {
-                Log.print("Mature Space Start: ");
-                Log.println(matureSpace.start());
-                Log.print("Mature Space Allocation Mark: ");
-                Log.println(matureSpace.getAllocationMark());
-                Log.print("Mature Space End: ");
-                Log.println(matureSpace.end());
-
+                printBeltInfo("Mature Space", matureSpace);
                 Log.print("Mature Space Reserve Size: ");
                 Log.println(matureSpaceReserve.size().toLong());
                 Log.print("Configuration usable memory Size ");
                 Log.println(BeltwayConfiguration.getUsableMemory().toLong());
             }
-            if (matureSpaceReserve.size().lessEqual(BeltwayConfiguration.getUsableMemory())) {
 
+            if (matureSpaceReserve.size().lessEqual(BeltwayConfiguration.getUsableMemory())) {
                 if (Heap.verbose()) {
                     Log.println("Compaction ");
                 }
-                // Start scanning the reachable objects from my roots.
-                beltwayHeapSchemeBA2.getRootScannerUpdater().setToSpace(matureSpace);
-                beltwayHeapSchemeBA2.getRootScannerUpdater().setFromSpace(matureSpaceReserve);
 
-                scavengeBeltRoot(matureSpaceReserve, matureSpace);
+                // Start scanning the reachable objects from my roots.
+                heapScheme.scavengeRoot(matureSpaceReserve, matureSpace);
+
                 if (Heap.verbose()) {
                     Log.println("Evacuate Followers");
                 }
 
                 evacuateFollowers(matureSpaceReserve, matureSpace);
 
-                BeltwayHeapSchemeBA2.sideTable.restoreAllChunkSlots();
+                heapScheme.sideTable.restoreAllChunkSlots();
 
                 if (Heap.verbose()) {
                     Log.println("Reset Nursery Space Allocation Mark");
@@ -153,19 +157,8 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                 monitorScheme.afterGarbageCollection();
 
                 if (Heap.verbose()) {
-                    final Belt nurserySpace = beltwayHeapSchemeBA2.getNurserySpace();
-                    Log.print("Nursery Space Start: ");
-                    Log.println(nurserySpace.start());
-                    Log.print("Nursery Space Allocation Mark: ");
-                    Log.println(nurserySpace.getAllocationMark());
-                    Log.print("Nursery Space End: ");
-                    Log.println(nurserySpace.end());
-                    Log.print("Mature Space Start: ");
-                    Log.println(matureSpace.start());
-                    Log.print("Mature Space Allocation Mark: ");
-                    Log.println(matureSpace.getAllocationMark());
-                    Log.print("Mature Space End: ");
-                    Log.println(matureSpace.end());
+                    printBeltInfo("Nursery Space", nurserySpace);
+                    printBeltInfo("Mature Space", matureSpace);
                     Log.println("End Calibration ");
                 }
 
@@ -175,69 +168,42 @@ public class BeltwayBA2Collector extends BeltwayCollector {
         }
     }
 
-    class MinorGCCollector implements Runnable {
-        public long minorCollections = 0;
-        final Belt nurserySpace;
-        final Belt matureSpace;
-
+    class MinorGCCollector extends BA2Collector implements Runnable {
         MinorGCCollector() {
-            final BeltwayHeapSchemeBA2 beltwayHeapSchemeBA2 = (BeltwayHeapSchemeBA2) getBeltwayHeapScheme();
-            nurserySpace =  beltwayHeapSchemeBA2.getNurserySpace();
-            matureSpace =  beltwayHeapSchemeBA2.getMatureSpace();
-        }
-
-        private void printHeapDebugInfo() {
-            Log.print("Nursery Space Start: ");
-            Log.println(nurserySpace.start());
-            Log.print("Nursery Space Allocation Mark: ");
-            Log.println(nurserySpace.getAllocationMark());
-            Log.print("Nursery Space End: ");
-            Log.println(nurserySpace.end());
-            Log.print("Mature Space Start: ");
-            Log.println(matureSpace.start());
-            Log.print("Mature Space Allocation Mark: ");
-            Log.println(matureSpace.getAllocationMark());
-            Log.print("Mature Space End: ");
-            Log.println(matureSpace.end());
+            super("Minor");
         }
 
         protected void evacuateFollowers() {
-            if (Heap.verbose()) {
-                Log.println("Evacuate Followers");
-            }
             getBeltwayHeapScheme().evacuate(nurserySpace, matureSpace);
+            // beltwayHeapSchemeBA2.fillLastTLAB(); FIXME: do we need this ?
         }
 
         public void run() {
-            minorCollections++;
-            if (Heap.verbose()) {
-                Log.print("Minor Collection: ");
-                Log.println(minorCollections);
-            }
+            prologue();
             matureSpace.setAllocationMarkSnapshot();
 
             if (Heap.verbose()) {
-                printHeapDebugInfo();
+                printBeltInfo("Nursery Space", nurserySpace);
+                printBeltInfo("Mature Space", matureSpace);
                 Log.println("Verify Nursery:");
             }
             verifyBelt(nurserySpace);
             InspectableHeapInfo.beforeGarbageCollection();
             monitorScheme.beforeGarbageCollection();
-
-            getBeltwayHeapScheme().getRootScannerUpdater().setFromSpace(nurserySpace);
-            getBeltwayHeapScheme().getRootScannerUpdater().setToSpace(matureSpace);
-            scavengeBeltRoot(nurserySpace, matureSpace);
+            heapScheme.scavengeRoot(nurserySpace, matureSpace);
 
             if (Heap.verbose()) {
                 Log.println("Scan Cards");
             }
 
-            getBeltwayHeapScheme().scanCardAndEvacuate(matureSpace, nurserySpace);
+            heapScheme.scanCardAndEvacuate(matureSpace, nurserySpace);
 
+            if (Heap.verbose()) {
+                Log.println("Evacuate Followers");
+            }
             evacuateFollowers();
-            // beltwayHeapSchemeBA2.fillLastTLAB(); FIXME: do we need this ?
 
-            BeltwayHeapSchemeBA2.sideTable.restoreAllChunkSlots();
+            heapScheme.sideTable.restoreAllChunkSlots();
 
             if (Heap.verbose()) {
                 Log.println("Reset Nursery Space Allocation Mark");
@@ -246,12 +212,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
             monitorScheme.afterGarbageCollection();
 
             if (Heap.verbose()) {
-                Log.print("Mature Space Start: ");
-                Log.println(matureSpace.start());
-                Log.print("Mature Space Allocation Mark: ");
-                Log.println(matureSpace.getAllocationMark());
-                Log.print("Mature Space End: ");
-                Log.println(matureSpace.end());
+                printBeltInfo("Mature Space", matureSpace);
                 Log.println("Verify Mature Space");
             }
 
@@ -259,9 +220,10 @@ public class BeltwayBA2Collector extends BeltwayCollector {
             InspectableHeapInfo.afterGarbageCollection();
 
             if (Heap.verbose()) {
-                printHeapDebugInfo();
+                printBeltInfo("Nursery Space", nurserySpace);
+                printBeltInfo("Mature Space", matureSpace);
                 Log.print("End of Minor Collection: ");
-                Log.println(minorCollections);
+                Log.println(numCollections);
             }
         }
     }
@@ -293,9 +255,6 @@ public class BeltwayBA2Collector extends BeltwayCollector {
 
         @Override
         protected void evacuateFollowers() {
-            if (Heap.verbose()) {
-                Log.println("Evacuate Followers");
-            }
             beltwayHeapSchemeBA2.fillLastTLAB();
             // beltwayHeapSchemeBA2.markSideTableLastTLAB();
             BeltwayHeapScheme.inScavenging = true;

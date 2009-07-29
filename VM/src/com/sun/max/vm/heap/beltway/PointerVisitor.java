@@ -20,29 +20,39 @@
  */
 package com.sun.max.vm.heap.beltway;
 
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.grip.*;
-
+import com.sun.max.vm.heap.*;
 /**
- * @author Christos Kotselidis
+ *
+ *
+ * @author Laurent Daynes
  */
-public  class PointerIndexVisitorImpl implements BeltWayPointerIndexVisitor {
+public class PointerVisitor implements PointerIndexVisitor, PointerOffsetVisitor {
 
-    private   Action actionImpl;
+    final Action action;
 
-    public PointerIndexVisitorImpl(Action actionImpl) {
-        this.actionImpl = actionImpl;
+    public PointerVisitor(Action action) {
+        this.action = action;
     }
 
-    public void visitPointerIndex(Pointer pointer, int wordIndex, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
+    public void visitPointerOffset(Pointer pointer, int offset) {
+        final Grip oldGrip = pointer.readGrip(offset);
+        final Grip newGrip = action.doAction(oldGrip);
+        if (newGrip != null) {
+            if (newGrip != oldGrip) {
+                pointer.writeGrip(offset, newGrip);
+            }
+        }
+    }
+
+    public void visitPointerIndex(Pointer pointer, int wordIndex) {
         final Grip oldGrip = pointer.getGrip(wordIndex);
-        final Grip newGrip = actionImpl.doAction(oldGrip, from, to);
+        final Grip newGrip = action.doAction(oldGrip);
         if (newGrip != null) {
             if (newGrip != oldGrip) {
                 pointer.setGrip(wordIndex, newGrip);
             }
         }
     }
-
 }
