@@ -55,14 +55,13 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
             adjustedCardTableAddress = BeltwayCardRegion.adjustedCardTableBase(cardRegion.cardTableBase().asPointer());
             beltManager.swapBelts(getMatureSpace(), getNurserySpace());
             getMatureSpace().setExpandable(true);
+            tlabAllocationBelt = getNurserySpace();
             InspectableHeapInfo.init(getNurserySpace(), getMatureSpace());
             collectorThread.start();
         } else if (phase == MaxineVM.Phase.RUNNING) {
             beltCollectorBA2.setBeltwayHeapScheme(this);
             beltCollector.setRunnable(beltCollectorBA2);
-            heapVerifier.initialize(this);
-            heapVerifier.getRootsVerifier().setFromSpace(beltManager.getApplicationHeap());
-            heapVerifier.getRootsVerifier().setToSpace(getMatureSpace());
+            heapVerifier.initialize(beltManager.getApplicationHeap(), getMatureSpace());
             if (Heap.verbose()) {
                 HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "NurserySpaceGC", "MatureSpaceGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "CardScan", "Scavenge");
             }
@@ -79,17 +78,6 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
         return beltManager.getBelt(1);
     }
 
-    @INLINE
-    @NO_SAFEPOINTS("TODO")
-    public Pointer allocate(Size size) {
-        if (!MaxineVM.isRunning()) {
-            return bumpAllocateSlowPath(getNurserySpace(), size);
-        }
-        if (BeltwayConfiguration.useTLABS) {
-            return tlabAllocate(getNurserySpace(), size);
-        }
-        return heapAllocate(getNurserySpace(), size);
-    }
 
     public synchronized boolean collectGarbage(Size requestedFreeSpace) {
         boolean result = false;

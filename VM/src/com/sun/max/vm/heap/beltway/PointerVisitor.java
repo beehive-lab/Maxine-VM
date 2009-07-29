@@ -20,17 +20,39 @@
  */
 package com.sun.max.vm.heap.beltway;
 
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
-
+import com.sun.max.vm.grip.*;
+import com.sun.max.vm.heap.*;
 /**
  *
+ *
+ * @author Laurent Daynes
  */
-public interface BeltWayCellVisitor extends Visitor{
+public class PointerVisitor implements PointerIndexVisitor, PointerOffsetVisitor {
 
-    /**
-     * @param cell the cell to be visited
-     * @return the adjacent next cell
-     */
-    Pointer visitCell(Pointer cell, Action action, RuntimeMemoryRegion from, RuntimeMemoryRegion to);
+    final Action action;
+
+    public PointerVisitor(Action action) {
+        this.action = action;
+    }
+
+    public void visitPointerOffset(Pointer pointer, int offset) {
+        final Grip oldGrip = pointer.readGrip(offset);
+        final Grip newGrip = action.doAction(oldGrip);
+        if (newGrip != null) {
+            if (newGrip != oldGrip) {
+                pointer.writeGrip(offset, newGrip);
+            }
+        }
+    }
+
+    public void visitPointerIndex(Pointer pointer, int wordIndex) {
+        final Grip oldGrip = pointer.getGrip(wordIndex);
+        final Grip newGrip = action.doAction(oldGrip);
+        if (newGrip != null) {
+            if (newGrip != oldGrip) {
+                pointer.setGrip(wordIndex, newGrip);
+            }
+        }
+    }
 }

@@ -20,29 +20,31 @@
  */
 package com.sun.max.vm.heap.beltway;
 
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.grip.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.thread.*;
 
-/**
- * @author Christos Kotselidis
- */
-public  class PointerIndexVisitorImpl implements BeltWayPointerIndexVisitor {
 
-    private   Action actionImpl;
+public class StacksAndMonitorsScanner {
+    private final PointerVisitor pointerVisitor;
 
-    public PointerIndexVisitorImpl(Action actionImpl) {
-        this.actionImpl = actionImpl;
-    }
-
-    public void visitPointerIndex(Pointer pointer, int wordIndex, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        final Grip oldGrip = pointer.getGrip(wordIndex);
-        final Grip newGrip = actionImpl.doAction(oldGrip, from, to);
-        if (newGrip != null) {
-            if (newGrip != oldGrip) {
-                pointer.setGrip(wordIndex, newGrip);
-            }
+    /**
+     * A closure for updating thread stacks references.
+     */
+    private final Pointer.Procedure vmThreadLocalsScanner = new Pointer.Procedure(){
+        public void run(Pointer vmThreadLocals) {
+            VmThreadLocal.scanReferences(vmThreadLocals, pointerVisitor);
         }
+    };
+
+    public StacksAndMonitorsScanner(PointerVisitor pointerVisitor) {
+        this.pointerVisitor = pointerVisitor;
     }
 
+    public void run() {
+        // do thread stacks
+        VmThreadMap.ACTIVE.forAllVmThreadLocals(null, vmThreadLocalsScanner);
+        // do monitors
+        VMConfiguration.target().monitorScheme().scanReferences(pointerVisitor);
+    }
 }
