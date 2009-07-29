@@ -169,7 +169,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         "The size of thread-local allocation buffers."), MaxineVM.Phase.PRISTINE);
 
     /**
-     * A VM option for disabling use of TLABs.
+     * A VM option for forcing a GC before allocation. Ignored if useTLABOption is on.
      */
     private static final VMBooleanXXOption excessiveGCOption = register(new VMBooleanXXOption("-XX:-ExcessiveGC",
         "Perform a garbage collection before every allocation. This is ignored if " + useTLABOption + " is specified."), MaxineVM.Phase.PRISTINE);
@@ -206,9 +206,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             allocationMark.set(toSpace.start());
             top = toSpace.end().minus(safetyZoneSize);
 
-
             // From now on we can allocate
-
             InspectableHeapInfo.init(toSpace, fromSpace);
         } else if (phase == MaxineVM.Phase.STARTING) {
             final String growPolicy = growPolicyOption.getValue();
@@ -276,7 +274,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         }
     }
 
-    private final class PointerIndexGripUpdater extends PointerIndexVisitor {
+    private final class PointerIndexGripUpdater implements PointerIndexVisitor {
 
         @Override
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
@@ -288,8 +286,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         }
     }
 
-    private final class GripVerifier extends PointerIndexVisitor implements PointerOffsetVisitor {
-        @Override
+    private final class GripVerifier   implements PointerIndexVisitor, PointerOffsetVisitor {
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
             visitPointerOffset(pointer, wordIndex * Word.size());
         }
@@ -738,7 +735,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      *
      * @param size the size of memory chunk to be allocated
      * @return an allocated chunk of memory {@code size} bytes in size
-     * @throws OutOfMemoryError if the allocation request cannot be satified
+     * @throws OutOfMemoryError if the allocation request cannot be satisfied.
      */
     @INLINE
     private Pointer allocate(Size size) {
@@ -761,6 +758,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      * @param size the requested allocation size
      * @return the address of the allocated cell. Space for the {@linkplain DebugHeap#writeCellTag(Pointer) debug tag}
      *         will have been reserved immediately before the allocated cell.
+     * @throws OutOfMemoryError if the allocation request cannot be satisfied.
      */
     @NEVER_INLINE
     private Pointer allocateSlowPath(Size size) {
@@ -819,6 +817,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      *
      * @param size the requested cell size to be allocated
      * @param adjustForDebugTag specifies if an extra word is to be reserved before the cell for the debug tag word
+     * @throws OutOfMemoryError if the allocation request cannot be satisfied.
      */
     @NEVER_INLINE
     private Pointer retryAllocate(Size size, boolean adjustForDebugTag) {

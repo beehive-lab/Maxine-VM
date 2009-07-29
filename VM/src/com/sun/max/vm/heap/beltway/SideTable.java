@@ -28,8 +28,8 @@ import com.sun.max.vm.heap.*;
 
 /**
  * The side table keeps track of where the first object begins in each increment.
- * This helps scanning the reference of a single increment when used in generational context with an imprecise
- * write barrier (e.g., card table).
+ * This helps scanning the reference of a single increment when used in generational collectors with an imprecise
+ * write barrier (e.g., a card table).
  *
  * @author Christos Kotselidis
  */
@@ -138,7 +138,7 @@ public class SideTable {
         region.setSize(size);
         SideTable.sideTableStart = sideTableStart;
         // calculate the integral number of chunks in the specified size.
-        final long numberOfChunks = size.roundedUpBy(CHUNK_SIZE.toInt()).toLong() /  CHUNK_SIZE.toLong();
+        final long numberOfChunks = size.roundedUpBy(CHUNK_SIZE.toInt()).toLong() >> CHUNK_SHIFT;
         sideTableSize = Size.fromLong(numberOfChunks * CHUNK_SLOT_LENGTH);
 
         if (Heap.verbose()) {

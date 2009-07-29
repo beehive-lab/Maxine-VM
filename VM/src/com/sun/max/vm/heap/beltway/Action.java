@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.heap.beltway;
 
-import com.sun.max.memory.*;
 import com.sun.max.vm.grip.*;
 
 /**
@@ -28,6 +27,6 @@ import com.sun.max.vm.grip.*;
  */
 
 public interface Action {
-
-    Grip doAction(Grip origin, RuntimeMemoryRegion from, RuntimeMemoryRegion to);
+    void init(Belt from, Belt to);
+    Grip doAction(Grip origin);
 }
