@@ -35,7 +35,10 @@ import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
- * An heap scheme for beltway collectors.
+ * A heap scheme for beltway collectors.
+ * This scheme loosely follows the beltway infrastructure for building copying collector.
+ * The main difference with what is described in the original paper is that a belt is made of a single increment (instead of potentially many).
+ *
  * The scheme gathers a number of statically allocated objects so as to avoid dynamic allocation during GC
  * (although it is possible for the GC to allocate objects directly in the evacuation belts as beltway collectors are primarily copying GC).
  *
@@ -59,7 +62,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB implements He
 
     /**
      * The evacuation closure used by the heap scheme. It's either one of singleThreadedEvacuationClosure parallelEvacuationClosure depending on
-     * the Beltway configuration.
+     * the Beltway configuration. It should be possible to pick up the right configuration based on a VM option.
      */
     protected Action evacuationClosure;
 
@@ -305,7 +308,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB implements He
                 final Pointer gcTLABStart = getGCTLABStartFromAddress(heapStartAddress);
                 if (!gcTLABStart.isZero()) {
                     final Pointer gcTLABEnd = getGCTLABEndFromStart(gcTLABStart);
-                    BeltwayCellVisitorImpl.linearVisitAllCellsTLAB(cellVisitor(), gcTLABStart, gcTLABEnd, from, to);
+                    BeltwayCellVisitorImpl.linearVisitAllCellsTLAB(cellVisitor, gcTLABStart, gcTLABEnd, from, to);
                     SideTable.markScavengeSideTable(gcTLABStart);
                 }
             }
