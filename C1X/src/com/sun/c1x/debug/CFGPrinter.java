@@ -120,7 +120,6 @@ public class CFGPrinter {
         out.print("name \"B").print(block.blockID).println('"');
         out.print("from_bci ").println(block.bci());
         out.print("to_bci ").println(block.end() == null ? -1 : block.end().bci());
-        out.print("dfn ").println(block.depthFirstNumber());
 
         out.print("predecessors ");
         for (BlockBegin pred : block.predecessors()) {

@@ -29,12 +29,12 @@ import com.sun.c1x.ci.CiLocation;
  * @author Thomas Wuerthinger
  *
  */
-public class Register {
+public final class Register {
 
     // Invalid register
     public static final Register noreg = new Register(-1, -1, "noreg");
 
-    public static final int vregBase = 50;
+    public static final int vregBase = 40;
 
     public final int number;
     public final String name;
@@ -42,7 +42,7 @@ public class Register {
     private final int flags;
 
     public enum RegisterFlag {
-        CPU, Byte, FPU, XMM, MMX;
+        CPU, Byte, XMM, MMX;
 
         public int mask() {
             return 1 << (ordinal() + 1);
@@ -70,10 +70,6 @@ public class Register {
 
     public boolean isValid() {
         return number >= 0;
-    }
-
-    public boolean isFpu() {
-        return checkFlag(RegisterFlag.FPU);
     }
 
     public boolean isXMM() {

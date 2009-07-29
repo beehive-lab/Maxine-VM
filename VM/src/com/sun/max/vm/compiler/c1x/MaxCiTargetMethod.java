@@ -397,12 +397,17 @@ public class MaxCiTargetMethod implements CiTargetMethod {
         int directPos = 0;
         int indirectPos = directCalls;
         bitMap.setSize(stackRefMapSize());
-        final ClassMethodActor[] directCallees = new ClassMethodActor[directCalls];
+        final List<ClassMethodActor> directCallees = new ArrayList<ClassMethodActor>(directCalls);
         for (CallSite callSite : callSites) {
             // fill in the stop position for this call site
             if (callSite.direct) {
                 bitMap.setOffset(directPos);
-                directCallees[directPos] = getClassMethodActor(callSite.runtimeCall, callSite.method);
+                final ClassMethodActor cma = getClassMethodActor(callSite.runtimeCall, callSite.method);
+                if (cma != null) {
+                    directCallees.add(cma);
+                } else {
+                    Trace.line(1, "Warning: Unresolved direct call: " + callSite.runtimeCall + ", " + callSite.method);
+                }
                 stopPositions[directPos] = callSite.codePos;
                 directPos++;
             } else {
@@ -415,7 +420,7 @@ public class MaxCiTargetMethod implements CiTargetMethod {
             assert directPos <= indirectCalls;
             assert indirectPos <= directCalls + indirectCalls;
         }
-        return directCallees;
+        return directCallees.toArray(new ClassMethodActor[directCallees.size()]);
     }
 
     private ClassMethodActor getClassMethodActor(CiRuntimeCall runtimeCall, CiMethod method) {

@@ -146,6 +146,7 @@ public class C1XOptions {
     public static boolean GenerateCompilerNullChecks         = ____;
     public static boolean UseTableRanges                     = ____;
     public static boolean DetailedAsserts                    = ____;
+    public static boolean FastPathTypeCheck                  = ____;
 
     public static boolean ImplicitDiv0Checks                 = ____;
 
@@ -184,7 +185,6 @@ public class C1XOptions {
     public static boolean UseNormalNop                       = TRUE;
     public static boolean UseAddressNop                      = TRUE;
     public static boolean ForceUnreachable                   = ____;
-    public static boolean PrintBiasedLockingStatistics       = ____;
     public static boolean UseIncDec                          = ____;
     public static boolean UseXmmLoadAndClearUpper            = ____;
     public static boolean UseXmmRegToRegMoveAll              = ____;
@@ -259,7 +259,7 @@ public class C1XOptions {
         DoArrayBoundsCheckElimination      = ____;
         DistinguishExceptionHandlerCode    = ____;
         DoNullCheckElimination             = TRUE;
-        DoIterativeNullCheckElimination    = ____; // don't iterate NCE        
+        DoIterativeNullCheckElimination    = ____; // don't iterate NCE
         DoProfileGuidedInlining            = ____;
         DoTypeFlowAnalysis                 = ____;
     }

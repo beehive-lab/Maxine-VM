@@ -53,7 +53,7 @@ public class AddressLiteral extends MutableAssembledObject {
         }
     }
 
-    public final Type type() {
-        return Type.DATA;
+    public final boolean isCode() {
+        return false;
     }
 }

@@ -780,4 +780,12 @@ public class ValueStack {
 
         return result;
     }
+
+    public void pinStackForLinearScan() {
+        for (Instruction i : allStateValues()) {
+           if (!(i instanceof Local) && !(i instanceof Constant)) {
+               i.pin();
+           }
+        }
+    }
 }

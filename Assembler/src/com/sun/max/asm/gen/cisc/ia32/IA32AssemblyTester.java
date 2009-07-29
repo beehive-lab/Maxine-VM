@@ -33,7 +33,7 @@ import com.sun.max.lang.*;
 /**
  * @author Bernd Mathiske
  */
-public class IA32AssemblyTester extends X86AssemblyTester<IA32Template, IA32DisassembledInstruction> {
+public class IA32AssemblyTester extends X86AssemblyTester<IA32Template> {
 
     public IA32AssemblyTester(EnumSet<AssemblyTestComponent> components) {
         super(IA32Assembly.ASSEMBLY, WordWidth.BITS_32, components);

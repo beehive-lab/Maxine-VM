@@ -41,16 +41,13 @@ public enum CiRuntimeCall {
     NewTypeArray,
     NewObjectArray,
     NewMultiArray,
-    HandleExceptionNofpu,
     HandleException,
     ThrowArrayStoreException,
     ThrowClassCastException,
     ThrowIncompatibleClassChangeError,
     SlowSubtypeCheck,
     Monitorenter,
-    MonitorenterNofpu,
     Monitorexit,
-    MonitorexitNofpu,
     AccessFieldPatching,
     LoadKlassPatching,
     JvmtiExceptionThrow,
@@ -87,9 +84,7 @@ public enum CiRuntimeCall {
     IcMiss,
     Debug,
     Warning,
-    dsin,
-    dcos,
-    dtan
+    frem, drem, cos, tan, log, log10, sin
 
 
 }
