@@ -73,6 +73,12 @@ public class C1XTest {
         "Print settings of C1XOptions.");
     private static final Option<Boolean> averageOption = options.newBooleanOption("average", true,
         "Report only the average compilation speed.");
+    private static final Option<Long> longerThanOption = options.newLongOption("longer-than", 0L,
+        "Report only the compilation times that took longer than the specified number of nanoseconds.");
+    private static final Option<Long> slowerThanOption = options.newLongOption("slower-than", 1000000000L,
+        "Report only the compilation speeds that were slower than the specified number of bytes per second.");
+    private static final Option<Long> biggerThanOption = options.newLongOption("bigger-than", 0L,
+        "Report only the compilation speeds for methods larger than the specified threshold.");
     private static final Option<Integer> warmupOption = options.newIntegerOption("warmup", 0,
         "Set the number of warmup runs to execute before initiating the timed run.");
     private static final Option<Boolean> helpOption = options.newBooleanOption("help", false,
@@ -390,14 +396,20 @@ public class C1XTest {
             double totalBcps = 0d;
             double totalIps = 0d;
             int count = 0;
+            long longerThan = longerThanOption.getValue();
+            long slowerThan = slowerThanOption.getValue();
+            long biggerThan = biggerThanOption.getValue();
+            boolean printAll = !averageOption.getValue();
             for (Timing timing : timings) {
                 final MethodActor method = timing.classMethodActor;
                 final long ns = timing.nanoSeconds;
+                final int bytecodes = timing.bytecodes();
                 final double bcps = timing.bytecodesPerSecond();
                 final double ips = timing.instructionsPerSecond();
-                if (!averageOption.getValue()) {
+                if (printAll && ns >= longerThan && bcps <= slowerThan && bytecodes >= biggerThan) {
                     out.print(Strings.padLengthWithSpaces("#" + timing.number, 6));
                     out.print(Strings.padLengthWithSpaces(method.toString(), 80) + ": \n\t\t");
+                    out.print(Strings.padLengthWithSpaces(6, bytecodes + " bytes   "));
                     out.print(Strings.padLengthWithSpaces(13, ns + " ns "));
                     out.print(Strings.padLengthWithSpaces(20, Strings.fixedDouble(bcps, 2) + " bytes/s"));
                     out.print(Strings.padLengthWithSpaces(20, Strings.fixedDouble(ips, 2) + " insts/s"));
@@ -462,7 +474,11 @@ public class C1XTest {
         }
 
         public double bytecodesPerSecond() {
-            return 1000000000 * (classMethodActor.rawCodeAttribute().code().length / (double) nanoSeconds);
+            return 1000000000 * (bytecodes() / (double) nanoSeconds);
+        }
+
+        public int bytecodes() {
+            return classMethodActor.rawCodeAttribute().code().length;
         }
 
         public double instructionsPerSecond() {

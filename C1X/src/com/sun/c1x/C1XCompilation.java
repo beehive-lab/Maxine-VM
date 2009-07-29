@@ -64,7 +64,6 @@ public class C1XCompilation {
     boolean hasUnsafeAccess;
     Bailout bailout;
 
-    int totalInstructions;
     private Instruction currentInstruction;
 
     private FrameMap frameMap;
@@ -250,7 +249,7 @@ public class C1XCompilation {
      * @return the number of bytecodes
      */
     public int totalInstructions() {
-        return totalInstructions;
+        return hir.totalInstructions();
     }
 
     /**
