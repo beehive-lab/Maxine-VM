@@ -40,7 +40,6 @@ public abstract class LIRInstruction {
     protected LIRMoveKind flags; // flag that indicate the kind of move
     CodeEmitInfo info; // used to emit debug information
     private int id; // value id for register allocation
-    private int fpuPopCount;
     private Instruction source; // for debugging
 
     /**
@@ -63,7 +62,6 @@ public abstract class LIRInstruction {
         this.code = opcode;
         this.info = info;
         flags = LIRMoveKind.Normal;
-        fpuPopCount = 0;
         source = null;
         id = -1;
     }
@@ -130,33 +128,6 @@ public abstract class LIRInstruction {
      */
     public void setId(int id) {
         this.id = id;
-    }
-
-    /**
-     * Sets the Fpu pop counter of this instruction. This is a counter to FPU stack simulation, only used on Intel.
-     *
-     * @param id the value
-     */
-    public void setFpuPopCount(int fpuPopCount) {
-        this.fpuPopCount = fpuPopCount;
-    }
-
-    /**
-     * Gets the Fpu pop counter of this instruction.This is a counter to a FPU stack simulation, only used on Intel.
-     *
-     * @return id the value id.
-     */
-    public int fpuPopCount() {
-        return fpuPopCount;
-    }
-
-    /**
-     * Checks if the Fpu stack is not empty. This FPU stack simulation is only used on Intel.
-     *
-     * @return <code>true</code> if the Fpu stack is not empty.
-     */
-    public boolean popFpuStack() {
-        return fpuPopCount > 0;
     }
 
     /**

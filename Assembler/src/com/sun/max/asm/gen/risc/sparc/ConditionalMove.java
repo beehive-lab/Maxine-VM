@@ -22,6 +22,7 @@ package com.sun.max.asm.gen.risc.sparc;
 
 import static com.sun.max.asm.gen.risc.sparc.SPARCFields.*;
 
+import com.sun.max.asm.gen.risc.*;
 import com.sun.max.asm.gen.risc.field.*;
 
 /**
@@ -113,7 +114,7 @@ class ConditionalMove extends SPARCInstructionDescriptionCreator {
         addMovr("gez", 0x7);
     }
 
-    ConditionalMove(SPARCTemplateCreator templateCreator) {
+    ConditionalMove(RiscTemplateCreator templateCreator) {
         super(templateCreator);
 
         create_A34_A36();

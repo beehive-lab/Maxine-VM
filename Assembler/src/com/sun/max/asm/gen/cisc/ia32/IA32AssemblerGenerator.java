@@ -95,6 +95,6 @@ public class IA32AssemblerGenerator extends X86AssemblerGenerator<IA32Template> 
         final IA32Assembler assembler = new IA32Assembler(0);
         assembly().assemble(assembler, template, arguments);
         final byte[] bytes = assembler.toByteArray();
-        return new IA32DisassembledInstruction(new IA32Disassembler(0, null), 0, bytes, template, arguments);
+        return new DisassembledInstruction(new IA32Disassembler(0, null), 0, bytes, template, arguments);
     }
 }

@@ -32,56 +32,56 @@ import com.sun.max.collect.*;
  * @author Dave Ungar
  * @author Adam Spitz
  */
-public abstract class RiscAssembly<Template_Type extends RiscTemplate> extends Assembly<Template_Type> {
+public abstract class RiscAssembly extends Assembly<RiscTemplate> {
 
-    protected RiscAssembly(InstructionSet instructionSet, Class<Template_Type> templateType) {
+    protected RiscAssembly(InstructionSet instructionSet, Class<RiscTemplate> templateType) {
         super(instructionSet, templateType);
     }
 
-    private AppendableSequence<SpecificityGroup<Template_Type>> specificityGroups;
+    private AppendableSequence<SpecificityGroup> specificityGroups;
 
     private void initialize() {
-        final IntHashMap<IntHashMap<OpcodeMaskGroup<Template_Type>>> specificityTable = new IntHashMap<IntHashMap<OpcodeMaskGroup<Template_Type>>>();
-        for (Template_Type template : templates()) {
+        final IntHashMap<IntHashMap<OpcodeMaskGroup>> specificityTable = new IntHashMap<IntHashMap<OpcodeMaskGroup>>();
+        for (RiscTemplate template : templates()) {
             if (!template.isRedundant()) {
-                IntHashMap<OpcodeMaskGroup<Template_Type>> opcodeMaskGroups = specificityTable.get(template.specificity());
+                IntHashMap<OpcodeMaskGroup> opcodeMaskGroups = specificityTable.get(template.specificity());
                 if (opcodeMaskGroups == null) {
-                    opcodeMaskGroups = new IntHashMap<OpcodeMaskGroup<Template_Type>>();
+                    opcodeMaskGroups = new IntHashMap<OpcodeMaskGroup>();
                     specificityTable.put(template.specificity(), opcodeMaskGroups);
                 }
                 final int opcodeMask = template.opcodeMask();
-                OpcodeMaskGroup<Template_Type> opcodeMaskGroup = opcodeMaskGroups.get(opcodeMask);
+                OpcodeMaskGroup opcodeMaskGroup = opcodeMaskGroups.get(opcodeMask);
                 if (opcodeMaskGroup == null) {
-                    opcodeMaskGroup = new OpcodeMaskGroup<Template_Type>(opcodeMask);
+                    opcodeMaskGroup = new OpcodeMaskGroup(opcodeMask);
                     opcodeMaskGroups.put(opcodeMask, opcodeMaskGroup);
                 }
                 opcodeMaskGroup.add(template);
             }
         }
-        specificityGroups = new LinkSequence<SpecificityGroup<Template_Type>>();
+        specificityGroups = new LinkSequence<SpecificityGroup>();
         for (int specificity = 33; specificity >= 0; specificity--) {
-            final IntHashMap<OpcodeMaskGroup<Template_Type>> opcodeGroupTable = specificityTable.get(specificity);
+            final IntHashMap<OpcodeMaskGroup> opcodeGroupTable = specificityTable.get(specificity);
             if (opcodeGroupTable != null) {
-                final Sequence<OpcodeMaskGroup<Template_Type>> opcodeMaskGroups = opcodeGroupTable.toSequence();
-                final SpecificityGroup<Template_Type> specificityGroup = new SpecificityGroup<Template_Type>(specificity, opcodeMaskGroups);
+                final Sequence<OpcodeMaskGroup> opcodeMaskGroups = opcodeGroupTable.toSequence();
+                final SpecificityGroup specificityGroup = new SpecificityGroup(specificity, opcodeMaskGroups);
                 specificityGroups.append(specificityGroup);
             }
         }
     }
 
     public void printSpecificityGroups(PrintStream out) {
-        for (SpecificityGroup<Template_Type> specificityGroup : specificityGroups) {
+        for (SpecificityGroup specificityGroup : specificityGroups) {
             out.println("Specificity group " + specificityGroup.specificity());
-            for (OpcodeMaskGroup<Template_Type> opcodeMaskGroup : specificityGroup.opcodeMaskGroups()) {
+            for (OpcodeMaskGroup opcodeMaskGroup : specificityGroup.opcodeMaskGroups()) {
                 out.println("  Opcode mask group " + Integer.toBinaryString(opcodeMaskGroup.mask()));
-                for (Template_Type template : opcodeMaskGroup.templates()) {
+                for (RiscTemplate template : opcodeMaskGroup.templates()) {
                     out.println("    " + template);
                 }
             }
         }
     }
 
-    public Sequence<SpecificityGroup<Template_Type>> specificityGroups() {
+    public Sequence<SpecificityGroup> specificityGroups() {
         if (specificityGroups == null) {
             initialize();
         }

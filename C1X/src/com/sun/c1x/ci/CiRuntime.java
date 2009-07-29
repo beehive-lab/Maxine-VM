@@ -264,8 +264,6 @@ public interface CiRuntime {
     int biasedLockPattern();
     int unlockedValue();
 
-    long biasedLockingFastPathEntryCountAddr();
-
     int maxArrayAllocationLength();
 
     int prototypeHeaderOffsetInBytes();

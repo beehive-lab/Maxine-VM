@@ -21,7 +21,6 @@
 package com.sun.max.asm.amd64;
 
 import com.sun.max.asm.*;
-import com.sun.max.asm.AssemblyObject.*;
 import com.sun.max.lang.*;
 
 /**
@@ -69,24 +68,5 @@ public abstract class AbstractAMD64Assembler extends LittleEndianAssembler imple
 
     public long address(Label label) throws AssemblyException {
         return address64(label);
-    }
-
-    private final AMD64Directives directives = new AMD64Directives();
-
-    @Override
-    public Directives directives() {
-        return directives;
-    }
-
-    public class AMD64Directives extends Directives {
-        @Override
-        protected byte padByte() {
-            return (byte) 0x90; // NOP
-        }
-
-        @Override
-        protected Type padByteType() {
-            return Type.CODE;
-        }
     }
 }
