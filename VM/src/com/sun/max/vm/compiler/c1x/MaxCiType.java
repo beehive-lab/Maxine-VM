@@ -82,16 +82,7 @@ public class MaxCiType implements CiType {
         this.constantPool = constantPool;
         if (typeDescriptor instanceof JavaTypeDescriptor.AtomicTypeDescriptor) {
             final JavaTypeDescriptor.AtomicTypeDescriptor atom = (JavaTypeDescriptor.AtomicTypeDescriptor) typeDescriptor;
-            if (false) {
-                // TODO: is this really necessary?
-                this.classActor = MaxineVM.usingTarget(new Function<ClassActor>() {
-                    public ClassActor call() throws Exception {
-                        return ClassActor.fromJava(atom.javaClass);
-                    }
-                });
-            } else {
-                this.classActor = ClassActor.fromJava(atom.javaClass);
-            }
+            this.classActor = ClassActor.fromJava(atom.javaClass);
         }
         this.typeDescriptor = typeDescriptor;
         this.basicType = kindToBasicType(typeDescriptor.toKind());
@@ -263,11 +254,7 @@ public class MaxCiType implements CiType {
      */
     public CiType arrayOf() {
         if (classActor != null) {
-            return constantPool.canonicalCiType(MaxineVM.usingTarget(new Function<ArrayClassActor>() {
-                public ArrayClassActor call() throws Exception {
-                    return ArrayClassActor.forComponentClassActor(classActor);
-                }
-            }));
+            return constantPool.canonicalCiType(ArrayClassActor.forComponentClassActor(classActor));
         }
         return new MaxCiType(constantPool, JavaTypeDescriptor.getArrayDescriptorForDescriptor(typeDescriptor, 1));
     }

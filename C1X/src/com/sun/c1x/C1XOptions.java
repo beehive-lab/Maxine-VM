@@ -161,7 +161,7 @@ public class C1XOptions {
     public static boolean AvoidUnsupported                   = TRUE; // Bails out when reaching code that is currently not supported
 
     // backend optimization settings
-    public static boolean OptimizeControlFlow                = TRUE;
+    public static boolean OptimizeControlFlow                = ____;
     public static boolean OptimizeMoves                      = ____;
 
     // Runtime settings
@@ -220,7 +220,7 @@ public class C1XOptions {
         EliminateFieldAccess               = ____;
         AlwaysCSEArrayLength               = ____;
 
-        MergeEquivalentConstants           = ____;
+        MergeEquivalentConstants           = ____; // won't work until constants can be outside CFG
         ComputeStoresInLoops               = ____;
         SimplifyPhis                       = ____;
 
@@ -247,7 +247,7 @@ public class C1XOptions {
         AlwaysCSEArrayLength               = ____;
 
         // turn on state merging optimizations
-        MergeEquivalentConstants           = ____;
+        MergeEquivalentConstants           = ____; // won't work until constants can be outside CFG
         ComputeStoresInLoops               = TRUE;
         SimplifyPhis                       = TRUE;
 
@@ -281,7 +281,7 @@ public class C1XOptions {
         AlwaysCSEArrayLength               = TRUE;
 
         // turn on state merging optimizations
-        MergeEquivalentConstants           = ____;
+        MergeEquivalentConstants           = ____; // won't work until constants can be outside CFG
         ComputeStoresInLoops               = TRUE;
         SimplifyPhis                       = TRUE;
 
