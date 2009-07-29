@@ -24,9 +24,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.c1x.C1XOptions;
-import com.sun.max.lang.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -217,17 +215,17 @@ public class MaxCiType implements CiType {
     }
 
     /**
-     * Gets the element type of this compiler interface type.
-     * @return the element type if this class is an array
+     * Gets the component type of this compiler interface type.
+     * @return the component type if this class is an array
      * @throws MaxCiUnresolved if the class is not resolved
      */
-    public CiType elementType() {
+    public CiType componentType() {
         if (classActor instanceof ArrayClassActor) {
             // the type is already resolved
-            return constantPool.canonicalCiType(classActor.elementClassActor());
+            return constantPool.canonicalCiType(classActor.componentClassActor());
         }
         // the type is not resolved, but we can get the type of the elements
-        return new MaxCiType(constantPool, typeDescriptor.elementTypeDescriptor());
+        return new MaxCiType(constantPool, typeDescriptor.componentTypeDescriptor());
     }
 
     /**
