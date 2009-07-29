@@ -157,7 +157,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB implements He
             final Address address = allocateMemory(heapSize);
             final int [] defaultBeltHeapPercentage = defaultBeltHeapPercentage();
             beltwayConfiguration.initializeBeltWayConfiguration(address, heapSize,  defaultBeltHeapPercentage.length, defaultBeltHeapPercentage);
-            //copyAction = BeltwayConfiguration.parallelScavenging ?  concurrentEvacuationClosure : evacuationClosure;
+            evacuationClosure = BeltwayConfiguration.parallelScavenging ? parallelEvacuationClosure : singleThreadedEvacuationClosure;
             beltManager.initializeBelts();
             if (Heap.verbose()) {
                 beltManager.printBeltsInfo();
