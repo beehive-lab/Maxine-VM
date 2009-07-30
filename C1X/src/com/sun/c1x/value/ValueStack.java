@@ -581,7 +581,7 @@ public class ValueStack {
     public void setupPhiForStack(BlockBegin block, int i) {
         Instruction p = stackAt(i);
         assert !(p instanceof Phi) || ((Phi) p).block() != block : "phi already created for this block";
-        Instruction phi = new Phi(p.type(), block, -i - 1);
+        Instruction phi = new Phi(p.type().base(), block, -i - 1);
         values[maxLocals + i] = phi;
     }
 
@@ -594,7 +594,7 @@ public class ValueStack {
     public void setupPhiForLocal(BlockBegin block, int i) {
         Instruction p = values[i];
         assert !(p instanceof Phi) || ((Phi) p).block() != block : "phi already created for this block";
-        Instruction phi = new Phi(p.type(), block, i);
+        Instruction phi = new Phi(p.type().base(), block, i);
         storeLocal(i, phi);
     }
 

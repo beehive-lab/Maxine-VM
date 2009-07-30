@@ -30,6 +30,8 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
+import com.sun.max.vm.MaxineVM;
+import com.sun.max.lang.Function;
 
 /**
  * The <code>MaxCiType</code> class represents a compiler interface type,
@@ -252,7 +254,12 @@ public class MaxCiType implements CiType {
      */
     public CiType arrayOf() {
         if (classActor != null) {
-            return constantPool.canonicalCiType(ArrayClassActor.forComponentClassActor(classActor));
+            ArrayClassActor arrayClassActor = MaxineVM.usingTarget(new Function<ArrayClassActor>() {
+                public ArrayClassActor call() {
+                    return ArrayClassActor.forComponentClassActor(classActor);
+                }
+            });
+            return constantPool.canonicalCiType(arrayClassActor);
         }
         return new MaxCiType(constantPool, JavaTypeDescriptor.getArrayDescriptorForDescriptor(typeDescriptor, 1));
     }

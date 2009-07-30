@@ -30,7 +30,8 @@ import com.sun.c1x.C1XMetrics;
 
 /**
  * This class implements block merging, which combines adjacent basic blocks into a larger
- * basic block.
+ * basic block, and block skipping, which removes empty blocks that end in a Goto with
+ * their target.
  *
  * @author Ben L. Titzer
  */
