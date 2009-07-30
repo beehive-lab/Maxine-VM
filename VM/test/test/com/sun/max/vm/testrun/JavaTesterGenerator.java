@@ -127,7 +127,7 @@ public class JavaTesterGenerator {
         gen.genClassList(cases);
         gen.genRunMethod(cases);
         writer.close();
-         return Files.updateGeneratedContent(runSchemeFile, ReadableSource.Static.fromString(writer.toString()), "// GENERATED TEST RUNS", "// END GENERATED TEST RUNS");
+        return Files.updateGeneratedContent(runSchemeFile, ReadableSource.Static.fromString(writer.toString()), "// GENERATED TEST RUNS", "// END GENERATED TEST RUNS");
     }
 
     private static boolean generateTestRunsContent(final File testRunsFile, final LinkedList<JavaTestCase> cases) throws IOException {
