@@ -680,6 +680,10 @@ public abstract class TeleVM implements MaxVM {
         return teleHeapManager.teleHeapRegions();
     }
 
+    public final TeleRuntimeMemoryRegion[] teleHeapRegionsArray() {
+        return teleHeapManager.teleHeapRegionsArray();
+    }
+
     public final TeleRuntimeMemoryRegion teleRootsRegion() {
         return teleHeapManager.teleRootsRegion();
     }
@@ -705,6 +709,32 @@ public abstract class TeleVM implements MaxVM {
     public final Address rootEpochAddress() {
         return teleHeapManager.rootEpochAddress();
     }
+
+    public int readCardTableEntry(int index) {
+        return teleHeapManager.readCardTableEntry(index);
+    }
+
+    public void writeCardTableEntry(int index, int value) {
+        teleHeapManager.writeCardTableEntry(index, value);
+    }
+
+    public Address getCardTableAddress(int index) {
+        return teleHeapManager.getCardTableAddress(index);
+    }
+
+    public Address getObjectOldAddress() {
+        return teleHeapManager.getObjectOldAddress();
+    }
+
+    public Address getObjectNewAddress() {
+        return teleHeapManager.getObjectNewAddress();
+    }
+
+    public boolean isCardTableAddress(Address address) {
+        return teleHeapManager.isCardTableAddress(address);
+    }
+
+
     /**
      * @return manager for {@link MemoryRegion}s containing target code in the VM.
      */

@@ -132,6 +132,7 @@ public final class WatchpointsTable extends InspectorTable {
             createColumn(WatchpointsColumnKind.WRITE, null, new DefaultCellEditor(new JCheckBox()));
             createColumn(WatchpointsColumnKind.EXEC, null, new DefaultCellEditor(new JCheckBox()));
             createColumn(WatchpointsColumnKind.GC, null, new DefaultCellEditor(new JCheckBox()));
+            createColumn(WatchpointsColumnKind.EAGER, null, new DefaultCellEditor(new JCheckBox()));
             createColumn(WatchpointsColumnKind.TRIGGERED_THREAD, new TriggerThreadCellRenderer(inspection()), null);
             createColumn(WatchpointsColumnKind.ADDRESS_TRIGGERED, new TriggerAddressCellRenderer(inspection()), null);
             createColumn(WatchpointsColumnKind.CODE_TRIGGERED, new TriggerCodeCellRenderer(inspection()), null);
@@ -189,6 +190,8 @@ public final class WatchpointsTable extends InspectorTable {
                     return watchpoint.isExec();
                 case GC:
                     return watchpoint.isEnabledDuringGC();
+                case EAGER:
+                    return watchpoint.isEagerRelocationUpdateSet();
                 default:
                     throw FatalError.unexpected("Unspected Watchpoint Data column");
             }
@@ -223,6 +226,11 @@ public final class WatchpointsTable extends InspectorTable {
                     watchpoint.setEnabledDuringGC(newState);
                     inspection().settings().save();
                     break;
+                case EAGER:
+                    newState = (Boolean) value;
+                    watchpoint.setEagerRelocationUpdate(newState);
+                    inspection().settings().save();
+                    break;
                 default:
             }
         }
@@ -237,6 +245,8 @@ public final class WatchpointsTable extends InspectorTable {
                 case EXEC:
                     return Boolean.class;
                 case GC:
+                    return Boolean.class;
+                case EAGER:
                     return Boolean.class;
                 default:
                     return MaxWatchpoint.class;
@@ -434,7 +444,11 @@ public final class WatchpointsTable extends InspectorTable {
             final String description = watchpoint.description();
             setText(description);
             setToolTipText(description);
-            setForeground(getRowTextColor(row));
+            if (description.equals("RegionWatchpoint - GC removed corresponding Object")) {
+                setForeground(Color.RED);
+            } else {
+                setForeground(getRowTextColor(row));
+            }
             setBackground(getRowBackgroundColor(row));
             return this;
         }

@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include "log.h"
 #include "jni.h"
+#include "errno.h"
 
 #include "proc.h"
 
@@ -147,9 +148,11 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeResume(JNIEnv *env,
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeWait(JNIEnv *env, jclass c, jlong processHandle) {
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
-    if (proc_Pwait(ph, 0) != 0) {
+    int error = proc_Pwait(ph, 0);
+    if (error != 0) {
         int rc = proc_Pstate(ph);
-        log_println("nativeWait: Pwait failed, proc_Pstate %d", rc);
+        log_println("nativeWait: Pwait failed in solarisTeleProcess, proc_Pstate %d; erroro: %d; errno: %d", rc, error, errno);
+		log_println("ERROR: %s", strerror(errno));
         return false;
     }
 
@@ -259,6 +262,7 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeActivateWatchpoint(
     w.pr_vaddr = address;
     w.pr_size = size;
     w.pr_wflags = 0;
+    _libproc_debug = 1;
 
     if (read) {
         w.pr_wflags |= WA_READ;

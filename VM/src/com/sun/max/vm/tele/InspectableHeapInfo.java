@@ -56,15 +56,22 @@ public final class InspectableHeapInfo {
     private static long collectionEpoch;
 
     /**
-     * How many words of the Heap refer to one Word in the card table.
+     * How many words of the heap refer to one Word in the card table.
      */
+    @INSPECTED
     private static int cardTableRatio = 100;
 
-    private static long cardTableSize = 0;
+    @INSPECTED
+    private static int totalCardTableEntries = 0;
 
+    @INSPECTED
     private static Pointer cardTablePointer = Pointer.zero();
 
-    private static int[] cardTableRegions;
+    @INSPECTED
+    public static Address oldAddress;
+
+    @INSPECTED
+    public static Address newAddress;
 
     /**
      * Stores memory allocated by the heap in an location that can
@@ -93,33 +100,54 @@ public final class InspectableHeapInfo {
 
     private static void initCardTable(MemoryRegion[] memoryRegions) {
         if (cardTablePointer.equals(Pointer.zero())) {
-
             for (MemoryRegion memoryRegion : memoryRegions) {
-                cardTableSize += calculateNumberOfCardTableEntries(memoryRegion);
+                totalCardTableEntries += calculateNumberOfCardTableEntries(memoryRegion);
             }
-            cardTablePointer = Memory.allocate(Size.fromLong(cardTableSize));
+            cardTablePointer = Memory.allocate(Size.fromInt(totalCardTableEntries * Word.size()));
         }
     }
 
-    private static long calculateNumberOfCardTableEntries(MemoryRegion memoryRegion) {
-        long cardTableEntries = 0;
-        cardTableEntries += memoryRegion.size().toLong() / cardTableRatio;
-        if (memoryRegion.size().toLong() % cardTableRatio != 0) {
-            cardTableEntries += Word.size();
+    private static int calculateNumberOfCardTableEntries(MemoryRegion memoryRegion) {
+        int nrOfWords = memoryRegion.size().toInt() / Word.size();
+        int cardTableEntries = nrOfWords / cardTableRatio;
+        if (nrOfWords % cardTableRatio != 0) {
+            cardTableEntries++;
         }
         return cardTableEntries;
     }
 
-    public void touchCardTableField(Address address) {
-        long cardTableEntry = 0;
+    public static Word touchCardTableField(Address address) {
+        return touchCardTableField(address, memoryRegions);
+    }
 
+    public static Word touchCardTableField(Address address, MemoryRegion... memoryRegions) {
+        int index;
+        index = getCardTableIndex(address, memoryRegions);
+
+        if (index != -1) {
+            return cardTablePointer.getWord(index);
+        }
+        return Word.zero();
+    }
+
+    public static int getCardTableIndex(Address address, MemoryRegion... memoryRegions) {
+        int cardTableEntry = 0;
         for (MemoryRegion memoryRegion : memoryRegions) {
             if (memoryRegion.contains(address)) {
-                //calculate offset;
-            } else {
-                cardTableEntry += calculateNumberOfCardTableEntries(memoryRegion);
+                final int offset = address.minus(memoryRegion.start()).toInt() / Word.size();
+                return cardTableEntry + calculateIndexInMemoryRegion(offset);
             }
+            cardTableEntry += calculateNumberOfCardTableEntries(memoryRegion);
         }
+        return -1;
+    }
+
+    private static int calculateIndexInMemoryRegion(int offset) {
+        int index = offset / cardTableRatio;
+        if (offset % cardTableRatio != 0) {
+            index++;
+        }
+        return index;
     }
 
     private static class RootsMemoryRegion extends RuntimeMemoryRegion {

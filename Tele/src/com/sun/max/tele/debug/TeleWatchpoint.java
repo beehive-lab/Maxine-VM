@@ -30,6 +30,7 @@ import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.layout.Layout.*;
+import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
@@ -59,6 +60,8 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
     private boolean isEnabledDuringGC;
 
     private byte[] teleWatchpointCache;
+
+    private boolean eagerRelocationUpdate = false;
 
     /**
      * Creates a watchpoint with memory location not yet configured.
@@ -189,6 +192,41 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
      */
     public TeleObject getTeleObject() {
         return null;
+    }
+
+    public void setEagerRelocationUpdate(boolean eagerRelocationUpdate) {
+        this.eagerRelocationUpdate = eagerRelocationUpdate;
+        if (getTeleObject() != null) {
+            TeleWatchpoint watchpoint;
+            int index = InspectableHeapInfo.getCardTableIndex(start, factory.teleProcess.teleVM().teleHeapRegionsArray());
+            int objectReferences = factory.teleProcess.teleVM().readCardTableEntry(index);
+            Address cardTableAddress = factory.teleProcess.teleVM().getCardTableAddress(index);
+            if (eagerRelocationUpdate) {
+                if (objectReferences > 0) {
+                    watchpoint = (TeleWatchpoint) factory.findInvisibleWatchpoint(cardTableAddress);
+                    watchpoint.disable();
+                } else {
+                    watchpoint = factory.createInvisibleWatchpoint("Card table watchpoint", new FixedMemoryRegion(cardTableAddress, Size.fromInt(Word.size()), "Card table entry"), true, true, false, false, true);
+                }
+                objectReferences++;
+                factory.teleProcess.teleVM().writeCardTableEntry(index, objectReferences);
+                watchpoint.enable();
+            } else {
+                watchpoint = (TeleWatchpoint) factory.findInvisibleWatchpoint(cardTableAddress);
+                watchpoint.disable();
+                objectReferences--;
+                factory.teleProcess.teleVM().writeCardTableEntry(index, objectReferences);
+                if (objectReferences > 0) {
+                    watchpoint.enable();
+                } else {
+                    factory.removeInvisibleWatchpoint(watchpoint);
+                }
+            }
+        }
+    }
+
+    public boolean isEagerRelocationUpdateSet() {
+        return eagerRelocationUpdate;
     }
 
     protected void updateTeleWatchpointCache(TeleProcess teleProcess) {
@@ -375,6 +413,10 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         // This list will be read many, many more times than it will change.
         private volatile IterableWithLength<MaxWatchpoint> watchpointsCache;
 
+        // CardTable watchpoints used for eager watchpoint relocation mechanism
+        private final TreeSet<TeleWatchpoint> invisibleWatchpoints = new TreeSet<TeleWatchpoint>(this);
+        private volatile IterableWithLength<MaxWatchpoint> invisibleWatchpointsCache;
+
         private boolean inGCMode = false;
 
         private int relocatableWatchpointsCounter = 0;
@@ -392,6 +434,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
                 public void upate(MaxVMState maxVMState) {
                     if (maxVMState.processState() == ProcessState.TERMINATED) {
                         watchpoints.clear();
+                        invisibleWatchpoints.clear();
                         updateCache();
                         setChanged();
                         notifyObservers();
@@ -402,7 +445,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
 
         public void initFactory() {
             endOfGCWatchpoint = createInvisibleWatchpoint("End of GC", new FixedMemoryRegion(teleProcess.teleVM().rootEpochAddress(), Size.fromInt(Pointer.size()), "Root epoch address"), true, false, true, false, true);
-            endOfGCWatchpoint.enable(); // TODO: REMOVE, should be dynamic
+            //endOfGCWatchpoint.enable(); // TODO: REMOVE, should be dynamic
         }
 
         public boolean isInGCMode() {
@@ -411,6 +454,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
 
         private void updateCache() {
             watchpointsCache = new VectorSequence<MaxWatchpoint>(watchpoints);
+            invisibleWatchpointsCache = new VectorSequence<MaxWatchpoint>(invisibleWatchpoints);
         }
 
         /**
@@ -433,7 +477,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
             if (result != null) {
                 relocatableWatchpointsCounter++;
                 if (relocatableWatchpointsCounter == 1) {
-                    //endOfGCWatchpoint.enable();
+                    endOfGCWatchpoint.enable();
                 }
             }
             return result;
@@ -586,7 +630,26 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
          */
         public synchronized TeleWatchpoint createInvisibleWatchpoint(String description, MemoryRegion memoryRegion, boolean after, boolean read, boolean write, boolean exec, boolean gc) {
             final TeleWatchpoint teleWatchpoint = new TeleInvisibleWatchpoint(this, description, memoryRegion, after, read, write, exec, gc);
+            invisibleWatchpoints.add(teleWatchpoint);
             return teleWatchpoint;
+        }
+
+        public synchronized boolean removeInvisibleWatchpoint(TeleWatchpoint teleWatchpoint) {
+            ProgramError.check(teleWatchpoint.active, "Attempt to delete an already deleted watchpoint ");
+            if (invisibleWatchpoints.remove(teleWatchpoint)) {
+                if (teleProcess.deactivateWatchpoint(teleWatchpoint)) {
+                    Trace.line(TRACE_VALUE, "Removed invisible watchpoint at start=" + teleWatchpoint.start().toHexString() + ", size=" + teleWatchpoint.size().toString());
+                    teleWatchpoint.active = false;
+
+                    updateCache();
+                    return true;
+                } else {
+                    // Can't deactivate for some reason, so put back in the active collection.
+                    invisibleWatchpoints.add(teleWatchpoint);
+                }
+            }
+            Trace.line(TRACE_VALUE, "Failed to remove watchpoint at start=" + teleWatchpoint.start().toHexString() + ", size=" + teleWatchpoint.size().toString());
+            return false;
         }
 
         /**
@@ -700,7 +763,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
 
                     if (teleWatchpoint.getTeleObject() != null) {
                         if (relocatableWatchpointsCounter == 1) {
-                            //endOfGCWatchpoint.disable();
+                            endOfGCWatchpoint.disable();
                         }
                         relocatableWatchpointsCounter--;
                     }
@@ -718,6 +781,8 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
             return false;
         }
 
+
+
         /**
          * Relocates a watchpoint to the new address of the object.
          *
@@ -730,22 +795,79 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         private synchronized boolean relocateWatchpoint(TeleWatchpoint teleWatchpoint) throws TooManyWatchpointsException, DuplicateWatchpointException {
             ProgramError.check(teleWatchpoint.active, "Attempt to relocate an already deleted watchpoint ");
             TeleObject teleObject = teleWatchpoint.getTeleObject();
+            System.out.println("RELOCATE WATCHPOINT");
+            if (teleObject != null) {
+                System.out.println("tele object still reachable");
+                if (teleObject.isLive()) {
+                    System.out.println("tele object still live");
+                    Address newAddress = teleObject.getCurrentOrigin();
 
-            if (teleObject != null && teleObject.isLive()) {
-                Address newAddress = teleObject.getCurrentOrigin();
-
-                if (removeWatchpoint(teleWatchpoint)) {
-                    teleWatchpoint.setStart(newAddress);
-                    if (addWatchpoint(teleWatchpoint) != null) {
-                        return true;
-                    } else {
-                        // Can't store relocated watchpoint in watchpoints list.
-                        Trace.line(TRACE_VALUE, "Failed to store relocated watchpoint in watchpoints list start=" + teleWatchpoint.start().toHexString() + ", size=" + teleWatchpoint.size().toString());
+                    if (removeWatchpoint(teleWatchpoint)) {
+                        teleWatchpoint.setStart(newAddress);
+                        if (addWatchpoint(teleWatchpoint) != null) {
+                            return true;
+                        } else {
+                            // Can't store relocated watchpoint in watchpoints list.
+                            Trace.line(TRACE_VALUE, "Failed to store relocated watchpoint in watchpoints list start=" + teleWatchpoint.start().toHexString() + ", size=" + teleWatchpoint.size().toString());
+                        }
                     }
+                    Trace.line(TRACE_VALUE, "Failed to relocate watchpoint at start=" + teleWatchpoint.start().toHexString() + ", size=" + teleWatchpoint.size().toString());
+                } else {
+                    System.out.println("tele object dead");
+                    if (removeWatchpoint(teleWatchpoint)) {
+                        TeleWatchpoint teleRegionWatchpoint = setRegionWatchpoint("RegionWatchpoint - GC removed corresponding Object", new FixedMemoryRegion(teleWatchpoint.start(), teleWatchpoint.size(), "Old memory location of watched object"),
+                            teleWatchpoint.after, teleWatchpoint.read, teleWatchpoint.write, teleWatchpoint.exec, teleWatchpoint.isEnabledDuringGC);
+                        if (teleRegionWatchpoint != null) {
+                            teleRegionWatchpoint.setEagerRelocationUpdate(true);
+                            return true;
+                        } else {
+                            Trace.line(TRACE_VALUE, "Failed to create RegionWatchpoint for outdated TeleWatchpoint=" + teleWatchpoint.start().toHexString() + ", size=" + teleWatchpoint.size().toString());
+                        }
+                    }
+                    Trace.line(TRACE_VALUE, "Failed to handle outdated watchpoint at start=" + teleWatchpoint.start().toHexString() + ", size=" + teleWatchpoint.size().toString());
                 }
-                Trace.line(TRACE_VALUE, "Failed to relocate watchpoint at start=" + teleWatchpoint.start().toHexString() + ", size=" + teleWatchpoint.size().toString());
             }
             return false;
+        }
+
+        public synchronized boolean relocateCardTableWatchpoint(Address oldAddress, Address newAddress) {
+            TeleWatchpoint watchpoint;
+            final int oldIndex = InspectableHeapInfo.getCardTableIndex(oldAddress, teleProcess.teleVM().teleHeapRegionsArray());
+            final int newIndex = InspectableHeapInfo.getCardTableIndex(newAddress, teleProcess.teleVM().teleHeapRegionsArray());
+            if (oldIndex == newIndex) {
+                return false;
+            }
+
+            int oldObjectReferences = teleProcess.teleVM().readCardTableEntry(oldIndex);
+            final Address oldCardTableAddress = teleProcess.teleVM().getCardTableAddress(oldIndex);
+            watchpoint = (TeleWatchpoint) findInvisibleWatchpoint(oldCardTableAddress);
+            if (watchpoint == null) {
+                return false;
+            }
+            oldObjectReferences--;
+            if (oldObjectReferences == 0) {
+                removeInvisibleWatchpoint(watchpoint);
+            } else {
+                watchpoint.disable();
+            }
+            teleProcess.teleVM().writeCardTableEntry(oldIndex, oldObjectReferences);
+            if (oldObjectReferences > 0) {
+                watchpoint.enable();
+            }
+
+            int newObjectReferences = teleProcess.teleVM().readCardTableEntry(newIndex);
+            final Address newCardTableAddress = teleProcess.teleVM().getCardTableAddress(newIndex);
+            if (newObjectReferences == 0) {
+                watchpoint = createInvisibleWatchpoint("Card table watchpoint", new FixedMemoryRegion(newCardTableAddress, Size.fromInt(Word.size()), "Card table entry"), true, true, false, false, true);
+            } else {
+                watchpoint = (TeleWatchpoint) findInvisibleWatchpoint(newCardTableAddress);
+                watchpoint.disable();
+            }
+            newObjectReferences++;
+            teleProcess.teleVM().writeCardTableEntry(newIndex, newObjectReferences);
+            watchpoint.enable();
+
+            return true;
         }
 
         /**
@@ -795,6 +917,15 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
          */
         public MaxWatchpoint findWatchpoint(Address address) {
             for (MaxWatchpoint maxWatchpoint : watchpointsCache) {
+                if (maxWatchpoint.contains(address)) {
+                    return maxWatchpoint;
+                }
+            }
+            return null;
+        }
+
+        public MaxWatchpoint findInvisibleWatchpoint(Address address) {
+            for (MaxWatchpoint maxWatchpoint : invisibleWatchpointsCache) {
                 if (maxWatchpoint.contains(address)) {
                     return maxWatchpoint;
                 }

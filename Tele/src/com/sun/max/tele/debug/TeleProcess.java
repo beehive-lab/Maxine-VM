@@ -119,6 +119,16 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                 watchpointFactory().reenableWatchpointsAfterGC();
                 return true;
             } else if (teleVM().isInGC()) {
+                // Handle watchpoint triggered in card table
+                Address objectOldAddress = teleVM().getObjectOldAddress();
+                if (teleVM().isCardTableAddress(objectOldAddress)) {
+                    //System.out.println("OLD ADDRESS " + teleVM().getObjectOldAddress().toHexString());
+                    //System.out.println("NEW ADDRESS " + teleVM().getObjectNewAddress().toHexString());
+                    watchpointFactory().relocateCardTableWatchpoint(objectOldAddress, teleVM().getObjectNewAddress());
+                }
+
+                //Word value = thread.threadLocalsFor(Safepoint.State.ENABLED).getVmThreadLocal(VmThreadLocal.OLD_OBJECT_ADDRESS.index).getVariableWord();
+                //System.out.println("WATCHPOINT FIELDS " + thread.threadLocalsFor(Safepoint.State.ENABLED).getVmThreadLocal(VmThreadLocal.NEW_OBJECT_ADDRESS.index).getVariableWord());
                 // The VM is in GC. Turn Watchpoints off for all objects that are not interested in GC related triggers.
                 if (!watchpointFactory().isInGCMode()) {
                     watchpointFactory().disableWatchpointsDuringGC();
@@ -126,7 +136,6 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                         return true;
                     }
                 }
-                // else if check for special object handle watchpoint
             }
             return false;
         }
@@ -172,7 +181,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                     // Wait here for VM process to stop
                     if (!waitUntilStopped()) {
                         // Something went wrong; process presumed to be dead.
-                        throw new ProcessTerminatedException("");
+                        throw new ProcessTerminatedException("Wait until process stopped failed");
                     }
                     Trace.line(TRACE_VALUE, tracePrefix() + "Execution stopped: " + request);
                     // Read VM memory and update various bits of cached state about the VM state

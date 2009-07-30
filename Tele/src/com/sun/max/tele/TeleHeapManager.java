@@ -73,9 +73,19 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
      */
     private TeleRuntimeMemoryRegion[] teleHeapRegions = new TeleRuntimeMemoryRegion[0];
 
+    private Pointer cardTablePointer = Pointer.zero();
+
+    private int cardTableSize;
+
     private Pointer teleRootsPointer = Pointer.zero();
 
+    private Pointer objectOldAddressPointer = Pointer.zero();
+
+    private Pointer objectNewAddressPointer = Pointer.zero();
+
     private TeleRuntimeMemoryRegion teleRootsRegion = null;
+
+    private Pointer cardTableSizePointer = Pointer.zero();
 
     private TeleHeapManager(TeleVM teleVM) {
         super(teleVM);
@@ -104,9 +114,19 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
         final Reference bootHeapRegionReference = teleVM().fields().Heap_bootHeapRegion.readReference(teleVM());
         teleBootHeapRegion = (TeleRuntimeMemoryRegion) teleVM().makeTeleObject(bootHeapRegionReference);
         final int teleRootsOffset = teleVM().fields().InspectableHeapInfo_rootsPointer.fieldActor().offset();
+        final int teleCardTableOffset = teleVM().fields().InspectableHeapInfo_cardTablePointer.fieldActor().offset();
+        final int teleObjectOldOffset = teleVM().fields().InspectableHeapInfo_oldAddress.fieldActor().offset();
+        final int teleObjectNewOffset = teleVM().fields().InspectableHeapInfo_newAddress.fieldActor().offset();
         // The address of the tele roots field must be accessible before any {@link TeleObject}s can be created,
         // which means that it must be accessible before calling {@link #refresh()} here.
         teleRootsPointer = teleVM().fields().InspectableHeapInfo_rootsPointer.staticTupleReference(teleVM()).toOrigin().plus(teleRootsOffset);
+        cardTablePointer = teleVM().fields().InspectableHeapInfo_cardTablePointer.staticTupleReference(teleVM()).toOrigin().plus(teleCardTableOffset);
+        objectOldAddressPointer = teleVM().fields().InspectableHeapInfo_oldAddress.staticTupleReference(teleVM()).toOrigin().plus(teleObjectOldOffset);
+        objectNewAddressPointer = teleVM().fields().InspectableHeapInfo_newAddress.staticTupleReference(teleVM()).toOrigin().plus(teleObjectNewOffset);
+
+        final int cardTableSizeOffset = teleVM().fields().InspectableHeapInfo_totalCardTableEntries.fieldActor().offset();
+        cardTableSizePointer = teleVM().fields().InspectableHeapInfo_totalCardTableEntries.staticTupleReference(teleVM()).toOrigin().plus(cardTableSizeOffset);
+
         refresh(processEpoch);
         Trace.end(1, tracePrefix() + "initializing", startTimeMillis);
     }
@@ -150,6 +170,11 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
                     teleRootsRegion = (TeleRuntimeMemoryRegion) teleVM().makeTeleObject(teleRootsRegionReference);
                 }
             }
+
+            if (!teleVM().dataAccess().readWord(cardTableSizePointer).equals(Word.zero())) {
+                cardTableSize = teleVM().dataAccess().readInt(teleVM().dataAccess().readWord(cardTableSizePointer).asAddress()) * Word.size();
+            }
+
             Trace.end(TRACE_VALUE, tracePrefix() + "refreshing", startTimeMillis);
         }
     }
@@ -168,6 +193,10 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
      */
     public IndexedSequence<TeleRuntimeMemoryRegion> teleHeapRegions() {
         return new ArraySequence<TeleRuntimeMemoryRegion>(teleHeapRegions);
+    }
+
+    public TeleRuntimeMemoryRegion[] teleHeapRegionsArray() {
+        return teleHeapRegions;
     }
 
     /**
@@ -295,6 +324,33 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
     public Address rootEpochAddress() {
         final int offset = teleVM().fields().InspectableHeapInfo_rootEpoch.fieldActor().offset();
         return teleVM().fields().InspectableHeapInfo_rootEpoch.staticTupleReference(teleVM()).toOrigin().plus(offset);
+    }
+
+    public Address getObjectOldAddress() {
+        return teleVM().dataAccess().readWord(teleVM().dataAccess().readWord(objectOldAddressPointer).asAddress()).asAddress();
+    }
+
+    public Address getObjectNewAddress() {
+        return teleVM().dataAccess().readWord(teleVM().dataAccess().readWord(objectNewAddressPointer).asAddress()).asAddress();
+    }
+
+    public Address getCardTableAddress(int index) {
+        return teleVM().dataAccess().readWord(cardTablePointer).asAddress().plus(index * Word.size());
+    }
+
+    public int readCardTableEntry(int index) {
+        return teleVM().dataAccess().readInt(teleVM().dataAccess().readWord(cardTablePointer).asAddress(), index * Word.size());
+    }
+
+    public void writeCardTableEntry(int index, int value) {
+        teleVM().dataAccess().writeInt(teleVM().dataAccess().readWord(cardTablePointer).asAddress(), index * Word.size(), value);
+    }
+
+    public boolean isCardTableAddress(Address address) {
+        if (address.greaterEqual(getCardTableAddress(0)) && getCardTableAddress(0).plus(cardTableSize).greaterEqual(address)) {
+            return true;
+        }
+        return false;
     }
 
 }

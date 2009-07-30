@@ -258,6 +258,18 @@ public class VmThreadLocal {
         = new VmThreadLocal("STACK_REFERENCE_MAP", Kind.WORD, "points to stack reference map");
 
     /**
+     * This is address of the object before it got relocated by the GC.
+     */
+    public static final VmThreadLocal OLD_OBJECT_ADDRESS
+        = new VmThreadLocal("OLD_OBJECT_ADDRESS", Kind.WORD, "old address of an object, before compaction");
+
+    /**
+     * This is the new address of the object after relocation.
+     */
+    public static final VmThreadLocal NEW_OBJECT_ADDRESS
+        = new VmThreadLocal("NEW_OBJECT_ADDRESS", Kind.WORD, "new address of an object, after compaction");
+
+    /**
      * Links for a doubly-linked list of all thread locals for active threads.
      */
     public static final VmThreadLocal FORWARD_LINK = new VmThreadLocal("FORWARD_LINK", Kind.WORD, "points to next thread locals in list of all active");
