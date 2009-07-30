@@ -243,7 +243,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
     private static final IsNotGCOrCurrentThread isNotGCOrCurrentThread = new IsNotGCOrCurrentThread();
 
     /**
-     * The procedure that is run the on GC thread to perform a garbage collection.
+     * The procedure that is run by the GC thread to perform a garbage collection.
      */
     class GCRequest implements Runnable {
         public void run() {
