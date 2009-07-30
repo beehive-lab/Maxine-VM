@@ -107,6 +107,8 @@ safepoints
 scalability
 scrollable
 selectable
+semispace
+semispaces
 settable
 solaris
 struct
@@ -118,6 +120,7 @@ toolbar
 tooltip
 tooltips
 trampoline
+unboxed
 uncomment
 uncompiled
 undock
