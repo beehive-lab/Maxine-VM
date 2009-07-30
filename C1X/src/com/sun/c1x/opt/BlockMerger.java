@@ -87,7 +87,7 @@ public class BlockMerger implements BlockClosure {
                     // the successor has multiple predecessors, but this block is empty
                     // go through all phis in the successor block
                     assert sux.state().scope() == oldEnd.state().scope();
-                    if (block.checkBlockFlag(BlockBegin.BlockFlag.HasPhis)) {
+                    if (block.state().hasPhisFor(block)) {
                         // can't skip a block that has phis
                         return false;
                     }
