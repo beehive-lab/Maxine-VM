@@ -62,11 +62,11 @@ public class CirBytecode {
         /**
          * {@link CirCall} instruction.
          * <pre>
-         * Format: CALL count numberOfJavaFrameDescriptors {numberOFLocals numberOfStackSlots}*
+         * Format: CALL count numberOfJavaFrameDescriptors {numberOfLocals numberOfStackSlots}*
          * </pre>
          * OR
          * <pre>
-         * Format: CALL_[count] numberOfJavaFrameDescriptors {numberOFLocals numberOfStackSlots}*  // 0 <= count <= 6
+         * Format: CALL_[count] numberOfJavaFrameDescriptors {numberOfLocals numberOfStackSlots}*  // 0 <= count <= 6
          * </pre>
          * Stack: ..., procedure:CirValue, arguments:CirValue*count => ..., CirCall
          */
@@ -162,6 +162,19 @@ public class CirBytecode {
                 return 6;
             }
         },
+
+        /**
+         * {@link CirCall} instruction for a {@linkplain CirCall#isNative() native function call}.
+         * <pre>
+         * Format: NATIVE_CALL count numberOfJavaFrameDescriptors {numberOfLocals numberOfStackSlots}*
+         * </pre>
+         * OR
+         * <pre>
+         * Format: NATIVE_CALL[count] numberOfJavaFrameDescriptors {numberOfLocals numberOfStackSlots}*  // 0 <= count <= 6
+         * </pre>
+         * Stack: ..., procedure:CirValue, arguments:CirValue*count => ..., CirCall
+         */
+        NATIVE_CALL,
 
         /**
          * {@link CirConstant} instruction.

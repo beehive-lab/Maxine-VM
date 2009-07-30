@@ -829,6 +829,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
 
         cc.setBody(call);
         call = call(callEntryPoint, arguments);
+        call.setIsNative();
 
         if (!isCFunction) {
             call = call(nativeCallPrologue, cont(vmThreadLocals, call), ce());

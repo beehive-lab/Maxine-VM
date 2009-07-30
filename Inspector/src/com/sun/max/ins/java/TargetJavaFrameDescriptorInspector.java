@@ -86,7 +86,7 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
             }
             case LOCAL_STACK_SLOT: {
                 final TargetLocation.LocalStackSlot localStackSlot = (TargetLocation.LocalStackSlot) targetLocation;
-                return framePointer + "[" + (localStackSlot.index() * maxVM().wordSize()) + "]";
+                return framePointer + "[" + (localStackSlot.index() * maxVM().wordSize().toInt()) + "]";
             }
             default: {
                 return targetLocation.toString();

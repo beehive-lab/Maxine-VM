@@ -155,7 +155,7 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
                                 logSlot(regionWordIndex, address);
                             }
                         }
-                        pointerIndexVisitor.visitPointerIndex(start().asPointer(), regionWordIndex);
+                        pointerIndexVisitor.visit(start().asPointer(), regionWordIndex);
                     }
                     refmapWord = refmapWord.dividedBy(2);
                     bitIndex++;

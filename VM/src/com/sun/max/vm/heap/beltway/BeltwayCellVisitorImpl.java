@@ -66,8 +66,8 @@ public class BeltwayCellVisitorImpl implements BeltCellVisitor {
     private void visitOriginOffsets(Hub hub, Pointer origin) {
         final int n = hub.referenceMapStartIndex + hub.referenceMapLength;
         for (int i = hub.referenceMapStartIndex; i < n; i++) {
-            final int offset = hub.getInt(i);
-            pointerOffsetGripUpdater.visitPointerOffset(origin, offset);
+            final int index = hub.getInt(i);
+            pointerOffsetGripUpdater.visit(origin, index);
         }
     }
 
@@ -113,5 +113,4 @@ public class BeltwayCellVisitorImpl implements BeltCellVisitor {
         }
         return cell.plus(Layout.size(origin));
     }
-
 }

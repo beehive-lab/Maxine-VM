@@ -57,12 +57,15 @@ public abstract class EirCall<EirInstructionVisitor_Type extends EirInstructionV
         return arguments;
     }
 
+    public final boolean isNativeFunctionCall;
+
     protected EirCall(EirBlock block,
                       EirABI abi, EirValue result, EirLocation resultLocation,
                       EirValue function, PoolSet<EirLocationCategory> functionLocationCategories,
                       EirValue[] arguments, EirLocation[] argumentLocations,
-                      EirMethodGeneration methodGeneration) {
+                      boolean isNativeFunctionCall, EirMethodGeneration methodGeneration) {
         super(block);
+        this.isNativeFunctionCall = isNativeFunctionCall;
         this.function = new EirOperand(this, EirOperand.Effect.USE, functionLocationCategories);
         this.function.setEirValue(function);
         if (result == null) {
@@ -147,7 +150,11 @@ public abstract class EirCall<EirInstructionVisitor_Type extends EirInstructionV
         if (callerSavedOperands != null) {
             s += " [Caller saved: " + Arrays.toString(callerSavedOperands) + "]";
         }
-        return s + " " + javaFrameDescriptor();
+        s += " " + javaFrameDescriptor();
+        if (isNativeFunctionCall) {
+            s += " <native function call>";
+        }
+        return s;
     }
 
     @Override

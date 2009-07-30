@@ -35,13 +35,17 @@ import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
- * An heap scheme for beltway collectors.
+ * A heap scheme for beltway collectors.
+ * This scheme loosely follows the beltway infrastructure for building copying collector.
+ * The main difference with what is described in the original paper is that a belt is made of a single increment (instead of potentially many).
+ *
  * The scheme gathers a number of statically allocated objects so as to avoid dynamic allocation during GC
  * (although it is possible for the GC to allocate objects directly in the evacuation belts as beltway collectors are primarily copying GC).
  *
  * @author Christos Kotselidis
+ * @author Laurent Daynes
  */
-public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB implements HeapScheme {
+public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
 
     private static final Verify verifyAction = new VerifyActionImpl();
 
@@ -59,7 +63,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB implements He
 
     /**
      * The evacuation closure used by the heap scheme. It's either one of singleThreadedEvacuationClosure parallelEvacuationClosure depending on
-     * the Beltway configuration.
+     * the Beltway configuration. It should be possible to pick up the right configuration based on a VM option.
      */
     protected Action evacuationClosure;
 
@@ -113,19 +117,11 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB implements He
         return evacuationClosure;
     }
 
-    public PointerOffsetVisitor pointerOffsetGripVerifier() {
-        return pointerVisitorGripVerifier;
-    }
-
     public PointerIndexVisitor pointerIndexGripVerifier() {
         return pointerVisitorGripVerifier;
     }
 
     public PointerIndexVisitor pointerIndexGripUpdater() {
-        return pointerVisitorGripUpdater;
-    }
-
-    public PointerOffsetVisitor pointerOffsetGripUpdater() {
         return pointerVisitorGripUpdater;
     }
 
@@ -142,6 +138,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB implements He
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
+        super.initialize(phase);
         if (MaxineVM.isPrototyping()) {
             beltwayConfiguration = new BeltwayConfiguration();
             beltCollector = new BeltwayCollector();
@@ -168,13 +165,24 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB implements He
                             Platform.target().pageSize));
             BeltwayCardRegion.switchToRegularCardTable(cardRegion.cardTableBase().asPointer());
         } else if (phase == MaxineVM.Phase.STARTING) {
-            collectorThread = new BeltwayStopTheWorldDaemon("GC", beltCollector);
+            //collectorThread =  BeltwayConfiguration.parallelScavenging ? new BeltwayStopTheWorldDaemon("GC", beltCollector) : new StopTheWorldSingleThreadGCDaemon("GC", beltCollector);
+            collectorThread =  new BeltwayStopTheWorldDaemon("GC", beltCollector);
             collectorThread.start();
         } else if (phase == MaxineVM.Phase.RUNNING) {
             if (BeltwayConfiguration.parallelScavenging) {
                 createGCThreads();
             }
         }
+    }
+
+    /**
+     * This collector treats the references in code as GC roots.
+     * (an alternative would be to have a special Belt for code with
+     * a remembered set for reference from the code belt).
+     */
+    @Override
+    public boolean codeReferencesAreGCRoots() {
+        return true;
     }
 
     @INLINE
@@ -305,7 +313,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB implements He
                 final Pointer gcTLABStart = getGCTLABStartFromAddress(heapStartAddress);
                 if (!gcTLABStart.isZero()) {
                     final Pointer gcTLABEnd = getGCTLABEndFromStart(gcTLABStart);
-                    BeltwayCellVisitorImpl.linearVisitAllCellsTLAB(cellVisitor(), gcTLABStart, gcTLABEnd, from, to);
+                    BeltwayCellVisitorImpl.linearVisitAllCellsTLAB(cellVisitor, gcTLABStart, gcTLABEnd, from, to);
                     SideTable.markScavengeSideTable(gcTLABStart);
                 }
             }
@@ -369,26 +377,42 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB implements He
         fillWithDeadObject(tlabAllocationMark, tlabEnd);
     }
 
+    /**
+     * A TLAB policy that never refills. Just a convenience to disable TLAB use.
+     */
+    private static final TLABRefillPolicy NEVER_REFILL_TLAB = new TLABRefillPolicy() {
+        @Override
+        public boolean shouldRefill(Size size, Pointer allocationMark) {
+            return false;
+        }
+
+        @Override
+        public Size nextTlabSize() {
+            return Size.zero();
+        }
+    };
+
     @Override
-    protected Pointer handleTLABOverflow(Size size, Pointer allocationMark) {
+    protected Pointer handleTLABOverflow(Size size, Pointer allocationMark, Pointer enabledVmThreadLocals) {
         // Should we refill the TLAB ?
-        final TLABRefillPolicy refillPolicy = TLABRefillPolicy.getCurrentThreadPolicy();
+        final TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(enabledVmThreadLocals);
         if (refillPolicy == null) {
             // No policy yet for the current thread. This must be the first time this thread uses a TLAB (it does not have one yet).
             ProgramError.check(allocationMark.isZero(), "thread must not have a TLAB yet");
             if (!useTLAB()) {
                 // We're not using TLAB. So let's assign the never refill tlab policy.
-                TLABRefillPolicy.setCurrentThreadPolicy(TLABRefillPolicy.NEVER_REFILL_TLAB);
+                TLABRefillPolicy.setForCurrentThread(enabledVmThreadLocals, NEVER_REFILL_TLAB);
                 return tlabAllocationBelt.allocate(size);
             }
             // Allocate an initial TLAB and a refill policy. For simplicity, this one is allocated from the TLAB.
             Size tlabSize = initialTlabSize();
-            refillTLAB(tlabAllocationBelt.allocate(tlabSize), tlabSize);
+            // FIXME: may have to remove the debug tag here. Or should we use a specific tlab allocation routine ?
+            refillTLAB(enabledVmThreadLocals, tlabAllocationBelt.allocate(tlabSize), tlabSize);
             // Let's do a bit of dirty meta-circularity. The TLAB is refilled, and no-one except the current thread can use it.
             // So the tlab allocation is going to succeed here.
-            TLABRefillPolicy.setCurrentThreadPolicy(new TLABRefillPolicy(tlabSize));
+            TLABRefillPolicy.setForCurrentThread(enabledVmThreadLocals, new SimpleTLABRefillPolicy(tlabSize));
             return tlabAllocate(size);
-        } else if (size.greaterThan(refillPolicy.tlabSize())) {
+        } else if (size.greaterThan(refillPolicy.nextTlabSize())) {
             // This couldn't be allocated in a TLAB, so go directly to direct allocation routine.
             return tlabAllocationBelt.allocate(size);
         } else if (!refillPolicy.shouldRefill(size, allocationMark)) {
@@ -396,20 +420,9 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB implements He
             return tlabAllocationBelt.allocate(size);
         }
         // Refill TLAB and allocate (we know the request can be satisfied with a fresh TLAB and will therefore succeed).
-        Size tlabSize = refillPolicy.tlabSize();
+        Size tlabSize = refillPolicy.nextTlabSize();
         refillTLAB(tlabAllocationBelt.allocate(tlabSize), tlabSize);
         return tlabAllocate(size);
-    }
-
-    /**
-     * Allocation from heap (SlowPath). This method delegates the allocation to the belt denoted by the Belt Manager.
-     * Currently we are synchronizing to avoid race conditions. TODO: Recalculate tlabs' sizes
-     *
-     * @param size The size of the allocation.
-     * @return the pointer to the address in which we can allocate. If null, a GC should be triggered.
-     */
-    private Pointer allocate(Belt belt, Size size) {
-        return belt.allocate(size);
     }
 
     protected Pointer bumpAllocateSlowPath(Belt belt, Size size) {

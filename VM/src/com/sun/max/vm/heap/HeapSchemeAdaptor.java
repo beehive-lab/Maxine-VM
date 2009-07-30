@@ -29,7 +29,6 @@ import com.sun.max.vm.runtime.*;
  *
  * @author Mick Jordan
  */
-
 public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements HeapScheme {
 
     /**
@@ -55,5 +54,9 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
 
     public void enableAllocationForCurrentThread() {
         FatalError.unimplemented();
+    }
+
+    public boolean codeReferencesAreGCRoots() {
+        throw FatalError.unimplemented();
     }
 }

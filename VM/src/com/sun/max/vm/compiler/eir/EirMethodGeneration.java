@@ -297,7 +297,7 @@ public abstract class EirMethodGeneration {
         return integerRegisterRoleValue(VMRegister.Role.SAFEPOINT_LATCH);
     }
 
-    public abstract EirCall createCall(EirBlock eirBlock, EirABI eirAbi, EirValue resultValue, EirLocation resultLocation, EirValue function, EirValue[] arguments, EirLocation[] argumentLocations);
+    public abstract EirCall createCall(EirBlock eirBlock, EirABI eirAbi, EirValue resultValue, EirLocation resultLocation, EirValue function, EirValue[] arguments, EirLocation[] argumentLocations, boolean isNativeFunctionCall);
 
     public abstract EirCall createRuntimeCall(EirBlock eirBlock, EirABI eirAbi, EirValue resultValue, EirLocation resultLocation, EirValue function, EirValue[] arguments, EirLocation[] argumentLocations);
 

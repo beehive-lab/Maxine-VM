@@ -380,8 +380,8 @@ int maxine(int argc, char *argv[], char *executablePath) {
     }
 
 #if log_LOADER
-    log_println("entering Java by calling MaxineVM::run(primordialVmThreadLocals=%p, bootHeapRegionStart=%p, auxiliarySpace=%p, openDynamicLibrary=%p, dlsym=%p, argc=%d, argv=%p)",
-                    primordialVmThreadLocals, image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, argc, argv);
+    log_println("entering Java by calling MaxineVM::run(primordialVmThreadLocals=%p, bootHeapRegionStart=%p, auxiliarySpace=%p, openDynamicLibrary=%p, dlsym=%p, dlerror=%p, argc=%d, argv=%p)",
+                    primordialVmThreadLocals, image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, dlerror, argc, argv);
 #endif
     exitCode = (*method)(primordialVmThreadLocals, image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, dlerror, argc, argv);
 
