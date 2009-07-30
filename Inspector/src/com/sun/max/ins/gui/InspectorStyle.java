@@ -235,6 +235,8 @@ public interface InspectorStyle {
     Icon debugContinueButtonIcon();
     Icon debugPauseButtonIcon();
 
+    Icon generalFindIcon();
+
     Icon navigationUpIcon();
     Icon navigationDownIcon();
     Icon navigationForwardIcon();

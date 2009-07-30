@@ -429,6 +429,10 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return debugToggleBreakpointButtonIcon;
     }
 
+    private final Icon generalFindIcon = createImageIcon("/toolbarButtonGraphics/general/Find16.gif", "Find");
+    public Icon generalFindIcon() {
+        return generalFindIcon;
+    }
     private final Icon navigationUpIcon = createImageIcon("/toolbarButtonGraphics/navigation/Up16.gif", "Move up");
     private final Icon navigationDownIcon = createImageIcon("/toolbarButtonGraphics/navigation/Down16.gif", "Move down");
     private final Icon navigationForwardIcon = createImageIcon("/toolbarButtonGraphics/navigation/Forward16.gif", "Move forward");
@@ -494,13 +498,11 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
 
 
     // Search related
-    private final Icon searchNextMatchButtonIcon = IconFactory.createDownArrow(14, 14);
     public Icon searchNextMatchButtonIcon() {
-        return searchNextMatchButtonIcon;
+        return navigationForwardIcon();
     }
-    private final Icon searchPreviousMatchButtonIcon = IconFactory.createUpArrow(14, 14);
     public Icon searchPreviousMatchButtonIcon() {
-        return searchPreviousMatchButtonIcon;
+        return navigationBackIcon();
     }
     public Color searchFailedBackground() {
         return Color.red;
