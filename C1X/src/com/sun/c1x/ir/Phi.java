@@ -54,6 +54,7 @@ public class Phi extends Instruction {
         super(type);
         this.block = block;
         this.index = index;
+        block.setBlockFlag(BlockBegin.BlockFlag.HasPhis);
     }
 
     /**
@@ -104,13 +105,22 @@ public class Phi extends Instruction {
      * @param i the index of the predecessor
      * @return the instruction that produced the value in the i'th predecessor
      */
-    public Instruction operandAt(int i) {
+    public final Instruction operandAt(int i) {
         ValueStack state;
         if (block.isExceptionEntry()) {
             state = block.exceptionHandlerStates().get(i);
         } else {
             state = block.predecessors().get(i).end().state();
         }
+        return operandIn(state);
+    }
+
+    /**
+     * Gets the instruction that produces the value for this phi in the specified state.
+     * @param state the state to access
+     * @return the instruction producing the value
+     */
+    public final Instruction operandIn(ValueStack state) {
         if (isLocal()) {
             return state.localAt(localIndex());
         } else {

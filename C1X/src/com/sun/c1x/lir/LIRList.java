@@ -22,6 +22,7 @@ package com.sun.c1x.lir;
 
 import com.sun.c1x.C1XCompilation;
 import com.sun.c1x.C1XOptions;
+import com.sun.c1x.util.Util;
 import com.sun.c1x.alloc.LIRInsertionBuffer;
 import com.sun.c1x.asm.Label;
 import com.sun.c1x.ci.CiMethod;
@@ -648,7 +649,6 @@ public class LIRList {
     }
 
     public void insertBefore(int i, LIRInstruction op) {
-        // TODO Auto-generated method stub
-
+        Util.nonFatalUnimplemented();
     }
 }

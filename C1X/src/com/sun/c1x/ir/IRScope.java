@@ -41,7 +41,7 @@ public class IRScope {
     public final CiMethod method;
     public final int level;
 
-    final C1XCompilation compilation; // XXX: is this necessary?
+    final C1XCompilation compilation; // TODO: remove this field
     final int callerBCI;
     final List<IRScope> callees;
 
@@ -214,10 +214,9 @@ public class IRScope {
     }
 
     /**
-     * @return
+     * @return the compilation
      */
     public C1XCompilation compilation() {
-        // TODO Auto-generated method stub
         return compilation;
     }
 }

@@ -474,6 +474,26 @@ public abstract class Instruction {
     }
 
     /**
+     * Checks that two instructions are equivalent, optionally comparing constants.
+     * @param x the first instruction
+     * @param y the second instruction
+     * @param compareConstants {@code true} if equivalent constants should be considered equivalent
+     * @return {@code true} if the instructions are equivalent; {@code false} otherwise
+     */
+    public static boolean equivalent(Instruction x, Instruction y, boolean compareConstants) {
+        if (x == y) {
+            return true;
+        }
+        if (compareConstants && x != null && y != null) {
+            ValueType xt = x.type();
+            if (xt.isConstant() && xt.asConstant().equivalent(y.type())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Converts a given instruction to a value string. The representation of an instruction as
      * a value is formed by concatenating the {@linkplain com.sun.c1x.value.ValueType#tchar() character} denoting its
      * {@linkplain com.sun.c1x.ir.Instruction#type() type} and its {@linkplain com.sun.c1x.ir.Instruction#id()}. For example,

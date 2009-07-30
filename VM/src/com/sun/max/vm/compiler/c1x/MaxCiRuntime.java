@@ -100,19 +100,6 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     /**
-     * Gets the compiler interface type for the specified Java class.
-     * @param javaClass the java class object
-     * @return the compiler interface type for the specified class
-     */
-    public CiType getType(final Class<?> javaClass) {
-        return globalConstantPool.canonicalCiType(MaxineVM.usingTarget(new Function<ClassActor>() {
-            public ClassActor call() throws Exception {
-                return ClassActor.fromJava(javaClass);
-            }
-        }));
-    }
-
-    /**
      * Gets the <code>CiMethod</code> for a given method actor.
      * @param methodActor the method actor
      * @return the canonical compiler interface method for the method actor
