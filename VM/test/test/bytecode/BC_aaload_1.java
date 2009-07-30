@@ -18,33 +18,17 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.asm.gen.risc.sparc;
+package test.bytecode;
 
-import com.sun.max.asm.*;
-import com.sun.max.asm.dis.*;
-import com.sun.max.asm.gen.*;
-import com.sun.max.asm.gen.risc.*;
-import com.sun.max.collect.*;
-
-/**
- * Output of SPARC instructions in external assembler format.
- *
- * @author Bernd Mathiske
- * @author Doug Simon
+/*
+ * @Harness: java
+ * @Runs: 0 = null; 1 = null; 2 = ""
  */
-public class SPARCExternalInstruction extends RiscExternalInstruction {
+public class BC_aaload_1 {
 
-    SPARCExternalInstruction(SPARCTemplate template, Sequence<Argument> arguments) {
-        super(template, arguments);
-    }
+    static Object[][] array = {{null}, {null}, {""}};
 
-    public SPARCExternalInstruction(SPARCTemplate template, Sequence<Argument> arguments, ImmediateArgument address, AddressMapper addressMapper) {
-        super(template, arguments, address, addressMapper);
-    }
-
-    @Override
-    public boolean isAbsoluteBranch() {
-        // There are no branch instructions in SPARC whose target address is not PC relative
-        return false;
+    public static Object test(int arg) {
+        return array[arg][0];
     }
 }

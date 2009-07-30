@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,46 +18,33 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.stub;
+package com.sun.max.vm.heap.beltway;
 
-import com.sun.c1x.lir.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.thread.*;
 
 
-/**
- * The <code>ConversionStub</code> class definition.
- *
- * @author Marcelo Cintra
- *
- */
-public class ConversionStub extends CodeStub {
-
-    public final int bytecode;
-    public final LIROperand input;
-    public final LIROperand result;
+public class StacksAndMonitorsScanner {
+    private final PointerVisitor pointerVisitor;
 
     /**
-     * Constructs a new conversion stub.
-     *
-     * @param opcode
-     * @param input
-     * @param result
+     * A closure for updating thread stacks references.
      */
-    public ConversionStub(int opcode, LIROperand input, LIROperand result) {
-        super(null);
-        this.bytecode = opcode;
-        this.input = input;
-        this.result = result;
+    private final Pointer.Procedure vmThreadLocalsScanner = new Pointer.Procedure(){
+        public void run(Pointer vmThreadLocals) {
+            VmThreadLocal.scanReferences(vmThreadLocals, pointerVisitor);
+        }
+    };
+
+    public StacksAndMonitorsScanner(PointerVisitor pointerVisitor) {
+        this.pointerVisitor = pointerVisitor;
     }
 
-    @Override
-    public void accept(CodeStubVisitor visitor) {
-        visitor.visitConversionStub(this);
-    }
-
-    @Override
-    public void visit(LIRVisitState visitor) {
-        visitor.doSlowCase();
-        visitor.doInput(input);
-        visitor.doOutput(result);
+    public void run() {
+        // do thread stacks
+        VmThreadMap.ACTIVE.forAllVmThreadLocals(null, vmThreadLocalsScanner);
+        // do monitors
+        VMConfiguration.target().monitorScheme().scanReferences(pointerVisitor);
     }
 }

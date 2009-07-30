@@ -30,7 +30,8 @@ import com.sun.max.collect.*;
 public enum MemoryWordsColumnKind {
     TAG("Tag", "Additional information", true, -1),
     ADDRESS("Addr.", "Memory address", true, -1),
-    POSITION("Pos.", "Relative position (bytes)", true, 20),
+    WORD("Word", "Offset relative to origin (words)", false, 10),
+    OFFSET("Offset", "Offset relative to origin (bytes)", true, 10),
     VALUE("Value", "Word value", true, 20),
     REGION("Region", "Memory region pointed to by value", true, 20);
 

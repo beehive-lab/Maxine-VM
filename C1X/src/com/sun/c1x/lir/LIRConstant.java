@@ -37,30 +37,9 @@ public class LIRConstant extends LIROperand {
      * Create a LIRConstant from a ConstType object.
      * @param value the value
      */
-    public LIRConstant(ConstType value) {
+    LIRConstant(ConstType value) {
         super(value.basicType);
         this.value = value;
-    }
-
-    /**
-     * Gets the basic type of this constant, which can be used to convert it
-     * to the appropriate primitive value or object.
-     *
-     * @return the basic type of this constant
-     */
-    @Override
-    public BasicType type() {
-        return value.basicType;
-    }
-
-    /**
-     * Returns the reference for this constant.
-     *
-     * @return the reference(this) for this constant
-     */
-    @Override
-    public LIRConstant asConstant() {
-        return this;
     }
 
     /**
@@ -234,17 +213,14 @@ public class LIRConstant extends LIROperand {
         return asDouble() == 1.0;
       }
 
-    @Override
     public float asJfloat() {
         return this.asFloat();
     }
 
-    @Override
     public double asJdouble() {
         return this.asDouble();
     }
 
-    @Override
     public Object asJobject() {
         return this.asObject();
     }
@@ -257,13 +233,13 @@ public class LIRConstant extends LIROperand {
             case Long:
                 return String.format("lng:%d", asLong());
             case Float:
-                return String.format("flt:%f", asJfloat());
+                return String.format("flt:%f", this.asFloat());
             case Double:
-                return String.format("dbl:%f", asJdouble());
+                return String.format("dbl:%f", this.asDouble());
             case Object:
-                return String.format("obj:%s", asJobject());
+                return String.format("obj:%s", this.asObject());
             default:
-                return String.format("%3d:0x%x", type(), asJdouble());
+                return String.format("%3d:0x%x", type(), this.asDouble());
         }
     }
 }

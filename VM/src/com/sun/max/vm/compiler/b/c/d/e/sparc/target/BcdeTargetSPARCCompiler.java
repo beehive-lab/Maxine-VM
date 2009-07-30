@@ -87,7 +87,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
     }
 
     private EirABI optimizedABI() {
-        return eirGenerator().eirABIsScheme().javaABI();
+        return eirGenerator().eirABIsScheme().javaABI;
     }
 
     public TargetABI javaTargetABI() {

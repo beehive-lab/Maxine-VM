@@ -22,7 +22,6 @@ package com.sun.c1x.lir;
 
 import com.sun.c1x.bytecode.Bytecodes;
 import com.sun.c1x.debug.LogStream;
-import com.sun.c1x.stub.ConversionStub;
 
 /**
  * The <code>LIRConvert</code> class definition.
@@ -32,8 +31,7 @@ import com.sun.c1x.stub.ConversionStub;
  */
 public class LIRConvert extends LIROp1 {
 
-    private int bytecode;
-    ConversionStub stub;
+    public final int bytecode;
 
     /**
      * Constructs a new instruction LIRConvert for a given operand.
@@ -43,26 +41,9 @@ public class LIRConvert extends LIROp1 {
      * @param result the result operand for this instruction
      * @param stub the conversion stub for this instruction
      */
-    public LIRConvert(int bytecode, LIROperand operand, LIROperand result, ConversionStub stub) {
+    public LIRConvert(int bytecode, LIROperand operand, LIROperand result) {
         super(LIROpcode.Convert, operand, result);
         this.bytecode = bytecode;
-        this.stub = stub;
-    }
-
-    /**
-     * @return the bytecode
-     */
-    public int bytecode() {
-        return bytecode;
-    }
-
-    /**
-     * Gets the code stub associated for this instruction.
-     *
-     * @return the code stub
-     */
-    public ConversionStub stub() {
-        return stub;
     }
 
     /**
@@ -73,9 +54,6 @@ public class LIRConvert extends LIROp1 {
     @Override
     public void emitCode(LIRAssembler masm) {
         masm.emitConvert(this);
-        if (stub() != null) {
-            masm.emitCodeStub(stub());
-        }
     }
 
     /**

@@ -21,7 +21,9 @@
 package com.sun.max.asm.dis.sparc;
 
 import com.sun.max.asm.*;
+import com.sun.max.asm.dis.*;
 import com.sun.max.asm.gen.*;
+import com.sun.max.asm.gen.risc.*;
 import com.sun.max.asm.gen.risc.sparc.*;
 import com.sun.max.asm.sparc.complete.*;
 import com.sun.max.collect.*;
@@ -31,15 +33,15 @@ import com.sun.max.collect.*;
  *
  * @author Bernd Mathiske
  */
-public class SPARC64Disassembler extends SPARCDisassembler<SPARC64DisassembledInstruction> {
+public class SPARC64Disassembler extends SPARCDisassembler {
 
     public SPARC64Disassembler(long startAddress, InlineDataDecoder inlineDataDecoder) {
         super(new Immediate64Argument(startAddress), SPARCAssembly.ASSEMBLY, inlineDataDecoder);
     }
 
     @Override
-    protected SPARC64DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, SPARCTemplate template, IndexedSequence<Argument> arguments) {
-        return new SPARC64DisassembledInstruction(this, position, bytes, template, arguments);
+    protected DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, RiscTemplate template, IndexedSequence<Argument> arguments) {
+        return new DisassembledInstruction(this, position, bytes, template, arguments);
     }
 
     @Override

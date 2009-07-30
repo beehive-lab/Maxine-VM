@@ -121,7 +121,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
     static final class IsNotGCOrCurrentThread implements Pointer.Predicate {
 
         public boolean evaluate(Pointer vmThreadLocals) {
-            return vmThreadLocals != VmThread.current().vmThreadLocals() && !VmThread.current(vmThreadLocals).isGCThread();
+            return vmThreadLocals != VmThread.current().vmThreadLocals() && !VmThread.fromVmThreadLocals(vmThreadLocals).isGCThread();
         }
     }
 
@@ -243,7 +243,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
     private static final IsNotGCOrCurrentThread isNotGCOrCurrentThread = new IsNotGCOrCurrentThread();
 
     /**
-     * The procedure that is run the on GC thread to perform a garbage collection.
+     * The procedure that is run by the GC thread to perform a garbage collection.
      */
     class GCRequest implements Runnable {
         public void run() {
@@ -311,7 +311,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
             for (int stopIndex = 0; stopIndex < directCallees.length; ++stopIndex) {
                 if (directCallees[stopIndex].name.string.equals("prepareCurrentStackReferenceMap")) {
                     final int stopPosition = targetMethod.stopPosition(stopIndex);
-                    final int nextCallPosition = targetMethod.findNextCall(stopPosition);
+                    final int nextCallPosition = targetMethod.findNextCall(stopPosition, false);
                     if (nextCallPosition >= 0) {
                         final int[] stopPositions = targetMethod.stopPositions();
                         for (int nextCallStopIndex = 0; nextCallStopIndex < stopPositions.length; ++nextCallStopIndex) {

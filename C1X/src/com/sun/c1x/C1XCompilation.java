@@ -61,11 +61,9 @@ public class C1XCompilation {
     int maxSpills;
     boolean needsDebugInfo;
     boolean hasExceptionHandlers;
-    boolean hasFpuCode;
     boolean hasUnsafeAccess;
     Bailout bailout;
 
-    int totalInstructions;
     private Instruction currentInstruction;
 
     private FrameMap frameMap;
@@ -251,7 +249,7 @@ public class C1XCompilation {
      * @return the number of bytecodes
      */
     public int totalInstructions() {
-        return totalInstructions;
+        return hir.totalInstructions();
     }
 
     /**
@@ -324,14 +322,6 @@ public class C1XCompilation {
 
     public BlockBegin osrEntry() {
         throw Util.unimplemented();
-    }
-
-    public boolean hasFpuCode() {
-        return hasFpuCode;
-    }
-
-    public void setHasFpuCode(boolean hasFpuCode) {
-        this.hasFpuCode = hasFpuCode;
     }
 
     public boolean compile() {

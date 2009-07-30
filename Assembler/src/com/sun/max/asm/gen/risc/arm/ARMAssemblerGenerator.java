@@ -34,18 +34,15 @@ import com.sun.max.collect.*;
  * @author Sumeet Panchal
  */
 
-public final class ARMAssemblerGenerator extends RiscAssemblerGenerator<ARMTemplate> {
+public final class ARMAssemblerGenerator extends RiscAssemblerGenerator<RiscTemplate> {
 
     private ARMAssemblerGenerator() {
         super(ARMAssembly.ASSEMBLY);
     }
 
     @Override
-    protected String getJavadocManualReference(ARMTemplate template) {
+    protected String getJavadocManualReference(RiscTemplate template) {
         final String section = template.instructionDescription().architectureManualSection();
-        /*if (section.indexOf("[Book ") == -1) {
-            section += " [Book 1]";
-        }*/
         return "\"ARM Architecture Reference Manual, Second Edition - Section " + section + "\"";
     }
 
@@ -56,11 +53,8 @@ public final class ARMAssemblerGenerator extends RiscAssemblerGenerator<ARMTempl
     }
 
     @Override
-    protected DisassembledInstruction generateExampleInstruction(ARMTemplate template, IndexedSequence<Argument> arguments) throws AssemblyException {
-//        final ARMAssembler assembler = new ARMAssembler(0);
-//        assembly().assemble(assembler, template, arguments);
-//        final byte[] bytes = assembler.toByteArray();
-        return new ARMDisassembledInstruction(new ARMDisassembler(0, null), 0, new byte[] {0, 0, 0, 0}, template, arguments);
+    protected DisassembledInstruction generateExampleInstruction(RiscTemplate template, IndexedSequence<Argument> arguments) throws AssemblyException {
+        return new DisassembledInstruction(new ARMDisassembler(0, null), 0, new byte[] {0, 0, 0, 0}, template, arguments);
     }
 
 }

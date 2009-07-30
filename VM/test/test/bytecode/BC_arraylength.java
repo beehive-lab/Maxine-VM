@@ -29,6 +29,7 @@ public class BC_arraylength {
     static int[] array1 = {1, 2, 3};
     static char[] array2 = {'a', 'b', 'c', 'd'};
     static Object[] array3 = new Object[5];
+    static Object[][] array4 = new Object[5][5];
 
     public static int test(int arg) {
         if (arg == 1) {
@@ -39,6 +40,9 @@ public class BC_arraylength {
         }
         if (arg == 3) {
             return array3.length;
+        }
+        if (arg == 4) {
+            return array4[0].length;
         }
         return 42;
     }

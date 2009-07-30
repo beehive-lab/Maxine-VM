@@ -18,19 +18,17 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.asm.gen.risc.ppc;
+package com.sun.max.vm.heap.beltway;
 
-import com.sun.max.asm.gen.*;
-import com.sun.max.asm.gen.risc.*;
+import com.sun.max.vm.heap.sequential.*;
 
 /**
+ * Stop the world daemon for single-threaded GC. The Daemon performs the GC.
  *
- *
- * @author Bernd Mathiske
+ * @author Laurent Daynes
  */
-public class PPCTemplate extends RiscTemplate {
-
-    public PPCTemplate(InstructionDescription instructionDescription) {
-        super(instructionDescription);
+public class StopTheWorldSingleThreadGCDaemon extends StopTheWorldGCDaemon {
+    public StopTheWorldSingleThreadGCDaemon(String name, Runnable collect) {
+        super(name, collect);
     }
 }

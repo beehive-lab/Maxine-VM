@@ -44,4 +44,5 @@ public class C1XMetrics {
     public static int ConditionalEliminations;
     public static int BlocksMerged;
     public static int NestedIfOpsRemoved;
+    public static int BlocksSkipped;
 }

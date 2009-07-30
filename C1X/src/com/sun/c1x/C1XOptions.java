@@ -121,6 +121,7 @@ public class C1XOptions {
     public static boolean DoArrayBoundsCheckElimination      = ____;
     public static boolean DoCEElimination                    = ____;
     public static boolean DoBlockMerging                     = ____;
+    public static boolean DoBlockSkipping                    = ____;
     public static boolean DistinguishExceptionHandlerCode    = ____;
     public static boolean DoNullCheckElimination             = ____;
     public static boolean DoProfileGuidedInlining            = ____;
@@ -149,6 +150,7 @@ public class C1XOptions {
     public static boolean GenerateCompilerNullChecks         = ____;
     public static boolean UseTableRanges                     = ____;
     public static boolean DetailedAsserts                    = ____;
+    public static boolean FastPathTypeCheck                  = ____;
 
     public static boolean ImplicitDiv0Checks                 = ____;
 
@@ -187,7 +189,6 @@ public class C1XOptions {
     public static boolean UseNormalNop                       = TRUE;
     public static boolean UseAddressNop                      = TRUE;
     public static boolean ForceUnreachable                   = ____;
-    public static boolean PrintBiasedLockingStatistics       = ____;
     public static boolean UseIncDec                          = ____;
     public static boolean UseXmmLoadAndClearUpper            = ____;
     public static boolean UseXmmRegToRegMoveAll              = ____;
@@ -219,7 +220,7 @@ public class C1XOptions {
         EliminateFieldAccess               = ____;
         AlwaysCSEArrayLength               = ____;
 
-        MergeEquivalentConstants           = ____;
+        MergeEquivalentConstants           = ____; // won't work until constants can be outside CFG
         ComputeStoresInLoops               = ____;
         SimplifyPhis                       = ____;
 
@@ -246,7 +247,7 @@ public class C1XOptions {
         AlwaysCSEArrayLength               = ____;
 
         // turn on state merging optimizations
-        MergeEquivalentConstants           = ____;
+        MergeEquivalentConstants           = ____; // won't work until constants can be outside CFG
         ComputeStoresInLoops               = TRUE;
         SimplifyPhis                       = TRUE;
 
@@ -280,7 +281,7 @@ public class C1XOptions {
         AlwaysCSEArrayLength               = TRUE;
 
         // turn on state merging optimizations
-        MergeEquivalentConstants           = ____;
+        MergeEquivalentConstants           = ____; // won't work until constants can be outside CFG
         ComputeStoresInLoops               = TRUE;
         SimplifyPhis                       = TRUE;
 
@@ -297,6 +298,7 @@ public class C1XOptions {
         DoGlobalValueNumbering             = TRUE;
         DoCEElimination                    = TRUE;
         DoBlockMerging                     = TRUE;
+        DoBlockSkipping                    = TRUE;
         DoArrayBoundsCheckElimination      = TRUE;
         DistinguishExceptionHandlerCode    = TRUE;
         DoNullCheckElimination             = TRUE;

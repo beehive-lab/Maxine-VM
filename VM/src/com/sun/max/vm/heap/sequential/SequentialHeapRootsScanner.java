@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.heap.sequential;
 
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
@@ -39,8 +38,6 @@ import com.sun.max.vm.thread.*;
 public class SequentialHeapRootsScanner {
 
     private PointerIndexVisitor pointerIndexVisitor;
-    private RuntimeMemoryRegion fromSpace;
-    private RuntimeMemoryRegion toSpace;
 
     public SequentialHeapRootsScanner(PointerIndexVisitor pointerIndexVisitor) {
         this.pointerIndexVisitor = pointerIndexVisitor;
@@ -50,17 +47,13 @@ public class SequentialHeapRootsScanner {
         this.pointerIndexVisitor = pointerIndexVisitor;
     }
 
-    public void setFromSpace(RuntimeMemoryRegion fromSpace) {
-        this.fromSpace = fromSpace;
-    }
-
-    public void setToSpace(RuntimeMemoryRegion toSpace) {
-        this.toSpace = toSpace;
-    }
-
     final class VmThreadLocalsScanner implements Pointer.Procedure {
 
         public void run(Pointer vmThreadLocals) {
+            if (Heap.traceGCPhases()) {
+                Log.print("Scanning roots in stack for thread ");
+                Log.printVmThread(VmThread.fromVmThreadLocals(vmThreadLocals), true);
+            }
             VmThreadLocal.scanReferences(vmThreadLocals, pointerIndexVisitor);
         }
     }

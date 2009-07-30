@@ -54,7 +54,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
     }
 
     public Address address() {
-        return teleCodeLocation.targetCodeInstructionAddresss();
+        return teleCodeLocation.targetCodeInstructionAddress();
     }
 
     private final byte[] originalCode;

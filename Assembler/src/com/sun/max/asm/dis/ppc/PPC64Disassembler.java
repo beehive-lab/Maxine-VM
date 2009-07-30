@@ -24,27 +24,20 @@ import com.sun.max.asm.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.ppc.*;
 import com.sun.max.asm.ppc.complete.*;
-import com.sun.max.collect.*;
 
 /**
  *
  *
  * @author Bernd Mathiske
  */
-public class PPC64Disassembler extends PPCDisassembler<PPC64DisassembledInstruction> {
+public class PPC64Disassembler extends PPCDisassembler {
 
     public PPC64Disassembler(long startAddress, InlineDataDecoder inlineDataDecoder) {
         super(new Immediate64Argument(startAddress), PPCAssembly.ASSEMBLY, inlineDataDecoder);
     }
 
     @Override
-    protected PPC64DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, PPCTemplate template, IndexedSequence<Argument> arguments) {
-        return new PPC64DisassembledInstruction(this, position, bytes, template, arguments);
-    }
-
-    @Override
     protected Assembler createAssembler(int position) {
         return new PPC64Assembler(startAddress().asLong() + position);
     }
-
 }

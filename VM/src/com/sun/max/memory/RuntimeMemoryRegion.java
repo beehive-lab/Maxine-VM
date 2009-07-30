@@ -56,6 +56,12 @@ public class RuntimeMemoryRegion implements MemoryRegion {
         size = memoryRegion.size();
     }
 
+    public RuntimeMemoryRegion(String description) {
+        this.description = description;
+        start = Address.zero();
+        size = Size.zero();
+    }
+
     @INLINE
     public final Address start() {
         return start;

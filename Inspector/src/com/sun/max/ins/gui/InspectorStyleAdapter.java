@@ -429,6 +429,40 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return debugToggleBreakpointButtonIcon;
     }
 
+    private final Icon generalFindIcon = createImageIcon("/toolbarButtonGraphics/general/Find16.gif", "Find");
+    public Icon generalFindIcon() {
+        return generalFindIcon;
+    }
+    private final Icon navigationUpIcon = createImageIcon("/toolbarButtonGraphics/navigation/Up16.gif", "Move up");
+    private final Icon navigationDownIcon = createImageIcon("/toolbarButtonGraphics/navigation/Down16.gif", "Move down");
+    private final Icon navigationForwardIcon = createImageIcon("/toolbarButtonGraphics/navigation/Forward16.gif", "Move forward");
+    private final Icon navigationBackIcon = createImageIcon("/toolbarButtonGraphics/navigation/Back16.gif", "Move back");
+    private final Icon navigationHomeIcon = createImageIcon("/toolbarButtonGraphics/navigation/Home16.gif", "Move home");
+    public Icon navigationUpIcon() {
+        return navigationUpIcon;
+    }
+    public Icon navigationDownIcon() {
+        return navigationDownIcon;
+    }
+    public Icon navigationForwardIcon() {
+        return navigationForwardIcon;
+    }
+    public Icon navigationBackIcon() {
+        return navigationBackIcon;
+    }
+    public Icon navigationHomeIcon() {
+        return navigationHomeIcon;
+    }
+
+    private final Icon mediaStepBackIcon = createImageIcon("/toolbarButtonGraphics/media/StepBack16.gif", "Step back");
+    private final Icon mediaStepForwardIcon = createImageIcon("/toolbarButtonGraphics/media/StepForward16.gif", "Step forward");
+    public Icon mediaStepBackIcon() {
+        return mediaStepBackIcon;
+    }
+    public Icon mediaStepForwardIcon() {
+        return mediaStepForwardIcon;
+    }
+
     private final Icon debugActiveRowButtonIcon = IconFactory.createRightArrow(16, 16);
     public Icon debugActiveRowButtonIcon() {
         return debugActiveRowButtonIcon;
@@ -447,7 +481,7 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         //return debugCallReturnTextColor();
         // the above would be more consistent,
         // but for now opt for consistency with the memory word inspector
-        // the current colors for return value aren't too good anywy
+        // the current colors for return value aren't too good anyway
         return wordSelectedColor();
     }
     public Border memoryEnabledWatchpointTagBorder() {
@@ -464,13 +498,11 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
 
 
     // Search related
-    private final Icon searchNextMatchButtonIcon = IconFactory.createDownArrow(14, 14);
     public Icon searchNextMatchButtonIcon() {
-        return searchNextMatchButtonIcon;
+        return navigationForwardIcon();
     }
-    private final Icon searchPreviousMatchButtonIcon = IconFactory.createUpArrow(14, 14);
     public Icon searchPreviousMatchButtonIcon() {
-        return searchPreviousMatchButtonIcon;
+        return navigationBackIcon();
     }
     public Color searchFailedBackground() {
         return Color.red;

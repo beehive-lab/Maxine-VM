@@ -36,37 +36,23 @@ import com.sun.max.vm.runtime.*;
  */
 public class BeltwayHeapVerifier {
 
-    private static Belt belt;
+    private final Verify cellVerifier = new VerifyActionImpl();
 
-    private final BeltwaySequentialHeapRootsScanner heapRootsVerifier;
-    private static Verify cellVerifier = new VerifyActionImpl();
+    private final StacksAndMonitorsScanner stackAndMonitorVerifier;
+    private final PointerVisitor pointerVisitor;
 
-    public BeltwayHeapVerifier() {
-        heapRootsVerifier = new BeltwaySequentialHeapRootsScanner();
+    public BeltwayHeapVerifier(PointerVisitor pointerVisitor) {
+        stackAndMonitorVerifier = new StacksAndMonitorsScanner(pointerVisitor);
+        this.pointerVisitor = pointerVisitor;
     }
 
-    public void initialize(BeltwayHeapScheme heapScheme) {
-        heapRootsVerifier.setHeapScheme(heapScheme);
-        heapRootsVerifier.setBeltwayPointerIndexVisitor(((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).pointerIndexGripVerifier());
+    public void initialize(Belt from, Belt to) {
+        pointerVisitor.action.init(from, to);
     }
-
-    public BeltwaySequentialHeapRootsScanner getRootsVerifier() {
-        return heapRootsVerifier;
-    }
-
-    public Verify getCellVerificator() {
-        return cellVerifier;
-    }
-
-    private final PointerOffsetVisitor pointerOffsetVisitor = new PointerOffsetVisitor() {
-        public void visitPointerOffset(Pointer pointer, int offset) {
-            ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).pointerOffsetGripVerifier().visitPointerOffset(pointer, offset, belt, belt);
-        }
-    };
 
     public void verifyHeap(Address regionStartAddress, Address allocationMark, Belt belt) {
-        BeltwayHeapVerifier.belt = belt;
-        heapRootsVerifier.run();
+        stackAndMonitorVerifier.run();
+        // FIXME: should this verify boot heap and code region ?
         if (Heap.verbose()) {
             Log.println("Finished Roots Verification");
         }
@@ -81,11 +67,11 @@ public class BeltwayHeapVerifier {
             cellVerifier.checkHub(hub);
             final SpecificLayout specificLayout = hub.specificLayout;
             if (specificLayout.isTupleLayout()) {
-                TupleReferenceMap.visitOriginOffsets(hub, origin, pointerOffsetVisitor);
+                TupleReferenceMap.visitReferences(hub, origin, pointerVisitor);
                 cell = cell.plus(hub.tupleSize);
             } else {
                 if (specificLayout.isHybridLayout()) {
-                    TupleReferenceMap.visitOriginOffsets(hub, origin, pointerOffsetVisitor);
+                    TupleReferenceMap.visitReferences(hub, origin, pointerVisitor);
                 } else if (specificLayout.isReferenceArrayLayout()) {
                     final int length = Layout.readArrayLength(origin);
                     for (int index = 0; index < length; index++) {

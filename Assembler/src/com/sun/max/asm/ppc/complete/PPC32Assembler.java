@@ -21,7 +21,6 @@
 package com.sun.max.asm.ppc.complete;
 
 import com.sun.max.asm.*;
-import com.sun.max.asm.AssemblyObject.*;
 import com.sun.max.lang.*;
 
 
@@ -62,24 +61,5 @@ public class PPC32Assembler extends PPCAssembler implements Assembler32 {
 
     public int address(Label label) throws AssemblyException {
         return address32(label);
-    }
-
-    private PPC32Directives directives = new PPC32Directives();
-
-    @Override
-    public Directives directives() {
-        return directives;
-    }
-
-    public class PPC32Directives extends Directives {
-        @Override
-        public byte padByte() {
-            return 0;
-        }
-
-        @Override
-        protected Type padByteType() {
-            return Type.DATA;
-        }
     }
 }

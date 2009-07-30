@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.heap.beltway;
 
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.grip.*;
@@ -35,7 +34,7 @@ public interface Verify extends Action {
 
     void checkGripTag(Grip grip);
 
-    Grip verifyGrip(RuntimeMemoryRegion from, Grip grip);
+    Grip verifyGrip(Belt from, Grip grip);
 
     void checkHub(Hub hub);
 }

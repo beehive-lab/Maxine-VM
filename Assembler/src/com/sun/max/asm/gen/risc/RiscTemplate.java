@@ -30,7 +30,7 @@ import com.sun.max.program.*;
  * @author Dave Ungar
  * @author Adam Spitz
  */
-public abstract class RiscTemplate extends Template implements RiscInstructionDescriptionVisitor {
+public class RiscTemplate extends Template implements RiscInstructionDescriptionVisitor {
 
     private final AppendableSequence<RiscField> allFields = new LinkSequence<RiscField>();
     private final AppendableSequence<OperandField> operandFields = new LinkSequence<OperandField>();
@@ -42,7 +42,7 @@ public abstract class RiscTemplate extends Template implements RiscInstructionDe
     private int opcodeMask;
     private RiscTemplate canonicalRepresentative;
 
-    protected RiscTemplate(InstructionDescription instructionDescription) {
+    public RiscTemplate(InstructionDescription instructionDescription) {
         super(instructionDescription);
     }
 

@@ -37,8 +37,7 @@ import com.sun.c1x.value.BasicType;
 import com.sun.c1x.value.ConstType;
 import com.sun.c1x.value.ValueType;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  *
@@ -340,7 +339,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         value.loadItem();
         LIROperand reg = rlock(x);
         lir().negate(value.result(), reg);
-        setResult(x, roundItem(reg));
+        setResult(x, reg);
     }
 
     public void visitArithmeticOpFPU(ArithmeticOp x) {
@@ -354,58 +353,30 @@ public final class X86LIRGenerator extends LIRGenerator {
             left.dontLoadItem();
         }
 
-        // do not load right operand if it is a constant. only 0 and 1 are
-        // loaded because there are special instructions for loading them
-        // without memory access (not needed for SSE2 instructions)
-        boolean mustLoadRight = false;
-        if (right.isConstant()) {
-            LIRConstant c = right.result().asConstantPtr();
-            assert c != null : "invalid constant";
-            assert c.type() == BasicType.Float || c.type() == BasicType.Double : "invalid type";
-
-            if (c.type() == BasicType.Float) {
-                mustLoadRight = C1XOptions.SSEVersion < 1 && (c.isOneFloat() || c.isZeroFloat());
-            } else {
-                mustLoadRight = C1XOptions.SSEVersion < 2 && (c.isOneDouble() || c.isZeroDouble());
-            }
-        }
+        assert C1XOptions.SSEVersion >= 2;
 
         if (mustLoadBoth) {
             // frem and drem destroy also right operand, so move it to a new register
             right.setDestroysRegister();
             right.loadItem();
-        } else if (right.isRegister() || mustLoadRight) {
+        } else if (right.isRegister()) {
             right.loadItem();
         } else {
             right.dontLoadItem();
         }
-        LIROperand reg = rlock(x);
-        LIROperand tmp = LIROperandFactory.IllegalOperand;
-        if (x.isStrictFP() && (x.opcode() == Bytecodes.DMUL || x.opcode() == Bytecodes.DDIV)) {
-            tmp = newRegister(BasicType.Double);
-        }
 
-        if ((C1XOptions.SSEVersion >= 1 && x.opcode() == Bytecodes.FREM) || (C1XOptions.SSEVersion >= 2 && x.opcode() == Bytecodes.DREM)) {
-            // special handling for frem and drem: no SSE instruction, so must use FPU with temporary fpu stack slots
-            LIROperand fpu0;
-            LIROperand fpu1;
-            if (x.opcode() == Bytecodes.FREM) {
-                fpu0 = LIROperandFactory.singleLocation(BasicType.Float, X86Register.fpu0);
-                fpu1 = LIROperandFactory.singleLocation(BasicType.Float, X86Register.fpu1);
-            } else {
-                fpu0 = LIROperandFactory.doubleLocation(BasicType.Double, X86Register.fpu0, X86Register.fpu0);
-                fpu1 = LIROperandFactory.doubleLocation(BasicType.Double, X86Register.fpu1, X86Register.fpu1);
-            }
-            lir().move(right.result(), fpu1); // order of left and right operand is important!
-            lir().move(left.result(), fpu0);
-            lir().rem(fpu0, fpu1, fpu0, null);
-            lir().move(fpu0, reg);
+        LIROperand reg;
 
+        if (x.opcode() == Bytecodes.FREM) {
+            reg = callRuntime(new BasicType[]{BasicType.Float, BasicType.Float}, Arrays.asList(left.result(), right.result()), CiRuntimeCall.frem, ValueType.FLOAT_TYPE, null);
+        } else if (x.opcode() == Bytecodes.DREM) {
+            reg = callRuntime(new BasicType[]{BasicType.Double, BasicType.Double}, Arrays.asList(left.result(), right.result()), CiRuntimeCall.drem, ValueType.DOUBLE_TYPE, null);
         } else {
-            arithmeticOpFpu(x.opcode(), reg, left.result(), right.result(), x.isStrictFP(), tmp);
+            reg = rlock(x);
+            arithmeticOpFpu(x.opcode(), reg, left.result(), right.result(), LIROperandFactory.IllegalOperand);
         }
 
-        setResult(x, roundItem(reg));
+        setResult(x, reg);
     }
 
     public void visitArithmeticOpLong(ArithmeticOp x) {
@@ -448,7 +419,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             }
 
             LIROperand result = rlockResult(x);
-            lir().callRuntimeLeaf(entry, getThreadTemp(), resultReg, cc.args());
+            lir().callRuntime(entry, getThreadTemp(), resultReg, cc.args(), null);
             lir().move(resultReg, result);
         } else if (x.opcode() == Bytecodes.LMUL) {
             // missing test if instr is commutative and if we should swap
@@ -651,7 +622,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         right.loadItem();
         LIROperand reg = rlockResult(x);
 
-        if (x.x().type().isFloat()) {
+        if (x.x().type().isFloat() || x.x().type().isDouble()) {
             int code = x.opcode();
             lir().fcmp2int(left.result(), right.result(), reg, (code == Bytecodes.FCMPL || code == Bytecodes.DCMPL));
         } else if (x.x().type().isLong()) {
@@ -757,40 +728,12 @@ public final class X86LIRGenerator extends LIRGenerator {
     @Override
     protected void visitMathIntrinsic(Intrinsic x) {
         assert x.numberOfArguments() == 1 : "wrong type";
+
         LIRItem value = new LIRItem(x.argumentAt(0), this);
-
-        boolean useFpu = false;
-        if (C1XOptions.SSEVersion >= 2) {
-            switch (x.intrinsic()) {
-                case java_lang_Math$sin:
-                case java_lang_Math$cos:
-                case java_lang_Math$tan:
-                case java_lang_Math$log:
-                case java_lang_Math$log10:
-                    useFpu = true;
-            }
-        } else {
-            value.setDestroysRegister();
-        }
-
         value.loadItem();
-
         LIROperand calcInput = value.result();
+
         LIROperand calcResult = rlockResult(x);
-
-        // sin and cos need two free fpu stack slots, so register two temporary operands
-        LIROperand tmp1 = LIROperandFactory.singleLocation(BasicType.Float, compilation.runtime.callerSaveFpuRegAt(0));
-        LIROperand tmp2 = LIROperandFactory.singleLocation(BasicType.Float, compilation.runtime.callerSaveFpuRegAt(1));
-
-        if (useFpu) {
-            LIROperand tmp = X86FrameMap.fpu0DoubleOpr;
-            lir().move(calcInput, tmp);
-
-            calcInput = tmp;
-            calcResult = tmp;
-            tmp1 = LIROperandFactory.singleLocation(BasicType.Float, compilation.runtime.callerSaveFpuRegAt(1));
-            tmp2 = LIROperandFactory.singleLocation(BasicType.Float, compilation.runtime.callerSaveFpuRegAt(2));
-        }
 
         switch (x.intrinsic()) {
             case java_lang_Math$abs:
@@ -800,26 +743,22 @@ public final class X86LIRGenerator extends LIRGenerator {
                 lir().sqrt(calcInput, calcResult, LIROperandFactory.IllegalOperand);
                 break;
             case java_lang_Math$sin:
-                lir().sin(calcInput, calcResult, tmp1, tmp2);
+                callRuntime(new BasicType[]{BasicType.Float}, Arrays.asList(calcInput), CiRuntimeCall.sin, ValueType.FLOAT_TYPE, null);
                 break;
             case java_lang_Math$cos:
-                lir().cos(calcInput, calcResult, tmp1, tmp2);
+                callRuntime(new BasicType[]{BasicType.Float}, Arrays.asList(calcInput), CiRuntimeCall.cos, ValueType.FLOAT_TYPE, null);
                 break;
             case java_lang_Math$tan:
-                lir().tan(calcInput, calcResult, tmp1, tmp2);
+                callRuntime(new BasicType[]{BasicType.Float}, Arrays.asList(calcInput), CiRuntimeCall.tan, ValueType.FLOAT_TYPE, null);
                 break;
             case java_lang_Math$log:
-                lir().log(calcInput, calcResult, LIROperandFactory.IllegalOperand);
+                callRuntime(new BasicType[]{BasicType.Float}, Arrays.asList(calcInput), CiRuntimeCall.log, ValueType.FLOAT_TYPE, null);
                 break;
             case java_lang_Math$log10:
-                lir().log10(calcInput, calcResult, LIROperandFactory.IllegalOperand);
+                callRuntime(new BasicType[]{BasicType.Float}, Arrays.asList(calcInput), CiRuntimeCall.log10, ValueType.FLOAT_TYPE, null);
                 break;
             default:
                 Util.shouldNotReachHere();
-        }
-
-        if (useFpu) {
-            lir().move(calcResult, x.operand());
         }
     }
 
@@ -875,106 +814,9 @@ public final class X86LIRGenerator extends LIRGenerator {
         // addSafepoint
     }
 
-    private LIROperand fixedRegisterFor(BasicType type) {
-        switch (type) {
-            case Float:
-                return X86FrameMap.fpu0FloatOpr;
-            case Double:
-                return X86FrameMap.fpu0DoubleOpr;
-            case Int:
-                return X86FrameMap.raxOpr;
-            case Long:
-                return X86FrameMap.long0Opr(compilation.target.arch);
-            default:
-                Util.shouldNotReachHere();
-                return LIROperandFactory.IllegalOperand;
-        }
-    }
-
     @Override
     public void visitConvert(Convert x) {
-        // flags that vary for the different operations and different SSE-settings
-        boolean fixedInput = false;
-        boolean fixedResult = false;
-        boolean roundResult = false;
-        boolean needsStub = false;
-
-        switch (x.opcode()) {
-            case Bytecodes.I2L: // fall through
-            case Bytecodes.L2I: // fall through
-            case Bytecodes.I2B: // fall through
-            case Bytecodes.I2C: // fall through
-            case Bytecodes.I2S:
-                fixedInput = false;
-                fixedResult = false;
-                roundResult = false;
-                needsStub = false;
-                break;
-
-            case Bytecodes.F2D:
-                fixedInput = C1XOptions.SSEVersion == 1;
-                fixedResult = false;
-                roundResult = false;
-                needsStub = false;
-                break;
-            case Bytecodes.D2F:
-                fixedInput = false;
-                fixedResult = C1XOptions.SSEVersion == 1;
-                roundResult = C1XOptions.SSEVersion < 1;
-                needsStub = false;
-                break;
-            case Bytecodes.I2F:
-                fixedInput = false;
-                fixedResult = false;
-                roundResult = C1XOptions.SSEVersion < 1;
-                needsStub = false;
-                break;
-            case Bytecodes.I2D:
-                fixedInput = false;
-                fixedResult = false;
-                roundResult = false;
-                needsStub = false;
-                break;
-            case Bytecodes.F2I:
-                fixedInput = false;
-                fixedResult = false;
-                roundResult = false;
-                needsStub = true;
-                break;
-            case Bytecodes.D2I:
-                fixedInput = false;
-                fixedResult = false;
-                roundResult = false;
-                needsStub = true;
-                break;
-            case Bytecodes.L2F:
-                fixedInput = false;
-                fixedResult = C1XOptions.SSEVersion >= 1;
-                roundResult = C1XOptions.SSEVersion < 1;
-                needsStub = false;
-                break;
-            case Bytecodes.L2D:
-                fixedInput = false;
-                fixedResult = C1XOptions.SSEVersion >= 2;
-                roundResult = C1XOptions.SSEVersion < 2;
-                needsStub = false;
-                break;
-            case Bytecodes.F2L:
-                fixedInput = true;
-                fixedResult = true;
-                roundResult = false;
-                needsStub = false;
-                break;
-            case Bytecodes.D2L:
-                fixedInput = true;
-                fixedResult = true;
-                roundResult = false;
-                needsStub = false;
-                break;
-            default:
-                Util.shouldNotReachHere();
-        }
-
+        assert C1XOptions.SSEVersion >= 2 : "no fpu stack";
         LIRItem value = new LIRItem(x.value(), this);
         value.loadItem();
         LIROperand input = value.result();
@@ -982,32 +824,8 @@ public final class X86LIRGenerator extends LIRGenerator {
 
         // arguments of lirConvert
         LIROperand convInput = input;
-        LIROperand convResult = result;
-        ConversionStub stub = null;
 
-        if (fixedInput) {
-            convInput = fixedRegisterFor(input.type());
-            lir().move(input, convInput);
-        }
-
-        assert !fixedResult || !roundResult : "cannot set both";
-        if (fixedResult) {
-            convResult = fixedRegisterFor(result.type());
-        } else if (roundResult) {
-            result = newRegister(result.type());
-            setVregFlag(result, VregFlag.MustStartInMemory);
-        }
-
-        if (needsStub) {
-            stub = new ConversionStub(x.opcode(), convInput, convResult);
-        }
-
-        lir().convert(x.opcode(), convInput, convResult, stub);
-
-        if (result != convResult) {
-            lir().move(convResult, result);
-        }
-
+        lir().convert(x.opcode(), convInput, result);
         assert result.isVirtual() : "result must be virtual register";
         setResult(x, result);
     }
@@ -1261,9 +1079,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     protected void traceBlockEntry(BlockBegin block) {
-        storeStackParameter(LIROperandFactory.intConst(block.id()), 0);
-        List<LIROperand> args = new ArrayList<LIROperand>();
-        lir().callRuntimeLeaf(CiRuntimeCall.TraceBlockEntry, LIROperandFactory.IllegalOperand, LIROperandFactory.IllegalOperand, args);
+        callRuntime(new BasicType[]{BasicType.Int}, Arrays.asList(LIROperandFactory.intConst(block.id())), CiRuntimeCall.TraceBlockEntry, ValueType.VOID_TYPE, null);
     }
 
     @Override
@@ -1357,8 +1173,13 @@ public final class X86LIRGenerator extends LIRGenerator {
         return compilation.frameMap().receiverOpr();
     }
 
+    /**
+     * TODO: (tw) this is maybe part of the calling convention?
+     */
     @Override
     protected LIROperand resultRegisterFor(ValueType type, boolean callee) {
+
+        assert C1XOptions.SSEVersion >= 2;
         LIROperand opr;
         switch (type.basicType) {
             case Int:
@@ -1371,10 +1192,10 @@ public final class X86LIRGenerator extends LIRGenerator {
                 opr = X86FrameMap.long0Opr(compilation.target.arch);
                 break;
             case Float:
-                opr = C1XOptions.SSEVersion >= 1 ? X86FrameMap.xmm0floatOpr : X86FrameMap.fpu0FloatOpr;
+                opr = X86FrameMap.xmm0floatOpr;
                 break;
             case Double:
-                opr = C1XOptions.SSEVersion >= 2 ? X86FrameMap.xmm0doubleOpr : X86FrameMap.fpu0DoubleOpr;
+                opr = X86FrameMap.xmm0doubleOpr;
                 break;
 
             default:

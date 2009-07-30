@@ -32,7 +32,6 @@ import com.sun.c1x.debug.TTY;
 import com.sun.c1x.ir.BlockBegin;
 import com.sun.c1x.ir.BlockEnd;
 import com.sun.c1x.stub.CodeStub;
-import com.sun.c1x.stub.ConversionStub;
 import com.sun.c1x.value.BasicType;
 
 import java.util.ArrayList;
@@ -161,10 +160,6 @@ public class LIRList {
         append(new LIROp1(LIROpcode.Leal, from, resultReg));
     }
 
-    public void roundfp(LIROperand reg, LIROperand stackLocTemp, LIROperand result) {
-        append(new LIRRoundFP(reg, stackLocTemp, result));
-    }
-
     public void unalignedMove(LIRAddress src, LIROperand dst) {
         append(new LIROp1(LIROpcode.Move, src, dst, dst.type(), LIRPatchCode.PatchNone, null, LIRInstruction.LIRMoveKind.Unaligned));
     }
@@ -227,12 +222,8 @@ public class LIRList {
         append(new LIROp1(LIROpcode.Safepoint, tmp, info));
     }
 
-    public void convert(int code, LIROperand left, LIROperand dst, ConversionStub stub) {
-        append(new LIRConvert(code, left, dst, stub));
-    }
-
     public void convert(int code, LIROperand left, LIROperand dst) {
-        convert(code, left, dst, null);
+        append(new LIRConvert(code, left, dst));
     }
 
     public void logicalAnd(LIROperand left, LIROperand right, LIROperand dst) {
@@ -331,16 +322,8 @@ public class LIRList {
         append(new LIROp2(LIROpcode.Mul, left, right, res));
     }
 
-    public void mulStrictfp(LIROperand left, LIROperand right, LIROperand res, LIROperand tmp) {
-        append(new LIROp2(LIROpcode.MulStrictFp, left, right, res, tmp));
-    }
-
     public void div(LIROperand left, LIROperand right, LIROperand res, CodeEmitInfo info) {
         append(new LIROp2(LIROpcode.Div, left, right, res, info));
-    }
-
-    public void divStrictfp(LIROperand left, LIROperand right, LIROperand res, LIROperand tmp) {
-        append(new LIROp2(LIROpcode.DivStrictFp, left, right, res, tmp));
     }
 
     public void rem(LIROperand left, LIROperand right, LIROperand res, CodeEmitInfo info) {
@@ -390,10 +373,6 @@ public class LIRList {
         append(new LIROp2(LIROpcode.Cmpl2i, left, right, dst));
     }
 
-    public void callRuntimeLeaf(CiRuntimeCall entry, LIROperand tmp, LIROperand result, List<LIROperand> arguments) {
-        append(new LIRRTCall(entry, tmp, result, arguments));
-    }
-
     public void callRuntime(CiRuntimeCall routine, LIROperand tmp, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info) {
         append(new LIRRTCall(routine, tmp, result, arguments, info));
     }
@@ -402,24 +381,8 @@ public class LIRList {
         append(new LIROp1(LIROpcode.Monaddr, LIROperandFactory.intConst(monitorIx), dst));
     }
 
-    public void set_24bitFpu() {
-        append(new LIROp0(LIROpcode.Op24bitFPU));
-    }
-
-    public void restoreFpu() {
-        append(new LIROp0(LIROpcode.ResetFPU));
-    }
-
-    public void breakpoint() {
-        append(new LIROp0(LIROpcode.Breakpoint));
-    }
-
     public void arraycopy(LIROperand src, LIROperand srcPos, LIROperand dst, LIROperand dstPos, LIROperand length, LIROperand tmp, CiType expectedType, int flags, CodeEmitInfo info) {
         append(new LIRArrayCopy(src, srcPos, dst, dstPos, length, tmp, expectedType, flags, info));
-    }
-
-    public void fpopRaw() {
-        append(new LIROp0(LIROpcode.FpopRaw));
     }
 
     public void profileCall(CiMethod method, int bci, LIROperand mdo, LIROperand recv, LIROperand t1, CiType chaKlass) {

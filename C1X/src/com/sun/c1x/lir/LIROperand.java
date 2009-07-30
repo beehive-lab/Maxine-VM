@@ -78,11 +78,11 @@ public abstract class LIROperand {
     }
 
     public boolean isRegister() {
-        return isCpuRegister() || isFpuRegister();
+        return isCpuRegister() || isXmmRegister();
     }
 
     public boolean isVirtual() {
-        return isVirtualCpu() || isVirtualFpu();
+        return isVirtualCpu();
     }
 
     public boolean isConstant() {
@@ -127,11 +127,6 @@ public abstract class LIROperand {
             out.append(asRegister().name);
         } else if (isDoubleXmm()) {
             out.append(asRegister().name);
-        } else if (isSingleFpu()) {
-            out.append(asRegister().name);
-        } else if (isDoubleFpu()) {
-            out.append(asRegister().name);
-
         } else if (isIllegal()) {
             out.append("-");
         } else {
@@ -186,26 +181,6 @@ public abstract class LIROperand {
     }
 
     public boolean isDoubleCpu() {
-        return false;
-    }
-
-    public boolean isFpuRegister() {
-        return false;
-    }
-
-    public boolean isVirtualFpu() {
-        return false;
-    }
-
-    public boolean isFixedFpu() {
-        return false;
-    }
-
-    public boolean isSingleFpu() {
-        return false;
-    }
-
-    public boolean isDoubleFpu() {
         return false;
     }
 
@@ -265,18 +240,6 @@ public abstract class LIROperand {
         throw Util.shouldNotReachHere();
     }
 
-    public int fpuRegnr() {
-        throw Util.shouldNotReachHere();
-    }
-
-    public int fpuRegnrLo() {
-        throw Util.shouldNotReachHere();
-    }
-
-    public int fpuRegnrHi() {
-        throw Util.shouldNotReachHere();
-    }
-
     public int vregNumber() {
         throw Util.shouldNotReachHere();
     }
@@ -325,19 +288,6 @@ public abstract class LIROperand {
         throw Util.unimplemented();
     }
 
-
-    public float asJfloat() {
-        throw Util.unimplemented();
-    }
-
-    public double asJdouble() {
-        throw Util.unimplemented();
-    }
-
-    public Object asJobject() {
-        throw Util.unimplemented();
-    }
-
     boolean isOopPointer() {
         return type() == BasicType.Object;
     }
@@ -345,13 +295,6 @@ public abstract class LIROperand {
     boolean isFloat() {
         BasicType t = type();
         return (t == BasicType.Float) || (t == BasicType.Double);
-    }
-
-    public LIRConstant asConstant() {
-        if (this instanceof LIRConstant) {
-            return (LIRConstant) this;
-        }
-        return null;
     }
 
     public LIRAddress asAddress() {

@@ -22,6 +22,8 @@ package com.sun.max.asm.gen.risc.sparc;
 
 import static com.sun.max.asm.gen.risc.sparc.SPARCFields.*;
 
+import com.sun.max.asm.gen.risc.*;
+
 /**
  * @author Bernd Mathiske
  * @author Dave Ungar
@@ -131,7 +133,7 @@ public class FloatingPointOperate extends SPARCInstructionDescriptionCreator {
         createUnaryArithmetic("sqrt", "q", head, qfrs2, qfrd, 0x2b);
     }
 
-    FloatingPointOperate(SPARCTemplateCreator templateCreator) {
+    FloatingPointOperate(RiscTemplateCreator templateCreator) {
         super(templateCreator);
 
         final Object[] head1 = {op(0x2), op3(0x34)};

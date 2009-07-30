@@ -107,7 +107,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
 
         @Override
         public EirABI abi() {
-            return  eirGenerator.eirABIsScheme().nativeABI();
+            return eirGenerator.eirABIsScheme().nativeABI;
         }
     }
 

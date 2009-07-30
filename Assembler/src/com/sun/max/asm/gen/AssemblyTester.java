@@ -73,7 +73,7 @@ import com.sun.max.util.*;
  * @author Dave Ungar
  * @author Adam Spitz
  */
-public abstract class AssemblyTester<Template_Type extends Template, DisassembledInstruction_Type extends DisassembledInstruction<Template_Type>> {
+public abstract class AssemblyTester<Template_Type extends Template> {
 
     private final Assembly<Template_Type> assembly;
     private final WordWidth addressWidth;
@@ -490,7 +490,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
 
     protected abstract Assembler createTestAssembler();
 
-    protected abstract Disassembler<Template_Type, DisassembledInstruction_Type> createTestDisassembler();
+    protected abstract Disassembler createTestDisassembler();
 
     /**
      * We use this more complicated comparison instead of 'Sequence.equals()',
@@ -525,7 +525,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
 
     private void testDisassembler(Template_Type template, IndexedSequence<Argument> argumentList, byte[] internalResult) throws IOException, AssemblyException {
         final BufferedInputStream disassemblyStream = new BufferedInputStream(new ByteArrayInputStream(internalResult));
-        final Disassembler<Template_Type, DisassembledInstruction_Type> disassembler = createTestDisassembler();
+        final Disassembler disassembler = createTestDisassembler();
         disassembler.setAbstractionPreference(template.instructionDescription().isSynthetic() ? Disassembler.AbstractionPreference.SYNTHETIC : Disassembler.AbstractionPreference.RAW);
         disassembler.setExpectedNumberOfArguments(argumentList.length());
         final Sequence<DisassembledObject> disassembledObjects = disassembler.scanOne(disassemblyStream);
@@ -533,8 +533,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
         boolean matchFound = false;
         for (DisassembledObject disassembledObject : disassembledObjects) {
             if (disassembledObject instanceof DisassembledInstruction) {
-                final Class<DisassembledInstruction_Type> type = null;
-                final DisassembledInstruction_Type disassembledInstruction = StaticLoophole.cast(type, disassembledObject);
+                final DisassembledInstruction disassembledInstruction = (DisassembledInstruction) disassembledObject;
                 matchFound = matchFound ||
                              (disassembledInstruction.template().isEquivalentTo(template) &&
                                 equals(disassembledInstruction.arguments(), argumentList) &&
@@ -564,8 +563,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
             int matchNumber = 1;
             for (DisassembledObject disassembledObject : disassembledObjects) {
                 if (disassembledObject instanceof DisassembledInstruction) {
-                    final Class<DisassembledInstruction_Type> type = null;
-                    final DisassembledInstruction_Type disassembledInstruction = StaticLoophole.cast(type, disassembledObject);
+                    final DisassembledInstruction disassembledInstruction = (DisassembledInstruction) disassembledObject;
                     System.err.println();
                     System.err.println("False match number " + matchNumber + ":");
                     System.err.println("    assembled template: " + template);
@@ -611,8 +609,8 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
             final Assembler assembler = createTestAssembler();
             assembly().assemble(assembler, template, argumentList);
             final byte[] internalResult = assembler.toByteArray();
-            if (Trace.hasLevel(1)) {
-                Trace.line(1, "assembleInternally[" + testCaseNumber + "]: " + assembly().createMethodCallString(template, argumentList) + " = " + DisassembledInstruction.toHexString(internalResult));
+            if (Trace.hasLevel(3)) {
+                Trace.line(3, "assembleInternally[" + testCaseNumber + "]: " + assembly().createMethodCallString(template, argumentList) + " = " + DisassembledInstruction.toHexString(internalResult));
             }
             if (components.contains(AssemblyTestComponent.DISASSEMBLER) && template.isDisassemblable() &&
                     !findExcludedDisassemblerTestArgument(template.parameters(), argumentList)) {

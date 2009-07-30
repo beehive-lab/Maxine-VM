@@ -96,18 +96,10 @@ public class RowTextSearchToolBar extends InspectorToolBar {
         textField.requestFocusInWindow();
         add(textField);
 
+        add(Box.createHorizontalGlue());
+
         statusLabel = new JLabel("");
         add(statusLabel);
-
-        nextButton = new JButton(new AbstractAction() {
-            public void actionPerformed(ActionEvent actionEvent) {
-                owner.selectNextResult();
-            }
-        });
-        nextButton.setIcon(style().searchNextMatchButtonIcon());
-        nextButton.setToolTipText("Scroll to next matching line");
-        nextButton.setEnabled(false);
-        add(nextButton);
 
         previousButton = new JButton(new AbstractAction() {
             public void actionPerformed(ActionEvent actionEvent) {
@@ -115,11 +107,23 @@ public class RowTextSearchToolBar extends InspectorToolBar {
             }
         });
         previousButton.setIcon(style().searchPreviousMatchButtonIcon());
+        previousButton.setText(null);
         previousButton.setToolTipText("Scroll to previous matching line");
         previousButton.setEnabled(false);
         add(previousButton);
 
-        add(Box.createHorizontalGlue());
+        nextButton = new JButton(new AbstractAction() {
+            public void actionPerformed(ActionEvent actionEvent) {
+                owner.selectNextResult();
+            }
+        });
+        nextButton.setIcon(style().searchNextMatchButtonIcon());
+        nextButton.setText(null);
+        nextButton.setToolTipText("Scroll to next matching line");
+        nextButton.setEnabled(false);
+        add(nextButton);
+
+
 
         final JButton closeButton = new JButton(new AbstractAction() {
             public void actionPerformed(ActionEvent actionEvent) {

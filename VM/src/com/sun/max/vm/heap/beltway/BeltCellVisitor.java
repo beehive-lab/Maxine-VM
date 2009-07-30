@@ -20,17 +20,14 @@
  */
 package com.sun.max.vm.heap.beltway;
 
-import com.sun.max.memory.*;
-import com.sun.max.unsafe.*;
+import com.sun.max.vm.heap.*;
 
 /**
- *
+ * Interface for visiting cells in a Belt that reaches another Belt.
  */
-public interface BeltWayCellVisitor extends Visitor{
-
+public interface BeltCellVisitor extends CellVisitor {
     /**
-     * @param cell the cell to be visited
-     * @return the adjacent next cell
+     * Initialize the action the cell visitor will perform on the cell.
      */
-    Pointer visitCell(Pointer cell, Action action, RuntimeMemoryRegion from, RuntimeMemoryRegion to);
+    void init(Belt from, Belt to);
 }

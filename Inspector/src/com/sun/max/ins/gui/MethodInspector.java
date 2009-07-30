@@ -140,7 +140,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
      */
     private static MethodInspector make(Inspection inspection, TeleCodeLocation teleCodeLocation, boolean interactiveForNative) {
         if (teleCodeLocation.hasTargetCodeLocation()) {
-            return make(inspection, teleCodeLocation.targetCodeInstructionAddresss(), interactiveForNative);
+            return make(inspection, teleCodeLocation.targetCodeInstructionAddress(), interactiveForNative);
         }
         if (teleCodeLocation.hasBytecodeLocation()) {
             // TODO (mlvdv)  Select the specified bytecode position

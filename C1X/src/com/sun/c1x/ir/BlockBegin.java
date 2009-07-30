@@ -57,6 +57,7 @@ public class BlockBegin extends StateSplit {
         BackwardBranchTarget,
         IsOnWorkList,
         WasVisited,
+        HasPhis,
         DefaultExceptionHandler,
         ParserLoopHeader,
         CriticalEdgeSplit,

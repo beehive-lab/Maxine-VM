@@ -32,15 +32,15 @@ import com.sun.max.collect.*;
  * @author Bernd Mathiske
  * @author Greg Wright
  */
-public abstract class DisassembledInstruction<Template_Type extends Template> implements DisassembledObject {
+public class DisassembledInstruction implements DisassembledObject {
 
     private final Disassembler disassembler;
     private final int startPosition;
     private final byte[] bytes;
-    private final Template_Type template;
+    private final Template template;
     private final IndexedSequence<Argument> arguments;
 
-    protected DisassembledInstruction(Disassembler disassembler, int position, byte[] bytes, Template_Type template, IndexedSequence<Argument> arguments) {
+    public DisassembledInstruction(Disassembler disassembler, int position, byte[] bytes, Template template, IndexedSequence<Argument> arguments) {
         assert bytes.length != 0;
         this.disassembler = disassembler;
         this.startPosition = position;
@@ -53,8 +53,11 @@ public abstract class DisassembledInstruction<Template_Type extends Template> im
         return disassembler.startAddress().plus(startPosition);
     }
 
-    public ImmediateArgument endAddress() {
-        return disassembler.startAddress().plus(endPosition());
+    /**
+     * Gets the address to which an offset argument of this instruction is relative.
+     */
+    public ImmediateArgument addressForRelativeAddressing() {
+        return disassembler.addressForRelativeAddressing(this);
     }
 
     public int startPosition() {
@@ -69,27 +72,16 @@ public abstract class DisassembledInstruction<Template_Type extends Template> im
         return bytes.clone();
     }
 
-    public Template_Type template() {
+    public Template template() {
         return template;
     }
 
-    public Type type() {
-        return Type.CODE;
+    public boolean isCode() {
+        return true;
     }
 
     public IndexedSequence<Argument> arguments() {
         return arguments;
-    }
-
-    public static String toHexString(byte[] bytes) {
-        String result = "[";
-        String separator = "";
-        for (byte b : bytes) {
-            result += separator + String.format("%02X", b);
-            separator = " ";
-        }
-        result += "]";
-        return result;
     }
 
     @Override
@@ -97,14 +89,17 @@ public abstract class DisassembledInstruction<Template_Type extends Template> im
         return toString(disassembler.addressMapper());
     }
 
-    public abstract String toString(AddressMapper addressMapper);
+    public String mnemonic() {
+        return disassembler.mnemonic(this);
+    }
 
-    public abstract String operandsToString(AddressMapper addressMapper);
+    public String toString(AddressMapper addressMapper) {
+        return disassembler.toString(this, addressMapper);
+    }
 
-    /**
-     * Gets the address to which an offset argument of this instruction is relative.
-     */
-    public abstract ImmediateArgument addressForRelativeAddressing();
+    public String operandsToString(AddressMapper addressMapper) {
+        return disassembler.operandsToString(this, addressMapper);
+    }
 
     public ImmediateArgument targetAddress() {
         final int parameterIndex = template().labelParameterIndex();
@@ -119,10 +114,14 @@ public abstract class DisassembledInstruction<Template_Type extends Template> im
         return null;
     }
 
-    /**
-     * Gets the byte array encoding this instruction.
-     */
-    protected byte[] rawInstruction() {
-        return bytes;
+    public static String toHexString(byte[] bytes) {
+        String result = "[";
+        String separator = "";
+        for (byte b : bytes) {
+            result += separator + String.format("%02X", b);
+            separator = " ";
+        }
+        result += "]";
+        return result;
     }
 }

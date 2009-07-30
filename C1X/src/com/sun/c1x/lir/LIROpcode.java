@@ -39,10 +39,6 @@ public enum LIROpcode {
         , StdEntry
         , OsrEntry
         , BuildFrame
-        , FpopRaw
-        , Op24bitFPU
-        , ResetFPU
-        , Breakpoint
         , RtCall
         , Membar
         , MembarAcquire
@@ -50,9 +46,6 @@ public enum LIROpcode {
         , GetThread
     , EndOp0
     , BeginOp1
-        , Fxch
-        , Fld
-        , Ffree
         , Push
         , Pop
         , NullCheck
@@ -79,9 +72,7 @@ public enum LIROpcode {
         , Add
         , Sub
         , Mul
-        , MulStrictFp
         , Div
-        , DivStrictFp
         , Rem
         , Sqrt
         , Abs

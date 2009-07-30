@@ -34,7 +34,6 @@ import com.sun.c1x.value.BasicType;
  */
 public class X86MacroAssembler extends X86Assembler {
 
-    private final int fpuStateSizeInWords;
     private Register rscratch1;
     private final int wordSize;
     private int rspOffset;
@@ -50,19 +49,12 @@ public class X86MacroAssembler extends X86Assembler {
     final Register jRarg2;
     final Register jRarg3;
     final Register jRarg4;
-    private static final long NULLWORD = 0;
 
     public X86MacroAssembler(C1XCompilation compilation) {
         super(compilation);
 
         rscratch1 = X86FrameMap.rscratch1(compilation.target.arch);
         wordSize = compilation.target.arch.wordSize;
-
-        if (compilation.target.arch.is64bit()) {
-            fpuStateSizeInWords = 512 / wordSize;
-        } else {
-            fpuStateSizeInWords = 27;
-        }
 
         cRarg0 = compilation.runtime.getCRarg(0);
         cRarg1 = compilation.runtime.getCRarg(1);
@@ -299,15 +291,16 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void inlineCacheCheck(Register receiver, Register iCache) {
-        assert verifyOop(receiver);
-        // explicit null check not needed since load from [klassOffset] causes a trap
-        // check against inline cache
-        assert !compilation.runtime.needsExplicitNullCheck(compilation.runtime.klassOffsetInBytes()) : "must add explicit null check";
-        //int startOffset = offset();
-        cmpptr(iCache, new Address(receiver, compilation.runtime.klassOffsetInBytes()));
-        // if icache check fails, then jump to runtime routine
-        // Note: RECEIVER must still contain the receiver!
-        jumpCc(X86Assembler.Condition.notEqual, new RuntimeAddress(CiRuntimeCall.IcMiss));
+        // TODO: Implement this method or throw away the IC-cache facilities...
+//        assert verifyOop(receiver);
+//        // explicit null check not needed since load from [klassOffset] causes a trap
+//        // check against inline cache
+//        assert !compilation.runtime.needsExplicitNullCheck(compilation.runtime.klassOffsetInBytes()) : "must add explicit null check";
+//        //int startOffset = offset();
+//        cmpptr(iCache, new Address(receiver, compilation.runtime.klassOffsetInBytes()));
+//        // if icache check fails, then jump to runtime routine
+//        // Note: RECEIVER must still contain the receiver!
+//        jumpCc(X86Assembler.Condition.notEqual, new RuntimeAddress(CiRuntimeCall.IcMiss));
 
         // TODO: Check why the size is 9
 //        int icCmpSize = 10;
@@ -333,120 +326,25 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    void callVMLeafBase(CiRuntimeCall entryPoint, int numberOfArguments) {
-        if (compilation.target.arch.is32bit()) {
-            call(new RuntimeAddress(entryPoint));
-            increment(X86Register.rsp, numberOfArguments * compilation.target.arch.wordSize);
-        } else if (compilation.target.arch.is64bit()) {
-
-            Label l = new Label();
-            Label e = new Label();
-
-            if (compilation.target.isWin64()) {
-                // Windows always allocates space for it's register args
-                assert numberOfArguments <= 4 : "only register arguments supported";
-                subq(X86Register.rsp, compilation.runtime.argRegSaveAreaBytes());
-            }
-
-            // Align stack if necessary
-            testl(X86Register.rsp, 15);
-            jcc(X86Assembler.Condition.zero, l);
-
-            subq(X86Register.rsp, 8);
-            call(new RuntimeAddress(entryPoint));
-            addq(X86Register.rsp, 8);
-            jmp(e);
-
-            bind(l);
-            call(new RuntimeAddress(entryPoint));
-            bind(e);
-
-            if (compilation.target.isWin64()) {
-                // restore stack pointer
-                addq(X86Register.rsp, compilation.runtime.argRegSaveAreaBytes());
-            }
-        } else {
-            Util.shouldNotReachHere();
-        }
-    }
-
     void cmpoop(Address src1, Object obj) {
-        cmpLiteral32(src1, compilation.runtime.convertToPointer32(obj), Relocation.specForImmediate());
+        // (tw) Cannot embed oop as literal (only 32-bit relevant)
+        throw Util.unimplemented();
+        //cmpLiteral32(src1, compilation.runtime.convertToPointer32(obj), Relocation.specForImmediate());
     }
 
     void cmpoop(Register src1, Object obj) {
-        cmpLiteral32(src1, compilation.runtime.convertToPointer32(obj), Relocation.specForImmediate());
+        // (tw) Cannot embed oop as literal (only 32-bit relevant)
+        throw Util.unimplemented();
+        //cmpLiteral32(src1, compilation.runtime.convertToPointer32(obj), Relocation.specForImmediate());
     }
 
     void extendSign(Register hi, Register lo) {
         // According to Intel Doc. AP-526, "Integer Divide", p.18.
-        if (compilation.target.isP6() && hi == X86Register.rdx && lo == X86Register.rax) {
+        if (compilation.target.isP6() && hi == X86.rdx && lo == X86.rax) {
             cdql();
         } else {
             movl(hi, lo);
             sarl(hi, 31);
-        }
-    }
-
-    void fatNop() {
-        if (compilation.target.arch.is32bit()) {
-            // A 5 byte nop that is safe for patching (see patchVerifiedEntry)
-            emitByte(0x26); // es:
-            emitByte(0x2e); // cs:
-            emitByte(0x64); // fs:
-            emitByte(0x65); // gs:
-            emitByte(0x90);
-        } else if (compilation.target.arch.is64bit()) {
-
-            // A 5 byte nop that is safe for patching (see patchVerifiedEntry)
-            // Recommened sequence from 'Software Optimization Guide for the AMD
-            // Hammer Processor'
-            emitByte(0x66);
-            emitByte(0x66);
-            emitByte(0x90);
-            emitByte(0x66);
-            emitByte(0x90);
-        } else {
-            Util.shouldNotReachHere();
-        }
-    }
-
-    void jC2(Register tmp, Label l) {
-        // set parity bit if FPU flag C2 is set (via X86Register.rax)
-        saveRax(tmp);
-        fwait();
-        fnstswAx();
-        sahf();
-        restoreRax(tmp);
-        // branch
-        jcc(Condition.parity, l);
-    }
-
-    void jnC2(Register tmp, Label l) {
-        // set parity bit if FPU flag C2 is set (via X86Register.rax)
-        saveRax(tmp);
-        fwait();
-        fnstswAx();
-        sahf();
-        restoreRax(tmp);
-        // branch
-        jcc(Condition.noParity, l);
-    }
-
-    // 32bit can do a case table jump in one instruction but we no longer allow the base
-    // to be installed in the Address class
-    void jump(ArrayAddress entry) {
-        if (compilation.target.arch.is32bit()) {
-            jmp(asAddress(entry));
-        } else if (compilation.target.arch.is64bit()) {
-            lea(rscratch1, entry.base());
-            Address dispatch = entry.index();
-            assert dispatch.base == Register.noreg : "must be";
-            assert dispatch.rspec == null : "otherwise the copy is not made correctly!";
-            dispatch = new Address(rscratch1, dispatch.index, dispatch.scale, dispatch.disp);
-            jmp(dispatch);
-        } else {
-            throw Util.shouldNotReachHere();
         }
     }
 
@@ -483,34 +381,10 @@ public class X86MacroAssembler extends X86Assembler {
         bind(done);
     }
 
-    void lea(Register dst, AddressLiteral src) {
-        if (compilation.target.arch.is32bit()) {
-            movLiteral32(dst, Util.safeToInt(src.target()), src.rspec());
-        } else if (compilation.target.arch.is64bit()) {
-            movLiteral64(dst, src.target(), src.rspec());
-        } else {
-            Util.shouldNotReachHere();
-        }
-    }
-
-    void lea(Address dst, AddressLiteral adr) {
-        if (compilation.target.arch.is32bit()) {
-            // leal(dst, asAddress(adr));
-            // see note in movl as to why we must use a move
-            movLiteral32(dst, Util.safeToInt(adr.target()), adr.rspec());
-        } else if (compilation.target.arch.is64bit()) {
-
-            movLiteral64(rscratch1, adr.target(), adr.rspec());
-            movptr(dst, rscratch1);
-        } else {
-            Util.shouldNotReachHere();
-        }
-    }
-
     void leave() {
         if (compilation.target.arch.is32bit()) {
-            mov(X86Register.rsp, X86Register.rbp);
-            pop(X86Register.rbp);
+            mov(X86.rsp, X86.rbp);
+            pop(X86.rbp);
 
         } else if (compilation.target.arch.is64bit()) {
 
@@ -536,31 +410,31 @@ public class X86MacroAssembler extends X86Assembler {
         //
         // Basic idea: lo(result) = lo(xLo * yLo)
         // hi(result) = hi(xLo * yLo) + lo(xHi * yLo) + lo(xLo * yHi)
-        Address xHi = new Address(X86Register.rsp, xRspOffset + compilation.target.arch.wordSize);
-        Address xLo = new Address(X86Register.rsp, xRspOffset);
-        Address yHi = new Address(X86Register.rsp, yRspOffset + compilation.target.arch.wordSize);
-        Address yLo = new Address(X86Register.rsp, yRspOffset);
+        Address xHi = new Address(X86.rsp, xRspOffset + compilation.target.arch.wordSize);
+        Address xLo = new Address(X86.rsp, xRspOffset);
+        Address yHi = new Address(X86.rsp, yRspOffset + compilation.target.arch.wordSize);
+        Address yLo = new Address(X86.rsp, yRspOffset);
         Label quick = new Label();
         // load xHi, yHi and check if quick
         // multiplication is possible
-        movl(X86Register.rbx, xHi);
-        movl(X86Register.rcx, yHi);
-        movl(X86Register.rax, X86Register.rbx);
-        orl(X86Register.rbx, X86Register.rcx); // X86Register.rbx, = 0 <=> xHi = 0 and yHi = 0
+        movl(X86.rbx, xHi);
+        movl(X86.rcx, yHi);
+        movl(X86.rax, X86.rbx);
+        orl(X86.rbx, X86.rcx); // X86Register.rbx, = 0 <=> xHi = 0 and yHi = 0
         jcc(X86Assembler.Condition.zero, quick); // if X86Register.rbx, = 0 do quick multiply
         // do full multiplication
         // 1st step
         mull(yLo); // xHi * yLo
-        movl(X86Register.rbx, X86Register.rax); // save lo(xHi * yLo) in X86Register.rbx,
+        movl(X86.rbx, X86.rax); // save lo(xHi * yLo) in X86Register.rbx,
         // 2nd step
-        movl(X86Register.rax, xLo);
-        mull(X86Register.rcx); // xLo * yHi
-        addl(X86Register.rbx, X86Register.rax); // add lo(xLo * yHi) to X86Register.rbx,
+        movl(X86.rax, xLo);
+        mull(X86.rcx); // xLo * yHi
+        addl(X86.rbx, X86.rax); // add lo(xLo * yHi) to X86Register.rbx,
         // 3rd step
         bind(quick); // note: X86Register.rbx, = 0 if quick multiply!
-        movl(X86Register.rax, xLo);
+        movl(X86.rax, xLo);
         mull(yLo); // xLo * yLo
-        addl(X86Register.rdx, X86Register.rbx); // correct hi(xLo * yLo)
+        addl(X86.rdx, X86.rbx); // correct hi(xLo * yLo)
     }
 
     void lneg(Register hi, Register lo) {
@@ -577,9 +451,9 @@ public class X86MacroAssembler extends X86Assembler {
         // Java shift left long support (semantics as described in JVM spec., p.305)
         // (basic idea for shift counts s >= n: x << s == (x << n) << (s - n))
         // shift value is in X86Register.rcx !
-        assert hi != X86Register.rcx : "must not use X86Register.rcx";
-        assert lo != X86Register.rcx : "must not use X86Register.rcx";
-        Register s = X86Register.rcx; // shift count
+        assert hi != X86.rcx : "must not use X86Register.rcx";
+        assert lo != X86.rcx : "must not use X86Register.rcx";
+        Register s = X86.rcx; // shift count
         int n = compilation.target.arch.bitsPerWord;
         Label l = new Label();
         andl(s, 0x3f); // s := s & 0x3f (s < 0x40)
@@ -596,9 +470,9 @@ public class X86MacroAssembler extends X86Assembler {
     void lshr(Register hi, Register lo, boolean signExtension) {
         // Java shift right long support (semantics as described in JVM spec., p.306 & p.310)
         // (basic idea for shift counts s >= n: x >> s == (x >> n) >> (s - n))
-        assert hi != X86Register.rcx : "must not use X86Register.rcx";
-        assert lo != X86Register.rcx : "must not use X86Register.rcx";
-        Register s = X86Register.rcx; // shift count
+        assert hi != X86.rcx : "must not use X86Register.rcx";
+        assert lo != X86.rcx : "must not use X86Register.rcx";
+        Register s = X86.rcx; // shift count
         int n = compilation.target.arch.bitsPerWord;
         Label l = new Label();
         andl(s, 0x3f); // s := s & 0x3f (s < 0x40)
@@ -622,10 +496,14 @@ public class X86MacroAssembler extends X86Assembler {
 
     void movoop(Register dst, Object obj) {
         if (compilation.target.arch.is32bit()) {
+            // (tw) Cannot embed oop as immediate!
             throw Util.unimplemented();
         } else if (compilation.target.arch.is64bit()) {
-            recordObjectReferenceInCode(obj);
-            this.movq(dst, new Address(new Relocation(offset(), obj)));
+            if (obj == null) {
+                this.xorq(dst, dst);
+            } else {
+                this.movq(dst, recordObjectReferenceInCode(obj));
+            }
         } else {
             Util.shouldNotReachHere();
         }
@@ -635,58 +513,12 @@ public class X86MacroAssembler extends X86Assembler {
     void movoop(Address dst, Object obj) {
 
         if (compilation.target.arch.is32bit()) {
-            movLiteral32(dst, compilation.runtime.convertToPointer32(obj), Relocation.specForImmediate());
+            // (tw) Cannot embed oop as immediate!
+            throw Util.unimplemented();
+            //movLiteral32(dst, compilation.runtime.convertToPointer32(obj), Relocation.specForImmediate());
         } else if (compilation.target.arch.is64bit()) {
-            movLiteral64(rscratch1, compilation.runtime.convertToPointer64(obj), Relocation.specForImmediate());
+            this.movq(rscratch1, recordObjectReferenceInCode(obj));
             movq(dst, rscratch1);
-        } else {
-            Util.shouldNotReachHere();
-        }
-    }
-
-    void movptr(Register dst, AddressLiteral src) {
-
-        if (compilation.target.arch.is32bit()) {
-            if (src.isLval()) {
-                movLiteral32(dst, Util.safeToInt(src.target()), src.rspec());
-            } else {
-                movl(dst, asAddress(src));
-            }
-        } else if (compilation.target.arch.is64bit()) {
-
-            if (src.isLval()) {
-                movLiteral64(dst, src.target(), src.rspec());
-            } else {
-                if (reachable(src)) {
-                    movq(dst, asAddress(src));
-                } else {
-                    lea(rscratch1, src);
-                    movq(dst, new Address(rscratch1, 0));
-                }
-            }
-        } else {
-            Util.shouldNotReachHere();
-        }
-
-    }
-
-    void movptr(ArrayAddress dst, Register src) {
-        if (compilation.target.arch.is32bit()) {
-            movl(asAddress(dst), src);
-        } else if (compilation.target.arch.is64bit()) {
-            movq(asAddress(dst), src);
-
-        } else {
-            Util.shouldNotReachHere();
-        }
-    }
-
-    void movptr(Register dst, ArrayAddress src) {
-        if (compilation.target.arch.is32bit()) {
-            movl(dst, asAddress(src));
-        } else if (compilation.target.arch.is64bit()) {
-
-            movq(dst, asAddress(src));
         } else {
             Util.shouldNotReachHere();
         }
@@ -704,63 +536,29 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    void movsd(Register dst, AddressLiteral src) {
-        assert dst.isXMM();
-        movsd(dst, asAddress(src));
-    }
-
     void popCalleeSavedRegisters() {
-        pop(X86Register.rcx);
-        pop(X86Register.rdx);
-        pop(X86Register.rdi);
-        pop(X86Register.rsi);
-    }
-
-    void popFTOS() {
-        fldD(new Address(X86Register.rsp, 0));
-        addl(X86Register.rsp, 2 * wordSize);
+        pop(X86.rcx);
+        pop(X86.rdx);
+        pop(X86.rdi);
+        pop(X86.rsi);
     }
 
     void pushCalleeSavedRegisters() {
-        push(X86Register.rsi);
-        push(X86Register.rdi);
-        push(X86Register.rdx);
-        push(X86Register.rcx);
-    }
-
-    void pushFTOS() {
-        subl(X86Register.rsp, 2 * compilation.target.arch.wordSize);
-        fstpD(new Address(X86Register.rsp, 0));
+        push(X86.rsi);
+        push(X86.rdi);
+        push(X86.rdx);
+        push(X86.rcx);
     }
 
     void pushoop(Object obj) {
 
         if (compilation.target.arch.is32bit()) {
-            pushLiteral32(compilation.runtime.convertToPointer32(obj), Relocation.specForImmediate());
+            // Cannot embed obj as an immediate here!
+            throw Util.unimplemented();
+            //pushLiteral32(compilation.runtime.convertToPointer32(obj), Relocation.specForImmediate());
         } else if (compilation.target.arch.is64bit()) {
             movoop(rscratch1, obj);
             push(rscratch1);
-        } else {
-            Util.shouldNotReachHere();
-        }
-    }
-
-    void pushptr(AddressLiteral src) {
-
-        if (compilation.target.arch.is32bit()) {
-            if (src.isLval()) {
-                pushLiteral32(Util.safeToInt(src.target()), src.rspec());
-            } else {
-                pushl(asAddress(src));
-            }
-        } else if (compilation.target.arch.is64bit()) {
-            lea(rscratch1, src);
-            if (src.isLval()) {
-                push(rscratch1);
-            } else {
-                pushq(new Address(rscratch1, 0));
-            }
-
         } else {
             Util.shouldNotReachHere();
         }
@@ -852,27 +650,6 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     // 64 bit versions
-
-    Address asAddress(AddressLiteral adr) {
-        assert compilation.target.arch.is64bit();
-        // amd64 always does this as a pc-rel
-        // we can be absolute or disp based on the instruction type
-        // jmp/call are displacements others are absolute
-        assert !adr.isLval() : "must be rval";
-        assert reachable(adr) : "must be";
-        return new Address(Util.safeToInt(adr.target()), adr.target(), adr.reloc());
-
-    }
-
-    Address asAddress(ArrayAddress adr) {
-        assert compilation.target.arch.is64bit();
-        AddressLiteral base = adr.base();
-        lea(rscratch1, base);
-        Address index = adr.index();
-        assert index.disp == 0 : "must not have disp"; // maybe it can?
-        Address array = new Address(rscratch1, index.index, index.scale, index.disp);
-        return array;
-    }
 
     int biasedLockingEnter64(Register lockReg, Register objReg, Register swapReg, Register tmpReg, boolean swapRegContainsMark, Label done, Label slowCase, BiasedLockingCounters counters) {
 
@@ -1032,18 +809,6 @@ public class X86MacroAssembler extends X86Assembler {
 // return nullCheckOffset;
     }
 
-    void cmp64(Register src1, AddressLiteral src2) {
-        assert compilation.target.arch.is64bit();
-        assert !src2.isLval() : "should use cmpptr";
-
-        if (reachable(src2)) {
-            cmpq(src1, asAddress(src2));
-        } else {
-            lea(rscratch1, src2);
-            cmpq(src1, new Address(rscratch1, 0));
-        }
-    }
-
     int correctedIdivq(Register reg) {
         assert compilation.target.arch.is64bit();
         // Full implementation of Java ldiv and lrem; checks for special
@@ -1058,15 +823,15 @@ public class X86MacroAssembler extends X86Assembler {
         //
         // output: X86Register.rax: quotient (= X86Register.rax idiv reg) minLong
         // X86Register.rdx: remainder (= X86Register.rax irem reg) 0
-        assert reg != X86Register.rax && reg != X86Register.rdx : "reg cannot be X86Register.rax or X86Register.rdx register";
+        assert reg != X86.rax && reg != X86.rdx : "reg cannot be X86Register.rax or X86Register.rdx register";
         final long minLong = 0x8000000000000000L;
         Label normalCase = new Label();
         Label specialCase = new Label();
 
         // check for special case
-        cmp64(X86Register.rax, new ExternalAddress(minLong));
+        cmpq(X86.rax, longConstant(minLong));
         jcc(X86Assembler.Condition.notEqual, normalCase);
-        xorl(X86Register.rdx, X86Register.rdx); // prepare X86Register.rdx for possible special case (where
+        xorl(X86.rdx, X86.rdx); // prepare X86Register.rdx for possible special case (where
         // remainder = 0)
         cmpq(reg, -1);
         jcc(X86Assembler.Condition.equal, specialCase);
@@ -1227,32 +992,9 @@ public class X86MacroAssembler extends X86Assembler {
     void stop(String msg) {
 
         if (compilation.target.arch.is64bit()) {
-            int rip = pc();
-            pusha(); // get regs on stack
-            lea(cRarg0, new ExternalAddress(Util.stringToAddress(msg)));
-            lea(cRarg1, new InternalAddress(rip));
-            movq(cRarg2, X86Register.rsp); // pass pointer to regs array
-            andq(X86Register.rsp, -16); // align stack as required by ABI
-            call(new RuntimeAddress(CiRuntimeCall.Debug));
+            // TODO: Add debug infos / message as paramters to Debug
+            callRuntime(CiRuntimeCall.Debug);
             hlt();
-        } else {
-            throw Util.unimplemented();
-        }
-    }
-
-    void warn(String msg) {
-        if (compilation.target.arch.is64bit()) {
-            push(X86Register.r12);
-            movq(X86Register.r12, X86Register.rsp);
-            andq(X86Register.rsp, -16); // align stack as required by pushCPUState and call
-
-            pushCPUState(); // keeps alignment at 16 bytes
-            lea(cRarg0, new ExternalAddress(Util.stringToAddress(msg)));
-            callVMLeaf(CiRuntimeCall.Warning, 0);
-            popCPUState();
-
-            movq(X86Register.rsp, X86Register.r12);
-            pop(X86Register.r12);
         } else {
             throw Util.unimplemented();
         }
@@ -1298,11 +1040,6 @@ public class X86MacroAssembler extends X86Assembler {
         nop(length);
     }
 
-    void andpd(Register dst, AddressLiteral src) {
-        assert dst.isXMM();
-        andpd(dst, asAddress(src));
-    }
-
     void andptr(Register dst, int imm32) {
         if (compilation.target.arch.is64bit()) {
             andq(dst, imm32);
@@ -1311,19 +1048,10 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    void atomicIncl(AddressLiteral counterAddr) {
-        pushf();
-        if (compilation.runtime.isMP()) {
-            lock();
-        }
-        incrementl(counterAddr);
-        popf();
-    }
-
     // Writes to stack successive pages until offset reached to check for
     // stack overflow + shadow pages. This clobbers tmp.
     void bangStackSize(Register size, Register tmp) {
-        movptr(tmp, X86Register.rsp);
+        movptr(tmp, X86.rsp);
         // Bang stack for total size given plus shadow page size.
         // Bang one page at a time because large size can bang beyond yellow and
         // red zones.
@@ -1365,279 +1093,6 @@ public class X86MacroAssembler extends X86Assembler {
         // only! (was bug)
         andl(x, 0xFF);
         setb(X86Assembler.Condition.notZero, x);
-    }
-
-    void call(AddressLiteral entry) {
-        if (reachable(entry)) {
-            callLiteral(entry.target(), entry.rspec());
-        } else {
-            lea(rscratch1, entry);
-            call(rscratch1);
-        }
-    }
-
-    // Implementation of callVM versions
-
-    void callVM(Register oopResult, CiRuntimeCall entryPoint, boolean checkExceptions) {
-        Label c = new Label();
-        Label e = new Label();
-        call(c);
-        jmp(e);
-
-        bind(c);
-        callVMHelper(oopResult, entryPoint, 0, checkExceptions);
-        ret(0);
-
-        bind(e);
-    }
-
-    void callVM(Register oopResult, CiRuntimeCall entryPoint, Register arg1, boolean checkExceptions) {
-        Label c = new Label();
-        Label e = new Label();
-        call(c);
-        jmp(e);
-
-        bind(c);
-        passArg1(this, arg1);
-        callVMHelper(oopResult, entryPoint, 1, checkExceptions);
-        ret(0);
-
-        bind(e);
-    }
-
-    void callVM(Register oopResult, CiRuntimeCall entryPoint, Register arg1, Register arg2, boolean checkExceptions) {
-        Label c = new Label();
-        Label e = new Label();
-        call(c);
-        jmp(e);
-
-        bind(c);
-
-        assert !compilation.target.arch.is64bit() || arg1 != cRarg2 : "smashed arg";
-
-        passArg2(this, arg2);
-        passArg1(this, arg1);
-        callVMHelper(oopResult, entryPoint, 2, checkExceptions);
-        ret(0);
-
-        bind(e);
-    }
-
-    void callVM(Register oopResult, CiRuntimeCall entryPoint, Register arg1, Register arg2, Register arg3, boolean checkExceptions) {
-        Label c = new Label();
-        Label e = new Label();
-        call(c);
-        jmp(e);
-
-        bind(c);
-
-        assert !compilation.target.arch.is64bit() || arg1 != cRarg3 : "smashed arg";
-        assert !compilation.target.arch.is64bit() || arg2 != cRarg3 : "smashed arg";
-        passArg3(this, arg3);
-
-        assert !compilation.target.arch.is64bit() || arg1 != cRarg2 : "smashed arg";
-        passArg2(this, arg2);
-
-        passArg1(this, arg1);
-        callVMHelper(oopResult, entryPoint, 3, checkExceptions);
-        ret(0);
-
-        bind(e);
-    }
-
-    void callVM(Register oopResult, Register lastJavaSp, CiRuntimeCall entryPoint, int numberOfArguments, boolean checkExceptions) {
-        Register thread = (compilation.target.arch.is64bit()) ? X86FrameMap.r15thread : Register.noreg;
-        callVMBase(oopResult, thread, lastJavaSp, entryPoint, numberOfArguments, checkExceptions);
-    }
-
-    void callVM(Register oopResult, Register lastJavaSp, CiRuntimeCall entryPoint, Register arg1, boolean checkExceptions) {
-        passArg1(this, arg1);
-        callVM(oopResult, lastJavaSp, entryPoint, 1, checkExceptions);
-    }
-
-    void callVM(Register oopResult, Register lastJavaSp, CiRuntimeCall entryPoint, Register arg1, Register arg2, boolean checkExceptions) {
-
-        assert !compilation.target.arch.is64bit() || arg1 != cRarg2 : "smashed arg";
-        passArg2(this, arg2);
-        passArg1(this, arg1);
-        callVM(oopResult, lastJavaSp, entryPoint, 2, checkExceptions);
-    }
-
-    void callVM(Register oopResult, Register lastJavaSp, CiRuntimeCall entryPoint, Register arg1, Register arg2, Register arg3, boolean checkExceptions) {
-        assert !compilation.target.arch.is64bit() || arg1 != cRarg3 : "smashed arg";
-        assert !compilation.target.arch.is64bit() || arg2 != cRarg3 : "smashed arg";
-        passArg3(this, arg3);
-        assert !compilation.target.arch.is64bit() || arg1 != cRarg2 : "smashed arg";
-        passArg2(this, arg2);
-        passArg1(this, arg1);
-        callVM(oopResult, lastJavaSp, entryPoint, 3, checkExceptions);
-    }
-
-    void callVMBase(Register oopResult, Register javaThread, Register lastJavaSp, CiRuntimeCall entryPoint, int numberOfArguments, boolean checkExceptions) {
-        // determine javaThread register
-        if (!javaThread.isValid()) {
-
-            if (compilation.target.arch.is64bit()) {
-                javaThread = X86FrameMap.r15thread;
-            } else {
-                javaThread = X86Register.rdi;
-                getThread(javaThread);
-            }
-        }
-        // determine lastJavaSp register
-        if (!lastJavaSp.isValid()) {
-            lastJavaSp = X86Register.rsp;
-        }
-        // debugging support
-        assert numberOfArguments >= 0 : "cannot have negative number of arguments";
-        assert !compilation.target.arch.is64bit() || javaThread == X86FrameMap.r15thread : "unexpected register";
-        assert javaThread != oopResult : "cannot use the same register for javaThread & oopResult";
-        assert javaThread != lastJavaSp : "cannot use the same register for javaThread & lastJavaSp";
-
-        // push java thread (becomes first argument of C function)
-
-        if (compilation.target.arch.is64bit()) {
-            mov(cRarg0, X86FrameMap.r15thread);
-        } else {
-            push(javaThread);
-            numberOfArguments++;
-        }
-        // set last Java frame before call
-        assert lastJavaSp != X86Register.rbp : "can't use ebp/X86Register.rbp";
-
-        // Only interpreter should have to set fp
-        setLastJavaFrame(javaThread, lastJavaSp, X86Register.rbp, null);
-
-        // do the call : remove parameters
-        callVMLeafBase(entryPoint, numberOfArguments);
-
-        // restore the thread (cannot use the pushed argument since arguments
-        // may be overwritten by C code generated by an optimizing compiler);
-        // however can use the register value directly if it is callee saved.
-        if (compilation.target.arch.is64bit() || javaThread == X86Register.rdi || javaThread == X86Register.rsi) {
-            // X86Register.rdi & X86Register.rsi (also r15) are callee saved . nothing to do
-
-            if (C1XOptions.GenerateAssertionCode) {
-                Util.guarantee(javaThread != X86Register.rax, "change this code");
-                push(X86Register.rax);
-                Label l = new Label();
-                getThread(X86Register.rax);
-                cmpptr(javaThread, X86Register.rax);
-                jcc(X86Assembler.Condition.equal, l);
-                stop("callVMBase: X86Register.rdi not callee saved?");
-                bind(l);
-                pop(X86Register.rax);
-            }
-        } else {
-            getThread(javaThread);
-        }
-        // reset last Java frame
-        // Only interpreter should have to clear fp
-        resetLastJavaFrame(javaThread, true, false);
-
-        // #ifndef CCINTERP
-        // C++ interp handles this in the interpreter
-        checkAndHandlePopframe(javaThread);
-        checkAndHandleEarlyret(javaThread);
-
-        if (checkExceptions) {
-            // check for pending exceptions (javaThread is set upon return)
-            cmpptr(new Address(javaThread, compilation.runtime.threadPendingExceptionOffset()), (int) NULLWORD);
-            if (!compilation.target.arch.is64bit()) {
-                jumpCc(X86Assembler.Condition.notEqual, new RuntimeAddress(CiRuntimeCall.ForwardException));
-            } else {
-                // This used to conditionally jump to forwardException however it is
-                // possible if we relocate that the branch will not reach. So we must jump
-                // around so we can always reach
-
-                Label ok = new Label();
-                jcc(X86Assembler.Condition.equal, ok);
-                jump(new RuntimeAddress(CiRuntimeCall.ForwardException));
-                bind(ok);
-            }
-        }
-
-        // get oop result if there is one and reset the value in the thread
-        if (oopResult.isValid()) {
-            movptr(oopResult, new Address(javaThread, compilation.runtime.threadVmResultOffset()));
-            movptr(new Address(javaThread, compilation.runtime.threadVmResultOffset()), NULLWORD);
-            verifyOop(oopResult, "broken oop in callVMBase");
-        }
-    }
-
-    void callVMHelper(Register oopResult, CiRuntimeCall entryPoint, int numberOfArguments, boolean checkExceptions) {
-
-        // Calculate the value for lastJavaSp
-        // somewhat subtle. callVM does an intermediate call
-        // which places a return Address on the stack just under the
-        // stack pointer as the user finsihed with it. This allows
-        // use to retrieve lastJavaPc from lastJavaSp[-1].
-        // On 32bit we then have to push additional args on the stack to accomplish
-        // the actual requested call. On 64bit callVM only can use register args
-        // so the only extra space is the return Address that callVM created.
-        // This hopefully explains the calculations here.
-
-        if (compilation.target.arch.is64bit()) {
-            // We've pushed one Address : correct lastJavaSp
-            lea(X86Register.rax, new Address(X86Register.rsp, compilation.target.arch.wordSize));
-        } else {
-            lea(X86Register.rax, new Address(X86Register.rsp, (1 + numberOfArguments) * wordSize));
-        }
-
-        callVMBase(oopResult, Register.noreg, X86Register.rax, entryPoint, numberOfArguments, checkExceptions);
-
-    }
-
-    void callVMLeaf(CiRuntimeCall entryPoint, int numberOfArguments) {
-        callVMLeafBase(entryPoint, numberOfArguments);
-    }
-
-    void callVMLeaf(CiRuntimeCall entryPoint, Register arg0) {
-        passArg0(this, arg0);
-        callVMLeaf(entryPoint, 1);
-    }
-
-    void callVMLeaf(CiRuntimeCall entryPoint, Register arg0, Register arg1) {
-
-        assert !compilation.target.arch.is64bit() || arg0 != cRarg1 : "smashed arg";
-        passArg1(this, arg1);
-        passArg0(this, arg0);
-        callVMLeaf(entryPoint, 2);
-    }
-
-    void callVMLeaf(CiRuntimeCall entryPoint, Register arg0, Register arg1, Register arg2) {
-        assert !compilation.target.arch.is64bit() || arg0 != cRarg2 : "smashed arg";
-        assert !compilation.target.arch.is64bit() || arg1 != cRarg2 : "smashed arg";
-        passArg2(this, arg2);
-        assert !compilation.target.arch.is64bit() || arg0 != cRarg1 : "smashed arg";
-        passArg1(this, arg1);
-        passArg0(this, arg0);
-        callVMLeaf(entryPoint, 3);
-    }
-
-    void checkAndHandleEarlyret(Register javaThread) {
-    }
-
-    void checkAndHandlePopframe(Register javaThread) {
-    }
-
-    void cmp32(AddressLiteral src1, int imm) {
-        if (reachable(src1)) {
-            cmpl(asAddress(src1), imm);
-        } else {
-            lea(rscratch1, src1);
-            cmpl(new Address(rscratch1, 0), imm);
-        }
-    }
-
-    void cmp32(Register src1, AddressLiteral src2) {
-        assert !src2.isLval() : "use cmpptr";
-        if (reachable(src2)) {
-            cmpl(src1, asAddress(src2));
-        } else {
-            lea(rscratch1, src2);
-            cmpl(src1, new Address(rscratch1, 0));
-        }
     }
 
     void cmp32(Register src1, int imm) {
@@ -1695,36 +1150,6 @@ public class X86MacroAssembler extends X86Assembler {
         bind(l);
     }
 
-    void cmp8(AddressLiteral src1, int imm) {
-        if (reachable(src1)) {
-            cmpb(asAddress(src1), imm);
-        } else {
-            lea(rscratch1, src1);
-            cmpb(new Address(rscratch1, 0), imm);
-        }
-    }
-
-    void cmpptr(Register src1, AddressLiteral src2) {
-
-        if (compilation.target.arch.is64bit()) {
-            if (src2.isLval()) {
-                movptr(rscratch1, src2);
-                cmpq(src1, rscratch1);
-            } else if (reachable(src2)) {
-                cmpq(src1, asAddress(src2));
-            } else {
-                lea(rscratch1, src2);
-                cmpq(src1, new Address(rscratch1, 0));
-            }
-        } else {
-            if (src2.isLval()) {
-                cmpLiteral32(src1, Util.safeToInt(src2.target()), src2.rspec());
-            } else {
-                cmpl(src1, asAddress(src2));
-            }
-        }
-    }
-
     void cmpptr(Register src1, Register src2) {
         if (compilation.target.arch.is64bit()) {
             cmpq(src1, src2);
@@ -1757,32 +1182,6 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    void cmpptr(Address src1, AddressLiteral src2) {
-        assert src2.isLval() : "not a mem-mem compare";
-        if (compilation.target.arch.is64bit()) {
-            // moves src2's literal Address
-            movptr(rscratch1, src2);
-            cmpq(src1, rscratch1);
-        } else {
-            cmpLiteral32(src1, Util.safeToInt(src2.target()), src2.rspec());
-        }
-    }
-
-    void lockedCmpxchgptr(Register reg, AddressLiteral adr) {
-        if (reachable(adr)) {
-            if (compilation.runtime.isMP()) {
-                lock();
-            }
-            cmpxchgptr(reg, asAddress(adr));
-        } else {
-            lea(X86FrameMap.rscratch1(compilation.target.arch), adr);
-            if (compilation.runtime.isMP()) {
-                lock();
-            }
-            cmpxchgptr(reg, new Address(rscratch1, 0));
-        }
-    }
-
     void cmpxchgptr(Register reg, Address adr) {
         if (compilation.target.arch.is64bit()) {
             cmpxchgq(reg, adr);
@@ -1790,24 +1189,6 @@ public class X86MacroAssembler extends X86Assembler {
             cmpxchgl(reg, adr);
         }
 
-    }
-
-    void comisd(Register dst, AddressLiteral src) {
-        assert dst.isXMM();
-        comisd(dst, asAddress(src));
-    }
-
-    void comiss(Register dst, AddressLiteral src) {
-        assert dst.isXMM();
-        comiss(dst, asAddress(src));
-    }
-
-    void condInc32(Condition cond, AddressLiteral counterAddr) {
-        Condition negatedCond = cond.negate();
-        Label l = new Label();
-        jcc(negatedCond, l);
-        atomicIncl(counterAddr);
-        bind(l);
     }
 
     int correctedIdivl(Register reg) {
@@ -1823,15 +1204,15 @@ public class X86MacroAssembler extends X86Assembler {
         //
         // output: X86Register.rax : : quotient (= X86Register.rax, idiv reg) minInt
         // X86Register.rdx: remainder (= X86Register.rax, irem reg) 0
-        assert reg != X86Register.rax && reg != X86Register.rdx : "reg cannot be X86Register.rax, or X86Register.rdx register";
+        assert reg != X86.rax && reg != X86.rdx : "reg cannot be X86Register.rax, or X86Register.rdx register";
         int minInt = 0x80000000;
         Label normalCase = new Label();
         Label specialCase = new Label();
 
         // check for special case
-        cmpl(X86Register.rax, minInt);
+        cmpl(X86.rax, minInt);
         jcc(Condition.notEqual, normalCase);
-        xorl(X86Register.rdx, X86Register.rdx); // prepare X86Register.rdx for possible special case (where remainder =
+        xorl(X86.rdx, X86.rdx); // prepare X86Register.rdx for possible special case (where remainder =
         // 0)
         cmpl(reg, -1);
         jcc(Condition.equal, specialCase);
@@ -1907,16 +1288,6 @@ public class X86MacroAssembler extends X86Assembler {
         sarl(reg, shiftValue);
     }
 
-    void emptyFPUStack() {
-        if (compilation.target.supportsMmx()) {
-            emms();
-        } else {
-            for (int i = 8; i-- > 0;) {
-                ffree(i);
-            }
-        }
-    }
-
     // Defines obj : preserves varSizeInBytes
     void edenAllocate(Register obj, Register varSizeInBytes, int conSizeInBytes, Register t1, Label slowCase) {
 
@@ -1951,130 +1322,8 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void enter() {
-        push(X86Register.rbp);
-        mov(X86Register.rbp, X86Register.rsp);
-    }
-
-    void fcmp(Register tmp) {
-        fcmp(tmp, 1, true, true);
-    }
-
-    void fcmp(Register tmp, int index, boolean popLeft, boolean popRight) {
-        assert !popRight || popLeft : "usage error";
-        if (compilation.target.supportsCmov()) {
-            assert tmp == Register.noreg : "unneeded temp";
-            if (popLeft) {
-                fucomip(index);
-            } else {
-                fucomi(index);
-            }
-            if (popRight) {
-                fpop();
-            }
-        } else {
-            assert tmp != Register.noreg : "need temp";
-            if (popLeft) {
-                if (popRight) {
-                    fcompp();
-                } else {
-                    fcomp(index);
-                }
-            } else {
-                fcom(index);
-            }
-            // convert FPU condition into eflags condition via X86Register.rax :
-            saveRax(tmp);
-            fwait();
-            fnstswAx();
-            sahf();
-            restoreRax(tmp);
-        }
-        // condition codes set as follows:
-        //
-        // CF (corresponds to C0) if x < y
-        // PF (corresponds to C2) if unordered
-        // ZF (corresponds to C3) if x = y
-    }
-
-    void fcmp2int(Register dst, boolean unorderedIsLess) {
-        fcmp2int(dst, unorderedIsLess, 1, true, true);
-    }
-
-    void fcmp2int(Register dst, boolean unorderedIsLess, int index, boolean popLeft, boolean popRight) {
-        fcmp(compilation.target.supportsCmov() ? Register.noreg : dst, index, popLeft, popRight);
-        Label l = new Label();
-        if (unorderedIsLess) {
-            movl(dst, -1);
-            jcc(Condition.parity, l);
-            jcc(Condition.below, l);
-            movl(dst, 0);
-            jcc(Condition.equal, l);
-            increment(dst, 1);
-        } else { // unordered is greater
-            movl(dst, 1);
-            jcc(Condition.parity, l);
-            jcc(Condition.above, l);
-            movl(dst, 0);
-            jcc(Condition.equal, l);
-            decrementl(dst, 1);
-        }
-        bind(l);
-    }
-
-    void fldD(AddressLiteral src) {
-        fldD(asAddress(src));
-    }
-
-    void fldS(AddressLiteral src) {
-        fldS(asAddress(src));
-    }
-
-    void fldX(AddressLiteral src) {
-        fldX(asAddress(src));
-    }
-
-    void fldcw(AddressLiteral src) {
-        fldcw(asAddress(src));
-    }
-
-    void fpop() {
-        ffree(0);
-        fincstp();
-    }
-
-    void fremr(Register tmp) {
-        saveRax(tmp);
-        Label l = new Label();
-        bind(l);
-        fprem();
-        fwait();
-        fnstswAx();
-        if (compilation.target.arch.is64bit()) {
-            testl(X86Register.rax, 0x400);
-            jcc(Condition.notEqual, l);
-        } else {
-            sahf();
-            jcc(Condition.parity, l);
-        }
-        restoreRax(tmp);
-        // Result is in ST0.
-        // Note: fxch & fpop to get rid of ST1
-        // (otherwise FPU stack could overflow eventually)
-        fxch(1);
-        fpop();
-    }
-
-    void incrementl(AddressLiteral dst) {
-        if (reachable(dst)) {
-            incrementl(asAddress(dst), 1);
-        } else {
-            lea(rscratch1, dst);
-            incrementl(new Address(rscratch1, 0), 1);
-        }
-    }
-
-    void incrementl(ArrayAddress dst) {
-        incrementl(asAddress(dst), 1);
+        push(X86.rbp);
+        mov(X86.rbp, X86.rsp);
     }
 
     void incrementl(Register reg, int value) {
@@ -2116,55 +1365,6 @@ public class X86MacroAssembler extends X86Assembler {
         } else {
             addl(dst, value);
             return;
-        }
-    }
-
-    void jump(AddressLiteral dst) {
-        if (reachable(dst)) {
-            jmpLiteral(dst.target(), dst.rspec());
-        } else {
-            lea(rscratch1, dst);
-            jmp(rscratch1);
-        }
-    }
-
-    void jumpCc(Condition cc, AddressLiteral dst) {
-        if (reachable(dst)) {
-            this.setInstMark();
-            try {
-                relocate(dst.rspec);
-                int shortSize = 2;
-                int longSize = 6;
-                int offs = Util.safeToInt(dst.target() - codeBuffer.position());
-                if (dst.reloc() == RelocInfo.Type.none && is8bit(offs - shortSize)) {
-                    // 0111 tttn #8-bit disp
-                    emitByte(0x70 | cc.value);
-                    emitByte((offs - shortSize) & 0xFF);
-                } else {
-                    // 0000 1111 1000 tttn #32-bit disp
-                    emitByte(0x0F);
-                    emitByte(0x80 | cc.value);
-                    emitInt(offs - longSize);
-                }
-            } finally {
-                this.clearInstMark();
-            }
-        } else {
-            Util.warning("reversing conditional branch");
-            Label skip = new Label();
-            jccb(cc.negate(), skip);
-            lea(rscratch1, dst);
-            jmp(rscratch1);
-            bind(skip);
-        }
-    }
-
-    void ldmxcsr(AddressLiteral src) {
-        if (reachable(src)) {
-            ldmxcsr(asAddress(src));
-        } else {
-            lea(rscratch1, src);
-            ldmxcsr(new Address(rscratch1, 0));
         }
     }
 
@@ -2268,24 +1468,6 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    void mov32(AddressLiteral dst, Register src) {
-        if (reachable(dst)) {
-            movl(asAddress(dst), src);
-        } else {
-            lea(rscratch1, dst);
-            movl(new Address(rscratch1, 0), src);
-        }
-    }
-
-    void mov32(Register dst, AddressLiteral src) {
-        if (reachable(src)) {
-            movl(dst, asAddress(src));
-        } else {
-            lea(rscratch1, src);
-            movl(dst, new Address(rscratch1, 0));
-        }
-    }
-
     // C++ boolean manipulation
 
     void movbool(Register dst, Address src) {
@@ -2324,39 +1506,6 @@ public class X86MacroAssembler extends X86Assembler {
         } else {
             // unsupported
             Util.shouldNotReachHere();
-        }
-    }
-
-    void movbyte(ArrayAddress dst, int src) {
-        movb(asAddress(dst), src);
-    }
-
-    void movdbl(Register dst, AddressLiteral src) {
-        assert dst.isXMM();
-        if (reachable(src)) {
-            if (C1XOptions.UseXmmLoadAndClearUpper) {
-                movsd(dst, asAddress(src));
-            } else {
-                movlpd(dst, asAddress(src));
-            }
-        } else {
-            lea(rscratch1, src);
-            if (C1XOptions.UseXmmLoadAndClearUpper) {
-                movsd(dst, new Address(rscratch1, 0));
-            } else {
-                movlpd(dst, new Address(rscratch1, 0));
-            }
-        }
-    }
-
-    void movflt(Register dst, AddressLiteral src) {
-
-        assert dst.isXMM();
-        if (reachable(src)) {
-            movss(dst, asAddress(src));
-        } else {
-            lea(rscratch1, src);
-            movss(dst, new Address(rscratch1, 0));
         }
     }
 
@@ -2404,22 +1553,12 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    void movss(Register dst, AddressLiteral src) {
-        assert dst.isXMM();
-        if (reachable(src)) {
-            movss(dst, asAddress(src));
-        } else {
-            lea(rscratch1, src);
-            movss(dst, new Address(rscratch1, 0));
-        }
-    }
-
     void nullCheck(Register reg, int offset) {
         if (compilation.runtime.needsExplicitNullCheck(offset)) {
             // provoke OS null exception if reg = null by
             // accessing M[reg] w/o changing any (non-CC) registers
             // NOTE: cmpl is plenty here to provoke a segv
-            cmpptr(X86Register.rax, new Address(reg, 0));
+            cmpptr(X86.rax, new Address(reg, 0));
             // Note: should probably use testl(X86Register.rax, new Address(reg, 0));
             // may be shorter code (however, this version of
             // testl needs to be implemented first)
@@ -2427,63 +1566,6 @@ public class X86MacroAssembler extends X86Assembler {
             // nothing to do, (later) access of M[reg + offset]
             // will provoke OS null exception if reg = null
         }
-    }
-
-    void osBreakpoint() {
-        // instead of directly emitting a breakpoint, call os:breakpoint for better debugability
-        // (e.g., MSVC can't call ps() otherwise)
-        call(new RuntimeAddress(CiRuntimeCall.Breakpoint));
-    }
-
-    void popCPUState() {
-        popFPUState();
-        popIUState();
-    }
-
-    void popFPUState() {
-        if (compilation.target.arch.is64bit()) {
-            fxrstor(new Address(X86Register.rsp, 0));
-        } else {
-            frstor(new Address(X86Register.rsp, 0));
-        }
-        addptr(X86Register.rsp, fpuStateSizeInWords * wordSize);
-    }
-
-    void popIUState() {
-        popa();
-        if (compilation.target.arch.is64bit()) {
-            addq(X86Register.rsp, 8);
-        }
-        popf();
-    }
-
-    // Save Integer and Float state
-    // Warning: Stack must be 16 byte aligned (64bit)
-    void pushCPUState() {
-        pushIUState();
-        pushFPUState();
-    }
-
-    void pushFPUState() {
-        subptr(X86Register.rsp, fpuStateSizeInWords * wordSize);
-
-        if (compilation.target.arch.is64bit()) {
-
-            fxsave(new Address(X86Register.rsp, 0));
-        } else {
-            fnsave(new Address(X86Register.rsp, 0));
-            fwait();
-        }
-    }
-
-    void pushIUState() {
-        // Push flags first because pusha kills them
-        pushf();
-        // Make sure X86Register.rsp stays 16-byte aligned
-        if (compilation.target.arch.is64bit()) {
-            subq(X86Register.rsp, 8);
-        }
-        pusha();
     }
 
     void resetLastJavaFrame(Register javaThread, boolean clearFp, boolean clearPc) {
@@ -2508,9 +1590,9 @@ public class X86MacroAssembler extends X86Assembler {
 
     void restoreRax(Register tmp) {
         if (tmp == Register.noreg) {
-            pop(X86Register.rax);
-        } else if (tmp != X86Register.rax) {
-            mov(X86Register.rax, tmp);
+            pop(X86.rax);
+        } else if (tmp != X86.rax) {
+            mov(X86.rax, tmp);
         }
     }
 
@@ -2521,9 +1603,9 @@ public class X86MacroAssembler extends X86Assembler {
 
     void saveRax(Register tmp) {
         if (tmp == Register.noreg) {
-            push(X86Register.rax);
-        } else if (tmp != X86Register.rax) {
-            mov(tmp, X86Register.rax);
+            push(X86.rax);
+        } else if (tmp != X86.rax) {
+            mov(tmp, X86.rax);
         }
     }
 
@@ -2674,32 +1756,6 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    void test32(Register src1, AddressLiteral src2) {
-        // src2 must be rval
-
-        if (reachable(src2)) {
-            testl(src1, asAddress(src2));
-        } else {
-            lea(rscratch1, src2);
-            testl(src1, new Address(rscratch1, 0));
-        }
-    }
-
-    // C++ boolean manipulation
-    void testbool(Register dst) {
-        if (Util.sizeofBoolean() == 1) {
-            testb(dst, 0xff);
-        } else if (Util.sizeofBoolean() == 2) {
-            // testw implementation needed for two byte bools
-            Util.shouldNotReachHere();
-        } else if (Util.sizeofBoolean() == 4) {
-            testl(dst, dst);
-        } else {
-            // unsupported
-            Util.shouldNotReachHere();
-        }
-    }
-
     void testptr(Register dst, Register src) {
         if (compilation.target.arch.is64bit()) {
             testq(dst, src);
@@ -2847,124 +1903,6 @@ public class X86MacroAssembler extends X86Assembler {
 // movptr(new Address(threadReg, compilation.runtime.threadTlabEndOffset()), top);
 // verifyTlab();
 // jmp(retry);
-    }
-
-    static double pi4 = 0.7853981633974483;
-
-    void trigfunc(char trig, int numFpuRegsInUse) {
-        // A hand-coded argument reduction for values in fabs(pi/4, pi/2)
-        // was attempted in this code; unfortunately it appears that the
-        // switch to 80-bit precision and back causes this to be
-        // unprofitable compared with simply performing a runtime call if
-        // the argument is out of the (-pi/4, pi/4) range.
-
-        Register tmp = Register.noreg;
-        if (!compilation.target.supportsCmov()) {
-            // fcmp needs a temporary so preserve X86Register.rbx :
-            tmp = X86Register.rbx;
-            push(tmp);
-        }
-
-        Label slowCase = new Label();
-        Label done = new Label();
-
-        ExternalAddress pi4Adr = null; // TODO: Replace this with address of pi (Address)&pi4;
-        if (reachable(pi4Adr)) {
-            // x ?<= pi/4
-            fldD(pi4Adr);
-            fldS(1); // Stack: X PI/4 X
-            fabs(); // Stack: |X| PI/4 X
-            fcmp(tmp);
-            jcc(X86Assembler.Condition.above, slowCase);
-
-            // fastest case: -pi/4 <= x <= pi/4
-            switch (trig) {
-                case 's':
-                    fsin();
-                    break;
-                case 'c':
-                    fcos();
-                    break;
-                case 't':
-                    ftan();
-                    break;
-                default:
-                    Util.shouldNotReachHere();
-                    break;
-            }
-            jmp(done);
-        }
-
-        // slow case: runtime call
-        bind(slowCase);
-        // Preserve registers across runtime call
-        pusha();
-        int incomingArgumentAndReturnValueOffset = -1;
-        if (numFpuRegsInUse > 1) {
-            // Must preserve all other FPU regs (could alternatively convert
-            // SharedRuntime.dsin and dcos into assembly routines known not to trash
-            // FPU state, but can not trust C compiler)
-            needsCleanUp();
-            // NOTE that in this case we also push the incoming argument to
-            // the stack and restore it later; we also use this stack slot to
-            // hold the return value from dsin or dcos.
-            for (int i = 0; i < numFpuRegsInUse; i++) {
-                subptr(X86Register.rsp, sizeofDouble());
-                fstpD(new Address(X86Register.rsp, 0));
-            }
-            incomingArgumentAndReturnValueOffset = sizeofDouble() * (numFpuRegsInUse - 1);
-            fldD(new Address(X86Register.rsp, incomingArgumentAndReturnValueOffset));
-        }
-        subptr(X86Register.rsp, sizeofDouble());
-        fstpD(new Address(X86Register.rsp, 0));
-        if (compilation.target.arch.is64bit()) {
-            movdbl(X86Register.xmm0, new Address(X86Register.rsp, 0));
-        }
-
-        // NOTE: we must not use callVMLeaf here because that requires a
-        // complete interpreter frame in debug mode -- same bug as 4387334
-        // callVMLeafBase is perfectly safe and will
-        // do proper 64bit abi
-
-        needsCleanUp();
-        // Need to add stack banging before this runtime call if it needs to
-        // be taken; however : there is no generic stack banging routine at
-        // the MacroAssembler level
-        switch (trig) {
-            case 's':
-                callVMLeafBase(CiRuntimeCall.dsin, 0);
-                break;
-            case 'c':
-                callVMLeafBase(CiRuntimeCall.dcos, 0);
-                break;
-            case 't':
-                callVMLeafBase(CiRuntimeCall.dtan, 0);
-                break;
-            default:
-                Util.shouldNotReachHere();
-                break;
-        }
-        if (compilation.target.arch.is64bit()) {
-            movsd(new Address(X86Register.rsp, 0), X86Register.xmm0);
-            fldD(new Address(X86Register.rsp, 0));
-        }
-        addptr(X86Register.rsp, sizeofDouble());
-        if (numFpuRegsInUse > 1) {
-            // Must save return value to stack and then restore entire FPU stack
-            fstpD(new Address(X86Register.rsp, incomingArgumentAndReturnValueOffset));
-            for (int i = 0; i < numFpuRegsInUse; i++) {
-                fldD(new Address(X86Register.rsp, 0));
-                addptr(X86Register.rsp, sizeofDouble());
-            }
-        }
-        popa();
-
-        // Come here with result in F-TOS
-        bind(done);
-
-        if (tmp != Register.noreg) {
-            pop(tmp);
-        }
     }
 
     // Look up the method for a megamorphic invokeinterface call.
@@ -3221,44 +2159,35 @@ public class X86MacroAssembler extends X86Assembler {
         // The repneScan instruction uses fixed registers : which we must spill.
         // Don't worry too much about pre-existing connections with the input regs.
 
-        assert subKlass != X86Register.rax : "killed reg"; // killed by mov(X86Register.rax, super)
-        assert subKlass != X86Register.rcx : "killed reg"; // killed by lea(X86Register.rcx, &pstCounter)
+        assert subKlass != X86.rax : "killed reg"; // killed by mov(X86Register.rax, super)
+        assert subKlass != X86.rcx : "killed reg"; // killed by lea(X86Register.rcx, &pstCounter)
 
         // Get superKlass value into X86Register.rax (even if it was in X86Register.rdi or X86Register.rcx).
         boolean pushedRax = false;
         boolean pushedRcx = false;
         boolean pushedRdi = false;
-        if (superKlass != X86Register.rax) {
-            if (X86Register.rax != tempReg && X86Register.rax != temp2Reg) {
-                push(X86Register.rax);
+        if (superKlass != X86.rax) {
+            if (X86.rax != tempReg && X86.rax != temp2Reg) {
+                push(X86.rax);
                 pushedRax = true;
             }
-            mov(X86Register.rax, superKlass);
+            mov(X86.rax, superKlass);
         }
-        if (X86Register.rcx != tempReg && X86Register.rcx != temp2Reg) {
-            push(X86Register.rcx);
+        if (X86.rcx != tempReg && X86.rcx != temp2Reg) {
+            push(X86.rcx);
             pushedRcx = true;
         }
-        if (X86Register.rdi != tempReg && X86Register.rdi != temp2Reg) {
-            push(X86Register.rdi);
+        if (X86.rdi != tempReg && X86.rdi != temp2Reg) {
+            push(X86.rdi);
             pushedRdi = true;
         }
 
-        // TODO: Check what to do with this!
-// #ifndef PRODUCT
-// int pstCounter = &SharedRuntime.partialSubtypeCtr;
-// ExternalAddress pstCounterAddr((Address) pstCounter);
-// NOTLP64( incrementl(pstCounterAddr) );
-// LP64ONLY( lea(X86Register.rcx, pstCounterAddr) );
-// LP64ONLY( incrementl(new Address(X86Register.rcx, 0)) );
-// #endif //PRODUCT
-
         // We will consult the secondary-super array.
-        movptr(X86Register.rdi, secondarySupersAddr);
+        movptr(X86.rdi, secondarySupersAddr);
         // Load the array length. (Positive movl does right thing on LP64.)
-        movl(X86Register.rcx, new Address(X86Register.rdi, compilation.runtime.arrayLengthOffsetInBytes()));
+        movl(X86.rcx, new Address(X86.rdi, compilation.runtime.arrayLengthOffsetInBytes()));
         // Skip to start of data.
-        addptr(X86Register.rdi, compilation.runtime.arrayBaseOffsetInBytes(BasicType.Object));
+        addptr(X86.rdi, compilation.runtime.arrayBaseOffsetInBytes(BasicType.Object));
 
         // Scan RCX words at [RDI] for an occurrence of RAX.
         // Set NZ/Z based on last compare.
@@ -3270,13 +2199,13 @@ public class X86MacroAssembler extends X86Assembler {
 
         // Unspill the temp. registers:
         if (pushedRdi) {
-            pop(X86Register.rdi);
+            pop(X86.rdi);
         }
         if (pushedRcx) {
-            pop(X86Register.rcx);
+            pop(X86.rcx);
         }
         if (pushedRax) {
-            pop(X86Register.rax);
+            pop(X86.rax);
         }
 
         if (setCondCodes) {
@@ -3301,59 +2230,13 @@ public class X86MacroAssembler extends X86Assembler {
         bind(lFallthrough);
     }
 
-    void ucomisd(Register dst, AddressLiteral src) {
-        assert dst.isXMM();
-        ucomisd(dst, asAddress(src));
-    }
-
-    void ucomiss(Register dst, AddressLiteral src) {
-        assert dst.isXMM();
-        ucomiss(dst, asAddress(src));
-    }
-
-    void xorpd(Register dst, AddressLiteral src) {
-        assert dst.isXMM();
-        if (reachable(src)) {
-            xorpd(dst, asAddress(src));
-        } else {
-            lea(rscratch1, src);
-            xorpd(dst, new Address(rscratch1, 0));
-        }
-    }
-
-    void xorps(Register dst, AddressLiteral src) {
-        assert dst.isXMM();
-        if (reachable(src)) {
-            xorps(dst, asAddress(src));
-        } else {
-            lea(rscratch1, src);
-            xorps(dst, new Address(rscratch1, 0));
-        }
-    }
-
     boolean verifyOop(Register reg) {
-        return verifyOop(reg, "");
-
-    }
-
-    boolean verifyOop(Register reg, String message) {
         if (!C1XOptions.VerifyOops) {
             return true;
         }
 
-        // Pass register number to verifyOopSubroutine
-        String b = String.format("verifyOop: %s: %s", reg.toString(), message);
-        push(X86Register.rax); // save X86Register.rax :
-        push(reg); // pass register argument
-        ExternalAddress buffer = new ExternalAddress(Util.stringToAddress(b));
-        // avoid using pushptr : as it modifies scratch registers
-        // and our contract is not to modify anything
-        movptr(X86Register.rax, buffer.addr());
-        push(X86Register.rax);
-        // call indirectly to solve generation ordering problem
-        movptr(X86Register.rax, new RuntimeAddress(CiRuntimeCall.VerifyOopSubroutine));
-        call(X86Register.rax);
-        return true;
+        // TODO: Figure out how to verify oops, maybe a runtime call?
+        throw Util.unimplemented();
     }
 
     // registers on entry:
@@ -3407,46 +2290,12 @@ public class X86MacroAssembler extends X86Assembler {
 // // see MethodHandles.generateMethodHandleStub
     }
 
-    void verifyOopAddr(Address addr, String s) {
-        if (!C1XOptions.VerifyOops) {
-            return;
-        }
-
-        // Address adjust(addr.base(), addr.index(), addr.scale(), addr.disp() + BytesPerWord);
-        // Pass register number to verifyOopSubroutine
-        String b = String.format("verifyOopAddr: %s", s);
-
-        push(X86Register.rax); // save X86Register.rax :
-        // addr may contain X86Register.rsp so we will have to adjust it based on the push
-        // we just did
-        // NOTE: 64bit seemed to have had a bug in that it did movq(addr, X86Register.rax); which
-        // stores X86Register.rax into addr which is backwards of what was intended.
-        if (addr.uses(X86Register.rsp)) {
-            lea(X86Register.rax, addr);
-            pushptr(new Address(X86Register.rax, wordSize));
-        } else {
-            pushptr(addr);
-        }
-
-        ExternalAddress buffer = new ExternalAddress(Util.stringToAddress(b));
-        // pass msg argument
-        // avoid using pushptr : as it modifies scratch registers
-        // and our contract is not to modify anything
-        movptr(X86Register.rax, buffer.addr());
-        push(X86Register.rax);
-
-        // call indirectly to solve generation ordering problem
-        movptr(X86Register.rax, new RuntimeAddress(CiRuntimeCall.VerifyOopSubroutine));
-        call(X86Register.rax);
-        // Caller pops the arguments and restores X86Register.rax : from the stack
-    }
-
     boolean verifyTlab() {
         if (C1XOptions.UseTLAB && C1XOptions.VerifyOops) {
             Label next = new Label();
             Label ok = new Label();
-            Register t1 = X86Register.rsi;
-            Register threadReg = (compilation.target.arch.is64bit()) ? X86FrameMap.r15thread : X86Register.rbx;
+            Register t1 = X86.rsi;
+            Register threadReg = (compilation.target.arch.is64bit()) ? X86FrameMap.r15thread : X86.rbx;
 
             push(t1);
 
@@ -3518,32 +2367,12 @@ public class X86MacroAssembler extends X86Assembler {
     void decStack(int nofWords) {
         rspOffset -= nofWords;
         assert rspOffset >= 0 : "stack offset underflow";
-        addptr(X86Register.rsp, wordSize * nofWords);
+        addptr(X86.rsp, wordSize * nofWords);
     }
 
     void decStackAfterCall(int nofWords) {
         rspOffset -= nofWords;
         assert rspOffset >= 0 : "stack offset underflow";
-    }
-
-    public void int3() {
-
-        if (compilation.target.isSolaris()) {
-            push(X86Register.rax);
-            push(X86Register.rdx);
-            push(X86Register.rcx);
-            call(new RuntimeAddress(CiRuntimeCall.Breakpoint));
-            pop(X86Register.rcx);
-            pop(X86Register.rdx);
-            pop(X86Register.rax);
-
-        } else {
-            Util.shouldNotReachHere();
-        }
-    }
-
-    void jmp(Label label) {
-        jmp(label, Relocation.none);
     }
 
     // Support optimal SSE move instructions.
@@ -3622,7 +2451,7 @@ public class X86MacroAssembler extends X86Assembler {
     int lockObject(Register hdr, Register obj, Register dispHdr, Register scratch, Label slowCase) {
         int alignedMask = wordSize - 1;
         int hdrOffset = compilation.runtime.markOffsetInBytes();
-        assert hdr == X86Register.rax : "hdr must be X86Register.rax :  for the cmpxchg instruction";
+        assert hdr == X86.rax : "hdr must be X86Register.rax :  for the cmpxchg instruction";
         assert hdr != obj && hdr != dispHdr && obj != dispHdr : "registers must be different";
         Label done = new Label();
         int nullCheckOffset = -1;
@@ -3652,10 +2481,6 @@ public class X86MacroAssembler extends X86Assembler {
             lock(); // must be immediately before cmpxchg!
         }
         cmpxchgptr(dispHdr, new Address(obj, hdrOffset));
-        // if the object header was the same, we're done
-        if (C1XOptions.PrintBiasedLockingStatistics) {
-            condInc32(X86Assembler.Condition.equal, new ExternalAddress(compilation.runtime.biasedLockingFastPathEntryCountAddr()));
-        }
         jcc(X86Assembler.Condition.equal, done);
         // if the object header was not the same, it is now in the hdr register
         // => test if it is a stack pointer into the same stack (recursive locking), i.e.:
@@ -3670,7 +2495,7 @@ public class X86MacroAssembler extends X86Assembler {
         //
         // assuming both the stack pointer and pageSize have their least
         // significant 2 bits cleared and pageSize is a power of 2
-        subptr(hdr, X86Register.rsp);
+        subptr(hdr, X86.rsp);
         andptr(hdr, alignedMask - compilation.runtime.vmPageSize());
         // for recursive locking, the result is zero => save it in the displaced header
         // location (null in the displaced hdr location indicates recursive locking)
@@ -3684,7 +2509,7 @@ public class X86MacroAssembler extends X86Assembler {
 
     public void unlockObject(Register hdr, Register obj, Register dispHdr, Label slowCase) {
         int hdrOffset = compilation.runtime.markOffsetInBytes();
-        assert dispHdr == X86Register.rax : "dispHdr must be X86Register.rax :  for the cmpxchg instruction";
+        assert dispHdr == X86.rax : "dispHdr must be X86Register.rax :  for the cmpxchg instruction";
         assert hdr != obj && hdr != dispHdr && obj != dispHdr : "registers must be different";
         Label done = new Label();
 
@@ -3723,31 +2548,24 @@ public class X86MacroAssembler extends X86Assembler {
 
         if (C1XOptions.GenerateAssertionCode) {
             if (invRax) {
-                movptr(X86Register.rax, 0xDEAD);
+                movptr(X86.rax, 0xDEAD);
             }
             if (invRbx) {
-                movptr(X86Register.rbx, 0xDEAD);
+                movptr(X86.rbx, 0xDEAD);
             }
             if (invRcx) {
-                movptr(X86Register.rcx, 0xDEAD);
+                movptr(X86.rcx, 0xDEAD);
             }
             if (invRdx) {
-                movptr(X86Register.rdx, 0xDEAD);
+                movptr(X86.rdx, 0xDEAD);
             }
             if (invRsi) {
-                movptr(X86Register.rsi, 0xDEAD);
+                movptr(X86.rsi, 0xDEAD);
             }
             if (invRdi) {
-                movptr(X86Register.rdi, 0xDEAD);
+                movptr(X86.rdi, 0xDEAD);
             }
         }
-    }
-
-    void verifyStackOop(int stackOffset) {
-        if (!C1XOptions.VerifyOops) {
-            return;
-        }
-        verifyOopAddr(new Address(X86Register.rsp, stackOffset), "verfyStackOop");
     }
 
     void verifyNotNullOop(Register r) {
@@ -3770,16 +2588,8 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    void xchgptr(Register src1, Address src2) {
-        if (compilation.target.arch.is64bit()) {
-            xchgq(src1, src2);
-        } else {
-            xchgl(src1, src2);
-        }
-    }
-
     void allocateArray(Register obj, Register len, Register t1, Register t2, int headerSize, Address.ScaleFactor scaleFactor, Register klass, Label slowCase) {
-        assert obj == X86Register.rax : "obj must be in X86Register.rax :  for cmpxchg";
+        assert obj == X86.rax : "obj must be in X86Register.rax :  for cmpxchg";
         assert Register.assertDifferentRegisters(obj, len, t1, t2, klass);
 
         // determine alignment mask
@@ -3802,11 +2612,6 @@ public class X86MacroAssembler extends X86Assembler {
         // clear rest of allocated space
         Register lenZero = len;
         initializeBody(obj, arrSize, headerSize * wordSize, lenZero);
-
-        if (compilation.runtime.dtraceAllocProbes()) {
-            assert obj == X86Register.rax : "must be";
-            call(new RuntimeAddress(CiRuntimeCall.DtraceObjectAlloc));
-        }
 
         verifyOop(obj);
     }
@@ -3893,7 +2698,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void allocateObject(Register obj, Register t1, Register t2, int headerSize, int objectSize, Register klass, Label slowCase) {
-        assert obj == X86Register.rax : "obj must be in X86Register.rax :  for cmpxchg";
+        assert obj == X86.rax : "obj must be in X86Register.rax :  for cmpxchg";
         assert obj != t1 && obj != t2 && t1 != t2 : "registers must be different"; // XXX really?
         assert headerSize >= 0 && objectSize >= headerSize : "illegal sizes";
 
@@ -3944,11 +2749,6 @@ public class X86MacroAssembler extends X86Assembler {
 
         }
 
-        if (compilation.runtime.dtraceAllocProbes()) {
-            assert obj == X86Register.rax : "must be";
-            call(new RuntimeAddress(CiRuntimeCall.DtraceObjectAlloc));
-        }
-
         verifyOop(obj);
     }
 
@@ -3973,14 +2773,6 @@ public class X86MacroAssembler extends X86Assembler {
             cmovq(cc, dst, src);
         } else {
             cmovl(cc, dst, src);
-        }
-    }
-
-    void orptr(Register dst, Address src) {
-        if (compilation.target.arch.is64bit()) {
-            orq(dst, src);
-        } else {
-            orl(dst, src);
         }
     }
 
@@ -4040,19 +2832,11 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    void notptr(Register dst) {
-        if (compilation.target.arch.is64bit()) {
-            notq(dst);
-        } else {
-            notl(dst);
-        }
-    }
-
     @Override
     protected void bangStackWithOffset(int offset) {
         // stack grows down, caller passes positive offset
         assert offset > 0 :  "must bang with negative offset";
-        movl(new Address(X86Register.rsp, (-offset)), X86Register.rax);
+        movl(new Address(X86.rsp, (-offset)), X86.rax);
     }
 
     @Override
@@ -4061,43 +2845,19 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     @Override
-    protected boolean pdCheckInstructionMark() {
-        return true;
-    }
-
-    @Override
     public void buildFrame(int frameSizeInBytes) {
-     // Make sure there is enough stack space for this method's activation.
+        // Make sure there is enough stack space for this method's activation.
         // Note that we do this before doing an enter(). This matches the
         // ordering of C2's stack overflow check / X86Register.rsp decrement and allows
         // the SharedRuntime stack overflow handling to be consistent
         // between the two compilers.
         generateStackOverflowCheck(frameSizeInBytes);
-
         enter();
-
-        // c2 leaves fpu stack dirty. Clean it on entry
-        if (C1XOptions.SSEVersion < 2) {
-          emptyFPUStack();
-        }
-        decrement(X86Register.rsp, frameSizeInBytes); // does not emit code for frameSize == 0
-    }
-
-    public int longConstant(long l) {
-        return dataBuffer.emitLong(l);
-    }
-
-    public int longConstant(long l, int alignment) {
-        dataBuffer.align(alignment);
-        return dataBuffer.emitLong(l);
+        decrement(X86.rsp, frameSizeInBytes); // does not emit code for frameSize == 0
     }
 
     public void shouldNotReachHere() {
         stop("should not reach here");
-    }
-
-    public static void needsCleanUp() {
-        Util.nonFatalUnimplemented();
     }
 
     public static int sizeofDouble() {
