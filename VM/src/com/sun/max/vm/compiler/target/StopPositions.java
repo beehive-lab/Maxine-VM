@@ -65,6 +65,24 @@ public class StopPositions {
     }
 
     /**
+     * Gets the index of a given position in a given stop positions array.
+     *
+     * @param stopPositions a target method's {@linkplain TargetMethod#stopPositions() stop positions} array
+     * @param position a position to search for
+     * @return the index of {@code position} in {@code stopPositions} or -1 if not found
+     */
+    public static int indexOf(int[] stopPositions, int position) {
+        if (stopPositions != null) {
+            for (int i = 0; i < stopPositions.length; ++i) {
+                if (get(stopPositions, i) == position) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    /**
      * Determines if a given position denotes a native function call.
      *
      * @param stopPositions a target method's {@linkplain TargetMethod#stopPositions() stop positions} array

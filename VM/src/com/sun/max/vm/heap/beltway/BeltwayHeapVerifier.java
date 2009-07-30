@@ -58,9 +58,10 @@ public class BeltwayHeapVerifier {
         return cellVerifier;
     }
 
-    private final PointerOffsetVisitor pointerOffsetVisitor = new PointerOffsetVisitor() {
-        public void visitPointerOffset(Pointer pointer, int offset) {
-            ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).pointerOffsetGripVerifier().visitPointerOffset(pointer, offset, belt, belt);
+    private final PointerIndexVisitor pointerIndexVisitor = new PointerIndexVisitor() {
+        @Override
+        public void visit(Pointer pointer, int index) {
+            ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).pointerIndexGripVerifier().visitPointerIndex(pointer, index, belt, belt);
         }
     };
 
@@ -81,11 +82,11 @@ public class BeltwayHeapVerifier {
             cellVerifier.checkHub(hub);
             final SpecificLayout specificLayout = hub.specificLayout;
             if (specificLayout.isTupleLayout()) {
-                TupleReferenceMap.visitOriginOffsets(hub, origin, pointerOffsetVisitor);
+                TupleReferenceMap.visitReferences(hub, origin, pointerIndexVisitor);
                 cell = cell.plus(hub.tupleSize);
             } else {
                 if (specificLayout.isHybridLayout()) {
-                    TupleReferenceMap.visitOriginOffsets(hub, origin, pointerOffsetVisitor);
+                    TupleReferenceMap.visitReferences(hub, origin, pointerIndexVisitor);
                 } else if (specificLayout.isReferenceArrayLayout()) {
                     final int length = Layout.readArrayLength(origin);
                     for (int index = 0; index < length; index++) {
@@ -95,6 +96,5 @@ public class BeltwayHeapVerifier {
                 cell = cell.plus(Layout.size(origin));
             }
         }
-
     }
 }

@@ -952,11 +952,12 @@ public final class DataPrototype extends Prototype {
     }
 
     /**
-     * A visitor that sets the relocation flag for the origin of all objects.
+     * A visitor that sets the relocation flag for references.
      */
-    private final PointerOffsetVisitor originOffsetVisitor = new PointerOffsetVisitor() {
-        public void visitPointerOffset(Pointer origin, int offset) {
-            setRelocationFlag(origin.plus(offset));
+    private final PointerIndexVisitor originVisitor = new PointerIndexVisitor() {
+        @Override
+        public void visit(Pointer origin, int index) {
+            setRelocationFlag(origin.plus(index * Word.size()));
         }
     };
 
@@ -985,7 +986,7 @@ public final class DataPrototype extends Prototype {
             return 1;
         }
         final Pointer origin = specificLayout.cellToOrigin(cell.asPointer());
-        TupleReferenceMap.visitOriginOffsets(hub, origin, originOffsetVisitor);
+        TupleReferenceMap.visitReferences(hub, origin, originVisitor);
         return 1 + hub.referenceMapLength;
     }
 

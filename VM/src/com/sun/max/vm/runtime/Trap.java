@@ -182,7 +182,7 @@ public abstract class Trap {
                 case ILLEGAL_INSTRUCTION:
                     // deoptimization
                     // TODO: deoptimization
-                    FatalError.unexpected("illegal instruction", Address.zero(), null, trapState);
+                    FatalError.unexpected("illegal instruction", false, null, trapState);
                     break;
                 case ARITHMETIC_EXCEPTION:
                     // integer divide by zero
@@ -191,10 +191,10 @@ public abstract class Trap {
             }
         } else {
             // the fault occurred in native code
-            Log.print("Trap in native code (or runtime stub) @ ");
+            Log.print("Trap in native code (or a runtime stub) @ ");
             Log.print(instructionPointer);
             Log.println(", exiting.");
-            FatalError.unexpected("Trap in native code", instructionPointer, null, trapState);
+            FatalError.unexpected("Trap in native code or a runtime stub", true, null, trapState);
         }
     }
 
@@ -207,8 +207,8 @@ public abstract class Trap {
      * @param trapNumber the trap number
      * @param trapState the trap state area on the stack
      * @param faultAddress the faulting address that caused the trap (memory faults only)
-     * @return a reference to the {@code TargetMethod} containing the instruction pointer that caused the trap; {@code
-     *         null} if neither a runtime stub nor a target method produced the trap
+     * @return a reference to the {@code TargetMethod} or {@link RuntimeStub} containing the instruction pointer that
+     *         caused the trap or {@code null} if trap occurred in native code
      */
     private static Object checkTrapOrigin(int trapNumber, Pointer trapState, Address faultAddress) {
         final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
@@ -234,7 +234,7 @@ public abstract class Trap {
             Log.println(faultAddress);
             trapStateAccess.logTrapState(trapState);
             if (dumpStackOnTrap.getValue()) {
-                Throw.stackDump("", instructionPointer, trapStateAccess.getStackPointer(trapState, null), trapStateAccess.getFramePointer(trapState, null));
+                Throw.stackDump("Stack trace:", instructionPointer, trapStateAccess.getStackPointer(trapState, null), trapStateAccess.getFramePointer(trapState, null));
             }
             Log.unlock(lockDisabledSafepoints);
         }
@@ -246,18 +246,10 @@ public abstract class Trap {
         // check to see if this fault originated in a runtime stub
         final RuntimeStub runtimeStub = Code.codePointerToRuntimeStub(instructionPointer);
         if (runtimeStub != null) {
-            Log.print("Trap ");
-            Log.print(trapNumber);
-            Log.print(" in runtime stub @ ");
             return runtimeStub;
         }
 
         // this fault occurred in native code
-        Log.print("Trap ");
-        Log.print(trapNumber);
-        Log.print(" in native code @ ");
-        Log.println(instructionPointer);
-
         return null;
     }
 
@@ -281,7 +273,7 @@ public abstract class Trap {
         final Pointer safepointLatch = trapStateAccess.getSafepointLatch(trapState);
 
         if (VmThread.current().isGCThread()) {
-            FatalError.unexpected("Memory fault on a GC thread", Address.zero(), null, trapState);
+            FatalError.unexpected("Memory fault on a GC thread", false, null, trapState);
         }
 
         // check to see if a safepoint has been triggered for this thread
@@ -327,7 +319,7 @@ public abstract class Trap {
             raise(trapState, targetMethod, new NullPointerException(), stackPointer, framePointer, instructionPointer);
         } else {
             // segmentation fault happened in native code somewhere, die.
-            FatalError.unexpected("Trap in native code", instructionPointer, null, trapState);
+            FatalError.unexpected("Trap in native code", true, null, trapState);
         }
     }
 
