@@ -275,7 +275,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         }
     }
 
-<<<<<<< local
     /**
      * A procedure to update a grip so that it points to an object in 'toSpace'.
      *
@@ -284,21 +283,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     private final class GripUpdater extends PointerIndexVisitor {
         @Override
         public void visit(Pointer pointer, int wordIndex) {
-=======
-    private final class PointerOffsetGripUpdater implements PointerOffsetVisitor {
-
-        public void visitPointerOffset(Pointer pointer, int offset) {
-            final Grip oldGrip = pointer.readGrip(offset);
-            final Grip newGrip = mapGrip(oldGrip);
-            if (newGrip != oldGrip) {
-                pointer.writeGrip(offset, newGrip);
-            }
-        }
-    }
-
-    private final class PointerIndexGripUpdater implements PointerIndexVisitor {
-        public void visitPointerIndex(Pointer pointer, int wordIndex) {
->>>>>>> other
             final Grip oldGrip = pointer.getGrip(wordIndex);
             final Grip newGrip = mapGrip(oldGrip);
             if (newGrip != oldGrip) {
