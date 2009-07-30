@@ -24,24 +24,12 @@ import com.sun.max.unsafe.*;
 
 /**
  * A policy object that helps with taking decisions with respect to when to refill a tlab on allocation failure, what size the tlab should have on next refill etc....
- * TLABRefillPolicy are stored in a thread local variable TLAB_REFILL_POLICY if tlabs are being used.
+ * TLABRefillPolicy are stored in a thread local variable TLAB_REFILL_POLICY if tlabs are being used. Threads may refer to the same TLAB policy or
+ * to one individual policy if the policy allows each thread to have their TLAB evolves differently.
  *
  * @author Laurent Daynes
  */
-public class TLABRefillPolicy {
-    //public static final VmThreadLocal TLAB_REFILL_POLICY = new VmThreadLocal("TLAB_REFILL_POLICY", Kind.REFERENCE, "Refill policy for thread's TLABs");
-
-    private static final ThreadLocal<TLABRefillPolicy> TLAB_REFILL_POLICY = new ThreadLocal<TLABRefillPolicy>();
-
-    /**
-     * A TLAB policy that never refills. Just a convenience to disable TLAB use when using HeapSchemeWithTLAB.
-     */
-    public static final TLABRefillPolicy NEVER_REFILL_TLAB = new TLABRefillPolicy(Size.zero()) {
-        @Override
-        public boolean shouldRefill(Size size, Pointer allocationMark) {
-            return false;
-        }
-    };
+public class SimpleTLABRefillPolicy extends TLABRefillPolicy {
 
     /**
      * Number of allocation failure tolerated per allocation mark.
@@ -79,13 +67,14 @@ public class TLABRefillPolicy {
     private Pointer lastMark;
 
 
-    public TLABRefillPolicy(Size initialTLABSize) {
+    public SimpleTLABRefillPolicy(Size initialTLABSize) {
         lastMark = Pointer.zero();
         allocationFailures = 0;
         nextSize = initialTLABSize;
         refillThreshold = initialTLABSize.dividedBy(TLAB_REFILL_RATIO);
     }
 
+    @Override
     public boolean shouldRefill(Size size, Pointer allocationMark) {
         if (size.greaterThan(refillThreshold)) {
             return true;
@@ -100,22 +89,10 @@ public class TLABRefillPolicy {
         return allocationFailures > TLAB_NUM_ALLOCATION_FAILURES_PER_MARK;
     }
 
-    /**
-     * Returns the size the TLAB should have on next refill.
-     * @return
-     */
-    public Size tlabSize() {
+    @Override
+    public Size nextTlabSize() {
         // Currently, nothing fancy. Just always returns the initial TLAB size value.
         return nextSize;
     }
 
-    public static TLABRefillPolicy getCurrentThreadPolicy() {
-        // FIXME: here check that a refill policy exists for the current thread. If not, this thread hasn't perform allocation yet. We should allocate a refill policy.
-        TLABRefillPolicy tlabRefillPolicy = TLAB_REFILL_POLICY.get();
-        return tlabRefillPolicy;
-    }
-
-    public static void setCurrentThreadPolicy(TLABRefillPolicy policy) {
-        TLAB_REFILL_POLICY.set(policy);
-    }
 }
