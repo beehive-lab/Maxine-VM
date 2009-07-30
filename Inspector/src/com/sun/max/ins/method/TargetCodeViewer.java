@@ -145,10 +145,10 @@ public abstract class TargetCodeViewer extends CodeViewer {
         final int targetCodeLength = teleTargetRoutine.targetCodeRegion().size().toInt();
         final int[] positionToStopIndex = new int[targetCodeLength];
         Arrays.fill(positionToStopIndex, -1);
-        final int[] stopPositions = teleTargetRoutine.getStopPositions();
+        final StopPositions stopPositions = teleTargetRoutine.getStopPositions();
         if (stopPositions != null) {
-            for (int i = 0; i < stopPositions.length; ++i) {
-                positionToStopIndex[stopPositions[i]] = i;
+            for (int i = 0; i < stopPositions.length(); ++i) {
+                positionToStopIndex[stopPositions.get(i)] = i;
             }
         }
 

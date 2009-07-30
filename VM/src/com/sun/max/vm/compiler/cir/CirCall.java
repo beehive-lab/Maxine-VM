@@ -53,6 +53,7 @@ public final class CirCall extends CirNode {
     private CirValue procedure;
     private CirValue[] arguments;
     private CirJavaFrameDescriptor javaFrameDescriptor;
+    private boolean isNative;
 
     public CirCall() {
     }
@@ -140,10 +141,18 @@ public final class CirCall extends CirNode {
         procedure = call.procedure;
         arguments = call.arguments;
         javaFrameDescriptor = call.javaFrameDescriptor;
+        isNative = call.isNative;
     }
 
     public boolean isFoldable() {
         return false;
+    }
+
+    /**
+     * @see #isNative()
+     */
+    public void setIsNative() {
+        isNative = true;
     }
 
     /**
@@ -152,7 +161,7 @@ public final class CirCall extends CirNode {
      * {@link Bytecode#CALLNATIVE} instruction.
      */
     public boolean isNative() {
-        return javaFrameDescriptor != null && javaFrameDescriptor.isNativeCall();
+        return isNative;
     }
 
     @Override

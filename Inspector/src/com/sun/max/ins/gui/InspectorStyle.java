@@ -235,6 +235,17 @@ public interface InspectorStyle {
     Icon debugContinueButtonIcon();
     Icon debugPauseButtonIcon();
 
+    Icon generalFindIcon();
+
+    Icon navigationUpIcon();
+    Icon navigationDownIcon();
+    Icon navigationForwardIcon();
+    Icon navigationBackIcon();
+    Icon navigationHomeIcon();
+
+    Icon mediaStepBackIcon();
+    Icon mediaStepForwardIcon();
+
     Icon debugActiveRowButtonIcon();
 
     // Display of memory locations:  object fields, array elements, thread locals, etc.

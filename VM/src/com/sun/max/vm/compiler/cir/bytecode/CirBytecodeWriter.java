@@ -259,11 +259,11 @@ public class CirBytecodeWriter extends CirVisitor {
     @Override
     public void visitCall(CirCall call) {
         final CirValue[] arguments = call.arguments();
-        final Opcode implicitOperandOpcode = CALL.withImplicitOperand(arguments.length);
+        final Opcode implicitOperandOpcode = call.isNative() ? null : CALL.withImplicitOperand(arguments.length);
         if (implicitOperandOpcode != null) {
             writeOpcode(implicitOperandOpcode);
         } else {
-            writeOpcode(CALL);
+            writeOpcode(call.isNative() ? NATIVE_CALL : CALL);
             writeUnsignedInt(arguments.length);
         }
         writeJavaFrameDescriptor(call.javaFrameDescriptor());

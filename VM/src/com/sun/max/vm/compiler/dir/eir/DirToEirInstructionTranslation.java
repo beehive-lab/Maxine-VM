@@ -152,13 +152,13 @@ public abstract class DirToEirInstructionTranslation implements DirVisitor {
         }
     }
 
-    private void generateCall(DirJavaFrameDescriptor dirJavaFrameDescriptor, EirABI abi, Kind resultKind, EirValue result, EirValue function, Kind[] argumentKinds, EirValue... arguments) {
+    private void generateCall(DirJavaFrameDescriptor dirJavaFrameDescriptor, EirABI abi, Kind resultKind, EirValue result, EirValue function, Kind[] argumentKinds, boolean isNativeFunctionCall, EirValue... arguments) {
         final EirLocation[] argumentLocations = abi.getParameterLocations(EirStackSlot.Purpose.LOCAL, argumentKinds);
         final EirLocation resultLocation = (result == null) ? null : abi.getResultLocation(resultKind);
         final boolean isTemplate = methodTranslation.isTemplate();
         final EirCall instruction = isTemplate ?
                         methodTranslation.createRuntimeCall(eirBlock, abi, result, resultLocation, function, arguments, argumentLocations) :
-                        methodTranslation.createCall(eirBlock, abi, result, resultLocation, function, arguments, argumentLocations);
+                        methodTranslation.createCall(eirBlock, abi, result, resultLocation, function, arguments, argumentLocations, isNativeFunctionCall);
         addInstruction(instruction);
         if (!isTemplate) {
             instruction.setEirJavaFrameDescriptor(methodTranslation.dirToEirJavaFrameDescriptor(dirJavaFrameDescriptor, instruction));
@@ -178,8 +178,8 @@ public abstract class DirToEirInstructionTranslation implements DirVisitor {
         addInstruction(new EirTry(eirBlock(), null));
         final MethodActor classMethodActor = NonFoldableSnippet.RaiseThrowable.SNIPPET.classMethodActor();
         final EirValue eirThrowable = methodTranslation.dirToEirValue(dirThrow.throwable());
-        generateCall(null, methodTranslation.eirGenerator.eirABIsScheme().javaABI(), null, null,
-                     makeRaiseThrowableEirValue(), classMethodActor.getParameterKinds(), eirThrowable);
+        generateCall(null, methodTranslation.eirGenerator.eirABIsScheme().javaABI, null, null,
+                     makeRaiseThrowableEirValue(), classMethodActor.getParameterKinds(), false, eirThrowable);
         // No need for a JavaFrameDescriptor here.
         // Throw.raise() disables safepoints until the exception has been delivered to its dispatcher.
     }
@@ -202,16 +202,18 @@ public abstract class DirToEirInstructionTranslation implements DirVisitor {
         }
 
         EirABI abi;
+        boolean isNativeFunctionCall = false;
         if (dirMethodCall.method() instanceof DirMethodValue) {
             final DirMethodValue dirMethodValue = (DirMethodValue) dirMethodCall.method();
             abi = methodTranslation.eirGenerator.eirABIsScheme().getABIFor(dirMethodValue.classMethodActor());
         } else if (dirMethodCall.isNative()) {
-            abi = methodTranslation.eirGenerator.eirABIsScheme().nativeABI();
+            abi = methodTranslation.eirGenerator.eirABIsScheme().nativeABI;
+            isNativeFunctionCall = true;
         } else {
-            abi = methodTranslation.eirGenerator.eirABIsScheme().javaABI();
+            abi = methodTranslation.eirGenerator.eirABIsScheme().javaABI;
         }
 
-        generateCall(dirMethodCall.javaFrameDescriptor(), abi, resultKind, eirResult, methodEirValue, argumentKinds, eirArguments);
+        generateCall(dirMethodCall.javaFrameDescriptor(), abi, resultKind, eirResult, methodEirValue, argumentKinds, isNativeFunctionCall, eirArguments);
 
         if (dirMethodCall.catchBlock() != null && methodEirValue != makeRaiseThrowableEirValue()) {
             splitBlock();

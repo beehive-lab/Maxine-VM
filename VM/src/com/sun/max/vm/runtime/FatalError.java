@@ -46,7 +46,7 @@ public final class FatalError extends Error {
     static {
         ProgramError.setHandler(new Handler() {
             public void handle(String message, Throwable throwable) {
-                unexpected(message, Address.zero(), throwable, Pointer.zero());
+                unexpected(message, false, throwable, Pointer.zero());
             }
         });
     }
@@ -71,11 +71,11 @@ public final class FatalError extends Error {
      * This method does not perform any synchronization or heap allocation.
      *
      * @param message a message describing the error condition. This value may be {@code null}.
-     * @see #unexpected(String, Address, Throwable, Pointer)
+     * @see #unexpected(String, boolean, Throwable, Pointer)
      * @return never
      */
     public static FatalError unexpected(String message) {
-        throw unexpected(message, Address.zero(), null, Pointer.zero());
+        throw unexpected(message, false, null, Pointer.zero());
     }
 
     /**
@@ -87,46 +87,30 @@ public final class FatalError extends Error {
      *
      * @param message a message describing the error condition. This value may be {@code null}.
      * @param throwable an exception given more detail on the cause of the error condition. This value may be {@code null}.
-     * @see #unexpected(String, Address, Throwable, Pointer)
+     * @see #unexpected(String, boolean, Throwable, Pointer)
      * @return never
      */
     public static FatalError unexpected(String message, Throwable throwable) {
-        throw unexpected(message, Address.zero(), throwable, Pointer.zero());
+        throw unexpected(message, false, throwable, Pointer.zero());
     }
 
     /**
-     * Reports the occurrence of a trap that occurred while executing native code.
-     *
-     * This method never returns normally.
-     *
-     * This method does not perform any synchronization or heap allocation.
-     *
-     * @param message a message describing the trap. This value may be {@code null}.
-     * @param nativeTrapAddress the address reported by the OS at which the trap occurred
-     * @see #unexpected(String, Address, Throwable, Pointer)
-     * @return never
-     */
-    public static FatalError unexpected(String message, Address nativeTrapAddress) {
-        throw unexpected(message, nativeTrapAddress, null, Pointer.zero());
-    }
-
-    /**
-     * Reports the occurrence of some error condition. Before exiting the VM, this method attempts to
-     * print a stack trace.
+     * Reports the occurrence of some error condition. Before exiting the VM, this method attempts to print a stack
+     * trace.
      *
      * This method never returns normally.
      *
      * If {@code throwable == null}, this method does not perform any synchronization or heap allocation.
      *
      * @param message a message describing the trap. This value may be {@code null}.
-     * @param nativeTrapAddress if this value is not equal to {@link Address#zero()}, then it is the address reported by
-     *            the OS at which a trap occurred in native code
+     * @param trappedInNative specifies if this is a fatal error due to a trap in native code. If so, then the native
+     *            code instruction pointer at which the trap occurred can be extracted from {@code trapState}
      * @param throwable an exception given more detail on the cause of the error condition. This value may be {@code null}.
      * @param trapState if non-zero, then this is a pointer to the {@linkplain TrapStateAccess trap state} for the trap
      *            resulting in this fatal error
      * @return never
      */
-    public static FatalError unexpected(String message, Address nativeTrapAddress, Throwable throwable, Pointer trapState) {
+    public static FatalError unexpected(String message, boolean trappedInNative, Throwable throwable, Pointer trapState) {
         if (MaxineVM.isPrototyping()) {
             throw new FatalError(message, throwable);
         }
@@ -161,7 +145,7 @@ public final class FatalError extends Error {
             TrapStateAccess.instance().logTrapState(trapState);
         }
 
-        dumpStackAndThreadLocals(VmThread.currentVmThreadLocals());
+        dumpStackAndThreadLocals(VmThread.currentVmThreadLocals(), trappedInNative);
 
         if (throwable != null) {
             Log.print("------ Cause Exception ------");
@@ -169,15 +153,15 @@ public final class FatalError extends Error {
         }
         VmThreadMap.ACTIVE.forAllVmThreadLocals(null, dumpStackOfNonCurrentThread);
 
-        if (!nativeTrapAddress.isZero() || Throw.scanStackOnFatalError.getValue()) {
+        if (trappedInNative || Throw.scanStackOnFatalError.getValue()) {
             final Word highestStackAddress = VmThreadLocal.HIGHEST_STACK_SLOT_ADDRESS.getConstantWord();
             Throw.stackScan("RAW STACK SCAN FOR CODE POINTERS:", VMRegister.getCpuStackPointer(), highestStackAddress.asPointer());
         }
         Log.unlock(lockDisabledSafepoints);
-        if (nativeTrapAddress.isZero()) {
+        if (!trappedInNative) {
             MaxineVM.native_exit(11);
         }
-        MaxineVM.native_trap_exit(11, nativeTrapAddress);
+        MaxineVM.native_trap_exit(11, trapState.isZero() ? Address.zero() :  TrapStateAccess.instance().getInstructionPointer(trapState));
         throw null; // unreachable
     }
 
@@ -200,7 +184,7 @@ public final class FatalError extends Error {
     @INLINE
     public static void check(boolean condition, String message) {
         if (!condition) {
-            unexpected(message, Address.zero(), null, Pointer.zero());
+            unexpected(message, false, null, Pointer.zero());
         }
     }
 
@@ -211,24 +195,25 @@ public final class FatalError extends Error {
      *
      * This method does not perform any synchronization or heap allocation.
      *
-     * @see #unexpected(String, Address, Throwable, Pointer)
+     * @see #unexpected(String, boolean, Throwable, Pointer)
      * @return never
      */
     public static FatalError unimplemented() {
-        throw unexpected("Unimplemented", Address.zero(), null, Pointer.zero());
+        throw unexpected("Unimplemented", false, null, Pointer.zero());
     }
 
     /**
      * Dumps the stack and thread locals of a given thread to the log stream.
      *
      * @param vmThreadLocals VM thread locals of a thread
+     * @param trappedInNative specifies if this is for a thread that trapped in native code
      */
-    static void dumpStackAndThreadLocals(Pointer vmThreadLocals) {
+    static void dumpStackAndThreadLocals(Pointer vmThreadLocals, boolean trappedInNative) {
         final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
         Log.print("------ Stack dump for thread ");
         Log.printVmThread(vmThread, false);
         Log.println(" ------");
-        if (vmThreadLocals == VmThread.currentVmThreadLocals()) {
+        if (!trappedInNative && vmThreadLocals == VmThread.currentVmThreadLocals()) {
             Throw.stackDump(null, VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer());
         } else {
             Throw.stackDump(null, vmThreadLocals);
@@ -243,7 +228,7 @@ public final class FatalError extends Error {
     static final class DumpStackOfNonCurrentThread implements Pointer.Procedure {
         public void run(Pointer vmThreadLocals) {
             if (SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals) != SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord()) {
-                dumpStackAndThreadLocals(vmThreadLocals);
+                dumpStackAndThreadLocals(vmThreadLocals, false);
             }
         }
     }

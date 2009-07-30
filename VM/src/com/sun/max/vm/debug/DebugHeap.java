@@ -33,7 +33,6 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.type.*;
 
 /**
  * A collection of routines useful for placing and operating on special
@@ -146,8 +145,7 @@ public final class DebugHeap {
     }
 
     /**
-     * Verifies that a reference value denoted by a given base pointer and scaled index points into a known object
-     * address space.
+     * Verifies that a reference value denoted by a given base pointer and index points into a known object address space.
      *
      * @param address the base pointer of a reference. If this value is {@link Address#zero()}, then both it and {@code
      *            index} are ignored.
@@ -164,7 +162,9 @@ public final class DebugHeap {
         if (grip.isZero()) {
             return;
         }
-        checkGripTag(grip);
+        if (MaxineVM.isDebug()) {
+            checkGripTag(grip);
+        }
         final Pointer origin = grip.toOrigin();
         if (Heap.bootHeapRegion.contains(origin) || Code.contains(origin)) {
             return;
@@ -180,8 +180,8 @@ public final class DebugHeap {
         if (!address.isZero()) {
             Log.print(" @ ");
             Log.print(address);
-            Log.print(" + ");
-            Log.print(index);
+            Log.print("+");
+            Log.print(index * Word.size());
         }
         Log.println();
         FatalError.unexpected("invalid grip");
@@ -190,7 +190,8 @@ public final class DebugHeap {
     private static Hub checkHub(Pointer origin, MemoryRegion space) {
         final Grip hubGrip = Layout.readHubGrip(origin);
         FatalError.check(!hubGrip.isZero(), "null hub");
-        verifyGripAtIndex(origin, Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt(), hubGrip, space, null);
+        final int hubIndex = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).dividedBy(Word.size()).toInt();
+        verifyGripAtIndex(origin, hubIndex, hubGrip, space, null);
         final Hub hub = UnsafeLoophole.cast(hubGrip.toJava());
 
         Hub h = hub;
@@ -227,7 +228,7 @@ public final class DebugHeap {
      *            {@link #verifyGripAtIndex(Address, int, Grip, MemoryRegion, MemoryRegion)} for a reference value denoted by a base
      *            pointer and offset
      */
-    public static void verifyRegion(String description, Address start, final Address end, final MemoryRegion space, PointerOffsetVisitor verifier) {
+    public static void verifyRegion(String description, Address start, final Address end, final MemoryRegion space, PointerIndexVisitor verifier) {
 
         if (Heap.traceGCPhases()) {
             Log.print("Verifying region ");
@@ -265,15 +266,15 @@ public final class DebugHeap {
 
             final SpecificLayout specificLayout = hub.specificLayout;
             if (specificLayout.isTupleLayout()) {
-                TupleReferenceMap.visitOriginOffsets(hub, origin, verifier);
+                TupleReferenceMap.visitReferences(hub, origin, verifier);
                 cell = cell.plus(hub.tupleSize);
             } else {
                 if (specificLayout.isHybridLayout()) {
-                    TupleReferenceMap.visitOriginOffsets(hub, origin, verifier);
+                    TupleReferenceMap.visitReferences(hub, origin, verifier);
                 } else if (specificLayout.isReferenceArrayLayout()) {
                     final int length = Layout.readArrayLength(origin);
                     for (int index = 0; index < length; index++) {
-                        verifyGripAtIndex(origin, index * Kind.REFERENCE.width.numberOfBytes, Layout.getGrip(origin, index), space, null);
+                        verifyGripAtIndex(origin, index, Layout.getGrip(origin, index), space, null);
                     }
                 }
                 cell = cell.plus(Layout.size(origin));
