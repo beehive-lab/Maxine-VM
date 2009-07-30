@@ -99,18 +99,18 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
     private StopTheWorldGCDaemon collectorThread;
 
-    private final SemiSpaceMemoryRegion fromSpace = new SemiSpaceMemoryRegion("Heap-From");
-    private final SemiSpaceMemoryRegion toSpace = new SemiSpaceMemoryRegion("Heap-To");
+    private final RuntimeMemoryRegion fromSpace = new RuntimeMemoryRegion("Heap-From");
+    private final RuntimeMemoryRegion toSpace = new RuntimeMemoryRegion("Heap-To");
 
     /**
      * Used when {@linkplain #grow(GrowPolicy) growing} the heap.
      */
-    private final SemiSpaceMemoryRegion growFromSpace = new SemiSpaceMemoryRegion("Heap-From-Grow");
+    private final RuntimeMemoryRegion growFromSpace = new RuntimeMemoryRegion("Heap-From-Grow");
 
     /**
      * Used when {@linkplain #grow(GrowPolicy) growing} the heap.
      */
-    private final SemiSpaceMemoryRegion growToSpace = new SemiSpaceMemoryRegion("Heap-To-Grow");
+    private final RuntimeMemoryRegion growToSpace = new RuntimeMemoryRegion("Heap-To-Grow");
 
     /**
      * The amount of memory reserved for allocating and raising an OutOfMemoryError when insufficient
@@ -357,7 +357,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 stopTimer(gcTimer);
 
                 // Bring the inspectable mark up to date, since it is not updated during the move.
-                toSpace.setAllocationMark(allocationMark()); // for debugging
+                toSpace.mark.set(allocationMark()); // for debugging
 
                 VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
 
@@ -400,11 +400,11 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      * Attempts to allocate memory of given size for given space.
      * If successful sets region start and size.
      */
-    private static Address allocateSpace(SemiSpaceMemoryRegion space, Size size) {
+    private static Address allocateSpace(RuntimeMemoryRegion space, Size size) {
         final Address base = virtualAllocOption.getValue() ? VirtualMemory.allocate(size, VirtualMemory.Type.HEAP) : Memory.allocate(size);
         if (!base.isZero()) {
             space.setStart(base);
-            space.setAllocationMark(base); // debugging
+            space.mark.set(base); // debugging
             space.setSize(size);
         }
         return base;
@@ -415,7 +415,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      * Deallocates the memory associated with the given region.
      * Sets the region start to zero but does not change the size.
      */
-    private static void deallocateSpace(SemiSpaceMemoryRegion space) {
+    private static void deallocateSpace(RuntimeMemoryRegion space) {
         final Address base = space.start();
         if (virtualAllocOption.getValue()) {
             VirtualMemory.deallocate(base, space.size(), VirtualMemory.Type.HEAP);
@@ -430,9 +430,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      * Copies the state of one space into another.
      * Used when growing the semispaces.
      */
-    private static void copySpaceState(SemiSpaceMemoryRegion from, SemiSpaceMemoryRegion to) {
+    private static void copySpaceState(RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         to.setStart(from.start());
-        to.setAllocationMark(from.start());
+        to.mark.set(from.start());
         to.setSize(from.size());
     }
 
@@ -442,11 +442,11 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
         fromSpace.setStart(toSpace.start());
         fromSpace.setSize(toSpace.size());
-        fromSpace.setAllocationMark(toSpace.getAllocationMark()); // for debugging
+        fromSpace.mark.set(toSpace.getAllocationMark()); // for debugging
 
         toSpace.setStart(oldFromSpaceStart);
         toSpace.setSize(oldFromSpaceSize);
-        toSpace.setAllocationMark(toSpace.start());  // for debugging
+        toSpace.mark.set(toSpace.start());  // for debugging
 
         allocationMark.set(toSpace.start());
         top = toSpace.end();
@@ -1030,7 +1030,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         }
     }
 
-    private void logSpace(SemiSpaceMemoryRegion space) {
+    private void logSpace(RuntimeMemoryRegion space) {
         Log.print(space.description());
         Log.print(" start "); Log.print(space.start());
         Log.print(", end "); Log.print(space.end());
