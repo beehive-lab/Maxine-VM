@@ -258,14 +258,6 @@ public class RegisterVerifier {
 
                     assert checkState(inputState, interval.assignedReg(), interval.splitParent());
                     assert checkState(inputState, interval.assignedRegHi(), interval.splitParent());
-
-                    // When an operand is marked with isLastUse, then the fpu stack allocator
-                    // removes the register from the fpu stack . the register contains no value
-                    // TODO: (tw) check why this leads to problems! " && opr.isFpuRegister()" manually inserted
-                    if (allocator.isLastUse(opr) && opr.isFpuRegister()) {
-                        statePut(inputState, interval.assignedReg(), null);
-                        statePut(inputState, interval.assignedRegHi(), null);
-                    }
                 }
             }
 

@@ -34,7 +34,8 @@ import com.sun.max.vm.tele.*;
  * @author Christos Kotselidis
  *
  * A Beltway collector configured as a generational heap.
- * Configured with three belts: one for an nursery (the eden space); one for the tenured generation (the mature space);
+ * Configured with three belts: one for a nursery (the eden space); one for a survivor space (to space);
+ * and one for the tenured generation (the mature space).
  */
 public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
     /**
@@ -44,12 +45,7 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
      */
     private static final  int [] DEFAULT_BELT_HEAP_PERCENTAGE = new int[] {10, 40, 50};
 
-    @Override
-    protected int [] defaultBeltHeapPercentage() {
-        return DEFAULT_BELT_HEAP_PERCENTAGE;
-    }
-
-    protected static BeltwayGenerationalCollector beltCollectorGenerational = new BeltwayGenerationalCollector();
+    private final BeltwayGenerationalCollector beltCollectorGenerational = new BeltwayGenerationalCollector();
 
     public BeltwayHeapSchemeGenerational(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -60,16 +56,20 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
         super.initialize(phase);
         if (phase == MaxineVM.Phase.PRISTINE) {
             InspectableHeapInfo.init(getEdenSpace(), getToSpace(), getMatureSpace());
+            tlabAllocationBelt = getEdenSpace();
         } else if (phase == MaxineVM.Phase.RUNNING) {
             beltCollectorGenerational.setBeltwayHeapScheme(this);
             beltCollector.setRunnable(beltCollectorGenerational);
-            heapVerifier.initialize(this);
-            heapVerifier.getRootsVerifier().setFromSpace(beltManager.getApplicationHeap());
-            heapVerifier.getRootsVerifier().setToSpace(getMatureSpace());
+            heapVerifier.initialize(beltManager.getApplicationHeap(), getMatureSpace());
             if (Heap.verbose()) {
                 HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "EdenGC", "ToSpaceGC", "MatureSpaceGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "CardScan", "Scavenge");
             }
         }
+    }
+
+    @Override
+    protected int [] defaultBeltHeapPercentage() {
+        return DEFAULT_BELT_HEAP_PERCENTAGE;
     }
 
     @INLINE
@@ -85,25 +85,6 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
     @INLINE
     public final Belt getMatureSpace() {
         return beltManager.getBelt(2);
-    }
-
-    /**
-     * This is the generic allocator which first attempt to allocate space on current thread's TLAB. If allocation
-     * fails, it checks if a new TLAB can be allocated in the youngest belt. If the TLAB allocation is successful the
-     * object is allocated in the new allocated TLAB. Otherwise a minor GC is triggered. TODO: Recalculate tlabs' sizes
-     *
-     * @param size The size of the allocation.
-     * @return the pointer to the address in which we can allocate. If null, a GC should be triggered.
-     */
-    @INLINE(override = true)
-    public Pointer allocate(Size size) {
-        if (!MaxineVM.isRunning()) {
-            return bumpAllocateSlowPath(getEdenSpace(), size);
-        }
-        if (BeltwayConfiguration.useTLABS) {
-            return tlabAllocate(getEdenSpace(), size);
-        }
-        return heapAllocate(getEdenSpace(), size);
     }
 
     public synchronized boolean collectGarbage(Size requestedFreeSpace) {

@@ -35,9 +35,9 @@ import com.sun.max.program.*;
  */
 public abstract class RiscInstructionDescriptionCreator extends InstructionDescriptionCreator<RiscInstructionDescription> {
 
-    protected final RiscTemplateCreator<? extends RiscTemplate> templateCreator;
+    protected final RiscTemplateCreator templateCreator;
 
-    protected RiscInstructionDescriptionCreator(Assembly assembly, RiscTemplateCreator<? extends RiscTemplate> templateCreator) {
+    protected RiscInstructionDescriptionCreator(Assembly assembly, RiscTemplateCreator templateCreator) {
         super(assembly);
         this.templateCreator = templateCreator;
     }

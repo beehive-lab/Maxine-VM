@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,46 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.stub;
+package com.sun.max.vm.heap.beltway;
 
-import com.sun.c1x.lir.*;
-
+import com.sun.max.vm.heap.*;
 
 /**
- * The <code>ConversionStub</code> class definition.
- *
- * @author Marcelo Cintra
- *
+ * Interface for visiting cells in a Belt that reaches another Belt.
  */
-public class ConversionStub extends CodeStub {
-
-    public final int bytecode;
-    public final LIROperand input;
-    public final LIROperand result;
-
+public interface BeltCellVisitor extends CellVisitor {
     /**
-     * Constructs a new conversion stub.
-     *
-     * @param opcode
-     * @param input
-     * @param result
+     * Initialize the action the cell visitor will perform on the cell.
      */
-    public ConversionStub(int opcode, LIROperand input, LIROperand result) {
-        super(null);
-        this.bytecode = opcode;
-        this.input = input;
-        this.result = result;
-    }
-
-    @Override
-    public void accept(CodeStubVisitor visitor) {
-        visitor.visitConversionStub(this);
-    }
-
-    @Override
-    public void visit(LIRVisitState visitor) {
-        visitor.doSlowCase();
-        visitor.doInput(input);
-        visitor.doOutput(result);
-    }
+    void init(Belt from, Belt to);
 }

@@ -33,7 +33,7 @@ import com.sun.max.lang.*;
  *
  * @author Bernd Mathiske
  */
-public class SPARC64AssemblyTester extends SPARCAssemblyTester<SPARC64DisassembledInstruction> {
+public class SPARC64AssemblyTester extends SPARCAssemblyTester {
 
     public SPARC64AssemblyTester(EnumSet<AssemblyTestComponent> components) {
         super(SPARCAssembly.ASSEMBLY, WordWidth.BITS_64, components);

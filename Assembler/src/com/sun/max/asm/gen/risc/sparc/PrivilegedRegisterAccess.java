@@ -22,6 +22,8 @@ package com.sun.max.asm.gen.risc.sparc;
 
 import static com.sun.max.asm.gen.risc.sparc.SPARCFields.*;
 
+import com.sun.max.asm.gen.risc.*;
+
 /**
  * @author Bernd Mathiske
  * @author Dave Ungar
@@ -39,7 +41,7 @@ public class PrivilegedRegisterAccess extends SPARCInstructionDescriptionCreator
         define("wrpr", head, i(1), simm13, rdPrivReg);
     }
 
-    PrivilegedRegisterAccess(SPARCTemplateCreator templateCreator) {
+    PrivilegedRegisterAccess(RiscTemplateCreator templateCreator) {
         super(templateCreator);
 
         setCurrentArchitectureManualSection("A.42");

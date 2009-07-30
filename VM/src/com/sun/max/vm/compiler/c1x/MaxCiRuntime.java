@@ -54,8 +54,8 @@ import com.sun.max.vm.type.*;
  */
 public class MaxCiRuntime implements CiRuntime {
 
-    private static final Register[] generalParameterRegisters = new Register[]{X86Register.rdi, X86Register.rsi, X86Register.rdx, X86Register.rcx, X86Register.r8, X86Register.r9};
-    private static final Register[] xmmParameterRegisters = new Register[]{X86Register.xmm0, X86Register.xmm1, X86Register.xmm2, X86Register.xmm3, X86Register.xmm4, X86Register.xmm5, X86Register.xmm6, X86Register.xmm7};
+    private static final Register[] generalParameterRegisters = new Register[]{X86.rdi, X86.rsi, X86.rdx, X86.rcx, X86.r8, X86.r9};
+    private static final Register[] xmmParameterRegisters = new Register[]{X86.xmm0, X86.xmm1, X86.xmm2, X86.xmm3, X86.xmm4, X86.xmm5, X86.xmm6, X86.xmm7};
 
     public static final MaxCiRuntime globalRuntime = new MaxCiRuntime();
 
@@ -166,17 +166,17 @@ public class MaxCiRuntime implements CiRuntime {
         // TODO: move this out of the compiler interface
         switch(i) {
             case 0:
-                return X86Register.rdi;
+                return X86.rdi;
             case 1:
-                return X86Register.rsi;
+                return X86.rsi;
             case 2:
-                return X86Register.rdx;
+                return X86.rdx;
             case 3:
-                return X86Register.rcx;
+                return X86.rcx;
             case 4:
-                return X86Register.r8;
+                return X86.r8;
             case 5:
-                return X86Register.r9;
+                return X86.r9;
         }
         Util.unimplemented();
         throw Util.shouldNotReachHere();
@@ -360,7 +360,7 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public Register javaCallingConventionReceiverRegister() {
-        return X86Register.rax;
+        return X86.rax;
     }
 
     public int markOffsetInBytes() {
@@ -427,10 +427,6 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public int biasedLockPattern() {
-        throw Util.unimplemented();
-    }
-
-    public long biasedLockingFastPathEntryCountAddr() {
         throw Util.unimplemented();
     }
 

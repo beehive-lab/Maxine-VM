@@ -32,7 +32,7 @@ import com.sun.max.collect.*;
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public class OpcodeMaskGroup<Template_Type extends RiscTemplate> {
+public class OpcodeMaskGroup {
 
     private final int mask;
 
@@ -44,31 +44,31 @@ public class OpcodeMaskGroup<Template_Type extends RiscTemplate> {
         return mask;
     }
 
-    private final Set<Template_Type> templates = new HashSet<Template_Type>();
+    private final Set<RiscTemplate> templates = new HashSet<RiscTemplate>();
 
-    private final IntHashMap<AppendableSequence<Template_Type>> templatesForOpcodes = new IntHashMap<AppendableSequence<Template_Type>>();
-    private final Sequence<Template_Type> empty = new LinkSequence<Template_Type>();
+    private final IntHashMap<AppendableSequence<RiscTemplate>> templatesForOpcodes = new IntHashMap<AppendableSequence<RiscTemplate>>();
+    private final Sequence<RiscTemplate> empty = new LinkSequence<RiscTemplate>();
 
-    public void add(Template_Type template) {
+    public void add(RiscTemplate template) {
         assert template.opcodeMask() == mask;
         templates.add(template);
-        AppendableSequence<Template_Type> templatesForOpcode = templatesForOpcodes.get(template.opcode());
+        AppendableSequence<RiscTemplate> templatesForOpcode = templatesForOpcodes.get(template.opcode());
         if (templatesForOpcode == null) {
-            templatesForOpcode = new LinkSequence<Template_Type>();
+            templatesForOpcode = new LinkSequence<RiscTemplate>();
             templatesForOpcodes.put(template.opcode(), templatesForOpcode);
         }
         templatesForOpcode.append(template);
     }
 
-    public Sequence<Template_Type> templatesFor(int opcode) {
-        final Sequence<Template_Type> result = templatesForOpcodes.get(opcode);
+    public Sequence<RiscTemplate> templatesFor(int opcode) {
+        final Sequence<RiscTemplate> result = templatesForOpcodes.get(opcode);
         if (result == null) {
             return empty;
         }
         return result;
     }
 
-    public Sequence<Template_Type> templates() {
-        return new ArraySequence<Template_Type>(templates);
+    public Sequence<RiscTemplate> templates() {
+        return new ArraySequence<RiscTemplate>(templates);
     }
 }

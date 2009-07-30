@@ -38,21 +38,20 @@ import com.sun.max.program.*;
  * @author Greg Wright
  * @author Doug Simon
  */
-public abstract class Disassembler<Template_Type extends Template, DisassembledInstruction_Type extends DisassembledInstruction<Template_Type>> {
+public abstract class Disassembler {
+
+    /**
+     * (tw) Turn on the following flag in order to get debugging output.
+     */
+    public final boolean TRACE = false;
 
     private final ImmediateArgument startAddress;
-    private final Assembly<Template_Type> assembly;
     private final Endianness endianness;
 
-    protected Disassembler(ImmediateArgument startAddress, Assembly<Template_Type> assembly, Endianness endianness, InlineDataDecoder inlineDataDecoder) {
+    protected Disassembler(ImmediateArgument startAddress, Endianness endianness, InlineDataDecoder inlineDataDecoder) {
         this.startAddress = startAddress;
-        this.assembly = assembly;
         this.endianness = endianness;
         this.inlineDataDecoder = inlineDataDecoder;
-    }
-
-    public Assembly<Template_Type> assembly() {
-        return assembly;
     }
 
     public WordWidth addressWidth() {
@@ -80,18 +79,6 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
     public InlineDataDecoder inlineDataDecoder() {
         return inlineDataDecoder;
     }
-
-    /**
-     * Creates a disassembled instruction based on a given sequence of bytes, a template and a set of arguments. The
-     * caller has performed the necessary decoding of the bytes to derive the template and arguments.
-     *
-     * @param position the position an instruction stream from which the bytes were read
-     * @param bytes the bytes of an instruction
-     * @param template the template that corresponds to the instruction encoded in {@code bytes}
-     * @param arguments the arguments of the instruction encoded in {@code bytes}
-     * @return a disassembled instruction representing the result of decoding {@code bytes} into an instruction
-     */
-    protected abstract DisassembledInstruction_Type createDisassembledInstruction(int position, byte[] bytes, Template_Type template, IndexedSequence<Argument> arguments);
 
     /**
      * Creates one or more disassembled data objects representing some given inline data.
@@ -274,7 +261,7 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
     /**
      * Does the actual scanning for {@link #scan(BufferedInputStream)}.
      */
-    public abstract IndexedSequence<DisassembledObject> scan0(BufferedInputStream stream) throws IOException, AssemblyException;
+    protected abstract IndexedSequence<DisassembledObject> scan0(BufferedInputStream stream) throws IOException, AssemblyException;
 
     protected final void scanInlineData(BufferedInputStream stream, AppendableIndexedSequence<DisassembledObject> disassembledObjects) throws IOException {
         if (inlineDataDecoder() != null) {
@@ -336,4 +323,9 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
     public void setExpectedNumberOfArguments(int expectedNumberOfArguments) {
         this.expectedNumberOfArguments = expectedNumberOfArguments;
     }
+
+    public abstract ImmediateArgument addressForRelativeAddressing(DisassembledInstruction di);
+    public abstract String mnemonic(DisassembledInstruction di);
+    public abstract String operandsToString(DisassembledInstruction di, AddressMapper addressMapper);
+    public abstract String toString(DisassembledInstruction di, AddressMapper addressMapper);
 }

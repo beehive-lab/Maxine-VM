@@ -30,6 +30,7 @@ import java.lang.reflect.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.arm.*;
 import com.sun.max.asm.gen.*;
+import com.sun.max.asm.gen.risc.*;
 import com.sun.max.collect.*;
 
 /**
@@ -41,7 +42,7 @@ import com.sun.max.collect.*;
 public final class RawInstructions extends ARMInstructionDescriptionCreator {
     final Immediate32Argument zero = new Immediate32Argument(0);
 
-    RawInstructions(ARMTemplateCreator templateCreator) {
+    RawInstructions(RiscTemplateCreator templateCreator) {
         super(templateCreator);
 
         generateBranch();

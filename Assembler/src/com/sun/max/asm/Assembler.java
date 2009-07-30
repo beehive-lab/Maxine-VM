@@ -22,7 +22,6 @@ package com.sun.max.asm;
 
 import java.io.*;
 
-import com.sun.max.asm.AssemblyObject.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -36,12 +35,17 @@ import com.sun.max.program.*;
  */
 public abstract class Assembler {
 
-    protected Assembler() {
+    private final Directives directives;
+
+    protected Assembler(byte byteData, boolean isValidCode) {
+        this.directives = new Directives(byteData, isValidCode);
     }
 
     public abstract InstructionSet instructionSet();
 
-    public abstract Directives directives();
+    public final Directives directives() {
+        return directives;
+    }
 
     /**
      * Gets the width of a word on machine for which the code is being assembled.
@@ -79,7 +83,15 @@ public abstract class Assembler {
      * @author David Liu
      * @author Doug Simon
      */
-    public abstract class Directives {
+    public final class Directives {
+
+        private final byte padByte;
+        private final boolean isValidCode;
+
+        public Directives(byte padByte, boolean isValidCode) {
+            this.padByte = padByte;
+            this.isValidCode = isValidCode;
+        }
         /**
          * Inserts as many {@linkplain #padByte() pad byte} as necessary to ensure that the next assembled object starts
          * at an address aligned by a given number.
@@ -98,53 +110,41 @@ public abstract class Assembler {
             final int misalignmentSize = (int) (unsignedAddend % alignment);
             final int padSize = misalignmentSize > 0 ? (alignment - misalignmentSize) : 0;
             for (int i = 0; i < padSize; i++) {
-                emitByte(padByte());
+                emitByte(padByte);
             }
-            new AlignmentPadding(Assembler.this, startPosition, currentPosition(), alignment, padByte()) {
-                public Type type() {
-                    return padByteType();
+            new AlignmentPadding(Assembler.this, startPosition, currentPosition(), alignment, padByte) {
+                public boolean isCode() {
+                    return isValidCode;
                 }
             };
         }
 
-        /**
-         * Gets the padding byte used when {@linkplain #align(int) aligning}. Typically, the ISA representation of a
-         * single byte NOP instruction is used as the pad byte if possible.
-         */
-        protected abstract byte padByte();
-
-        /**
-         * Gets an object denoting whether the value of the {@linkplain pad byte} can be decoded as valid code or only
-         * as data.
-         */
-        protected abstract Type padByteType();
-
-        public final void inlineByte(byte byteValue) {
+        public void inlineByte(byte byteValue) {
             addInlineData(currentPosition(), Bytes.SIZE);
             emitByte(byteValue);
         }
 
-        public final void inlineByteArray(byte[] byteArrayValue) {
+        public void inlineByteArray(byte[] byteArrayValue) {
             addInlineData(currentPosition(), byteArrayValue.length);
             emitByteArray(byteArrayValue, 0, byteArrayValue.length);
         }
 
-        public final void inlineByteArray(byte[] byteArrayValue, int offset, int length) {
+        public void inlineByteArray(byte[] byteArrayValue, int offset, int length) {
             addInlineData(currentPosition(), length);
             emitByteArray(byteArrayValue, offset, length);
         }
 
-        public final void inlineShort(short shortValue) {
+        public void inlineShort(short shortValue) {
             addInlineData(currentPosition(), Shorts.SIZE);
             emitShort(shortValue);
         }
 
-        public final void inlineInt(int intValue) {
+        public void inlineInt(int intValue) {
             addInlineData(currentPosition(), Ints.SIZE);
             emitInt(intValue);
         }
 
-        public final void inlineLong(long longValue) {
+        public void inlineLong(long longValue) {
             addInlineData(currentPosition(), Longs.SIZE);
             emitLong(longValue);
         }
@@ -287,8 +287,8 @@ public abstract class Assembler {
 
     void addInlineData(int startPosition, int size) {
         assembledObjects.append(new AssembledObject(startPosition, startPosition + size) {
-            public Type type() {
-                return Type.DATA;
+            public boolean isCode() {
+                return false;
             }
         });
     }
@@ -383,7 +383,7 @@ public abstract class Assembler {
         try {
             int initialOffset = 0;
             for (AssembledObject assembledObject : assembledObjects) {
-                if (inlineDataRecorder != null && assembledObject.type() == Type.DATA) {
+                if (inlineDataRecorder != null && !assembledObject.isCode()) {
                     inlineDataRecorder.add(new InlineDataDescriptor.ByteData(assembledObject.startPosition(), assembledObject.size()));
                 }
 

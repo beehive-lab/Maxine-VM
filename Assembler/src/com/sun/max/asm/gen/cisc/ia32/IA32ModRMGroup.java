@@ -22,8 +22,8 @@ package com.sun.max.asm.gen.cisc.ia32;
 
 import static com.sun.max.asm.gen.cisc.x86.AddressingMethodCode.*;
 import static com.sun.max.asm.gen.cisc.x86.FloatingPointOperandCode.*;
-import static com.sun.max.asm.gen.cisc.x86.OperandCode.*;
 import static com.sun.max.asm.gen.cisc.x86.ModRMGroup.Opcode.*;
+import static com.sun.max.asm.gen.cisc.x86.OperandCode.*;
 import static com.sun.max.asm.gen.cisc.x86.OperandTypeCode.*;
 import static com.sun.max.asm.gen.cisc.x86.RegisterOperandCode.*;
 import static com.sun.max.asm.ia32.IA32GeneralRegister16.*;

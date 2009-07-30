@@ -505,7 +505,7 @@ public abstract class LIRAssembler {
                     assert op.patchCode() == LIRPatchCode.PatchNone : "can't patch volatiles";
                     volatileMoveOp(op.inOpr(), op.result(), op.type(), op.info());
                 } else {
-                    moveOp(op.inOpr(), op.result(), op.type(), op.patchCode(), op.info(), op.popFpuStack(), op.moveKind() == LIRInstruction.LIRMoveKind.Unaligned);
+                    moveOp(op.inOpr(), op.result(), op.type(), op.patchCode(), op.info(), op.moveKind() == LIRInstruction.LIRMoveKind.Unaligned);
                 }
                 break;
 
@@ -517,13 +517,6 @@ public abstract class LIRAssembler {
                 prefetchr(op.inOpr());
                 break;
 
-            case Roundfp: {
-                assert op instanceof LIRRoundFP;
-                LIRRoundFP roundOp = (LIRRoundFP) op;
-                roundfpOp(roundOp.inOpr(), roundOp.tmp(), roundOp.resultOpr(), roundOp.popFpuStack());
-                break;
-            }
-
             case Return:
                 returnOp(op.inOpr());
                 break;
@@ -533,18 +526,6 @@ public abstract class LIRAssembler {
                     asm.nop();
                 }
                 safepointPoll(op.inOpr(), op.info());
-                break;
-
-            case Fxch:
-                fxch(op.inOpr().asInt());
-                break;
-
-            case Fld:
-                fld(op.inOpr().asInt());
-                break;
-
-            case Ffree:
-                ffree(op.inOpr().asInt());
                 break;
 
             case Branch:
@@ -600,12 +581,6 @@ public abstract class LIRAssembler {
 
     protected abstract void push(LIROperand inOpr);
 
-    protected abstract void ffree(int asJint);
-
-    protected abstract void fld(int asJint);
-
-    protected abstract void fxch(int asJint);
-
     protected abstract void safepointPoll(LIROperand inOpr, CodeEmitInfo info);
 
     protected abstract void returnOp(LIROperand inOpr);
@@ -654,22 +629,6 @@ public abstract class LIRAssembler {
                 osrEntry();
                 break;
 
-            case Op24bitFPU:
-                set_24bitFPU();
-                break;
-
-            case ResetFPU:
-                resetFPU();
-                break;
-
-            case Breakpoint:
-                breakpoint();
-                break;
-
-            case FpopRaw:
-                fpop();
-                break;
-
             case Membar:
                 membar();
                 break;
@@ -700,14 +659,6 @@ public abstract class LIRAssembler {
     protected abstract void membarAcquire();
 
     protected abstract void membar();
-
-    protected abstract void fpop();
-
-    protected abstract void breakpoint();
-
-    protected abstract void resetFPU();
-
-    protected abstract void set_24bitFPU();
 
     protected abstract void osrEntry();
 
@@ -744,12 +695,9 @@ public abstract class LIRAssembler {
             case Add:
             case Sub:
             case Mul:
-            case MulStrictFp:
             case Div:
-            case DivStrictFp:
             case Rem:
-                assert op.fpuPopCount() < 2 : "";
-                arithOp(op.code(), op.inOpr1(), op.inOpr2(), op.resultOpr(), op.info(), op.fpuPopCount() == 1);
+                arithOp(op.code(), op.inOpr1(), op.inOpr2(), op.resultOpr(), op.info());
                 break;
 
             case Abs:
@@ -784,7 +732,7 @@ public abstract class LIRAssembler {
 
     protected abstract void intrinsicOp(LIROpcode code, LIROperand inOpr1, LIROperand inOpr2, LIROperand resultOpr, LIROp2 op);
 
-    protected abstract void arithOp(LIROpcode code, LIROperand inOpr1, LIROperand inOpr2, LIROperand resultOpr, CodeEmitInfo info, boolean b);
+    protected abstract void arithOp(LIROpcode code, LIROperand inOpr1, LIROperand inOpr2, LIROperand resultOpr, CodeEmitInfo info);
 
     protected abstract void shiftOp(LIROpcode code, LIROperand inOpr1, LIROperand inOpr2, LIROperand resultOpr, LIROperand tmpOpr);
 
@@ -802,24 +750,18 @@ public abstract class LIRAssembler {
 
     protected abstract int initialFrameSizeInBytes();
 
-    void roundfpOp(LIROperand src, LIROperand tmp, LIROperand dest, boolean popFpuStack) {
-        assert (src.isSingleFpu() && dest.isSingleStack()) || (src.isDoubleFpu() && dest.isDoubleStack()) : "roundFp: rounds register . stack location";
+    protected abstract void reg2stack(LIROperand src, LIROperand dest, BasicType type);
 
-        reg2stack(src, dest, src.type(), popFpuStack);
-    }
-
-    protected abstract void reg2stack(LIROperand src, LIROperand dest, BasicType type, boolean popFpuStack);
-
-    void moveOp(LIROperand src, LIROperand dest, BasicType type, LIRPatchCode patchCode, CodeEmitInfo info, boolean popFpuStack, boolean unaligned) {
+    void moveOp(LIROperand src, LIROperand dest, BasicType type, LIRPatchCode patchCode, CodeEmitInfo info, boolean unaligned) {
         if (src.isRegister()) {
             if (dest.isRegister()) {
                 assert patchCode == LIRPatchCode.PatchNone && info == null : "no patching and info allowed here";
                 reg2reg(src, dest);
             } else if (dest.isStack()) {
                 assert patchCode == LIRPatchCode.PatchNone && info == null : "no patching and info allowed here";
-                reg2stack(src, dest, type, popFpuStack);
+                reg2stack(src, dest, type);
             } else if (dest.isAddress()) {
-                reg2mem(src, dest, type, patchCode, info, popFpuStack, unaligned);
+                reg2mem(src, dest, type, patchCode, info, unaligned);
             } else {
                 throw Util.shouldNotReachHere();
             }
@@ -855,7 +797,7 @@ public abstract class LIRAssembler {
         }
     }
 
-    protected abstract void reg2mem(LIROperand src, LIROperand dest, BasicType type, LIRPatchCode patchCode, CodeEmitInfo info, boolean popFpuStack, boolean unaligned);
+    protected abstract void reg2mem(LIROperand src, LIROperand dest, BasicType type, LIRPatchCode patchCode, CodeEmitInfo info, boolean unaligned);
 
     protected abstract void mem2reg(LIROperand src, LIROperand dest, BasicType type, LIRPatchCode patchCode, CodeEmitInfo info, boolean unaligned);
 
@@ -899,8 +841,6 @@ public abstract class LIRAssembler {
 // C1XOptions.VerifyOops = v;
         }
     }
-
-    protected abstract void emitLabel(LIRLabel lirLabel);
 
     protected abstract void emitBranch(LIRBranch lirBranch);
 

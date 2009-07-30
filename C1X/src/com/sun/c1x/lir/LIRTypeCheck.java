@@ -66,8 +66,8 @@ public class LIRTypeCheck extends LIRInstruction {
      * @param profiledMethod
      * @param profiledBci
      */
-    public LIRTypeCheck(LIROpcode opcode, LIROperand result, LIROperand object, CiType klass, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, boolean fastCheck, CodeEmitInfo infoForPatch,
-                        CodeEmitInfo infoForException, CodeStub stub, CiMethod profiledMethod, int profiledBci) {
+    public LIRTypeCheck(LIROpcode opcode, LIROperand result, LIROperand object, CiType klass, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, boolean fastCheck, CodeEmitInfo infoForException,
+                        CodeEmitInfo infoForPatch, CodeStub stub, CiMethod profiledMethod, int profiledBci) {
         super(opcode, result, null);
         this.object = object;
         this.array = LIROperandFactory.IllegalOperand;
@@ -94,20 +94,18 @@ public class LIRTypeCheck extends LIRInstruction {
     /**
      * Constructs a new TypeCheck instruction.
      *
+     * @param opcode
      * @param object
      * @param array
-     * @param klass
      * @param tmp1
      * @param tmp2
      * @param tmp3
-     * @param fastCheck
-     * @param infoForPatch
      * @param infoForException
-     * @param stub
      * @param profiledMethod
      * @param profiledBci
      */
-    public LIRTypeCheck(LIROpcode opcode, LIROperand object, LIROperand array, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3,
+    public LIRTypeCheck(LIROpcode opcode, LIROperand object, LIROperand array,
+                        LIROperand tmp1, LIROperand tmp2, LIROperand tmp3,
                         CodeEmitInfo infoForException, CiMethod profiledMethod, int profiledBci) {
         super(opcode, LIROperandFactory.IllegalOperand, null);
         this.object = object;

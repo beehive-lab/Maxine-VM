@@ -22,6 +22,8 @@ package com.sun.max.asm.gen.risc.sparc;
 
 import static com.sun.max.asm.gen.risc.sparc.SPARCFields.*;
 
+import com.sun.max.asm.gen.risc.*;
+
 /**
  * @author Bernd Mathiske
  * @author Dave Ungar
@@ -48,7 +50,7 @@ public class RegisterWindowManagement extends SPARCInstructionDescriptionCreator
         define("restored", op(0x2), fcnc(1), op3(0x31), res_18_0);
     }
 
-    RegisterWindowManagement(SPARCTemplateCreator templateCreator) {
+    RegisterWindowManagement(RiscTemplateCreator templateCreator) {
         super(templateCreator);
 
         setCurrentArchitectureManualSection("A.21");

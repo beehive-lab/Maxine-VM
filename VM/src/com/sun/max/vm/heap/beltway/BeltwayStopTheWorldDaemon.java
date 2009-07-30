@@ -109,22 +109,23 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
     private final Pointer.Procedure fillLastTlabs = new Pointer.Procedure() {
 
         public void run(Pointer localSpace) {
+            /* FIXME:
             if (!localSpace.isZero()) {
                 final VmThread thread = VmThread.fromVmThreadLocals(localSpace);
                 if (thread != null) {
-                    final TLAB tlab = thread.getTLAB();
+                    final BeltTLAB tlab = thread.getTLAB();
                     if (!tlab.isFull()) {
                         tlab.fillTLAB();
                     }
                 }
-            }
+            }*/
         }
     };
 
 
     private static class TLABScavengerReset implements Procedure<VmThread> {
         public void run(VmThread thread) {
-            thread.getTLAB().unSet();
+            // thread.getTLAB().unSet();   FIXME
         }
     }
 
@@ -143,12 +144,15 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
                 BeltwayHeapScheme.inGC = true;
                 VmThreadMap.ACTIVE.forAllVmThreadLocals(isNotGCThreadLocalsOrCurrent, triggerSafepoint);
                 VmThreadMap.ACTIVE.forAllVmThreadLocals(isNotGCThreadLocalsOrCurrent, waitUntilNonMutating);
+                /*
+                 * FIXME:
                 if (BeltwayConfiguration.useTLABS) {
                     VmThreadMap.ACTIVE.forAllVmThreadLocals(isNotGCThreadLocalsOrCurrent, fillLastTlabs);
                 }
+
                 if (BeltwayConfiguration.useGCTlabs) {
                     VmThreadMap.ACTIVE.forAllVmThreads(isGCOrStopTheWorldDaemonThread, tlabScavengerReset);
-                }
+                }*/
                 VmThreadMap.ACTIVE.forAllVmThreadLocals(isGCThread, prepareGCThreadStackMap);
                 VmThreadLocal.prepareCurrentStackReferenceMap();
                 procedure.run();
@@ -188,10 +192,10 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
         execute(gcRequest);
     }
 
-    public TLAB getScavengeTLAB() {
+    public BeltTLAB getScavengeTLAB() {
         return currentTLAB;
     }
 
-    private TLAB currentTLAB;
+    private BeltTLAB currentTLAB;
 
 }
