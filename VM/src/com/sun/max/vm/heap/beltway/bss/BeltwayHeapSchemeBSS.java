@@ -31,14 +31,14 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.tele.*;
 
 /**
- * Heap scheme for a semi-space beltway collector. Use a single belt with two increments, each allocated half of the total heap space.
+ * Heap scheme for a semi-space beltway collector. Use two belts, each allocated half of the total heap space.
  * @author Christos Kotselidis
  */
 
 public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
 
     private static int[] DEFAULT_BELT_HEAP_PERCENTAGE = new int[] {50, 50};
-    protected static BeltwaySSCollector beltCollectorBSS = new BeltwaySSCollector();
+    final  BeltwaySSCollector beltCollectorBSS = new BeltwaySSCollector();
 
     public BeltwayHeapSchemeBSS(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -53,14 +53,17 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (phase == MaxineVM.Phase.PRISTINE) {
+            // The following line enables allocation to take place.
+            tlabAllocationBelt = getFromSpace();
+            // Watch out: the following create a MemoryRegion array
             InspectableHeapInfo.init(getToSpace(), getFromSpace());
         } else if (phase == MaxineVM.Phase.RUNNING) {
             beltCollectorBSS.setBeltwayHeapScheme(this);
             beltCollector.setRunnable(beltCollectorBSS);
-            heapVerifier.initialize(this);
-            heapVerifier.getRootsVerifier().setFromSpace(beltManager.getApplicationHeap());
-            heapVerifier.getRootsVerifier().setToSpace(getToSpace());
-            HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "Scavenge");
+            heapVerifier.initialize(beltManager.getApplicationHeap(), getToSpace());
+            if (Heap.verbose()) {
+                HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "Scavenge");
+            }
         }
     }
 
@@ -81,18 +84,6 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
             return true;
         }
         return false;
-    }
-
-    @INLINE(override = true)
-    @NO_SAFEPOINTS("TODO")
-    public Pointer allocate(Size size) {
-        if (!MaxineVM.isRunning()) {
-            return bumpAllocateSlowPath(getFromSpace(), size);
-        }
-        if (BeltwayConfiguration.useTLABS) {
-            return tlabAllocate(getFromSpace(), size);
-        }
-        return heapAllocate(getFromSpace(), size);
     }
 
     private Size immediateFreeSpace() {

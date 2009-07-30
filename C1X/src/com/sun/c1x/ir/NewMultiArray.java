@@ -30,8 +30,8 @@ import com.sun.c1x.value.ValueStack;
  * @author Ben L. Titzer
  */
 public class NewMultiArray extends NewArray {
-    CiType elementType;
-    Instruction[] dimensions;
+    final CiType elementType;
+    final Instruction[] dimensions;
 
     /**
      * Constructs a new NewMultiArray instruction.

@@ -33,7 +33,7 @@ import com.sun.max.asm.gen.risc.*;
  */
 
 public abstract class ARMInstructionDescriptionCreator extends RiscInstructionDescriptionCreator {
-    protected ARMInstructionDescriptionCreator(ARMTemplateCreator templateCreator) {
+    protected ARMInstructionDescriptionCreator(RiscTemplateCreator templateCreator) {
         super(ARMAssembly.ASSEMBLY, templateCreator);
     }
 

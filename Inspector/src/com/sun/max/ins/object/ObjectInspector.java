@@ -113,6 +113,8 @@ public abstract class ObjectInspector extends Inspector {
                 MemoryWordInspector.create(inspection(), teleObject.getCurrentMemoryRegion()).highlight();
             }
         });
+        //frame().menu().add(actions().inspectMemoryWords(teleObject, "TEST: Inspect object's memory words"));
+
         frame().menu().add(actions().setObjectWatchpoint(teleObject, "Watch object's memory"));
         frame().menu().addSeparator();
         frame().menu().add(actions().closeViews(otherObjectInspectorsPredicate, "Close other object inspectors"));

@@ -127,6 +127,32 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         catchBlocks.append(catchBlock);
     }
 
+    public static class ExtraCallInfo {
+        public final Label label;
+        public final boolean isReferenceCall;
+        public final boolean isNativeFunctionCall;
+
+        public ExtraCallInfo(Label label, boolean isReferenceCall, boolean isNativeFunctionCall) {
+            this.label = label;
+            this.isReferenceCall = isReferenceCall;
+            this.isNativeFunctionCall = isNativeFunctionCall;
+        }
+    }
+
+    final AppendableSequence<ExtraCallInfo> extraCallInfos = new LinkSequence<ExtraCallInfo>();
+
+    public Sequence<ExtraCallInfo> extraCallInfos() {
+        return extraCallInfos;
+    }
+
+    private void recordExtraCallInfo(EirCall call, Label label) {
+        // TODO: Re-enable recording of reference calls once they are needed for deoptimization
+        final boolean isReferenceCall = false && call.result() != null && call.result().eirValue().kind() == Kind.REFERENCE;
+        if (isReferenceCall || call.isNativeFunctionCall) {
+            extraCallInfos.append(new ExtraCallInfo(label, isReferenceCall, call.isNativeFunctionCall));
+        }
+    }
+
     final AppendableSequence<Label> directCallLabels = new LinkSequence<Label>();
 
     public Sequence<Label> directCallLabels() {
@@ -138,8 +164,6 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
     public Sequence<EirCall> directCalls() {
         return directCalls;
     }
-
-    private final BitSet directReferenceCalls = new BitSet();
 
     private TargetLocation[] eirToTargetLocations(EirOperand[] eirOperands) {
         final TargetLocation[] result = new TargetLocation[eirOperands.length];
@@ -170,11 +194,9 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
     public void addDirectCall(EirCall call) {
         final Label label = new Label();
         assembler.bindLabel(label);
-        if (call.result() != null && call.result().eirValue().kind() == Kind.REFERENCE) {
-            directReferenceCalls.set(directCalls.length());
-        }
         directCallLabels.append(label);
         directCalls.append(call);
+        recordExtraCallInfo(call, label);
     }
 
     final AppendableSequence<Label> indirectCallLabels = new LinkSequence<Label>();
@@ -189,23 +211,12 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         return indirectCalls;
     }
 
-    private final BitSet indirectReferenceCalls = new BitSet();
-
     public void addIndirectCall(EirCall call) {
         final Label label = new Label();
         assembler.bindLabel(label);
-        if (call.result() != null && call.result().eirValue().kind() == Kind.REFERENCE) {
-            indirectReferenceCalls.set(indirectCalls.length());
-        }
         indirectCallLabels.append(label);
         indirectCalls.append(call);
-    }
-
-    public final boolean isReferenceCall(int stopIndex) {
-        if (stopIndex < directCalls.length()) {
-            return directReferenceCalls.get(stopIndex);
-        }
-        return indirectReferenceCalls.get(stopIndex - directCalls.length());
+        recordExtraCallInfo(call, label);
     }
 
     private final AppendableSequence<Label> safepointLabels = new LinkSequence<Label>();

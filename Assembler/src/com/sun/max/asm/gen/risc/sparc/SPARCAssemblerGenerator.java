@@ -33,14 +33,14 @@ import com.sun.max.collect.*;
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public final class SPARCAssemblerGenerator extends RiscAssemblerGenerator<SPARCTemplate> {
+public final class SPARCAssemblerGenerator extends RiscAssemblerGenerator<RiscTemplate> {
 
     private SPARCAssemblerGenerator() {
         super(SPARCAssembly.ASSEMBLY);
     }
 
     @Override
-    protected String getJavadocManualReference(SPARCTemplate template) {
+    protected String getJavadocManualReference(RiscTemplate template) {
         return "\"<a href=\"http://developers.sun.com/solaris/articles/sparcv9.pdf\">The SPARC Architecture Manual, Version 9</a> - Section " +
             template.instructionDescription().architectureManualSection() + "\"";
     }
@@ -52,10 +52,10 @@ public final class SPARCAssemblerGenerator extends RiscAssemblerGenerator<SPARCT
     }
 
     @Override
-    protected DisassembledInstruction generateExampleInstruction(SPARCTemplate template, IndexedSequence<Argument> arguments) throws AssemblyException {
+    protected DisassembledInstruction generateExampleInstruction(RiscTemplate template, IndexedSequence<Argument> arguments) throws AssemblyException {
         final SPARCAssembler assembler = new SPARC64Assembler(0);
         assembly().assemble(assembler, template, arguments);
         final byte[] bytes = assembler.toByteArray();
-        return new SPARC64DisassembledInstruction(new SPARC64Disassembler(0, null), 0, bytes, template, arguments);
+        return new DisassembledInstruction(new SPARC64Disassembler(0, null), 0, bytes, template, arguments);
     }
 }

@@ -24,6 +24,7 @@ import static com.sun.max.asm.gen.risc.sparc.SPARCFields.*;
 import static com.sun.max.asm.sparc.AnnulBit.*;
 import static com.sun.max.asm.sparc.BranchPredictionBit.*;
 
+import com.sun.max.asm.gen.risc.*;
 import com.sun.max.asm.sparc.*;
 
 /**
@@ -126,7 +127,7 @@ class ControlTransfer extends SPARCInstructionDescriptionCreator {
         createBicc("t", head, i(1), res_10_7, swTrapNumber);
     }
 
-    ControlTransfer(SPARCTemplateCreator templateCreator) {
+    ControlTransfer(RiscTemplateCreator templateCreator) {
         super(templateCreator);
 
         setCurrentArchitectureManualSection("A.3");

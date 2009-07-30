@@ -25,12 +25,12 @@ import com.sun.max.vm.stack.sparc.*;
 
 
 /**
- * The ABI of some platforms requires the use of a stack bias. The bias is a constant offset that needs to be added to the registers holding the stack pointer
- * to access elements of the stack frame.
+ * The ABI of some platforms requires the use of a stack bias. The bias is a constant offset that needs to be added to the registers holding the
+ * stack pointer to access elements of the stack frame.
  * The only example of this so far is the Solaris SPARC V9 (64-bits platform. The stack bias helps the operating system identifying easily
  * whether it runs in 64-bits address mode when hitting a stack overflow signal.
  * That is, the registers that hold, respectively, the stack and frame pointers are set to the corresponding pointer minus a bias.
- * Accessing a slot of the stack frame requires adding the bias, e.g.,  ld [ %i6 + STACK_BIAS + x]  loads the content
+ * Accessing a slot of the stack frame requires adding the bias, e.g.,  ld [%i6 + STACK_BIAS + x]  loads the contents
  * of the slot at offset x from the frame pointer.
  *
  * @author Laurent Daynes

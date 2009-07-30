@@ -45,9 +45,10 @@ public abstract class Instruction {
      */
     public enum Flag {
         NonNull,
-        NeedsNullCheck,
-        NeedsStoreCheck,   // TODO: unused until array store check elimination
-        NeedsWriteBarrier, // TODO: unused until write-barrier elision optimization
+        NoNullCheck,
+        NoStoreCheck,
+        NoRangeCheck,
+        NoWriteBarrier,
         DirectCompare,
         IsEliminated, // TODO: scheduled for deletion
         IsLoaded, // TODO: necessary?
@@ -84,7 +85,7 @@ public abstract class Instruction {
     private final int id;
     private int bci;
     private int flags;
-    private ValueType valueType;
+    protected ValueType valueType;
     private Instruction next;
     private Instruction subst;
 
@@ -153,15 +154,6 @@ public abstract class Instruction {
      */
     public final ValueType type() {
         return valueType;
-    }
-
-    /**
-     * Sets the value type of this instruction.
-     * @param type the new value type for this instruction
-     */
-    public final void setType(ValueType type) {
-        assert type != null;
-        valueType = type;
     }
 
     /**
@@ -258,6 +250,10 @@ public abstract class Instruction {
         }
     }
 
+    public void clearNullCheck() {
+        clearFlag(Flag.NoNullCheck);
+    }
+
     /**
      * Check whether this instruction has the specified flag set.
      * @param flag the flag to test
@@ -320,7 +316,7 @@ public abstract class Instruction {
      * @return <code>true</code> if this instruction needs a null check
      */
     public final boolean needsNullCheck() {
-        return checkFlag(Flag.NeedsNullCheck);
+        return !checkFlag(Flag.NoNullCheck);
     }
 
     /**
@@ -475,42 +471,6 @@ public abstract class Instruction {
      */
     public static boolean sameBasicType(Instruction i, Instruction other) {
         return i.type().basicType == other.type().basicType;
-    }
-
-    /**
-     * Formats a given instruction as value is a {@linkplain ValueStack frame state}. If the instruction is a phi defined at a given
-     * block, its {@linkplain Phi#operand() operands} are appended to the returned string.
-     *
-     * @param index the index of the value in the frame state
-     * @param value the frame state value
-     * @param block if {@code value} is a phi, then its operands are formatted if {@code block} is its
-     *            {@linkplain Phi#block() join point}
-     * @return the instruction representation as a string
-     */
-    public static String stateString(int index, Instruction value, BlockBegin block) {
-        StringBuilder sb = new StringBuilder(30);
-        sb.append(String.format("%2d  %s", index, valueString(value)));
-        if (value instanceof Phi) {
-            Phi phi = (Phi) value;
-            // print phi operands
-            if (phi.block() == block) {
-                sb.append(" [");
-                for (int j = 0; j < phi.operandCount(); j++) {
-                    sb.append(' ');
-                    Instruction operand = phi.operandAt(j);
-                    if (operand != null) {
-                        sb.append(valueString(operand));
-                    } else {
-                        sb.append("NULL");
-                    }
-                }
-                sb.append("] ");
-            }
-        }
-        if (value != value.subst()) {
-            sb.append("alias ").append(valueString(value.subst()));
-        }
-        return sb.toString();
     }
 
     /**

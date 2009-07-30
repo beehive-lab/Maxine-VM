@@ -23,25 +23,10 @@ package com.sun.max.asm;
 /**
  * Describes an object in an assembled instruction stream. The object has a {@linkplain #startPosition() start} and
  * {@linkplain #endPosition() end} position in the stream.
- * 
+ *
  * @author Bernd Mathiske
  */
 public interface AssemblyObject {
-
-    /**
-     * Enumerated type for categorizing assembled objects as either code or data.
-     */
-    enum Type {
-        /**
-         * Denotes that an assembled object is code.
-         */
-        CODE,
-
-        /**
-         * Denotes that an assembled object is data.
-         */
-        DATA;
-    }
 
     /**
      * Gets the position of this instruction's first byte.
@@ -56,5 +41,5 @@ public interface AssemblyObject {
     /**
      * Gets an object denoting whether this assembled object is code or data.
      */
-    Type type();
+    boolean isCode();
 }

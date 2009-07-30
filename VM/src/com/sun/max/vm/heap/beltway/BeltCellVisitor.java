@@ -18,19 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.asm.gen.risc.sparc;
+package com.sun.max.vm.heap.beltway;
 
-import com.sun.max.asm.gen.*;
-import com.sun.max.asm.gen.risc.*;
+import com.sun.max.vm.heap.*;
 
 /**
- *
- *
- * @author Bernd Mathiske
+ * Interface for visiting cells in a Belt that reaches another Belt.
  */
-public class SPARCTemplate extends RiscTemplate {
-
-    public SPARCTemplate(InstructionDescription instructionDescription) {
-        super(instructionDescription);
-    }
+public interface BeltCellVisitor extends CellVisitor {
+    /**
+     * Initialize the action the cell visitor will perform on the cell.
+     */
+    void init(Belt from, Belt to);
 }

@@ -354,8 +354,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     }
                 }
             } else if (teleCodeLocation.hasTargetCodeLocation()) {
-                if (teleTargetMethod() != null && teleTargetMethod().targetCodeRegion().contains(teleCodeLocation.targetCodeInstructionAddresss())) {
-                    final int row = model.findRow(teleCodeLocation.targetCodeInstructionAddresss());
+                if (teleTargetMethod() != null && teleTargetMethod().targetCodeRegion().contains(teleCodeLocation.targetCodeInstructionAddress())) {
+                    final int row = model.findRow(teleCodeLocation.targetCodeInstructionAddress());
                     if (row >= 0) {
                         if (row != oldSelectedRow) {
                             changeSelection(row, row, false, false);

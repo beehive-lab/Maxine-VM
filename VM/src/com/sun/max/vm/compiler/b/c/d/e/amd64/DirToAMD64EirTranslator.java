@@ -57,7 +57,7 @@ public class DirToAMD64EirTranslator extends AMD64EirGenerator {
     }
 
     private TreeEirMethod createTreeEirMethod(ClassMethodActor classMethodActor) {
-        final TreeEirMethod eirMethod = new TreeEirMethod(classMethodActor, eirABIsScheme().treeABI());
+        final TreeEirMethod eirMethod = new TreeEirMethod(classMethodActor, eirABIsScheme().treeABI);
         notifyAllocation(eirMethod);
         return eirMethod;
     }

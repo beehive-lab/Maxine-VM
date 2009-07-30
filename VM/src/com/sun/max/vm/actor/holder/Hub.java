@@ -177,7 +177,7 @@ public abstract class Hub extends Hybrid {
         this.mTableStartIndex = firstIntIndex();
         this.mTableLength = 1;
         this.referenceMapStartIndex = mTableStartIndex + mTableLength;
-        this.referenceMapLength = referenceMap.numberOfOffsets();
+        this.referenceMapLength = referenceMap.numberOfEntries();
         this.isSpecialReference = false;
     }
 
@@ -205,7 +205,7 @@ public abstract class Hub extends Hybrid {
         this.mTableStartIndex = firstIntIndex();
         this.mTableLength = getMinCollisionFreeDivisor(superClassActorSerials);
         this.referenceMapStartIndex = mTableStartIndex + mTableLength;
-        this.referenceMapLength = referenceMap.numberOfOffsets();
+        this.referenceMapLength = referenceMap.numberOfEntries();
         this.isSpecialReference = classActor.isSpecialReference();
     }
 

@@ -50,7 +50,7 @@ class SyntheticInstructions extends PPCInstructionDescriptionCreator {
         return (RiscInstructionDescription) super.define(specifications).beSynthetic();
     }
 
-    SyntheticInstructions(PPCTemplateCreator creator) {
+    SyntheticInstructions(RiscTemplateCreator creator) {
         super(creator);
 
         setCurrentArchitectureManualSection("B.2.2");

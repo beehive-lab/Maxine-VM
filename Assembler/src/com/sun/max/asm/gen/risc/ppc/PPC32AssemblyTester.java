@@ -33,7 +33,7 @@ import com.sun.max.lang.*;
  *
  * @author Bernd Mathiske
  */
-public class PPC32AssemblyTester extends PPCAssemblyTester<PPC32DisassembledInstruction> {
+public class PPC32AssemblyTester extends PPCAssemblyTester {
 
     public PPC32AssemblyTester(EnumSet<AssemblyTestComponent> components) {
         super(PPCAssembly.ASSEMBLY, WordWidth.BITS_32, components);

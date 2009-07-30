@@ -96,7 +96,7 @@ public abstract class Assembly<Template_Type extends Template> {
         return argument;
     }
 
-    public final String createMethodCallString(Template_Type template, IndexedSequence<Argument> argumentList) {
+    public final String createMethodCallString(Template template, IndexedSequence<Argument> argumentList) {
         assert argumentList.length() == template.parameters().length();
         String call = template.assemblerMethodName() + "(";
         for (int i = 0; i < argumentList.length(); i++) {
@@ -105,7 +105,7 @@ public abstract class Assembly<Template_Type extends Template> {
         return call + ")";
     }
 
-    private Method getAssemblerMethod(Assembler assembler, Template_Type template, Class[] parameterTypes) throws NoSuchAssemblerMethodError {
+    private Method getAssemblerMethod(Assembler assembler, Template template, Class[] parameterTypes) throws NoSuchAssemblerMethodError {
         try {
             return assembler.getClass().getMethod(template.assemblerMethodName(), parameterTypes);
         } catch (NoSuchMethodException e) {
@@ -113,7 +113,7 @@ public abstract class Assembly<Template_Type extends Template> {
         }
     }
 
-    private Method getAssemblerMethod(Assembler assembler, Template_Type template, IndexedSequence<Argument> arguments) throws NoSuchAssemblerMethodError {
+    private Method getAssemblerMethod(Assembler assembler, Template template, IndexedSequence<Argument> arguments) throws NoSuchAssemblerMethodError {
         final Class[] parameterTypes = template.parameterTypes();
         final int index = template.labelParameterIndex();
         if (index >= 0 && arguments.get(index) instanceof Label) {
@@ -126,7 +126,7 @@ public abstract class Assembly<Template_Type extends Template> {
         return template.assemblerMethod;
     }
 
-    public void assemble(Assembler assembler, Template_Type template, IndexedSequence<Argument> arguments) throws AssemblyException, NoSuchAssemblerMethodError {
+    public void assemble(Assembler assembler, Template template, IndexedSequence<Argument> arguments) throws AssemblyException, NoSuchAssemblerMethodError {
         assert arguments.length() == template.parameters().length();
         final Method assemblerMethod = getAssemblerMethod(assembler, template, arguments);
         final Object[] objects = new Object[arguments.length()];
@@ -150,5 +150,4 @@ public abstract class Assembly<Template_Type extends Template> {
             ProgramError.unexpected(invocationTargetException);
         }
     }
-
 }

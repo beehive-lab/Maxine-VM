@@ -145,7 +145,7 @@ public class Phi extends Instruction {
      */
     public void makeIllegal() {
         setPhiFlag(PhiFlag.CannotSimplify);
-        setType(ValueType.ILLEGAL_TYPE);
+        valueType = ValueType.ILLEGAL_TYPE;
     }
 
     /**

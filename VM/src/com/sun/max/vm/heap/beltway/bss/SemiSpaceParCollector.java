@@ -18,18 +18,36 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+package com.sun.max.vm.heap.beltway.bss;
 
-package com.sun.max.asm.gen.risc.arm;
-
-import com.sun.max.asm.gen.*;
-import com.sun.max.asm.gen.risc.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.beltway.*;
 
 /**
+ * Parallel version of the beltway semi-space collector.
+ * Just spawns GC thread to evacuate followers.
  *
- * @author Sumeet Panchal
+ * @author Laurent Daynes.
  */
-public class ARMTemplate extends RiscTemplate {
-    public ARMTemplate(InstructionDescription instructionDescription) {
-        super(instructionDescription);
+public class SemiSpaceParCollector extends BeltwaySSCollector {
+
+    @Override
+    protected void evacuateFollowers(Belt fromSpace, Belt toSpace) {
+        final BeltwayHeapScheme heapScheme = getBeltwayHeapScheme();
+        if (Heap.verbose()) {
+            Log.println("Evacuate reachable...");
+        }
+        // heapScheme.fillLastTLAB();  FIXME: revisit this!!!
+        heapScheme.initializeGCThreads(heapScheme, fromSpace, toSpace);
+        if (Heap.verbose()) {
+            Log.println("Start Threads");
+        }
+
+        heapScheme.startGCThreads();
+
+        if (Heap.verbose()) {
+            Log.println("Join Threads");
+        }
     }
 }

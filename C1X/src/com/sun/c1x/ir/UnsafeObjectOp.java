@@ -31,7 +31,7 @@ public abstract class UnsafeObjectOp extends UnsafeOp {
 
     Instruction object;
     Instruction offset;
-    boolean isVolatile;
+    final boolean isVolatile;
 
     /**
      * Creates a new UnsafeObjectOp instruction.

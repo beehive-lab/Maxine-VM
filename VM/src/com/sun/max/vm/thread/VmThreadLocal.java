@@ -91,7 +91,7 @@ public class VmThreadLocal {
     private static final AppendableIndexedSequence<VmThreadLocal> values = new ArrayListSequence<VmThreadLocal>();
 
     /**
-     * Must be first as needed by {@link Safepoint#initialize(Pointer)}.
+     * Must be first as needed by {@link Safepoint#initializePrimordial(Pointer)}.
      */
     public static final VmThreadLocal SAFEPOINT_LATCH = new VmThreadLocal("SAFEPOINT_LATCH", Kind.WORD, "");
 
@@ -111,7 +111,7 @@ public class VmThreadLocal {
 
     /**
      * The {@linkplain VmThread#currentVmThreadLocals() current} thread local storage when safepoints for the thread are
-     * {@linkplain Safepoint#trigger(Pointer, Word, Word) triggered}.
+     * {@linkplain Safepoint#trigger(Pointer) triggered}.
      */
     public static final VmThreadLocal SAFEPOINTS_TRIGGERED_THREAD_LOCALS
         = new VmThreadLocal("SAFEPOINTS_TRIGGERED_THREAD_LOCALS", Kind.WORD, "points to TLS used when safepoints triggered");

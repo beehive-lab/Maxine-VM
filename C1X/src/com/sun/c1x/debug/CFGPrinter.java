@@ -27,7 +27,6 @@ import com.sun.c1x.graph.BlockMap;
 import com.sun.c1x.ir.BlockBegin;
 import com.sun.c1x.ir.BlockClosure;
 import com.sun.c1x.ir.Instruction;
-import static com.sun.c1x.ir.Instruction.stateString;
 import static com.sun.c1x.ir.Instruction.valueString;
 import com.sun.c1x.lir.LIRList;
 import com.sun.c1x.util.Util;
@@ -216,7 +215,7 @@ public class CFGPrinter {
           while (i < state.stackSize()) {
               Instruction value = state.stackAt(i);
               out.disableIndentation();
-              out.print(stateString(i, value, block));
+              out.print(InstructionPrinter.stateString(i, value, block));
               printLirOperand(value);
               out.println();
               out.enableIndentation();
@@ -232,7 +231,7 @@ public class CFGPrinter {
             for (int i = 0; i < state.locksSize(); ++i) {
                 Instruction value = state.lockAt(i);
                 out.disableIndentation();
-                out.print(stateString(i, value, block));
+                out.print(InstructionPrinter.stateString(i, value, block));
                 printLirOperand(value);
                 out.println();
                 out.enableIndentation();
@@ -249,7 +248,7 @@ public class CFGPrinter {
                 Instruction value = state.localAt(i);
                 if (value != null) {
                     out.disableIndentation();
-                    out.print(stateString(i, value, block));
+                    out.print(InstructionPrinter.stateString(i, value, block));
                     printLirOperand(value);
                     out.println();
                     out.enableIndentation();

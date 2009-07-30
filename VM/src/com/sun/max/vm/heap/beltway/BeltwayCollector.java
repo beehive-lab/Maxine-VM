@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.heap.beltway;
 
+import com.sun.max.vm.*;
+import com.sun.max.vm.monitor.*;
+
 /**
  * This class defines a specialized over the generic Collector Runnable which performs "an action" over a "a space".
  *
@@ -31,6 +34,8 @@ public class BeltwayCollector implements Runnable {
     protected Runnable gcImpl;
 
     private BeltwayHeapScheme beltwayHeapScheme;
+
+    protected final MonitorScheme monitorScheme = VMConfiguration.target().monitorScheme();
 
     public BeltwayCollector() {
     }
@@ -52,7 +57,7 @@ public class BeltwayCollector implements Runnable {
     }
 
     protected void verifyBelt(Belt belt) {
-        beltwayHeapScheme.getVerifier().verifyHeap(belt.start(), belt.getAllocationMark(), beltwayHeapScheme.getBeltManager().getApplicationHeap());
+        beltwayHeapScheme.heapVerifier.verifyHeap(belt.start(), belt.getAllocationMark(), beltwayHeapScheme.getBeltManager().getApplicationHeap());
     }
 
 }

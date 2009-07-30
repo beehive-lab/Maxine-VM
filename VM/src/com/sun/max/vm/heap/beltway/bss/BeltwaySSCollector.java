@@ -27,16 +27,24 @@ import com.sun.max.vm.tele.*;
 
 /**
  * Semi-space Collector based on Beltways.
- * Used a single belt with two increment (to and from spaces).
+ * Uses two belts (to and from spaces) with one increment each.
  *
  * @author Christos Kotselidis
  */
 
 public class BeltwaySSCollector extends BeltwayCollector {
 
-    private static long collections;
+    protected long collections;
 
     public BeltwaySSCollector() {
+        collections = 0;
+    }
+
+    protected void evacuateFollowers(Belt fromSpace, Belt toSpace) {
+        if (Heap.verbose()) {
+            Log.println("Evacuate reachable...");
+        }
+        getBeltwayHeapScheme().evacuate(fromSpace, toSpace);
     }
 
     @Override
@@ -46,66 +54,33 @@ public class BeltwaySSCollector extends BeltwayCollector {
             Log.print("Collection: ");
             Log.println(collections);
         }
-        final BeltwayHeapSchemeBSS beltwayHeapSchemeBSS = (BeltwayHeapSchemeBSS) getBeltwayHeapScheme();
+        final BeltwayHeapSchemeBSS heapScheme = (BeltwayHeapSchemeBSS) getBeltwayHeapScheme();
+        final Belt fromSpace = heapScheme.getFromSpace();
+        final Belt toSpace = heapScheme.getToSpace();
         if (Heap.verbose()) {
             Log.println("Verify Heap");
-            verifyBelt(beltwayHeapSchemeBSS.getFromSpace());
+            verifyBelt(fromSpace);
         }
 
         InspectableHeapInfo.beforeGarbageCollection();
-        VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
+        monitorScheme.beforeGarbageCollection();
 
-        if (Heap.verbose()) {
-            Log.println("Scanning roots...");
-        }
+        // Start scanning the reachable objects from roots.
+        heapScheme.scavengeRoot(fromSpace, toSpace);
 
-        // Start scanning the reachable objects from my roots.
-        beltwayHeapSchemeBSS.getRootScannerUpdater().setFromSpace(beltwayHeapSchemeBSS.getFromSpace());
-        beltwayHeapSchemeBSS.getRootScannerUpdater().setToSpace(beltwayHeapSchemeBSS.getToSpace());
-        beltwayHeapSchemeBSS.getRootScannerUpdater().run();
+        // Evacuate all remaining objects reachable
+        evacuateFollowers(fromSpace, toSpace);
+        heapScheme.evacuate(fromSpace, toSpace);
+        // beltwayHeapSchemeBSS.fillLastTLAB(); FIXME: do we need this ?
 
-        if (Heap.verbose()) {
-            Log.println("Scanning boot heap...");
-        }
+        monitorScheme.afterGarbageCollection();
 
-        beltwayHeapSchemeBSS.scanBootHeap(beltwayHeapSchemeBSS.getFromSpace(), beltwayHeapSchemeBSS.getToSpace());
-
-        if (Heap.verbose()) {
-            Log.println("Scanning code...");
-        }
-
-        beltwayHeapSchemeBSS.scanCode(beltwayHeapSchemeBSS.getFromSpace(), beltwayHeapSchemeBSS.getToSpace());
-
-        if (Heap.verbose()) {
-            Log.println("Moving recheable...");
-        }
-
-        if (BeltwayConfiguration.parallelScavenging) {
-            beltwayHeapSchemeBSS.fillLastTLAB();
-            beltwayHeapSchemeBSS.initializeGCThreads(beltwayHeapSchemeBSS, beltwayHeapSchemeBSS.getToSpace(), beltwayHeapSchemeBSS.getFromSpace());
-            VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
-            if (Heap.verbose()) {
-                Log.println("Start Threads");
-            }
-
-            beltwayHeapSchemeBSS.startGCThreads();
-
-            if (Heap.verbose()) {
-                Log.println("Join Threads");
-            }
-        } else {
-            beltwayHeapSchemeBSS.linearScanRegionBelt(beltwayHeapSchemeBSS.getToSpace(), beltwayHeapSchemeBSS.getFromSpace(), beltwayHeapSchemeBSS.getToSpace());
-            beltwayHeapSchemeBSS.fillLastTLAB();
-        }
-
-        VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
-
-        verifyBelt(beltwayHeapSchemeBSS.getToSpace());
+        verifyBelt(toSpace);
         InspectableHeapInfo.afterGarbageCollection();
 
         // Swap semi-spaces. From--> To and To-->From
-        beltwayHeapSchemeBSS.getBeltManager().swapBelts(beltwayHeapSchemeBSS.getFromSpace(), beltwayHeapSchemeBSS.getToSpace());
-        beltwayHeapSchemeBSS.getToSpace().resetAllocationMark();
+        heapScheme.getBeltManager().swapBelts(fromSpace, toSpace);
+        heapScheme.getToSpace().resetAllocationMark();
         if (Heap.verbose()) {
             Log.print("Finished Collection: ");
             Log.println(collections);

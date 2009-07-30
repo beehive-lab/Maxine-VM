@@ -24,7 +24,7 @@ import com.sun.max.asm.*;
 
 /**
  * The abstract base class for PowerPC assemblers.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */

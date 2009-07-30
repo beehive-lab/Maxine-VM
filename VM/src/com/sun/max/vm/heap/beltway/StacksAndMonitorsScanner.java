@@ -20,17 +20,31 @@
  */
 package com.sun.max.vm.heap.beltway;
 
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.thread.*;
 
-/**
- *
- */
-public interface BeltWayCellVisitor extends Visitor{
+
+public class StacksAndMonitorsScanner {
+    private final PointerVisitor pointerVisitor;
 
     /**
-     * @param cell the cell to be visited
-     * @return the adjacent next cell
+     * A closure for updating thread stacks references.
      */
-    Pointer visitCell(Pointer cell, Action action, RuntimeMemoryRegion from, RuntimeMemoryRegion to);
+    private final Pointer.Procedure vmThreadLocalsScanner = new Pointer.Procedure(){
+        public void run(Pointer vmThreadLocals) {
+            VmThreadLocal.scanReferences(vmThreadLocals, pointerVisitor);
+        }
+    };
+
+    public StacksAndMonitorsScanner(PointerVisitor pointerVisitor) {
+        this.pointerVisitor = pointerVisitor;
+    }
+
+    public void run() {
+        // do thread stacks
+        VmThreadMap.ACTIVE.forAllVmThreadLocals(null, vmThreadLocalsScanner);
+        // do monitors
+        VMConfiguration.target().monitorScheme().scanReferences(pointerVisitor);
+    }
 }

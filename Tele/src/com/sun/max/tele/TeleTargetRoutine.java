@@ -27,6 +27,7 @@ import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.compiler.target.*;
 
 /**
  * Data describing a single code routine in the {@link TeleVM}, either compiled from a Java method or a block of native code.
@@ -86,7 +87,7 @@ public interface TeleTargetRoutine extends TargetMethodAccess {
      */
     TeleClassMethodActor getTeleClassMethodActor();
 
-    int[] getStopPositions();
+    StopPositions getStopPositions();
 
     int[] bytecodeToTargetCodePositionMap();
 
