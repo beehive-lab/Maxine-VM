@@ -355,7 +355,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         public boolean updateCodeFocus(TeleCodeLocation teleCodeLocation) {
             final int oldSelectedRow = getSelectedRow();
             if (teleCodeLocation.hasTargetCodeLocation()) {
-                final Address targetCodeInstructionAddress = inspection().focus().codeLocation().targetCodeInstructionAddresss();
+                final Address targetCodeInstructionAddress = inspection().focus().codeLocation().targetCodeInstructionAddress();
                 if (teleTargetRoutine().targetCodeRegion().contains(targetCodeInstructionAddress)) {
                     final TargetCodeTableModel model = (TargetCodeTableModel) getModel();
                     final int row = model.findRow(targetCodeInstructionAddress);

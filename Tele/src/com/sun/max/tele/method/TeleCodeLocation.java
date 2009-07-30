@@ -95,10 +95,10 @@ public class TeleCodeLocation extends AbstractTeleVMHolder {
     }
 
     /**
-     * Location relative to the target code representation;
+     * Target code instruction pointer;
      * zero if no target code information about the location available.
      */
-    public Address targetCodeInstructionAddresss() {
+    public Address targetCodeInstructionAddress() {
         return targetCodeInstructionAddress;
     }
 
