@@ -776,6 +776,24 @@ public class ValueStack {
     }
 
     /**
+     * Checks whether this value stack has any phi statements that refer to the specified block.
+     * @param block the block to check
+     * @return {@code true} if this value stack has phis for the specified block
+     */
+    public boolean hasPhisFor(BlockBegin block) {
+        int max = valuesSize();
+        for (int i = 0; i < max; i++) {
+            Instruction instr = values[i];
+            if (instr instanceof Phi) {
+                if (block == null || ((Phi) instr).block() == block) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * This is a helper method for iterating over all stack values and local variables in this value stack.
      * @return an interator over all state values
      */

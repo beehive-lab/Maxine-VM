@@ -71,10 +71,10 @@ public class PhiSimplifier implements BlockClosure {
         if (phi.hasSubst()) {
             // already substituted, but the subst could be a phi itself, so simplify
             return simplify(phi.subst());
-        } else if (phi.checkPhiFlag(Phi.PhiFlag.CannotSimplify)) {
+        } else if (phi.checkFlag(Instruction.Flag.PhiCannotSimplify)) {
             // already tried, cannot simplify this phi
             return phi;
-        } else if (phi.checkPhiFlag(Phi.PhiFlag.Visited)) {
+        } else if (phi.checkFlag(Instruction.Flag.PhiVisited)) {
             // break cycles in phis
             return phi;
         } else if (phi.type().isIllegal()) {
@@ -82,7 +82,7 @@ public class PhiSimplifier implements BlockClosure {
             return phi;
         } else {
             // attempt to simplify the phi by recursively simplifying its operands
-            phi.setPhiFlag(Phi.PhiFlag.Visited);
+            phi.setFlag(Instruction.Flag.PhiVisited);
             Instruction phiSubst = null;
             int max = phi.operandCount();
             for (int i = 0; i < max; i++) {
@@ -91,7 +91,7 @@ public class PhiSimplifier implements BlockClosure {
                 if (oldInstr == null || oldInstr.type().isIllegal()) {
                     // if one operand is illegal, make the entire phi illegal
                     phi.makeIllegal();
-                    phi.clearPhiFlag(Phi.PhiFlag.Visited);
+                    phi.clearFlag(Instruction.Flag.PhiVisited);
                     return phi;
                 }
 
@@ -113,14 +113,14 @@ public class PhiSimplifier implements BlockClosure {
                         }
                     }
                     // this phi cannot be simplified
-                    phi.setPhiFlag(Phi.PhiFlag.CannotSimplify);
-                    phi.clearPhiFlag(Phi.PhiFlag.Visited);
+                    phi.setFlag(Instruction.Flag.PhiCannotSimplify);
+                    phi.clearFlag(Instruction.Flag.PhiVisited);
                     return phi;
                 }
             }
             // successfully simplified the phi
             assert phiSubst != null : "illegal phi function";
-            phi.clearPhiFlag(Phi.PhiFlag.Visited);
+            phi.clearFlag(Instruction.Flag.PhiVisited);
             phi.setSubst(phiSubst);
             hasSubstitutions = true;
             return phiSubst;

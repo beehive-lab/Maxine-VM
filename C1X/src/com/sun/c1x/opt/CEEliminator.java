@@ -143,10 +143,7 @@ public class CEEliminator implements BlockClosure {
             }
         }
         // check that true and false blocks don't have phis
-        for (Instruction i : tBlock.state().allPhis()) {
-            return;
-        }
-        for (Instruction i : fBlock.state().allPhis()) {
+        if (tBlock.state().hasPhisFor(null) || fBlock.state().hasPhisFor(null)) {
             return;
         }
 

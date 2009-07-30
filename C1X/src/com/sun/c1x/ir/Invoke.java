@@ -56,11 +56,6 @@ public class Invoke extends StateSplit {
         this.isStatic = isStatic;
         this.vtableIndex = vtableIndex;
         this.target = target;
-        if (target.isLoaded()) {
-            setFlag(Flag.TargetIsLoaded);
-            initFlag(Flag.TargetIsFinal, target.isFinalMethod());
-            initFlag(Flag.TargetIsStrictFP, target.isStrictFP());
-        }
         if (!isStatic && args[0].isNonNull()) {
             clearNullCheck();
             C1XMetrics.NullChecksRedundant++;
