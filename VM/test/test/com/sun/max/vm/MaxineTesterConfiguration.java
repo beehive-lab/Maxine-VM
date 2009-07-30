@@ -88,6 +88,8 @@ public class MaxineTesterConfiguration {
 
     static final Object[] javaTestList = {
         test.threads.Thread_isInterrupted02.class,                  FAIL_LINUX,
+        test.jdk.EnumMap01.class,                                   RAND_ALL,
+        test.jdk.EnumMap02.class,                                   RAND_ALL,
         test.hotpath.HP_series.class,                  FAIL_SPARC,
         test.hotpath.HP_array02.class,                 FAIL_SPARC,
         test.except.Catch_StackOverflowError_01.class, FAIL_SPARC,

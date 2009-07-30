@@ -139,7 +139,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     public final void cleanup() {
     }
 
-
     /**
      * Gets the array of positions denoting which ranges of code are covered by an
      * exception dispatcher. The {@code n}th range includes positions

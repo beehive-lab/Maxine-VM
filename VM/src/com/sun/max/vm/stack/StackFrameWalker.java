@@ -336,6 +336,15 @@ public abstract class StackFrameWalker {
                 // native function call. This makes it match the pattern expected by the
                 // StackReferenceMapPreparer where the instruction pointer in all but the
                 // top frame is past the address of the call.
+//                if (purpose == Purpose.REFERENCE_MAP_PREPARING) {
+//                    Log.print("IP for stack prep: ");
+//                    Log.print(nativeStubTargetMethod.name());
+//                    Log.print(" [");
+//                    Log.print(nativeStubTargetMethod.codeStart());
+//                    Log.print("+");
+//                    Log.print(nativeFunctionCallPosition + 1);
+//                    Log.println(']');
+//                }
                 return nativeFunctionCall.plus(1);
             }
         }

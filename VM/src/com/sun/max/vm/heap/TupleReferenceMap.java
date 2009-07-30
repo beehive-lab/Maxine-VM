@@ -21,14 +21,14 @@
 package com.sun.max.vm.heap;
 
 import com.sun.max.collect.*;
+import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.type.*;
 
 /**
- * A facility for building and traversing the reference map for a {@linkplain TupleClassActor tuple}
- * object. The
+ * A facility for building and traversing the reference map for a {@linkplain TupleClassActor tuple} object.
  *
  * @author Bernd Mathiske
  */
@@ -80,11 +80,18 @@ public class TupleReferenceMap {
         }
     }
 
-    public static void visitOriginOffsets(Hub hub, Pointer origin, PointerOffsetVisitor offsetVisitor) {
+    /**
+     * Visits all the references in a given object described by a given hub.
+     *
+     * @param hub a hub describing where the references are in the object at {@code origin}
+     * @param origin the origin of an object
+     * @param visitor the visitor to notify of each reference in the object denoted by {@code origin}
+     */
+    public static void visitReferences(Hub hub, Pointer origin, PointerIndexVisitor visitor) {
         final int n = hub.referenceMapStartIndex + hub.referenceMapLength;
         for (int i = hub.referenceMapStartIndex; i < n; i++) {
             final int offset = hub.getInt(i);
-            offsetVisitor.visitPointerOffset(origin, offset);
+            visitor.visit(origin, Unsigned.idiv(offset, Word.size()));
         }
     }
 }
