@@ -31,17 +31,7 @@ import com.sun.c1x.value.ValueType;
  */
 public class Phi extends Instruction {
 
-    public enum PhiFlag {
-        CannotSimplify,
-        Visited;
-
-        public final int mask() {
-            return 1 << ordinal();
-        }
-    }
-
     private final BlockBegin block;
-    private int phiFlags;
     private final int index;
 
     /**
@@ -144,34 +134,7 @@ public class Phi extends Instruction {
      * Make this phi illegal if types were not merged correctly.
      */
     public void makeIllegal() {
-        setPhiFlag(PhiFlag.CannotSimplify);
+        setFlag(Flag.PhiCannotSimplify);
         valueType = ValueType.ILLEGAL_TYPE;
     }
-
-    /**
-     * Check whether this instruction has the specified phi flag set.
-     * @param flag the flag to test
-     * @return <code>true</code> if this instruction has the flag
-     */
-    public boolean checkPhiFlag(PhiFlag flag) {
-        return (phiFlags & flag.mask()) != 0;
-    }
-
-    /**
-     * Set a phi flag on this instruction.
-     * @param flag the flag to set
-     */
-    public void setPhiFlag(PhiFlag flag) {
-        phiFlags |= flag.mask();
-    }
-
-    /**
-     * Clear a phi flag on this instruction.
-     * @param flag the flag to set
-     */
-    public void clearPhiFlag(PhiFlag flag) {
-        phiFlags &= ~flag.mask();
-    }
-
-    // XXX: why are there no input values to do with inputValuesDo?
 }
