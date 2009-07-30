@@ -20,7 +20,6 @@
  */
 package com.sun.max.unsafe.box;
 
-import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
 
@@ -179,7 +178,7 @@ public final class BoxedPointer extends Pointer implements UnsafeBox {
 
     @Override
     protected Word readWordAtLongOffset(long offset) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return Address.fromLong(readLongAtLongOffset(offset));
         }
         return Address.fromInt(readIntAtLongOffset(offset));
@@ -272,7 +271,7 @@ public final class BoxedPointer extends Pointer implements UnsafeBox {
 
     @Override
     protected void writeWordAtLongOffset(long offset, Word value) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             writeLongAtLongOffset(offset, value.asOffset().toLong());
         } else {
             writeIntAtLongOffset(offset, value.asOffset().toInt());

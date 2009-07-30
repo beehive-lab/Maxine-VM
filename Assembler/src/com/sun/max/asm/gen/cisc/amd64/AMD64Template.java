@@ -217,6 +217,7 @@ public class AMD64Template extends X86Template {
         }
     }
 
+    @Override
     public void visitOperandCode(OperandCode operandCode, X86Operand.Designation designation, ArgumentRange argumentRange, TestArgumentExclusion testArgumentExclusion)
         throws TemplateNotNeededException {
         switch (operandCode) {
@@ -574,6 +575,7 @@ public class AMD64Template extends X86Template {
         }
     }
 
+    @Override
     public void visitRegisterOperandCode(RegisterOperandCode registerOperandCode, X86Operand.Designation designation, ImplicitOperand.ExternalPresence externalPresence) {
         switch (operandSizeAttribute()) {
             case BITS_16:

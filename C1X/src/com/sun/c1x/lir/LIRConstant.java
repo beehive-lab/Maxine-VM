@@ -37,30 +37,9 @@ public class LIRConstant extends LIROperand {
      * Create a LIRConstant from a ConstType object.
      * @param value the value
      */
-    public LIRConstant(ConstType value) {
+    LIRConstant(ConstType value) {
         super(value.basicType);
         this.value = value;
-    }
-
-    /**
-     * Gets the basic type of this constant, which can be used to convert it
-     * to the appropriate primitive value or object.
-     *
-     * @return the basic type of this constant
-     */
-    @Override
-    public BasicType type() {
-        return value.basicType;
-    }
-
-    /**
-     * Returns the reference for this constant.
-     *
-     * @return the reference(this) for this constant
-     */
-    @Override
-    public LIRConstant asConstant() {
-        return this;
     }
 
     /**
@@ -132,7 +111,7 @@ public class LIRConstant extends LIROperand {
      */
     public int asIntHi() {
         assertType(this, BasicType.Long);
-        return (int) value.asLong() >> 32;
+        return (int) (value.asLong() >> 32);
     }
 
     /**
@@ -202,77 +181,6 @@ public class LIRConstant extends LIROperand {
       }
     }
 
-    /**
-     * Checks if the float constant has the value 0.0f.
-     *
-     * @return true if the constant is zero, false otherwise.
-     */
-    public boolean isFloat0() {
-        return asFloat() == 0.0f;
-      }
-
-    /**
-     * Checks if the float constant has the value 1.0f.
-     *
-     * @return true if the constant is 1.0, false otherwise.
-     */
-    public boolean isFloat1() {
-        return asFloat() == 1.0f;
-      }
-
-    /**
-     * Checks if the double constant has the value 0.0.
-     *
-     * @return true if the constant is zero, false otherwise.
-     */
-    public boolean isDouble0() {
-        return asDouble() == 0.0;
-    }
-
-    /**
-     * Checks if the double constant has the value 1.0.
-     *
-     * @return true if the constant is zero, false otherwise.
-     */
-    public boolean isDouble1() {
-        return asDouble() == 1.0;
-      }
-
-    public boolean isOneFloat() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    public boolean isZeroFloat() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    public boolean isZeroDouble() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    public boolean isOneDouble() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public float asJfloat() {
-        return this.asFloat();
-    }
-
-    @Override
-    public double asJdouble() {
-        return this.asDouble();
-    }
-
-    @Override
-    public Object asJobject() {
-        return this.asObject();
-    }
-
     @Override
     public String valueToString() {
         switch (type()) {
@@ -281,13 +189,13 @@ public class LIRConstant extends LIROperand {
             case Long:
                 return String.format("lng:%d", asLong());
             case Float:
-                return String.format("flt:%f", asJfloat());
+                return String.format("flt:%f", this.asFloat());
             case Double:
-                return String.format("dbl:%f", asJdouble());
+                return String.format("dbl:%f", this.asDouble());
             case Object:
-                return String.format("obj:%s", asJobject());
+                return String.format("obj:%s", this.asObject());
             default:
-                return String.format("%3d:0x%x", type(), asJdouble());
+                return String.format("%3d:0x%x", type(), this.asDouble());
         }
     }
 }

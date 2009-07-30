@@ -28,80 +28,149 @@ import com.sun.max.unsafe.*;
 /**
  * Makes critical state information about the object heap
  * remotely inspectable.
+ * <br>
  * Active only when VM is being inspected.
+ * <br>
+ * Dynamic object allocation is to be avoided.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
+ * @author Hannes Payer
  */
 public final class InspectableHeapInfo {
 
     private InspectableHeapInfo() {
     }
 
+    /**
+     * Inspectable array of memory regions allocated for heap memory management.
+     * @see com.sun.max.vm.heap.HeapScheme
+     */
     @INSPECTED
     private static MemoryRegion[] memoryRegions;
 
     /**
-     * Stores memory allocated by the heap in an location that can
+     * Maximum number of roots that the Inspector can register for tracking relocations.
+     */
+    public static final int MAX_NUMBER_OF_ROOTS = Ints.M / 8;
+
+
+    /**
+     * Inspectable description the memory allocated for the Inspector's root table.
+     */
+    @INSPECTED
+    public static RuntimeMemoryRegion rootsRegion = new RuntimeMemoryRegion("TeleRoots");
+
+    /**
+     * Inspectable location of the memory allocated for the Inspector's root table.
+     * Equivalent to {@link RuntimeMemoryRegion#start()}, but it must be
+     * readable by the Inspector using only low level operations during startup.
+     */
+    @INSPECTED
+    public static Pointer rootsPointer = Pointer.zero();
+
+    /**
+     * Inspectable counter of the number of Garbage Collections that have <strong>begun</strong>.
+     * <br>
+     * Used by the Inspector to determine if the VM is currently collecting.
+     */
+    @INSPECTED
+    private static long collectionEpoch;
+
+    /**
+     * Inspectable counter of the number of Garbage Collections that have <strong>completed</strong>.
+     * <br>
+     * Used by the Inspector to determine if the VM is currently collecting, and to
+     * determine if the Inspector's cache of the root locations is current.
+     */
+    @INSPECTED
+    private static long rootEpoch;
+
+    /**
+     * How many words of the Heap refer to one Word in the card table.
+     */
+    private static int cardTableRatio = 100;
+
+    private static long cardTableSize = 0;
+
+    private static Pointer cardTablePointer = Pointer.zero();
+
+    private static int[] cardTableRegions;
+
+    /**
+     * Stores descriptions of memory allocated by the heap in a location that can
      * be inspected easily.
      * <br>
      * No-op when VM is not being inspected.
      *
      * @param memoryRegions regions allocated by the heap implementation
      */
-    public static void registerMemoryRegions(MemoryRegion... memoryRegions) {
+    public static void init(MemoryRegion... memoryRegions) {
         if (MaxineMessenger.isVmInspected()) {
-            if (rootsRegion == null) {
-                final Size size = Size.fromInt(Pointer.size() * MAX_NUMBER_OF_ROOTS);
-                rootsPointer = Memory.allocate(size);
-                rootsRegion = new RootsMemoryRegion(rootsPointer, size);
-            }
             InspectableHeapInfo.memoryRegions = memoryRegions;
-        }
-    }
-
-    public static final int MAX_NUMBER_OF_ROOTS = Ints.M / 8;
-
-    private static class RootsMemoryRegion extends RuntimeMemoryRegion {
-        public RootsMemoryRegion(Address address, Size size) {
-            super(address, size);
-            setDescription("TeleRoots");
-            mark.set(end());
+            initRootsRegion();
+            initCardTable(memoryRegions);
         }
     }
 
     /**
-     * Access to the special region containing remote root pointers.
-     * This is equivalent to the start address of {@link #rootsRegion}, but it must be
-     * inspectable at a lower level before object-valued fields can be inspected.
-     *
+     * Allocates a special area of memory for references held by the Inspector.
+     * The Inspector writes values into the array, and each GC implementation is obliged to
+     * relocate them at the conclusion of each collection.
+     */
+    private static void initRootsRegion() {
+        final Size size = Size.fromInt(Pointer.size() * MAX_NUMBER_OF_ROOTS);
+        rootsPointer = Memory.allocate(size);
+        rootsRegion.setStart(rootsPointer);
+        rootsRegion.setSize(size);
+    }
+
+    private static void initCardTable(MemoryRegion[] memoryRegions) {
+        if (cardTablePointer.equals(Pointer.zero())) {
+            for (MemoryRegion memoryRegion : memoryRegions) {
+                cardTableSize += calculateNumberOfCardTableEntries(memoryRegion);
+            }
+            cardTablePointer = Memory.allocate(Size.fromLong(cardTableSize));
+        }
+    }
+
+    private static long calculateNumberOfCardTableEntries(MemoryRegion memoryRegion) {
+        long cardTableEntries = 0;
+        cardTableEntries += memoryRegion.size().toLong() / cardTableRatio;
+        if (memoryRegion.size().toLong() % cardTableRatio != 0) {
+            cardTableEntries += Word.size();
+        }
+        return cardTableEntries;
+    }
+
+    public void touchCardTableField(Address address) {
+        long cardTableEntry = 0;
+
+        for (MemoryRegion memoryRegion : memoryRegions) {
+            if (memoryRegion.contains(address)) {
+                //calculate offset;
+            } else {
+                cardTableEntry += calculateNumberOfCardTableEntries(memoryRegion);
+            }
+        }
+    }
+
+    /**
      * @return base of the specially allocated memory region containing inspectable root pointers
      */
     public static Pointer rootsPointer() {
         return rootsPointer;
     }
 
-    @INSPECTED
-    public static MemoryRegion rootsRegion = null;
-
-    @INSPECTED
-    public static Pointer rootsPointer = Pointer.zero();
-
-    @INSPECTED
-    private static long rootEpoch;
-
-    @INSPECTED
-    private static long collectionEpoch;
-
     /**
-     * For remote inspection:  records that a GC has begun.
+     * Records that a GC has begun, using an inspectable counter.
      */
     public static void beforeGarbageCollection() {
         collectionEpoch++;
     }
 
     /**
-     * For remote inspection:  records that a GC has concluded.
+     * Records that a GC has concluded, using an inspectable counter.
      */
     public static void afterGarbageCollection() {
         rootEpoch = collectionEpoch;

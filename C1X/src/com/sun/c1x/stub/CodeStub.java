@@ -27,7 +27,6 @@ import com.sun.c1x.debug.TTY;
 import com.sun.c1x.lir.CodeEmitInfo;
 import com.sun.c1x.lir.LIRVisitState;
 
-
 /**
  * The <code>CodeStub</code> class definition. CodeStubs are little 'out-of-line'
  * pieces of code that usually handle slow cases of operations. All code stubs are
@@ -35,7 +34,6 @@ import com.sun.c1x.lir.LIRVisitState;
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
- *
  */
 public abstract class CodeStub {
 

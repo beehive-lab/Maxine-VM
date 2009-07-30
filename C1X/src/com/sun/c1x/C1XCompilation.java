@@ -52,26 +52,15 @@ import java.util.List;
  */
 public class C1XCompilation {
 
-    public enum MethodCompilation {
-        InvocationEntryBci(-1), InvalidOSREntryBci(-2), SynchronizationEntryBCI(-1);
-
-        public final int value;
-
-        MethodCompilation(int value) {
-            this.value = value;
-        }
-    }
-
     public final Target target;
     public final CiRuntime runtime;
     public final CiMethod method;
     public final CiTargetMethod targetMethod;
-    final int osrBCI;
+    public final int osrBCI;
 
     int maxSpills;
     boolean needsDebugInfo;
     boolean hasExceptionHandlers;
-    private boolean hasFpuCode;
     boolean hasUnsafeAccess;
     Bailout bailout;
 
@@ -86,22 +75,17 @@ public class C1XCompilation {
     private Instruction lastInstructionPrinted; // Debugging only
     private CFGPrinter cfgPrinter;
 
-    private CodeOffsets codeOffsets = new CodeOffsets();
-    private List<ExceptionInfo> exceptionInfoList = new ArrayList<ExceptionInfo>();
+    private CodeOffsets codeOffsets;
+    private List<ExceptionInfo> exceptionInfoList;
 
     /**
      * Creates a new compilation for the specified method and runtime.
      *
-     * @param target
-     *            the target of the compilation, including architecture information
-     * @param runtime
-     *            the runtime implementation
-     * @param method
-     *            the method to be compiled
-     * @param targetMethod
-     *            the target method to accept the results
-     * @param osrBCI
-     *            the bytecode index for on-stack replacement, if requested
+     * @param target the target of the compilation, including architecture information
+     * @param runtime the runtime implementation
+     * @param method the method to be compiled
+     * @param targetMethod the target method to accept the results
+     * @param osrBCI the bytecode index for on-stack replacement, if requested
      */
     public C1XCompilation(Target target, CiRuntime runtime, CiMethod method, CiTargetMethod targetMethod, int osrBCI) {
         this.target = target;
@@ -114,14 +98,10 @@ public class C1XCompilation {
     /**
      * Creates a new compilation for the specified method and runtime.
      *
-     * @param target
-     *            the target of the compilation, including architecture information
-     * @param runtime
-     *            the runtime implementation
-     * @param method
-     *            the method to be compiled
-     * @param targetMethod
-     *            the target method
+     * @param target the target of the compilation, including architecture information
+     * @param runtime the runtime implementation
+     * @param method the method to be compiled
+     * @param targetMethod the target method
      */
     public C1XCompilation(Target target, CiRuntime runtime, CiMethod method, CiTargetMethod targetMethod) {
         this(target, runtime, method, targetMethod, -1);
@@ -166,15 +146,6 @@ public class C1XCompilation {
     }
 
     /**
-     * Gets the bytecode index for on-stack replacement, if this compilation is for an OSR.
-     *
-     * @return the bytecode index
-     */
-    public int osrBCI() {
-        return osrBCI;
-    }
-
-    /**
      * Gets the frame which describes the layout of the OSR interpreter frame for this method.
      *
      * @return the OSR frame
@@ -186,8 +157,7 @@ public class C1XCompilation {
     /**
      * Records an assumption made by this compilation that the specified type is a leaf class.
      *
-     * @param type
-     *            the type that is assumed to be a leaf class
+     * @param type the type that is assumed to be a leaf class
      * @return <code>true</code> if the assumption was recorded and can be assumed; <code>false</code> otherwise
      */
     public boolean recordLeafTypeAssumption(CiType type) {
@@ -197,8 +167,7 @@ public class C1XCompilation {
     /**
      * Records an assumption made by this compilation that the specified method is a leaf method.
      *
-     * @param method
-     *            the method that is assumed to be a leaf method
+     * @param method the method that is assumed to be a leaf method
      * @return <code>true</code> if the assumption was recorded and can be assumed; <code>false</code> otherwise
      */
     public boolean recordLeafMethodAssumption(CiMethod method) {
@@ -208,8 +177,7 @@ public class C1XCompilation {
     /**
      * Records an assumption that the specified type has no finalizable subclasses.
      *
-     * @param receiverType
-     *            the type that is assumed to have no finalizable subclasses
+     * @param receiverType the type that is assumed to have no finalizable subclasses
      * @return <code>true</code> if the assumption was recorded and can be assumed; <code>false</code> otherwise
      */
     public boolean recordNoFinalizableSubclassAssumption(CiType receiverType) {
@@ -228,10 +196,8 @@ public class C1XCompilation {
     /**
      * Records an inlining decision not to inline an inlinable method.
      *
-     * @param target
-     *            the method that was not inlined
-     * @param reason
-     *            a description of the reason why the method was not inlined
+     * @param target the method that was not inlined
+     * @param reason a description of the reason why the method was not inlined
      */
     public void recordInliningFailure(CiMethod target, String reason) {
         // TODO: record inlining failure
@@ -253,10 +219,8 @@ public class C1XCompilation {
     /**
      * Builds the block map for the specified method.
      *
-     * @param method
-     *            the method for which to build the block map
-     * @param osrBCI
-     *            the OSR bytecode index; <code>-1</code> if this is not an OSR
+     * @param method the method for which to build the block map
+     * @param osrBCI the OSR bytecode index; <code>-1</code> if this is not an OSR
      * @return the block map for the specified method
      */
     public BlockMap getBlockMap(CiMethod method, int osrBCI) {
@@ -271,11 +235,8 @@ public class C1XCompilation {
             throw new Bailout("build of BlockMap failed for " + method);
         } else {
             if (C1XOptions.PrintCFGToFile) {
-                OutputStream cfgFileStream = CFGPrinter.cfgFileStream();
-                if (cfgFileStream != null) {
-                    CFGPrinter cfgPrinter = new CFGPrinter(cfgFileStream);
-                    cfgPrinter.printCFG(map, method.codeSize(), "BlockListBuilder " + Util.format("%f %r %H.%n(%p)", method, true), false, false);
-                }
+                CFGPrinter cfgPrinter = this.cfgPrinter();
+                cfgPrinter.printCFG(method, map, method.codeSize(), "BlockListBuilder " + Util.format("%f %r %H.%n(%p)", method, true), false, false);
             }
         }
         map.cleanup();
@@ -331,6 +292,9 @@ public class C1XCompilation {
     }
 
     public CodeOffsets offsets() {
+        if (codeOffsets == null) {
+            codeOffsets = new CodeOffsets();
+        }
         return codeOffsets;
     }
 
@@ -341,6 +305,9 @@ public class C1XCompilation {
     public void addExceptionHandlersForPco(int pcOffset, List<ExceptionHandler> exceptionHandlers) {
         if (C1XOptions.PrintExceptionHandlers && C1XOptions.Verbose) {
             TTY.println("  added exception scope for pco %d", pcOffset);
+        }
+        if (exceptionInfoList == null) {
+            exceptionInfoList = new ArrayList<ExceptionInfo>();
         }
         exceptionInfoList.add(new ExceptionInfo(pcOffset, exceptionHandlers));
     }
@@ -358,14 +325,6 @@ public class C1XCompilation {
         throw Util.unimplemented();
     }
 
-    public boolean hasFpuCode() {
-        return hasFpuCode;
-    }
-
-    public void setHasFpuCode(boolean hasFpuCode) {
-        this.hasFpuCode = hasFpuCode;
-    }
-
     public boolean compile() {
 
         if (C1XOptions.PrintCompilation) {
@@ -376,19 +335,7 @@ public class C1XCompilation {
         try {
             hir = new IR(this);
             hir.build();
-
-            CFGPrinter printer = cfgPrinter();
-
-            if (C1XOptions.PrintCFGToFile && printer != null) {
-                printer.printCFG(hir.startBlock, "Before generation of LIR", true, false);
-            }
-
             emitLIR();
-
-            if (C1XOptions.PrintCFGToFile && C1XOptions.GenerateLIR && printer != null) {
-                printer.printCFG(hir.startBlock, "After generation of LIR", false, true);
-            }
-
             emitCode();
         } catch (Bailout b) {
             bailout = b;
@@ -411,6 +358,11 @@ public class C1XCompilation {
 
             final RegisterAllocator registerAllocator = new LinearScan(this, hir, lirGenerator, frameMap());
             registerAllocator.allocate();
+
+            CFGPrinter printer = cfgPrinter();
+            if (printer != null) {
+                printer.printCFG(hir.startBlock, "After generation of LIR", false, true);
+            }
         }
     }
 
@@ -450,7 +402,7 @@ public class C1XCompilation {
     }
 
     public void recordImplicitException(int offset, int offset2) {
-        // TODO Auto-generated method stub
+        // TODO move to CiTargetMethod?
 
     }
 }

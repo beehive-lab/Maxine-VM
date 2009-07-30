@@ -21,6 +21,7 @@
 package com.sun.c1x.target;
 
 import com.sun.c1x.ci.CiLocation;
+import com.sun.c1x.util.Util;
 
 /**
  * The <code>Register</code> class definition.
@@ -29,12 +30,12 @@ import com.sun.c1x.ci.CiLocation;
  * @author Thomas Wuerthinger
  *
  */
-public class Register {
+public final class Register {
 
     // Invalid register
-    public static final Register noreg = new Register(-1, "noreg");
+    public static final Register noreg = new Register(-1, -1, "noreg");
 
-    public static final int vregBase = 50;
+    public static final int vregBase = 40;
 
     public final int number;
     public final String name;
@@ -42,18 +43,18 @@ public class Register {
     private final int flags;
 
     public enum RegisterFlag {
-        CPU, Byte, FPU, XMM, MMX;
+        CPU, Byte, XMM, MMX;
 
         public int mask() {
             return 1 << (ordinal() + 1);
         }
     }
 
-    public Register(int number, String name, RegisterFlag... flags) {
+    public Register(int number, int encoding, String name, RegisterFlag... flags) {
         this.number = number;
         this.name = name;
         this.flags = createMask(flags);
-        this.encoding = number - 1;
+        this.encoding = encoding;
     }
 
     private int createMask(RegisterFlag... flags) {
@@ -72,17 +73,12 @@ public class Register {
         return number >= 0;
     }
 
-    public boolean isFpu() {
-        return checkFlag(RegisterFlag.FPU);
-    }
-
     public boolean isXMM() {
         return checkFlag(RegisterFlag.XMM);
     }
 
     public CiLocation asVMReg() {
-        // TODO Auto-generated method stub
-        return null;
+        return Util.nonFatalUnimplemented(null);
     }
 
     public boolean isCpu() {

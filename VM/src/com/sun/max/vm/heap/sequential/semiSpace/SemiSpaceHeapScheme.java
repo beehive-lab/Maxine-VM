@@ -99,18 +99,18 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
     private StopTheWorldGCDaemon collectorThread;
 
-    private final SemiSpaceMemoryRegion fromSpace = new SemiSpaceMemoryRegion("Heap-From");
-    private final SemiSpaceMemoryRegion toSpace = new SemiSpaceMemoryRegion("Heap-To");
+    private final RuntimeMemoryRegion fromSpace = new RuntimeMemoryRegion("Heap-From");
+    private final RuntimeMemoryRegion toSpace = new RuntimeMemoryRegion("Heap-To");
 
     /**
      * Used when {@linkplain #grow(GrowPolicy) growing} the heap.
      */
-    private final SemiSpaceMemoryRegion growFromSpace = new SemiSpaceMemoryRegion("Heap-From-Grow");
+    private final RuntimeMemoryRegion growFromSpace = new RuntimeMemoryRegion("Heap-From-Grow");
 
     /**
      * Used when {@linkplain #grow(GrowPolicy) growing} the heap.
      */
-    private final SemiSpaceMemoryRegion growToSpace = new SemiSpaceMemoryRegion("Heap-To-Grow");
+    private final RuntimeMemoryRegion growToSpace = new RuntimeMemoryRegion("Heap-To-Grow");
 
     /**
      * The amount of memory reserved for allocating and raising an OutOfMemoryError when insufficient
@@ -169,7 +169,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         "The size of thread-local allocation buffers."), MaxineVM.Phase.PRISTINE);
 
     /**
-     * A VM option for disabling use of TLABs.
+     * A VM option for forcing a GC before allocation. Ignored if useTLABOption is on.
      */
     private static final VMBooleanXXOption excessiveGCOption = register(new VMBooleanXXOption("-XX:-ExcessiveGC",
         "Perform a garbage collection before every allocation. This is ignored if " + useTLABOption + " is specified."), MaxineVM.Phase.PRISTINE);
@@ -206,10 +206,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             allocationMark.set(toSpace.start());
             top = toSpace.end().minus(safetyZoneSize);
 
-
             // From now on we can allocate
-
-            InspectableHeapInfo.registerMemoryRegions(toSpace, fromSpace);
+            InspectableHeapInfo.init(toSpace, fromSpace);
         } else if (phase == MaxineVM.Phase.STARTING) {
             final String growPolicy = growPolicyOption.getValue();
             if (growPolicy.equals("Double")) {
@@ -276,7 +274,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         }
     }
 
-    private final class PointerIndexGripUpdater extends PointerIndexVisitor {
+    private final class PointerIndexGripUpdater implements PointerIndexVisitor {
 
         @Override
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
@@ -288,10 +286,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         }
     }
 
-    private final class GripVerifier extends PointerIndexVisitor implements PointerOffsetVisitor {
-        @Override
+    private final class GripVerifier   implements PointerIndexVisitor, PointerOffsetVisitor {
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
-            visitPointerOffset(pointer, wordIndex * Kind.REFERENCE.width.numberOfBytes);
+            visitPointerOffset(pointer, wordIndex * Word.size());
         }
         public void visitPointerOffset(Pointer pointer, int offset) {
             DebugHeap.verifyGripAtIndex(pointer, offset, pointer.readGrip(offset), toSpace, null);
@@ -307,7 +304,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 VmThreadMap.ACTIVE.forAllVmThreadLocals(null, resetTLAB);
                 if (MaxineVM.isDebug()) {
                     // Pre-verification of the heap.
-                    verifyHeap("before GC");
+                    verifyObjectSpaces("before GC");
                 }
 
                 ++numberOfGarbageCollectionInvocations;
@@ -321,7 +318,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 swapSemiSpaces(); // Swap semi-spaces. From--> To and To-->From
                 stopTimer(clearTimer);
 
-                if (Heap.traceRootScanning()) {
+                if (Heap.traceGCPhases()) {
                     Log.println("Scanning roots...");
                 }
                 startTimer(rootScanTimer);
@@ -360,12 +357,12 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 stopTimer(gcTimer);
 
                 // Bring the inspectable mark up to date, since it is not updated during the move.
-                toSpace.setAllocationMark(allocationMark()); // for debugging
+                toSpace.mark.set(allocationMark()); // for debugging
 
                 VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
 
                 if (MaxineVM.isDebug()) {
-                    verifyHeap("after GC");
+                    verifyObjectSpaces("after GC");
                 }
 
                 InspectableHeapInfo.afterGarbageCollection();
@@ -403,11 +400,11 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      * Attempts to allocate memory of given size for given space.
      * If successful sets region start and size.
      */
-    private static Address allocateSpace(SemiSpaceMemoryRegion space, Size size) {
+    private static Address allocateSpace(RuntimeMemoryRegion space, Size size) {
         final Address base = virtualAllocOption.getValue() ? VirtualMemory.allocate(size, VirtualMemory.Type.HEAP) : Memory.allocate(size);
         if (!base.isZero()) {
             space.setStart(base);
-            space.setAllocationMark(base); // debugging
+            space.mark.set(base); // debugging
             space.setSize(size);
         }
         return base;
@@ -418,7 +415,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      * Deallocates the memory associated with the given region.
      * Sets the region start to zero but does not change the size.
      */
-    private static void deallocateSpace(SemiSpaceMemoryRegion space) {
+    private static void deallocateSpace(RuntimeMemoryRegion space) {
         final Address base = space.start();
         if (virtualAllocOption.getValue()) {
             VirtualMemory.deallocate(base, space.size(), VirtualMemory.Type.HEAP);
@@ -433,9 +430,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      * Copies the state of one space into another.
      * Used when growing the semispaces.
      */
-    private static void copySpaceState(SemiSpaceMemoryRegion from, SemiSpaceMemoryRegion to) {
+    private static void copySpaceState(RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         to.setStart(from.start());
-        to.setAllocationMark(from.start());
+        to.mark.set(from.start());
         to.setSize(from.size());
     }
 
@@ -445,11 +442,11 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
         fromSpace.setStart(toSpace.start());
         fromSpace.setSize(toSpace.size());
-        fromSpace.setAllocationMark(toSpace.getAllocationMark()); // for debugging
+        fromSpace.mark.set(toSpace.getAllocationMark()); // for debugging
 
         toSpace.setStart(oldFromSpaceStart);
         toSpace.setSize(oldFromSpaceSize);
-        toSpace.setAllocationMark(toSpace.start());  // for debugging
+        toSpace.mark.set(toSpace.start());  // for debugging
 
         allocationMark.set(toSpace.start());
         top = toSpace.end();
@@ -572,23 +569,12 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         }
     }
 
-    /**
-     * This option exists only to measure the performance effect of using a reference map for the boot heap.
-     */
-    private static final VMBooleanXXOption useBootHeapRefmap = register(new VMBooleanXXOption("-XX:+UseBootHeapRefmap", "Use the boot heap reference map when scanning the boot heap."), MaxineVM.Phase.STARTING);
-
     private void scanBootHeap() {
-        if (useBootHeapRefmap.getValue()) {
-            Heap.bootHeapRegion.visitCells(this);
-        } else {
-            Heap.bootHeapRegion.visitPointers(pointerIndexGripUpdater);
-        }
+        Heap.bootHeapRegion.visitReferences(pointerIndexGripUpdater);
     }
 
     private void scanCode() {
-        // All objects in the boot code region are immutable
-        final boolean includeBootCode = false;
-        Code.visitCells(this, includeBootCode);
+        Code.visitReferences(pointerIndexGripUpdater);
     }
 
     private boolean cannotGrow() {
@@ -749,7 +735,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      *
      * @param size the size of memory chunk to be allocated
      * @return an allocated chunk of memory {@code size} bytes in size
-     * @throws OutOfMemoryError if the allocation request cannot be satified
+     * @throws OutOfMemoryError if the allocation request cannot be satisfied.
      */
     @INLINE
     private Pointer allocate(Size size) {
@@ -772,6 +758,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      * @param size the requested allocation size
      * @return the address of the allocated cell. Space for the {@linkplain DebugHeap#writeCellTag(Pointer) debug tag}
      *         will have been reserved immediately before the allocated cell.
+     * @throws OutOfMemoryError if the allocation request cannot be satisfied.
      */
     @NEVER_INLINE
     private Pointer allocateSlowPath(Size size) {
@@ -802,10 +789,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             final Pointer cell = DebugHeap.adjustForDebugTag(tlab);
             enabledVmThreadLocals.setWord(TLAB_TOP.index, tlabTop);
             enabledVmThreadLocals.setWord(TLAB_MARK.index, cell.plus(size));
-            if (Heap.traceAllocation() || Heap.traceGC()) {
+            if (Heap.traceAllocation()) {
                 final boolean lockDisabledSafepoints = Log.lock();
-                final VmThread vmThread = UnsafeLoophole.cast(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
-                Log.printVmThread(vmThread, false);
+                Log.printVmThread(VmThread.current(), false);
                 Log.print(": Allocated TLAB at ");
                 Log.print(tlab);
                 Log.print(" [TOP=");
@@ -831,6 +817,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      *
      * @param size the requested cell size to be allocated
      * @param adjustForDebugTag specifies if an extra word is to be reserved before the cell for the debug tag word
+     * @throws OutOfMemoryError if the allocation request cannot be satisfied.
      */
     @NEVER_INLINE
     private Pointer retryAllocate(Size size, boolean adjustForDebugTag) {
@@ -887,7 +874,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         if (!tlabTop.isZero()) {
             final Pointer tlabMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
             final int padWords = DebugHeap.writeCellPadding(tlabMark, tlabTop);
-            if (Heap.traceAllocation() || Heap.traceGC()) {
+            if (Heap.traceAllocation()) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 final VmThread vmThread = UnsafeLoophole.cast(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
                 Log.printVmThread(vmThread, false);
@@ -908,7 +895,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
         public void run(Pointer vmThreadLocals) {
             final Pointer enabledVmThreadLocals = vmThreadLocals.getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
-            if (Heap.traceAllocation() || Heap.traceGC()) {
+            if (Heap.traceAllocation()) {
                 final Pointer tlabTop = enabledVmThreadLocals.getWord(TLAB_TOP.index).asPointer();
                 final Pointer tlabMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
                 final VmThread vmThread = UnsafeLoophole.cast(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
@@ -1010,18 +997,24 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         return false;
     }
 
-    private void verifyHeap(String when) {
+    /**
+     * Verifies invariants for memory spaces (i.e. heap, code caches, thread stacks) that contain
+     * objects and/or object references.
+     *
+     * @param when a description of the current GC phase
+     */
+    private void verifyObjectSpaces(String when) {
         if (Heap.traceGCPhases()) {
-            Log.print("Verifying heap ");
+            Log.print("Verifying object spaces ");
             Log.println(when);
         }
         heapRootsVerifier.run();
 
         DebugHeap.verifyRegion(toSpace.description(), toSpace.start().asPointer(), allocationMark(), toSpace, gripVerifier);
-        Code.verifyRegions(toSpace, gripVerifier, false);
+        Code.visitReferences(gripVerifier);
 
         if (Heap.traceGCPhases()) {
-            Log.print("Verifying heap ");
+            Log.print("Verifying object spaces ");
             Log.print(when);
             Log.println(": DONE");
         }
@@ -1037,7 +1030,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         }
     }
 
-    private void logSpace(SemiSpaceMemoryRegion space) {
+    private void logSpace(RuntimeMemoryRegion space) {
         Log.print(space.description());
         Log.print(" start "); Log.print(space.start());
         Log.print(", end "); Log.print(space.end());

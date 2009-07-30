@@ -21,7 +21,6 @@
 package com.sun.max.asm.sparc.complete;
 
 import com.sun.max.asm.*;
-import com.sun.max.asm.AssemblyObject.*;
 import com.sun.max.lang.*;
 
 /**
@@ -64,24 +63,5 @@ public class SPARC32Assembler extends SPARCAssembler implements Assembler32 {
 
     public int address(Label label) throws AssemblyException {
         return address32(label);
-    }
-
-    private SPARC32Directives directives = new SPARC32Directives();
-
-    @Override
-    public Directives directives() {
-        return directives;
-    }
-
-    public class SPARC32Directives extends Directives {
-        @Override
-        public byte padByte() {
-            return 0;
-        }
-
-        @Override
-        protected Type padByteType() {
-            return Type.DATA;
-        }
     }
 }

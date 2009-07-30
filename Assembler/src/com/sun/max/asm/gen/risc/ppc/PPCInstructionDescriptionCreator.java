@@ -31,7 +31,7 @@ import com.sun.max.collect.*;
  */
 public abstract class PPCInstructionDescriptionCreator extends RiscInstructionDescriptionCreator {
 
-    protected PPCInstructionDescriptionCreator(PPCTemplateCreator templateCreator) {
+    protected PPCInstructionDescriptionCreator(RiscTemplateCreator templateCreator) {
         super(PPCAssembly.ASSEMBLY, templateCreator);
     }
 

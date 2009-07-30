@@ -46,7 +46,7 @@ public final class FatalError extends Error {
     static {
         ProgramError.setHandler(new Handler() {
             public void handle(String message, Throwable throwable) {
-                unexpected(message, Address.zero(), throwable);
+                unexpected(message, Address.zero(), throwable, Pointer.zero());
             }
         });
     }
@@ -71,11 +71,11 @@ public final class FatalError extends Error {
      * This method does not perform any synchronization or heap allocation.
      *
      * @param message a message describing the error condition. This value may be {@code null}.
-     * @see #unexpected(String, Address, Throwable)
+     * @see #unexpected(String, Address, Throwable, Pointer)
      * @return never
      */
     public static FatalError unexpected(String message) {
-        throw unexpected(message, Address.zero(), null);
+        throw unexpected(message, Address.zero(), null, Pointer.zero());
     }
 
     /**
@@ -87,11 +87,11 @@ public final class FatalError extends Error {
      *
      * @param message a message describing the error condition. This value may be {@code null}.
      * @param throwable an exception given more detail on the cause of the error condition. This value may be {@code null}.
-     * @see #unexpected(String, Address, Throwable)
+     * @see #unexpected(String, Address, Throwable, Pointer)
      * @return never
      */
     public static FatalError unexpected(String message, Throwable throwable) {
-        throw unexpected(message, Address.zero(), throwable);
+        throw unexpected(message, Address.zero(), throwable, Pointer.zero());
     }
 
     /**
@@ -103,11 +103,11 @@ public final class FatalError extends Error {
      *
      * @param message a message describing the trap. This value may be {@code null}.
      * @param nativeTrapAddress the address reported by the OS at which the trap occurred
-     * @see #unexpected(String, Address, Throwable)
+     * @see #unexpected(String, Address, Throwable, Pointer)
      * @return never
      */
     public static FatalError unexpected(String message, Address nativeTrapAddress) {
-        throw unexpected(message, nativeTrapAddress, null);
+        throw unexpected(message, nativeTrapAddress, null, Pointer.zero());
     }
 
     /**
@@ -119,12 +119,14 @@ public final class FatalError extends Error {
      * If {@code throwable == null}, this method does not perform any synchronization or heap allocation.
      *
      * @param message a message describing the trap. This value may be {@code null}.
-     * @param throwable an exception given more detail on the cause of the error condition. This value may be {@code null}.
      * @param nativeTrapAddress if this value is not equal to {@link Address#zero()}, then it is the address reported by
      *            the OS at which a trap occurred in native code
+     * @param throwable an exception given more detail on the cause of the error condition. This value may be {@code null}.
+     * @param trapState if non-zero, then this is a pointer to the {@linkplain TrapStateAccess trap state} for the trap
+     *            resulting in this fatal error
      * @return never
      */
-    public static FatalError unexpected(String message, Address nativeTrapAddress, Throwable throwable) {
+    public static FatalError unexpected(String message, Address nativeTrapAddress, Throwable throwable, Pointer trapState) {
         if (MaxineVM.isPrototyping()) {
             throw new FatalError(message, throwable);
         }
@@ -153,6 +155,11 @@ public final class FatalError extends Error {
         }
         Log.print("Faulting thread: ");
         Log.printVmThread(vmThread, true);
+
+        if (!trapState.isZero()) {
+            Log.print("------ Trap State ------");
+            TrapStateAccess.instance().logTrapState(trapState);
+        }
 
         dumpStackAndThreadLocals(VmThread.currentVmThreadLocals());
 
@@ -193,7 +200,7 @@ public final class FatalError extends Error {
     @INLINE
     public static void check(boolean condition, String message) {
         if (!condition) {
-            unexpected(message, Address.zero(), null);
+            unexpected(message, Address.zero(), null, Pointer.zero());
         }
     }
 
@@ -204,11 +211,11 @@ public final class FatalError extends Error {
      *
      * This method does not perform any synchronization or heap allocation.
      *
-     * @see #unexpected(String, Address, Throwable)
+     * @see #unexpected(String, Address, Throwable, Pointer)
      * @return never
      */
     public static FatalError unimplemented() {
-        throw unexpected("Unimplemented", Address.zero(), null);
+        throw unexpected("Unimplemented", Address.zero(), null, Pointer.zero());
     }
 
     /**

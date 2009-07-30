@@ -31,6 +31,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.sparc.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.sparc.*;
@@ -40,6 +41,7 @@ import com.sun.max.vm.type.*;
 /**
  * @author Bernd Mathiske
  * @author Laurent Daynes
+ * @author Paul Caprioli
  */
 public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisitor, SPARCEirTargetEmitter> implements SPARCEirInstruction {
 
@@ -52,17 +54,33 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
 
     private static final SPARCAssembler ASM = SPARCAssembler.createAssembler(WordWidth.BITS_64);
 
-    /**
-     * The maximum imm13 offset we can get for a stack offset. It leaves about 4K
-     * for the stack overflow routine to operate if we hit a protected zone.
-     */
-    private static final int DEFAULT_STACK_BANG_OFFSET = -2045;
+    private static int trapStateOffsetFromSP;
 
-    private static int stackBangOffset(int frameSize) {
-        if (SPARCAssembler.isSimm13(frameSize)) {
-            return DEFAULT_STACK_BANG_OFFSET;
+    /** Calculates the difference between the (biased) stack pointer register in the trapped frame and the trapState.
+     * @see SPARCTrapStateAccess
+     * @return The offset of the trapState from the stack pointer register of the trapped frame.
+     */
+    public static int getTrapStateOffsetFromSP() {
+        return trapStateOffsetFromSP;
+    }
+
+    @Override
+    public void emit(SPARCEirTargetEmitter emitter) {
+        if (!eirMethod().isTemplate()) {
+            final SPARCAssembler asm = emitter.assembler();
+            final SPARCEirRegister.GeneralPurpose stackPointer = (SPARCEirRegister.GeneralPurpose) emitter.abi().stackPointer();
+            if (eirMethod().classMethodActor().isTrapStub()) {
+               // emit a special prologue that saves all the registers
+                trapStateOffsetFromSP = emitTrapStubPrologue(asm, stackPointer.as());
+            } else {
+                final GPR scratchRegister = ((SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT)).as();
+                emitFrameBuilder(asm, eirMethod().frameSize(), stackPointer.as(), scratchRegister);
+            }
+            if (eirMethod().literalPool().hasLiterals()) {
+                asm.bindLabel(emitter.literalBaseLabel());
+                asm.rd(StateRegister.PC, ((SPARCEirABI) emitter.abi()).literalBaseRegister().as());
+            }
         }
-        return StackBias.SPARC_V9.stackBias() - frameSize;
     }
 
     /**
@@ -71,17 +89,18 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
      * This information is useful for stack walkers to determine whether a method activation is in its caller
      * register window.
      * @param frameSize
-     * @return
+     * @return the number of instructions
      */
     public static int numberOfFrameBuilderInstructions(int frameSize) {
-        if (SPARCAssembler.isSimm13(frameSize)) {
-            return 2;
+        final int stackBangOffset = -Trap.stackGuardSize + StackBias.SPARC_V9.stackBias() - frameSize;
+        int count = 2;
+        if (!SPARCAssembler.isSimm13(stackBangOffset)) {
+            count += ASM.setswNumberOfInstructions(stackBangOffset & ~0x3FF);
         }
-        final int stackBangOffset = stackBangOffset(frameSize);
-        if (SPARCAssembler.isSimm13(stackBangOffset)) {
-            return 2 + ASM.setswNumberOfInstructions(stackBangOffset);
+        if (!SPARCAssembler.isSimm13(-frameSize)) {
+            count += ASM.setswNumberOfInstructions(-frameSize);
         }
-        return 3 + ASM.setswNumberOfInstructions(stackBangOffset);
+        return count;
     }
 
     /**
@@ -98,45 +117,42 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         // frame we're creating should an stack overflow occur (especially if a save instruction subsequent to the one that
         // create this frame traps). To avoid this, we bang on the top of the frame we're creating. If this one cause a SIGSEGV,
         // we know the current register window can take the trap.
-        final int stackBangOffset = stackBangOffset(frameSize);
-        if (SPARCAssembler.isSimm13(frameSize)) {
-            assert SPARCAssembler.isSimm13(stackBangOffset);
-            asm.lduw(stackPointer, stackBangOffset, GPR.G0);
-            asm.save(stackPointer, -frameSize, stackPointer);
-        } else {
-            final GPR frameSizeReg = scratchRegister;
-            try {
-                if (SPARCAssembler.isSimm13(stackBangOffset)) {
-                    asm.lduw(stackPointer, stackBangOffset, GPR.G0);
-                    asm.setsw(-frameSize, frameSizeReg);
-                } else {
-                    asm.setsw(stackBangOffset, frameSizeReg);
-                    asm.lduw(stackPointer, frameSizeReg, GPR.G0);
-                    asm.sub(frameSizeReg, StackBias.SPARC_V9.stackBias(), frameSizeReg);
-                }
-                asm.save(stackPointer, frameSizeReg, stackPointer);
-            } catch (AssemblyException e) {
+        final int stackBangOffset = -Trap.stackGuardSize + StackBias.SPARC_V9.stackBias() - frameSize;
+        try {
+            if (SPARCAssembler.isSimm13(stackBangOffset)) {
+                asm.ldub(stackPointer, stackBangOffset, GPR.G0);
+            } else {
+                asm.setsw(stackBangOffset & ~0x3FF, scratchRegister);   // Note: stackBangOffset is rounded off
+                asm.ldub(stackPointer, scratchRegister, GPR.G0);
             }
+            if (SPARCAssembler.isSimm13(-frameSize)) {
+                asm.save(stackPointer, -frameSize, stackPointer);
+            } else {
+                asm.setsw(-frameSize, scratchRegister);
+                asm.save(stackPointer, scratchRegister, stackPointer);
+            }
+        } catch (AssemblyException e) {
+            FatalError.unexpected(null, e);
         }
     }
 
-    private void emitTrapStubPrologue(SPARCAssembler asm, GPR stackPointer) {
-        // Note: the safepoint latch register is already set to the disabled state (the C code in trap.c took care of that)
+    private int emitTrapStubPrologue(SPARCAssembler asm, GPR stackPointer) {
+        // Note: the safepoint latch register is already set to the disabled state (the C code in trap.c took care of that).
         // The value of the latch register at the trap instruction is stored in the trap state.
         final GPR latchRegister = SPARCSafepoint.LATCH_REGISTER;
-        final int frameSize = eirMethod().frameSize() + SPARCSafepoint.TRAP_STATE_SIZE;
+        final int frameSize = eirMethod().frameSize() + SPARCTrapStateAccess.TRAP_STATE_SIZE;
         final GPR scratchRegister = GPR.L0;
         final GPR scratchRegister2 = GPR.L1;
         assert SPARCAssembler.isSimm13(frameSize);
         eirMethod().setFrameSize(frameSize);
 
-        emitFrameBuilder(asm, frameSize, stackPointer, scratchRegister /* will no be use */);
+        emitFrameBuilder(asm, frameSize, stackPointer, scratchRegister /* will not be used */);
         // Only need to save the %i and %g of the trap stub frame, plus the %f.
-        // Can use all %l and %o of the trap stub frame as temp registers, since these doesn't contain any state of the
+        // Can use all %l and %o of the trap stub frame as temporary registers, since these don't contain any state of the
         // trapped frame.
 
         // flush register window as the trap stub will access the register window of the trapped frame.
-        // this is likely a no-op as we're entering here from returning from a signal handler.
+        // this is likely a nop as we're entering here from returning from a signal handler.
         asm.flushw();
         final int wordSize = Word.size();
         final int trapStateOffset =  SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer();
@@ -145,7 +161,7 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         // We want to copy into the trap state the value of the latch register at the instruction that causes the trap.
         asm.ldx(latchRegister, VmThreadLocal.TRAP_LATCH_REGISTER.offset, scratchRegister);
 
-        for (GPR register :  SPARCSafepoint.TRAP_SAVED_GLOBAL_SYMBOLIZER) {
+        for (GPR register :  SPARCTrapStateAccess.TRAP_SAVED_GLOBAL_SYMBOLIZER) {
             if (register == latchRegister) {
                 asm.stx(scratchRegister, stackPointer, offset);
             } else {
@@ -182,25 +198,7 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
 
         // Write trap number in corresponding trap state location
         asm.stx((GPR) parameterRegisters.get(0), stackPointer, offset);
-    }
-
-    @Override
-    public void emit(SPARCEirTargetEmitter emitter) {
-        if (!eirMethod().isTemplate()) {
-            final SPARCAssembler asm = emitter.assembler();
-            final SPARCEirRegister.GeneralPurpose stackPointer = (SPARCEirRegister.GeneralPurpose) emitter.abi().stackPointer();
-            if (eirMethod().classMethodActor().isTrapStub()) {
-               // emit a special prologue that saves all the registers
-                emitTrapStubPrologue(asm, stackPointer.as());
-            } else {
-                final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
-                emitFrameBuilder(asm, eirMethod().frameSize(), stackPointer.as(), scratchRegister.as());
-            }
-            if (eirMethod().literalPool().hasLiterals()) {
-                asm.bindLabel(emitter.literalBaseLabel());
-                asm.rd(StateRegister.PC, ((SPARCEirABI) emitter.abi()).literalBaseRegister().as());
-            }
-        }
+        return -frameSize + trapStateOffset;
     }
 
     @Override

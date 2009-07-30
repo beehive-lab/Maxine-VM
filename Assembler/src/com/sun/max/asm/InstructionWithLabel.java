@@ -38,7 +38,7 @@ public abstract class InstructionWithLabel extends MutableAssembledObject {
         return label;
     }
 
-    public final Type type() {
-        return Type.CODE;
+    public final boolean isCode() {
+        return true;
     }
 }

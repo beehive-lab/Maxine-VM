@@ -70,10 +70,11 @@ public final class Throw {
                 } else {
                     Log.print("<adapter>");
                 }
-                Log.print(" [");
-                Log.print(instructionPointer);
+                final Pointer codeStart = targetMethod.codeStart();
+                Log.print(" [0x");
+                Log.print(codeStart);
                 Log.print("+");
-                Log.print(instructionPointer.minus(targetMethod.codeStart()).toInt());
+                Log.print(instructionPointer.minus(codeStart).toInt());
                 Log.print("]");
             } else {
                 Log.print("unknown:");

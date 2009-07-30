@@ -284,7 +284,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
         // The caller's window is restored in the delay slot of the return instruction.
         // When on the first instruction of the prologue of a method, the callee is still operating with the caller's register window,
         // i.e., both the stack and frame pointer are that of the callers. Further, the instruction pointer
-        // is in %o7 (the "frameless call instruction register"), not %i7, and therefore cannot be found on the stack.
+        // is in %o7 (the "frame-less call instruction register"), not %i7, and therefore cannot be found on the stack.
         // This situation occurs only in the first instruction of the optimized method. Because the restoring of the
         // caller's window takes place in the last instruction of the method, this situation doesn't occur in the method's epilogue.
 
@@ -359,11 +359,10 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
             } else {
                 // When purpose is other than inspecting, this situation can only occur when we trapped in a prologue (e.g.,
                 // when banging the stack).
-                // We can fish for the caller's instruction pointer in the trapped state, which is located at the
-                // top of the callee stack.
-                final SPARCSafepoint safepoint = (SPARCSafepoint) VMConfiguration.hostOrTarget().safepoint;
-                final Pointer trapState = StackBias.SPARC_V9.unbias(stackFrameWalker.stackPointer()).minus(SPARCSafepoint.TRAP_STATE_SIZE);
-                callerInstructionPointer = safepoint.getCallAddressRegister(trapState);
+                // We can fish for the caller's instruction pointer in the trap state.
+                final SPARCTrapStateAccess trapStateAccess = (SPARCTrapStateAccess) TrapStateAccess.instance();
+                final Pointer trapState = stackFrameWalker.stackPointer().plus(SPARCEirPrologue.getTrapStateOffsetFromSP());
+                callerInstructionPointer = trapStateAccess.getCallAddressRegister(trapState);
             }
         } else {
             callerInstructionPointer = SPARCStackFrameLayout.getCallerPC(stackFrameWalker);

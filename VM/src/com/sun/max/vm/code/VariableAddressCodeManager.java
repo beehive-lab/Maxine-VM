@@ -64,7 +64,8 @@ public class VariableAddressCodeManager extends CodeManager {
             FatalError.unexpected("cannot free code regions");
         }
 
-        final Address address = allocateCodeRegionMemory(Size.fromInt(RUNTIME_CODE_REGION_SIZE));
+        final Size size = Size.fromInt(RUNTIME_CODE_REGION_SIZE);
+        final Address address = allocateCodeRegionMemory(size);
         if (address.isZero() || address.isAllOnes()) {
             throw ProgramError.unexpected("could not allocate runtime code region");
         }
@@ -94,9 +95,7 @@ public class VariableAddressCodeManager extends CodeManager {
                 runtimeCodeRegions[i + 1] =  runtimeCodeRegions[i];
             }
         }
-        codeRegion.setStart(address);
-        codeRegion.setMark(address);
-        codeRegion.setSize(Size.fromInt(RUNTIME_CODE_REGION_SIZE));
+        codeRegion.bind(address, size);
         runtimeCodeRegions[index] = codeRegion;
 
         if (numberOfRuntimeCodeRegionsInUse == 0) {

@@ -28,14 +28,87 @@ import com.sun.max.asm.amd64.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.cisc.x86.*;
+import com.sun.max.asm.x86.*;
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.util.*;
 
+
 /**
- * A disassembler for x86 instructions.
+ * An x86 instruction disassembler.
+ *
+ * The string representation for disassembler output has the following format,
+ * which borrows from both Intel and AT&T syntax and differs from either
+ * regarding indirect addressing and indexing.
+ *
+ * Operand order follows Intel syntax:
+ *
+ * mnemonic argument
+ * mnemonic destination, source
+ * mnemonic argument1, argument2, argument3
+ *
+ * Some mnemonics may have operand size suffixes as in AT&T (gas) syntax.
+ * Suffix    Intel size     Java size    # bits
+ * ------    -----------    ---------    ------
+ * b         byte           byte          8
+ * w         word           short        16
+ * l         long word      int          32
+ * q         quad word      long         64
+ *
+ * Using this AT&T syntax feature, there is no need for operand size indicators
+ * (e.g. DWORD PTR) for pointers as in Intel syntax.
+ *
+ * Registers etc. are named as in Intel syntax,
+ * in lower case without AT&T's "%" prefix.
+ *
+ * Indexing is indicated by '[' and ']', similiar to array access in the Java(TM) Programming Language:
+ *
+ * base[index], e.g. eax[ebx]
+ *
+ * Indirect access looks like indexing without a base (or with implicit base 0):
+ *
+ * [indirect], e.g. [ecx]
+ *
+ * Displacements are added/subtracted from the index/indirect operand:
+ *
+ * base[index + displacement], e.g. ebp[eax - 12]
+ * [indirect + displacement], e.g. [esi + 100]
+ *
+ * Scale is displayed as multiplication of the index:
+ *
+ * [base[index * scale] or base[index * scale + displacement], e.g. ecx[ebx * 4 + 10]
+ *
+ * A scale of 1 is left implicit, i.e. not printed.
+ * Scale literals are the unsigned decimal integer numbers 2, 4, 8.
+ *
+ * Displacement literals are signed decimal integer numbers.
+ *
+ * Direct memory references (pointer literals) are unsigned hexadecimal integer numbers, e.g.:
+ *
+ * [0x12345678], 0x12345678[eax]
+ *
+ * Immediate operands are unsigned hexadecimal integer numbers, e.g.:
+ *
+ * 0x12, 0xffff, 0x0, 0x123456789abcdef
+ *
+ * Offset operands are signed decimal integer numbers, like displacements, but without space between the sign and the number, e.g.:
+ *
+ * jmp +12
+ * call -2048
+ *
+ * RIP (Relative to Instruction Pointer) addressing is a combination of an offset operand and indirect addressing, e.g.:
+ *
+ * add [+20], eax
+ * mov ebx, [-200]
+ *
+ * The disassembler displays synthetic labels for all target addresses
+ * within the disassembled address range that hit the start address of an instruction.
+ * Operands that coincide with such a label are displayed with the respective Label prepended. e.g.:
+ *
+ * jmp L1: +100
+ * adc [L2: +128], ESI
  *
  * @see Disassembler
  * @see X86DisassembledInstruction
@@ -43,49 +116,59 @@ import com.sun.max.util.*;
  * @author Bernd Mathiske
  * @author David Liu
  */
-public abstract class X86Disassembler<Template_Type extends X86Template, DisassembledInstruction_Type extends X86DisassembledInstruction<Template_Type>>
-                          extends Disassembler<Template_Type, DisassembledInstruction_Type> {
+public abstract class X86Disassembler extends Disassembler {
 
-    protected X86Disassembler(ImmediateArgument startAddress, Assembly<Template_Type> assembly, InlineDataDecoder inlineDataDecoder) {
-        super(startAddress, assembly, Endianness.LITTLE, inlineDataDecoder);
+
+    private X86Assembly<? extends X86Template> assembly;
+
+    protected X86Disassembler(ImmediateArgument startAddress, X86Assembly<? extends X86Template> assembly, InlineDataDecoder inlineDataDecoder) {
+        super(startAddress, Endianness.LITTLE, inlineDataDecoder);
+        this.assembly = assembly;
     }
 
     protected abstract boolean isRexPrefix(HexByte opcode);
 
-    private X86InstructionHeader scanInstructionHeader(BufferedInputStream stream) throws IOException {
+    private X86InstructionHeader scanInstructionHeader(BufferedInputStream stream, boolean justSkip) throws IOException {
         int byteValue = stream.read();
         if (byteValue < 0) {
             return null;
         }
         final X86InstructionHeader header = new X86InstructionHeader();
+
         do {
             final HexByte hexByte = HexByte.VALUES.get(byteValue);
             if (header.opcode1 == null) {
                 if (hexByte == X86Opcode.ADDRESS_SIZE) {
                     header.hasAddressSizePrefix = true;
                 } else if (hexByte == X86Opcode.OPERAND_SIZE) {
+                    assert header.instructionSelectionPrefix == null;
                     header.instructionSelectionPrefix = hexByte;
                 } else if (hexByte == X86Opcode.REPE || hexByte == X86Opcode.REPNE) {
+                    assert header.instructionSelectionPrefix == null;
                     header.instructionSelectionPrefix = hexByte;
-                    return header;
                 } else if (isRexPrefix(hexByte)) {
                     header.rexPrefix = hexByte;
                 } else {
                     header.opcode1 = hexByte;
                     if (hexByte != HexByte._0F) {
-                        return header;
+                        break;
                     }
                 }
             } else {
                 header.opcode2 = hexByte;
-                return header;
+                break;
             }
             byteValue = stream.read();
         } while (byteValue >= 0);
-        return header;
+
+        if (TRACE && !justSkip) {
+            System.out.println("Scanned header: " + header);
+        }
+
+        return justSkip ? null : header;
     }
 
-    private IndexedSequence<Argument> scanArguments(BufferedInputStream stream, Template_Type template, X86InstructionHeader header, byte modRMByte, byte sibByte) throws IOException {
+    private IndexedSequence<Argument> scanArguments(BufferedInputStream stream, X86Template template, X86InstructionHeader header, byte modRMByte, byte sibByte) throws IOException {
         final AppendableIndexedSequence<Argument> arguments = new ArrayListSequence<Argument>();
         final byte rexByte = (header.rexPrefix != null) ? header.rexPrefix.byteValue() : 0;
         for (X86Parameter parameter : template.parameters()) {
@@ -165,7 +248,7 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
         return arguments;
     }
 
-    private int getModVariantParameterIndex(Template_Type template, byte modRMByte, byte sibByte) {
+    private int getModVariantParameterIndex(X86Template template, byte modRMByte, byte sibByte) {
         if (template.modCase() == X86TemplateContext.ModCase.MOD_0 && X86Field.MOD.extract(modRMByte) != X86TemplateContext.ModCase.MOD_0.value()) {
             switch (template.rmCase()) {
                 case NORMAL: {
@@ -209,7 +292,7 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
         return -1;
     }
 
-    private byte getSibByte(BufferedInputStream stream, Template_Type template, byte modRMByte) throws IOException {
+    private byte getSibByte(BufferedInputStream stream, X86Template template, byte modRMByte) throws IOException {
         if (template.addressSizeAttribute() == WordWidth.BITS_16) {
             return 0;
         }
@@ -223,7 +306,7 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
         return 0;
     }
 
-    protected abstract Map<X86InstructionHeader, AppendableSequence<Template_Type>> headerToTemplates();
+    protected abstract Map<X86InstructionHeader, AppendableSequence<X86Template>> headerToTemplates();
 
     private static int serial;
 
@@ -239,11 +322,11 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
                     header.opcode2 = HexByte.VALUES.get(byte2);
                 }
             }
-            final Sequence<Template_Type> templates = headerToTemplates().get(header);
+            final Sequence<X86Template> templates = headerToTemplates().get(header);
             if (templates != null) {
-                for (Template_Type template : templates) {
+                for (X86Template template : templates) {
                     stream.reset();
-                    scanInstructionHeader(stream);
+                    scanInstructionHeader(stream, true);
                     if (isFloatingPointEscape) {
                         stream.read();
                     }
@@ -257,7 +340,7 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
                             sibByte = getSibByte(stream, template, modRMByte);
                             modVariantParameterIndex = getModVariantParameterIndex(template, modRMByte, sibByte);
                             if (modVariantParameterIndex >= 0) {
-                                final Template_Type modVariantTemplate = X86Assembly.getModVariantTemplate(templates, template, template.parameters().get(modVariantParameterIndex).type());
+                                final X86Template modVariantTemplate = X86Assembly.getModVariantTemplate(templates, template, template.parameters().get(modVariantParameterIndex).type());
                                 arguments = scanArguments(stream, modVariantTemplate, header, modRMByte, sibByte);
                             }
                         }
@@ -282,16 +365,16 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
                             byte[] bytes;
                             if (true) {
                                 final Assembler assembler = createAssembler(currentPosition);
-                                assembly().assemble(assembler, template, arguments);
+                                assembly.assemble(assembler, template, arguments);
                                 bytes = assembler.toByteArray();
                             } else { // TODO: does not work yet
-                                final X86TemplateAssembler<Template_Type> templateAssembler = new X86TemplateAssembler<Template_Type>(template, addressWidth());
+                                final X86TemplateAssembler templateAssembler = new X86TemplateAssembler(template, addressWidth());
                                 bytes = templateAssembler.assemble(arguments);
                             }
                             if (bytes != null) {
                                 stream.reset();
                                 if (Streams.startsWith(stream, bytes)) {
-                                    final DisassembledInstruction_Type disassembledInstruction = createDisassembledInstruction(currentPosition, bytes, template, arguments);
+                                    final DisassembledInstruction disassembledInstruction = createDisassembledInstruction(currentPosition, bytes, template, arguments);
                                     currentPosition += bytes.length;
                                     return disassembledInstruction;
                                 }
@@ -309,10 +392,10 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
         if (header.instructionSelectionPrefix == X86Opcode.REPE || header.instructionSelectionPrefix == X86Opcode.REPNE) {
             final X86InstructionHeader prefixHeader = new X86InstructionHeader();
             prefixHeader.opcode1 = header.instructionSelectionPrefix;
-            final Sequence<Template_Type> prefixTemplates = headerToTemplates().get(prefixHeader);
-            final Template_Type template = prefixTemplates.first();
+            final Sequence<X86Template> prefixTemplates = headerToTemplates().get(prefixHeader);
+            final X86Template template = prefixTemplates.first();
             final byte[] bytes = new byte[]{header.instructionSelectionPrefix.byteValue()};
-            final DisassembledInstruction_Type disassembledInstruction = createDisassembledInstruction(currentPosition, bytes, template, IndexedSequence.Static.empty(Argument.class));
+            final DisassembledInstruction disassembledInstruction = createDisassembledInstruction(currentPosition, bytes, template, IndexedSequence.Static.empty(Argument.class));
             currentPosition++;
             return disassembledInstruction;
         }
@@ -329,6 +412,21 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
         throw new AssemblyException("unknown instruction");
     }
 
+
+    /**
+     * Creates a disassembled instruction based on a given sequence of bytes, a template and a set of arguments. The
+     * caller has performed the necessary decoding of the bytes to derive the template and arguments.
+     *
+     * @param position the position an instruction stream from which the bytes were read
+     * @param bytes the bytes of an instruction
+     * @param template the template that corresponds to the instruction encoded in {@code bytes}
+     * @param arguments the arguments of the instruction encoded in {@code bytes}
+     * @return a disassembled instruction representing the result of decoding {@code bytes} into an instruction
+     */
+    protected X86DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, X86Template template, IndexedSequence<Argument> arguments) {
+        return new X86DisassembledInstruction(this, position, bytes, template, arguments);
+    }
+
     private static final int MORE_THAN_ANY_INSTRUCTION_LENGTH = 100;
     private static final boolean INLINE_INVALID_INSTRUCTIONS_AS_BYTES = true;
 
@@ -336,7 +434,7 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
     public IndexedSequence<DisassembledObject> scanOne0(BufferedInputStream stream) throws IOException, AssemblyException {
         final AppendableIndexedSequence<DisassembledObject> disassembledObjects = new ArrayListSequence<DisassembledObject>();
         stream.mark(MORE_THAN_ANY_INSTRUCTION_LENGTH);
-        final X86InstructionHeader header = scanInstructionHeader(stream);
+        final X86InstructionHeader header = scanInstructionHeader(stream, false);
         if (header == null) {
             throw new AssemblyException("unknown instruction");
         }
@@ -359,7 +457,7 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
 
             stream.mark(MORE_THAN_ANY_INSTRUCTION_LENGTH);
 
-            final X86InstructionHeader header = scanInstructionHeader(stream);
+            final X86InstructionHeader header = scanInstructionHeader(stream, false);
             if (header == null) {
                 return result;
             }
@@ -385,8 +483,7 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
                 }
             } else {
                 if (processingKnownValidCode && disassembledObject instanceof DisassembledInstruction) {
-                    final Class<DisassembledInstruction_Type> type = null;
-                    final DisassembledInstruction_Type disassembledInstruction = StaticLoophole.cast(type, disassembledObject);
+                    final DisassembledInstruction disassembledInstruction = (DisassembledInstruction) disassembledObject;
                     if (isRelativeJumpForward(disassembledInstruction)) {
                         int jumpOffset;
                         if (disassembledInstruction.arguments().first() instanceof Immediate32Argument) {
@@ -414,5 +511,125 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
             ((Immediate8Argument) instruction.arguments().first()).value() >= 0)); // forward in the code stream
     }
 
-    protected abstract Template_Type createInlineDataTemplate(Object[] specification);
+    @Override
+    public ImmediateArgument addressForRelativeAddressing(DisassembledInstruction di) {
+        return di.startAddress().plus(di.endPosition());
+    }
+
+    @Override
+    public String mnemonic(DisassembledInstruction di) {
+        return di.template().externalName();
+    }
+
+    @Override
+    public String operandsToString(DisassembledInstruction di, AddressMapper addressMapper) {
+        final Queue<X86Operand> operandQueue = new MutableQueue<X86Operand>();
+        for (Operand operand : di.template().operands()) {
+            operandQueue.add((X86Operand) operand);
+        }
+        final Queue<Argument> argumentQueue = new MutableQueue<Argument>(di.arguments());
+        String result = "";
+        String separator = "";
+        while (!operandQueue.isEmpty()) {
+            result += separator + getOperand(di, operandQueue, argumentQueue, addressMapper);
+            separator = ", ";
+        }
+        return result;
+    }
+
+    @Override
+    public String toString(DisassembledInstruction di, AddressMapper addressMapper) {
+        String s = operandsToString(di, addressMapper);
+        if (s.length() > 0) {
+            s = "  " + s;
+        }
+        return Strings.padLengthWithSpaces(mnemonic(di), 8) + s;
+    }
+
+
+    private String getSibIndexAndScale(Queue<X86Operand> operands, Queue<Argument> arguments) {
+        X86Parameter parameter = (X86Parameter) operands.remove();
+        assert parameter.place() == ParameterPlace.SIB_INDEX || parameter.place() == ParameterPlace.SIB_INDEX_REXX;
+        final String result = arguments.remove().disassembledValue();
+        parameter = (X86Parameter) operands.remove();
+        assert parameter.place() == ParameterPlace.SIB_SCALE;
+        final Scale scale = (Scale) arguments.remove();
+        if (scale == Scale.SCALE_1) {
+            return result;
+        }
+        return result + " * " + scale.disassembledValue();
+    }
+
+    private String addition(Argument argument, String space) {
+        assert argument instanceof ImmediateArgument;
+        final long value = argument.asLong();
+        final String s = Long.toString(value);
+        if (value >= 0) {
+            return "+" + space + s;
+        }
+        return "-" + space + s.substring(1);
+    }
+
+    private String getOperand(DisassembledInstruction di, Queue<X86Operand> operands, Queue<Argument> arguments, AddressMapper addressMapper) {
+        final X86Operand operand = operands.remove();
+        if (operand instanceof ImplicitOperand) {
+            final ImplicitOperand implicitOperand = (ImplicitOperand) operand;
+            return implicitOperand.argument().disassembledValue();
+        }
+        final X86Parameter parameter = (X86Parameter) operand;
+        final Argument argument = arguments.remove();
+        if (parameter instanceof X86DisplacementParameter) {
+            assert parameter.place() == ParameterPlace.APPEND;
+            final X86Parameter nextParameter = (X86Parameter) operands.element();
+            String prefix = "";
+            if (IndirectRegister.class.isAssignableFrom(nextParameter.type())) {
+                operands.remove();
+                prefix += "[" + arguments.remove().disassembledValue();
+            } else {
+                if (nextParameter.place() == ParameterPlace.SIB_BASE || nextParameter.place() == ParameterPlace.SIB_BASE_REXB) {
+                    operands.remove();
+                    prefix += arguments.remove().disassembledValue();
+                }
+                prefix += "[" + getSibIndexAndScale(operands, arguments);
+            }
+            return prefix + " " + addition(argument, " ") + "]";
+        }
+        if (parameter.place() == ParameterPlace.SIB_BASE || parameter.place() == ParameterPlace.SIB_BASE_REXB) {
+            return argument.disassembledValue() + "[" + getSibIndexAndScale(operands, arguments) + "]";
+        }
+        if (IndirectRegister.class.isAssignableFrom(parameter.type())) {
+            return "[" + argument.disassembledValue() + "]";
+        }
+        if (parameter instanceof X86AddressParameter) {
+            String address = argument.disassembledValue();
+            final DisassembledLabel label = addressMapper.labelAt((ImmediateArgument) argument);
+            if (label != null) {
+                address = label.name() + ": " + address;
+            }
+            final X86Operand nextOperand = operands.peek();
+            if (nextOperand instanceof X86Parameter) {
+                final X86Parameter nextParameter = (X86Parameter) nextOperand;
+                if (nextParameter.place() == ParameterPlace.SIB_INDEX || nextParameter.place() == ParameterPlace.SIB_INDEX_REXX) {
+                    return address + "[" + getSibIndexAndScale(operands, arguments) + "]";
+                }
+            }
+            return "[" + address + "]";
+        }
+        if (parameter instanceof X86OffsetParameter) {
+            String offset = addition(argument, "");
+            final ImmediateArgument targetAddress = di.addressForRelativeAddressing().plus((ImmediateArgument) argument);
+            final DisassembledLabel label =  addressMapper.labelAt(targetAddress);
+            if (label != null) {
+                offset = label.name() + ": " + offset;
+            }
+            if (((X86Template) di.template()).addressSizeAttribute() == WordWidth.BITS_64 && ((X86Template) di.template()).rmCase() == X86TemplateContext.RMCase.SDWORD) {
+                return "[" + offset + "]"; // RIP
+            }
+            return offset;
+        }
+        if (parameter.getClass() == X86ImmediateParameter.class) {
+            return argument.disassembledValue();
+        }
+        return argument.disassembledValue();
+    }
 }

@@ -29,6 +29,7 @@ import com.sun.max.vm.code.Code;
 import com.sun.max.vm.VMConfiguration;
 import com.sun.max.collect.AppendableSequence;
 import com.sun.max.annotate.PROTOTYPE_ONLY;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 
 import java.util.ArrayList;
@@ -218,6 +219,7 @@ public class MaxCiTargetMethod implements CiTargetMethod {
      * @param relative {@code true} if the reference is instruction-relative
      */
     public void recordDataReferenceInCode(int codePosition, int dataPosition, boolean relative) {
+        assert codePosition >= 0 && dataPosition >= 0;
         dataPatchSites.add(new DataPatchSite(codePosition, dataPosition, relative));
     }
 
@@ -324,7 +326,7 @@ public class MaxCiTargetMethod implements CiTargetMethod {
         );
         // TODO: patch code and data references
         processDataPatches(targetBundleLayout);
-        processRefPatches(targetBundleLayout, refLiterals);
+        processRefPatches(targetBundleLayout, targetMethod.referenceLiterals());
     }
 
     private void processRefPatches(TargetBundleLayout bundleLayout, Object[] refLiterals) {
@@ -354,6 +356,25 @@ public class MaxCiTargetMethod implements CiTargetMethod {
 
     private void patchRelativeInstruction(int codePos, Offset relative) {
         // TODO: patch relative load instructions in a platform-dependent way
+        X86InstructionDecoder decoder = new X86InstructionDecoder(targetMethod.code(), true);
+        decoder.decodePosition(codePos);
+        int patchPos = decoder.currentDisplacementPosition();
+        int endOfInstruction = decoder.currentEndOfInstruction();
+        int offset = relative.toInt() - endOfInstruction + codePos;
+        patchDisp32(targetMethod.code(), patchPos, offset);
+    }
+
+    private void patchDisp32(byte[] code, int pos, int b) {
+        assert pos + 4 < code.length;
+        assert code[pos] == 0;
+        assert code[pos + 1] == 0;
+        assert code[pos + 2] == 0;
+        assert code[pos + 3] == 0;
+
+        code[pos++] = (byte) (b & 0xFF);
+        code[pos++] = (byte) ((b >> 8) & 0xFF);
+        code[pos++] = (byte) ((b >> 16) & 0xFF);
+        code[pos++] = (byte) ((b >> 24) & 0xFF);
     }
 
     private void processSafepoints(int[] stopPositions, ByteArrayBitMap bitMap) {
@@ -376,12 +397,17 @@ public class MaxCiTargetMethod implements CiTargetMethod {
         int directPos = 0;
         int indirectPos = directCalls;
         bitMap.setSize(stackRefMapSize());
-        final ClassMethodActor[] directCallees = new ClassMethodActor[directCalls];
+        final List<ClassMethodActor> directCallees = new ArrayList<ClassMethodActor>(directCalls);
         for (CallSite callSite : callSites) {
             // fill in the stop position for this call site
             if (callSite.direct) {
                 bitMap.setOffset(directPos);
-                directCallees[directPos] = getClassMethodActor(callSite.runtimeCall, callSite.method);
+                final ClassMethodActor cma = getClassMethodActor(callSite.runtimeCall, callSite.method);
+                if (cma != null) {
+                    directCallees.add(cma);
+                } else {
+                    Trace.line(1, "Warning: Unresolved direct call: " + callSite.runtimeCall + ", " + callSite.method);
+                }
                 stopPositions[directPos] = callSite.codePos;
                 directPos++;
             } else {
@@ -394,7 +420,7 @@ public class MaxCiTargetMethod implements CiTargetMethod {
             assert directPos <= indirectCalls;
             assert indirectPos <= directCalls + indirectCalls;
         }
-        return directCallees;
+        return directCallees.toArray(new ClassMethodActor[directCallees.size()]);
     }
 
     private ClassMethodActor getClassMethodActor(CiRuntimeCall runtimeCall, CiMethod method) {
@@ -402,8 +428,15 @@ public class MaxCiTargetMethod implements CiTargetMethod {
             final MaxCiMethod maxMethod = (MaxCiMethod) method;
             return maxMethod.asClassMethodActor("directCall()");
         }
-        // TODO: get the class method actor for a runtime method call
-        return null;
+
+        assert runtimeCall != null : "A call can either be a call to a method or a runtime call";
+
+        switch(runtimeCall) {
+
+            default:
+                Trace.line(1, "WARNING: Unknown runtime call to " + runtimeCall.name());
+                return null;
+        }
     }
 
     private void setBits(ByteArrayBitMap bitMap, boolean[] stackMap) {
@@ -443,7 +476,5 @@ public class MaxCiTargetMethod implements CiTargetMethod {
     }
 
     public void recordCodeReferenceInData(int codePosition, int dataPosition, boolean relative) {
-        // TODO Auto-generated method stub
-
     }
 }

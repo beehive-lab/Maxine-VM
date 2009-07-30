@@ -57,7 +57,7 @@ public class Interval {
 
     enum IntervalKind {
         fixedKind, // interval pre-colored by LIR_Generator
-        anyKind; // no register/memory allocated by LIR_Generator
+        anyKind // no register/memory allocated by LIR_Generator
     }
 
     // during linear scan an interval is in one of four states in
@@ -794,36 +794,47 @@ public class Interval {
         return false;
     }
 
-    public void print(LogStream out, LinearScan allocator) {
+    @Override
+    public String toString() {
+        return regNum() + " " + typeName();
+    }
+
+    private String typeName() {
 
         String typeName;
-        LIROperand opr = LIROperandFactory.illegal();
         if (regNum() < Register.vregBase) {
             typeName = "fixed";
+        } else {
+            typeName = type().name();
+        }
+        return typeName;
+    }
+
+    public void print(LogStream out, LinearScan allocator) {
+
+        LIROperand opr = LIROperandFactory.illegal();
+        if (regNum() < Register.vregBase) {
             // need a temporary operand for fixed intervals because type() cannot be called
             if (allocator.isCpu(assignedReg())) {
                 opr = LIROperandFactory.singleLocation(BasicType.Int, allocator.toRegister(assignedReg()));
-            } else if (allocator.isFpu(assignedReg())) {
-                opr = LIROperandFactory.singleLocation(BasicType.Float, allocator.toRegister(assignedReg()));
             } else if (allocator.isXmm(assignedReg())) {
                 opr = LIROperandFactory.singleLocation(BasicType.Float, allocator.toRegister(assignedReg()));
             } else {
                 Util.shouldNotReachHere();
             }
         } else {
-            typeName = type().name();
             if (assignedReg() != -1) {
                 opr = allocator.calcOperandForInterval(this);
             }
         }
 
-        out.printf("%d %s ", regNum(), typeName);
+        out.printf("%d %s ", regNum(), typeName());
         if (opr.isValid()) {
             out.print("\"");
             opr.print(out);
             out.print("\" ");
         }
-        out.printf("%d %d ", splitParent().regNum(), (registerHint(false, allocator) != null ? registerHint(false, allocator).regNum() : -1));
+        out.printf("%d %d ", splitParent().regNum(), registerHint(false, allocator) != null ? registerHint(false, allocator).regNum() : -1);
 
         // print ranges
         Range cur = first;

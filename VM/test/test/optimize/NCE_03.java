@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,31 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.heap.beltway;
+package test.optimize;
 
-import com.sun.max.memory.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.grip.*;
-
-/**
- * @author Christos Kotselidis
+/*
+ * Test case for null check elimination.
+ * @Harness: java
+ * @Runs: 0=23
  */
-public  class PointerIndexVisitorImpl implements BeltWayPointerIndexVisitor {
+public class NCE_03 {
 
-    private   Action actionImpl;
+    private static boolean cond = true;
+    public static NCE_03 object = new NCE_03();
 
-    public PointerIndexVisitorImpl(Action actionImpl) {
-        this.actionImpl = actionImpl;
-    }
+    int field1;
+    int field2 = 23;
 
-    public void visitPointerIndex(Pointer pointer, int wordIndex, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        final Grip oldGrip = pointer.getGrip(wordIndex);
-        final Grip newGrip = actionImpl.doAction(oldGrip, from, to);
-        if (newGrip != null) {
-            if (newGrip != oldGrip) {
-                pointer.setGrip(wordIndex, newGrip);
-            }
+    public static int test(int arg) {
+        NCE_03 o = object;
+        o.field1 = 11;
+        if (cond) {
+            // expect non-null
+            o.field1 = 22;
         }
+        // expect non-null
+        return o.field2;
     }
-
 }

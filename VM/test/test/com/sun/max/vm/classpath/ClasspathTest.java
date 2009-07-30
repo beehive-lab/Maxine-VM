@@ -20,9 +20,9 @@
  */
 package test.com.sun.max.vm.classpath;
 
-import junit.framework.*;
+import test.com.sun.max.vm.*;
 
-public class ClasspathTest extends TestCase {
+public class ClasspathTest extends VmTestCase {
 
     public static void main(String[] args) {
         junit.textui.TestRunner.run(ClasspathTest.class);

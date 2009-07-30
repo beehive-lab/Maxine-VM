@@ -49,7 +49,7 @@ public class MonitorValue extends ScopeValue {
     public MonitorValue(DebugInfoReadStream stream) {
         basicLock = new Location(stream);
         owner = ScopeValue.readFrom(stream);
-        eliminated = (stream.readBool() != false);
+        eliminated = stream.readBool();
     }
 
     // Accessors

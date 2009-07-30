@@ -27,7 +27,6 @@ import com.sun.c1x.graph.BlockMap;
 import com.sun.c1x.ir.BlockBegin;
 import com.sun.c1x.ir.BlockClosure;
 import com.sun.c1x.ir.Instruction;
-import static com.sun.c1x.ir.Instruction.stateString;
 import static com.sun.c1x.ir.Instruction.valueString;
 import com.sun.c1x.lir.LIRList;
 import com.sun.c1x.util.Util;
@@ -50,6 +49,8 @@ import java.util.List;
 public class CFGPrinter {
 
     private static OutputStream cfgFileStream;
+
+    private CiMethod currentMethod;
 
     /**
      * Gets the output stream  on the file "output.cfg" in the current working directory.
@@ -96,6 +97,7 @@ public class CFGPrinter {
      * @param method the method for which a timestamp will be printed
      */
     public void printCompilation(CiMethod method) {
+        currentMethod = method;
         begin("compilation");
         out.print("name \" ").print(Util.format("%H::%n", method, true)).println('"');
         out.print("method \"").print(Util.format("%f %r %H.%n(%p)", method, true)).println('"');
@@ -213,7 +215,7 @@ public class CFGPrinter {
           while (i < state.stackSize()) {
               Instruction value = state.stackAt(i);
               out.disableIndentation();
-              out.print(stateString(i, value, block));
+              out.print(InstructionPrinter.stateString(i, value, block));
               printLirOperand(value);
               out.println();
               out.enableIndentation();
@@ -229,7 +231,7 @@ public class CFGPrinter {
             for (int i = 0; i < state.locksSize(); ++i) {
                 Instruction value = state.lockAt(i);
                 out.disableIndentation();
-                out.print(stateString(i, value, block));
+                out.print(InstructionPrinter.stateString(i, value, block));
                 printLirOperand(value);
                 out.println();
                 out.enableIndentation();
@@ -246,7 +248,7 @@ public class CFGPrinter {
                 Instruction value = state.localAt(i);
                 if (value != null) {
                     out.disableIndentation();
-                    out.print(stateString(i, value, block));
+                    out.print(InstructionPrinter.stateString(i, value, block));
                     printLirOperand(value);
                     out.println();
                     out.enableIndentation();
@@ -329,7 +331,8 @@ public class CFGPrinter {
      * @param printHIR if {@code true} the HIR for each instruction in the block will be printed
      * @param printLIR if {@code true} the LIR for each instruction in the block will be printed
      */
-    public void printCFG(BlockMap blockMap, int codeSize, String label, boolean printHIR, boolean printLIR) {
+    public void printCFG(CiMethod method, BlockMap blockMap, int codeSize, String label, boolean printHIR, boolean printLIR) {
+        assert method == currentMethod;
         begin("cfg");
         out.print("name \"").print(label).println('"');
         for (int bci = 0; bci < codeSize; ++bci) {

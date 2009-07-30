@@ -42,6 +42,7 @@ import java.util.UnknownFormatConversionException;
 public class Util {
 
     public static final int K = 1024;
+    public static final int M = 1024 * 1024;
 
     public static RuntimeException unimplemented() {
         throw new Error("unimplemented");
@@ -499,6 +500,7 @@ public class Util {
     public static void breakpoint() {
         // do nothing.
     }
+
     public static void guarantee(boolean b, String string) {
         if (!b) {
             throw new Bailout(string);
@@ -510,8 +512,7 @@ public class Util {
     }
 
     public static boolean is8bit(long l) {
-        // TODO Auto-generated method stub
-        return false;
+        return l < 128 && l >= -128;
     }
 
     public static void warning(String string) {
@@ -537,32 +538,11 @@ public class Util {
     }
 
     public static int sizeofOopDesc() {
-        // TODO Auto-generated method stub
-        return 0;
+        return nonFatalUnimplemented(0);
     }
 
     public static long stringToAddress(String b) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    public static void needsCleanUp() {
-        // TODO Auto-generated method stub
-
-    }
-
-    public static int sizeofJdouble() {
-        return 8;
-    }
-
-    public static int heapWordsPerLong() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    public static int bytesPerLong() {
-        // TODO Auto-generated method stub
-        return 0;
+        return nonFatalUnimplemented(0);
     }
 
     public static boolean traceLinearScan(int level, String string, Object...objects) {
@@ -599,5 +579,43 @@ public class Util {
                 TTY.println();
             }
         }
+    }
+
+    public static BasicType[] signatureToBasicTypes(CiSignature signature, boolean withReceiver) {
+        int args = signature.argumentCount(false);
+        BasicType[] result;
+        int i = 0;
+        if (withReceiver) {
+            result = new BasicType[args + 1];
+            result[0] = BasicType.Object;
+            i = 1;
+        } else {
+            result = new BasicType[args];
+        }
+        for (int j = 0; j < args; j++) {
+            result[i + j] = signature.argumentBasicTypeAt(j);
+        }
+        return result;
+    }
+
+    public static <T> T nonFatalUnimplemented(T val) {
+        if (C1XOptions.FatalUnimplemented) {
+            throw new Error("unimplemented");
+        }
+        return val;
+    }
+
+    public static int nonFatalUnimplemented(int val) {
+        if (C1XOptions.FatalUnimplemented) {
+            throw new Error("unimplemented");
+        }
+        return val;
+    }
+
+    public static boolean nonFatalUnimplemented(boolean val) {
+        if (C1XOptions.FatalUnimplemented) {
+            throw new Error("unimplemented");
+        }
+        return val;
     }
 }

@@ -91,7 +91,7 @@ public class MoveResolver {
         for (int i = 0; i < allocator.nofRegs; i++) {
             assert registerBlocked(i) == 0 : "register map must be empty before and after processing";
         }
-        assert multipleReadsAllowed == false : "must have default value";
+        assert !multipleReadsAllowed : "must have default value";
         return true;
     }
 
@@ -237,12 +237,6 @@ public class MoveResolver {
         LIROperand fromOpr = LIROperandFactory.virtualRegister(fromInterval.regNum(), fromInterval.type());
         LIROperand toOpr = LIROperandFactory.virtualRegister(toInterval.regNum(), toInterval.type());
 
-        if (!multipleReadsAllowed) {
-            // the lastUse flag is an optimization for FPU stack allocation. When the same
-            // input interval is used in more than one move, then it is too difficult to determine
-            // if this move is really the last use.
-            allocator.makeLastUse(fromOpr);
-        }
         insertionBuffer.move(insertIdx, fromOpr, toOpr);
 
         Util.traceLinearScan(4, "MoveResolver: inserted move from register %d (%d, %d) to %d (%d, %d)",

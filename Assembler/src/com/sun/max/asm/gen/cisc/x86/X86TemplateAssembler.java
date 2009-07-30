@@ -36,7 +36,7 @@ import com.sun.max.util.*;
  *
  * @author Bernd Mathiske
  */
-public class X86TemplateAssembler<Template_Type extends X86Template> {
+public class X86TemplateAssembler {
 
     private static final int MORE_BYTES_THAN_ANY_INSTRUCTION = 32;
     private final byte[] bytes = new byte[MORE_BYTES_THAN_ANY_INSTRUCTION];
@@ -89,10 +89,10 @@ public class X86TemplateAssembler<Template_Type extends X86Template> {
         return field.inPlace((byte) (argument & field.mask));
     }
 
-    private final Template_Type template;
+    private final X86Template template;
     private WordWidth addressWidth;
 
-    public X86TemplateAssembler(Template_Type template, WordWidth addressWidth) {
+    public X86TemplateAssembler(X86Template template, WordWidth addressWidth) {
         this.template = template;
         this.addressWidth = addressWidth;
     }

@@ -24,8 +24,6 @@ import com.sun.c1x.bytecode.Bytecodes;
 import com.sun.c1x.ci.CiMethod;
 import static com.sun.c1x.debug.InstructionPrinter.InstructionLineColumn.*;
 import com.sun.c1x.ir.*;
-import static com.sun.c1x.ir.Instruction.stateString;
-import com.sun.c1x.value.ClassType;
 import com.sun.c1x.value.ConstType;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.value.ValueType;
@@ -37,6 +35,42 @@ import com.sun.c1x.value.ValueType;
  * @author Doug Simon
  */
 public class InstructionPrinter extends InstructionVisitor {
+    /**
+     * Formats a given instruction as value is a {@linkplain com.sun.c1x.value.ValueStack frame state}. If the instruction is a phi defined at a given
+     * block, its {@linkplain com.sun.c1x.ir.Phi#operand() operands} are appended to the returned string.
+     *
+     * @param index the index of the value in the frame state
+     * @param value the frame state value
+     * @param block if {@code value} is a phi, then its operands are formatted if {@code block} is its
+     *            {@linkplain com.sun.c1x.ir.Phi#block() join point}
+     * @return the instruction representation as a string
+     */
+    public static String stateString(int index, Instruction value, BlockBegin block) {
+        StringBuilder sb = new StringBuilder(30);
+        sb.append(String.format("%2d  %s", index, Instruction.valueString(value)));
+        if (value instanceof Phi) {
+            Phi phi = (Phi) value;
+            // print phi operands
+            if (phi.block() == block) {
+                sb.append(" [");
+                for (int j = 0; j < phi.operandCount(); j++) {
+                    sb.append(' ');
+                    Instruction operand = phi.operandAt(j);
+                    if (operand != null) {
+                        sb.append(Instruction.valueString(operand));
+                    } else {
+                        sb.append("NULL");
+                    }
+                }
+                sb.append("] ");
+            }
+        }
+        if (value != value.subst()) {
+            sb.append("alias ").append(Instruction.valueString(value.subst()));
+        }
+        return sb.toString();
+    }
+
     /**
      * The columns printed in a tabulated instruction
      * {@linkplain InstructionPrinter#printInstructionListing(Instruction) listing}.
@@ -111,6 +145,10 @@ public class InstructionPrinter extends InstructionVisitor {
      */
     public void printInstruction(Instruction instruction) {
         instruction.accept(this);
+    }
+
+    public void printBlock(BlockBegin block) {
+        block.accept(this); // TODO: maybe we don't need to print out the whole block
     }
 
     /**
@@ -204,7 +242,7 @@ public class InstructionPrinter extends InstructionVisitor {
         }
 
         // print block bci range
-        out.print('[').print(block.bci()).print(", ").print((end == null ? -1 : end.bci())).print(']');
+        out.print('[').print(block.bci()).print(", ").print(end == null ? -1 : end.bci()).print(']');
 
         // print block successors
         if (end != null && end.successors().size() > 0) {
@@ -343,12 +381,6 @@ public class InstructionPrinter extends InstructionVisitor {
             out.print("null");
         } else if (type.isPrimitive()) {
             out.print(type.asConstant().valueString());
-        } else if (type.isClass()) {
-            ClassType k = (ClassType) type;
-            if (k.ciType().isLoaded()) {
-                out.print("<unloaded> ");
-            }
-            out.print("class ").print(k.ciType().name());
         } else if (type.isObject()) {
             Object object = type.asConstant().asObject();
             if (object instanceof String) {

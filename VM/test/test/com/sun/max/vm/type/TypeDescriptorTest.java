@@ -21,7 +21,7 @@
 package test.com.sun.max.vm.type;
 
 import static com.sun.max.vm.type.JavaTypeDescriptor.*;
-import junit.framework.*;
+import test.com.sun.max.vm.*;
 
 import com.sun.max.vm.type.*;
 
@@ -32,7 +32,7 @@ import com.sun.max.vm.type.*;
  * @author Ben L. Titzer
  */
 
-public class TypeDescriptorTest extends TestCase {
+public class TypeDescriptorTest extends VmTestCase {
 
     public TypeDescriptorTest(String name) {
         super(name);

@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.heap.beltway;
 
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -37,12 +36,17 @@ import com.sun.max.vm.runtime.*;
  */
 
 public class VerifyActionImpl implements Verify {
+    Belt from;
 
     public VerifyActionImpl() {
 
     }
 
-    public Grip doAction(Grip grip, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
+    public void init(Belt from, Belt to) {
+        this.from = from;
+    }
+
+    public Grip doAction(Grip grip) {
         return verifyGrip(from, grip);
     }
 
@@ -85,7 +89,7 @@ public class VerifyActionImpl implements Verify {
     private void checkClassActor(ClassActor classActor) {
     }
 
-    public Grip verifyGrip(RuntimeMemoryRegion from, Grip grip) {
+    public Grip verifyGrip(Belt from, Grip grip) {
         if (grip.isZero()) {
             return null;
         }

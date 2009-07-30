@@ -78,13 +78,13 @@ public interface MonitorScheme extends VMScheme {
     void scanReferences(PointerIndexVisitor pointerIndexVisitor);
 
     /**
-     *  Notification that we are at a global safe-point, pre-collection.
+     *  Notification that we are at a global safe-point (i.e. the object graph is well-formed and non-mutating), pre-collection.
      */
     @INLINE(override = true)
     void beforeGarbageCollection();
 
     /**
-     *  Notification that we are at a global safe-point, post-collection.
+     *  Notification that we are at a global safe-point (i.e. the object graph is well-formed and non-mutating), post-collection.
      */
     void afterGarbageCollection();
 

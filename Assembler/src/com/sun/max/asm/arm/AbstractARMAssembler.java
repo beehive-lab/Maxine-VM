@@ -22,7 +22,6 @@
 package com.sun.max.asm.arm;
 
 import com.sun.max.asm.*;
-import com.sun.max.asm.AssemblyObject.Type;
 import com.sun.max.lang.*;
 
 /**
@@ -79,24 +78,5 @@ public abstract class AbstractARMAssembler extends BigEndianAssembler implements
     @Override
     public WordWidth wordWidth() {
         return WordWidth.BITS_32;
-    }
-
-    private ARMDirectives directives = new ARMDirectives();
-
-    @Override
-    public Directives directives() {
-        return directives;
-    }
-
-    public class ARMDirectives extends Directives {
-        @Override
-        public byte padByte() {
-            return 0;
-        }
-
-        @Override
-        protected Type padByteType() {
-            return Type.DATA;
-        }
     }
 }

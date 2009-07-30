@@ -26,7 +26,7 @@ package com.sun.max.asm;
 public abstract class LittleEndianAssembler extends Assembler {
 
     protected LittleEndianAssembler() {
-        super();
+        super((byte) 0x90, true);
     }
 
     @Override

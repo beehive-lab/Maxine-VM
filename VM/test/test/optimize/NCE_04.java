@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,18 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+package test.optimize;
 
-package com.sun.max.asm.gen.risc.arm;
-
-import com.sun.max.asm.gen.*;
-import com.sun.max.asm.gen.risc.*;
-
-/**
- *
- * @author Sumeet Panchal
+/*
+ * Test case for null check elimination.
+ * @Harness: java
+ * @Runs: 0=23
  */
-public class ARMTemplate extends RiscTemplate {
-    public ARMTemplate(InstructionDescription instructionDescription) {
-        super(instructionDescription);
+public class NCE_04 {
+
+    private static boolean cond = true;
+    public static NCE_04 object = new NCE_04();
+
+    int field1;
+    int field2 = 23;
+
+    public static int test(int arg) {
+        NCE_04 o = object;
+        if (cond) {
+            o.field1 = 22;
+        } else {
+            o.field1 = 11;
+        }
+        // expect non-null
+        return o.field2;
     }
 }

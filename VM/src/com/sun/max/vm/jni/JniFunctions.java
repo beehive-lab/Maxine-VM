@@ -1811,7 +1811,7 @@ public final class JniFunctions {
     private static int RegisterNatives(Pointer env, JniHandle javaType, Pointer methods, int numberOfMethods) {
         Pointer a = methods;
 
-        final int pointerSize = Word.width().numberOfBytes;
+        final int pointerSize = Word.size();
         final int NAME = 0 * pointerSize;
         final int SIGNATURE = 1 * pointerSize;
         final int FNPTR = 2 * pointerSize;

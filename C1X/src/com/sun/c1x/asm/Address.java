@@ -57,15 +57,12 @@ public class Address {
         }
     }
 
+    public static final Address InternalRelocation = new Address(Register.noreg, 0);
+
     public final Register base;
     public final int disp;
     public final ScaleFactor scale;
     public final Register index;
-    public final Relocation rspec;
-
-    public Address() {
-        this(Register.noreg, 0);
-    }
 
     public Address(Register base, int displacement) {
         this(base, Register.noreg, ScaleFactor.noScale, displacement);
@@ -80,38 +77,12 @@ public class Address {
         this.index = index;
         this.scale = scale;
         this.disp = displacement;
-        this.rspec = Relocation.none;
         assert base != null && index != null && scale != null;
     }
 
     public Address(Register base, RegisterOrConstant index, ScaleFactor scale, int displacement) {
         this(base, index.registerOrNoReg(), scale, displacement);
         assert !this.index.isValid() == (scale == ScaleFactor.noScale) : "inconsistent Pointer";
-    }
-
-    public Address(int displacement, long loc, RelocInfo.Type reloc) {
-
-        base = Register.noreg;
-        index = Register.noreg;
-        scale = ScaleFactor.noScale;
-        this.disp = displacement;
-        switch (reloc) {
-            case externalWordType:
-                rspec = Relocation.specExternalWord(loc);
-                break;
-            case internalWordType:
-                rspec = Relocation.specInternalWord(loc);
-                break;
-            case runtimeCallType:
-                // HMM
-                rspec = Relocation.specRuntimeCall();
-                break;
-            case none:
-                rspec = null;
-                break;
-            default:
-                throw Util.shouldNotReachHere();
-        }
     }
 
     public Address(Register base, long displacement) {

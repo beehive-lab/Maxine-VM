@@ -245,6 +245,6 @@ public class AMD64AssemblerGenerator extends X86AssemblerGenerator<AMD64Template
         final AMD64Assembler assembler = new AMD64Assembler(0);
         assembly().assemble(assembler, template, arguments);
         final byte[] bytes = assembler.toByteArray();
-        return new AMD64DisassembledInstruction(new AMD64Disassembler(0, null), 0, bytes, template, arguments);
+        return new DisassembledInstruction(new AMD64Disassembler(0, null), 0, bytes, template, arguments);
     }
 }

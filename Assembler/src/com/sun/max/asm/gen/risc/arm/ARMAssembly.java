@@ -32,12 +32,12 @@ import com.sun.max.collect.*;
  * @author Sumeet Panchal
  */
 
-public final class ARMAssembly extends RiscAssembly<ARMTemplate> {
+public final class ARMAssembly extends RiscAssembly {
 
     public static final ARMAssembly ASSEMBLY = new ARMAssembly();
 
     private ARMAssembly() {
-        super(InstructionSet.ARM, ARMTemplate.class);
+        super(InstructionSet.ARM, RiscTemplate.class);
     }
 
     @Override
@@ -46,8 +46,8 @@ public final class ARMAssembly extends RiscAssembly<ARMTemplate> {
     }
 
     @Override
-    protected Sequence<ARMTemplate> createTemplates() {
-        final ARMTemplateCreator creator = new ARMTemplateCreator();
+    protected Sequence<RiscTemplate> createTemplates() {
+        final RiscTemplateCreator creator = new RiscTemplateCreator();
         creator.createTemplates(new RawInstructions(creator));
         return creator.templates();
     }

@@ -88,7 +88,7 @@ public final class LongValue extends PrimitiveValue<LongValue> {
 
     @Override
     protected int unsignedCompareSameKind(LongValue other) {
-        if (Word.width() == WordWidth.BITS_64) {
+        if (Word.width() == 64) {
             return Address.fromLong(value).compareTo(Address.fromLong(other.value));
         }
         throw FatalError.unimplemented();
@@ -174,7 +174,7 @@ public final class LongValue extends PrimitiveValue<LongValue> {
 
     @Override
     public Word unboxWord() {
-        if (WordWidth.BITS_64 == Word.width()) {
+        if (64 == Word.width()) {
             return toWord();
         }
         return super.unboxWord();
