@@ -22,7 +22,7 @@ package test.bytecode;
 
 /*
  * @Harness: java
- * @Runs: 1 = 3; 2 = 4; 3 = 5; 4 = 42
+ * @Runs: 1 = 3; 2 = 4; 3 = 5; 4 = 5; 5 = 42 
  */
 public class BC_arraylength {
 
