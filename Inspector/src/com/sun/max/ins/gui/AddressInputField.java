@@ -22,6 +22,7 @@ package com.sun.max.ins.gui;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.font.*;
 
 import javax.swing.*;
 
@@ -46,6 +47,11 @@ public abstract class AddressInputField extends JTextField {
         return value;
     }
 
+    public void setValue(Address value) {
+        this.value = value;
+        updateView();
+    }
+
     private Address lowerBound = Address.zero();
     private Address upperBound = Address.fromLong(-1L);
 
@@ -53,7 +59,11 @@ public abstract class AddressInputField extends JTextField {
 
     protected void updateView() {
         numberOfDigits = upperBound.toUnsignedString(radix).length();
-        setPreferredSize(new Dimension(9 * numberOfDigits, 25));
+        final Number widthNumber = (Number) getFont().getAttributes().get(TextAttribute.WIDTH_EXTENDED);
+        if (widthNumber != null) {
+            final int width = widthNumber.intValue();
+            setPreferredSize(new Dimension(width * numberOfDigits, getSize().height));
+        }
         setText(value.toUnsignedString(radix));
     }
 
@@ -62,11 +72,10 @@ public abstract class AddressInputField extends JTextField {
         this.upperBound = upperBound;
         if (value.greaterThan(upperBound)) {
             value = upperBound;
-            updateView();
         } else if (value.lessThan(lowerBound)) {
             value = lowerBound;
-            updateView();
         }
+        updateView();
     }
 
     public void setRange(int lowerBound, int upperBound) {

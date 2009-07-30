@@ -64,4 +64,12 @@ public class DirMethodCall extends DirCall<DirValue> {
     public void acceptVisitor(DirVisitor visitor) {
         visitor.visitMethodCall(this);
     }
+
+    @Override
+    public String toString() {
+        if (isNative) {
+            return super.toString() + " <native function call>";
+        }
+        return super.toString();
+    }
 }

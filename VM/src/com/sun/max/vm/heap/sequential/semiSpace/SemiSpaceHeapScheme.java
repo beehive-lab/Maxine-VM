@@ -44,20 +44,20 @@ import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
- * A simple semi-space scavenger heap, mainly for testing.
+ * A simple semi-space scavenger heap.
  *
  * @author Bernd Mathiske
  * @author Sunil Soman
  * @author Doug Simon
  * @author Hannes Payer
  */
-public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements HeapScheme, CellVisitor {
+public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements HeapScheme {
 
     /**
      * A VM option for specifying how heap memory is to be allocated.
      */
     private static final VMBooleanXXOption virtualAllocOption =
-        register(new VMBooleanXXOption("-XX:+SemiSpaceUseVirtualMemory", "Allocate memory for GC using mmap instead of malloc."), MaxineVM.Phase.PRISTINE);
+        register(new VMBooleanXXOption("-XX:+UseVirtualMemory", "Allocate memory for GC using mmap instead of malloc."), MaxineVM.Phase.PRISTINE);
 
     /**
      * A VM option for specifying amount of memory to be reserved for allocating and raising an
@@ -67,50 +67,61 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      * @see #safetyZoneSize
      */
     private static final VMIntOption safetyZoneSizeOption =
-        register(new VMIntOption("-XX:SemiSpaceGCSafetyZoneSize=", 6144,
+        register(new VMIntOption("-XX:OutOfMemoryZoneSize=", 6144,
             "Memory reserved to throw OutOfMemoryError. If using TLABs, then the actual memory reserved " +
             "is the maximum of this option's value and the size of a TLAB."), MaxineVM.Phase.PRISTINE);
 
     private static final VMStringOption growPolicyOption =
-        register(new VMStringOption("-XX:SemiSpaceGCGrowPolicy=", false, "Double", "Grow policy for heap (Linear|Double)."), MaxineVM.Phase.STARTING);
+        register(new VMStringOption("-XX:HeapGrowPolicy=", false, "Double", "Grow policy for heap (Linear|Double)."), MaxineVM.Phase.STARTING);
 
-    private final PointerIndexGripUpdater pointerIndexGripUpdater = new PointerIndexGripUpdater();
-    private final PointerOffsetGripUpdater pointerOffsetGripUpdater = new PointerOffsetGripUpdater();
+    /**
+     * Procedure used to update a grip so that it points to an object in 'toSpace'.
+     */
+    private final GripUpdater gripUpdater = new GripUpdater();
+
     private final GripForwarder gripForwarder = new GripForwarder();
 
     /**
      * The procedure that will identify all the GC roots except those in the boot heap and code regions.
      */
-    private final SequentialHeapRootsScanner heapRootsScanner = new SequentialHeapRootsScanner(pointerIndexGripUpdater);
+    private final SequentialHeapRootsScanner heapRootsScanner = new SequentialHeapRootsScanner(gripUpdater);
 
     /**
      * Procedure used to verify a grip.
-     * This field is null in a {@linkplain VMConfiguration#debugging() non-debug} VM.
      */
-    private GripVerifier gripVerifier;
+    private final GripVerifier gripVerifier = new GripVerifier();
 
     /**
-     * Procedure used to verify heap well-formedness.
-     * This field is null in a {@linkplain VMConfiguration#debugging() non-debug} VM.
+     * A VM option for enabling extra checking of references. This should be disabled when running GC benchmarks.
+     * It's enabled by default in this collector its primary design goals are simplicity and robustness,
+     * not high performance.
      */
-    private SequentialHeapRootsScanner heapRootsVerifier;
+    private static final VMBooleanXXOption verifyReferencesOption =
+        register(new VMBooleanXXOption("-XX:+VerifyReferences", "Do extra verification for each reference scanned by the GC."), MaxineVM.Phase.PRISTINE);
+
+    private boolean verifyReferences;
+
+    /**
+     * Procedure used to verify GC root reference well-formedness.
+     */
+    private final SequentialHeapRootsScanner gcRootsVerifier = new SequentialHeapRootsScanner(gripVerifier);
 
     private final Collect collect = new Collect();
 
     private StopTheWorldGCDaemon collectorThread;
 
-    private final SemiSpaceMemoryRegion fromSpace = new SemiSpaceMemoryRegion("Heap-From");
-    private final SemiSpaceMemoryRegion toSpace = new SemiSpaceMemoryRegion("Heap-To");
+    private final RuntimeMemoryRegion fromSpace = new RuntimeMemoryRegion("Heap-From");
+    private final RuntimeMemoryRegion toSpace = new RuntimeMemoryRegion("Heap-To");
 
     /**
      * Used when {@linkplain #grow(GrowPolicy) growing} the heap.
      */
-    private final SemiSpaceMemoryRegion growFromSpace = new SemiSpaceMemoryRegion("Heap-From-Grow");
+    private final RuntimeMemoryRegion growFromSpace = new RuntimeMemoryRegion("Heap-From-Grow");
 
     /**
      * Used when {@linkplain #grow(GrowPolicy) growing} the heap.
      */
-    private final SemiSpaceMemoryRegion growToSpace = new SemiSpaceMemoryRegion("Heap-To-Grow");
+    private final RuntimeMemoryRegion growToSpace = new RuntimeMemoryRegion("Heap-To-Grow");
 
     /**
      * The amount of memory reserved for allocating and raising an OutOfMemoryError when insufficient
@@ -169,7 +180,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         "The size of thread-local allocation buffers."), MaxineVM.Phase.PRISTINE);
 
     /**
-     * A VM option for forcing a GC before allocation. Ignored if useTLABOption is on.
+     * A VM option for disabling use of TLABs.
      */
     private static final VMBooleanXXOption excessiveGCOption = register(new VMBooleanXXOption("-XX:-ExcessiveGC",
         "Perform a garbage collection before every allocation. This is ignored if " + useTLABOption + " is specified."), MaxineVM.Phase.PRISTINE);
@@ -180,13 +191,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        if (MaxineVM.isPrototyping()) {
-            if (MaxineVM.isDebug()) {
-                gripVerifier = new GripVerifier();
-                heapRootsVerifier = new SequentialHeapRootsScanner(gripVerifier);
-            }
-
-        } else if (phase == MaxineVM.Phase.PRISTINE) {
+        if (phase == MaxineVM.Phase.PRISTINE) {
             final Size size = Heap.initialSize().dividedBy(2);
 
             if (allocateSpace(fromSpace, size).isZero() || allocateSpace(toSpace, size).isZero()) {
@@ -206,7 +211,14 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             allocationMark.set(toSpace.start());
             top = toSpace.end().minus(safetyZoneSize);
 
+            if (MaxineVM.isDebug()) {
+                zapRegion(toSpace, "at GC initialization");
+            }
+
+            verifyReferences = MaxineVM.isDebug() || verifyReferencesOption.getValue();
+
             // From now on we can allocate
+
             InspectableHeapInfo.init(toSpace, fromSpace);
         } else if (phase == MaxineVM.Phase.STARTING) {
             final String growPolicy = growPolicyOption.getValue();
@@ -263,21 +275,14 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         }
     }
 
-    private final class PointerOffsetGripUpdater implements PointerOffsetVisitor {
-
-        public void visitPointerOffset(Pointer pointer, int offset) {
-            final Grip oldGrip = pointer.readGrip(offset);
-            final Grip newGrip = mapGrip(oldGrip);
-            if (newGrip != oldGrip) {
-                pointer.writeGrip(offset, newGrip);
-            }
-        }
-    }
-
-    private final class PointerIndexGripUpdater implements PointerIndexVisitor {
-
+    /**
+     * A procedure to update a grip so that it points to an object in 'toSpace'.
+     *
+     * @see SemiSpaceHeapScheme#mapGrip(Grip)
+     */
+    private final class GripUpdater extends PointerIndexVisitor {
         @Override
-        public void visitPointerIndex(Pointer pointer, int wordIndex) {
+        public void visit(Pointer pointer, int wordIndex) {
             final Grip oldGrip = pointer.getGrip(wordIndex);
             final Grip newGrip = mapGrip(oldGrip);
             if (newGrip != oldGrip) {
@@ -286,12 +291,10 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         }
     }
 
-    private final class GripVerifier   implements PointerIndexVisitor, PointerOffsetVisitor {
-        public void visitPointerIndex(Pointer pointer, int wordIndex) {
-            visitPointerOffset(pointer, wordIndex * Word.size());
-        }
-        public void visitPointerOffset(Pointer pointer, int offset) {
-            DebugHeap.verifyGripAtIndex(pointer, offset, pointer.readGrip(offset), toSpace, null);
+    private final class GripVerifier extends PointerIndexVisitor {
+        @Override
+        public void visit(Pointer pointer, int index) {
+            DebugHeap.verifyGripAtIndex(pointer, index, pointer.getGrip(index), toSpace, null);
         }
     }
 
@@ -302,10 +305,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         public void run() {
             try {
                 VmThreadMap.ACTIVE.forAllVmThreadLocals(null, resetTLAB);
-                if (MaxineVM.isDebug()) {
-                    // Pre-verification of the heap.
-                    verifyObjectSpaces("before GC");
-                }
+
+                // Pre-verification of the heap.
+                verifyObjectSpaces("before GC");
 
                 ++numberOfGarbageCollectionInvocations;
                 InspectableHeapInfo.beforeGarbageCollection();
@@ -357,13 +359,12 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 stopTimer(gcTimer);
 
                 // Bring the inspectable mark up to date, since it is not updated during the move.
-                toSpace.setAllocationMark(allocationMark()); // for debugging
+                toSpace.mark.set(allocationMark()); // for debugging
 
                 VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
 
-                if (MaxineVM.isDebug()) {
-                    verifyObjectSpaces("after GC");
-                }
+                // Post-verification of the heap.
+                verifyObjectSpaces("after GC");
 
                 InspectableHeapInfo.afterGarbageCollection();
 
@@ -400,11 +401,11 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      * Attempts to allocate memory of given size for given space.
      * If successful sets region start and size.
      */
-    private static Address allocateSpace(SemiSpaceMemoryRegion space, Size size) {
+    private static Address allocateSpace(RuntimeMemoryRegion space, Size size) {
         final Address base = virtualAllocOption.getValue() ? VirtualMemory.allocate(size, VirtualMemory.Type.HEAP) : Memory.allocate(size);
         if (!base.isZero()) {
             space.setStart(base);
-            space.setAllocationMark(base); // debugging
+            space.mark.set(base); // debugging
             space.setSize(size);
         }
         return base;
@@ -415,7 +416,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      * Deallocates the memory associated with the given region.
      * Sets the region start to zero but does not change the size.
      */
-    private static void deallocateSpace(SemiSpaceMemoryRegion space) {
+    private static void deallocateSpace(RuntimeMemoryRegion space) {
         final Address base = space.start();
         if (virtualAllocOption.getValue()) {
             VirtualMemory.deallocate(base, space.size(), VirtualMemory.Type.HEAP);
@@ -430,9 +431,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      * Copies the state of one space into another.
      * Used when growing the semispaces.
      */
-    private static void copySpaceState(SemiSpaceMemoryRegion from, SemiSpaceMemoryRegion to) {
+    private static void copySpaceState(RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         to.setStart(from.start());
-        to.setAllocationMark(from.start());
+        to.mark.set(from.start());
         to.setSize(from.size());
     }
 
@@ -442,11 +443,11 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
         fromSpace.setStart(toSpace.start());
         fromSpace.setSize(toSpace.size());
-        fromSpace.setAllocationMark(toSpace.getAllocationMark()); // for debugging
+        fromSpace.mark.set(toSpace.getAllocationMark()); // for debugging
 
         toSpace.setStart(oldFromSpaceStart);
         toSpace.setSize(oldFromSpaceSize);
-        toSpace.setAllocationMark(toSpace.start());  // for debugging
+        toSpace.mark.set(toSpace.start());  // for debugging
 
         allocationMark.set(toSpace.start());
         top = toSpace.end();
@@ -476,9 +477,25 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         return top.minus(allocationMark()).asSize();
     }
 
+    /**
+     * Maps a given grip to the grip of an object in 'toSpace'.
+     * The action taken depends on which of the three following states {@code grip} is in:
+     * <ul>
+     * <li>Points to a not-yet-copied object in 'fromSpace'. The object is
+     * copied and a forwarding pointer is installed in the header of
+     * the source object (i.e. the one in 'fromSpace'). The grip of the
+     * destination object (i.e the one in 'toSpace') is returned.</li>
+     * <li>Points to a object in 'fromSpace' for which a copy in 'toSpace' exists.
+     * The grip of the 'toSpace' copy is derived from the forwarding pointer and returned.</li>
+     * <li>Points to a object in 'toSpace'. The value of {@code grip} is returned.</li>
+     * </ul>
+     *
+     * @param grip a pointer to an object either in 'fromSpace' or 'toSpace'
+     * @return the reference to the object in 'toSpace' obtained by the algorithm described above
+     */
     private Grip mapGrip(Grip grip) {
         final Pointer fromOrigin = grip.toOrigin();
-        if (MaxineVM.isDebug()) {
+        if (verifyReferences) {
             DebugHeap.verifyGripAtIndex(Address.zero(), 0, grip, toSpace, fromSpace);
         }
         if (fromSpace.contains(fromOrigin)) {
@@ -529,26 +546,39 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         }
     }
 
+    /**
+     * Visits a cell for an object that has been copied to 'toSpace' to
+     * update any references in the object. If any of the references being
+     * updated still point to objects in 'fromSpace', then those objects
+     * will be copied as a side effect of the call to {@link #mapGrip(Grip)}
+     * that yields the updated value of a reference.
+     *
+     * @param cell a cell in 'toSpace' to whose references are to be updated
+     */
+    private Pointer visitCell(Pointer cell) {
+        final Pointer origin = Layout.cellToOrigin(cell);
 
-    public Pointer visitCell(Pointer cell) {
-        final Pointer origin = Layout.cellToOrigin(cell); // Returns the pointer of the first object of the semispace.
-        final Grip oldHubGrip = Layout.readHubGrip(origin); // Reads the hub-Grip of the previously retrieved object.
-        // Grips are used for GC purpose.
+        // Update the hub first so that is can be dereferenced to obtain
+        // the reference map needed to find the other references in the object
+        final Grip oldHubGrip = Layout.readHubGrip(origin);
         final Grip newHubGrip = mapGrip(oldHubGrip);
         if (newHubGrip != oldHubGrip) {
+            // The hub was copied
             Layout.writeHubGrip(origin, newHubGrip);
         }
         final Hub hub = UnsafeLoophole.cast(newHubGrip.toJava());
+
+        // Update the other references in the object
         final SpecificLayout specificLayout = hub.specificLayout;
         if (specificLayout.isTupleLayout()) {
-            TupleReferenceMap.visitOriginOffsets(hub, origin, pointerOffsetGripUpdater);
+            TupleReferenceMap.visitReferences(hub, origin, gripUpdater);
             if (hub.isSpecialReference) {
                 SpecialReferenceManager.discoverSpecialReference(Grip.fromOrigin(origin));
             }
             return cell.plus(hub.tupleSize);
         }
         if (specificLayout.isHybridLayout()) {
-            TupleReferenceMap.visitOriginOffsets(hub, origin, pointerOffsetGripUpdater);
+            TupleReferenceMap.visitReferences(hub, origin, gripUpdater);
         } else if (specificLayout.isReferenceArrayLayout()) {
             scanReferenceArray(origin);
         }
@@ -570,11 +600,11 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     }
 
     private void scanBootHeap() {
-        Heap.bootHeapRegion.visitReferences(pointerIndexGripUpdater);
+        Heap.bootHeapRegion.visitReferences(gripUpdater);
     }
 
     private void scanCode() {
-        Code.visitReferences(pointerIndexGripUpdater);
+        Code.visitReferences(gripUpdater);
     }
 
     private boolean cannotGrow() {
@@ -735,7 +765,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      *
      * @param size the size of memory chunk to be allocated
      * @return an allocated chunk of memory {@code size} bytes in size
-     * @throws OutOfMemoryError if the allocation request cannot be satisfied.
+     * @throws OutOfMemoryError if the allocation request cannot be satified
      */
     @INLINE
     private Pointer allocate(Size size) {
@@ -758,7 +788,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      * @param size the requested allocation size
      * @return the address of the allocated cell. Space for the {@linkplain DebugHeap#writeCellTag(Pointer) debug tag}
      *         will have been reserved immediately before the allocated cell.
-     * @throws OutOfMemoryError if the allocation request cannot be satisfied.
      */
     @NEVER_INLINE
     private Pointer allocateSlowPath(Size size) {
@@ -817,7 +846,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      *
      * @param size the requested cell size to be allocated
      * @param adjustForDebugTag specifies if an extra word is to be reserved before the cell for the debug tag word
-     * @throws OutOfMemoryError if the allocation request cannot be satisfied.
      */
     @NEVER_INLINE
     private Pointer retryAllocate(Size size, boolean adjustForDebugTag) {
@@ -983,6 +1011,17 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     public void runFinalization() {
     }
 
+    /**
+     * This collector treats the references in code as GC roots. Not doing so would require
+     * maintaining a list of reachable objects in the code region as the heap objects are
+     * being scanned and {@linkplain #moveReachableObjects() moved} so that the references
+     * in the code objects can subsequently updated.
+     */
+    @Override
+    public boolean codeReferencesAreGCRoots() {
+        return true;
+    }
+
     @INLINE
     public boolean pin(Object object) {
         return false;
@@ -1004,13 +1043,18 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      * @param when a description of the current GC phase
      */
     private void verifyObjectSpaces(String when) {
+        if (!MaxineVM.isDebug() && !verifyReferences) {
+            return;
+        }
         if (Heap.traceGCPhases()) {
             Log.print("Verifying object spaces ");
             Log.println(when);
         }
-        heapRootsVerifier.run();
 
-        DebugHeap.verifyRegion(toSpace.description(), toSpace.start().asPointer(), allocationMark(), toSpace, gripVerifier);
+        gcRootsVerifier.run();
+        if (MaxineVM.isDebug()) {
+            DebugHeap.verifyRegion(toSpace.description(), toSpace.start().asPointer(), allocationMark(), toSpace, gripVerifier);
+        }
         Code.visitReferences(gripVerifier);
 
         if (Heap.traceGCPhases()) {
@@ -1018,6 +1062,20 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             Log.print(when);
             Log.println(": DONE");
         }
+
+        if (MaxineVM.isDebug()) {
+            zapRegion(fromSpace, when);
+        }
+    }
+
+    private void zapRegion(MemoryRegion region, String when) {
+        if (Heap.traceGCPhases()) {
+            Log.print("Zapping region ");
+            Log.print(region.description());
+            Log.print(' ');
+            Log.println(when);
+        }
+        Memory.setWords(region.start().asPointer(), region.size().dividedBy(Word.size()).toInt(), Address.fromLong(0xDEADBEEFCAFEBABEL));
     }
 
     private void logSpaces() {
@@ -1030,7 +1088,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         }
     }
 
-    private void logSpace(SemiSpaceMemoryRegion space) {
+    private void logSpace(RuntimeMemoryRegion space) {
         Log.print(space.description());
         Log.print(" start "); Log.print(space.start());
         Log.print(", end "); Log.print(space.end());

@@ -23,6 +23,7 @@ package com.sun.max.vm.compiler.target.amd64;
 import static com.sun.max.asm.amd64.AMD64GeneralRegister64.*;
 import static com.sun.max.asm.amd64.AMD64XMMRegister.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.collect.*;
 import com.sun.max.platform.*;
@@ -69,12 +70,14 @@ public final class AMD64TargetABIsScheme extends TargetABIsScheme<AMD64GeneralRe
 
     private static final int NULL_STACK_BIAS = 0;
 
+    @PROTOTYPE_ONLY
     static TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> createAMD64TargetABI(RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister> registerRoleAssignment, CallEntryPoint callEntryPoint, VMConfiguration vmConfiguration) {
         return  new TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>(registerRoleAssignment, callEntryPoint,
                         integerParameterRegisters, integerParameterRegisters, floatingPointParameterRegisters,
                         false, true, stackFrameAlignment(vmConfiguration), NULL_STACK_BIAS);
     }
 
+    @PROTOTYPE_ONLY
     public AMD64TargetABIsScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration,
                         createAMD64TargetABI(nativeRegisterRoleAssignment, CallEntryPoint.C_ENTRY_POINT, vmConfiguration),
@@ -83,6 +86,7 @@ public final class AMD64TargetABIsScheme extends TargetABIsScheme<AMD64GeneralRe
                         createAMD64TargetABI(interpreterRoleAssignment, CallEntryPoint.INTERPRETER_ENTRY_POINT, vmConfiguration));
     }
 
+    @PROTOTYPE_ONLY
     private static int stackFrameAlignment(VMConfiguration vmConfiguration) {
         if (vmConfiguration.platform().operatingSystem == OperatingSystem.DARWIN) {
             // Darwin requires 16-byte stack frame alignment.

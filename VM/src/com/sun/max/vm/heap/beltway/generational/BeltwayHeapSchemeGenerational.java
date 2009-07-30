@@ -55,8 +55,10 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (phase == MaxineVM.Phase.PRISTINE) {
-            InspectableHeapInfo.init(getEdenSpace(), getToSpace(), getMatureSpace());
+            // The following line enables allocation to take place.
             tlabAllocationBelt = getEdenSpace();
+            // Watch out: the following create a MemoryRegion array
+            InspectableHeapInfo.init(getEdenSpace(), getToSpace(), getMatureSpace());
         } else if (phase == MaxineVM.Phase.RUNNING) {
             beltCollectorGenerational.setBeltwayHeapScheme(this);
             beltCollector.setRunnable(beltCollectorGenerational);

@@ -159,7 +159,8 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        if (phase == MaxineVM.Phase.PROTOTYPING) {
+        super.initialize(phase);
+        if (MaxineVM.isPrototyping()) {
             OBJECT_HUB = TupleClassActor.fromJava(Object.class).dynamicHub();
             BYTE_ARRAY_HUB = PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub();
             MIN_OBJECT_SIZE = OBJECT_HUB.tupleSize;
@@ -216,12 +217,14 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      */
     public void refillTLAB(Pointer enabledVmThreadLocals, Pointer tlab, Size size) {
         final Pointer tlabTop = tlab.plus(size);
+        final Pointer allocationMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
+        if (!allocationMark.isZero()) {
+            // It is a refill, not an initial fill. So invoke handler.
+            doBeforeTLABRefill(allocationMark, enabledVmThreadLocals.getWord(TLAB_TOP.index).asPointer());
+        }
 
-        doBeforeTLABRefill(enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer(), enabledVmThreadLocals.getWord(TLAB_TOP.index).asPointer());
-
-        final Pointer cell = DebugHeap.adjustForDebugTag(tlab);
         enabledVmThreadLocals.setWord(TLAB_TOP.index, tlabTop);
-        enabledVmThreadLocals.setWord(TLAB_MARK.index, cell);
+        enabledVmThreadLocals.setWord(TLAB_MARK.index, tlab);
         if (Heap.traceAllocation() || Heap.traceGC()) {
             final boolean lockDisabledSafepoints = Log.lock();
             final VmThread vmThread = UnsafeLoophole.cast(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
@@ -240,22 +243,18 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
     }
 
-    public Pointer tlabAllocationMark(Pointer oldMark) {
-        final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
-        return enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
-    }
-
     /**
      * Method that extension of {@link HeapSchemeWithTLAB} must implement to handle TLAB allocation failure.
      * The handler is specified the size of the failed allocation and the allocation mark of the TLAB and must return
      * a pointer to a cell of the specified cell. The handling of the TLAB allocation failure may result in refilling the TLAB.
      *
-     * @param size
-     * @param allocationMark
+     * @param size size requested to the tlab
+     * @param allocationMark allocation mark of the tlab
+     * @param enabledVmThreadLocals
      * @return a pointer to a cell resulting from a successful allocation of space of the specified size.
      * @throws OutOfMemoryError if the allocation request cannot be satisfied.
      */
-    protected abstract Pointer handleTLABOverflow(Size size, Pointer allocationMark);
+    protected abstract Pointer handleTLABOverflow(Size size, Pointer allocationMark, Pointer enabledVmThreadLocals);
 
     /**
      * Action to perform on a TLAB before its refill with another chunk of heap.
@@ -278,7 +277,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         final Pointer end = cell.plus(size);
         if (end.greaterThan(enabledVmThreadLocals.getWord(TLAB_TOP.index).asAddress())) {
             // This path will always be taken if TLAB allocation is not enabled
-            return handleTLABOverflow(size, oldAllocationMark);
+            return handleTLABOverflow(size, oldAllocationMark, enabledVmThreadLocals);
         }
         enabledVmThreadLocals.setWord(TLAB_MARK.index, end);
         return cell;

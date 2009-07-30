@@ -55,14 +55,19 @@ public class UnixAMD64EirCFunctionABI extends UnixAMD64EirJavaABI {
     }
 
     /**
-     * Functions annotated with {@link C_FUNCTION} fall currently in two categories: function used only by native code and that can only be called from native (i.e., C) code.
-     * This is the case for "JNI" function.
+     * Functions annotated with {@link C_FUNCTION} fall currently in two categories: VM entry points and VM exits
+     * points.
+     *
+     * @param isVmEntryPoint {@code true} if this is an ABI for methods called from C/native code, {@code false} if it
+     *            is for {@code native} methods called from compiled Java code
+     * @see C_FUNCTION
      */
-    public UnixAMD64EirCFunctionABI(VMConfiguration vmConfiguration, boolean onlyCalledFromC) {
+    public UnixAMD64EirCFunctionABI(VMConfiguration vmConfiguration, boolean isVmEntryPoint) {
         super(vmConfiguration);
         // Native target ABI uses different entry point.
         final TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> originalTargetABI = targetABI();
-        initTargetABI(new TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>(originalTargetABI, originalTargetABI.registerRoleAssignment(), onlyCalledFromC ? CallEntryPoint.C_ENTRY_POINT : CallEntryPoint.OPTIMIZED_ENTRY_POINT));
+        final CallEntryPoint callEntryPoint = isVmEntryPoint ? CallEntryPoint.C_ENTRY_POINT : CallEntryPoint.OPTIMIZED_ENTRY_POINT;
+        initTargetABI(new TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>(originalTargetABI, originalTargetABI.registerRoleAssignment(), callEntryPoint));
     }
 
 }

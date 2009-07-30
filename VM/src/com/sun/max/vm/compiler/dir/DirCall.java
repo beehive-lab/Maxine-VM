@@ -123,7 +123,7 @@ public abstract class DirCall<Procedure_Type> extends DirInstruction {
     }
 
     @Override
-    public final String toString() {
+    public String toString() {
         String argumentsString = "";
         String separator = "";
         for (int i = 0; i < arguments().length; i++) {

@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.eir.sparc;
 
+import com.sun.max.annotate.*;
 import com.sun.max.asm.sparc.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.*;
@@ -39,6 +40,7 @@ import com.sun.max.vm.runtime.*;
  */
 public class SPARCEirTemplateABI extends SPARCEirJavaABI {
 
+    @PROTOTYPE_ONLY
     public SPARCEirTemplateABI(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
         // Customize the ABI. We need to change the ABI frame pointer for that of the JIT, and remove it from the allocatable set of register.

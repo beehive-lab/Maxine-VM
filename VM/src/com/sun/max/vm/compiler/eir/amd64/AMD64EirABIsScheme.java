@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.eir.amd64;
 
+import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.eir.*;
@@ -29,6 +30,7 @@ import com.sun.max.vm.compiler.eir.*;
  */
 public abstract class AMD64EirABIsScheme extends EirABIsScheme<AMD64EirRegister> {
 
+    @PROTOTYPE_ONLY
     protected AMD64EirABIsScheme(VMConfiguration vmConfiguration,
                     EirABI<AMD64EirRegister> javaABI,
                     EirABI<AMD64EirRegister> nativeABI,
@@ -47,6 +49,6 @@ public abstract class AMD64EirABIsScheme extends EirABIsScheme<AMD64EirRegister>
 
     @Override
     public AMD64EirRegister safepointLatchRegister() {
-        return (AMD64EirRegister) javaABI().safepointLatchRegister();
+        return javaABI.safepointLatchRegister();
     }
 }
