@@ -342,7 +342,11 @@ public final class MemoryRegionsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
             final long allocated = memoryRegionData.allocated().toLong();
-            final DataLabel.Percent percentDataLabel = new DataLabel.Percent(inspection(), allocated, memoryRegionData.size().toLong());
+            long size = memoryRegionData.size().toLong();
+            if (size == 0) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
+            final DataLabel.Percent percentDataLabel = new DataLabel.Percent(inspection(), allocated, size);
             percentDataLabel.setToolTipText("Allocated from region: 0x" + Long.toHexString(allocated) + "(" + allocated + ")");
             if (row == getSelectionModel().getMinSelectionIndex()) {
                 percentDataLabel.setBackground(style().defaultCodeAlternateBackgroundColor());

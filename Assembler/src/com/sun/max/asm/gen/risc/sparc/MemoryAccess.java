@@ -22,6 +22,8 @@ package com.sun.max.asm.gen.risc.sparc;
 
 import static com.sun.max.asm.gen.risc.sparc.SPARCFields.*;
 
+import com.sun.max.asm.gen.risc.*;
+
 /**
  * @author Bernd Mathiske
  * @author Dave Ungar
@@ -176,7 +178,7 @@ class MemoryAccess extends SPARCInstructionDescriptionCreator {
         }
     }
 
-    MemoryAccess(SPARCTemplateCreator templateCreator) {
+    MemoryAccess(RiscTemplateCreator templateCreator) {
         super(templateCreator);
 
         setCurrentArchitectureManualSection("A.9");

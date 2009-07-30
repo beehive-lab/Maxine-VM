@@ -18,19 +18,33 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.asm.gen.risc.ppc;
+package com.sun.max.vm.heap.beltway;
 
-import com.sun.max.asm.gen.*;
-import com.sun.max.asm.gen.risc.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.thread.*;
 
-/**
- *
- *
- * @author Bernd Mathiske
- */
-public class PPCTemplate extends RiscTemplate {
 
-    public PPCTemplate(InstructionDescription instructionDescription) {
-        super(instructionDescription);
+public class StacksAndMonitorsScanner {
+    private final PointerVisitor pointerVisitor;
+
+    /**
+     * A closure for updating thread stacks references.
+     */
+    private final Pointer.Procedure vmThreadLocalsScanner = new Pointer.Procedure(){
+        public void run(Pointer vmThreadLocals) {
+            VmThreadLocal.scanReferences(vmThreadLocals, pointerVisitor);
+        }
+    };
+
+    public StacksAndMonitorsScanner(PointerVisitor pointerVisitor) {
+        this.pointerVisitor = pointerVisitor;
+    }
+
+    public void run() {
+        // do thread stacks
+        VmThreadMap.ACTIVE.forAllVmThreadLocals(null, vmThreadLocalsScanner);
+        // do monitors
+        VMConfiguration.target().monitorScheme().scanReferences(pointerVisitor);
     }
 }

@@ -37,7 +37,7 @@ import com.sun.max.util.*;
  *
  * @author Bernd Mathiske
  */
-public class AMD64Disassembler extends X86Disassembler<AMD64Template, AMD64DisassembledInstruction> {
+public class AMD64Disassembler extends X86Disassembler {
 
     public AMD64Disassembler(long startAddress, InlineDataDecoder inlineDataDecoder) {
         super(new Immediate64Argument(startAddress), AMD64Assembly.ASSEMBLY, inlineDataDecoder);
@@ -49,24 +49,14 @@ public class AMD64Disassembler extends X86Disassembler<AMD64Template, AMD64Disas
     }
 
     @Override
-    protected AMD64DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, AMD64Template template, IndexedSequence<Argument> arguments) {
-        return new AMD64DisassembledInstruction(this, position, bytes, template, arguments);
-    }
-
-    @Override
-    protected AMD64Template createInlineDataTemplate(Object[] specification) {
-        return new AMD64Template(new X86InstructionDescription(new ArraySequence<Object>(specification)), 0, null, null);
-    }
-
-    @Override
     protected Assembler createAssembler(int position) {
         return new AMD64Assembler(startAddress().asLong() + position);
     }
 
-    private static Map<X86InstructionHeader, AppendableSequence<AMD64Template>> headerToTemplates = X86InstructionHeader.createMapping(AMD64Assembly.ASSEMBLY, WordWidth.BITS_64);
+    private static Map<X86InstructionHeader, AppendableSequence<X86Template>> headerToTemplates = X86InstructionHeader.createMapping(AMD64Assembly.ASSEMBLY, WordWidth.BITS_64);
 
     @Override
-    protected Map<X86InstructionHeader, AppendableSequence<AMD64Template>> headerToTemplates() {
+    protected Map<X86InstructionHeader, AppendableSequence<X86Template>> headerToTemplates() {
         return headerToTemplates;
     }
 }

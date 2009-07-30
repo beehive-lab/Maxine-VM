@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.heap.beltway;
 
+import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -29,23 +30,61 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 
 /**
+ * A closure for evacuating an object from one belt to another belt.
+ * The closure assume single-threaded evacuation and perform a non-synchronized bump allocation
+ * to allocate space in the evacuation belt.
+ *
  * @author Christos Kotselidis
  */
 
 public class CopyActionImpl implements Action {
 
-    private static Verify verifyAction = new VerifyActionImpl();
+    final Verify verifyAction;
 
-    public Grip doAction(Grip origin, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
+    @CONSTANT_WHEN_NOT_ZERO
+    protected BeltwayHeapScheme heapScheme;
+
+    protected Belt from;
+    protected Belt to;
+
+    public CopyActionImpl(Verify verifyAction) {
+        this.verifyAction = verifyAction;
+    }
+
+    /**
+     * Initialize the heap scheme this closure is being used by.
+     * This needs to be decoupled from the constructor because the closure is typically created at prototyping time
+     * before the heap scheme might be created.
+     */
+    public void initialize(BeltwayHeapScheme heapScheme) {
+        this.heapScheme = heapScheme;
+    }
+
+    /**
+     * Set the source and destination belt for this copying action.
+     * @param from the belt the objects are copied from
+     * @param to the belt where the objects are copied to
+     */
+    public void init(Belt from, Belt to) {
+        this.from = from;
+        this.to = to;
+    }
+
+    @INLINE
+    final void verify(Grip origin) {
+        final Pointer fromOrigin = origin.toOrigin();
+        if (!heapScheme.contains(fromOrigin)) {
+            Log.print("invalid grip: ");
+            Log.println(fromOrigin.asAddress());
+            FatalError.unexpected("invalid grip");
+        }
+        verifyAction.checkGripTag(origin);
+    }
+
+    public Grip doAction(Grip origin) {
         final Pointer fromOrigin = origin.toOrigin();
         if (MaxineVM.isDebug()) {
-            if (!VMConfiguration.hostOrTarget().heapScheme().contains(fromOrigin)) {
-                Log.print("invalid grip: ");
-                Log.println(origin.toOrigin().asAddress());
-                FatalError.unexpected("invalid grip");
-            }
-
-            verifyAction.checkGripTag(origin);
+            verify(origin);
         }
 
         if (from.contains(fromOrigin)) {
@@ -55,7 +94,7 @@ public class CopyActionImpl implements Action {
             }
             final Pointer fromCell = Layout.originToCell(fromOrigin);
             final Size size = Layout.size(fromOrigin);
-            final Pointer toCell = ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).gcAllocate(to, size);
+            final Pointer toCell = to.bumpAllocate(size);
             if (toCell.isZero()) {
                 throw BeltwayHeapScheme.outOfMemoryError;
             }

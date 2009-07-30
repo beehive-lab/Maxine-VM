@@ -61,7 +61,6 @@ public class C1XCompilation {
     int maxSpills;
     boolean needsDebugInfo;
     boolean hasExceptionHandlers;
-    boolean hasFpuCode;
     boolean hasUnsafeAccess;
     Bailout bailout;
 
@@ -324,14 +323,6 @@ public class C1XCompilation {
 
     public BlockBegin osrEntry() {
         throw Util.unimplemented();
-    }
-
-    public boolean hasFpuCode() {
-        return hasFpuCode;
-    }
-
-    public void setHasFpuCode(boolean hasFpuCode) {
-        this.hasFpuCode = hasFpuCode;
     }
 
     public boolean compile() {

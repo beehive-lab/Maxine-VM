@@ -18,19 +18,32 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.asm.gen.risc.sparc;
+package com.sun.max.vm.heap.beltway;
 
-import com.sun.max.asm.gen.*;
-import com.sun.max.asm.gen.risc.*;
-
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.grip.*;
+import com.sun.max.vm.heap.*;
 /**
  *
  *
- * @author Bernd Mathiske
+ * @author Laurent Daynes
  */
-public class SPARCTemplate extends RiscTemplate {
+public class PointerVisitor extends PointerIndexVisitor {
 
-    public SPARCTemplate(InstructionDescription instructionDescription) {
-        super(instructionDescription);
+    final Action action;
+
+    public PointerVisitor(Action action) {
+        this.action = action;
+    }
+
+    @Override
+    public void visit(Pointer pointer, int wordIndex) {
+        final Grip oldGrip = pointer.getGrip(wordIndex);
+        final Grip newGrip = action.doAction(oldGrip);
+        if (newGrip != null) {
+            if (newGrip != oldGrip) {
+                pointer.setGrip(wordIndex, newGrip);
+            }
+        }
     }
 }

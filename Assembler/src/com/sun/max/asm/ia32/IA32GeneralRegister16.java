@@ -21,14 +21,12 @@
 package com.sun.max.asm.ia32;
 
 import com.sun.max.asm.x86.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.util.*;
 
 /**
  * @author Bernd Mathiske
  */
-@SuppressWarnings("unused")
 public enum IA32GeneralRegister16 implements GeneralRegister<IA32GeneralRegister16> {
 
     // Note: keep the order such that 'value()' can rely on ordinals:

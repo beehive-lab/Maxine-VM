@@ -31,8 +31,6 @@ public interface CodeStubVisitor {
 
     void visitArrayStoreExceptionStub(ArrayStoreExceptionStub arrayStoreExceptionStub);
 
-    void visitConversionStub(ConversionStub conversionStub);
-
     void visitDivByZeroStub(DivByZeroStub divByZeroStub);
 
     void visitImplicitNullCheckStub(ImplicitNullCheckStub implicitNullCheckStub);

@@ -310,9 +310,9 @@ public class Canonicalizer extends InstructionVisitor {
                     }
                     // reduce to (e & mask)
                     if (islong) {
-                        return setCanonical(new ArithmeticOp(Bytecodes.LAND, s.x(), longInstr(mask), false, null));
+                        return setCanonical(new LogicOp(Bytecodes.LAND, s.x(), longInstr(mask)));
                     } else {
-                        return setCanonical(new ArithmeticOp(Bytecodes.IAND, s.x(), intInstr((int) mask), false, null));
+                        return setCanonical(new LogicOp(Bytecodes.IAND, s.x(), intInstr((int) mask)));
                     }
                 }
             }

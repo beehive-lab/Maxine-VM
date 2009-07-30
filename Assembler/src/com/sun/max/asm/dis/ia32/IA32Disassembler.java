@@ -38,7 +38,7 @@ import com.sun.max.util.*;
  *
  * @author Bernd Mathiske
  */
-public class IA32Disassembler extends X86Disassembler<IA32Template, IA32DisassembledInstruction> {
+public class IA32Disassembler extends X86Disassembler {
 
     public IA32Disassembler(int startAddress, InlineDataDecoder inlineDataDecoder) {
         super(new Immediate32Argument(startAddress), IA32Assembly.ASSEMBLY, inlineDataDecoder);
@@ -50,24 +50,14 @@ public class IA32Disassembler extends X86Disassembler<IA32Template, IA32Disassem
     }
 
     @Override
-    protected IA32DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, IA32Template template, IndexedSequence<Argument> arguments) {
-        return new IA32DisassembledInstruction(this, position, bytes, template, arguments);
-    }
-
-    @Override
-    protected IA32Template createInlineDataTemplate(Object[] specification) {
-        return new IA32Template(new X86InstructionDescription(new ArraySequence<Object>(specification)), 0, null, null);
-    }
-
-    @Override
     protected Assembler createAssembler(int position) {
         return new IA32Assembler((int) startAddress().asLong() + position);
     }
 
-    private static Map<X86InstructionHeader, AppendableSequence<IA32Template>> headerToTemplates = X86InstructionHeader.createMapping(IA32Assembly.ASSEMBLY, WordWidth.BITS_32);
+    private static Map<X86InstructionHeader, AppendableSequence<X86Template>> headerToTemplates = X86InstructionHeader.createMapping(IA32Assembly.ASSEMBLY, WordWidth.BITS_32);
 
     @Override
-    protected Map<X86InstructionHeader, AppendableSequence<IA32Template>> headerToTemplates() {
+    protected Map<X86InstructionHeader, AppendableSequence<X86Template>> headerToTemplates() {
         return headerToTemplates;
     }
 }

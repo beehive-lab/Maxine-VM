@@ -92,8 +92,6 @@ public class MaxineTesterConfiguration {
         test.jdk.EnumMap02.class,                                   RAND_ALL,
         test.hotpath.HP_series.class,                  FAIL_SPARC,
         test.hotpath.HP_array02.class,                 FAIL_SPARC,
-        test.except.Catch_StackOverflowError_01.class, FAIL_SPARC,
-        test.except.Catch_StackOverflowError_02.class, FAIL_SPARC,
     };
 
     static final String[] dacapoTests = {

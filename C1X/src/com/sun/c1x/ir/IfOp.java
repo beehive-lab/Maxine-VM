@@ -45,7 +45,8 @@ public class IfOp extends Op2 {
      * @param fval the value produced if the condition is false
      */
     public IfOp(Instruction x, Condition cond, Instruction y, Instruction tval, Instruction fval) {
-        super(tval.type().meet(fval.type()), Bytecodes.ILLEGAL, x, y); // TODO: return the bytecode IF_ICMPEQ, etc
+        // TODO: return the appropriate bytecode IF_ICMPEQ, etc
+        super(tval.type().meet(fval.type()), Bytecodes.ILLEGAL, x, y);
         this.cond = cond;
         this.trueVal = tval;
         falseVal = fval;
