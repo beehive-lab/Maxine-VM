@@ -54,6 +54,7 @@ public class Phi extends Instruction {
         super(type);
         this.block = block;
         this.index = index;
+        block.setBlockFlag(BlockBegin.BlockFlag.HasPhis);
     }
 
     /**

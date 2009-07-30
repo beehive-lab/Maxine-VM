@@ -85,23 +85,11 @@ public class BlockMerger implements BlockClosure {
                     C1XMetrics.BlocksMerged++;
                 } else if (C1XOptions.DoBlockSkipping && block.next() == oldEnd) {
                     // the successor has multiple predecessors, but this block is empty
-                    for (Phi phi : sux.state().allPhis()) {
-                        // check that the incoming value for any phis at the successor
-                        // is the same at this block and this block's predecessor
-                        Instruction oldEndValue = phi.operandIn(oldEnd.state());
-                        if (oldEndValue instanceof Phi) {
-                            BlockBegin phiBlock = ((Phi) oldEndValue).block();
-                            if (phiBlock == block || phiBlock == sux) {
-                                // this block already has a phi for the phi
-                                continue;
-                            }
-                        }
-                        for (BlockBegin pred : block.predecessors()) {
-                            // somehow there was not a phi but the incoming values are not equal??
-                            if (!Instruction.equivalent(oldEndValue, phi.operandIn(pred.end().state()), C1XOptions.MergeEquivalentConstants)) {
-                                return false;
-                            }
-                        }
+                    // go through all phis in the successor block
+                    assert sux.state().scope() == oldEnd.state().scope();
+                    if (block.checkBlockFlag(BlockBegin.BlockFlag.HasPhis)) {
+                        // can't skip a block that has phis
+                        return false;
                     }
                     sux.removePredecessor(block); // remove this block from the successor
                     for (BlockBegin pred : block.predecessors()) {
@@ -197,19 +185,12 @@ public class BlockMerger implements BlockClosure {
         assert endState.stackSize() == suxState.stackSize() : "stack not equal";
         assert endState.localsSize() == suxState.localsSize() : "locals not equal";
 
-/*
-                    int index;
-                    Instruction sux_value;
-                    for_each_stack_value(suxState, index, sux_value)
-                    {
-                        assert sux_value == endState.stackAt(index) : "stack not equal";
-                    }
-                    for_each_local_value(suxState, index, sux_value)
-                    {
-                        assert sux_value == endState.localAt(index) : "locals not equal";
-                    }
-                    assert suxState.callerState() == endState.callerState() : "caller not equal";
-*/
+        for (int i = 0; i < endState.localsSize(); i++) {
+            assert endState.localAt(i) == suxState.localAt(i);
+        }
+        for (int i = 0; i < endState.stackSize(); i++) {
+            assert endState.stackAt(i) == suxState.stackAt(i);
+        }
     }
 
     private IfOp asIfOp(Instruction x) {
