@@ -85,8 +85,6 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
 
     private TeleRuntimeMemoryRegion teleRootsRegion = null;
 
-    private Pointer cardTableSizePointer = Pointer.zero();
-
     private TeleHeapManager(TeleVM teleVM) {
         super(teleVM);
     }
@@ -123,9 +121,6 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
         cardTablePointer = teleVM().fields().InspectableHeapInfo_cardTablePointer.staticTupleReference(teleVM()).toOrigin().plus(teleCardTableOffset);
         objectOldAddressPointer = teleVM().fields().InspectableHeapInfo_oldAddress.staticTupleReference(teleVM()).toOrigin().plus(teleObjectOldOffset);
         objectNewAddressPointer = teleVM().fields().InspectableHeapInfo_newAddress.staticTupleReference(teleVM()).toOrigin().plus(teleObjectNewOffset);
-
-        final int cardTableSizeOffset = teleVM().fields().InspectableHeapInfo_totalCardTableEntries.fieldActor().offset();
-        cardTableSizePointer = teleVM().fields().InspectableHeapInfo_totalCardTableEntries.staticTupleReference(teleVM()).toOrigin().plus(cardTableSizeOffset);
 
         refresh(processEpoch);
         Trace.end(1, tracePrefix() + "initializing", startTimeMillis);
@@ -171,9 +166,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
                 }
             }
 
-            if (!teleVM().dataAccess().readWord(cardTableSizePointer).equals(Word.zero())) {
-                cardTableSize = teleVM().dataAccess().readInt(teleVM().dataAccess().readWord(cardTableSizePointer).asAddress()) * Word.size();
-            }
+            cardTableSize = teleVM().fields().InspectableHeapInfo_totalCardTableEntries.readInt(teleVM()) * Word.size();
 
             Trace.end(TRACE_VALUE, tracePrefix() + "refreshing", startTimeMillis);
         }
