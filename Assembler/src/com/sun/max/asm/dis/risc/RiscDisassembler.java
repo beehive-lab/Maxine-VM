@@ -41,17 +41,19 @@ import com.sun.max.program.*;
  * @author Dave Ungar
  * @author Adam Spitz
  */
-public abstract class RiscDisassembler<Template_Type extends RiscTemplate, DisassembledInstruction_Type extends DisassembledInstruction<Template_Type>>
-    extends Disassembler<Template_Type, DisassembledInstruction_Type> {
+public abstract class RiscDisassembler extends Disassembler {
 
-    protected RiscDisassembler(ImmediateArgument startAddress, Assembly<Template_Type> assembly, Endianness endianness, InlineDataDecoder inlineDataDecoder) {
-        super(startAddress, assembly, endianness, inlineDataDecoder);
+    private final RiscAssembly assembly;
+
+    protected RiscDisassembler(ImmediateArgument startAddress, RiscAssembly assembly, Endianness endianness, InlineDataDecoder inlineDataDecoder) {
+        super(startAddress, endianness, inlineDataDecoder);
+        assert assembly != null;
+        this.assembly = assembly;
+        this.byteFields = new ImmediateOperandField[]{createByteField(0), createByteField(1), createByteField(2), createByteField(3)};
     }
 
-    @Override
-    public RiscAssembly<Template_Type> assembly() {
-        final Class<RiscAssembly<Template_Type>> type = null;
-        return StaticLoophole.cast(type, super.assembly());
+    public RiscAssembly assembly() {
+        return assembly;
     }
 
     private static final boolean INLINE_INVALID_INSTRUCTIONS_AS_BYTES = true;
@@ -64,7 +66,7 @@ public abstract class RiscDisassembler<Template_Type extends RiscTemplate, Disas
      * @return the decoded arguments for each operand or null if at least one operand has
      *         an invalid value in the encoded instruction
      */
-    private IndexedSequence<Argument> disassemble(int instruction, Template_Type template) {
+    private IndexedSequence<Argument> disassemble(int instruction, RiscTemplate template) {
         final AppendableIndexedSequence<Argument> arguments = new ArrayListSequence<Argument>();
         for (OperandField operandField : template.parameters()) {
             final Argument argument = operandField.disassemble(instruction);
@@ -76,7 +78,7 @@ public abstract class RiscDisassembler<Template_Type extends RiscTemplate, Disas
         return arguments;
     }
 
-    private boolean isLegalArgumentList(Template_Type template, IndexedSequence<Argument> arguments) {
+    private boolean isLegalArgumentList(RiscTemplate template, IndexedSequence<Argument> arguments) {
         final Sequence<InstructionConstraint> constraints = template.instructionDescription().constraints();
         for (InstructionConstraint constraint : constraints) {
             if (!(constraint.check(template, arguments))) {
@@ -86,15 +88,29 @@ public abstract class RiscDisassembler<Template_Type extends RiscTemplate, Disas
         return true;
     }
 
+
+    /**
+     * Creates a disassembled instruction based on a given sequence of bytes, a template and a set of arguments. The
+     * caller has performed the necessary decoding of the bytes to derive the template and arguments.
+     *
+     * @param position the position an instruction stream from which the bytes were read
+     * @param bytes the bytes of an instruction
+     * @param template the template that corresponds to the instruction encoded in {@code bytes}
+     * @param arguments the arguments of the instruction encoded in {@code bytes}
+     * @return a disassembled instruction representing the result of decoding {@code bytes} into an instruction
+     */
+    protected abstract DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, RiscTemplate template, IndexedSequence<Argument> arguments);
+
+
     @Override
     public Sequence<DisassembledObject> scanOne0(BufferedInputStream stream) throws IOException, AssemblyException {
         final int instruction = endianness().readInt(stream);
         final AppendableSequence<DisassembledObject> result = new LinkSequence<DisassembledObject>();
         final byte[] instructionBytes = endianness().toBytes(instruction);
-        for (SpecificityGroup<Template_Type> specificityGroup : assembly().specificityGroups()) {
-            for (OpcodeMaskGroup<Template_Type> opcodeMaskGroup : specificityGroup.opcodeMaskGroups()) {
+        for (SpecificityGroup specificityGroup : assembly().specificityGroups()) {
+            for (OpcodeMaskGroup opcodeMaskGroup : specificityGroup.opcodeMaskGroups()) {
                 final int opcode = instruction & opcodeMaskGroup.mask();
-                for (Template_Type template : opcodeMaskGroup.templatesFor(opcode)) {
+                for (RiscTemplate template : opcodeMaskGroup.templatesFor(opcode)) {
                     // Skip synthetic instructions when preference is for raw instructions,
                     // and skip instructions with a different number of arguments than requested if so (i.e. when running the AssemblyTester):
                     if (template != null && template.isDisassemblable() && ((abstractionPreference() == AbstractionPreference.SYNTHETIC) || !template.instructionDescription().isSynthetic())) {
@@ -106,7 +122,7 @@ public abstract class RiscDisassembler<Template_Type extends RiscTemplate, Disas
                                     assembly().assemble(assembler, template, arguments);
                                     final byte[] bytes = assembler.toByteArray();
                                     if (Arrays.equals(bytes, instructionBytes)) {
-                                        final DisassembledInstruction_Type disassembledInstruction = createDisassembledInstruction(currentPosition, bytes, template, arguments);
+                                        final DisassembledInstruction disassembledInstruction = createDisassembledInstruction(currentPosition, bytes, template, arguments);
                                         result.append(disassembledInstruction);
                                     }
                                 } catch (AssemblyException assemblyException) {
@@ -145,8 +161,7 @@ public abstract class RiscDisassembler<Template_Type extends RiscTemplate, Disas
                 if (abstractionPreference() == AbstractionPreference.SYNTHETIC) {
                     for (DisassembledObject disassembledObject : disassembledObjects) {
                         if (disassembledObject instanceof DisassembledInstruction) {
-                            final Class<DisassembledInstruction_Type> type = null;
-                            final DisassembledInstruction_Type disassembledInstruction = StaticLoophole.cast(type, disassembledObject);
+                            final DisassembledInstruction disassembledInstruction = (DisassembledInstruction) disassembledObject;
                             if (disassembledInstruction.template().instructionDescription().isSynthetic()) {
                                 result.append(disassembledInstruction);
                                 foundSyntheticDisassembledInstruction = true;
@@ -164,9 +179,11 @@ public abstract class RiscDisassembler<Template_Type extends RiscTemplate, Disas
         }
     }
 
-    protected abstract Template_Type createInlineDataTemplate(InstructionDescription instructionDescription);
+    protected RiscTemplate createInlineDataTemplate(InstructionDescription instructionDescription) {
+        return new RiscTemplate(instructionDescription);
+    }
 
-    private final ImmediateOperandField[] byteFields = {createByteField(0), createByteField(1), createByteField(2), createByteField(3)};
+    private final ImmediateOperandField[] byteFields;
 
     private ImmediateOperandField createByteField(int index) {
         if (assembly().bitRangeEndianness() == BitRangeOrder.ASCENDING) {
@@ -177,5 +194,28 @@ public abstract class RiscDisassembler<Template_Type extends RiscTemplate, Disas
         final int lastBit = index * Bytes.WIDTH;
         final int firstBit = lastBit + 7;
         return ImmediateOperandField.createDescending(firstBit, lastBit);
+    }
+
+    @Override
+    public ImmediateArgument addressForRelativeAddressing(DisassembledInstruction di) {
+        return di.startAddress();
+    }
+
+    @Override
+    public String mnemonic(DisassembledInstruction di) {
+        final RiscExternalInstruction instruction = new RiscExternalInstruction((RiscTemplate) di.template(), di.arguments(), di.startAddress(), null);
+        return instruction.name();
+    }
+
+    @Override
+    public String operandsToString(DisassembledInstruction di, AddressMapper addressMapper) {
+        final RiscExternalInstruction instruction = new RiscExternalInstruction((RiscTemplate) di.template(), di.arguments(), di.startAddress(), addressMapper);
+        return instruction.operands();
+    }
+
+    @Override
+    public String toString(DisassembledInstruction di, AddressMapper addressMapper) {
+        final RiscExternalInstruction instruction = new RiscExternalInstruction((RiscTemplate) di.template(), di.arguments(), di.startAddress(), addressMapper);
+        return instruction.toString();
     }
 }

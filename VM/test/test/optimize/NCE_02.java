@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,13 +18,26 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=8ef40a37-6a9b-45d0-b4c0-2a9ea2597045*/
-package com.sun.max.vm.heap;
-import com.sun.max.unsafe.*;
+package test.optimize;
 
-/**
- * @author Bernd Mathiske
+/*
+ * Test case for null check elimination.
+ * @Harness: java
+ * @Runs: 0=23
  */
-public interface PointerOffsetVisitor {
-    void visitPointerOffset(Pointer pointer, int offset);
+public class NCE_02 {
+
+    public static NCE_02 object = new NCE_02();
+
+    int field1;
+    int field2 = 23;
+
+    public static int test(int arg) {
+        NCE_02 o = object;
+        o.field1 = 11;
+        // expect non-null
+        o.field1 = 22;
+        // expect non-null
+        return o.field2;
+    }
 }

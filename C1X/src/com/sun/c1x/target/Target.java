@@ -21,6 +21,7 @@
 package com.sun.c1x.target;
 
 import com.sun.c1x.value.BasicType;
+import com.sun.c1x.util.Util;
 
 /**
  * The <code>Target</code> class represents the target of a compilation, including
@@ -84,87 +85,70 @@ public class Target {
     }
 
     public boolean supportsSSE() {
-        // TODO Auto-generated method stub
-        return false;
+        return Util.nonFatalUnimplemented(true);
     }
 
     public boolean supports3DNOW() {
-        // TODO Auto-generated method stub
-        return false;
+        return Util.nonFatalUnimplemented(true);
     }
 
     public boolean supportsSSE2() {
-        // TODO Auto-generated method stub
-        return false;
+        return Util.nonFatalUnimplemented(true);
     }
 
     public boolean supportsLzcnt() {
-        // TODO Auto-generated method stub
-        return false;
+        return Util.nonFatalUnimplemented(true);
     }
 
     public boolean supportsCmov() {
-        // TODO Auto-generated method stub
-        return false;
+        return Util.nonFatalUnimplemented(true);
     }
 
     public boolean supportsMmx() {
-        // TODO Auto-generated method stub
-        return false;
+        return Util.nonFatalUnimplemented(true);
     }
 
     public boolean supportsSse42() {
-        // TODO Auto-generated method stub
-        return false;
+        return Util.nonFatalUnimplemented(false);
     }
 
     public boolean supportsMMX() {
-        // TODO Auto-generated method stub
-        return false;
+        return Util.nonFatalUnimplemented(true);
     }
 
     public boolean isIntel() {
-        // TODO Auto-generated method stub
-        return false;
+        return Util.nonFatalUnimplemented(false);
     }
 
     public boolean isAmd() {
-        // TODO Auto-generated method stub
-        return false;
+        return Util.nonFatalUnimplemented(true);
     }
 
     public boolean supportsPopcnt() {
-        // TODO Auto-generated method stub
-        return false;
+        return Util.nonFatalUnimplemented(true);
     }
 
     public boolean supportsSse41() {
-        // TODO Auto-generated method stub
-        return false;
+        return Util.nonFatalUnimplemented(false);
     }
 
     public boolean isP6() {
-        // TODO Auto-generated method stub
-        return false;
+        return Util.nonFatalUnimplemented(false);
     }
 
     public boolean supportsCx8() {
-        // TODO Auto-generated method stub
-        return false;
+        return Util.nonFatalUnimplemented(true);
     }
 
     public boolean isWin64() {
-        // TODO Auto-generated method stub
-        return false;
+        return Util.nonFatalUnimplemented(false);
     }
 
     public boolean isWindows() {
-        // TODO Auto-generated method stub
-        return false;
+        return Util.nonFatalUnimplemented(false);
     }
 
     public boolean isSolaris() {
-        // TODO Auto-generated method stub
-        return false;
+        return Util.nonFatalUnimplemented(true);
     }
 }

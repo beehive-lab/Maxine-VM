@@ -23,6 +23,9 @@ package com.sun.max.vm.heap;
 import com.sun.max.unsafe.*;
 
 /**
+ * Encapsulates a {@linkplain #visit(Pointer, int) procedure} for being informed
+ * of an address expressed as a pointer and word-based index.
+ *
  * @author Bernd Mathiske
  */
 public abstract class PointerIndexVisitor {
@@ -34,5 +37,5 @@ public abstract class PointerIndexVisitor {
      * @param pointer
      * @param wordIndex
      */
-    public abstract void visitPointerIndex(Pointer pointer, int wordIndex);
+    public abstract void visit(Pointer pointer, int wordIndex);
 }

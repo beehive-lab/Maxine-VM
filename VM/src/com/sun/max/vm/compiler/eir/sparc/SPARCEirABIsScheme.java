@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.eir.sparc;
 
+import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.eir.*;
@@ -29,6 +30,8 @@ import com.sun.max.vm.compiler.eir.*;
  * @author Laurent Daynes
  */
 public abstract class SPARCEirABIsScheme extends EirABIsScheme<SPARCEirRegister> {
+
+    @PROTOTYPE_ONLY
     public SPARCEirABIsScheme(VMConfiguration vmConfiguration,
                     EirABI<SPARCEirRegister> javaABI,
                     EirABI<SPARCEirRegister> nativeABI,
@@ -47,7 +50,7 @@ public abstract class SPARCEirABIsScheme extends EirABIsScheme<SPARCEirRegister>
 
     @Override
     public SPARCEirRegister safepointLatchRegister() {
-        return (SPARCEirRegister) javaABI().safepointLatchRegister();
+        return javaABI.safepointLatchRegister();
     }
 
 }

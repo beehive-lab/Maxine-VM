@@ -21,6 +21,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.C1XOptions;
+import com.sun.c1x.C1XMetrics;
 import com.sun.c1x.ci.CiField;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.value.ValueType;
@@ -38,7 +39,6 @@ public abstract class AccessField extends Instruction {
     final CiField field;
     ValueStack stateBefore;
     ValueStack lockStack;
-    NullCheck explicitNullCheck;
     boolean isStatic;
 
     /**
@@ -46,27 +46,30 @@ public abstract class AccessField extends Instruction {
      * @param object the instruction producing the receiver object
      * @param field the compiler interface representation of the field
      * @param isStatic indicates if the field is static
-     * @param lockStack the lock stack
+     * @param exceptionState the state if an exception occurs
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
      */
     public AccessField(Instruction object, CiField field, boolean isStatic,
-                       ValueStack lockStack, ValueStack stateBefore, boolean isLoaded) {
+                       ValueStack exceptionState, ValueStack stateBefore, boolean isLoaded) {
         super(ValueType.fromBasicType(field.basicType()));
         this.object = object;
         this.offset = isLoaded ? field.offset() : -1;
         this.field = field;
-        this.lockStack = lockStack;
+        this.lockStack = exceptionState;
         this.stateBefore = stateBefore;
         this.isStatic = isStatic;
-        if (!isLoaded || (C1XOptions.TestPatching && !field.isVolatile())) {
+        if (!isLoaded || C1XOptions.TestPatching && !field.isVolatile()) {
             // require patching if the field is not loaded (i.e. resolved),
             // or if patch testing is turned on (but not if the field is volatile)
             setFlag(Flag.NeedsPatching);
         }
         initFlag(Flag.IsLoaded, isLoaded);
-        initFlag(Flag.NeedsNullCheck, !object.isNonNull());
         pin(); // pin memory access instructions
+        if (object != null && object.isNonNull()) {
+            clearNullCheck();
+            C1XMetrics.NullChecksRedundant++;
+        }
     }
 
     /**
@@ -118,6 +121,17 @@ public abstract class AccessField extends Instruction {
         return !isStatic || isLoaded() && field.holder().isInitialized();
     }
 
+    @Override
+    public void clearNullCheck() {
+        // if stateBefore is not null, that may mean the field is unresolved, which
+        // may require resolution, which could throw an exception requiring lockStack
+        if (stateBefore != null) {
+            assert isInitialized();
+            lockStack = null;
+        }
+        setFlag(Flag.NoNullCheck);
+    }
+
     /**
      * Gets the value stack of the state before this field access.
      * @return the state before this field access
@@ -128,7 +142,6 @@ public abstract class AccessField extends Instruction {
 
     @Override
     public ValueStack lockStack() {
-        // XXX: what is a lock stack?
         return lockStack;
     }
 
@@ -141,15 +154,7 @@ public abstract class AccessField extends Instruction {
      * @return the object representing an explicit null check
      */
     public NullCheck explicitNullCheck() {
-        return explicitNullCheck;
-    }
-
-    /**
-     * Sets the instruction representing an explicit null check for this field access.
-     * @param explicitNullCheck the instruction representing the explicit check
-     */
-    public void setExplicitNullCheck(NullCheck explicitNullCheck) {
-        this.explicitNullCheck = explicitNullCheck;
+        return null;
     }
 
     /**

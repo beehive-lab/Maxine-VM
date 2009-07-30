@@ -33,7 +33,7 @@ public class UseCountComputer {
 
     private static final int maxRecurseDepth = 20;
 
-    private List<Instruction> worklist = new ArrayList<Instruction>();
+    private final List<Instruction> worklist = new ArrayList<Instruction>();
     private int depth;
     private HashMap<Instruction, Integer> map = new HashMap<Instruction, Integer>();
 
@@ -41,7 +41,7 @@ public class UseCountComputer {
         this.map = map;
     }
 
-    private InstructionClosure updateUseCount = new InstructionClosure() {
+    private final InstructionClosure updateUseCount = new InstructionClosure() {
 
         public Instruction apply(Instruction n) {
             // Local instructions and Phis for expression stack values at the

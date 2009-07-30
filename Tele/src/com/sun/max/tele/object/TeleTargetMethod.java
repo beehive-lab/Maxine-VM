@@ -229,26 +229,22 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
     }
 
     /**
+     * @see  StopPositions
      * @see  TargetMethod#stopPositions()
      */
-    private int[] stopPositions;
+    private StopPositions stopPositions;
 
     /**
      * @see TargetMethod#stopPositions()
      */
-    public int[] getStopPositions() {
+    public StopPositions getStopPositions() {
         if (stopPositions == null) {
             final Reference intArrayReference = teleVM().fields().TargetMethod_stopPositions.readReference(reference());
             final TeleArrayObject teleIntArrayObject = (TeleArrayObject) teleVM().makeTeleObject(intArrayReference);
             if (teleIntArrayObject == null) {
                 return null;
             }
-            stopPositions = (int[]) teleIntArrayObject.shallowCopy();
-
-            // Since only the VM's deoptimization algorithm cares about these flags, we omit them here:
-            for (int i = 0; i < stopPositions.length; i++) {
-                stopPositions[i] &= ~TargetMethod.REFERENCE_RETURN_FLAG;
-            }
+            stopPositions = new StopPositions((int[]) teleIntArrayObject.shallowCopy());
         }
         return stopPositions;
     }
@@ -257,16 +253,16 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
      * @see TargetMethod#numberOfStopPositions()
      */
     public int getNumberOfStopPositions() {
-        final int[] stopPositions = getStopPositions();
-        return stopPositions == null ? 0 : stopPositions.length;
+        final StopPositions stopPositions = getStopPositions();
+        return stopPositions == null ? 0 : stopPositions.length();
     }
 
     public int getJavaStopIndex(Address address) {
-        final int[] stopPositions = getStopPositions();
+        final StopPositions stopPositions = getStopPositions();
         if (stopPositions != null) {
             final int targetCodePosition = address.minus(getCodeStart()).toInt();
-            for (int i = 0; i < stopPositions.length; i++) {
-                if (stopPositions[i] == targetCodePosition) {
+            for (int i = 0; i < stopPositions.length(); i++) {
+                if (stopPositions.get(i) == targetCodePosition) {
                     return i;
                 }
             }
@@ -283,11 +279,11 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
      */
     private int getNextCallPosition(int position) {
         int nextCallPosition = -1;
-        final int[] stopPositions = getStopPositions();
+        final StopPositions stopPositions = getStopPositions();
         if (stopPositions != null) {
             final int numberOfCalls = getNumberOfDirectCalls() + getNumberOfIndirectCalls();
             for (int i = 0; i < numberOfCalls; i++) {
-                final int stopPosition = stopPositions[i];
+                final int stopPosition = stopPositions.get(i);
                 if (stopPosition > position && (nextCallPosition == -1 || stopPosition < nextCallPosition)) {
                     nextCallPosition = stopPosition;
                 }
@@ -344,11 +340,11 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
     }
 
     public int getNumberOfDirectCalls() {
-        final int[] stopPositions = getStopPositions();
+        final StopPositions stopPositions = getStopPositions();
         if (stopPositions == null) {
             return 0;
         }
-        return stopPositions.length - (getNumberOfIndirectCalls() + getNumberOfSafepoints());
+        return stopPositions.length() - (getNumberOfIndirectCalls() + getNumberOfSafepoints());
     }
 
     /**
@@ -476,7 +472,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
                 final Reference classMethodActorReference = directCallees[i];
                 final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) teleVM().makeTeleObject(classMethodActorReference);
                 final String calleeName = teleClassMethodActor == null ? "<unknown>" :  teleClassMethodActor.classMethodActor().format("%r %n(%p)" + " in %H");
-                writer.println(getStopPositions()[i] + " -> " + calleeName);
+                writer.println(getStopPositions().get(i) + " -> " + calleeName);
             }
             writer.outdent();
         }
@@ -494,7 +490,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
             writer.indent();
             for (int stopIndex = 0; stopIndex < javaFrameDescriptors.length(); ++stopIndex) {
                 final TargetJavaFrameDescriptor frameDescriptor = javaFrameDescriptors.get(stopIndex);
-                final int stopPosition = getStopPositions()[stopIndex];
+                final int stopPosition = getStopPositions().get(stopIndex);
                 writer.println(stopPosition + ": " + frameDescriptor);
             }
             writer.outdent();

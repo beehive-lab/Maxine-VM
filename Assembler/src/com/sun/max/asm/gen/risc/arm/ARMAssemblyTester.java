@@ -38,7 +38,7 @@ import com.sun.max.lang.*;
  * @author Sumeet Panchal
  */
 
-public class ARMAssemblyTester extends RiscAssemblyTester<ARMTemplate, ARMDisassembledInstruction> {
+public class ARMAssemblyTester extends RiscAssemblyTester<RiscTemplate> {
 
     public ARMAssemblyTester(ARMAssembly assembly, WordWidth addressWidth, EnumSet<AssemblyTestComponent> components) {
         super(assembly, addressWidth, components);
@@ -55,8 +55,8 @@ public class ARMAssemblyTester extends RiscAssemblyTester<ARMTemplate, ARMDisass
     }
 
     @Override
-    protected void assembleExternally(IndentWriter writer, ARMTemplate template, Sequence<Argument> argumentList, String label) {
-        final ARMExternalInstruction instruction = new ARMExternalInstruction(template, argumentList);
+    protected void assembleExternally(IndentWriter writer, RiscTemplate template, Sequence<Argument> argumentList, String label) {
+        final RiscExternalInstruction instruction = new RiscExternalInstruction(template, argumentList);
         writer.println(instruction.toString());
     }
 

@@ -35,7 +35,6 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.tele.*;
-import com.sun.max.vm.type.*;
 
 
 /**
@@ -46,24 +45,6 @@ import com.sun.max.vm.type.*;
  * @author Bernd Mathiske
  */
 public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapScheme {
-
-    private static final class NoGCHeapMemoryRegion extends RuntimeMemoryRegion {
-
-        /**
-         * @param title how the region should identify itself for debugging purposes
-         */
-        public NoGCHeapMemoryRegion(String title) {
-            super(Size.zero(), Size.zero());
-            setDescription(title);
-        }
-
-        /**
-         * @param address sets an inspected field that can be used for debugging.
-         */
-        void setAllocationMark(Address address) {
-            mark.set(address);
-        }
-    }
 
     public boolean isGcThread(Thread thread) {
         return thread instanceof StopTheWorldGCDaemon;
@@ -173,7 +154,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
 
     private StopTheWorldGCDaemon collectorThread;
 
-    private NoGCHeapMemoryRegion space = new NoGCHeapMemoryRegion("Heap-NoGC");
+    private RuntimeMemoryRegion space = new RuntimeMemoryRegion("Heap-NoGC");
     private Address top;
     private final AtomicWord allocationMark = new AtomicWord();
 
@@ -195,7 +176,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
             // From now on we can allocate
 
             // For debugging
-            space.setAllocationMark(allocationMark());
+            space.mark.set(allocationMark());
 
             InspectableHeapInfo.init(space);
         } else if (phase == MaxineVM.Phase.STARTING) {
@@ -259,7 +240,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
             return fail();
         }
         // For debugging
-        space.setAllocationMark(end);
+        space.mark.set(end);
         return cell;
     }
 
@@ -323,30 +304,23 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     private void checkClassActor(ClassActor classActor) {
     }
 
-    private final class PointerOffsetGripVerifier implements PointerOffsetVisitor {
-        public void visitPointerOffset(Pointer pointer, int offset) {
-            DebugHeap.verifyGripAtIndex(pointer, offset, pointer.readGrip(offset), space, null);
-        }
-    }
-
-    private final class PointerIndexGripVerifier extends PointerIndexVisitor {
+    private final class GripVerifier extends PointerIndexVisitor {
         @Override
-        public void visitPointerIndex(Pointer pointer, int wordIndex) {
-            DebugHeap.verifyGripAtIndex(pointer, wordIndex * Kind.REFERENCE.width.numberOfBytes, pointer.getGrip(wordIndex), space, null);
+        public void visit(Pointer pointer, int index) {
+            DebugHeap.verifyGripAtIndex(pointer, index, pointer.getGrip(index), space, null);
         }
     }
-    private final PointerIndexGripVerifier pointerIndexGripVerifier = new PointerIndexGripVerifier();
 
-    private final PointerOffsetGripVerifier pointerOffsetGripVerifier = new PointerOffsetGripVerifier();
+    private final GripVerifier gripVerifier = new GripVerifier();
 
-    private final SequentialHeapRootsScanner heapRootsVerifier = new SequentialHeapRootsScanner(pointerIndexGripVerifier);
+    private final SequentialHeapRootsScanner heapRootsVerifier = new SequentialHeapRootsScanner(gripVerifier);
 
     private void verifyHeap() {
         if (Heap.traceGCPhases()) {
             Log.println("Verifying heap...");
         }
         heapRootsVerifier.run();
-        DebugHeap.verifyRegion("Heap", space.start().asPointer(), allocationMark(), space, pointerOffsetGripVerifier);
+        DebugHeap.verifyRegion("Heap", space.start().asPointer(), allocationMark(), space, gripVerifier);
         if (Heap.traceGCPhases()) {
             Log.println("done verifying heap");
         }

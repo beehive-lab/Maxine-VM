@@ -207,6 +207,10 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         repaint();
     }
 
+    /**
+     * @param listSelectionEvent a change to the current selection in the table
+     * @return the newly selected row, null if cannot be determined.
+     */
     public Object getChangedValueRow(ListSelectionEvent listSelectionEvent) {
         super.valueChanged(listSelectionEvent);
         if (!listSelectionEvent.getValueIsAdjusting()) {
@@ -218,20 +222,36 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         return null;
     }
 
+    /**
+     * Scrolls the table to display the first row.
+     */
+    public void scrollToBeginning() {
+        scrollToRows(0, 0);
+    }
+
+    /**
+     * Scrolls the table to display the last row.
+     */
+    public void scrollToEnd() {
+        final int lastRow = getRowCount() - 1;
+        scrollToRows(lastRow, lastRow);
+    }
+
 
     /**
      * Scrolls the table to display the specified range (with a few rows before or after if possible).
      * @param firstRow first row of the range that should be made visible
      * @param lastRow last row of the range that should be made visible
      */
-    protected void scrollToRows(int firstRow, int lastRow) {
+    public void scrollToRows(int firstRow, int lastRow) {
         assert firstRow <= lastRow;
-        final int width = getWidth() - 2;
-        final int height = getRowHeight() - 2;
+        final int tableWidth = getWidth() - 2;
+        final int rowHeight = getRowHeight() - 2;
         // Create a rectangle in the table view to use as a scroll target; include
         // the row immediately before and the row immediately after so that the row of interest
         // doesn't land at the very beginning or very end of the view, if possible.
-        final Rectangle rectangle = new Rectangle(0, (firstRow - 1) * getRowHeight(), width, 3 * height);
+        final int rowCount = lastRow - firstRow + 1 + 2;
+        final Rectangle rectangle = new Rectangle(0, (firstRow - 1) * getRowHeight(), tableWidth, rowCount * rowHeight);
         // System.out.println("row=" + firstRow + " rect=" + rectangle);
         scrollRectToVisible(rectangle);
     }

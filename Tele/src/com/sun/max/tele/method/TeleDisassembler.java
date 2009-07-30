@@ -30,9 +30,7 @@ import com.sun.max.asm.dis.ia32.*;
 import com.sun.max.asm.dis.ppc.*;
 import com.sun.max.asm.dis.sparc.*;
 import com.sun.max.asm.gen.*;
-import com.sun.max.asm.gen.cisc.amd64.*;
 import com.sun.max.asm.gen.cisc.x86.*;
-import com.sun.max.asm.gen.risc.sparc.*;
 import com.sun.max.asm.sparc.*;
 import com.sun.max.asm.sparc.complete.*;
 import com.sun.max.collect.*;
@@ -157,7 +155,7 @@ public final class TeleDisassembler {
     }
 
     private static class AMD64LoadLiteralParser extends LoadLiteralParser {
-        AMD64LoadLiteralParser(Disassembler<AMD64Template, AMD64DisassembledInstruction> disassembler, Address codeStart) {
+        AMD64LoadLiteralParser(Disassembler disassembler, Address codeStart) {
             super(disassembler, codeStart);
         }
         @Override
@@ -317,7 +315,7 @@ public final class TeleDisassembler {
             return searchLiteralBaseInstruction(start, end, code);
         }
 
-        SPARCLoadLiteralParser(Disassembler<SPARCTemplate, SPARCDisassembledInstruction> disassembler, Address codeStart, byte [] code) {
+        SPARCLoadLiteralParser(Disassembler disassembler, Address codeStart, byte [] code) {
             super(disassembler, codeStart.plus(literalBaseFromCodeStart(code)));
         }
 
@@ -337,15 +335,13 @@ public final class TeleDisassembler {
         }
     }
 
-    private static LoadLiteralParser createLiteralParser(final ProcessorKind processorKind, Disassembler rawDisassembler, Address codeStart, byte [] code) {
+    private static LoadLiteralParser createLiteralParser(final ProcessorKind processorKind, Disassembler disassembler, Address codeStart, byte [] code) {
         //final ProcessorKind processorKind = teleVM.vmConfiguration().platform().processorKind();
         switch (processorKind.instructionSet) {
             case ARM:
                 FatalError.unimplemented();
                 return null;
             case AMD64: {
-                final Class<Disassembler<AMD64Template, AMD64DisassembledInstruction>> type = null;
-                final Disassembler<AMD64Template, AMD64DisassembledInstruction> disassembler = StaticLoophole.cast(type, rawDisassembler);
                 return new AMD64LoadLiteralParser(disassembler, codeStart);
             }
             case IA32:
@@ -355,8 +351,6 @@ public final class TeleDisassembler {
                 FatalError.unimplemented();
                 return null;
             case SPARC: {
-                final Class<Disassembler<SPARCTemplate, SPARCDisassembledInstruction>> type = null;
-                final Disassembler<SPARCTemplate, SPARCDisassembledInstruction> disassembler = StaticLoophole.cast(type, rawDisassembler);
                 return new SPARCLoadLiteralParser(disassembler, codeStart, code);
             }
         }

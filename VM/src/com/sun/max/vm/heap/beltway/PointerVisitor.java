@@ -18,33 +18,32 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.asm.gen.risc.ppc;
+package com.sun.max.vm.heap.beltway;
 
-import com.sun.max.asm.*;
-import com.sun.max.asm.dis.*;
-import com.sun.max.asm.gen.*;
-import com.sun.max.asm.gen.risc.*;
-import com.sun.max.collect.*;
-
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.grip.*;
+import com.sun.max.vm.heap.*;
 /**
- * Output of PowerPC instructions in external assembler format.
  *
- * @author Bernd Mathiske
- * @author Doug Simon
+ *
+ * @author Laurent Daynes
  */
-public class PPCExternalInstruction extends RiscExternalInstruction {
+public class PointerVisitor extends PointerIndexVisitor {
 
-    PPCExternalInstruction(PPCTemplate template, Sequence<Argument> arguments) {
-        super(template, arguments);
-    }
+    final Action action;
 
-    public PPCExternalInstruction(PPCTemplate template, Sequence<Argument> arguments, ImmediateArgument address, AddressMapper addressMapper) {
-        super(template, arguments, address, addressMapper);
+    public PointerVisitor(Action action) {
+        this.action = action;
     }
 
     @Override
-    public boolean isAbsoluteBranch() {
-        // An absolute branch instruction in PowerPC has an AA field with its bit set
-        return Sequence.Static.containsEqual(template.optionFields(), PPCFields.aa) && (template.opcode() & PPCFields.aa.bitRange().instructionMask()) != 0;
+    public void visit(Pointer pointer, int wordIndex) {
+        final Grip oldGrip = pointer.getGrip(wordIndex);
+        final Grip newGrip = action.doAction(oldGrip);
+        if (newGrip != null) {
+            if (newGrip != oldGrip) {
+                pointer.setGrip(wordIndex, newGrip);
+            }
+        }
     }
 }

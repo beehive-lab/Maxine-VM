@@ -26,6 +26,7 @@ import static com.sun.max.asm.gen.risc.ppc.PPCFields.*;
 import java.lang.reflect.*;
 
 import com.sun.max.asm.gen.*;
+import com.sun.max.asm.gen.risc.*;
 import com.sun.max.asm.ppc.*;
 
 /**
@@ -35,7 +36,7 @@ import com.sun.max.asm.ppc.*;
  */
 public final class RawInstructions extends PPCInstructionDescriptionCreator {
 
-    RawInstructions(PPCTemplateCreator templateCreator) {
+    RawInstructions(RiscTemplateCreator templateCreator) {
         super(templateCreator);
 
         setCurrentArchitectureManualSection("2.4.1");

@@ -24,7 +24,6 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.max.asm.*;
-import com.sun.max.asm.dis.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
@@ -32,8 +31,8 @@ import com.sun.max.lang.*;
 /**
  * @author Bernd Mathiske
  */
-public abstract class RiscAssemblyTester<Template_Type extends RiscTemplate, DisassembledInstruction_Type extends DisassembledInstruction<Template_Type>>
-                          extends AssemblyTester<Template_Type, DisassembledInstruction_Type> {
+public abstract class RiscAssemblyTester<Template_Type extends RiscTemplate>
+                          extends AssemblyTester<Template_Type> {
 
     public RiscAssemblyTester(Assembly<Template_Type> assembly, WordWidth addressWidth, EnumSet<AssemblyTestComponent> components) {
         super(assembly, addressWidth, components);

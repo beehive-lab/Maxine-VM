@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.eir.sparc.solaris;
 
+import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.eir.sparc.*;
 
@@ -28,6 +29,7 @@ import com.sun.max.vm.compiler.eir.sparc.*;
  */
 public final class SolarisSPARCEirABIs extends SPARCEirABIsScheme {
 
+    @PROTOTYPE_ONLY
     public SolarisSPARCEirABIs(VMConfiguration vmConfiguration) {
         super(vmConfiguration, new SPARCEirJavaABI(vmConfiguration),
                         new SPARCEirNativeABI(vmConfiguration),

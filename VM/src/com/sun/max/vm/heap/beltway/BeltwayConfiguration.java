@@ -34,7 +34,7 @@ public final class BeltwayConfiguration extends BeltwayHeapSchemeConfiguration {
     private static int numberOfBelts;
 
     public static final boolean useTLABS = true;
-    public static boolean useGCTlabs = true;
+    public static boolean useGCTlabs = false;
     public static boolean parallelScavenging = false;
 
     private static int[] percentagesOfUsableMemoryPerBelt;

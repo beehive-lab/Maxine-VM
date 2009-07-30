@@ -61,8 +61,8 @@ public class MaxineTesterConfiguration {
         test.output.ExitCode.class,
         test.output.FloatNanTest.class,
         test.output.GetResource.class,              FAIL_SPARC,
-        test.output.SafepointWhileInNative.class,   FAIL_SPARC, RAND_LINUX,
-        test.output.SafepointWhileInJava.class,     FAIL_SPARC, RAND_LINUX,
+        test.output.SafepointWhileInNative.class,   FAIL_SPARC,
+        test.output.SafepointWhileInJava.class,     FAIL_SPARC,
         test.output.BlockingQueue.class,            FAIL_SPARC,
         test.output.Recursion.class,
         test.output.StaticInitializers.class,       FAIL_SPARC,
@@ -79,11 +79,11 @@ public class MaxineTesterConfiguration {
         test.output.JREJarLoadTest.class,
         test.output.FileReader.class,
         test.output.ZipFileReader.class,
-        test.output.WeakReferenceTest01.class,      FAIL_SPARC, RAND_ALL,
-        test.output.WeakReferenceTest02.class,      FAIL_SPARC, RAND_ALL,
-        test.output.WeakReferenceTest03.class,      FAIL_SPARC, RAND_ALL,
-        test.output.WeakReferenceTest04.class,      FAIL_SPARC, RAND_ALL,
-        test.output.MegaThreads.class,              FAIL_SPARC, RAND_ALL,
+        test.output.WeakReferenceTest01.class,      FAIL_SPARC,
+        test.output.WeakReferenceTest02.class,      FAIL_SPARC,
+        test.output.WeakReferenceTest03.class,      FAIL_SPARC,
+        test.output.WeakReferenceTest04.class,      FAIL_SPARC,
+        test.output.MegaThreads.class,              FAIL_SPARC,
     };
 
     static final Object[] javaTestList = {
@@ -92,8 +92,6 @@ public class MaxineTesterConfiguration {
         test.jdk.EnumMap02.class,                                   RAND_ALL,
         test.hotpath.HP_series.class,                  FAIL_SPARC,
         test.hotpath.HP_array02.class,                 FAIL_SPARC,
-        test.except.Catch_StackOverflowError_01.class, FAIL_SPARC,
-        test.except.Catch_StackOverflowError_02.class, FAIL_SPARC,
     };
 
     static final String[] dacapoTests = {

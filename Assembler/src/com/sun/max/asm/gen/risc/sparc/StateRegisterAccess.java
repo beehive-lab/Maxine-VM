@@ -22,6 +22,8 @@ package com.sun.max.asm.gen.risc.sparc;
 
 import static com.sun.max.asm.gen.risc.sparc.SPARCFields.*;
 
+import com.sun.max.asm.gen.risc.*;
+
 /**
  * @author Bernd Mathiske
  */
@@ -36,7 +38,7 @@ public class StateRegisterAccess extends SPARCInstructionDescriptionCreator {
         define("wr", op(0x2), op3(0x30), rs1, i(1), simm13, rd_state);
     }
 
-    StateRegisterAccess(SPARCTemplateCreator templateCreator) {
+    StateRegisterAccess(RiscTemplateCreator templateCreator) {
         super(templateCreator);
 
         setCurrentArchitectureManualSection("A.43");

@@ -29,6 +29,7 @@ import com.sun.max.vm.code.Code;
 import com.sun.max.vm.VMConfiguration;
 import com.sun.max.collect.AppendableSequence;
 import com.sun.max.annotate.PROTOTYPE_ONLY;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 
 import java.util.ArrayList;
@@ -396,12 +397,17 @@ public class MaxCiTargetMethod implements CiTargetMethod {
         int directPos = 0;
         int indirectPos = directCalls;
         bitMap.setSize(stackRefMapSize());
-        final ClassMethodActor[] directCallees = new ClassMethodActor[directCalls];
+        final List<ClassMethodActor> directCallees = new ArrayList<ClassMethodActor>(directCalls);
         for (CallSite callSite : callSites) {
             // fill in the stop position for this call site
             if (callSite.direct) {
                 bitMap.setOffset(directPos);
-                directCallees[directPos] = getClassMethodActor(callSite.runtimeCall, callSite.method);
+                final ClassMethodActor cma = getClassMethodActor(callSite.runtimeCall, callSite.method);
+                if (cma != null) {
+                    directCallees.add(cma);
+                } else {
+                    Trace.line(1, "Warning: Unresolved direct call: " + callSite.runtimeCall + ", " + callSite.method);
+                }
                 stopPositions[directPos] = callSite.codePos;
                 directPos++;
             } else {
@@ -414,7 +420,7 @@ public class MaxCiTargetMethod implements CiTargetMethod {
             assert directPos <= indirectCalls;
             assert indirectPos <= directCalls + indirectCalls;
         }
-        return directCallees;
+        return directCallees.toArray(new ClassMethodActor[directCallees.size()]);
     }
 
     private ClassMethodActor getClassMethodActor(CiRuntimeCall runtimeCall, CiMethod method) {
@@ -422,8 +428,15 @@ public class MaxCiTargetMethod implements CiTargetMethod {
             final MaxCiMethod maxMethod = (MaxCiMethod) method;
             return maxMethod.asClassMethodActor("directCall()");
         }
-        // TODO: get the class method actor for a runtime method call
-        return null;
+
+        assert runtimeCall != null : "A call can either be a call to a method or a runtime call";
+
+        switch(runtimeCall) {
+
+            default:
+                Trace.line(1, "WARNING: Unknown runtime call to " + runtimeCall.name());
+                return null;
+        }
     }
 
     private void setBits(ByteArrayBitMap bitMap, boolean[] stackMap) {

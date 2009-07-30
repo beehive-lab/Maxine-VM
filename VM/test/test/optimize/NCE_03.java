@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,33 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.asm.gen.risc.sparc;
+package test.optimize;
 
-import com.sun.max.asm.*;
-import com.sun.max.asm.dis.*;
-import com.sun.max.asm.gen.*;
-import com.sun.max.asm.gen.risc.*;
-import com.sun.max.collect.*;
-
-/**
- * Output of SPARC instructions in external assembler format.
- *
- * @author Bernd Mathiske
- * @author Doug Simon
+/*
+ * Test case for null check elimination.
+ * @Harness: java
+ * @Runs: 0=23
  */
-public class SPARCExternalInstruction extends RiscExternalInstruction {
+public class NCE_03 {
 
-    SPARCExternalInstruction(SPARCTemplate template, Sequence<Argument> arguments) {
-        super(template, arguments);
-    }
+    private static boolean cond = true;
+    public static NCE_03 object = new NCE_03();
 
-    public SPARCExternalInstruction(SPARCTemplate template, Sequence<Argument> arguments, ImmediateArgument address, AddressMapper addressMapper) {
-        super(template, arguments, address, addressMapper);
-    }
+    int field1;
+    int field2 = 23;
 
-    @Override
-    public boolean isAbsoluteBranch() {
-        // There are no branch instructions in SPARC whose target address is not PC relative
-        return false;
+    public static int test(int arg) {
+        NCE_03 o = object;
+        o.field1 = 11;
+        if (cond) {
+            // expect non-null
+            o.field1 = 22;
+        }
+        // expect non-null
+        return o.field2;
     }
 }

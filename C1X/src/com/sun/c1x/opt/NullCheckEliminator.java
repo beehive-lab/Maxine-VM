@@ -27,6 +27,7 @@ import com.sun.c1x.util.BitMap;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.bytecode.Bytecodes;
 import com.sun.c1x.C1XOptions;
+import com.sun.c1x.C1XMetrics;
 
 import java.util.*;
 
@@ -37,10 +38,9 @@ import java.util.*;
  * This implementation uses an optimistic dataflow analysis by it attempting to visit all predecessors
  * of a block before visiting the block itself. For this purpose it uses the block numbers computed by
  * the {@link com.sun.c1x.graph.BlockMap} during graph construction, which may not actually be
- * a valid reverse post-order number.
+ * a valid reverse post-order number (due to inlining and any previous optimizations).
  *
- * When loops are encountered, or if the blocks are not visited in the optimal order due to
- * inlining with exception handlers or intermediate control flow changes, this implementation
+ * When loops are encountered, or if the blocks are not visited in the optimal order, this implementation
  * will fall back to performing an iterative data flow analysis where it maintains a set
  * of incoming non-null instructions and a set of locally produced outgoing non-null instructions
  * and iterates the dataflow equations to a fixed point. Basically, for block b,
@@ -50,7 +50,7 @@ import java.util.*;
  *
  * Note that the iterative phase is actually optional, because the first pass is conservative.
  * Iteration can be disabled by setting {@link com.sun.c1x.C1XOptions#DoIterativeNullCheckElimination} to
- * {@code false}.
+ * {@code false}. Iteration is rarely necessary for acyclic graphs.
  *
  * @author Ben L. Titzer
  */
@@ -166,6 +166,7 @@ public class NullCheckEliminator extends InstructionVisitor {
         // calculate the {in} sets
         if (localUses.size() > 0) {
             // only perform iterative flow analysis if there are checks remaining to eliminate
+            C1XMetrics.NullCheckIterations++;
             index = new HashMap<Instruction, Integer>();
             inBitmaps = new HashMap<BlockBegin, BitMap>();
             outBitmaps = new HashMap<BlockBegin, BitMap>();
@@ -271,15 +272,16 @@ public class NullCheckEliminator extends InstructionVisitor {
     private boolean processUse(Instruction use, Instruction object, boolean implicitCheck) {
         if (object.isNonNull()) {
             // the object itself is known for sure to be non-null, so clear the flag.
-            // the flag is usually cleared in the constructor of the use, but
+            // the flag is usually cleared in the constructor of the using instruction, but
             // later optimizations may more reveal more non-null objects
-            use.clearFlag(Instruction.Flag.NeedsNullCheck);
+            use.clearNullCheck();
             return true;
         } else {
-            // check if the object is non-null
+            // check if the object is non-null in the bitmap or hashset
             if (isNonNull(currentBitMap, currentNonNulls, object)) {
                 // the object is non-null at this site
-                use.clearFlag(Instruction.Flag.NeedsNullCheck);
+                use.clearNullCheck();
+                C1XMetrics.NullCheckEliminations++;
                 return true;
             } else {
                 if (implicitCheck) {
@@ -296,17 +298,13 @@ public class NullCheckEliminator extends InstructionVisitor {
 
     @Override
     public void visitPhi(Phi i) {
-        boolean all = true;
         for (int j = 0; j < i.operandCount(); j++) {
-            // TODO: don't allow phi to be added multiple times to the use list
             if (!processUse(i, i.operandAt(j), false)) {
-                all = false;
+                return;
             }
         }
-        if (all) {
-            // the phi is non-null if all its inputs are
-            i.setFlag(Instruction.Flag.NonNull);
-        }
+        // all inputs are non-null
+        i.setFlag(Instruction.Flag.NonNull);
     }
 
     @Override

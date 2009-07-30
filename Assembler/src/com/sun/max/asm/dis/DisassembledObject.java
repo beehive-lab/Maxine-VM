@@ -50,11 +50,6 @@ public interface DisassembledObject extends AssemblyObject {
     ImmediateArgument startAddress();
 
     /**
-     * Gets the absolute address of this disassembled object's first byte.
-     */
-    ImmediateArgument endAddress();
-
-    /**
      * Gets a string representation of this object. The recommended format is one resembling that of a native
      * disassembler for the platform corresponding to the ISA.
      *

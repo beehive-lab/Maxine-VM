@@ -32,10 +32,10 @@ import com.sun.c1x.value.ValueType;
  */
 public class ProfileCall extends Instruction {
 
-    CiMethod method;
-    int bciOfInvoke;
+    final CiMethod method;
+    final int bciOfInvoke;
     Instruction object;
-    CiType knownHolder;
+    final CiType knownHolder;
 
     /**
      * Constructs a new ProfileCall instruction.

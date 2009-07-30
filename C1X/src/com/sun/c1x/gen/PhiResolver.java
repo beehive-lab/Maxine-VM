@@ -41,9 +41,6 @@ public class PhiResolver {
         private List<ResolveNode> otherOperands;
         private ResolveNode[] vregTable;
 
-        public PhiResolverState() {
-        }
-
         void reset(int maxVregs) {
             virtualOperands = new ArrayList<ResolveNode>(maxVregs);
             otherOperands = new ArrayList<ResolveNode>(maxVregs);
@@ -52,8 +49,8 @@ public class PhiResolver {
         }
     }
 
-    private LIRGenerator gen;
-    private PhiResolverState state;
+    private final LIRGenerator gen;
+    private final PhiResolverState state;
 
     private ResolveNode loop;
     private LIROperand temp;

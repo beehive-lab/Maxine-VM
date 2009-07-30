@@ -28,14 +28,14 @@ import com.sun.max.collect.*;
 /**
  * @author Doug Simon
  */
-public final class PPCAssembly extends RiscAssembly<PPCTemplate> {
+public final class PPCAssembly extends RiscAssembly {
 
     private static final boolean GENERATING_DEPRECATED_INSTRUCTIONS = true;
     private static final boolean GENERATING_64BIT_INSTRUCTIONS = true;
     private static final boolean GENERATING_POWER5_INSTRUCTIONS = false;
 
     private PPCAssembly() {
-        super(InstructionSet.PPC, PPCTemplate.class);
+        super(InstructionSet.PPC, RiscTemplate.class);
     }
 
     public boolean generatingDeprecatedInstructions() {
@@ -67,8 +67,8 @@ public final class PPCAssembly extends RiscAssembly<PPCTemplate> {
     }
 
     @Override
-    protected Sequence<PPCTemplate> createTemplates() {
-        final PPCTemplateCreator creator = new PPCTemplateCreator();
+    protected Sequence<RiscTemplate> createTemplates() {
+        final RiscTemplateCreator creator = new RiscTemplateCreator();
         creator.createTemplates(new RawInstructions(creator));
         creator.createTemplates(new SyntheticInstructions(creator));
         return creator.templates();

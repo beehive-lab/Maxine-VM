@@ -22,6 +22,8 @@ package com.sun.max.asm.gen.risc.sparc;
 
 import static com.sun.max.asm.gen.risc.sparc.SPARCFields.*;
 
+import com.sun.max.asm.gen.risc.*;
+
 /**
  * @author Bernd Mathiske
  * @author Dave Ungar
@@ -39,7 +41,7 @@ class MemorySynchronization extends SPARCInstructionDescriptionCreator {
         }
     }
 
-    MemorySynchronization(SPARCTemplateCreator templateCreator) {
+    MemorySynchronization(RiscTemplateCreator templateCreator) {
         super(templateCreator);
 
         setCurrentArchitectureManualSection("A.32");
