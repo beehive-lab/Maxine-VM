@@ -186,11 +186,11 @@ public class IRScope {
         while (curScope != null && curScope.method.exceptionHandlers().size() > 0) {
             curScope = curScope.caller;
         }
-        lockStackSize = (curScope == null ? 0 : (curScope.callerState() == null ? 0 : curScope.callerState().stackSize()));
+        lockStackSize = curScope == null ? 0 : curScope.callerState() == null ? 0 : curScope.callerState().stackSize();
     }
 
     /**
-     * Gets the lock stack size. The method {@link computeLockStackSize()} has to be called for this value to be valid.
+     * Gets the lock stack size. The method {@link #computeLockStackSize()} has to be called for this value to be valid.
      * @return the lock stack size.
      */
     public int lockStackSize() {

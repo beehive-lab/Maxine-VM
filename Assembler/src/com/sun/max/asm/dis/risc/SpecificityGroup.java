@@ -20,7 +20,6 @@
  */
 package com.sun.max.asm.dis.risc;
 
-import com.sun.max.asm.gen.risc.*;
 import com.sun.max.collect.*;
 
 /**
@@ -29,12 +28,12 @@ import com.sun.max.collect.*;
  * @author Dave Ungar
  * @author Bernd Mathiske
  */
-public class SpecificityGroup<Template_Type extends RiscTemplate> {
+public class SpecificityGroup {
 
     private final int specificity;
-    private final Sequence<OpcodeMaskGroup<Template_Type>> opcodeMaskGroups;
+    private final Sequence<OpcodeMaskGroup> opcodeMaskGroups;
 
-    public SpecificityGroup(int specificity, Sequence<OpcodeMaskGroup<Template_Type>> opcodeMaskGroups) {
+    public SpecificityGroup(int specificity, Sequence<OpcodeMaskGroup> opcodeMaskGroups) {
         this.specificity = specificity;
         this.opcodeMaskGroups = opcodeMaskGroups;
     }
@@ -43,7 +42,7 @@ public class SpecificityGroup<Template_Type extends RiscTemplate> {
         return specificity;
     }
 
-    public Sequence<OpcodeMaskGroup<Template_Type>> opcodeMaskGroups() {
+    public Sequence<OpcodeMaskGroup> opcodeMaskGroups() {
         return opcodeMaskGroups;
     }
 

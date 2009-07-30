@@ -71,8 +71,8 @@ public abstract class DisassembledData implements DisassembledObject {
         return bytes.clone();
     }
 
-    public Type type() {
-        return Type.DATA;
+    public boolean isCode() {
+        return false;
     }
 
     public ImmediateArgument targetAddress() {

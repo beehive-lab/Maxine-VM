@@ -468,17 +468,17 @@ public class Bytecodes {
         int length = Bytecodes.length[opcode];
         if (length == 0) {
             switch (opcode) {
-                case Bytecodes.TABLESWITCH: {
+                case TABLESWITCH: {
                     return new BytecodeTableSwitch(code, bci).size();
                 }
-                case Bytecodes.LOOKUPSWITCH: {
+                case LOOKUPSWITCH: {
                     return new BytecodeLookupSwitch(code, bci).size();
                 }
-                case Bytecodes.WIDE: {
+                case WIDE: {
                     int opc = Bytes.beU1(code, bci + 1);
-                    if (opc == Bytecodes.RET) {
+                    if (opc == RET) {
                         return 4;
-                    } else if (opc == Bytecodes.IINC) {
+                    } else if (opc == IINC) {
                         return 6;
                     } else {
                         return 4; // a load or store bytecode
@@ -543,42 +543,42 @@ public class Bytecodes {
     public static String operator(int op) {
         switch (op) {
             // arithmetic ops
-            case Bytecodes.IADD : // fall through
-            case Bytecodes.LADD : // fall through
-            case Bytecodes.FADD : // fall through
-            case Bytecodes.DADD : return "+";
-            case Bytecodes.ISUB : // fall through
-            case Bytecodes.LSUB : // fall through
-            case Bytecodes.FSUB : // fall through
-            case Bytecodes.DSUB : return "-";
-            case Bytecodes.IMUL : // fall through
-            case Bytecodes.LMUL : // fall through
-            case Bytecodes.FMUL : // fall through
-            case Bytecodes.DMUL : return "*";
-            case Bytecodes.IDIV : // fall through
-            case Bytecodes.LDIV : // fall through
-            case Bytecodes.FDIV : // fall through
-            case Bytecodes.DDIV : return "/";
-            case Bytecodes.IREM : // fall through
-            case Bytecodes.LREM : // fall through
-            case Bytecodes.FREM : // fall through
-            case Bytecodes.DREM : return "%";
+            case IADD : // fall through
+            case LADD : // fall through
+            case FADD : // fall through
+            case DADD : return "+";
+            case ISUB : // fall through
+            case LSUB : // fall through
+            case FSUB : // fall through
+            case DSUB : return "-";
+            case IMUL : // fall through
+            case LMUL : // fall through
+            case FMUL : // fall through
+            case DMUL : return "*";
+            case IDIV : // fall through
+            case LDIV : // fall through
+            case FDIV : // fall through
+            case DDIV : return "/";
+            case IREM : // fall through
+            case LREM : // fall through
+            case FREM : // fall through
+            case DREM : return "%";
             // shift ops
-            case Bytecodes.ISHL : // fall through
-            case Bytecodes.LSHL : return "<<";
-            case Bytecodes.ISHR : // fall through
-            case Bytecodes.LSHR : return ">>";
-            case Bytecodes.IUSHR: // fall through
-            case Bytecodes.LUSHR: return ">>>";
+            case ISHL : // fall through
+            case LSHL : return "<<";
+            case ISHR : // fall through
+            case LSHR : return ">>";
+            case IUSHR: // fall through
+            case LUSHR: return ">>>";
             // logic ops
-            case Bytecodes.IAND : // fall through
-            case Bytecodes.LAND : return "&";
-            case Bytecodes.IOR  : // fall through
-            case Bytecodes.LOR  : return "|";
-            case Bytecodes.IXOR : // fall through
-            case Bytecodes.LXOR : return "^";
+            case IAND : // fall through
+            case LAND : return "&";
+            case IOR  : // fall through
+            case LOR  : return "|";
+            case IXOR : // fall through
+            case LXOR : return "^";
         }
-        return Bytecodes.name(op);
+        return name(op);
     }
 
     /**
@@ -593,27 +593,27 @@ public class Bytecodes {
     public static Integer foldIntOp2(int opcode, int x, int y) {
         // attempt to fold a binary operation with constant inputs
         switch (opcode) {
-            case Bytecodes.IADD: return (x + y);
-            case Bytecodes.ISUB: return (x - y);
-            case Bytecodes.IMUL: return (x * y);
-            case Bytecodes.IDIV: {
+            case IADD: return x + y;
+            case ISUB: return x - y;
+            case IMUL: return x * y;
+            case IDIV: {
                 if (y == 0) {
                     return null;
                 }
-                return (x / y);
+                return x / y;
             }
-            case Bytecodes.IREM: {
+            case IREM: {
                 if (y == 0) {
                     return null;
                 }
-                return (x % y);
+                return x % y;
             }
-            case Bytecodes.IAND: return (x & y);
-            case Bytecodes.IOR:  return (x | y);
-            case Bytecodes.IXOR: return (x ^ y);
-            case Bytecodes.ISHL: return (x << y);
-            case Bytecodes.ISHR: return (x >> y);
-            case Bytecodes.IUSHR: return (x >>> y);
+            case IAND: return x & y;
+            case IOR:  return x | y;
+            case IXOR: return x ^ y;
+            case ISHL: return x << y;
+            case ISHR: return x >> y;
+            case IUSHR: return x >>> y;
         }
         return null;
     }
@@ -630,49 +630,49 @@ public class Bytecodes {
     public static Long foldLongOp2(int opcode, long x, long y) {
         // attempt to fold a binary operation with constant inputs
         switch (opcode) {
-            case Bytecodes.LADD: return (x + y);
-            case Bytecodes.LSUB: return (x - y);
-            case Bytecodes.LMUL: return (x * y);
-            case Bytecodes.LDIV: {
+            case LADD: return x + y;
+            case LSUB: return x - y;
+            case LMUL: return x * y;
+            case LDIV: {
                 if (y == 0) {
                     return null;
                 }
-                return (x / y);
+                return x / y;
             }
-            case Bytecodes.LREM: {
+            case LREM: {
                 if (y == 0) {
                     return null;
                 }
-                return (x % y);
+                return x % y;
             }
-            case Bytecodes.LAND: return (x & y);
-            case Bytecodes.LOR:  return (x | y);
-            case Bytecodes.LXOR: return (x ^ y);
-            case Bytecodes.LSHL: return (x << y);
-            case Bytecodes.LSHR: return (x >> y);
-            case Bytecodes.LUSHR: return (x >>> y);
+            case LAND: return x & y;
+            case LOR:  return x | y;
+            case LXOR: return x ^ y;
+            case LSHL: return x << y;
+            case LSHR: return x >> y;
+            case LUSHR: return x >>> y;
         }
         return null;
     }
 
     public static strictfp Float foldFloatOp2(int opcode, float x, float y) {
         switch (opcode) {
-            case Bytecodes.FADD: return (x + y);
-            case Bytecodes.FSUB: return (x - y);
-            case Bytecodes.FMUL: return (x * y);
-            case Bytecodes.FDIV: return (x / y);
-            case Bytecodes.FREM: return (x % y);
+            case FADD: return x + y;
+            case FSUB: return x - y;
+            case FMUL: return x * y;
+            case FDIV: return x / y;
+            case FREM: return x % y;
         }
         return null;
     }
 
     public static strictfp Double foldDoubleOp2(int opcode, double x, double y) {
         switch (opcode) {
-            case Bytecodes.DADD: return (x + y);
-            case Bytecodes.DSUB: return (x - y);
-            case Bytecodes.DMUL: return (x * y);
-            case Bytecodes.DDIV: return (x / y);
-            case Bytecodes.DREM: return (x % y);
+            case DADD: return x + y;
+            case DSUB: return x - y;
+            case DMUL: return x * y;
+            case DDIV: return x / y;
+            case DREM: return x % y;
         }
         return null;
     }

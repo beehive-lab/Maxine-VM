@@ -85,7 +85,7 @@ public class DisplacementModifier extends InstructionModifier {
     }
 
     /**
-     * @param code bytes buffer containing a copy of the original code annotated with this displacement modifier
+     * @param code byte buffer containing a copy of the original code annotated with this displacement modifier
      * @param position position of the original code annotated with this displacement modifier
      * @param newDisplacement new displacement to replace the original one
      */
@@ -95,7 +95,7 @@ public class DisplacementModifier extends InstructionModifier {
     }
 
     /**
-     * @param code bytes buffer containing a copy of the original code annotated with this displacement modifier
+     * @param codeRegion byte buffer containing a copy of the original code annotated with this displacement modifier
      * @param offsetToCode offset to the first byte of a copy of the original target code annotated with this displacement modifier
      * @param newDisplacement new displacement to replace the original one
      */

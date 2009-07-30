@@ -61,7 +61,7 @@ public class SingleThread extends Thread {
             try {
                 return future.get();
             } catch (ExecutionException e) {
-                ProgramError.unexpected(e.getCause());
+                throw Exceptions.cast(RuntimeException.class, e.getCause());
             } catch (InterruptedException exception) {
                 // continue
             }

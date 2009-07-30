@@ -29,7 +29,7 @@ import com.sun.c1x.debug.LogStream;
  */
 public class Range {
 
-    private static Range end = new Range(Integer.MAX_VALUE, Integer.MAX_VALUE, null); // sentinel (from == to ==
+    private static final Range end = new Range(Integer.MAX_VALUE, Integer.MAX_VALUE, null); // sentinel (from == to ==
                                                                                       // maxJint)
 
     static Range end() {

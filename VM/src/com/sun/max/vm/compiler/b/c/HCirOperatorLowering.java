@@ -795,21 +795,21 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
 
         final CirVariable callEntryPoint = variableFactory().createTemporary(Kind.WORD);
 
-        final CirVariable localSpace;
+        final CirVariable vmThreadLocals;
 
         CirCall call;
 
         if (!isCFunction) {
-            localSpace = variableFactory().createTemporary(Kind.WORD);
+            vmThreadLocals = variableFactory().createTemporary(Kind.WORD);
         } else {
             if (MaxineVM.isPrototyping()) {
                 if (!classMethodActor.getAnnotation(C_FUNCTION.class).isInterruptHandler()) {
-                    localSpace = variableFactory().createTemporary(Kind.WORD);
+                    vmThreadLocals = variableFactory().createTemporary(Kind.WORD);
                 } else {
-                    localSpace = null;
+                    vmThreadLocals = null;
                 }
             } else {
-                localSpace = variableFactory().createTemporary(Kind.WORD);
+                vmThreadLocals = variableFactory().createTemporary(Kind.WORD);
             }
         }
 
@@ -818,10 +818,10 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
         final CirCall ccBody = cc.body();
 
         if (!isCFunction) {
-            call = call(nativeCallEpilogue, localSpace, cont(ccBody), ce());
+            call = call(nativeCallEpilogue, vmThreadLocals, cont(ccBody), ce());
         } else {
-            if (localSpace != null) {
-                call = call(nativeCallEpilogueForC, localSpace, cont(ccBody), ce());
+            if (vmThreadLocals != null) {
+                call = call(nativeCallEpilogueForC, vmThreadLocals, cont(ccBody), ce());
             } else {
                 call = ccBody;
             }
@@ -831,15 +831,15 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
         call = call(callEntryPoint, arguments);
 
         if (!isCFunction) {
-            call = call(nativeCallPrologue, cont(localSpace, call), ce());
+            call = call(nativeCallPrologue, cont(vmThreadLocals, call), ce());
         } else {
             if (classMethodActor.isCFunction()) {
                 if (MaxineVM.isPrototyping()) {
                     if (!classMethodActor.getAnnotation(C_FUNCTION.class).isInterruptHandler()) {
-                        call = call(nativeCallPrologueForC, cont(localSpace, call), ce());
+                        call = call(nativeCallPrologueForC, cont(vmThreadLocals, call), ce());
                     }
                 } else {
-                    call = call(nativeCallPrologueForC, cont(localSpace, call), ce());
+                    call = call(nativeCallPrologueForC, cont(vmThreadLocals, call), ce());
                 }
             }
         }

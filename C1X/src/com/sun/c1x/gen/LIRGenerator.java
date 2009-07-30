@@ -41,9 +41,7 @@ import com.sun.c1x.value.BasicType;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.value.ValueType;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 /**
  * This class traverses the HIR instructions and generates LIR instructions from them.
@@ -53,6 +51,7 @@ import java.util.List;
  *
  */
 public abstract class LIRGenerator extends InstructionVisitor {
+    private static final BasicType[] BASIC_TYPES_OBJECT = {BasicType.Object};
 
     // the range of values in a lookupswitch or tableswitch statement
     private static final class SwitchRange {
@@ -229,16 +228,6 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
 
         final CiMethod method = compilation.method;
-        if (compilation.runtime.dtraceMethodProbes()) {
-            BasicType[] signature = new BasicType[] {BasicType.Int, // thread
-                            BasicType.Object}; // methodOop
-            List<LIROperand> arguments = new ArrayList<LIROperand>(2);
-            arguments.add(getThreadPointer());
-            LIROperand meth = newRegister(BasicType.Object);
-            lir.oop2reg(method, meth);
-            arguments.add(meth);
-            callRuntime(signature, arguments, CiRuntimeCall.DTraceMethodEntry, ValueType.VOID_TYPE, null);
-        }
 
         if (method.isSynchronized()) {
             LIROperand obj;
@@ -256,7 +245,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
                 LIROperand lock = newRegister(BasicType.Int);
                 lir.loadStackAddressMonitor(0, lock);
 
-                CodeEmitInfo info = new CodeEmitInfo(C1XCompilation.MethodCompilation.SynchronizationEntryBCI.value, compilation.hir().startBlock.state(), null);
+                CodeEmitInfo info = new CodeEmitInfo(Instruction.SYNCHRONIZATION_ENTRY_BCI, compilation.hir().startBlock.state(), null);
                 CodeStub slowPath = new MonitorEnterStub(obj, lock, info);
 
                 // receiver is guaranteed non-null so don't need CodeEmitInfo
@@ -273,14 +262,24 @@ public abstract class LIRGenerator extends InstructionVisitor {
     }
 
     @Override
+    public void visitResolveClass(ResolveClass i) {
+        assert i.state() != null;
+
+
+    }
+
+    @Override
     public void visitConstant(Constant x) {
-        if (x.state() != null) {
-            // XXX: in the future, no constants will require patching; there will be a ResolveClass instruction
-            // Any constant with a ValueStack requires patching so emit the patch here
-            LIROperand reg = rlockResult(x);
-            CodeEmitInfo info = stateFor(x, x.state());
-            lir.oop2regPatch(null, reg, info);
-        } else if (useCount(x) > 1 && !canInlineAsConstant(x)) {
+//        if (x.state() != null) {
+//            // XXX: in the future, no constants will require patching; there will be a ResolveClass instruction
+//            // Any constant with a ValueStack requires patching so emit the patch here
+//            LIROperand reg = rlockResult(x);
+//            CodeEmitInfo info = stateFor(x, x.state());
+//            lir.oop2regPatch(null, reg, info);
+//        } else
+
+
+        if (useCount(x) > 1 && !canInlineAsConstant(x)) {
             if (!x.isPinned()) {
                 // unpinned constants are handled specially so that they can be
                 // put into registers when they are used multiple times within a
@@ -334,12 +333,8 @@ public abstract class LIRGenerator extends InstructionVisitor {
             // need to free up storage used for OSR entry point
             LIROperand osrBuffer = currentBlock.next().operand();
             BasicType[] signature = new BasicType[] {BasicType.Int};
-            CallingConvention cc = compilation.frameMap().runtimeCallingConvention(signature);
-            lir.move(osrBuffer, cc.args().get(0));
-            lir.callRuntimeLeaf(CiRuntimeCall.OSRMigrationEnd, getThreadTemp(), LIROperandFactory.IllegalOperand, cc.args());
-        }
+            this.callRuntime(signature, Arrays.asList(osrBuffer), CiRuntimeCall.OSRMigrationEnd, ValueType.VOID_TYPE, null);
 
-        if (x.isSafepoint()) {
             ValueStack state = (x.stateBefore() != null) ? x.stateBefore() : x.state();
 
             // increment backedge counter if needed
@@ -404,8 +399,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
             case java_lang_System$currentTimeMillis: {
                 assert x.numberOfArguments() == 0 : "wrong type";
-                LIROperand reg = resultRegisterFor(x.type());
-                lir.callRuntimeLeaf(CiRuntimeCall.JavaTimeMillis, getThreadTemp(), reg, new ArrayList<LIROperand>(0));
+                LIROperand reg = callRuntime(null, null, CiRuntimeCall.JavaTimeMillis, x.type(), null);
                 LIROperand result = rlockResult(x);
                 lir.move(reg, result);
                 break;
@@ -413,8 +407,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
             case java_lang_System$nanoTime: {
                 assert x.numberOfArguments() == 0 : "wrong type";
-                LIROperand reg = resultRegisterFor(x.type());
-                lir.callRuntimeLeaf(CiRuntimeCall.JavaTimeNanos, getThreadTemp(), reg, new ArrayList<LIROperand>(0));
+                LIROperand reg = callRuntime(null, null, CiRuntimeCall.JavaTimeNanos, x.type(), null);
                 LIROperand result = rlockResult(x);
                 lir.move(reg, result);
                 break;
@@ -520,17 +513,6 @@ public abstract class LIRGenerator extends InstructionVisitor {
                 break;
         }
 
-        if (x.type().isFloat() || x.type().isDouble()) {
-            // Force rounding of results from non-strictfp when in strictfp
-            // scope (or when we don't know the strictness of the callee, to
-            // be safe.)
-            if (compilation.method.isStrictFP()) {
-                if (!x.target().isLoaded() || !x.target().isStrictFP()) {
-                    resultRegister = roundItem(resultRegister);
-                }
-            }
-        }
-
         if (resultRegister.isValid()) {
             LIROperand result = rlockResult(x);
             lir.move(resultRegister, result);
@@ -603,7 +585,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         boolean needsRangeCheck = true;
 
         if (useLength) {
-            needsRangeCheck = x.computeNeedsRangeCheck();
+            needsRangeCheck = x.needsRangeCheck();
             if (needsRangeCheck) {
                 length.setInstruction(x.length());
                 length.loadItem();
@@ -621,12 +603,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         CodeEmitInfo rangeCheckInfo = stateFor(x);
         CodeEmitInfo nullCheckInfo = null;
         if (x.needsNullCheck()) {
-            NullCheck nc = x.explicitNullCheck();
-            if (nc != null) {
-                nullCheckInfo = stateFor(nc);
-            } else {
-                nullCheckInfo = rangeCheckInfo;
-            }
+            nullCheckInfo = rangeCheckInfo;
         }
 
         // emit array address setup early so it schedules better
@@ -744,19 +721,8 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
     @Override
     public void visitRoundFP(RoundFP x) {
-        LIRItem input = new LIRItem(x.value(), this);
-        input.loadItem();
-        LIROperand inputOpr = input.result();
-        assert inputOpr.isRegister() : "why round if value is not in a register?";
-        assert inputOpr.isSingleFpu() || inputOpr.isDoubleFpu() : "input should be floating-point value";
-        if (inputOpr.isSingleFpu()) {
-            setResult(x, roundItem(inputOpr)); // This code path not currently taken
-        } else {
-            LIROperand result = newRegister(BasicType.Double);
-            setVregFlag(result, VregFlag.MustStartInMemory);
-            lir.roundfp(inputOpr, LIROperandFactory.IllegalOperand, result);
-            setResult(x, result);
-        }
+        // No longer necessary with SSE
+        throw Util.shouldNotReachHere();
     }
 
     @Override
@@ -1135,47 +1101,8 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
     }
 
-    private LIROperand callRuntimeWithItems(BasicType[] signature, List<LIRItem> args, CiRuntimeCall entry, ValueType resultType, CodeEmitInfo info) {
-        // get a result register
-        LIROperand physReg = LIROperandFactory.IllegalOperand;
-        LIROperand result = LIROperandFactory.IllegalOperand;
-        if (!resultType.isVoid()) {
-            result = newRegister(resultType.basicType);
-            physReg = resultRegisterFor(resultType);
-        }
-
-        // move the arguments into the correct location
-        CallingConvention cc = compilation.frameMap().runtimeCallingConvention(signature);
-
-        assert cc.length() == args.size() : "argument mismatch";
-        for (int i = 0; i < args.size(); i++) {
-            LIRItem arg = args.get(i);
-            LIROperand loc = cc.at(i);
-            if (loc.isRegister()) {
-                arg.loadItemForce(loc);
-            } else {
-                LIROperand addr = loc.asAddressPtr();
-                arg.loadForStore(addr.type());
-                if (addr.type() == BasicType.Long || addr.type() == BasicType.Double) {
-                    lir.unalignedMove(arg.result(), addr);
-                } else {
-                    lir.move(arg.result(), addr);
-                }
-            }
-        }
-
-        if (info != null) {
-            lir.callRuntime(entry, getThreadTemp(), physReg, cc.args(), info);
-        } else {
-            lir.callRuntimeLeaf(entry, getThreadTemp(), physReg, cc.args());
-        }
-        if (result.isValid()) {
-            lir.move(physReg, result);
-        }
-        return result;
-    }
-
     LIROperand forceToSpill(LIROperand value, BasicType t) {
+        assert value.isValid() : "value should not be illegal";
         assert t.size == value.type().size : "size mismatch";
         if (!value.isRegister()) {
             // force into a register
@@ -1294,20 +1221,6 @@ public abstract class LIRGenerator extends InstructionVisitor {
         return reg;
     }
 
-    protected LIROperand roundItem(LIROperand opr) {
-        assert opr.isRegister() : "why spill if item is not register?";
-
-        if (C1XOptions.RoundFPResults && C1XOptions.SSEVersion < 1 && opr.isSingleFpu()) {
-            LIROperand result = newRegister(BasicType.Float);
-            setVregFlag(result, VregFlag.MustStartInMemory);
-            assert opr.isRegister() : "only a register can be spilled";
-            assert opr.basicType == BasicType.Float : "rounding only for floats available";
-            lir.roundfp(opr, LIROperandFactory.IllegalOperand, result);
-            return result;
-        }
-        return opr;
-    }
-
     private void visitCurrentThread(Intrinsic x) {
         assert x.numberOfArguments() == 0 : "wrong type";
         LIROperand reg = rlockResult(x);
@@ -1372,11 +1285,10 @@ public abstract class LIRGenerator extends InstructionVisitor {
         LIRItem receiver = new LIRItem(x.argumentAt(0), this);
 
         receiver.loadItem();
-        BasicType[] signature = new BasicType[] {BasicType.Object};
         List<LIROperand> args = new ArrayList<LIROperand>();
         args.add(receiver.result());
         CodeEmitInfo info = stateFor(x, x.state());
-        callRuntime(signature, args, CiRuntimeCall.RegisterFinalizer, ValueType.VOID_TYPE, info);
+        callRuntime(BASIC_TYPES_OBJECT, args, CiRuntimeCall.RegisterFinalizer, ValueType.VOID_TYPE, info);
 
         setNoResult(x);
     }
@@ -1428,7 +1340,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
     }
 
-    protected void arithmeticOpFpu(int code, LIROperand result, LIROperand left, LIROperand right, boolean isStrictfp, LIROperand tmp) {
+    protected void arithmeticOpFpu(int code, LIROperand result, LIROperand left, LIROperand right, LIROperand tmp) {
         LIROperand resultOp = result;
         LIROperand leftOp = left;
         LIROperand rightOp = right;
@@ -1452,13 +1364,8 @@ public abstract class LIRGenerator extends InstructionVisitor {
                 break;
 
             case Bytecodes.DMUL:
-                if (isStrictfp) {
-                    lir.mulStrictfp(leftOp, rightOp, resultOp, tmp);
-                    break;
-                } else {
-                    lir.mul(leftOp, rightOp, resultOp);
-                    break;
-                }
+                lir.mul(leftOp, rightOp, resultOp);
+                break;
 
             case Bytecodes.IMUL:
                 boolean didStrengthReduce = false;
@@ -1491,17 +1398,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             // ldiv and lrem are implemented with a direct runtime call
 
             case Bytecodes.DDIV:
-                if (isStrictfp) {
-                    lir.divStrictfp(leftOp, rightOp, resultOp, tmp);
-                    break;
-                } else {
-                    lir.div(leftOp, rightOp, resultOp, null);
-                    break;
-                }
-
-            case Bytecodes.DREM:
-            case Bytecodes.FREM:
-                lir.rem(leftOp, rightOp, resultOp, null);
+                lir.div(leftOp, rightOp, resultOp, null);
                 break;
 
             default:
@@ -1533,13 +1430,8 @@ public abstract class LIRGenerator extends InstructionVisitor {
                 break;
 
             case Bytecodes.DMUL:
-                if (false) {
-                    lir.mulStrictfp(leftOp, rightOp, resultOp, tmp);
-                    break;
-                } else {
-                    lir.mul(leftOp, rightOp, resultOp);
-                    break;
-                }
+                lir.mul(leftOp, rightOp, resultOp);
+                break;
 
             case Bytecodes.IMUL:
                 boolean didStrengthReduce = false;
@@ -1572,18 +1464,8 @@ public abstract class LIRGenerator extends InstructionVisitor {
             // ldiv and lrem are implemented with a direct runtime call
 
             case Bytecodes.DDIV:
-                if (false) {
-                    lir.divStrictfp(leftOp, rightOp, resultOp, tmp);
-                    break;
-                } else {
                     lir.div(leftOp, rightOp, resultOp, null);
                     break;
-                }
-
-            case Bytecodes.DREM:
-            case Bytecodes.FREM:
-                lir.rem(leftOp, rightOp, resultOp, null);
-                break;
 
             default:
                 Util.shouldNotReachHere();
@@ -1615,13 +1497,8 @@ public abstract class LIRGenerator extends InstructionVisitor {
                 break;
 
             case Bytecodes.DMUL:
-                if (false) {
-                    lir.mulStrictfp(leftOp, rightOp, resultOp, tmpOp);
-                    break;
-                } else {
-                    lir.mul(leftOp, rightOp, resultOp);
-                    break;
-                }
+                lir.mul(leftOp, rightOp, resultOp);
+                break;
 
             case Bytecodes.IMUL:
                 boolean didStrengthReduce = false;
@@ -1654,13 +1531,8 @@ public abstract class LIRGenerator extends InstructionVisitor {
             // ldiv and lrem are implemented with a direct runtime call
 
             case Bytecodes.DDIV:
-                if (false) {
-                    lir.divStrictfp(leftOp, rightOp, resultOp, tmpOp);
-                    break;
-                } else {
-                    lir.div(leftOp, rightOp, resultOp, null);
-                    break;
-                }
+                lir.div(leftOp, rightOp, resultOp, null);
+                break;
 
             case Bytecodes.DREM:
             case Bytecodes.FREM:
@@ -1791,7 +1663,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
     }
 
-    LIROperand callRuntime(BasicType[] signature, List<LIROperand> args, CiRuntimeCall l, ValueType resultType, CodeEmitInfo info) {
+    protected final LIROperand callRuntime(BasicType[] signature, List<LIROperand> args, CiRuntimeCall l, ValueType resultType, CodeEmitInfo info) {
         // get a result register
         LIROperand physReg = LIROperandFactory.IllegalOperand;
         LIROperand result = LIROperandFactory.IllegalOperand;
@@ -1800,50 +1672,36 @@ public abstract class LIRGenerator extends InstructionVisitor {
             physReg = resultRegisterFor(resultType);
         }
 
-        // move the arguments into the correct location
-        CallingConvention cc = compilation.frameMap().runtimeCallingConvention(signature);
-        assert cc.length() == args.size() : "argument mismatch";
-        for (int i = 0; i < args.size(); i++) {
-            LIROperand arg = args.get(i);
-            LIROperand loc = cc.at(i);
-            if (loc.isRegister()) {
-                lir.move(arg, loc);
-            } else {
-                LIROperand addr = loc.asAddressPtr();
-                if (addr.type() == BasicType.Long || addr.type() == BasicType.Double) {
-                    lir.unalignedMove(arg, addr);
+        List<LIROperand> argumentList = new ArrayList<LIROperand>();
+        if (signature != null) {
+            // move the arguments into the correct location
+            CallingConvention cc = compilation.frameMap().runtimeCallingConvention(signature);
+            assert cc.length() == args.size() : "argument mismatch";
+            for (int i = 0; i < args.size(); i++) {
+                LIROperand arg = args.get(i);
+                LIROperand loc = cc.at(i);
+                if (loc.isRegister()) {
+                    lir.move(arg, loc);
                 } else {
-                    lir.move(arg, addr);
+                    LIROperand addr = loc.asAddressPtr();
+                    if (addr.type() == BasicType.Long || addr.type() == BasicType.Double) {
+                        lir.unalignedMove(arg, addr);
+                    } else {
+                        lir.move(arg, addr);
+                    }
                 }
             }
+            argumentList.addAll(cc.args());
+        } else {
+            assert args == null;
         }
 
-        if (info != null) {
-            lir.callRuntime(l, getThreadTemp(), physReg, cc.args(), info);
-        } else {
-            lir.callRuntimeLeaf(l, getThreadTemp(), physReg, cc.args());
-        }
+        lir.callRuntime(l, getThreadTemp(), physReg, argumentList, info);
+
         if (result.isValid()) {
             lir.move(physReg, result);
         }
         return result;
-    }
-
-    LIROperand callRuntime(Instruction arg1, CiRuntimeCall entry, ValueType resultType, CodeEmitInfo info) {
-        List<LIRItem> args = new ArrayList<LIRItem>(1);
-        args.add(new LIRItem(arg1, this));
-        BasicType[] signature = new BasicType[] {arg1.type().basicType};
-        return callRuntimeWithItems(signature, args, entry, resultType, info);
-    }
-
-    LIROperand callRuntime(Instruction arg1, Instruction arg2, CiRuntimeCall entry, ValueType resultType, CodeEmitInfo info) {
-
-        List<LIRItem> args = new ArrayList<LIRItem>();
-        args.add(new LIRItem(arg1, this));
-        args.add(new LIRItem(arg2, this));
-
-        BasicType[] signature = new BasicType[] {arg1.type().basicType, arg2.type().basicType};
-        return callRuntimeWithItems(signature, args, entry, resultType, info);
     }
 
     SwitchRange[] createLookupRanges(LookupSwitch x) {
@@ -1945,6 +1803,11 @@ public abstract class LIRGenerator extends InstructionVisitor {
     }
 
     void init() {
+
+        for (BlockBegin begin : ir.linearScanOrder()) {
+            begin.end().state().pinStackForLinearScan();
+        }
+
         UseCountComputer useCountComputer = new UseCountComputer(useCounts);
         for (BlockBegin begin : ir.linearScanOrder()) {
             useCountComputer.visitBlock(begin);
@@ -2201,7 +2064,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             CiMethod method = scope.method;
 
             BitMap liveness = method.liveness(bci);
-            if (bci == C1XCompilation.MethodCompilation.SynchronizationEntryBCI.value) {
+            if (bci == Instruction.SYNCHRONIZATION_ENTRY_BCI) {
                 if (x instanceof ExceptionObject || x instanceof Throw) {
                     // all locals are dead on exit from the synthetic unlocker
                     liveness.clearAll();

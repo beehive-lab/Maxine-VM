@@ -18,6 +18,8 @@ Maxine.ipr
 Maxine.iws
 maxine-tester
 test-logs.zip
+*~
+output.cfg
 
 # switch to regexp syntax
 syntax: regexp

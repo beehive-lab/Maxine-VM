@@ -109,8 +109,6 @@ public abstract class Builtin extends IrRoutine implements Comparable<Builtin>, 
 
     /**
      * Assigning the serial numbers alphabetically and thus deterministically facilitates matching builtins between VM and Inspector.
-     *
-     * @see InspectorTransfer
      */
     @PROTOTYPE_ONLY
     public static void initialize() {

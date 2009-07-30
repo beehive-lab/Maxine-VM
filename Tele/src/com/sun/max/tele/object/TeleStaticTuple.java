@@ -36,17 +36,10 @@ public class TeleStaticTuple extends TeleTupleObject {
     @Override
     public Set<FieldActor> getFieldActors() {
         final Set<FieldActor> staticFieldActors = new HashSet<FieldActor>();
-        collectStaticFieldActors(classActorForType(), staticFieldActors);
-        return staticFieldActors;
-    }
-
-    private void collectStaticFieldActors(ClassActor classActor, Set<FieldActor> staticFieldActors) {
-        if (classActor != null) {
-            for (FieldActor fieldActor : classActor.localStaticFieldActors()) {
-                staticFieldActors.add(fieldActor);
-            }
-            collectStaticFieldActors(classActor.superClassActor, staticFieldActors);
+        for (FieldActor fieldActor : classActorForType().localStaticFieldActors()) {
+            staticFieldActors.add(fieldActor);
         }
+        return staticFieldActors;
     }
 
     @Override

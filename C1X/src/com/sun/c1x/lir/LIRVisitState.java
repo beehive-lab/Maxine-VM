@@ -38,7 +38,7 @@ import java.util.List;
 public class LIRVisitState {
 
     public enum OperandMode {
-        InputMode, TempMode, OutputMode;
+        InputMode, TempMode, OutputMode
     }
 
     public static final int MAXNUMBEROFOPERANDS = 14;
@@ -135,10 +135,6 @@ public class LIRVisitState {
             case WordAlign: // result and info always invalid
             case BackwardBranchTarget: // result and info always invalid
             case BuildFrame: // result and info always invalid
-            case FpopRaw: // result and info always invalid
-            case Op24bitFPU: // result and info always invalid
-            case ResetFPU: // result and info always invalid
-            case Breakpoint: // result and info always invalid
             case Membar: // result and info always invalid
             case MembarAcquire: // result and info always invalid
             case MembarRelease: // result and info always invalid
@@ -172,9 +168,6 @@ public class LIRVisitState {
             }
 
                 // LIROp1
-            case Fxch: // input always valid, result and info always invalid
-            case Fld: // input always valid, result and info always invalid
-            case Ffree: // input always valid, result and info always invalid
             case Push: // input always valid, result and info always invalid
             case Pop: // input always valid, result and info always invalid
             case Return: // input always valid, result and info always invalid
@@ -226,7 +219,6 @@ public class LIRVisitState {
                 if (opConvert.result.isValid()) {
                     doOutput(opConvert.result);
                 }
-                doStub(opConvert.stub);
 
                 break;
             }
@@ -274,18 +266,6 @@ public class LIRVisitState {
                     doOutput(opAllocObj.result);
                 }
                 doStub(opAllocObj.stub);
-                break;
-            }
-
-                // LIROpRoundFP;
-            case Roundfp: {
-                LIRRoundFP opRoundFP = (LIRRoundFP) op;
-
-                assert op.info == null : "info not used by this instruction";
-                assert opRoundFP.tmp.isIllegal() : "not used";
-                doInput(opRoundFP.opr);
-                doOutput(opRoundFP.result);
-
                 break;
             }
 
@@ -341,30 +321,6 @@ public class LIRVisitState {
                 doInput(op2.opr1);
                 doInput(op2.opr2);
                 doTemp(op2.opr2);
-                doOutput(op2.result);
-
-                break;
-            }
-
-                // vspecial handling for strict operations: register input operands
-                // as temp to guarantee that they do not overlap with other
-                // registers
-            case MulStrictFp:
-            case DivStrictFp: {
-                LIROp2 op2 = (LIROp2) op;
-
-                assert op2.info == null : "not used";
-                assert op2.opr1.isValid() : "used";
-                assert op2.opr2.isValid() : "used";
-                assert op2.result.isValid() : "used";
-
-                doInput(op2.opr1);
-                doTemp(op2.opr1);
-                doInput(op2.opr2);
-                doTemp(op2.opr2);
-                if (op2.tmp.isValid()) {
-                    doTemp(op2.tmp);
-                }
                 doOutput(op2.result);
 
                 break;

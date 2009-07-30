@@ -24,7 +24,6 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.max.asm.*;
-import com.sun.max.asm.dis.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.*;
 import com.sun.max.collect.*;
@@ -35,8 +34,7 @@ import com.sun.max.program.*;
 /**
  * @author Bernd Mathiske
  */
-public abstract class SPARCAssemblyTester<DisassembledInstruction_Type extends DisassembledInstruction<SPARCTemplate>>
-                          extends RiscAssemblyTester<SPARCTemplate, DisassembledInstruction_Type> {
+public abstract class SPARCAssemblyTester extends RiscAssemblyTester<RiscTemplate> {
 
     public SPARCAssemblyTester(SPARCAssembly assembly, WordWidth addressWidth, EnumSet<AssemblyTestComponent> components) {
         super(assembly, addressWidth, components);
@@ -52,10 +50,10 @@ public abstract class SPARCAssemblyTester<DisassembledInstruction_Type extends D
         return "as -xarch=v9a";
     }
 
-    private SPARCTemplate lastTemplate;
+    private RiscTemplate lastTemplate;
 
     @Override
-    protected void assembleExternally(IndentWriter writer, SPARCTemplate template, Sequence<Argument> argumentList, String label) {
+    protected void assembleExternally(IndentWriter writer, RiscTemplate template, Sequence<Argument> argumentList, String label) {
 
         // This is a workaround for SPARC V9 ABI compliance checks: http://developers.sun.com/solaris/articles/sparcv9abi.html
         if (lastTemplate == null || template != lastTemplate) {
@@ -65,7 +63,7 @@ public abstract class SPARCAssemblyTester<DisassembledInstruction_Type extends D
             writer.println(".register %g7,#scratch");
             lastTemplate = template;
         }
-        final SPARCExternalInstruction instruction = new SPARCExternalInstruction(template, argumentList);
+        final RiscExternalInstruction instruction = new RiscExternalInstruction(template, argumentList);
         writer.println(instruction.toString());
         writer.println("nop"); // fill potential DCTI slot with something - see below
     }
@@ -77,7 +75,7 @@ public abstract class SPARCAssemblyTester<DisassembledInstruction_Type extends D
     }
 
     @Override
-    protected byte[] readExternalInstruction(PushbackInputStream externalInputStream, SPARCTemplate template, byte[] internalBytes) throws IOException {
+    protected byte[] readExternalInstruction(PushbackInputStream externalInputStream, RiscTemplate template, byte[] internalBytes) throws IOException {
         final byte[] result = super.readExternalInstruction(externalInputStream, template, internalBytes);
         if (!readNop(externalInputStream)) { // read potential DCTI slot place holder contents - see above
             ProgramError.unexpected("nop missing after external instruction");

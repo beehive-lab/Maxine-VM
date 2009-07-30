@@ -18,6 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+/*VCSID=e74ecb84-ca6a-4129-a3b6-b9f3408cec81*/
 package com.sun.max.tele.value;
 
 import com.sun.max.lang.*;
@@ -152,12 +153,12 @@ public final class TeleReferenceValue extends ReferenceValue {
 
     @Override
     public WordWidth signedEffectiveWidth() {
-        return Word.width(); // TODO
+        return Word.widthValue();
     }
 
     @Override
     public WordWidth unsignedEffectiveWidth() {
-        return Word.width(); // TODO
+        return Word.widthValue();
     }
 
     @Override

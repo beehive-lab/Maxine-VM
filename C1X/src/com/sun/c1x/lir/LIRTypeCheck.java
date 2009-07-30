@@ -53,9 +53,9 @@ public class LIRTypeCheck extends LIRInstruction {
     /**
      * Constructs a new TypeCheck instruction.
      *
-     * @param object
+     * @param opcode
      * @param result
-     * @param array
+     * @param object
      * @param tmp1
      * @param tmp2
      * @param tmp3
@@ -66,8 +66,8 @@ public class LIRTypeCheck extends LIRInstruction {
      * @param profiledMethod
      * @param profiledBci
      */
-    public LIRTypeCheck(LIROpcode opcode, LIROperand result, LIROperand object, CiType klass, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, boolean fastCheck, CodeEmitInfo infoForPatch,
-                        CodeEmitInfo infoForException, CodeStub stub, CiMethod profiledMethod, int profiledBci) {
+    public LIRTypeCheck(LIROpcode opcode, LIROperand result, LIROperand object, CiType klass, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, boolean fastCheck, CodeEmitInfo infoForException,
+                        CodeEmitInfo infoForPatch, CodeStub stub, CiMethod profiledMethod, int profiledBci) {
         super(opcode, result, null);
         this.object = object;
         this.array = LIROperandFactory.IllegalOperand;
@@ -83,7 +83,7 @@ public class LIRTypeCheck extends LIRInstruction {
         this.profiledBci = profiledBci;
 
         if (opcode == LIROpcode.CheckCast) {
-            assert this.infoForException != null : "infoForExeception must not be null. CheckCast throws exceptions.";
+            assert this.infoForException != null : "infoForException must not be null. CheckCast throws exceptions.";
         } else if (opcode == LIROpcode.InstanceOf) {
             assert this.infoForException == null : "infoForExeception must be null. Instanceof throws no exceptions.";
         } else {
@@ -94,20 +94,18 @@ public class LIRTypeCheck extends LIRInstruction {
     /**
      * Constructs a new TypeCheck instruction.
      *
+     * @param opcode
      * @param object
      * @param array
-     * @param klass
      * @param tmp1
      * @param tmp2
      * @param tmp3
-     * @param fastCheck
-     * @param infoForPatch
      * @param infoForException
-     * @param stub
      * @param profiledMethod
      * @param profiledBci
      */
-    public LIRTypeCheck(LIROpcode opcode, LIROperand object, LIROperand array, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3,
+    public LIRTypeCheck(LIROpcode opcode, LIROperand object, LIROperand array,
+                        LIROperand tmp1, LIROperand tmp2, LIROperand tmp3,
                         CodeEmitInfo infoForException, CiMethod profiledMethod, int profiledBci) {
         super(opcode, LIROperandFactory.IllegalOperand, null);
         this.object = object;

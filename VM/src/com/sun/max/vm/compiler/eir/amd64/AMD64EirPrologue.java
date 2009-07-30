@@ -75,8 +75,8 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
         final AMD64GeneralRegister64 latchRegister = AMD64Safepoint.LATCH_REGISTER;
         final AMD64GeneralRegister64 scratchRegister = AMD64GeneralRegister64.R11;
         // expand the frame size for this method to allow for the saved register state
-        final int frameSize = originalFrameSize + AMD64Safepoint.TRAP_STATE_SIZE_WITHOUT_RIP;
-        final int endOfFrame = originalFrameSize + AMD64Safepoint.TRAP_STATE_SIZE_WITH_RIP;
+        final int frameSize = originalFrameSize + AMD64TrapStateAccess.TRAP_STATE_SIZE_WITHOUT_RIP;
+        final int endOfFrame = originalFrameSize + AMD64TrapStateAccess.TRAP_STATE_SIZE_WITH_RIP;
         eirMethod.setFrameSize(frameSize);
 
         // the very first instruction must save the flags.
@@ -113,9 +113,9 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
 
         // save the trap number
         asm.mov(scratchRegister, VmThreadLocal.TRAP_NUMBER.offset, latchRegister.indirect());
-        asm.mov(originalFrameSize + AMD64Safepoint.TRAP_NUMBER_OFFSET, framePointer.indirect(), scratchRegister);
+        asm.mov(originalFrameSize + AMD64TrapStateAccess.TRAP_NUMBER_OFFSET, framePointer.indirect(), scratchRegister);
 
-        // now load the trap parameter information into registers from the vm thread locals
+        // now load the trap parameter information into registers from the VM thread locals
         final TargetABI targetABI = VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI();
         final IndexedSequence parameterRegisters = targetABI.integerIncomingParameterRegisters();
         // load the trap number into the first parameter register

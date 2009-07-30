@@ -34,8 +34,8 @@ public class RelocatableWatchpointTest1 {
     private static final int allocations = 10000000;
     private static final int allocationSize = 20;
 
-    public static String getMessage() {
-        return new String("allocationTest");
+    public static String getMessage(String msg) {
+        return new String(msg);
     }
 
     public static String getGarbageMessage() {
@@ -47,18 +47,20 @@ public class RelocatableWatchpointTest1 {
     }
 
     public static void relocationTest() {
-        String test = getMessage();
-        printMessage(test);
+        String test = getMessage("test1");
+        String test1 = getGarbageMessage();
         for (int i = 0; i < allocations; i++) {
             final byte[] tmp = new byte[allocationSize];
             tmp[0] = 1;
         }
         printMessage(test);
+        printMessage(test1);
         for (int i = 0; i < allocations; i++) {
             final byte[] tmp = new byte[allocationSize];
             tmp[0] = 1;
         }
         printMessage(test);
+        printMessage(test1);
     }
 
     public static void main(String[] args) {

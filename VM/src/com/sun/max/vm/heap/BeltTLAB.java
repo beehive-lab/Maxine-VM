@@ -33,7 +33,7 @@ import com.sun.max.vm.heap.beltway.*;
  *
  * @author Christos Kotselidis
  */
-public class TLAB extends RuntimeMemoryRegion implements Allocator {
+public class BeltTLAB extends RuntimeMemoryRegion {
 
     private Address endAllocationMark;
     private Address previousAllocationMark;
@@ -46,18 +46,7 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
     // It is also used for synchronization when accessing the linked list
     private final AtomicWord scavenged = new AtomicWord();
 
-    public TLAB() {
-        mark.set(start());
-    }
-
-    public TLAB(Address start, Size size) {
-        super(start, size);
-        mark.set(start());
-
-    }
-
-    public TLAB(Size size) {
-        super(size);
+    public BeltTLAB() {
         mark.set(start());
         setDescription("TLAB");
     }

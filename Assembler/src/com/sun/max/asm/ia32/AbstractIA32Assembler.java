@@ -21,7 +21,6 @@
 package com.sun.max.asm.ia32;
 
 import com.sun.max.asm.*;
-import com.sun.max.asm.AssemblyObject.*;
 import com.sun.max.lang.*;
 
 /**
@@ -70,24 +69,5 @@ public abstract class AbstractIA32Assembler extends LittleEndianAssembler implem
 
     public int address(Label label) throws AssemblyException {
         return address32(label);
-    }
-
-    private IA32Directives directives = new IA32Directives();
-
-    @Override
-    public Directives directives() {
-        return directives;
-    }
-
-    public class IA32Directives extends Directives {
-        @Override
-        public byte padByte() {
-            return (byte) 0x90; // NOP
-        }
-
-        @Override
-        protected Type padByteType() {
-            return Type.CODE;
-        }
     }
 }

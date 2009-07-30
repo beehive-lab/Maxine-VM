@@ -24,13 +24,14 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 
 /**
  * @author Christos Kotselidis
  */
-public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
+public class Belt extends RuntimeMemoryRegion {
 
     /**
      * The relative order of a belt. Always starts from Zero (0). The lower the value, the older
@@ -117,14 +118,8 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
     @NO_SAFEPOINTS("TODO")
     @INLINE
     public final Pointer allocate(Size size) {
-        Pointer cell;
         final Pointer oldAllocationMark = mark();
-
-        if (MaxineVM.isDebug()) {
-            cell = oldAllocationMark.plusWords(1);
-        } else {
-            cell = oldAllocationMark;
-        }
+        final Pointer cell = DebugHeap.adjustForDebugTag(oldAllocationMark);
         final Pointer end = cell.plus(size);
 
         if (!checkObjectInBelt(size)) {
@@ -146,11 +141,10 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
     public final Pointer bumpAllocate(Size size) {
         Pointer cell;
         final Pointer oldAllocationMark = mark();
+        cell = oldAllocationMark;
 
         if (MaxineVM.isDebug()) {
-            cell = oldAllocationMark.plusWords(1);
-        } else {
-            cell = oldAllocationMark;
+            cell = cell.plusWords(1);
         }
         final Pointer end = cell.plus(size);
 
@@ -354,8 +348,19 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
 
     }
 
-    @INLINE
-    public final void visitCells(Visitor cellVisitor, Action action, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        BeltwayCellVisitorImpl.linearVisitAllCells((BeltWayCellVisitor) cellVisitor, action, this, from, to);
+    /**
+     * Evacuate objects of the specified belt reachable from objects of this belt into this belt using the specified copied action and cell visitor.
+     * This method is not multi-thread safe and cannot be used for parallel evacuation.
+     *
+     * @param cellVisitor visits objects of this belt to find references to evacuation candidates
+     * @param action the copy action used to evacuate objects into this belt
+     * @param from the belt that contains the objects that will be evacuated into this belt.
+     */
+    public final void evacuate(BeltCellVisitor cellVisitor, Belt from) {
+        Pointer cell = start().asPointer();
+        while (cell.lessThan(getAllocationMark())) {
+            cell = DebugHeap.checkDebugCellTag(from.start(), cell);
+            cell = cellVisitor.visitCell(cell);
+        }
     }
 }

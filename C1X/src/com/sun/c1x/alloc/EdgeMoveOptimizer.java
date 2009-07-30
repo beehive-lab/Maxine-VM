@@ -113,19 +113,6 @@ public final class EdgeMoveOptimizer {
                 return false;
             }
 
-        } else if (op1.code() == LIROpcode.Fxch && op2.code() == LIROpcode.Fxch) {
-            assert op1 instanceof LIROp1 : "fxch must be LIROp1";
-            assert op2 instanceof LIROp1 : "fxch must be LIROp1";
-            LIROp1 fxch1 = (LIROp1) op1;
-            LIROp1 fxch2 = (LIROp1) op2;
-            if (fxch1.inOpr().asInt() == fxch2.inOpr().asInt()) {
-                // equal FPU stack operations can be optimized
-                return false;
-            }
-
-        } else if (op1.code() == LIROpcode.FpopRaw && op2.code() == LIROpcode.FpopRaw) {
-            // equal FPU stack operations can be optimized
-            return false;
         }
 
         // no optimization possible

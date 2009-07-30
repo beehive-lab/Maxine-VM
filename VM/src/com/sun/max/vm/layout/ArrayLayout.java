@@ -31,6 +31,13 @@ public interface ArrayLayout<Value_Type extends Value<Value_Type>> extends Array
 
     Kind<Value_Type> elementKind();
 
+    /**
+     * Gets the size of the cell required to hold an array of a given length described by this layout object.
+     * The return value accounts for the object header size as well as any padding at the end of the cell
+     * to ensure that the cell size is word aligned.
+     *
+     * @param length the length of an array
+     */
     Size getArraySize(int length);
 
     Offset getElementOffsetFromOrigin(int index);

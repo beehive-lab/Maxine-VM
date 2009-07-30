@@ -18,46 +18,24 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.stub;
+package test.optimize;
 
-import com.sun.c1x.lir.*;
-
-
-/**
- * The <code>ConversionStub</code> class definition.
- *
- * @author Marcelo Cintra
- *
+/*
+ * Test case for null check elimination.
+ * @Harness: java
+ * @Runs: 0=45
  */
-public class ConversionStub extends CodeStub {
+public class NCE_01 {
 
-    public final int bytecode;
-    public final LIROperand input;
-    public final LIROperand result;
+    public static NCE_01 object = new NCE_01();
 
-    /**
-     * Constructs a new conversion stub.
-     *
-     * @param opcode
-     * @param input
-     * @param result
-     */
-    public ConversionStub(int opcode, LIROperand input, LIROperand result) {
-        super(null);
-        this.bytecode = opcode;
-        this.input = input;
-        this.result = result;
-    }
+    int field1 = 22;
+    int field2 = 23;
 
-    @Override
-    public void accept(CodeStubVisitor visitor) {
-        visitor.visitConversionStub(this);
-    }
-
-    @Override
-    public void visit(LIRVisitState visitor) {
-        visitor.doSlowCase();
-        visitor.doInput(input);
-        visitor.doOutput(result);
+    public static int test(int arg) {
+        NCE_01 o = object;
+        int i = o.field1;
+        // expected null check elimination here
+        return o.field2 + i;
     }
 }

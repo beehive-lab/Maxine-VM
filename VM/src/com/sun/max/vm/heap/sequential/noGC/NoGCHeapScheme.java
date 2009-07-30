@@ -47,24 +47,6 @@ import com.sun.max.vm.type.*;
  */
 public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapScheme {
 
-    private static final class NoGCHeapMemoryRegion extends RuntimeMemoryRegion {
-
-        /**
-         * @param title how the region should identify itself for debugging purposes
-         */
-        public NoGCHeapMemoryRegion(String title) {
-            super(Size.zero(), Size.zero());
-            setDescription(title);
-        }
-
-        /**
-         * @param address sets an inspected field that can be used for debugging.
-         */
-        void setAllocationMark(Address address) {
-            mark.set(address);
-        }
-    }
-
     public boolean isGcThread(Thread thread) {
         return thread instanceof StopTheWorldGCDaemon;
     }
@@ -173,7 +155,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
 
     private StopTheWorldGCDaemon collectorThread;
 
-    private NoGCHeapMemoryRegion space = new NoGCHeapMemoryRegion("Heap-NoGC");
+    private RuntimeMemoryRegion space = new RuntimeMemoryRegion("Heap-NoGC");
     private Address top;
     private final AtomicWord allocationMark = new AtomicWord();
 
@@ -195,9 +177,9 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
             // From now on we can allocate
 
             // For debugging
-            space.setAllocationMark(allocationMark());
+            space.mark.set(allocationMark());
 
-            InspectableHeapInfo.registerMemoryRegions(space);
+            InspectableHeapInfo.init(space);
         } else if (phase == MaxineVM.Phase.STARTING) {
             collectorThread = new StopTheWorldGCDaemon("GC", collect);
             collectorThread.start();
@@ -259,7 +241,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
             return fail();
         }
         // For debugging
-        space.setAllocationMark(end);
+        space.mark.set(end);
         return cell;
     }
 
@@ -329,7 +311,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
         }
     }
 
-    private final class PointerIndexGripVerifier extends PointerIndexVisitor {
+    private final class PointerIndexGripVerifier implements PointerIndexVisitor {
         @Override
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
             DebugHeap.verifyGripAtIndex(pointer, wordIndex * Kind.REFERENCE.width.numberOfBytes, pointer.getGrip(wordIndex), space, null);

@@ -26,9 +26,9 @@ import static com.sun.max.asm.amd64.AMD64GeneralRegister64.*;
 import static com.sun.max.asm.amd64.AMD64GeneralRegister8.*;
 import static com.sun.max.asm.gen.cisc.x86.AddressingMethodCode.*;
 import static com.sun.max.asm.gen.cisc.x86.FloatingPointOperandCode.*;
+import static com.sun.max.asm.gen.cisc.x86.ModRMGroup.Opcode.*;
 import static com.sun.max.asm.gen.cisc.x86.OperandCode.*;
 import static com.sun.max.asm.gen.cisc.x86.OperandTypeCode.*;
-import static com.sun.max.asm.gen.cisc.x86.ModRMGroup.Opcode.*;
 
 import com.sun.max.asm.amd64.*;
 import com.sun.max.asm.gen.*;

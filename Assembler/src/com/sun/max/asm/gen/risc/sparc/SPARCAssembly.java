@@ -30,13 +30,13 @@ import com.sun.max.collect.*;
  * @author Dave Ungar
  * @author Adam Spitz
  */
-public final class SPARCAssembly extends RiscAssembly<SPARCTemplate> {
+public final class SPARCAssembly extends RiscAssembly {
 
     private static final boolean GENERATING_DEPRECATED_INSTRUCTIONS = true;
     private static final boolean GENERATING_V9_INSTRUCTIONS = true;
 
     private SPARCAssembly() {
-        super(InstructionSet.SPARC, SPARCTemplate.class);
+        super(InstructionSet.SPARC, RiscTemplate.class);
     }
 
     public boolean generatingDeprecatedInstructions() {
@@ -53,8 +53,8 @@ public final class SPARCAssembly extends RiscAssembly<SPARCTemplate> {
     }
 
     @Override
-    protected Sequence<SPARCTemplate> createTemplates() {
-        final SPARCTemplateCreator creator = new SPARCTemplateCreator();
+    protected Sequence<RiscTemplate> createTemplates() {
+        final RiscTemplateCreator creator = new RiscTemplateCreator();
         creator.createTemplates(new MemoryAccess(creator));
         creator.createTemplates(new MemorySynchronization(creator));
         creator.createTemplates(new IntegerArithmetic(creator));
