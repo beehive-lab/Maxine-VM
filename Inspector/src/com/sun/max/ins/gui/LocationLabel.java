@@ -36,14 +36,14 @@ import com.sun.max.unsafe.*;
 public abstract class LocationLabel extends InspectorLabel {
 
     protected int value;
-    protected Address base;
+    protected Address origin;
     private MaxVMState lastRefreshedState = null;
 
     /**
      * @return a menu containing actions suitable for a generic memory location.
      */
     protected InspectorMenu createLocationMenu() {
-        final Address address = base.plus(value);
+        final Address address = origin.plus(value);
         final InspectorMenu menu = new InspectorMenu();
         menu.add(inspection().actions().copyWord(address, null));
         menu.add(inspection().actions().inspectMemory(address, null));
@@ -77,17 +77,17 @@ public abstract class LocationLabel extends InspectorLabel {
      * @return string displaying the location as a hex address in the standard format.
      */
     protected final String addressText() {
-        if (base == null) {
+        if (origin == null) {
             return "";
         }
-        return "Address:  0x" + base.plus(value).toHexString();
+        return "Address:  0x" + origin.plus(value).toHexString();
     }
 
-    protected LocationLabel(Inspection inspection, int value, Address base) {
+    protected LocationLabel(Inspection inspection, int value, Address origin) {
         super(inspection, null);
         this.value = value;
-        this.base = base;
-        if (base != null) {
+        this.origin = origin;
+        if (origin != null) {
             addMouseListener(new InspectorMouseClickAdapter(inspection) {
                 @Override
                 public void procedure(final MouseEvent mouseEvent) {
@@ -118,9 +118,9 @@ public abstract class LocationLabel extends InspectorLabel {
         updateText();
     }
 
-    public final void setValue(int value, Address base) {
+    public final void setValue(int value, Address origin) {
         this.value = value;
-        this.base = base;
+        this.origin = origin;
         updateText();
     }
 
@@ -130,8 +130,8 @@ public abstract class LocationLabel extends InspectorLabel {
      */
     public static class AsAddressWithOffset extends LocationLabel {
 
-        public AsAddressWithOffset(Inspection inspection, int offset, Address base) {
-            super(inspection, offset, base);
+        public AsAddressWithOffset(Inspection inspection, int offset, Address origin) {
+            super(inspection, offset, origin);
             redisplay();
         }
 
@@ -148,7 +148,7 @@ public abstract class LocationLabel extends InspectorLabel {
 
         @Override
         protected final void updateText() {
-            setText(base.plus(value).toHexString());
+            setText(origin.plus(value).toHexString());
             setToolTipText("Offset: " + signedLocationText() + ", " + addressText());
         }
     }
@@ -161,8 +161,8 @@ public abstract class LocationLabel extends InspectorLabel {
      */
     public static class AsAddressWithPosition extends LocationLabel {
 
-        public AsAddressWithPosition(Inspection inspection, int value, Address base) {
-            super(inspection, value, base);
+        public AsAddressWithPosition(Inspection inspection, int value, Address origin) {
+            super(inspection, value, origin);
             assert value >= 0;
             redisplay();
         }
@@ -176,7 +176,7 @@ public abstract class LocationLabel extends InspectorLabel {
 
         @Override
         protected final void updateText() {
-            setText(base.plus(value).toHexString());
+            setText(origin.plus(value).toHexString());
             setToolTipText("Position: " + unsignedLocationText() + ", " + addressText());
         }
     }
@@ -194,8 +194,8 @@ public abstract class LocationLabel extends InspectorLabel {
             this(inspection, value, null);
         }
 
-        public AsPosition(Inspection inspection, int value, Address base) {
-            super(inspection, value, base);
+        public AsPosition(Inspection inspection, int value, Address origin) {
+            super(inspection, value, origin);
             redisplay();
         }
 
@@ -209,7 +209,7 @@ public abstract class LocationLabel extends InspectorLabel {
         @Override
         protected final void updateText() {
             setText(Integer.toString(value));
-            if (base != null) {
+            if (origin != null) {
                 setToolTipText("Position: " + unsignedLocationText() + ", " + addressText());
             } else {
                 setToolTipText("Position: " + unsignedLocationText());
@@ -218,7 +218,7 @@ public abstract class LocationLabel extends InspectorLabel {
     }
 
     /**
-     * A label that displays, in decimal, an offset from some origin;
+     * A label that displays, in decimal, an offset in bytes from some origin;
      * if an origin is specified, then a ToolTip shows that actual address and a right-button
      * menu is available with some useful commands.
      * The address does not update if contents at location get moved.
@@ -255,10 +255,60 @@ public abstract class LocationLabel extends InspectorLabel {
             if (indexScalingFactor != 0) {
                 text.append(", Index: ").append(value / indexScalingFactor);
             }
-            if (base != null) {
+            if (origin != null) {
                 text.append(", ").append(addressText());
             }
             setToolTipText(text.toString());
+        }
+    }
+
+    /**
+     * A label that displays, in decimal, an offset in words from some origin;
+     * if an origin is specified, then a ToolTip shows that actual address and a right-button
+     * menu is available with some useful commands.
+     * Note that the offset is set as bytes, but displayed as words.
+     * The address does not update if contents at location get moved.
+     */
+    public static class AsWordOffset extends LocationLabel {
+
+        /**
+         * Creates a label that displays an offset from an origin as words.
+         *
+         * @param offset offset in bytes from the origin
+         * @param origin the base address for display
+         */
+        public AsWordOffset(Inspection inspection, int offset, Address origin) {
+            super(inspection, offset, origin);
+            redisplay();
+        }
+
+        public AsWordOffset(Inspection inspection, int offset) {
+            this(inspection, offset, Address.zero());
+        }
+
+        public AsWordOffset(Inspection inspection) {
+            this(inspection, 0, Address.zero());
+        }
+
+        public void redisplay() {
+            setFont(style().decimalDataFont());
+            setForeground(style().decimalDataColor());
+            setBackground(style().decimalDataBackgroundColor());
+            updateText();
+        }
+
+        @Override
+        protected void updateText() {
+            final int wordOffset = value / maxVM().wordSize().toInt();
+            final String shortText = (wordOffset >= 0 ? "+" : "") + Integer.toString(wordOffset);
+            setText(shortText);
+            StringBuilder sb = new StringBuilder(50);
+            sb.append("Offset: ");
+            sb.append(shortText).append("(0x").append(Integer.toHexString(wordOffset)).append(") words");
+            if (origin != null) {
+                sb.append(", ").append(addressText());
+            }
+            setToolTipText(sb.toString());
         }
     }
 
@@ -273,11 +323,11 @@ public abstract class LocationLabel extends InspectorLabel {
         private int index;
 
         /**
-         * A label that displays a memory location <base> + <offset> as "<prefix>[<index>]",
+         * A label that displays a memory location <origin> + <offset> as "<prefix>[<index>]",
          * with a ToolTip giving more detail.
          */
-        public AsIndex(Inspection inspection, String prefix, int index, int value, Address base) {
-            super(inspection, value, base);
+        public AsIndex(Inspection inspection, String prefix, int index, int value, Address origin) {
+            super(inspection, value, origin);
             this.prefix = prefix;
             this.index = index;
             redisplay();
@@ -290,17 +340,17 @@ public abstract class LocationLabel extends InspectorLabel {
             updateText();
         }
 
-        public void setValue(int index, int value, Address base) {
+        public void setValue(int index, int value, Address origin) {
             this.index = index;
             this.value = value;
-            this.base = base;
+            this.origin = origin;
             updateText();
         }
 
         @Override
         protected void updateText() {
             setText(prefix  + "[" + index + "]");
-            if (base != null) {
+            if (origin != null) {
                 setToolTipText("Offset: " + signedLocationText() + ", " + addressText());
             } else {
                 setToolTipText("Offset: " + signedLocationText());
@@ -317,8 +367,8 @@ public abstract class LocationLabel extends InspectorLabel {
 
         private String labelText;
 
-        public AsTextLabel(Inspection inspection, Address base) {
-            super(inspection, 0, base);
+        public AsTextLabel(Inspection inspection, Address origin) {
+            super(inspection, 0, origin);
             redisplay();
         }
 

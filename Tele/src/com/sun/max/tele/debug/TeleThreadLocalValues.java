@@ -127,7 +127,7 @@ public final class TeleThreadLocalValues extends FixedMemoryRegion {
      */
     public MemoryRegion getMemoryRegion(int index) {
         final VmThreadLocal vmThreadLocal = getVmThreadLocal(index);
-        return new FixedMemoryRegion(start().plus(vmThreadLocal.offset), Size.fromInt(teleNativeThread.teleVM().wordSize()), "");
+        return new FixedMemoryRegion(start().plus(vmThreadLocal.offset), teleNativeThread.teleVM().wordSize(), "");
     }
 
     /**

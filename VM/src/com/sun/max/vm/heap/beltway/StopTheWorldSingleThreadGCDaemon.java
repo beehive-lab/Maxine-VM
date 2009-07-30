@@ -18,13 +18,17 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=8ef40a37-6a9b-45d0-b4c0-2a9ea2597045*/
-package com.sun.max.vm.heap;
-import com.sun.max.unsafe.*;
+package com.sun.max.vm.heap.beltway;
+
+import com.sun.max.vm.heap.sequential.*;
 
 /**
- * @author Bernd Mathiske
+ * Stop the world daemon for single-threaded GC. The Daemon performs the GC.
+ *
+ * @author Laurent Daynes
  */
-public interface PointerOffsetVisitor {
-    void visitPointerOffset(Pointer pointer, int offset);
+public class StopTheWorldSingleThreadGCDaemon extends StopTheWorldGCDaemon {
+    public StopTheWorldSingleThreadGCDaemon(String name, Runnable collect) {
+        super(name, collect);
+    }
 }

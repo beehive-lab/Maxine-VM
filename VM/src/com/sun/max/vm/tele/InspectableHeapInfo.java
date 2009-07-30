@@ -98,7 +98,7 @@ public final class InspectableHeapInfo {
     private static int[] cardTableRegions;
 
     /**
-     * Stores memory allocated by the heap in an location that can
+     * Stores descriptions of memory allocated by the heap in a location that can
      * be inspected easily.
      * <br>
      * No-op when VM is not being inspected.

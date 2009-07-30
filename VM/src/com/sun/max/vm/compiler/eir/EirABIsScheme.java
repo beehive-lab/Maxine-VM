@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.eir;
 
+import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -31,57 +32,25 @@ import com.sun.max.vm.actor.member.*;
  */
 public abstract class EirABIsScheme<EirRegister_Type extends EirRegister> extends AbstractVMScheme implements VMScheme {
 
-    private final EirABI<EirRegister_Type> javaABI;
-
-    public EirABI javaABI() {
-        return javaABI;
-    }
-
-    private final EirABI<EirRegister_Type> trampolineABI;
-
-    public EirABI trampolineABI() {
-        return trampolineABI;
-    }
-
-    private final EirABI<EirRegister_Type> templateABI;
-
-    public EirABI templateABI() {
-        return templateABI;
-    }
+    public final EirABI<EirRegister_Type> javaABI;
+    public final EirABI<EirRegister_Type> trampolineABI;
+    public final EirABI<EirRegister_Type> templateABI;
 
     /**
-     * ABI for method with native code called from Java (e.g., method annotated with C_FUNCTION).
-     * If more than one compiler schemes are used, and they used different calling convention, frame adapter
-     * needs to be generated for these.
+     * The ABI for a {@code native} method annotated with {@link C_FUNCTION}. If more than one compiler scheme is in use
+     * with differing calling conventions, frame adapters need to be generated for such methods.
      */
-    private final EirABI<EirRegister_Type> j2cFunctionABI;
+    public final EirABI<EirRegister_Type> j2cFunctionABI;
+
     /**
-     * ABI for java method than can only be called from native code. This includes "hook" (i.e., static private method annotated with C_FUNCTION)
-     * and JNI function (i.e., method annotated with JNI_FUNCTION). These needs a single entry point and no frame adapter, regardless of how many
-     * compiler scheme the VM uses, or their calling convention.
+     * The ABI for a Java method than is only called from native code. These are all the non-native methods annotated
+     * with {@link C_FUNCTION} or {@link JNI_FUNCTION}. These methods only need a single entry point and have no frame
+     * adapter
      */
-    private final EirABI<EirRegister_Type> c2jFunctionABI;
+    public final EirABI<EirRegister_Type> c2jFunctionABI;
 
-    public EirABI cFunctionABI(boolean isNative) {
-        return isNative ? j2cFunctionABI : c2jFunctionABI;
-    }
-
-
-    public EirABI jniFunctionABI() {
-        return c2jFunctionABI;
-    }
-
-    private final EirABI<EirRegister_Type> nativeABI;
-
-    public EirABI nativeABI() {
-        return nativeABI;
-    }
-
-    private final EirABI<EirRegister_Type> treeABI;
-
-    public EirABI treeABI() {
-        return treeABI;
-    }
+    public final EirABI<EirRegister_Type> nativeABI;
+    public final EirABI<EirRegister_Type> treeABI;
 
     public abstract EirRegister_Type safepointLatchRegister();
 
@@ -89,13 +58,14 @@ public abstract class EirABIsScheme<EirRegister_Type extends EirRegister> extend
      *
      * @param vmConfiguration
      * @param javaABI
-     * @param nativeABI
-     * @param j2cFunctionABI abi for method annotated as C_FUNCTION and called only from Java methods (e.g., native C_FUNCTION method).
-     * @param c2jFunctionABI abi for method called only from native code (e.g., static non-native C_FUNCTION methods, method annotated as JNI_FUNCTION).
+     * @param nativeABI the ABI
+     * @param j2cFunctionABI ABI for {@linkplain C_FUNCTION VM exit} methods
+     * @param c2jFunctionABI ABI for {@linkplain C_FUNCTION VM entry} methods
      * @param trampolineABI
      * @param templateABI
      * @param treeABI abi for tree calls.
      */
+    @PROTOTYPE_ONLY
     protected EirABIsScheme(VMConfiguration vmConfiguration,
                             EirABI<EirRegister_Type> javaABI,
                             EirABI<EirRegister_Type> nativeABI,
@@ -119,13 +89,13 @@ public abstract class EirABIsScheme<EirRegister_Type extends EirRegister> extend
     /**
      * Gets the ABI for a given method.
      *
-     * @param classMethodActor the method for which the calling conventions
+     * @param classMethodActor the method for which the calling conventions are being requested
      * @return
      */
     public EirABI getABIFor(ClassMethodActor classMethodActor) {
         final MethodActor compilee = classMethodActor.compilee();
         if (compilee.isCFunction()) {
-            return cFunctionABI(compilee.isNative());
+            return compilee.isNative() ? j2cFunctionABI : c2jFunctionABI;
         }
         if (compilee.isJniFunction()) {
             return c2jFunctionABI;

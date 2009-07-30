@@ -106,7 +106,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
         }
         // User Model Policy: when setting code location, if it happens to match a stack frame of the current thread then focus on that frame.
         if (thread != null && codeLocation.hasTargetCodeLocation()) {
-            final Address address = codeLocation.targetCodeInstructionAddresss();
+            final Address address = codeLocation.targetCodeInstructionAddress();
             final Sequence<StackFrame> frames = thread.frames();
             for (StackFrame stackFrame : frames) {
                 if (stackFrame.instructionPointer.equals(address)) {
@@ -237,7 +237,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
         // User Model Policy:  When a stack frame becomes the focus, then also focus on the code at the frame's instruction pointer.
         // Update code location, even if stack frame is the "same", where same means at the same logical position in the stack as the old one.
         // Note that the old and new stack frames are not identical, and in fact may have different instruction pointers.
-        if (!codeLocation.hasTargetCodeLocation() || !codeLocation.targetCodeInstructionAddresss().equals(stackFrame.instructionPointer)) {
+        if (!codeLocation.hasTargetCodeLocation() || !codeLocation.targetCodeInstructionAddress().equals(stackFrame.instructionPointer)) {
             setCodeLocation(maxVM().createCodeLocation(stackFrame.instructionPointer), interactiveForNative);
         }
     }
