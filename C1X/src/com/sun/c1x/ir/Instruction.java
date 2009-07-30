@@ -50,14 +50,10 @@ public abstract class Instruction {
         NoRangeCheck,
         NoWriteBarrier,
         DirectCompare,
-        IsEliminated, // TODO: scheduled for deletion
-        IsLoaded, // TODO: necessary?
+        IsLoaded,
         IsSafepoint,
         IsStrictFP,
         PreservesState,
-        TargetIsFinal, // TODO: scheduled for deletion
-        TargetIsLoaded, // TODO: scheduled for deletion
-        TargetIsStrictFP,
         UnorderedIsTrue,
         NeedsPatching,
         ThrowIncompatibleClassChangeError,
@@ -66,17 +62,19 @@ public abstract class Instruction {
         PinExplicitNullCheck,
         PinStackForStateSplit,
         PinStateSplitConstructor,
-        PinGlobalValueNumbering;
+        PinGlobalValueNumbering,
+        PhiCannotSimplify,
+        PhiVisited;
 
-        public final int mask() {
-            return 1 << ordinal();
-        }
+        public final int mask = 1 << ordinal();
     }
 
     private static final int BCI_NOT_APPENDED = -99;
-    private static final int PIN_FLAGS = Flag.PinUnknown.mask() | Flag.PinExplicitNullCheck.mask() |
-                                         Flag.PinStackForStateSplit.mask() | Flag.PinStateSplitConstructor.mask() |
-                                         Flag.PinGlobalValueNumbering.mask();
+    private static final int PIN_FLAGS = Flag.PinUnknown.mask |
+                                         Flag.PinExplicitNullCheck.mask |
+                                         Flag.PinStackForStateSplit.mask |
+                                         Flag.PinStateSplitConstructor.mask |
+                                         Flag.PinGlobalValueNumbering.mask;
     public static final int INVOCATION_ENTRY_BCI = -1;
     public static final int SYNCHRONIZATION_ENTRY_BCI = -1;
 
@@ -260,7 +258,7 @@ public abstract class Instruction {
      * @return <code>true</code> if this instruction has the flag
      */
     public final boolean checkFlag(Flag flag) {
-        return (flags & flag.mask()) != 0;
+        return (flags & flag.mask) != 0;
     }
 
     /**
@@ -268,7 +266,7 @@ public abstract class Instruction {
      * @param flag the flag to set
      */
     public final void setFlag(Flag flag) {
-        flags |= flag.mask();
+        flags |= flag.mask;
     }
 
     /**
@@ -276,7 +274,7 @@ public abstract class Instruction {
      * @param flag the flag to set
      */
     public final void clearFlag(Flag flag) {
-        flags &= ~flag.mask();
+        flags &= ~flag.mask;
     }
 
     /**
