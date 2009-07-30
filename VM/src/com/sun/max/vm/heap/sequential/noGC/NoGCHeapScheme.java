@@ -311,17 +311,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
         }
     }
 
-<<<<<<< local
     private final GripVerifier gripVerifier = new GripVerifier();
-=======
-    private final class PointerIndexGripVerifier implements PointerIndexVisitor {
-        public void visitPointerIndex(Pointer pointer, int wordIndex) {
-            DebugHeap.verifyGripAtIndex(pointer, wordIndex * Kind.REFERENCE.width.numberOfBytes, pointer.getGrip(wordIndex), space, null);
-        }
-    }
-    private final PointerIndexGripVerifier pointerIndexGripVerifier = new PointerIndexGripVerifier();
->>>>>>> other
-
     private final SequentialHeapRootsScanner heapRootsVerifier = new SequentialHeapRootsScanner(gripVerifier);
 
     private void verifyHeap() {

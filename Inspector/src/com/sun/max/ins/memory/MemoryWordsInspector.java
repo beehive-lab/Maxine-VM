@@ -139,7 +139,6 @@ public final class MemoryWordsInspector extends Inspector {
         toolBar.add(upButton);
 
         final InspectorButton downButton = new InspectorButton(inspection(), new AbstractAction() {
-            @Override
             public void actionPerformed(ActionEvent e) {
                 growRegionDown(1);
             }
@@ -149,7 +148,6 @@ public final class MemoryWordsInspector extends Inspector {
         toolBar.add(downButton);
 
         final InspectorButton homeButton = new InspectorButton(inspection(), new AbstractAction() {
-            @Override
             public void actionPerformed(ActionEvent e) {
                 setToOriginalRegion();
             }
@@ -159,7 +157,6 @@ public final class MemoryWordsInspector extends Inspector {
         toolBar.add(homeButton);
 
         final InspectorButton backButton = new InspectorButton(inspection(), new AbstractAction() {
-            @Override
             public void actionPerformed(ActionEvent e) {
                 moveToPreviousObject();
             }
@@ -178,7 +175,6 @@ public final class MemoryWordsInspector extends Inspector {
         toolBar.add(forwardButton);
 
         final InspectorButton backPageButton = new InspectorButton(inspection(), new AbstractAction() {
-            @Override
             public void actionPerformed(ActionEvent e) {
                 moveToPreviousPage();
             }
@@ -410,7 +406,6 @@ public final class MemoryWordsInspector extends Inspector {
         dispose();
     }
 
-    @Override
     public void viewConfigurationChanged() {
         reconstructView();
     }
@@ -450,7 +445,6 @@ public final class MemoryWordsInspector extends Inspector {
             }
         };
 
-        @Override
         public void addTo(InspectorMenu menu) {
             setOriginAction.refresh(true);
             menu.add(setOriginAction);
@@ -460,11 +454,9 @@ public final class MemoryWordsInspector extends Inspector {
             menu.add(actions().closeViews(allMemoryWordsInspectorsPredicate, "Close all memory words inspectors"));
         }
 
-        @Override
         public void redisplay() {
         }
 
-        @Override
         public void refresh(boolean force) {
             setOriginAction.refresh(force);
         }
