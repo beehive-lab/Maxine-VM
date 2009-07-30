@@ -816,6 +816,8 @@ public abstract class TeleVM implements MaxVM {
             }
         } catch (DataIOError dataAccessError) {
             return false;
+        } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
+            return false;
         }
         return false;
     }
