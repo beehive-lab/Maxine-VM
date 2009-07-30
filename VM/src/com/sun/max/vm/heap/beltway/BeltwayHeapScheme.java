@@ -165,7 +165,8 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
                             Platform.target().pageSize));
             BeltwayCardRegion.switchToRegularCardTable(cardRegion.cardTableBase().asPointer());
         } else if (phase == MaxineVM.Phase.STARTING) {
-            collectorThread = new BeltwayStopTheWorldDaemon("GC", beltCollector);
+            //collectorThread =  BeltwayConfiguration.parallelScavenging ? new BeltwayStopTheWorldDaemon("GC", beltCollector) : new StopTheWorldSingleThreadGCDaemon("GC", beltCollector);
+            collectorThread =  new BeltwayStopTheWorldDaemon("GC", beltCollector);
             collectorThread.start();
         } else if (phase == MaxineVM.Phase.RUNNING) {
             if (BeltwayConfiguration.parallelScavenging) {
