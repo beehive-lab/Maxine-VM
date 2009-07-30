@@ -113,19 +113,11 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB implements He
         return evacuationClosure;
     }
 
-    public PointerOffsetVisitor pointerOffsetGripVerifier() {
-        return pointerVisitorGripVerifier;
-    }
-
     public PointerIndexVisitor pointerIndexGripVerifier() {
         return pointerVisitorGripVerifier;
     }
 
     public PointerIndexVisitor pointerIndexGripUpdater() {
-        return pointerVisitorGripUpdater;
-    }
-
-    public PointerOffsetVisitor pointerOffsetGripUpdater() {
         return pointerVisitorGripUpdater;
     }
 

@@ -476,7 +476,7 @@ public interface SPARCEirInstruction {
         public FLAT_CALL(EirBlock block, EirABI abi, EirValue result, EirLocation resultLocation,
                         EirValue function, EirValue[] arguments, EirLocation[] argumentLocations,
                         EirMethodGeneration methodGeneration) {
-            super(block, abi, result, resultLocation, function, M, arguments, argumentLocations, methodGeneration);
+            super(block, abi, result, resultLocation, function, M, arguments, argumentLocations, false, methodGeneration);
         }
 
         private void assembleStaticTrampolineCall(SPARCEirTargetEmitter emitter) {
@@ -540,8 +540,8 @@ public interface SPARCEirInstruction {
 
         public CALL(EirBlock block, EirABI abi, EirValue result, EirLocation resultLocation,
                         EirValue function, EirValue[] arguments, EirLocation[] argumentLocations,
-                        EirMethodGeneration methodGeneration) {
-            super(block, abi, result, resultLocation, function, M_G, arguments, argumentLocations, methodGeneration);
+                        boolean isNativeFunctionCall, EirMethodGeneration methodGeneration) {
+            super(block, abi, result, resultLocation, function, M_G, arguments, argumentLocations, isNativeFunctionCall, methodGeneration);
             final SPARCEirABI sparcAbi = (SPARCEirABI) abi;
             safepointLatch = (SPARCEirRegister.GeneralPurpose) sparcAbi.safepointLatchRegister();
             final DirToSPARCEirMethodTranslation sparcMethodGeneration = (DirToSPARCEirMethodTranslation) methodGeneration;

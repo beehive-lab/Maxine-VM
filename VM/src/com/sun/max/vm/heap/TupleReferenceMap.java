@@ -21,20 +21,26 @@
 package com.sun.max.vm.heap;
 
 import com.sun.max.collect.*;
+import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.type.*;
 
 /**
- * A facility for building and traversing the reference map for a {@linkplain TupleClassActor tuple}
- * object. The
+ * A facility for building and traversing the reference map for a {@linkplain TupleClassActor tuple} object.
+ * A reference map is a list of word-scaled offsets relative to an object's origin describing the
+ * object slots containing references.
  *
  * @author Bernd Mathiske
+ * @author Doug Simon
  */
 public class TupleReferenceMap {
 
-    private AppendableSequence<Integer> offsets = new LinkSequence<Integer>();
+    /**
+     * The set of word-scaled offsets to references.
+     */
+    private AppendableSequence<Integer> indexes = new LinkSequence<Integer>();
 
     /**
      * Builds a reference map for a given set of static fields. This is the reference map that
@@ -44,7 +50,8 @@ public class TupleReferenceMap {
     public TupleReferenceMap(FieldActor[] staticFieldActors) {
         for (FieldActor staticFieldActor : staticFieldActors) {
             if (staticFieldActor.kind == Kind.REFERENCE) {
-                offsets.append(staticFieldActor.offset());
+                final int fieldIndex = Unsigned.idiv(staticFieldActor.offset(), Word.size());
+                indexes.append(fieldIndex);
             }
         }
     }
@@ -59,7 +66,8 @@ public class TupleReferenceMap {
         do {
             for (FieldActor instanceFieldActor : c.localInstanceFieldActors()) {
                 if (instanceFieldActor.kind == Kind.REFERENCE && !instanceFieldActor.isSpecialReference()) {
-                    offsets.append(instanceFieldActor.offset());
+                    final int fieldIndex = Unsigned.idiv(instanceFieldActor.offset(), Word.size());
+                    indexes.append(fieldIndex);
                 }
             }
             c = c.superClassActor;
@@ -68,23 +76,33 @@ public class TupleReferenceMap {
 
     public static final TupleReferenceMap EMPTY = new TupleReferenceMap(new FieldActor[0]);
 
-    public int numberOfOffsets() {
-        return offsets.length();
+    /**
+     * Gets the number of entries in this reference map.
+     */
+    public int numberOfEntries() {
+        return indexes.length();
     }
 
     public void copyIntoHub(Hub hub) {
         int index = hub.referenceMapStartIndex;
-        for (Integer offset : offsets) {
-            hub.setInt(index, offset);
+        for (Integer referenceIndex : indexes) {
+            hub.setInt(index, referenceIndex);
             index++;
         }
     }
 
-    public static void visitOriginOffsets(Hub hub, Pointer origin, PointerOffsetVisitor offsetVisitor) {
+    /**
+     * Visits all the references in a given object described by a given hub.
+     *
+     * @param hub a hub describing where the references are in the object at {@code origin}
+     * @param origin the origin of an object
+     * @param visitor the visitor to notify of each reference in the object denoted by {@code origin}
+     */
+    public static void visitReferences(Hub hub, Pointer origin, PointerIndexVisitor visitor) {
         final int n = hub.referenceMapStartIndex + hub.referenceMapLength;
         for (int i = hub.referenceMapStartIndex; i < n; i++) {
-            final int offset = hub.getInt(i);
-            offsetVisitor.visitPointerOffset(origin, offset);
+            final int index = hub.getInt(i);
+            visitor.visit(origin, index);
         }
     }
 }

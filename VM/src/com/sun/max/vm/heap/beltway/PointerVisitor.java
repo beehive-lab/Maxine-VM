@@ -28,7 +28,7 @@ import com.sun.max.vm.heap.*;
  *
  * @author Laurent Daynes
  */
-public class PointerVisitor implements PointerIndexVisitor, PointerOffsetVisitor {
+public class PointerVisitor extends PointerIndexVisitor {
 
     final Action action;
 
@@ -36,17 +36,8 @@ public class PointerVisitor implements PointerIndexVisitor, PointerOffsetVisitor
         this.action = action;
     }
 
-    public void visitPointerOffset(Pointer pointer, int offset) {
-        final Grip oldGrip = pointer.readGrip(offset);
-        final Grip newGrip = action.doAction(oldGrip);
-        if (newGrip != null) {
-            if (newGrip != oldGrip) {
-                pointer.writeGrip(offset, newGrip);
-            }
-        }
-    }
-
-    public void visitPointerIndex(Pointer pointer, int wordIndex) {
+    @Override
+    public void visit(Pointer pointer, int wordIndex) {
         final Grip oldGrip = pointer.getGrip(wordIndex);
         final Grip newGrip = action.doAction(oldGrip);
         if (newGrip != null) {

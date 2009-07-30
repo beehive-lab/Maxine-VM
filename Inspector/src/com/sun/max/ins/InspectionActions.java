@@ -2132,7 +2132,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final Address targetCodeInstructionAddress = focus().codeLocation().targetCodeInstructionAddresss();
+            final Address targetCodeInstructionAddress = focus().codeLocation().targetCodeInstructionAddress();
             if (!targetCodeInstructionAddress.isZero()) {
                 TeleTargetBreakpoint breakpoint = maxVM().getTargetBreakpoint(targetCodeInstructionAddress);
                 if (breakpoint == null) {
@@ -2181,7 +2181,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final Address address = focus().codeLocation().targetCodeInstructionAddresss();
+            final Address address = focus().codeLocation().targetCodeInstructionAddress();
             final TeleTargetRoutine teleTargetRoutine = maxVM().findTeleTargetRoutine(TeleTargetRoutine.class, address);
             if (teleTargetRoutine != null) {
                 teleTargetRoutine.setTargetCodeLabelBreakpoints();
@@ -2232,7 +2232,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final Address address = focus().codeLocation().targetCodeInstructionAddresss();
+            final Address address = focus().codeLocation().targetCodeInstructionAddress();
             final TeleTargetRoutine teleTargetRoutine = maxVM().findTeleTargetRoutine(TeleTargetRoutine.class, address);
             if (teleTargetRoutine != null) {
                 teleTargetRoutine.removeTargetCodeLabelBreakpoints();
@@ -3327,7 +3327,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final Address selectedAddress = focus().codeLocation().targetCodeInstructionAddresss();
+            final Address selectedAddress = focus().codeLocation().targetCodeInstructionAddress();
             if (!selectedAddress.isZero()) {
                 try {
                     maxVM().runToInstruction(selectedAddress, false, true);
@@ -3371,7 +3371,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final Address selectedAddress = focus().codeLocation().targetCodeInstructionAddresss();
+            final Address selectedAddress = focus().codeLocation().targetCodeInstructionAddress();
             if (!selectedAddress.isZero()) {
                 try {
                     maxVM().runToInstruction(selectedAddress, false, false);
@@ -3415,7 +3415,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final Address address = focus().codeLocation().targetCodeInstructionAddresss();
+            final Address address = focus().codeLocation().targetCodeInstructionAddress();
             final TeleTargetMethod teleTargetMethod = maxVM().findTeleTargetRoutine(TeleTargetMethod.class, address);
             if (teleTargetMethod != null) {
                 final Address nextCallAddress = teleTargetMethod.getNextCallAddress(address);
@@ -3461,7 +3461,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final Address address = focus().codeLocation().targetCodeInstructionAddresss();
+            final Address address = focus().codeLocation().targetCodeInstructionAddress();
             final TeleTargetMethod teleTargetMethod = maxVM().findTeleTargetRoutine(TeleTargetMethod.class, address);
             if (teleTargetMethod != null) {
                 final Address nextCallAddress = teleTargetMethod.getNextCallAddress(address);
@@ -3639,7 +3639,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
          * @return whether there is a Java frame descriptor at the focus target code location
          */
         private boolean inspectable() {
-            final Address instructionAddress = focus().codeLocation().targetCodeInstructionAddresss();
+            final Address instructionAddress = focus().codeLocation().targetCodeInstructionAddress();
             if (instructionAddress.isZero()) {
                 return false;
             }

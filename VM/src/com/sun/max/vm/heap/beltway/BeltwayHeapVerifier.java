@@ -67,11 +67,11 @@ public class BeltwayHeapVerifier {
             cellVerifier.checkHub(hub);
             final SpecificLayout specificLayout = hub.specificLayout;
             if (specificLayout.isTupleLayout()) {
-                TupleReferenceMap.visitOriginOffsets(hub, origin, pointerVisitor);
+                TupleReferenceMap.visitReferences(hub, origin, pointerVisitor);
                 cell = cell.plus(hub.tupleSize);
             } else {
                 if (specificLayout.isHybridLayout()) {
-                    TupleReferenceMap.visitOriginOffsets(hub, origin, pointerVisitor);
+                    TupleReferenceMap.visitReferences(hub, origin, pointerVisitor);
                 } else if (specificLayout.isReferenceArrayLayout()) {
                     final int length = Layout.readArrayLength(origin);
                     for (int index = 0; index < length; index++) {

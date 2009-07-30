@@ -62,7 +62,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
 
         @Override
         public EirABI abi() {
-            return  eirGenerator().eirABIsScheme().nativeABI();
+            return eirGenerator().eirABIsScheme().nativeABI;
         }
     }
 
