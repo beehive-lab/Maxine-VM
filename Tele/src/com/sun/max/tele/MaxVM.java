@@ -76,9 +76,14 @@ public interface MaxVM {
     VMConfiguration vmConfiguration();
 
     /**
-     * @return size in bytes of a word in the VM.
+     * @return size of a word in the VM.
      */
-    int wordSize();
+    Size wordSize();
+
+    /**
+     * @return size a memory page in the VM
+     */
+    Size pageSize();
 
     /**
      * @return the boot image from which this VM instance was created.
@@ -395,6 +400,24 @@ public interface MaxVM {
      * @return an accessor for the specified heap object.
      */
     TeleObject findObjectByOID(long id);
+
+    /**
+     * Scans VM memory backwards (smaller address) for an object.
+     *
+     * @param address search starts with word preceding this address
+     * @param maxSearchExtent maximum number of bytes to search, unbounded if 0.
+     * @return surrogate for a VM object, null if none found
+     */
+    TeleObject findObjectPreceding(Address address, long maxSearchExtent);
+
+    /**
+     * Scans VM memory forward (larger address) for an object.
+     *
+     * @param address search starts with word following this address
+     * @param maxSearchExtent maximum number of bytes to search, unbounded if 0.
+     * @return surrogate for a VM object, null if none found
+     */
+    TeleObject findObjectFollowing(Address address, long maxSearchExtent);
 
     /**
      * @param id  Class ID of a {@link ClassActor} in the VM.

@@ -1077,33 +1077,39 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Inspect memory words";
         private final Address address;
-        private final TeleObject teleObject;
+        private final MemoryRegion memoryRegion;
 
         InspectMemoryWordsAction() {
             super(inspection(), "Inspect memory words at address...");
             refreshableActions.append(this);
             this.address = null;
-            this.teleObject = null;
+            this.memoryRegion = null;
         }
 
         InspectMemoryWordsAction(Address address, String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
             this.address = address;
-            this.teleObject = null;
+            this.memoryRegion = null;
+        }
+
+        InspectMemoryWordsAction(MemoryRegion memoryRegion, String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            this.address = null;
+            this.memoryRegion = memoryRegion;
         }
 
         InspectMemoryWordsAction(TeleObject teleObject, String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
             this.address = null;
-            this.teleObject = teleObject;
+            this.memoryRegion = teleObject.getCurrentMemoryRegion();
         }
 
         @Override
         protected void procedure() {
-            if (teleObject != null) {
-                MemoryWordInspector.create(inspection(), teleObject.getCurrentMemoryRegion()).highlight();
-            }
-            if (address != null) {
+            if (memoryRegion != null) {
+                //MemoryWordInspector.create(inspection(), teleObject.getCurrentMemoryRegion()).highlight();
+                new MemoryWordsInspector(inspection(), memoryRegion);
+            } else if (address != null) {
                 MemoryWordInspector.create(inspection(), address).highlight();
             } else {
                 new AddressInputDialog(inspection(), maxVM().bootImageStart(), "Inspect memory words at address...", "Inspect") {
@@ -1142,6 +1148,16 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public final InspectorAction inspectMemoryWords(Address address, String title) {
         return new InspectMemoryWordsAction(address, title);
+    }
+
+
+    /**
+     * @param address a valid area of memory in the VM
+     * @param title a name for the action
+     * @return an Action that will create a Memory Words Inspector at the address
+     */
+    public final InspectorAction inspectMemoryWords(MemoryRegion memoryRegion, String title) {
+        return new InspectMemoryWordsAction(memoryRegion, title);
     }
 
 
@@ -2563,7 +2579,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         SetWordWatchpointAction(Address address, String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
-            this.memoryRegion = new FixedMemoryRegion(address, Size.fromInt(maxVM().wordSize()), "");
+            this.memoryRegion = new MemoryWordRegion(address, 1, maxVM().wordSize());
             setEnabled(maxVM().findWatchpoint(memoryRegion) == null);
         }
 
@@ -2575,7 +2591,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 new AddressInputDialog(inspection(), maxVM().bootImageStart(), "Watch word at address...", "Watch") {
                     @Override
                     public void entered(Address address) {
-                        setWatchpoint(new FixedMemoryRegion(address, Size.fromInt(maxVM().wordSize()), ""), "User specified region");
+                        setWatchpoint(new MemoryWordRegion(address, 1, maxVM().wordSize()), "User specified region");
                     }
                 };
             }
@@ -2654,7 +2670,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 new AddressInputDialog(inspection(), maxVM().bootImageStart(), "Watch memory...", "Watch") {
                     @Override
                     public void entered(Address address) {
-                        setWatchpoint(new FixedMemoryRegion(address, Size.fromInt(maxVM().wordSize()), ""), "User specified region");
+                        setWatchpoint(new FixedMemoryRegion(address, maxVM().wordSize(), ""), "User specified region");
                     }
                 };
             }
