@@ -44,6 +44,7 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -354,7 +355,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         public boolean updateCodeFocus(TeleCodeLocation teleCodeLocation) {
             final int oldSelectedRow = getSelectedRow();
             if (teleCodeLocation.hasTargetCodeLocation()) {
-                final Address targetCodeInstructionAddress = inspection().focus().codeLocation().targetCodeInstructionAddresss();
+                final Address targetCodeInstructionAddress = inspection().focus().codeLocation().targetCodeInstructionAddress();
                 if (teleTargetRoutine().targetCodeRegion().contains(targetCodeInstructionAddress)) {
                     final TargetCodeTableModel model = (TargetCodeTableModel) getModel();
                     final int row = model.findRow(targetCodeInstructionAddress);
@@ -727,10 +728,17 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                     inspectorLabel = poolConstantLabel;
                     inspectorLabel.setForeground(getRowTextColor(row));
                 } else {
-                    inspectorLabel = targetCodeLabel;
-                    inspectorLabel.setText(text);
-                    inspectorLabel.setToolTipText(null);
-                    inspectorLabel.setForeground(getRowTextColor(row));
+                    final StopPositions stopPositions = teleTargetRoutine().getStopPositions();
+                    if (stopPositions != null && stopPositions.isNativeFunctionCallPosition(targetCodeInstruction.position)) {
+                        final TextLabel textLabel = new TextLabel(inspection, "<native function>", text);
+                        inspectorLabel = textLabel;
+                        inspectorLabel.setForeground(getRowTextColor(row));
+                    } else {
+                        inspectorLabel = targetCodeLabel;
+                        inspectorLabel.setText(text);
+                        inspectorLabel.setToolTipText(null);
+                        inspectorLabel.setForeground(getRowTextColor(row));
+                    }
                 }
             }
             inspectorLabel.setBackground(rowToBackgroundColor(row));

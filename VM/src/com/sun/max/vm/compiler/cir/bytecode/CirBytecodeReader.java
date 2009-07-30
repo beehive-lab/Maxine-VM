@@ -247,11 +247,14 @@ public final class CirBytecodeReader {
         return new CirJavaFrameDescriptor(popJavaFrameDescriptor(numberOfJavaFrameDescriptors - 1), classMethodActor, bytecodePosition, locals, stackSlots);
     }
 
-    private CirCall readCall(int count) {
+    private CirCall readCall(int count, boolean isNative) {
         final CirCall call = new CirCall();
         call.setArguments(pop(CirCall.newArguments(count)));
         call.setJavaFrameDescriptor(popJavaFrameDescriptor(readUnsignedInt()));
         call.setProcedure((CirValue) pop());
+        if (isNative) {
+            call.setIsNative();
+        }
         return call;
     }
 
@@ -275,8 +278,12 @@ public final class CirBytecodeReader {
             }
 
             switch (opcode) {
+                case NATIVE_CALL: {
+                    push(readCall(readUnsignedInt(), true));
+                    break;
+                }
                 case CALL: {
-                    push(readCall(readUnsignedInt()));
+                    push(readCall(readUnsignedInt(), false));
                     break;
                 }
                 case CALL_0:
@@ -286,7 +293,7 @@ public final class CirBytecodeReader {
                 case CALL_4:
                 case CALL_5:
                 case CALL_6: {
-                    push(readCall(opcode.implicitOperand()));
+                    push(readCall(opcode.implicitOperand(), false));
                     break;
                 }
                 case CONSTANT: {

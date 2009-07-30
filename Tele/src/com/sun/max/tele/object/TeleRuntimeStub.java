@@ -30,6 +30,7 @@ import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.value.*;
@@ -119,7 +120,7 @@ public class TeleRuntimeStub extends TeleRuntimeMemoryRegion implements TeleTarg
         return null;
     }
 
-    public int[] getStopPositions() {
+    public StopPositions getStopPositions() {
         return null;
     }
 

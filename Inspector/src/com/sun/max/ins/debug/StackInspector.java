@@ -37,6 +37,7 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -156,6 +157,13 @@ public class StackInspector extends Inspector {
                     break;
                 }
             }
+        }
+    }
+
+    @Override
+    public void codeLocationFocusSet(TeleCodeLocation teleCodeLocation, boolean interactiveForNative) {
+        if (selectedFrame != null) {
+            selectedFrame.instructionPointerFocusChanged(teleCodeLocation.targetCodeInstructionAddress().asPointer());
         }
     }
 
@@ -397,6 +405,9 @@ public class StackInspector extends Inspector {
             this.stackFrame = StaticLoophole.cast(type, stackFrame);
             refresh(true);
         }
+
+        public void instructionPointerFocusChanged(Pointer instructionPointer) {
+        }
     }
 
     private final class AdapterStackFramePanel extends StackFramePanel<AdapterStackFrame> {
@@ -450,6 +461,7 @@ public class StackInspector extends Inspector {
         final TargetMethod targetMethod;
         final CodeAttribute codeAttribute;
         final JCheckBox showSlotAddresses;
+        Pointer focusedInstructionPointer;
 
         JavaStackFramePanel(Inspection inspection, JavaStackFrame javaStackFrame) {
             super(inspection, javaStackFrame);
@@ -463,7 +475,7 @@ public class StackInspector extends Inspector {
             instructionPointerLabel = new WordValueLabel(inspection(), ValueMode.INTEGER_REGISTER, this) {
                 @Override
                 public Value fetchValue() {
-                    return WordValue.from(stackFrame().instructionPointer);
+                    return WordValue.from(stackFrame.instructionPointer);
                 }
             };
 
@@ -535,18 +547,37 @@ public class StackInspector extends Inspector {
         }
 
         @Override
+        public void instructionPointerFocusChanged(Pointer instructionPointer) {
+            if (focusedInstructionPointer == null || !instructionPointer.equals(focusedInstructionPointer)) {
+                if (targetMethod.contains(instructionPointer)) {
+                    focusedInstructionPointer = instructionPointer;
+                    refresh(true);
+                } else {
+                    focusedInstructionPointer = null;
+                }
+
+            }
+        }
+
+        @Override
         public void refresh(boolean force) {
             instructionPointerLabel.refresh(force);
             final boolean isTopFrame = stackFrame.isTopFrame();
-            final Pointer instructionPointer = stackFrame.instructionPointer;
-            final Pointer instructionPointerForStopPosition = isTopFrame ?  instructionPointer.plus(1) :  instructionPointer;
-            int stopIndex = targetMethod.findClosestStopIndex(instructionPointerForStopPosition);
-            if (stopIndex != -1 && isTopFrame) {
-                final int stopPosition = targetMethod.stopPosition(stopIndex);
-                final int targetCodePosition = targetMethod.targetCodePositionFor(instructionPointer);
-                if (targetCodePosition != stopPosition) {
-                    stopIndex = -1;
+            int stopIndex = -1;
+            if (focusedInstructionPointer == null) {
+                final Pointer instructionPointer = stackFrame.instructionPointer;
+                final Pointer instructionPointerForStopPosition = isTopFrame ?  instructionPointer.plus(1) :  instructionPointer;
+                targetMethod.findClosestStopIndex(instructionPointerForStopPosition);
+                if (stopIndex != -1 && isTopFrame) {
+                    final int stopPosition = targetMethod.stopPosition(stopIndex);
+                    final int targetCodePosition = targetMethod.targetCodePositionFor(instructionPointer);
+                    if (targetCodePosition != stopPosition) {
+                        stopIndex = -1;
+                    }
                 }
+            } else {
+                final int position = focusedInstructionPointer.minus(targetMethod.codeStart()).toInt();
+                stopIndex = StopPositions.indexOf(targetMethod.stopPositions(), position);
             }
 
             // Update the color of the slot labels to denote if a reference map indicates they are holding object references:

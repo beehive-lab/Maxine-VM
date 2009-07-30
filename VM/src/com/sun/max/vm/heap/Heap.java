@@ -26,6 +26,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
@@ -39,6 +40,19 @@ import com.sun.max.vm.thread.*;
 public final class Heap {
 
     private Heap() {
+    }
+
+    /**
+     * Determines if references in memory regions managed by a {@link CodeManager}
+     * will be treated as GC roots by the configured heap scheme.
+     *
+     * It is expected that some heap schemes will use other mechanisms for
+     * tracing and updating references in a code region. For example, a generational
+     * collector may rely on a write-barrier to manage such references.
+     */
+    @FOLD
+    public static boolean codeReferencesAreGCRoots() {
+        return heapScheme().codeReferencesAreGCRoots();
     }
 
     private static final VMSizeOption maxHeapSizeOption = register(new VMSizeOption("-Xmx", Size.G, "The maximum heap size."), MaxineVM.Phase.PRISTINE);

@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.eir.amd64.unix;
 
+import com.sun.max.annotate.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.collect.*;
 import com.sun.max.vm.*;
@@ -38,6 +39,7 @@ import com.sun.max.vm.runtime.*;
  */
 public class UnixAMD64EirTemplateABI extends UnixAMD64EirJavaABI {
 
+    @PROTOTYPE_ONLY
     public UnixAMD64EirTemplateABI(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
         final TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> originalTargetABI = super.targetABI();

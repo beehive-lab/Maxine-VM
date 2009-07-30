@@ -139,6 +139,9 @@ public class CirPrinter extends CirVisitor {
         if (call.javaFrameDescriptor() != null) {
             print(call.javaFrameDescriptor().toString());
         }
+        if (call.isNative()) {
+            print(" <native function call>");
+        }
     }
 
     private void printParameters(CirClosure closure) {
