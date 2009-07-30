@@ -66,32 +66,43 @@ public class JavaTesterGenerator {
 
     final IndentWriter writer;
 
-    public static void generate(OptionSet extraOptions, String[] args) {
+    /** Generate, if necessary, the runSchemeFile and the testRunsFile.
+     * @param extraOptions
+     * @param args
+     * @return true if either the runSchemeFile or the testRunsFile was actually updated.
+     */
+    public static boolean generate(OptionSet extraOptions, String[] args) {
         options.loadOptions(extraOptions);
-        generate(args);
+        return generate(args);
     }
 
     public static void main(String[] args) {
         generate(options.parseArguments(args).getArguments());
     }
 
-    private static void generate(final String[] arguments) throws ProgramError {
+    private static boolean generate(final String[] arguments) throws ProgramError {
         final Registry<TestHarness> registry = new Registry<TestHarness>(TestHarness.class, false);
         final JavaExecHarness javaExecHarness = new JavaExecHarness(new Executor());
         registry.registerObject("java", javaExecHarness);
         final TestEngine engine = new TestEngine(registry);
         engine.parseTests(arguments, sortOption.getValue());
+        boolean filesUpdated = false;
         try {
             final String runSchemeFile = fileName("JavaTesterRunScheme");
             final String testRunsFile = fileName("JavaTesterTests");
 
             final LinkedList<JavaTestCase> cases = extractJavaTests(engine);
 
-            generateRunSchemeContent(new File(runSchemeFile), cases);
-            generateTestRunsContent(new File(testRunsFile), cases);
+            if (generateRunSchemeContent(new File(runSchemeFile), cases)) {
+                filesUpdated = true;
+                System.out.println(runSchemeFile + " updated.");
+            }
+            if (generateTestRunsContent(new File(testRunsFile), cases)) {
+                filesUpdated = true;
+                System.out.println(testRunsFile + " updated.");
+            }
 
-            System.out.println(runSchemeFile + " updated.");
-            if (compileOption.getValue()) {
+            if (filesUpdated && compileOption.getValue())  {
                 ToolChain.compile(new String[] {className("JavaTesterRunScheme"), className("JavaTesterTests")});
                 System.out.println(runSchemeFile + " recompiled.");
                 System.out.println(testRunsFile + " recompiled.");
@@ -99,6 +110,7 @@ public class JavaTesterGenerator {
         } catch (IOException e) {
             ProgramError.unexpected(e);
         }
+        return filesUpdated;
     }
 
     private static String className(String className) {
@@ -109,21 +121,21 @@ public class JavaTesterGenerator {
         return className(className).replace('.', File.separatorChar) + ".java";
     }
 
-    private static void generateRunSchemeContent(final File runSchemeFile, final LinkedList<JavaTestCase> cases) throws IOException {
+    private static boolean generateRunSchemeContent(final File runSchemeFile, final LinkedList<JavaTestCase> cases) throws IOException {
         final Writer writer = new StringWriter();
         final JavaTesterGenerator gen = new JavaTesterGenerator(writer);
         gen.genClassList(cases);
         gen.genRunMethod(cases);
         writer.close();
-        Files.updateGeneratedContent(runSchemeFile, ReadableSource.Static.fromString(writer.toString()), "// GENERATED TEST RUNS", "// END GENERATED TEST RUNS");
+         return Files.updateGeneratedContent(runSchemeFile, ReadableSource.Static.fromString(writer.toString()), "// GENERATED TEST RUNS", "// END GENERATED TEST RUNS");
     }
 
-    private static void generateTestRunsContent(final File testRunsFile, final LinkedList<JavaTestCase> cases) throws IOException {
+    private static boolean generateTestRunsContent(final File testRunsFile, final LinkedList<JavaTestCase> cases) throws IOException {
         final Writer writer = new StringWriter();
         final JavaTesterGenerator gen = new JavaTesterGenerator(writer);
         gen.genTestRuns(cases);
         writer.close();
-        Files.updateGeneratedContent(testRunsFile, ReadableSource.Static.fromString(writer.toString()), "// GENERATED TEST RUNS", "// END GENERATED TEST RUNS");
+        return Files.updateGeneratedContent(testRunsFile, ReadableSource.Static.fromString(writer.toString()), "// GENERATED TEST RUNS", "// END GENERATED TEST RUNS");
     }
 
     private static LinkedList<JavaExecHarness.JavaTestCase> extractJavaTests(final TestEngine engine) {

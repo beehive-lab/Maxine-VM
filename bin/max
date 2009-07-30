@@ -354,7 +354,7 @@ function run_build() {
             exit $result
         fi
     fi
-        
+
     # Compile Java sources
     for project in ${projects[@]}; do
         project_dir=${project/:*/}
@@ -403,6 +403,16 @@ function run_build() {
             fi
         done
     done
+
+    # Regenerate javatester files
+    pushd VM/test
+    ${JAVA_HOME}/bin/java -d64 -ea -cp ../../Base/bin:../bin test.com.sun.max.vm.compiler.JavaTester -scenario=target -run-scheme-package=all -native-tests test/bytecode test/except test/optimize test/lang test/hotpath test/reflect test/jdk test/threads test/micro test/jvmni test/jni
+    result=$?
+    popd >/dev/null
+    if [ $result -ne 0 ]; then
+        exit $result
+    fi
+        
 }
 
 #=======================================
