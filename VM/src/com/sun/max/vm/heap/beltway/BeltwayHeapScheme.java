@@ -24,6 +24,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
+import com.sun.max.sync.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
@@ -36,7 +37,7 @@ import com.sun.max.vm.type.*;
 
 /**
  * A heap scheme for beltway collectors.
- * This scheme loosely follows the beltway infrastructure for building copying collector.
+ * This scheme loosely follows the beltway infrastructure for building copying collectors.
  * The main difference with what is described in the original paper is that a belt is made of a single increment (instead of potentially many).
  *
  * The scheme gathers a number of statically allocated objects so as to avoid dynamic allocation during GC
@@ -77,7 +78,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
 
     protected final BeltwayCardRegion cardRegion = new BeltwayCardRegion();
 
-    private final StacksAndMonitorsScanner stackAndMonitorGripUpdater = new StacksAndMonitorsScanner(pointerVisitorGripUpdater);
+    private final SequentialHeapRootsScanner stackAndMonitorGripUpdater = new SequentialHeapRootsScanner(pointerVisitorGripUpdater);
 
     /**
      * Side table for the heap. Keeps track of the address to the first object in a card to enable
@@ -89,8 +90,10 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
 
     protected BeltwayConfiguration beltwayConfiguration;
     protected BeltManager beltManager;
-    protected BeltwayCollector beltCollector;
-    protected static BeltwayStopTheWorldDaemon collectorThread;
+    /**
+     * The thread running the collector, and coordinating the GC threads when the GC support parallel collection.
+     */
+    protected BlockingServerDaemon collectorThread;
 
 
     public static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError();
@@ -141,7 +144,6 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
         super.initialize(phase);
         if (MaxineVM.isPrototyping()) {
             beltwayConfiguration = new BeltwayConfiguration();
-            beltCollector = new BeltwayCollector();
             beltManager = new BeltManager();
             beltManager.createBelts();
 
@@ -165,8 +167,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
                             Platform.target().pageSize));
             BeltwayCardRegion.switchToRegularCardTable(cardRegion.cardTableBase().asPointer());
         } else if (phase == MaxineVM.Phase.STARTING) {
-            //collectorThread =  BeltwayConfiguration.parallelScavenging ? new BeltwayStopTheWorldDaemon("GC", beltCollector) : new StopTheWorldSingleThreadGCDaemon("GC", beltCollector);
-            collectorThread =  new BeltwayStopTheWorldDaemon("GC", beltCollector);
+            collectorThread =  BeltwayConfiguration.parallelScavenging ? new BeltwayStopTheWorldDaemon("GC") : new StopTheWorldGCDaemon("GC");
             collectorThread.start();
         } else if (phase == MaxineVM.Phase.RUNNING) {
             if (BeltwayConfiguration.parallelScavenging) {
@@ -363,7 +364,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     }
 
     public boolean isGcThread(Thread thread) {
-        return thread instanceof BeltwayStopTheWorldDaemon;
+        return thread == collectorThread;
     }
 
     /**
@@ -392,6 +393,9 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
         }
     };
 
+    /**
+     * Handling of TLAB Overflow.
+     */
     @Override
     protected Pointer handleTLABOverflow(Size size, Pointer allocationMark, Pointer enabledVmThreadLocals) {
         // Should we refill the TLAB ?
