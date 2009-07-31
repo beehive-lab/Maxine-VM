@@ -8100,6 +8100,22 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void test_except_Catch_StackOverflowError_03() {
+        JavaTesterRunScheme.begin("test.except.Catch_StackOverflowError_03");
+        String runString = null;
+        try {
+        // test(0) == 0
+            runString = "test(0)";
+            if (0 != test.except.Catch_StackOverflowError_03.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void test_except_Except_Synchronized01() {
         JavaTesterRunScheme.begin("test.except.Except_Synchronized01");
         String runString = null;
