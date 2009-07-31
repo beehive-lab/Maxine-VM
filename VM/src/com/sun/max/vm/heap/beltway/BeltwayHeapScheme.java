@@ -384,11 +384,12 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
 
     @Override
     protected  void doBeforeTLABRefill(Pointer tlabAllocationMark, Pointer tlabEnd) {
+        Pointer hardLimit = tlabEnd.plus(TLAB_HEADROOM);
         if (tlabAllocationMark.greaterEqual(tlabEnd)) {
-            FatalError.check(tlabEnd.plus(TLAB_HEADROOM).equals(tlabAllocationMark), "TLAB allocation mark cannot be greater than TLAB End");
+            FatalError.check(hardLimit.equals(tlabAllocationMark), "TLAB allocation mark cannot be greater than TLAB End");
             return;
         }
-        fillWithDeadObject(tlabAllocationMark, tlabEnd);
+        fillWithDeadObject(tlabAllocationMark, hardLimit);
     }
 
     /**
