@@ -62,7 +62,7 @@ public class MaxineTester {
                     "Single threaded. Do not run any tests concurrently.");
     private static final Option<String> outputDirOption = options.newStringOption("output-dir", "maxine-tester",
                     "The output directory for the results of the maxine tester.");
-    private static final Option<Integer> imageBuildTimeOutOption = options.newIntegerOption("image-build-timeout", 600,
+    private static final Option<Integer> imageBuildTimeOutOption = options.newIntegerOption("image-build-timeout", 1200,
                     "The number of seconds to wait for an image build to complete before " +
                     "timing out and killing it.");
     private static final Option<String> javaExecutableOption = options.newStringOption("java-executable", "java",
