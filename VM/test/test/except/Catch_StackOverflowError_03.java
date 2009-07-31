@@ -18,19 +18,39 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.asm;
+package test.except;
 
-import com.sun.c1x.util.Util;
-
-/**
- *
- * @author Thomas Wuerthinger
- *
+/** Some basic checking of the stack trace produced after a StackOverflowError.
+ * @author Paul Caprioli
+ * @Harness: java
+ * @Runs: 0 = 0;
  */
-public class BiasedLocking {
+public class Catch_StackOverflowError_03 {
 
-    public static BiasedLockingCounters counters() {
-        return Util.nonFatalUnimplemented(null);
+    private static void recurseA() {
+        recurseB();
     }
 
+    private static void recurseB() {
+        recurseA();
+    }
+
+    public static int test(int ignore) {
+        try {
+            recurseA();
+        } catch (StackOverflowError stackOverflowError) {
+            // Check that a method does not appear to call itself in the stack trace:
+            StackTraceElement[] elements = stackOverflowError.getStackTrace();
+            String lastMethodName = "";
+            for (StackTraceElement element : elements) {
+                String methodName = element.getMethodName();
+                if (lastMethodName.equals(methodName)) {
+                    stackOverflowError.printStackTrace();
+                    return 1;
+                }
+                lastMethodName = methodName;
+            }
+        }
+        return 0;
+    }
 }

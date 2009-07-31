@@ -1165,13 +1165,11 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     protected LIROperand osrBufferPointer() {
-        // TODO Auto-generated method stub
-        return null;
+        return Util.nonFatalUnimplemented(null);
     }
 
     @Override
     protected LIROperand receiverOpr() {
-        // TODO Auto-generated method stub
         return compilation.frameMap().receiverOpr();
     }
 
@@ -1211,8 +1209,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     protected LIROperand rlockCalleeSaved(BasicType type) {
-        // TODO Auto-generated method stub
-        return null;
+        return Util.nonFatalUnimplemented(null);
     }
 
 }

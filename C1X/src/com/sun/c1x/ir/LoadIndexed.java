@@ -53,7 +53,7 @@ public class LoadIndexed extends AccessIndexed {
         if (arrayType == null) {
             return null;
         }
-        return arrayType.elementType();
+        return arrayType.componentType();
     }
 
     /**

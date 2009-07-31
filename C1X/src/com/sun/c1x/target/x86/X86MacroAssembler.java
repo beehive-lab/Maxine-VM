@@ -52,7 +52,6 @@ public class X86MacroAssembler extends X86Assembler {
 
     public X86MacroAssembler(C1XCompilation compilation) {
         super(compilation);
-        // TODO Auto-generated constructor stub
 
         rscratch1 = X86FrameMap.rscratch1(compilation.target.arch);
         wordSize = compilation.target.arch.wordSize;
@@ -1648,8 +1647,8 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void getThread(Register javaThread) {
-        // TODO Auto-generated method stub
         // Platform-specific! Solaris / Windows / Linux
+        Util.nonFatalUnimplemented();
     }
 
     void shlptr(Register dst, int imm8) {

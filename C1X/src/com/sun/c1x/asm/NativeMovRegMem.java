@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.asm;
 
+import com.sun.c1x.util.Util;
 
 /**
  * The <code>NativeMovRegMem</code> class definition.
@@ -31,15 +32,14 @@ package com.sun.c1x.asm;
 public class NativeMovRegMem {
 
     public static NativeMovRegMem nativeMoveRegMemAt(int i) {
-        return null; // TODO
+        return Util.nonFatalUnimplemented(null);
     }
 
     /**
      * @param fieldOffset
      */
     public void setOffset(int fieldOffset) {
-        // TODO Auto-generated method stub
-
+        Util.nonFatalUnimplemented();
     }
 
 }

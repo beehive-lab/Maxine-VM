@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.debug;
 
+import com.sun.c1x.util.Util;
+
 /**
  * A collection of static methods for printing debug and informational output to a global {@link LogStream}.
  *
@@ -150,7 +152,6 @@ public class TTY {
     }
 
     public static void fillTo(int i) {
-        // TODO Auto-generated method stub
-
+        Util.nonFatalUnimplemented();
     }
 }
