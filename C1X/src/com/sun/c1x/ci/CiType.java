@@ -141,10 +141,10 @@ public interface CiType {
     boolean isInstance(Object obj);
 
     /**
-     * For array types, gets the type of the elements.
-     * @return the element type of this array type
+     * For array types, gets the type of the components.
+     * @return the component type of this array type
      */
-    CiType elementType();
+    CiType componentType();
 
     /**
      * Attempts to get an exact type for this type. Final classes,
@@ -194,4 +194,5 @@ public interface CiType {
     Object encoding();
 
     CiConstant getStaticContainer();
+
 }

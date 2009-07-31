@@ -312,7 +312,6 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     }
 
     private final GripVerifier gripVerifier = new GripVerifier();
-
     private final SequentialHeapRootsScanner heapRootsVerifier = new SequentialHeapRootsScanner(gripVerifier);
 
     private void verifyHeap() {

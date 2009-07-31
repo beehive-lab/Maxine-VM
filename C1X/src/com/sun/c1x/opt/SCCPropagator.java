@@ -18,19 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.asm;
-
-import com.sun.c1x.util.Util;
+package com.sun.c1x.opt;
 
 /**
+ * The <code>SCCPropagator</code> class implements sparse conditional constant propagation.
+ * While most canonicalization opportunities are revealed and exploited during graph construction
+ * in SSA form, some opportunities can be missed, and still more may be created by later optimizations.
+ * This class implements a classic iterative data-flow analysis to discover all canonicalization
+ * opportunities.
  *
- * @author Thomas Wuerthinger
- *
+ * @author Ben L. Titzer
  */
-public class BiasedLocking {
-
-    public static BiasedLockingCounters counters() {
-        return Util.nonFatalUnimplemented(null);
-    }
-
+public class SCCPropagator {
 }

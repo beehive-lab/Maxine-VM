@@ -70,6 +70,34 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void test_bytecode_BC_aaload_1() {
+        JavaTesterRunScheme.begin("test.bytecode.BC_aaload_1");
+        String runString = null;
+        try {
+        // test(0) == null
+            runString = "test(0)";
+            if (null != test.bytecode.BC_aaload_1.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == null
+            runString = "test(1)";
+            if (null != test.bytecode.BC_aaload_1.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == 
+            runString = "test(2)";
+            if (!"".equals(test.bytecode.BC_aaload_1.test(2))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void test_bytecode_BC_aastore() {
         JavaTesterRunScheme.begin("test.bytecode.BC_aastore");
         String runString = null;
@@ -270,9 +298,15 @@ public class JavaTesterTests {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 42
+        // test(4) == 5
             runString = "test(4)";
-            if (42 != test.bytecode.BC_arraylength.test(4)) {
+            if (5 != test.bytecode.BC_arraylength.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(5) == 42
+            runString = "test(5)";
+            if (42 != test.bytecode.BC_arraylength.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
