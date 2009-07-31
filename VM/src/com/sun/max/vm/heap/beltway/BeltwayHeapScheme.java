@@ -406,7 +406,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
         }
     };
 
-    private void refillTLAB(Size tlabSize, Pointer enabledVmThreadLocals) {
+    private void allocateAndRefillTLABl(Pointer enabledVmThreadLocals, Size tlabSize) {
         Pointer tlab = tlabAllocationBelt.allocate(tlabSize);
         // FIXME: we should verify that the tlab was successfully allocated here -- we may run out of space at this stage.
         if (MaxineVM.isDebug()) {
@@ -433,7 +433,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             }
             // Allocate an initial TLAB and a refill policy. For simplicity, this one is allocated from the TLAB (see comment below).
             final Size tlabSize = initialTlabSize();
-            refillTLAB(enabledVmThreadLocals, tlabSize);
+            allocateAndRefillTLABl(enabledVmThreadLocals, tlabSize);
             // Let's do a bit of dirty meta-circularity. The TLAB is refilled, and no-one except the current thread can use it.
             // So the tlab allocation is going to succeed here
             TLABRefillPolicy.setForCurrentThread(enabledVmThreadLocals, new SimpleTLABRefillPolicy(tlabSize));
@@ -441,7 +441,8 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             // request is larger than the TLAB size. However, this second call will succeed and allocate outside of the tlab.
             return tlabAllocate(size);
         }
-        if (size.greaterThan(refillPolicy.nextTlabSize())) {
+        final Size nextTLABSize = refillPolicy.nextTlabSize();
+        if (size.greaterThan(nextTLABSize)) {
             // This couldn't be allocated in a TLAB, so go directly to direct allocation routine.
             return tlabAllocationBelt.allocate(size);
         }
@@ -450,16 +451,16 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             // Can actually fit the object in the TLAB.
             final Pointer cell = DebugHeap.adjustForDebugTag(tlabMark);
             setTlabAllocationMark(enabledVmThreadLocals, hardLimit);
-            refillTLAB(enabledVmThreadLocals, refillPolicy.nextTlabSize());
+            allocateAndRefillTLABl(enabledVmThreadLocals, nextTLABSize);
             return cell;
         }
 
         if (!refillPolicy.shouldRefill(size, tlabMark)) {
-            // Size would fit in tlab, but the policy says we shouldn't refill the tlab yet, so allocate directly in the heap.
+            // Size would fit in a new tlab, but the policy says we shouldn't refill the tlab yet, so allocate directly in the heap.
             return tlabAllocationBelt.allocate(size);
         }
         // Refill TLAB and allocate (we know the request can be satisfied with a fresh TLAB and will therefore succeed).
-        refillTLAB(enabledVmThreadLocals, refillPolicy.nextTlabSize());
+        allocateAndRefillTLABl(enabledVmThreadLocals, nextTLABSize);
         return tlabAllocate(size);
     }
 

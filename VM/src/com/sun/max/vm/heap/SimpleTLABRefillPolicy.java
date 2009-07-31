@@ -74,9 +74,15 @@ public class SimpleTLABRefillPolicy extends TLABRefillPolicy {
 
     @Override
     public boolean shouldRefill(Size size, Pointer allocationMark) {
-        if (size.greaterThan(refillThreshold)) {
+        if (size.lessThan(refillThreshold)) {
+            // space the TLAB failed to allocate is smaller than the refill threshold.
+            // We should definitively refill
             return true;
         }
+        // Space left in TLAB is larger than refill ratio. Don't want to refill, unless
+        // we had a number of allocation failures for the same allocation mark.
+        // In that case, let bite the bullet and get a new TLAB.
+
         // FIXME: a tlab global allocation failure counter is probably better...
         if (!lastMark.equals(allocationMark)) {
             lastMark = allocationMark;
