@@ -95,7 +95,7 @@ public final class PrototypeGenerator {
             "Specifies the ABIs scheme for the target");
     private final Option<MaxPackage> runScheme = schemeOption("run", new com.sun.max.vm.run.Package(), RunScheme.class,
             "Specifies the run scheme for the target.");
-    private final Option<Integer> threadsOption = options.newIntegerOption("threads", ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors(),
+    private final Option<Integer> threadsOption = options.newIntegerOption("threads", 1, //ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors(),
             "Specifies the number of threads to be used for parallel compilation.");
 
     private Option<MaxPackage> schemeOption(String name, MaxPackage superPackage, Class cl, String help) {
