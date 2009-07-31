@@ -18,33 +18,50 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.heap.beltway;
+package com.sun.max.vm.heap;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.thread.*;
 
+/**
+ * Scans all GC roots in the VM sequentially. The GC roots scanned by the {@link #run()}
+ * method of this object are the references on the stacks of all active mutator threads as well as
+ * any references {@linkplain MonitorScheme#scanReferences(PointerIndexVisitor) held}
+ * by the monitor scheme in use.
+ *
+ * @author Bernd Mathiske
+ * @author Doug Simon
+ */
+public class SequentialHeapRootsScanner {
 
-public class StacksAndMonitorsScanner {
-    private final PointerVisitor pointerVisitor;
+    private PointerIndexVisitor pointerIndexVisitor;
 
-    /**
-     * A closure for updating thread stacks references.
-     */
-    private final Pointer.Procedure vmThreadLocalsScanner = new Pointer.Procedure(){
-        public void run(Pointer vmThreadLocals) {
-            VmThreadLocal.scanReferences(vmThreadLocals, pointerVisitor);
-        }
-    };
-
-    public StacksAndMonitorsScanner(PointerVisitor pointerVisitor) {
-        this.pointerVisitor = pointerVisitor;
+    public SequentialHeapRootsScanner(PointerIndexVisitor pointerIndexVisitor) {
+        this.pointerIndexVisitor = pointerIndexVisitor;
     }
+
+    public void setPointerIndexVisitor(PointerIndexVisitor pointerIndexVisitor) {
+        this.pointerIndexVisitor = pointerIndexVisitor;
+    }
+
+    final class VmThreadLocalsScanner implements Pointer.Procedure {
+
+        public void run(Pointer vmThreadLocals) {
+            if (Heap.traceGCPhases()) {
+                Log.print("Scanning roots in stack for thread ");
+                Log.printVmThread(VmThread.fromVmThreadLocals(vmThreadLocals), true);
+            }
+            VmThreadLocal.scanReferences(vmThreadLocals, pointerIndexVisitor);
+        }
+    }
+
+    private final VmThreadLocalsScanner vmThreadLocalsScanner = new VmThreadLocalsScanner();
 
     public void run() {
-        // do thread stacks
         VmThreadMap.ACTIVE.forAllVmThreadLocals(null, vmThreadLocalsScanner);
-        // do monitors
-        VMConfiguration.target().monitorScheme().scanReferences(pointerVisitor);
+        VMConfiguration.hostOrTarget().monitorScheme().scanReferences(pointerIndexVisitor);
     }
+
 }

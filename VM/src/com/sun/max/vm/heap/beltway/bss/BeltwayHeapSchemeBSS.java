@@ -33,12 +33,13 @@ import com.sun.max.vm.tele.*;
 /**
  * Heap scheme for a semi-space beltway collector. Use two belts, each allocated half of the total heap space.
  * @author Christos Kotselidis
+ * @author Laurent Daynes
  */
 
 public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
 
     private static int[] DEFAULT_BELT_HEAP_PERCENTAGE = new int[] {50, 50};
-    final  BeltwaySSCollector beltCollectorBSS = new BeltwaySSCollector();
+    private BeltwaySSCollector beltCollectorBSS;
 
     public BeltwayHeapSchemeBSS(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -57,9 +58,8 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
             tlabAllocationBelt = getFromSpace();
             // Watch out: the following create a MemoryRegion array
             InspectableHeapInfo.init(getToSpace(), getFromSpace());
+            beltCollectorBSS = BeltwayConfiguration.parallelScavenging ? new SemiSpaceParCollector() : new BeltwaySSCollector();
         } else if (phase == MaxineVM.Phase.RUNNING) {
-            beltCollectorBSS.setBeltwayHeapScheme(this);
-            beltCollector.setRunnable(beltCollectorBSS);
             heapVerifier.initialize(beltManager.getApplicationHeap(), getToSpace());
             if (Heap.verbose()) {
                 HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "Scavenge");
@@ -79,7 +79,7 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
         if (outOfMemory) {
             return false;
         }
-        collectorThread.execute();
+        collectorThread.execute(beltCollectorBSS);
         if (immediateFreeSpace().greaterEqual(requestedFreeSpace)) {
             return true;
         }
