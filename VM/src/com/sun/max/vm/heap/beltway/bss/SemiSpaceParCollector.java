@@ -31,7 +31,9 @@ import com.sun.max.vm.heap.beltway.*;
  * @author Laurent Daynes.
  */
 public class SemiSpaceParCollector extends BeltwaySSCollector {
-
+    SemiSpaceParCollector() {
+        super("ParBSS");
+    }
     @Override
     protected void evacuateFollowers(Belt fromSpace, Belt toSpace) {
         final BeltwayHeapScheme heapScheme = getBeltwayHeapScheme();

@@ -59,6 +59,10 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
 
     private Runnable procedure = null;
 
+    public BeltwayStopTheWorldDaemon(String name) {
+        super(name);
+    }
+
     public BeltwayStopTheWorldDaemon(String name, Runnable procedure) {
         super(name);
         this.procedure = procedure;

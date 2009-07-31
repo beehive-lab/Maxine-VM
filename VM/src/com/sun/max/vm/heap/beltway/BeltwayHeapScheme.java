@@ -24,9 +24,11 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
+import com.sun.max.sync.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.beltway.profile.*;
 import com.sun.max.vm.monitor.modal.sync.*;
@@ -36,7 +38,7 @@ import com.sun.max.vm.type.*;
 
 /**
  * A heap scheme for beltway collectors.
- * This scheme loosely follows the beltway infrastructure for building copying collector.
+ * This scheme loosely follows the beltway infrastructure for building copying collectors.
  * The main difference with what is described in the original paper is that a belt is made of a single increment (instead of potentially many).
  *
  * The scheme gathers a number of statically allocated objects so as to avoid dynamic allocation during GC
@@ -46,8 +48,15 @@ import com.sun.max.vm.type.*;
  * @author Laurent Daynes
  */
 public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
-
     private static final Verify verifyAction = new VerifyActionImpl();
+
+    /**
+     * Size to reserve at the end of a TLABs to guarantee that a dead object can always be
+     * appended to a TLAB to fill unused space before a TLAB refill.
+     * The headroom is used to compute a soft limit that'll be used as the tlab's top.
+     */
+    @CONSTANT_WHEN_NOT_ZERO
+    private static Size TLAB_HEADROOM;
 
     /**
      * Closure for evacuating object from a belt to another belt in a single-threaded GC.
@@ -77,7 +86,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
 
     protected final BeltwayCardRegion cardRegion = new BeltwayCardRegion();
 
-    private final StacksAndMonitorsScanner stackAndMonitorGripUpdater = new StacksAndMonitorsScanner(pointerVisitorGripUpdater);
+    private final SequentialHeapRootsScanner stackAndMonitorGripUpdater = new SequentialHeapRootsScanner(pointerVisitorGripUpdater);
 
     /**
      * Side table for the heap. Keeps track of the address to the first object in a card to enable
@@ -89,8 +98,10 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
 
     protected BeltwayConfiguration beltwayConfiguration;
     protected BeltManager beltManager;
-    protected BeltwayCollector beltCollector;
-    protected static BeltwayStopTheWorldDaemon collectorThread;
+    /**
+     * The thread running the collector, and coordinating the GC threads when the GC support parallel collection.
+     */
+    protected BlockingServerDaemon collectorThread;
 
 
     public static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError();
@@ -140,8 +151,9 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (MaxineVM.isPrototyping()) {
+            TLAB_HEADROOM = MIN_OBJECT_SIZE.plus(MaxineVM.isDebug() ? Word.size() : 0);
+
             beltwayConfiguration = new BeltwayConfiguration();
-            beltCollector = new BeltwayCollector();
             beltManager = new BeltManager();
             beltManager.createBelts();
 
@@ -165,8 +177,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
                             Platform.target().pageSize));
             BeltwayCardRegion.switchToRegularCardTable(cardRegion.cardTableBase().asPointer());
         } else if (phase == MaxineVM.Phase.STARTING) {
-            //collectorThread =  BeltwayConfiguration.parallelScavenging ? new BeltwayStopTheWorldDaemon("GC", beltCollector) : new StopTheWorldSingleThreadGCDaemon("GC", beltCollector);
-            collectorThread =  new BeltwayStopTheWorldDaemon("GC", beltCollector);
+            collectorThread =  BeltwayConfiguration.parallelScavenging ? new BeltwayStopTheWorldDaemon("GC") : new StopTheWorldGCDaemon("GC");
             collectorThread.start();
         } else if (phase == MaxineVM.Phase.RUNNING) {
             if (BeltwayConfiguration.parallelScavenging) {
@@ -339,7 +350,6 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     }
 
     public final void evacuate(Belt from, Belt to) {
-        cellVisitor.init(from, to);
         to.evacuate(cellVisitor, from);
     }
 
@@ -363,7 +373,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     }
 
     public boolean isGcThread(Thread thread) {
-        return thread instanceof BeltwayStopTheWorldDaemon;
+        return thread == collectorThread;
     }
 
     /**
@@ -374,7 +384,12 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
 
     @Override
     protected  void doBeforeTLABRefill(Pointer tlabAllocationMark, Pointer tlabEnd) {
-        fillWithDeadObject(tlabAllocationMark, tlabEnd);
+        Pointer hardLimit = tlabEnd.plus(TLAB_HEADROOM);
+        if (tlabAllocationMark.greaterEqual(tlabEnd)) {
+            FatalError.check(hardLimit.equals(tlabAllocationMark), "TLAB allocation mark cannot be greater than TLAB End");
+            return;
+        }
+        fillWithDeadObject(tlabAllocationMark, hardLimit);
     }
 
     /**
@@ -392,36 +407,61 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
         }
     };
 
+    private void allocateAndRefillTLABl(Pointer enabledVmThreadLocals, Size tlabSize) {
+        Pointer tlab = tlabAllocationBelt.allocate(tlabSize);
+        // FIXME: we should verify that the tlab was successfully allocated here -- we may run out of space at this stage.
+        if (MaxineVM.isDebug()) {
+            // We have to remove the adjustment that might have been made by DebugHeap. The TLAB isn't a real object.
+            tlab = DebugHeap.undoDebugTagAdjustment(tlab);
+            DebugHeap.writeCellPadding(tlab, tlab.plus(tlabSize));
+        }
+        refillTLAB(enabledVmThreadLocals, tlab, tlabSize.minus(TLAB_HEADROOM));
+    }
+    /**
+     * Handling of TLAB Overflow.
+     */
     @Override
-    protected Pointer handleTLABOverflow(Size size, Pointer allocationMark, Pointer enabledVmThreadLocals) {
+    protected Pointer handleTLABOverflow(Size size, Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabEnd) {
         // Should we refill the TLAB ?
         final TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(enabledVmThreadLocals);
         if (refillPolicy == null) {
             // No policy yet for the current thread. This must be the first time this thread uses a TLAB (it does not have one yet).
-            ProgramError.check(allocationMark.isZero(), "thread must not have a TLAB yet");
+            ProgramError.check(tlabMark.isZero(), "thread must not have a TLAB yet");
             if (!useTLAB()) {
                 // We're not using TLAB. So let's assign the never refill tlab policy.
                 TLABRefillPolicy.setForCurrentThread(enabledVmThreadLocals, NEVER_REFILL_TLAB);
                 return tlabAllocationBelt.allocate(size);
             }
-            // Allocate an initial TLAB and a refill policy. For simplicity, this one is allocated from the TLAB.
-            Size tlabSize = initialTlabSize();
-            // FIXME: may have to remove the debug tag here. Or should we use a specific tlab allocation routine ?
-            refillTLAB(enabledVmThreadLocals, tlabAllocationBelt.allocate(tlabSize), tlabSize);
+            // Allocate an initial TLAB and a refill policy. For simplicity, this one is allocated from the TLAB (see comment below).
+            final Size tlabSize = initialTlabSize();
+            allocateAndRefillTLABl(enabledVmThreadLocals, tlabSize);
             // Let's do a bit of dirty meta-circularity. The TLAB is refilled, and no-one except the current thread can use it.
-            // So the tlab allocation is going to succeed here.
+            // So the tlab allocation is going to succeed here
             TLABRefillPolicy.setForCurrentThread(enabledVmThreadLocals, new SimpleTLABRefillPolicy(tlabSize));
+            // Now, address the initial request. Note that we may recursed down to handleTLABOverflow again here if the
+            // request is larger than the TLAB size. However, this second call will succeed and allocate outside of the tlab.
             return tlabAllocate(size);
-        } else if (size.greaterThan(refillPolicy.nextTlabSize())) {
+        }
+        final Size nextTLABSize = refillPolicy.nextTlabSize();
+        if (size.greaterThan(nextTLABSize)) {
             // This couldn't be allocated in a TLAB, so go directly to direct allocation routine.
             return tlabAllocationBelt.allocate(size);
-        } else if (!refillPolicy.shouldRefill(size, allocationMark)) {
-            // Size would fit in tlab, but the policy says we shouldn't refill the tlab yet, so allocate directly in the heap.
+        }
+        final Pointer hardLimit = tlabEnd.plus(TLAB_HEADROOM);
+        if (tlabMark.plus(size).equals(hardLimit)) {
+            // Can actually fit the object in the TLAB.
+            final Pointer cell = DebugHeap.adjustForDebugTag(tlabMark);
+            setTlabAllocationMark(enabledVmThreadLocals, hardLimit);
+            allocateAndRefillTLABl(enabledVmThreadLocals, nextTLABSize);
+            return cell;
+        }
+
+        if (!refillPolicy.shouldRefill(size, tlabMark)) {
+            // Size would fit in a new tlab, but the policy says we shouldn't refill the tlab yet, so allocate directly in the heap.
             return tlabAllocationBelt.allocate(size);
         }
         // Refill TLAB and allocate (we know the request can be satisfied with a fresh TLAB and will therefore succeed).
-        Size tlabSize = refillPolicy.nextTlabSize();
-        refillTLAB(tlabAllocationBelt.allocate(tlabSize), tlabSize);
+        allocateAndRefillTLABl(enabledVmThreadLocals, nextTLABSize);
         return tlabAllocate(size);
     }
 
