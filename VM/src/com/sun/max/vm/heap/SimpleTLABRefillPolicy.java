@@ -30,7 +30,6 @@ import com.sun.max.unsafe.*;
  * @author Laurent Daynes
  */
 public class SimpleTLABRefillPolicy extends TLABRefillPolicy {
-
     /**
      * Number of allocation failure tolerated per allocation mark.
      * Arbitrarily chosen at the moment. Statistics needed to see if it helps.
@@ -65,7 +64,6 @@ public class SimpleTLABRefillPolicy extends TLABRefillPolicy {
      * Last allocation mark where an allocation failure occurred.
      */
     private Pointer lastMark;
-
 
     public SimpleTLABRefillPolicy(Size initialTLABSize) {
         lastMark = Pointer.zero();

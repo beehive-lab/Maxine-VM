@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.prototype;
 
-import sun.management.*;
-
 import com.sun.max.*;
 import com.sun.max.asm.*;
 import com.sun.max.lang.*;
