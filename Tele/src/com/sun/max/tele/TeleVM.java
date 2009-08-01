@@ -770,14 +770,14 @@ public abstract class TeleVM implements MaxVM {
             // In a debugging build, each object is preceded by an extra tag word
             p = p.minus(Word.size()); // can the tag be accessed?
         }
-        if (!containsInHeap(p) && !containsInCode(p)) {
-            return false;
-        }
-        if (false && isInGC() && containsInDynamicHeap(origin)) {
-            //  Assume that any reference to the dynamic heap is invalid during GC.
-            return false;
-        }
         try {
+            if (!containsInHeap(p) && !containsInCode(p)) {
+                return false;
+            }
+            if (false && isInGC() && containsInDynamicHeap(origin)) {
+                //  Assume that any reference to the dynamic heap is invalid during GC.
+                return false;
+            }
             if (bootImage.vmConfiguration().debugging()) {
                 // Checking is easy in a debugging build; there's a special word preceding each object
                 final Word tag = dataAccess().getWord(cell, 0, -1);
