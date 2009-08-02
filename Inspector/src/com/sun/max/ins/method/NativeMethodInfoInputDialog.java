@@ -20,6 +20,7 @@
  */
 package com.sun.max.ins.method;
 
+import java.awt.*;
 import java.awt.event.*;
 
 import javax.swing.*;
@@ -30,42 +31,51 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.unsafe.*;
 
 /**
+ * Dialog for entering information about areas in native code that are generally
+ * unknown to the VM and Inspector.
  *
  * @author Mick Jordan
- *
+ * @author Michael Van De Vanter
  */
-public abstract class NativeMethodAddressInputDialog extends InspectorDialog {
+public abstract class NativeMethodInfoInputDialog extends InspectorDialog {
 
     private  AddressInputField.Decimal codeLengthInputField;
     private final AddressInputField.Hex addressInputField;
-    private final JTextField titleInputField;
+    private final JTextField descriptionInputField;
 
     private final Size initialCodeSize;
     private final String initialTitle;
 
     private Address codeStart;
     private Size codeSize;
-    private String title;
+    private String description;
 
     public abstract void entered(Address address, Size codeSize, String title);
 
-    public NativeMethodAddressInputDialog(Inspection inspection, Address codeStart, Size initialCodeSize) {
-        super(inspection, "Native Code Address", true);
+    public NativeMethodInfoInputDialog(Inspection inspection, Address codeStart, Size initialCodeSize, String title) {
+        super(inspection, title == null ? "Native Code Description" : title, true);
         this.initialCodeSize = initialCodeSize;
         initialTitle =  defaultTitle(codeStart);
 
-        final JPanel dialogPanel = new InspectorPanel(inspection, new SpringLayout());
-        dialogPanel.add(new TextLabel(inspection, "Address:"));
+        final JPanel dialogPanel = new InspectorPanel(inspection, new BorderLayout());
+
+        final JPanel fieldsPanel = new InspectorPanel(inspection, new SpringLayout());
+
+        final JLabel addressFieldLabel = new JLabel("Address:", JLabel.TRAILING);
+        fieldsPanel.add(addressFieldLabel);
         addressInputField = new AddressInputField.Hex(inspection, codeStart) {
             @Override
             public void update(Address address) {
                 if (isValidInput(address)) {
-                    NativeMethodAddressInputDialog.this.codeStart = address;
+                    NativeMethodInfoInputDialog.this.codeStart = address;
                 }
             }
         };
-        dialogPanel.add(addressInputField);
-        dialogPanel.add(new TextLabel(inspection, "CodeLength:"));
+        addressFieldLabel.setLabelFor(addressInputField);
+        fieldsPanel.add(addressInputField);
+
+        final JLabel lengthFieldLabel = new JLabel("CodeLength:", JLabel.TRAILING);
+        fieldsPanel.add(lengthFieldLabel);
         codeLengthInputField = new AddressInputField.Decimal(inspection, initialCodeSize) {
             @Override
             public void update(Address address) {
@@ -74,19 +84,30 @@ public abstract class NativeMethodAddressInputDialog extends InspectorDialog {
                 }
             }
         };
-        dialogPanel.add(codeLengthInputField);
-        dialogPanel.add(new TextLabel(inspection, "Title:"));
-        titleInputField = new JTextField(initialTitle);
-        dialogPanel.add(titleInputField);
+        codeLengthInputField.setRange(1, 999);
+        lengthFieldLabel.setLabelFor(codeLengthInputField);
+        fieldsPanel.add(codeLengthInputField);
 
-        dialogPanel.add(new JButton(new AbstractAction("Cancel") {
-            public void actionPerformed(ActionEvent e) {
+        final JLabel descriptionFieldLabel = new JLabel("Description:", JLabel.TRAILING);
+        fieldsPanel.add(descriptionFieldLabel);
+        descriptionInputField = new JTextField(initialTitle);
+        descriptionFieldLabel.setLabelFor(descriptionInputField);
+        fieldsPanel.add(descriptionInputField);
+
+        SpringUtilities.makeCompactGrid(fieldsPanel, 3, 2, 6, 6, 6, 6);
+
+        dialogPanel.add(fieldsPanel, BorderLayout.NORTH);
+
+        final JPanel buttonPanel = new InspectorPanel(inspection);
+        buttonPanel.add(new JButton(new AbstractAction("Cancel") {
+            public void actionPerformed(ActionEvent event) {
                 dispose();
             }
         }));
-        dialogPanel.add(new JButton(new EnterAction()));
+        buttonPanel.add(new JButton(new EnterAction()));
 
-        SpringUtilities.makeGrid(dialogPanel, 4, 2, 10, 10, 20, 20);
+        dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
+
         setContentPane(dialogPanel);
         pack();
         inspection.gui().moveToMiddle(this);
@@ -110,12 +131,12 @@ public abstract class NativeMethodAddressInputDialog extends InspectorDialog {
         protected void procedure() {
             addressInputField.attemptUpdate();
             codeLengthInputField.attemptUpdate();
-            title = titleInputField.getText();
-            if (title.equals(initialTitle)) {
-                title = defaultTitle(codeStart);
+            description = descriptionInputField.getText();
+            if (description.equals(initialTitle)) {
+                description = defaultTitle(codeStart);
             }
             dispose();
-            entered(codeStart, codeSize, title);
+            entered(codeStart, codeSize, description);
         }
     }
 
