@@ -20,11 +20,11 @@
  */
 package com.sun.max.ins.gui;
 
+import java.awt.*;
 import java.awt.event.*;
 
 import javax.swing.*;
 
-import com.sun.max.gui.*;
 import com.sun.max.ins.*;
 import com.sun.max.unsafe.*;
 
@@ -81,8 +81,10 @@ public abstract class AddressInputDialog extends InspectorDialog {
             this.actionName = actionName;
         }
 
-        final JPanel dialogPanel = new InspectorPanel(inspection, new SpringLayout());
-        dialogPanel.add(new TextLabel(inspection(), "Address:"));
+        final JPanel dialogPanel = new InspectorPanel(inspection, new BorderLayout());
+
+        final JPanel upperPanel = new InspectorPanel(inspection);
+        upperPanel.add(new TextLabel(inspection(), "Address:    0x"));
         addressInputField = new AddressInputField.Hex(inspection, initialAddress) {
             @Override
             public void update(Address address) {
@@ -95,16 +97,18 @@ public abstract class AddressInputDialog extends InspectorDialog {
                 }
             }
         };
-        dialogPanel.add(addressInputField);
+        upperPanel.add(addressInputField);
+        dialogPanel.add(upperPanel, BorderLayout.NORTH);
 
-        dialogPanel.add(new JButton(new AbstractAction("Cancel") {
+        final JPanel lowerPanel = new InspectorPanel(inspection);
+        lowerPanel.add(new JButton(new AbstractAction("Cancel") {
             public void actionPerformed(ActionEvent event) {
                 dispose();
             }
         }));
-        dialogPanel.add(new JButton(new EnterAction()));
+        lowerPanel.add(new JButton(new EnterAction()));
+        dialogPanel.add(lowerPanel, BorderLayout.SOUTH);
 
-        SpringUtilities.makeGrid(dialogPanel, 2, 2, 10, 10, 20, 20);
         setContentPane(dialogPanel);
         pack();
         inspection.gui().moveToMiddle(this);
