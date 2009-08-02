@@ -116,6 +116,42 @@ public final class Strings {
         return spaces(length - s.length()) + s;
     }
 
+    private static final char[] ZEROES;
+    static {
+        ZEROES = new char[200];
+        java.util.Arrays.fill(ZEROES, '0');
+    }
+
+    public static String zeroes(int nZeroes) {
+        if (nZeroes <= 0) {
+            return "";
+        }
+        if (nZeroes <= ZEROES.length) {
+            return new String(ZEROES, 0, nZeroes);
+        }
+        return times(' ', nZeroes);
+    }
+
+    /**
+     * @return The String {@code s} padded out to {@code length}, if needed, by appending zero characters
+     */
+    public static String padLengthWithZeroes(String s, int length) {
+        if (s.length() >= length) {
+            return s;
+        }
+        return s + zeroes(length - s.length());
+    }
+
+    /**
+     * @return The string {@code s} padded out to {@code length}, if needed, by prepending zero characters
+     */
+    public static String padLengthWithZeroes(int length, String s) {
+        if (s.length() >= length) {
+            return s;
+        }
+        return zeroes(length - s.length()) + s;
+    }
+
     /**
      * Finds the index of the first non-escaped instance of {@code c} in {@code s} starting at {@code fromIndex}.
      * The search takes into account that the escape char (i.e. {@code '\'}) may itself be escaped.
