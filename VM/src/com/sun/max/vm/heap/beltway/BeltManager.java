@@ -38,7 +38,7 @@ public final class BeltManager {
     private static final int MAX_INITIAL_BELTS = 5;
 
     // The List of Belts used
-    private static final List<Belt> belts = new ArrayList<Belt>();
+    private final List<Belt> belts = new ArrayList<Belt>();
 
     private Belt applicationHeap;
 
