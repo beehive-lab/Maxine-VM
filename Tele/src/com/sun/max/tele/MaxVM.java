@@ -481,7 +481,7 @@ public interface MaxVM {
      *
      * @param codeStart starting address of the code in VM memory
      * @param codeSize presumed size of the code
-     * @param name a name to be assigned to the block of code; a simple address-based name used if null.
+     * @param name an optional name to be assigned to the block of code; a simple address-based name used if null.
      * @return a newly created TeleNativeTargetRoutine
      */
     TeleNativeTargetRoutine createTeleNativeTargetRoutine(Address codeStart, Size codeSize, String name);
@@ -620,8 +620,9 @@ public interface MaxVM {
      *
      * @param address a code address in the VM.
      * @return a possibly new, non-transient, target code breakpoint at the address.
+     * @throws MaxVMException when the VM fails to create the breakpoint.
      */
-    TeleTargetBreakpoint makeTargetBreakpoint(Address address);
+    TeleTargetBreakpoint makeMaxTargetBreakpoint(Address address) throws MaxVMException;
 
     /**
      * Finds a target code breakpoint in the VM.
