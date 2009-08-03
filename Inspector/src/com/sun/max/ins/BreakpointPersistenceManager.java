@@ -25,6 +25,7 @@ import java.util.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -88,6 +89,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
     private static final String ADDRESS_KEY = "address";
     private static final String CONDITION_KEY = "condition";
     private static final String COUNT_KEY = "count";
+    private static final String DESCRIPTION_KEY = "description";
     private static final String ENABLED_KEY = "enabled";
     private static final String METHOD_HOLDER_KEY = "method.holder";
     private static final String METHOD_NAME_KEY = "method.name";
@@ -111,6 +113,9 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
             if (condition != null) {
                 settings.save(prefix + "." + CONDITION_KEY, condition.toString());
             }
+            if (breakpoint.getDescription() != null) {
+                settings.save(prefix + "." + DESCRIPTION_KEY, breakpoint.getDescription());
+            }
         }
     }
 
@@ -122,15 +127,19 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
             final Address address = inspection.maxVM().bootImageStart().plus(bootImageOffset);
             final boolean enabled = settings.get(this, prefix + "." + ENABLED_KEY, OptionTypes.BOOLEAN_TYPE, null);
             final String condition = settings.get(this, prefix + "." + CONDITION_KEY, OptionTypes.STRING_TYPE, null);
+            final String description = settings.get(this, prefix + "." + DESCRIPTION_KEY, OptionTypes.STRING_TYPE, null);
             if (inspection.maxVM().containsInCode(address)) {
                 try {
-                    final TeleTargetBreakpoint teleBreakpoint = inspection.maxVM().makeTargetBreakpoint(address);
+                    final TeleTargetBreakpoint teleBreakpoint = inspection.maxVM().makeMaxTargetBreakpoint(address);
                     if (condition != null) {
                         teleBreakpoint.setCondition(condition);
                     }
+                    teleBreakpoint.setDescription(description);
                     teleBreakpoint.setEnabled(enabled);
                 } catch (BreakpointCondition.ExpressionException expressionException) {
                     inspection.gui().errorMessage(String.format("Error parsing saved breakpoint condition:%n  expression: %s%n       error: " + condition, expressionException.getMessage()), "Breakpoint Condition Error");
+                } catch (MaxVMException maxVMException) {
+                    ProgramWarning.message(maxVMException.getMessage());
                 }
             } else {
                 ProgramWarning.message("dropped former breakpoint in runtime-generated code at address: " + address);

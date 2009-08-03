@@ -138,7 +138,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         final JButton viewOptionsButton = new InspectorButton(inspection(), new AbstractAction("View...") {
             public void actionPerformed(ActionEvent actionEvent) {
                 final TargetCodeViewerPreferences globalPreferences = TargetCodeViewerPreferences.globalPreferences(inspection());
-                new TableColumnVisibilityPreferences.Dialog<TargetCodeColumnKind>(inspection(), "TargetCode View Options", columnModel.preferences(), globalPreferences);
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<TargetCodeColumnKind>(inspection(), "TargetCode View Options", columnModel.preferences(), globalPreferences);
             }
         });
         viewOptionsButton.setToolTipText("Target code view options");

@@ -170,6 +170,7 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
         menu.add(actions.removeAllBreakpoints());
         menu.addSeparator();
         menu.add(actions.toggleTargetCodeBreakpoint());
+        menu.add(actions.setCustomTargetCodeBreakpoint());
         menu.add(actions.setTargetCodeLabelBreakpoints());
         menu.add(actions.removeTargetCodeLabelBreakpoints());
         menu.add(actions.removeAllTargetCodeBreakpoints());
