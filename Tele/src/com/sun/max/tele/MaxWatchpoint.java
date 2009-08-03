@@ -105,12 +105,16 @@ public interface MaxWatchpoint extends MemoryRegion {
     TeleObject getTeleObject();
 
     /**
-     * When a watchpoint corresponding to an object which got collected by the GC becomes
-     * a RegionWatchpoint, this flag is set to signal in the Inspector the event.
+     * Sets the update mechanism of relocatable watchpoints.
+     * true == eager, false == lazy
      * @param correspondingObjectGotCollected
      */
     void setEagerRelocationUpdate(boolean refObjectCollected);
 
+    /**
+     * Checks if eager relocation update mechanism is turned on for a given watchpoint.
+     * @return true if eager relocation update activated
+     */
     boolean isEagerRelocationUpdateSet();
 
     /**

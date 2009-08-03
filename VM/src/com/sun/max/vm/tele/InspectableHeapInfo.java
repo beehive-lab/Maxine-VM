@@ -24,6 +24,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * Makes critical state information about the object heap
@@ -59,7 +60,7 @@ public final class InspectableHeapInfo {
      * Inspectable description the memory allocated for the Inspector's root table.
      */
     @INSPECTED
-    public static RuntimeMemoryRegion rootsRegion = new RuntimeMemoryRegion("TeleRoots");
+    public static RuntimeMemoryRegion rootsRegion = new RuntimeMemoryRegion("TeleRoots"); // TODO: remove allocation
 
     /**
      * Inspectable location of the memory allocated for the Inspector's root table.
@@ -92,15 +93,27 @@ public final class InspectableHeapInfo {
     @INSPECTED
     private static int cardTableRatio = 100;
 
+    /**
+     * Number of entries in the card table.
+     */
     @INSPECTED
     private static int totalCardTableEntries = 0;
 
+    /**
+     * Card table memory.
+     */
     @INSPECTED
     private static Pointer cardTablePointer = Pointer.zero();
 
+    /**
+     * Address of object before compaction.
+     */
     @INSPECTED
     public static Address oldAddress;
 
+    /**
+     * Address of object after compaction.
+     */
     @INSPECTED
     public static Address newAddress;
 
@@ -132,6 +145,10 @@ public final class InspectableHeapInfo {
         rootsRegion.setSize(size);
     }
 
+    /**
+     * Initialize the card table.
+     * @param memoryRegions
+     */
     private static void initCardTable(MemoryRegion[] memoryRegions) {
         if (cardTablePointer.equals(Pointer.zero())) {
             for (MemoryRegion memoryRegion : memoryRegions) {
@@ -141,6 +158,11 @@ public final class InspectableHeapInfo {
         }
     }
 
+    /**
+     * Calculates the number of slots in the card table.
+     * @param memoryRegion
+     * @return number of card table slots
+     */
     private static int calculateNumberOfCardTableEntries(MemoryRegion memoryRegion) {
         int nrOfWords = memoryRegion.size().toInt() / Word.size();
         int cardTableEntries = nrOfWords / cardTableRatio;
@@ -150,38 +172,136 @@ public final class InspectableHeapInfo {
         return cardTableEntries;
     }
 
+    /**
+     * Touches as field in the card table at the corresponding address.
+     * @param address
+     * @return field
+     */
     public static Word touchCardTableField(Address address) {
-        return touchCardTableField(address, memoryRegions);
+        return touchCardTableField(address, InspectableHeapInfo.memoryRegions);
     }
 
+    /**
+     * Touches as field in the card table at the corresponding address.
+     * @param address
+     * @param memoryRegions
+     * @return field
+     */
     public static Word touchCardTableField(Address address, MemoryRegion... memoryRegions) {
         int index;
         index = getCardTableIndex(address, memoryRegions);
-
-        if (index != -1) {
-            return cardTablePointer.getWord(index);
+        if (index == -1) {
+            FatalError.unexpected("Card table index invalid");
         }
-        return Word.zero();
+
+        return cardTablePointer.getWord(index);
     }
 
+    /**
+     * Returns the card table slot number (index) to a corresponding address.
+     * @param address
+     * @param memoryRegions
+     * @return card table index
+     */
     public static int getCardTableIndex(Address address, MemoryRegion... memoryRegions) {
         int cardTableEntry = 0;
-        for (MemoryRegion memoryRegion : memoryRegions) {
-            if (memoryRegion.contains(address)) {
-                final int offset = address.minus(memoryRegion.start()).toInt() / Word.size();
-                return cardTableEntry + calculateIndexInMemoryRegion(offset);
+
+        // used for sorting algorithm
+        Address last = Address.zero();
+        Address current = Address.zero();
+        int i = 0;
+        int pos = 0;
+
+        //sort memory regions without allocation
+        for (int j = 0; j < memoryRegions.length; j++) {
+            for (MemoryRegion memoryRegion : memoryRegions) {
+                if (memoryRegion.start().greaterThan(last) && (current.greaterThan(memoryRegion.start()) || current.equals(Address.zero()))) {
+                    current = memoryRegion.start();
+                    pos = i;
+                }
+                i++;
             }
-            cardTableEntry += calculateNumberOfCardTableEntries(memoryRegion);
+
+            // do work
+            if (memoryRegions[pos].contains(address)) {
+                final int offset = address.minus(memoryRegions[pos].start()).toInt();
+                return cardTableEntry + calculateCardTableIndexInMemoryRegion(offset);
+            }
+            cardTableEntry += calculateNumberOfCardTableEntries(memoryRegions[pos]);
+
+            // reset sorting algorithm
+            i = 0;
+            last = current;
+            current = Address.zero();
         }
         return -1;
     }
 
-    private static int calculateIndexInMemoryRegion(int offset) {
-        int index = offset / cardTableRatio;
-        if (offset % cardTableRatio != 0) {
-            index++;
+    /**
+     * Get start of memory region covered by index.
+     * @param index
+     * @param memoryRegions
+     * @return Memory region start address
+     */
+    public static Address getStartAddressOfMemoryRange(int index, MemoryRegion... memoryRegions) {
+        int cardTableEntries = 0;
+        int tmpCardTableEntries = 0;
+
+        // used for sorting algorithm
+        Address last = Address.zero();
+        Address current = Address.zero();
+        int i = 0;
+        int pos = 0;
+
+        //sort memory regions without allocation
+        for (int j = 0; j < memoryRegions.length; j++) {
+            for (MemoryRegion memoryRegion : memoryRegions) {
+                if (memoryRegion.start().greaterThan(last) && (current.greaterThan(memoryRegion.start()) || current.equals(Address.zero()))) {
+                    current = memoryRegion.start();
+                    pos = i;
+                }
+                i++;
+            }
+
+            // do work
+            cardTableEntries += calculateNumberOfCardTableEntries(memoryRegions[pos]);
+            if (cardTableEntries >= index + 1) {
+                int offset;
+                if (tmpCardTableEntries == 0) {
+                    offset = index;
+                } else {
+                    offset = index - tmpCardTableEntries;
+                }
+                return memoryRegions[pos].start().plus(offset * cardTableRatio * Word.size());
+            }
+            tmpCardTableEntries = cardTableEntries;
+
+            // reset sorting algorithm
+            i = 0;
+            last = current;
+            current = Address.zero();
         }
-        return index;
+        return Address.zero();
+    }
+
+    /**
+     * Get end of memory region covered by index.
+     * @param index
+     * @param memoryRegions
+     * @return Memory region start address
+     */
+    public static Address getEndAddressOfMemoryRange(int index, MemoryRegion... memoryRegions) {
+        Address address = getStartAddressOfMemoryRange(index, memoryRegions);
+        return address.plus(cardTableRatio * Word.size() - 1);
+    }
+
+    /**
+     * Calculates the card table index to an offset.
+     * @param offset
+     * @return index
+     */
+    private static int calculateCardTableIndexInMemoryRegion(int offset) {
+        return offset / cardTableRatio / Word.size();
     }
 
     /**
