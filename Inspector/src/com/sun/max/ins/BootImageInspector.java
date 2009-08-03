@@ -97,7 +97,7 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
         return new InspectorAction(inspection(), "View Options") {
             @Override
             public void procedure() {
-                new TableColumnVisibilityPreferences.Dialog<BootImageColumnKind>(inspection(), "Boot Image View Options", viewPreferences);
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<BootImageColumnKind>(inspection(), "Boot Image View Options", viewPreferences);
             }
         };
     }

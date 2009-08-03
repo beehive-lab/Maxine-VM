@@ -29,26 +29,42 @@ import com.sun.max.ins.*;
 import com.sun.max.unsafe.*;
 
 /**
+ * A dialog that permits entering of a hex-specified memory address.
+ *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
 public abstract class AddressInputDialog extends InspectorDialog {
 
+    private final AddressInputField.Hex addressInputField;
+    private final String actionButtonTitle;
+
+    // Most recently entered/updated address from the input field, if valid; null if not valid.
+    private Address address;
+
+    /**
+     * Notifies subclasses that the dialog is closing with a valid address entered.
+     *
+     * @param address valid address entered.
+     */
     public abstract void entered(Address address);
 
-    private final String actionName;
-
-    private final AddressInputField.Hex addressInputField;
-
+    /**
+     * Action that attempts to close the dialog; fails if input value not valid.
+     */
     private final class EnterAction extends InspectorAction {
         private EnterAction() {
-            super(inspection(), actionName);
+            super(inspection(), actionButtonTitle);
         }
 
         @Override
         protected void procedure() {
             try {
                 addressInputField.attemptUpdate();
+                if (AddressInputDialog.this.address != null) {
+                    dispose();
+                    entered(AddressInputDialog.this.address);
+                }
             } catch (NumberFormatException numberFormatException) {
                 gui().errorMessage("Badly formed address: " + numberFormatException.getMessage());
             }
@@ -56,58 +72,80 @@ public abstract class AddressInputDialog extends InspectorDialog {
     }
 
     /**
-     * Validates a given address.
+     * Subclasses override to validate an entered address, above and beyond being a valid hex number.
      *
      * @param address an address to validate
      * @return {@code null} is {@code address} is valid, an error message if not
      */
-    public String validateInput(Address address) {
+    protected String validateInput(Address address) {
         return null;
     }
 
+    /**
+     * Creates and displays an interactive dialog that allows entering of a hex-specified memory address.
+     *
+     * @param inspection
+     * @param initialAddress default value for the address
+     */
     public AddressInputDialog(Inspection inspection, Address initialAddress) {
         this(inspection, initialAddress, "Address", null);
     }
 
-    public AddressInputDialog(Inspection inspection, Address initialAddress, String title) {
-        this(inspection, initialAddress, title, null);
+    /**
+     * Creates and displays an interactive dialog that allows entering of a hex-specified memory address.
+     *
+     * @param inspection
+     * @param initialAddress default value for the address
+     * @param frameTitle optional title to appear in the window frame of the dialog
+     */
+    public AddressInputDialog(Inspection inspection, Address initialAddress, String frameTitle) {
+        this(inspection, initialAddress, frameTitle, null);
     }
 
-    public AddressInputDialog(Inspection inspection, Address initialAddress, String title, String actionName) {
-        super(inspection, title, true);
-        if (actionName == null) {
-            this.actionName = "OK";
+    /**
+     * Creates and displays an interactive dialog that allows entering of a hex-specified memory address.
+     *
+     * @param inspection
+     * @param address default value for the address
+     * @param frameTitle optional title to appear in the window frame of the dialog
+     * @param actionButtonTitle  optional text to appear on the button that triggers action; if null, button text will be "OK".
+     */
+    public AddressInputDialog(Inspection inspection, Address address, String frameTitle, String actionButtonTitle) {
+        super(inspection, frameTitle, true);
+        this.address = address;
+        if (actionButtonTitle == null) {
+            this.actionButtonTitle = "OK";
         } else {
-            this.actionName = actionName;
+            this.actionButtonTitle = actionButtonTitle;
         }
 
         final JPanel dialogPanel = new InspectorPanel(inspection, new BorderLayout());
 
-        final JPanel upperPanel = new InspectorPanel(inspection);
-        upperPanel.add(new TextLabel(inspection(), "Address:    0x"));
-        addressInputField = new AddressInputField.Hex(inspection, initialAddress) {
+        final JPanel fieldPanel = new InspectorPanel(inspection);
+        fieldPanel.add(new TextLabel(inspection(), "Address:    0x"));
+        addressInputField = new AddressInputField.Hex(inspection, address) {
             @Override
             public void update(Address address) {
                 final String errorMessage = validateInput(address);
                 if (errorMessage == null) {
-                    dispose();
-                    entered(address);
+                    AddressInputDialog.this.address = address;
                 } else {
+                    AddressInputDialog.this.address = null;
                     JOptionPane.showMessageDialog(dialogPanel, errorMessage, "Invalid Address", JOptionPane.ERROR_MESSAGE);
                 }
             }
         };
-        upperPanel.add(addressInputField);
-        dialogPanel.add(upperPanel, BorderLayout.NORTH);
+        fieldPanel.add(addressInputField);
+        dialogPanel.add(fieldPanel, BorderLayout.NORTH);
 
-        final JPanel lowerPanel = new InspectorPanel(inspection);
-        lowerPanel.add(new JButton(new AbstractAction("Cancel") {
+        final JPanel buttonPanel = new InspectorPanel(inspection);
+        buttonPanel.add(new JButton(new AbstractAction("Cancel") {
             public void actionPerformed(ActionEvent event) {
                 dispose();
             }
         }));
-        lowerPanel.add(new JButton(new EnterAction()));
-        dialogPanel.add(lowerPanel, BorderLayout.SOUTH);
+        buttonPanel.add(new JButton(new EnterAction()));
+        dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         setContentPane(dialogPanel);
         pack();

@@ -38,11 +38,11 @@ public abstract class InspectorDialog extends JDialog implements InspectionHolde
     /**
      * Creates an instance of {@link JDialog}, specialized for use in the Maxine Inspector.
      *
-     * @param title title of the dialog, appears in frame
+     * @param frameTitle title of the dialog, appears in frame
      * @param modal should the dialog be modal, i.e. capture all user input when visible?
      */
-    protected InspectorDialog(Inspection inspection, String title, boolean modal) {
-        super(inspection.gui().frame(), title, modal);
+    protected InspectorDialog(Inspection inspection, String frameTitle, boolean modal) {
+        super(inspection.gui().frame(), frameTitle, modal);
         this.inspection = inspection;
         setBackground(inspection.style().defaultBackgroundColor());
     }

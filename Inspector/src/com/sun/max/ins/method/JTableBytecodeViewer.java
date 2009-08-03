@@ -138,7 +138,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         final JButton viewOptionsButton = new InspectorButton(inspection, new AbstractAction("View...") {
             public void actionPerformed(ActionEvent actionEvent) {
                 final BytecodeViewerPreferences globalPreferences = BytecodeViewerPreferences.globalPreferences(inspection());
-                new TableColumnVisibilityPreferences.Dialog<BytecodeColumnKind>(inspection(), "Bytecode View Options", columnModel.preferences(), globalPreferences);
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<BytecodeColumnKind>(inspection(), "Bytecode View Options", columnModel.preferences(), globalPreferences);
             }
         });
         viewOptionsButton.setToolTipText("Bytecode view options");
