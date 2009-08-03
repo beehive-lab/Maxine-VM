@@ -512,12 +512,7 @@ public class StackInspector extends Inspector {
                 final WordValueLabel slotValue = new WordValueLabel(inspection(), WordValueLabel.ValueMode.INTEGER_REGISTER, this) {
                     @Override
                     public Value fetchValue() {
-                        // TODO (mlvdv)  generalize this, and catch at {@link WordValueLabel}
-                        try {
-                            return new WordValue(maxVM().readWord(slotBase, offset));
-                        } catch (DataIOError e) {
-                            return VoidValue.VOID;
-                        }
+                        return new WordValue(maxVM().readWord(slotBase, offset));
                     }
                 };
                 slotsPanel.add(slotValue);
