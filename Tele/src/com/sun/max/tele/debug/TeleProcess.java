@@ -120,11 +120,9 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                 return true;
             } else if (teleVM().isInGC()) {
                 // Handle watchpoint triggered in card table
-                Address objectOldAddress = teleVM().getObjectOldAddress();
-                if (teleVM().isCardTableAddress(objectOldAddress)) {
-                    //System.out.println("OLD ADDRESS " + teleVM().getObjectOldAddress().toHexString());
-                    //System.out.println("NEW ADDRESS " + teleVM().getObjectNewAddress().toHexString());
-                    watchpointFactory().relocateCardTableWatchpoint(objectOldAddress, teleVM().getObjectNewAddress());
+                if (teleVM().isCardTableAddress(triggeredWatchpointAddress)) {
+                    Address objectOldAddress = teleVM().getObjectOldAddress();
+                    return watchpointFactory().relocateCardTableWatchpoint(objectOldAddress, teleVM().getObjectNewAddress());
                 }
 
                 //Word value = thread.threadLocalsFor(Safepoint.State.ENABLED).getVmThreadLocal(VmThreadLocal.OLD_OBJECT_ADDRESS.index).getVariableWord();
@@ -142,7 +140,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
 
         /**
          * Special handling of a breakpoint, if needed.
-         * @return true if it is a conditional breakpoint whose condition is unsatified, and execution should be resumed.
+         * @return true if it is a conditional breakpoint whose condition is unsatisfied, and execution should be resumed.
          * @throws ProcessTerminatedException
          */
         private boolean handleBreakpoint(TeleNativeThread thread, TeleTargetBreakpoint breakpoint) throws ProcessTerminatedException {

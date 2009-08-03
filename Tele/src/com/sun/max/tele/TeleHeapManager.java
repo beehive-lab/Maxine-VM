@@ -73,6 +73,10 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
      */
     private TeleRuntimeMemoryRegion[] teleHeapRegions = new TeleRuntimeMemoryRegion[0];
 
+    private Word[] teleRuntimeMemoryRegionRegistration = null;
+
+    private Pointer teleRuntimeMemoryRegionRegistrationPointer = Pointer.zero();
+
     private Pointer cardTablePointer = Pointer.zero();
 
     private int cardTableSize;
@@ -115,9 +119,11 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
         final int teleCardTableOffset = teleVM().fields().InspectableHeapInfo_cardTablePointer.fieldActor().offset();
         final int teleObjectOldOffset = teleVM().fields().InspectableHeapInfo_oldAddress.fieldActor().offset();
         final int teleObjectNewOffset = teleVM().fields().InspectableHeapInfo_newAddress.fieldActor().offset();
+
         // The address of the tele roots field must be accessible before any {@link TeleObject}s can be created,
         // which means that it must be accessible before calling {@link #refresh()} here.
         teleRootsPointer = teleVM().fields().InspectableHeapInfo_rootsPointer.staticTupleReference(teleVM()).toOrigin().plus(teleRootsOffset);
+
         cardTablePointer = teleVM().fields().InspectableHeapInfo_cardTablePointer.staticTupleReference(teleVM()).toOrigin().plus(teleCardTableOffset);
         objectOldAddressPointer = teleVM().fields().InspectableHeapInfo_oldAddress.staticTupleReference(teleVM()).toOrigin().plus(teleObjectOldOffset);
         objectNewAddressPointer = teleVM().fields().InspectableHeapInfo_newAddress.staticTupleReference(teleVM()).toOrigin().plus(teleObjectNewOffset);
@@ -156,6 +162,13 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
                 // Remove any null memory regions from the list.
                 if (next != teleHeapRegions.length) {
                     teleHeapRegions = Arrays.copyOf(teleHeapRegions, next);
+                }
+
+                if (teleRuntimeMemoryRegionRegistration == null) {
+                    teleRuntimeMemoryRegionRegistration = new Word[teleHeapRegions.length];
+                    for (int i = 0; i < teleHeapRegions.length; i++) {
+                        teleRuntimeMemoryRegionRegistration[i] = teleVM().dataAccess().readWord(teleRuntimeMemoryRegionRegistrationPointer, i * Word.size());
+                    }
                 }
             }
             updatingHeapMemoryRegions = false;
@@ -322,26 +335,54 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
         return teleVM().fields().InspectableHeapInfo_rootEpoch.staticTupleReference(teleVM()).toOrigin().plus(offset);
     }
 
+    /**
+     * Returns the old address of an object before compaction (from-space).
+     * @return old object address
+     */
     public Address getObjectOldAddress() {
-        return teleVM().dataAccess().readWord(teleVM().dataAccess().readWord(objectOldAddressPointer).asAddress()).asAddress();
+        return teleVM().dataAccess().readWord(objectOldAddressPointer).asAddress();
     }
 
+    /**
+     * Returns the new address of an object after compaction (to-space).
+     * @return new object address
+     */
     public Address getObjectNewAddress() {
-        return teleVM().dataAccess().readWord(teleVM().dataAccess().readWord(objectNewAddressPointer).asAddress()).asAddress();
+        return teleVM().dataAccess().readWord(objectNewAddressPointer).asAddress();
     }
 
+    /**
+     * Get card table address to a given index.
+     * @param index
+     * @return card table address
+     */
     public Address getCardTableAddress(int index) {
         return teleVM().dataAccess().readWord(cardTablePointer).asAddress().plus(index * Word.size());
     }
 
+    /**
+     * Get value of card table field.
+     * @param index
+     * @return value of card table field
+     */
     public int readCardTableEntry(int index) {
         return teleVM().dataAccess().readInt(teleVM().dataAccess().readWord(cardTablePointer).asAddress(), index * Word.size());
     }
 
+    /**
+     * Write to card table field.
+     * @param index
+     * @param value
+     */
     public void writeCardTableEntry(int index, int value) {
         teleVM().dataAccess().writeInt(teleVM().dataAccess().readWord(cardTablePointer).asAddress(), index * Word.size(), value);
     }
 
+    /**
+     * Checks if given address is a card table address.
+     * @param address
+     * @return true if address is a card table address
+     */
     public boolean isCardTableAddress(Address address) {
         if (address.greaterEqual(getCardTableAddress(0)) && getCardTableAddress(0).plus(cardTableSize).greaterEqual(address)) {
             return true;
