@@ -113,9 +113,8 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
             if (condition != null) {
                 settings.save(prefix + "." + CONDITION_KEY, condition.toString());
             }
-            if (breakpoint.getDescription() != null) {
-                settings.save(prefix + "." + DESCRIPTION_KEY, breakpoint.getDescription());
-            }
+            // Always save, even if empty, so old values get overwritten if description is removed.
+            settings.save(prefix + "." + DESCRIPTION_KEY, breakpoint.getDescription() == null ? "" : breakpoint.getDescription());
         }
     }
 
