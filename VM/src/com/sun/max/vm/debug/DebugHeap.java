@@ -297,4 +297,12 @@ public final class DebugHeap {
         return mark;
     }
 
+    @INLINE
+    public static Pointer undoDebugTagAdjustment(Pointer mark) {
+        if (MaxineVM.isDebug()) {
+            return mark.minusWords(1);
+        }
+        return mark;
+    }
+
 }

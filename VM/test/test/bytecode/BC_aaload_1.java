@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,19 +18,17 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.asm;
+package test.bytecode;
 
-import com.sun.c1x.util.Util;
-
-/**
- *
- * @author Thomas Wuerthinger
- *
+/*
+ * @Harness: java
+ * @Runs: 0 = null; 1 = null; 2 = ""
  */
-public class BiasedLocking {
+public class BC_aaload_1 {
 
-    public static BiasedLockingCounters counters() {
-        return Util.nonFatalUnimplemented(null);
+    static Object[][] array = {{null}, {null}, {""}};
+
+    public static Object test(int arg) {
+        return array[arg][0];
     }
-
 }

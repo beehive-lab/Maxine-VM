@@ -261,7 +261,7 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
     /**
      * A dialog that allows the user to specify preferences about column visibility.
      */
-    public static final class Dialog<Column_Type extends Enum<Column_Type>> extends InspectorDialog {
+    public static final class ColumnPreferencesDialog<Column_Type extends Enum<Column_Type>> extends InspectorDialog {
 
         /**
          * Create a dialog that allows the user to specify both global preferences as well as preferences for an individual viewer.
@@ -270,7 +270,7 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
          * @param instancePreferences
          * @param globalPreferences
          */
-        public Dialog(Inspection inspection,
+        public ColumnPreferencesDialog(Inspection inspection,
                         String title,
                         TableColumnVisibilityPreferences<Column_Type> instancePreferences,
                         TableColumnVisibilityPreferences<Column_Type> globalPreferences) {
@@ -325,7 +325,7 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
          * @param title
          * @param instancePreferences
          */
-        public Dialog(Inspection inspection,
+        public ColumnPreferencesDialog(Inspection inspection,
                         String title,
                         TableColumnVisibilityPreferences<Column_Type> instancePreferences) {
             super(inspection, title, true);

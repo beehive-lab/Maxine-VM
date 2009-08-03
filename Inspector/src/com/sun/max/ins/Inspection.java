@@ -483,8 +483,8 @@ public final class Inspection {
     public void updateAfterVMStopped() {
         gui().showInspectorBusy(true);
         final IdentityHashSet<InspectionListener> listeners = inspectionListeners.clone();
-        // Notify of any changes of the thread set
 
+        // Notify of any changes of the thread set
         Trace.begin(TRACE_VALUE, threadTracer);
         final long startTimeMillis = System.currentTimeMillis();
         if (!maxVMState().threadsStarted().isEmpty() || !maxVMState().threadsDied().isEmpty()) {

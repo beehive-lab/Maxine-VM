@@ -30,7 +30,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.sequential.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
@@ -312,7 +311,6 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     }
 
     private final GripVerifier gripVerifier = new GripVerifier();
-
     private final SequentialHeapRootsScanner heapRootsVerifier = new SequentialHeapRootsScanner(gripVerifier);
 
     private void verifyHeap() {

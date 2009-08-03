@@ -23,88 +23,44 @@ package com.sun.max.vm.heap.beltway.generational;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.beltway.*;
-import com.sun.max.vm.tele.*;
 
 /**
+ * @author Laurent Daynes
  * @author Christos Kotselidis
  */
 
 public class BeltwayGenerationalCollector extends BeltwayCollector {
 
-    public static long edenCollections = 0;
-    public static long majorCollections = 0;
-    public static long toCollections = 0;
-
-    @Override
-    public void run() {
+    public BeltwayGenerationalCollector(String name) {
+        super(name);
     }
 
-    class GenCollector {
-        long numCollections = 0;
-        final String collectorName;
-        GenCollector(String name) {
-            collectorName = name;
-        }
-
-        protected void printSpaceDebugInfo(String name, Belt space) {
-            Log.print(name + " Space Start: ");
-            Log.println(space.start());
-            Log.print(name + " Space Allocation Mark: ");
-            Log.println(space.getAllocationMark());
-            Log.print(name + " Space End: ");
-            Log.println(space.end());
-        }
-
-        protected void evacuateFollowers(Belt from, Belt to) {
-            getBeltwayHeapScheme().evacuate(from, to);
-            // beltwayHeapSchemeGen.fillLastTLAB();
-        }
-
-        protected void parEvacuateFollowers(Belt from, Belt to) {
-            BeltwayHeapScheme heapScheme = getBeltwayHeapScheme();
-            /*               heapScheme.fillLastTLAB();
+    protected void parEvacuateFollowers(Belt from, Belt to) {
+        BeltwayHeapScheme heapScheme = getBeltwayHeapScheme();
+        /*               heapScheme.fillLastTLAB();
                 heapScheme.markSideTableLastTLAB();
-             */
-            BeltwayHeapScheme.inScavenging = true;
-            heapScheme.initializeGCThreads(heapScheme, from, to);
-            if (Heap.verbose()) {
-                Log.println("Start Threads");
-            }
-            heapScheme.startGCThreads();
-            BeltwayHeapScheme.inScavenging = false;
-            if (Heap.verbose()) {
-                Log.println("Join Threads");
-            }
+         */
+        BeltwayHeapScheme.inScavenging = true;
+        heapScheme.initializeGCThreads(heapScheme, from, to);
+        if (Heap.verbose()) {
+            Log.println("Start Threads");
         }
-
-        protected void prologue() {
-            numCollections++;
-            InspectableHeapInfo.beforeGarbageCollection();
-
-            if (Heap.verbose()) {
-                Log.print(collectorName + " Collection: ");
-                Log.println(numCollections);
-            }
-        }
-
-        protected void epilogue() {
-            if (Heap.verbose()) {
-                Log.print("Finished " + collectorName + " Collection: ");
-                Log.println(numCollections);
-            }
-            InspectableHeapInfo.afterGarbageCollection();
+        heapScheme.startGCThreads();
+        BeltwayHeapScheme.inScavenging = false;
+        if (Heap.verbose()) {
+            Log.println("Join Threads");
         }
     }
 
-    class MajorCollector extends GenCollector implements Runnable {
+    static class MajorCollector extends BeltwayGenerationalCollector implements Runnable {
         MajorCollector() {
             super("Major");
         }
 
         private void printSpacesInfo(Belt edenSpace, Belt toSpace, Belt matureSpace) {
-            printSpaceDebugInfo("Eden", edenSpace);
-            printSpaceDebugInfo("To", toSpace);
-            printSpaceDebugInfo("Mature", matureSpace);
+            printBeltInfo("Eden Space", edenSpace);
+            printBeltInfo("To Space", toSpace);
+            printBeltInfo("Mature Space", matureSpace);
         }
 
         public void run() {
@@ -115,7 +71,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
             prologue();
 
             if (Heap.verbose()) {
-                printSpaceDebugInfo("Mature", matureSpace);
+                printBeltInfo("Mature Space", matureSpace);
                 Log.println("Verify Mature Space ");
             }
             verifyBelt(matureSpace);
@@ -127,10 +83,6 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
             edenSpace.setExpandable(true);
 
             heapScheme.scavengeRoot(matureSpace, edenSpace);
-
-            if (Heap.verbose()) {
-                Log.print("Evacuate Followers");
-            }
 
             evacuateFollowers(matureSpace, edenSpace);
 
@@ -174,7 +126,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
         }
     }
 
-    class ToSpaceCollector  extends GenCollector implements Runnable {
+    static class ToSpaceCollector  extends BeltwayGenerationalCollector implements Runnable {
         ToSpaceCollector() {
             super("To");
         }
@@ -185,7 +137,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
             prologue();
 
             if (Heap.verbose()) {
-                printSpaceDebugInfo("To", toSpace);
+                printBeltInfo("To Space", toSpace);
                 Log.println("Verify To Space: ");
             }
             verifyBelt(toSpace);
@@ -203,10 +155,6 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
 
             heapScheme.scanCardAndEvacuate(matureSpace, toSpace);
 
-            if (Heap.verbose()) {
-                Log.println("Promote Reachable Objects");
-            }
-
             evacuateFollowers(toSpace, matureSpace);
 
             heapScheme.sideTable.restoreAllChunkSlots();
@@ -215,7 +163,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
             monitorScheme.afterGarbageCollection();
 
             if (Heap.verbose()) {
-                printSpaceDebugInfo("Mature", matureSpace);
+                printBeltInfo("Mature Space", matureSpace);
                 Log.println("Verify Mature Space");
             }
 
@@ -224,7 +172,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
         }
     }
 
-    class EdenCollector extends GenCollector implements Runnable {
+    static class EdenCollector extends BeltwayGenerationalCollector implements Runnable {
         EdenCollector() {
             super("Eden");
         }
@@ -237,7 +185,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
             prologue();
 
             if (Heap.verbose()) {
-                printSpaceDebugInfo("Eden", edenSpace);
+                printBeltInfo("Eden Space", edenSpace);
                 Log.println("Verify Eden: ");
             }
             verifyBelt(edenSpace);
@@ -257,9 +205,6 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
             heapScheme.scanCardAndEvacuate(toSpace, edenSpace);
             heapScheme.scanCardAndEvacuate(matureSpace, edenSpace);
 
-            if (Heap.verbose()) {
-                Log.println("Evacuate Followers");
-            }
             evacuateFollowers(edenSpace, toSpace);
 
             heapScheme.sideTable.restoreAllChunkSlots();
@@ -272,7 +217,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
             monitorScheme.afterGarbageCollection();
 
             if (Heap.verbose()) {
-                printSpaceDebugInfo("To", toSpace);
+                printBeltInfo("To Space", toSpace);
                 Log.println("Verfiy To Space: ");
             }
 
@@ -281,52 +226,35 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
         }
     }
 
-    class ParEdenCollector extends EdenCollector {
+    static class ParEdenCollector extends EdenCollector {
+        ParEdenCollector() {
+            super();
+        }
+
         @Override
         protected void evacuateFollowers(Belt from, Belt to) {
             parEvacuateFollowers(from, to);
         }
     }
 
-    class ParToSpaceCollector extends ToSpaceCollector {
+    static class ParToSpaceCollector extends ToSpaceCollector {
+        ParToSpaceCollector() {
+            super();
+        }
         @Override
         protected void evacuateFollowers(Belt from, Belt to) {
             parEvacuateFollowers(from, to);
         }
     }
 
-    class ParMajorCollector extends MajorCollector {
+    static class ParMajorCollector extends MajorCollector {
+        ParMajorCollector() {
+            super();
+        }
         @Override
         protected void evacuateFollowers(Belt from, Belt to) {
             parEvacuateFollowers(from, to);
         }
     }
 
-    private final Runnable edenGC;
-    private final Runnable toGC;
-    private final Runnable majorGC;
-
-    public Runnable getMinorGC() {
-        return edenGC;
-    }
-
-    public Runnable getMajorGC() {
-        return majorGC;
-    }
-
-    public Runnable getToGC() {
-        return toGC;
-    }
-
-    public BeltwayGenerationalCollector() {
-        if (BeltwayConfiguration.parallelScavenging) {
-            edenGC = new ParEdenCollector();
-            toGC = new ParToSpaceCollector();
-            majorGC = new ParMajorCollector();
-        } else {
-            edenGC = new EdenCollector();
-            toGC = new ToSpaceCollector();
-            majorGC = new MajorCollector();
-        }
-    }
 }

@@ -277,7 +277,6 @@ public class OopMapValue {
      * @return
      */
     public static CiLocation asVMReg(short contentReg, boolean b) {
-        // TODO Auto-generated method stub
-        return null;
+        return Util.nonFatalUnimplemented(null);
     }
 }

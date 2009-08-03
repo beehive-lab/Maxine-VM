@@ -32,37 +32,27 @@ import com.sun.max.vm.tele.*;
  * @author Christos Kotselidis
  */
 
-public class BeltwaySSCollector extends BeltwayCollector {
-
-    protected long collections;
+public class BeltwaySSCollector extends BeltwayCollector implements Runnable {
 
     public BeltwaySSCollector() {
-        collections = 0;
+        super("BSS");
     }
 
-    protected void evacuateFollowers(Belt fromSpace, Belt toSpace) {
-        if (Heap.verbose()) {
-            Log.println("Evacuate reachable...");
-        }
-        getBeltwayHeapScheme().evacuate(fromSpace, toSpace);
+    protected BeltwaySSCollector(String name) {
+        super(name);
     }
 
     @Override
     public void run() {
-        collections++;
-        if (Heap.verbose()) {
-            Log.print("Collection: ");
-            Log.println(collections);
-        }
         final BeltwayHeapSchemeBSS heapScheme = (BeltwayHeapSchemeBSS) getBeltwayHeapScheme();
         final Belt fromSpace = heapScheme.getFromSpace();
         final Belt toSpace = heapScheme.getToSpace();
+        prologue();
         if (Heap.verbose()) {
             Log.println("Verify Heap");
             verifyBelt(fromSpace);
         }
 
-        InspectableHeapInfo.beforeGarbageCollection();
         monitorScheme.beforeGarbageCollection();
 
         // Start scanning the reachable objects from roots.
@@ -70,8 +60,6 @@ public class BeltwaySSCollector extends BeltwayCollector {
 
         // Evacuate all remaining objects reachable
         evacuateFollowers(fromSpace, toSpace);
-        heapScheme.evacuate(fromSpace, toSpace);
-        // beltwayHeapSchemeBSS.fillLastTLAB(); FIXME: do we need this ?
 
         monitorScheme.afterGarbageCollection();
 
@@ -83,7 +71,7 @@ public class BeltwaySSCollector extends BeltwayCollector {
         heapScheme.getToSpace().resetAllocationMark();
         if (Heap.verbose()) {
             Log.print("Finished Collection: ");
-            Log.println(collections);
+            Log.println(numCollections);
         }
     }
 }

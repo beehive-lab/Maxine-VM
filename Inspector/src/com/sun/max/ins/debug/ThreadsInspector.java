@@ -114,7 +114,7 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
         return new InspectorAction(inspection(), "View Options") {
             @Override
             public void procedure() {
-                new TableColumnVisibilityPreferences.Dialog<ThreadsColumnKind>(inspection(), "Threads View Options", viewPreferences);
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<ThreadsColumnKind>(inspection(), "Threads View Options", viewPreferences);
             }
         };
     }

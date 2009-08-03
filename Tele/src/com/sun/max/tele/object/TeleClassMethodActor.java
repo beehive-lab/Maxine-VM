@@ -25,6 +25,7 @@ import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.LineNumberTable.*;
@@ -56,8 +57,12 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
 
     @Override
     public TeleCodeAttribute getTeleCodeAttribute() {
-        final Reference codeAttributeReference = teleVM().fields().ClassMethodActor_codeAttribute.readReference(reference());
-        return (TeleCodeAttribute) teleVM().makeTeleObject(codeAttributeReference);
+        try {
+            final Reference codeAttributeReference = teleVM().fields().ClassMethodActor_codeAttribute.readReference(reference());
+            return (TeleCodeAttribute) teleVM().makeTeleObject(codeAttributeReference);
+        } catch (DataIOError dataIOError) {
+        }
+        return null;
     }
 
     /**

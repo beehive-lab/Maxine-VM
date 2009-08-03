@@ -1848,74 +1848,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
 
-    /**
-     * Action:  set a target code breakpoint at a particular address.
-     */
-    final class SetTargetCodeBreakpointAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Set target code breakpoint";
-
-        private final Address address;
-
-        public SetTargetCodeBreakpointAction(Address address, String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
-            this.address = address;
-            refresh(true);
-        }
-
-        @Override
-        protected void procedure() {
-            final TeleTargetBreakpoint breakpoint = maxVM().makeTargetBreakpoint(address);
-            focus().setBreakpoint(breakpoint);
-        }
-
-        @Override
-        public void refresh(boolean force) {
-            setEnabled(maxVM().getTargetBreakpoint(address) == null);
-        }
-    }
-
-    public final InspectorAction setTargetCodeBreakpoint(Address address, String title) {
-        return new SetTargetCodeBreakpointAction(address, title);
-    }
-
-
-    /**
-     * Action:  remove a target code breakpoint at a particular address.
-     */
-    final class RemoveTargetCodeBreakpointAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Remove target code breakpoint";
-
-        private final Address address;
-
-        public RemoveTargetCodeBreakpointAction(Address address, String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
-            this.address = address;
-            refresh(true);
-        }
-
-        @Override
-        protected void procedure() {
-            final TeleTargetBreakpoint breakpoint = maxVM().getTargetBreakpoint(address);
-            if (breakpoint != null) {
-                breakpoint.remove();
-                focus().setBreakpoint(null);
-            }
-        }
-
-        @Override
-        public void refresh(boolean force) {
-            setEnabled(maxVM().getTargetBreakpoint(address) != null);
-        }
-    }
-
-    public final InspectorAction removeTargetCodeBreakpoint(Address address, String title) {
-        return new RemoveTargetCodeBreakpointAction(address, title);
-    }
-
-
-    /**
+   /**
      * Action:  removes the currently selected breakpoint from the VM.
      */
     final class RemoveSelectedBreakpointAction extends InspectorAction {
@@ -2113,6 +2046,78 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
+     * Action:  set a target code breakpoint at a particular address.
+     */
+    final class SetTargetCodeBreakpointAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Set target code breakpoint";
+
+        private final Address address;
+
+        public SetTargetCodeBreakpointAction(Address address, String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            this.address = address;
+            refresh(true);
+        }
+
+        @Override
+        protected void procedure() {
+            try {
+                final TeleTargetBreakpoint breakpoint = maxVM().makeMaxTargetBreakpoint(address);
+                focus().setBreakpoint(breakpoint);
+            } catch (MaxVMException maxVMException) {
+                gui().errorMessage(maxVMException.getMessage());
+            }
+
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(maxVM().getTargetBreakpoint(address) == null);
+        }
+    }
+
+    public final InspectorAction setTargetCodeBreakpoint(Address address, String title) {
+        return new SetTargetCodeBreakpointAction(address, title);
+    }
+
+
+    /**
+     * Action:  remove a target code breakpoint at a particular address.
+     */
+    final class RemoveTargetCodeBreakpointAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Remove target code breakpoint";
+
+        private final Address address;
+
+        public RemoveTargetCodeBreakpointAction(Address address, String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            this.address = address;
+            refresh(true);
+        }
+
+        @Override
+        protected void procedure() {
+            final TeleTargetBreakpoint breakpoint = maxVM().getTargetBreakpoint(address);
+            if (breakpoint != null) {
+                breakpoint.remove();
+                focus().setBreakpoint(null);
+            }
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(maxVM().getTargetBreakpoint(address) != null);
+        }
+    }
+
+    public final InspectorAction removeTargetCodeBreakpoint(Address address, String title) {
+        return new RemoveTargetCodeBreakpointAction(address, title);
+    }
+
+
+     /**
      * Action:  toggle on/off a breakpoint at the target code location of the current focus.
      */
     final class ToggleTargetCodeBreakpointAction extends InspectorAction {
@@ -2136,8 +2141,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (!targetCodeInstructionAddress.isZero()) {
                 TeleTargetBreakpoint breakpoint = maxVM().getTargetBreakpoint(targetCodeInstructionAddress);
                 if (breakpoint == null) {
-                    breakpoint = maxVM().makeTargetBreakpoint(targetCodeInstructionAddress);
-                    focus().setBreakpoint(breakpoint);
+                    try {
+                        breakpoint = maxVM().makeMaxTargetBreakpoint(targetCodeInstructionAddress);
+                        focus().setBreakpoint(breakpoint);
+                    } catch (MaxVMException maxVMException) {
+                        gui().errorMessage(maxVMException.getMessage());
+                    }
                 } else {
                     breakpoint.remove();
                     focus().setBreakpoint(null);
@@ -2158,6 +2167,56 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public final InspectorAction toggleTargetCodeBreakpoint() {
         return toggleTargetCodeBreakpoint;
+    }
+
+
+    /**
+     * Action:  sets a  breakpoint at the target code location specified interactively..
+     */
+    final class SetCustomTargetCodeBreakpointAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Set custom target code breakpoint...";
+
+        SetCustomTargetCodeBreakpointAction(String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            refreshableActions.append(this);
+            refresh(true);
+        }
+
+        @Override
+        protected void procedure() {
+            new NativeLocationInputDialog(inspection(), "Set breakpoint at address...", maxVM().bootImageStart(), "") {
+                @Override
+                public void entered(Address address, String description) {
+                    if (!address.isZero()) {
+                        try {
+                            final TeleTargetBreakpoint breakpoint = maxVM().makeMaxTargetBreakpoint(address);
+                            if (breakpoint == null) {
+                                gui().errorMessage("Unable to create breakpoint at: " + "0x" + address.toHexString());
+                            } else {
+                                breakpoint.setDescription(description);
+                            }
+                        } catch (MaxVMException maxVMException) {
+                            gui().errorMessage(maxVMException.getMessage());
+                        }
+                    }
+                }
+            };
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(inspection().hasProcess());
+        }
+    }
+
+    private InspectorAction setCustomTargetCodeBreakpoint = new SetCustomTargetCodeBreakpointAction(null);
+
+    /**
+     * @return an Action that will toggle on/off a breakpoint at the target code location of the current focus.
+     */
+    public final InspectorAction setCustomTargetCodeBreakpoint() {
+        return setCustomTargetCodeBreakpoint;
     }
 
 

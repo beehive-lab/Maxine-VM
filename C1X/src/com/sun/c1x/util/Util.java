@@ -516,8 +516,6 @@ public class Util {
     }
 
     public static void warning(String string) {
-        // TODO Auto-generated method stub
-
     }
 
     public static int safeToInt(long l) {
@@ -617,5 +615,11 @@ public class Util {
             throw new Error("unimplemented");
         }
         return val;
+    }
+
+    public static void nonFatalUnimplemented() {
+        if (C1XOptions.FatalUnimplemented) {
+            throw new Error("unimplemented");
+        }
     }
 }

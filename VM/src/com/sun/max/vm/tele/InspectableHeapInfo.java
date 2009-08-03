@@ -121,6 +121,11 @@ public final class InspectableHeapInfo {
      * Stores descriptions of memory allocated by the heap in a location that can
      * be inspected easily.
      * <br>
+     * It is a good idea to use instances of {@link MemoryRegion} that have
+     * been allocated in the boot heap if at all possible, thus avoiding having
+     * meta information about the dynamic heap being described by objects
+     * in the dynamic heap.
+     * <br>
      * No-op when VM is not being inspected.
      *
      * @param memoryRegions regions allocated by the heap implementation

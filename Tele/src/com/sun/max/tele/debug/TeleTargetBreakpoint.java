@@ -260,7 +260,8 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
          * @return the created breakpoint
          */
         public synchronized TeleTargetBreakpoint createBreakpoint(Address address, byte[] originalCode, boolean isTransient) {
-            final TeleTargetBreakpoint breakpoint = new TeleTargetBreakpoint(teleVM, this, address, originalCode, isTransient);
+            TeleTargetBreakpoint breakpoint;
+            breakpoint = new TeleTargetBreakpoint(teleVM, this, address, originalCode, isTransient);
             if (!isTransient) {
                 final TeleTargetBreakpoint oldBreakpoint = breakpoints.put(address.toLong(), breakpoint);
                 assert oldBreakpoint == null;
@@ -352,7 +353,8 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
         }
 
         /**
-         * Deactivates all {@linkplain #activateAll() activated} breakpoints and removes all transient breakpoints.
+         * Deactivates all {@linkplain #activateAll() activated} breakpoints.
+         * @return all breakpoints that were disabled.
          */
         public synchronized Sequence<TeleTargetBreakpoint> deactivateAll() {
             final AppendableSequence<TeleTargetBreakpoint> deactivated = new ArrayListSequence<TeleTargetBreakpoint>();
@@ -366,8 +368,14 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
                 breakpoint.deactivate();
                 deactivated.append(breakpoint);
             }
-            transientBreakpoints.clear();
             return deactivated;
+        }
+
+        /**
+         * Removes and clears all state associated with transient breakpoints.
+         */
+        public synchronized void removeTransientBreakpoints() {
+            transientBreakpoints.clear();
         }
     }
 }

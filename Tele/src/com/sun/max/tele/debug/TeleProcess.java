@@ -227,6 +227,8 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                         }
                     }
                 } while (resumeExecution);
+                // Finished with these now
+                targetBreakpointFactory().removeTransientBreakpoints();
                 Trace.end(TRACE_VALUE, tracePrefix() + "waiting for execution to stop: " + request);
                 Trace.begin(TRACE_VALUE, tracePrefix() + "firing execution post-request action: " + request);
                 request.notifyProcessStopped();
