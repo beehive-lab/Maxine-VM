@@ -28,9 +28,15 @@ import com.sun.max.tele.method.*;
  *
  * @author Michael Van De Vanter
  */
+/**
+ * @author Michael Van De Vanter
+ *
+ */
 public abstract class TeleBreakpoint extends AbstractTeleVMHolder {
 
     private final boolean isTransient;
+
+    private String description = null;
 
     /**
      * Creates a breakpoint.
@@ -74,12 +80,26 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder {
     public abstract BreakpointCondition condition();
 
     /**
+     * Associates an arbitrary, optional string with the breakpoint for debugging.
+     */
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    /**
+     * @return the optional string associated with the breakpoint for debugging;
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
      * Removes this breakpoint from the {@link TeleVM}.
      */
     public abstract void remove();
 
     /**
-     * @return a string description of the attributes of this breakpoints.
+     * @return a textual description of the attributes of this breakpoints.
      */
     public String attributesToString() {
         final StringBuilder sb = new StringBuilder(isEnabled() ? "enabled " : "disabled ");

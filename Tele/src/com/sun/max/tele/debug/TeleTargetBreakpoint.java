@@ -260,7 +260,8 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
          * @return the created breakpoint
          */
         public synchronized TeleTargetBreakpoint createBreakpoint(Address address, byte[] originalCode, boolean isTransient) {
-            final TeleTargetBreakpoint breakpoint = new TeleTargetBreakpoint(teleVM, this, address, originalCode, isTransient);
+            TeleTargetBreakpoint breakpoint;
+            breakpoint = new TeleTargetBreakpoint(teleVM, this, address, originalCode, isTransient);
             if (!isTransient) {
                 final TeleTargetBreakpoint oldBreakpoint = breakpoints.put(address.toLong(), breakpoint);
                 assert oldBreakpoint == null;

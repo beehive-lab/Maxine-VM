@@ -1246,6 +1246,15 @@ public abstract class TeleVM implements MaxVM {
         return teleProcess.targetBreakpointFactory().size(true);
     }
 
+    public final TeleTargetBreakpoint makeMaxTargetBreakpoint(Address address) throws MaxVMException {
+        try {
+            return makeTargetBreakpoint(address);
+        } catch (DataIOError dataIOError) {
+            final String message = "Cannot create breakpoint at 0x" + address.toHexString() + ":  " + dataIOError.getMessage();
+            throw new MaxVMException(message);
+        }
+    }
+
     public final TeleTargetBreakpoint makeTargetBreakpoint(Address address) {
         return teleProcess.targetBreakpointFactory().makeBreakpoint(address, false);
     }

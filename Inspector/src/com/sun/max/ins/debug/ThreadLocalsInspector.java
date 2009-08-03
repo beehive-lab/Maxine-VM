@@ -126,7 +126,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         return new InspectorAction(inspection(), "View Options") {
             @Override
             public void procedure() {
-                new TableColumnVisibilityPreferences.Dialog<ThreadLocalsColumnKind>(inspection(), "Thread Locals View Options", viewPreferences);
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<ThreadLocalsColumnKind>(inspection(), "Thread Locals View Options", viewPreferences);
             }
         };
     }

@@ -105,7 +105,7 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
         return new InspectorAction(inspection(), "View Options") {
             @Override
             public void procedure() {
-                new TableColumnVisibilityPreferences.Dialog<BreakpointsColumnKind>(inspection(), "Breakpoints View Options", viewPreferences);
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<BreakpointsColumnKind>(inspection(), "Breakpoints View Options", viewPreferences);
             }
         };
     }

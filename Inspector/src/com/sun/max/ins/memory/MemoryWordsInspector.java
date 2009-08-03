@@ -373,7 +373,7 @@ public final class MemoryWordsInspector extends Inspector {
             public void procedure() {
                 final MemoryWordsViewPreferences globalPreferences = MemoryWordsViewPreferences.globalPreferences(inspection());
                 MemoryWordsViewPreferences instanceViewPreferences = table.getInstanceViewPreferences();
-                new TableColumnVisibilityPreferences.Dialog<MemoryWordsColumnKind>(inspection(), "View Options", instanceViewPreferences, globalPreferences);
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<MemoryWordsColumnKind>(inspection(), "View Options", instanceViewPreferences, globalPreferences);
             }
         };
     }
