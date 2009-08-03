@@ -51,10 +51,6 @@ public final class BeltwayConfiguration extends BeltwayHeapSchemeConfiguration {
         super(Address.zero(), Size.zero());
     }
 
-    @INLINE
-    public static void setNumberOfBelts(int numOfBelts) {
-        numberOfBelts = numOfBelts;
-    }
 
     @INLINE
     public static void setPercentageOfUsableMemoryPerFrame(int[] percent) {
