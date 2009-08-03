@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.prototype;
 
+import java.lang.management.*;
+
 import com.sun.max.*;
 import com.sun.max.asm.*;
 import com.sun.max.lang.*;
@@ -93,7 +95,7 @@ public final class PrototypeGenerator {
             "Specifies the ABIs scheme for the target");
     private final Option<MaxPackage> runScheme = schemeOption("run", new com.sun.max.vm.run.Package(), RunScheme.class,
             "Specifies the run scheme for the target.");
-    private final Option<Integer> threadsOption = options.newIntegerOption("threads", 1, //ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors(),
+    private final Option<Integer> threadsOption = options.newIntegerOption("threads", ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors(),
             "Specifies the number of threads to be used for parallel compilation.");
 
     private Option<MaxPackage> schemeOption(String name, MaxPackage superPackage, Class cl, String help) {
@@ -243,7 +245,12 @@ public final class PrototypeGenerator {
                 public GraphPrototype call() {
                     GraphPrototype graphPrototype;
                     int numberOfClassActors = 0;
-                    final CompiledPrototype compiledPrototype = new CompiledPrototype(javaPrototype, threadsOption.getValue());
+                    int numberOfCompilationThreads = threadsOption.getValue();
+                    if (numberOfCompilationThreads > 1 && Platform.target().processorKind.processorModel.name().startsWith("SPARC")) {
+                        ProgramWarning.message("Throttling compiler threads back to 1 until CPS compiler race is solved");
+                        numberOfCompilationThreads = 1;
+                    }
+                    final CompiledPrototype compiledPrototype = new CompiledPrototype(javaPrototype, numberOfCompilationThreads);
                     compiledPrototype.addEntrypoints();
                     do {
                         for (MethodActor methodActor : javaPrototype.vmConfiguration().runScheme().gatherNativeInitializationMethods()) {

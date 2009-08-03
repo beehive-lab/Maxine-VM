@@ -352,7 +352,8 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
         }
 
         /**
-         * Deactivates all {@linkplain #activateAll() activated} breakpoints and removes all transient breakpoints.
+         * Deactivates all {@linkplain #activateAll() activated} breakpoints.
+         * @return all breakpoints that were disabled.
          */
         public synchronized Sequence<TeleTargetBreakpoint> deactivateAll() {
             final AppendableSequence<TeleTargetBreakpoint> deactivated = new ArrayListSequence<TeleTargetBreakpoint>();
@@ -366,8 +367,14 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
                 breakpoint.deactivate();
                 deactivated.append(breakpoint);
             }
-            transientBreakpoints.clear();
             return deactivated;
+        }
+
+        /**
+         * Removes and clears all state associated with transient breakpoints.
+         */
+        public synchronized void removeTransientBreakpoints() {
+            transientBreakpoints.clear();
         }
     }
 }
