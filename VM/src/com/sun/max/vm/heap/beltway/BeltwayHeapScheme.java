@@ -59,34 +59,29 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     private static Size TLAB_HEADROOM;
 
     /**
-     * Closure for evacuating object from a belt to another belt in a single-threaded GC.
-     * The source and destination belt should be properly initialized before using the closure.
+     *  Cell visitor for evacuating object from a belt to another belt in a single-threaded GC.
+     * The source and destination belt should be properly initialized before using the cell visitor.
      */
-    private static final Action singleThreadedEvacuationClosure = new CopyActionImpl(verifyAction);
+    private static final BeltwayCellVisitorImpl singleThreadedCellVisitor = new BeltwayCellVisitorImpl(new PointerVisitor(new CopyActionImpl(verifyAction)));
 
     /**
-     * Closure for evacuating object from a belt to another belt in a parallel GC (i.e., with potentially multiple thread evacuating objects).
-     * Although the closure can be used by multiple thread simultaneously, all the threads must operate on the same source and destination belts.
+     * Cell visitor for evacuating object from a belt to another belt in a parallel GC (i.e., with potentially multiple thread evacuating objects).
+     * Although the visitor can be used by multiple thread simultaneously, all the threads must operate on the same source and destination belts.
      */
-    private static final Action parallelEvacuationClosure = new ParallelCopyActionImpl(verifyAction);
+    private static final BeltwayCellVisitorImpl parallelCellVisitor = new BeltwayCellVisitorImpl(new PointerVisitor(new ParallelCopyActionImpl(verifyAction)));
 
     /**
-     * The evacuation closure used by the heap scheme. It's either one of singleThreadedEvacuationClosure parallelEvacuationClosure depending on
+     * The cell visitor used by the heap scheme. It's either one of singleThreadedCellVisitor parallelCellVisitor depending on
      * the Beltway configuration. It should be possible to pick up the right configuration based on a VM option.
      */
-    protected Action evacuationClosure;
+    @CONSTANT_WHEN_NOT_ZERO
+    protected BeltwayCellVisitorImpl cellVisitor;
 
-    private final PointerVisitor pointerVisitorGripVerifier = new PointerVisitor(verifyAction);
-
-    private final PointerVisitor pointerVisitorGripUpdater = new PointerVisitor(evacuationClosure);
-
-    protected final BeltCellVisitor cellVisitor = new BeltwayCellVisitorImpl(pointerVisitorGripUpdater);
-
-    public final BeltwayHeapVerifier heapVerifier = new BeltwayHeapVerifier(pointerVisitorGripUpdater);
+    public final BeltwayHeapVerifier heapVerifier = new BeltwayHeapVerifier();
 
     protected final BeltwayCardRegion cardRegion = new BeltwayCardRegion();
 
-    private final SequentialHeapRootsScanner stackAndMonitorGripUpdater = new SequentialHeapRootsScanner(pointerVisitorGripUpdater);
+    private final SequentialHeapRootsScanner stackAndMonitorGripUpdater = new SequentialHeapRootsScanner(null);
 
     /**
      * Side table for the heap. Keeps track of the address to the first object in a card to enable
@@ -102,7 +97,6 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
      * The thread running the collector, and coordinating the GC threads when the GC support parallel collection.
      */
     protected BlockingServerDaemon collectorThread;
-
 
     public static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError();
     public static boolean outOfMemory = false;
@@ -122,18 +116,6 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
 
     public BeltCellVisitor cellVisitor() {
         return cellVisitor;
-    }
-
-    public Action copyAction() {
-        return evacuationClosure;
-    }
-
-    public PointerIndexVisitor pointerIndexGripVerifier() {
-        return pointerVisitorGripVerifier;
-    }
-
-    public PointerIndexVisitor pointerIndexGripUpdater() {
-        return pointerVisitorGripUpdater;
     }
 
     @INLINE
@@ -166,7 +148,8 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             final Address address = allocateHeapStorage(heapSize);
             final int [] defaultBeltHeapPercentage = defaultBeltHeapPercentage();
             beltwayConfiguration.initializeBeltWayConfiguration(address, heapSize,  defaultBeltHeapPercentage.length, defaultBeltHeapPercentage);
-            evacuationClosure = BeltwayConfiguration.parallelScavenging ? parallelEvacuationClosure : singleThreadedEvacuationClosure;
+            cellVisitor = BeltwayConfiguration.parallelScavenging ? parallelCellVisitor : singleThreadedCellVisitor;
+            stackAndMonitorGripUpdater.setPointerIndexVisitor(cellVisitor.pointerVisitorGripUpdater);
             beltManager.initializeBelts();
             if (Heap.verbose()) {
                 beltManager.printBeltsInfo();
@@ -233,7 +216,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
      * @param to the belt where the objects are evacuated to
      */
     public void scavengeRoot(Belt from, Belt to) {
-        pointerVisitorGripUpdater.action.init(from, to);
+        cellVisitor.init(from, to);
 
         if (Heap.verbose()) {
             Log.println("Scan Roots ");
@@ -243,12 +226,12 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
         if (Heap.verbose()) {
             Log.println("Scan Boot Heap");
         }
-        Heap.bootHeapRegion.visitReferences(pointerVisitorGripUpdater);
+        Heap.bootHeapRegion.visitReferences(cellVisitor.pointerVisitorGripUpdater);
 
         if (Heap.verbose()) {
             Log.println("Scan Code");
         }
-        Code.visitReferences(pointerVisitorGripUpdater);
+        Code.visitReferences(cellVisitor.pointerVisitorGripUpdater);
     }
 
     protected Size calculateHeapSize() {
