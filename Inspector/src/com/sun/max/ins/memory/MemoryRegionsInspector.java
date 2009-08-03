@@ -98,7 +98,7 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
         return new InspectorAction(inspection(), "View Options") {
             @Override
             public void procedure() {
-                new TableColumnVisibilityPreferences.Dialog<MemoryRegionsColumnKind>(inspection(), "Memory Regions View Options", viewPreferences);
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<MemoryRegionsColumnKind>(inspection(), "Memory Regions View Options", viewPreferences);
             }
         };
     }

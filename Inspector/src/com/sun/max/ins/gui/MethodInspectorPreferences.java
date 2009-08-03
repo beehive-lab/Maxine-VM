@@ -123,11 +123,11 @@ public class MethodInspectorPreferences extends AbstractInspectionHolder {
     }
 
     public void showDialog() {
-        new Dialog(inspection());
+        new MethodCodeDisplayPreferencesDialog(inspection());
     }
 
-    private final class Dialog extends InspectorDialog {
-        Dialog(Inspection inspection) {
+    private final class MethodCodeDisplayPreferencesDialog extends InspectorDialog {
+        MethodCodeDisplayPreferencesDialog(Inspection inspection) {
             super(inspection, "Method Code Display Preferences", false);
 
             final JPanel dialogPanel = new InspectorPanel(inspection, new BorderLayout());

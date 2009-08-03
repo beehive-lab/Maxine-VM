@@ -20,13 +20,12 @@
  */
 package com.sun.max.ins.gui;
 
-import java.awt.*;
 import java.awt.event.*;
-import java.awt.font.*;
 
 import javax.swing.*;
 
 import com.sun.max.ins.*;
+import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -59,12 +58,8 @@ public abstract class AddressInputField extends JTextField {
 
     protected void updateView() {
         numberOfDigits = upperBound.toUnsignedString(radix).length();
-        final Number widthNumber = (Number) getFont().getAttributes().get(TextAttribute.WIDTH_EXTENDED);
-        if (widthNumber != null) {
-            final int width = widthNumber.intValue();
-            setPreferredSize(new Dimension(width * numberOfDigits, getSize().height));
-        }
-        setText(value.toUnsignedString(radix));
+        final String unsignedString = Strings.padLengthWithZeroes(numberOfDigits, value.toUnsignedString(radix));
+        setText(unsignedString);
     }
 
     private void setRange(Address lowerBound, Address upperBound) {
@@ -87,7 +82,7 @@ public abstract class AddressInputField extends JTextField {
         if (text.isEmpty()) {
             return;
         }
-        if (radix == 16 && text.substring(0, 2).equalsIgnoreCase("0x")) {
+        if (radix == 16 && text.length() > 2 && text.substring(0, 2).equalsIgnoreCase("0x")) {
             text = text.substring(2);
             setText(text);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,19 +18,18 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.asm;
+package com.sun.max.tele;
 
-import com.sun.c1x.util.Util;
 
 /**
+ * A general exception for methods on {@link MaxVM}.
  *
- * @author Thomas Wuerthinger
- *
+ * @author Michael Van De Vanter
  */
-public class BiasedLocking {
+public class MaxVMException extends Exception {
 
-    public static BiasedLockingCounters counters() {
-        return Util.nonFatalUnimplemented(null);
+    public MaxVMException(String message) {
+        super(message);
     }
 
 }

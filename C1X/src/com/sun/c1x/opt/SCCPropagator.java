@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,17 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.heap.beltway;
-
-import com.sun.max.vm.heap.sequential.*;
+package com.sun.c1x.opt;
 
 /**
- * Stop the world daemon for single-threaded GC. The Daemon performs the GC.
+ * The <code>SCCPropagator</code> class implements sparse conditional constant propagation.
+ * While most canonicalization opportunities are revealed and exploited during graph construction
+ * in SSA form, some opportunities can be missed, and still more may be created by later optimizations.
+ * This class implements a classic iterative data-flow analysis to discover all canonicalization
+ * opportunities.
  *
- * @author Laurent Daynes
+ * @author Ben L. Titzer
  */
-public class StopTheWorldSingleThreadGCDaemon extends StopTheWorldGCDaemon {
-    public StopTheWorldSingleThreadGCDaemon(String name, Runnable collect) {
-        super(name, collect);
-    }
+public class SCCPropagator {
 }

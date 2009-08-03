@@ -96,7 +96,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      * Size of an java.lang.Object instance, presumably the minimum object size.
      */
     @CONSTANT_WHEN_NOT_ZERO
-    private static Size MIN_OBJECT_SIZE;
+    protected static Size MIN_OBJECT_SIZE;
     /**
      * Size of byte array header.
      */
@@ -249,12 +249,13 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      * a pointer to a cell of the specified cell. The handling of the TLAB allocation failure may result in refilling the TLAB.
      *
      * @param size size requested to the tlab
-     * @param allocationMark allocation mark of the tlab
      * @param enabledVmThreadLocals
+     * @param tlabMark allocation mark of the tlab
+     * @param tlabEnd TODO
      * @return a pointer to a cell resulting from a successful allocation of space of the specified size.
      * @throws OutOfMemoryError if the allocation request cannot be satisfied.
      */
-    protected abstract Pointer handleTLABOverflow(Size size, Pointer allocationMark, Pointer enabledVmThreadLocals);
+    protected abstract Pointer handleTLABOverflow(Size size, Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabEnd);
 
     /**
      * Action to perform on a TLAB before its refill with another chunk of heap.
@@ -273,14 +274,19 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     protected final Pointer tlabAllocate(Size size) {
         final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
         final Pointer oldAllocationMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
+        final Pointer tlabEnd = enabledVmThreadLocals.getWord(TLAB_TOP.index).asPointer();
         final Pointer cell = DebugHeap.adjustForDebugTag(oldAllocationMark);
         final Pointer end = cell.plus(size);
-        if (end.greaterThan(enabledVmThreadLocals.getWord(TLAB_TOP.index).asAddress())) {
+        if (end.greaterThan(tlabEnd)) {
             // This path will always be taken if TLAB allocation is not enabled
-            return handleTLABOverflow(size, oldAllocationMark, enabledVmThreadLocals);
+            return handleTLABOverflow(size, enabledVmThreadLocals, oldAllocationMark, tlabEnd);
         }
         enabledVmThreadLocals.setWord(TLAB_MARK.index, end);
         return cell;
+    }
+
+    protected final void setTlabAllocationMark(Pointer enabledVmThreadLocals, Pointer newAllocationMark) {
+        enabledVmThreadLocals.setWord(TLAB_MARK.index, newAllocationMark);
     }
 
     @INLINE

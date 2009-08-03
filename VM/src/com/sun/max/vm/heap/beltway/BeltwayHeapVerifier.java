@@ -38,11 +38,11 @@ public class BeltwayHeapVerifier {
 
     private final Verify cellVerifier = new VerifyActionImpl();
 
-    private final StacksAndMonitorsScanner stackAndMonitorVerifier;
+    private final SequentialHeapRootsScanner stackAndMonitorVerifier;
     private final PointerVisitor pointerVisitor;
 
     public BeltwayHeapVerifier(PointerVisitor pointerVisitor) {
-        stackAndMonitorVerifier = new StacksAndMonitorsScanner(pointerVisitor);
+        stackAndMonitorVerifier = new SequentialHeapRootsScanner(pointerVisitor);
         this.pointerVisitor = pointerVisitor;
     }
 

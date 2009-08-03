@@ -155,18 +155,15 @@ public abstract class FrameMap {
     }
 
     public int reservedArgumentAreaSize() {
-        // TODO Auto-generated method stub
-        return 0;
+        return Util.nonFatalUnimplemented(0);
     }
 
     public Address addressForMonitorLock(int monitorNo) {
-        // TODO Auto-generated method stub
-        return null;
+        return Util.nonFatalUnimplemented(null);
     }
 
     public Address addressForMonitorObject(int i) {
-        // TODO Auto-generated method stub
-        return null;
+        return Util.nonFatalUnimplemented(null);
     }
 
     public int framesize() {
@@ -218,53 +215,43 @@ public abstract class FrameMap {
     }
 
     public CiLocation regname(LIROperand opr) {
-        // TODO Auto-generated method stub
-        return null;
+        return Util.nonFatalUnimplemented(null);
     }
 
     public boolean isCallerSaveRegister(LIROperand res) {
-        // TODO Auto-generated method stub
-        return false;
+        return Util.nonFatalUnimplemented(false);
     }
 
     public int oopMapArgCount() {
-        // TODO Auto-generated method stub
-        return 0;
+        return Util.nonFatalUnimplemented(0);
     }
 
     public CiLocation slotRegname(int i) {
-        // TODO Auto-generated method stub
-        return null;
+        return Util.nonFatalUnimplemented(null);
     }
 
     public CiLocation monitorObjectRegname(int i) {
-        // TODO Auto-generated method stub
-        return null;
+        return Util.nonFatalUnimplemented(null);
     }
 
     public boolean locationForMonitorObject(int monitorIndex, Location[] loc) {
-        // TODO Auto-generated method stub
-        return false;
+        return Util.nonFatalUnimplemented(false);
     }
 
     public boolean locationForMonitorLock(int monitorIndex, Location[] loc) {
-        // TODO Auto-generated method stub
-        return false;
+        return Util.nonFatalUnimplemented(false);
     }
 
     public boolean locationsForSlot(int name, LocationType locType, Location[] loc) {
-        // TODO Auto-generated method stub
-        return false;
+        return Util.nonFatalUnimplemented(false);
     }
 
     public boolean locationsForSlot(int doubleStackIx, LocationType locType, Location[] loc1, Object object) {
-        // TODO Auto-generated method stub
-        return false;
+        return Util.nonFatalUnimplemented(false);
     }
 
     public CiLocation fpuRegname(int fpuRegnrHi) {
-        // TODO Auto-generated method stub
-        return null;
+        return Util.nonFatalUnimplemented(null);
     }
 
     public LIROperand receiverOpr() {

@@ -83,7 +83,6 @@ public class UnsafePutRaw extends UnsafeRawOp {
     }
 
     public int log2scale() {
-        // TODO Auto-generated method stub
-        return 0;
+        return log2Scale;
     }
 }

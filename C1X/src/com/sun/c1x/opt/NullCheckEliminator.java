@@ -309,12 +309,18 @@ public class NullCheckEliminator extends InstructionVisitor {
 
     @Override
     public void visitLoadField(LoadField i) {
-        processUse(i, i.object(), true);
+        Instruction object = i.object();
+        if (object != null) {
+            processUse(i, object, true);
+        }
     }
 
     @Override
     public void visitStoreField(StoreField i) {
-        processUse(i, i.object(), true);
+        Instruction object = i.object();
+        if (object != null) {
+            processUse(i, object, true);
+        }
     }
 
     @Override

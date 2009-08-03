@@ -26,6 +26,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.beltway.*;
+import com.sun.max.vm.heap.beltway.generational.BeltwayGenerationalCollector.*;
 import com.sun.max.vm.heap.beltway.profile.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.tele.*;
@@ -45,7 +46,21 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
      */
     private static final  int [] DEFAULT_BELT_HEAP_PERCENTAGE = new int[] {10, 40, 50};
 
-    private final BeltwayGenerationalCollector beltCollectorGenerational = new BeltwayGenerationalCollector();
+    private Runnable edenGC;
+    private Runnable toGC;
+    private Runnable majorGC;
+
+    public Runnable getMinorGC() {
+        return edenGC;
+    }
+
+    public Runnable getMajorGC() {
+        return majorGC;
+    }
+
+    public Runnable getToGC() {
+        return toGC;
+    }
 
     public BeltwayHeapSchemeGenerational(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -59,9 +74,17 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
             tlabAllocationBelt = getEdenSpace();
             // Watch out: the following create a MemoryRegion array
             InspectableHeapInfo.init(getEdenSpace(), getToSpace(), getMatureSpace());
+
+            if (BeltwayConfiguration.parallelScavenging) {
+                edenGC = new ParEdenCollector();
+                toGC = new ParToSpaceCollector();
+                majorGC = new ParMajorCollector();
+            } else {
+                edenGC = new EdenCollector();
+                toGC = new ToSpaceCollector();
+                majorGC = new MajorCollector();
+            }
         } else if (phase == MaxineVM.Phase.RUNNING) {
-            beltCollectorGenerational.setBeltwayHeapScheme(this);
-            beltCollector.setRunnable(beltCollectorGenerational);
             heapVerifier.initialize(beltManager.getApplicationHeap(), getMatureSpace());
             if (Heap.verbose()) {
                 HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "EdenGC", "ToSpaceGC", "MatureSpaceGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "CardScan", "Scavenge");
@@ -93,22 +116,22 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
         if (outOfMemory) {
             return false;
         }
-        beltCollector.setRunnable(beltCollectorGenerational.getMinorGC());
-        collectorThread.execute();
+        //beltCollector.setRunnable(beltCollectorGenerational.getMinorGC());
+        collectorThread.execute(getMinorGC());
 
         if (Heap.verbose()) {
             HeapStatistics.incrementEdenCollections();
         }
         if (getToSpace().getRemainingMemorySize().lessEqual(getEdenSpace().size())) {
-            beltCollector.setRunnable(beltCollectorGenerational.getToGC());
-            collectorThread.execute();
+            //beltCollector.setRunnable(beltCollectorGenerational.getToGC());
+            collectorThread.execute(getToGC());
 
             if (Heap.verbose()) {
                 HeapStatistics.incrementToSpaceCollections();
             }
             if (getMatureSpace().getRemainingMemorySize().lessEqual(getToSpace().size().dividedBy(2))) {
-                beltCollector.setRunnable(beltCollectorGenerational.getMajorGC());
-                collectorThread.execute();
+                //beltCollector.setRunnable(beltCollectorGenerational.getMajorGC());
+                collectorThread.execute(getMajorGC());
 
                 if (Heap.verbose()) {
                     HeapStatistics.incrementMatureCollections();

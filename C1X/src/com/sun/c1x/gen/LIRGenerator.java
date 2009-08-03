@@ -1575,7 +1575,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
                 srcType = srcDeclaredType;
             }
             if (srcType != null) {
-                if (srcType.elementType().isSubtypeOf(dstType.elementType())) {
+                if (srcType.componentType().isSubtypeOf(dstType.componentType())) {
                     isExact = true;
                     expectedType = dstType;
                 }
