@@ -605,6 +605,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             //final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
             //enabledVmThreadLocals.setWord(OLD_OBJECT_ADDRESS.index, oldAddress);
             //enabledVmThreadLocals.setWord(NEW_OBJECT_ADDRESS.index, newAddress);
+            InspectableHeapInfo.oldAddress = oldAddress;
             InspectableHeapInfo.touchCardTableField(InspectableHeapInfo.oldAddress);
         }
     }

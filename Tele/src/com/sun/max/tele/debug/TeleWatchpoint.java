@@ -840,11 +840,8 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         private synchronized boolean relocateWatchpoint(TeleWatchpoint teleWatchpoint) throws TooManyWatchpointsException, DuplicateWatchpointException {
             ProgramError.check(teleWatchpoint.active, "Attempt to relocate an already deleted watchpoint ");
             TeleObject teleObject = teleWatchpoint.getTeleObject();
-            System.out.println("RELOCATE WATCHPOINT");
             if (teleObject != null) {
-                System.out.println("tele object still reachable");
                 if (teleObject.isLive()) {
-                    System.out.println("tele object still live");
                     Address newAddress = teleObject.getCurrentOrigin();
 
                     if (removeWatchpoint(teleWatchpoint)) {
@@ -858,12 +855,10 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
                     }
                     Trace.line(TRACE_VALUE, "Failed to relocate watchpoint at start=" + teleWatchpoint.start().toHexString() + ", size=" + teleWatchpoint.size().toString());
                 } else {
-                    System.out.println("tele object dead");
                     if (removeWatchpoint(teleWatchpoint)) {
                         TeleWatchpoint teleRegionWatchpoint = setRegionWatchpoint("RegionWatchpoint - GC removed corresponding Object", new FixedMemoryRegion(teleWatchpoint.start(), teleWatchpoint.size(), "Old memory location of watched object"),
                             teleWatchpoint.after, teleWatchpoint.read, teleWatchpoint.write, teleWatchpoint.exec, teleWatchpoint.isEnabledDuringGC);
                         if (teleRegionWatchpoint != null) {
-                            teleRegionWatchpoint.setEagerRelocationUpdate(true);
                             return true;
                         } else {
                             Trace.line(TRACE_VALUE, "Failed to create RegionWatchpoint for outdated TeleWatchpoint=" + teleWatchpoint.start().toHexString() + ", size=" + teleWatchpoint.size().toString());

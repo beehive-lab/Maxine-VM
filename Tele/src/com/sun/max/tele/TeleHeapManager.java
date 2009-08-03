@@ -73,8 +73,6 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
      */
     private TeleRuntimeMemoryRegion[] teleHeapRegions = new TeleRuntimeMemoryRegion[0];
 
-    private Word[] teleRuntimeMemoryRegionRegistration = null;
-
     private Pointer teleRuntimeMemoryRegionRegistrationPointer = Pointer.zero();
 
     private Pointer cardTablePointer = Pointer.zero();
@@ -162,13 +160,6 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
                 // Remove any null memory regions from the list.
                 if (next != teleHeapRegions.length) {
                     teleHeapRegions = Arrays.copyOf(teleHeapRegions, next);
-                }
-
-                if (teleRuntimeMemoryRegionRegistration == null) {
-                    teleRuntimeMemoryRegionRegistration = new Word[teleHeapRegions.length];
-                    for (int i = 0; i < teleHeapRegions.length; i++) {
-                        teleRuntimeMemoryRegionRegistration[i] = teleVM().dataAccess().readWord(teleRuntimeMemoryRegionRegistrationPointer, i * Word.size());
-                    }
                 }
             }
             updatingHeapMemoryRegions = false;
