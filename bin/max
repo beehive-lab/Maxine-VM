@@ -63,6 +63,7 @@ default_jvm_args="-d64 -ea -Xss2m -Xms1g -Xmx1g"
 jvm_args="$default_jvm_args"
 jvm_args_prefix=""
 jvm_args_suffix=""
+jvm_dbg_port=""
 maxine_dir=""
 make_arg=
 while [ "${1:0:1}" = "-" ]; do
@@ -101,6 +102,10 @@ while [ "${1:0:1}" = "-" ]; do
         -J* )
             jvm_args=${1/-J/}
             ;;
+        -dbgport )
+            shift
+            jvm_dbg_port=$1
+            ;;
         -junit4 )
             shift
             JUNIT4_CP=$1
@@ -114,6 +119,9 @@ while [ "${1:0:1}" = "-" ]; do
 done
 command=$1
 shift
+if [ -n "$jvm_dbg_port" ]; then
+    jvm_args="$jvm_args -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=$jvm_dbg_port"
+fi
 jvm_args="$jvm_args_prefix $jvm_args $jvm_args_suffix"
 command_args=$@
 
@@ -1104,13 +1112,15 @@ function usage() {
     echo " -v               enable verbose output "
     echo " -d               enable debug output"
     echo " -h               show launcher help"
-    echo " -java_home <path> specifies JDK installation directory (must be JDK 6 or later)"
+    echo " -java_home <path> JDK installation directory (must be JDK 6 or later)"
     echo "                    (default: value of the JAVA_HOME environment variable)"
-    echo " -jvm <path>      specifies Java VM executable (default: bin/java under JAVA_HOME)"
-    echo " -J<args>         specifies Java VM arguments (default: ${default_jvm_args})"
+    echo " -jvm <path>      Java VM executable (default: bin/java under JAVA_HOME)"
+    echo " -dbgport <num>   add following to Java VM arguments to enable attaching a debugger:"
+    echo "                      -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=<num>"
+    echo " -J<args>         Java VM arguments (default: ${default_jvm_args})"
     echo " -J/p<args>       prefix Java VM arguments"
     echo " -J/a<args>       suffix Java VM arguments"
-    echo " -maxine <path>   specifies base directory of the Maxine code base"
+    echo " -maxine <path>   base directory of the Maxine code base"
     echo "                    (default: ${maxine_dir})"
     echo " -junit4 <cp>     class path for Junit 4 classes (default: value of JUNIT4_CP environment variable)"
     echo " -make <path>     path to GNU make executable (default: $make)"
