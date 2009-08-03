@@ -665,10 +665,9 @@ public final class BreakpointsTable extends InspectorTable {
         TargetBreakpointData(TeleTargetBreakpoint teleTargetBreakpoint) {
             this.teleTargetBreakpoint = teleTargetBreakpoint;
             final Address address = teleTargetBreakpoint.address();
-            final String description = teleTargetBreakpoint.getDescription();
             final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(address);
             if (teleTargetMethod != null) {
-                shortName = description != null ? description : inspection().nameDisplay().shortName(teleTargetMethod);
+                shortName = inspection().nameDisplay().shortName(teleTargetMethod);
                 longName = "method: " + inspection().nameDisplay().longName(teleTargetMethod, address);
                 codeStart = teleTargetMethod.getCodeStart();
                 location = address.minus(codeStart.asAddress()).toInt();
@@ -677,18 +676,18 @@ public final class BreakpointsTable extends InspectorTable {
                 if (teleRuntimeStub != null) {
                     codeStart = teleRuntimeStub.runtimeStub().start();
                     location = address.minus(codeStart).toInt();
-                    shortName = description != null ? description : "runtime stub[0x" + codeStart + "]";
+                    shortName = "runtime stub[0x" + codeStart + "]";
                     longName = shortName;
                 } else {
                     final TeleNativeTargetRoutine teleNativeTargetRoutine = maxVM().findTeleTargetRoutine(TeleNativeTargetRoutine.class, address);
                     if (teleNativeTargetRoutine != null) {
                         codeStart = teleNativeTargetRoutine.getCodeStart();
                         location = address.minus(codeStart.asAddress()).toInt();
-                        shortName = description != null ? description : inspection().nameDisplay().shortName(teleNativeTargetRoutine);
+                        shortName = inspection().nameDisplay().shortName(teleNativeTargetRoutine);
                         longName = inspection().nameDisplay().longName(teleNativeTargetRoutine);
                     } else {
                         // Must be an address in an unknown area of native code
-                        shortName = description != null ? description : "0x" + address.toHexString();
+                        shortName = "0x" + address.toHexString();
                         longName = "unknown native code at 0x" + address.toHexString();
                         codeStart = address;
                         location = 0;
@@ -714,7 +713,8 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         String shortName() {
-            return shortName;
+            String description = teleTargetBreakpoint.getDescription();
+            return description != null && !description.equals("") ?  description  : shortName;
         }
 
         @Override
