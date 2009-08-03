@@ -163,7 +163,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             JavaMonitorManager.bindStickyMonitor(BeltwayCollectorThread.callerToken, new StandardJavaMonitor());
         } else if (phase == MaxineVM.Phase.PRISTINE) {
             final Size heapSize = calculateHeapSize();
-            final Address address = allocateMemory(heapSize);
+            final Address address = allocateHeapStorage(heapSize);
             final int [] defaultBeltHeapPercentage = defaultBeltHeapPercentage();
             beltwayConfiguration.initializeBeltWayConfiguration(address, heapSize,  defaultBeltHeapPercentage.length, defaultBeltHeapPercentage);
             evacuationClosure = BeltwayConfiguration.parallelScavenging ? parallelEvacuationClosure : singleThreadedEvacuationClosure;
@@ -196,9 +196,22 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
         return true;
     }
 
-    @INLINE
-    protected final Address allocateMemory(Size size) {
-        final Address endOfCodeRegion = Code.bootCodeRegion.end();
+    /**
+     * Allocate the backing storage for the entire heap.
+     * For now, the beltway heap schemes require that the heap be contiguous with the boot heap region so as to
+     * simply implement card-tables (the write barrier currently uses a card table that covers both the boot and the heap).
+     * This gets complicated because other parts  of the VM may require that too. At the moment, the CodeManager, if a FixedAddressCodeManager,
+     * requires storage immediately after the code region. We need to take this into account when allocating storage for the heap.
+     *
+     * @param size
+     * @return
+     */
+    private Address allocateHeapStorage(Size size) {
+        Address endOfCodeRegion = Code.bootCodeRegion.end().roundedUpBy(Platform.target().pageSize);
+        RuntimeMemoryRegion codeManager = Code.getCodeManager();
+        if (codeManager instanceof FixedAddressCodeManager && codeManager.start().equals(endOfCodeRegion)) {
+            endOfCodeRegion = codeManager.end();
+        }
         final Address tlabAlignedEndOfCodeRegion = endOfCodeRegion.roundedUpBy(BeltwayConfiguration.TLAB_SIZE.toInt());
         assert tlabAlignedEndOfCodeRegion.isAligned(Platform.target().pageSize);
         if (VirtualMemory.allocatePageAlignedAtFixedAddress(tlabAlignedEndOfCodeRegion, size, VirtualMemory.Type.HEAP)) {
@@ -385,7 +398,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     @Override
     protected  void doBeforeTLABRefill(Pointer tlabAllocationMark, Pointer tlabEnd) {
         Pointer hardLimit = tlabEnd.plus(TLAB_HEADROOM);
-        if (tlabAllocationMark.greaterEqual(tlabEnd)) {
+        if (tlabAllocationMark.greaterThan(tlabEnd)) {
             FatalError.check(hardLimit.equals(tlabAllocationMark), "TLAB allocation mark cannot be greater than TLAB End");
             return;
         }
