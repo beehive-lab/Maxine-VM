@@ -61,6 +61,7 @@ public class BeltwayCollector {
 
     protected void prologue() {
         numCollections++;
+        heapScheme.resetTLABs();
         InspectableHeapInfo.beforeGarbageCollection();
 
         if (Heap.verbose()) {
@@ -85,7 +86,6 @@ public class BeltwayCollector {
             Log.println("Evacuate Followers");
         }
         heapScheme.evacuate(from, to);
-        // beltwayHeapSchemeBA2.fillLastTLAB(); FIXME: do we need this ?
     }
 
     protected void printBeltInfo(String beltName, Belt belt) {

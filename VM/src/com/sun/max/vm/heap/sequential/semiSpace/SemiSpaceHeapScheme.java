@@ -948,11 +948,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         final Pointer vmThreadLocals = VmThread.currentVmThreadLocals();
         final Address value = ALLOCATION_DISABLED.getConstantWord(vmThreadLocals).asAddress();
         ALLOCATION_DISABLED.setConstantWord(vmThreadLocals, value.plus(1));
-        if (MaxineVM.isDebug()) {
-            // Need to pad the current TLAB in case a GC occurs while allocation is disabled on the current thread.
-            final Pointer enabledVmThreadLocals = vmThreadLocals.getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
-            padTLAB(enabledVmThreadLocals);
-        }
         TLAB_TOP.setVariableWord(vmThreadLocals, Address.zero());
     }
 

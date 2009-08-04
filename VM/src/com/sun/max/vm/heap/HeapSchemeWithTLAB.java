@@ -144,6 +144,41 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     }
 
     /**
+     * A procedure for resetting the TLAB of a thread.
+     */
+    protected static class ResetTLAB implements Pointer.Procedure {
+
+        protected void doBeforeReset(Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabTop) {
+            // Default is nothing.
+        }
+
+        public void run(Pointer vmThreadLocals) {
+            final Pointer enabledVmThreadLocals = vmThreadLocals.getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
+            final Pointer tlabTop = enabledVmThreadLocals.getWord(TLAB_TOP.index).asPointer();
+            final Pointer tlabMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
+            if (Heap.traceAllocation()) {
+                final VmThread vmThread = UnsafeLoophole.cast(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.printVmThread(vmThread, false);
+                Log.print(": Resetting TLAB [TOP=");
+                Log.print(tlabTop);
+                Log.print(", MARK=");
+                Log.print(tlabMark);
+                Log.println("]");
+                Log.unlock(lockDisabledSafepoints);
+            }
+            if (tlabTop.equals(Address.zero())) {
+                FatalError.check(tlabMark.equals(Address.zero()), "TLAB mark must also be zero");
+                // No TLABs, so nothing to reset.
+                return;
+            }
+            doBeforeReset(enabledVmThreadLocals, tlabMark, tlabTop);
+            enabledVmThreadLocals.setWord(TLAB_TOP.index, Address.zero());
+            enabledVmThreadLocals.setWord(TLAB_MARK.index, Address.zero());
+        }
+    }
+
+    /**
      * Flags if TLABs are being used for allocation.
      */
     private boolean useTLAB;
