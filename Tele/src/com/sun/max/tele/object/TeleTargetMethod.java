@@ -477,7 +477,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
                     assert teleObject instanceof TeleClassMethodActor;
                     final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) teleObject;
                     final String calleeName = teleClassMethodActor == null ? "<unknown>" :  teleClassMethodActor.classMethodActor().format("%r %n(%p)" + " in %H");
-                    writer.println(getStopPositions()[i] + " -> " + calleeName);
+                    writer.println(getStopPositions().get(i) + " -> " + calleeName);
                 }
             }
             writer.outdent();
