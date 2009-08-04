@@ -35,6 +35,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -80,7 +81,16 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                 FatalError.unexpected("Stack reference map preparer should be cleared before GC");
             }
 
+            // Stack reference map preparation must never include a call to a native method (e.g. blocking
+            // due to synchronization) as it such a transition will be interpreted by a GC thread to
+            // mean that the thread is now blocked on the GC lock as a result of synchronizing on
+            // VmThreadMap.ACTIVE (below). Given that stack reference map preparation involves an
+            // extensive amount of Java code, the easiest way to detect a violation this invariant
+            // is by disabling the ability to call native methods (as opposed to continually
+            // auditing any code that may be involved in stack reference map preparation).
+            NativeStubSnippet.disableNativeCallsForCurrentThread();
             VmThreadLocal.prepareStackReferenceMapFromTrap(vmThreadLocals, trapState);
+            NativeStubSnippet.enableNativeCallsForCurrentThread();
 
             synchronized (VmThreadMap.ACTIVE) {
                 // Stops this thread until GC is done.
