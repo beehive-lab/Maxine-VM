@@ -72,7 +72,11 @@ public abstract class ValueLabel extends InspectorLabel {
      * Sets initial value, display properties.
      */
     protected final void initializeValue() {
-        value = fetchValue();
+        try {
+            value = fetchValue();
+        } catch (DataIOError dataIOError) {
+            value = VoidValue.VOID;
+        }
         lastRefreshedState = maxVMState();
     }
 
