@@ -25,6 +25,7 @@ import java.awt.event.*;
 
 import javax.swing.*;
 
+import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.memory.*;
@@ -47,6 +48,25 @@ import com.sun.max.util.*;
 public final class MemoryWordsInspector extends Inspector {
 
     private static final int TRACE_VALUE = 1;
+
+    private static enum NavMode {
+        WORD("Word"),
+        OBJECT("Obj"),
+        PAGE("Page");
+
+        private final String label;
+
+        private NavMode(String label) {
+            this.label = label;
+        }
+
+        public String label() {
+            return label;
+        }
+
+        public static final IndexedSequence<NavMode> VALUES = new ArraySequence<NavMode>(values());
+
+    }
 
     private final Size wordSize;
     private final Size pageSize;
