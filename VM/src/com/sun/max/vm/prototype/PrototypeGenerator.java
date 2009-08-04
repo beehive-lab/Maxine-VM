@@ -120,10 +120,11 @@ public final class PrototypeGenerator {
      * selected
      */
     VMConfiguration createVMConfiguration(final VMConfiguration defaultConfiguration) {
+        OperatingSystem defaultOperatingSystem = defaultConfiguration.platform().operatingSystem;
         // set the defaults manually using the default configuration
         processorModel.setDefaultValue(defaultConfiguration.platform().processorKind.processorModel);
         instructionSet.setDefaultValue(defaultConfiguration.platform().processorKind.instructionSet);
-        operatingSystem.setDefaultValue(defaultConfiguration.platform().operatingSystem);
+        operatingSystem.setDefaultValue(defaultOperatingSystem);
         pageSizeOption.setDefaultValue(defaultConfiguration.platform().pageSize);
         wordWidth.setDefaultValue(defaultConfiguration.platform().processorKind.dataModel.wordWidth);
         endiannessOption.setDefaultValue(defaultConfiguration.platform().processorKind.dataModel.endianness);
@@ -147,7 +148,7 @@ public final class PrototypeGenerator {
         final ProcessorKind processorKind = new ProcessorKind(processorModel.getValue(), instructionSet.getValue(), dataModel);
         final OperatingSystem operatingSystem = this.operatingSystem.getValue();
         int pageSizeValue = pageSizeOption.getValue();
-        if (!options.hasOptionSpecified(pageSizeOption.getName()) && operatingSystem != defaultConfiguration.platform().operatingSystem) {
+        if (!options.hasOptionSpecified(pageSizeOption.getName()) && operatingSystem != defaultOperatingSystem) {
             pageSizeValue = operatingSystem.defaultPageSize();
         }
         final Platform platform = new Platform(processorKind, operatingSystem, pageSizeValue);
@@ -246,10 +247,6 @@ public final class PrototypeGenerator {
                     GraphPrototype graphPrototype;
                     int numberOfClassActors = 0;
                     int numberOfCompilationThreads = threadsOption.getValue();
-                    if (numberOfCompilationThreads > 1 && Platform.target().processorKind.processorModel.name().startsWith("SPARC")) {
-                        ProgramWarning.message("Throttling compiler threads back to 1 until CPS compiler race is solved");
-                        numberOfCompilationThreads = 1;
-                    }
                     final CompiledPrototype compiledPrototype = new CompiledPrototype(javaPrototype, numberOfCompilationThreads);
                     compiledPrototype.addEntrypoints();
                     do {
