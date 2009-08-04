@@ -479,8 +479,8 @@ JVM_AllocateNewArray(JNIEnv *env, jobject obj, jclass currClass,
 
 jobject
 JVM_LatestUserDefinedLoader(JNIEnv *env) {
-    c_UNIMPLEMENTED();
-    return 0;
+    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/jni/JVMFunctions", "LatestUserDefinedLoader", "()Ljava/lang/ClassLoader;");
+    return (*env)->CallStaticObjectMethod(env, result.jClass, result.jMethod);
 }
 
 /*
