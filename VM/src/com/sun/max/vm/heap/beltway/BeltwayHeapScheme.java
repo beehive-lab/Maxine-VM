@@ -51,6 +51,12 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     private static final Verify verifyAction = new VerifyActionImpl();
 
     /**
+     * Alignment requirement for Belt. Must be aligned on a card for now.
+     * Since the heap is made of Belts, it must also enforce belt alignment.
+     */
+    public static final int BELT_ALIGNMENT = BeltwayCardRegion.CARD_SIZE.toInt();
+
+    /**
      * Size to reserve at the end of a TLABs to guarantee that a dead object can always be
      * appended to a TLAB to fill unused space before a TLAB refill.
      * The headroom is used to compute a soft limit that'll be used as the tlab's top.
@@ -59,34 +65,39 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     private static Size TLAB_HEADROOM;
 
     /**
-     * Closure for evacuating object from a belt to another belt in a single-threaded GC.
-     * The source and destination belt should be properly initialized before using the closure.
+     *  Cell visitor for evacuating object from a belt to another belt in a single-threaded GC.
+     * The source and destination belt should be properly initialized before using the cell visitor.
      */
-    private static final Action singleThreadedEvacuationClosure = new CopyActionImpl(verifyAction);
+    private static final BeltwayCellVisitorImpl singleThreadedCellVisitor = new BeltwayCellVisitorImpl(new PointerVisitor(new CopyActionImpl(verifyAction)));
 
     /**
-     * Closure for evacuating object from a belt to another belt in a parallel GC (i.e., with potentially multiple thread evacuating objects).
-     * Although the closure can be used by multiple thread simultaneously, all the threads must operate on the same source and destination belts.
+     * Cell visitor for evacuating object from a belt to another belt in a parallel GC (i.e., with potentially multiple thread evacuating objects).
+     * Although the visitor can be used by multiple thread simultaneously, all the threads must operate on the same source and destination belts.
      */
-    private static final Action parallelEvacuationClosure = new ParallelCopyActionImpl(verifyAction);
+    private static final BeltwayCellVisitorImpl parallelCellVisitor = new BeltwayCellVisitorImpl(new PointerVisitor(new ParallelCopyActionImpl(verifyAction)));
 
     /**
-     * The evacuation closure used by the heap scheme. It's either one of singleThreadedEvacuationClosure parallelEvacuationClosure depending on
+     * The cell visitor used by the heap scheme. It's either one of singleThreadedCellVisitor parallelCellVisitor depending on
      * the Beltway configuration. It should be possible to pick up the right configuration based on a VM option.
      */
-    protected Action evacuationClosure;
+    @CONSTANT_WHEN_NOT_ZERO
+    protected BeltwayCellVisitorImpl cellVisitor;
 
-    private final PointerVisitor pointerVisitorGripVerifier = new PointerVisitor(verifyAction);
-
-    private final PointerVisitor pointerVisitorGripUpdater = new PointerVisitor(evacuationClosure);
-
-    protected final BeltCellVisitor cellVisitor = new BeltwayCellVisitorImpl(pointerVisitorGripUpdater);
-
-    public final BeltwayHeapVerifier heapVerifier = new BeltwayHeapVerifier(pointerVisitorGripUpdater);
+    public final BeltwayHeapVerifier heapVerifier = new BeltwayHeapVerifier();
 
     protected final BeltwayCardRegion cardRegion = new BeltwayCardRegion();
 
-    private final SequentialHeapRootsScanner stackAndMonitorGripUpdater = new SequentialHeapRootsScanner(pointerVisitorGripUpdater);
+    private final SequentialHeapRootsScanner stackAndMonitorGripUpdater = new SequentialHeapRootsScanner(null);
+
+    /**
+     * The address of the first byte of the dynamic heap. This is set at VM startup time, once the heap size is known.
+     */
+    private Address dynamicHeapStart;
+    /**
+     * Size of the dynamic heap (i.e., excluding boot heap and code regions). This is set at VM startup time, once the heap
+     * size is computed based on heap sizing arguments provided to the VM.
+     */
+    private Size dynamicHeapMaxSize;
 
     /**
      * Side table for the heap. Keeps track of the address to the first object in a card to enable
@@ -96,20 +107,24 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
 
     protected Address adjustedCardTableAddress = Address.zero();
 
-    protected BeltwayConfiguration beltwayConfiguration;
     protected BeltManager beltManager;
+
     /**
      * The thread running the collector, and coordinating the GC threads when the GC support parallel collection.
      */
     protected BlockingServerDaemon collectorThread;
-
 
     public static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError();
     public static boolean outOfMemory = false;
 
     // Support for parallel collections
 
-    public static BeltwayCollectorThread[] gcThreads = new BeltwayCollectorThread[BeltwayConfiguration.numberOfGCThreads];
+    public static final int numberOfGCThreads = 1;
+
+    public static boolean useGCTlabs = false;
+    public static boolean parallelScavenging = false;
+
+    public static BeltwayCollectorThread[] gcThreads = new BeltwayCollectorThread[numberOfGCThreads];
     public static int lastThreadAllocated;
     public static volatile long allocatedTLABS = 0;
     public static Object tlabCounterMutex = new Object();
@@ -117,23 +132,11 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     public static Object tlabRetrieveMutex = new Object();
     public static boolean inGC = false;
     public static boolean inScavenging = false;
-    public static BeltTLAB[] scavengerTLABs = new BeltTLAB[BeltwayConfiguration.numberOfGCThreads + 1];
+    public static BeltTLAB[] scavengerTLABs = new BeltTLAB[numberOfGCThreads + 1];
 
 
     public BeltCellVisitor cellVisitor() {
         return cellVisitor;
-    }
-
-    public Action copyAction() {
-        return evacuationClosure;
-    }
-
-    public PointerIndexVisitor pointerIndexGripVerifier() {
-        return pointerVisitorGripVerifier;
-    }
-
-    public PointerIndexVisitor pointerIndexGripUpdater() {
-        return pointerVisitorGripUpdater;
     }
 
     @INLINE
@@ -145,29 +148,39 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
         super(vmConfiguration);
     }
 
-    protected abstract int [] defaultBeltHeapPercentage();
+    protected abstract int [] beltHeapPercentage();
+    protected abstract String [] beltDescriptions();
+
+    public Size getMaxHeapSize() {
+        return dynamicHeapMaxSize;
+    }
+
+    public Address getHeapStart() {
+        return dynamicHeapStart;
+    }
+
+    public Address getHeapEnd() {
+        return dynamicHeapStart.plus(dynamicHeapMaxSize);
+    }
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (MaxineVM.isPrototyping()) {
             TLAB_HEADROOM = MIN_OBJECT_SIZE.plus(MaxineVM.isDebug() ? Word.size() : 0);
+            beltManager = new BeltManager(this);
 
-            beltwayConfiguration = new BeltwayConfiguration();
-            beltManager = new BeltManager();
-            beltManager.createBelts();
-
-            for (int i = 0; i < BeltwayConfiguration.numberOfGCThreads; i++) {
+            for (int i = 0; i < numberOfGCThreads; i++) {
                 JavaMonitorManager.bindStickyMonitor(BeltwayCollectorThread.tokens[i], new StandardJavaMonitor());
             }
             JavaMonitorManager.bindStickyMonitor(BeltwayCollectorThread.callerToken, new StandardJavaMonitor());
         } else if (phase == MaxineVM.Phase.PRISTINE) {
-            final Size heapSize = calculateHeapSize();
-            final Address address = allocateHeapStorage(heapSize);
-            final int [] defaultBeltHeapPercentage = defaultBeltHeapPercentage();
-            beltwayConfiguration.initializeBeltWayConfiguration(address, heapSize,  defaultBeltHeapPercentage.length, defaultBeltHeapPercentage);
-            evacuationClosure = BeltwayConfiguration.parallelScavenging ? parallelEvacuationClosure : singleThreadedEvacuationClosure;
+            cellVisitor = parallelScavenging ? parallelCellVisitor : singleThreadedCellVisitor;
+            stackAndMonitorGripUpdater.setPointerIndexVisitor(cellVisitor.pointerVisitorGripUpdater);
+            dynamicHeapMaxSize = calculateHeapSize();
+            dynamicHeapStart = allocateHeapStorage(dynamicHeapMaxSize);
             beltManager.initializeBelts();
+
             if (Heap.verbose()) {
                 beltManager.printBeltsInfo();
             }
@@ -177,10 +190,10 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
                             Platform.target().pageSize));
             BeltwayCardRegion.switchToRegularCardTable(cardRegion.cardTableBase().asPointer());
         } else if (phase == MaxineVM.Phase.STARTING) {
-            collectorThread =  BeltwayConfiguration.parallelScavenging ? new BeltwayStopTheWorldDaemon("GC") : new StopTheWorldGCDaemon("GC");
+            collectorThread =  parallelScavenging ? new BeltwayStopTheWorldDaemon("GC") : new StopTheWorldGCDaemon("GC");
             collectorThread.start();
         } else if (phase == MaxineVM.Phase.RUNNING) {
-            if (BeltwayConfiguration.parallelScavenging) {
+            if (parallelScavenging) {
                 createGCThreads();
             }
         }
@@ -212,7 +225,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
         if (codeManager instanceof FixedAddressCodeManager && codeManager.start().equals(endOfCodeRegion)) {
             endOfCodeRegion = codeManager.end();
         }
-        final Address tlabAlignedEndOfCodeRegion = endOfCodeRegion.roundedUpBy(BeltwayConfiguration.TLAB_SIZE.toInt());
+        final Address tlabAlignedEndOfCodeRegion = endOfCodeRegion.roundedUpBy(BeltwayHeapSchemeConfiguration.TLAB_SIZE.toInt());
         assert tlabAlignedEndOfCodeRegion.isAligned(Platform.target().pageSize);
         if (VirtualMemory.allocatePageAlignedAtFixedAddress(tlabAlignedEndOfCodeRegion, size, VirtualMemory.Type.HEAP)) {
             return tlabAlignedEndOfCodeRegion;
@@ -233,7 +246,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
      * @param to the belt where the objects are evacuated to
      */
     public void scavengeRoot(Belt from, Belt to) {
-        pointerVisitorGripUpdater.action.init(from, to);
+        cellVisitor.init(from, to);
 
         if (Heap.verbose()) {
             Log.println("Scan Roots ");
@@ -243,12 +256,12 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
         if (Heap.verbose()) {
             Log.println("Scan Boot Heap");
         }
-        Heap.bootHeapRegion.visitReferences(pointerVisitorGripUpdater);
+        Heap.bootHeapRegion.visitReferences(cellVisitor.pointerVisitorGripUpdater);
 
         if (Heap.verbose()) {
             Log.println("Scan Code");
         }
-        Code.visitReferences(pointerVisitorGripUpdater);
+        Code.visitReferences(cellVisitor.pointerVisitorGripUpdater);
     }
 
     protected Size calculateHeapSize() {
@@ -256,12 +269,12 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
         if (Heap.maxSize().greaterThan(size)) {
             size = Heap.maxSize();
         }
-        return size.roundedUpBy(BeltwayHeapSchemeConfiguration.TLAB_SIZE.toInt()).asSize();
+        return size.roundedUpBy(BELT_ALIGNMENT).asSize();
     }
 
     @INLINE
     protected final void createGCThreads() {
-        for (int i = 0; i < BeltwayConfiguration.numberOfGCThreads; i++) {
+        for (int i = 0; i < numberOfGCThreads; i++) {
             gcThreads[i] = new BeltwayCollectorThread(i);
         }
 
@@ -378,7 +391,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
 
     @INLINE
     public final Pointer gcAllocate(RuntimeMemoryRegion belt, Size size) {
-        if (BeltwayConfiguration.useGCTlabs) {
+        if (useGCTlabs) {
             return gcTlabAllocate(belt, size);
         }
         return gcBumpAllocate(belt, size);
@@ -420,6 +433,11 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
         }
     };
 
+    /**
+     * Allocate a chunk of memory of the specified size and refill a thread's TLAB with it.
+     * @param enabledVmThreadLocals the thread whose TLAB will be refilled
+     * @param tlabSize the size of the chunk of memory used to refill the TLAB
+     */
     private void allocateAndRefillTLABl(Pointer enabledVmThreadLocals, Size tlabSize) {
         Pointer tlab = tlabAllocationBelt.allocate(tlabSize);
         // FIXME: we should verify that the tlab was successfully allocated here -- we may run out of space at this stage.
@@ -430,6 +448,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
         }
         refillTLAB(enabledVmThreadLocals, tlab, tlabSize.minus(TLAB_HEADROOM));
     }
+
     /**
      * Handling of TLAB Overflow.
      */
@@ -491,7 +510,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     public final Pointer heapAllocate(Belt belt, Size size) {
         final Pointer pointer = belt.allocate(size);
         if (pointer.equals(Pointer.zero())) {
-            if (belt.getIndex() == (BeltwayConfiguration.getNumberOfBelts() - 1)) {
+            if (belt.getIndex() == (beltManager.numberOfBelts() - 1)) {
                 throw outOfMemoryError;
             }
             if (!Heap.collectGarbage(size)) {
@@ -588,23 +607,17 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
 
     }
 
-    public final Size calculateTLABSize(Size size) {
-        Size defaultSize;
-        defaultSize = BeltwayConfiguration.TLAB_SIZE;
-        if (inGC) {
-            defaultSize = BeltwayConfiguration.GC_TLAB_SIZE;
-        }
-        Size newSize = defaultSize;
+    private Size calculateGCTLABSize(Size size) {
+        Size newSize = BeltwayHeapSchemeConfiguration.GC_TLAB_SIZE;
         while (size.greaterThan(newSize.minus(100))) {
-            newSize = newSize.plus(200);
-            newSize = newSize.roundedUpBy(defaultSize).asSize();
+            newSize = newSize.plus(200).roundedUpBy(BeltwayHeapSchemeConfiguration.GC_TLAB_SIZE).asSize();
         }
         return newSize;
     }
 
     public final void initializeFirstGCTLAB(RuntimeMemoryRegion gcRegion, BeltTLAB tlab, Size size) {
         //Debug.println("Try to set initial GC TLAB");
-        final Size newSize = calculateTLABSize(size);
+        final Size newSize = calculateGCTLABSize(size);
         final Size allocSize = newSize.asPointer().minusWords(1).asSize();
         final Pointer newTLABAddress = gcAllocateTLAB(gcRegion, allocSize);
         sideTable.markCreatingSideTable(newTLABAddress);
@@ -664,8 +677,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     }
 
     public Size reportUsedSpace() {
-        FatalError.unimplemented();
-        return null;
+        return beltManager.reportUsedSpace();
     }
 
     public void runFinalization() {
