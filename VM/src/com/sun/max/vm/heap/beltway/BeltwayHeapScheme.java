@@ -677,8 +677,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     }
 
     public Size reportUsedSpace() {
-        FatalError.unimplemented();
-        return null;
+        return beltManager.reportUsedSpace();
     }
 
     public void runFinalization() {

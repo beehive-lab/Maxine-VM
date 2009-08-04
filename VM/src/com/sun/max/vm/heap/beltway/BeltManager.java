@@ -162,6 +162,14 @@ public final class BeltManager {
         return freeSize;
     }
 
+    public Size reportUsedSpace() {
+        Size usedSize = Size.zero();
+        for (int i = 0; i <  belts.length; i++) {
+            usedSize = usedSize.plus(belts[i].getUsedMemorySize());
+        }
+        return usedSize;
+    }
+
     public void printTotalMemory() {
         Size size = Heap.bootHeapRegion.size().plus(Code.bootCodeRegion.size()).plus(Code.getCodeSize());
         for (int i = 0; i <  belts.length; i++) {
