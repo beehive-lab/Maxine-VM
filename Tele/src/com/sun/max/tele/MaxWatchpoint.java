@@ -105,6 +105,19 @@ public interface MaxWatchpoint extends MemoryRegion {
     TeleObject getTeleObject();
 
     /**
+     * Sets the update mechanism of relocatable watchpoints.
+     * true == eager, false == lazy
+     * @param correspondingObjectGotCollected
+     */
+    void setEagerRelocationUpdate(boolean refObjectCollected);
+
+    /**
+     * Checks if eager relocation update mechanism is turned on for a given watchpoint.
+     * @return true if eager relocation update activated
+     */
+    boolean isEagerRelocationUpdateSet();
+
+    /**
      * Disable watchpoint and temporary store old configuration.
      */
     boolean disable();
