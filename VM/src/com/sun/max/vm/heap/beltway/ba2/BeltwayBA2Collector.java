@@ -85,15 +85,16 @@ public class BeltwayBA2Collector extends BeltwayCollector {
 
             matureSpace.resetAllocationMark();
             matureSpace.setEnd(matureSpaceEnd);
+            final Size usableMemory =  ((BeltwayHeapSchemeBA2) heapScheme).getUsableMemory();
             if (Heap.verbose()) {
                 printBeltInfo("Mature Space", matureSpace);
                 Log.print("Mature Space Reserve Size: ");
                 Log.println(matureSpaceReserve.size().toLong());
                 Log.print("Configuration usable memory Size ");
-                Log.println(BeltwayConfiguration.getUsableMemory().toLong());
+                Log.println(usableMemory);
             }
 
-            if (matureSpaceReserve.size().lessEqual(BeltwayConfiguration.getUsableMemory())) {
+            if (matureSpaceReserve.size().lessEqual(usableMemory)) {
                 if (Heap.verbose()) {
                     Log.println("Compaction ");
                 }

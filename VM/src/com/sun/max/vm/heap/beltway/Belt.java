@@ -32,7 +32,7 @@ import com.sun.max.vm.runtime.*;
  * @author Christos Kotselidis
  */
 public class Belt extends RuntimeMemoryRegion {
-
+    private static final int NO_BELT_INDEX = -1;
     /**
      * The relative order of a belt. Always starts from Zero (0). The lower the value, the older
      * the generation and vice versa.
@@ -44,29 +44,17 @@ public class Belt extends RuntimeMemoryRegion {
      */
     private boolean expandable = false;
 
-    /**
-     * The percent of usable memory frames the belt occupies. This corresponds to the "X" described in the Beltway paper.
-     */
-    private int framePercentageOfUsableMemory;
-
     // The address and the pointer to the address
     // of the previous allocation mark
     private volatile Address prevAllocationMark = Address.zero();
 
-    private Address usableMemoryEnd;
-    private Address usableMemoryStart;
-
-    private Size usableMemory;
-
-    public Belt(int index, Address beltStartAddress, Size beltSize, int framePercentageOfUsableMemory) {
-        super(beltStartAddress, beltSize);
+    public Belt(int index, String description) {
+        super(description);
         this.index = index;
-        this.usableMemoryStart = beltStartAddress;
-        this.framePercentageOfUsableMemory = framePercentageOfUsableMemory;
-        this.mark.set(beltStartAddress);
     }
 
     public Belt() {
+        this.index = NO_BELT_INDEX;
     }
 
     public final Address getPrevAllocationMark() {
@@ -78,7 +66,7 @@ public class Belt extends RuntimeMemoryRegion {
     }
 
     public final Size getRemainingMemorySize() {
-        return end().asSize().minus(getAllocationMark());
+        return end().minus(getAllocationMark()).asSize();
     }
 
     public final void resetAllocationMark() {
@@ -91,20 +79,16 @@ public class Belt extends RuntimeMemoryRegion {
         mark.set(beltStartAddress);
     }
 
+    public void initialize(Address start, Size size) {
+
+    }
+
     public void setIndex(int index) {
         this.index = index;
     }
 
     public int getIndex() {
         return index;
-    }
-
-    public int getFramePercentageOfUsableMemory() {
-        return framePercentageOfUsableMemory;
-    }
-
-    public void setFramePercentageOfUsableMemory(int framePercentageOfUsableMemory) {
-        this.framePercentageOfUsableMemory = framePercentageOfUsableMemory;
     }
 
     public void setExpandable(boolean expandable) {
@@ -161,12 +145,20 @@ public class Belt extends RuntimeMemoryRegion {
             oldAllocationMark = mark();
             cell = DebugHeap.adjustForDebugTag(oldAllocationMark);
             end = cell.plus(size);
-            if (checkNotExceedUsable(end.asSize())) {
+ /*           if (checkNotExceedUsable(end.asSize())) {
                 return Pointer.zero();
             }
-            oldAllocationMark = mark();
+*/
+            if (end.greaterThan(end())) {
+                return Pointer.zero();
+            }
         } while (mark.compareAndSwap(oldAllocationMark, end) != oldAllocationMark);
         return cell;
+    }
+
+    @INLINE
+    private BeltwayHeapScheme heapScheme() {
+        return (BeltwayHeapScheme) VMConfiguration.target().heapScheme();
     }
 
     @INLINE
@@ -184,7 +176,7 @@ public class Belt extends RuntimeMemoryRegion {
                 return Pointer.zero();
             }
 
-            if (!end.lessThan(((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).getBeltManager().getApplicationHeap().end())) {
+            if (!end.lessThan(heapScheme().getHeapEnd())) {
                 return Pointer.zero();
             }
             if (!(mark.compareAndSwap(oldAllocationMark, end) == oldAllocationMark)) {
@@ -281,7 +273,7 @@ public class Belt extends RuntimeMemoryRegion {
     public Pointer getAllocationMarkSnapshot() {
         return prevAllocationMark.asPointer();
     }
-
+/*
     public final boolean checkNotExceedUsable(Size size) {
         final Size usedMemory = calculateUsedMemory();
         if (usedMemory.plus(size).greaterThan(BeltwayConfiguration.getUsableMemory())) {
@@ -302,16 +294,16 @@ public class Belt extends RuntimeMemoryRegion {
 
     }
 
-    public Size calculateUsedMemory() {
+    private Size calculateUsedMemory() {
         Size usableMemory = Size.zero();
-        if (mark().lessThan(this.usableMemoryStart)) {
+        if (mark().lessThan(start)) {
             usableMemory = usableMemory.plus(this.usableMemoryStart.plus(end())).asSize();
             usableMemory = usableMemory.plus(start().plus(mark())).asSize();
         } else {
-            usableMemory = mark().minus(this.usableMemoryStart).asSize();
+            usableMemory = mark().minus(start).asSize();
         }
         return usableMemory;
-    }
+    }*/
 
     public void printInfo() {
         Log.println();
@@ -325,10 +317,10 @@ public class Belt extends RuntimeMemoryRegion {
         Log.println(getAllocationMark());
         Log.print("Belt size: ");
         Log.println(size().toLong());
-        Log.print("Frame percentage of usable memory: ");
-        Log.println(framePercentageOfUsableMemory);
-        if (start().isAligned(BeltwayHeapSchemeConfiguration.ALIGNMENT)) {
-            Log.println("true");
+        Log.print("percentage of heap memory: ");
+        Log.println(heapScheme().beltHeapPercentage()[index]);
+        if (start.isAligned(BeltwayHeapScheme.BELT_ALIGNMENT)) {
+            Log.println("is aligned");
         }
 
     }

@@ -32,11 +32,12 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.tele.*;
 
 /**
- * @author Christos Kotselidis
- *
  * A Beltway collector configured as a generational heap.
  * Configured with three belts: one for a nursery (the eden space); one for a survivor space (to space);
  * and one for the tenured generation (the mature space).
+ *
+ * @author Christos Kotselidis
+ * @author Laurent Daynes
  */
 public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
     /**
@@ -45,6 +46,8 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
      * (e.g., belt 0, i.e., the eden, is allocated 10 % percent of the heap.
      */
     private static final  int [] DEFAULT_BELT_HEAP_PERCENTAGE = new int[] {10, 40, 50};
+
+    private final String [] BELT_DESCRIPTIONS = new String[] {"Eden Belt", "To Belt", "Mature Belt" };
 
     private Runnable edenGC;
     private Runnable toGC;
@@ -67,6 +70,16 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
     }
 
     @Override
+    protected int [] beltHeapPercentage() {
+        return DEFAULT_BELT_HEAP_PERCENTAGE;
+    }
+
+    @Override
+    protected String [] beltDescriptions() {
+        return BELT_DESCRIPTIONS;
+    }
+
+    @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (phase == MaxineVM.Phase.PRISTINE) {
@@ -75,7 +88,7 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
             // Watch out: the following create a MemoryRegion array
             InspectableHeapInfo.init(getEdenSpace(), getToSpace(), getMatureSpace());
 
-            if (BeltwayConfiguration.parallelScavenging) {
+            if (parallelScavenging) {
                 edenGC = new ParEdenCollector();
                 toGC = new ParToSpaceCollector();
                 majorGC = new ParMajorCollector();
@@ -90,11 +103,6 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
                 HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "EdenGC", "ToSpaceGC", "MatureSpaceGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "CardScan", "Scavenge");
             }
         }
-    }
-
-    @Override
-    protected int [] defaultBeltHeapPercentage() {
-        return DEFAULT_BELT_HEAP_PERCENTAGE;
     }
 
     @INLINE
@@ -116,21 +124,18 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
         if (outOfMemory) {
             return false;
         }
-        //beltCollector.setRunnable(beltCollectorGenerational.getMinorGC());
         collectorThread.execute(getMinorGC());
 
         if (Heap.verbose()) {
             HeapStatistics.incrementEdenCollections();
         }
         if (getToSpace().getRemainingMemorySize().lessEqual(getEdenSpace().size())) {
-            //beltCollector.setRunnable(beltCollectorGenerational.getToGC());
             collectorThread.execute(getToGC());
 
             if (Heap.verbose()) {
                 HeapStatistics.incrementToSpaceCollections();
             }
             if (getMatureSpace().getRemainingMemorySize().lessEqual(getToSpace().size().dividedBy(2))) {
-                //beltCollector.setRunnable(beltCollectorGenerational.getMajorGC());
                 collectorThread.execute(getMajorGC());
 
                 if (Heap.verbose()) {
