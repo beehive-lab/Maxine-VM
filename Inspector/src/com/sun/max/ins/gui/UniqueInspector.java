@@ -296,7 +296,7 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
 
     private static <UniqueInspector_Type extends UniqueInspector> UniqueInspector_Type match(InspectorFrame inspectorFrame, Key<UniqueInspector_Type> key) {
         final Inspector inspector = inspectorFrame.inspector();
-        if (key.type().isInstance(inspector)) {
+        if (key != null && key.type().isInstance(inspector)) {
             final UniqueInspector_Type uniqueInspector = key.type().cast(inspector);
             if (uniqueInspector.key().equals(key)) {
                 return uniqueInspector;

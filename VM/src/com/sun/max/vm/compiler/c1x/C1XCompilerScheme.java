@@ -49,23 +49,24 @@ import com.sun.max.unsafe.Pointer;
 import com.sun.c1x.target.Target;
 import com.sun.c1x.target.Architecture;
 import com.sun.c1x.target.Register;
-import com.sun.c1x.C1XCompilation;
-import com.sun.c1x.ci.CiMethod;
+import com.sun.c1x.*;
+import com.sun.c1x.ci.*;
 
 import java.util.*;
 
 /**
  * @author Ben L. Titzer
  */
-public class C1XCompiler extends AbstractVMScheme implements CompilerScheme {
+public class C1XCompilerScheme extends AbstractVMScheme implements CompilerScheme {
 
     private Target c1xTarget;
     private MaxCiRuntime c1xRuntime;
+    private C1XCompiler compiler;
 
     @PROTOTYPE_ONLY
-    private final Map<TargetMethod, MaxCiTargetMethod> targetMap = new HashMap<TargetMethod, MaxCiTargetMethod>();
+    private final Map<TargetMethod, C1XTargetMethodGenerator> targetMap = new HashMap<TargetMethod, C1XTargetMethodGenerator>();
 
-    public C1XCompiler(VMConfiguration vmConfiguration) {
+    public C1XCompilerScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
     }
 
@@ -102,11 +103,15 @@ public class C1XCompiler extends AbstractVMScheme implements CompilerScheme {
                 }
             }
             Register[] allocRegs = allocatable.toArray(new Register[allocatable.size()]);
-            c1xTarget = new Target(arch, allocRegs, allocRegs);
+
+            // TODO (tw): Initialize target differently
+            c1xTarget = new Target(arch, allocRegs, allocRegs, 1024, true);
             c1xTarget.stackAlignment = targetABI.stackFrameAlignment();
 
             // create the CiRuntime object passed to C1X
             c1xRuntime = MaxCiRuntime.globalRuntime;
+
+            compiler = new C1XCompiler(c1xTarget, c1xRuntime);
         }
     }
 
@@ -156,25 +161,29 @@ public class C1XCompiler extends AbstractVMScheme implements CompilerScheme {
     public final IrMethod compile(ClassMethodActor classMethodActor, CompilationDirective compilationDirective) {
         // ignore compilation directive for now
         CiMethod method = c1xRuntime.getCiMethod(classMethodActor);
-        MaxCiTargetMethod targetMethod = new MaxCiTargetMethod(classMethodActor);
-        C1XCompilation compilation = new C1XCompilation(c1xTarget, c1xRuntime, method, targetMethod);
-        if (compilation.compile()) {
+        CiTargetMethod compiledMethod = compiler.compileMethod(method);
+        if (compiledMethod != null) {
+
+            C1XTargetMethodGenerator generator = new C1XTargetMethodGenerator(classMethodActor, compiledMethod);
+            C1XTargetMethod targetMethod = generator.finish();
+
             if (MaxineVM.isPrototyping()) {
                 // in prototyping mode, we need to be able to iterate over the calls in the code
                 // for the closure process
-                targetMap.put(targetMethod.targetMethod, targetMethod);
+                targetMap.put(targetMethod, generator);
             }
-            assert targetMethod.targetMethod != null;
-            return targetMethod.targetMethod;
+            assert targetMethod != null;
+            return targetMethod;
         }
-        throw compilation.bailout(); // compilation failed
+        throw FatalError.unexpected("bailout"); // compilation failed
     }
+
 
     @PROTOTYPE_ONLY
     public void gatherCalls(TargetMethod targetMethod, AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls) {
         // iterate over all the calls in this target method and add them to the appropriate lists
         // this is used in code reachability during prototyping
-        MaxCiTargetMethod ciTargetMethod = targetMap.get(targetMethod);
+        C1XTargetMethodGenerator ciTargetMethod = targetMap.get(targetMethod);
         assert ciTargetMethod != null : "no registered MaxCiTargetMethod for this TargetMethod";
         ciTargetMethod.gatherCalls(directCalls, virtualCalls, interfaceCalls);
     }

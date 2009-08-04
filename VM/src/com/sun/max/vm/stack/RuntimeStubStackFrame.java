@@ -21,7 +21,6 @@
 package com.sun.max.vm.stack;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -38,22 +37,12 @@ public class RuntimeStubStackFrame extends StackFrame {
     }
 
     @Override
-    public boolean isJavaStackFrame() {
-        return false;
-    }
-
-    @Override
     public boolean isSameFrame(StackFrame stackFrame) {
         if (stackFrame instanceof RuntimeStubStackFrame) {
             final RuntimeStubStackFrame runtimeStubStackFrame = (RuntimeStubStackFrame) stackFrame;
             return stub.equals(runtimeStubStackFrame.stub) && stackFrame.stackPointer.equals(stackPointer);
         }
         return false;
-    }
-
-    @Override
-    public TargetMethod targetMethod() {
-        return null;
     }
 
     public RuntimeStub stub() {

@@ -104,7 +104,7 @@ final class JDK_java_lang_Thread {
      * @see java.lang.Thread#yield()
      */
     @SUBSTITUTE
-    public void yield() {
+    public static void yield() {
         VmThread.yield();
     }
 

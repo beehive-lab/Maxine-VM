@@ -80,7 +80,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
     }
 
     public void visitArrayStoreExceptionStub(ArrayStoreExceptionStub stub) {
-        assert lir().rspOffset() == 0 : "frame size should be fixed";
         lir().bind(stub.entry);
         lir().callRuntime(CiRuntimeCall.ThrowArrayStoreException);
         ce.addCallInfoHere(stub.info);
@@ -91,11 +90,11 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
 
     public void visitDivByZeroStub(DivByZeroStub stub) {
         if (stub.offset != -1) {
-            compilation.recordImplicitException(stub.offset, masm.offset());
+            compilation.recordImplicitException(stub.offset, masm.codeBuffer.position());
         }
 
         masm.bind(stub.entry);
-        masm.callRuntime(CiRuntimeCall.ThrowDiv0exception);
+        masm.callRuntime(CiRuntimeCall.ThrowDiv0Exception);
         ce.addCallInfoHere(stub.info);
         if (C1XOptions.GenerateAssertionCode) {
             masm.shouldNotReachHere();
@@ -103,7 +102,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
     }
 
     public void visitImplicitNullCheckStub(ImplicitNullCheckStub stub) {
-        ce.compilation.recordImplicitException(stub.offset, lir().offset());
+        ce.compilation.recordImplicitException(stub.offset, lir().codeBuffer.position());
         lir().bind(stub.entry);
         lir().callRuntime(CiRuntimeCall.ThrowNullPointerException);
         ce.addCallInfoHere(stub.info);
@@ -113,7 +112,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
     }
 
     public void visitMonitorEnterStub(MonitorEnterStub stub) {
-        assert lir().rspOffset() == 0 : "frame size should be fixed";
         lir().bind(stub.entry);
         ce.storeParameter(stub.objReg.asRegister(), 1);
         ce.storeParameter(stub.lockReg.asRegister(), 0);
@@ -136,7 +134,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
     }
 
     public void visitNewInstanceStub(NewInstanceStub stub) {
-        assert lir().rspOffset() == 0 : "frame size should be fixed";
         lir().bind(stub.entry);
         lir().movptr(X86.rdx, stub.klassReg.asRegister());
         lir().callRuntime(stub.stubId);
@@ -147,7 +144,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
     }
 
     public void visitNewObjectArrayStub(NewObjectArrayStub stub) {
-        assert lir().rspOffset() == 0 : "frame size should be fixed";
         lir().bind(stub.entry);
         assert stub.length.asRegister() == X86.rbx : "length must in X86Register.rbx : ";
         assert stub.klassReg.asRegister() == X86.rdx : "klassReg must in X86Register.rdx";
@@ -159,7 +155,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
     }
 
     public void visitNewTypeArrayStub(NewTypeArrayStub stub) {
-        assert lir().rspOffset() == 0 : "frame size should be fixed";
         lir().bind(stub.entry);
         assert stub.length.asRegister() == X86.rbx : "length must in X86Register.rbx : ";
         assert stub.klassReg.asRegister() == X86.rdx : "klassReg must in X86Register.rdx";
@@ -306,8 +301,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
     }
 
     public void visitSimpleExceptionStub(SimpleExceptionStub stub) {
-        assert lir().rspOffset() == 0 : "frame size should be fixed";
-
         lir().bind(stub.entry);
         // pass the object on stack because all registers must be preserved
         if (stub.obj.isCpuRegister()) {

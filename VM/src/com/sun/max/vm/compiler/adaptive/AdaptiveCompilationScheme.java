@@ -151,6 +151,10 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * @return true if the update should be allowed; false otherwise
      */
     protected boolean allowUpdate(AdaptiveMethodState methodState, TargetMethod newTargetMethod) {
+        if (methodState.currentTargetMethod(CompilationDirective.STUB) != null) {
+            return false;
+        }
+
         return true;
     }
 
@@ -210,7 +214,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * @return the canonical method instrumentation object associated with the specified method
      */
     public MethodInstrumentation makeMethodInstrumentation(ClassMethodActor classMethodActor) {
-        return makeMethodState(classMethodActor).makeMethodInstrumentation();
+        return ((AdaptiveMethodState) makeMethodState(classMethodActor)).makeMethodInstrumentation();
     }
 
     /**
@@ -245,9 +249,9 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * @param classMethodActor the class method for which to make the method state
      * @return the method state associated with the specified method
      */
-    public AdaptiveMethodState makeMethodState(ClassMethodActor classMethodActor) {
+    public MethodState makeMethodState(ClassMethodActor classMethodActor) {
         synchronized (classMethodActor) {
-            AdaptiveMethodState methodState = (AdaptiveMethodState) classMethodActor.methodState();
+            MethodState methodState = classMethodActor.methodState();
             if (methodState == null) {
                 methodState = new AdaptiveMethodState(this, classMethodActor);
                 classMethodActor.setMethodState(methodState);
@@ -264,7 +268,12 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * @return the target method that results from compiling the specified method
      */
     public TargetMethod synchronousCompile(ClassMethodActor classMethodActor, CompilationDirective compilationDirective) {
-        final AdaptiveMethodState methodState = makeMethodState(classMethodActor);
+        final MethodState originalMethodState = makeMethodState(classMethodActor);
+        if (originalMethodState.currentTargetMethod() != null && !(originalMethodState instanceof AdaptiveMethodState)) {
+            return originalMethodState.currentTargetMethod();
+        }
+
+        final AdaptiveMethodState methodState = (AdaptiveMethodState) originalMethodState;
         Compilation compilation = null;
         synchronized (methodState) {
             if (methodState.currentCompilation(compilationDirective) != null) {
@@ -296,7 +305,8 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * @return a {@code Future} object that can be used to retrieve the result of the compilation later
      */
     public Future<TargetMethod> asynchronousCompile(ClassMethodActor classMethodActor, CompilationDirective compilationDirective) {
-        final AdaptiveMethodState methodState = makeMethodState(classMethodActor);
+        final MethodState originalMethodState = makeMethodState(classMethodActor);
+        final AdaptiveMethodState methodState = (AdaptiveMethodState) originalMethodState;
         Compilation compilation = null;
         synchronized (methodState) {
             if (methodState.currentCompilation(compilationDirective) != null) {
@@ -407,7 +417,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             if (CompiledPrototype.jitCompile(classMethodActor)) {
                 return jitCompiler;
             } else if (CompiledPrototype.c1xCompile(classMethodActor)) {
-                final DynamicCompilerScheme result = new C1XCompiler(vmConfiguration());
+                final DynamicCompilerScheme result = new C1XCompilerScheme(vmConfiguration());
                 result.initialize(Phase.PROTOTYPING);
                 return result;
             }
@@ -462,7 +472,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
         if (gcOnRecompileOption.getValue()) {
             System.gc();
         }
-        final AdaptiveMethodState methodState = makeMethodState(classMethodActor);
+        final AdaptiveMethodState methodState = (AdaptiveMethodState) makeMethodState(classMethodActor);
         Compilation compilation = null;
         synchronized (methodState) {
             final TargetMethod targetMethod = methodState.currentTargetMethod();

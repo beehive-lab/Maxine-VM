@@ -25,6 +25,7 @@ import java.util.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.lang.Arrays;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.collect.*;
 
@@ -63,6 +64,28 @@ public abstract class JavaStackFrameLayout {
     public abstract int frameReferenceMapOffset();
 
     /**
+     * Gets the frame pointer offset of the effective address of a given local variable.
+     *
+     * @param localVariableIndex
+     *                an index into the local variables array
+     * @return the frame pointer offset of the value of the variable at {@code localVariableIndex} in the local variables array
+     */
+    public int localVariableOffset(int localVariableIndex) {
+        throw ProgramError.unexpected("Not implemented for this stack frame layout!");
+    }
+
+    /**
+     * Gets the frame pointer offset of the effective address of a given operand stack slot.
+     *
+     * @param operandStackIndex
+     *                an index relative to the bottom of the operand stack
+     * @return the frame pointer offset of the value of the operand stack slot at {@code operandStackIndex} from the bottom of the operand stack
+     */
+    public int operandStackOffset(int operandStackIndex) {
+        throw ProgramError.unexpected("Not implemented for this stack frame layout!");
+    }
+
+    /**
      * Gets the highest frame pointer offset of a stack slot considered to be within this frame.
      */
     public int maximumSlotOffset() {
@@ -80,13 +103,6 @@ public abstract class JavaStackFrameLayout {
      * Determines if the caller of this frame pushed a return address to the stack.
      */
     public abstract boolean isReturnAddressPushedByCall();
-
-    /**
-     * Determines if this is an adapter frame.
-     */
-    public boolean isAdapter() {
-        return false;
-    }
 
     /**
      * Gets an object that can format the details of this layout as strings.

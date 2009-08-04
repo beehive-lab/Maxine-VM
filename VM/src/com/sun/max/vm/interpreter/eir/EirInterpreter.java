@@ -143,7 +143,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
             try {
                 return eirMethod.classMethodActor().invoke(arguments);
             } catch (IllegalAccessException illegalAccessException) {
-                ProgramError.unexpected("could not access method for invocation: " + eirMethod.classMethodActor().toJava());
+                ProgramError.unexpected("could not access method for invocation: " + eirMethod.classMethodActor());
             }
         }
 

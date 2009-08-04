@@ -91,7 +91,7 @@ public final class JDK_java_lang_Throwable {
         final Sequence<StackFrame> stackFrames = stackFrameWalker.frames(null, instructionPointer, cpuStackPointer, cpuFramePointer);
         final List<StackTraceElement> result = new ArrayList<StackTraceElement>();
         for (StackFrame stackFrame : stackFrames) {
-            if (stackFrame.isAdapter()) {
+            if (stackFrame instanceof AdapterStackFrame) {
                 continue;
             }
             final TargetMethod targetMethod = stackFrame.targetMethod();

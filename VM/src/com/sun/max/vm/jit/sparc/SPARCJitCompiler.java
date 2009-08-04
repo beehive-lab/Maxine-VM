@@ -160,7 +160,7 @@ public class SPARCJitCompiler extends JitCompiler {
             }
             case INSPECTING: {
                 final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
-                final StackFrame stackFrame = new SPARCOptimizedToJitAdapterFrame(stackFrameWalker.calleeStackFrame(), targetMethod, instructionPointer, framePointer, stackPointer, adapterFrameSize);
+                final StackFrame stackFrame = new AdapterStackFrame(stackFrameWalker.calleeStackFrame(), new AdapterStackFrameLayout(adapterFrameSize, false), targetMethod, instructionPointer, framePointer, stackPointer);
                 if (!stackFrameVisitor.visitFrame(stackFrame)) {
                     return false;
                 }
@@ -439,10 +439,6 @@ public class SPARCJitCompiler extends JitCompiler {
             final int unalignedSize = targetMethod.stackFrameLayout().sizeOfTemplateSlots() + SPARCJitStackFrameLayout.CALL_SAVE_AREA_SIZE;
             return targetMethod.abi().alignFrameSize(unalignedSize);
         }
-    }
-
-    public void advance(StackFrameWalker stackFrameWalker, Word instructionPointer, Word stackPointer, Word framePointer) {
-        stackFrameWalker.advance(instructionPointer, stackPointer, framePointer);
     }
 
     @Override

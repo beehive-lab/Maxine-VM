@@ -20,11 +20,12 @@
  */
 package com.sun.c1x.asm;
 
-import com.sun.c1x.C1XCompilation;
+import java.util.*;
+
 import com.sun.c1x.C1XOptions;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.TTY;
-import com.sun.c1x.target.Register;
+import com.sun.c1x.target.*;
 import com.sun.c1x.util.Util;
 
 /**
@@ -34,106 +35,56 @@ import com.sun.c1x.util.Util;
  */
 public abstract class AbstractAssembler {
 
-    protected final Buffer codeBuffer;
-    protected final Buffer dataBuffer;
-    private int lastDecodeStart;
+    public final Buffer codeBuffer;
+    public final Buffer dataBuffer;
+    public final Target target;
+    private final CiTargetMethod targetMethod = new CiTargetMethod();
 
-    protected OopRecorder oopRecorder; // support for relocInfo.oopType
-    public final C1XCompilation compilation;
-
-    protected boolean is8bit(int x) {
-        return -0x80 <= x && x < 0x80;
-    }
-
-    protected boolean isByte(int x) {
-        return 0 <= x && x < 0x100;
-    }
-
-    protected boolean isShiftCount(int x) {
-        return 0 <= x && x < 32;
-    }
-
-    public int pc() {
-        return codeBuffer.position();
-    }
-
-    public int offset() {
-        return codeBuffer.position();
-    }
-
-    public OopRecorder oopRecorder() {
-        return oopRecorder;
-    }
-
-    public void setOopRecorder(OopRecorder r) {
-        oopRecorder = r;
-    }
-
-    public AbstractAssembler(C1XCompilation compilation) {
-        this.compilation = compilation;
-        this.codeBuffer = new Buffer(compilation.target.arch.bitOrdering);
-        this.dataBuffer = new Buffer(compilation.target.arch.bitOrdering);
-        oopRecorder = new OopRecorder();
-    }
-
-    // Inform CodeBuffer that incoming code and relocation will be for stubs
-    Address startAConst(int requiredSpace, int requiredAlign) {
-        // TODO: Figure out how to do this in Java!
-// assert codeSection == cb.insts() : "not in insts?";
-// sync();
-// Address end = cs.end();
-// int pad = -end.asInt() & (requiredAlign - 1);
-// if (cs.maybeExpandToEnsureRemaining(pad + requiredSpace)) {
-// if (cb.blob() == null) {
-// return null;
-// }
-// end = cs.end(); // refresh pointer
-// }
-// if (pad > 0) {
-// while (--pad >= 0) {
-// *end++ = 0;
-// }
-// cs.setEnd(end);
-// }
-// return end;
-        throw Util.unimplemented();
-    }
-
-    public void aByte(int x) {
-        emitByte(x);
-    }
-
-
-    void aLong(int x) {
-        emitInt(x);
-    }
-
-    void print(Label l) {
-        if (l.isBound()) {
-            TTY.println(String.format("bound label to %d", l.loc()));
-        } else if (l.isUnbound()) {
-            l.printInstructions(this);
-        } else {
-            TTY.println(String.format("label in inconsistent state (loc = %d)", l.loc()));
-        }
+    public AbstractAssembler(Target target) {
+        this.target = target;
+        this.codeBuffer = new Buffer(target.arch.bitOrdering);
+        this.dataBuffer = new Buffer(target.arch.bitOrdering);
     }
 
     public void bind(Label l) {
         if (l.isBound()) {
             // Assembler can bind a label more than once to the same place.
-            Util.guarantee(l.loc() == offset(), "attempt to redefine label");
+            Util.guarantee(l.loc() == codeBuffer.position(), "attempt to redefine label");
             return;
         }
-        l.bindLoc(offset());
+        l.bindLoc(codeBuffer.position());
         l.patchInstructions(this);
     }
 
-    public final Address makeInternalAddress(int disp) {
-        recordDataReferenceInCode(offset(), disp, true);
-        return Address.InternalRelocation;
+    public CiTargetMethod finishTargetMethod(CiRuntime runtime, int framesize) {
+
+        final Buffer codeBuffer = this.codeBuffer;
+        final Buffer dataBuffer = this.dataBuffer;
+
+        byte[] codeArray = codeBuffer.finished();
+        int codeSize = codeBuffer.position();
+        byte[] dataArray = dataBuffer.finished();
+        int dataSize = dataBuffer.position();
+
+        if (C1XOptions.PrintAssembly) {
+
+            Util.printBytes(codeArray, codeSize);
+
+            TTY.println("Disassembled code:");
+            TTY.println(runtime.disassemble(Arrays.copyOf(codeArray, codeSize)));
+
+            Util.printBytes(dataArray, dataSize);
+            TTY.println("Frame size: %d", framesize);
+        }
+
+        targetMethod.setTargetCode(codeArray, codeSize);
+        targetMethod.setData(dataArray, dataSize);
+        targetMethod.setFrameSize(framesize);
+        return targetMethod;
     }
 
-    protected void generateStackOverflowCheck(int frameSizeInBytes) {
+
+    protected void generateStackOverflowCheck() {
         if (C1XOptions.UseStackBanging) {
             // Each code entry causes one stack bang n pages down the stack where n
             // is configurable by StackBangPages. The setting depends on the maximum
@@ -147,21 +98,15 @@ public abstract class AbstractAssembler {
             // The entry code may need to bang additional pages if the framesize
             // is greater than a page.
 
-            int pageSize = compilation.runtime.vmPageSize();
-            int bangEnd = C1XOptions.StackShadowPages * pageSize;
+            int bangEnd = C1XOptions.StackShadowPages * target.pageSize;
 
             // This is how far the previous frame's stack banging extended.
             int bangEndSafe = bangEnd;
-
-            if (frameSizeInBytes > pageSize) {
-                bangEnd += frameSizeInBytes;
-            }
-
             int bangOffset = bangEndSafe;
             while (bangOffset <= bangEnd) {
                 // Need at least one stack bang at end of shadow zone.
                 bangStackWithOffset(bangOffset);
-                bangOffset += pageSize;
+                bangOffset += target.pageSize;
             }
         } // end (UseStackBanging)
     }
@@ -182,6 +127,19 @@ public abstract class AbstractAssembler {
         codeBuffer.emitInt(x);
     }
 
+    protected void recordGlobalStubCall(int pos, Object globalStubCall, boolean[] stackMap) {
+
+        assert pos >= 0 && globalStubCall != null && stackMap != null;
+
+        if (C1XOptions.TraceRelocation) {
+            TTY.print("Global stub call: pos = %d, name = %s, stackMap.length = %d", pos, globalStubCall, stackMap.length);
+        }
+
+        if (targetMethod != null) {
+            targetMethod.recordGlobalStubCall(pos, globalStubCall, stackMap);
+        }
+    }
+
     protected void recordRuntimeCall(int pos, CiRuntimeCall call, boolean[] stackMap) {
 
         assert pos >= 0 && call != null && stackMap != null;
@@ -190,8 +148,8 @@ public abstract class AbstractAssembler {
             TTY.print("Runtime call: pos = %d, name = %s, stackMap.length = %d", pos, call.name(), stackMap.length);
         }
 
-        if (compilation.targetMethod != null) {
-            compilation.targetMethod.recordRuntimeCall(pos, call, stackMap);
+        if (targetMethod != null) {
+            targetMethod.recordRuntimeCall(pos, call, stackMap);
         }
     }
 
@@ -203,8 +161,8 @@ public abstract class AbstractAssembler {
             TTY.print("Object reference in code: pos = %d, dataOffset = %d, relative = %b", pos, dataOffset, relative);
         }
 
-        if (compilation.targetMethod != null) {
-            compilation.targetMethod.recordDataReferenceInCode(pos, dataOffset, relative);
+        if (targetMethod != null) {
+            targetMethod.recordDataReferenceInCode(pos, dataOffset, relative);
         }
     }
 
@@ -212,11 +170,11 @@ public abstract class AbstractAssembler {
         assert obj != null;
 
         if (C1XOptions.TraceRelocation) {
-            TTY.print("Object reference in code: pos = %d, object= %s", offset(), obj);
+            TTY.print("Object reference in code: pos = %d, object= %s", codeBuffer.position(), obj);
         }
 
-        if (compilation.targetMethod != null) {
-            compilation.targetMethod.recordObjectReferenceInCode(offset(), obj);
+        if (targetMethod != null) {
+            targetMethod.recordObjectReferenceInCode(codeBuffer.position(), obj);
         }
 
         return Address.InternalRelocation;
@@ -227,13 +185,11 @@ public abstract class AbstractAssembler {
     }
 
     protected int target(Label l) {
-
-        int branchPc = pc();
+        int branchPc = codeBuffer.position();
         if (l.isBound()) {
             return l.loc();
         } else {
             l.addPatchAt(branchPc);
-
             // Need to return a pc, doesn't matter what it is since it will be
             // replaced during resolution later.
             // Don't return null or badAddress, since branches shouldn't overflow.
@@ -241,6 +197,11 @@ public abstract class AbstractAssembler {
             // for shorter branches. It will get checked when bound.
             return branchPc;
         }
+    }
+
+    private Address makeInternalAddress(int disp) {
+        recordDataReferenceInCode(codeBuffer.position(), disp, true);
+        return Address.InternalRelocation;
     }
 
     public Address doubleConstant(double d) {
@@ -282,65 +243,5 @@ public abstract class AbstractAssembler {
 
     public abstract void makeOffset(int offset);
 
-    public void pdPatchInstruction(int branch, int target) {
-        assert compilation.target.arch.isX86();
-
-        int op = codeBuffer.getByte(branch);
-        assert op == 0xE8 // call
-                        ||
-                        op == 0xE9 // jmp
-                        || op == 0xEB // short jmp
-                        || (op & 0xF0) == 0x70 // short jcc
-                        || op == 0x0F && (codeBuffer.getByte(branch + 1) & 0xF0) == 0x80 // jcc
-        : "Invalid opcode at patch point";
-
-        if (op == 0xEB || (op & 0xF0) == 0x70) {
-
-            // short offset operators (jmp and jcc)
-            int imm8 = target - (branch + 2);
-            assert this.is8bit(imm8) : "Short forward jump exceeds 8-bit offset";
-            codeBuffer.emitByte(imm8, branch + 1);
-
-        } else {
-
-            int off = 1;
-            if (op == 0x0F) {
-                off = 2;
-            }
-
-            int imm32 = target - (branch + 4 + off);
-            codeBuffer.emitInt(imm32, branch + off);
-        }
-    }
-
-    public void installTargetMethod() {
-        if (compilation.targetMethod == null) {
-            //byte[] array = codeBuffer.finished();
-            //int length = codeBuffer.position();
-            //Util.printBytes(array, length);
-
-            //TTY.println("Disassembled code:");
-            //TTY.println(compilation.runtime.disassemble(Arrays.copyOf(array, length)));
-
-            //array = dataBuffer.finished();
-            //length = dataBuffer.position();
-            //Util.printBytes(array, length);
-            //TTY.println("Frame size: %d", compilation.frameMap().framesize());
-
-        } else {
-            compilation.targetMethod.setTargetCode(codeBuffer.finished(), codeBuffer.position());
-            compilation.targetMethod.setData(dataBuffer.finished(), dataBuffer.position());
-            compilation.targetMethod.setFrameSize(compilation.frameMap().framesize());
-            compilation.targetMethod.finish();
-        }
-    }
-
-    public void decode() {
-        byte[] currentBytes = codeBuffer.getData(lastDecodeStart, codeBuffer.position());
-        Util.printBytes(currentBytes);
-        if (currentBytes.length > 0) {
-            TTY.println(compilation.runtime.disassemble(currentBytes));
-        }
-        lastDecodeStart = codeBuffer.position();
-    }
+    public abstract void patchJumpTarget(int branch, int target);
 }

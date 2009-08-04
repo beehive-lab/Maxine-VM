@@ -88,7 +88,7 @@ public class AdaptiveMethodState extends MethodState {
         return currentCompilations[compilationDirective.ordinal()];
     }
 
-    void setCurrentCompilation(Compilation compilation, CompilationDirective compilationDirective) {
+    public void setCurrentCompilation(Compilation compilation, CompilationDirective compilationDirective) {
         currentCompilations[compilationDirective.ordinal()] = compilation;
     }
 
@@ -100,7 +100,7 @@ public class AdaptiveMethodState extends MethodState {
      *
      * @param newTargetMethod the new target method
      */
-    protected final void setTargetMethod(TargetMethod newTargetMethod, CompilationDirective compilationDirective) {
+    public final void setTargetMethod(TargetMethod newTargetMethod, CompilationDirective compilationDirective) {
         final TargetMethod currentTargetMethod = currentTargetMethod(compilationDirective);
         if (currentTargetMethod == null) {
             // no previous code for this method and this compilation directive

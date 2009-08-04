@@ -27,12 +27,10 @@ package com.sun.c1x.ci;
  */
 public enum CiRuntimeCall {
 
-    // C1Runtime
     UnwindException,
-    ForwardException,
     ThrowRangeCheckFailed,
     ThrowIndexException,
-    ThrowDiv0exception,
+    ThrowDiv0Exception,
     ThrowNullPointerException,
     RegisterFinalizer,
     NewInstance,
@@ -48,43 +46,25 @@ public enum CiRuntimeCall {
     SlowSubtypeCheck,
     Monitorenter,
     Monitorexit,
-    AccessFieldPatching,
-    LoadKlassPatching,
-    JvmtiExceptionThrow,
-    G1preBarrierSlow,
-    G1postBarrierSlow,
-    Fpu2longStub,
-    CounterOverflow,
-    NumberOfIds,
-
-    // SharedRuntime
+    TraceBlockEntry,
     OSRMigrationEnd,
-    DTraceMethodEntry,
     JavaTimeMillis,
     JavaTimeNanos,
-
-    // Unknown
-    TraceBlockEntry,
-    Lrem,
-    Ldiv,
-    Lmul,
     OopArrayCopy,
     PrimitiveArrayCopy,
-    FpuCntrlWrd_24,
-    FpuCntrlWrdStd,
-    Breakpoint,
-    FpuCntrlWrdTrunc,
-    AddrFpuSubnormalBias1,
-    AddrFpuSubnormalBias2,
     ArrayCopy,
     ResolveOptVirtualCall,
     ResolveStaticCall,
     ResolveVirtualCall,
-    VerifyOopSubroutine,
-    IcMiss,
     Debug,
-    Warning,
-    frem, drem, cos, tan, log, log10, sin
-
-
+    ArithmethicLrem,
+    ArithmeticLdiv,
+    ArithmeticLmul,
+    ArithmeticFrem,
+    ArithmeticDrem,
+    ArithmeticCos,
+    ArithmeticTan,
+    ArithmeticLog,
+    ArithmeticLog10,
+    ArithmeticSin
 }

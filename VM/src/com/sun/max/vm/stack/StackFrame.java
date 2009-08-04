@@ -56,7 +56,9 @@ public abstract class StackFrame {
      *
      * @return null if this is a frame of a native function
      */
-    public abstract TargetMethod targetMethod();
+    public TargetMethod targetMethod() {
+        return null;
+    }
 
     /**
      * Gets the base address of all stack slots. This provides a convenience for stack frame visitors that need to see all stack slot as
@@ -87,12 +89,6 @@ public abstract class StackFrame {
     }
 
     /**
-     * Determines if this is a {@link JavaStackFrame} object.
-     * @return true if this stack frame is a java stack frame
-     */
-    public abstract boolean isJavaStackFrame();
-
-    /**
      * Gets the frame called by this frame.
      *
      * @return null if this is the {@linkplain #isTopFrame() top} frame
@@ -115,13 +111,6 @@ public abstract class StackFrame {
      */
     public boolean isTopFrame() {
         return callee == null;
-    }
-
-    /**
-     * Determines if this is a {@link AdapterStackFrame} object.
-     */
-    public boolean isAdapter() {
-        return false;
     }
 
     /**

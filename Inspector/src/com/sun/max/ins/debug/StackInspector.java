@@ -128,11 +128,6 @@ public class StackInspector extends Inspector {
         }
 
         @Override
-        public boolean isJavaStackFrame() {
-            return false;
-        }
-
-        @Override
         public boolean isSameFrame(StackFrame stackFrame) {
             if (stackFrame instanceof TruncatedStackFrame) {
                 final TruncatedStackFrame other = (TruncatedStackFrame) stackFrame;
@@ -204,7 +199,7 @@ public class StackInspector extends Inspector {
                     name = inspection().nameDisplay().veryShortName(teleTargetMethod);
                     toolTip = inspection().nameDisplay().longName(teleTargetMethod, address);
                     final TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
-                    if (teleClassMethodActor.isSubstituted()) {
+                    if (teleClassMethodActor != null && teleClassMethodActor.isSubstituted()) {
                         name = name + inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor);
                         toolTip = toolTip + inspection().nameDisplay().methodSubstitutionLongAnnotation(teleClassMethodActor);
                     }
@@ -213,7 +208,7 @@ public class StackInspector extends Inspector {
                     name = classMethodActor.format("%h.%n");
                     toolTip = classMethodActor.format("%r %H.%n(%p)");
                 }
-                if (javaStackFrame.isAdapter()) {
+                if (javaStackFrame instanceof AdapterStackFrame) {
                     name = "frame adapter [" + name + "]";
                     if (javaStackFrame.targetMethod().compilerScheme().equals(StackInspector.this.inspection().maxVM().vmConfiguration().jitScheme())) {
                         toolTip = "optimized-to-JIT frame adapter [ " + toolTip + "]";
@@ -452,7 +447,7 @@ public class StackInspector extends Inspector {
             if (index >= 0 && index < stackFrameListModel.getSize()) {
                 final StackFrame stackFrame = (StackFrame) stackFrameListModel.get(index);
                 if (stackFrame instanceof JavaStackFrame) {
-                    if (stackFrame.isAdapter()) {
+                    if (stackFrame instanceof AdapterStackFrame) {
                         final AdapterStackFrame adapterStackFrame = (AdapterStackFrame) stackFrame;
                         selectedFramePanel = new AdapterStackFramePanel(inspection(), adapterStackFrame);
                     } else {

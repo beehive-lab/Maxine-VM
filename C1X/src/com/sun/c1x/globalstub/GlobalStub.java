@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,18 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.stack.sparc;
-
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.stack.*;
+package com.sun.c1x.globalstub;
 
 /**
- * Describes adapter frame for calls from optimized code to jited code.
- * @author Laurent Daynes
+ *
+ * @author Thomas Wuerthinger
+ *
  */
-public class SPARCOptimizedToJitAdapterFrame extends AdapterStackFrame<AdapterStackFrameLayout> {
-    public SPARCOptimizedToJitAdapterFrame(StackFrame callee, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer, int adapterFrameSize) {
-        super(callee, new AdapterStackFrameLayout(adapterFrameSize, false),  targetMethod, instructionPointer, framePointer, stackPointer);
-    }
+public enum GlobalStub {
+
+
+    SlowSubtypeCheck;
+
 }

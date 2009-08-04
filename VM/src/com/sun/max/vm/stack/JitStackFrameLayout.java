@@ -114,24 +114,6 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
     }
 
     /**
-     * Gets the frame pointer offset of the effective address of a given local variable.
-     *
-     * @param localVariableIndex
-     *                an index into the local variables array
-     * @return the frame pointer offset of the value of the variable at {@code localVariableIndex} in the local variables array
-     */
-    public abstract int localVariableOffset(int localVariableIndex);
-
-    /**
-     * Gets the frame pointer offset of the effective address of a given operand stack slot.
-     *
-     * @param operandStackIndex
-     *                an index relative to the bottom of the operand stack
-     * @return the frame pointer offset of the value of the operand stack slot at {@code operandStackIndex} from the bottom of the operand stack
-     */
-    public abstract int operandStackOffset(int operandStackIndex);
-
-    /**
      * Gets the number of stack slots occupied by the incoming parameters to this frame.
      */
     public int numberOfParameterSlots() {

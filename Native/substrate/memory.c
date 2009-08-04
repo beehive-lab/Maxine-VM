@@ -46,7 +46,7 @@ Address memory_allocate(Size size)
 Address memory_reallocate(Address pointer, Size size)
 {
 	if (pointer == 0) {
-		return (Address) malloc((size_t) size);
+		return (Address) calloc(1, (size_t) size);
 	}
     return (Address) realloc((void *) pointer, (size_t) size);
 }

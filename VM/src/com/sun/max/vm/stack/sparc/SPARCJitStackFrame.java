@@ -34,7 +34,7 @@ import com.sun.max.vm.stack.*;
  * @author Doug Simon
  * @author Bernd Mathiske
  */
-public class SPARCJitStackFrame extends JitStackFrame<SPARCJitStackFrameLayout> {
+public class SPARCJitStackFrame extends JitStackFrame {
 
     private final Pointer localVariablesBase;
 

@@ -78,12 +78,12 @@ public class PatchingStub extends CodeStub {
         super(null);
         this.id = id;
         this.oopIndex = oopIndex;
-        if (masm.compilation.runtime.isMP()) {
+        if (masm.target.isMP) {
             // force alignment of patch sites on MP hardware so we
             // can guarantee atomic writes to the patch site.
             alignPatchSite(masm);
         }
-        pcStart = masm.pc();
+        pcStart = masm.codeBuffer.position();
         masm.bind(patchSiteEntry);
     }
 
@@ -95,7 +95,7 @@ public class PatchingStub extends CodeStub {
         this.info = info;
         this.obj = obj;
         masm.bind(patchSiteContinuation);
-        bytesToCopy = masm.pc() - pcStart;
+        bytesToCopy = masm.codeBuffer.position() - pcStart;
         if (id == PatchID.AccessFieldId) {
             // embed a fixed offset to handle long patches which need to be offset by a word.
             // the patching code will just add the field offset field to this offset so
@@ -103,10 +103,10 @@ public class PatchingStub extends CodeStub {
             int fieldOffset = 0;
             switch (patchCode) {
                 case PatchLow:
-                    fieldOffset = masm.compilation.target.arch.loWordOffsetInBytes;
+                    fieldOffset = masm.target.arch.loWordOffsetInBytes;
                     break;
                 case PatchHigh:
-                    fieldOffset = masm.compilation.target.arch.hiWordOffsetInBytes;
+                    fieldOffset = masm.target.arch.hiWordOffsetInBytes;
                     break;
                 case PatchNormal:
                     fieldOffset = 0;
@@ -123,7 +123,7 @@ public class PatchingStub extends CodeStub {
         } else {
             Util.shouldNotReachHere();
         }
-        assert bytesToCopy <= (masm.pc() - pcStart()) : "not enough bytes";
+        assert bytesToCopy <= (masm.codeBuffer.position() - pcStart()) : "not enough bytes";
     }
 
     /**

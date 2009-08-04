@@ -39,6 +39,9 @@ import com.sun.max.vm.tele.*;
 public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
 
     private static int[] DEFAULT_BELT_HEAP_PERCENTAGE = new int[] {50, 50};
+    private final String [] BELT_DESCRIPTIONS = new String[] {"From Belt", "To Belt"};
+
+
     private BeltwaySSCollector beltCollectorBSS;
 
     public BeltwayHeapSchemeBSS(VMConfiguration vmConfiguration) {
@@ -46,8 +49,13 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
     }
 
     @Override
-    protected int [] defaultBeltHeapPercentage() {
+    protected int [] beltHeapPercentage() {
         return DEFAULT_BELT_HEAP_PERCENTAGE;
+    }
+
+    @Override
+    protected String [] beltDescriptions() {
+        return BELT_DESCRIPTIONS;
     }
 
     @Override
@@ -58,7 +66,7 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
             tlabAllocationBelt = getFromSpace();
             // Watch out: the following create a MemoryRegion array
             InspectableHeapInfo.init(getToSpace(), getFromSpace());
-            beltCollectorBSS = BeltwayConfiguration.parallelScavenging ? new SemiSpaceParCollector() : new BeltwaySSCollector();
+            beltCollectorBSS = parallelScavenging ? new SemiSpaceParCollector() : new BeltwaySSCollector();
         } else if (phase == MaxineVM.Phase.RUNNING) {
             heapVerifier.initialize(beltManager.getApplicationHeap(), getToSpace());
             if (Heap.verbose()) {
@@ -92,7 +100,7 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
 
     @Override
     public boolean contains(Address address) {
-        return address.greaterEqual(Heap.bootHeapRegion.start()) && address.lessEqual(BeltwayConfiguration.getApplicationHeapEndAddress());
+        return address.greaterEqual(Heap.bootHeapRegion.start()) && address.lessEqual(getHeapEnd());
     }
 
     @INLINE(override = true)

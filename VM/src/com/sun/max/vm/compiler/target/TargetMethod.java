@@ -87,7 +87,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     private int[] stopPositions;
 
     @INSPECTED
-    private ClassMethodActor[] directCallees;
+    private Object[] directCallees;
 
     @INSPECTED
     private int numberOfIndirectCalls;
@@ -129,11 +129,11 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     public abstract InstructionSet instructionSet();
 
     public final String name() {
-        return classMethodActor.name.toString();
+        return (classMethodActor == null) ? "<no method actor>" : classMethodActor.name.toString();
     }
 
     public final boolean isNative() {
-        return classMethodActor().compilee().isNative();
+        return (classMethodActor == null) ? false : classMethodActor.compilee().isNative();
     }
 
     public final void cleanup() {
@@ -410,7 +410,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     /**
      * @return class method actors referenced by direct call instructions, matched to the stop positions array above by array index
      */
-    public final ClassMethodActor[] directCallees() {
+    public final Object[] directCallees() {
         return directCallees;
     }
 
@@ -639,7 +639,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
                                    int[] catchBlockPositions,
                                    int[] stopPositions,
                                    byte[] compressedJavaFrameDescriptors,
-                                   ClassMethodActor[] directCallees,
+                                   Object[] directCallees,
                                    int numberOfIndirectCalls,
                                    int numberOfSafepoints,
                                    byte[] referenceMaps,
@@ -701,8 +701,8 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     public final ClassMethodActor callSiteToCallee(Address callSite) {
         final int callOffset = callSite.minus(codeStart).toInt();
         for (int i = 0; i < numberOfStopPositions(); i++) {
-            if (stopPosition(i) == callOffset) {
-                return directCallees[i];
+            if (stopPosition(i) == callOffset && directCallees[i] instanceof ClassMethodActor) {
+                return (ClassMethodActor) directCallees[i];
             }
         }
         throw FatalError.unexpected("could not find callee for call site: " + callSite.toHexString());
@@ -852,7 +852,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
 
     @Override
     public final String toString() {
-        return classMethodActor.format("%H.%n(%p)");
+        return (classMethodActor == null) ? "<no method actor>" : classMethodActor.format("%H.%n(%p)");
     }
 
     public final void trace(int level) {
@@ -951,12 +951,12 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      */
     public final boolean linkDirectCalls() {
         boolean linkedAll = true;
-        final ClassMethodActor[] directCallees = directCallees();
+        final Object[] directCallees = directCallees();
         if (directCallees != null) {
             for (int i = 0; i < directCallees.length; i++) {
-                final CallEntryPoint callEntryPoint = callEntryPointForDirectCall(i);
-                final int offset = callEntryPoint.offsetFromCalleeCodeStart();
-                final TargetMethod callee = CompilationScheme.Static.getCurrentTargetMethod(directCallees[i]);
+                final int offset = getCallEntryOffset(directCallees[i], i);
+                Object currentDirectCallee = directCallees[i];
+                final TargetMethod callee = getTargetMethod(currentDirectCallee);
                 if (callee == null) {
                     linkedAll = false;
                     patchCallSite(stopPosition(i), StaticTrampoline.codeStart().plus(offset));
@@ -973,6 +973,21 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return false;
     }
 
+    private TargetMethod getTargetMethod(Object o) {
+        TargetMethod result = null;
+        if (o instanceof ClassMethodActor) {
+            result = CompilationScheme.Static.getCurrentTargetMethod((ClassMethodActor) o);
+        } else if (o instanceof TargetMethod) {
+            result = (TargetMethod) o;
+        }
+        return result;
+    }
+
+    private int getCallEntryOffset(Object callee, int index) {
+        final CallEntryPoint callEntryPoint = callEntryPointForDirectCall(index);
+        return callEntryPoint.offsetFromCalleeCodeStart();
+    }
+
     /**
      * Links all the direct calls in this target method. Only calls within this target method's prologue are linked to
      * the target callee (if it's
@@ -984,12 +999,11 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     @PROTOTYPE_ONLY
     public final boolean linkDirectCallsInPrologue() {
         boolean linkedAll = true;
-        final ClassMethodActor[] directCallees = directCallees();
+        final Object[] directCallees = directCallees();
         if (directCallees != null) {
             for (int i = 0; i < directCallees.length; i++) {
-                final CallEntryPoint callEntryPoint = callEntryPointForDirectCall(i);
-                final int offset = callEntryPoint.offsetFromCalleeCodeStart();
-                final TargetMethod callee = CompilationScheme.Static.getCurrentTargetMethod(directCallees[i]);
+                final int offset = getCallEntryOffset(directCallees[i], i);
+                final TargetMethod callee = getTargetMethod(directCallees[i]);
                 if (!isDirectCalleeInPrologue(i)) {
                     patchCallSite(stopPosition(i), StaticTrampoline.codeStart().plus(offset));
                 } else if (callee == null) {
