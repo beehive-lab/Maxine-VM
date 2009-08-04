@@ -72,11 +72,6 @@ final class JavaStackFramePanel extends StackFramePanel<JavaStackFrame> {
             return description;
         }
 
-        @Override
-        public String toString() {
-            return label;
-        }
-
         public static final IndexedSequence<SlotNameDisplayMode> VALUES = new ArraySequence<SlotNameDisplayMode>(values());
     }
 
