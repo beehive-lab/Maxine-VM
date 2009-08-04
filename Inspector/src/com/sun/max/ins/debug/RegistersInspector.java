@@ -110,7 +110,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         return new InspectorAction(inspection(), "View Options") {
             @Override
             public void procedure() {
-                new TableColumnVisibilityPreferences.Dialog<RegistersColumnKind>(inspection(), "Registers View Options", viewPreferences);
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<RegistersColumnKind>(inspection(), "Registers View Options", viewPreferences);
             }
         };
     }

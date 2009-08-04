@@ -844,15 +844,15 @@ public final class StackReferenceMapPreparer {
         final int refMapByte = referenceMap.getByte(refMapByteIndex);
         if (refMapByte != 0) {
             final int baseIndex = refMapByteIndex * Bytes.WIDTH;
-            final Pointer slot = lowestStackSlot.plus(baseIndex * Word.size());
             for (int bitIndex = startBit; bitIndex < endBit; bitIndex++) {
                 if (((refMapByte >>> bitIndex) & 1) != 0) {
+                    final int stackWordIndex = baseIndex + bitIndex;
                     if (Heap.traceRootScanning()) {
                         Log.print("    Slot: ");
-                        printSlot(baseIndex + bitIndex, vmThreadLocals, Pointer.zero());
+                        printSlot(stackWordIndex, vmThreadLocals, Pointer.zero());
                         Log.println();
                     }
-                    wordPointerIndexVisitor.visitPointerIndex(slot, bitIndex);
+                    wordPointerIndexVisitor.visit(lowestStackSlot, stackWordIndex);
                 }
             }
         }

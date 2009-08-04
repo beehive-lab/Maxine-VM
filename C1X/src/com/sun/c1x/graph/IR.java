@@ -22,6 +22,7 @@ package com.sun.c1x.graph;
 
 import com.sun.c1x.C1XCompilation;
 import com.sun.c1x.C1XOptions;
+import com.sun.c1x.util.Util;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.BlockBegin;
 import com.sun.c1x.ir.ComputeLinearScanOrder;
@@ -70,6 +71,7 @@ public class IR {
     private List<BlockBegin> orderedBlocks;
 
     int totalBlocks = 1;
+    int totalInstructions;
 
     /**
      * Creates a new IR instance for the specified compilation.
@@ -97,7 +99,8 @@ public class IR {
         topScope = new IRScope(compilation, null, -1, compilation.method, compilation.osrBCI);
 
         // Graph builder must set the startBlock and the osrEntryBlock
-        new GraphBuilder(compilation, topScope, this);
+        GraphBuilder g = new GraphBuilder(compilation, topScope, this);
+        totalInstructions += g.totalInstructions();
         assert startBlock != null;
 
     }
@@ -120,16 +123,23 @@ public class IR {
         startBlock.iteratePreOrder(finder);
         finder.splitCriticalEdges();
 
-        verifyAndPrint("After critical edge splitting");
+        if (C1XOptions.GenerateLIR && C1XOptions.GenerateAssembly) {
+            makeLinearScanOrder();
+        }
+    }
 
-        ComputeLinearScanOrder computeLinearScanOrder = new ComputeLinearScanOrder(totalBlocks, startBlock);
-        orderedBlocks = computeLinearScanOrder.linearScanOrder();
-        computeLinearScanOrder.printBlocks();
+    private void makeLinearScanOrder() {
+        if (orderedBlocks == null) {
+            ComputeLinearScanOrder computeLinearScanOrder = new ComputeLinearScanOrder(totalBlocks, startBlock);
+            orderedBlocks = computeLinearScanOrder.linearScanOrder();
+            computeLinearScanOrder.printBlocks();
+        }
     }
 
     private void optimize2() {
         // do more advanced, dominator-based optimizations
         if (C1XOptions.DoGlobalValueNumbering) {
+            makeLinearScanOrder();
             new GlobalValueNumberer(this);
         }
     }
@@ -166,11 +176,6 @@ public class IR {
             TTY.println(phase);
             print(false);
         }
-    }
-
-    public int numLoops() {
-        // TODO record the number of loops found in compute linear scan order
-        return 0;
     }
 
     /**
@@ -250,7 +255,15 @@ public class IR {
         return totalBlocks;
     }
 
+    public int totalInstructions() {
+        return totalInstructions;
+    }
+
     public void incrementNumberOfBlocks(int i) {
         totalBlocks += i;
+    }
+
+    public int numLoops() {
+        return Util.nonFatalUnimplemented(0);
     }
 }

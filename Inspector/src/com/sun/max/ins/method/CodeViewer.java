@@ -86,9 +86,11 @@ public abstract class CodeViewer extends InspectorPanel {
                 addSearchToolBar();
             }
         });
+        searchButton.setText(null);
+        searchButton.setIcon(style().generalFindIcon());
         searchButton.setToolTipText("Open toolbar for searching");
 
-        activeRowsButton = new InspectorButton(inspection, new AbstractAction(null, style().debugActiveRowButtonIcon()) {
+        activeRowsButton = new InspectorButton(inspection, new AbstractAction(null, style().navigationForwardIcon()) {
             public void actionPerformed(ActionEvent actionEvent) {
                 int nextActiveRow = nextActiveRow();
                 if (nextActiveRow >= 0) {
@@ -100,6 +102,7 @@ public abstract class CodeViewer extends InspectorPanel {
                 }
             }
         });
+        activeRowsButton.setText(null);
         activeRowsButton.setForeground(style().debugIPTagColor());
         activeRowsButton.setToolTipText("Scroll to next line with IP or Call Return");
         activeRowsButton.setEnabled(false);

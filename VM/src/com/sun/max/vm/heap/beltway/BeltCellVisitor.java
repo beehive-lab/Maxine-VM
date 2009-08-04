@@ -20,29 +20,14 @@
  */
 package com.sun.max.vm.heap.beltway;
 
-import com.sun.max.memory.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.grip.*;
+import com.sun.max.vm.heap.*;
 
 /**
- * @author Christos Kotselidis
+ * Interface for visiting cells in a Belt that reaches another Belt.
  */
-public  class PointerIndexVisitorImpl implements BeltWayPointerIndexVisitor {
-
-    private   Action actionImpl;
-
-    public PointerIndexVisitorImpl(Action actionImpl) {
-        this.actionImpl = actionImpl;
-    }
-
-    public void visitPointerIndex(Pointer pointer, int wordIndex, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        final Grip oldGrip = pointer.getGrip(wordIndex);
-        final Grip newGrip = actionImpl.doAction(oldGrip, from, to);
-        if (newGrip != null) {
-            if (newGrip != oldGrip) {
-                pointer.setGrip(wordIndex, newGrip);
-            }
-        }
-    }
-
+public interface BeltCellVisitor extends CellVisitor {
+    /**
+     * Initialize the action the cell visitor will perform on the cell.
+     */
+    void init(Belt from, Belt to);
 }

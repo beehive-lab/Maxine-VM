@@ -18,19 +18,17 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.heap.beltway;
+package test.bytecode;
 
-import com.sun.max.memory.*;
-import com.sun.max.unsafe.*;
-
-/**
- * @author Christos Kotselidis
+/*
+ * @Harness: java
+ * @Runs: 0 = null; 1 = null; 2 = ""
  */
+public class BC_aaload_1 {
 
-public interface Allocator {
+    static Object[][] array = {{null}, {null}, {""}};
 
-    Pointer allocate(Size size);
-
-    Pointer allocate(RuntimeMemoryRegion space, Size size);
-
+    public static Object test(int arg) {
+        return array[arg][0];
+    }
 }

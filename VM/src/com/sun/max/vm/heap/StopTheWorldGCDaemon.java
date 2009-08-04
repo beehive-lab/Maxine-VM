@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.heap.sequential;
+package com.sun.max.vm.heap;
 
 import static com.sun.max.vm.runtime.Safepoint.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
@@ -36,7 +36,6 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
@@ -102,26 +101,10 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
 
     private static AfterSafepoint afterSafepoint = new AfterSafepoint();
 
-    /**
-     * The procedure supplied by the {@link HeapScheme} that implements the GC algorithm.
-     */
-    private final Runnable collect;
-
-    public StopTheWorldGCDaemon(String name, Runnable collect) {
-        super(name);
-        this.collect = collect;
-    }
-
-    @Override
-    public void run() {
-        Heap.disableAllocationForCurrentThread();
-        super.run();
-    }
-
     static final class IsNotGCOrCurrentThread implements Pointer.Predicate {
 
         public boolean evaluate(Pointer vmThreadLocals) {
-            return vmThreadLocals != VmThread.current().vmThreadLocals() && !VmThread.current(vmThreadLocals).isGCThread();
+            return vmThreadLocals != VmThread.current().vmThreadLocals() && !VmThread.fromVmThreadLocals(vmThreadLocals).isGCThread();
         }
     }
 
@@ -243,9 +226,16 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
     private static final IsNotGCOrCurrentThread isNotGCOrCurrentThread = new IsNotGCOrCurrentThread();
 
     /**
-     * The procedure that is run the on GC thread to perform a garbage collection.
+     * The procedure that is run by the GC thread to perform a garbage collection.
      */
     class GCRequest implements Runnable {
+
+        /**
+         * A procedure supplied by the {@link HeapScheme} that implements a GC algorithm the request will execute.
+         * This may be set to a different routine at every GC request.
+         */
+        private Runnable collector;
+
         public void run() {
             // The lock for the special reference manager must be held before starting GC
             synchronized (SpecialReferenceManager.LOCK) {
@@ -275,7 +265,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                     // The next 2 statements *must* be adjacent as the reference map for this frame must
                     // be the same at both calls. This is verified by StopTheWorldDaemon.checkInvariants().
                     final long time = VmThreadLocal.prepareCurrentStackReferenceMap();
-                    collect.run();
+                    collector.run();
 
                     if (Heap.traceGCPhases()) {
                         Log.println("GCDaemon: Resetting mutators");
@@ -309,6 +299,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
         if (targetMethod != null) {
             final Object[] directCallees = targetMethod.directCallees();
             for (int stopIndex = 0; stopIndex < directCallees.length; ++stopIndex) {
+<<<<<<< local
                 final Object current = directCallees[stopIndex];
                 if (current instanceof MethodActor) {
                     final MethodActor currentCallee = (MethodActor) current;
@@ -330,6 +321,20 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                                         "    frame refmap 1: %s%n" +
                                         "    frame refmap 2: %s",
                                         classMethodActor.format("%H.%n(%p)"), firstCallRefmap, nextCallRefmap));
+=======
+                if (directCallees[stopIndex].name.string.equals("prepareCurrentStackReferenceMap")) {
+                    final int stopPosition = targetMethod.stopPosition(stopIndex);
+                    final int nextCallPosition = targetMethod.findNextCall(stopPosition, false);
+                    if (nextCallPosition >= 0) {
+                        final int[] stopPositions = targetMethod.stopPositions();
+                        for (int nextCallStopIndex = 0; nextCallStopIndex < stopPositions.length; ++nextCallStopIndex) {
+                            if (stopPositions[nextCallStopIndex] == nextCallPosition) {
+                                final ByteArrayBitMap nextCallRefmap = targetMethod.frameReferenceMapFor(nextCallStopIndex);
+                                final ByteArrayBitMap firstCallRefmap = targetMethod.frameReferenceMapFor(stopIndex);
+                                if (nextCallRefmap.equals(firstCallRefmap)) {
+                                    // OK
+                                    return;
+>>>>>>> other
                                 }
                             }
                         }
@@ -344,7 +349,46 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
 
     private final GCRequest gcRequest = new GCRequest();
 
+    /**
+     * Set the daemon with initial GC logic. The GC logic can be subsequently changes on every request using the
+     * execute method.
+     * @param name name of the daemon
+     * @param collector initial GC logic
+     */
+    public StopTheWorldGCDaemon(String name, Runnable collector) {
+        super(name);
+        gcRequest.collector = collector;
+    }
+
+    /**
+     * Set the daemon without initial GC logic. First request must be executed using the
+     * execute method.
+     * @param name name of the daemon
+     * @param collector initial GC logic
+     */
+    public StopTheWorldGCDaemon(String name) {
+        super(name);
+    }
+
+    @Override
+    public void run() {
+        Heap.disableAllocationForCurrentThread();
+        super.run();
+    }
+
+    /**
+     * Execute gc request with previously set GC logic.
+     */
     public void execute() {
-        execute(gcRequest);
+        super.execute(gcRequest);
+    }
+
+    /**
+     * Execute gc request with a new GC logic.
+     */
+    @Override
+    public void execute(Runnable collector) {
+        gcRequest.collector = collector;
+        super.execute(gcRequest);
     }
 }

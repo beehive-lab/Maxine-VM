@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,35 +18,39 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.heap.beltway;
+package test.except;
 
-import com.sun.max.memory.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.grip.*;
+/** Some basic checking of the stack trace produced after a StackOverflowError.
+ * @author Paul Caprioli
+ * @Harness: java
+ * @Runs: 0 = 0;
+ */
+public class Catch_StackOverflowError_03 {
 
-public class PointerOffsetVisitorImpl implements BeltWayPointerOffsetVisitor {
-
-    private Action actionImpl;
-
-    public PointerOffsetVisitorImpl() {
+    private static void recurseA() {
+        recurseB();
     }
 
-    public PointerOffsetVisitorImpl(Action actionImpl) {
-        this.actionImpl = actionImpl;
+    private static void recurseB() {
+        recurseA();
     }
 
-    public void visitPointerOffset(Pointer pointer, int offset, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        final Grip oldGrip = pointer.readGrip(offset);
-        final Grip newGrip = actionImpl.doAction(oldGrip, from, to);
-        if (newGrip != null) {
-            if (newGrip != oldGrip) {
-                pointer.writeGrip(offset, newGrip);
+    public static int test(int ignore) {
+        try {
+            recurseA();
+        } catch (StackOverflowError stackOverflowError) {
+            // Check that a method does not appear to call itself in the stack trace:
+            StackTraceElement[] elements = stackOverflowError.getStackTrace();
+            String lastMethodName = "";
+            for (StackTraceElement element : elements) {
+                String methodName = element.getMethodName();
+                if (lastMethodName.equals(methodName)) {
+                    stackOverflowError.printStackTrace();
+                    return 1;
+                }
+                lastMethodName = methodName;
             }
         }
+        return 0;
     }
-
-    public void visitPointerOffset(Pointer pointer, int offset) {
-
-    }
-
 }

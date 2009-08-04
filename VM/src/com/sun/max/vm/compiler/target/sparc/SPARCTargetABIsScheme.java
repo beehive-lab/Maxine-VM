@@ -23,6 +23,7 @@ package com.sun.max.vm.compiler.target.sparc;
 import static com.sun.max.asm.sparc.GPR.*;
 import static com.sun.max.asm.sparc.FPR.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.asm.sparc.*;
 import com.sun.max.collect.*;
 import com.sun.max.vm.*;
@@ -35,16 +36,29 @@ import com.sun.max.vm.stack.sparc.*;
  */
 public abstract class SPARCTargetABIsScheme extends TargetABIsScheme<GPR, FPR> {
 
-    private static final RegisterRoleAssignment<GPR, FPR> nativeRegisterRoleAssignment =
-        new RegisterRoleAssignment<GPR, FPR>(GPR.class, O6, I6, O6, I6, I0, O0, null, null, null, FPR.class, F0, null, I7, O7);
+    @PROTOTYPE_ONLY
+    private static RegisterRoleAssignment<GPR, FPR> nativeRegisterRoleAssignment() {
+        return new RegisterRoleAssignment<GPR, FPR>(GPR.class, O6, I6, O6, I6, I0, O0, null, null, null, FPR.class, F0, null, I7, O7);
+    }
 
-    protected static final IndexedSequence<GPR> incomingIntegerParameterRegisters = new ArraySequence<GPR>(I0, I1, I2, I3, I4, I5);
-    protected static final IndexedSequence<GPR> outgoingIntegerParameterRegisters = new ArraySequence<GPR>(O0, O1, O2, O3, O4, O5);
+    @PROTOTYPE_ONLY
+    protected static IndexedSequence<GPR> incomingIntegerparameterregisters() {
+        return new ArraySequence<GPR>(I0, I1, I2, I3, I4, I5);
+    }
 
-    protected static final IndexedSequence<FPR> floatingPointParameterRegisters = new ArraySequence<FPR>(
+    @PROTOTYPE_ONLY
+    protected static IndexedSequence<GPR> outgoingIntegerParameterRegisters() {
+        return new ArraySequence<GPR>(O0, O1, O2, O3, O4, O5);
+    }
+
+    @PROTOTYPE_ONLY
+    protected static IndexedSequence<FPR> floatingPointParameterRegisters() {
+        return new ArraySequence<FPR>(
                         F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15,
                         F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, F31);
+    }
 
+    @PROTOTYPE_ONLY
     public static TargetABI<GPR, FPR> createSPARC64TargetABI(RegisterRoleAssignment<GPR, FPR> registerRoleAssignment, CallEntryPoint callEntryPoint,
                     IndexedSequence<GPR> integerIncomingParameterRegisters,
                     IndexedSequence<GPR> integerOutgoingParameterRegisters,
@@ -55,28 +69,30 @@ public abstract class SPARCTargetABIsScheme extends TargetABIsScheme<GPR, FPR> {
                         SPARCStackFrameLayout.STACK_FRAME_ALIGNMENT, SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer());
     }
 
+    @PROTOTYPE_ONLY
     public static TargetABI<GPR, FPR> createSPARC64TargetABI(RegisterRoleAssignment<GPR, FPR> registerRoleAssignment, CallEntryPoint callEntryPoint,
                     IndexedSequence<FPR> floatingPointParameterRegisters, boolean useRegisterWindows, boolean callPushesReturnAddress) {
         return createSPARC64TargetABI(
                         registerRoleAssignment,
                         callEntryPoint,
-                        incomingIntegerParameterRegisters,
-                        outgoingIntegerParameterRegisters,
+                        incomingIntegerparameterregisters(),
+                        outgoingIntegerParameterRegisters(),
                         floatingPointParameterRegisters,
                         useRegisterWindows,
                         callPushesReturnAddress);
     }
 
+    @PROTOTYPE_ONLY
     public SPARCTargetABIsScheme(
                     VMConfiguration vmConfiguration,
                     TargetABI<GPR, FPR> jitABI,
                     TargetABI<GPR, FPR> optimizedJavaABI) {
         super(vmConfiguration,
                         createSPARC64TargetABI(
-                                        nativeRegisterRoleAssignment,
+                                        nativeRegisterRoleAssignment(),
                                         CallEntryPoint.C_ENTRY_POINT,
-                                        incomingIntegerParameterRegisters,
-                                        outgoingIntegerParameterRegisters,
+                                        incomingIntegerparameterregisters(),
+                                        outgoingIntegerParameterRegisters(),
                                         null, false, false),
                                         jitABI, optimizedJavaABI, null);
     }

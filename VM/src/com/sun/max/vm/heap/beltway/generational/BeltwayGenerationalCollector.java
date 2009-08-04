@@ -23,100 +23,68 @@ package com.sun.max.vm.heap.beltway.generational;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.beltway.*;
-import com.sun.max.vm.tele.*;
 
 /**
+ * @author Laurent Daynes
  * @author Christos Kotselidis
  */
 
 public class BeltwayGenerationalCollector extends BeltwayCollector {
 
-    public static long edenCollections = 0;
-    public static long majorCollections = 0;
-    public static long toCollections = 0;
-
-
-    public BeltwayGenerationalCollector() {
-
+    public BeltwayGenerationalCollector(String name) {
+        super(name);
     }
 
-    @Override
-    public void run() {
+    protected void parEvacuateFollowers(Belt from, Belt to) {
+        BeltwayHeapScheme heapScheme = getBeltwayHeapScheme();
+        /*               heapScheme.fillLastTLAB();
+                heapScheme.markSideTableLastTLAB();
+         */
+        BeltwayHeapScheme.inScavenging = true;
+        heapScheme.initializeGCThreads(heapScheme, from, to);
+        if (Heap.verbose()) {
+            Log.println("Start Threads");
+        }
+        heapScheme.startGCThreads();
+        BeltwayHeapScheme.inScavenging = false;
+        if (Heap.verbose()) {
+            Log.println("Join Threads");
+        }
     }
 
-    private final Runnable majorGC = new Runnable() {
+    static class MajorCollector extends BeltwayGenerationalCollector implements Runnable {
+        MajorCollector() {
+            super("Major");
+        }
+
+        private void printSpacesInfo(Belt edenSpace, Belt toSpace, Belt matureSpace) {
+            printBeltInfo("Eden Space", edenSpace);
+            printBeltInfo("To Space", toSpace);
+            printBeltInfo("Mature Space", matureSpace);
+        }
 
         public void run() {
-            majorCollections++;
-            if (Heap.verbose()) {
-                Log.print("Major Collection: ");
-                Log.println(majorCollections);
-            }
-            final BeltwayHeapSchemeGenerational beltwayHeapSchemeGen = (BeltwayHeapSchemeGenerational) getBeltwayHeapScheme();
-            final Belt matureSpace = beltwayHeapSchemeGen.getMatureSpace();
-            final Belt toSpace = beltwayHeapSchemeGen.getToSpace();
-            final Belt edenSpace = beltwayHeapSchemeGen.getEdenSpace();
+            final BeltwayHeapSchemeGenerational heapScheme = (BeltwayHeapSchemeGenerational) getBeltwayHeapScheme();
+            final Belt matureSpace = heapScheme.getMatureSpace();
+            final Belt toSpace = heapScheme.getToSpace();
+            final Belt edenSpace = heapScheme.getEdenSpace();
+            prologue();
 
             if (Heap.verbose()) {
-                Log.print("Mature Space Start: ");
-                Log.println(matureSpace.start());
-                Log.print("Mature Space Allocation Mark: ");
-                Log.println(matureSpace.getAllocationMark());
-                Log.print("Mature Space End: ");
-                Log.println(matureSpace.end());
+                printBeltInfo("Mature Space", matureSpace);
                 Log.println("Verify Mature Space ");
             }
-
             verifyBelt(matureSpace);
-            InspectableHeapInfo.beforeGarbageCollection();
-            VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
+            monitorScheme.beforeGarbageCollection();
 
             if (Heap.verbose()) {
                 Log.println("Set Eden Expandable ");
             }
-
             edenSpace.setExpandable(true);
 
-            if (Heap.verbose()) {
-                Log.println("Scan roots ");
-            }
-            beltwayHeapSchemeGen.getRootScannerUpdater().run(matureSpace, edenSpace);
+            heapScheme.scavengeRoot(matureSpace, edenSpace);
 
-            if (Heap.verbose()) {
-                Log.println("Scan Boot");
-            }
-
-            beltwayHeapSchemeGen.scanBootHeap(matureSpace, edenSpace);
-
-            if (Heap.verbose()) {
-                Log.println("Scan code");
-            }
-            beltwayHeapSchemeGen.scanCode(matureSpace, edenSpace);
-
-            if (Heap.verbose()) {
-                Log.print("Scavenge");
-            }
-
-            if (BeltwayConfiguration.parallelScavenging) {
-                beltwayHeapSchemeGen.fillLastTLAB();
-                beltwayHeapSchemeGen.markSideTableLastTLAB();
-                BeltwayHeapScheme.inScavenging = true;
-                beltwayHeapSchemeGen.initializeGCThreads(beltwayHeapSchemeGen, matureSpace, toSpace);
-                VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
-                if (Heap.verbose()) {
-                    Log.println("Start Threads");
-                }
-
-                beltwayHeapSchemeGen.startGCThreads();
-                BeltwayHeapScheme.inScavenging = false;
-                if (Heap.verbose()) {
-                    Log.println("Join Threads");
-                }
-
-            } else {
-                beltwayHeapSchemeGen.linearScanRegionBelt(edenSpace, matureSpace, edenSpace);
-                beltwayHeapSchemeGen.fillLastTLAB();
-            }
+            evacuateFollowers(matureSpace, edenSpace);
 
             if (Heap.verbose()) {
                 Log.println("Mature Reset Allocation Mark");
@@ -135,65 +103,13 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 throw BeltwayHeapScheme.outOfMemoryError;
             }
             edenSpace.setEnd(edenSpace.getAllocationMark());
-            if (Heap.verbose()) {
-                Log.println("Scan roots ");
-            }
-            // Start scanning the reachable objects from my roots.
-            beltwayHeapSchemeGen.getRootScannerUpdater().run(edenSpace, matureSpace);
-            VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
-
-            if (Heap.verbose()) {
-                Log.println("Scan Boot");
-            }
-
-            beltwayHeapSchemeGen.scanBootHeap(edenSpace, matureSpace);
-
-            if (Heap.verbose()) {
-                Log.println("Scan code");
-            }
-            beltwayHeapSchemeGen.scanCode(edenSpace, matureSpace);
+            heapScheme.scavengeRoot(edenSpace, matureSpace);
 
             if (Heap.verbose()) {
                 Log.println("Move Reachable");
-                Log.print("Eden Space Start: ");
-                Log.println(edenSpace.start());
-                Log.print("Eden Space Allocation Mark: ");
-                Log.println(edenSpace.getAllocationMark());
-                Log.print("Eden Space End: ");
-                Log.println(edenSpace.end());
-                Log.print("To Space Start: ");
-                Log.println(toSpace.start());
-                Log.print("To Space Allocation Mark: ");
-                Log.println(toSpace.getAllocationMark());
-                Log.print("To Space End: ");
-                Log.println(toSpace.end());
-                Log.print("Mature Space Start: ");
-                Log.println(matureSpace.start());
-                Log.print("Mature Space Allocation Mark: ");
-                Log.println(matureSpace.getAllocationMark());
-                Log.print("Mature Space End: ");
-                Log.println(matureSpace.end());
+                printSpacesInfo(edenSpace, toSpace, matureSpace);
             }
-            if (BeltwayConfiguration.parallelScavenging) {
-                beltwayHeapSchemeGen.fillLastTLAB();
-                beltwayHeapSchemeGen.markSideTableLastTLAB();
-                BeltwayHeapScheme.inScavenging = true;
-
-                beltwayHeapSchemeGen.initializeGCThreads(beltwayHeapSchemeGen, edenSpace, matureSpace);
-                VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
-                if (Heap.verbose()) {
-                    Log.println("Start Threads");
-                }
-
-                beltwayHeapSchemeGen.startGCThreads();
-                BeltwayHeapScheme.inScavenging = false;
-                if (Heap.verbose()) {
-                    Log.println("Join Threads");
-                }
-            } else {
-                beltwayHeapSchemeGen.linearScanRegionBelt(matureSpace, edenSpace, matureSpace);
-                beltwayHeapSchemeGen.fillLastTLAB();
-            }
+            evacuateFollowers(edenSpace, matureSpace);
 
             if (Heap.verbose()) {
                 Log.println("Reset Eden Space ");
@@ -201,65 +117,27 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
             edenSpace.resetAllocationMark();
             edenSpace.setEnd(toSpace.start());
             edenSpace.setExpandable(false);
-            InspectableHeapInfo.afterGarbageCollection();
+            monitorScheme.afterGarbageCollection();
+
             if (Heap.verbose()) {
-                Log.print("Eden Space Start: ");
-                Log.println(edenSpace.start());
-                Log.print("Eden Space Allocation Mark: ");
-                Log.println(edenSpace.getAllocationMark());
-                Log.print("Eden Space End: ");
-                Log.println(edenSpace.end());
-                Log.print("To Space Start: ");
-                Log.println(toSpace.start());
-                Log.print("To Space Allocation Mark: ");
-                Log.println(toSpace.getAllocationMark());
-                Log.print("To Space End: ");
-                Log.println(toSpace.end());
-                Log.print("Mature Space Start: ");
-                Log.println(matureSpace.start());
-                Log.print("Mature Space Allocation Mark: ");
-                Log.println(matureSpace.getAllocationMark());
-                Log.print("Mature Space End: ");
-                Log.println(matureSpace.end());
+                printSpacesInfo(edenSpace, toSpace, matureSpace);
             }
-            if (Heap.verbose()) {
-                Log.print("Finished Eden Collection: ");
-                Log.println(edenCollections);
-            }
+            epilogue();
         }
-    };
-
-    public Runnable getMinorGC() {
-        return edenGC;
     }
 
-    public Runnable getMajorGC() {
-        return majorGC;
-    }
-
-    public Runnable getToGC() {
-        return toGC;
-    }
-
-    private final Runnable toGC = new Runnable() {
-
+    static class ToSpaceCollector  extends BeltwayGenerationalCollector implements Runnable {
+        ToSpaceCollector() {
+            super("To");
+        }
         public void run() {
-            toCollections++;
-            if (Heap.verbose()) {
-                Log.print("To Collection: ");
-                Log.println(toCollections);
-            }
-            final BeltwayHeapSchemeGenerational beltwayHeapSchemeGen = (BeltwayHeapSchemeGenerational) getBeltwayHeapScheme();
-            final Belt matureSpace = beltwayHeapSchemeGen.getMatureSpace();
-            final Belt toSpace = beltwayHeapSchemeGen.getToSpace();
+            final BeltwayHeapSchemeGenerational heapScheme = (BeltwayHeapSchemeGenerational) getBeltwayHeapScheme();
+            final Belt matureSpace = heapScheme.getMatureSpace();
+            final Belt toSpace = heapScheme.getToSpace();
+            prologue();
 
             if (Heap.verbose()) {
-                Log.print("To Space Start: ");
-                Log.println(toSpace.start());
-                Log.print("To Space Allocation Mark: ");
-                Log.println(toSpace.getAllocationMark());
-                Log.print("To Space End: ");
-                Log.println(toSpace.end());
+                printBeltInfo("To Space", toSpace);
                 Log.println("Verify To Space: ");
             }
             verifyBelt(toSpace);
@@ -268,105 +146,46 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
             }
 
             matureSpace.setAllocationMarkSnapshot();
-            VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
-
-            if (Heap.verbose()) {
-                Log.println("Scan Roots ");
-            }
-
-            beltwayHeapSchemeGen.getRootScannerUpdater().run(toSpace, matureSpace);
-
-            if (Heap.verbose()) {
-                Log.println("Scan Boot Heap");
-            }
-
-            beltwayHeapSchemeGen.scanBootHeap(toSpace, matureSpace);
-
-            if (Heap.verbose()) {
-                Log.println("Scan Code");
-            }
-
-            beltwayHeapSchemeGen.scanCode(toSpace, matureSpace);
+            monitorScheme.beforeGarbageCollection();
+            heapScheme.scavengeRoot(toSpace, matureSpace);
 
             if (Heap.verbose()) {
                 Log.println("Scan cards");
             }
 
-            beltwayHeapSchemeGen.scanCards(matureSpace, toSpace, matureSpace);
+            heapScheme.scanCardAndEvacuate(matureSpace, toSpace);
 
-            if (Heap.verbose()) {
-                Log.println("Move Reachable Objects");
-            }
+            evacuateFollowers(toSpace, matureSpace);
 
-            if (BeltwayConfiguration.parallelScavenging) {
-                beltwayHeapSchemeGen.fillLastTLAB();
-                beltwayHeapSchemeGen.markSideTableLastTLAB();
-                BeltwayHeapScheme.inScavenging = true;
-                beltwayHeapSchemeGen.initializeGCThreads(beltwayHeapSchemeGen, toSpace, matureSpace);
-                VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
-                if (Heap.verbose()) {
-                    Log.println("Start Threads");
-                }
-
-                beltwayHeapSchemeGen.startGCThreads();
-                BeltwayHeapScheme.inScavenging = false;
-                if (Heap.verbose()) {
-                    Log.println("Join Threads");
-                }
-            } else {
-                beltwayHeapSchemeGen.linearScanRegionBelt(matureSpace, toSpace, matureSpace);
-                beltwayHeapSchemeGen.fillLastTLAB();
-            }
-
-            BeltwayHeapSchemeGenerational.sideTable.restoreAllChunkSlots();
-
-            // TODO: Delete
-            //Debug.println("Wipe To");
-            //beltwayHeapSchemeGen.wipeMemory(toSpace);
+            heapScheme.sideTable.restoreAllChunkSlots();
 
             toSpace.resetAllocationMark();
-            VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
+            monitorScheme.afterGarbageCollection();
 
             if (Heap.verbose()) {
-                Log.print("Mature Space Start: ");
-                Log.println(matureSpace.start());
-                Log.print("Mature Space Allocation Mark: ");
-                Log.println(matureSpace.getAllocationMark());
-                Log.print("Mature Space End: ");
-                Log.println(matureSpace.end());
+                printBeltInfo("Mature Space", matureSpace);
                 Log.println("Verify Mature Space");
             }
-            verifyBelt(matureSpace);
-            InspectableHeapInfo.afterGarbageCollection();
-            if (Heap.verbose()) {
-                Log.print("Finished To Collection: ");
-                Log.println(toCollections);
-            }
-        }
-    };
 
-    private final Runnable edenGC = new Runnable() {
+            verifyBelt(matureSpace);
+            epilogue();
+        }
+    }
+
+    static class EdenCollector extends BeltwayGenerationalCollector implements Runnable {
+        EdenCollector() {
+            super("Eden");
+        }
 
         public void run() {
-            edenCollections++;
-            if (Heap.verbose()) {
-                Log.print("Eden Collection: ");
-                Log.println(edenCollections);
-            }
-
-            final BeltwayHeapSchemeGenerational beltwayHeapSchemeGen = (BeltwayHeapSchemeGenerational) getBeltwayHeapScheme();
-
-            final Belt matureSpace = beltwayHeapSchemeGen.getMatureSpace();
-            final Belt toSpace = beltwayHeapSchemeGen.getToSpace();
-            final Belt edenSpace = beltwayHeapSchemeGen.getEdenSpace();
+            final BeltwayHeapSchemeGenerational heapScheme = (BeltwayHeapSchemeGenerational) getBeltwayHeapScheme();
+            final Belt matureSpace = heapScheme.getMatureSpace();
+            final Belt toSpace = heapScheme.getToSpace();
+            final Belt edenSpace = heapScheme.getEdenSpace();
+            prologue();
 
             if (Heap.verbose()) {
-                Log.print("Eden Space Start: ");
-                Log.println(edenSpace.start());
-                Log.print("Eden Space Allocation Mark: ");
-                Log.println(edenSpace.getAllocationMark());
-                Log.print("Eden Space End: ");
-                Log.println(edenSpace.end());
+                printBeltInfo("Eden Space", edenSpace);
                 Log.println("Verify Eden: ");
             }
             verifyBelt(edenSpace);
@@ -375,88 +194,67 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 Log.println("To Space Snapshot");
             }
             toSpace.setAllocationMarkSnapshot();
-            InspectableHeapInfo.beforeGarbageCollection();
 
-            VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
-            if (Heap.verbose()) {
-                Log.println("Scan Roots ");
-            }
-
-            beltwayHeapSchemeGen.getRootScannerUpdater().run(edenSpace, toSpace);
-
-            if (Heap.verbose()) {
-                Log.println("Scan Boot Heap");
-            }
-
-            beltwayHeapSchemeGen.scanBootHeap(edenSpace, toSpace);
-
-            if (Heap.verbose()) {
-                Log.println("Scan Code");
-            }
-
-            beltwayHeapSchemeGen.scanCode(edenSpace, toSpace);
+            monitorScheme.beforeGarbageCollection();
+            heapScheme.scavengeRoot(edenSpace, toSpace);
 
             if (Heap.verbose()) {
                 Log.println("Scan cards");
             }
 
-            beltwayHeapSchemeGen.scanCards(toSpace, edenSpace, toSpace);
-            beltwayHeapSchemeGen.scanCards(matureSpace, edenSpace, toSpace);
+            heapScheme.scanCardAndEvacuate(toSpace, edenSpace);
+            heapScheme.scanCardAndEvacuate(matureSpace, edenSpace);
 
-            if (Heap.verbose()) {
-                Log.println("Move Reachable Objects");
-            }
+            evacuateFollowers(edenSpace, toSpace);
 
-            if (BeltwayConfiguration.parallelScavenging) {
-                beltwayHeapSchemeGen.fillLastTLAB();
-                beltwayHeapSchemeGen.markSideTableLastTLAB();
-                BeltwayHeapScheme.inScavenging = true;
-                beltwayHeapSchemeGen.initializeGCThreads(beltwayHeapSchemeGen, edenSpace, toSpace);
-                VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
-                if (Heap.verbose()) {
-                    Log.println("Start Threads");
-                }
-
-                beltwayHeapSchemeGen.startGCThreads();
-                BeltwayHeapScheme.inScavenging = false;
-                if (Heap.verbose()) {
-                    Log.println("Join Threads");
-                }
-            } else {
-                beltwayHeapSchemeGen.linearScanRegionBelt(toSpace, edenSpace, toSpace);
-                beltwayHeapSchemeGen.fillLastTLAB();
-            }
-
-            BeltwayHeapSchemeGenerational.sideTable.restoreAllChunkSlots();
-
-            // TODO: Delete
-            //Debug.println("Wipe Eden");
-            //beltwayHeapSchemeGen.wipeMemory(edenSpace);
+            heapScheme.sideTable.restoreAllChunkSlots();
 
             if (Heap.verbose()) {
                 Log.println("Reset Nursery Space Allocation Mark");
             }
 
             edenSpace.resetAllocationMark();
-            VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
+            monitorScheme.afterGarbageCollection();
 
             if (Heap.verbose()) {
-                Log.print("To Space Start: ");
-                Log.println(toSpace.start());
-                Log.print("To Space Allocation Mark: ");
-                Log.println(toSpace.getAllocationMark());
-                Log.print("To Space End: ");
-                Log.println(toSpace.end());
+                printBeltInfo("To Space", toSpace);
                 Log.println("Verfiy To Space: ");
             }
 
             verifyBelt(toSpace);
-            InspectableHeapInfo.afterGarbageCollection();
-            if (Heap.verbose()) {
-                Log.print("Finished Eden Collection: ");
-                Log.println(edenCollections);
-            }
+            epilogue();
         }
-    };
+    }
+
+    static class ParEdenCollector extends EdenCollector {
+        ParEdenCollector() {
+            super();
+        }
+
+        @Override
+        protected void evacuateFollowers(Belt from, Belt to) {
+            parEvacuateFollowers(from, to);
+        }
+    }
+
+    static class ParToSpaceCollector extends ToSpaceCollector {
+        ParToSpaceCollector() {
+            super();
+        }
+        @Override
+        protected void evacuateFollowers(Belt from, Belt to) {
+            parEvacuateFollowers(from, to);
+        }
+    }
+
+    static class ParMajorCollector extends MajorCollector {
+        ParMajorCollector() {
+            super();
+        }
+        @Override
+        protected void evacuateFollowers(Belt from, Belt to) {
+            parEvacuateFollowers(from, to);
+        }
+    }
 
 }

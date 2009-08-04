@@ -20,12 +20,12 @@
  */
 package com.sun.max.ins.gui;
 
-import java.awt.*;
 import java.awt.event.*;
 
 import javax.swing.*;
 
 import com.sun.max.ins.*;
+import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -46,6 +46,11 @@ public abstract class AddressInputField extends JTextField {
         return value;
     }
 
+    public void setValue(Address value) {
+        this.value = value;
+        updateView();
+    }
+
     private Address lowerBound = Address.zero();
     private Address upperBound = Address.fromLong(-1L);
 
@@ -53,8 +58,8 @@ public abstract class AddressInputField extends JTextField {
 
     protected void updateView() {
         numberOfDigits = upperBound.toUnsignedString(radix).length();
-        setPreferredSize(new Dimension(9 * numberOfDigits, 25));
-        setText(value.toUnsignedString(radix));
+        final String unsignedString = Strings.padLengthWithZeroes(numberOfDigits, value.toUnsignedString(radix));
+        setText(unsignedString);
     }
 
     private void setRange(Address lowerBound, Address upperBound) {
@@ -62,11 +67,10 @@ public abstract class AddressInputField extends JTextField {
         this.upperBound = upperBound;
         if (value.greaterThan(upperBound)) {
             value = upperBound;
-            updateView();
         } else if (value.lessThan(lowerBound)) {
             value = lowerBound;
-            updateView();
         }
+        updateView();
     }
 
     public void setRange(int lowerBound, int upperBound) {
@@ -78,7 +82,7 @@ public abstract class AddressInputField extends JTextField {
         if (text.isEmpty()) {
             return;
         }
-        if (radix == 16 && text.substring(0, 2).equalsIgnoreCase("0x")) {
+        if (radix == 16 && text.length() > 2 && text.substring(0, 2).equalsIgnoreCase("0x")) {
             text = text.substring(2);
             setText(text);
         }

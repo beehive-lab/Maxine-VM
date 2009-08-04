@@ -147,7 +147,10 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
             if (teleRootsRegion == null) {
                 final Reference teleRootsRegionReference = teleVM().fields().InspectableHeapInfo_rootsRegion.readReference(teleVM());
                 if (teleRootsRegionReference != null && !teleRootsRegionReference.isZero()) {
-                    teleRootsRegion = (TeleRuntimeMemoryRegion) teleVM().makeTeleObject(teleRootsRegionReference);
+                    final TeleRuntimeMemoryRegion maybeAllocatedRegion = (TeleRuntimeMemoryRegion) teleVM().makeTeleObject(teleRootsRegionReference);
+                    if (maybeAllocatedRegion.isAllocated()) {
+                        teleRootsRegion = maybeAllocatedRegion;
+                    }
                 }
             }
             Trace.end(TRACE_VALUE, tracePrefix() + "refreshing", startTimeMillis);

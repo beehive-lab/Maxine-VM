@@ -302,10 +302,16 @@ public abstract class TeleVM implements MaxVM {
         return vmConfiguration;
     }
 
-    private final int wordSize;
+    private final Size wordSize;
 
-    public final int wordSize() {
+    public final Size wordSize() {
         return wordSize;
+    }
+
+    private final Size pageSize;
+
+    public final Size pageSize() {
+        return pageSize;
     }
 
     private final BootImage bootImage;
@@ -441,7 +447,8 @@ public abstract class TeleVM implements MaxVM {
         // Pre-initialize an appropriate disassembler to save time.
         TeleDisassembler.initialize(vmConfiguration.platform().processorKind);
 
-        this.wordSize = vmConfiguration.platform().processorKind.dataModel.wordWidth.numberOfBytes;
+        this.wordSize = Size.fromInt(vmConfiguration.platform().processorKind.dataModel.wordWidth.numberOfBytes);
+        this.pageSize = Size.fromInt(vmConfiguration.platform.pageSize);
         this.programFile = new File(bootImageFile.getParent(), PROGRAM_NAME);
 
         if (commandLineArguments == null) {
@@ -647,15 +654,19 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final MemoryRegion memoryRegionContaining(Address address) {
-        MemoryRegion memoryRegion = teleHeapManager.regionContaining(address);
-        if (memoryRegion == null) {
-            memoryRegion = teleCodeManager().regionContaining(address);
+        MemoryRegion memoryRegion = null;
+        try {
+            memoryRegion = teleHeapManager.regionContaining(address);
             if (memoryRegion == null) {
-                final MaxThread maxThread = threadContaining(address);
-                if (maxThread != null) {
-                    memoryRegion = maxThread.stack();
+                memoryRegion = teleCodeManager().regionContaining(address);
+                if (memoryRegion == null) {
+                    final MaxThread maxThread = threadContaining(address);
+                    if (maxThread != null) {
+                        memoryRegion = maxThread.stack();
+                    }
                 }
             }
+        } catch (DataIOError dataIOError) {
         }
         return memoryRegion;
     }
@@ -763,14 +774,14 @@ public abstract class TeleVM implements MaxVM {
             // In a debugging build, each object is preceded by an extra tag word
             p = p.minus(Word.size()); // can the tag be accessed?
         }
-        if (!containsInHeap(p) && !containsInCode(p)) {
-            return false;
-        }
-        if (false && isInGC() && containsInDynamicHeap(origin)) {
-            //  Assume that any reference to the dynamic heap is invalid during GC.
-            return false;
-        }
         try {
+            if (!containsInHeap(p) && !containsInCode(p)) {
+                return false;
+            }
+            if (false && isInGC() && containsInDynamicHeap(origin)) {
+                //  Assume that any reference to the dynamic heap is invalid during GC.
+                return false;
+            }
             if (bootImage.vmConfiguration().debugging()) {
                 // Checking is easy in a debugging build; there's a special word preceding each object
                 final Word tag = dataAccess().getWord(cell, 0, -1);
@@ -808,6 +819,8 @@ public abstract class TeleVM implements MaxVM {
                 hubWord = nextHubWord;
             }
         } catch (DataIOError dataAccessError) {
+            return false;
+        } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
             return false;
         }
         return false;
@@ -1051,6 +1064,44 @@ public abstract class TeleVM implements MaxVM {
         return teleObjectFactory.lookupObject(id);
     }
 
+    public final TeleObject findObjectFollowing(Address address, long maxSearchExtent) {
+
+        // Search limit expressed in words
+        long wordSearchExtent = Long.MAX_VALUE;
+        if (maxSearchExtent > 0) {
+            wordSearchExtent = maxSearchExtent / wordSize().toInt();
+        }
+        try {
+            for (long count = 0; count < wordSearchExtent; count++) {
+                address = address.plus(wordSize());
+                if (isValidOrigin(address.asPointer())) {
+                    return makeTeleObject(originToReference(address.asPointer()));
+                }
+            }
+        } catch (Throwable throwable) {
+        }
+        return null;
+    }
+
+    public final TeleObject findObjectPreceding(Address address, long maxSearchExtent) {
+
+        // Search limit expressed in words
+        long wordSearchExtent = Long.MAX_VALUE;
+        if (maxSearchExtent > 0) {
+            wordSearchExtent = maxSearchExtent / wordSize().toInt();
+        }
+        try {
+            for (long count = 0; count < wordSearchExtent; count++) {
+                address = address.minus(wordSize());
+                if (isValidOrigin(address.asPointer())) {
+                    return makeTeleObject(originToReference(address.asPointer()));
+                }
+            }
+        } catch (Throwable throwable) {
+        }
+        return null;
+    }
+
     public final TeleClassActor findTeleClassActor(int id) {
         return teleClassRegistry.findTeleClassActorByID(id);
     }
@@ -1199,6 +1250,15 @@ public abstract class TeleVM implements MaxVM {
         return teleProcess.targetBreakpointFactory().size(true);
     }
 
+    public final TeleTargetBreakpoint makeMaxTargetBreakpoint(Address address) throws MaxVMException {
+        try {
+            return makeTargetBreakpoint(address);
+        } catch (DataIOError dataIOError) {
+            final String message = "Cannot create breakpoint at 0x" + address.toHexString() + ":  " + dataIOError.getMessage();
+            throw new MaxVMException(message);
+        }
+    }
+
     public final TeleTargetBreakpoint makeTargetBreakpoint(Address address) {
         return teleProcess.targetBreakpointFactory().makeBreakpoint(address, false);
     }
@@ -1247,7 +1307,7 @@ public abstract class TeleVM implements MaxVM {
 
     public final MaxWatchpoint setWordWatchpoint(String description, Address address, boolean after, boolean read, boolean write, boolean exec, boolean gc)
         throws TooManyWatchpointsException, DuplicateWatchpointException {
-        final MemoryRegion memoryRegion = new FixedMemoryRegion(address, Size.fromInt(wordSize()), "");
+        final MemoryRegion memoryRegion = new FixedMemoryRegion(address, wordSize(), "");
         return setRegionWatchpoint(description, memoryRegion, after, read, write, exec, gc);
     }
 

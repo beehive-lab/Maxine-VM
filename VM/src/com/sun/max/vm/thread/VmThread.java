@@ -139,8 +139,6 @@ public class VmThread {
     private int id;
     private int parkState;
 
-    private TLAB tlab = new TLAB();
-
     private Address guardPage = Address.zero();
 
     @CONSTANT
@@ -211,9 +209,6 @@ public class VmThread {
         this.state = state;
     }
 
-    public void setTLAB(TLAB tlab) {
-        this.tlab = tlab;
-    }
 
     public Thread javaThread() {
         return javaThread;
@@ -429,14 +424,6 @@ public class VmThread {
             return mainVMThread;
         }
         return UnsafeLoophole.cast(VM_THREAD.getConstantReference().toJava());
-    }
-
-    @INLINE
-    public static VmThread current(Pointer vmThreadLocals) {
-        if (MaxineVM.isPrototyping()) {
-            return mainVMThread;
-        }
-        return UnsafeLoophole.cast(VmThreadLocal.VM_THREAD.getConstantReference(vmThreadLocals).toJava());
     }
 
     private static void executeRunnable(VmThread vmThread) throws Throwable {
@@ -730,7 +717,11 @@ public class VmThread {
         return fromVmThreadLocals(vmThreadLocals);
     }
 
-    public static VmThread fromVmThreadLocals(final Pointer vmThreadLocals) {
+    @INLINE
+    public static VmThread fromVmThreadLocals(Pointer vmThreadLocals) {
+        if (MaxineVM.isPrototyping()) {
+            return mainVMThread;
+        }
         return UnsafeLoophole.cast(VM_THREAD.getConstantReference(vmThreadLocals).toJava());
     }
 
@@ -903,12 +894,6 @@ public class VmThread {
     @Override
     public String toString() {
         return "VM" + javaThread;
-    }
-
-    // GC support:
-
-    public TLAB getTLAB() {
-        return tlab;
     }
 
     public  Address guardPage() {

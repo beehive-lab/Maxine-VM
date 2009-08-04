@@ -59,6 +59,10 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
 
     private Runnable procedure = null;
 
+    public BeltwayStopTheWorldDaemon(String name) {
+        super(name);
+    }
+
     public BeltwayStopTheWorldDaemon(String name, Runnable procedure) {
         super(name);
         this.procedure = procedure;
@@ -109,22 +113,23 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
     private final Pointer.Procedure fillLastTlabs = new Pointer.Procedure() {
 
         public void run(Pointer localSpace) {
+            /* FIXME:
             if (!localSpace.isZero()) {
-                final VmThread thread = VmThread.current(localSpace);
+                final VmThread thread = VmThread.fromVmThreadLocals(localSpace);
                 if (thread != null) {
-                    final TLAB tlab = thread.getTLAB();
+                    final BeltTLAB tlab = thread.getTLAB();
                     if (!tlab.isFull()) {
                         tlab.fillTLAB();
                     }
                 }
-            }
+            }*/
         }
     };
 
 
     private static class TLABScavengerReset implements Procedure<VmThread> {
         public void run(VmThread thread) {
-            thread.getTLAB().unSet();
+            // thread.getTLAB().unSet();   FIXME
         }
     }
 
@@ -143,12 +148,15 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
                 BeltwayHeapScheme.inGC = true;
                 VmThreadMap.ACTIVE.forAllVmThreadLocals(isNotGCThreadLocalsOrCurrent, triggerSafepoint);
                 VmThreadMap.ACTIVE.forAllVmThreadLocals(isNotGCThreadLocalsOrCurrent, waitUntilNonMutating);
+                /*
+                 * FIXME:
                 if (BeltwayConfiguration.useTLABS) {
                     VmThreadMap.ACTIVE.forAllVmThreadLocals(isNotGCThreadLocalsOrCurrent, fillLastTlabs);
                 }
+
                 if (BeltwayConfiguration.useGCTlabs) {
                     VmThreadMap.ACTIVE.forAllVmThreads(isGCOrStopTheWorldDaemonThread, tlabScavengerReset);
-                }
+                }*/
                 VmThreadMap.ACTIVE.forAllVmThreadLocals(isGCThread, prepareGCThreadStackMap);
                 VmThreadLocal.prepareCurrentStackReferenceMap();
                 procedure.run();
@@ -170,7 +178,7 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
     private static final Pointer.Predicate isNotGCThreadLocalsOrCurrent = new Pointer.Predicate() {
         public boolean evaluate(Pointer vmThreadLocals) {
             if (vmThreadLocals != VmThread.current().vmThreadLocals()) {
-                final Thread javaThread = VmThread.current(vmThreadLocals).javaThread();
+                final Thread javaThread = VmThread.fromVmThreadLocals(vmThreadLocals).javaThread();
                 return !(javaThread instanceof BeltwayStopTheWorldDaemon) && !(javaThread instanceof BeltwayCollectorThread);
             }
             return false;
@@ -179,7 +187,7 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
 
     private static final Pointer.Predicate isGCThread = new Pointer.Predicate() {
         public boolean evaluate(Pointer vmThreadLocals) {
-            final Thread javaThread = VmThread.current(vmThreadLocals).javaThread();
+            final Thread javaThread = VmThread.fromVmThreadLocals(vmThreadLocals).javaThread();
             return javaThread instanceof BeltwayCollectorThread;
         }
     };
@@ -188,10 +196,10 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
         execute(gcRequest);
     }
 
-    public TLAB getScavengeTLAB() {
+    public BeltTLAB getScavengeTLAB() {
         return currentTLAB;
     }
 
-    private TLAB currentTLAB;
+    private BeltTLAB currentTLAB;
 
 }

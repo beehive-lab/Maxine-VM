@@ -112,16 +112,25 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
                     // Code location is not in a Java method or runtime stub and has not yet been viewed in a native routine.
                     // Give the user a chance to guess at its length so we can register and view it
                     final MutableInnerClassGlobal<MethodInspector> result = new MutableInnerClassGlobal<MethodInspector>();
-                    new NativeMethodAddressInputDialog(inspection, address, TeleNativeTargetRoutine.DEFAULT_NATIVE_CODE_LENGTH) {
+                    final String defaultDescription = "Native code @0x" + address.toHexString();
+                    new NativeLocationInputDialog(inspection, "Describe unknown native code", address, TeleNativeTargetRoutine.DEFAULT_NATIVE_CODE_LENGTH, defaultDescription) {
                         @Override
-                        public void entered(Address nativeAddress, Size codeSize, String name) {
+                        public void entered(Address nativeAddress, Size codeSize, String enteredDescription) {
                             try {
-                                final TeleNativeTargetRoutine teleNativeTargetRoutine = maxVM().createTeleNativeTargetRoutine(nativeAddress, codeSize, name);
+                                String description = enteredDescription;
+                                if (description == null || description.equals("")) {
+                                    description = "Native code @0x" + nativeAddress.toHexString();
+                                }
+                                final TeleNativeTargetRoutine teleNativeTargetRoutine = maxVM().createTeleNativeTargetRoutine(nativeAddress, codeSize, description);
                                 result.setValue(MethodInspector.make(inspection, teleNativeTargetRoutine));
                                 // inspection.focus().setCodeLocation(new TeleCodeLocation(inspection.teleVM(), nativeAddress));
                             } catch (IllegalArgumentException illegalArgumentException) {
                                 inspection.gui().errorMessage("Specified native code range overlaps region already registered in Inpsector");
                             }
+                        }
+                        @Override
+                        public boolean isValidSize(Size size) {
+                            return size.greaterThan(0);
                         }
                     };
                     methodInspector = result.value();
@@ -140,7 +149,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
      */
     private static MethodInspector make(Inspection inspection, TeleCodeLocation teleCodeLocation, boolean interactiveForNative) {
         if (teleCodeLocation.hasTargetCodeLocation()) {
-            return make(inspection, teleCodeLocation.targetCodeInstructionAddresss(), interactiveForNative);
+            return make(inspection, teleCodeLocation.targetCodeInstructionAddress(), interactiveForNative);
         }
         if (teleCodeLocation.hasBytecodeLocation()) {
             // TODO (mlvdv)  Select the specified bytecode position

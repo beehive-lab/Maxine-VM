@@ -83,6 +83,20 @@ public final class BreakpointsTable extends InspectorTable {
     }
 
     @Override
+    protected JTableHeader createDefaultTableHeader() {
+        // Custom table header with tooltips that describe the column data.
+        return new JTableHeader(columnModel) {
+            @Override
+            public String getToolTipText(MouseEvent mouseEvent) {
+                final Point p = mouseEvent.getPoint();
+                final int index = columnModel.getColumnIndexAtX(p.x);
+                final int modelIndex = columnModel.getColumn(index).getModelIndex();
+                return BreakpointsColumnKind.VALUES.get(modelIndex).toolTipText();
+            }
+        };
+    }
+
+    @Override
     public void valueChanged(ListSelectionEvent listSelectionEvent) {
         // TODO: Add MaxBreakpoint interface and generalize this code (cf. WatchpointsTable)
         // Row selection changed, perhaps by user mouse click or navigation;
@@ -108,7 +122,7 @@ public final class BreakpointsTable extends InspectorTable {
             this.viewPreferences = viewPreferences;
             createColumn(BreakpointsColumnKind.TAG, new TagCellRenderer(inspection()), null);
             createColumn(BreakpointsColumnKind.ENABLED, null, new DefaultCellEditor(new JCheckBox()));
-            createColumn(BreakpointsColumnKind.METHOD, new MethodCellRenderer(inspection()), null);
+            createColumn(BreakpointsColumnKind.DESCRIPTION, new DescriptionCellRenderer(inspection()), null);
             createColumn(BreakpointsColumnKind.LOCATION, new LocationCellRenderer(inspection()), null);
             createColumn(BreakpointsColumnKind.CONDITION, new ConditionCellRenderer(), new DefaultCellEditor(new JTextField()));
             createColumn(BreakpointsColumnKind.TRIGGER_THREAD, new TriggerThreadCellRenderer(inspection()), null);
@@ -181,7 +195,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         public int getRowCount() {
-            // This gets called during superclass initialiation, before the local
+            // This gets called during superclass initialization, before the local
             // data has been initialized, even  if you try to set row size to 0
             // in the constructor.
             return breakpoints == null ? 0 : breakpoints.size();
@@ -210,7 +224,7 @@ public final class BreakpointsTable extends InspectorTable {
                     return breakpointData.kindTag();
                 case ENABLED:
                     return breakpointData.enabled();
-                case METHOD:
+                case DESCRIPTION:
                     return breakpointData.shortName();
                 case LOCATION:
                     return breakpointData.location();
@@ -230,7 +244,7 @@ public final class BreakpointsTable extends InspectorTable {
                     return String.class;
                 case ENABLED:
                     return Boolean.class;
-                case METHOD:
+                case DESCRIPTION:
                     return String.class;
                 case LOCATION:
                     return Number.class;
@@ -341,9 +355,9 @@ public final class BreakpointsTable extends InspectorTable {
         }
     }
 
-    private final class MethodCellRenderer extends JavaNameLabel implements TableCellRenderer {
+    private final class DescriptionCellRenderer extends JavaNameLabel implements TableCellRenderer {
 
-        public MethodCellRenderer(Inspection inspection) {
+        public DescriptionCellRenderer(Inspection inspection) {
             super(inspection, null);
         }
 
@@ -654,7 +668,7 @@ public final class BreakpointsTable extends InspectorTable {
             final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(address);
             if (teleTargetMethod != null) {
                 shortName = inspection().nameDisplay().shortName(teleTargetMethod);
-                longName = inspection().nameDisplay().longName(teleTargetMethod, address);
+                longName = "method: " + inspection().nameDisplay().longName(teleTargetMethod, address);
                 codeStart = teleTargetMethod.getCodeStart();
                 location = address.minus(codeStart.asAddress()).toInt();
             } else {
@@ -674,7 +688,7 @@ public final class BreakpointsTable extends InspectorTable {
                     } else {
                         // Must be an address in an unknown area of native code
                         shortName = "0x" + address.toHexString();
-                        longName = "native code at 0x" + address.toHexString();
+                        longName = "unknown native code at 0x" + address.toHexString();
                         codeStart = address;
                         location = 0;
                     }
@@ -699,7 +713,8 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         String shortName() {
-            return shortName;
+            String description = teleTargetBreakpoint.getDescription();
+            return description != null && !description.equals("") ?  description  : shortName;
         }
 
         @Override
@@ -753,7 +768,7 @@ public final class BreakpointsTable extends InspectorTable {
             key = teleBytecodeBreakpoint.key();
             shortName = key.holder().toJavaString(false) + "." + key.name().toString() + key.signature().toJavaString(false,  false);
 
-            longName = key.signature().resultDescriptor().toJavaString(false) + " " + key.name().toString() + key.signature().toJavaString(false,  false);
+            longName = "Method: " + key.signature().resultDescriptor().toJavaString(false) + " " + key.name().toString() + key.signature().toJavaString(false,  false);
             if (key.position() > 0) {
                 longName += " + " + key.position();
             }

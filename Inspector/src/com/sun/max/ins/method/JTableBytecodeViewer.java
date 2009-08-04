@@ -138,7 +138,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         final JButton viewOptionsButton = new InspectorButton(inspection, new AbstractAction("View...") {
             public void actionPerformed(ActionEvent actionEvent) {
                 final BytecodeViewerPreferences globalPreferences = BytecodeViewerPreferences.globalPreferences(inspection());
-                new TableColumnVisibilityPreferences.Dialog<BytecodeColumnKind>(inspection(), "Bytecode View Options", columnModel.preferences(), globalPreferences);
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<BytecodeColumnKind>(inspection(), "Bytecode View Options", columnModel.preferences(), globalPreferences);
             }
         });
         viewOptionsButton.setToolTipText("Bytecode view options");
@@ -354,8 +354,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     }
                 }
             } else if (teleCodeLocation.hasTargetCodeLocation()) {
-                if (teleTargetMethod() != null && teleTargetMethod().targetCodeRegion().contains(teleCodeLocation.targetCodeInstructionAddresss())) {
-                    final int row = model.findRow(teleCodeLocation.targetCodeInstructionAddresss());
+                if (teleTargetMethod() != null && teleTargetMethod().targetCodeRegion().contains(teleCodeLocation.targetCodeInstructionAddress())) {
+                    final int row = model.findRow(teleCodeLocation.targetCodeInstructionAddress());
                     if (row >= 0) {
                         if (row != oldSelectedRow) {
                             changeSelection(row, row, false, false);

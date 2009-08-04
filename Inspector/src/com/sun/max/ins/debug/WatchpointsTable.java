@@ -108,6 +108,20 @@ public final class WatchpointsTable extends InspectorTable {
     }
 
     @Override
+    protected JTableHeader createDefaultTableHeader() {
+        // Custom table header with tooltips that describe the column data.
+        return new JTableHeader(columnModel) {
+            @Override
+            public String getToolTipText(MouseEvent mouseEvent) {
+                final Point p = mouseEvent.getPoint();
+                final int index = columnModel.getColumnIndexAtX(p.x);
+                final int modelIndex = columnModel.getColumn(index).getModelIndex();
+                return WatchpointsColumnKind.VALUES.get(modelIndex).toolTipText();
+            }
+        };
+    }
+
+    @Override
     public void valueChanged(ListSelectionEvent listSelectionEvent) {
         // Row selection changed, perhaps by user mouse click or navigation;
         // update user focus to follow the selection.

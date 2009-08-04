@@ -27,17 +27,15 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.code.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * The special region describing the heap in the boot image.
  *
  * @author Doug Simon
  */
-public class BootHeapRegion extends LinearAllocatorHeapRegion implements PointerOffsetVisitor {
+public class BootHeapRegion extends LinearAllocatorHeapRegion {
 
     private byte[] referenceMapBytes;
 
@@ -54,33 +52,6 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
         ProgramError.check(Address.fromInt(refMap.length).isWordAligned(), "Boot heap reference map must have word-aligned size");
         this.referenceMapBytes = refMap;
         this.specialReferences = specialRefs;
-    }
-
-    public void visitPointerOffset(Pointer pointer, int offset) {
-        final Pointer address = pointer.plus(offset);
-        final int heapWordIndex = address.minus(start()).dividedBy(Word.size()).toInt();
-        final Address value = address.readWord(0).asAddress();
-        final int bitsPerMapWord = Word.width();
-
-        final boolean isWordTagged;
-        final int referenceMapWordIndex = Unsigned.idiv(heapWordIndex, bitsPerMapWord);
-        final Pointer referenceMapEnd = referenceMap.plus(referenceMapBytes.length);
-        if (referenceMap.plus(referenceMapWordIndex * Word.size()).lessEqual(referenceMapEnd)) {
-            final Address referenceMapWord = referenceMap.getWord(referenceMapWordIndex).asAddress();
-            final Address mask = Address.fromLong(1).shiftedLeft(heapWordIndex % bitsPerMapWord);
-            isWordTagged = !referenceMapWord.and(mask).isZero();
-        } else {
-            isWordTagged = false;
-        }
-
-        if (!isWordTagged) {
-            if (!value.isZero() && !contains(value) && !Code.bootCodeRegion.contains(value)) {
-                Log.println("Non-tagged reference in boot heap refers to address neither in boot heap nor boot code region");
-                Log.print("Slot: ");
-                logSlot(heapWordIndex, address);
-                FatalError.unexpected("Non-tagged reference in boot heap refers to address neither in boot heap nor boot code region");
-            }
-        }
     }
 
     @Override

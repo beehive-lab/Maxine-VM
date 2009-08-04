@@ -20,39 +20,84 @@
  */
 package com.sun.max.vm.heap.beltway;
 
+import com.sun.max.vm.*;
+import com.sun.max.vm.heap.*;
+import com.sun.max.vm.monitor.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.tele.*;
+
 /**
- * This class defines a specialized over the generic Collector Runnable which performs "an action" over a "a space".
  *
+ *
+ * @author Laurent Daynes
  * @author Christos Kotselidis
  */
 
-public class BeltwayCollector implements Runnable {
+public class BeltwayCollector {
 
-    protected Runnable gcImpl;
+    protected final BeltwayHeapScheme heapScheme;
 
-    private BeltwayHeapScheme beltwayHeapScheme;
+    protected final MonitorScheme monitorScheme = VMConfiguration.target().monitorScheme();
 
-    public BeltwayCollector() {
-    }
+    protected long numCollections;
 
-    public void setRunnable(Runnable gcImpl) {
-        this.gcImpl = gcImpl;
-    }
+    protected final String collectorName;
 
-    public void run() {
-        gcImpl.run();
-    }
-
-    public void setBeltwayHeapScheme(BeltwayHeapScheme beltwayHeapScheme) {
-        this.beltwayHeapScheme = beltwayHeapScheme;
+    public BeltwayCollector(String name) {
+        numCollections = 0;
+        collectorName = name;
+        final HeapScheme scheme = VMConfiguration.target().heapScheme();
+        FatalError.check(scheme instanceof BeltwayHeapScheme, "Heap scheme must be a Beltway Heap Scheme");
+        heapScheme = (BeltwayHeapScheme) scheme;
     }
 
     public BeltwayHeapScheme getBeltwayHeapScheme() {
-        return beltwayHeapScheme;
+        return heapScheme;
     }
 
     protected void verifyBelt(Belt belt) {
-        beltwayHeapScheme.getVerifier().verifyHeap(belt.start(), belt.getAllocationMark(), beltwayHeapScheme.getBeltManager().getApplicationHeap());
+        heapScheme.heapVerifier.verifyHeap(belt.start(), belt.getAllocationMark(), heapScheme.getBeltManager().getApplicationHeap());
+    }
+
+    protected void prologue() {
+        numCollections++;
+        InspectableHeapInfo.beforeGarbageCollection();
+
+        if (Heap.verbose()) {
+            Log.print(collectorName + " Collection: ");
+            Log.println(numCollections);
+        }
+    }
+
+    protected void epilogue() {
+        if (Heap.verbose()) {
+            Log.print("Finished " + collectorName + " Collection: ");
+            Log.println(numCollections);
+        }
+        InspectableHeapInfo.afterGarbageCollection();
+    }
+
+    /**
+     * Evacuate remaining objects of the "from" belt reachable from the "to" belt.
+     */
+    protected void evacuateFollowers(Belt from, Belt to) {
+        if (Heap.verbose()) {
+            Log.println("Evacuate Followers");
+        }
+        heapScheme.evacuate(from, to);
+        // beltwayHeapSchemeBA2.fillLastTLAB(); FIXME: do we need this ?
+    }
+
+    protected void printBeltInfo(String beltName, Belt belt) {
+        Log.print(beltName);
+        Log.print(" Start: ");
+        Log.println(belt.start());
+        Log.print(beltName);
+        Log.print(" Mark: ");
+        Log.println(belt.getAllocationMark());
+        Log.print(beltName);
+        Log.print(" End: ");
+        Log.println(belt.end());
     }
 
 }

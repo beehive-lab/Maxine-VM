@@ -519,7 +519,7 @@ public abstract class X86Disassembler extends Disassembler {
 
     @Override
     public ImmediateArgument addressForRelativeAddressing(DisassembledInstruction di) {
-        return di.startAddress().plus(di.endPosition());
+        return startAddress().plus(di.endPosition());
     }
 
     @Override

@@ -26,6 +26,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.beltway.*;
+import com.sun.max.vm.heap.beltway.ba2.BeltwayBA2Collector.*;
 import com.sun.max.vm.heap.beltway.profile.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.tele.*;
@@ -37,7 +38,17 @@ import com.sun.max.vm.tele.*;
 public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
 
     private static int[] DEFAULT_BELT_HEAP_PERCENTAGE = new int[] {70, 30};
-    protected static BeltwayBA2Collector beltCollectorBA2 = new BeltwayBA2Collector();
+
+    Runnable minorGCCollector;
+    Runnable fullGCCollector;
+
+    public Runnable getMinorGC() {
+        return minorGCCollector;
+    }
+
+    public Runnable getMajorGC() {
+        return fullGCCollector;
+    }
 
     public BeltwayHeapSchemeBA2(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -55,14 +66,19 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
             adjustedCardTableAddress = BeltwayCardRegion.adjustedCardTableBase(cardRegion.cardTableBase().asPointer());
             beltManager.swapBelts(getMatureSpace(), getNurserySpace());
             getMatureSpace().setExpandable(true);
+            // The following line enables allocation to take place.
+            tlabAllocationBelt = getNurserySpace();
+            // Watch out: the following create a MemoryRegion array
             InspectableHeapInfo.init(getNurserySpace(), getMatureSpace());
-            collectorThread.start();
+            if (BeltwayConfiguration.parallelScavenging) {
+                minorGCCollector =  new ParMinorGCCollector();
+                fullGCCollector = new ParFullGCCollector();
+            } else {
+                minorGCCollector =  new MinorGCCollector();
+                fullGCCollector =  new FullGCCollector();
+            }
         } else if (phase == MaxineVM.Phase.RUNNING) {
-            beltCollectorBA2.setBeltwayHeapScheme(this);
-            beltCollector.setRunnable(beltCollectorBA2);
-            heapVerifier.initialize(this);
-            heapVerifier.getRootsVerifier().setFromSpace(beltManager.getApplicationHeap());
-            heapVerifier.getRootsVerifier().setToSpace(getMatureSpace());
+            heapVerifier.initialize(beltManager.getApplicationHeap(), getMatureSpace());
             if (Heap.verbose()) {
                 HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "NurserySpaceGC", "MatureSpaceGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "CardScan", "Scavenge");
             }
@@ -79,17 +95,6 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
         return beltManager.getBelt(1);
     }
 
-    @INLINE
-    @NO_SAFEPOINTS("TODO")
-    public Pointer allocate(Size size) {
-        if (!MaxineVM.isRunning()) {
-            return bumpAllocateSlowPath(getNurserySpace(), size);
-        }
-        if (BeltwayConfiguration.useTLABS) {
-            return tlabAllocate(getNurserySpace(), size);
-        }
-        return heapAllocate(getNurserySpace(), size);
-    }
 
     public synchronized boolean collectGarbage(Size requestedFreeSpace) {
         boolean result = false;
@@ -109,8 +114,7 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
         if (outOfMemory) {
             return false;
         }
-        beltCollector.setRunnable(beltCollectorBA2.getMinorGC());
-        collectorThread.execute();
+        collectorThread.execute(getMinorGC());
         if (immediateFreeSpace(getNurserySpace()).greaterEqual(requestedFreeSpace)) {
             return true;
         }
@@ -122,8 +126,7 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
         if (outOfMemory) {
             return false;
         }
-        beltCollector.setRunnable(beltCollectorBA2.getMajorGC());
-        collectorThread.execute();
+        collectorThread.execute(getMajorGC());
         if (!BeltwayHeapScheme.outOfMemory == true) {
             if (immediateFreeSpace(getMatureSpace()).greaterEqual(requestedFreeSpace)) {
                 return true;

@@ -22,15 +22,12 @@ package com.sun.max.vm.code;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
@@ -38,35 +35,10 @@ import com.sun.max.vm.thread.*;
  * A code region that encapsulates a contiguous, fixed-sized memory area in the {@link TeleVM}
  * for storing code and data structures relating to code.
  *
- * A code region includes a {@linkplain #setReferenceMapBits(Address, int) reference map} describing
- * where all the references are in the region. The reference map itself exists in the code region
- * and is created when the code region is {@linkplain #bind(Address, Size) bound} to some real memory.
- *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
 public final class CodeRegion extends LinearAllocatorHeapRegion {
-
-    /**
-     * The reference map allocated *in* this code region describing where the
-     * references are in the rest of the region.
-     *
-     * Invariant: the reference map does not have any bits set for header words. That is, all objects in
-     * a code region are assumed to be of a type known at boot image time (i.e. the hub word in the
-     * header is immutable) and the configured {@link MonitorScheme} explicitly manages the binding of objects to
-     * heap allocated monitors via the "misc" word in an object's header.
-     */
-    private Pointer referenceMap;
-
-    /**
-     * The index one past the highest set bit in the {@linkplain #referenceMap reference map}.
-     */
-    private int referenceMapEndBitIndex;
-
-    /**
-     * The address in this code region corresponding to the first bit in the {@linkplain #referenceMap reference map}.
-     */
-    private Address referenceMapDomainStart;
 
     /**
      * Creates a code region that is not yet bound to any memory.
@@ -91,9 +63,7 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
     }
 
     /**
-     * Binds this code region to some allocated memory range. This method also initializes the
-     * {@linkplain #setReferenceMapBits(Address, int) reference map} at the start of the code
-     * region.
+     * Binds this code region to some allocated memory range.
      *
      * @param start the start address of the range
      * @param size the size of the memory range
@@ -102,76 +72,6 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
         this.start = start;
         this.size = size;
         this.mark.set(start);
-
-        final int referenceMapBitCount = size.plus(Word.size() - 1).dividedBy(Word.size()).toInt();
-        Size referenceMapSize = Size.fromInt(ByteArrayBitMap.computeBitMapSize(referenceMapBitCount)).wordAligned();
-        referenceMap = allocateSpace(Code.traceAllocation.getValue() ? "code region refmap" : null, referenceMapSize);
-        FatalError.check(referenceMap.equals(start), "Code region reference map must be at start of region");
-        referenceMapDomainStart = referenceMap.plus(referenceMapSize);
-    }
-
-    /**
-     * Sets the bits in this code region's reference map corresponding to a range of
-     * address in this region which contain references.
-     *
-     * @param start the address of a reference in this code region
-     * @param count the number of references in the sequence of references starting at {@code start}
-     */
-    public void setReferenceMapBits(Address start, int count) {
-        if (referenceMap.isZero()) {
-            FatalError.unexpected("Cannot write to uninitialized reference map");
-        }
-        FatalError.check(start.isWordAligned(), "Unaligned reference address");
-        final int startBitIndex = start.minus(this.start).dividedBy(Word.size()).toInt();
-        final Address referenceMapDomainEnd = end();
-        final Address end = start.plus(count * Word.size());
-        if (start.lessThan(referenceMapDomainStart) || end.greaterThan(referenceMapDomainEnd)) {
-            Log.print("Reference address range ");
-            Log.print(start);
-            Log.print(" .. ");
-            Log.print(end);
-            Log.print(" is not completely within domain of reference map [");
-            Log.print(referenceMapDomainStart);
-            Log.print(" .. ");
-            Log.println(referenceMapDomainEnd);
-            FatalError.unexpected("Reference address range is not completely within domain of reference map");
-        }
-        final int endBitIndex = startBitIndex + count;
-        for (int bitIndex = startBitIndex; bitIndex < endBitIndex; ++bitIndex) {
-            referenceMap.setBit(bitIndex);
-        }
-        if (endBitIndex > referenceMapEndBitIndex) {
-            referenceMapEndBitIndex = endBitIndex;
-        }
-    }
-
-    @Override
-    public void visitReferences(PointerIndexVisitor pointerIndexVisitor) {
-
-        if (referenceMap.isZero()) {
-            if (!start.isZero()) {
-                FatalError.unexpected("Cannot have null reference map in code region that is bound to memory");
-            }
-            return;
-        }
-
-        final Pointer refMap = referenceMap;
-        final int referenceMapWords = Unsigned.idiv(referenceMapEndBitIndex + (Word.width() - 1), Word.width());
-        if (Heap.traceRootScanning()) {
-            Log.print("Scanning references in code region ");
-            Log.print(description());
-            Log.print(": start=");
-            Log.print(start());
-            Log.print(", end=");
-            Log.print(end());
-            Log.print(", references end=");
-            Log.println(start().plus(referenceMapWords * Word.size()));
-        }
-        if (Heap.traceRootScanning()) {
-            scanReferenceMap(pointerIndexVisitor, refMap, referenceMapWords, true);
-        } else {
-            scanReferenceMap(pointerIndexVisitor, refMap, referenceMapWords, false);
-        }
     }
 
     /**

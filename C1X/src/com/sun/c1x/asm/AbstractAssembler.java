@@ -228,13 +228,13 @@ public abstract class AbstractAssembler {
     public abstract void nop();
 
     public void blockComment(String st) {
-        // TODO Auto-generated method stub
+        Util.nonFatalUnimplemented();
     }
 
     public abstract void nullCheck(Register r);
 
     public void verifiedEntry() {
-        // TODO Auto-generated method stub
+        Util.nonFatalUnimplemented();
     }
 
     public abstract void buildFrame(int initialFrameSizeInBytes);

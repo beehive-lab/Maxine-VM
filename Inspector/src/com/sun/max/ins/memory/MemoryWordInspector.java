@@ -178,7 +178,7 @@ public final class MemoryWordInspector extends Inspector {
             final int line = Arrays.find(offsetLabels, source);
             if (line >= 0) {
                 selectedLine = line;
-                selectedAddress = address.plus(line * maxVM().wordSize());
+                selectedAddress = address.plus(maxVM().wordSize().times(line));
                 MemoryWordInspector.this.reconstructView();
             }
         }
@@ -225,7 +225,7 @@ public final class MemoryWordInspector extends Inspector {
 
     @Override
     protected boolean refreshView(boolean force) {
-        final int wordSize = maxVM().wordSize();
+        final int wordSize = maxVM().wordSize().toInt();
         for (int i = 0; i < numberOfWords; i++) {
             final Address a = address.plus(i * wordSize);
             try {
@@ -337,7 +337,7 @@ public final class MemoryWordInspector extends Inspector {
         this.address = address.wordAligned();
         selectedAddress = this.address;
         this.numberOfWords = numberOfWords;
-        wordHexChars = maxVM().wordSize() * 2;
+        wordHexChars = maxVM().wordSize().times(2).toInt();
         createFrame(null);
         frame().menu().addSeparator();
         frame().menu().add(actions().closeViews(otherMemoryInspectorsPredicate, "Close other Memory Word Inspectors"));

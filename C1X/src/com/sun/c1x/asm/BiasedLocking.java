@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.asm;
 
+import com.sun.c1x.util.Util;
+
 /**
  *
  * @author Thomas Wuerthinger
@@ -28,8 +30,7 @@ package com.sun.c1x.asm;
 public class BiasedLocking {
 
     public static BiasedLockingCounters counters() {
-        // TODO Auto-generated method stub
-        return null;
+        return Util.nonFatalUnimplemented(null);
     }
 
 }

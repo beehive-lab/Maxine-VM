@@ -395,6 +395,7 @@ public class JavaMethodInspector extends MethodInspector {
 
 
     private final class JavaMethodInspectorViewOptionsDialog extends InspectorDialog {
+
         JavaMethodInspectorViewOptionsDialog(Inspection inspection) {
             super(inspection, "Java Method Inspector View Options", false);
 
