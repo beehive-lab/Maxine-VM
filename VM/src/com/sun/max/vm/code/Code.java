@@ -81,6 +81,10 @@ public final class Code {
     @INSPECTED
     private static final CodeManager codeManager = createCodeManager();
 
+    public static CodeManager getCodeManager() {
+        return codeManager;
+    }
+
     /**
      * Initializes the code manager.
      */
