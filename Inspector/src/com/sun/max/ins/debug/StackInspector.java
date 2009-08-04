@@ -30,6 +30,7 @@ import com.sun.max.collect.*;
 import com.sun.max.gui.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
+import com.sun.max.ins.debug.JavaStackFramePanel.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.program.*;
@@ -81,6 +82,34 @@ public class StackInspector extends Inspector {
         }
     }
 
+    private static StackViewPreferences globalPreferences;
+
+    /**
+     * @return the global, persistent set of user preferences for viewing stacks
+     */
+    public static StackViewPreferences globalPreferences(Inspection inspection) {
+        if (globalPreferences == null) {
+            globalPreferences = new StackViewPreferences(inspection) {
+                @Override
+                public void setSlotNameDisplayMode(SlotNameDisplayMode slotNameDisplayMode) {
+                    super.setSlotNameDisplayMode(slotNameDisplayMode);
+                    if (stackInspector != null) {
+                        stackInspector.refreshView(true);
+                    }
+                }
+            };
+        }
+        return globalPreferences;
+    }
+
+    /**
+     * @return a GUI panel suitable for setting global preferences for this kind of view.
+     */
+    public static JPanel globalPreferencesPanel(Inspection inspection) {
+        return globalPreferences(inspection).getPanel();
+    }
+
+
     static class TruncatedStackFrame extends StackFrame {
         private StackFrame truncatedStackFrame;
 
@@ -126,7 +155,7 @@ public class StackInspector extends Inspector {
     private final StackFrameListCellRenderer stackFrameListCellRenderer = new StackFrameListCellRenderer();
 
     private boolean stateChanged = true;  // conservative assessment of possible stack change
-    private StackFramePanel<? extends StackFrame> selectedFrame;
+    private StackFramePanel<? extends StackFrame> selectedFramePanel;
 
     @Override
     public void threadStateChanged(MaxThread thread) {
@@ -154,8 +183,8 @@ public class StackInspector extends Inspector {
 
     @Override
     public void codeLocationFocusSet(TeleCodeLocation teleCodeLocation, boolean interactiveForNative) {
-        if (selectedFrame != null) {
-            selectedFrame.instructionPointerFocusChanged(teleCodeLocation.targetCodeInstructionAddress().asPointer());
+        if (selectedFramePanel != null) {
+            selectedFramePanel.instructionPointerFocusChanged(teleCodeLocation.targetCodeInstructionAddress().asPointer());
         }
     }
 
@@ -335,6 +364,16 @@ public class StackInspector extends Inspector {
     }
 
     @Override
+    public InspectorAction getViewOptionsAction() {
+        return new InspectorAction(inspection(), "View Options") {
+            @Override
+            public void procedure() {
+                new SimpleDialog(inspection(), globalPreferences(inspection()).getPanel(), "Stack Inspector view options", true);
+            }
+        };
+    }
+
+    @Override
     protected boolean refreshView(boolean force) {
         if (thread != null && thread.isLive()) {
             final Sequence<StackFrame> frames = thread.frames();
@@ -349,13 +388,15 @@ public class StackInspector extends Inspector {
                 // However, the object representing the top frame may be different,
                 // in which case the state of the old frame object is out of date.
                 final StackFrame newTopFrame = frames.first();
-                if (selectedFrame != null && selectedFrame.stackFrame().isTopFrame() && selectedFrame.stackFrame().isSameFrame(newTopFrame)) {
-                    selectedFrame.setStackFrame(newTopFrame);
+                if (selectedFramePanel != null && selectedFramePanel.stackFrame().isTopFrame() && selectedFramePanel.stackFrame().isSameFrame(newTopFrame)) {
+                    selectedFramePanel.setStackFrame(newTopFrame);
                 }
             }
-            if (selectedFrame != null) {
-                selectedFrame.refresh(force);
+            if (selectedFramePanel != null) {
+                selectedFramePanel.refresh(force);
             }
+            final InspectorPanel panel = (InspectorPanel) splitPane.getRightComponent();
+            panel.refresh(true);
         }
         super.refreshView(force);
         // The title displays thread state, so must be updated.
@@ -402,7 +443,7 @@ public class StackInspector extends Inspector {
                 return;
             }
             final int index = stackFrameList.getSelectedIndex();
-            selectedFrame = null;
+            selectedFramePanel = null;
             final int dividerLocation = splitPane.getDividerLocation();
 
             final Component oldRightComponent = splitPane.getRightComponent();
@@ -413,12 +454,12 @@ public class StackInspector extends Inspector {
                 if (stackFrame instanceof JavaStackFrame) {
                     if (stackFrame.isAdapter()) {
                         final AdapterStackFrame adapterStackFrame = (AdapterStackFrame) stackFrame;
-                        selectedFrame = new AdapterStackFramePanel(inspection(), adapterStackFrame);
+                        selectedFramePanel = new AdapterStackFramePanel(inspection(), adapterStackFrame);
                     } else {
                         final JavaStackFrame javaStackFrame = (JavaStackFrame) stackFrame;
-                        selectedFrame = new JavaStackFramePanel(inspection(), javaStackFrame);
+                        selectedFramePanel = new JavaStackFramePanel(inspection(), javaStackFrame);
                     }
-                    newRightComponent = selectedFrame;
+                    newRightComponent = selectedFramePanel;
                 } else if (stackFrame instanceof TruncatedStackFrame) {
                     maxFramesDisplay *= 2;
                     stateChanged = true;
