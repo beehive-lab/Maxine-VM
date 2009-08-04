@@ -136,10 +136,6 @@ public abstract class AbstractCompiler extends AbstractVMScheme implements Compi
         throw new UnsupportedOperationException();
     }
 
-    public void advance(StackFrameWalker stackFrameWalker, Word instructionPointer, Word stackPointer, Word framePointer) {
-        throw new UnsupportedOperationException();
-    }
-
     public Pointer namedVariablesBasePointer(Pointer stackPointer, Pointer framePointer) {
         throw new UnsupportedOperationException();
     }

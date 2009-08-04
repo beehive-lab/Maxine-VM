@@ -30,6 +30,7 @@ import com.sun.c1x.ci.CiMethod;
 import com.sun.c1x.ci.CiMethodData;
 import com.sun.c1x.ci.CiRuntimeCall;
 import com.sun.c1x.ci.CiType;
+import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.BlockBegin;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.stub.CodeStub;
@@ -92,41 +93,6 @@ public class X86LIRAssembler extends LIRAssembler {
 
     private X86MacroAssembler masm() {
         return masm;
-    }
-
-    @Override
-    protected void push(LIROperand opr) {
-        if (opr.isSingleCpu()) {
-            masm().pushReg(opr.asRegister());
-        } else if (opr.isDoubleCpu()) {
-            if (!compilation.target.arch.is64bit()) {
-                masm().pushReg(opr.asRegisterHi());
-            }
-            masm().pushReg(opr.asRegisterLo());
-        } else if (opr.isStack()) {
-            masm().pushAddr(frameMap().addressForSlot(opr.singleStackIx()));
-        } else if (opr.isConstant()) {
-            LIRConstant constOpr = opr.asConstantPtr();
-            if (constOpr.type() == BasicType.Object) {
-                masm().pushOop(constOpr.asObject());
-            } else if (constOpr.type() == BasicType.Int) {
-                masm().pushJint(constOpr.asInt());
-            } else {
-                throw Util.shouldNotReachHere();
-            }
-
-        } else {
-            throw Util.shouldNotReachHere();
-        }
-    }
-
-    @Override
-    protected void pop(LIROperand opr) {
-        if (opr.isSingleCpu()) {
-            masm().popReg(opr.asRegister());
-        } else {
-            throw Util.shouldNotReachHere();
-        }
     }
 
     private boolean isLiteralAddress(LIRAddress addr) {
@@ -248,11 +214,11 @@ public class X86LIRAssembler extends LIRAssembler {
 
         if (!C1XOptions.VerifyOops) {
             // insert some nops so that the verified entry point is aligned on CodeEntryAlignment
-            while ((masm().offset() + icCmpSize) % compilation.target.codeAlignment != 0) {
+            while ((masm().codeBuffer.position() + icCmpSize) % compilation.target.codeAlignment != 0) {
                 masm().nop();
             }
         }
-        int offset = masm().offset();
+        int offset = masm().codeBuffer.position();
         masm().inlineCacheCheck(receiver, ICKlass);
         //assert masm().offset() % compilation.target.codeAlignment == 0 || C1XOptions.VerifyOops : "alignment must be correct";
         if (C1XOptions.VerifyOops) {
@@ -293,7 +259,7 @@ public class X86LIRAssembler extends LIRAssembler {
             // try inlined fast unlocking first, revert to slow locking if it fails
             // note: lockReg points to the displaced header since the displaced header offset is 0!
             assert compilation.runtime.basicLockDisplacedHeaderOffsetInBytes() == 0 : "lockReg must point to the displaced header";
-            masm().unlockObject(hdr, objReg, lockReg, slowCase.entry);
+            masm().unlockObject(compilation.runtime, hdr, objReg, lockReg, slowCase.entry);
         } else {
             // always do slow unlocking
             // note: the slow unlocking code could be inlined here, however if we use
@@ -319,7 +285,7 @@ public class X86LIRAssembler extends LIRAssembler {
         // The frameMap records size in slots (32bit word)
 
         // subtract two words to account for return address and link
-        return (frameMap().framesize() - (2 * (wordSize / FrameMap.spillSlotSizeInBytes))) * FrameMap.spillSlotSizeInBytes;
+        return frameMap().framesize();
     }
 
     @Override
@@ -394,8 +360,10 @@ public class X86LIRAssembler extends LIRAssembler {
             assert false : "no fpu stack";
         }
 
+        // Add again to the stack pointer
+
         // Pop the stack before the safepoint code
-        masm().leave();
+        masm().increment(X86.rsp, initialFrameSizeInBytes());
 
         // TODO: Add Safepoint polling at return!
         // Note: we do not need to round double result; float result has the right precision
@@ -900,12 +868,6 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected boolean assertFrameSize() {
-        assert !compilation.target.arch.isX86() || masm.rspOffset() == 0 : "frame size should be fixed";
-        return true;
-    }
-
-    @Override
     protected void mem2reg(LIROperand src, LIROperand dest, BasicType type, LIRPatchCode patchCode, CodeEmitInfo info, boolean unaligned) {
         assert src.isAddress() : "should not call otherwise";
         assert dest.isRegister() : "should not call otherwise";
@@ -1337,7 +1299,7 @@ public class X86LIRAssembler extends LIRAssembler {
             addDebugInfoForNullCheckHere(op.stub().info);
             masm().jcc(X86Assembler.Condition.notEqual, op.stub().entry);
         }
-        masm().allocateObject(op.obj().asRegister(), op.tmp1().asRegister(), op.tmp2().asRegister(), op.headerSize(), op.obectSize(), op.klass().asRegister(), op.stub().entry);
+        masm().allocateObject(compilation.runtime, op.obj().asRegister(), op.tmp1().asRegister(), op.tmp2().asRegister(), op.headerSize(), op.obectSize(), op.klass().asRegister(), op.stub().entry);
         masm().bind(op.stub().continuation);
     }
 
@@ -1359,7 +1321,7 @@ public class X86LIRAssembler extends LIRAssembler {
             } else {
                 masm().mov(tmp3, len);
             }
-            masm().allocateArray(op.obj().asRegister(), len, tmp1, tmp2, compilation.runtime.arrayOopDescHeaderSize(op.type()),
+            masm().allocateArray(compilation.runtime, op.obj().asRegister(), len, tmp1, tmp2, compilation.runtime.arrayOopDescHeaderSize(op.type()),
                             Address.ScaleFactor.fromInt(compilation.runtime.arrayElementSize(op.type())), op.klass().asRegister(), op.stub().entry);
         }
         masm().bind(op.stub().continuation);
@@ -1404,7 +1366,8 @@ public class X86LIRAssembler extends LIRAssembler {
             Register array = op.array().asRegister();
             Register kRInfo = op.tmp1().asRegister();
             Register klassRInfo = op.tmp2().asRegister();
-            // Register rtmp1 = op.tmp3().asRegister();
+            Register rtmp1 = op.tmp3().asRegister();
+
 
             CodeStub stub = op.stub();
             Label done = new Label();
@@ -1423,13 +1386,20 @@ public class X86LIRAssembler extends LIRAssembler {
             // RegisterOrConstant(-1));
 
             // call out-of-line instance of lir(). checkKlassSubtypeSlowPath(...):
-            masm().push(klassRInfo);
-            masm().push(kRInfo);
-            masm().callRuntime(CiRuntimeCall.SlowSubtypeCheck);
-            masm().pop(klassRInfo);
-            masm().pop(kRInfo);
+            this.storeParameter(kRInfo, 1);
+            this.storeParameter(klassRInfo, 0);
+            masm().callGlobalStub(compilation.compiler.lookupGlobalStub(GlobalStub.SlowSubtypeCheck));
+
+            this.loadResult(rtmp1, 0);
+
+            // Clear out parameters
+            if (C1XOptions.GenerateAssertionCode) {
+                this.storeParameter(0, 1);
+                this.storeParameter(0, 0);
+            }
+
             // result is a boolean
-            masm().cmpl(kRInfo, 0);
+            masm().cmpl(rtmp1, 0);
             masm().jcc(X86Assembler.Condition.equal, stub.entry);
             masm().bind(done);
         } else if (op.code() == LIROpcode.CheckCast) {
@@ -2513,7 +2483,7 @@ public class X86LIRAssembler extends LIRAssembler {
     protected void alignCall(LIROpcode code) {
         if (compilation.runtime.isMP()) {
             // make sure that the displacement word of the call ends up word aligned
-            int offset = masm().offset();
+            int offset = masm().codeBuffer.position();
             switch (code) {
                 case StaticCall:
                 case OptVirtualCall:
@@ -2535,14 +2505,14 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void call(CiMethod method, CiRuntimeCall entry, CodeEmitInfo info) {
-        assert !compilation.runtime.isMP() || (masm().offset() + compilation.target.arch.nativeCallDisplacementOffset) % wordSize == 0 : "must be aligned";
+        assert !compilation.runtime.isMP() || (masm().codeBuffer.position() + compilation.target.arch.nativeCallDisplacementOffset) % wordSize == 0 : "must be aligned";
         masm().callRuntime(entry, method);
         addCallInfo(codeOffset(), info);
     }
 
     @Override
     protected void icCall(CiMethod method, CiRuntimeCall entry, CodeEmitInfo info) {
-        assert !compilation.runtime.isMP() || (masm().offset() + compilation.target.arch.nativeCallDisplacementOffset + compilation.target.arch.nativeMoveConstInstructionSize) % wordSize == 0 : "must be aligned";
+        assert !compilation.runtime.isMP() || (masm().codeBuffer.position() + compilation.target.arch.nativeCallDisplacementOffset + compilation.target.arch.nativeMoveConstInstructionSize) % wordSize == 0 : "must be aligned";
         masm().movoop(ICKlass, compilation.runtime.universeNonOopWord());
         masm().callRuntime(entry, method);
         addCallInfo(codeOffset(), info);
@@ -2595,7 +2565,6 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void throwOp(LIROperand exceptionPC, LIROperand exceptionOop, CodeEmitInfo info, boolean unwind) {
-        assert exceptionOop.asRegister() == X86.rax : "must match";
         assert unwind || exceptionPC.asRegister() == X86.rdx : "must match";
 
         // exception object is not added to oop map by LinearScan
@@ -2606,8 +2575,8 @@ public class X86LIRAssembler extends LIRAssembler {
         if (!unwind) {
             // get current pc information
             // pc is only needed if the method has an exception handler, the unwind code does not need it.
-            int pcForAthrowOffset = masm().offset();
-            masm().movl(exceptionPC.asRegister(), masm().pc());
+            int pcForAthrowOffset = masm().codeBuffer.position();
+            masm().movl(exceptionPC.asRegister(), masm().codeBuffer.position());
             addCallInfo(pcForAthrowOffset, info); // for exception handler
 
             masm().verifyNotNullOop(X86.rax);
@@ -2740,6 +2709,13 @@ public class X86LIRAssembler extends LIRAssembler {
         }
     }
 
+    private void loadResult(Register r, int offsetFromRspInWords) {
+        assert offsetFromRspInWords >= 0 : "invalid offset from rsp";
+        int offsetFromRspInBytes = offsetFromRspInWords * compilation.target.arch.wordSize;
+        assert offsetFromRspInBytes < frameMap().reservedArgumentAreaSize() : "invalid offset";
+        masm().movptr(r, new Address(X86.rsp, offsetFromRspInBytes));
+    }
+
     private void storeParameter(Register r, int offsetFromRspInWords) {
         assert offsetFromRspInWords >= 0 : "invalid offset from rsp";
         int offsetFromRspInBytes = offsetFromRspInWords * compilation.target.arch.wordSize;
@@ -2771,6 +2747,18 @@ public class X86LIRAssembler extends LIRAssembler {
         Register length = op.length().asRegister();
         Register tmp = op.tmp().asRegister();
 
+        Register cRarg0 = compilation.runtime.getCRarg(0);
+        Register cRarg1 = compilation.runtime.getCRarg(1);
+        Register cRarg2 = compilation.runtime.getCRarg(2);
+        Register cRarg3 = compilation.runtime.getCRarg(3);
+        Register cRarg4 = compilation.runtime.getCRarg(4);
+
+        Register jRarg0 = compilation.runtime.getJRarg(0);
+        Register jRarg1 = compilation.runtime.getJRarg(1);
+        Register jRarg2 = compilation.runtime.getJRarg(2);
+        Register jRarg3 = compilation.runtime.getJRarg(3);
+        Register jRarg4 = compilation.runtime.getJRarg(4);
+
         CodeStub stub = op.stub();
         int flags = op.flags();
         BasicType basicType = defaultType != null ? defaultType.elementType().basicType() : BasicType.Illegal;
@@ -2799,24 +2787,26 @@ public class X86LIRAssembler extends LIRAssembler {
 
             // pass arguments: may push as this is not a safepoint; SP must be fix at each safepoint
             if (compilation.target.arch.is64bit()) {
+
+
                 // The arguments are in java calling convention so we can trivially shift them to C
                 // convention
-                assert Register.assertDifferentRegisters(masm.cRarg0, masm.jRarg1, masm.jRarg2, masm.jRarg3, masm.jRarg4);
-                masm().mov(masm.cRarg0, masm.jRarg0);
-                assert Register.assertDifferentRegisters(masm.cRarg1, masm.jRarg2, masm.jRarg3, masm.jRarg4);
-                masm().mov(masm.cRarg1, masm.jRarg1);
-                assert Register.assertDifferentRegisters(masm.cRarg2, masm.jRarg3, masm.jRarg4);
-                masm().mov(masm.cRarg2, masm.jRarg2);
-                assert Register.assertDifferentRegisters(masm.cRarg3, masm.jRarg4);
-                masm().mov(masm.cRarg3, masm.jRarg3);
+                assert Register.assertDifferentRegisters(cRarg0, jRarg1, jRarg2, jRarg3, jRarg4);
+                masm().mov(cRarg0, jRarg0);
+                assert Register.assertDifferentRegisters(cRarg1, jRarg2, jRarg3, jRarg4);
+                masm().mov(cRarg1, jRarg1);
+                assert Register.assertDifferentRegisters(cRarg2, jRarg3, jRarg4);
+                masm().mov(cRarg2, jRarg2);
+                assert Register.assertDifferentRegisters(cRarg3, jRarg4);
+                masm().mov(cRarg3, jRarg3);
                 if (compilation.target.isWindows()) {
                     // Allocate abi space for args but be sure to keep stack aligned
                     masm().subptr(X86.rsp, 6 * compilation.target.arch.wordSize);
-                    storeParameter(masm.jRarg4, 4);
+                    storeParameter(jRarg4, 4);
                     masm().callRuntime(entry);
                     masm().addptr(X86.rsp, 6 * compilation.target.arch.wordSize);
                 } else {
-                    masm().mov(masm.cRarg4, masm.jRarg4);
+                    masm().mov(cRarg4, jRarg4);
                     masm().callRuntime(entry);
                 }
             } else {
@@ -2948,11 +2938,11 @@ public class X86LIRAssembler extends LIRAssembler {
         }
 
         if (compilation.target.arch.is64bit()) {
-            assert Register.assertDifferentRegisters(masm.cRarg0, dst, dstPos, length);
-            masm().lea(masm.cRarg0, new Address(src, srcPos, scale, compilation.runtime.arrayBaseOffsetInBytes(basicType)));
-            assert Register.assertDifferentRegisters(masm.cRarg1, length);
-            masm().lea(masm.cRarg1, new Address(dst, dstPos, scale, compilation.runtime.arrayBaseOffsetInBytes(basicType)));
-            masm().mov(masm.cRarg2, length);
+            assert Register.assertDifferentRegisters(cRarg0, dst, dstPos, length);
+            masm().lea(cRarg0, new Address(src, srcPos, scale, compilation.runtime.arrayBaseOffsetInBytes(basicType)));
+            assert Register.assertDifferentRegisters(cRarg1, length);
+            masm().lea(cRarg1, new Address(dst, dstPos, scale, compilation.runtime.arrayBaseOffsetInBytes(basicType)));
+            masm().mov(cRarg2, length);
 
         } else {
             masm().lea(tmp, new Address(src, srcPos, scale, compilation.runtime.arrayBaseOffsetInBytes(basicType)));
@@ -2984,14 +2974,14 @@ public class X86LIRAssembler extends LIRAssembler {
             }
             assert compilation.runtime.basicLockDisplacedHeaderOffsetInBytes() == 0 : "lockReg must point to the displaced header";
             // add debug info for NullPointerException only if one is possible
-            int nullCheckOffset = masm().lockObject(hdr, obj, lock, scratch, op.stub().entry);
+            int nullCheckOffset = masm().lockObject(compilation.runtime, hdr, obj, lock, scratch, op.stub().entry);
             if (op.info() != null) {
                 addDebugInfoForNullCheck(nullCheckOffset, op.info());
             }
             // done
         } else if (op.code() == LIROpcode.Unlock) {
             assert compilation.runtime.basicLockDisplacedHeaderOffsetInBytes() == 0 : "lockReg must point to the displaced header";
-            masm().unlockObject(hdr, obj, lock, op.stub().entry);
+            masm().unlockObject(compilation.runtime, hdr, obj, lock, op.stub().entry);
         } else {
             throw Util.shouldNotReachHere();
         }

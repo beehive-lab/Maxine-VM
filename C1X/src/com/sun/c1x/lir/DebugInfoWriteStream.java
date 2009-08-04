@@ -21,6 +21,7 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.C1XOptions;
+import com.sun.c1x.util.*;
 
 /**
  * The <code>DebugInfoWriteStream</code> class definition.
@@ -43,7 +44,7 @@ public class DebugInfoWriteStream extends CompressedWriteStream {
     }
 
     public void writeHandle(Object h) {
-        writeInt(recorder.oopRecorder().findIndex(h));
+        throw Util.unimplemented();
     }
 
     public void writeBci(int bci) {

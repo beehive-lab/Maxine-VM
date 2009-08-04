@@ -628,4 +628,16 @@ public class Util {
         }
         return val;
     }
+
+    public static boolean isShiftCount(int x) {
+        return 0 <= x && x < 32;
+    }
+
+    public static boolean isByte(int x) {
+        return 0 <= x && x < 0x100;
+    }
+
+    public static boolean is8bit(int x) {
+        return -0x80 <= x && x < 0x80;
+    }
 }

@@ -253,14 +253,6 @@ public class LIRList {
         append(new LIROp2(LIROpcode.CompareTo, left, right, dst));
     }
 
-    public void push(LIROperand opr) {
-        append(new LIROp1(LIROpcode.Push, opr));
-    }
-
-    public void pop(LIROperand reg) {
-        append(new LIROp1(LIROpcode.Pop, reg));
-    }
-
     public void cmp(LIRCondition condition, LIROperand left, LIROperand right, CodeEmitInfo info) {
         append(new LIROp2(LIROpcode.Cmp, condition, left, right, info));
     }

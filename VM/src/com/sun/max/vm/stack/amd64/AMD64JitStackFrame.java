@@ -35,7 +35,7 @@ import com.sun.max.vm.stack.*;
  * @author Laurent Daynes
  * @author Doug Simon
  */
-public class AMD64JitStackFrame extends JitStackFrame<AMD64JitStackFrameLayout> {
+public class AMD64JitStackFrame extends JitStackFrame {
 
     private final Pointer localVariablesBase;
 

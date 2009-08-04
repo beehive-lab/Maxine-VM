@@ -18,20 +18,15 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.stack.amd64;
+package com.sun.c1x.globalstub;
 
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.stack.*;
+import com.sun.c1x.ci.*;
 
 /**
- * Describes the activation frame of an adapter for calls from a method compiled by the JIT compiler to a method
- * compiled by the optimizing compiler on AMD64.
+ * @author Thomas Wuerthinger
  *
- * @author Laurent Daynes
  */
-public class AMD64JitToOptimizedAdapterFrame extends AdapterStackFrame<AdapterStackFrameLayout> {
-    public AMD64JitToOptimizedAdapterFrame(StackFrame callee, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer, final int frameSize) {
-        super(callee, new AdapterStackFrameLayout(frameSize, true), targetMethod, instructionPointer, framePointer, stackPointer);
-    }
+public interface GlobalStubEmitter {
+
+    CiTargetMethod emit(GlobalStub stub);
 }

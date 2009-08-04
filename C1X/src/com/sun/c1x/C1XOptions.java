@@ -196,6 +196,7 @@ public class C1XOptions {
     public static boolean GenerateAssertionCode              = ____;
     public static boolean EmitStaticCallStubs                = ____;
     public static boolean TraceRelocation                    = ____;
+    public static boolean PrintAssembly                      = ____;
 
     // Profiling settings
 

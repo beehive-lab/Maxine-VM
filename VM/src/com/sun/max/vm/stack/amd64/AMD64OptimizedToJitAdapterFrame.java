@@ -33,36 +33,21 @@ import com.sun.max.vm.stack.*;
  *
  * @author Laurent Daynes
  */
-public class AMD64OptimizedToJitAdapterFrame extends AdapterStackFrame<AdapterStackFrameLayout> {
+public class AMD64OptimizedToJitAdapterFrame extends AdapterStackFrame {
 
     /**
      * Cache the value of the RIP address on the stack. This is used frequently for walking stacks and comparing stack frame.
      */
     private final Pointer ripPointer;
 
-    public Pointer ripPointer() {
-        return ripPointer;
-    }
-
-    public Pointer callerFramePointer() {
-        return framePointer;
-    }
-
     public AMD64OptimizedToJitAdapterFrame(StackFrame callee, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
         super(callee, new AdapterStackFrameLayout(targetMethod.classMethodActor().numberOfParameterSlots() * JitStackFrameLayout.JIT_SLOT_SIZE, true), targetMethod, instructionPointer, framePointer, stackPointer);
         // Initialize the cache of caller stack pointer
-        if (isFrameless() && instructionPointer.equals(entryPoint())) {
+        if (isFrameless() && instructionPointer.equals(CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(targetMethod()))) {
             ripPointer = stackPointer;
         } else {
             ripPointer = stackPointer.plus(AMD64JitCompiler.adapterFrameSize(targetMethod().classMethodActor()));
         }
-    }
-
-    /**
-     * Return the entry point to the adapter in the target code.
-     */
-    public Pointer entryPoint() {
-        return CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(targetMethod());
     }
 
     /**
@@ -73,18 +58,11 @@ public class AMD64OptimizedToJitAdapterFrame extends AdapterStackFrame<AdapterSt
         return classMethodActor.isStatic() && (classMethodActor.descriptor().numberOfParameters() == 0);
     }
 
-    /**
-     * Return true if stack frame is partial.
-     */
-    public boolean isPartial() {
-        return instructionPointer.equals(entryPoint()) && !isFrameless();
-    }
-
     @Override
     public boolean isSameFrame(StackFrame stackFrame) {
         if (stackFrame instanceof AMD64OptimizedToJitAdapterFrame && stackFrame.targetMethod() == targetMethod()) {
             final AMD64OptimizedToJitAdapterFrame other = (AMD64OptimizedToJitAdapterFrame) stackFrame;
-            return other.ripPointer().equals(ripPointer());
+            return other.ripPointer.equals(ripPointer);
         }
         return false;
     }

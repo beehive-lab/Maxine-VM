@@ -216,7 +216,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      * E.g.: "[n]", where n is the index into the compilation history; first compilation n=0.
      */
     public String methodCompilationID(TeleTargetMethod teleTargetMethod) {
-        if (teleTargetMethod != null) {
+        if (teleTargetMethod != null && teleTargetMethod.getTeleClassMethodActor() != null) {
             final int compilationIndex = teleTargetMethod.getTeleClassMethodActor().indexOf(teleTargetMethod);
             if (compilationIndex >= 0) {
                 return "[" + compilationIndex + "]";
@@ -229,14 +229,14 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      * E.g. an asterisk when a method has been substituted.
      */
     public String methodSubstitutionShortAnnotation(TeleMethodActor teleMethodActor) {
-        return teleMethodActor.isSubstituted() ? " *" : "";
+        return (teleMethodActor != null && teleMethodActor.isSubstituted()) ? " *" : "";
     }
 
     /**
      * E.g. an asterisk when a method has been substituted.
      */
     public String methodSubstitutionLongAnnotation(TeleMethodActor teleMethodActor) {
-        return teleMethodActor.isSubstituted() ? " substituted from " + teleMethodActor.teleClassActorSubstitutedFrom().getName() : "";
+        return (teleMethodActor != null && teleMethodActor.isSubstituted()) ? " substituted from " + teleMethodActor.teleClassActorSubstitutedFrom().getName() : "";
     }
 
 
@@ -244,14 +244,14 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      * E.g. "Element.foo()[0]"
      */
     public String veryShortName(TeleTargetMethod teleTargetMethod) {
-        return teleTargetMethod.classMethodActor().format("%h.%n()" + methodCompilationID(teleTargetMethod));
+        return teleTargetMethod.classMethodActor() == null ? "<nma>" : teleTargetMethod.classMethodActor().format("%h.%n()" + methodCompilationID(teleTargetMethod));
     }
 
     /**
      * E.g. "foo(Pointer, Word, int[])[0]"
      */
     public String shortName(TeleTargetMethod teleTargetMethod) {
-        return teleTargetMethod.classMethodActor().format("%n(%p)" + methodCompilationID(teleTargetMethod));
+        return teleTargetMethod.classMethodActor() == null ? "<nma>" : teleTargetMethod.classMethodActor().format("%n(%p)" + methodCompilationID(teleTargetMethod));
     }
 
     /**
@@ -261,6 +261,11 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      */
     public String shortName(TeleTargetMethod teleTargetMethod, ReturnTypeSpecification returnTypeSpecification) {
         final ClassMethodActor classMethodActor = teleTargetMethod.classMethodActor();
+
+        if (classMethodActor == null) {
+            return "<nma>";
+        }
+
         switch (returnTypeSpecification) {
             case ABSENT: {
                 return classMethodActor.format("%n(%p)" + methodCompilationID(teleTargetMethod));
@@ -287,35 +292,45 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      * E.g. "int foo(Pointer, Word, int[])[0] in com.sun.max.ins.Bar"
      */
     public String longName(TeleTargetMethod teleTargetMethod) {
-        return teleTargetMethod.classMethodActor().format("%r %n(%p)" + methodCompilationID(teleTargetMethod) + " in %H");
+        return teleTargetMethod.classMethodActor() == null ? "<no method actor>" : teleTargetMethod.classMethodActor().format("%r %n(%p)" + methodCompilationID(teleTargetMethod) + " in %H");
     }
 
     /**
      * E.g. "foo()[0]+0x7"
      */
     public String veryShortName(TeleTargetMethod teleTargetMethod, Address address) {
-        return teleTargetMethod.classMethodActor().format("%n()" + methodCompilationID(teleTargetMethod) + positionString(teleTargetMethod, address));
+        return teleTargetMethod.classMethodActor() == null ? "<no method actor>" : teleTargetMethod.classMethodActor().format("%n()" + methodCompilationID(teleTargetMethod) + positionString(teleTargetMethod, address));
     }
 
     /**
      * E.g. "int foo(Pointer, Word, int[])[0]+0x7"
      */
     public String shortName(TeleTargetMethod teleTargetMethod, Address address) {
-        return teleTargetMethod.classMethodActor().format("%r %n(%p)" + methodCompilationID(teleTargetMethod) + positionString(teleTargetMethod, address));
+        return teleTargetMethod.classMethodActor() == null ? "<no method actor>" : teleTargetMethod.classMethodActor().format("%r %n(%p)" + methodCompilationID(teleTargetMethod) + positionString(teleTargetMethod, address));
     }
 
     /**
      * E.g. "int foo(Pointer, Word, int[])[0]+0x7 in com.sun.max.ins.Bar"
      */
     public String longName(TeleTargetMethod teleTargetMethod, Address address) {
-        return teleTargetMethod.classMethodActor().format("%r %n(%p)" + methodCompilationID(teleTargetMethod) + positionString(teleTargetMethod, address) + " in %H");
+        if (teleTargetMethod.classMethodActor() != null) {
+            return teleTargetMethod.classMethodActor().format("%r %n(%p)" + methodCompilationID(teleTargetMethod) + positionString(teleTargetMethod, address) + " in %H");
+        }
+        return "<no method actor>";
     }
 
     /**
      * E.g. "int foo(Pointer, Word, int[])"
      */
     public String shortName(TeleClassMethodActor teleClassMethodActor, ReturnTypeSpecification returnTypeSpecification) {
+
+        if (teleClassMethodActor == null) {
+            return "<nma>";
+        }
+
         final ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
+
+
         switch (returnTypeSpecification) {
             case ABSENT: {
                 return classMethodActor.format("%n(%p)");
@@ -336,6 +351,9 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      * E.g. "int foo(Pointer, Word, int[]) in com.sun.max.ins.Bar"
      */
     public String longName(TeleClassMethodActor teleClassMethodActor) {
+        if (teleClassMethodActor == null) {
+            return "<no method actor>";
+        }
         return teleClassMethodActor.classMethodActor().format("%r %n(%p)" + " in %H");
     }
 

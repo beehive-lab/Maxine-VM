@@ -61,7 +61,9 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
 
         @Override
         public void procedure() {
-            inspection().focus().setHeapObject(teleClassMethodActor);
+            if (teleClassMethodActor != null) {
+                inspection().focus().setHeapObject(teleClassMethodActor);
+            }
         }
     }
 
@@ -74,7 +76,9 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
 
         @Override
         public void procedure() {
-            inspection().focus().setHeapObject(teleClassMethodActor.teleClassActorSubstitutedFrom());
+            if (teleClassMethodActor != null) {
+                inspection().focus().setHeapObject(teleClassMethodActor.teleClassActorSubstitutedFrom());
+            }
         }
     }
 
@@ -87,7 +91,9 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
 
         @Override
         public void procedure() {
-            inspection().viewSourceExternally(new BytecodeLocation(teleClassMethodActor.classMethodActor(), 0));
+            if (teleClassMethodActor != null) {
+                inspection().viewSourceExternally(new BytecodeLocation(teleClassMethodActor.classMethodActor(), 0));
+            }
         }
     }
 
@@ -101,8 +107,10 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
 
         @Override
         public void procedure() {
-            final TeleCodeLocation teleCodeLocation = maxVM().createCodeLocation(teleClassMethodActor, 0);
-            inspection().focus().setCodeLocation(teleCodeLocation, false);
+            if (teleClassMethodActor != null) {
+                final TeleCodeLocation teleCodeLocation = maxVM().createCodeLocation(teleClassMethodActor, 0);
+                inspection().focus().setCodeLocation(teleCodeLocation, false);
+            }
         }
     }
 
@@ -116,8 +124,10 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
 
         @Override
         public void procedure() {
-            final MethodKey methodKey = new MethodActorKey(teleClassMethodActor.classMethodActor());
-            maxVM().makeBytecodeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, 0));
+            if (teleClassMethodActor != null) {
+                final MethodKey methodKey = new MethodActorKey(teleClassMethodActor.classMethodActor());
+                maxVM().makeBytecodeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, 0));
+            }
         }
     }
 
@@ -131,6 +141,11 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
 
         @Override
         public void procedure() {
+
+            if (teleClassMethodActor == null) {
+                return;
+            }
+
             ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
             ReferenceValue receiver = null;
 
@@ -199,6 +214,11 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
     }
 
     public void refresh(boolean force) {
+
+        if (teleClassMethodActor == null) {
+            return;
+        }
+
         teleClassMethodActor.refreshView();
         final boolean hasCodeAttribute =  teleClassMethodActor.hasCodeAttribute();
         final File javaSourceFile = maxVM().findJavaSourceFile(teleClassMethodActor.getTeleHolder().classActor());

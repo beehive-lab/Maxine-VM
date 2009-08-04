@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.asm.OopRecorder;
 import com.sun.c1x.ci.CiMethod;
 
 import java.util.List;
@@ -30,7 +29,6 @@ import java.util.List;
  *
  */
 public class DebugInformationRecorder {
-    OopRecorder recorder;
 
     public boolean recordingNonSafepoints() {
         // TODO Auto-generated method stub
@@ -86,14 +84,6 @@ public class DebugInformationRecorder {
     public void describeScope(int pcOffset, CiMethod method, int bci, long locvals, long expvals, long monvals) {
         // TODO Auto-generated method stub
 
-    }
-
-    /**
-     * @return
-     */
-    public OopRecorder oopRecorder() {
-        // TODO Auto-generated method stub
-        return recorder;
     }
 
     /**

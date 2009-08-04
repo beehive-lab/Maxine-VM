@@ -80,6 +80,17 @@ public class InternalTest extends MaxTestCase {
         disassemble(0L, bytes);
     }
 
+    public void testXMMMove() throws IOException, AssemblyException {
+        System.out.println("--- testXMMMove: ---");
+        final AMD64Assembler asm = new AMD64Assembler(0L);
+        asm.movq(8, RSP.indirect(), AMD64XMMRegister.XMM4);
+        byte[] bytes = asm.toByteArray();
+        System.out.println(bytes);
+        disassemble(0L, bytes);
+
+
+    }
+
     private byte[] assemble1(long startAddress) throws IOException, AssemblyException {
         final AMD64GeneralRegister64 myGPR = RAX;
         final AMD64Assembler asm = new AMD64Assembler(startAddress);

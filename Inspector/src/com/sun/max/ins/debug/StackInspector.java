@@ -106,11 +106,6 @@ public class StackInspector extends Inspector {
         }
 
         @Override
-        public boolean isJavaStackFrame() {
-            return false;
-        }
-
-        @Override
         public boolean isSameFrame(StackFrame stackFrame) {
             if (stackFrame instanceof TruncatedStackFrame) {
                 final TruncatedStackFrame other = (TruncatedStackFrame) stackFrame;
@@ -175,7 +170,7 @@ public class StackInspector extends Inspector {
                     name = inspection().nameDisplay().veryShortName(teleTargetMethod);
                     toolTip = inspection().nameDisplay().longName(teleTargetMethod, address);
                     final TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
-                    if (teleClassMethodActor.isSubstituted()) {
+                    if (teleClassMethodActor != null && teleClassMethodActor.isSubstituted()) {
                         name = name + inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor);
                         toolTip = toolTip + inspection().nameDisplay().methodSubstitutionLongAnnotation(teleClassMethodActor);
                     }
@@ -184,7 +179,7 @@ public class StackInspector extends Inspector {
                     name = classMethodActor.format("%h.%n");
                     toolTip = classMethodActor.format("%r %H.%n(%p)");
                 }
-                if (javaStackFrame.isAdapter()) {
+                if (javaStackFrame instanceof AdapterStackFrame) {
                     name = "frame adapter [" + name + "]";
                     if (javaStackFrame.targetMethod().compilerScheme().equals(StackInspector.this.inspection().maxVM().vmConfiguration().jitScheme())) {
                         toolTip = "optimized-to-JIT frame adapter [ " + toolTip + "]";
@@ -456,7 +451,7 @@ public class StackInspector extends Inspector {
             final String frameClassName = javaStackFrame.getClass().getSimpleName();
             final Address slotBase = javaStackFrame.slotBase();
             targetMethod = javaStackFrame.targetMethod();
-            codeAttribute = targetMethod.classMethodActor().codeAttribute();
+            codeAttribute = (targetMethod.classMethodActor() == null) ? null : targetMethod.classMethodActor().codeAttribute();
             final int frameSize = javaStackFrame.layout.frameSize();
 
             final JPanel header = new InspectorPanel(inspection(), new SpringLayout());
@@ -598,7 +593,7 @@ public class StackInspector extends Inspector {
                 final JitTargetMethod jitTargetMethod = (JitTargetMethod) targetMethod;
                 final JitStackFrameLayout jitLayout = (JitStackFrameLayout) stackFrame.layout;
                 final int bytecodePosition = jitTargetMethod.bytecodePositionFor(stackFrame.instructionPointer);
-                if (bytecodePosition != -1) {
+                if (bytecodePosition != -1 && codeAttribute != null) {
                     for (int localVariableIndex = 0; localVariableIndex < codeAttribute.maxLocals(); ++localVariableIndex) {
                         final int localVariableOffset = jitLayout.localVariableOffset(localVariableIndex);
                         if (slot.offset == localVariableOffset) {
@@ -651,7 +646,7 @@ public class StackInspector extends Inspector {
             if (index >= 0 && index < stackFrameListModel.getSize()) {
                 final StackFrame stackFrame = (StackFrame) stackFrameListModel.get(index);
                 if (stackFrame instanceof JavaStackFrame) {
-                    if (stackFrame.isAdapter()) {
+                    if (stackFrame instanceof AdapterStackFrame) {
                         final AdapterStackFrame adapterStackFrame = (AdapterStackFrame) stackFrame;
                         selectedFrame = new AdapterStackFramePanel(inspection(), adapterStackFrame);
                     } else {

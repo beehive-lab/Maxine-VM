@@ -24,6 +24,7 @@ import java.lang.annotation.*;
 import java.lang.reflect.*;
 
 import com.sun.max.program.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.type.*;
@@ -66,8 +67,8 @@ public @interface WRAPPED {
         private Static() {
         }
 
-        public static Method getWrapper(Method wrappedMethod, Class wrapperHolder) {
-            final SignatureDescriptor wrappedDescriptor = SignatureDescriptor.fromJava(wrappedMethod);
+        public static Method getWrapper(MethodActor wrappedMethod, Class wrapperHolder) {
+            final SignatureDescriptor wrappedDescriptor = (SignatureDescriptor) wrappedMethod.descriptor;
             for (Method wrapperMethod : wrapperHolder.getDeclaredMethods()) {
                 if (wrapperMethod.getAnnotation(WRAPPER.class) != null) {
                     final SignatureDescriptor wrapperDescriptor = SignatureDescriptor.fromJava(wrapperMethod);

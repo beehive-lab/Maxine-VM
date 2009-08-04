@@ -20,11 +20,10 @@
  */
 package com.sun.c1x.target.x86;
 
-import com.sun.c1x.C1XCompilation;
 import com.sun.c1x.C1XOptions;
 import com.sun.c1x.asm.*;
-import com.sun.c1x.ci.CiRuntimeCall;
-import com.sun.c1x.target.Register;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.target.*;
 import com.sun.c1x.util.Util;
 import com.sun.c1x.value.BasicType;
 
@@ -36,44 +35,19 @@ public class X86MacroAssembler extends X86Assembler {
 
     private Register rscratch1;
     private final int wordSize;
-    private int rspOffset;
 
-    final Register cRarg0;
-    final Register cRarg1;
-    final Register cRarg2;
-    final Register cRarg3;
-    final Register cRarg4;
-
-    final Register jRarg0;
-    final Register jRarg1;
-    final Register jRarg2;
-    final Register jRarg3;
-    final Register jRarg4;
-
-    public X86MacroAssembler(C1XCompilation compilation) {
-        super(compilation);
+    public X86MacroAssembler(Target target) {
+        super(target);
         // TODO Auto-generated constructor stub
 
-        rscratch1 = X86FrameMap.rscratch1(compilation.target.arch);
-        wordSize = compilation.target.arch.wordSize;
-
-        cRarg0 = compilation.runtime.getCRarg(0);
-        cRarg1 = compilation.runtime.getCRarg(1);
-        cRarg2 = compilation.runtime.getCRarg(2);
-        cRarg3 = compilation.runtime.getCRarg(3);
-        cRarg4 = compilation.runtime.getCRarg(4);
-
-        jRarg0 = compilation.runtime.getJRarg(0);
-        jRarg1 = compilation.runtime.getJRarg(1);
-        jRarg2 = compilation.runtime.getJRarg(2);
-        jRarg3 = compilation.runtime.getJRarg(3);
-        jRarg4 = compilation.runtime.getJRarg(4);
+        rscratch1 = X86FrameMap.rscratch1(target.arch);
+        wordSize = target.arch.wordSize;
     }
 
     int biasedLockingEnter(Register lockReg, Register objReg, Register swapReg, Register tmpReg, boolean swapRegContainsMark, Label done, Label slowCase, BiasedLockingCounters counters) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             return biasedLockingEnter64(lockReg, objReg, swapReg, tmpReg, swapRegContainsMark, done, slowCase, counters);
-        } else if (compilation.target.arch.is32bit()) {
+        } else if (target.arch.is32bit()) {
             return biasedLockingEnter64(lockReg, objReg, swapReg, tmpReg, swapRegContainsMark, done, slowCase, counters);
         } else {
             throw Util.shouldNotReachHere();
@@ -305,14 +279,14 @@ public class X86MacroAssembler extends X86Assembler {
 
         // TODO: Check why the size is 9
 //        int icCmpSize = 10;
-//        if (compilation.target.arch.is32bit()) {
+//        if (target.arch.is32bit()) {
 //            icCmpSize = 9;
 //        }
 //        assert offset() - startOffset == icCmpSize : "check alignment in emitMethodEntry";
     }
 
     void increment(Register reg, int value /* = 1 */) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             incrementq(reg, value);
         } else {
             incrementl(reg, value);
@@ -320,7 +294,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void decrement(Register reg, int value /* = 1 */) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             decrementq(reg, value);
         } else {
             decrementl(reg, value);
@@ -341,7 +315,7 @@ public class X86MacroAssembler extends X86Assembler {
 
     void extendSign(Register hi, Register lo) {
         // According to Intel Doc. AP-526, "Integer Divide", p.18.
-        if (compilation.target.isP6() && hi == X86.rdx && lo == X86.rax) {
+        if (target.isP6() && hi == X86.rdx && lo == X86.rax) {
             cdql();
         } else {
             movl(hi, lo);
@@ -351,7 +325,7 @@ public class X86MacroAssembler extends X86Assembler {
 
     // Note: yLo will be destroyed
     void lcmp2int(Register xHi, Register xLo, Register yHi, Register yLo) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             // 64 Bit does not use this!
             Util.shouldNotReachHere();
         }
@@ -382,20 +356,6 @@ public class X86MacroAssembler extends X86Assembler {
         bind(done);
     }
 
-    void leave() {
-        if (compilation.target.arch.is32bit()) {
-            mov(X86.rsp, X86.rbp);
-            pop(X86.rbp);
-
-        } else if (compilation.target.arch.is64bit()) {
-
-            // %%% is this really better? Why not on 32bit too?
-            emitByte(0xC9); // LEAVE
-        } else {
-            Util.shouldNotReachHere();
-        }
-    }
-
     void lmul(int xRspOffset, int yRspOffset) {
         // Multiplication of two Java long values stored on the stack
         // as illustrated below. Result is in X86Register.rdx:X86Register.rax.
@@ -411,9 +371,9 @@ public class X86MacroAssembler extends X86Assembler {
         //
         // Basic idea: lo(result) = lo(xLo * yLo)
         // hi(result) = hi(xLo * yLo) + lo(xHi * yLo) + lo(xLo * yHi)
-        Address xHi = new Address(X86.rsp, xRspOffset + compilation.target.arch.wordSize);
+        Address xHi = new Address(X86.rsp, xRspOffset + target.arch.wordSize);
         Address xLo = new Address(X86.rsp, xRspOffset);
-        Address yHi = new Address(X86.rsp, yRspOffset + compilation.target.arch.wordSize);
+        Address yHi = new Address(X86.rsp, yRspOffset + target.arch.wordSize);
         Address yLo = new Address(X86.rsp, yRspOffset);
         Label quick = new Label();
         // load xHi, yHi and check if quick
@@ -440,7 +400,7 @@ public class X86MacroAssembler extends X86Assembler {
 
     void lneg(Register hi, Register lo) {
 
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             Util.shouldNotReachHere(); // 64bit doesn't use two regs
         }
         negl(lo);
@@ -455,7 +415,7 @@ public class X86MacroAssembler extends X86Assembler {
         assert hi != X86.rcx : "must not use X86Register.rcx";
         assert lo != X86.rcx : "must not use X86Register.rcx";
         Register s = X86.rcx; // shift count
-        int n = compilation.target.arch.bitsPerWord;
+        int n = target.arch.bitsPerWord;
         Label l = new Label();
         andl(s, 0x3f); // s := s & 0x3f (s < 0x40)
         cmpl(s, n); // if (s < n)
@@ -474,7 +434,7 @@ public class X86MacroAssembler extends X86Assembler {
         assert hi != X86.rcx : "must not use X86Register.rcx";
         assert lo != X86.rcx : "must not use X86Register.rcx";
         Register s = X86.rcx; // shift count
-        int n = compilation.target.arch.bitsPerWord;
+        int n = target.arch.bitsPerWord;
         Label l = new Label();
         andl(s, 0x3f); // s := s & 0x3f (s < 0x40)
         cmpl(s, n); // if (s < n)
@@ -496,10 +456,10 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void movoop(Register dst, Object obj) {
-        if (compilation.target.arch.is32bit()) {
+        if (target.arch.is32bit()) {
             // (tw) Cannot embed oop as immediate!
             throw Util.unimplemented();
-        } else if (compilation.target.arch.is64bit()) {
+        } else if (target.arch.is64bit()) {
             if (obj == null) {
                 this.xorq(dst, dst);
             } else {
@@ -513,11 +473,11 @@ public class X86MacroAssembler extends X86Assembler {
 
     void movoop(Address dst, Object obj) {
 
-        if (compilation.target.arch.is32bit()) {
+        if (target.arch.is32bit()) {
             // (tw) Cannot embed oop as immediate!
             throw Util.unimplemented();
             //movLiteral32(dst, compilation.runtime.convertToPointer32(obj), Relocation.specForImmediate());
-        } else if (compilation.target.arch.is64bit()) {
+        } else if (target.arch.is64bit()) {
             this.movq(rscratch1, recordObjectReferenceInCode(obj));
             movq(dst, rscratch1);
         } else {
@@ -527,9 +487,9 @@ public class X86MacroAssembler extends X86Assembler {
 
     // src should NEVER be a real pointer. Use AddressLiteral for true pointers
     void movptr(Address dst, long src) {
-        if (compilation.target.arch.is32bit()) {
+        if (target.arch.is32bit()) {
             movl(dst, Util.safeToInt(src));
-        } else if (compilation.target.arch.is64bit()) {
+        } else if (target.arch.is64bit()) {
             mov64(rscratch1, src);
             movq(dst, rscratch1);
         } else {
@@ -537,27 +497,13 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    void popCalleeSavedRegisters() {
-        pop(X86.rcx);
-        pop(X86.rdx);
-        pop(X86.rdi);
-        pop(X86.rsi);
-    }
-
-    void pushCalleeSavedRegisters() {
-        push(X86.rsi);
-        push(X86.rdi);
-        push(X86.rdx);
-        push(X86.rcx);
-    }
-
     void pushoop(Object obj) {
 
-        if (compilation.target.arch.is32bit()) {
+        if (target.arch.is32bit()) {
             // Cannot embed obj as an immediate here!
             throw Util.unimplemented();
             //pushLiteral32(compilation.runtime.convertToPointer32(obj), Relocation.specForImmediate());
-        } else if (compilation.target.arch.is64bit()) {
+        } else if (target.arch.is64bit()) {
             movoop(rscratch1, obj);
             push(rscratch1);
         } else {
@@ -566,7 +512,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void pushptr(Address src) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             pushq(src);
         } else {
             pushl(src);
@@ -574,7 +520,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void popptr(Address src) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             popq(src);
         } else {
             popl(src);
@@ -582,7 +528,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void xorptr(Register dst, Register src) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             xorq(dst, src);
         } else {
             xorl(dst, src);
@@ -590,63 +536,10 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void xorptr(Register dst, Address src) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             xorq(dst, src);
         } else {
             xorl(dst, src);
-        }
-    }
-
-    void setWordIfNotZero(Register dst) {
-        xorl(dst, dst);
-        setByteIfNotZero(dst);
-    }
-
-    void passArg0(X86MacroAssembler masm, Register arg) {
-        if (compilation.target.arch.is32bit()) {
-            masm.push(arg);
-        } else if (compilation.target.arch.is64bit()) {
-            if (cRarg0 != arg) {
-                masm.mov(cRarg0, arg);
-            }
-        } else {
-            Util.shouldNotReachHere();
-        }
-    }
-
-    void passArg1(X86MacroAssembler masm, Register arg) {
-        if (compilation.target.arch.is32bit()) {
-            masm.push(arg);
-        } else if (compilation.target.arch.is64bit()) {
-            if (cRarg1 != arg) {
-                masm.mov(cRarg1, arg);
-            }
-        } else {
-            Util.shouldNotReachHere();
-        }
-    }
-
-    void passArg2(X86MacroAssembler masm, Register arg) {
-        if (compilation.target.arch.is32bit()) {
-            masm.push(arg);
-        } else if (compilation.target.arch.is64bit()) {
-            if (cRarg2 != arg) {
-                masm.mov(cRarg2, arg);
-            }
-        } else {
-            Util.shouldNotReachHere();
-        }
-    }
-
-    void passArg3(X86MacroAssembler masm, Register arg) {
-        if (compilation.target.arch.is32bit()) {
-            masm.push(arg);
-        } else if (compilation.target.arch.is64bit()) {
-            if (cRarg3 != arg) {
-                masm.mov(cRarg3, arg);
-            }
-        } else {
-            Util.shouldNotReachHere();
         }
     }
 
@@ -654,7 +547,7 @@ public class X86MacroAssembler extends X86Assembler {
 
     int biasedLockingEnter64(Register lockReg, Register objReg, Register swapReg, Register tmpReg, boolean swapRegContainsMark, Label done, Label slowCase, BiasedLockingCounters counters) {
 
-        assert compilation.target.arch.is64bit();
+        assert target.arch.is64bit();
         // TODO: Check what to do with biased locking!
         throw Util.unimplemented();
 //
@@ -811,7 +704,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     int correctedIdivq(Register reg) {
-        assert compilation.target.arch.is64bit();
+        assert target.arch.is64bit();
         // Full implementation of Java ldiv and lrem; checks for special
         // case as described in JVM spec. : p.243 & p.271. The function
         // returns the (pc) offset of the idivl instruction - may be needed
@@ -840,7 +733,7 @@ public class X86MacroAssembler extends X86Assembler {
         // handle normal case
         bind(normalCase);
         cdqq();
-        int idivqOffset = offset();
+        int idivqOffset = codeBuffer.position();
         idivq(reg);
 
         // normal and special case exit
@@ -850,7 +743,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void decrementq(Register reg, int value) {
-        assert compilation.target.arch.is64bit();
+        assert target.arch.is64bit();
         if (value == Integer.MIN_VALUE) {
             subq(reg, value);
             return;
@@ -869,30 +762,8 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    void decrementq(Address dst, int value) {
-        assert compilation.target.arch.is64bit();
-        if (value == Integer.MIN_VALUE) {
-            subq(dst, value);
-            return;
-        }
-        if (value < 0) {
-            incrementq(dst, -value);
-            return;
-        }
-        if (value == 0) {
-            return;
-        }
-        if (value == 1 && C1XOptions.UseIncDec) {
-            decq(dst);
-            return;
-        } else {
-            subq(dst, value);
-            return;
-        }
-    }
-
     void incrementq(Register reg, int value) {
-        assert compilation.target.arch.is64bit();
+        assert target.arch.is64bit();
         if (value == Integer.MIN_VALUE) {
             addq(reg, value);
             return;
@@ -913,41 +784,19 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    void incrementq(Address dst, int value) {
-        assert compilation.target.arch.is64bit();
-        if (value == Integer.MIN_VALUE) {
-            addq(dst, value);
-            return;
-        }
-        if (value < 0) {
-            decrementq(dst, -value);
-            return;
-        }
-        if (value == 0) {
-            return;
-        }
-        if (value == 1 && C1XOptions.UseIncDec) {
-            incq(dst);
-            return;
-        } else {
-            addq(dst, value);
-            return;
-        }
-    }
-
     // These are mostly for initializing null
     void movptr(Address dst, int src) {
-        assert compilation.target.arch.is64bit();
+        assert target.arch.is64bit();
         movslq(dst, src);
     }
 
     void movptr(Register dst, long src) {
-        assert compilation.target.arch.is64bit();
+        assert target.arch.is64bit();
         mov64(dst, src);
     }
 
     void resetLastJavaFrame(boolean clearFp, boolean clearPc) {
-        assert compilation.target.arch.is64bit();
+        assert target.arch.is64bit();
 
         // TODO: Reset last Java frame!
         throw Util.unimplemented();
@@ -965,7 +814,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void setLastJavaFrame(Register lastJavaSp, Register lastJavaFp, Address lastJavaPc) {
-        assert compilation.target.arch.is64bit();
+        assert target.arch.is64bit();
 
         // TODO: Set last Java frame!
         throw Util.unimplemented();
@@ -992,7 +841,7 @@ public class X86MacroAssembler extends X86Assembler {
 
     void stop(String msg) {
 
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             // TODO: Add debug infos / message as paramters to Debug
             callRuntime(CiRuntimeCall.Debug);
             hlt();
@@ -1005,7 +854,7 @@ public class X86MacroAssembler extends X86Assembler {
 
     void addptr(Register dst, int imm32) {
 
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             addq(dst, imm32);
         } else {
             addl(dst, imm32);
@@ -1013,7 +862,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void addptr(Register dst, Register src) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             addq(dst, src);
         } else {
             addl(dst, src);
@@ -1022,7 +871,7 @@ public class X86MacroAssembler extends X86Assembler {
 
     void addptr(Address dst, Register src) {
 
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             addq(dst, src);
         } else {
             addl(dst, src);
@@ -1031,8 +880,8 @@ public class X86MacroAssembler extends X86Assembler {
 
     @Override
     public void align(int modulus) {
-        if (offset() % modulus != 0) {
-            nop(modulus - (offset() % modulus));
+        if (codeBuffer.position() % modulus != 0) {
+            nop(modulus - (codeBuffer.position() % modulus));
         }
     }
 
@@ -1042,37 +891,14 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void andptr(Register dst, int imm32) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             andq(dst, imm32);
         } else {
             andl(dst, imm32);
         }
     }
 
-    // Writes to stack successive pages until offset reached to check for
-    // stack overflow + shadow pages. This clobbers tmp.
-    void bangStackSize(Register size, Register tmp) {
-        movptr(tmp, X86.rsp);
-        // Bang stack for total size given plus shadow page size.
-        // Bang one page at a time because large size can bang beyond yellow and
-        // red zones.
-        Label loop = new Label();
-        bind(loop);
-        movl(new Address(tmp, (-compilation.runtime.vmPageSize())), size);
-        subptr(tmp, compilation.runtime.vmPageSize());
-        subl(size, compilation.runtime.vmPageSize());
-        jcc(X86Assembler.Condition.greater, loop);
-
-        // Bang down shadow pages too.
-        // The -1 because we already subtracted 1 page.
-        for (int i = 0; i < C1XOptions.StackShadowPages - 1; i++) {
-            // this could be any sized move but this is can be a debugging crumb
-            // so the bigger the better.
-            movptr(new Address(tmp, (-i * compilation.runtime.vmPageSize())), size);
-        }
-    }
-
-    void biasedLockingExit(Register objReg, Register tempReg, Label done) {
+    void biasedLockingExit(CiRuntime runtime, Register objReg, Register tempReg, Label done) {
         assert C1XOptions.UseBiasedLocking;
 
         // Check for biased locking unlock case : which is a no-op
@@ -1081,9 +907,9 @@ public class X86MacroAssembler extends X86Assembler {
         // a higher level. Second : if the bias was revoked while we held the
         // lock : the object could not be rebiased toward another thread : so
         // the bias bit would be clear.
-        movptr(tempReg, new Address(objReg, compilation.runtime.markOffsetInBytes()));
-        andptr(tempReg, compilation.runtime.biasedLockMaskInPlace());
-        cmpptr(tempReg, compilation.runtime.biasedLockPattern());
+        movptr(tempReg, new Address(objReg, runtime.markOffsetInBytes()));
+        andptr(tempReg, runtime.biasedLockMaskInPlace());
+        cmpptr(tempReg, runtime.biasedLockPattern());
         jcc(X86Assembler.Condition.equal, done);
     }
 
@@ -1152,7 +978,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void cmpptr(Register src1, Register src2) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             cmpq(src1, src2);
         } else {
             cmpl(src1, src2);
@@ -1160,7 +986,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void cmpptr(Register src1, Address src2) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             cmpq(src1, src2);
         } else {
             cmpl(src1, src2);
@@ -1168,7 +994,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void cmpptr(Register src1, int src2) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             cmpq(src1, src2);
         } else {
             cmpl(src1, src2);
@@ -1176,7 +1002,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void cmpptr(Address src1, int src2) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             cmpq(src1, src2);
         } else {
             cmpl(src1, src2);
@@ -1184,7 +1010,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void cmpxchgptr(Register reg, Address adr) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             cmpxchgq(reg, adr);
         } else {
             cmpxchgl(reg, adr);
@@ -1221,7 +1047,7 @@ public class X86MacroAssembler extends X86Assembler {
         // handle normal case
         bind(normalCase);
         cdql();
-        int idivlOffset = offset();
+        int idivlOffset = codeBuffer.position();
         idivl(reg);
 
         // normal and special case exit
@@ -1322,11 +1148,6 @@ public class X86MacroAssembler extends X86Assembler {
 // }
     }
 
-    void enter() {
-        push(X86.rbp);
-        mov(X86.rbp, X86.rsp);
-    }
-
     void incrementl(Register reg, int value) {
         if (value == Integer.MIN_VALUE) {
             addl(reg, value);
@@ -1371,8 +1192,8 @@ public class X86MacroAssembler extends X86Assembler {
 
     int loadSignedByte(Register dst, Address src) {
         int off;
-        if (compilation.target.arch.is64bit() || compilation.target.isP6()) {
-            off = offset();
+        if (target.arch.is64bit() || target.isP6()) {
+            off = codeBuffer.position();
             movsbl(dst, src); // movsxb
         } else {
             off = loadUnsignedByte(dst, src);
@@ -1388,11 +1209,11 @@ public class X86MacroAssembler extends X86Assembler {
     // The term "word" in HotSpot means a 32- or 64-bit machine word.
     int loadSignedShort(Register dst, Address src) {
         int off;
-        if (compilation.target.arch.is64bit() || compilation.target.isP6()) {
+        if (target.arch.is64bit() || target.isP6()) {
             // This is dubious to me since it seems safe to do a signed 16 => 64 bit
             // version but this is what 64bit has always done. This seems to imply
             // that users are only using 32bits worth.
-            off = offset();
+            off = codeBuffer.position();
             movswl(dst, src); // movsxw
         } else {
             off = loadUnsignedShort(dst, src);
@@ -1406,12 +1227,12 @@ public class X86MacroAssembler extends X86Assembler {
         // According to Intel Doc. AP-526 : "Zero-Extension of Short" : p.16 :
         // and "3.9 Partial Register Penalties" : p. 22.
         int off;
-        if (compilation.target.arch.is64bit() || compilation.target.isP6() || src.uses(dst)) {
-            off = offset();
+        if (target.arch.is64bit() || target.isP6() || src.uses(dst)) {
+            off = codeBuffer.position();
             movzbl(dst, src); // movzxb
         } else {
             xorl(dst, dst);
-            off = offset();
+            off = codeBuffer.position();
             movb(dst, src);
         }
         return off;
@@ -1422,12 +1243,12 @@ public class X86MacroAssembler extends X86Assembler {
         // According to Intel Doc. AP-526, "Zero-Extension of Short", p.16,
         // and "3.9 Partial Register Penalties", p. 22).
         int off;
-        if (compilation.target.arch.is64bit() || compilation.target.isP6() || src.uses(dst)) {
-            off = offset();
+        if (target.arch.is64bit() || target.isP6() || src.uses(dst)) {
+            off = codeBuffer.position();
             movzwl(dst, src); // movzxw
         } else {
             xorl(dst, dst);
-            off = offset();
+            off = codeBuffer.position();
             movw(dst, src);
         }
         return off;
@@ -1442,7 +1263,7 @@ public class X86MacroAssembler extends X86Assembler {
             // the second word into another X86Register.
             case ~8: // fall through:
             case 8:
-                if (compilation.target.arch.is64bit()) {
+                if (target.arch.is64bit()) {
                     movq(dst, src);
                 } else {
                     movl(dst, src);
@@ -1512,7 +1333,7 @@ public class X86MacroAssembler extends X86Assembler {
 
     void movptr(Register dst, Register src) {
 
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
 
             movq(dst, src);
         } else {
@@ -1522,7 +1343,7 @@ public class X86MacroAssembler extends X86Assembler {
 
     void movptr(Register dst, Address src) {
 
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             movq(dst, src);
         } else {
             movl(dst, src);
@@ -1530,7 +1351,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void movptr(Address dst, Register src) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             movq(dst, src);
         } else {
             movl(dst, src);
@@ -1539,7 +1360,7 @@ public class X86MacroAssembler extends X86Assembler {
 
     // sign extend as need a l to ptr sized element
     void movl2ptr(Register dst, Address src) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             movslq(dst, src);
         } else {
             movl(dst, src);
@@ -1547,26 +1368,22 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void movl2ptr(Register dst, Register src) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             movslq(dst, src);
         } else if (dst != src) {
             movl(dst, src);
         }
     }
 
-    void nullCheck(Register reg, int offset) {
-        if (compilation.runtime.needsExplicitNullCheck(offset)) {
-            // provoke OS null exception if reg = null by
-            // accessing M[reg] w/o changing any (non-CC) registers
-            // NOTE: cmpl is plenty here to provoke a segv
-            cmpptr(X86.rax, new Address(reg, 0));
-            // Note: should probably use testl(X86Register.rax, new Address(reg, 0));
-            // may be shorter code (however, this version of
-            // testl needs to be implemented first)
-        } else {
-            // nothing to do, (later) access of M[reg + offset]
-            // will provoke OS null exception if reg = null
-        }
+    @Override
+    public void nullCheck(Register reg) {
+        // provoke OS null exception if reg = null by
+        // accessing M[reg] w/o changing any (non-CC) registers
+        // NOTE: cmpl is plenty here to provoke a segv
+        cmpptr(X86.rax, new Address(reg, 0));
+        // Note: should probably use testl(X86Register.rax, new Address(reg, 0));
+        // may be shorter code (however, this version of
+        // testl needs to be implemented first)
     }
 
     void resetLastJavaFrame(Register javaThread, boolean clearFp, boolean clearPc) {
@@ -1653,7 +1470,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void shlptr(Register dst, int imm8) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             shlq(dst, imm8);
         } else {
             shll(dst, imm8);
@@ -1661,7 +1478,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void shrptr(Register dst, int imm8) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             shrq(dst, imm8);
         } else {
             shrl(dst, imm8);
@@ -1669,7 +1486,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void signExtendByte(Register reg) {
-        if (compilation.target.arch.is64bit() || compilation.target.isP6() && reg.isByte()) {
+        if (target.arch.is64bit() || target.isP6() && reg.isByte()) {
             movsbl(reg, reg); // movsxb
         } else {
             shll(reg, 24);
@@ -1678,7 +1495,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void signExtendShort(Register reg) {
-        if (compilation.target.arch.is64bit() || compilation.target.isP6()) {
+        if (target.arch.is64bit() || target.isP6()) {
             movswl(reg, reg); // movsxw
         } else {
             shll(reg, 16);
@@ -1742,7 +1559,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void subptr(Register dst, int imm32) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             subq(dst, imm32);
         } else {
             subl(dst, imm32);
@@ -1750,7 +1567,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void subptr(Register dst, Register src) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             subq(dst, src);
         } else {
             subl(dst, src);
@@ -1758,7 +1575,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void testptr(Register dst, Register src) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             testq(dst, src);
         } else {
             testl(dst, src);
@@ -1766,38 +1583,38 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     // Defines obj : preserves varSizeInBytes : okay for t2 == varSizeInBytes.
-    void tlabAllocate(Register obj, Register varSizeInBytes, int conSizeInBytes, Register t1, Register t2, Label slowCase) {
+    void tlabAllocate(CiRuntime runtime, Register obj, Register varSizeInBytes, int conSizeInBytes, Register t1, Register t2, Label slowCase) {
         assert Register.assertDifferentRegisters(obj, t1, t2);
         assert Register.assertDifferentRegisters(obj, varSizeInBytes, t1);
         Register end = t2;
         Register thread = t1;
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             thread = X86FrameMap.r15thread;
         }
 
-        verifyTlab();
+        verifyTlab(runtime);
 
-        if (!compilation.target.arch.is64bit()) {
+        if (!target.arch.is64bit()) {
             getThread(thread);
         }
 
-        movptr(obj, new Address(thread, compilation.runtime.threadTlabTopOffset()));
+        movptr(obj, new Address(thread, runtime.threadTlabTopOffset()));
         if (varSizeInBytes == Register.noreg) {
             lea(end, new Address(obj, conSizeInBytes));
         } else {
             lea(end, new Address(obj, varSizeInBytes, Address.ScaleFactor.times1));
         }
-        cmpptr(end, new Address(thread, compilation.runtime.threadTlabEndOffset()));
+        cmpptr(end, new Address(thread, runtime.threadTlabEndOffset()));
         jcc(X86Assembler.Condition.above, slowCase);
 
         // update the tlab top pointer
-        movptr(new Address(thread, compilation.runtime.threadTlabTopOffset()), end);
+        movptr(new Address(thread, runtime.threadTlabTopOffset()), end);
 
         // recover varSizeInBytes if necessary
         if (varSizeInBytes == end) {
             subptr(varSizeInBytes, obj);
         }
-        verifyTlab();
+        verifyTlab(runtime);
     }
 
     // Preserves X86Register.rbx : and X86Register.rdx.
@@ -1809,7 +1626,7 @@ public class X86MacroAssembler extends X86Assembler {
 // Register top = X86Register.rax;
 // Register t1 = X86Register.rcx;
 // Register t2 = X86Register.rsi;
-// Register threadReg = (compilation.target.arch.is64bit()) ? X86FrameMap.r15thread : X86Register.rdi;
+// Register threadReg = (target.arch.is64bit()) ? X86FrameMap.r15thread : X86Register.rdi;
 // assert Register.assertDifferentRegisters(top, threadReg, t1, t2, /* preserve: */X86Register.rbx, X86Register.rdx);
 // Label doRefill = new Label();
 // Label discardTlab = new Label();
@@ -1819,7 +1636,7 @@ public class X86MacroAssembler extends X86Assembler {
 // jmp(slowCase);
 // }
 //
-// if (!compilation.target.arch.is64bit()) {
+// if (!target.arch.is64bit()) {
 // getThread(threadReg);
 // }
 //
@@ -1911,19 +1728,19 @@ public class X86MacroAssembler extends X86Assembler {
     // The receiver klass is in recvKlass.
     // On success : the result will be in methodResult : and execution falls through.
     // On failure : execution transfers to the given label.
-    void lookupInterfaceMethod(Register recvKlass, Register intfKlass, RegisterOrConstant itableIndex, Register methodResult, Register scanTemp, Label lNoSuchInterface) {
+    void lookupInterfaceMethod(CiRuntime runtime, Register recvKlass, Register intfKlass, RegisterOrConstant itableIndex, Register methodResult, Register scanTemp, Label lNoSuchInterface) {
         assert Register.assertDifferentRegisters(recvKlass, intfKlass, methodResult, scanTemp);
         assert itableIndex.isConstant() || itableIndex.asRegister() == methodResult : "caller must use same register for non-constant itable index as for method";
 
         // Compute start of first itableOffsetEntry (which is at the end of the vtable)
-        int vtableBase = compilation.runtime.vtableStartOffset() * wordSize;
-        int itentryOff = compilation.runtime.itableMethodEntryMethodOffset();
-        int scanStep = compilation.runtime.itableOffsetEntrySize() * wordSize;
-        int vteSize = compilation.runtime.vtableEntrySize() * wordSize;
-        Address.ScaleFactor timesVteScale = Address.ScaleFactor.timesPtr(compilation.target.arch);
+        int vtableBase = runtime.vtableStartOffset() * wordSize;
+        int itentryOff = runtime.itableMethodEntryMethodOffset();
+        int scanStep = runtime.itableOffsetEntrySize() * wordSize;
+        int vteSize = runtime.vtableEntrySize() * wordSize;
+        Address.ScaleFactor timesVteScale = Address.ScaleFactor.timesPtr(target.arch);
         assert vteSize == wordSize : "else adjust timesVteScale";
 
-        movl(scanTemp, new Address(recvKlass, compilation.runtime.vtableLengthOffset() * wordSize));
+        movl(scanTemp, new Address(recvKlass, runtime.vtableLengthOffset() * wordSize));
 
         // %%% Could store the aligned : prescaled offset in the klassoop.
         lea(scanTemp, new Address(recvKlass, scanTemp, timesVteScale, vtableBase));
@@ -1934,8 +1751,8 @@ public class X86MacroAssembler extends X86Assembler {
         }
 
         // Adjust recvKlass by scaled itableIndex : so we can free itableIndex.
-        assert compilation.runtime.itableOffsetEntrySize() * wordSize == wordSize : "adjust the scaling in the code below";
-        lea(recvKlass, new Address(recvKlass, itableIndex, Address.ScaleFactor.timesPtr(compilation.target.arch), itentryOff));
+        assert runtime.itableOffsetEntrySize() * wordSize == wordSize : "adjust the scaling in the code below";
+        lea(recvKlass, new Address(recvKlass, itableIndex, Address.ScaleFactor.timesPtr(target.arch), itentryOff));
 
         // for (scan = klass.itable(); scan.interface() != null; scan += scanStep) {
         // if (scan.interface() == intf) {
@@ -1946,7 +1763,7 @@ public class X86MacroAssembler extends X86Assembler {
         Label foundMethod = new Label();
 
         for (int peel = 1; peel >= 0; peel--) {
-            movptr(methodResult, new Address(scanTemp, compilation.runtime.itableInterfaceOffsetInBytes()));
+            movptr(methodResult, new Address(scanTemp, runtime.itableInterfaceOffsetInBytes()));
             cmpptr(intfKlass, methodResult);
 
             if (peel != 0) {
@@ -1973,19 +1790,19 @@ public class X86MacroAssembler extends X86Assembler {
         bind(foundMethod);
 
         // Got a hit.
-        movl(scanTemp, new Address(scanTemp, compilation.runtime.itableOffsetOffsetInBytes()));
+        movl(scanTemp, new Address(scanTemp, runtime.itableOffsetOffsetInBytes()));
         movptr(methodResult, new Address(recvKlass, scanTemp, Address.ScaleFactor.times1));
     }
 
-    void checkKlassSubtype(Register subKlass, Register superKlass, Register tempReg, Label lSuccess) {
+    void checkKlassSubtype(CiRuntime runtime, Register subKlass, Register superKlass, Register tempReg, Label lSuccess) {
         // TODO: Also use the fast path!
         //Label lFailure = new Label();
         //checkKlassSubtypeFastPath(subKlass, superKlass, tempReg, lSuccess, lFailure, null, new RegisterOrConstant(-1));
-        checkKlassSubtypeSlowPath(subKlass, superKlass, tempReg, Register.noreg, lSuccess, null, false);
+        checkKlassSubtypeSlowPath(runtime, subKlass, superKlass, tempReg, Register.noreg, lSuccess, null, false);
         //bind(lFailure);
     }
 
-    void checkKlassSubtypeFastPath(Register subKlass, Register superKlass, Register tempReg, Label lSuccess, Label lFailure, Label lSlowPath, RegisterOrConstant superCheckOffset) {
+    void checkKlassSubtypeFastPath(CiRuntime runtime, Register subKlass, Register superKlass, Register tempReg, Label lSuccess, Label lFailure, Label lSlowPath, RegisterOrConstant superCheckOffset) {
         // TODO: Model the fast path!
         if (true) {
             throw Util.unimplemented();
@@ -2015,8 +1832,8 @@ public class X86MacroAssembler extends X86Assembler {
         }
         assert labelNulls <= 1 : "at most one null in the batch";
 
-        int scOffset = (compilation.runtime.headerSize() * wordSize + compilation.runtime.secondarySuperCacheOffsetInBytes());
-        int scoOffset = (compilation.runtime.headerSize() * wordSize + compilation.runtime.superCheckOffsetOffsetInBytes());
+        int scOffset = (runtime.headerSize() * wordSize + runtime.secondarySuperCacheOffsetInBytes());
+        int scoOffset = (runtime.headerSize() * wordSize + runtime.superCheckOffsetOffsetInBytes());
         Address superCheckOffsetAddr = new Address(superKlass, scoOffset);
 
         // If the pointers are equal : we are done (e.g., String[] elements).
@@ -2131,7 +1948,7 @@ public class X86MacroAssembler extends X86Assembler {
         bind(lFallthrough);
     }
 
-    void checkKlassSubtypeSlowPath(Register subKlass, Register superKlass, Register tempReg, Register temp2Reg, Label lSuccess, Label lFailure, boolean setCondCodes) {
+    void checkKlassSubtypeSlowPath(CiRuntime runtime, Register subKlass, Register superKlass, Register tempReg, Register temp2Reg, Label lSuccess, Label lFailure, boolean setCondCodes) {
         assert Register.assertDifferentRegisters(subKlass, superKlass, tempReg);
         if (temp2Reg != Register.noreg) {
             assert Register.assertDifferentRegisters(subKlass, superKlass, tempReg, temp2Reg);
@@ -2150,8 +1967,8 @@ public class X86MacroAssembler extends X86Assembler {
         assert labelNulls <= 1 : "at most one null in the batch";
 
         // a couple of useful fields in subKlass:
-        int ssOffset = (compilation.runtime.headerSize() * wordSize + compilation.runtime.secondarySupersOffsetInBytes());
-        int scOffset = (compilation.runtime.headerSize() * wordSize + compilation.runtime.secondarySuperCacheOffsetInBytes());
+        int ssOffset = (runtime.headerSize() * wordSize + runtime.secondarySupersOffsetInBytes());
+        int scOffset = (runtime.headerSize() * wordSize + runtime.secondarySuperCacheOffsetInBytes());
         Address secondarySupersAddr = new Address(subKlass, ssOffset);
         Address superCacheAddr = new Address(subKlass, scOffset);
 
@@ -2186,9 +2003,9 @@ public class X86MacroAssembler extends X86Assembler {
         // We will consult the secondary-super array.
         movptr(X86.rdi, secondarySupersAddr);
         // Load the array length. (Positive movl does right thing on LP64.)
-        movl(X86.rcx, new Address(X86.rdi, compilation.runtime.arrayLengthOffsetInBytes()));
+        movl(X86.rcx, new Address(X86.rdi, runtime.arrayLengthOffsetInBytes()));
         // Skip to start of data.
-        addptr(X86.rdi, compilation.runtime.arrayBaseOffsetInBytes(BasicType.Object));
+        addptr(X86.rdi, runtime.arrayBaseOffsetInBytes(BasicType.Object));
 
         // Scan RCX words at [RDI] for an occurrence of RAX.
         // Set NZ/Z based on last compare.
@@ -2291,89 +2108,40 @@ public class X86MacroAssembler extends X86Assembler {
 // // see MethodHandles.generateMethodHandleStub
     }
 
-    boolean verifyTlab() {
+    boolean verifyTlab(CiRuntime runtime) {
         if (C1XOptions.UseTLAB && C1XOptions.VerifyOops) {
             Label next = new Label();
             Label ok = new Label();
             Register t1 = X86.rsi;
-            Register threadReg = (compilation.target.arch.is64bit()) ? X86FrameMap.r15thread : X86.rbx;
+            Register threadReg = (target.arch.is64bit()) ? X86FrameMap.r15thread : X86.rbx;
 
             push(t1);
 
-            if (!compilation.target.arch.is64bit()) {
+            if (!target.arch.is64bit()) {
                 push(threadReg);
                 getThread(threadReg);
             }
 
-            movptr(t1, new Address(threadReg, compilation.runtime.threadTlabTopOffset()));
-            cmpptr(t1, new Address(threadReg, compilation.runtime.threadTlabStartOffset()));
+            movptr(t1, new Address(threadReg, runtime.threadTlabTopOffset()));
+            cmpptr(t1, new Address(threadReg, runtime.threadTlabStartOffset()));
             jcc(X86Assembler.Condition.aboveEqual, next);
             stop("assert(top >= start)");
             Util.shouldNotReachHere();
 
             bind(next);
-            movptr(t1, new Address(threadReg, compilation.runtime.threadTlabEndOffset()));
-            cmpptr(t1, new Address(threadReg, compilation.runtime.threadTlabTopOffset()));
+            movptr(t1, new Address(threadReg, runtime.threadTlabEndOffset()));
+            cmpptr(t1, new Address(threadReg, runtime.threadTlabTopOffset()));
             jcc(X86Assembler.Condition.aboveEqual, ok);
             stop("assert(top <= end)");
             Util.shouldNotReachHere();
 
             bind(ok);
-            if (!compilation.target.arch.is64bit()) {
+            if (!target.arch.is64bit()) {
                 pop(threadReg);
             }
             pop(t1);
         }
         return true;
-    }
-
-    int rspOffset() {
-        return rspOffset;
-    }
-
-    void setRspOffset(int n) {
-        rspOffset = n;
-    }
-
-    // Note: NEVER push values directly, but only through following pushXxx functions;
-    // This helps us to track the X86Register.rsp changes compared to the entry X86Register.rsp (.rspOffset)
-
-    void pushJint(int i) {
-        rspOffset++;
-        push(i);
-    }
-
-    void pushOop(Object o) {
-        rspOffset++;
-        pushoop(o);
-    }
-
-    // Seems to always be in wordSize
-    void pushAddr(Address a) {
-        rspOffset++;
-        pushptr(a);
-    }
-
-    void pushReg(Register r) {
-        rspOffset++;
-        push(r);
-    }
-
-    void popReg(Register r) {
-        rspOffset--;
-        pop(r);
-        assert rspOffset >= 0 : "stack offset underflow";
-    }
-
-    void decStack(int nofWords) {
-        rspOffset -= nofWords;
-        assert rspOffset >= 0 : "stack offset underflow";
-        addptr(X86.rsp, wordSize * nofWords);
-    }
-
-    void decStackAfterCall(int nofWords) {
-        rspOffset -= nofWords;
-        assert rspOffset >= 0 : "stack offset underflow";
     }
 
     // Support optimal SSE move instructions.
@@ -2426,7 +2194,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void addptr(Address dst, int src) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             addq(dst, src);
         } else {
             addl(dst, src);
@@ -2434,7 +2202,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void addptr(Register dst, Address src) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             addq(dst, src);
         } else {
             addl(dst, src);
@@ -2442,16 +2210,16 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void andptr(Register src1, Register src2) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             andq(src1, src2);
         } else {
             andl(src1, src2);
         }
     }
 
-    int lockObject(Register hdr, Register obj, Register dispHdr, Register scratch, Label slowCase) {
+    int lockObject(CiRuntime runtime, Register hdr, Register obj, Register dispHdr, Register scratch, Label slowCase) {
         int alignedMask = wordSize - 1;
-        int hdrOffset = compilation.runtime.markOffsetInBytes();
+        int hdrOffset = runtime.markOffsetInBytes();
         assert hdr == X86.rax : "hdr must be X86Register.rax :  for the cmpxchg instruction";
         assert hdr != obj && hdr != dispHdr && obj != dispHdr : "registers must be different";
         Label done = new Label();
@@ -2460,25 +2228,25 @@ public class X86MacroAssembler extends X86Assembler {
         verifyOop(obj);
 
         // save object being locked into the BasicObjectLock
-        movptr(new Address(dispHdr, compilation.runtime.basicObjectLockOffsetInBytes()), obj);
+        movptr(new Address(dispHdr, runtime.basicObjectLockOffsetInBytes()), obj);
 
         if (C1XOptions.UseBiasedLocking) {
             assert scratch != Register.noreg : "should have scratch register at this point";
             nullCheckOffset = biasedLockingEnter(dispHdr, obj, hdr, scratch, false, done, slowCase, null);
         } else {
-            nullCheckOffset = offset();
+            nullCheckOffset = codeBuffer.position();
         }
 
         // Load object header
         movptr(hdr, new Address(obj, hdrOffset));
         // and mark it as unlocked
-        orptr(hdr, compilation.runtime.unlockedValue());
+        orptr(hdr, runtime.unlockedValue());
         // save unlocked object header into the displaced header location on the stack
         movptr(new Address(dispHdr, 0), hdr);
         // test if object header is still the same (i.e. unlocked), and if so, store the
         // displaced header Pointer in the object header - if it is not the same, get the
         // object header instead
-        if (compilation.runtime.isMP()) {
+        if (runtime.isMP()) {
             lock(); // must be immediately before cmpxchg!
         }
         cmpxchgptr(dispHdr, new Address(obj, hdrOffset));
@@ -2497,7 +2265,7 @@ public class X86MacroAssembler extends X86Assembler {
         // assuming both the stack pointer and pageSize have their least
         // significant 2 bits cleared and pageSize is a power of 2
         subptr(hdr, X86.rsp);
-        andptr(hdr, alignedMask - compilation.runtime.vmPageSize());
+        andptr(hdr, alignedMask - runtime.vmPageSize());
         // for recursive locking, the result is zero => save it in the displaced header
         // location (null in the displaced hdr location indicates recursive locking)
         movptr(new Address(dispHdr, 0), hdr);
@@ -2508,16 +2276,16 @@ public class X86MacroAssembler extends X86Assembler {
         return nullCheckOffset;
     }
 
-    public void unlockObject(Register hdr, Register obj, Register dispHdr, Label slowCase) {
-        int hdrOffset = compilation.runtime.markOffsetInBytes();
+    public void unlockObject(CiRuntime runtime, Register hdr, Register obj, Register dispHdr, Label slowCase) {
+        int hdrOffset = runtime.markOffsetInBytes();
         assert dispHdr == X86.rax : "dispHdr must be X86Register.rax :  for the cmpxchg instruction";
         assert hdr != obj && hdr != dispHdr && obj != dispHdr : "registers must be different";
         Label done = new Label();
 
         if (C1XOptions.UseBiasedLocking) {
             // load object
-            movptr(obj, new Address(dispHdr, compilation.runtime.basicObjectObjOffsetInBytes()));
-            biasedLockingExit(obj, hdr, done);
+            movptr(obj, new Address(dispHdr, runtime.basicObjectObjOffsetInBytes()));
+            biasedLockingExit(runtime, obj, hdr, done);
         }
 
         // load displaced header
@@ -2528,13 +2296,13 @@ public class X86MacroAssembler extends X86Assembler {
         jcc(X86Assembler.Condition.zero, done);
         if (!C1XOptions.UseBiasedLocking) {
             // load object
-            movptr(obj, new Address(dispHdr, compilation.runtime.basicObjectObjOffsetInBytes()));
+            movptr(obj, new Address(dispHdr, runtime.basicObjectObjOffsetInBytes()));
         }
         verifyOop(obj);
         // test if object header is pointing to the displaced header, and if so, restore
         // the displaced header in the object - if the object header is not pointing to
         // the displaced header, get the object header instead
-        if (compilation.runtime.isMP()) {
+        if (runtime.isMP()) {
             lock(); // must be immediately before cmpxchg!
         }
         cmpxchgptr(hdr, new Address(obj, hdrOffset));
@@ -2582,14 +2350,14 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void xchgptr(Register src1, Register src2) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             xchgq(src1, src2);
         } else {
             xchgl(src1, src2);
         }
     }
 
-    void allocateArray(Register obj, Register len, Register t1, Register t2, int headerSize, Address.ScaleFactor scaleFactor, Register klass, Label slowCase) {
+    void allocateArray(CiRuntime runtime, Register obj, Register len, Register t1, Register t2, int headerSize, Address.ScaleFactor scaleFactor, Register klass, Label slowCase) {
         assert obj == X86.rax : "obj must be in X86Register.rax :  for cmpxchg";
         assert Register.assertDifferentRegisters(obj, len, t1, t2, klass);
 
@@ -2597,18 +2365,18 @@ public class X86MacroAssembler extends X86Assembler {
         assert (wordSize & 1) == 0 : "must be a multiple of 2 for masking code to work";
 
         // check for negative or excessive length
-        cmpptr(len, compilation.runtime.maxArrayAllocationLength());
+        cmpptr(len, runtime.maxArrayAllocationLength());
         jcc(X86Assembler.Condition.above, slowCase);
 
         Register arrSize = t2; // okay to be the same
         // align object end
-        movptr(arrSize, headerSize * wordSize + compilation.runtime.getMinObjAlignmentInBytesMask());
+        movptr(arrSize, headerSize * wordSize + runtime.getMinObjAlignmentInBytesMask());
         lea(arrSize, new Address(arrSize, len, scaleFactor));
-        andptr(arrSize, ~compilation.runtime.getMinObjAlignmentInBytesMask());
+        andptr(arrSize, ~runtime.getMinObjAlignmentInBytesMask());
 
-        tryAllocate(obj, arrSize, 0, t1, t2, slowCase);
+        tryAllocate(runtime, obj, arrSize, 0, t1, t2, slowCase);
 
-        initializeHeader(obj, klass, len, t1, t2);
+        initializeHeader(runtime, obj, klass, len, t1, t2);
 
         // clear rest of allocated space
         Register lenZero = len;
@@ -2618,28 +2386,28 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     // Defines obj, preserves varSizeInBytes
-    void tryAllocate(Register obj, Register varSizeInBytes, int conSizeInBytes, Register t1, Register t2, Label slowCase) {
+    void tryAllocate(CiRuntime runtime, Register obj, Register varSizeInBytes, int conSizeInBytes, Register t1, Register t2, Label slowCase) {
         if (C1XOptions.UseTLAB) {
-            tlabAllocate(obj, varSizeInBytes, conSizeInBytes, t1, t2, slowCase);
+            tlabAllocate(runtime, obj, varSizeInBytes, conSizeInBytes, t1, t2, slowCase);
         } else {
             edenAllocate(obj, varSizeInBytes, conSizeInBytes, t1, slowCase);
         }
     }
 
-    void initializeHeader(Register obj, Register klass, Register len, Register t1, Register t2) {
+    void initializeHeader(CiRuntime runtime, Register obj, Register klass, Register len, Register t1, Register t2) {
         assert Register.assertDifferentRegisters(obj, klass, len);
         if (C1XOptions.UseBiasedLocking && !len.isValid()) {
             assert Register.assertDifferentRegisters(obj, klass, len, t1, t2);
-            movptr(t1, new Address(klass, compilation.runtime.prototypeHeaderOffsetInBytes() + compilation.runtime.klassPartOffsetInBytes()));
-            movptr(new Address(obj, compilation.runtime.markOffsetInBytes()), t1);
+            movptr(t1, new Address(klass, runtime.prototypeHeaderOffsetInBytes() + runtime.klassPartOffsetInBytes()));
+            movptr(new Address(obj, runtime.markOffsetInBytes()), t1);
         } else {
             // This assumes that all prototype bits fit in an int
-            movptr(new Address(obj, compilation.runtime.markOffsetInBytes()), compilation.runtime.markOopDescPrototype());
+            movptr(new Address(obj, runtime.markOffsetInBytes()), runtime.markOopDescPrototype());
         }
 
-        movptr(new Address(obj, compilation.runtime.klassOffsetInBytes()), klass);
+        movptr(new Address(obj, runtime.klassOffsetInBytes()), klass);
         if (len.isValid()) {
-            movl(new Address(obj, compilation.runtime.arrayLengthOffsetInBytes()), len);
+            movl(new Address(obj, runtime.arrayLengthOffsetInBytes()), len);
         }
     }
 
@@ -2670,7 +2438,7 @@ public class X86MacroAssembler extends X86Assembler {
             shrptr(index, 1);
         }
 
-        if (compilation.target.arch.is32bit()) {
+        if (target.arch.is32bit()) {
             // index could have been not a multiple of 8 (i.e., bit 2 was set)
             Label even = new Label();
             // note: if index was a multiple of 8, than it cannot
@@ -2688,7 +2456,7 @@ public class X86MacroAssembler extends X86Assembler {
         Label loop = new Label();
         bind(loop);
         movptr(new Address(obj, index, Address.ScaleFactor.times8, hdrSizeInBytes - 1 * wordSize), t1);
-        if (compilation.target.arch.is32bit()) {
+        if (target.arch.is32bit()) {
             movptr(new Address(obj, index, Address.ScaleFactor.times8, hdrSizeInBytes - 2 * wordSize), t1);
         }
         decrement(index, 1);
@@ -2698,21 +2466,21 @@ public class X86MacroAssembler extends X86Assembler {
         bind(done);
     }
 
-    void allocateObject(Register obj, Register t1, Register t2, int headerSize, int objectSize, Register klass, Label slowCase) {
+    void allocateObject(CiRuntime runtime, Register obj, Register t1, Register t2, int headerSize, int objectSize, Register klass, Label slowCase) {
         assert obj == X86.rax : "obj must be in X86Register.rax :  for cmpxchg";
         assert obj != t1 && obj != t2 && t1 != t2 : "registers must be different"; // XXX really?
         assert headerSize >= 0 && objectSize >= headerSize : "illegal sizes";
 
-        tryAllocate(obj, Register.noreg, objectSize * wordSize, t1, t2, slowCase);
+        tryAllocate(runtime, obj, Register.noreg, objectSize * wordSize, t1, t2, slowCase);
 
-        initializeObject(obj, klass, Register.noreg, objectSize * wordSize, t1, t2);
+        initializeObject(runtime, obj, klass, Register.noreg, objectSize * wordSize, t1, t2);
     }
 
-    void initializeObject(Register obj, Register klass, Register varSizeInBytes, int conSizeInBytes, Register t1, Register t2) {
-        assert (conSizeInBytes & compilation.runtime.getMinObjAlignmentInBytesMask()) == 0 : "conSizeInBytes is not multiple of alignment";
-        int hdrSizeInBytes = compilation.runtime.instanceOopDescBaseOffsetInBytes();
+    void initializeObject(CiRuntime runtime, Register obj, Register klass, Register varSizeInBytes, int conSizeInBytes, Register t1, Register t2) {
+        assert (conSizeInBytes & runtime.getMinObjAlignmentInBytesMask()) == 0 : "conSizeInBytes is not multiple of alignment";
+        int hdrSizeInBytes = runtime.instanceOopDescBaseOffsetInBytes();
 
-        initializeHeader(obj, klass, Register.noreg, t1, t2);
+        initializeHeader(runtime, obj, klass, Register.noreg, t1, t2);
 
         // clear rest of allocated space
         Register t1Zero = t1;
@@ -2742,7 +2510,7 @@ public class X86MacroAssembler extends X86Assembler {
             Label loop = new Label();
             bind(loop);
             movptr(new Address(obj, index, Address.ScaleFactor.times8, hdrSizeInBytes - (1 * wordSize)), t1Zero);
-            if (!compilation.target.arch.is64bit()) {
+            if (!target.arch.is64bit()) {
                 movptr(new Address(obj, index, Address.ScaleFactor.times8, hdrSizeInBytes - (2 * wordSize)), t1Zero);
             }
             decrement(index, 1);
@@ -2754,7 +2522,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void cmov(Condition cc, Register dst, Register src) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             cmovq(cc, dst, src);
         } else {
             cmovl(cc, dst, src);
@@ -2762,7 +2530,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void cmovptr(Condition cc, Register dst, Address src) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             cmovq(cc, dst, src);
         } else {
             cmovl(cc, dst, src);
@@ -2770,7 +2538,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void cmovptr(Condition cc, Register dst, Register src) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             cmovq(cc, dst, src);
         } else {
             cmovl(cc, dst, src);
@@ -2778,7 +2546,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void orptr(Register dst, Register src) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             orq(dst, src);
         } else {
             orl(dst, src);
@@ -2786,7 +2554,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void orptr(Register dst, int src) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             orq(dst, src);
         } else {
             orl(dst, src);
@@ -2794,7 +2562,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void shlptr(Register dst) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             shlq(dst);
         } else {
             shll(dst);
@@ -2802,7 +2570,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void shrptr(Register dst) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             shrq(dst);
         } else {
             shrl(dst);
@@ -2810,7 +2578,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void sarptr(Register dst) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             sarq(dst);
         } else {
             sarl(dst);
@@ -2818,7 +2586,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void sarptr(Register dst, int src) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             sarq(dst, src);
         } else {
             sarl(dst, src);
@@ -2826,7 +2594,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void negptr(Register dst) {
-        if (compilation.target.arch.is64bit()) {
+        if (target.arch.is64bit()) {
             negq(dst);
         } else {
             negl(dst);
@@ -2841,20 +2609,9 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     @Override
-    public void nullCheck(Register reg) {
-        nullCheck(reg, -1);
-    }
-
-    @Override
     public void buildFrame(int frameSizeInBytes) {
-        // Make sure there is enough stack space for this method's activation.
-        // Note that we do this before doing an enter(). This matches the
-        // ordering of C2's stack overflow check / X86Register.rsp decrement and allows
-        // the SharedRuntime stack overflow handling to be consistent
-        // between the two compilers.
-        generateStackOverflowCheck(frameSizeInBytes);
-        enter();
         decrement(X86.rsp, frameSizeInBytes); // does not emit code for frameSize == 0
+        generateStackOverflowCheck();
     }
 
     public void shouldNotReachHere() {
@@ -2870,6 +2627,6 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     public int heapWordsPerLong() {
-        return 8 / compilation.target.arch.wordSize;
+        return 8 / target.arch.wordSize;
     }
 }

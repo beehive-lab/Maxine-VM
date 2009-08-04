@@ -42,6 +42,7 @@ import java.util.List;
 public abstract class FrameMap {
 
     public static final int spillSlotSizeInBytes = 4;
+    public static final int NumberOfReservedArguments = 4;
 
     int framesize;
     int argcount;
@@ -64,8 +65,7 @@ public abstract class FrameMap {
 
         assert monitors >= 0 : "not set";
         numMonitors = monitors;
-        assert reservedArgumentAreaSize >= 0 : "not set";
-        reservedArgumentAreaSize = Math.max(4, reservedArgumentAreaSize) * compilation.target.arch.wordSize;
+        reservedArgumentAreaSize = NumberOfReservedArguments * compilation.target.arch.wordSize;
 
         argcount = method.signatureType().argumentCount(!method.isStatic());
         argumentLocations = new int[argcount];
@@ -112,7 +112,15 @@ public abstract class FrameMap {
     }
 
     public CallingConvention runtimeCallingConvention(BasicType[] signature) {
-        return javaCallingConvention(signature, true);
+
+        CiLocation[] regs = new CiLocation[signature.length];
+        int preservedStackSlots = compilation.runtime.runtimeCallingConvention(signature, regs);
+        List<LIROperand> args = new ArrayList<LIROperand>(signature.length);
+        for (int i = 0; i < signature.length; i++) {
+            args.add(mapToOpr(signature[i], regs[i], true));
+        }
+
+        return new CallingConvention(args, preservedStackSlots);
     }
 
     public CallingConvention javaCallingConvention(BasicType[] signature, boolean outgoing) {
@@ -151,12 +159,11 @@ public abstract class FrameMap {
     }
 
     public Address addressForSlot(int stackSlot, int offset) {
-        return new Address(stackRegister(), stackSlot * spillSlotSizeInBytes + offset);
+        return new Address(stackRegister(), reservedArgumentAreaSize + stackSlot * spillSlotSizeInBytes + offset);
     }
 
     public int reservedArgumentAreaSize() {
-        // TODO Auto-generated method stub
-        return 0;
+        return reservedArgumentAreaSize;
     }
 
     public Address addressForMonitorLock(int monitorNo) {
@@ -190,7 +197,7 @@ public abstract class FrameMap {
                                numMonitors * compilation.runtime.sizeofBasicObjectLock() +
 
                                compilation.target.arch.framePadding,
-                               compilation.target.stackAlignment) / 4;
+                               compilation.target.stackAlignment);
 
         for (int i = 0; i < incomingArguments.length(); i++) {
           LIROperand opr = incomingArguments.at(i);
@@ -210,7 +217,7 @@ public abstract class FrameMap {
     }
 
     private int framesizeInBytes() {
-        return framesize * 4;
+        return framesize;
     }
 
     private boolean validateFrame() {
@@ -262,14 +269,13 @@ public abstract class FrameMap {
         return false;
     }
 
-    public CiLocation fpuRegname(int fpuRegnrHi) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
     public LIROperand receiverOpr() {
         return mapToOpr(BasicType.Object, compilation.runtime.receiverLocation(), false);
     }
 
     public abstract boolean allocatableRegister(Register r);
+
+    public LIROperand returnOpr(BasicType object) {
+        return LIROperandFactory.singleLocation(object, compilation.runtime.returnRegister(object));
+    }
 }

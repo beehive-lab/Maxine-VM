@@ -307,30 +307,34 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
         final ClassMethodActor classMethodActor = ClassActor.fromJava(GCRequest.class).findLocalClassMethodActor(SymbolTable.makeSymbol("run"), SignatureDescriptor.VOID);
         final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(classMethodActor);
         if (targetMethod != null) {
-            final ClassMethodActor[] directCallees = targetMethod.directCallees();
+            final Object[] directCallees = targetMethod.directCallees();
             for (int stopIndex = 0; stopIndex < directCallees.length; ++stopIndex) {
-                if (directCallees[stopIndex].name.string.equals("prepareCurrentStackReferenceMap")) {
-                    final int stopPosition = targetMethod.stopPosition(stopIndex);
-                    final int nextCallPosition = targetMethod.findNextCall(stopPosition);
-                    if (nextCallPosition >= 0) {
-                        final int[] stopPositions = targetMethod.stopPositions();
-                        for (int nextCallStopIndex = 0; nextCallStopIndex < stopPositions.length; ++nextCallStopIndex) {
-                            if (stopPositions[nextCallStopIndex] == nextCallPosition) {
-                                final ByteArrayBitMap nextCallRefmap = targetMethod.frameReferenceMapFor(nextCallStopIndex);
-                                final ByteArrayBitMap firstCallRefmap = targetMethod.frameReferenceMapFor(stopIndex);
-                                if (nextCallRefmap.equals(firstCallRefmap)) {
-                                    // OK
-                                    return;
+                final Object current = directCallees[stopIndex];
+                if (current instanceof MethodActor) {
+                    final MethodActor currentCallee = (MethodActor) current;
+                    if (currentCallee.name.string.equals("prepareCurrentStackReferenceMap")) {
+                        final int stopPosition = targetMethod.stopPosition(stopIndex);
+                        final int nextCallPosition = targetMethod.findNextCall(stopPosition);
+                        if (nextCallPosition >= 0) {
+                            final int[] stopPositions = targetMethod.stopPositions();
+                            for (int nextCallStopIndex = 0; nextCallStopIndex < stopPositions.length; ++nextCallStopIndex) {
+                                if (stopPositions[nextCallStopIndex] == nextCallPosition) {
+                                    final ByteArrayBitMap nextCallRefmap = targetMethod.frameReferenceMapFor(nextCallStopIndex);
+                                    final ByteArrayBitMap firstCallRefmap = targetMethod.frameReferenceMapFor(stopIndex);
+                                    if (nextCallRefmap.equals(firstCallRefmap)) {
+                                        // OK
+                                        return;
+                                    }
+                                    throw ProgramError.unexpected(String.format(
+                                        "Reference maps not equal in %s for calls to VmThreadLocal.prepareCurrentStackReferenceMap() and _procedure.run():%n" +
+                                        "    frame refmap 1: %s%n" +
+                                        "    frame refmap 2: %s",
+                                        classMethodActor.format("%H.%n(%p)"), firstCallRefmap, nextCallRefmap));
                                 }
-                                throw ProgramError.unexpected(String.format(
-                                    "Reference maps not equal in %s for calls to VmThreadLocal.prepareCurrentStackReferenceMap() and _procedure.run():%n" +
-                                    "    frame refmap 1: %s%n" +
-                                    "    frame refmap 2: %s",
-                                    classMethodActor.format("%H.%n(%p)"), firstCallRefmap, nextCallRefmap));
                             }
                         }
+                        throw ProgramError.unexpected("Cannot find stop in " + classMethodActor.format("%H.%n(%p)") + " for call to _procedure.run()");
                     }
-                    throw ProgramError.unexpected("Cannot find stop in " + classMethodActor.format("%H.%n(%p)") + " for call to _procedure.run()");
                 }
             }
             throw ProgramError.unexpected("Cannot find stop in " + classMethodActor.format("%H.%n(%p)") + " for call to VmThreadLocal.prepareCurrentStackReferenceMap()");

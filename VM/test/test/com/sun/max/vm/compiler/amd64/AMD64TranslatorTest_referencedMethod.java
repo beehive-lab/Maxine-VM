@@ -78,8 +78,10 @@ public class AMD64TranslatorTest_referencedMethod extends CompilerTestCase<Targe
 
         System.out.println("Direct Callees: ");
         if (targetMethod.directCallees() != null) {
-            for (MethodActor directCallee : targetMethod.directCallees()) {
-                listMethodActor(directCallee, methodActors);
+            for (Object directCallee : targetMethod.directCallees()) {
+                if (directCallee instanceof MethodActor) {
+                    listMethodActor((MethodActor) directCallee, methodActors);
+                }
             }
         }
 

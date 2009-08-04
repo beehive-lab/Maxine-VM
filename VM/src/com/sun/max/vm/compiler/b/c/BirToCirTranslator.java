@@ -143,7 +143,7 @@ public class BirToCirTranslator extends CirGenerator {
                 }
             }
             if (wrapperHolder != null) {
-                final ClassMethodActor wrapperClassMethodActor = (ClassMethodActor) MethodActor.fromJava(WRAPPED.Static.getWrapper(classMethodActor.toJava(), wrapperHolder));
+                final ClassMethodActor wrapperClassMethodActor = (ClassMethodActor) MethodActor.fromJava(WRAPPED.Static.getWrapper(classMethodActor, wrapperHolder));
                 final CirMethod wrapperCirMethod = makeIrMethod(wrapperClassMethodActor);
                 notifyBeforeTransformation(wrapperCirMethod, null, WRAPPER_APPLICATION);
                 final CirClosure wrappedCirClosure = CirWrapping.apply(wrapperCirMethod, cirClosure);
