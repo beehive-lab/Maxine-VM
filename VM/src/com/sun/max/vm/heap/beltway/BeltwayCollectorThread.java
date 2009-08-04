@@ -35,10 +35,10 @@ public class BeltwayCollectorThread extends Thread {
     private static volatile int runningGCThreads = 0;
     private static volatile boolean start = false;
     public static final Object callerToken = new Object();
-    public static Object[] tokens = new Object[BeltwayConfiguration.numberOfGCThreads];
+    public static Object[] tokens = new Object[BeltwayHeapScheme.numberOfGCThreads];
 
     static {
-        for (int i = 0; i < BeltwayConfiguration.numberOfGCThreads; i++) {
+        for (int i = 0; i < BeltwayHeapScheme.numberOfGCThreads; i++) {
             tokens[i] = new Object();
         }
     }
@@ -117,7 +117,7 @@ public class BeltwayCollectorThread extends Thread {
     private void enter() {
         synchronized (callerToken) {
             runningGCThreads++;
-            if (runningGCThreads == BeltwayConfiguration.numberOfGCThreads) {
+            if (runningGCThreads == BeltwayHeapScheme.numberOfGCThreads) {
                 try {
                     if (Heap.verbose()) {
                         Log.println("Pausing Stop The World Daemon");

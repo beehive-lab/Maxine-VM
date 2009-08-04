@@ -32,12 +32,17 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.tele.*;
 
 /**
+ * An Heap Scheme for a Appel-style collector implemented with Beltway.
+ * Uses two belts: one for the nursery and one for the mature space.
+ *
  * @author Christos Kotselidis
+ * @author Laurent Daynes
  */
 
 public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
 
     private static int[] DEFAULT_BELT_HEAP_PERCENTAGE = new int[] {70, 30};
+    private final String [] BELT_DESCRIPTIONS = new String[] {"Nursery Belt", "Mature Belt" };
 
     Runnable minorGCCollector;
     Runnable fullGCCollector;
@@ -55,8 +60,13 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
     }
 
     @Override
-    protected int [] defaultBeltHeapPercentage() {
+    protected int [] beltHeapPercentage() {
         return DEFAULT_BELT_HEAP_PERCENTAGE;
+    }
+
+    @Override
+    protected String [] beltDescriptions() {
+        return BELT_DESCRIPTIONS;
     }
 
     @Override
@@ -70,7 +80,7 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
             tlabAllocationBelt = getNurserySpace();
             // Watch out: the following create a MemoryRegion array
             InspectableHeapInfo.init(getNurserySpace(), getMatureSpace());
-            if (BeltwayConfiguration.parallelScavenging) {
+            if (parallelScavenging) {
                 minorGCCollector =  new ParMinorGCCollector();
                 fullGCCollector = new ParFullGCCollector();
             } else {
@@ -95,12 +105,21 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
         return beltManager.getBelt(1);
     }
 
+    @INLINE
+    public  Size getUsableMemory() {
+        return getMaxHeapSize().dividedBy(2);
+    }
+
+    @INLINE
+    public  Size getCopyReserveMemory() {
+        return getMaxHeapSize().minus(getUsableMemory());
+    }
 
     public synchronized boolean collectGarbage(Size requestedFreeSpace) {
         boolean result = false;
         if (minorCollect(requestedFreeSpace)) {
             result = true;
-            if (getMatureSpace().getUsedMemorySize().greaterEqual(BeltwayHeapSchemeConfiguration.getMaxHeapSize().dividedBy(2))) {
+            if (getMatureSpace().getUsedMemorySize().greaterEqual(getUsableMemory())) {
                 result = majorCollect(requestedFreeSpace);
             }
         }
