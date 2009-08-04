@@ -52,10 +52,7 @@ public abstract class Safepoint {
 
     public static final Word THREAD_IN_JAVA = Address.fromInt(0);
     public static final Word THREAD_IN_NATIVE = Address.fromInt(1);
-    public static final Word THREAD_IN_JAVA_STOPPING_FOR_GC = Address.fromInt(2);
-    public static final Word THREAD_IN_GC_FROM_JAVA = Address.fromInt(3);
-    public static final Word THREAD_IN_GC_FROM_NATIVE = Address.fromInt(4);
-    public static final Word THREAD_IN_GC_FROM_JAVA_DONE = Address.fromInt(5);
+    public static final Word THREAD_IN_GC = Address.fromInt(2);
 
     public enum State implements PoolObject {
         ENABLED(SAFEPOINTS_ENABLED_THREAD_LOCALS),
@@ -139,15 +136,7 @@ public abstract class Safepoint {
     public static void reset(Pointer vmThreadLocals) {
         if (UseCASBasedGCMutatorSynchronization) {
             final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-            Word state = enabledVmThreadLocals.getWord(MUTATOR_STATE.index);
-            if (state.equals(THREAD_IN_GC_FROM_JAVA)) {
-                enabledVmThreadLocals.setWord(MUTATOR_STATE.index, THREAD_IN_GC_FROM_JAVA_DONE);
-            } else {
-                if (!state.equals(THREAD_IN_GC_FROM_NATIVE)) {
-                    FatalError.unexpected("Encountered thread in illegal state");
-                }
-                enabledVmThreadLocals.setWord(MUTATOR_STATE.index, THREAD_IN_NATIVE);
-            }
+            enabledVmThreadLocals.setWord(MUTATOR_STATE.index, THREAD_IN_NATIVE);
         }
         SAFEPOINT_LATCH.setVariableWord(vmThreadLocals, SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals));
     }

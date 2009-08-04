@@ -116,7 +116,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     }
 
     protected void setWarning() {
-        highlight();
+        //highlight();
     }
 
     /**
