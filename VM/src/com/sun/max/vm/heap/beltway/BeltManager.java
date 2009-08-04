@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.heap.beltway;
 
-import java.util.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -30,39 +28,27 @@ import com.sun.max.vm.heap.*;
 
 /**
  * @author Christos Kotselidis
+ * @author Laurent Daynes
  */
 
 public final class BeltManager {
-
-    // Initial number of belts, used only for the bootstrap of the heap
-    private static final int MAX_INITIAL_BELTS = 5;
-
-    // The List of Belts used
-    private static final List<Belt> belts = new ArrayList<Belt>();
+    private final BeltwayHeapScheme heapScheme;
+    private final Belt [] belts;
 
     private Belt applicationHeap;
 
     private Belt tempBelt;
 
-
-
-    public BeltManager() {
+    public BeltManager(BeltwayHeapScheme heapScheme) {
+        this.heapScheme = heapScheme;
         applicationHeap = new Belt();
         tempBelt = new Belt();
-    }
-
-    @INLINE
-    public void createBelts() {
-        for (int i = 0; i < MAX_INITIAL_BELTS; i++) {
-            belts.add(new Belt());
+        final String [] beltDescriptions = heapScheme.beltDescriptions();
+        belts = new Belt[beltDescriptions.length];
+        for (int i = 0; i < belts.length; i++) {
+            belts[i] = new Belt(i, beltDescriptions[i]);
         }
     }
-
-    @INLINE
-    public void matchStartAllocationMark(Belt belt) {
-        belt.setStart(belt.getAllocationMark());
-    }
-
 
     public void swapBelts(Belt from, Belt to) {
         final Address oldFromSpaceStart = from.start();
@@ -77,50 +63,39 @@ public final class BeltManager {
 
     }
 
-    @INLINE
-    private void initializeFirstBelt() {
-        final Size size = calculateBeltSize(0);
-        belts.get(0).setStart(BeltwayHeapSchemeConfiguration.getApplicationHeapStartAddress());
-        belts.get(0).setEnd(belts.get(0).start().plus(size));
-        belts.get(0).setIndex(0);
-        belts.get(0).setFramePercentageOfUsableMemory(BeltwayConfiguration.getPercentOfUsableMemoryPerBelt(0));
-        belts.get(0).resetAllocationMark();
-        tempBelt.resetAllocationMark();
+    public int numberOfBelts() {
+        return belts.length;
     }
 
-
     public void initializeBelts() {
-        initializeFirstBelt();
-        int i;
-        for (i = 1; i < BeltwayConfiguration.getNumberOfBelts() - 1; i++) {
-            belts.get(i).setStart(belts.get(i - 1).end());
-            belts.get(i).setEnd(belts.get(i).start().plus(calculateBeltSize(i)));
-            belts.get(i).setIndex(i);
-            belts.get(i).resetAllocationMark();
-            belts.get(i).setFramePercentageOfUsableMemory(BeltwayConfiguration.getPercentOfUsableMemoryPerBelt(i));
+        final Size heapSize = heapScheme.getMaxHeapSize();
+        Address nextBeltStart = heapScheme.getHeapStart();
+        int [] percentagesOfHeapMemoryPerBelt = heapScheme.beltHeapPercentage();
+        tempBelt.resetAllocationMark();
+        int beltIndex = 0;
+        Belt belt = null;
+        while (beltIndex < numberOfBelts() - 1) {
+            belt = belts[beltIndex];
+            belt.setStart(nextBeltStart);
+            final Size beltSize =  heapSize.times(percentagesOfHeapMemoryPerBelt[beltIndex]).dividedBy(100).roundedUpBy(BeltwayHeapScheme.BELT_ALIGNMENT).asSize();
+            belt.setSize(beltSize);
+            nextBeltStart = nextBeltStart.plus(beltSize);
+            belt.resetAllocationMark();
+            beltIndex++;
         }
         // Initialize the last belt.
         // Because of the alignment the last belt will be a little bit smaller
         // than the previous ones, as it has to stop at the belt's boundaries
-        if (i < BeltwayConfiguration.getNumberOfBelts()) {
-            belts.get(i).setStart(belts.get(i - 1).end());
-            belts.get(i).setEnd(belts.get(0).start().plus(BeltwayConfiguration.getMaxHeapSize().asAddress()));
-            belts.get(i).setFramePercentageOfUsableMemory(BeltwayConfiguration.getPercentOfUsableMemoryPerBelt(i));
-            belts.get(i).setIndex(i);
-            belts.get(i).resetAllocationMark();
-        }
-    }
+        belt = belts[beltIndex];
+        belt.setStart(nextBeltStart);
+        belt.setEnd(heapScheme.getHeapStart().plus(heapScheme.getMaxHeapSize()));
+        belt.resetAllocationMark();
 
-    @INLINE
-    private Size calculateBeltSize(int i) {
-        final Size heapSize = BeltwayHeapSchemeConfiguration.getMaxHeapSize();
-        final Size beltSize = heapSize.times(BeltwayConfiguration.getPercentOfUsableMemoryPerBelt(i)).dividedBy(100);
-        return beltSize.roundedUpBy(BeltwayHeapSchemeConfiguration.TLAB_SIZE.toInt()).asSize();
     }
 
     @INLINE
     public Address getEnd() {
-        return belts.get(BeltwayConfiguration.getNumberOfBelts() - 1).end();
+        return belts[numberOfBelts() - 1].end();
     }
 
     @INLINE
@@ -143,7 +118,7 @@ public final class BeltManager {
 
     @INLINE
     public Belt getBelt(int index) {
-        return belts.get(index);
+        return belts[index];
     }
 
     @INLINE
@@ -167,30 +142,38 @@ public final class BeltManager {
 
     @INLINE
     public Belt getApplicationHeap() {
-        applicationHeap.setStart(BeltwayConfiguration.getApplicationHeapStartAddress());
-        applicationHeap.setEnd(BeltwayConfiguration.getApplicationHeapEndAddress());
+        applicationHeap.setStart(heapScheme.getHeapStart());
+        applicationHeap.setSize(heapScheme.getMaxHeapSize());
         return applicationHeap;
     }
 
 
     public void printBeltsInfo() {
-        for (int i = 0; i < BeltwayConfiguration.getNumberOfBelts(); i++) {
-            belts.get(i).printInfo();
+        for (int i = 0; i < belts.length; i++) {
+            belts[i].printInfo();
         }
     }
 
     public Size reportFreeSpace() {
         Size freeSize = Size.zero();
-        for (int i = 0; i < BeltwayConfiguration.getNumberOfBelts(); i++) {
-            freeSize = freeSize.plus(belts.get(i).getRemainingMemorySize());
+        for (int i = 0; i <  belts.length; i++) {
+            freeSize = freeSize.plus(belts[i].getRemainingMemorySize());
         }
         return freeSize;
     }
 
+    public Size reportUsedSpace() {
+        Size usedSize = Size.zero();
+        for (int i = 0; i <  belts.length; i++) {
+            usedSize = usedSize.plus(belts[i].getUsedMemorySize());
+        }
+        return usedSize;
+    }
+
     public void printTotalMemory() {
         Size size = Heap.bootHeapRegion.size().plus(Code.bootCodeRegion.size()).plus(Code.getCodeSize());
-        for (int i = 0; i < BeltwayConfiguration.getNumberOfBelts(); i++) {
-            size = size.plus(belts.get(i).size());
+        for (int i = 0; i <  belts.length; i++) {
+            size = size.plus(belts[i].size());
         }
         Log.print("Total Memory: ");
         Log.println(size.toLong());

@@ -41,9 +41,9 @@ public class BeltwayHeapVerifier {
     private final SequentialHeapRootsScanner stackAndMonitorVerifier;
     private final PointerVisitor pointerVisitor;
 
-    public BeltwayHeapVerifier(PointerVisitor pointerVisitor) {
+    public BeltwayHeapVerifier() {
+        pointerVisitor = new PointerVisitor(cellVerifier);
         stackAndMonitorVerifier = new SequentialHeapRootsScanner(pointerVisitor);
-        this.pointerVisitor = pointerVisitor;
     }
 
     public void initialize(Belt from, Belt to) {
