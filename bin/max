@@ -871,7 +871,7 @@ function run_inspect() {
         shift
     done    
 
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.ins.MaxineInspector -d -trace=1 ${inspector_args} -a="$vm_args"
+    run ${jvm_exe} -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar com.sun.max.ins.MaxineInspector -d -trace=1 ${inspector_args} -a="$vm_args"
 }
 
 #=======================================
