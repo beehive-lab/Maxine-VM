@@ -155,7 +155,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            new AboutDialog(inspection());
+            AboutDialog.create(inspection());
         }
     }
 
@@ -182,7 +182,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            new PreferenceDialog(inspection());
+            PreferenceDialog.create(inspection());
         }
     }
 

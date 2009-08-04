@@ -21,7 +21,6 @@
 package com.sun.max.ins;
 
 import java.awt.*;
-import java.awt.event.*;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -39,16 +38,13 @@ import com.sun.max.ins.object.*;
  *
  * @author Michael Van De Vanter
  */
-public class PreferenceDialog extends InspectorDialog {
+public class PreferenceDialog extends SimpleDialog {
 
-    public PreferenceDialog(final Inspection inspection) {
-        super(inspection, "Preferences", false);
+    private static final Border border = BorderFactory.createLineBorder(Color.black);
 
-        final JPanel dialogPanel = new InspectorPanel(inspection, new BorderLayout());
+    public static PreferenceDialog create(Inspection inspection) {
 
         final JPanel prefPanel = new InspectorPanel(inspection, new SpringLayout());
-
-        final Border border = BorderFactory.createLineBorder(Color.black);
 
         final JPanel generalLabelPanel = new InspectorPanel(inspection, new BorderLayout());
         generalLabelPanel.setBorder(border);
@@ -149,6 +145,15 @@ public class PreferenceDialog extends InspectorDialog {
         registersInspectorPanel.setBorder(border);
         prefPanel.add(registersInspectorPanel);
 
+        final JPanel stackLabelPanel = new InspectorPanel(inspection, new BorderLayout());
+        stackLabelPanel.setBorder(border);
+        stackLabelPanel.add(new TextLabel(inspection, "Stacks"), BorderLayout.WEST);
+        prefPanel.add(stackLabelPanel);
+
+        final JPanel stackInspectorPanel = StackInspector.globalPreferencesPanel(inspection);
+        stackInspectorPanel.setBorder(border);
+        prefPanel.add(stackInspectorPanel);
+
         final JPanel vmThreadLocalsLabelPanel = new InspectorPanel(inspection, new BorderLayout());
         vmThreadLocalsLabelPanel.setBorder(border);
         vmThreadLocalsLabelPanel.add(new TextLabel(inspection, "VM Thread Locals"), BorderLayout.WEST);
@@ -168,20 +173,11 @@ public class PreferenceDialog extends InspectorDialog {
         prefPanel.add(bootImageInspectorPanel);
 
         SpringUtilities.makeCompactGrid(prefPanel, 2);
+        return new PreferenceDialog(inspection, prefPanel);
+    }
 
-        final JPanel buttonsPanel = new InspectorPanel(inspection);
-        buttonsPanel.add(new InspectorButton(inspection, new AbstractAction("Close") {
-            public void actionPerformed(ActionEvent e) {
-                inspection.settings().save();
-                dispose();
-            }
-        }));
-        dialogPanel.add(prefPanel, BorderLayout.CENTER);
-        dialogPanel.add(buttonsPanel, BorderLayout.SOUTH);
-        setContentPane(dialogPanel);
-        pack();
-        inspection.gui().moveToMiddle(this);
-        setVisible(true);
+    public PreferenceDialog(Inspection inspection, JPanel panel) {
+        super(inspection, panel, "Inspector Preferences", false);
     }
 
 }

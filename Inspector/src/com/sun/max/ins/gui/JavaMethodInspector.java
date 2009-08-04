@@ -142,7 +142,7 @@ public class JavaMethodInspector extends MethodInspector {
         return new InspectorAction(inspection(), "View Options") {
             @Override
             protected void procedure() {
-                new JavaMethodInspectorViewOptionsDialog(inspection());
+                showViewOptionsDialog(inspection());
             }
         };
     }
@@ -385,52 +385,33 @@ public class JavaMethodInspector extends MethodInspector {
         }
     }
 
+    private void showViewOptionsDialog(Inspection inspection) {
 
-    private final class JavaMethodInspectorViewOptionsDialog extends InspectorDialog {
+        final JPanel prefPanel = new InspectorPanel(inspection, new SpringLayout());
 
-        JavaMethodInspectorViewOptionsDialog(Inspection inspection) {
-            super(inspection, "Java Method Inspector View Options", false);
+        final Border border = BorderFactory.createLineBorder(Color.black);
 
-            final JPanel dialogPanel = new InspectorPanel(inspection, new BorderLayout());
+        final JPanel thisLabelPanel = new InspectorPanel(inspection, new BorderLayout());
+        thisLabelPanel.setBorder(border);
+        thisLabelPanel.add(new TextLabel(inspection, "This Method"), BorderLayout.WEST);
+        prefPanel.add(thisLabelPanel);
 
-            final JPanel prefPanel = new InspectorPanel(inspection, new SpringLayout());
+        final JPanel thisOptionsPanel = new ViewOptionsPanel(inspection);
+        thisOptionsPanel.setBorder(border);
+        prefPanel.add(thisOptionsPanel);
 
-            final Border border = BorderFactory.createLineBorder(Color.black);
+        final JPanel prefslLabelPanel = new InspectorPanel(inspection, new BorderLayout());
+        prefslLabelPanel.setBorder(border);
+        prefslLabelPanel.add(new TextLabel(inspection, "Preferences"), BorderLayout.WEST);
+        prefPanel.add(prefslLabelPanel);
 
-            final JPanel thisLabelPanel = new InspectorPanel(inspection, new BorderLayout());
-            thisLabelPanel.setBorder(border);
-            thisLabelPanel.add(new TextLabel(inspection, "This Method"), BorderLayout.WEST);
-            prefPanel.add(thisLabelPanel);
+        final JPanel prefsOptionsPanel = MethodInspectorPreferences.globalPreferences(inspection).getPanel();
+        prefsOptionsPanel.setBorder(border);
+        prefPanel.add(prefsOptionsPanel);
 
-            final JPanel thisOptionsPanel = new ViewOptionsPanel(inspection);
-            thisOptionsPanel.setBorder(border);
-            prefPanel.add(thisOptionsPanel);
+        SpringUtilities.makeCompactGrid(prefPanel, 2);
 
-            final JPanel prefslLabelPanel = new InspectorPanel(inspection, new BorderLayout());
-            prefslLabelPanel.setBorder(border);
-            prefslLabelPanel.add(new TextLabel(inspection, "Preferences"), BorderLayout.WEST);
-            prefPanel.add(prefslLabelPanel);
-
-            final JPanel prefsOptionsPanel = MethodInspectorPreferences.globalPreferences(inspection).getPanel();
-            prefsOptionsPanel.setBorder(border);
-            prefPanel.add(prefsOptionsPanel);
-
-            SpringUtilities.makeCompactGrid(prefPanel, 2);
-
-            final JPanel buttons = new InspectorPanel(inspection);
-            buttons.add(new JButton(new InspectorAction(inspection, "Close") {
-                @Override
-                protected void procedure() {
-                    dispose();
-                }
-            }));
-
-            dialogPanel.add(prefPanel, BorderLayout.CENTER);
-            dialogPanel.add(buttons, BorderLayout.SOUTH);
-            setContentPane(dialogPanel);
-            pack();
-            inspection.gui().setLocationRelativeToMouse(this, 5);
-            setVisible(true);
-        }
+        new SimpleDialog(inspection, prefPanel, "Java Method Inspector View Options", true);
     }
+
 }

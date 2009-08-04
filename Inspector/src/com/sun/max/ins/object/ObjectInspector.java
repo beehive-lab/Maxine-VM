@@ -150,7 +150,7 @@ public abstract class ObjectInspector extends Inspector {
         return new InspectorAction(inspection(), "View Options") {
             @Override
             public void procedure() {
-                new ObjectInspectorPreferencesDialog(inspection());
+                showViewOptionsDialog(inspection());
             }
         };
     }
@@ -414,55 +414,32 @@ public abstract class ObjectInspector extends Inspector {
         }
     }
 
-    /**
-     * A model dialog that allows object inspection options to be set:  both for the instance being inspected and global, persistent preferences.
-     */
-    private final class ObjectInspectorPreferencesDialog extends InspectorDialog {
+    private void showViewOptionsDialog(Inspection inspection) {
 
-        ObjectInspectorPreferencesDialog(Inspection inspection) {
-            super(inspection, "Object Inspector Preferences", false);
+        final JPanel prefPanel = new InspectorPanel(inspection, new SpringLayout());
+        final Border border = BorderFactory.createLineBorder(Color.black);
 
-            final JPanel dialogPanel = new InspectorPanel(inspection, new BorderLayout());
+        final JPanel thisLabelPanel = new InspectorPanel(inspection, new BorderLayout());
+        thisLabelPanel.setBorder(border);
+        thisLabelPanel.add(new TextLabel(inspection, "This Object"), BorderLayout.WEST);
+        prefPanel.add(thisLabelPanel);
 
-            final JPanel prefPanel = new InspectorPanel(inspection, new SpringLayout());
+        final JPanel thisOptionsPanel = new ViewOptionsPanel(inspection);
+        thisOptionsPanel.setBorder(border);
+        prefPanel.add(thisOptionsPanel);
 
-            final Border border = BorderFactory.createLineBorder(Color.black);
+        final JPanel prefslLabelPanel = new InspectorPanel(inspection, new BorderLayout());
+        prefslLabelPanel.setBorder(border);
+        prefslLabelPanel.add(new TextLabel(inspection, "Preferences"), BorderLayout.WEST);
+        prefPanel.add(prefslLabelPanel);
 
-            final JPanel thisLabelPanel = new InspectorPanel(inspection, new BorderLayout());
-            thisLabelPanel.setBorder(border);
-            thisLabelPanel.add(new TextLabel(inspection, "This Object"), BorderLayout.WEST);
-            prefPanel.add(thisLabelPanel);
+        final JPanel prefsOptionsPanel = ObjectInspectorPreferences.globalPreferencesPanel(inspection);
+        prefsOptionsPanel.setBorder(border);
+        prefPanel.add(prefsOptionsPanel);
 
-            final JPanel thisOptionsPanel = new ViewOptionsPanel(inspection);
-            thisOptionsPanel.setBorder(border);
-            prefPanel.add(thisOptionsPanel);
+        SpringUtilities.makeCompactGrid(prefPanel, 2);
 
-            final JPanel prefslLabelPanel = new InspectorPanel(inspection, new BorderLayout());
-            prefslLabelPanel.setBorder(border);
-            prefslLabelPanel.add(new TextLabel(inspection, "Preferences"), BorderLayout.WEST);
-            prefPanel.add(prefslLabelPanel);
-
-            final JPanel prefsOptionsPanel = ObjectInspectorPreferences.globalPreferencesPanel(inspection);
-            prefsOptionsPanel.setBorder(border);
-            prefPanel.add(prefsOptionsPanel);
-
-            SpringUtilities.makeCompactGrid(prefPanel, 2);
-
-            final JPanel buttonPanel = new InspectorPanel(inspection);
-            buttonPanel.add(new JButton(new InspectorAction(inspection, "Close") {
-                @Override
-                protected void procedure() {
-                    dispose();
-                }
-            }));
-
-            dialogPanel.add(prefPanel, BorderLayout.CENTER);
-            dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
-            setContentPane(dialogPanel);
-            pack();
-            inspection.gui().setLocationRelativeToMouse(this, 5);
-            setVisible(true);
-        }
+        new SimpleDialog(inspection, prefPanel, "Object Inspector Preferences", true);
     }
 
 }
