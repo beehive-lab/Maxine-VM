@@ -486,6 +486,11 @@ public class MaxCiRuntime implements CiRuntime {
         throw Util.unimplemented();
     }
 
+    @Override
+    public int runtimeCallingConvention(BasicType[] signature, CiLocation[] regs) {
+        return javaCallingConvention(signature, regs, true);
+    }
+
     public int javaCallingConvention(BasicType[] types, CiLocation[] result, boolean outgoing) {
 
         assert result.length == types.length;
@@ -603,23 +608,77 @@ public class MaxCiRuntime implements CiRuntime {
         return 0;
     }
 
-    public int convertToPointer32(Object obj) {
-        if (obj == nonOopWord) {
-            // Return something that is not 0 and does not look like an oop (neither high nor low word).
-            return 1;
-        }
-
-        // TODO: Determine how to get address of an object in Maxine
-        return 0;
+    @Override
+    public Register exceptionOopRegister() {
+        return X86.rax;
     }
 
-    public long convertToPointer64(Object obj) {
-        if (obj == nonOopWord) {
-            // Return something that is not 0 and does not look like an oop (neither high nor low word).
-            return 1;
+    @Override
+    public Register returnRegister(BasicType object) {
+
+        if (object == BasicType.Void) {
+            return Register.noreg;
         }
-        // TODO: Determine how to get address of an object in Maxine
-        return 0;
+
+        if (object == BasicType.Float || object == BasicType.Double) {
+            return X86.xmm0;
+        }
+        return X86.rax;
     }
 
+    public static void skeletonSlowSubtypeCheck() {
+
+    }
+
+    int memberIndex;
+
+    @Override
+    public Object registerTargetMethod(CiTargetMethod ciTargetMethod) {
+//        ClassMethodActor classMethodActor = null;
+//        try {
+//            classMethodActor = (ClassMethodActor) MethodActor.fromJava(MaxCiRuntime.class.getMethod("skeleton" + globalStubID.toString()));
+//        } catch (SecurityException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        } catch (NoSuchMethodException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        }
+
+        //new StaticMethodActor(new Utf8Constant(globalStubID.toString()), SignatureDescriptor.fromJava(Void.TYPE), Actor.ACC_PUBLIC | Actor.ACC_STATIC, null);
+        //classMethodActor.assignHolder(ClassActor.fromJava(MaxCiRuntime.class), memberIndex++);
+//        ClassActor classActor = ClassActor.fromJava(MaxCiRuntime.class);
+//        ClassMethodActor classMethodActor = new StaticMethodActor(new Utf8Constant("skeleton" + globalStubID.toString()), SignatureDescriptor.fromJava(Void.TYPE), Actor.ACC_PUBLIC | Actor.ACC_STATIC, null);
+//        classMethodActor.assignHolder(classActor, 0);
+
+
+        C1XTargetMethodGenerator generator = new C1XTargetMethodGenerator(null, ciTargetMethod);
+        //assert !globalStubCache.containsKey(globalStubID);
+        final C1XTargetMethod targetMethod = generator.finish();
+        //globalStubCache.put(globalStubID, targetMethod);
+        return targetMethod;
+
+
+//        MethodState state = VMConfiguration.target().compilationScheme().makeMethodState(classMethodActor);
+//
+//        if (state.currentTargetMethod(CompilationDirective.STUB) == null) {
+//
+//            AdaptiveMethodState methodState = (AdaptiveMethodState) state;
+//            methodState.setTargetMethod(targetMethod, CompilationDirective.STUB);
+//        }
+//
+//
+//
+//        classMethodActor.setMethodState(new MethodState(classMethodActor, 1) {
+//
+//            @Override
+//            public TargetMethod currentTargetMethod() {
+//                return targetMethod;
+//            }
+//
+//            @Override
+//            public TargetMethod currentTargetMethod(CompilationDirective compilationDirective) {
+//                return targetMethod;
+//            }});
+    }
 }

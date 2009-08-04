@@ -30,15 +30,10 @@ import com.sun.max.vm.compiler.target.*;
  *
  * @author Laurent Daynes
  */
-public abstract class AdapterStackFrame<AdapterStackFrameLayout_Type extends AdapterStackFrameLayout> extends JavaStackFrame<AdapterStackFrameLayout_Type> {
+public class AdapterStackFrame extends JavaStackFrame {
 
-    public AdapterStackFrame(StackFrame callee, AdapterStackFrameLayout_Type layout, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
+    public AdapterStackFrame(StackFrame callee, AdapterStackFrameLayout layout, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
         super(callee, layout, targetMethod, instructionPointer, framePointer, stackPointer);
-    }
-
-    @Override
-    public final boolean isAdapter() {
-        return true;
     }
 
     /**

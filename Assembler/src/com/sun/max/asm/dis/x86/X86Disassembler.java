@@ -390,6 +390,12 @@ public abstract class X86Disassembler extends Disassembler {
             }
         }
         if (header.instructionSelectionPrefix == X86Opcode.REPE || header.instructionSelectionPrefix == X86Opcode.REPNE) {
+
+            stream.reset();
+            final int size = 1;
+            final byte[] data = new byte[size];
+            Streams.readFully(stream, data);
+
             final X86InstructionHeader prefixHeader = new X86InstructionHeader();
             prefixHeader.opcode1 = header.instructionSelectionPrefix;
             final Sequence<X86Template> prefixTemplates = headerToTemplates().get(prefixHeader);

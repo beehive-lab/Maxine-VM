@@ -316,12 +316,13 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
         // XXX: in Maxine's runtime, the exception object is passed in a physical register
         LIROperand threadReg = getThreadPointer();
-        lir.move(new LIRAddress(threadReg, compilation.runtime.threadExceptionOopOffset(), BasicType.Object), exceptionOopOpr());
+        LIROperand exceptionOopOpr = LIROperandFactory.singleLocation(BasicType.Object, compilation.runtime.exceptionOopRegister());
+        lir.move(new LIRAddress(threadReg, compilation.runtime.threadExceptionOopOffset(), BasicType.Object), exceptionOopOpr);
         lir.move(LIROperandFactory.oopConst(null), new LIRAddress(threadReg, compilation.runtime.threadExceptionOopOffset(), BasicType.Object));
         lir.move(LIROperandFactory.oopConst(null), new LIRAddress(threadReg, compilation.runtime.threadExceptionPcOffset(), BasicType.Object));
 
         LIROperand result = newRegister(BasicType.Object);
-        lir.move(exceptionOopOpr(), result);
+        lir.move(exceptionOopOpr, result);
         setResult(x, result);
     }
 
@@ -887,12 +888,12 @@ public abstract class LIRGenerator extends InstructionVisitor {
         assert !currentBlock.checkBlockFlag(BlockBegin.BlockFlag.DefaultExceptionHandler) || unwind : "should be no more handlers to dispatch to";
 
         // move exception oop into fixed register
-        lir.move(exceptionOpr, exceptionOopOpr());
+        lir.move(exceptionOpr, compilation.frameMap().runtimeCallingConvention(new BasicType[]{BasicType.Object}).at(0));
 
         if (unwind) {
-            lir.unwindException(LIROperandFactory.IllegalOperand, exceptionOopOpr(), info);
+            lir.unwindException(LIROperandFactory.IllegalOperand, exceptionOpr, info);
         } else {
-            lir.throwException(exceptionPcOpr(), exceptionOopOpr(), info);
+            lir.throwException(exceptionPcOpr(), exceptionOpr, info);
         }
     }
 
@@ -2135,8 +2136,6 @@ public abstract class LIRGenerator extends InstructionVisitor {
     protected abstract void cmpRegMem(LIRCondition condition, LIROperand reg, LIROperand base, LIROperand disp, BasicType type, CodeEmitInfo info);
 
     protected abstract LIROperand emitArrayAddress(LIROperand arrayOpr, LIROperand indexOpr, BasicType type, boolean needsCardMark);
-
-    protected abstract LIROperand exceptionOopOpr();
 
     protected abstract LIROperand exceptionPcOpr();
 

@@ -26,7 +26,7 @@ import com.sun.c1x.util.*;
  *
  * @author Thomas Wuerthinger
  */
-public class X86InstructionDecoder {
+public final class X86InstructionDecoder {
 
     private boolean targetIs64Bit;
     private byte[] code;
@@ -60,7 +60,7 @@ public class X86InstructionDecoder {
         public static final int REXWRXB = 0x4F;
     }
 
-    public X86InstructionDecoder(byte[] code, boolean targetIs64Bit) {
+    private X86InstructionDecoder(byte[] code, boolean targetIs64Bit) {
         this.code = code;
         this.targetIs64Bit = targetIs64Bit;
     }
@@ -484,5 +484,27 @@ public class X86InstructionDecoder {
         }
 
         currentEndOfInstruction = ip + tailSize;
+    }
+
+    public static void patchRelativeInstruction(byte[] code, int codePos, int relative) {
+        X86InstructionDecoder decoder = new X86InstructionDecoder(code, true);
+        decoder.decodePosition(codePos);
+        int patchPos = decoder.currentDisplacementPosition();
+        int endOfInstruction = decoder.currentEndOfInstruction();
+        int offset = relative - endOfInstruction + codePos;
+        patchDisp32(code, patchPos, offset);
+    }
+
+    private static void patchDisp32(byte[] code, int pos, int b) {
+        assert pos + 4 < code.length;
+        assert code[pos] == 0;
+        assert code[pos + 1] == 0;
+        assert code[pos + 2] == 0;
+        assert code[pos + 3] == 0;
+
+        code[pos++] = (byte) (b & 0xFF);
+        code[pos++] = (byte) ((b >> 8) & 0xFF);
+        code[pos++] = (byte) ((b >> 16) & 0xFF);
+        code[pos++] = (byte) ((b >> 24) & 0xFF);
     }
 }

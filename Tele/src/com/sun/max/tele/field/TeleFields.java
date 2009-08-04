@@ -153,7 +153,7 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess TargetMethod_code = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "code", byte[].class);
     public final TeleInstanceWordFieldAccess TargetMethod_codeStart = new TeleInstanceWordFieldAccess(TargetMethod.class, "codeStart");
     public final TeleInstanceReferenceFieldAccess TargetMethod_compressedJavaFrameDescriptors = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "compressedJavaFrameDescriptors", byte[].class);
-    public final TeleInstanceReferenceFieldAccess TargetMethod_directCallees = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "directCallees", ClassMethodActor[].class);
+    public final TeleInstanceReferenceFieldAccess TargetMethod_directCallees = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "directCallees", Object[].class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_encodedInlineDataDescriptors = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "encodedInlineDataDescriptors", byte[].class);
     public final TeleInstanceIntFieldAccess TargetMethod_frameReferenceMapSize = new TeleInstanceIntFieldAccess(TargetMethod.class, "frameReferenceMapSize");
     public final TeleInstanceIntFieldAccess TargetMethod_numberOfIndirectCalls = new TeleInstanceIntFieldAccess(TargetMethod.class, "numberOfIndirectCalls");

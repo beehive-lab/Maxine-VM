@@ -44,6 +44,13 @@ public enum CompilationDirective {
         }
     },
 
+    STUB (false, false) {
+        @Override
+        public Sequence<CompilationDirective> promotableFrom() {
+            return ArraySequence.of(STUB);
+        }
+    },
+
     JIT (true, false) {
         @Override
         public Sequence<CompilationDirective> promotableFrom() {

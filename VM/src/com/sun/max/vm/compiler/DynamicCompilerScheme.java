@@ -115,16 +115,6 @@ public interface DynamicCompilerScheme extends VMScheme {
      */
     boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, Purpose purpose, Object context); // TODO: why is the compiler involved in stack walking at all?
 
-    /**
-     * Advances from the specified stack frame to the next stack frame.
-     *
-     * @param stackFrameWalker the stack frame walker object
-     * @param instructionPointer the instruction pointer
-     * @param stackPointer the stack pointer
-     * @param framePointer the frame pointer
-     */
-    void advance(StackFrameWalker stackFrameWalker, Word instructionPointer, Word stackPointer, Word framePointer); // TODO: could advance() be moved to a FrameKind abstraction?
-
     StackUnwindingContext makeStackUnwindingContext(Word stackPointer, Word framePointer, Throwable throwable);
 
 }

@@ -23,8 +23,7 @@ package com.sun.c1x;
 
 import com.sun.c1x.alloc.LinearScan;
 import com.sun.c1x.alloc.RegisterAllocator;
-import com.sun.c1x.asm.AbstractAssembler;
-import com.sun.c1x.asm.CodeOffsets;
+import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.CFGPrinter;
 import com.sun.c1x.debug.TTY;
@@ -41,8 +40,7 @@ import com.sun.c1x.target.Target;
 import com.sun.c1x.util.Util;
 
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * The <code>Compilation</code> class encapsulates global information about the compilation of a particular method,
@@ -55,7 +53,6 @@ public class C1XCompilation {
     public final Target target;
     public final CiRuntime runtime;
     public final CiMethod method;
-    public final CiTargetMethod targetMethod;
     public final int osrBCI;
 
     int maxSpills;
@@ -77,6 +74,7 @@ public class C1XCompilation {
 
     private CodeOffsets codeOffsets;
     private List<ExceptionInfo> exceptionInfoList;
+    public C1XCompiler compiler;
 
     /**
      * Creates a new compilation for the specified method and runtime.
@@ -84,14 +82,13 @@ public class C1XCompilation {
      * @param target the target of the compilation, including architecture information
      * @param runtime the runtime implementation
      * @param method the method to be compiled
-     * @param targetMethod the target method to accept the results
      * @param osrBCI the bytecode index for on-stack replacement, if requested
      */
-    public C1XCompilation(Target target, CiRuntime runtime, CiMethod method, CiTargetMethod targetMethod, int osrBCI) {
+    C1XCompilation(C1XCompiler compiler, Target target, CiRuntime runtime, CiMethod method, int osrBCI) {
+        this.compiler = compiler;
         this.target = target;
         this.runtime = runtime;
         this.method = method;
-        this.targetMethod = targetMethod;
         this.osrBCI = osrBCI;
     }
 
@@ -103,8 +100,8 @@ public class C1XCompilation {
      * @param method the method to be compiled
      * @param targetMethod the target method
      */
-    public C1XCompilation(Target target, CiRuntime runtime, CiMethod method, CiTargetMethod targetMethod) {
-        this(target, runtime, method, targetMethod, -1);
+    public C1XCompilation(C1XCompiler compiler, Target target, CiRuntime runtime, CiMethod method) {
+        this(compiler, target, runtime, method, -1);
     }
 
     public IR hir() {
@@ -325,27 +322,32 @@ public class C1XCompilation {
         throw Util.unimplemented();
     }
 
-    public boolean compile() {
+    public CiTargetMethod compile() {
 
         if (C1XOptions.PrintCompilation) {
             TTY.println();
             TTY.println("Compiling method: " + method.toString());
         }
 
+        CiTargetMethod targetMethod = null;
         try {
             hir = new IR(this);
             hir.build();
             emitLIR();
-            emitCode();
+            targetMethod = emitCode();
         } catch (Bailout b) {
             bailout = b;
-            return false;
+            return null;
         } catch (Throwable t) {
             bailout = new Bailout("Unexpected exception while compiling: " + this.method(), t);
-            return false;
+            return null;
         }
 
-        return true;
+        if (targetMethod != null) {
+            targetMethod.totalInstructions = this.totalInstructions;
+        }
+
+        return targetMethod;
     }
 
     private void emitLIR() {
@@ -366,9 +368,9 @@ public class C1XCompilation {
         }
     }
 
-    private void emitCode() {
+    private CiTargetMethod emitCode() {
         if (C1XOptions.GenerateLIR && C1XOptions.GenerateAssembly) {
-            assembler = target.backend.newAssembler(this);
+            assembler = target.backend.newAssembler();
             final LIRAssembler lirAssembler = target.backend.newLIRAssembler(this);
             lirAssembler.emitCode(hir.linearScanOrder());
 
@@ -380,8 +382,10 @@ public class C1XCompilation {
 
             lirAssembler.emitDeoptHandler();
 
-            assembler.installTargetMethod();
+            return assembler.finishTargetMethod(runtime, frameMap().framesize());
         }
+
+        return null;
     }
 
     public CFGPrinter cfgPrinter() {

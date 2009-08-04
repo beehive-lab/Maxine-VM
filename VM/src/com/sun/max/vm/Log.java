@@ -282,7 +282,14 @@ public final class Log {
      * Equivalent to calling {@link LogPrintStream#printMethodActor(MethodActor, boolean)} on {@link #out}.
      */
     public static void printMethodActor(MethodActor methodActor, boolean withNewline) {
-        out.printMethodActor(methodActor, withNewline);
+        if (methodActor == null) {
+            out.print("<no method actor>");
+            if (withNewline) {
+                out.println();
+            }
+        } else {
+            out.printMethodActor(methodActor, withNewline);
+        }
     }
 
     /**

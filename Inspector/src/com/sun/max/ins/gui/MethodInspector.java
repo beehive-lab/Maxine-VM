@@ -188,8 +188,11 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
         if (methodInspector == null) {
             // No existing inspector is bound to this compilation; see if there is an inspector for this method that is
             // unbound
-            final UniqueInspector.Key<? extends MethodInspector> classMethodActorKey = UniqueInspector.Key.create(JavaMethodInspector.class, teleTargetMethod.getTeleClassMethodActor());
-            methodInspector = UniqueInspector.find(inspection, classMethodActorKey);
+            final UniqueInspector.Key<? extends MethodInspector> classMethodActorKey = null;
+            if (teleTargetMethod.getTeleClassMethodActor() != null) {
+                UniqueInspector.Key.create(JavaMethodInspector.class, teleTargetMethod.getTeleClassMethodActor());
+                methodInspector = UniqueInspector.find(inspection, classMethodActorKey);
+            }
             final MethodInspectorContainer parent = MethodInspectorContainer.make(inspection);
             if (methodInspector == null) {
                 // No existing inspector exists for this method; create new one bound to this compilation

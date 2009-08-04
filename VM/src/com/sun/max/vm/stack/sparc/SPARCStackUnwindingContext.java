@@ -48,11 +48,6 @@ public class SPARCStackUnwindingContext extends StackUnwindingContext {
         this.isTopFrame = false;
     }
 
-    @Override
-    public void visitFrame(Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
-        record(stackPointer, framePointer);
-    }
-
     public Pointer stackPointer() {
         return stackPointer.asPointer();
     }

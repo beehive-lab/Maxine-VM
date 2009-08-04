@@ -474,9 +474,15 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
             writer.indent();
             for (int i = 0; i < directCallees.length; i++) {
                 final Reference classMethodActorReference = directCallees[i];
-                final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) teleVM().makeTeleObject(classMethodActorReference);
-                final String calleeName = teleClassMethodActor == null ? "<unknown>" :  teleClassMethodActor.classMethodActor().format("%r %n(%p)" + " in %H");
-                writer.println(getStopPositions()[i] + " -> " + calleeName);
+                final TeleObject teleObject = teleVM().makeTeleObject(classMethodActorReference);
+                if (teleObject instanceof TeleTargetMethod) {
+                    writer.println("TeleTargetMethod");
+                } else {
+                    assert teleObject instanceof TeleClassMethodActor;
+                    final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) teleObject;
+                    final String calleeName = teleClassMethodActor == null ? "<unknown>" :  teleClassMethodActor.classMethodActor().format("%r %n(%p)" + " in %H");
+                    writer.println(getStopPositions()[i] + " -> " + calleeName);
+                }
             }
             writer.outdent();
         }

@@ -292,6 +292,17 @@ public final class Throw {
     }
 
     /**
+     * Raises an {@code ArrayIndexOutOfBoundsException}. This is out-of-line to reduce the amount
+     * of code inlined on the fast path for an array bounds check.
+     *
+     * @param index the index that is out of the bounds
+     */
+    @INLINE
+    public static void arrayIndexOutOfBoundsException(int index) {
+        throw new ArrayIndexOutOfBoundsException(index);
+    }
+
+    /**
      * Raises an {@code ArrayStoreException}. This is out-of-line to reduce the amount
      * of code inlined on the fast path for an array store check.
      *

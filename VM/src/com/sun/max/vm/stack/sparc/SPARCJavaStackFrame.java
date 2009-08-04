@@ -33,7 +33,7 @@ import com.sun.max.vm.stack.*;
  * @author Bernd Mathiske
  * @author Laurent Daynes
  */
-public class SPARCJavaStackFrame extends JavaStackFrame<OptoStackFrameLayout> {
+public class SPARCJavaStackFrame extends JavaStackFrame {
 
     public SPARCJavaStackFrame(StackFrame callee, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
         super(callee, new OptoStackFrameLayout(targetMethod.frameSize(), false), targetMethod, instructionPointer, framePointer, stackPointer);

@@ -82,6 +82,7 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
         // the very first instruction must save the flags.
         // we save them twice and overwrite one copy with the trap instruction address.
         asm.pushfq();
+
         asm.pushfq();
 
         // now allocate the frame for this method

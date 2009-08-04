@@ -179,10 +179,12 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
                     final AppendableSequence<MethodActor> virtualCalls,
                     final AppendableSequence<MethodActor> interfaceCalls) {
         traceBeforeFindMethodActors(targetMethod);
-        final MethodActor[] directCallees = targetMethod.directCallees();
+        final Object[] directCallees = targetMethod.directCallees();
         if (directCallees != null) {
-            for (MethodActor methodActor : directCallees) {
-                directCalls.append(methodActor);
+            for (Object o : directCallees) {
+                if (o instanceof MethodActor) {
+                    directCalls.append((MethodActor) o);
+                }
             }
         }
         final CirMethod cirMethod = cirGenerator().getCirMethod(targetMethod.classMethodActor());

@@ -169,7 +169,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
             }
             case INSPECTING: {
                 final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
-                final StackFrame stackFrame = new AMD64JitToOptimizedAdapterFrame(stackFrameWalker.calleeStackFrame(), targetMethod, instructionPointer, stackFrameWalker.framePointer(), stackPointer, adapterFrameSize);
+                final StackFrame stackFrame = new AdapterStackFrame(stackFrameWalker.calleeStackFrame(), new AdapterStackFrameLayout(adapterFrameSize, true), targetMethod, instructionPointer, stackFrameWalker.framePointer(), stackPointer);
                 if (!stackFrameVisitor.visitFrame(stackFrame)) {
                     return false;
                 }
@@ -328,7 +328,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
         final Pointer callerInstructionPointer = stackFrameWalker.readWord(ripPointer, 0).asPointer();
         final Pointer callerStackPointer = ripPointer.plus(Word.size()); // Skip RIP word
         final Pointer callerFramePointer;
-        if (targetMethod.classMethodActor().isTrapStub()) {
+        if (targetMethod.classMethodActor() != null && targetMethod.classMethodActor().isTrapStub()) {
             // framePointer is whatever was in the frame pointer register at the time of the trap
             final Pointer trapState = AMD64TrapStateAccess.getTrapStateFromRipPointer(ripPointer);
             callerFramePointer = stackFrameWalker.readWord(trapState, AMD64GeneralRegister64.RBP.value() * Word.size()).asPointer();
@@ -399,12 +399,6 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
     @Override
     public Pointer namedVariablesBasePointer(Pointer stackPointer, Pointer framePointer) {
         return stackPointer;
-    }
-
-    @Override
-    public void advance(StackFrameWalker stackFrameWalker, Word instructionPointer, Word stackPointer, Word framePointer) {
-        // stack pointer = frame pointer for this scheme
-        stackFrameWalker.advance(instructionPointer, stackPointer, stackPointer);
     }
 
     @Override
