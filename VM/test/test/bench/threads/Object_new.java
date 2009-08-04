@@ -85,7 +85,7 @@ public class Object_new {
         } catch (InterruptedException e) { }
 
         final long benchtime = System.currentTimeMillis() - start;
-        System.out.println(benchtime + " ms");
+        System.out.println(benchtime); // + " ms");
 
         /*System.out.println("Simple Allocator Benchmark Result (nr threads: " + nrThreads +
                             "; size: " + allocSize + "; nr allocs: " + nrAllocs +
@@ -123,7 +123,7 @@ public class Object_new {
                     tmp[0] = 1;
                 }
             }
-            System.out.println("Thread " + threadId + " done");
+            //System.out.println("Thread " + threadId + " done");
             try {
                 barrier2.waitForRelease();
             } catch (InterruptedException e) { }

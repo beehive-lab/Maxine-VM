@@ -51,6 +51,7 @@ import com.sun.max.vm.type.*;
  * @author Ben L. Titzer
  * @author Doug Simon
  * @author Paul Caprioli
+ * @author Hannes Payer
  */
 public class StopTheWorldGCDaemon extends BlockingServerDaemon {
 
@@ -73,10 +74,6 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
             Heap.disableAllocationForCurrentThread();
             if (!VmThreadLocal.inJava(vmThreadLocals)) {
                 FatalError.unexpected("Mutator thread trapped while in native code");
-            }
-
-            if (Safepoint.UseCASBasedGCMutatorSynchronization) {
-                enabledVmThreadLocals.setWord(MUTATOR_STATE.index, THREAD_IN_JAVA_STOPPING_FOR_GC);
             }
 
             if (!enabledVmThreadLocals.getWord(LOWEST_ACTIVE_STACK_SLOT_ADDRESS.index).isZero()) {
@@ -167,11 +164,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
             if (Safepoint.UseCASBasedGCMutatorSynchronization) {
                 final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
                 while (true) {
-                    if (enabledVmThreadLocals.readWord(MUTATOR_STATE.offset).equals(THREAD_IN_GC_FROM_JAVA)) {
-                        // Transitioned thread into GC
-                        break;
-                    }
-                    if (enabledVmThreadLocals.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IN_GC_FROM_NATIVE).equals(THREAD_IN_NATIVE)) {
+                    if (enabledVmThreadLocals.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IN_GC).equals(THREAD_IN_NATIVE)) {
                         // Transitioned thread into GC
                         break;
                     }
