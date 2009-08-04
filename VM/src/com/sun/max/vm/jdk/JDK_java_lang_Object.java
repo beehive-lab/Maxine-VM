@@ -27,7 +27,7 @@ import com.sun.max.vm.object.*;
 
 /**
  * Method substitutions for java.lang.Object.
- * 
+ *
  * @author Bernd Mathiske
  */
 @METHOD_SUBSTITUTIONS(Object.class)
