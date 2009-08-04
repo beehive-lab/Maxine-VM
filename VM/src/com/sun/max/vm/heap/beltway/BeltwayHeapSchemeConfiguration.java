@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.heap.beltway;
 
-import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -29,45 +28,7 @@ import com.sun.max.unsafe.*;
  */
 public class BeltwayHeapSchemeConfiguration {
 
-    protected static Address applicationHeapStartAddress;
-    protected static Size applicationHeapMaxSize;
-
     public static final Size TLAB_SIZE = BeltwayCardRegion.CARD_SIZE.times(512).asSize();
     public static final Size GC_TLAB_SIZE = BeltwayCardRegion.CARD_SIZE;
-    public static final int ALIGNMENT = BeltwayCardRegion.CARD_SIZE.toInt();
 
-    public BeltwayHeapSchemeConfiguration(Address applicationHeapStartAddress, Size applicationHeapMaxSize) {
-        BeltwayHeapSchemeConfiguration.applicationHeapStartAddress = applicationHeapStartAddress;
-        BeltwayHeapSchemeConfiguration.applicationHeapMaxSize = applicationHeapMaxSize;
-    }
-
-    @INLINE
-    public static Address getApplicationHeapStartAddress() {
-        return applicationHeapStartAddress;
-    }
-
-    @INLINE
-    public static void setHeapStartStartAddress(Address address) {
-        applicationHeapStartAddress = address;
-    }
-
-    @INLINE
-    public static Address getApplicationHeapEndAddress() {
-        return applicationHeapStartAddress.plus(applicationHeapMaxSize);
-    }
-
-    @INLINE
-    public static Size getUsableMemory() {
-        return applicationHeapMaxSize.dividedBy(2);
-    }
-
-    @INLINE
-    public static Size getCopyReserveMemory() {
-        return applicationHeapMaxSize.minus(getUsableMemory());
-    }
-
-    @INLINE
-    public static Size getMaxHeapSize() {
-        return applicationHeapMaxSize;
-    }
 }

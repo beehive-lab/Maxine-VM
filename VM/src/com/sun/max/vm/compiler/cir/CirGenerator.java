@@ -118,7 +118,7 @@ public abstract class CirGenerator extends IrGenerator<CirGeneratorScheme, CirMe
 
     @Override
     public CirMethod createIrMethod(ClassMethodActor classMethodActor) {
-        synchronized (classMethodActor) {
+        synchronized (cirCache) {
             CirMethod cirMethod = getCirMethod(classMethodActor);
             if (cirMethod == null) {
                 cirMethod = new CirMethod(classMethodActor);

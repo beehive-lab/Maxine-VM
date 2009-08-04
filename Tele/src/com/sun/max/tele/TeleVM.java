@@ -654,15 +654,19 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final MemoryRegion memoryRegionContaining(Address address) {
-        MemoryRegion memoryRegion = teleHeapManager.regionContaining(address);
-        if (memoryRegion == null) {
-            memoryRegion = teleCodeManager().regionContaining(address);
+        MemoryRegion memoryRegion = null;
+        try {
+            memoryRegion = teleHeapManager.regionContaining(address);
             if (memoryRegion == null) {
-                final MaxThread maxThread = threadContaining(address);
-                if (maxThread != null) {
-                    memoryRegion = maxThread.stack();
+                memoryRegion = teleCodeManager().regionContaining(address);
+                if (memoryRegion == null) {
+                    final MaxThread maxThread = threadContaining(address);
+                    if (maxThread != null) {
+                        memoryRegion = maxThread.stack();
+                    }
                 }
             }
+        } catch (DataIOError dataIOError) {
         }
         return memoryRegion;
     }

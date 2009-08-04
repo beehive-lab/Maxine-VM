@@ -20,14 +20,19 @@
  */
 package com.sun.max.vm.jni;
 
+import java.lang.reflect.*;
 import java.util.*;
 
 import sun.reflect.*;
 
+import static com.sun.max.vm.stack.RawStackFrameVisitor.Util.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
@@ -60,6 +65,33 @@ public class JVMFunctions {
         }
 
         return result.toArray(new Class[result.size()]);
+    }
+
+    private static final CriticalMethod javaLangReflectMethodInvoke = new CriticalMethod(Method.class, "invoke",
+        SignatureDescriptor.create(Object.class, Object.class, Object[].class));
+
+    private static class LatestUserDefinedLoaderVisitor implements RawStackFrameVisitor {
+        ClassLoader result;
+        public boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, int flags) {
+            if (isTopFrame(flags) || isAdapter(flags) || targetMethod == null || targetMethod.classMethodActor() == javaLangReflectMethodInvoke.classMethodActor) {
+                return true;
+            }
+            final ClassLoader cl = targetMethod.classMethodActor().holder().classLoader;
+            if (cl != null && cl != VmClassLoader.VM_CLASS_LOADER) {
+                result = cl;
+                return false;
+            }
+            return true;
+        }
+    }
+
+    public static ClassLoader LatestUserDefinedLoader() {
+        LatestUserDefinedLoaderVisitor visitor = new LatestUserDefinedLoaderVisitor();
+        new VmStackFrameWalker(VmThread.current().vmThreadLocals()).inspect(VMRegister.getInstructionPointer(),
+            VMRegister.getCpuStackPointer(),
+            VMRegister.getCpuFramePointer(),
+            visitor);
+        return visitor.result;
     }
 
     @NEVER_INLINE

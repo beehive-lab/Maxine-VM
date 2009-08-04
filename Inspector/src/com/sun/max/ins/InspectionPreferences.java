@@ -78,9 +78,47 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
         public static final IndexedSequence<ExternalViewerType> VALUES = new ArraySequence<ExternalViewerType>(values());
     }
 
+
+    /**
+     * Policies for how long tool tip text remains visible.
+     */
+    public enum ToolTipDismissDelayPolicy {
+
+        /**
+         * Use the default setting.
+         */
+        DEFAULT("Default delay"),
+        /**
+         * Double the default tool tip display time.
+         */
+        EXTENDED("Extended delay"),
+        /**
+         * Tool tip display does not stop.
+         */
+        PERSISTENT("Persistent");
+
+        private final String label;
+
+        private ToolTipDismissDelayPolicy(String label) {
+            this.label = label;
+        }
+
+        public String label() {
+            return label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
+
+        public static final IndexedSequence<ToolTipDismissDelayPolicy> VALUES = new ArraySequence<ToolTipDismissDelayPolicy>(values());
+    }
+
     private static final String INSPECTION_SETTINGS_NAME = "inspection";
     private static final String KEY_BINDINGS_PREFERENCE = "keyBindings";
     private static final String DISPLAY_STYLE_PREFERENCE = "displayStyle";
+    private static final String TOOLTIP_DELAY_POLICY = "toolTipDelay";
     private static final String INVESTIGATE_WORD_VALUES_PREFERENCE = "investigateWordValues";
     private static final String EXTERNAL_VIEWER_PREFERENCE = "externalViewer";
 
@@ -88,6 +126,8 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
     private final InspectionSettings settings;
     private final InspectorStyleFactory styleFactory;
     private InspectorStyle style;
+    private ToolTipDismissDelayPolicy toolTipDismissDelayPolicy = ToolTipDismissDelayPolicy.DEFAULT;
+    private final int defaultToolTipDismissDelay;
     private InspectorGeometry geometry;
     private boolean investigateWordValues = true;
 
@@ -115,6 +155,8 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
         //_geometry = new InspectorGeometry10Pt();
         this.geometry = new InspectorGeometry12Pt();
 
+        defaultToolTipDismissDelay = ToolTipManager.sharedInstance().getDismissDelay();
+
         settings.addSaveSettingsListener(this);
 
         try {
@@ -139,6 +181,9 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
             }
 
             investigateWordValues = settings.get(this, INVESTIGATE_WORD_VALUES_PREFERENCE, OptionTypes.BOOLEAN_TYPE, true);
+
+            setToolTipDismissDelay(settings.get(this, TOOLTIP_DELAY_POLICY, new OptionTypes.EnumType<ToolTipDismissDelayPolicy>(ToolTipDismissDelayPolicy.class), ToolTipDismissDelayPolicy.DEFAULT));
+
             externalViewerType = settings.get(this, EXTERNAL_VIEWER_PREFERENCE, new OptionTypes.EnumType<ExternalViewerType>(ExternalViewerType.class), ExternalViewerType.NONE);
             for (ExternalViewerType externalViewerType : ExternalViewerType.VALUES) {
                 final String config = settings.get(this, "externalViewer." + externalViewerType.name(), OptionTypes.STRING_TYPE, null);
@@ -160,6 +205,21 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
     private void setStyle(InspectorStyle style) {
         this.style = style;
         inspection.updateViewConfiguration();
+    }
+
+    private void setToolTipDismissDelay(ToolTipDismissDelayPolicy toolTipDelay) {
+        this.toolTipDismissDelayPolicy = toolTipDelay;
+        switch(toolTipDelay) {
+            case DEFAULT:
+                ToolTipManager.sharedInstance().setDismissDelay(defaultToolTipDismissDelay);
+                break;
+            case EXTENDED:
+                ToolTipManager.sharedInstance().setDismissDelay(defaultToolTipDismissDelay * 2);
+                break;
+            case PERSISTENT:
+                ToolTipManager.sharedInstance().setDismissDelay(Integer.MAX_VALUE);
+                break;
+        }
     }
 
     /**
@@ -231,6 +291,7 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
     public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
         saveSettingsEvent.save(KEY_BINDINGS_PREFERENCE, keyBindingMap.name());
         saveSettingsEvent.save(DISPLAY_STYLE_PREFERENCE, style().name());
+        saveSettingsEvent.save(TOOLTIP_DELAY_POLICY, toolTipDismissDelayPolicy.name());
         saveSettingsEvent.save(INVESTIGATE_WORD_VALUES_PREFERENCE, investigateWordValues);
         saveSettingsEvent.save(EXTERNAL_VIEWER_PREFERENCE, externalViewerType.name());
         for (ExternalViewerType externalViewerType : ExternalViewerType.VALUES) {
@@ -294,6 +355,18 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
         });
         interiorPanel.add(new TextLabel(inspection, "Display style:  "));
         interiorPanel.add(uiComboBox);
+
+        // Add tool tip policy chooser
+        final JComboBox toolTipComboBox = new InspectorComboBox(inspection, ToolTipDismissDelayPolicy.values());
+        toolTipComboBox.setSelectedItem(toolTipDismissDelayPolicy);
+        toolTipComboBox.addActionListener(new ActionListener() {
+
+            public void actionPerformed(ActionEvent e) {
+                setToolTipDismissDelay((ToolTipDismissDelayPolicy) toolTipComboBox.getSelectedItem());
+            }
+        });
+        interiorPanel.add(new TextLabel(inspection, "ToolTip dismiss: "));
+        interiorPanel.add(toolTipComboBox);
 
         final JPanel panel = new InspectorPanel(inspection, new BorderLayout());
         panel.add(interiorPanel, BorderLayout.WEST);

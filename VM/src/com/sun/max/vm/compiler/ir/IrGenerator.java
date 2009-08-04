@@ -191,13 +191,16 @@ public abstract class IrGenerator<CompilerScheme_Type extends DynamicCompilerSch
      * Obtain the representation of the given class method actor in this IR,
      * creating the result object if necessary.
      * If IR for the method body has not been generated and installed yet, do so.
+     *
+     * Note: This method does not synchronize on {@code classMethodActor}; it is expected
+     * that the caller ensures that at most one thread is ever attempting to compile a method.
+     * Synchronizing {@code classMethodActor} here can cause deadlock due to the fact
+     * that {@link ClassMethodActor#compilee()} is synchronized.
      */
     public final IrMethod_Type makeIrMethod(ClassMethodActor classMethodActor, CompilationDirective compilationDirective) {
-        synchronized (classMethodActor) {
-            final IrMethod_Type irMethod = createIrMethod(classMethodActor);
-            makeIrMethod(irMethod, compilationDirective);
-            return irMethod;
-        }
+        final IrMethod_Type irMethod = createIrMethod(classMethodActor);
+        makeIrMethod(irMethod, compilationDirective);
+        return irMethod;
     }
 
     public long numberOfCompilations() {
