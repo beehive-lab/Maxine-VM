@@ -33,14 +33,14 @@ import com.sun.max.vm.layout.*;
  */
 
 public class BeltwayCellVisitorImpl implements BeltCellVisitor {
-    final PointerVisitor pointerOffsetGripUpdater;
+    final PointerVisitor pointerVisitorGripUpdater;
 
     public BeltwayCellVisitorImpl(PointerVisitor pointerOffsetGripUpdater) {
-        this.pointerOffsetGripUpdater = pointerOffsetGripUpdater;
+        this.pointerVisitorGripUpdater = pointerOffsetGripUpdater;
     }
 
     public void init(Belt from, Belt to) {
-        pointerOffsetGripUpdater.action.init(from, to);
+        pointerVisitorGripUpdater.action.init(from, to);
     }
 
     public static void linearVisitTLAB(BeltTLAB tlab, BeltCellVisitor cellVisitor, Belt from, Belt to) {
@@ -67,13 +67,13 @@ public class BeltwayCellVisitorImpl implements BeltCellVisitor {
         final int n = hub.referenceMapStartIndex + hub.referenceMapLength;
         for (int i = hub.referenceMapStartIndex; i < n; i++) {
             final int index = hub.getInt(i);
-            pointerOffsetGripUpdater.visit(origin, index);
+            pointerVisitorGripUpdater.visit(origin, index);
         }
     }
 
     @INLINE
     private Action action() {
-        return pointerOffsetGripUpdater.action;
+        return pointerVisitorGripUpdater.action;
     }
 
     @INLINE

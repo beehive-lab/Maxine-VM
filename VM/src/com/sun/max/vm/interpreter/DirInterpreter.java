@@ -307,7 +307,7 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
             try {
                 return dirMethod.classMethodActor().invoke(arguments);
             } catch (IllegalAccessException illegalAccessException) {
-                ProgramError.unexpected("could not access method for invocation: " + dirMethod.classMethodActor().toJava());
+                ProgramError.unexpected("could not access method for invocation: " + dirMethod.classMethodActor());
             }
         }
         final DirValue[] executeArguments = valuesToDirValues(arguments);

@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.stack;
 
-import com.sun.max.unsafe.*;
-
 /**
  * Carries context that may be necessary while unwinding a stack for exception handling.
  * The information that needs to be carried, beside the exception object, is platform-dependent.
@@ -37,8 +35,5 @@ public class StackUnwindingContext {
 
     public StackUnwindingContext(Throwable throwable) {
         this.throwable = throwable;
-    }
-
-    public void visitFrame(Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
     }
 }

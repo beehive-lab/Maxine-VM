@@ -155,7 +155,7 @@ public abstract class StackFrameWalker {
                 if (!compilerScheme.walkFrame(this, isTopFrame, targetMethod, purpose, context)) {
                     return;
                 }
-                if (!targetMethod.classMethodActor().isTrapStub()) {
+                if (targetMethod.classMethodActor() == null || !targetMethod.classMethodActor().isTrapStub()) {
                     trapState = Pointer.zero();
                 }
             } else {
@@ -193,7 +193,7 @@ public abstract class StackFrameWalker {
                             }
 
                             final ClassMethodActor lastJavaCalleeMethodActor = lastJavaCallee.classMethodActor();
-                            if (lastJavaCalleeMethodActor.isCFunction()) {
+                            if (lastJavaCalleeMethodActor != null && lastJavaCalleeMethodActor.isCFunction()) {
                                 if (lastJavaCalleeMethodActor.isTrapStub()) {
                                     // This can only occur in the inspector and implies that execution is in the platform specific
                                     // prologue of Trap.trapStub() before the point where the trap frame has been completed. In
@@ -204,6 +204,8 @@ public abstract class StackFrameWalker {
                                 if (!advanceCFunctionFrame(purpose, lastJavaCallee, lastJavaCalleeStackPointer, lastJavaCalleeFramePointer, context)) {
                                     return;
                                 }
+                            } else if (lastJavaCalleeMethodActor == null) {
+                                FatalError.unexpected("Unrecognized target method without a class method actor!");
                             } else {
                                 Log.print("Native code called/entered a Java method not annotated with @C_FUNCTION: ");
                                 Log.print(lastJavaCalleeMethodActor.name.string);
@@ -222,7 +224,7 @@ public abstract class StackFrameWalker {
     }
 
     private void checkVmEntrypointCaller(TargetMethod lastJavaCallee, final TargetMethod targetMethod) {
-        if (lastJavaCallee != null) {
+        if (lastJavaCallee != null && lastJavaCallee.classMethodActor() != null) {
             final ClassMethodActor classMethodActor = lastJavaCallee.classMethodActor();
             if (classMethodActor.isCFunction() && !classMethodActor.isTrapStub()) {
                 Log.print("Caller of VM entry point (@C_FUNCTION method) \"");
@@ -238,7 +240,7 @@ public abstract class StackFrameWalker {
     }
 
     private boolean isRunMethod(final ClassMethodActor lastJavaCalleeMethodActor) {
-        return lastJavaCalleeMethodActor.equals(MaxineVM_run.classMethodActor) || lastJavaCalleeMethodActor.equals(VmThread_run.classMethodActor);
+        return lastJavaCalleeMethodActor != null && (lastJavaCalleeMethodActor.equals(MaxineVM_run.classMethodActor) || lastJavaCalleeMethodActor.equals(VmThread_run.classMethodActor));
     }
 
     /**
@@ -252,7 +254,7 @@ public abstract class StackFrameWalker {
      */
     private boolean advanceCFunctionFrame(Purpose purpose, TargetMethod lastJavaCallee, Pointer lastJavaCalleeStackPointer, Pointer lastJavaCalleeFramePointer, Object context) {
         final ClassMethodActor lastJavaCalleeMethodActor = lastJavaCallee.classMethodActor();
-        if (lastJavaCalleeMethodActor.isJniFunction()) {
+        if (lastJavaCalleeMethodActor != null && lastJavaCalleeMethodActor.isJniFunction()) {
             final Pointer namedVariablesBasePointer = compilerScheme.namedVariablesBasePointer(lastJavaCalleeStackPointer, lastJavaCalleeFramePointer);
             final Word lastJavaCallerInstructionPointer = readWord(savedLastJavaCallerInstructionPointer().address(lastJavaCallee, namedVariablesBasePointer), 0);
             final Word lastJavaCallerStackPointer = readWord(savedLastJavaCallerStackPointer().address(lastJavaCallee, namedVariablesBasePointer), 0);
@@ -357,7 +359,11 @@ public abstract class StackFrameWalker {
                 Log.print("+");
                 Log.print(instructionPointer.minus(nativeStubTargetMethod.codeStart()).toLong());
                 Log.print(" in ");
-                Log.printMethodActor(nativeStubTargetMethod.classMethodActor(), true);
+                if (nativeStubTargetMethod.classMethodActor() != null) {
+                    Log.printMethodActor(nativeStubTargetMethod.classMethodActor(), true);
+                } else {
+                    Log.println("<no method actor>");
+                }
             }
             throw FatalError.unexpected("Could not find native function call in native stub");
         }
@@ -535,7 +541,7 @@ public abstract class StackFrameWalker {
                     continue;
                 }
             }
-            if (stackFrame.isAdapter() && !adapterFrames) {
+            if (stackFrame instanceof AdapterStackFrame && !adapterFrames) {
                 continue;
             }
             final TargetMethod targetMethod = Code.codePointerToTargetMethod(stackFrame.instructionPointer);
@@ -545,7 +551,9 @@ public abstract class StackFrameWalker {
             }
             final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.instructionPointer);
             if (bytecodeLocations == null) {
-                appendClassMethodActor(result, targetMethod.classMethodActor(), invisibleFrames);
+                if (targetMethod.classMethodActor() != null) {
+                    appendClassMethodActor(result, targetMethod.classMethodActor(), invisibleFrames);
+                }
             } else {
                 appendCallers(result, bytecodeLocations, invisibleFrames);
             }

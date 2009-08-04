@@ -95,7 +95,7 @@ public abstract class BlockEnd extends StateSplit {
      * @param newSucc the new successor
      */
     public void substituteSuccessor(BlockBegin oldSucc, BlockBegin newSucc) {
-        Util.replaceInList(oldSucc, newSucc, successors);
+        Util.replaceAllInList(oldSucc, newSucc, successors);
     }
 
     /**

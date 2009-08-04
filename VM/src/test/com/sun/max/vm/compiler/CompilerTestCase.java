@@ -445,8 +445,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
                 }
 
                 if (Word.class.isAssignableFrom(classActor.toJava()) && !classMethodActor.isStatic() && !classMethodActor.isInstanceInitializer()) {
-                    final Method javaMethod = methodActor.toJava();
-                    if (!javaMethod.isAnnotationPresent(INLINE.class)) {
+                    if (!methodActor.isAnnotationPresent(INLINE.class)) {
                         Trace.line(2, "skipping non-static method in Word subclass that is not annotated with @INLINE: " + methodActor);
                         continue;
                     }

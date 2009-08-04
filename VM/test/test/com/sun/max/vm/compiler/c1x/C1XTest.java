@@ -28,6 +28,7 @@ import java.util.*;
 import java.util.Arrays;
 
 import com.sun.c1x.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.target.Target;
 import com.sun.c1x.target.Architecture;
 import com.sun.max.collect.*;
@@ -136,20 +137,21 @@ public class C1XTest {
         final List<MethodActor> methods = findMethodsToCompile(arguments);
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
         final Target target = createTarget();
+        final C1XCompiler compiler = new C1XCompiler(target, runtime);
 
-        doWarmup(runtime, methods, target);
-        doCompile(runtime, methods, progress, target);
+        doWarmup(compiler, methods);
+        doCompile(compiler, methods, progress);
 
         progress.report();
         reportTiming();
         reportMetrics();
     }
 
-    private static void doCompile(MaxCiRuntime runtime, List<MethodActor> methods, ProgressPrinter progress, Target target) {
+    private static void doCompile(C1XCompiler compiler, List<MethodActor> methods, ProgressPrinter progress) {
         // compile all the methods and report progress
         for (MethodActor methodActor : methods) {
             progress.begin(methodActor.toString());
-            final boolean result = compile(target, runtime, methodActor, printBailoutOption.getValue(), false);
+            final boolean result = compile(compiler, methodActor, printBailoutOption.getValue(), false);
             if (result) {
                 progress.pass();
             } else {
@@ -162,7 +164,7 @@ public class C1XTest {
         }
     }
 
-    private static void doWarmup(MaxCiRuntime runtime, List<MethodActor> methods, Target target) {
+    private static void doWarmup(C1XCompiler compiler, List<MethodActor> methods) {
         // compile all the methods in the list some number of times first to warmup the C1X code in the host VM
         for (int i = 0; i < warmupOption.getValue(); i++) {
             if (i == 0) {
@@ -171,7 +173,7 @@ public class C1XTest {
             out.print(".");
             out.flush();
             for (MethodActor actor : methods) {
-                compile(target, runtime, actor, false, true);
+                compile(compiler, actor, false, true);
             }
             if (i == warmupOption.getValue() - 1) {
                 out.print("\n");
@@ -179,24 +181,22 @@ public class C1XTest {
         }
     }
 
-    private static boolean compile(Target target, MaxCiRuntime runtime, MethodActor method, boolean printBailout, boolean warmup) {
+    private static boolean compile(C1XCompiler compiler, MethodActor method, boolean printBailout, boolean warmup) {
         // compile a single method
         if (isCompilable(method)) {
             final long startNs = System.nanoTime();
-            final MaxCiTargetMethod targetMethod = targetOption.getValue() ? new MaxCiTargetMethod((ClassMethodActor) method) : null;
-            final C1XCompilation compilation = new C1XCompilation(target, runtime, runtime.getCiMethod(method), targetMethod);
-            boolean result = compilation.compile();
+            CiTargetMethod result = compiler.compileMethod(((MaxCiRuntime) compiler.runtime).getCiMethod(method));
             long timeNs = System.nanoTime() - startNs;
-            if (!result) {
+            if (result == null) {
                 if (printBailout) {
-                    compilation.bailout().printStackTrace(out);
+                    out.println("bailout");
                 }
                 return false;
             }
 
-            if (!warmup) {
+            if (!warmup && result != null) {
                 // record the time for successful compilations
-                recordTime(method, compilation.totalInstructions(), timeNs);
+                recordTime(method, result.totalInstructions(), timeNs);
             }
             return true;
         }
@@ -281,7 +281,9 @@ public class C1XTest {
                 final boolean result = super.add(e);
                 // register foldable methods with C1X.
                 if (C1XOptions.CanonicalizeFoldableMethods && Actor.isDeclaredFoldable(e.flags())) {
-                    C1XIntrinsic.registerFoldableMethod(MaxCiRuntime.globalRuntime.getCiMethod(e), e.toJava());
+                    final Method method = e.toJava();
+                    assert method != null;
+                    C1XIntrinsic.registerFoldableMethod(MaxCiRuntime.globalRuntime.getCiMethod(e), method);
                 }
                 if ((size() % 1000) == 0 && verboseOption.getValue() >= 1) {
                     out.print('.');
@@ -489,6 +491,6 @@ public class C1XTest {
     private static Target createTarget() {
         // TODO: configure architecture according to host platform
         final Architecture arch = Architecture.findArchitecture("amd64");
-        return new Target(arch, arch.registers, arch.registers);
+        return new Target(arch, arch.registers, arch.registers, 1024, true);
     }
 }

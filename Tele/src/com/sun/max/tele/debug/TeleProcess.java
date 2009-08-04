@@ -119,6 +119,14 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                 watchpointFactory().reenableWatchpointsAfterGC();
                 return true;
             } else if (teleVM().isInGC()) {
+                // Handle watchpoint triggered in card table
+                if (teleVM().isCardTableAddress(triggeredWatchpointAddress)) {
+                    Address objectOldAddress = teleVM().getObjectOldAddress();
+                    return watchpointFactory().relocateCardTableWatchpoint(objectOldAddress, teleVM().getObjectNewAddress());
+                }
+
+                //Word value = thread.threadLocalsFor(Safepoint.State.ENABLED).getVmThreadLocal(VmThreadLocal.OLD_OBJECT_ADDRESS.index).getVariableWord();
+                //System.out.println("WATCHPOINT FIELDS " + thread.threadLocalsFor(Safepoint.State.ENABLED).getVmThreadLocal(VmThreadLocal.NEW_OBJECT_ADDRESS.index).getVariableWord());
                 // The VM is in GC. Turn Watchpoints off for all objects that are not interested in GC related triggers.
                 if (!watchpointFactory().isInGCMode()) {
                     watchpointFactory().disableWatchpointsDuringGC();
@@ -126,14 +134,13 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                         return true;
                     }
                 }
-                // else if check for special object handle watchpoint
             }
             return false;
         }
 
         /**
          * Special handling of a breakpoint, if needed.
-         * @return true if it is a conditional breakpoint whose condition is unsatified, and execution should be resumed.
+         * @return true if it is a conditional breakpoint whose condition is unsatisfied, and execution should be resumed.
          * @throws ProcessTerminatedException
          */
         private boolean handleBreakpoint(TeleNativeThread thread, TeleTargetBreakpoint breakpoint) throws ProcessTerminatedException {
@@ -172,7 +179,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                     // Wait here for VM process to stop
                     if (!waitUntilStopped()) {
                         // Something went wrong; process presumed to be dead.
-                        throw new ProcessTerminatedException("");
+                        throw new ProcessTerminatedException("Wait until process stopped failed");
                     }
                     Trace.line(TRACE_VALUE, tracePrefix() + "Execution stopped: " + request);
                     // Read VM memory and update various bits of cached state about the VM state

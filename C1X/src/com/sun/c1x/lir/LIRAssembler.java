@@ -102,7 +102,7 @@ public abstract class LIRAssembler {
 
     protected void patchingEpilog(PatchingStub patch, LIRPatchCode patchCode, Register obj, CodeEmitInfo info) {
         // we must have enough patching space so that call can be inserted
-        while (asm.pc() - patch.pcStart() < compilation.target.arch.nativeMoveConstInstructionSize) {
+        while (asm.codeBuffer.position() - patch.pcStart() < compilation.target.arch.nativeMoveConstInstructionSize) {
             asm.nop();
         }
         patch.install(asm, patchCode, obj, info);
@@ -186,11 +186,11 @@ public abstract class LIRAssembler {
     }
 
     protected int codeOffset() {
-        return asm.offset();
+        return asm.codeBuffer.position();
     }
 
     protected int pc() {
-        return asm.pc();
+        return asm.codeBuffer.position();
     }
 
     public void emitExceptionEntries(List<ExceptionInfo> infoList) {
@@ -259,17 +259,13 @@ public abstract class LIRAssembler {
         }
 
         assert block.lir() != null : "must have LIR";
-        assert assertFrameSize();
         if (C1XOptions.CommentedAssembly) {
             String st = String.format(" block B%d [%d, %d]", block.blockID, block.bci(), block.end().bci());
             asm.blockComment(st);
         }
 
         emitLirList(block.lir());
-        assert assertFrameSize();
     }
-
-    protected abstract boolean assertFrameSize();
 
     protected abstract void peephole(LIRList list);
 
@@ -305,9 +301,19 @@ public abstract class LIRAssembler {
             }
 
             if (C1XOptions.PrintLIRWithAssembly) {
-                asm.decode();
+                printAssembly(asm);
             }
         }
+    }
+
+    private int lastDecodeStart;
+    private void printAssembly(AbstractAssembler asm) {
+        byte[] currentBytes = asm.codeBuffer.getData(lastDecodeStart, asm.codeBuffer.position());
+        Util.printBytes(currentBytes);
+        if (currentBytes.length > 0) {
+            TTY.println(compilation.runtime.disassemble(currentBytes));
+        }
+        lastDecodeStart = asm.codeBuffer.position();
     }
 
     boolean checkNoUnboundLabels() {
@@ -531,14 +537,6 @@ public abstract class LIRAssembler {
             case Branch:
                 break;
 
-            case Push:
-                push(op.inOpr());
-                break;
-
-            case Pop:
-                pop(op.inOpr());
-                break;
-
             case Neg:
                 negate(op.inOpr(), op.resultOpr());
                 break;
@@ -577,10 +575,6 @@ public abstract class LIRAssembler {
 
     protected abstract void monitorAddress(int asInt, LIROperand result);
 
-    protected abstract void pop(LIROperand inOpr);
-
-    protected abstract void push(LIROperand inOpr);
-
     protected abstract void safepointPoll(LIROperand inOpr, CodeEmitInfo info);
 
     protected abstract void returnOp(LIROperand inOpr);
@@ -612,20 +606,20 @@ public abstract class LIRAssembler {
 
             case StdEntry:
                 // init offsets
-                offsets().setValue(CodeOffsets.Entries.OSREntry, asm.offset());
+                offsets().setValue(CodeOffsets.Entries.OSREntry, asm.codeBuffer.position());
                 asm.align(compilation.target.codeAlignment);
                 asm.makeOffset(compilation.runtime.codeOffset());
                 if (needsIcache(compilation.method())) {
                     checkIcache();
                 }
-                offsets().setValue(CodeOffsets.Entries.VerifiedEntry, asm.offset());
+                offsets().setValue(CodeOffsets.Entries.VerifiedEntry, asm.codeBuffer.position());
                 asm.verifiedEntry();
                 buildFrame();
-                offsets().setValue(CodeOffsets.Entries.FrameComplete, asm.offset());
+                offsets().setValue(CodeOffsets.Entries.FrameComplete, asm.codeBuffer.position());
                 break;
 
             case OsrEntry:
-                offsets().setValue(CodeOffsets.Entries.OSREntry, asm.offset());
+                offsets().setValue(CodeOffsets.Entries.OSREntry, asm.codeBuffer.position());
                 osrEntry();
                 break;
 

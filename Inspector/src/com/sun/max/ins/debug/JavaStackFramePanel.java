@@ -32,6 +32,7 @@ import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.LocalVariableTable.*;
 import com.sun.max.vm.collect.*;
@@ -93,7 +94,8 @@ final class JavaStackFramePanel extends StackFramePanel<JavaStackFrame> {
         final String frameClassName = javaStackFrame.getClass().getSimpleName();
         final Address slotBase = javaStackFrame.slotBase();
         targetMethod = javaStackFrame.targetMethod();
-        codeAttribute = targetMethod.classMethodActor().codeAttribute();
+        final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
+        codeAttribute = classMethodActor == null ? null : classMethodActor.codeAttribute();
         final int frameSize = javaStackFrame.layout.frameSize();
 
         final JPanel header = new InspectorPanel(inspection(), new SpringLayout());
@@ -257,7 +259,7 @@ final class JavaStackFramePanel extends StackFramePanel<JavaStackFrame> {
             final JitTargetMethod jitTargetMethod = (JitTargetMethod) targetMethod;
             final JitStackFrameLayout jitLayout = (JitStackFrameLayout) stackFrame.layout;
             final int bytecodePosition = jitTargetMethod.bytecodePositionFor(stackFrame.instructionPointer);
-            if (bytecodePosition != -1) {
+            if (bytecodePosition != -1 && codeAttribute != null) {
                 for (int localVariableIndex = 0; localVariableIndex < codeAttribute.maxLocals(); ++localVariableIndex) {
                     final int localVariableOffset = jitLayout.localVariableOffset(localVariableIndex);
                     if (slot.offset == localVariableOffset) {

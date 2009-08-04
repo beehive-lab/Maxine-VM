@@ -66,7 +66,9 @@ public class C1XTargetMethod extends TargetMethod {
 
     @Override
     public final void patchCallSite(int callOffset, Word callEntryPoint) {
-        patchCallSite(this, callOffset, callEntryPoint);
+        final long target = callEntryPoint.asAddress().toLong();
+        final int displacement = (int) (target - codeStart().plus(callOffset).toLong());
+        X86InstructionDecoder.patchRelativeInstruction(code(), callOffset, displacement);
     }
 
     @Override
@@ -75,13 +77,7 @@ public class C1XTargetMethod extends TargetMethod {
     }
 
     // TODO: (tw) Get rid of these!!!!!!!
-
-    private static final int RCALL = 0xe8;
     private static final int RJMP = 0xe9;
-
-    public static void patchCallSite(TargetMethod targetMethod, int callOffset, Word callEntryPoint) {
-        patchCode(targetMethod, callOffset, callEntryPoint.asAddress().toLong(), RCALL);
-    }
 
     public static void forwardTo(TargetMethod oldTargetMethod, TargetMethod newTargetMethod) {
         assert oldTargetMethod != newTargetMethod;

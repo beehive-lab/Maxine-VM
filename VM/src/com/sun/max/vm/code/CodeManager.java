@@ -266,7 +266,9 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
         final Pointer codeStart = targetBundleLayout.firstElementPointer(start, ArrayField.code);
         targetMethod.setCodeArrays(code, codeStart, scalarLiterals, referenceLiterals);
 
-        methodKeyToTargetMethods.add(new MethodActorKey(targetMethod.classMethodActor()), targetMethod);
+        if (targetMethod.classMethodActor() != null) {
+            methodKeyToTargetMethods.add(new MethodActorKey(targetMethod.classMethodActor()), targetMethod);
+        }
     }
 
     /**

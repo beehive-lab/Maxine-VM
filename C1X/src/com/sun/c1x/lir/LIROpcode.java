@@ -46,8 +46,6 @@ public enum LIROpcode {
         , GetThread
     , EndOp0
     , BeginOp1
-        , Push
-        , Pop
         , NullCheck
         , Return
         , Leal

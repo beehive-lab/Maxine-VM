@@ -51,6 +51,7 @@ import com.sun.max.vm.type.*;
  * @author Ben L. Titzer
  * @author Doug Simon
  * @author Paul Caprioli
+ * @author Hannes Payer
  */
 public class StopTheWorldGCDaemon extends BlockingServerDaemon {
 
@@ -73,10 +74,6 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
             Heap.disableAllocationForCurrentThread();
             if (!VmThreadLocal.inJava(vmThreadLocals)) {
                 FatalError.unexpected("Mutator thread trapped while in native code");
-            }
-
-            if (Safepoint.UseCASBasedGCMutatorSynchronization) {
-                enabledVmThreadLocals.setWord(MUTATOR_STATE.index, THREAD_IN_JAVA_STOPPING_FOR_GC);
             }
 
             if (!enabledVmThreadLocals.getWord(LOWEST_ACTIVE_STACK_SLOT_ADDRESS.index).isZero()) {
@@ -167,11 +164,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
             if (Safepoint.UseCASBasedGCMutatorSynchronization) {
                 final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
                 while (true) {
-                    if (enabledVmThreadLocals.readWord(MUTATOR_STATE.offset).equals(THREAD_IN_GC_FROM_JAVA)) {
-                        // Transitioned thread into GC
-                        break;
-                    }
-                    if (enabledVmThreadLocals.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IN_GC_FROM_NATIVE).equals(THREAD_IN_NATIVE)) {
+                    if (enabledVmThreadLocals.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IN_GC).equals(THREAD_IN_NATIVE)) {
                         // Transitioned thread into GC
                         break;
                     }
@@ -297,30 +290,30 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
         final ClassMethodActor classMethodActor = ClassActor.fromJava(GCRequest.class).findLocalClassMethodActor(SymbolTable.makeSymbol("run"), SignatureDescriptor.VOID);
         final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(classMethodActor);
         if (targetMethod != null) {
-            final ClassMethodActor[] directCallees = targetMethod.directCallees();
+            final Object[] directCallees = targetMethod.directCallees();
             for (int stopIndex = 0; stopIndex < directCallees.length; ++stopIndex) {
-                if (directCallees[stopIndex].name.string.equals("prepareCurrentStackReferenceMap")) {
-                    final int stopPosition = targetMethod.stopPosition(stopIndex);
-                    final int nextCallPosition = targetMethod.findNextCall(stopPosition, false);
-                    if (nextCallPosition >= 0) {
-                        final int[] stopPositions = targetMethod.stopPositions();
-                        for (int nextCallStopIndex = 0; nextCallStopIndex < stopPositions.length; ++nextCallStopIndex) {
-                            if (stopPositions[nextCallStopIndex] == nextCallPosition) {
-                                final ByteArrayBitMap nextCallRefmap = targetMethod.frameReferenceMapFor(nextCallStopIndex);
-                                final ByteArrayBitMap firstCallRefmap = targetMethod.frameReferenceMapFor(stopIndex);
-                                if (nextCallRefmap.equals(firstCallRefmap)) {
-                                    // OK
-                                    return;
+
+                final Object current = directCallees[stopIndex];
+                if (current instanceof MethodActor) {
+                    final MethodActor currentCallee = (MethodActor) current;
+                    if (currentCallee.name.string.equals("prepareCurrentStackReferenceMap")) {
+                        final int stopPosition = targetMethod.stopPosition(stopIndex);
+                        final int nextCallPosition = targetMethod.findNextCall(stopPosition, false);
+                        if (nextCallPosition >= 0) {
+                            final int[] stopPositions = targetMethod.stopPositions();
+                            for (int nextCallStopIndex = 0; nextCallStopIndex < stopPositions.length; ++nextCallStopIndex) {
+                                if (stopPositions[nextCallStopIndex] == nextCallPosition) {
+                                    final ByteArrayBitMap nextCallRefmap = targetMethod.frameReferenceMapFor(nextCallStopIndex);
+                                    final ByteArrayBitMap firstCallRefmap = targetMethod.frameReferenceMapFor(stopIndex);
+                                    if (nextCallRefmap.equals(firstCallRefmap)) {
+                                        // OK
+                                        return;
+                                    }
                                 }
-                                throw ProgramError.unexpected(String.format(
-                                    "Reference maps not equal in %s for calls to VmThreadLocal.prepareCurrentStackReferenceMap() and _procedure.run():%n" +
-                                    "    frame refmap 1: %s%n" +
-                                    "    frame refmap 2: %s",
-                                    classMethodActor.format("%H.%n(%p)"), firstCallRefmap, nextCallRefmap));
                             }
+                            throw ProgramError.unexpected("Cannot find stop in " + classMethodActor.format("%H.%n(%p)") + " for call to _procedure.run()");
                         }
                     }
-                    throw ProgramError.unexpected("Cannot find stop in " + classMethodActor.format("%H.%n(%p)") + " for call to _procedure.run()");
                 }
             }
             throw ProgramError.unexpected("Cannot find stop in " + classMethodActor.format("%H.%n(%p)") + " for call to VmThreadLocal.prepareCurrentStackReferenceMap()");

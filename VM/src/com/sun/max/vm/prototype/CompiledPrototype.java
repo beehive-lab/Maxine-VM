@@ -378,7 +378,7 @@ public class CompiledPrototype extends Prototype {
             return false;
         }
         if (methodActor.isAnnotationPresent(BOOT_IMAGE_DIRECTIVE.class)) {
-            final BOOT_IMAGE_DIRECTIVE annotation = methodActor.toJava().getAnnotation(BOOT_IMAGE_DIRECTIVE.class);
+            final BOOT_IMAGE_DIRECTIVE annotation = methodActor.getAnnotation(BOOT_IMAGE_DIRECTIVE.class);
             if (annotation.keepUnlinked()) {
                 // if there is an annotation to keep this method unlinked, add to the unlinked methods set
                 registerMethodUnlinked(methodActor);
@@ -644,7 +644,7 @@ public class CompiledPrototype extends Prototype {
     private void linkNonVirtualCalls() {
         Trace.begin(1, "linkNonVirtualCalls");
         for (TargetMethod targetMethod : Code.bootCodeRegion.targetMethods()) {
-            if (!unlinkedClasses.contains(targetMethod.classMethodActor().holder()) && !unlinkedMethods.contains(targetMethod.classMethodActor())) {
+            if (targetMethod.classMethodActor() == null || (!unlinkedClasses.contains(targetMethod.classMethodActor().holder()) && !unlinkedMethods.contains(targetMethod.classMethodActor()))) {
                 if (!targetMethod.linkDirectCalls()) {
                     targetMethod.linkDirectCalls();
                     ProgramError.unexpected("did not link all direct calls in method: " + targetMethod);

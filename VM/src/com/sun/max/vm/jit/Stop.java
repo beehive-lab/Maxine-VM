@@ -150,7 +150,7 @@ public abstract class Stop {
 
         @Override
         public ClassMethodActor directCallee() {
-            return template.directCallees()[index];
+            return (ClassMethodActor) template.directCallees()[index];
         }
 
         @Override

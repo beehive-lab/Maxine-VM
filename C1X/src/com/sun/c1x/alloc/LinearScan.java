@@ -2993,10 +2993,6 @@ public class LinearScan extends RegisterAllocator {
                 computeOopMap(iw, visitor, op);
 
                 // compute debug information
-                // compute debug information if fpu stack allocation is not needed.
-                // when fpu stack allocation is needed, the debug information can not
-                // be computed here because the exact location of fpu operands is not known
-                // . debug information is created inside the fpu stack allocator
                 int n = visitor.infoCount();
                 for (int k = 0; k < n; k++) {
                     computeDebugInfo(visitor.infoAt(k), opId);

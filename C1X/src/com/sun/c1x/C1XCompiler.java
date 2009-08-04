@@ -18,31 +18,58 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.target;
+package com.sun.c1x;
 
-import com.sun.c1x.C1XCompilation;
-import com.sun.c1x.asm.AbstractAssembler;
+import java.util.*;
+
 import com.sun.c1x.ci.*;
-import com.sun.c1x.gen.LIRGenerator;
 import com.sun.c1x.globalstub.*;
-import com.sun.c1x.lir.FrameMap;
-import com.sun.c1x.lir.LIRAssembler;
+import com.sun.c1x.target.*;
 
 /**
- * The <code>Backend</code> class represents a compiler backend for C1X.
  *
- * @author Ben L. Titzer
+ * @author Thomas Wuerthinger
+ *
  */
-public abstract class Backend {
-    public final Target target;
+public class C1XCompiler {
 
-    protected Backend(Target target) {
+    public final Target target;
+    public final CiRuntime runtime;
+    private final Map<GlobalStub, Object> map = new HashMap<GlobalStub, Object>();
+
+    private boolean initialized;
+
+    public C1XCompiler(Target target, CiRuntime runtime) {
         this.target = target;
+        this.runtime = runtime;
     }
 
-    public abstract FrameMap newFrameMap(C1XCompilation compilation, CiMethod method, int numberOfLocks, int maxStack);
-    public abstract LIRGenerator newLIRGenerator(C1XCompilation compilation);
-    public abstract LIRAssembler newLIRAssembler(C1XCompilation compilation);
-    public abstract AbstractAssembler newAssembler();
-    public abstract GlobalStubEmitter newGlobalStubEmitter(CiRuntime runtime);
+    public CiTargetMethod compileMethod(CiMethod method) {
+        return compileMethod(method, -1);
+    }
+
+    public CiTargetMethod compileMethod(CiMethod method, int osrBCI) {
+
+        if (!initialized) {
+            initialized = true;
+            init();
+        }
+
+        C1XCompilation compilation = new C1XCompilation(this, target, runtime, method, osrBCI);
+        return compilation.compile();
+    }
+
+    private void init() {
+        final GlobalStubEmitter emitter = target.backend.newGlobalStubEmitter(runtime);
+        for (GlobalStub globalStub : GlobalStub.values()) {
+            final CiTargetMethod targetMethod = emitter.emit(globalStub);
+            Object result = runtime.registerTargetMethod(targetMethod);
+            map.put(globalStub, result);
+        }
+    }
+
+    public Object lookupGlobalStub(GlobalStub stub) {
+        assert map.containsKey(stub);
+        return map.get(stub);
+    }
 }

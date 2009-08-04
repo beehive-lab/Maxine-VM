@@ -101,6 +101,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     }
 
     public boolean isLive() {
+        getCurrentOrigin();
         return live;
     }
 

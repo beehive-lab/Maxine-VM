@@ -543,6 +543,7 @@ public class ComputeLinearScanOrder {
         for (int i = 1; i < numBlocks; i++) {
             BlockBegin block = linearScanOrder.get(i);
 
+            assert block.numberOfPreds() > 0;
             BlockBegin dominator = block.predAt(0);
             int numPreds = block.numberOfPreds();
             for (int j = 1; j < numPreds; j++) {

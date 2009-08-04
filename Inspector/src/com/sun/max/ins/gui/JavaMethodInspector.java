@@ -99,7 +99,7 @@ public class JavaMethodInspector extends MethodInspector {
         // enable choice if target code is present, even though this Inspector is not bound to a TargetMethod
         codeKindEnabled.put(MethodCodeKind.TARGET_CODE, teleTargetMethod != null || teleClassMethodActor.hasTargetMethod());
         // enable if bytecodes present
-        codeKindEnabled.put(MethodCodeKind.BYTECODES, teleClassMethodActor.hasCodeAttribute());
+        codeKindEnabled.put(MethodCodeKind.BYTECODES, (teleClassMethodActor == null) ? false : teleClassMethodActor.hasCodeAttribute());
         // not implemented yet
         codeKindEnabled.put(MethodCodeKind.JAVA_SOURCE, false);
 
@@ -126,6 +126,11 @@ public class JavaMethodInspector extends MethodInspector {
 
     @Override
     public String getTextForTitle() {
+
+        if (teleClassMethodActor == null) {
+            return "<no method actor>";
+        }
+
         final ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
         final StringBuilder sb = new StringBuilder(50);
         sb.append(classMethodActor.holder().simpleName());
@@ -148,13 +153,13 @@ public class JavaMethodInspector extends MethodInspector {
     }
     @Override
     public String getToolTip() {
-        String result;
+        String result = "";
         if (teleTargetMethod != null) {
             result =  inspection().nameDisplay().shortName(teleTargetMethod, ReturnTypeSpecification.AS_PREFIX);
-        } else {
+        } else if (teleClassMethodActor != null) {
             result = inspection().nameDisplay().shortName(teleClassMethodActor, ReturnTypeSpecification.AS_PREFIX);
         }
-        if (teleClassMethodActor.isSubstituted()) {
+        if (teleClassMethodActor != null && teleClassMethodActor.isSubstituted()) {
             result = result + inspection().nameDisplay().methodSubstitutionLongAnnotation(teleClassMethodActor);
         }
         return result;
@@ -270,7 +275,10 @@ public class JavaMethodInspector extends MethodInspector {
     @Override
     protected boolean refreshView(boolean force) {
         if (isShowing() || force) {
-            teleClassMethodActor.refreshView();
+            if (teleClassMethodActor != null) {
+                teleClassMethodActor.refreshView();
+            }
+
             if (classMethodMenuItems != null) {
                 classMethodMenuItems.refresh(force);
             }

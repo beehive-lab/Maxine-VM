@@ -37,7 +37,7 @@ public final class StaticTrampolineContext implements StackFrameVisitor {
     public Pointer instructionPointer;
 
     public boolean visitFrame(StackFrame stackFrame) {
-        if (stackFrame.isTopFrame() || stackFrame.isAdapter()) {
+        if (stackFrame.isTopFrame() || stackFrame instanceof AdapterStackFrame) {
             return true;
         }
         final Pointer instructionPointer = stackFrame.instructionPointer;

@@ -177,7 +177,7 @@ public final class ControlFlowOptimizer {
                 for (j = originalPreds.size() - 1; j >= 0; j--) {
                     BlockBegin pred = originalPreds.get(j);
                     substituteBranchTarget(pred, block, newTarget);
-                    pred.substituteSux(block, newTarget);
+                    pred.end().substituteSuccessor(block, newTarget);
                 }
             } else {
                 // adjust position of this block in the block list if blocks before

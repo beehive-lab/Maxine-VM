@@ -46,11 +46,6 @@ public class AdapterStackFrameLayout extends JavaStackFrameLayout {
     }
 
     @Override
-    public boolean isAdapter() {
-        return true;
-    }
-
-    @Override
     public int frameReferenceMapOffset() {
         return 0;
     }

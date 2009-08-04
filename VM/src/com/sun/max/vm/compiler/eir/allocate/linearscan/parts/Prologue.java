@@ -83,12 +83,6 @@ public class Prologue extends AlgorithmPart {
                                     modifyCount2++;
                                 }
                             }
-
-                            if (modifyCount == 1 && modifyCount2 == 1) {
-                                final int x = 0;
-                            } else {
-                                final int y = 0;
-                            }
                         }
                     }
                 }

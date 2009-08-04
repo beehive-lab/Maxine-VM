@@ -95,7 +95,7 @@ public class BlockMerger implements BlockClosure {
                     sux.removePredecessor(block); // remove this block from the successor
                     for (BlockBegin pred : block.predecessors()) {
                         // substitute the new successor for this block in each predecessor
-                        pred.substituteSux(block, sux);
+                        pred.end().substituteSuccessor(block, sux);
                         // and add each predecessor to the successor
                         sux.addPredecessor(pred);
                     }

@@ -210,7 +210,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
             }
             case INSPECTING: {
                 final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
-                final StackFrame stackFrame = new SPARCJitToOptimizedAdapterFrame(stackFrameWalker.calleeStackFrame(), targetMethod, instructionPointer, stackFrameWalker.framePointer(), stackPointer, adapterFrameSize);
+                final StackFrame stackFrame = new AdapterStackFrame(stackFrameWalker.calleeStackFrame(), new AdapterStackFrameLayout(adapterFrameSize, false), targetMethod, instructionPointer, stackFrameWalker.framePointer(), stackPointer);
                 if (!stackFrameVisitor.visitFrame(stackFrame)) {
                     return false;
                 }
@@ -397,11 +397,6 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
     @Override
     public Pointer namedVariablesBasePointer(Pointer stackPointer, Pointer framePointer) {
         return framePointer;
-    }
-
-    @Override
-    public void advance(StackFrameWalker stackFrameWalker, Word instructionPointer, Word stackPointer, Word framePointer) {
-        stackFrameWalker.advance(instructionPointer, stackPointer, framePointer);
     }
 
     @Override
