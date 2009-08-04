@@ -343,7 +343,7 @@ public class C1XCompilation {
         }
 
         if (targetMethod != null) {
-            targetMethod.totalInstructions = this.totalInstructions;
+            targetMethod.totalInstructions = this.totalInstructions();
         }
 
         return targetMethod;
