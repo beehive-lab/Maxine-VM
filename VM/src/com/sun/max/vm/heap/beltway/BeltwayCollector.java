@@ -28,7 +28,6 @@ import com.sun.max.vm.tele.*;
 
 /**
  *
- *
  * @author Laurent Daynes
  * @author Christos Kotselidis
  */
@@ -65,14 +64,17 @@ public class BeltwayCollector {
         InspectableHeapInfo.beforeGarbageCollection();
 
         if (Heap.verbose()) {
-            Log.print(collectorName + " Collection: ");
+            Log.print(collectorName);
+            Log.print(" Collection: ");
             Log.println(numCollections);
         }
     }
 
     protected void epilogue() {
         if (Heap.verbose()) {
-            Log.print("Finished " + collectorName + " Collection: ");
+            Log.print("Finished ");
+            Log.print(collectorName);
+            Log.print(" Collection: ");
             Log.println(numCollections);
         }
         InspectableHeapInfo.afterGarbageCollection();
