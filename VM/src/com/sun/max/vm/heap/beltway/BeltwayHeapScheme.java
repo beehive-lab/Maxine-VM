@@ -87,6 +87,13 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
 
     protected final BeltwayCardRegion cardRegion = new BeltwayCardRegion();
 
+    private ResetTLAB resetTLAB = new ResetTLAB() {
+        @Override
+        protected void doBeforeReset(Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabTop) {
+            doBeforeTLABRefill(tlabMark, tlabTop);
+        }
+    };
+
     private final SequentialHeapRootsScanner stackAndMonitorGripUpdater = new SequentialHeapRootsScanner(null);
 
     /**
@@ -416,6 +423,10 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             return;
         }
         fillWithDeadObject(tlabAllocationMark, hardLimit);
+    }
+
+    protected void resetTLABs() {
+        VmThreadMap.ACTIVE.forAllVmThreadLocals(null, resetTLAB);
     }
 
     /**
