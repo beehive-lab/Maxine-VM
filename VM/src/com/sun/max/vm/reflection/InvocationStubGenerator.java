@@ -145,9 +145,7 @@ public class InvocationStubGenerator<T> {
      * @param parameterTypes the declared parameter types of the target
      * @param isStatic specifies if the target is {@code static}
      * @param isPrivate specifies if the target is {@code private}
-     * @param classToInstantiate the class instantiated by the target (ignored if target is not a constructor)
-     * @param forSerialization specifies if the target is being generated for serialization (ignored if target is not a
-     *            constructor)
+     * @param classToInstantiate the class instantiated by the target (ignored if target is not a constructor and only non-null for serialization stubs)
      * @param boxing enum value encapsulating the semantics of how values are to be boxed and unboxed by the stub
      */
     InvocationStubGenerator(AccessibleObject target,
@@ -159,7 +157,6 @@ public class InvocationStubGenerator<T> {
                     boolean isStatic,
                     boolean isPrivate,
                     Class classToInstantiate,
-                    boolean forSerialization,
                     Boxing boxing) {
         try {
             this.boxing = boxing;
@@ -168,6 +165,14 @@ public class InvocationStubGenerator<T> {
             this.isInterface = declaringClass.isInterface();
             this.isConstructor = target instanceof Constructor;
             this.runtimeParameterTypes = boxing.runtimeParameterTypes(parameterTypes, declaringClass, isStatic, isConstructor);
+            boolean forSerialization = false;
+            if (isConstructor) {
+                if (classToInstantiate == null) {
+                    classToInstantiate = declaringClass;
+                } else {
+                    forSerialization = true;
+                }
+            }
             final Utf8Constant stubClassName = generateName(isConstructor, forSerialization);
             final ClassActor declaringClassActor = ClassActor.fromJava(declaringClass);
 
