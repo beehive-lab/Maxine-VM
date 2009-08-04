@@ -27,11 +27,11 @@ package com.sun.max.asm;
  */
 public enum InstructionSet {
 
-    AMD64(Category.CISC, RelativeAddressing.FROM_INSTRUCTION_END),
-    ARM(Category.RISC, RelativeAddressing.FROM_INSTRUCTION_END),
-    IA32(Category.CISC, RelativeAddressing.FROM_INSTRUCTION_END),
-    PPC(Category.RISC, RelativeAddressing.FROM_INSTRUCTION_START),
-    SPARC(Category.RISC, RelativeAddressing.FROM_INSTRUCTION_START);
+    AMD64(Category.CISC, RelativeAddressing.FROM_INSTRUCTION_END, 0),
+    ARM(Category.RISC, RelativeAddressing.FROM_INSTRUCTION_END, 0),
+    IA32(Category.CISC, RelativeAddressing.FROM_INSTRUCTION_END, 0),
+    PPC(Category.RISC, RelativeAddressing.FROM_INSTRUCTION_START, 0),
+    SPARC(Category.RISC, RelativeAddressing.FROM_INSTRUCTION_START, 8);
 
     public enum Category {
         CISC, RISC;
@@ -53,9 +53,19 @@ public enum InstructionSet {
         return relativeAddressing;
     }
 
-    private InstructionSet(Category category, RelativeAddressing relativeAddressing) {
+    private final int offsetToReturnPC;
+
+    /**
+     * @return offset to the return address of the caller from the caller's saved PC.
+     */
+    public int offsetToReturnPC() {
+        return offsetToReturnPC;
+    }
+
+    private InstructionSet(Category category, RelativeAddressing relativeAddressing, int offsetToReturnPC) {
         this.category = category;
         this.relativeAddressing = relativeAddressing;
+        this.offsetToReturnPC = offsetToReturnPC;
     }
 
     @Override
@@ -69,4 +79,5 @@ public enum InstructionSet {
     public boolean callsPushReturnAddressOnStack() {
         return category == Category.CISC;
     }
+
 }
