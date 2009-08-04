@@ -69,8 +69,8 @@ public final class DirToAMD64EirMethodTranslation extends DirToEirMethodTranslat
 
     @Override
     public EirCall createCall(EirBlock eirBlock, EirABI abi, EirValue result, EirLocation resultLocation,
-                              EirValue function, EirValue[] arguments, EirLocation[] argumentLocations) {
-        return new CALL(eirBlock, abi, result, resultLocation, function, arguments, argumentLocations, this);
+                              EirValue function, EirValue[] arguments, EirLocation[] argumentLocations, boolean isNativeFunctionCall) {
+        return new CALL(eirBlock, abi, result, resultLocation, function, arguments, argumentLocations, isNativeFunctionCall, this);
     }
 
     @Override

@@ -26,6 +26,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.beltway.*;
+import com.sun.max.vm.heap.beltway.generational.BeltwayGenerationalCollector.*;
 import com.sun.max.vm.heap.beltway.profile.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.tele.*;
@@ -34,7 +35,8 @@ import com.sun.max.vm.tele.*;
  * @author Christos Kotselidis
  *
  * A Beltway collector configured as a generational heap.
- * Configured with three belts: one for an nursery (the eden space); one for the tenured generation (the mature space);
+ * Configured with three belts: one for a nursery (the eden space); one for a survivor space (to space);
+ * and one for the tenured generation (the mature space).
  */
 public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
     /**
@@ -44,12 +46,21 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
      */
     private static final  int [] DEFAULT_BELT_HEAP_PERCENTAGE = new int[] {10, 40, 50};
 
-    @Override
-    protected int [] defaultBeltHeapPercentage() {
-        return DEFAULT_BELT_HEAP_PERCENTAGE;
+    private Runnable edenGC;
+    private Runnable toGC;
+    private Runnable majorGC;
+
+    public Runnable getMinorGC() {
+        return edenGC;
     }
 
-    protected static BeltwayGenerationalCollector beltCollectorGenerational = new BeltwayGenerationalCollector();
+    public Runnable getMajorGC() {
+        return majorGC;
+    }
+
+    public Runnable getToGC() {
+        return toGC;
+    }
 
     public BeltwayHeapSchemeGenerational(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -59,17 +70,31 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (phase == MaxineVM.Phase.PRISTINE) {
+            // The following line enables allocation to take place.
+            tlabAllocationBelt = getEdenSpace();
+            // Watch out: the following create a MemoryRegion array
             InspectableHeapInfo.init(getEdenSpace(), getToSpace(), getMatureSpace());
+
+            if (BeltwayConfiguration.parallelScavenging) {
+                edenGC = new ParEdenCollector();
+                toGC = new ParToSpaceCollector();
+                majorGC = new ParMajorCollector();
+            } else {
+                edenGC = new EdenCollector();
+                toGC = new ToSpaceCollector();
+                majorGC = new MajorCollector();
+            }
         } else if (phase == MaxineVM.Phase.RUNNING) {
-            beltCollectorGenerational.setBeltwayHeapScheme(this);
-            beltCollector.setRunnable(beltCollectorGenerational);
-            heapVerifier.initialize(this);
-            heapVerifier.getRootsVerifier().setFromSpace(beltManager.getApplicationHeap());
-            heapVerifier.getRootsVerifier().setToSpace(getMatureSpace());
+            heapVerifier.initialize(beltManager.getApplicationHeap(), getMatureSpace());
             if (Heap.verbose()) {
                 HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "EdenGC", "ToSpaceGC", "MatureSpaceGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "CardScan", "Scavenge");
             }
         }
+    }
+
+    @Override
+    protected int [] defaultBeltHeapPercentage() {
+        return DEFAULT_BELT_HEAP_PERCENTAGE;
     }
 
     @INLINE
@@ -87,45 +112,26 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
         return beltManager.getBelt(2);
     }
 
-    /**
-     * This is the generic allocator which first attempt to allocate space on current thread's TLAB. If allocation
-     * fails, it checks if a new TLAB can be allocated in the youngest belt. If the TLAB allocation is successful the
-     * object is allocated in the new allocated TLAB. Otherwise a minor GC is triggered. TODO: Recalculate tlabs' sizes
-     *
-     * @param size The size of the allocation.
-     * @return the pointer to the address in which we can allocate. If null, a GC should be triggered.
-     */
-    @INLINE(override = true)
-    public Pointer allocate(Size size) {
-        if (!MaxineVM.isRunning()) {
-            return bumpAllocateSlowPath(getEdenSpace(), size);
-        }
-        if (BeltwayConfiguration.useTLABS) {
-            return tlabAllocate(getEdenSpace(), size);
-        }
-        return heapAllocate(getEdenSpace(), size);
-    }
-
     public synchronized boolean collectGarbage(Size requestedFreeSpace) {
         if (outOfMemory) {
             return false;
         }
-        beltCollector.setRunnable(beltCollectorGenerational.getMinorGC());
-        collectorThread.execute();
+        //beltCollector.setRunnable(beltCollectorGenerational.getMinorGC());
+        collectorThread.execute(getMinorGC());
 
         if (Heap.verbose()) {
             HeapStatistics.incrementEdenCollections();
         }
         if (getToSpace().getRemainingMemorySize().lessEqual(getEdenSpace().size())) {
-            beltCollector.setRunnable(beltCollectorGenerational.getToGC());
-            collectorThread.execute();
+            //beltCollector.setRunnable(beltCollectorGenerational.getToGC());
+            collectorThread.execute(getToGC());
 
             if (Heap.verbose()) {
                 HeapStatistics.incrementToSpaceCollections();
             }
             if (getMatureSpace().getRemainingMemorySize().lessEqual(getToSpace().size().dividedBy(2))) {
-                beltCollector.setRunnable(beltCollectorGenerational.getMajorGC());
-                collectorThread.execute();
+                //beltCollector.setRunnable(beltCollectorGenerational.getMajorGC());
+                collectorThread.execute(getMajorGC());
 
                 if (Heap.verbose()) {
                     HeapStatistics.incrementMatureCollections();

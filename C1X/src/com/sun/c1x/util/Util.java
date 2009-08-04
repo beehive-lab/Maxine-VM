@@ -526,8 +526,6 @@ public class Util {
     }
 
     public static void warning(String string) {
-        // TODO Auto-generated method stub
-
     }
 
     public static int safeToInt(long l) {
@@ -631,6 +629,12 @@ public class Util {
 
     public static boolean isShiftCount(int x) {
         return 0 <= x && x < 32;
+    }
+
+    public static void nonFatalUnimplemented() {
+        if (C1XOptions.FatalUnimplemented) {
+            throw new Error("unimplemented");
+        }
     }
 
     public static boolean isByte(int x) {

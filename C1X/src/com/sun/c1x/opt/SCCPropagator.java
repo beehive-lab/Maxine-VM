@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,13 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=8ef40a37-6a9b-45d0-b4c0-2a9ea2597045*/
-package com.sun.max.vm.heap;
-import com.sun.max.unsafe.*;
+package com.sun.c1x.opt;
 
 /**
- * @author Bernd Mathiske
+ * The <code>SCCPropagator</code> class implements sparse conditional constant propagation.
+ * While most canonicalization opportunities are revealed and exploited during graph construction
+ * in SSA form, some opportunities can be missed, and still more may be created by later optimizations.
+ * This class implements a classic iterative data-flow analysis to discover all canonicalization
+ * opportunities.
+ *
+ * @author Ben L. Titzer
  */
-public interface PointerOffsetVisitor {
-    void visitPointerOffset(Pointer pointer, int offset);
+public class SCCPropagator {
 }

@@ -76,9 +76,14 @@ public interface MaxVM {
     VMConfiguration vmConfiguration();
 
     /**
-     * @return size in bytes of a word in the VM.
+     * @return size of a word in the VM.
      */
-    int wordSize();
+    Size wordSize();
+
+    /**
+     * @return size a memory page in the VM
+     */
+    Size pageSize();
 
     /**
      * @return the boot image from which this VM instance was created.
@@ -397,6 +402,24 @@ public interface MaxVM {
     TeleObject findObjectByOID(long id);
 
     /**
+     * Scans VM memory backwards (smaller address) for an object.
+     *
+     * @param address search starts with word preceding this address
+     * @param maxSearchExtent maximum number of bytes to search, unbounded if 0.
+     * @return surrogate for a VM object, null if none found
+     */
+    TeleObject findObjectPreceding(Address address, long maxSearchExtent);
+
+    /**
+     * Scans VM memory forward (larger address) for an object.
+     *
+     * @param address search starts with word following this address
+     * @param maxSearchExtent maximum number of bytes to search, unbounded if 0.
+     * @return surrogate for a VM object, null if none found
+     */
+    TeleObject findObjectFollowing(Address address, long maxSearchExtent);
+
+    /**
      * @param id  Class ID of a {@link ClassActor} in the VM.
      * @return surrogate for the {@link ClassActor} in the VM, null if not known.
      * @see ClassActor
@@ -458,7 +481,7 @@ public interface MaxVM {
      *
      * @param codeStart starting address of the code in VM memory
      * @param codeSize presumed size of the code
-     * @param name a name to be assigned to the block of code; a simple address-based name used if null.
+     * @param name an optional name to be assigned to the block of code; a simple address-based name used if null.
      * @return a newly created TeleNativeTargetRoutine
      */
     TeleNativeTargetRoutine createTeleNativeTargetRoutine(Address codeStart, Size codeSize, String name);
@@ -597,8 +620,9 @@ public interface MaxVM {
      *
      * @param address a code address in the VM.
      * @return a possibly new, non-transient, target code breakpoint at the address.
+     * @throws MaxVMException when the VM fails to create the breakpoint.
      */
-    TeleTargetBreakpoint makeTargetBreakpoint(Address address);
+    TeleTargetBreakpoint makeMaxTargetBreakpoint(Address address) throws MaxVMException;
 
     /**
      * Finds a target code breakpoint in the VM.

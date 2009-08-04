@@ -23,6 +23,7 @@ package com.sun.max.ins.value;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -71,7 +72,11 @@ public abstract class ValueLabel extends InspectorLabel {
      * Sets initial value, display properties.
      */
     protected final void initializeValue() {
-        value = fetchValue();
+        try {
+            value = fetchValue();
+        } catch (DataIOError dataIOError) {
+            value = VoidValue.VOID;
+        }
         lastRefreshedState = maxVMState();
     }
 
@@ -93,7 +98,13 @@ public abstract class ValueLabel extends InspectorLabel {
     public final void refresh(boolean force) {
         if (maxVMState().newerThan(lastRefreshedState) || force) {
             lastRefreshedState = maxVMState();
-            setValue(fetchValue());
+            Value newValue;
+            try {
+                newValue = fetchValue();
+            } catch (DataIOError dataIOError) {
+                newValue = VoidValue.VOID;
+            }
+            setValue(newValue);
         }
     }
 

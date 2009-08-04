@@ -63,12 +63,10 @@ public class BlockBegin extends StateSplit {
         LinearScanLoopHeader,
         LinearScanLoopEnd;
 
-        public final int mask() {
-            return 1 << ordinal();
-        }
+        public final int mask = 1 << ordinal();
     }
 
-    private static final int entryFlags = BlockFlag.StandardEntry.mask() | BlockFlag.OsrEntry.mask() | BlockFlag.ExceptionEntry.mask();
+    private static final int entryFlags = BlockFlag.StandardEntry.mask | BlockFlag.OsrEntry.mask | BlockFlag.ExceptionEntry.mask;
 
     public final int blockID;
 
@@ -236,7 +234,7 @@ public class BlockBegin extends StateSplit {
      * @param flag the flag to set
      */
     public void setBlockFlag(BlockFlag flag) {
-        blockFlags |= flag.mask();
+        blockFlags |= flag.mask;
     }
 
     /**
@@ -244,7 +242,7 @@ public class BlockBegin extends StateSplit {
      * @param flag the flag to clear
      */
     public void clearBlockFlag(BlockFlag flag) {
-        blockFlags &= ~flag.mask();
+        blockFlags &= ~flag.mask;
     }
 
     public void copyBlockFlag(BlockBegin other, BlockFlag flag) {
@@ -257,7 +255,7 @@ public class BlockBegin extends StateSplit {
      * @return <code>true</code> if this block has the flag
      */
     public final boolean checkBlockFlag(BlockFlag flag) {
-        return (blockFlags & flag.mask()) != 0;
+        return (blockFlags & flag.mask) != 0;
     }
 
     /**

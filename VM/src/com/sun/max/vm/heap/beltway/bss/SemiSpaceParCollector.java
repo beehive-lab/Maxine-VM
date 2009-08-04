@@ -18,19 +18,38 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.heap.beltway;
+package com.sun.max.vm.heap.beltway.bss;
 
-import com.sun.max.memory.*;
-import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.beltway.*;
 
 /**
+ * Parallel version of the beltway semi-space collector.
+ * Just spawns GC thread to evacuate followers.
  *
+ * @author Laurent Daynes.
  */
-public interface BeltWayCellVisitor extends Visitor{
+public class SemiSpaceParCollector extends BeltwaySSCollector {
+    SemiSpaceParCollector() {
+        super("ParBSS");
+    }
+    @Override
+    protected void evacuateFollowers(Belt fromSpace, Belt toSpace) {
+        final BeltwayHeapScheme heapScheme = getBeltwayHeapScheme();
+        if (Heap.verbose()) {
+            Log.println("Evacuate reachable...");
+        }
+        // heapScheme.fillLastTLAB();  FIXME: revisit this!!!
+        heapScheme.initializeGCThreads(heapScheme, fromSpace, toSpace);
+        if (Heap.verbose()) {
+            Log.println("Start Threads");
+        }
 
-    /**
-     * @param cell the cell to be visited
-     * @return the adjacent next cell
-     */
-    Pointer visitCell(Pointer cell, Action action, RuntimeMemoryRegion from, RuntimeMemoryRegion to);
+        heapScheme.startGCThreads();
+
+        if (Heap.verbose()) {
+            Log.println("Join Threads");
+        }
+    }
 }

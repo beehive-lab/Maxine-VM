@@ -55,6 +55,9 @@ public abstract class TargetCodeViewer extends CodeViewer {
         return "Target Code";
     }
 
+    // Location of the caller return address relative to the saved location in a stack frame, usually 0 but see SPARC.
+    private final int  offsetToReturnPC;
+
     private final TeleTargetRoutine teleTargetRoutine;
 
     /**
@@ -118,6 +121,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
     protected TargetCodeViewer(Inspection inspection, MethodInspector parent, TeleTargetRoutine teleTargetRoutine) {
         super(inspection, parent);
 
+        this.offsetToReturnPC = maxVM().vmConfiguration().platform().processorKind.instructionSet.offsetToReturnPC();
         this.teleTargetRoutine = teleTargetRoutine;
         instructions = teleTargetRoutine.getInstructions();
         final TeleClassMethodActor teleClassMethodActor = teleTargetRoutine.getTeleClassMethodActor();
@@ -145,10 +149,10 @@ public abstract class TargetCodeViewer extends CodeViewer {
         final int targetCodeLength = teleTargetRoutine.targetCodeRegion().size().toInt();
         final int[] positionToStopIndex = new int[targetCodeLength];
         Arrays.fill(positionToStopIndex, -1);
-        final int[] stopPositions = teleTargetRoutine.getStopPositions();
+        final StopPositions stopPositions = teleTargetRoutine.getStopPositions();
         if (stopPositions != null) {
-            for (int i = 0; i < stopPositions.length; ++i) {
-                positionToStopIndex[stopPositions[i]] = i;
+            for (int i = 0; i < stopPositions.length(); ++i) {
+                positionToStopIndex[stopPositions.get(i)] = i;
             }
         }
 
@@ -264,7 +268,11 @@ public abstract class TargetCodeViewer extends CodeViewer {
 
     /**
      * Rebuilds the cache of stack information if needed, based on the thread that is the current focus.
-     * Identifies for each instruction in the method a stack frame (if any) whose instruction pointer is at the address of the instruction.
+     * <br>
+     * Identifies for each row (instruction) a stack frame (if any) that is related to the instruction.
+     * In the case of the top frame, this would be the row (instruction) at the current IP.
+     * In the case of other frames, this would be the row (instruction) that is the call return site.
+     *
      */
     @Override
     protected void updateStackCache() {
@@ -288,8 +296,9 @@ public abstract class TargetCodeViewer extends CodeViewer {
             if (isFrameForThisCode) {
                 int row = 0;
                 for (TargetCodeInstruction targetCodeInstruction : instructions) {
-                    final Address address = targetCodeInstruction.address;
-                    if (address.equals(frame.instructionPointer)) {
+                    final Address instructionAddress = targetCodeInstruction.address;
+                    if ((stackPosition == 0 && instructionAddress.equals(frame.instructionPointer)) ||
+                                    (stackPosition > 0 && instructionAddress.equals(frame.instructionPointer.plus(offsetToReturnPC)))) {
                         rowToStackFrameInfo[row] = new StackFrameInfo(frame, thread, stackPosition);
                         break;
                     }

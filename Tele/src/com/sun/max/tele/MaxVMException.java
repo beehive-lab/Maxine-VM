@@ -18,17 +18,18 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.heap.beltway;
+package com.sun.max.tele;
 
-import com.sun.max.memory.*;
-import com.sun.max.unsafe.*;
 
 /**
- * @author Bernd Mathiske
+ * A general exception for methods on {@link MaxVM}.
+ *
+ * @author Michael Van De Vanter
  */
-public interface BeltWayPointerOffsetVisitor extends Visitor{
+public class MaxVMException extends Exception {
 
-    void visitPointerOffset(Pointer pointer, int offset, RuntimeMemoryRegion from, RuntimeMemoryRegion to);
-    void visitPointerOffset(Pointer pointer, int offset);
+    public MaxVMException(String message) {
+        super(message);
+    }
 
 }

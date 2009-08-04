@@ -31,13 +31,13 @@ import com.sun.max.collect.*;
 public enum BreakpointsColumnKind implements ColumnKind{
     TAG ("Kind", "[T]arget, [B]ytecode, [S]ource", true, 20),
     ENABLED("En", "Enabled?", true, 5),
-    METHOD("Method", "Method containing breakpoint", true, -1) {
+    DESCRIPTION("Description", "How/where the breakpoint was created", true, -1) {
         @Override
         public boolean canBeMadeInvisible() {
             return false;
         }
     },
-    LOCATION("Locn", "Offset into method", true, -1),
+    LOCATION("Locn", "Location of the breakpoint", true, -1),
     CONDITION("Condition", "Optional conditional spec.", true, -1),
     TRIGGER_THREAD("Thread", "Name of thread currently stopped at breakpoint", true, 1);
 

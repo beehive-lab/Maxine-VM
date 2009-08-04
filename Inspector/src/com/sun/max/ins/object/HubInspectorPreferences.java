@@ -136,12 +136,12 @@ public final class HubInspectorPreferences {
     }
 
     void showDialog() {
-        new Dialog(inspection);
+        new HubInspectorPreferencesDialog(inspection);
     }
 
-    private final class Dialog extends InspectorDialog {
+    private final class HubInspectorPreferencesDialog extends InspectorDialog {
 
-        Dialog(Inspection inspection) {
+        HubInspectorPreferencesDialog(Inspection inspection) {
             super(inspection, "Hub Inspector Preferences", false);
 
             final JPanel dialogPanel = new InspectorPanel(inspection, new BorderLayout());

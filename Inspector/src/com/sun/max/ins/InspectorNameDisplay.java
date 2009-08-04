@@ -402,7 +402,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
         final StringBuilder name = new StringBuilder();
         if (teleCodeLocation.hasTargetCodeLocation()) {
-            final Address address = teleCodeLocation.targetCodeInstructionAddresss();
+            final Address address = teleCodeLocation.targetCodeInstructionAddress();
             name.append("Target{0x").append(address.toHexString());
             if (maxVM().findTeleTargetRoutine(TeleNativeTargetRoutine.class, address) != null) {
                 // a native routine that's already been registered.

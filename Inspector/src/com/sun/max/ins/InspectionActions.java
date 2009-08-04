@@ -1077,33 +1077,39 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Inspect memory words";
         private final Address address;
-        private final TeleObject teleObject;
+        private final MemoryRegion memoryRegion;
 
         InspectMemoryWordsAction() {
             super(inspection(), "Inspect memory words at address...");
             refreshableActions.append(this);
             this.address = null;
-            this.teleObject = null;
+            this.memoryRegion = null;
         }
 
         InspectMemoryWordsAction(Address address, String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
             this.address = address;
-            this.teleObject = null;
+            this.memoryRegion = null;
+        }
+
+        InspectMemoryWordsAction(MemoryRegion memoryRegion, String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            this.address = null;
+            this.memoryRegion = memoryRegion;
         }
 
         InspectMemoryWordsAction(TeleObject teleObject, String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
             this.address = null;
-            this.teleObject = teleObject;
+            this.memoryRegion = teleObject.getCurrentMemoryRegion();
         }
 
         @Override
         protected void procedure() {
-            if (teleObject != null) {
-                MemoryWordInspector.create(inspection(), teleObject.getCurrentMemoryRegion()).highlight();
-            }
-            if (address != null) {
+            if (memoryRegion != null) {
+                //MemoryWordInspector.create(inspection(), teleObject.getCurrentMemoryRegion()).highlight();
+                new MemoryWordsInspector(inspection(), memoryRegion);
+            } else if (address != null) {
                 MemoryWordInspector.create(inspection(), address).highlight();
             } else {
                 new AddressInputDialog(inspection(), maxVM().bootImageStart(), "Inspect memory words at address...", "Inspect") {
@@ -1142,6 +1148,16 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public final InspectorAction inspectMemoryWords(Address address, String title) {
         return new InspectMemoryWordsAction(address, title);
+    }
+
+
+    /**
+     * @param address a valid area of memory in the VM
+     * @param title a name for the action
+     * @return an Action that will create a Memory Words Inspector at the address
+     */
+    public final InspectorAction inspectMemoryWords(MemoryRegion memoryRegion, String title) {
+        return new InspectMemoryWordsAction(memoryRegion, title);
     }
 
 
@@ -1832,74 +1848,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
 
-    /**
-     * Action:  set a target code breakpoint at a particular address.
-     */
-    final class SetTargetCodeBreakpointAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Set target code breakpoint";
-
-        private final Address address;
-
-        public SetTargetCodeBreakpointAction(Address address, String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
-            this.address = address;
-            refresh(true);
-        }
-
-        @Override
-        protected void procedure() {
-            final TeleTargetBreakpoint breakpoint = maxVM().makeTargetBreakpoint(address);
-            focus().setBreakpoint(breakpoint);
-        }
-
-        @Override
-        public void refresh(boolean force) {
-            setEnabled(maxVM().getTargetBreakpoint(address) == null);
-        }
-    }
-
-    public final InspectorAction setTargetCodeBreakpoint(Address address, String title) {
-        return new SetTargetCodeBreakpointAction(address, title);
-    }
-
-
-    /**
-     * Action:  remove a target code breakpoint at a particular address.
-     */
-    final class RemoveTargetCodeBreakpointAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Remove target code breakpoint";
-
-        private final Address address;
-
-        public RemoveTargetCodeBreakpointAction(Address address, String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
-            this.address = address;
-            refresh(true);
-        }
-
-        @Override
-        protected void procedure() {
-            final TeleTargetBreakpoint breakpoint = maxVM().getTargetBreakpoint(address);
-            if (breakpoint != null) {
-                breakpoint.remove();
-                focus().setBreakpoint(null);
-            }
-        }
-
-        @Override
-        public void refresh(boolean force) {
-            setEnabled(maxVM().getTargetBreakpoint(address) != null);
-        }
-    }
-
-    public final InspectorAction removeTargetCodeBreakpoint(Address address, String title) {
-        return new RemoveTargetCodeBreakpointAction(address, title);
-    }
-
-
-    /**
+   /**
      * Action:  removes the currently selected breakpoint from the VM.
      */
     final class RemoveSelectedBreakpointAction extends InspectorAction {
@@ -2097,6 +2046,78 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
+     * Action:  set a target code breakpoint at a particular address.
+     */
+    final class SetTargetCodeBreakpointAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Set target code breakpoint";
+
+        private final Address address;
+
+        public SetTargetCodeBreakpointAction(Address address, String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            this.address = address;
+            refresh(true);
+        }
+
+        @Override
+        protected void procedure() {
+            try {
+                final TeleTargetBreakpoint breakpoint = maxVM().makeMaxTargetBreakpoint(address);
+                focus().setBreakpoint(breakpoint);
+            } catch (MaxVMException maxVMException) {
+                gui().errorMessage(maxVMException.getMessage());
+            }
+
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(maxVM().getTargetBreakpoint(address) == null);
+        }
+    }
+
+    public final InspectorAction setTargetCodeBreakpoint(Address address, String title) {
+        return new SetTargetCodeBreakpointAction(address, title);
+    }
+
+
+    /**
+     * Action:  remove a target code breakpoint at a particular address.
+     */
+    final class RemoveTargetCodeBreakpointAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Remove target code breakpoint";
+
+        private final Address address;
+
+        public RemoveTargetCodeBreakpointAction(Address address, String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            this.address = address;
+            refresh(true);
+        }
+
+        @Override
+        protected void procedure() {
+            final TeleTargetBreakpoint breakpoint = maxVM().getTargetBreakpoint(address);
+            if (breakpoint != null) {
+                breakpoint.remove();
+                focus().setBreakpoint(null);
+            }
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(maxVM().getTargetBreakpoint(address) != null);
+        }
+    }
+
+    public final InspectorAction removeTargetCodeBreakpoint(Address address, String title) {
+        return new RemoveTargetCodeBreakpointAction(address, title);
+    }
+
+
+     /**
      * Action:  toggle on/off a breakpoint at the target code location of the current focus.
      */
     final class ToggleTargetCodeBreakpointAction extends InspectorAction {
@@ -2116,12 +2137,16 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final Address targetCodeInstructionAddress = focus().codeLocation().targetCodeInstructionAddresss();
+            final Address targetCodeInstructionAddress = focus().codeLocation().targetCodeInstructionAddress();
             if (!targetCodeInstructionAddress.isZero()) {
                 TeleTargetBreakpoint breakpoint = maxVM().getTargetBreakpoint(targetCodeInstructionAddress);
                 if (breakpoint == null) {
-                    breakpoint = maxVM().makeTargetBreakpoint(targetCodeInstructionAddress);
-                    focus().setBreakpoint(breakpoint);
+                    try {
+                        breakpoint = maxVM().makeMaxTargetBreakpoint(targetCodeInstructionAddress);
+                        focus().setBreakpoint(breakpoint);
+                    } catch (MaxVMException maxVMException) {
+                        gui().errorMessage(maxVMException.getMessage());
+                    }
                 } else {
                     breakpoint.remove();
                     focus().setBreakpoint(null);
@@ -2146,6 +2171,56 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
+     * Action:  sets a  breakpoint at the target code location specified interactively..
+     */
+    final class SetCustomTargetCodeBreakpointAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Set custom target code breakpoint...";
+
+        SetCustomTargetCodeBreakpointAction(String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            refreshableActions.append(this);
+            refresh(true);
+        }
+
+        @Override
+        protected void procedure() {
+            new NativeLocationInputDialog(inspection(), "Set breakpoint at address...", maxVM().bootImageStart(), "") {
+                @Override
+                public void entered(Address address, String description) {
+                    if (!address.isZero()) {
+                        try {
+                            final TeleTargetBreakpoint breakpoint = maxVM().makeMaxTargetBreakpoint(address);
+                            if (breakpoint == null) {
+                                gui().errorMessage("Unable to create breakpoint at: " + "0x" + address.toHexString());
+                            } else {
+                                breakpoint.setDescription(description);
+                            }
+                        } catch (MaxVMException maxVMException) {
+                            gui().errorMessage(maxVMException.getMessage());
+                        }
+                    }
+                }
+            };
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(inspection().hasProcess());
+        }
+    }
+
+    private InspectorAction setCustomTargetCodeBreakpoint = new SetCustomTargetCodeBreakpointAction(null);
+
+    /**
+     * @return an Action that will toggle on/off a breakpoint at the target code location of the current focus.
+     */
+    public final InspectorAction setCustomTargetCodeBreakpoint() {
+        return setCustomTargetCodeBreakpoint;
+    }
+
+
+    /**
      * Action:  sets a breakpoint at every label in the target method containing the current code location focus.
      */
     final class SetTargetCodeLabelBreakpointsAction extends InspectorAction {
@@ -2165,7 +2240,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final Address address = focus().codeLocation().targetCodeInstructionAddresss();
+            final Address address = focus().codeLocation().targetCodeInstructionAddress();
             final TeleTargetRoutine teleTargetRoutine = maxVM().findTeleTargetRoutine(TeleTargetRoutine.class, address);
             if (teleTargetRoutine != null) {
                 teleTargetRoutine.setTargetCodeLabelBreakpoints();
@@ -2216,7 +2291,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final Address address = focus().codeLocation().targetCodeInstructionAddresss();
+            final Address address = focus().codeLocation().targetCodeInstructionAddress();
             final TeleTargetRoutine teleTargetRoutine = maxVM().findTeleTargetRoutine(TeleTargetRoutine.class, address);
             if (teleTargetRoutine != null) {
                 teleTargetRoutine.removeTargetCodeLabelBreakpoints();
@@ -2563,7 +2638,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         SetWordWatchpointAction(Address address, String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
-            this.memoryRegion = new FixedMemoryRegion(address, Size.fromInt(maxVM().wordSize()), "");
+            this.memoryRegion = new MemoryWordRegion(address, 1, maxVM().wordSize());
             setEnabled(maxVM().findWatchpoint(memoryRegion) == null);
         }
 
@@ -2575,7 +2650,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 new AddressInputDialog(inspection(), maxVM().bootImageStart(), "Watch word at address...", "Watch") {
                     @Override
                     public void entered(Address address) {
-                        setWatchpoint(new FixedMemoryRegion(address, Size.fromInt(maxVM().wordSize()), ""), "User specified region");
+                        setWatchpoint(new MemoryWordRegion(address, 1, maxVM().wordSize()), "User specified region");
                     }
                 };
             }
@@ -2654,7 +2729,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 new AddressInputDialog(inspection(), maxVM().bootImageStart(), "Watch memory...", "Watch") {
                     @Override
                     public void entered(Address address) {
-                        setWatchpoint(new FixedMemoryRegion(address, Size.fromInt(maxVM().wordSize()), ""), "User specified region");
+                        setWatchpoint(new FixedMemoryRegion(address, maxVM().wordSize(), ""), "User specified region");
                     }
                 };
             }
@@ -3311,7 +3386,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final Address selectedAddress = focus().codeLocation().targetCodeInstructionAddresss();
+            final Address selectedAddress = focus().codeLocation().targetCodeInstructionAddress();
             if (!selectedAddress.isZero()) {
                 try {
                     maxVM().runToInstruction(selectedAddress, false, true);
@@ -3355,7 +3430,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final Address selectedAddress = focus().codeLocation().targetCodeInstructionAddresss();
+            final Address selectedAddress = focus().codeLocation().targetCodeInstructionAddress();
             if (!selectedAddress.isZero()) {
                 try {
                     maxVM().runToInstruction(selectedAddress, false, false);
@@ -3399,7 +3474,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final Address address = focus().codeLocation().targetCodeInstructionAddresss();
+            final Address address = focus().codeLocation().targetCodeInstructionAddress();
             final TeleTargetMethod teleTargetMethod = maxVM().findTeleTargetRoutine(TeleTargetMethod.class, address);
             if (teleTargetMethod != null) {
                 final Address nextCallAddress = teleTargetMethod.getNextCallAddress(address);
@@ -3445,7 +3520,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final Address address = focus().codeLocation().targetCodeInstructionAddresss();
+            final Address address = focus().codeLocation().targetCodeInstructionAddress();
             final TeleTargetMethod teleTargetMethod = maxVM().findTeleTargetRoutine(TeleTargetMethod.class, address);
             if (teleTargetMethod != null) {
                 final Address nextCallAddress = teleTargetMethod.getNextCallAddress(address);
@@ -3623,7 +3698,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
          * @return whether there is a Java frame descriptor at the focus target code location
          */
         private boolean inspectable() {
-            final Address instructionAddress = focus().codeLocation().targetCodeInstructionAddresss();
+            final Address instructionAddress = focus().codeLocation().targetCodeInstructionAddress();
             if (instructionAddress.isZero()) {
                 return false;
             }

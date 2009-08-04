@@ -20,12 +20,17 @@
  */
 package com.sun.max.vm.compiler.target;
 
+import static com.sun.max.vm.runtime.VMRegister.Role.*;
+
 import com.sun.max.annotate.*;
+
 import com.sun.max.lang.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.runtime.*;
 
 /**
+ * Assignment of compilation roles to platform specific registers.
+ *
  * @author Bernd Mathiske
  * @author Laurent Daynes
  */
@@ -33,6 +38,12 @@ public final class RegisterRoleAssignment<IntegerRegister_Type extends Symbol, F
 
     private final IntegerRegister_Type[] integerRegisters;
 
+    /**
+     * Gets the integer register playing a given role.
+     *
+     * @param role a compilation role for a register
+     * @return the register designated to {@code role} by this object
+     */
     @FOLD
     public IntegerRegister_Type integerRegisterActingAs(VMRegister.Role role) {
         return integerRegisters[role.ordinal()];
@@ -45,6 +56,26 @@ public final class RegisterRoleAssignment<IntegerRegister_Type extends Symbol, F
         return floatingPointRegisters[role.ordinal()];
     }
 
+    /**
+     * Creates a set of role assignments.
+     *
+     * @param integerRegisterType
+     * @param cpuStackPointer
+     * @param cpuFramePointer
+     * @param abiStackPointer
+     * @param abiFramePointer
+     * @param integerReturn
+     * @param integerResult
+     * @param integerScratch
+     * @param safepointLatch
+     * @param literalBasePointer
+     * @param floatingPointRegisterType
+     * @param floatingPointReturn
+     * @param floatingPointScratch
+     * @param callInstructionAddress
+     * @param framelessCallInstructionAddress
+     */
+    @PROTOTYPE_ONLY
     public RegisterRoleAssignment(Class<IntegerRegister_Type> integerRegisterType,
                     IntegerRegister_Type cpuStackPointer,
                     IntegerRegister_Type cpuFramePointer,
@@ -58,26 +89,28 @@ public final class RegisterRoleAssignment<IntegerRegister_Type extends Symbol, F
                     Class<FloatingPointRegister_Type> floatingPointRegisterType,
                     FloatingPointRegister_Type floatingPointReturn, FloatingPointRegister_Type floatingPointScratch,
                     IntegerRegister_Type callInstructionAddress, IntegerRegister_Type framelessCallInstructionAddress) {
-        integerRegisters = Arrays.newInstance(integerRegisterType, VMRegister.Role.VALUES.length());
-        integerRegisters[VMRegister.Role.CPU_STACK_POINTER.ordinal()] = cpuStackPointer;
-        integerRegisters[VMRegister.Role.CPU_FRAME_POINTER.ordinal()] = cpuFramePointer;
-        integerRegisters[VMRegister.Role.ABI_STACK_POINTER.ordinal()] = abiStackPointer;
-        integerRegisters[VMRegister.Role.ABI_FRAME_POINTER.ordinal()] = abiFramePointer;
-        integerRegisters[VMRegister.Role.ABI_RETURN.ordinal()] = integerReturn;
-        integerRegisters[VMRegister.Role.ABI_RESULT.ordinal()] = integerResult;
-        integerRegisters[VMRegister.Role.ABI_SCRATCH.ordinal()] = integerScratch;
-        integerRegisters[VMRegister.Role.SAFEPOINT_LATCH.ordinal()] = safepointLatch;
-        integerRegisters[VMRegister.Role.LITERAL_BASE_POINTER.ordinal()] = literalBasePointer;
-        integerRegisters[VMRegister.Role.CALL_INSTRUCTION_ADDRESS.ordinal()] = callInstructionAddress;
-        integerRegisters[VMRegister.Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS.ordinal()] = framelessCallInstructionAddress;
+        final int roleCount = VMRegister.Role.VALUES.length();
+        integerRegisters = Arrays.newInstance(integerRegisterType, roleCount);
+        integerRegisters[CPU_STACK_POINTER.ordinal()] = cpuStackPointer;
+        integerRegisters[CPU_FRAME_POINTER.ordinal()] = cpuFramePointer;
+        integerRegisters[ABI_STACK_POINTER.ordinal()] = abiStackPointer;
+        integerRegisters[ABI_FRAME_POINTER.ordinal()] = abiFramePointer;
+        integerRegisters[ABI_RETURN.ordinal()] = integerReturn;
+        integerRegisters[ABI_RESULT.ordinal()] = integerResult;
+        integerRegisters[ABI_SCRATCH.ordinal()] = integerScratch;
+        integerRegisters[SAFEPOINT_LATCH.ordinal()] = safepointLatch;
+        integerRegisters[LITERAL_BASE_POINTER.ordinal()] = literalBasePointer;
+        integerRegisters[CALL_INSTRUCTION_ADDRESS.ordinal()] = callInstructionAddress;
+        integerRegisters[FRAMELESS_CALL_INSTRUCTION_ADDRESS.ordinal()] = framelessCallInstructionAddress;
 
-        floatingPointRegisters = Arrays.newInstance(floatingPointRegisterType, VMRegister.Role.values().length);
-        floatingPointRegisters[VMRegister.Role.ABI_RETURN.ordinal()] = floatingPointReturn;
-        floatingPointRegisters[VMRegister.Role.ABI_RESULT.ordinal()] = floatingPointReturn;
-        floatingPointRegisters[VMRegister.Role.ABI_SCRATCH.ordinal()] = floatingPointScratch;
+        floatingPointRegisters = Arrays.newInstance(floatingPointRegisterType, roleCount);
+        floatingPointRegisters[ABI_RETURN.ordinal()] = floatingPointReturn;
+        floatingPointRegisters[ABI_RESULT.ordinal()] = floatingPointReturn;
+        floatingPointRegisters[ABI_SCRATCH.ordinal()] = floatingPointScratch;
     }
 
 
+    @PROTOTYPE_ONLY
     public RegisterRoleAssignment(Class<IntegerRegister_Type> integerRegisterType,
                                   IntegerRegister_Type cpuStackPointer,
                                   IntegerRegister_Type cpuFramePointer,
@@ -93,6 +126,14 @@ public final class RegisterRoleAssignment<IntegerRegister_Type extends Symbol, F
                         integerScratch, safepointLatch, null, floatingPointRegisterType, floatingPointReturn, floatingPointScratch, null, null);
     }
 
+    /**
+     * Derives a new set of register role assignments by modifying another set of role assignments.
+     *
+     * @param original the role assignments from which the new one will be derived
+     * @param role the role to be modified in the derived role assignments
+     * @param newIntegerRegister the register to be associated with {@code role} in the derived role assignments
+     */
+    @PROTOTYPE_ONLY
     public RegisterRoleAssignment(RegisterRoleAssignment<IntegerRegister_Type, FloatingPointRegister_Type> original,
                                   VMRegister.Role role, IntegerRegister_Type newIntegerRegister) {
         integerRegisters = original.integerRegisters.clone();

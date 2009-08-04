@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.code;
 
+import static com.sun.max.vm.code.CodeManager.ReferenceListNode.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
@@ -41,7 +43,7 @@ import com.sun.max.vm.thread.*;
  *
  * All generated code is position independent as a whole, but target methods may contain direct call references between
  * each other and these must be within 32-bit offsets! Therefore all code regions must be within 32-bit offsets from
- * each other. An concrete implementation of this class must enforce this invariant.
+ * each other. A concrete implementation of this class must enforce this invariant.
  *
  * @author Bernd Mathiske
  */
@@ -67,6 +69,16 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
      */
     @INSPECTED
     protected final CodeRegion[] runtimeCodeRegions;
+
+    /**
+     * Linked list for tracking all the references in memory managed by this code manager.
+     * This data structure will only be used if {@link Heap#codeReferencesAreGCRoots()} returns true.
+     *
+     * TODO: Nodes will have to be removed from this list if code eviction is ever implemented.
+     *
+     * @see ReferenceListNode
+     */
+    private Pointer referenceList = Pointer.zero();
 
     /**
      * Get the code region at the specified index.
@@ -111,6 +123,53 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
     protected abstract CodeRegion makeFreeCodeRegion();
 
     /**
+     * Describes the layout of a node in {@link CodeManager#referenceList}.
+     *
+     * @author Doug Simon
+     */
+    enum ReferenceListNode {
+        /**
+         * The start address of a sequence of references.
+         */
+        references,
+
+        /**
+         * The number of references in the sequence.
+         */
+        count,
+
+        /**
+         * The address of the next ReferenceListNode.
+         */
+        next;
+
+        /**
+         * The size of a ReferenceListNode.
+         */
+        static final int SIZE = Word.size() * values().length;
+
+        /**
+         * Sets a value for this field in a ReferenceListNode.
+         *
+         * @param referenceListNode pointer to a node
+         * @param value the value to set for this field in {@code referenceListNode}
+         */
+        void set(Pointer referenceListNode, Word value) {
+            referenceListNode.setWord(ordinal(), value);
+        }
+
+        /**
+         * Gets the value of this field in a ReferenceListNode.
+         *
+         * @param referenceListNode pointer to a node
+         * @return the of this field in {@code referenceListNode}
+         */
+        Word get(Pointer referenceListNode) {
+            return referenceListNode.getWord(ordinal()).asPointer();
+        }
+    }
+
+    /**
      * Allocates memory in a code region for the code-related arrays of a given target method
      * and {@linkplain TargetMethod#setCodeArrays(byte[], byte[], Object[]) initializes} them.
      *
@@ -119,11 +178,23 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
      */
     synchronized void allocate(TargetBundleLayout targetBundleLayout, TargetMethod targetMethod) {
         final Size bundleSize = targetBundleLayout.bundleSize();
-        Pointer start = currentCodeRegion.allocateTargetMethod(targetMethod, bundleSize);
+        int codeLength = targetBundleLayout.length(ArrayField.code);
+        int scalarLiteralsLength = targetBundleLayout.length(ArrayField.scalarLiterals);
+        int referenceLiteralsLength = targetBundleLayout.length(ArrayField.referenceLiterals);
+        final Size allocationSize;
+
+        if (!MaxineVM.isPrototyping() && Heap.codeReferencesAreGCRoots() && referenceLiteralsLength != 0) {
+            // Allocate extra space for a ReferenceListNode
+            allocationSize = bundleSize.plus(ReferenceListNode.SIZE);
+        } else {
+            allocationSize = bundleSize;
+        }
+
+        Pointer start = currentCodeRegion.allocateTargetMethod(targetMethod, allocationSize);
         if (start.isZero()) {
             currentCodeRegion = makeFreeCodeRegion();
             Code.registerMemoryRegion(currentCodeRegion);
-            start = currentCodeRegion.allocateTargetMethod(targetMethod, bundleSize);
+            start = currentCodeRegion.allocateTargetMethod(targetMethod, allocationSize);
             if (start.isZero()) {
                 ProgramError.unexpected("could not allocate code");
             }
@@ -132,9 +203,6 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
         byte[] code;
         byte[] scalarLiterals = null;
         Object[] referenceLiterals = null;
-        int codeLength = targetBundleLayout.length(ArrayField.code);
-        int scalarLiteralsLength = targetBundleLayout.length(ArrayField.scalarLiterals);
-        int referenceLiteralsLength = targetBundleLayout.length(ArrayField.referenceLiterals);
         if (MaxineVM.isPrototyping()) {
             code = new byte[codeLength];
             scalarLiterals = scalarLiteralsLength == 0 ? null : new byte[scalarLiteralsLength];
@@ -149,7 +217,17 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
             if (referenceLiteralsLength != 0) {
                 final Pointer referenceLiteralsCell = targetBundleLayout.cell(start, ArrayField.referenceLiterals);
                 referenceLiterals = (Object[]) Cell.plantArray(referenceLiteralsCell, ClassActor.fromJava(Object[].class).dynamicHub(), referenceLiteralsLength);
-                currentCodeRegion.setReferenceMapBits(targetBundleLayout.firstElementPointer(start, ArrayField.referenceLiterals), referenceLiteralsLength);
+                if (Heap.codeReferencesAreGCRoots()) {
+                    // The ReferenceListNode is immediately after the rest of the bundle
+                    final Pointer referenceListNode = start.plus(bundleSize);
+                    final Pointer firstReference = targetBundleLayout.firstElementPointer(start, ArrayField.referenceLiterals);
+                    ReferenceListNode.references.set(referenceListNode, firstReference);
+                    ReferenceListNode.count.set(referenceListNode, Address.fromInt(referenceLiteralsLength));
+                    ReferenceListNode.next.set(referenceListNode, referenceList);
+
+                    // Only after the following assignment will the GC see the newly allocated reference literals:
+                    referenceList = referenceListNode;
+                }
             }
             if (Code.traceAllocation.getValue()) {
                 final boolean lockDisabledSafepoints = Log.lock();
@@ -171,6 +249,12 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
                     Log.print(targetBundleLayout.cell(start, ArrayField.referenceLiterals));
                     Log.print(" - ");
                     Log.print(targetBundleLayout.cellEnd(start, ArrayField.referenceLiterals));
+                    if (Heap.codeReferencesAreGCRoots()) {
+                        Log.print(", referenceListNode=");
+                        Log.print(start.plus(bundleSize));
+                        Log.print(" - ");
+                        Log.print(start.plus(bundleSize).plus(ReferenceListNode.SIZE));
+                    }
                     Log.println("]");
                 } else {
                     Log.println(0);
@@ -288,10 +372,32 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
      * @param pointerIndexVisitor the visitor that is notified of each reference in the code cache
      */
     public void visitReferences(PointerIndexVisitor pointerIndexVisitor) {
-        for (CodeRegion codeRegion : runtimeCodeRegions) {
-            if (codeRegion != null) {
-                codeRegion.visitReferences(pointerIndexVisitor);
+        if (!Heap.codeReferencesAreGCRoots()) {
+            FatalError.unexpected("References in code are only tracked if Heap.codeReferencesAreGCRoots() returns true");
+        }
+
+        if (Heap.traceRootScanning()) {
+            Log.println("Scanning references in code:");
+        }
+
+        Pointer referenceListNode = referenceList;
+        while (!referenceListNode.isZero()) {
+            final Pointer firstReference = references.get(referenceListNode).asPointer();
+            final int c = count.get(referenceListNode).asAddress().toInt();
+            for (int i = 0; i < c; i++) {
+                if (Heap.traceRootScanning()) {
+                    final Pointer address = firstReference.plus(i * Word.size());
+                    final Address value = address.readWord(0).asAddress();
+                    if (!value.isZero()) {
+                        Log.print("    Slot: address=");
+                        Log.print(address);
+                        Log.print(", value=");
+                        Log.println(address.readWord(0));
+                    }
+                }
+                pointerIndexVisitor.visit(firstReference, i);
             }
+            referenceListNode = next.get(referenceListNode).asPointer();
         }
     }
 

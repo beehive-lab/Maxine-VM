@@ -581,7 +581,7 @@ public class ValueStack {
     public void setupPhiForStack(BlockBegin block, int i) {
         Instruction p = stackAt(i);
         assert !(p instanceof Phi) || ((Phi) p).block() != block : "phi already created for this block";
-        Instruction phi = new Phi(p.type(), block, -i - 1);
+        Instruction phi = new Phi(p.type().base(), block, -i - 1);
         values[maxLocals + i] = phi;
     }
 
@@ -594,7 +594,7 @@ public class ValueStack {
     public void setupPhiForLocal(BlockBegin block, int i) {
         Instruction p = values[i];
         assert !(p instanceof Phi) || ((Phi) p).block() != block : "phi already created for this block";
-        Instruction phi = new Phi(p.type(), block, i);
+        Instruction phi = new Phi(p.type().base(), block, i);
         storeLocal(i, phi);
     }
 
@@ -773,6 +773,24 @@ public class ValueStack {
         }
 
         return phis;
+    }
+
+    /**
+     * Checks whether this value stack has any phi statements that refer to the specified block.
+     * @param block the block to check
+     * @return {@code true} if this value stack has phis for the specified block
+     */
+    public boolean hasPhisFor(BlockBegin block) {
+        int max = valuesSize();
+        for (int i = 0; i < max; i++) {
+            Instruction instr = values[i];
+            if (instr instanceof Phi) {
+                if (block == null || ((Phi) instr).block() == block) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**

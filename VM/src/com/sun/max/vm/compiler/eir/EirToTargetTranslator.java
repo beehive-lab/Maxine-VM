@@ -38,6 +38,7 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.MakeStackVariable.*;
+import com.sun.max.vm.compiler.eir.EirTargetEmitter.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
 import com.sun.max.vm.object.*;
@@ -123,12 +124,27 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         return positions;
     }
 
-    private void markReferenceCalls(int[] stopPositions, EirTargetEmitter<?> emitter) {
+    private void encodeExtraStopPositionInfo(int[] stopPositions, EirTargetEmitter<?> emitter) {
         if (stopPositions != null) {
-            for (int i = 0; i < stopPositions.length; i++) {
-                if (emitter.isReferenceCall(i)) {
-                    stopPositions[i] |= TargetMethod.REFERENCE_RETURN_FLAG;
+            try {
+                if (!emitter.extraCallInfos.isEmpty()) {
+                    final IntHashMap<Integer> map = new IntHashMap<Integer>();
+                    for (int stopIndex = 0; stopIndex < stopPositions.length; ++stopIndex) {
+                        map.put(stopPositions[stopIndex], stopIndex);
+                    }
+
+                    for (ExtraCallInfo extraCallInfo : emitter.extraCallInfos) {
+                        final int stopIndex = map.get(extraCallInfo.label.position());
+                        if (extraCallInfo.isNativeFunctionCall) {
+                            stopPositions[stopIndex] |= StopPositions.NATIVE_FUNCTION_CALL;
+                        }
+                        if (extraCallInfo.isReferenceCall) {
+                            stopPositions[stopIndex] |= StopPositions.REFERENCE_RETURN;
+                        }
+                    }
                 }
+            } catch (AssemblyException assemblyException) {
+                ProgramError.unexpected();
             }
         }
     }
@@ -270,7 +286,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
 
         final Sequence<EirCall> directCalls = emitter.directCalls();
         final int[] stopPositions = packLabelPositions(emitter.directCallLabels(), emitter.indirectCallLabels(), emitter.safepointLabels());
-        markReferenceCalls(stopPositions, emitter);
+        encodeExtraStopPositionInfo(stopPositions, emitter);
         final byte[] compressedJavaFrameDescriptors = targetMethod.classMethodActor().isTemplate() ? null : emitter.getCompressedJavaFrameDescriptors();
 
         final int numberOfDirectCalls = emitter.directCallLabels().length();

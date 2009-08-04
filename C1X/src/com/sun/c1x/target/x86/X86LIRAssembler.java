@@ -2761,7 +2761,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
         CodeStub stub = op.stub();
         int flags = op.flags();
-        BasicType basicType = defaultType != null ? defaultType.elementType().basicType() : BasicType.Illegal;
+        BasicType basicType = defaultType != null ? defaultType.componentType().basicType() : BasicType.Illegal;
 
         // if we don't know anything or it's an object array, just go through the generic arraycopy
         if (defaultType == null) {

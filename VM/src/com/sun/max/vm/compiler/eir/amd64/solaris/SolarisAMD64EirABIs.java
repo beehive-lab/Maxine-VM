@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.eir.amd64.solaris;
 
+import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.eir.amd64.*;
 import com.sun.max.vm.compiler.eir.amd64.unix.*;
@@ -29,6 +30,7 @@ import com.sun.max.vm.compiler.eir.amd64.unix.*;
  */
 public class SolarisAMD64EirABIs extends AMD64EirABIsScheme {
 
+    @PROTOTYPE_ONLY
     public SolarisAMD64EirABIs(VMConfiguration vmConfiguration) {
         super(vmConfiguration, new UnixAMD64EirJavaABI(vmConfiguration),
                                 new UnixAMD64EirNativeABI(vmConfiguration),

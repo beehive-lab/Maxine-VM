@@ -31,7 +31,6 @@ import com.sun.c1x.value.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.io.*;
-import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -97,19 +96,6 @@ public class MaxCiRuntime implements CiRuntime {
             return globalConstantPool.canonicalCiType(classActor);
         }
         return null;
-    }
-
-    /**
-     * Gets the compiler interface type for the specified Java class.
-     * @param javaClass the java class object
-     * @return the compiler interface type for the specified class
-     */
-    public CiType getType(final Class<?> javaClass) {
-        return globalConstantPool.canonicalCiType(MaxineVM.usingTarget(new Function<ClassActor>() {
-            public ClassActor call() throws Exception {
-                return ClassActor.fromJava(javaClass);
-            }
-        }));
     }
 
     /**

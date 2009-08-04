@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.prototype;
 
-import sun.management.*;
+import java.lang.management.*;
 
 import com.sun.max.*;
 import com.sun.max.asm.*;
@@ -245,7 +245,12 @@ public final class PrototypeGenerator {
                 public GraphPrototype call() {
                     GraphPrototype graphPrototype;
                     int numberOfClassActors = 0;
-                    final CompiledPrototype compiledPrototype = new CompiledPrototype(javaPrototype, threadsOption.getValue());
+                    int numberOfCompilationThreads = threadsOption.getValue();
+                    if (numberOfCompilationThreads > 1 && Platform.target().processorKind.processorModel.name().startsWith("SPARC")) {
+                        ProgramWarning.message("Throttling compiler threads back to 1 until CPS compiler race is solved");
+                        numberOfCompilationThreads = 1;
+                    }
+                    final CompiledPrototype compiledPrototype = new CompiledPrototype(javaPrototype, numberOfCompilationThreads);
                     compiledPrototype.addEntrypoints();
                     do {
                         for (MethodActor methodActor : javaPrototype.vmConfiguration().runScheme().gatherNativeInitializationMethods()) {

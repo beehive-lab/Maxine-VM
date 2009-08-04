@@ -78,6 +78,8 @@ public final class JavaTester {
                     "When specified, the JavaTester will report metrics that were gathered while running " +
                     "the tests.");
 
+    private static boolean filesUpdated = false;
+
     public static void main(String[] args) throws IOException, InterruptedException {
         Trace.addTo(options);
         // parse the arguments
@@ -114,6 +116,11 @@ public final class JavaTester {
         if (REPORT_METRICS.getValue()) {
             GlobalMetrics.report(System.out);
         }
+
+        // If JavaTesterGenerator had to actually update
+        if (filesUpdated) {
+            System.exit(1);
+        }
     }
 
     private static void runInTarget(final String[] arguments) throws IOException, InterruptedException {
@@ -123,7 +130,7 @@ public final class JavaTester {
             options.setValue("restart", String.valueOf(RESTART_IMAGE.getValue()));
             options.setValue("alphabetical", String.valueOf(SORT_OPTION.getValue()));
             options.setValue("package", String.valueOf(RUNSCHEME_PACKAGE.getValue()));
-            JavaTesterGenerator.generate(options, arguments);
+            filesUpdated = JavaTesterGenerator.generate(options, arguments);
         }
         if (GEN_IMAGE.getValue()) {
             // generate an image if necessary

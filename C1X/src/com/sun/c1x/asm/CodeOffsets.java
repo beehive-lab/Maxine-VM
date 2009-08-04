@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.asm;
 
+import com.sun.c1x.util.Util;
+
 /**
  *
  * @author Thomas Wuerthinger
@@ -36,7 +38,6 @@ public class CodeOffsets {
          }
 
     public void setValue(Entries osrentry, int offset) {
-        // TODO Auto-generated method stub
-
+        Util.nonFatalUnimplemented();
     }
 }

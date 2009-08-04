@@ -18,34 +18,32 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.heap.sequential.semiSpace;
+package com.sun.max.vm.heap.beltway;
 
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
-
-
+import com.sun.max.vm.grip.*;
+import com.sun.max.vm.heap.*;
 /**
- * Representation of memory regions for a semi-space collector.
  *
- * @author Michael Van De Vanter
+ *
+ * @author Laurent Daynes
  */
-public final class SemiSpaceMemoryRegion extends RuntimeMemoryRegion {
+public class PointerVisitor extends PointerIndexVisitor {
 
-    /**
-     * Creates an unallocated memory region specialized for use by a semi-space collector.
-     *
-     * @param title how the region should identify itself for debugging purposes
-     */
-    public SemiSpaceMemoryRegion(String title) {
-        super(Address.zero(), Size.zero());
-        setDescription(title);
+    final Action action;
+
+    public PointerVisitor(Action action) {
+        this.action = action;
     }
 
-    /**
-     * @param address sets an inspected field that can be used for debugging.
-     */
-    void setAllocationMark(Address address) {
-        mark.set(address);
+    @Override
+    public void visit(Pointer pointer, int wordIndex) {
+        final Grip oldGrip = pointer.getGrip(wordIndex);
+        final Grip newGrip = action.doAction(oldGrip);
+        if (newGrip != null) {
+            if (newGrip != oldGrip) {
+                pointer.setGrip(wordIndex, newGrip);
+            }
+        }
     }
-
 }

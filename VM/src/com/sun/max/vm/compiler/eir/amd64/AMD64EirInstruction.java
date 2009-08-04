@@ -423,8 +423,8 @@ public interface AMD64EirInstruction {
 
         public CALL(EirBlock block, EirABI abi, EirValue result, EirLocation resultLocation,
                     EirValue function, EirValue[] arguments, EirLocation[] argumentLocations,
-                    EirMethodGeneration methodGeneration) {
-            super(block, abi, result, resultLocation, function, M_G_L_S, arguments, argumentLocations, methodGeneration);
+                    boolean isNativeFunctionCall, EirMethodGeneration methodGeneration) {
+            super(block, abi, result, resultLocation, function, M_G_L_S, arguments, argumentLocations, isNativeFunctionCall, methodGeneration);
         }
 
         @Override
@@ -478,7 +478,7 @@ public interface AMD64EirInstruction {
         public RUNTIME_CALL(EirBlock block, EirABI abi, EirValue result, EirLocation resultLocation,
                         EirValue function, EirValue[] arguments, EirLocation[] argumentLocations,
                         EirMethodGeneration methodGeneration) {
-            super(block, abi, result, resultLocation, function, arguments, argumentLocations, methodGeneration);
+            super(block, abi, result, resultLocation, function, arguments, argumentLocations, false, methodGeneration);
             // TODO: get the correct frame pointer and stack pointer registers from ABI
             // the current ABI returns RSP for both framePointer() and stackPointer()
             framePointerRegister = AMD64GeneralRegister64.RBP;

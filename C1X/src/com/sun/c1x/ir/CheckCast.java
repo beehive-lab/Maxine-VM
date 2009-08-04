@@ -124,8 +124,7 @@ public class CheckCast extends TypeCheck {
     }
 
     public boolean isIncompatibleClassChangeCheck() {
-        // TODO Auto-generated method stub
-        return false;
+        return Util.nonFatalUnimplemented(false);
     }
 
 }
