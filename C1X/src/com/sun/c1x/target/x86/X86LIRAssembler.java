@@ -1352,6 +1352,29 @@ public class X86LIRAssembler extends LIRAssembler {
         Register.assertDifferentRegisters(preserve, tmp1[0], tmp2[0], tmp3[0]);
     }
 
+    private void callGlobalStub(GlobalStub stub, Register result, Register... args) {
+        int index = 0;
+        for (Register op : args) {
+            storeParameter(op, index++);
+        }
+
+        masm().callGlobalStub(compilation.compiler.lookupGlobalStub(stub));
+
+        if (result != Register.noreg) {
+
+            this.loadResult(result, 0);
+        }
+
+        // Clear out parameters
+        if (C1XOptions.GenerateAssertionCode) {
+
+            index = 0;
+            for (Register op : args) {
+                storeParameter(0, index++);
+            }
+        }
+    }
+
     @Override
     protected void emitTypeCheck(LIRTypeCheck op) {
 
@@ -1385,18 +1408,7 @@ public class X86LIRAssembler extends LIRAssembler {
             // masm().checkKlassSubtypeFastPath(klassRInfo, kRInfo, rtmp1, done, stub.entry, null, new
             // RegisterOrConstant(-1));
 
-            // call out-of-line instance of lir(). checkKlassSubtypeSlowPath(...):
-            this.storeParameter(kRInfo, 1);
-            this.storeParameter(klassRInfo, 0);
-            masm().callGlobalStub(compilation.compiler.lookupGlobalStub(GlobalStub.SlowSubtypeCheck));
-
-            this.loadResult(rtmp1, 0);
-
-            // Clear out parameters
-            if (C1XOptions.GenerateAssertionCode) {
-                this.storeParameter(0, 1);
-                this.storeParameter(0, 0);
-            }
+            callGlobalStub(GlobalStub.SlowSubtypeCheck, rtmp1, klassRInfo, kRInfo);
 
             // result is a boolean
             masm().cmpl(rtmp1, 0);
@@ -1440,12 +1452,7 @@ public class X86LIRAssembler extends LIRAssembler {
             if (!k.isLoaded()) {
                 jobject2regWithPatching(kRInfo, op.infoForPatch());
             } else {
-
-                if (compilation.target.arch.is64bit()) {
-                    masm().movoop(kRInfo, k);
-                } else {
-                    kRInfo = Register.noreg;
-                }
+                masm().movoop(kRInfo, k.encoding());
             }
             assert obj != kRInfo : "must be different";
             masm().cmpptr(obj, (int) NULLWORD);
@@ -1499,33 +1506,18 @@ public class X86LIRAssembler extends LIRAssembler {
                 masm().movptr(klassRInfo, new Address(obj, compilation.runtime.klassOffsetInBytes()));
                 if (k.isLoaded() && C1XOptions.FastPathTypeCheck) {
                     // See if we get an immediate positive hit
-                    if (compilation.target.arch.is64bit()) {
-                        masm().cmpptr(kRInfo, new Address(klassRInfo, k.superCheckOffset()));
-                    } else {
-                        masm().cmpoop(new Address(klassRInfo, k.superCheckOffset()), k);
-                    }
+                    masm().cmpptr(kRInfo, new Address(klassRInfo, k.superCheckOffset()));
                     if (Util.sizeofOopDesc() + compilation.runtime.secondarySuperCacheOffsetInBytes() != k.superCheckOffset()) {
                         masm().jcc(X86Assembler.Condition.notEqual, stub.entry);
                     } else {
                         // See if we get an immediate positive hit
                         masm().jcc(X86Assembler.Condition.equal, done);
-                        // check for self
-                        if (compilation.target.arch.is64bit()) {
-                            masm().cmpptr(klassRInfo, kRInfo);
-                        } else {
-                            masm().cmpoop(klassRInfo, k);
-                        }
-                        masm().jcc(X86Assembler.Condition.equal, done);
 
-                        masm().push(klassRInfo);
-                        if (compilation.target.arch.is64bit()) {
-                            masm().push(kRInfo);
-                        } else {
-                            masm().pushoop(k);
-                        }
-                        masm().callRuntime(CiRuntimeCall.SlowSubtypeCheck);
-                        masm().pop(klassRInfo);
-                        masm().pop(klassRInfo);
+                        // check for self
+                        masm().cmpptr(klassRInfo, kRInfo);
+                        masm().jcc(X86Assembler.Condition.equal, done);
+                        callGlobalStub(GlobalStub.SlowSubtypeCheck, klassRInfo, kRInfo, klassRInfo);
+
                         // result is a boolean
                         masm().cmpl(klassRInfo, 0);
                         masm().jcc(X86Assembler.Condition.equal, stub.entry);
@@ -1535,11 +1527,10 @@ public class X86LIRAssembler extends LIRAssembler {
                     // perform the fast part of the checking logic
                     //masm().checkKlassSubtypeFastPath(klassRInfo, kRInfo, rtmp1, done, stub.entry, null, new RegisterOrConstant(-1));
                     // call out-of-line instance of lir(). checkKlassSubtypeSlowPath(...):
-                    masm().push(klassRInfo);
-                    masm().push(kRInfo);
-                    masm().callRuntime(CiRuntimeCall.SlowSubtypeCheck);
-                    masm().pop(klassRInfo);
-                    masm().pop(kRInfo);
+
+
+                    callGlobalStub(GlobalStub.SlowSubtypeCheck, kRInfo, kRInfo, klassRInfo);
+
                     // result is a boolean
                     masm().cmpl(kRInfo, 0);
                     masm().jcc(X86Assembler.Condition.equal, stub.entry);
@@ -1570,7 +1561,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 jobject2regWithPatching(kRInfo, op.infoForPatch());
             } else {
                 if (compilation.target.arch.is64bit()) {
-                    masm().movoop(kRInfo, k);
+                    masm().movoop(kRInfo, k.encoding());
                 }
             }
             assert obj != kRInfo : "must be different";
@@ -1595,35 +1586,14 @@ public class X86LIRAssembler extends LIRAssembler {
                 masm().cmpptr(obj, (int) NULLWORD);
                 masm().jcc(X86Assembler.Condition.equal, zero);
                 masm().movptr(klassRInfo, new Address(obj, compilation.runtime.klassOffsetInBytes()));
-                if (!compilation.target.arch.is64bit() && k.isLoaded()) {
-                    // See if we get an immediate positive hit
-                    masm().cmpoop(new Address(klassRInfo, k.superCheckOffset()), k);
-                    masm().jcc(X86Assembler.Condition.equal, one);
-                    if (Util.sizeofOopDesc() + compilation.runtime.secondarySuperCacheOffsetInBytes() == k.superCheckOffset()) {
-                        // check for self
-                        masm().cmpoop(klassRInfo, k);
-                        masm().jcc(X86Assembler.Condition.equal, one);
-                        masm().push(klassRInfo);
-                        masm().pushoop(k);
-                        masm().callRuntime(CiRuntimeCall.SlowSubtypeCheck);
-                        masm().pop(klassRInfo);
-                        masm().pop(dst);
-                        masm().jmp(done);
-                    }
-                } else {
-                    // next block is unconditional if LP64:
-                    assert dst != klassRInfo && dst != kRInfo : "need 3 registers";
+                // next block is unconditional if LP64:
+                assert dst != klassRInfo && dst != kRInfo : "need 3 registers";
 
-                    // perform the fast part of the checking logic
-                    //masm().checkKlassSubtypeFastPath(klassRInfo, kRInfo, dst, one, zero, null, new RegisterOrConstant(-1));
-                    // call out-of-line instance of lir(). checkKlassSubtypeSlowPath(...):
-                    masm().push(klassRInfo);
-                    masm().push(kRInfo);
-                    masm().callRuntime(CiRuntimeCall.SlowSubtypeCheck);
-                    masm().pop(klassRInfo);
-                    masm().pop(dst);
-                    masm().jmp(done);
-                }
+                // perform the fast part of the checking logic
+                //masm().checkKlassSubtypeFastPath(klassRInfo, kRInfo, dst, one, zero, null, new RegisterOrConstant(-1));
+                // call out-of-line instance of lir(). checkKlassSubtypeSlowPath(...):
+                callGlobalStub(GlobalStub.SlowSubtypeCheck, dst, kRInfo, klassRInfo);
+                masm().jmp(done);
             }
             masm().bind(zero);
             masm().xorptr(dst, dst);

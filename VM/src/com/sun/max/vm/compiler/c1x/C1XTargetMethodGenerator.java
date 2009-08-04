@@ -126,9 +126,10 @@ public class C1XTargetMethodGenerator {
             Offset diff = dataStart.minus(codeStart).asOffset();
             int refPatchPos = 0;
             for (CiTargetMethod.RefPatchSite refPatch : ciTargetMethod.refPatchSites) {
-                refLiterals[refPatchPos++] = refPatch.referrent;
+                refLiterals[refPatchPos] = refPatch.referrent;
                 int refSize = Word.size(); // TODO: Use C1X target object
-                X86InstructionDecoder.patchRelativeInstruction(targetMethod.code(), refPatch.codePos, diff.plus(refPatch.index * refSize - refPatch.codePos).toInt());
+                X86InstructionDecoder.patchRelativeInstruction(targetMethod.code(), refPatch.codePos, diff.plus(refPatchPos * refSize - refPatch.codePos).toInt());
+                refPatchPos++;
             }
         }
     }
