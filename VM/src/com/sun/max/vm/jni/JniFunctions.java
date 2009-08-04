@@ -33,6 +33,7 @@ import com.sun.max.util.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.heap.*;
@@ -138,7 +139,7 @@ public final class JniFunctions {
     @JNI_FUNCTION
     private static JniHandle FindClass(Pointer env, Pointer name) throws ClassNotFoundException {
         try {
-            final Class javaClass = findClass(Current.classLoader(), CString.utf8ToJava(name));
+            final Class javaClass = findClass(Code.codePointerToTargetMethod(VMRegister.getInstructionPointer()).classMethodActor().holder().classLoader, CString.utf8ToJava(name));
             MakeClassInitialized.makeClassInitialized(ClassActor.fromJava(javaClass));
             return JniHandles.createLocalHandle(javaClass);
         } catch (Utf8Exception utf8Exception) {

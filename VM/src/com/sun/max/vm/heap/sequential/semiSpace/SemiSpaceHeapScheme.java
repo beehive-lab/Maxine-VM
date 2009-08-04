@@ -525,6 +525,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             }
 
             Memory.copyBytes(fromCell, toCell, size);
+            relocationInspection(fromCell, toCell);
+
             final Pointer toOrigin = Layout.cellToOrigin(toCell);
             final Grip toGrip = Grip.fromOrigin(toOrigin);
             Layout.writeForwardGrip(fromOrigin, toGrip);
@@ -595,6 +597,16 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 Log.unlock(lockDisabledSafepoints);
             }
             cell = visitCell(cell);
+        }
+    }
+
+    private void relocationInspection(Pointer oldAddress, Pointer newAddress) {
+        if (MaxineMessenger.isVmInspected()) {
+            //final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
+            //enabledVmThreadLocals.setWord(OLD_OBJECT_ADDRESS.index, oldAddress);
+            //enabledVmThreadLocals.setWord(NEW_OBJECT_ADDRESS.index, newAddress);
+            InspectableHeapInfo.oldAddress = oldAddress;
+            InspectableHeapInfo.touchCardTableField(InspectableHeapInfo.oldAddress);
         }
     }
 

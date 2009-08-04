@@ -292,8 +292,12 @@ public interface CiRuntime {
 
     int initThreadOffsetInBytes();
 
-    int convertToPointer32(Object obj);
+    Register exceptionOopRegister();
 
-    long convertToPointer64(Object obj);
+    Register returnRegister(BasicType object);
+
+    int runtimeCallingConvention(BasicType[] signature, CiLocation[] regs);
+
+    Object registerTargetMethod(CiTargetMethod targetMethod);
 
 }

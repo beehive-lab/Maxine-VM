@@ -44,9 +44,9 @@ public final class CompiledBytecodeTemplate implements BytecodeInfo {
 
     public CompiledBytecodeTemplate(TargetMethod targetMethod) {
         assert targetMethod.classMethodActor().isTemplate();
-        final Method javaMethod = targetMethod.classMethodActor().toJava();
-        final BYTECODE_TEMPLATE bytecodeAnnotation = javaMethod.getAnnotation(BYTECODE_TEMPLATE.class);
+        final BYTECODE_TEMPLATE bytecodeAnnotation = targetMethod.classMethodActor().getAnnotation(BYTECODE_TEMPLATE.class);
 
+        final Method javaMethod = targetMethod.classMethodActor().toJava();
 
         final TEMPLATE templateAnnotation = javaMethod.getDeclaringClass().getAnnotation(TEMPLATE.class);
         assert templateAnnotation != null : "bytecode template not within a template class";

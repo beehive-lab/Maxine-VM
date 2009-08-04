@@ -29,13 +29,13 @@ import com.sun.max.vm.compiler.target.*;
  * @author Doug Simon
  * @author Laurent Daynes
  */
-public abstract class JavaStackFrame<JavaStackFrameLayout_Type extends JavaStackFrameLayout> extends StackFrame {
+public abstract class JavaStackFrame extends StackFrame {
 
-    public final JavaStackFrameLayout_Type layout;
+    public final JavaStackFrameLayout layout;
 
     private final TargetMethod targetMethod;
 
-    public JavaStackFrame(StackFrame callee, JavaStackFrameLayout_Type layout, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
+    public JavaStackFrame(StackFrame callee, JavaStackFrameLayout layout, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
         super(callee, instructionPointer, framePointer, stackPointer);
         this.layout = layout;
         this.targetMethod = targetMethod;
@@ -60,11 +60,6 @@ public abstract class JavaStackFrame<JavaStackFrameLayout_Type extends JavaStack
     @Override
     public abstract boolean isSameFrame(StackFrame stackFrame);
 
-
-    @Override
-    public boolean isJavaStackFrame() {
-        return true;
-    }
 
     @Override
     public String toString() {

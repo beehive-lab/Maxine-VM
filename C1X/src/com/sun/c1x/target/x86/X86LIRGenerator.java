@@ -52,12 +52,6 @@ public final class X86LIRGenerator extends LIRGenerator {
     }
 
 
-
-    @Override
-    protected LIROperand exceptionOopOpr() {
-        return X86FrameMap.raxOopOpr;
-    }
-
     @Override
     protected LIROperand exceptionPcOpr() {
         return X86FrameMap.rdxOpr;
@@ -274,6 +268,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         }
 
         if (C1XOptions.GenerateArrayStoreCheck && needsStoreCheck) {
+
             LIROperand tmp1 = newRegister(BasicType.Object);
             LIROperand tmp2 = newRegister(BasicType.Object);
             LIROperand tmp3 = newRegister(BasicType.Object);
@@ -368,9 +363,9 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand reg;
 
         if (x.opcode() == Bytecodes.FREM) {
-            reg = callRuntime(new BasicType[]{BasicType.Float, BasicType.Float}, Arrays.asList(left.result(), right.result()), CiRuntimeCall.frem, ValueType.FLOAT_TYPE, null);
+            reg = callRuntime(new BasicType[]{BasicType.Float, BasicType.Float}, Arrays.asList(left.result(), right.result()), CiRuntimeCall.ArithmeticFrem, ValueType.FLOAT_TYPE, null);
         } else if (x.opcode() == Bytecodes.DREM) {
-            reg = callRuntime(new BasicType[]{BasicType.Double, BasicType.Double}, Arrays.asList(left.result(), right.result()), CiRuntimeCall.drem, ValueType.DOUBLE_TYPE, null);
+            reg = callRuntime(new BasicType[]{BasicType.Double, BasicType.Double}, Arrays.asList(left.result(), right.result()), CiRuntimeCall.ArithmeticDrem, ValueType.DOUBLE_TYPE, null);
         } else {
             reg = rlock(x);
             arithmeticOpFpu(x.opcode(), reg, left.result(), right.result(), LIROperandFactory.IllegalOperand);
@@ -406,13 +401,13 @@ public final class X86LIRGenerator extends LIRGenerator {
             CiRuntimeCall entry;
             switch (x.opcode()) {
                 case Bytecodes.LREM:
-                    entry = CiRuntimeCall.Lrem;
+                    entry = CiRuntimeCall.ArithmethicLrem;
                     break; // check if dividend is 0 is done elsewhere
                 case Bytecodes.LDIV:
-                    entry = CiRuntimeCall.Ldiv;
+                    entry = CiRuntimeCall.ArithmeticLdiv;
                     break; // check if dividend is 0 is done elsewhere
                 case Bytecodes.LMUL:
-                    entry = CiRuntimeCall.Lmul;
+                    entry = CiRuntimeCall.ArithmeticLmul;
                     break;
                 default:
                     throw Util.shouldNotReachHere();
@@ -743,19 +738,19 @@ public final class X86LIRGenerator extends LIRGenerator {
                 lir().sqrt(calcInput, calcResult, LIROperandFactory.IllegalOperand);
                 break;
             case java_lang_Math$sin:
-                callRuntime(new BasicType[]{BasicType.Float}, Arrays.asList(calcInput), CiRuntimeCall.sin, ValueType.FLOAT_TYPE, null);
+                callRuntime(new BasicType[]{BasicType.Float}, Arrays.asList(calcInput), CiRuntimeCall.ArithmeticSin, ValueType.FLOAT_TYPE, null);
                 break;
             case java_lang_Math$cos:
-                callRuntime(new BasicType[]{BasicType.Float}, Arrays.asList(calcInput), CiRuntimeCall.cos, ValueType.FLOAT_TYPE, null);
+                callRuntime(new BasicType[]{BasicType.Float}, Arrays.asList(calcInput), CiRuntimeCall.ArithmeticCos, ValueType.FLOAT_TYPE, null);
                 break;
             case java_lang_Math$tan:
-                callRuntime(new BasicType[]{BasicType.Float}, Arrays.asList(calcInput), CiRuntimeCall.tan, ValueType.FLOAT_TYPE, null);
+                callRuntime(new BasicType[]{BasicType.Float}, Arrays.asList(calcInput), CiRuntimeCall.ArithmeticTan, ValueType.FLOAT_TYPE, null);
                 break;
             case java_lang_Math$log:
-                callRuntime(new BasicType[]{BasicType.Float}, Arrays.asList(calcInput), CiRuntimeCall.log, ValueType.FLOAT_TYPE, null);
+                callRuntime(new BasicType[]{BasicType.Float}, Arrays.asList(calcInput), CiRuntimeCall.ArithmeticLog, ValueType.FLOAT_TYPE, null);
                 break;
             case java_lang_Math$log10:
-                callRuntime(new BasicType[]{BasicType.Float}, Arrays.asList(calcInput), CiRuntimeCall.log10, ValueType.FLOAT_TYPE, null);
+                callRuntime(new BasicType[]{BasicType.Float}, Arrays.asList(calcInput), CiRuntimeCall.ArithmeticLog10, ValueType.FLOAT_TYPE, null);
                 break;
             default:
                 Util.shouldNotReachHere();
@@ -991,6 +986,10 @@ public final class X86LIRGenerator extends LIRGenerator {
         lir().checkcast(reg, obj.result(), x.targetClass(), newRegister(BasicType.Object), newRegister(BasicType.Object),
                         !x.targetClass().isLoaded() ? newRegister(BasicType.Object) : LIROperandFactory.IllegalOperand, x.directCompare(), infoForException, patchingInfo, stub, x.profiledMethod(),
                         x.profiledBCI());
+    }
+
+    protected LIROperand[] runtimeArguments(BasicType... arguments) {
+        return compilation.frameMap().runtimeCallingConvention(arguments).args().toArray(new LIROperand[0]);
     }
 
     @Override

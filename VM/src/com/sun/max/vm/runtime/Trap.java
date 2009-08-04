@@ -103,7 +103,7 @@ public abstract class Trap {
      */
     public static boolean isTrapStub(MethodActor methodActor) {
         if (MaxineVM.isPrototyping()) {
-            return !methodActor.isInitializer() && MaxineVM.isMaxineClass(methodActor.holder()) && methodActor.toJava().equals(trapStubMethod);
+            return !methodActor.isInitializer() && MaxineVM.isMaxineClass(methodActor.holder()) && methodActor.toJava() != null && methodActor.toJava().equals(trapStubMethod);
         }
         return methodActor == trapStub.classMethodActor;
     }

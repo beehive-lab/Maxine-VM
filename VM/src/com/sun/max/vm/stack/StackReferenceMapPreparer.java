@@ -654,7 +654,7 @@ public final class StackReferenceMapPreparer {
         ClassMethodActor callee;
         final TrampolineMethodActor trampolineMethodActor = (TrampolineMethodActor) trampolineTargetMethod.classMethodActor();
         if (trampolineMethodActor.invocation() == TRAMPOLINE.Invocation.STATIC) {
-            callee = caller.directCallees()[callerStopIndex];
+            callee = (ClassMethodActor) caller.directCallees()[callerStopIndex];
         } else {
             final Object receiver = refmapFramePointer.getReference().toJava();
             final ClassActor classActor = ObjectAccess.readClassActor(receiver);
@@ -712,7 +712,7 @@ public final class StackReferenceMapPreparer {
             ignoreCurrentFrame = false;
             return true;
         }
-        if (targetMethod.classMethodActor() instanceof TrampolineMethodActor) {
+        if (targetMethod.classMethodActor() != null && targetMethod.classMethodActor() instanceof TrampolineMethodActor) {
             // Since trampolines are reused for different callees with different parameter signatures,
             // they do not carry enough reference map information for incoming parameters.
             // We need to find out what the actual callee is before preparing the trampoline frame reference map.

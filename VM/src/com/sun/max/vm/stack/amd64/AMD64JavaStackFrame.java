@@ -29,7 +29,7 @@ import com.sun.max.vm.stack.*;
  *
  * @author Doug Simon
  */
-public class AMD64JavaStackFrame extends JavaStackFrame<OptoStackFrameLayout> {
+public class AMD64JavaStackFrame extends JavaStackFrame {
 
     public AMD64JavaStackFrame(StackFrame callee, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
         super(callee, new OptoStackFrameLayout(targetMethod.frameSize(), true), targetMethod, instructionPointer, framePointer, stackPointer);

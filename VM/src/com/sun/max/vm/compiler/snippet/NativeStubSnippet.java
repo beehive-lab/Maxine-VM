@@ -39,6 +39,7 @@ import com.sun.max.vm.thread.*;
  * Snippets that are used in {@linkplain NativeStubGenerator native method stubs}.
  *
  * @author Doug Simon
+ * @author Hannes Payer
  */
 public abstract class NativeStubSnippet extends NonFoldableSnippet {
 
@@ -88,11 +89,8 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
             enabledVmThreadLocals.setWord(LAST_JAVA_CALLER_INSTRUCTION_POINTER.index, instructionPointer);
 
             if (Safepoint.UseCASBasedGCMutatorSynchronization) {
-                if (enabledVmThreadLocals.getWord(MUTATOR_STATE.index).equals(THREAD_IN_JAVA_STOPPING_FOR_GC)) {
-                    enabledVmThreadLocals.setWord(MUTATOR_STATE.index, THREAD_IN_GC_FROM_JAVA);
-                } else {
-                    enabledVmThreadLocals.setWord(MUTATOR_STATE.index, THREAD_IN_NATIVE);
-                }
+                enabledVmThreadLocals.setWord(MUTATOR_STATE.index, THREAD_IN_NATIVE);
+
             } else {
                 MemoryBarrier.memopStore(); // The following store must be last:
 
@@ -126,10 +124,6 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
             final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
             if (UseCASBasedGCMutatorSynchronization) {
                 while (true) {
-                    if (enabledVmThreadLocals.getWord(MUTATOR_STATE.index).equals(THREAD_IN_GC_FROM_JAVA_DONE)) {
-                        enabledVmThreadLocals.setWord(MUTATOR_STATE.index, THREAD_IN_JAVA);
-                        break;
-                    }
                     if (enabledVmThreadLocals.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IN_JAVA).equals(THREAD_IN_NATIVE)) {
                         break;
                     }

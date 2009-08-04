@@ -43,8 +43,10 @@ public class Target {
     public final Register[] allocatableRegisters;
     public final Register[] callerSavedRegisters;
     public int firstAvailableSpInFrame;
+    public int pageSize;
+    public boolean isMP;
 
-    public Target(Architecture arch, Register[] allocatableRegisters, Register[] callerSavedRegisters) {
+    public Target(Architecture arch, Register[] allocatableRegisters, Register[] callerSavedRegisters, int pageSize, boolean isMP) {
         this.arch = arch;
         referenceSize = arch.wordSize;
         stackAlignment = arch.wordSize;
@@ -54,6 +56,8 @@ public class Target {
         backend = arch.getBackend(this);
         this.callerSavedRegisters = callerSavedRegisters;
         this.allocatableRegisters = allocatableRegisters;
+        this.pageSize = pageSize;
+        this.isMP = isMP;
     }
 
     /**

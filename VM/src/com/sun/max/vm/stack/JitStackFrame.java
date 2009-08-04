@@ -28,9 +28,9 @@ import com.sun.max.vm.jit.*;
  *
  * @author Doug Simon
  */
-public abstract class JitStackFrame<JitStackFrameLayout_Type extends JitStackFrameLayout> extends JavaStackFrame<JitStackFrameLayout_Type> {
+public abstract class JitStackFrame extends JavaStackFrame {
 
-    public JitStackFrame(StackFrame callee, JitStackFrameLayout_Type layout, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
+    public JitStackFrame(StackFrame callee, JitStackFrameLayout layout, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
         super(callee, layout, targetMethod, instructionPointer, framePointer, stackPointer);
     }
 

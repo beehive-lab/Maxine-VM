@@ -67,7 +67,7 @@ public abstract class TeleGripScheme extends AbstractVMScheme implements GripSch
         final VariableMapping<Long, WeakReference<RemoteTeleGrip>> newMapping = HashMapping.createVariableEqualityMapping();
         for (WeakReference<RemoteTeleGrip> r : rawGripToRemoteTeleGrip.values()) {
             final RemoteTeleGrip remoteTeleGrip = r.get();
-            if (remoteTeleGrip != null) {
+            if (remoteTeleGrip != null && !remoteTeleGrip.raw().equals(Word.zero())) {
                 newMapping.put(remoteTeleGrip.raw().toLong(), r);
             }
         }

@@ -708,9 +708,4 @@ public class BlockBegin extends StateSplit {
     public boolean isPredecessor(BlockBegin block) {
         return this.predecessors.contains(block);
     }
-
-    public void substituteSux(BlockBegin block, BlockBegin newTarget) {
-        end.substituteSuccessor(block, newTarget);
-    }
-
 }

@@ -168,8 +168,6 @@ public class LIRVisitState {
             }
 
                 // LIROp1
-            case Push: // input always valid, result and info always invalid
-            case Pop: // input always valid, result and info always invalid
             case Return: // input always valid, result and info always invalid
             case Leal: // input and result always valid, info always invalid
             case Neg: // input and result always valid, info always invalid

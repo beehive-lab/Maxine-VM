@@ -100,7 +100,7 @@ public class Label {
 
         int target = loc;
         for (int branchLoc : patchOverflow) {
-            masm.pdPatchInstruction(branchLoc, target);
+            masm.patchJumpTarget(branchLoc, target);
         }
     }
 

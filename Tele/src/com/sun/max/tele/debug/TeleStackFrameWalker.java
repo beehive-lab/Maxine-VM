@@ -67,16 +67,6 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
             this.errorMessage = errorMessage;
         }
 
-        @Override
-        public TargetMethod targetMethod() {
-            return null;
-        }
-
-        @Override
-        public boolean isJavaStackFrame() {
-            return false;
-        }
-
         public String errorMessage() {
             return errorMessage;
         }

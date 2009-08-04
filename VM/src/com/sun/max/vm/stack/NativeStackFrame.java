@@ -21,7 +21,6 @@
 package com.sun.max.vm.stack;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.thread.*;
 
@@ -42,16 +41,6 @@ public final class NativeStackFrame extends StackFrame {
 
     public NativeStackFrame(StackFrame callee, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
         super(callee, instructionPointer, framePointer, stackPointer);
-    }
-
-    @Override
-    public TargetMethod targetMethod() {
-        return null;
-    }
-
-    @Override
-    public boolean isJavaStackFrame() {
-        return false;
     }
 
     /**

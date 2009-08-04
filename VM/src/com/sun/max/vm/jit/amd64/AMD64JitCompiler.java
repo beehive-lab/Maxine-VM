@@ -423,8 +423,4 @@ public class AMD64JitCompiler extends JitCompiler {
         }
     }
 
-    public void advance(StackFrameWalker stackFrameWalker, Word instructionPointer, Word stackPointer, Word framePointer) {
-        stackFrameWalker.advance(instructionPointer, stackPointer, framePointer);
-    }
-
 }
