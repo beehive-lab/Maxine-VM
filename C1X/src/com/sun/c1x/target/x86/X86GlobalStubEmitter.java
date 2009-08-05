@@ -20,24 +20,29 @@
  */
 package com.sun.c1x.target.x86;
 
-import static com.sun.c1x.value.BasicType.*;
-
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.target.*;
+import com.sun.c1x.target.x86.X86Assembler.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 
 public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
+
+
     private X86MacroAssembler asm;
     private final Target target;
     private int frameSize;
     private CiRuntime runtime;
     private C1XCompiler compiler;
+    private Register[] registersSaved;
+
+    private final Register convertArgument = X86.xmm0;
+    private final Register convertResult = X86.rax;
 
     public X86GlobalStubEmitter(C1XCompiler compiler) {
         this.compiler = compiler;
@@ -68,11 +73,87 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
                 emitStandardForward(stub, CiRuntimeCall.NewInstance);
                 break;
 
+            case f2i:
+                emitF2I();
+                break;
+
+            case f2l:
+                emitF2L();
+                break;
+
+            case d2i:
+                emitD2I();
+                break;
+
+            case d2l:
+                emitD2L();
+                break;
+
+
             default:
                 throw Util.shouldNotReachHere();
         }
 
         return asm.finishTargetMethod(runtime, frameSize);
+    }
+
+    private void convertPrologue() {
+        partialSavePrologue(convertArgument, convertResult);
+        loadArgument(0, convertArgument);
+    }
+
+    private void convertEpilogue() {
+
+        storeArgument(0, convertResult);
+        epilogue();
+    }
+
+    private void emitD2L() {
+        convertPrologue();
+        asm.mov64(convertResult, Long.MIN_VALUE);
+//        asm.ucomisd(convertArgument, asm.doubleConstant(Long.MAX_VALUE));
+//        asm.cmovq(Condition.greaterEqual, convertResult, asm.longConstant(Long.MAX_VALUE));
+//        asm.ucomisd(convertArgument, asm.doubleConstant(Long.MIN_VALUE));
+//        asm.cmovq(Condition.lessEqual, convertResult, asm.longConstant(Long.MIN_VALUE));
+        asm.ucomiss(convertArgument, asm.doubleConstant(Double.NaN));
+        asm.cmovq(Condition.equal, convertResult, asm.longConstant(0L));
+        convertEpilogue();
+    }
+
+    private void emitD2I() {
+        convertPrologue();
+        asm.mov64(convertResult, Long.MIN_VALUE);
+//        asm.ucomisd(convertArgument, asm.doubleConstant(Integer.MAX_VALUE));
+//        asm.cmovl(Condition.greaterEqual, convertResult, asm.intConstant(Integer.MAX_VALUE));
+//        asm.ucomisd(convertArgument, asm.doubleConstant(Integer.MIN_VALUE));
+//        asm.cmovl(Condition.lessEqual, convertResult, asm.intConstant(Integer.MIN_VALUE));
+        asm.ucomiss(convertArgument, asm.doubleConstant(Double.NaN));
+        asm.cmovl(Condition.equal, convertResult, asm.intConstant(0));
+        convertEpilogue();
+    }
+
+    private void emitF2L() {
+        convertPrologue();
+        asm.movl(convertResult, Integer.MIN_VALUE); //asm.floatConstant(Integer.MIN_VALUE));
+//        asm.ucomiss(convertArgument, asm.floatConstant(Long.MAX_VALUE));
+//        asm.cmovq(Condition.greaterEqual, convertResult, asm.longConstant(Long.MAX_VALUE));
+//        asm.ucomiss(convertArgument, asm.floatConstant(Long.MIN_VALUE));
+//        asm.cmovq(Condition.lessEqual, convertResult, asm.longConstant(Long.MIN_VALUE));
+        asm.ucomiss(convertArgument, asm.floatConstant(Float.NaN));
+        asm.cmovq(Condition.equal, convertResult, asm.longConstant(0L));
+        convertEpilogue();
+    }
+
+    private void emitF2I() {
+        convertPrologue();
+        asm.movl(convertResult, Integer.MIN_VALUE); //, asm.floatConstant(Integer.MIN_VALUE));
+//        asm.ucomiss(convertArgument, asm.floatConstant(Integer.MAX_VALUE));
+//        asm.cmovl(Condition.greaterEqual, convertResult, asm.intConstant(Integer.MAX_VALUE));
+//        asm.ucomiss(convertArgument, asm.floatConstant(Integer.MIN_VALUE));
+//        asm.cmovl(Condition.lessEqual, convertResult, asm.intConstant(Integer.MIN_VALUE));
+        asm.ucomiss(convertArgument, asm.floatConstant(Float.NaN));
+        asm.cmovl(Condition.equal, convertResult, asm.intConstant(0));
+        convertEpilogue();
     }
 
     private void emitStandardForward(GlobalStub stub, CiRuntimeCall call) {
@@ -145,6 +226,28 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         }
     }
 
+    private void partialSavePrologue(Register... registersToSave) {
+
+
+        this.registersSaved = registersToSave;
+
+        this.frameSize = 0;
+        for (Register r : registersToSave) {
+            frameSize += target.arch.wordSize;
+        }
+
+        asm.makeOffset(runtime.codeOffset());
+
+        // Modify rsp
+        asm.subq(X86.rsp, this.frameSize);
+
+        int index = 0;
+        for (Register r : registersToSave) {
+            asm.movq(new Address(X86.rsp, index * target.arch.wordSize), r);
+            index++;
+        }
+    }
+
     private void prologue(boolean savesRegisters) {
         if (savesRegisters) {
             this.frameSize = savedRegistersSize();
@@ -159,6 +262,14 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     private void epilogue() {
+
+        if (registersSaved != null) {
+            int index = 0;
+            for (Register r : registersSaved) {
+                asm.movq(r, new Address(X86.rsp, index * target.arch.wordSize));
+                index++;
+            }
+        }
 
         // Restore rsp
         asm.addq(X86.rsp, this.frameSize);

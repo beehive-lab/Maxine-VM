@@ -75,7 +75,7 @@ public class C1XTargetMethodGenerator {
 
         final int numberOfStopPositions = directCalls + indirectCalls + safepoints;
         final int[] stopPositions = new int[numberOfStopPositions];
-        final byte[] refMaps = new byte[TargetMethod.computeReferenceMapsSize(directCalls, indirectCalls, safepoints, stackRefMapSize(), registerRefMapSize())];
+        byte[] refMaps = new byte[TargetMethod.computeReferenceMapsSize(directCalls, indirectCalls, safepoints, stackRefMapSize(), registerRefMapSize())];
         final ByteArrayBitMap bitMap = new ByteArrayBitMap(refMaps);
         final Object[] refLiterals = new Object[refSize];
 
@@ -94,6 +94,10 @@ public class C1XTargetMethodGenerator {
         TargetABI abi = VMConfiguration.target().targetABIsScheme().optimizedJavaABI();
 
         assert ciTargetMethod.targetCode != null;
+
+        if (refMaps.length == 0) {
+            refMaps = null;
+        }
 
         targetMethod.setGenerated(
             catchRangePositions,

@@ -476,10 +476,10 @@ public abstract class LIRAssembler {
 
         switch (op.code()) {
             case StaticCall:
-                call(op.method(), op.addr, op.info());
+                call(op.method(), op.addr, op.info(), new boolean[frameMap.stackRefMapSize()]);
                 break;
             case OptVirtualCall:
-                call(op.method(), op.addr, op.info());
+                call(op.method(), op.addr, op.info(), new boolean[frameMap.stackRefMapSize()]);
                 break;
             case IcVirtualCall:
                 icCall(op.method(), op.addr, op.info());
@@ -492,7 +492,7 @@ public abstract class LIRAssembler {
         }
     }
 
-    protected abstract void call(CiMethod ciMethod, CiRuntimeCall addr, CodeEmitInfo info);
+    protected abstract void call(CiMethod ciMethod, CiRuntimeCall addr, CodeEmitInfo info, boolean[] stackRefMap);
 
     protected abstract void emitStaticCallStub();
 

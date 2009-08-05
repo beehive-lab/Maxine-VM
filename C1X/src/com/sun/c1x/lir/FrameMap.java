@@ -267,4 +267,8 @@ public abstract class FrameMap {
     public LIROperand returnOpr(BasicType object) {
         return LIROperandFactory.singleLocation(object, compilation.runtime.returnRegister(object));
     }
+
+    public int stackRefMapSize() {
+        return ((framesize + 7) >> 3) << 3; // round up to next byte size
+    }
 }
