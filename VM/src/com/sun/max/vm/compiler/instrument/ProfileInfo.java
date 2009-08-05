@@ -35,6 +35,9 @@ package com.sun.max.vm.compiler.instrument;
  * (e.g. the low order bits of the code entrypoint address) or the ID of a type instead
  * of the type itself.
  *
+ * This class maintains the data sorted by bytecode index and therefore most operations to
+ * receive information for a particular BCI take logarithmic time.
+ *
  * @author Ben L. Titzer
  */
 public class ProfileInfo {
@@ -67,7 +70,7 @@ public class ProfileInfo {
         Integer taken = get(search(bci, BR_TAKEN));
         Integer notTaken = get(search(bci, BR_NOT_TAKEN));
         if (taken != null || notTaken != null) {
-            return new Integer[] { taken, notTaken };
+            return new Integer[] {taken, notTaken};
         }
         return null;
     }
@@ -77,8 +80,8 @@ public class ProfileInfo {
     }
 
     private Integer get(int index) {
-        if (index >= 0 && index < data.length) {
-            return data[index];
+        if (index >= 0 && index < dataLength()) {
+            return dataAt(index);
         }
         return null;
     }
@@ -88,8 +91,8 @@ public class ProfileInfo {
         int index = search(bci);
         if (index >= 0) {
             int encoding = encodeType(bci, type);
-            while (index < indexData.length && bciAt(index) == bci) {
-                if (indexData[index] == encoding) {
+            while (index < dataLength() && bciAt(index) == bci) {
+                if (infoAt(index) == encoding) {
                     return index;
                 }
                 index++;
@@ -101,7 +104,7 @@ public class ProfileInfo {
     private int search(int bci) {
         // perform binary search to find the lowest entry with data for the bci
         int low = 0;
-        int high = indexData.length - 1;
+        int high = dataLength() - 1;
 
         while (low <= high) {
             int mid = (low + high) >>> 1;
@@ -112,10 +115,29 @@ public class ProfileInfo {
             } else if (midVal > bci) {
                 high = mid - 1;
             } else {
+                while (mid > 0) {
+                    // rewind to the first entry for this bci
+                    if (bciAt(mid - 1) != bci) {
+                        return mid;
+                    }
+                    mid--;
+                }
                 return mid; // key found
             }
         }
         return -(low + 1);  // key not found.
+    }
+
+    private int dataLength() {
+        return data.length;
+    }
+
+    private int infoAt(int index) {
+        return indexData[index];
+    }
+
+    private int dataAt(int index) {
+        return data[index];
     }
 
     private int encodeType(int bci, byte type) {
@@ -123,11 +145,11 @@ public class ProfileInfo {
     }
 
     private byte typeAt(int index) {
-        return (byte) indexData[index];
+        return (byte) infoAt(index);
     }
 
     private int bciAt(int index) {
-        return indexData[index] >>> 16;
+        return infoAt(index) >>> 16;
     }
 
 }
