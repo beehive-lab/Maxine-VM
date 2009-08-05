@@ -52,6 +52,7 @@ extern void log_print_vformat(const char *format, va_list ap);
 extern void log_print_newline(void);
 extern void log_print_float(float f);
 extern void log_print_double(double d);
+extern void log_print_null();
 
 #if os_WINDOWS
 #define NEWLINE_STRING "\r\n"

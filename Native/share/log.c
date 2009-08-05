@@ -166,3 +166,8 @@ void log_print_double(double d) {
 	// TODO: fprintf may not produce exactly the same format of floating point numbers
 	log_print_format("%lf", d);
 }
+
+void log_print_null() {
+    return;
+}
+
