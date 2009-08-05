@@ -105,11 +105,10 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
 
     private void translateTargetState(TeleObject targetState) {
         if (targetState instanceof TeleTargetMethod) {
-
             // the object actually is an instance of TargetMethod
             teleTargetMethodHistory = new TeleTargetMethod[] {(TeleTargetMethod) targetState};
-        } else if (targetState instanceof TeleArrayObject){
 
+        } else if (targetState instanceof TeleArrayObject) {
             // the object actually is an instance of TargetMethod[]
             final TeleArrayObject teleTargetMethodHistoryArray = (TeleArrayObject) targetState;
             int numberOfCompilations = teleTargetMethodHistoryArray.length();
