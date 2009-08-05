@@ -258,6 +258,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
         if (Heap.verbose()) {
             Log.println("Scan Roots ");
         }
+        VmThreadLocal.prepareCurrentStackReferenceMap();
         stackAndMonitorGripUpdater.run();
 
         if (Heap.verbose()) {
