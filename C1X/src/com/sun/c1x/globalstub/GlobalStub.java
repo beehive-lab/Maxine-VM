@@ -35,7 +35,11 @@ public enum GlobalStub {
     SlowSubtypeCheck(Boolean, Object, Object),
     NewObjectArray(Object, Object, Int),
     NewInstance(Object, Object),
-    NewTypeArray(Object, Object, Int);
+    NewTypeArray(Object, Object, Int),
+    f2i(Int, Float),
+    f2l(Long, Float),
+    d2i(Int, Double),
+    d2l(Long, Double);
 
     /**
      * Maximum number of arguments, determines how many stack words are reserved on the top of the stack.

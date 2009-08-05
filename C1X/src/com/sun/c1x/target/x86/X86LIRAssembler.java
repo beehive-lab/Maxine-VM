@@ -52,16 +52,9 @@ public class X86LIRAssembler extends LIRAssembler {
     private static final Register SYNCHeader = X86.rax;
     private static final Register SHIFTCount = X86.rcx;
 
-    private static final int FloatConstantAlignment = 16;
     private static final long FloatSignFlip = 0x8000000080000000L;
     private static final long DoubleSignFlip = 0x8000000000000000L;
     private static final long DoubleSignMask = 0x7FFFFFFFFFFFFFFFL;
-    private static final float MAX_FLOAT_VALUE_INTEGER = -1 >>> 1;
-    private static final float MAX_FLOAT_VALUE_LONG = ((long) -1) >>> 1;
-    private static final double MAX_DOUBLE_VALUE_INTEGER = -1 >>> 1;
-    private static final double MAX_DOUBLE_VALUE_LONG = ((long) -1) >>> 1;
-    private static final int MAX_INT_VALUE = -1 >>> 1;
-    private static final int MAX_LONG_VALUE = -1 >>> 1;
 
     X86MacroAssembler masm;
 
@@ -1192,7 +1185,10 @@ public class X86LIRAssembler extends LIRAssembler {
         LIROperand src = op.inOpr();
         LIROperand dest = op.resultOpr();
         Label biggerMaxValue = new Label();
+        Label labelNaN = new Label();
         Label endLabel = new Label();
+        Register srcRegister = src.asRegister();
+        Register rscratch1 = X86FrameMap.rscratch1(this.compilation.target.arch);
         switch (op.bytecode) {
             case Bytecodes.I2L:
                 if (compilation.target.arch.is64bit()) {
@@ -1247,23 +1243,19 @@ public class X86LIRAssembler extends LIRAssembler {
 
             case Bytecodes.F2I:
                 assert src.isSingleXmm() && dest.isRegister() : "must both be XMM register (no fpu stack)";
-                masm().ucomiss(src.asRegister(), masm().floatConstant(MAX_FLOAT_VALUE_INTEGER));
-                masm().jcc(Condition.aboveEqual, biggerMaxValue);
-                masm().cvttss2sil(dest.asRegister(), asXmmFloatReg(src));
-                masm().jmp(endLabel);
-                masm().bind(biggerMaxValue);
-                masm().movl(dest.asRegister(), MAX_INT_VALUE);
+                masm().cvttss2sil(dest.asRegister(), srcRegister);
+                masm().cmp32(dest.asRegister(), Integer.MIN_VALUE);
+                masm().jcc(Condition.notEqual, endLabel);
+                masm().callGlobalStub(GlobalStub.f2i, dest.asRegister(), srcRegister);
                 masm().bind(endLabel);
                 break;
 
             case Bytecodes.D2I:
                 assert src.isDoubleXmm() && dest.isRegister() : "must both be XMM register (no fpu stack)";
-                masm().ucomisd(src.asRegister(), masm().doubleConstant(MAX_DOUBLE_VALUE_INTEGER));
-                masm().jcc(Condition.aboveEqual, biggerMaxValue);
                 masm().cvttsd2sil(dest.asRegister(), asXmmDoubleReg(src));
-                masm().jmp(endLabel);
-                masm().bind(biggerMaxValue);
-                masm().movl(dest.asRegister(), MAX_INT_VALUE);
+                masm().cmp32(dest.asRegister(), Integer.MIN_VALUE);
+                masm().jcc(Condition.notEqual, endLabel);
+                masm().callGlobalStub(GlobalStub.d2i, dest.asRegister(), srcRegister);
                 masm().bind(endLabel);
                 break;
 
@@ -1277,23 +1269,22 @@ public class X86LIRAssembler extends LIRAssembler {
 
             case Bytecodes.F2L:
                 assert src.isSingleXmm() && dest.isDoubleCpu() : "must both be XMM register (no fpu stack)";
-                masm().ucomisd(src.asRegister(), masm().floatConstant(MAX_FLOAT_VALUE_LONG));
-                masm().jcc(Condition.aboveEqual, biggerMaxValue);
                 masm().cvttss2siq(dest.asRegister(), asXmmFloatReg(src));
-                masm().jmp(endLabel);
-                masm().bind(biggerMaxValue);
-                masm().movl(dest.asRegister(), MAX_LONG_VALUE);
+                masm().mov64(rscratch1, Long.MIN_VALUE);
+                masm().cmpq(dest.asRegister(), rscratch1);
+                masm().jcc(Condition.notEqual, endLabel);
+                masm().callGlobalStub(GlobalStub.f2i, dest.asRegister(), srcRegister);
                 masm().bind(endLabel);
                 break;
 
             case Bytecodes.D2L:
                 assert src.isDoubleXmm() && dest.isDoubleCpu() : "must both be XMM register (no fpu stack)";
-                masm().ucomisd(src.asRegister(), masm().doubleConstant(MAX_DOUBLE_VALUE_LONG));
-                masm().jcc(Condition.aboveEqual, biggerMaxValue);
                 masm().cvttsd2siq(dest.asRegister(), asXmmDoubleReg(src));
+                masm().mov64(rscratch1, Long.MIN_VALUE);
+                masm().cmpq(dest.asRegister(), rscratch1);
                 masm().jmp(endLabel);
-                masm().bind(biggerMaxValue);
-                masm().movl(dest.asRegister(), MAX_LONG_VALUE);
+                masm().jcc(Condition.notEqual, endLabel);
+                masm().callGlobalStub(GlobalStub.d2i, dest.asRegister(), srcRegister);
                 masm().bind(endLabel);
                 break;
 
@@ -2030,7 +2021,7 @@ public class X86LIRAssembler extends LIRAssembler {
                     if (asXmmDoubleReg(dest) != asXmmDoubleReg(value)) {
                         masm().movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(value));
                     }
-                    masm().andpd(asXmmDoubleReg(dest), masm().longConstant(DoubleSignMask, FloatConstantAlignment));
+                    masm().andpd(asXmmDoubleReg(dest), masm().longConstant(DoubleSignMask));
                     break;
 
                 case Sqrt:
@@ -2463,10 +2454,10 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void call(CiMethod method, CiRuntimeCall entry, CodeEmitInfo info) {
+    protected void call(CiMethod method, CiRuntimeCall entry, CodeEmitInfo info, boolean[] stackRefMap) {
         // (tw) TODO: Find out if we need to align calls!
         //assert !compilation.runtime.isMP() || (masm().codeBuffer.position() + compilation.target.arch.nativeCallDisplacementOffset) % wordSize == 0 : "must be aligned";
-        masm().callRuntime(entry, method);
+        masm().callMethodDirect(method, stackRefMap);
         addCallInfo(codeOffset(), info);
     }
 
@@ -3055,13 +3046,13 @@ public class X86LIRAssembler extends LIRAssembler {
             if (asXmmFloatReg(left) != asXmmFloatReg(dest)) {
                 masm().movflt(asXmmFloatReg(dest), asXmmFloatReg(left));
             }
-            masm().xorps(asXmmFloatReg(dest), masm.longConstant(FloatSignFlip, FloatConstantAlignment));
+            masm().xorps(asXmmFloatReg(dest), masm.longConstant(FloatSignFlip));
 
         } else if (dest.isDoubleXmm()) {
             if (asXmmDoubleReg(left) != asXmmDoubleReg(dest)) {
                 masm().movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(left));
             }
-            masm().xorpd(asXmmDoubleReg(dest), masm.longConstant(DoubleSignFlip, FloatConstantAlignment));
+            masm().xorpd(asXmmDoubleReg(dest), masm.longConstant(DoubleSignFlip));
 
         } else {
             throw Util.shouldNotReachHere();

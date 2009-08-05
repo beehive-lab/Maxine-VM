@@ -34,6 +34,7 @@ import com.sun.c1x.value.BasicType;
  */
 public class X86MacroAssembler extends X86Assembler {
 
+    private static final int FloatConstantAlignment = 16;
     private Register rscratch1;
     private final int wordSize;
     private final C1XCompiler compiler;

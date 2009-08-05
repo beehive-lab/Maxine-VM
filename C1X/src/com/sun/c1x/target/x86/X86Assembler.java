@@ -550,6 +550,19 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitInt(0);
     }
 
+    /**
+     * Emits a direct call to a method. It generates the bytes for the call, fills in 0 for the destination address and
+     * records the position as a relocation to the runtime.
+     *
+     * @param runtimeCall
+     *            the destination of the call
+     */
+    public void callMethodDirect(CiMethod method, boolean[] stackRefMap) {
+        recordDirectCall(codeBuffer.position(), method, stackRefMap);
+        emitByte(0xE8);
+        emitInt(0);
+    }
+
     void cdql() {
         emitByte(0x99);
     }
@@ -2603,7 +2616,7 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     int prefixAndEncode(int regEnc, boolean byteinst) {
-        assert target.arch.is32bit();
+      //  assert target.arch.is32bit();
         if (regEnc >= 8) {
             emitByte(Prefix.REXB);
             regEnc -= 8;
@@ -2716,7 +2729,6 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     void prefix(Address adr, Register reg) {
 
-        assert target.arch.is32bit();
         if (reg.encoding < 8) {
             if (needsRex(adr.base)) {
                 if (needsRex(adr.index)) {
