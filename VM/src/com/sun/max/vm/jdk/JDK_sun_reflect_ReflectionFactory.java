@@ -82,7 +82,7 @@ public class JDK_sun_reflect_ReflectionFactory {
         if (MaxineVM.isPrototyping()) {
             ConstructorAccessor stub = prePopulatedConstructorStubs.get(methodActor);
             if (stub == null) {
-                stub = newConstructorStub(methodActor.toJavaConstructor(), false, Boxing.JAVA);
+                stub = newConstructorStub(methodActor.toJavaConstructor(), null, Boxing.JAVA);
                 prePopulatedConstructorStubs.put(methodActor, stub);
             }
             return ClassActor.fromJava(stub.getClass());
@@ -139,7 +139,7 @@ public class JDK_sun_reflect_ReflectionFactory {
                     }
                 };
             }
-            result = newConstructorStub(constructor, false, Boxing.JAVA);
+            result = newConstructorStub(constructor, null, Boxing.JAVA);
         }
         return result;
     }
@@ -159,7 +159,7 @@ public class JDK_sun_reflect_ReflectionFactory {
         }
 
         final MethodActor constructorToCallActor = MethodActor.fromJavaConstructor(constructorToCall);
-        final ConstructorAccessor accessor =  newConstructorStub(constructorToCall, true, Boxing.JAVA);
+        final ConstructorAccessor accessor =  newConstructorStub(constructorToCall, classToInstantiate, Boxing.JAVA);
         final Constructor constructor = thisReflectionFactory().newConstructor(constructorToCall.getDeclaringClass(),
                         constructorToCall.getParameterTypes(),
                         constructorToCall.getExceptionTypes(),
