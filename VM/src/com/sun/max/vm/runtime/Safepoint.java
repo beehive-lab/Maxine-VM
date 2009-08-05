@@ -33,6 +33,8 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
+import com.sun.max.vm.heap.StopTheWorldGCDaemon.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
@@ -48,10 +50,58 @@ import com.sun.max.vm.thread.*;
  */
 public abstract class Safepoint {
 
+    /**
+     * Flag indicating which mechanism is to be used for synchronizing mutator and GC threads. The mechanisms are
+     * described below.
+     * <dl>
+     * <dt>CAS</dt>
+     * <dd>Atomic compare-and-swap (CAS) instructions are used to enforce transitions through the following state
+     * machine:
+     *
+     * <pre>
+     *
+     *     +------+                            +--------+                             +---------+
+     *     |      |--- M:JNI-Prolog{STORE} --->|        |--- GC:WaitForNative{CAS} -->|         |
+     *     | JAVA |                            | NATIVE |                             |   GC    |
+     *     |      |<--- M:JNI-Epilog{CAS} -----|        |<----- GC:Reset{STORE} ------|         |
+     *     +------+                            +--------+                             +---------+
+     * </pre>
+     *
+     * The states pertain to the mutator thread.
+     * Each transition describes which thread makes the transition ({@code M} == mutator thread, {@code GC} == GC
+     * thread), the VM code implementing the transition ({@linkplain NativeCallPrologue#nativeCallPrologue() JNI-Prolog},
+     * {@linkplain NativeCallEpilogue#nativeCallEpilogue(Pointer) JNI-Epilog}, {@linkplain WaitUntilNonMutating
+     * WaitForNative} and {@linkplain ResetMutator Reset}) and the instruction used to update state ({@code CAS} ==
+     * atomic compare-and-swap, {@code STORE} == normal memory store). The state is stored in the
+     * {@link VmThreadLocal#MUTATOR_STATE} thread local variable of the mutator thread.</dd>
+     *
+     * <dt>FENCE</dt>
+     * <dd>Memory fences are used to implement Dekkers algorithm to ensure that a thread is never
+     * mutating during a GC. This mechanism uses both the {@link VmThreadLocal#MUTATOR_STATE} and
+     * {@link VmThreadLocal#GC_STATE} thread local variables of the mutator thread. The operations
+     * that access these variables are in {@link NativeCallPrologue#nativeCallPrologue()},
+     * {@link NativeCallEpilogue#nativeCallEpilogue(Pointer)}, {@link WaitUntilNonMutating} and
+     * {@link ResetMutator}.
+     * </dd>
+     * </dl>
+     *
+     * TODO: Make the choice for this value based on the mechanism proven to runs best of the target platform.
+     */
     public static final boolean UseCASBasedGCMutatorSynchronization = false;
 
+    /**
+     * Constant denoting a mutator thread is executing Java code.
+     */
     public static final Word THREAD_IN_JAVA = Address.fromInt(0);
+
+    /**
+     * Constant denoting a mutator thread is executing native code.
+     */
     public static final Word THREAD_IN_NATIVE = Address.fromInt(1);
+
+    /**
+     * Constant denoting a mutator thread is stopped for garbage collection.
+     */
     public static final Word THREAD_IN_GC = Address.fromInt(2);
 
     public enum State implements PoolObject {
@@ -134,10 +184,6 @@ public abstract class Safepoint {
      *            thread locals can be obtained
      */
     public static void reset(Pointer vmThreadLocals) {
-        if (UseCASBasedGCMutatorSynchronization) {
-            final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-            enabledVmThreadLocals.setWord(MUTATOR_STATE.index, THREAD_IN_NATIVE);
-        }
         SAFEPOINT_LATCH.setVariableWord(vmThreadLocals, SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals));
     }
 

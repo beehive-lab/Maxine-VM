@@ -268,7 +268,7 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
         final TypeDescriptor typeDescriptor = JavaTypeDescriptor.getDescriptorForJavaString(name);
         final PrototypeClassLoader prototypeClassLoader = PrototypeClassLoader.PROTOTYPE_CLASS_LOADER;
         final Classpath classpath = prototypeClassLoader.classpath();
-        ClassActor classActor = ClassRegistry.get(prototypeClassLoader, typeDescriptor);
+        ClassActor classActor = ClassRegistry.get(prototypeClassLoader, typeDescriptor, false);
         if (classActor == null) {
             final ClasspathFile classpathFile = classpath.readClassFile(name);
             if (classpathFile == null) {
