@@ -161,6 +161,7 @@ public abstract class LIRAssembler {
     }
 
     protected void emitCodeStub(CodeStub stub) {
+        assert stub != null;
         slowCaseStubs.add(stub);
     }
 
@@ -462,9 +463,10 @@ public abstract class LIRAssembler {
     void emitCall(LIRJavaCall op) {
         verifyOopMap(op.info());
 
+        // TODO (tw) check if this is necessary and how to do it properly!
         if (compilation.runtime.isMP()) {
             // must align calls sites, otherwise they can't be updated atomically on MP hardware
-            alignCall(op.code());
+            //alignCall(op.code());
         }
 
         // emit the static call stub stuff out of line

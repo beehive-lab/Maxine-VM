@@ -666,7 +666,14 @@ public class X86LIRAssembler extends LIRAssembler {
                 masm().verifyOop(src.asRegister());
                 masm().movptr(dst, src.asRegister());
             } else {
-                masm().movl(dst, src.asRegister());
+                if (compilation.target.arch.is32bit()) {
+                    masm().movl(dst, src.asRegister());
+                } else if (compilation.target.arch.is64bit()) {
+                    masm().movq(dst, src.asRegister());
+
+                } else {
+                    throw Util.shouldNotReachHere();
+                }
             }
 
         } else if (src.isDoubleCpu()) {
@@ -740,7 +747,11 @@ public class X86LIRAssembler extends LIRAssembler {
                 }
                 break;
             case Int:
-                masm().movl(asAddress(toAddr), src.asRegister());
+                if (compilation.target.arch.is64bit()) {
+                    masm().movq(asAddress(toAddr), src.asRegister());
+                } else {
+                    masm().movl(asAddress(toAddr), src.asRegister());
+                }
                 break;
 
             case Long: {
@@ -1352,28 +1363,6 @@ public class X86LIRAssembler extends LIRAssembler {
         Register.assertDifferentRegisters(preserve, tmp1[0], tmp2[0], tmp3[0]);
     }
 
-    private void callGlobalStub(GlobalStub stub, Register result, Register... args) {
-        int index = 0;
-        for (Register op : args) {
-            storeParameter(op, index++);
-        }
-
-        masm().callGlobalStub(compilation.compiler.lookupGlobalStub(stub));
-
-        if (result != Register.noreg) {
-
-            this.loadResult(result, 0);
-        }
-
-        // Clear out parameters
-        if (C1XOptions.GenerateAssertionCode) {
-
-            index = 0;
-            for (Register op : args) {
-                storeParameter(0, index++);
-            }
-        }
-    }
 
     @Override
     protected void emitTypeCheck(LIRTypeCheck op) {
@@ -1408,7 +1397,7 @@ public class X86LIRAssembler extends LIRAssembler {
             // masm().checkKlassSubtypeFastPath(klassRInfo, kRInfo, rtmp1, done, stub.entry, null, new
             // RegisterOrConstant(-1));
 
-            callGlobalStub(GlobalStub.SlowSubtypeCheck, rtmp1, klassRInfo, kRInfo);
+            masm().callGlobalStub(GlobalStub.SlowSubtypeCheck, rtmp1, kRInfo, klassRInfo);
 
             // result is a boolean
             masm().cmpl(rtmp1, 0);
@@ -1516,7 +1505,7 @@ public class X86LIRAssembler extends LIRAssembler {
                         // check for self
                         masm().cmpptr(klassRInfo, kRInfo);
                         masm().jcc(X86Assembler.Condition.equal, done);
-                        callGlobalStub(GlobalStub.SlowSubtypeCheck, klassRInfo, kRInfo, klassRInfo);
+                        masm().callGlobalStub(GlobalStub.SlowSubtypeCheck, klassRInfo, kRInfo, klassRInfo);
 
                         // result is a boolean
                         masm().cmpl(klassRInfo, 0);
@@ -1529,7 +1518,7 @@ public class X86LIRAssembler extends LIRAssembler {
                     // call out-of-line instance of lir(). checkKlassSubtypeSlowPath(...):
 
 
-                    callGlobalStub(GlobalStub.SlowSubtypeCheck, kRInfo, kRInfo, klassRInfo);
+                    masm().callGlobalStub(GlobalStub.SlowSubtypeCheck, kRInfo, kRInfo, klassRInfo);
 
                     // result is a boolean
                     masm().cmpl(kRInfo, 0);
@@ -1592,7 +1581,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 // perform the fast part of the checking logic
                 //masm().checkKlassSubtypeFastPath(klassRInfo, kRInfo, dst, one, zero, null, new RegisterOrConstant(-1));
                 // call out-of-line instance of lir(). checkKlassSubtypeSlowPath(...):
-                callGlobalStub(GlobalStub.SlowSubtypeCheck, dst, kRInfo, klassRInfo);
+                masm().callGlobalStub(GlobalStub.SlowSubtypeCheck, dst, kRInfo, klassRInfo);
                 masm().jmp(done);
             }
             masm().bind(zero);
@@ -2475,7 +2464,8 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void call(CiMethod method, CiRuntimeCall entry, CodeEmitInfo info) {
-        assert !compilation.runtime.isMP() || (masm().codeBuffer.position() + compilation.target.arch.nativeCallDisplacementOffset) % wordSize == 0 : "must be aligned";
+        // (tw) TODO: Find out if we need to align calls!
+        //assert !compilation.runtime.isMP() || (masm().codeBuffer.position() + compilation.target.arch.nativeCallDisplacementOffset) % wordSize == 0 : "must be aligned";
         masm().callRuntime(entry, method);
         addCallInfo(codeOffset(), info);
     }
@@ -2495,7 +2485,8 @@ public class X86LIRAssembler extends LIRAssembler {
     protected void vtableCall(CiMethod method, LIROperand receiver, long vtableOffset, CodeEmitInfo info) {
         assert receiver != null && vtableOffset >= 0 : "Invalid receiver or vtable offset!";
         assert receiver.isRegister() : "Receiver must be in a register";
-        masm.call(new Address(receiver.asRegister(), Util.safeToInt(vtableOffset * compilation.runtime.vtableEntrySize() + compilation.runtime.vtableStartOffset())));
+        masm.movq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.klassOffsetInBytes()));
+        masm.call(new Address(rscratch1, Util.safeToInt(vtableOffset)));
     }
 
     @Override
@@ -2679,34 +2670,6 @@ public class X86LIRAssembler extends LIRAssembler {
         }
     }
 
-    private void loadResult(Register r, int offsetFromRspInWords) {
-        assert offsetFromRspInWords >= 0 : "invalid offset from rsp";
-        int offsetFromRspInBytes = offsetFromRspInWords * compilation.target.arch.wordSize;
-        assert offsetFromRspInBytes < frameMap().reservedArgumentAreaSize() : "invalid offset";
-        masm().movptr(r, new Address(X86.rsp, offsetFromRspInBytes));
-    }
-
-    private void storeParameter(Register r, int offsetFromRspInWords) {
-        assert offsetFromRspInWords >= 0 : "invalid offset from rsp";
-        int offsetFromRspInBytes = offsetFromRspInWords * compilation.target.arch.wordSize;
-        assert offsetFromRspInBytes < frameMap().reservedArgumentAreaSize() : "invalid offset";
-        masm().movptr(new Address(X86.rsp, offsetFromRspInBytes), r);
-    }
-
-    void storeParameter(int c, int offsetFromRspInWords) {
-        assert offsetFromRspInWords >= 0 : "invalid offset from rsp";
-        int offsetFromRspInBytes = offsetFromRspInWords * compilation.target.arch.wordSize;
-        assert offsetFromRspInBytes < frameMap().reservedArgumentAreaSize() : "invalid offset";
-        masm().movptr(new Address(X86.rsp, offsetFromRspInBytes), c);
-    }
-
-    void storeParameter(Object o, int offsetFromRspInWords) {
-        assert offsetFromRspInWords >= 0 : "invalid offset from rsp";
-        int offsetFromRspInBytes = offsetFromRspInWords * compilation.target.arch.wordSize;
-        assert offsetFromRspInBytes < frameMap().reservedArgumentAreaSize() : "invalid offset";
-        masm().movoop(new Address(X86.rsp, offsetFromRspInBytes), o);
-    }
-
     @Override
     protected void emitArrayCopy(LIRArrayCopy op) {
         CiType defaultType = op.expectedType();
@@ -2744,6 +2707,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
             // These are proper for the calling convention
 
+            /*
             storeParameter(length, 2);
             storeParameter(dstPos, 1);
             storeParameter(dst, 0);
@@ -2779,9 +2743,9 @@ public class X86LIRAssembler extends LIRAssembler {
                     masm().mov(cRarg4, jRarg4);
                     masm().callRuntime(entry);
                 }
-            } else {
-                throw Util.unimplemented();
-            }
+            } else {*/
+            Util.unimplemented();
+            //}
 
             masm().cmpl(X86.rax, 0);
             masm().jcc(X86Assembler.Condition.equal, stub.continuation);
@@ -2915,11 +2879,13 @@ public class X86LIRAssembler extends LIRAssembler {
             masm().mov(cRarg2, length);
 
         } else {
-            masm().lea(tmp, new Address(src, srcPos, scale, compilation.runtime.arrayBaseOffsetInBytes(basicType)));
-            storeParameter(tmp, 0);
-            masm().lea(tmp, new Address(dst, dstPos, scale, compilation.runtime.arrayBaseOffsetInBytes(basicType)));
-            storeParameter(tmp, 1);
-            storeParameter(length, 2);
+
+            throw Util.unimplemented();
+//            masm().lea(tmp, new Address(src, srcPos, scale, compilation.runtime.arrayBaseOffsetInBytes(basicType)));
+//            storeParameter(tmp, 0);
+//            masm().lea(tmp, new Address(dst, dstPos, scale, compilation.runtime.arrayBaseOffsetInBytes(basicType)));
+//            storeParameter(tmp, 1);
+//            storeParameter(length, 2);
         }
         if (basicType == BasicType.Object) {
             masm().callRuntime(CiRuntimeCall.OopArrayCopy);

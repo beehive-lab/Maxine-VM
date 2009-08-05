@@ -608,7 +608,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
 
         // emit array address setup early so it schedules better
-        LIROperand arrayAddr = emitArrayAddress(array.result(), index.result(), x.elementType(), false);
+        LIRAddress arrayAddr = emitArrayAddress(array.result(), index.result(), x.elementType(), false);
 
         if (C1XOptions.GenerateBoundsChecks && needsRangeCheck) {
             if (useLength) {
@@ -2135,7 +2135,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
     protected abstract void cmpRegMem(LIRCondition condition, LIROperand reg, LIROperand base, LIROperand disp, BasicType type, CodeEmitInfo info);
 
-    protected abstract LIROperand emitArrayAddress(LIROperand arrayOpr, LIROperand indexOpr, BasicType type, boolean needsCardMark);
+    protected abstract LIRAddress emitArrayAddress(LIROperand arrayOpr, LIROperand indexOpr, BasicType type, boolean needsCardMark);
 
     protected abstract LIROperand exceptionPcOpr();
 

@@ -1006,7 +1006,6 @@ public class Canonicalizer extends InstructionVisitor {
                 visitIf(canon);
             } else {
                 setCanonical(canon);
-                canonical.setBCI(cmp.bci());
             }
         }
     }

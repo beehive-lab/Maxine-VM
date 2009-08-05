@@ -29,6 +29,7 @@ import com.sun.c1x.ci.CiType;
 import com.sun.c1x.debug.TTY;
 import com.sun.c1x.gen.LIRGenerator;
 import com.sun.c1x.gen.LIRItem;
+import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.stub.*;
@@ -834,18 +835,18 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand reg = resultRegisterFor(x.type());
         CiType klass = x.instanceClass();
         LIROperand klassReg = X86FrameMap.rdxOopOpr;
-        jobject2regWithPatching(klassReg, klass, info);
+        jobject2regWithPatching(klassReg, klass.encoding(), info);
         // If klass is not loaded we do not know if the klass has finalizers:
         if (C1XOptions.UseFastNewInstance && klass.isLoaded() && !klass.layoutHelperNeedsSlowPath()) {
-            CiRuntimeCall stubId = klass.isInitialized() ? CiRuntimeCall.FastNewInstance : CiRuntimeCall.FastNewInstanceInitCheck;
-            CodeStub slowPath = new NewInstanceStub(klassReg, reg, klass, info, stubId);
-            assert klass.isLoaded() : "must be loaded";
-            // allocate space for instance
-            assert klass.sizeHelper() >= 0 : "illegal instance size";
-            int instanceSize = Util.align(klass.sizeHelper(), compilation.target.heapAlignment);
-            lir.allocateObject(reg, X86FrameMap.rcxOopOpr, X86FrameMap.rdiOopOpr, X86FrameMap.rsiOopOpr, LIROperandFactory.IllegalOperand, compilation.runtime.headerSize(), instanceSize, klassReg, !klass.isInitialized(), slowPath);
+//            CiRuntimeCall stubId = klass.isInitialized() ? CiRuntimeCall.FastNewInstance : CiRuntimeCall.FastNewInstanceInitCheck;
+//            CodeStub slowPath = new NewInstanceStub(klassReg, reg, klass, info, stubId);
+//            assert klass.isLoaded() : "must be loaded";
+//            // allocate space for instance
+//            assert klass.sizeHelper() >= 0 : "illegal instance size";
+//            int instanceSize = Util.align(klass.sizeHelper(), compilation.target.heapAlignment);
+//            lir.allocateObject(reg, X86FrameMap.rcxOopOpr, X86FrameMap.rdiOopOpr, X86FrameMap.rsiOopOpr, LIROperandFactory.IllegalOperand, compilation.runtime.headerSize(), instanceSize, klassReg, !klass.isInitialized(), slowPath);
         } else {
-            CodeStub slowPath = new NewInstanceStub(klassReg, reg, klass, info, CiRuntimeCall.NewInstance);
+            CodeStub slowPath = new NewInstanceStub(klassReg, reg, klass, info, GlobalStub.NewInstance);
             lir.branch(LIRCondition.Always, BasicType.Illegal, slowPath);
             lir.branchDestination(slowPath.continuation);
         }
@@ -867,7 +868,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand len = length.result();
         BasicType elemType = x.elementType();
 
-        lir().oop2reg(elemType.primitiveArrayClass(), klassReg);
+        lir().oop2reg(compilation.runtime.primitiveArrayType(elemType).encoding(), klassReg);
 
         CodeStub slowPath = new NewTypeArrayStub(klassReg, len, reg, info);
         lir().allocateArray(reg, len, tmp1, tmp2, tmp3, tmp4, elemType, klassReg, slowPath);
@@ -900,7 +901,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand len = length.result();
 
         CodeStub slowPath = new NewObjectArrayStub(klassReg, len, reg, info);
-        Object obj = x.elementClass().arrayOf();
+        Object obj = x.elementClass().arrayOf().encoding();
         jobject2regWithPatching(klassReg, obj, patchingInfo);
         lir().allocateArray(reg, len, tmp1, tmp2, tmp3, tmp4, BasicType.Object, klassReg, slowPath);
 
@@ -920,7 +921,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
         // need to get the info before, as the items may become invalid through itemFree
         CodeEmitInfo patchingInfo = null;
-        if (!x.elementType().isLoaded() || C1XOptions.TestPatching) {
+        if (!x.elementType.isLoaded() || C1XOptions.TestPatching) {
             patchingInfo = stateFor(x, x.stateBefore());
 
             // cannot re-use same xhandlers for multiple CodeEmitInfos, so
@@ -939,7 +940,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         }
 
         LIROperand reg = resultRegisterFor(x.type());
-        jobject2regWithPatching(reg, x.elementType(), patchingInfo);
+        jobject2regWithPatching(reg, x.elementType, patchingInfo);
 
         LIROperand rank = X86FrameMap.rbxOpr;
         lir().move(LIROperandFactory.intConst(x.rank()), rank);
