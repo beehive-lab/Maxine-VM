@@ -142,7 +142,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
      * The procedure that is run on the GC thread to reset the GC relevant state of a mutator thread
      * once GC is complete.
      */
-    private final class ResetMutator extends Safepoint.ResetSafepoints {
+    public final class ResetMutator extends Safepoint.ResetSafepoints {
         @Override
         public void run(Pointer vmThreadLocals) {
             if (Heap.traceGCPhases()) {
@@ -158,7 +158,9 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
             // Resets the safepoint latch and resets the safepoint procedure to null
             super.run(vmThreadLocals);
 
-            if (!Safepoint.UseCASBasedGCMutatorSynchronization) {
+            if (UseCASBasedGCMutatorSynchronization) {
+                MUTATOR_STATE.setVariableWord(vmThreadLocals, THREAD_IN_NATIVE);
+            } else {
                 // This must be last so that a mutator thread trying to return out of native code stays in the spin
                 // loop until its GC & safepoint related state has been completely reset
                 GC_STATE.setVariableWord(vmThreadLocals, Address.zero());
@@ -168,7 +170,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
 
     private final ResetMutator resetMutator = new ResetMutator();
 
-    static class WaitUntilNonMutating implements Pointer.Procedure {
+    public static class WaitUntilNonMutating implements Pointer.Procedure {
         long stackReferenceMapPreparationTime;
         public void run(Pointer vmThreadLocals) {
             if (Safepoint.UseCASBasedGCMutatorSynchronization) {
