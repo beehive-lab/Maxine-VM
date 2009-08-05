@@ -504,7 +504,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
 
     protected Method_Type generateAndCompileStubFor(MethodActor classMethodActor, Boxing boxing) {
         if (classMethodActor.isInstanceInitializer()) {
-            final GeneratedConstructorStub stub = newConstructorStub(classMethodActor.toJavaConstructor(), false, boxing);
+            final GeneratedConstructorStub stub = newConstructorStub(classMethodActor.toJavaConstructor(), null, boxing);
             final ClassActor stubActor = ClassActor.fromJava(stub.getClass());
             compileClass(stubActor);
             final ClassMethodActor newInstanceActor = stubActor.findClassMethodActor(makeSymbol("newInstance"), boxing.newInstanceSignature());
