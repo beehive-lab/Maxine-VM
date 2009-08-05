@@ -34,6 +34,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.adaptive.Compilation.CompilationStatsOption.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * This class represents the state for the compilation of a single method, including the method to be compiled, that
@@ -158,14 +159,16 @@ class Compilation implements Future<TargetMethod> {
         try {
             String methodString = null;
             if (verboseOption.verboseCompilation) {
+                Log.printVmThread(VmThread.current(), false);
                 methodString = methodState.classMethodActor().format("%H.%n(%p)");
-                Log.println(comp.name() + ": Compiling " + methodString);
+                Log.println(':' + comp.name() + ": Compiling " + methodString);
             }
             final CompilerStats stats = statsOptions.start(comp, methodState.classMethodActor());
             targetMethod = IrTargetMethod.asTargetMethod(comp.compile(methodState.classMethodActor(), directive));
             statsOptions.stop(stats);
             if (verboseOption.verboseCompilation) {
-                Log.print(comp.name() + ": Compiled  " + methodString + " @ ");
+                Log.printVmThread(VmThread.current(), false);
+                Log.print(':' + comp.name() + ": Compiled  " + methodString + " @ ");
                 Log.print(targetMethod.codeStart());
                 Log.print(" {code length=" + targetMethod.codeLength() + "}");
                 Log.println();
