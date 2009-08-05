@@ -28,7 +28,6 @@ import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
 
 /**
  * A utility class that sequentially verifies the Heap.
@@ -52,7 +51,6 @@ public class BeltwayHeapVerifier {
     }
 
     public void verifyHeap(Address regionStartAddress, Address allocationMark, Belt belt) {
-        VmThreadLocal.prepareCurrentStackReferenceMap();
         stackAndMonitorVerifier.run();
         // FIXME: should this verify boot heap and code region ?
         if (Heap.verbose()) {
