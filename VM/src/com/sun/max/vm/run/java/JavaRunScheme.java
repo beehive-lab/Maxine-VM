@@ -105,8 +105,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         final AppendableSequence<StaticMethodActor> methods = new LinkSequence<StaticMethodActor>();
         for (StaticMethodActor method : initIDMethods) {
             try {
-                final MethodState methodState = method.methodState();
-                if (methodState == null || methodState.currentTargetMethod() == null) {
+                if (method.currentTargetMethod() == null) {
                     FatalError.unexpected("Native initialization method must be compiled in boot image: " + method);
                 }
                 method.invoke();

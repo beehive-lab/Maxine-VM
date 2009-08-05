@@ -1427,7 +1427,7 @@ public abstract class ClassActor extends Actor {
 
     public void callInitializer() {
         if (clinit != null) {
-            SpecialBuiltin.call(CompilationScheme.Static.compile(clinit, CallEntryPoint.OPTIMIZED_ENTRY_POINT, CompilationDirective.DEFAULT));
+            SpecialBuiltin.call(CompilationScheme.Static.compile(clinit, CallEntryPoint.OPTIMIZED_ENTRY_POINT));
         }
         initializationState = InitializationState.INITIALIZED;
     }

@@ -114,12 +114,12 @@ public abstract class Snippet extends IrRoutine {
      * as compiled by the {@linkplain CallEntryPoint#OPTIMIZED_ENTRY_POINT optimizing compiler}.
      *
      * If the compiled code does not yet exist for the method, it is compiled with the
-     * {@linkplain CompilationDirective#DEFAULT default} compiler.
+     * default compiler.
      */
     public static final class MakeEntrypoint extends Snippet {
         @SNIPPET
         public static Address makeEntrypoint(ClassMethodActor classMethodActor) {
-            return CompilationScheme.Static.compile(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT, CompilationDirective.DEFAULT);
+            return CompilationScheme.Static.compile(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         }
         public static final MakeEntrypoint SNIPPET = new MakeEntrypoint();
     }
@@ -129,12 +129,12 @@ public abstract class Snippet extends IrRoutine {
      * as compiled by the {@linkplain CallEntryPoint#OPTIMIZED_ENTRY_POINT optimizing compiler}.
      *
      * If the compiled code does not yet exist for the method, it is compiled with the
-     * with a compiler that inserts {@linkplain CompilationDirective#TRACE_JIT tracing} instrumentation.
+     * with a compiler that inserts tracing instrumentation.
      */
     public static final class MakeTracedEntrypoint extends Snippet {
         @SNIPPET
         public static Address makeTracedEntrypoint(ClassMethodActor classMethodActor) {
-            return CompilationScheme.Static.compile(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT, CompilationDirective.TRACE_JIT);
+            return CompilationScheme.Static.compile(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         }
         public static final MakeTracedEntrypoint SNIPPET = new MakeTracedEntrypoint();
     }
