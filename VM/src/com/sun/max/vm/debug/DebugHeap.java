@@ -190,7 +190,7 @@ public final class DebugHeap {
     private static Hub checkHub(Pointer origin, MemoryRegion space) {
         final Grip hubGrip = Layout.readHubGrip(origin);
         FatalError.check(!hubGrip.isZero(), "null hub");
-        final int hubIndex = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).dividedBy(Word.size()).toInt();
+        final int hubIndex = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt() / Word.size();
         verifyGripAtIndex(origin, hubIndex, hubGrip, space, null);
         final Hub hub = UnsafeLoophole.cast(hubGrip.toJava());
 
