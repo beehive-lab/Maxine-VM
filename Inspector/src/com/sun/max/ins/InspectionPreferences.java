@@ -107,11 +107,6 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
             return label;
         }
 
-        @Override
-        public String toString() {
-            return label;
-        }
-
         public static final IndexedSequence<ToolTipDismissDelayPolicy> VALUES = new ArraySequence<ToolTipDismissDelayPolicy>(values());
     }
 

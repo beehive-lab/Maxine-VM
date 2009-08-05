@@ -91,7 +91,7 @@ public class MaxCiRuntime implements CiRuntime {
      * @return the compiler interface type for the class
      */
     public CiType resolveType(String name) {
-        final ClassActor classActor = ClassRegistry.get((ClassLoader) null, JavaTypeDescriptor.getDescriptorForJavaString(name));
+        final ClassActor classActor = ClassRegistry.get((ClassLoader) null, JavaTypeDescriptor.getDescriptorForJavaString(name), false);
         if (classActor != null) {
             return globalConstantPool.canonicalCiType(classActor);
         }

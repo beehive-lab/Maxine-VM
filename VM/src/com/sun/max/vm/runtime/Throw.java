@@ -71,7 +71,7 @@ public final class Throw {
                     Log.print("<adapter>");
                 }
                 final Pointer codeStart = targetMethod.codeStart();
-                Log.print(" [0x");
+                Log.print(" [");
                 Log.print(codeStart);
                 Log.print("+");
                 Log.print(instructionPointer.minus(codeStart).toInt());
