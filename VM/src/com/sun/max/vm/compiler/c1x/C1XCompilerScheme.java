@@ -33,7 +33,6 @@ import com.sun.max.vm.actor.member.MethodActor;
 import com.sun.max.vm.compiler.ir.IrGenerator;
 import com.sun.max.vm.compiler.ir.IrMethod;
 import com.sun.max.vm.compiler.builtin.Builtin;
-import com.sun.max.vm.compiler.CompilationDirective;
 import com.sun.max.vm.compiler.CompilerScheme;
 import com.sun.max.vm.compiler.target.TargetMethod;
 import com.sun.max.vm.compiler.target.TargetABI;
@@ -105,7 +104,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
             Register[] allocRegs = allocatable.toArray(new Register[allocatable.size()]);
 
             // TODO (tw): Initialize target differently
-            c1xTarget = new Target(arch, allocRegs, allocRegs, 1024, true);
+            c1xTarget = new Target(arch, allocRegs, allocRegs, vmConfiguration().platform.pageSize, true);
             c1xTarget.stackAlignment = targetABI.stackFrameAlignment();
 
             // create the CiRuntime object passed to C1X
@@ -158,13 +157,13 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
         throw new UnsupportedOperationException();
     }
 
-    public final IrMethod compile(ClassMethodActor classMethodActor, CompilationDirective compilationDirective) {
+    public final IrMethod compile(ClassMethodActor classMethodActor) {
         // ignore compilation directive for now
         CiMethod method = c1xRuntime.getCiMethod(classMethodActor);
         CiTargetMethod compiledMethod = compiler.compileMethod(method);
         if (compiledMethod != null) {
 
-            C1XTargetMethodGenerator generator = new C1XTargetMethodGenerator(classMethodActor, compiledMethod);
+            C1XTargetMethodGenerator generator = new C1XTargetMethodGenerator(this, classMethodActor, compiledMethod);
             C1XTargetMethod targetMethod = generator.finish();
 
             if (MaxineVM.isPrototyping()) {

@@ -42,7 +42,6 @@ public class BeltwaySSCollector extends BeltwayCollector implements Runnable {
         super(name);
     }
 
-    @Override
     public void run() {
         final BeltwayHeapSchemeBSS heapScheme = (BeltwayHeapSchemeBSS) getBeltwayHeapScheme();
         final Belt fromSpace = heapScheme.getFromSpace();

@@ -81,10 +81,10 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
         this.templateTable = templateTable;
     }
 
-    protected abstract BytecodeToTargetTranslator makeTargetTranslator(ClassMethodActor classMethodActor, CompilationDirective compilationDirective);
+    protected abstract BytecodeToTargetTranslator makeTargetTranslator(ClassMethodActor classMethodActor);
 
     @Override
-    protected void generateIrMethod(TargetMethod targetMethod, CompilationDirective compilationDirective) {
+    protected void generateIrMethod(TargetMethod targetMethod) {
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
 
         if (Trace.hasLevel(3)) {
@@ -92,18 +92,13 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
         }
 
         if (HotpathConfiguration.isEnabled()) {
-            if (compilationDirective.traceInstrument()) {
-                Log.print("JIT TRACED: ");
-            } else {
-                Log.print("JIT: ");
-            }
-
+            Log.print("JIT: ");
             Log.print(classMethodActor.toString());
             Log.println();
         }
 
         final MethodInstrumentation methodInstrumentation = VMConfiguration.target().compilationScheme().makeMethodInstrumentation(classMethodActor);
-        final BytecodeToTargetTranslator codeGenerator = makeTargetTranslator(classMethodActor, compilationDirective);
+        final BytecodeToTargetTranslator codeGenerator = makeTargetTranslator(classMethodActor);
         final BytecodeScanner bytecodeScanner = new BytecodeScanner(codeGenerator);
 
         // emit prologue

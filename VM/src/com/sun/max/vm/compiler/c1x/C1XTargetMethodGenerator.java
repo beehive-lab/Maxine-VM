@@ -43,6 +43,7 @@ import java.util.List;
  * @author Thomas Wuerthinger
  */
 public class C1XTargetMethodGenerator {
+    private final C1XCompilerScheme compilerScheme;
     private final ClassMethodActor classMethodActor;
     private final CiTargetMethod ciTargetMethod;
     private int directCalls;
@@ -54,10 +55,11 @@ public class C1XTargetMethodGenerator {
     /**
      * Creates a new compiler interface target method for the specified class method actor.
      *
+     * @param compilerScheme the compiler scheme that generated the method
      * @param classMethodActor the class method actor
      */
-    public C1XTargetMethodGenerator(ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod) {
-
+    public C1XTargetMethodGenerator(C1XCompilerScheme compilerScheme, ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod) {
+        this.compilerScheme = compilerScheme;
         this.classMethodActor = classMethodActor;
         this.ciTargetMethod = ciTargetMethod;
 
@@ -79,7 +81,7 @@ public class C1XTargetMethodGenerator {
         final ByteArrayBitMap bitMap = new ByteArrayBitMap(refMaps);
         final Object[] refLiterals = new Object[refSize];
 
-        targetMethod = new C1XTargetMethod(classMethodActor);
+        targetMethod = new C1XTargetMethod(classMethodActor, compilerScheme);
         Code.allocate(targetBundleLayout, targetMethod);
 
         Object[] directCallees = processCallSites(stopPositions, bitMap);

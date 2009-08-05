@@ -69,22 +69,14 @@ public abstract class IrGenerator<CompilerScheme_Type extends DynamicCompilerSch
     /**
      * Generate and install IR for the method body of the given IR method.
      */
-    protected abstract void generateIrMethod(IrMethod_Type irMethod, CompilationDirective compilationDirective);
-
-    protected void generateIrMethod(IrMethod_Type irMethod) {
-        generateIrMethod(irMethod, CompilationDirective.DEFAULT);
-    }
+    protected abstract void generateIrMethod(IrMethod_Type irMethod);
 
     public final void makeIrMethod(final IrMethod_Type irMethod) {
-        makeIrMethod(irMethod, CompilationDirective.DEFAULT);
-    }
-
-    public final void makeIrMethod(final IrMethod_Type irMethod, final CompilationDirective compilationDirective) {
         if (!irMethod.isGenerated()) {
             MaxineVM.usingTarget(new Runnable() {
                 public void run() {
                     notifyBeforeGeneration(irMethod);
-                    generateIrMethod(irMethod, compilationDirective);
+                    generateIrMethod(irMethod);
                     notifyAfterGeneration(irMethod);
                     irMethod.cleanup();
                 }
@@ -181,11 +173,7 @@ public abstract class IrGenerator<CompilerScheme_Type extends DynamicCompilerSch
             }
         }
     }
-
-    public final IrMethod_Type makeIrMethod(ClassMethodActor classMethodActor) {
-        return makeIrMethod(classMethodActor, null);
-    }
-
+    
     /**
      * Return a completed IR method representation.
      * Obtain the representation of the given class method actor in this IR,
@@ -197,9 +185,9 @@ public abstract class IrGenerator<CompilerScheme_Type extends DynamicCompilerSch
      * Synchronizing {@code classMethodActor} here can cause deadlock due to the fact
      * that {@link ClassMethodActor#compilee()} is synchronized.
      */
-    public final IrMethod_Type makeIrMethod(ClassMethodActor classMethodActor, CompilationDirective compilationDirective) {
+    public final IrMethod_Type makeIrMethod(ClassMethodActor classMethodActor) {
         final IrMethod_Type irMethod = createIrMethod(classMethodActor);
-        makeIrMethod(irMethod, compilationDirective);
+        makeIrMethod(irMethod);
         return irMethod;
     }
 

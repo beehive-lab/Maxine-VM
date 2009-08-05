@@ -18,14 +18,13 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.adaptive;
+package com.sun.max.vm.compiler.target;
 
 import com.sun.max.asm.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.ir.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
 
 /**
@@ -36,7 +35,7 @@ import com.sun.max.vm.stack.*;
  */
 public class IrTargetMethod extends TargetMethod {
 
-    static TargetMethod asTargetMethod(IrMethod irMethod) {
+    public static TargetMethod asTargetMethod(IrMethod irMethod) {
         if (irMethod == null) {
             return null;
         }
@@ -49,7 +48,7 @@ public class IrTargetMethod extends TargetMethod {
     final IrMethod irMethod;
 
     IrTargetMethod(IrMethod irMethod) {
-        super(irMethod.classMethodActor());
+        super(irMethod.classMethodActor(), null);
         this.irMethod = irMethod;
     }
 
