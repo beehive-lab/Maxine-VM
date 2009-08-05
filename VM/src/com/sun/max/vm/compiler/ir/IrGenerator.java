@@ -173,7 +173,7 @@ public abstract class IrGenerator<CompilerScheme_Type extends DynamicCompilerSch
             }
         }
     }
-    
+
     /**
      * Return a completed IR method representation.
      * Obtain the representation of the given class method actor in this IR,
