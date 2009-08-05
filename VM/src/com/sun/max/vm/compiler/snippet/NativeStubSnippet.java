@@ -34,6 +34,7 @@ import com.sun.max.vm.interpreter.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Snippets that are used in {@linkplain NativeStubGenerator native method stubs}.
@@ -71,6 +72,40 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
         public static final LinkNativeMethod SNIPPET = new LinkNativeMethod();
     }
 
+    private static final VmThreadLocal NATIVE_CALLS_DISABLED = new VmThreadLocal("NATIVE_CALLS_DISABLED", Kind.WORD, "");
+
+    /**
+     * Disables calling native methods on the current thread. This state is recursive. That is,
+     * natives calls are only re-enabled once {@link #enableNativeCallsForCurrentThread()} is
+     * called the same number of times as this method has been called.
+     *
+     * It is a {@linkplain FatalError fatal error} if calls to this method and {@link #enableNativeCallsForCurrentThread()}
+     * are unbalanced.
+     *
+     * Note: This feature is only provided as a debugging aid. It imposes an overhead (a test and branch on a VM thread local)
+     * on every native call. It could be removed or disabled in a product build of the VM once GC is debugged.
+     */
+    public static void disableNativeCallsForCurrentThread() {
+        final Address value = NATIVE_CALLS_DISABLED.getConstantWord().asAddress();
+        NATIVE_CALLS_DISABLED.setConstantWord(value.plus(1));
+    }
+
+    /**
+     * Re-enables calling native methods on the current thread. This state is recursive. That is,
+     * native calls are only re-enabled once this method is called the same number of times as
+     * {@link #disableNativeCallsForCurrentThread()} has been called.
+     *
+     * It is a {@linkplain FatalError fatal error} if calls to this method and {@link #disableNativeCallsForCurrentThread()}
+     * are unbalanced.
+     */
+    public static void enableNativeCallsForCurrentThread() {
+        final Address value = NATIVE_CALLS_DISABLED.getConstantWord().asAddress();
+        if (value.isZero()) {
+            FatalError.unexpected("Unbalanced calls to disable/enable native calls for current thread");
+        }
+        NATIVE_CALLS_DISABLED.setConstantWord(value.minus(1));
+    }
+
     /**
      * Performs any operations necessary immediately before entering native code.
      */
@@ -83,6 +118,9 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
 
         @INLINE
         public static Word nativeCallPrologue0(Pointer vmThreadLocals, Word stackPointer, Word framePointer, Word instructionPointer) {
+            if (!NATIVE_CALLS_DISABLED.getConstantWord().isZero()) {
+                FatalError.unexpected("Calling native code while native calls are disabled");
+            }
             final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
             enabledVmThreadLocals.setWord(LAST_JAVA_CALLER_FRAME_POINTER.index, framePointer);
             enabledVmThreadLocals.setWord(LAST_JAVA_CALLER_STACK_POINTER.index, stackPointer);
@@ -124,8 +162,10 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
             final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
             if (UseCASBasedGCMutatorSynchronization) {
                 while (true) {
-                    if (enabledVmThreadLocals.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IN_JAVA).equals(THREAD_IN_NATIVE)) {
-                        break;
+                    if (enabledVmThreadLocals.getWord(MUTATOR_STATE.index).equals(THREAD_IN_NATIVE)) {
+                        if (enabledVmThreadLocals.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IN_JAVA).equals(THREAD_IN_NATIVE)) {
+                            break;
+                        }
                     }
                     SpecialBuiltin.pause();
                 }

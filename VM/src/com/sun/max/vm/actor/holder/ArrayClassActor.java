@@ -78,7 +78,7 @@ public class ArrayClassActor<Value_Type extends Value<Value_Type>> extends Refer
 
     public static ArrayClassActor forComponentClassActor(ClassActor componentClassActor) {
         final TypeDescriptor arrayTypeDescriptor = JavaTypeDescriptor.getArrayDescriptorForDescriptor(componentClassActor.typeDescriptor, 1);
-        ArrayClassActor arrayClassActor = (ArrayClassActor) ClassRegistry.get(componentClassActor.classLoader, arrayTypeDescriptor);
+        ArrayClassActor arrayClassActor = (ArrayClassActor) ClassRegistry.get(componentClassActor.classLoader, arrayTypeDescriptor, false);
         if (arrayClassActor == null) {
             arrayClassActor = ClassActorFactory.createArrayClassActor(componentClassActor);
         }

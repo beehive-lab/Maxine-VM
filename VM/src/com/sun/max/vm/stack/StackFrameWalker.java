@@ -207,12 +207,12 @@ public abstract class StackFrameWalker {
                             } else if (lastJavaCalleeMethodActor == null) {
                                 FatalError.unexpected("Unrecognized target method without a class method actor!");
                             } else {
-                                Log.print("Native code called/entered a Java method not annotated with @C_FUNCTION: ");
+                                Log.print("Native code called/entered a Java method that is not a JNI function, a Java trap stub or a VM/thread entry point: ");
                                 Log.print(lastJavaCalleeMethodActor.name.string);
                                 Log.print(lastJavaCalleeMethodActor.descriptor().string);
                                 Log.print(" in ");
                                 Log.println(lastJavaCalleeMethodActor.holder().name.string);
-                                FatalError.unexpected("Native code called/entered a Java method that is not a JNI function, a Java trap stub");
+                                FatalError.unexpected("Native code called/entered a Java method that is not a JNI function, a Java trap stub or a VM/thread entry point");
                             }
                         }
                     }
