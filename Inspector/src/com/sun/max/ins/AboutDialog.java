@@ -20,9 +20,6 @@
  */
 package com.sun.max.ins;
 
-import java.awt.*;
-import java.awt.event.*;
-
 import javax.swing.*;
 
 import com.sun.max.ins.gui.*;
@@ -32,7 +29,7 @@ import com.sun.max.ins.gui.*;
  *
  * @author Michael Van De Vanter
  */
-public final class AboutDialog extends InspectorDialog {
+public final class AboutDialog extends SimpleDialog {
 
     private static final String aboutString =
         "The Maxine Inspector is a combined debugger and object browser tool for Maxine,\n" +
@@ -54,25 +51,16 @@ public final class AboutDialog extends InspectorDialog {
 
     private static final JTextArea textArea = new JTextArea(aboutString);
 
-    public AboutDialog(Inspection inspection) {
-        super(inspection, "About Maxine", true);
-
-        final JPanel dialogPanel = new InspectorPanel(inspection, new BorderLayout());
-
+    public static AboutDialog create(Inspection inspection) {
         textArea.setLineWrap(true);
         textArea.setWrapStyleWord(true);
         textArea.setColumns(50);
         textArea.setRows(17);
         final JScrollPane scrollPane = new InspectorScrollPane(inspection, textArea);
-        dialogPanel.add(scrollPane, BorderLayout.CENTER);
-        dialogPanel.add(new JButton(new AbstractAction("Close") {
-            public void actionPerformed(ActionEvent e) {
-                dispose();
-            }
-        }), BorderLayout.SOUTH);
-        setContentPane(dialogPanel);
-        pack();
-        inspection.gui().moveToMiddle(this);
-        setVisible(true);
+        return new AboutDialog(inspection, scrollPane);
+    }
+
+    public AboutDialog(Inspection inspection, JScrollPane scrollPane) {
+        super(inspection, scrollPane, "About Maxine", true);
     }
 }

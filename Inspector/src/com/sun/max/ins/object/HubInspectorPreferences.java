@@ -136,30 +136,6 @@ public final class HubInspectorPreferences {
     }
 
     void showDialog() {
-        new HubInspectorPreferencesDialog(inspection);
-    }
-
-    private final class HubInspectorPreferencesDialog extends InspectorDialog {
-
-        HubInspectorPreferencesDialog(Inspection inspection) {
-            super(inspection, "Hub Inspector Preferences", false);
-
-            final JPanel dialogPanel = new InspectorPanel(inspection, new BorderLayout());
-            final JPanel buttons = new InspectorPanel(inspection);
-            buttons.add(new JButton(new InspectorAction(inspection, "Close") {
-                @Override
-                protected void procedure() {
-                    dispose();
-                }
-            }));
-
-            dialogPanel.add(getPanel(), BorderLayout.NORTH);
-            dialogPanel.add(buttons, BorderLayout.SOUTH);
-
-            setContentPane(dialogPanel);
-            pack();
-            inspection.gui().moveToMiddle(this);
-            setVisible(true);
-        }
+        new SimpleDialog(inspection, getPanel(), "Hub Inspector Preferences", false);
     }
 }
