@@ -24,6 +24,7 @@ import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -109,6 +110,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     private static void plantDeadObject(Pointer cell) {
         DebugHeap.writeCellTag(cell);
         final Pointer origin = Layout.tupleCellToOrigin(cell);
+        Memory.clearBytes(cell, MIN_OBJECT_SIZE);
         Layout.writeHubReference(origin, Reference.fromJava(OBJECT_HUB));
     }
 
@@ -120,6 +122,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         DebugHeap.writeCellTag(cell);
         final int length = size.minus(BYTE_ARRAY_HEADER_SIZE).toInt();
         final Pointer origin = Layout.arrayCellToOrigin(cell);
+        Memory.clearBytes(cell, BYTE_ARRAY_HEADER_SIZE);
         Layout.writeArrayLength(origin, length);
         Layout.writeHubReference(origin, Reference.fromJava(BYTE_ARRAY_HUB));
     }
