@@ -23,15 +23,12 @@ package com.sun.max.vm.code;
 import static com.sun.max.vm.code.CodeManager.ReferenceListNode.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.actor.member.MethodKey.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
 import com.sun.max.vm.heap.*;
@@ -265,10 +262,6 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
 
         final Pointer codeStart = targetBundleLayout.firstElementPointer(start, ArrayField.code);
         targetMethod.setCodeArrays(code, codeStart, scalarLiterals, referenceLiterals);
-
-        if (targetMethod.classMethodActor() != null) {
-            methodKeyToTargetMethods.add(new MethodActorKey(targetMethod.classMethodActor()), targetMethod);
-        }
     }
 
     /**
@@ -349,21 +342,6 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
             return codeRegion.findRuntimeStub(codePointer);
         }
         return null;
-    }
-
-    /**
-     * A mapping from method keys to target methods.
-     */
-    private final ArrayBag<MethodKey, TargetMethod> methodKeyToTargetMethods = new ArrayBag<MethodKey, TargetMethod>(TargetMethod.class, ArrayBag.MapType.HASHED);
-
-    /**
-     * Finds any target methods that match the specified method key.
-     *
-     * @param methodKey the method key to lookup
-     * @return an array of target methods that match the specified method key
-     */
-    synchronized TargetMethod[] methodKeyToTargetMethods(MethodKey methodKey) {
-        return methodKeyToTargetMethods.get(methodKey);
     }
 
     /**
