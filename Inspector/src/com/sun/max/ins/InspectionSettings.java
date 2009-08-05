@@ -287,7 +287,7 @@ public class InspectionSettings {
         try {
             return type.parseValue(value);
         } catch (Option.Error optionError) {
-            throw new Option.Error(String.format("Problem occurred while parsing %s setting:%n%s", clientKey, optionError.getMessage()));
+            throw new Option.Error(String.format("Problem occurred while parsing %s for %s setting:%n%s", clientKey, value, optionError.getMessage()));
         }
     }
 
