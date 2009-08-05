@@ -80,6 +80,9 @@ public final class Log {
     @C_FUNCTION
     private static native void log_unlock();
 
+    @C_FUNCTION
+    private static native void log_print_null();
+
     /**
      * The singleton VM log output stream.
      *
@@ -269,6 +272,10 @@ public final class Log {
      */
     public static void println(Word word) {
         out.println(word);
+    }
+
+    public static void printnull() {
+        log_print_null();
     }
 
     /**

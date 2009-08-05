@@ -20,13 +20,16 @@
  */
 package test.bench.threads;
 
+import com.sun.max.vm.*;
+
+
 /**
- * Test for the scalability of heap allocation. This test is designed to
- * show the performance benefits of thread local allocation buffers (TLABs).
+ * Tests scalability of JNI invocations. This test is designed to show the performance of the
+ * MFence vs. CAS synchronization implementation.
  *
  * @author Hannes Payer
  */
-public class Object_new {
+public class JNI_invocations {
 
     static class Barrier {
         private int threads;
@@ -56,25 +59,23 @@ public class Object_new {
     protected static Barrier barrier1;
     protected static Barrier barrier2;
     protected static int nrThreads;
-    protected static int allocSize;
-    protected static int nrAllocs;
+    protected static int nrJNIInvocations;
     protected static boolean trace = System.getProperty("trace") != null;
 
     public static void main(String[] args) {
-        if (args.length != 3) {
-            System.out.println("ERROR: call java Simple <nr threads> <size> <nr allocs>");
+        if (args.length != 2) {
+            System.out.println("ERROR: call java JNI_Invocations <nr threads> <nr jni invocations>");
             System.exit(1);
         }
 
         nrThreads = Integer.parseInt(args[0]);
-        allocSize = Integer.parseInt(args[1]);
-        nrAllocs = Integer.parseInt(args[2]);
+        nrJNIInvocations = Integer.parseInt(args[1]);
 
         barrier1 = new Barrier(nrThreads + 1);
         barrier2 = new Barrier(nrThreads + 1);
 
         for (int i = 0; i < nrThreads; i++) {
-            new Thread(new AllocationThread(allocSize, nrAllocs, i)).start();
+            new Thread(new AllocationThread(nrJNIInvocations, i)).start();
         }
         long start = 0;
         try {
@@ -85,20 +86,14 @@ public class Object_new {
 
         final long benchtime = System.currentTimeMillis() - start;
         System.out.println(benchtime); // + " ms");
-
-        /*System.out.println("Simple Allocator Benchmark Result (nr threads: " + nrThreads +
-                            "; size: " + allocSize + "; nr allocs: " + nrAllocs +
-                            "; time: " + benchtime + " ns");*/
     }
 
     public static class AllocationThread implements Runnable{
-        private int size;
-        private int nrAllocations;
+        private int nrJNIcalls;
         private int threadId;
 
-        public AllocationThread(int size, int nrAllocations, int threadId) {
-            this.size = size;
-            this.nrAllocations = nrAllocations;
+        public AllocationThread(int nrJNICalls, int threadId) {
+            this.nrJNIcalls = nrJNICalls;
             this.threadId = threadId;
         }
 
@@ -109,17 +104,15 @@ public class Object_new {
             // Only have one thread report progress. It should be fairly
             // representative of over all progress.
             if (trace && threadId == 0) {
-                for (int i = 0; i < nrAllocations; i++) {
-                    final byte[] tmp = new byte[size];
-                    tmp[0] = 1;
+                for (int i = 0; i < nrJNIcalls; i++) {
+                    Log.printnull();
                     if (i % 10000 == 0) {
                         System.out.println(i);
                     }
                 }
             } else {
-                for (int i = 0; i < nrAllocations; i++) {
-                    final byte[] tmp = new byte[size];
-                    tmp[0] = 1;
+                for (int i = 0; i < nrJNIcalls; i++) {
+                    Log.printnull();
                 }
             }
             //System.out.println("Thread " + threadId + " done");
