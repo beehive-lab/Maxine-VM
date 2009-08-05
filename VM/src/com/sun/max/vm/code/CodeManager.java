@@ -230,36 +230,7 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
                 }
             }
             if (Code.traceAllocation.getValue()) {
-                final boolean lockDisabledSafepoints = Log.lock();
-                Log.printVmThread(VmThread.current(), false);
-                Log.print(": Code arrays: code=[");
-                Log.print(codeCell);
-                Log.print(" - ");
-                Log.print(targetBundleLayout.cellEnd(start, ArrayField.code));
-                Log.print("], scalarLiterals=");
-                if (scalarLiteralsLength > 0) {
-                    Log.print(targetBundleLayout.cell(start, ArrayField.scalarLiterals));
-                    Log.print(" - ");
-                    Log.print(targetBundleLayout.cellEnd(start, ArrayField.scalarLiterals));
-                    Log.print("], referenceLiterals=");
-                } else {
-                    Log.print("0, referenceLiterals=");
-                }
-                if (referenceLiteralsLength > 0) {
-                    Log.print(targetBundleLayout.cell(start, ArrayField.referenceLiterals));
-                    Log.print(" - ");
-                    Log.print(targetBundleLayout.cellEnd(start, ArrayField.referenceLiterals));
-                    if (Heap.codeReferencesAreGCRoots()) {
-                        Log.print(", referenceListNode=");
-                        Log.print(start.plus(bundleSize));
-                        Log.print(" - ");
-                        Log.print(start.plus(bundleSize).plus(ReferenceListNode.SIZE));
-                    }
-                    Log.println("]");
-                } else {
-                    Log.println(0);
-                }
-                Log.unlock(lockDisabledSafepoints);
+                traceAllocation(targetBundleLayout, bundleSize, scalarLiteralsLength, referenceLiteralsLength, start, codeCell);
             }
         }
 
@@ -269,6 +240,39 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
         if (targetMethod.classMethodActor() != null) {
             methodKeyToTargetMethods.add(new MethodActorKey(targetMethod.classMethodActor()), targetMethod);
         }
+    }
+
+    private void traceAllocation(TargetBundleLayout targetBundleLayout, Size bundleSize, int scalarLiteralsLength, int referenceLiteralsLength, Pointer start, Pointer codeCell) {
+        final boolean lockDisabledSafepoints = Log.lock();
+        Log.printVmThread(VmThread.current(), false);
+        Log.print(": Code arrays: code=[");
+        Log.print(codeCell);
+        Log.print(" - ");
+        Log.print(targetBundleLayout.cellEnd(start, ArrayField.code));
+        Log.print("], scalarLiterals=");
+        if (scalarLiteralsLength > 0) {
+            Log.print(targetBundleLayout.cell(start, ArrayField.scalarLiterals));
+            Log.print(" - ");
+            Log.print(targetBundleLayout.cellEnd(start, ArrayField.scalarLiterals));
+            Log.print("], referenceLiterals=");
+        } else {
+            Log.print("0, referenceLiterals=");
+        }
+        if (referenceLiteralsLength > 0) {
+            Log.print(targetBundleLayout.cell(start, ArrayField.referenceLiterals));
+            Log.print(" - ");
+            Log.print(targetBundleLayout.cellEnd(start, ArrayField.referenceLiterals));
+            if (Heap.codeReferencesAreGCRoots()) {
+                Log.print(", referenceListNode=");
+                Log.print(start.plus(bundleSize));
+                Log.print(" - ");
+                Log.print(start.plus(bundleSize).plus(ReferenceListNode.SIZE));
+            }
+            Log.println("]");
+        } else {
+            Log.println(0);
+        }
+        Log.unlock(lockDisabledSafepoints);
     }
 
     /**

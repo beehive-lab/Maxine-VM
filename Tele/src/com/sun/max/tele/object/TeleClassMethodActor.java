@@ -30,15 +30,17 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.LineNumberTable.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.compiler.target.TargetMethod;
 import com.sun.max.vm.compiler.target.Compilation;
 
 /**
  *  Canonical surrogate for an object of type {@link ClassMethodActor} in the {@link TeleVM}.
  *
  * @author Michael Van De Vanter
+ * @author Ben L. Titzer
  */
 public abstract class TeleClassMethodActor extends TeleMethodActor implements MethodProvider {
+
+    private static final TeleTargetMethod[] NO_TELE_TARGET_METHODS = new TeleTargetMethod[0];
 
     // Keep construction minimal for both performance and synchronization.
     protected TeleClassMethodActor(TeleVM teleVM, Reference classMethodActorReference) {
@@ -74,7 +76,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
 
     private void initialize() {
         if (teleTargetMethodHistory == null) {
-            teleTargetMethodHistory = new TeleTargetMethod[0];
+            teleTargetMethodHistory = NO_TELE_TARGET_METHODS;
             readTeleMethodState();
         }
     }
@@ -97,7 +99,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
             // the method has been compiled; check the type to determine the number of times
             translateTargetState(teleVM().makeTeleObject(targetStateReference));
         } else {
-            teleTargetMethodHistory = new TeleTargetMethod[0];
+            teleTargetMethodHistory = NO_TELE_TARGET_METHODS;
         }
     }
 
@@ -125,7 +127,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
                 translateTargetState(teleVM().makeTeleObject(previousTargetStateReference));
             }  else {
                 // this is the first compilation, no previous state
-                teleTargetMethodHistory = new TeleTargetMethod[0];
+                teleTargetMethodHistory = NO_TELE_TARGET_METHODS;
             }
         }
     }
@@ -151,7 +153,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
         if (hasTargetMethod()) {
             return Arrays.iterable(teleTargetMethodHistory);
         }
-        return Arrays.iterable(new TeleTargetMethod[0]);
+        return Arrays.iterable(NO_TELE_TARGET_METHODS);
     }
 
    /**
