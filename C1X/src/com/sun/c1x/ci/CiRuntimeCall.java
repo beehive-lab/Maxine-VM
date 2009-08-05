@@ -20,6 +20,9 @@
  */
 package com.sun.c1x.ci;
 
+import com.sun.c1x.value.*;
+import static com.sun.c1x.value.BasicType.*;
+
 /**
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
@@ -33,17 +36,14 @@ public enum CiRuntimeCall {
     ThrowDiv0Exception,
     ThrowNullPointerException,
     RegisterFinalizer,
-    NewInstance,
-    FastNewInstance,
-    FastNewInstanceInitCheck,
-    NewTypeArray,
-    NewObjectArray,
-    NewMultiArray,
+    NewInstance(Object, Object),
+    NewArray(Object, Object, Int),
+    NewMultiArray(Object, Int, Object, Object),
     HandleException,
     ThrowArrayStoreException,
     ThrowClassCastException,
     ThrowIncompatibleClassChangeError,
-    SlowSubtypeCheck,
+    SlowSubtypeCheck(Boolean, Object, Object),
     Monitorenter,
     Monitorexit,
     TraceBlockEntry,
@@ -57,14 +57,27 @@ public enum CiRuntimeCall {
     ResolveStaticCall,
     ResolveVirtualCall,
     Debug,
-    ArithmethicLrem,
-    ArithmeticLdiv,
-    ArithmeticLmul,
-    ArithmeticFrem,
-    ArithmeticDrem,
-    ArithmeticCos,
-    ArithmeticTan,
-    ArithmeticLog,
-    ArithmeticLog10,
-    ArithmeticSin
+    ArithmethicLrem(Long, Long, Long),
+    ArithmeticLdiv(Long, Long, Long),
+    ArithmeticLmul(Long, Long, Long),
+    ArithmeticFrem(Float, Float),
+    ArithmeticDrem(Double, Double),
+    ArithmeticCos(Double, Double),
+    ArithmeticTan(Double, Double),
+    ArithmeticLog(Double, Double),
+    ArithmeticLog10(Double, Double),
+    ArithmeticSin(Double, Double);
+
+    public final BasicType resultType;
+    public final BasicType[] arguments;
+
+    private CiRuntimeCall() {
+        resultType = Void;
+        arguments = new BasicType[0];
+    }
+
+    private CiRuntimeCall(BasicType resultType, BasicType... args) {
+        this.resultType = resultType;
+        this.arguments = args;
+    }
 }

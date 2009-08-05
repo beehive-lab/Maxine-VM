@@ -21,6 +21,7 @@
 package com.sun.c1x.stub;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
 
 
@@ -36,7 +37,7 @@ public class NewInstanceStub extends CodeStub {
     public final CiType klass;
     public final LIROperand klassReg;
     public final LIROperand result;
-    public final CiRuntimeCall stubId;
+    public final GlobalStub stubId;
 
 
     /**
@@ -46,7 +47,7 @@ public class NewInstanceStub extends CodeStub {
      * @param info
      * @param stubId
      */
-    public NewInstanceStub(LIROperand klassReg, LIROperand result, CiType klass, CodeEmitInfo info, CiRuntimeCall stubId) {
+    public NewInstanceStub(LIROperand klassReg, LIROperand result, CiType klass, CodeEmitInfo info, GlobalStub stubId) {
         super(info);
         this.klass = klass;
         this.klassReg = klassReg;

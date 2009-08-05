@@ -156,6 +156,7 @@ public class LIRAllocArray extends LIRInstruction {
     @Override
     public void emitCode(LIRAssembler masm) {
         masm.emitAllocArray(this);
+        masm.emitCodeStub(stub);
     }
 
     /**

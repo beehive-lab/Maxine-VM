@@ -124,18 +124,6 @@ public class C1XRuntimeCalls {
         return object;
     }
 
-
-    @RUNTIME_ENTRY(type = CiRuntimeCall.FastNewInstance)
-    public static Object runtimeFastNewInstance(Hub hub) {
-        return runtimeNewInstance(hub);
-    }
-
-
-    @RUNTIME_ENTRY(type = CiRuntimeCall.FastNewInstanceInitCheck)
-    public static Object runtimeFastNewInstanceInitCheck(Hub hub) {
-        return runtimeNewInstance(hub);
-    }
-
     @INLINE
     private static Object createArray(Hub hub, int length) {
         if (length < 0) {
@@ -147,15 +135,8 @@ public class C1XRuntimeCalls {
         return Heap.createArray(hub.classActor.dynamicHub(), length);
     }
 
-
-    @RUNTIME_ENTRY(type = CiRuntimeCall.NewTypeArray)
-    public static Object runtimeNewTypeArray(Hub arrayClassActor, int length) {
-        return createArray(arrayClassActor, length);
-    }
-
-
-    @RUNTIME_ENTRY(type = CiRuntimeCall.NewObjectArray)
-    public static Object runtimeNewObjectArray(Hub arrayClassActor, int length) {
+    @RUNTIME_ENTRY(type = CiRuntimeCall.NewArray)
+    public static Object runtimeNewArray(Hub arrayClassActor, int length) {
         return createArray(arrayClassActor, length);
     }
 

@@ -2603,6 +2603,7 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     int prefixAndEncode(int regEnc, boolean byteinst) {
+        assert target.arch.is32bit();
         if (regEnc >= 8) {
             emitByte(Prefix.REXB);
             regEnc -= 8;
@@ -2627,6 +2628,7 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     int prefixAndEncode(int dstEnc, int srcEnc, boolean byteinst) {
+        assert target.arch.is32bit();
         if (dstEnc < 8) {
             if (srcEnc >= 8) {
                 emitByte(Prefix.REXB);
@@ -2713,6 +2715,8 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     void prefix(Address adr, Register reg) {
+
+        assert target.arch.is32bit();
         if (reg.encoding < 8) {
             if (needsRex(adr.base)) {
                 if (needsRex(adr.index)) {

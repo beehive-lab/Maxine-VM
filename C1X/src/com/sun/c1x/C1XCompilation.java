@@ -369,7 +369,7 @@ public class C1XCompilation {
 
     private CiTargetMethod emitCode() {
         if (C1XOptions.GenerateLIR && C1XOptions.GenerateAssembly) {
-            assembler = target.backend.newAssembler();
+            assembler = target.backend.newAssembler(compiler);
             final LIRAssembler lirAssembler = target.backend.newLIRAssembler(this);
             lirAssembler.emitCode(hir.linearScanOrder());
 

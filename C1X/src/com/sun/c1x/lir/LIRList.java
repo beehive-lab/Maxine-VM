@@ -172,20 +172,16 @@ public class LIRList {
         append(new LIROp1(LIROpcode.Move, src, dst, dst.type(), LIRPatchCode.PatchNone, null, LIRInstruction.LIRMoveKind.Unaligned));
     }
 
-    public void move(LIROperand src, LIROperand dst, CodeEmitInfo info) {
-        append(new LIROp1(LIROpcode.Move, src, dst, dst.type(), LIRPatchCode.PatchNone, info));
-    }
-
-    void move(LIRAddress src, LIROperand dst, CodeEmitInfo info) {
+    public void move(LIRAddress src, LIROperand dst, CodeEmitInfo info) {
         append(new LIROp1(LIROpcode.Move, src, dst, src.type(), LIRPatchCode.PatchNone, info));
     }
 
-    void move(LIROperand src, LIRAddress dst, CodeEmitInfo info) {
+    public void move(LIROperand src, LIRAddress dst, CodeEmitInfo info) {
         append(new LIROp1(LIROpcode.Move, src, dst, dst.type(), LIRPatchCode.PatchNone, info));
     }
 
     public void move(LIROperand src, LIROperand dst) {
-        move(src, dst, null);
+        append(new LIROp1(LIROpcode.Move, src, dst, dst.type(), LIRPatchCode.PatchNone, null));
     }
 
     void move(LIRAddress src, LIROperand dst) {
