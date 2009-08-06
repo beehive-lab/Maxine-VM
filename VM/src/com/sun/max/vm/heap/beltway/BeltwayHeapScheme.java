@@ -87,6 +87,13 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
 
     protected final BeltwayCardRegion cardRegion = new BeltwayCardRegion();
 
+    private ResetTLAB resetTLAB = new ResetTLAB() {
+        @Override
+        protected void doBeforeReset(Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabTop) {
+            doBeforeTLABRefill(tlabMark, tlabTop);
+        }
+    };
+
     private final SequentialHeapRootsScanner stackAndMonitorGripUpdater = new SequentialHeapRootsScanner(null);
 
     /**
@@ -399,7 +406,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     }
 
     public boolean isGcThread(Thread thread) {
-        return thread == collectorThread;
+        return thread instanceof StopTheWorldGCDaemon || (parallelScavenging && thread instanceof BeltwayCollectorThread);
     }
 
     /**
@@ -416,6 +423,10 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             return;
         }
         fillWithDeadObject(tlabAllocationMark, hardLimit);
+    }
+
+    protected void resetTLABs() {
+        VmThreadMap.ACTIVE.forAllVmThreadLocals(null, resetTLAB);
     }
 
     /**
@@ -439,12 +450,24 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
      * @param tlabSize the size of the chunk of memory used to refill the TLAB
      */
     private void allocateAndRefillTLABl(Pointer enabledVmThreadLocals, Size tlabSize) {
-        Pointer tlab = tlabAllocationBelt.allocate(tlabSize);
+        Pointer tlab = tlabAllocationBelt.allocateTLAB(tlabSize);
         // FIXME: we should verify that the tlab was successfully allocated here -- we may run out of space at this stage.
         if (MaxineVM.isDebug()) {
-            // We have to remove the adjustment that might have been made by DebugHeap. The TLAB isn't a real object.
-            tlab = DebugHeap.undoDebugTagAdjustment(tlab);
             DebugHeap.writeCellPadding(tlab, tlab.plus(tlabSize));
+        }
+        if (Heap.traceAllocation()) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.printVmThread(VmThread.current(), false);
+            Log.print(": Allocated TLAB at ");
+            Log.print(tlab);
+            Log.print(" [TOP=");
+            Log.print(tlab.plus(tlab.plus(tlabSize.minus(TLAB_HEADROOM)).asAddress()));
+            Log.print(", end=");
+            Log.print(tlab.plus(tlabSize));
+            Log.print(", size=");
+            Log.print(tlabSize.toInt());
+            Log.println("]");
+            Log.unlock(lockDisabledSafepoints);
         }
         refillTLAB(enabledVmThreadLocals, tlab, tlabSize.minus(TLAB_HEADROOM));
     }
@@ -480,9 +503,9 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             return tlabAllocationBelt.allocate(size);
         }
         final Pointer hardLimit = tlabEnd.plus(TLAB_HEADROOM);
-        if (tlabMark.plus(size).equals(hardLimit)) {
+        final Pointer cell = DebugHeap.adjustForDebugTag(tlabMark);
+        if (cell.plus(size).equals(hardLimit)) {
             // Can actually fit the object in the TLAB.
-            final Pointer cell = DebugHeap.adjustForDebugTag(tlabMark);
             setTlabAllocationMark(enabledVmThreadLocals, hardLimit);
             allocateAndRefillTLABl(enabledVmThreadLocals, nextTLABSize);
             return cell;
@@ -495,14 +518,6 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
         // Refill TLAB and allocate (we know the request can be satisfied with a fresh TLAB and will therefore succeed).
         allocateAndRefillTLABl(enabledVmThreadLocals, nextTLABSize);
         return tlabAllocate(size);
-    }
-
-    protected Pointer bumpAllocateSlowPath(Belt belt, Size size) {
-        final Pointer pointer = belt.bumpAllocate(size);
-        if (pointer.isZero()) {
-            throw outOfMemoryError;
-        }
-        return pointer;
     }
 
     @INLINE
