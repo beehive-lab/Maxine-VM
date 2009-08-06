@@ -28,7 +28,6 @@ import com.sun.max.vm.tele.*;
 
 /**
  *
- *
  * @author Laurent Daynes
  * @author Christos Kotselidis
  */
@@ -61,17 +60,21 @@ public class BeltwayCollector {
 
     protected void prologue() {
         numCollections++;
+        heapScheme.resetTLABs();
         InspectableHeapInfo.beforeGarbageCollection();
 
         if (Heap.verbose()) {
-            Log.print(collectorName + " Collection: ");
+            Log.print(collectorName);
+            Log.print(" Collection: ");
             Log.println(numCollections);
         }
     }
 
     protected void epilogue() {
         if (Heap.verbose()) {
-            Log.print("Finished " + collectorName + " Collection: ");
+            Log.print("Finished ");
+            Log.print(collectorName);
+            Log.print(" Collection: ");
             Log.println(numCollections);
         }
         InspectableHeapInfo.afterGarbageCollection();
@@ -85,7 +88,6 @@ public class BeltwayCollector {
             Log.println("Evacuate Followers");
         }
         heapScheme.evacuate(from, to);
-        // beltwayHeapSchemeBA2.fillLastTLAB(); FIXME: do we need this ?
     }
 
     protected void printBeltInfo(String beltName, Belt belt) {

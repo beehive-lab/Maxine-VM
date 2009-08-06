@@ -509,7 +509,7 @@ public final class Inspection {
 
             final MaxWatchpointEvent watchpointEvent = maxVMState().watchpointEvent();
             if (watchpointEvent != null) {
-                focus().setThread(watchpointEvent.maxVMThread().maxThread());
+                focus().setThread(watchpointEvent.maxThread());
                 focus().setWatchpoint(watchpointEvent.maxWatchpoint());
                 focus().setAddress(watchpointEvent.address());
             } else if (!maxVMState().breakpointThreads().isEmpty()) {
