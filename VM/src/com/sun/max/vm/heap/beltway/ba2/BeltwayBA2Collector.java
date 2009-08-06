@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.heap.beltway.ba2;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
@@ -34,10 +35,19 @@ import com.sun.max.vm.tele.*;
  */
 
 public class BeltwayBA2Collector extends BeltwayCollector {
-    final Belt nurserySpace;
-    final Belt matureSpace;
+    @CONSTANT_WHEN_NOT_ZERO
+    protected Belt nurserySpace;
+    @CONSTANT_WHEN_NOT_ZERO
+    protected Belt matureSpace;
+
     BeltwayBA2Collector(String collectorName) {
         super(collectorName);
+    }
+
+    @PROTOTYPE_ONLY
+    @Override
+    public void initialize(BeltwayHeapScheme heapScheme) {
+        super.initialize(heapScheme);
         final BeltwayHeapSchemeBA2 ba2HeapScheme = (BeltwayHeapSchemeBA2) heapScheme;
         nurserySpace =  ba2HeapScheme.getNurserySpace();
         matureSpace =  ba2HeapScheme.getMatureSpace();
@@ -134,7 +144,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
         }
 
         protected void evacuateFollowers() {
-            getBeltwayHeapScheme().evacuate(nurserySpace, matureSpace);
+            heapScheme.evacuate(nurserySpace, matureSpace);
             // beltwayHeapSchemeBA2.fillLastTLAB(); FIXME: do we need this ?
         }
 
@@ -191,16 +201,15 @@ public class BeltwayBA2Collector extends BeltwayCollector {
 
         @Override
         protected void evacuateFollowers(Belt from, Belt to) {
-            final BeltwayHeapSchemeBA2 beltwayHeapSchemeBA2 = (BeltwayHeapSchemeBA2) getBeltwayHeapScheme();
-            beltwayHeapSchemeBA2.fillLastTLAB();
+            heapScheme.fillLastTLAB();
             //beltwayHeapSchemeBA2.markSideTableLastTLAB();
             BeltwayHeapScheme.inScavenging = true;
-            beltwayHeapSchemeBA2.initializeGCThreads(beltwayHeapSchemeBA2, from, to);
+            heapScheme.initializeGCThreads(heapScheme, from, to);
             if (Heap.verbose()) {
                 Log.println("Start Threads");
             }
 
-            beltwayHeapSchemeBA2.startGCThreads();
+            heapScheme.startGCThreads();
             BeltwayHeapScheme.inScavenging = false;
             if (Heap.verbose()) {
                 Log.println("Join Threads");
@@ -209,24 +218,23 @@ public class BeltwayBA2Collector extends BeltwayCollector {
     }
 
     static class ParMinorGCCollector  extends MinorGCCollector {
-        final BeltwayHeapSchemeBA2 beltwayHeapSchemeBA2 = (BeltwayHeapSchemeBA2) getBeltwayHeapScheme();
 
         @Override
         protected void evacuateFollowers() {
-            beltwayHeapSchemeBA2.fillLastTLAB();
+            heapScheme.fillLastTLAB();
             // beltwayHeapSchemeBA2.markSideTableLastTLAB();
             BeltwayHeapScheme.inScavenging = true;
-            beltwayHeapSchemeBA2.initializeGCThreads(beltwayHeapSchemeBA2, nurserySpace, matureSpace);
+            heapScheme.initializeGCThreads(heapScheme, nurserySpace, matureSpace);
             if (Heap.verbose()) {
                 Log.println("Start Threads");
             }
 
-            beltwayHeapSchemeBA2.startGCThreads();
+            heapScheme.startGCThreads();
             BeltwayHeapScheme.inScavenging = false;
             if (Heap.verbose()) {
                 Log.println("Join Threads");
             }
-            getBeltwayHeapScheme().evacuate(nurserySpace, matureSpace);
+            heapScheme.evacuate(nurserySpace, matureSpace);
         }
     }
 }
