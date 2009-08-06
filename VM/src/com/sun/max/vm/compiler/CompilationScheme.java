@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.compiler;
 
-import java.util.concurrent.*;
-
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -94,23 +92,11 @@ public interface CompilationScheme extends VMScheme {
      * compilation threads.
      *
      * @param classMethodActor the method for which to make the target method
-     * @param compilationDirective the compilation directive specifying the compiler to be used
      * @return the currently compiled version of a target method, if it exists; a new compiled version of the specified
      *         method according to the internal policies if it is not already compiled; null if the compilation policy
      *         denies compilation of the specified method
      */
-    TargetMethod synchronousCompile(ClassMethodActor classMethodActor, CompilationDirective compilationDirective);
-
-    /**
-     * This method queues a method for compilation, where compilation may or may not occur asynchronously, meaning that
-     * the compilation may happen in a background thread or threads, with the policy determined by the compilation
-     * scheme.
-     *
-     * @param classMethodActor the method to compile
-     * @param compilationDirective the compilation directive specifying the compiler to be used
-     * @return an object that can be used to retrieve the result of the compilation later
-     */
-    Future<TargetMethod> asynchronousCompile(ClassMethodActor classMethodActor, CompilationDirective compilationDirective);
+    TargetMethod synchronousCompile(ClassMethodActor classMethodActor);
 
     /**
      * This method queries whether this compilation scheme is currently performing a compilation or has queued
@@ -120,15 +106,6 @@ public interface CompilationScheme extends VMScheme {
      * @return true if there are any methods that are scheduled to be compiled that have not been completed yet
      */
     boolean isCompiling();
-
-    /**
-     * This method makes a {@code MethodState} object for the specified class method actor, if it does not
-     * already exist.
-     *
-     * @param classMethodActor the method for which to get or create the method state
-     * @return an object representing the compilation state for the specified method
-     */
-    MethodState makeMethodState(ClassMethodActor classMethodActor);
 
     /**
      * Adds a compilation observer to this compilation scheme. The observer will be notified before and after each
@@ -155,6 +132,7 @@ public interface CompilationScheme extends VMScheme {
     public final class Static {
         private Static() {
         }
+
         /**
          * Compile a method and return an address that represents its entrypoint for the specified call entrypoint. This
          * method performs a synchronous compile (i.e. waits for the compilation to complete before returning the
@@ -162,27 +140,19 @@ public interface CompilationScheme extends VMScheme {
          *
          * @param classMethodActor the method to compile
          * @param callEntryPoint the call entrypoint into the target code (@see CallEntryPoint)
-         * @param compilationDirective the compilation directive specifying the compiler to be used
          * @return an address representing the entrypoint to the compiled code of the specified method
          */
-        public static Address compile(ClassMethodActor classMethodActor, CallEntryPoint callEntryPoint, CompilationDirective compilationDirective) {
-            return VMConfiguration.target().compilationScheme().synchronousCompile(classMethodActor, compilationDirective).getEntryPoint(callEntryPoint).asAddress();
-
-        }
-
-        public static TargetMethod compile(ClassMethodActor classMethodActor, CompilationDirective compilationDirective) {
-            return VMConfiguration.target().compilationScheme().synchronousCompile(classMethodActor, compilationDirective);
-        }
-
-
-        /**
-         * Queue a method for compilation at some unspecified time in the future.
-         *
-         * @param classMethodActor the method to compile
-         * @param compilationDirective the compilation directive specifying the compiler to be used
-         */
-        public static void queue(ClassMethodActor classMethodActor, CompilationDirective compilationDirective) {
-            VMConfiguration.target().compilationScheme().asynchronousCompile(classMethodActor, compilationDirective);
+        public static Address compile(ClassMethodActor classMethodActor, CallEntryPoint callEntryPoint) {
+            TargetMethod current;
+            Object targetState = classMethodActor.targetState;
+            if (targetState instanceof TargetMethod) {
+                // fast path: method is already compiled just once
+                current = (TargetMethod) targetState;
+            } else {
+                // slower path: method has not been compiled, or been compiled more than once
+                current = VMConfiguration.target().compilationScheme().synchronousCompile(classMethodActor);
+            }
+            return current.getEntryPoint(callEntryPoint).asAddress();
         }
 
         /**
@@ -194,7 +164,7 @@ public interface CompilationScheme extends VMScheme {
          * @return an address representing the entrypoint to the compiled code of the specified method
          */
         public static Address getCriticalEntryPoint(ClassMethodActor classMethodActor, CallEntryPoint callEntryPoint) {
-            return classMethodActor.methodState().currentTargetMethod().getEntryPoint(callEntryPoint).asAddress();
+            return classMethodActor.currentTargetMethod().getEntryPoint(callEntryPoint).asAddress();
         }
 
         /**
@@ -204,11 +174,7 @@ public interface CompilationScheme extends VMScheme {
          * @return a reference to the current target method, if it exists; {@code null} otherwise
          */
         public static TargetMethod getCurrentTargetMethod(ClassMethodActor classMethodActor) {
-            final MethodState methodState = classMethodActor.methodState();
-            if (methodState != null) {
-                return methodState.currentTargetMethod();
-            }
-            return null;
+            return classMethodActor.currentTargetMethod();
         }
 
         /**
@@ -219,7 +185,7 @@ public interface CompilationScheme extends VMScheme {
          * @param classMethodActor the method for which to reset the method state
          */
         public static void resetMethodState(ClassMethodActor classMethodActor) {
-            classMethodActor.resetMethodState();
+            classMethodActor.targetState = null;
         }
 
         /**
@@ -227,12 +193,11 @@ public interface CompilationScheme extends VMScheme {
          * FOR GENERAL USE.
          *
          * @param classMethodActor the method to recompile
-         * @param compilationDirective the compilation directive specifying the compiler to be used
          * @return the new target method for specified method
          */
-        public static TargetMethod forceFreshCompile(ClassMethodActor classMethodActor, CompilationDirective compilationDirective) {
+        public static TargetMethod forceFreshCompile(ClassMethodActor classMethodActor) {
             resetMethodState(classMethodActor);
-            compile(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT, compilationDirective);
+            compile(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
             return getCurrentTargetMethod(classMethodActor);
         }
     }

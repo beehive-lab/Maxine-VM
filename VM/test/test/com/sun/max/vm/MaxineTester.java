@@ -1213,7 +1213,7 @@ public class MaxineTester {
                     }
                     if (lastTest != null) {
                         addTestResult(lastTest, "never returned a result");
-                        failedLines.append("\t" + lastTestNumber + ": crashed or hung the VM");
+                        failedLines.append("\t" + lastTestNumber + ", " + lastTest + ": crashed or hung the VM");
                     }
                     if (failedLines.isEmpty()) {
                         return new JavaTesterResult("no failures", nextTestOption);

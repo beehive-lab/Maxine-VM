@@ -119,7 +119,7 @@ public abstract class AbstractCompiler extends AbstractVMScheme implements Compi
         throw new UnsupportedOperationException();
     }
 
-    public final IrMethod compile(ClassMethodActor classMethodActor, CompilationDirective compilationDirective) {
+    public final IrMethod compile(ClassMethodActor classMethodActor) {
         return irGenerator().makeIrMethod(classMethodActor);
     }
 

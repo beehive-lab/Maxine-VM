@@ -118,7 +118,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
         // We can now search the caller for the ClassMethodActor corresponding to the direct call.
         final ClassMethodActor callee = caller.callSiteToCallee(callSite);
         // Compile the callee, and use the caller's abi to get the correct entry point.
-        final Address calleeEntryPoint = CompilationScheme.Static.compile(callee, caller.abi().callEntryPoint(), CompilationDirective.DEFAULT);
+        final Address calleeEntryPoint = CompilationScheme.Static.compile(callee, caller.abi().callEntryPoint());
         // Compute offset to the callee from the caller
         final int calleeOffset = calleeEntryPoint.minus(callSite).toInt();
         final int instr = CALL_INSTRUCTION | (calleeOffset >>> 2);

@@ -51,6 +51,7 @@ public abstract class AbstractTester extends JavaRunScheme {
     protected static int testEnd;
     protected static int testCount;
     protected static int verbose = 2;
+    protected static String lastTestName;
 
     private static VMIntOption startOption = register(new VMIntOption("-XX:TesterStart=", -1,
                     "The number of the first test to run."), MaxineVM.Phase.STARTING);
@@ -97,7 +98,11 @@ public abstract class AbstractTester extends JavaRunScheme {
     private static void printRun(String run) {
         Log.print("\t");
         printTestNum();
+        if (lastTestName != null) {
+            Log.print(lastTestName);
+        }
         if (run != null) {
+            Log.print(".test");
             Log.print(run);
         }
     }
@@ -121,6 +126,7 @@ public abstract class AbstractTester extends JavaRunScheme {
         if (verbose == 3) {
             printTestNum();
             Log.print(test);
+            lastTestName = test;
             int i = test.length();
             while (i++ < 50) {
                 Log.print(' ');

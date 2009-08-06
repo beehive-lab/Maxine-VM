@@ -44,14 +44,14 @@ public abstract class CompilerTest_entryPoints extends CompilerTestCase {
     public void test_startupMethod() {
         final ClassMethodActor methodActor = BootImage.getRunMethodActor(MaxineVM.class);
         assertNotNull(methodActor);
-        final int entryPointOffset = CompilerTestSetup.compilerScheme().compile(methodActor, CompilationDirective.DEFAULT).getEntryPoint(CallEntryPoint.OPTIMIZED_ENTRY_POINT).asOffset().toInt();
+        final int entryPointOffset = CompilerTestSetup.compilerScheme().compile(methodActor).getEntryPoint(CallEntryPoint.OPTIMIZED_ENTRY_POINT).asOffset().toInt();
         assertTrue(entryPointOffset > 0);
     }
 
     public void test_runMethod() {
         final ClassMethodActor methodActor = BootImage.getRunMethodActor(VmThread.class);
         assertNotNull(methodActor);
-        final int entryPointOffset = CompilerTestSetup.compilerScheme().compile(methodActor, CompilationDirective.DEFAULT).getEntryPoint(CallEntryPoint.OPTIMIZED_ENTRY_POINT).asOffset().toInt();
+        final int entryPointOffset = CompilerTestSetup.compilerScheme().compile(methodActor).getEntryPoint(CallEntryPoint.OPTIMIZED_ENTRY_POINT).asOffset().toInt();
         assertTrue(entryPointOffset > 0);
     }
 }

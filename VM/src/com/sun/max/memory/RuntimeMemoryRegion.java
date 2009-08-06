@@ -26,8 +26,17 @@ import com.sun.max.unsafe.*;
 
 public class RuntimeMemoryRegion implements MemoryRegion {
 
+    /**
+     * An optional, short string that describes the role being played by the region, useful for debugging.
+     */
+    @INSPECTED
+    private String description = "?";
+
     @INSPECTED
     protected Address start;
+
+    @INSPECTED
+    protected Size size;
 
     /**
      * The current allocation mark. This is an atomic word so that it can be updated
@@ -76,9 +85,6 @@ public class RuntimeMemoryRegion implements MemoryRegion {
         this.start = start;
     }
 
-    @INSPECTED
-    protected Size size;
-
     public final Size size() {
         return size;
     }
@@ -91,11 +97,6 @@ public class RuntimeMemoryRegion implements MemoryRegion {
         size = end.minus(start).asSize();
     }
 
-    /**
-     * An optional, short string that describes the role being played by the region, useful for debugging.
-     */
-    @INSPECTED
-    private String description = "?";
 
     public final String description() {
         return description;

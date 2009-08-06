@@ -26,7 +26,12 @@ import com.sun.c1x.value.ConstType;
  * Condition codes used in conditionals.
  */
 public enum Condition {
-    eql("=="), neq("!="), lss("<"), leq("<="), gtr(">"), geq(">=");
+    eql("=="),
+    neq("!="),
+    lss("<"),
+    leq("<="),
+    gtr(">"),
+    geq(">=");
 
     public final String operator;
 

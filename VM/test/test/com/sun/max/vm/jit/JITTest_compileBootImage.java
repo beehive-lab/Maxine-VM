@@ -48,10 +48,10 @@ public class JITTest_compileBootImage extends JitCompilerTestCase {
                 final ClassActor classActor = ClassActor.fromJava(com.sun.max.vm.run.jitTest.JitTest.class);
 
                 for (VirtualMethodActor dynamicMethodActor : classActor.localVirtualMethodActors()) {
-                    toDo.add((TargetMethod) jit.compile(dynamicMethodActor, CompilationDirective.DEFAULT));
+                    toDo.add((TargetMethod) jit.compile(dynamicMethodActor));
                 }
                 for (StaticMethodActor staticMethodActor : classActor.localStaticMethodActors()) {
-                    toDo.add((TargetMethod) jit.compile(staticMethodActor, CompilationDirective.DEFAULT));
+                    toDo.add((TargetMethod) jit.compile(staticMethodActor));
                 }
             }
         });
