@@ -35,6 +35,9 @@ public final class BeltManager {
     private final BeltwayHeapScheme heapScheme;
     private final Belt [] belts;
 
+    /**
+     * A virtual belt representing the whole Heap (?).
+     */
     private Belt applicationHeap;
 
     private Belt tempBelt;
