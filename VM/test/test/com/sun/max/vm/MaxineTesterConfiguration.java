@@ -90,7 +90,6 @@ public class MaxineTesterConfiguration {
         test.threads.Thread_isInterrupted02.class,                  FAIL_LINUX,
         test.jdk.EnumMap01.class,                                   RAND_ALL,
         test.jdk.EnumMap02.class,                                   RAND_ALL,
-        test.except.Catch_StackOverflowError_03.class, FAIL_SPARC,
         test.hotpath.HP_series.class,                  FAIL_SPARC,
         test.hotpath.HP_array02.class,                 FAIL_SPARC,
     };
@@ -209,26 +208,25 @@ public class MaxineTesterConfiguration {
     }
 
     private static void addTestExpectations(final Map<String, Expectation[]> map, final Object[] testList) throws ProgramError {
-        for (int i = 0; i < testList.length; i++) {
-            final Object o = testList[i];
-            if (o instanceof Class) {
+        int testListIndex = 0;
+        while (testListIndex < testList.length) {
+            final Object c = testList[testListIndex++];
+            if (c instanceof Class) {
                 final List<Expectation> list = new ArrayList<Expectation>();
-                // Checkstyle: stop
-                for (i++; i < testList.length; i++) {
-                    final Object e = testList[i];
+                while (testListIndex < testList.length) {
+                    final Object e = testList[testListIndex];
                     if (e instanceof Expectation) {
                         list.add((Expectation) e);
+                        ++testListIndex;
                     } else if (e instanceof Class) {
-                        i--;
                         break;
                     } else {
-                        throw ProgramError.unexpected("format of output test class list is wrong");
+                        throw ProgramError.unexpected("Format of output test class list is wrong");
                     }
                 }
-                // Checkstyle: resume
-                map.put(((Class) o).getName(), list.toArray(new Expectation[list.size()]));
+                map.put(((Class) c).getName(), list.toArray(new Expectation[list.size()]));
             } else {
-                throw ProgramError.unexpected("format of output test class list is wrong");
+                throw ProgramError.unexpected("Format of output test class list is wrong");
             }
         }
     }

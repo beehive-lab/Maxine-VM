@@ -176,7 +176,7 @@ public class SPARCJitCompiler extends JitCompiler {
             // We're in the top frame. The bottom of the frame comprises the register window's saving areas. We can
             // retrieve values from there.
             if (inCallerRegisterWindow) {
-                callerInstructionPointer = stackFrameWalker.readFramelessCallAddressRegister(targetMethod.abi()).asPointer();
+                callerInstructionPointer = stackFrameWalker.readRegister(Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS, targetMethod.abi()).asPointer();
                 callerFramePointer = stackFrameWalker.framePointer();
                 callerStackPointer =  stackFrameWalker.stackPointer();
             } else {
@@ -207,7 +207,7 @@ public class SPARCJitCompiler extends JitCompiler {
             final Pointer returnInstructionPointer = frameState.returnInstructionPointer(stackFrameWalker, targetMethod);
             callerInstructionPointer = stackFrameWalker.readWord(returnInstructionPointer, 0).asPointer();
         } else {
-            callerInstructionPointer = stackFrameWalker.readFramelessCallAddressRegister(targetMethod.abi()).asPointer();
+            callerInstructionPointer = stackFrameWalker.readRegister(Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS, targetMethod.abi()).asPointer();
         }
         return callerInstructionPointer;
     }
@@ -491,7 +491,7 @@ public class SPARCJitCompiler extends JitCompiler {
                 // The stack unwind stub is always a top frame. When this is not the case, it's because the unwind method has just patched it's
                 // return address with this. In this case, the real instruction pointer for this frame is saved in the frame-less call address register.
                 // We just set the stack frame walker to the real frame and return.
-                final Pointer realInstructionPointer = stackFrameWalker.readFramelessCallAddressRegister(callerTargetABI).asPointer();
+                final Pointer realInstructionPointer = stackFrameWalker.readRegister(Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS, callerTargetABI).asPointer();
                 stackFrameWalker.advance(realInstructionPointer, stackFrameWalker.stackPointer(), stackFrameWalker.framePointer());
                 return true;
             }
@@ -501,7 +501,7 @@ public class SPARCJitCompiler extends JitCompiler {
                 callerFramePointer = SPARCStackFrameLayout.getCallerFramePointer(stackFrameWalker);
             } else {
                 // We're in the exception catcher's register windows. Get return address and frame pointer directly from the register
-                callerInstructionPointer = stackFrameWalker.readFramelessCallAddressRegister(callerTargetABI).asPointer();
+                callerInstructionPointer = stackFrameWalker.readRegister(Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS, callerTargetABI).asPointer();
                 // Reload stack and frame pointer from registers specified by the JIT abi.
                 stackFrameWalker.useABI(callerTargetABI);
                 callerFramePointer = stackFrameWalker.framePointer();
