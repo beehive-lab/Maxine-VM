@@ -42,6 +42,10 @@ public class JNI_invocations {
             threadCount = 0;
         }
 
+        public int getThreadCount() {
+            return threadCount;
+        }
+
         public synchronized void waitForRelease() throws InterruptedException {
             threadCount++;
             if (threadCount == threads) {
@@ -59,23 +63,31 @@ public class JNI_invocations {
     protected static Barrier barrier2;
     protected static int nrThreads;
     protected static int nrJNIInvocations;
+    protected static int mode;
     protected static boolean trace = System.getProperty("trace") != null;
 
     public static void main(String[] args) {
-        if (args.length != 2) {
-            System.out.println("ERROR: call java JNI_Invocations <nr threads> <nr jni invocations>");
+        if (args.length != 3) {
+            System.out.println("ERROR: call java JNI_Invocations <nr threads> <nr jni invocations> <mode> ");
             System.exit(1);
         }
 
         nrThreads = Integer.parseInt(args[0]);
         nrJNIInvocations = Integer.parseInt(args[1]);
+        mode = Integer.parseInt(args[2]);
 
-        barrier1 = new Barrier(nrThreads + 1);
-        barrier2 = new Barrier(nrThreads + 1);
+        barrier1 = new Barrier(nrThreads + 1 + mode);
+        barrier2 = new Barrier(nrThreads + 1 + mode);
 
-        for (int i = 0; i < nrThreads; i++) {
+        int i;
+        for (i = 0; i < nrThreads; i++) {
             new Thread(new AllocationThread(nrJNIInvocations, i)).start();
         }
+
+        if (mode == 1) {
+            new Thread(new GCInvokeThread(nrThreads, i)).start();
+        }
+
         long start = 0;
         try {
             barrier1.waitForRelease();
@@ -104,14 +116,18 @@ public class JNI_invocations {
             // representative of over all progress.
             if (trace && threadId == 0) {
                 for (int i = 0; i < nrJNIcalls; i++) {
-                    nop();
+                    nop(0);
                     if (i % 10000 == 0) {
                         System.out.println(i);
                     }
                 }
             } else {
                 for (int i = 0; i < nrJNIcalls; i++) {
-                    nop();
+                    if (mode == 1) {
+                        nop(0);//work
+                    } else {
+                        nop(0);
+                    }
                 }
             }
             //System.out.println("Thread " + threadId + " done");
@@ -121,8 +137,39 @@ public class JNI_invocations {
         }
     }
 
+    public static class GCInvokeThread implements Runnable{
+        private int nrJNIThreads;
+        private int threadId;
+
+        public GCInvokeThread(int nrJNIThreads, int threadId) {
+            this.nrJNIThreads = nrJNIThreads;
+            this.threadId = threadId;
+        }
+
+        public void run() {
+            try {
+                barrier1.waitForRelease();
+            } catch (InterruptedException e) { }
+            while (barrier2.getThreadCount() != nrJNIThreads + 1) {
+                System.gc();
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+
+            //System.out.println("GCInvokeThread  done");
+            try {
+                barrier2.waitForRelease();
+            } catch (InterruptedException e) {
+            }
+        }
+    }
+
     /**
      * A native method that just returns.
      */
-    public static native void nop();
+    public static native long nop(long workload);
 }

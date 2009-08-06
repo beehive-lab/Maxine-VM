@@ -43,6 +43,9 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
 
     private static final int TRACE_VALUE = 1;
 
+    /**
+     * Watchpoints factory.
+     */
     private final Factory factory;
 
     /**
@@ -72,6 +75,12 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
      * true = eager, false = lazy
      */
     private boolean eagerRelocationUpdate = false;
+
+    /**
+     * Used for watchpoints set on object fields.
+     * Memory offset in byte from object start address.
+     */
+    protected long teleObjectStartAddressOffset = 0;
 
     /**
      * Creates a watchpoint with memory location not yet configured.
@@ -219,6 +228,10 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         return null;
     }
 
+    public long getTeleObjectStartAddressOffset() {
+        return teleObjectStartAddressOffset;
+    }
+
     /*
      * (non-Javadoc)
      * @see com.sun.max.tele.MaxWatchpoint#setEagerRelocationUpdate(boolean)
@@ -342,6 +355,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         public TeleFieldWatchpoint(Factory factory, String description, TeleObject teleObject, FieldActor fieldActor, boolean after, boolean read, boolean write, boolean exec, boolean gc) {
             super(factory, description, teleObject.getCurrentMemoryRegion(fieldActor), after, read, write, exec, gc);
             this.teleObject = teleObject;
+            teleObjectStartAddressOffset = teleObject.getCurrentMemoryRegion(fieldActor).start().minus(teleObject.getCurrentMemoryRegion().start()).toLong();
         }
 
         @Override
@@ -367,6 +381,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
             super(factory, description, teleObject.getCurrentOrigin().plus(arrayOffsetFromOrigin + (index * elementKind.width.numberOfBytes)), Size.fromInt(elementKind.width.numberOfBytes), after, read, write, exec, gc);
             this.teleObject = teleObject;
             this.index = index;
+            teleObjectStartAddressOffset = teleObject.getCurrentOrigin().plus(arrayOffsetFromOrigin + (index * elementKind.width.numberOfBytes)).minus(teleObject.getCurrentMemoryRegion().start()).toLong();
         }
 
         @Override
@@ -462,14 +477,14 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         private final TreeSet<TeleWatchpoint> invisibleWatchpoints = new TreeSet<TeleWatchpoint>(this);
         private volatile IterableWithLength<MaxWatchpoint> invisibleWatchpointsCache;
 
+        // Is VM currently in GC
         private boolean inGCMode = false;
 
+        // Holds the number of relocatable watchpoints
         private int relocatableWatchpointsCounter = 0;
 
+        // End of GC watchpoint; used in lazy watchpoint relocation algorithm
         private TeleWatchpoint endOfGCWatchpoint;
-
-        private Address triggeredWatchpointAddress;
-        private String triggeredWatchpointCode;
 
         public Factory(TeleProcess teleProcess) {
             this.teleProcess = teleProcess;
@@ -653,6 +668,11 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
             return teleWatchpoint;
         }
 
+        /**
+         * Removes an invisible watchpoint.
+         * @param teleWatchpoint
+         * @return true, if successful
+         */
         public synchronized boolean removeInvisibleWatchpoint(TeleWatchpoint teleWatchpoint) {
             ProgramError.check(teleWatchpoint.active, "Attempt to delete an already deleted watchpoint ");
             if (invisibleWatchpoints.remove(teleWatchpoint)) {
@@ -808,8 +828,6 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
             return false;
         }
 
-
-
         /**
          * Relocates a watchpoint to the new address of the object.
          *
@@ -824,7 +842,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
             TeleObject teleObject = teleWatchpoint.getTeleObject();
             if (teleObject != null) {
                 if (teleObject.isLive()) {
-                    Address newAddress = teleObject.getCurrentOrigin();
+                    Address newAddress = teleObject.getCurrentMemoryRegion().start().plus(teleWatchpoint.getTeleObjectStartAddressOffset());
 
                     if (removeWatchpoint(teleWatchpoint)) {
                         teleWatchpoint.setStart(newAddress);
@@ -866,7 +884,8 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
             if (teleObject != null) {
                 if (teleObject.isLive()) {
                     if (removeWatchpoint(teleWatchpoint)) {
-                        teleWatchpoint.setStart(newAddress);
+                        Address newWatchpointAddress = newAddress.plus(teleWatchpoint.getTeleObjectStartAddressOffset());
+                        teleWatchpoint.setStart(newWatchpointAddress);
                         if (addWatchpoint(teleWatchpoint) != null) {
                             return true;
                         } else {

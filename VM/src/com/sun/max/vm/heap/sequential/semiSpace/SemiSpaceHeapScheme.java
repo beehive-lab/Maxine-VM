@@ -525,7 +525,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             }
 
             Memory.copyBytes(fromCell, toCell, size);
-            relocationInspection(fromCell, toCell);
+            relocateWatchpoint(fromCell, toCell);
 
             final Pointer toOrigin = Layout.cellToOrigin(toCell);
             final Grip toGrip = Grip.fromOrigin(toOrigin);
@@ -600,7 +600,12 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         }
     }
 
-    private void relocationInspection(Pointer oldAddress, Pointer newAddress) {
+    /**
+     * Tells the inspector that a watchpoint on this object has to be relocated.
+     * @param oldAddress
+     * @param newAddress
+     */
+    private void relocateWatchpoint(Pointer oldAddress, Pointer newAddress) {
         if (MaxineMessenger.isVmInspected()) {
             //final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
             //enabledVmThreadLocals.setWord(OLD_OBJECT_ADDRESS.index, oldAddress);
