@@ -32,8 +32,8 @@ import com.sun.c1x.lir.*;
  */
 public abstract class MonitorAccessStub  extends CodeStub {
 
-    public final LIROperand objReg;
-    public final LIROperand lockReg;
+    public LIROperand objReg;
+    public LIROperand lockReg;
 
     /**
      * Creates a new <code>MonitorAccessStub</code>.

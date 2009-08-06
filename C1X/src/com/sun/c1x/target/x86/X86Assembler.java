@@ -200,6 +200,8 @@ public abstract class X86Assembler extends AbstractAssembler {
 
         // Encode the registers as needed in the fields they are used in
 
+        assert reg != Register.noreg;
+
         int regenc = encode(reg) << 3;
         int indexenc = index.isValid() ? encode(index) << 3 : 0;
         int baseenc = base.isValid() ? encode(base) : 0;
@@ -2641,7 +2643,7 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     int prefixAndEncode(int dstEnc, int srcEnc, boolean byteinst) {
-        assert target.arch.is32bit();
+//        assert target.arch.is32bit();
         if (dstEnc < 8) {
             if (srcEnc >= 8) {
                 emitByte(Prefix.REXB);

@@ -35,8 +35,8 @@ import com.sun.c1x.lir.*;
 public class NewInstanceStub extends CodeStub {
 
     public final CiType klass;
-    public final LIROperand klassReg;
-    public final LIROperand result;
+    public LIROperand klassReg;
+    public LIROperand result;
     public final GlobalStub stubId;
 
 
@@ -63,7 +63,7 @@ public class NewInstanceStub extends CodeStub {
     @Override
     public void visit(LIRVisitState visitor) {
         visitor.doSlowCase(info);
-        visitor.doInput(klassReg);
-        visitor.doOutput(result);
+        klassReg = visitor.doInput(klassReg);
+        result = visitor.doOutput(result);
     }
 }

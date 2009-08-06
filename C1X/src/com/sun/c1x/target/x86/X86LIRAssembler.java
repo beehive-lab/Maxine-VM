@@ -52,8 +52,6 @@ public class X86LIRAssembler extends LIRAssembler {
     private static final Register SYNCHeader = X86.rax;
     private static final Register SHIFTCount = X86.rcx;
 
-    private static final long FloatSignFlip = 0x8000000080000000L;
-    private static final long DoubleSignFlip = 0x8000000000000000L;
     private static final long DoubleSignMask = 0x7FFFFFFFFFFFFFFFL;
 
     X86MacroAssembler masm;
@@ -1184,8 +1182,6 @@ public class X86LIRAssembler extends LIRAssembler {
     protected void emitConvert(LIRConvert op) {
         LIROperand src = op.inOpr();
         LIROperand dest = op.resultOpr();
-        Label biggerMaxValue = new Label();
-        Label labelNaN = new Label();
         Label endLabel = new Label();
         Register srcRegister = src.asRegister();
         Register rscratch1 = X86FrameMap.rscratch1(this.compilation.target.arch);
@@ -1282,7 +1278,6 @@ public class X86LIRAssembler extends LIRAssembler {
                 masm().cvttsd2siq(dest.asRegister(), asXmmDoubleReg(src));
                 masm().mov64(rscratch1, Long.MIN_VALUE);
                 masm().cmpq(dest.asRegister(), rscratch1);
-                masm().jmp(endLabel);
                 masm().jcc(Condition.notEqual, endLabel);
                 masm().callGlobalStub(GlobalStub.d2i, dest.asRegister(), srcRegister);
                 masm().bind(endLabel);
@@ -2463,7 +2458,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void icCall(CiMethod method, CiRuntimeCall entry, CodeEmitInfo info) {
-        assert !compilation.runtime.isMP() || (masm().codeBuffer.position() + compilation.target.arch.nativeCallDisplacementOffset + compilation.target.arch.nativeMoveConstInstructionSize) % wordSize == 0 : "must be aligned";
+//        assert !compilation.runtime.isMP() || (masm().codeBuffer.position() + compilation.target.arch.nativeCallDisplacementOffset + compilation.target.arch.nativeMoveConstInstructionSize) % wordSize == 0 : "must be aligned";
         masm().movoop(ICKlass, compilation.runtime.universeNonOopWord());
         masm().callRuntime(entry, method);
         addCallInfo(codeOffset(), info);
@@ -3046,13 +3041,14 @@ public class X86LIRAssembler extends LIRAssembler {
             if (asXmmFloatReg(left) != asXmmFloatReg(dest)) {
                 masm().movflt(asXmmFloatReg(dest), asXmmFloatReg(left));
             }
-            masm().xorps(asXmmFloatReg(dest), masm.longConstant(FloatSignFlip));
+            masm().callGlobalStub(GlobalStub.fneg, asXmmFloatReg(dest), asXmmFloatReg(dest));
 
         } else if (dest.isDoubleXmm()) {
             if (asXmmDoubleReg(left) != asXmmDoubleReg(dest)) {
                 masm().movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(left));
             }
-            masm().xorpd(asXmmDoubleReg(dest), masm.longConstant(DoubleSignFlip));
+
+            masm().callGlobalStub(GlobalStub.dneg, asXmmDoubleReg(dest), asXmmDoubleReg(dest));
 
         } else {
             throw Util.shouldNotReachHere();
