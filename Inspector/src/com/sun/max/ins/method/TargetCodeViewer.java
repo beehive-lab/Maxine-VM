@@ -191,7 +191,14 @@ public abstract class TargetCodeViewer extends CodeViewer {
             }
         } else {
             for (int row = 0; row < targetInstructionCount; row++) {
-                final int stopIndex = positionToStopIndex[instructions.get(row).position];
+                int stopIndex = -1;
+                final int position = instructions.get(row).position;
+                if (position >= 0 && position < positionToStopIndex.length) {
+                    // The disassembler sometimes seems to report wild positions
+                    // when disassembling random binary; this can happen when
+                    // viewing some unknown native code whose length we must guess.
+                    stopIndex = positionToStopIndex[position];
+                }
                 if (stopIndex >= 0) {
                     // the row is at a stop point
                     rowToBackGroundColor[row] = stopBackgroundColor;
