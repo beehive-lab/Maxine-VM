@@ -359,7 +359,7 @@ public class Belt extends RuntimeMemoryRegion {
     }
 
     /**
-     * Evacuate objects of the specified belt reachable from objects of this belt into this belt using the specified  cell visitor.
+     * Evacuate objects of the specified belt reachable from objects of this belt into this belt using the specified cell visitor.
      * This method is not multi-thread safe and cannot be used for parallel evacuation.
      *
      * @param cellVisitor visits objects of this belt to find references to evacuation candidates

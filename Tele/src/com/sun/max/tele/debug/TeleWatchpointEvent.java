@@ -47,8 +47,8 @@ public class TeleWatchpointEvent implements MaxWatchpointEvent {
         return maxWatchpoint;
     }
 
-    public MaxVMThread maxVMThread() {
-        return teleNativeThread.maxVMThread();
+    public MaxThread maxThread() {
+        return teleNativeThread;
     }
 
     public Address address() {
@@ -64,7 +64,7 @@ public class TeleWatchpointEvent implements MaxWatchpointEvent {
         final StringBuilder sb = new StringBuilder(50);
         sb.append(getClass().getSimpleName()).append("(");
         sb.append(maxWatchpoint.toString()).append(", ");
-        sb.append(maxVMThread().toString()).append(" @");
+        sb.append(maxThread().toString()).append(" @");
         sb.append(address.toHexString()).append("code=");
         sb.append(Integer.toString(code)).append(")");
         return sb.toString();
