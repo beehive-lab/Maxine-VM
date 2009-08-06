@@ -35,6 +35,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.beltway.profile.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
@@ -199,6 +200,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             dynamicHeapMaxSize = calculateHeapSize();
             dynamicHeapStart = allocateHeapStorage(dynamicHeapMaxSize);
             beltManager.initializeBelts();
+            InspectableHeapInfo.init(beltManager.belts());
 
             if (Heap.verbose()) {
                 beltManager.printBeltsInfo();

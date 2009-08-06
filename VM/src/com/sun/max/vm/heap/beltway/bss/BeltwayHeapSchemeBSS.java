@@ -28,7 +28,6 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.beltway.*;
 import com.sun.max.vm.heap.beltway.profile.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.tele.*;
 
 /**
  * Heap scheme for a semi-space beltway collector. Use two belts, each allocated half of the total heap space. The heap
@@ -83,8 +82,6 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
         if (phase == MaxineVM.Phase.PRISTINE) {
             // The following line enables allocation to take place.
             tlabAllocationBelt = getFromSpace();
-            // Watch out: the following create a MemoryRegion array
-            InspectableHeapInfo.init(getToSpace(), getFromSpace());
             beltCollectorBSS = parallelScavenging ? parallelCollector : singleThreadedCollector;
         } else if (phase == MaxineVM.Phase.RUNNING) {
             heapVerifier.initialize(beltManager.getApplicationHeap(), getToSpace());

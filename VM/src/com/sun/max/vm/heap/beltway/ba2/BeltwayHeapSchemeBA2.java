@@ -29,7 +29,6 @@ import com.sun.max.vm.heap.beltway.*;
 import com.sun.max.vm.heap.beltway.ba2.BeltwayBA2Collector.*;
 import com.sun.max.vm.heap.beltway.profile.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.tele.*;
 
 /**
  * An Heap Scheme for a Appel-style collector implemented with Beltway. Uses two belts: one for the nursery and one for
@@ -108,8 +107,6 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
             getMatureSpace().setExpandable(true);
             // The following line enables allocation to take place.
             tlabAllocationBelt = getNurserySpace();
-            // Watch out: the following create a MemoryRegion array
-            InspectableHeapInfo.init(getNurserySpace(), getMatureSpace());
 
             final BeltwayBA2Collector [] collectors = parallelScavenging ? parallelCollectors : singleThreadedCollectors;
             minorGCCollector =  (Runnable) collectors[0];
