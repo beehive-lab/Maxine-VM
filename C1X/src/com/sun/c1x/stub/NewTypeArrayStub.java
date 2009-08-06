@@ -32,9 +32,9 @@ import com.sun.c1x.lir.*;
  */
 public class NewTypeArrayStub extends CodeStub {
 
-    public final LIROperand klassReg;
-    public final LIROperand length;
-    public final LIROperand result;
+    public LIROperand klassReg;
+    public LIROperand length;
+    public LIROperand result;
 
     /**
      * @param klassReg
@@ -57,9 +57,9 @@ public class NewTypeArrayStub extends CodeStub {
     @Override
     public void visit(LIRVisitState visitor) {
         visitor.doSlowCase(info);
-        visitor.doInput(klassReg);
-        visitor.doInput(length);
+        klassReg = visitor.doInput(klassReg);
+        length = visitor.doInput(length);
         assert result.isValid() : "must be valid";
-        visitor.doOutput(result);
+        result = visitor.doOutput(result);
     }
 }

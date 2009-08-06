@@ -28,6 +28,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.type.*;
@@ -48,7 +49,7 @@ public abstract class Hub extends Hybrid {
      * @return the "tuple size" of objects having this hub
      */
     public final Size tupleSize;
-    public final Kind elementKind;
+    public final Hub componentHub;
     public final SpecificLayout specificLayout;
     @INSPECTED
     public final ClassActor classActor;
@@ -168,7 +169,7 @@ public abstract class Hub extends Hybrid {
      */
     protected Hub(Size tupleSize, ClassActor classActor, TupleReferenceMap referenceMap) {
         this.tupleSize = tupleSize;
-        this.elementKind = Kind.VOID;
+        this.componentHub = null;
         this.specificLayout = Layout.tupleLayout();
         this.layoutCategory = Layout.Category.TUPLE;
         this.classActor = classActor;
@@ -188,17 +189,14 @@ public abstract class Hub extends Hybrid {
         this.tupleSize = tupleSize;
         this.specificLayout = specificLayout;
         this.layoutCategory = specificLayout.category();
-        switch (layoutCategory) {
-            case ARRAY:
-                this.elementKind = classActor.componentClassActor().kind;
-                break;
-            case HYBRID:
-                this.elementKind = Kind.WORD;
-                break;
-            default:
-                this.elementKind = Kind.VOID;
-                break;
+
+        if (layoutCategory == Category.ARRAY) {
+            componentHub = classActor.componentClassActor().dynamicHub();
+            assert componentHub != null || classActor.componentClassActor().kind != Kind.REFERENCE;
+        } else {
+            componentHub = null;
         }
+
         this.classActor = classActor;
         this.iTableStartIndex = firstWordIndex() + vTableLength;
         this.iTableLength = getITableLength(superClassActorSerials, allInterfaceActors);

@@ -38,6 +38,7 @@ import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.VMRegister.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -580,7 +581,7 @@ public abstract class StackFrameWalker {
     public abstract byte readByte(Address address, int offset);
     public abstract int readInt(Address address, int offset);
 
-    public abstract Word readFramelessCallAddressRegister(TargetABI targetABI);
+    public abstract Word readRegister(Role role, TargetABI targetABI);
 
     /**
      * Reads the value of a given VM thread local from the safepoint-enabled thread locals.

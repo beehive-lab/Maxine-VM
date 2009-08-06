@@ -26,6 +26,7 @@ import com.sun.c1x.ci.CiLocation;
 import com.sun.c1x.ci.CiMethod;
 import com.sun.c1x.ci.CiSignature;
 import com.sun.c1x.ci.CiType;
+import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.Location.LocationType;
 import com.sun.c1x.target.Register;
 import com.sun.c1x.util.Util;
@@ -42,7 +43,6 @@ import java.util.List;
 public abstract class FrameMap {
 
     public static final int spillSlotSizeInBytes = 4;
-    public static final int NumberOfReservedArguments = 4;
 
     int framesize;
     int argcount;
@@ -65,7 +65,7 @@ public abstract class FrameMap {
 
         assert monitors >= 0 : "not set";
         numMonitors = monitors;
-        reservedArgumentAreaSize = NumberOfReservedArguments * compilation.target.arch.wordSize;
+        reservedArgumentAreaSize = GlobalStub.MaxNumberOfArguments * compilation.target.arch.wordSize;
 
         argcount = method.signatureType().argumentCount(!method.isStatic());
         argumentLocations = new int[argcount];
@@ -266,5 +266,9 @@ public abstract class FrameMap {
 
     public LIROperand returnOpr(BasicType object) {
         return LIROperandFactory.singleLocation(object, compilation.runtime.returnRegister(object));
+    }
+
+    public int stackRefMapSize() {
+        return ((framesize + 7) >> 3) << 3; // round up to next byte size
     }
 }

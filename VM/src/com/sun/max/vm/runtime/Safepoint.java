@@ -292,7 +292,7 @@ public abstract class Safepoint {
         // spin until the SAFEPOINT_PROCEDURE field is null
         final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
         while (true) {
-            if (enabledVmThreadLocals.getReference(SAFEPOINT_PROCEDURE.offset).equals(null)) {
+            if (enabledVmThreadLocals.getReference(SAFEPOINT_PROCEDURE.index).isZero()) {
                 if (enabledVmThreadLocals.compareAndSwapReference(SAFEPOINT_PROCEDURE.offset, null, Reference.fromJava(procedure)).isZero()) {
                     Safepoint.trigger(vmThreadLocals);
                     return;

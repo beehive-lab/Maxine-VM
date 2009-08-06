@@ -103,12 +103,12 @@ public class LIRList {
         append(new LIRJavaCall(LIROpcode.StaticCall, method, LIROperandFactory.IllegalOperand, result, dest, arguments, info));
     }
 
-    public void callIcvirtual(CiMethod method, LIROperand receiver, LIROperand result, CiRuntimeCall dest, List<LIROperand> arguments, CodeEmitInfo info) {
-        append(new LIRJavaCall(LIROpcode.IcVirtualCall, method, receiver, result, dest, arguments, info));
+    public void callInterface(CiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info) {
+        append(new LIRJavaCall(LIROpcode.InterfaceCall, method, receiver, result, arguments, info));
     }
 
-    public void callVirtual(CiMethod method, LIROperand receiver, LIROperand result, int vtableOffset, List<LIROperand> arguments, CodeEmitInfo info) {
-        append(new LIRJavaCall(LIROpcode.VirtualCall, method, receiver, result, vtableOffset, arguments, info));
+    public void callVirtual(CiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info) {
+        append(new LIRJavaCall(LIROpcode.VirtualCall, method, receiver, result, arguments, info));
     }
 
     public void getThread(LIROperand result) {
@@ -172,20 +172,16 @@ public class LIRList {
         append(new LIROp1(LIROpcode.Move, src, dst, dst.type(), LIRPatchCode.PatchNone, null, LIRInstruction.LIRMoveKind.Unaligned));
     }
 
-    public void move(LIROperand src, LIROperand dst, CodeEmitInfo info) {
-        append(new LIROp1(LIROpcode.Move, src, dst, dst.type(), LIRPatchCode.PatchNone, info));
-    }
-
-    void move(LIRAddress src, LIROperand dst, CodeEmitInfo info) {
+    public void move(LIRAddress src, LIROperand dst, CodeEmitInfo info) {
         append(new LIROp1(LIROpcode.Move, src, dst, src.type(), LIRPatchCode.PatchNone, info));
     }
 
-    void move(LIROperand src, LIRAddress dst, CodeEmitInfo info) {
+    public void move(LIROperand src, LIRAddress dst, CodeEmitInfo info) {
         append(new LIROp1(LIROpcode.Move, src, dst, dst.type(), LIRPatchCode.PatchNone, info));
     }
 
     public void move(LIROperand src, LIROperand dst) {
-        move(src, dst, null);
+        append(new LIROp1(LIROpcode.Move, src, dst, dst.type(), LIRPatchCode.PatchNone, null));
     }
 
     void move(LIRAddress src, LIROperand dst) {
