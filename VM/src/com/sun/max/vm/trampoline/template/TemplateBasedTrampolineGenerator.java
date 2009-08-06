@@ -55,7 +55,7 @@ public abstract class TemplateBasedTrampolineGenerator extends TrampolineGenerat
         if (MaxineVM.isPrototyping()) {
             // The template is created at prototyping time only.
             if (template == null) {
-                template = CompilationScheme.Static.forceFreshCompile(trampolineClassMethodActor, CompilationDirective.DEFAULT);
+                template = CompilationScheme.Static.forceFreshCompile(trampolineClassMethodActor);
                 assert template.referenceLiterals().length == 1;
             }
         }

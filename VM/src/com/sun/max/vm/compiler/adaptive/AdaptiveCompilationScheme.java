@@ -23,10 +23,10 @@ package com.sun.max.vm.compiler.adaptive;
 import static com.sun.max.vm.VMOptions.register;
 
 import java.util.*;
-import java.util.concurrent.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.runtime.FatalError;
 import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -53,11 +53,6 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     private static final int DEFAULT_RECOMPILATION_THRESHOLD = 5000;
 
     /**
-     * Predicted maximum number of compilations for most methods.
-     */
-    static final int DEFAULT_HISTORY_LENGTH = 2;
-
-    /**
      * Stores the default threshold at which a recompilation is triggered from the baseline compiler to the next level
      * of optimization. This is typically the number of invocations of the method.
      */
@@ -73,22 +68,6 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * A queue of pending compilations.
      */
     protected final LinkedList<Compilation> pending = new LinkedList<Compilation>();
-
-    /**
-     * The number of submitted compilations.
-     */
-    protected int submitted;
-
-    /**
-     * A lock to synchronize access to {@link #completed}.
-     */
-    protected final Object completionLock = new Object();
-
-    /**
-     * The number of completed compilations. If {@code _completed < _submitted}, then there is currently a compilation
-     * pending or being performed.
-     */
-    protected int completed;
 
     /**
      * The compiler that is used as the default at prototyping time.
@@ -129,6 +108,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * The (dynamically selected) compilation mode.
      */
     private Mode mode = Mode.JIT;
+    private static final boolean BACKGROUND_COMPILATION = false;
 
     public Mode mode() {
         return mode;
@@ -139,23 +119,6 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      */
     public void setMode(Mode mode) {
         this.mode = mode;
-    }
-
-    /**
-     * This method decides whether an update of the target code for a specified method is allowed. An update might be
-     * disallowed for correctness reasons (e.g. due to deoptimization), or due to multiple compilations of the same
-     * method at the same or different optimization levels happening because of concurrency.
-     *
-     * @param methodState the method state of the ClassMethodActor
-     * @param newTargetMethod the new target code for the method
-     * @return true if the update should be allowed; false otherwise
-     */
-    protected boolean allowUpdate(AdaptiveMethodState methodState, TargetMethod newTargetMethod) {
-        if (methodState.currentTargetMethod(CompilationDirective.STUB) != null) {
-            return false;
-        }
-
-        return true;
     }
 
     /**
@@ -181,10 +144,12 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     @Override
     public void initialize(MaxineVM.Phase phase) {
         if (MaxineVM.isPrototyping()) {
-            // TODO: use more than one thread during prototyping
-            final CompilationThread compilationThread = new CompilationThread();
-            compilationThread.setDaemon(true);
-            compilationThread.start();
+            if (BACKGROUND_COMPILATION) {
+                // launch a compiler thread if background compilation is supported (currently no)
+                final CompilationThread compilationThread = new CompilationThread();
+                compilationThread.setDaemon(true);
+                compilationThread.start();
+            }
         } else if (phase == MaxineVM.Phase.STARTING) {
             if (jitOption.isPresent()) {
                 defaultRecompilationThreshold0 = RECOMPILATION_DISABLED;
@@ -199,10 +164,12 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 setMode(Mode.MIXED);
             }
 
-            // only use one compilation thread after starting
-            final CompilationThread compilationThread = new CompilationThread();
-            compilationThread.setDaemon(true);
-            compilationThread.start();
+            if (BACKGROUND_COMPILATION) {
+                // launch a compiler thread if background compilation is supported (currently no)
+                final CompilationThread compilationThread = new CompilationThread();
+                compilationThread.setDaemon(true);
+                compilationThread.start();
+            }
         }
     }
 
@@ -214,7 +181,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * @return the canonical method instrumentation object associated with the specified method
      */
     public MethodInstrumentation makeMethodInstrumentation(ClassMethodActor classMethodActor) {
-        return ((AdaptiveMethodState) makeMethodState(classMethodActor)).makeMethodInstrumentation();
+        return null;
     }
 
     /**
@@ -224,104 +191,44 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * @return the method instrumentation associated with the specified method if it exists; null otherwise
      */
     public MethodInstrumentation getMethodInstrumentation(ClassMethodActor classMethodActor) {
-        final AdaptiveMethodState methodState = getMethodState(classMethodActor);
-        if (methodState != null) {
-            return methodState.getMethodInstrumentation();
-        }
         return null;
-    }
-
-    /**
-     * Get the method state and cast it to a {@code AdaptiveMethodState} instance.
-     *
-     * @param classMethodActor the method for which to get the method state
-     * @return the method state as an instance of the {@code AdaptiveMethodState} class
-     */
-    private AdaptiveMethodState getMethodState(ClassMethodActor classMethodActor) {
-        synchronized (classMethodActor) {
-            return (AdaptiveMethodState) classMethodActor.methodState();
-        }
-    }
-
-    /**
-     * Gets the method state object for the specified class method actor, building it if necessary.
-     *
-     * @param classMethodActor the class method for which to make the method state
-     * @return the method state associated with the specified method
-     */
-    public MethodState makeMethodState(ClassMethodActor classMethodActor) {
-        synchronized (classMethodActor) {
-            MethodState methodState = classMethodActor.methodState();
-            if (methodState == null) {
-                methodState = new AdaptiveMethodState(this, classMethodActor);
-                classMethodActor.setMethodState(methodState);
-            }
-            return methodState;
-        }
     }
 
     /**
      * Performs a compilation of the specified method, waiting for the compilation to finish.
      *
      * @param classMethodActor the method to compile
-     * @param compilationDirective the compilation directive specifying the compiler to be used
      * @return the target method that results from compiling the specified method
      */
-    public TargetMethod synchronousCompile(ClassMethodActor classMethodActor, CompilationDirective compilationDirective) {
-        final MethodState originalMethodState = makeMethodState(classMethodActor);
-        if (originalMethodState.currentTargetMethod() != null && !(originalMethodState instanceof AdaptiveMethodState)) {
-            return originalMethodState.currentTargetMethod();
-        }
-
-        final AdaptiveMethodState methodState = (AdaptiveMethodState) originalMethodState;
-        Compilation compilation = null;
-        synchronized (methodState) {
-            if (methodState.currentCompilation(compilationDirective) != null) {
+    public TargetMethod synchronousCompile(ClassMethodActor classMethodActor) {
+        Compilation compilation;
+        synchronized (classMethodActor) {
+            Object targetState = classMethodActor.targetState;
+            if (targetState == null) {
+                // this is the first compilation.
+                DynamicCompilerScheme compiler = selectCompiler(classMethodActor, true);
+                compilation = new Compilation(this, compiler, classMethodActor, targetState, Thread.currentThread());
+                classMethodActor.targetState = compilation;
+            } else if (targetState instanceof Compilation) {
+                // the method is currently being compiled, wait for the result
+                compilation = (Compilation) targetState;
                 try {
-                    // wait for the existing compilation to finish
-                    return methodState.currentCompilation(compilationDirective).get();
+                    return compilation.get();
                 } catch (InterruptedException e) {
                     return null;
                 }
+            } else {
+                // this method has already been compiled
+                DynamicCompilerScheme compiler = selectCompiler(classMethodActor, classMethodActor.targetMethodCount() == 0);
+                TargetMethod targetMethod = classMethodActor.currentTargetMethod();
+                if (targetMethod != null && targetMethod.compilerScheme() == compiler) {
+                    return targetMethod;
+                }
+                compilation = new Compilation(this, compiler, classMethodActor, targetState, Thread.currentThread());
+                classMethodActor.targetState = compilation;
             }
-            if (methodState.currentTargetMethod(compilationDirective) != null) {
-                return methodState.currentTargetMethod(compilationDirective);
-            }
-            compilation = new Compilation(this, methodState, compilationDirective);
-            methodState.setCurrentCompilation(compilation, compilationDirective);
         }
-        // perform a synchronous compile
-        perform(compilation, true);
-
-        // return the result
-        return methodState.currentTargetMethod(compilationDirective);
-    }
-
-    /**
-     * Performs a compilation of the specified method in the background.
-     *
-     * @param classMethodActor the method to compile
-     * @param compilationDirective the compilation directive specifying the compiler to be used
-     * @return a {@code Future} object that can be used to retrieve the result of the compilation later
-     */
-    public Future<TargetMethod> asynchronousCompile(ClassMethodActor classMethodActor, CompilationDirective compilationDirective) {
-        final MethodState originalMethodState = makeMethodState(classMethodActor);
-        final AdaptiveMethodState methodState = (AdaptiveMethodState) originalMethodState;
-        Compilation compilation = null;
-        synchronized (methodState) {
-            if (methodState.currentCompilation(compilationDirective) != null) {
-                return methodState.currentCompilation(compilationDirective);
-            }
-            if (methodState.currentTargetMethod(compilationDirective) != null) {
-                compilation = new Compilation(this, methodState, compilationDirective);
-                compilation.done = true;
-                return compilation;
-            }
-            compilation = new Compilation(this, methodState, compilationDirective);
-            methodState.setCurrentCompilation(compilation, compilationDirective);
-        }
-        // perform an asynchronous compile
-        return perform(compilation, false);
+        return compilation.compile(observers);
     }
 
     /**
@@ -346,67 +253,23 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
         }
     }
 
-    synchronized void observeBeforeCompilation(Compilation compilation, DynamicCompilerScheme compiler) {
-        if (observers != null) {
-            for (CompilationObserver observer : observers) {
-                observer.observeBeforeCompilation(compilation.methodState.classMethodActor(), compilation.compilationDirective, compiler);
-            }
-        }
-    }
-
-    synchronized void observeAfterCompilation(Compilation compilation, DynamicCompilerScheme compiler, TargetMethod targetMethod) {
-        if (observers != null) {
-            for (CompilationObserver observer : observers) {
-                observer.observeAfterCompilation(compilation.methodState.classMethodActor(), compilation.compilationDirective, compiler, targetMethod);
-            }
-        }
-    }
-
-    /**
-     * Perform a compilation in either synchronous or asynchronous mode.
-     *
-     * @param compilation the compilation to perform
-     * @param synchronous {@code true} if the compilation should be performed immediately; {@code false} if it should be
-     *            queued
-     * @return the compilation
-     */
-    @INLINE
-    private Compilation perform(Compilation compilation, boolean synchronous) {
-        synchronized (pending) {
-            // a compilation is required.
-            submitted++;
-            if (!synchronous) {
-                pending.offer(compilation);
-                pending.notify();
-            }
-        }
-        if (synchronous) {
-            compilation.compile(compilation.compilationDirective);
-        }
-        return compilation;
-    }
-
     /**
      * Checks whether there is currently a compilation being performed.
      *
      * @return {@code true} if there is currently a compilation pending or being performed; {@code false} otherwise
      */
     public boolean isCompiling() {
-        synchronized (pending) {
-            synchronized (completionLock) {
-                return submitted > completed;
-            }
-        }
+        throw FatalError.unimplemented();
     }
 
     /**
      * Select the appropriate compiler based on the current state of the method.
      *
-     * @param methodState the state of the method
+     * @param classMethodActor the class method actor to compile
+     * @param firstCompile {@code true} if this is the first compilation of this method
      * @return the compiler that should be used to perform the next compilation of the method
      */
-    DynamicCompilerScheme selectCompiler(AdaptiveMethodState methodState) {
-        final ClassMethodActor classMethodActor = methodState.classMethodActor();
+    DynamicCompilerScheme selectCompiler(ClassMethodActor classMethodActor, boolean firstCompile) {
         if (classMethodActor.isUnsafe()) {
             // for unsafe methods there is no other choice no matter what, since the JIT cannot handle unsafe features
             return optimizingCompiler;
@@ -428,7 +291,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
         // templates should only be compiled at prototyping time
         assert !classMethodActor.isTemplate();
 
-        if (methodState.currentTargetMethod() == null) {
+        if (firstCompile) {
             if (classMethodActor.isSynthetic() && !classMethodActor.isNative()) {
                 // we must at first use the JIT for reflective invocation stubs, otherwise meta-evaluation may not
                 // terminate
@@ -450,12 +313,11 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      *
      * @param classMethodActor the method for which to increase the optimization level
      * @param synchronous a boolean indicating whether any recompilation should be performed synchronously (i.e.
-     *            immediately) or asynchronously (i.e. queued and potentially performed later by another thread)
      */
-    public static void increaseOptimizationLevel(ClassMethodActor classMethodActor, boolean synchronous, CompilationDirective compilationDirective) {
+    public static void increaseOptimizationLevel(ClassMethodActor classMethodActor, boolean synchronous) {
         final CompilationScheme compilationScheme = VMConfiguration.target().compilationScheme();
         if (compilationScheme instanceof AdaptiveCompilationScheme) {
-            ((AdaptiveCompilationScheme) compilationScheme).reoptimize(classMethodActor, synchronous, compilationDirective);
+            ((AdaptiveCompilationScheme) compilationScheme).reoptimize(classMethodActor, synchronous);
         }
     }
 
@@ -466,37 +328,9 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      *
      * @param classMethodActor the method to be reoptimized
      * @param synchronous a boolean indicating whether the compilation should be performed immediately or queued for
-     *            later
      */
-    public void reoptimize(ClassMethodActor classMethodActor, boolean synchronous, CompilationDirective compilationDirective) {
-        if (gcOnRecompileOption.getValue()) {
-            System.gc();
-        }
-        final AdaptiveMethodState methodState = (AdaptiveMethodState) makeMethodState(classMethodActor);
-        Compilation compilation = null;
-        synchronized (methodState) {
-            final TargetMethod targetMethod = methodState.currentTargetMethod();
-            if (methodState.currentCompilation(CompilationDirective.DEFAULT) != null) {
-                if (synchronous) {
-                    try {
-                        // wait for current compilation to finish
-                        methodState.currentCompilation(CompilationDirective.DEFAULT).get();
-                    } catch (InterruptedException e) {
-                        // do nothing
-                    }
-                }
-                return;
-            }
-            if (targetMethod != null && targetMethod.compilerScheme() == optimizingCompiler) {
-                // method is already optimized.
-                return;
-            }
-            // start a new compilation with the optimizing compiler
-            compilation = new Compilation(this, methodState, compilationDirective);
-            compilation.compiler = optimizingCompiler;
-            methodState.setCurrentCompilation(compilation, compilationDirective);
-        }
-        perform(compilation, synchronous);
+    public void reoptimize(ClassMethodActor classMethodActor, boolean synchronous) {
+        // TODO: reimplement reoptimize()
     }
 
     /**
@@ -529,7 +363,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 } catch (InterruptedException e) {
                     // do nothing.
                 } catch (Throwable t) {
-                    Log.print("Exception during compilation of " + compilation.methodState.classMethodActor() + " " + t.getClass());
+                    Log.print("Exception during compilation of " + compilation.classMethodActor);
                     t.printStackTrace();
                 }
             }
@@ -550,7 +384,11 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                     }
                 }
             }
-            compilation.compile(compilation.compilationDirective);
+            compilation.compilingThread = Thread.currentThread();
+            if (gcOnRecompileOption.getValue()) {
+                System.gc();
+            }
+            compilation.compile(observers);
             compilation = null;
         }
     }

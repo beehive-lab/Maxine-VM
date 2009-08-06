@@ -24,7 +24,6 @@ import com.sun.max.collect.*;
 import com.sun.max.profile.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.bir.*;
 
 /**
@@ -59,7 +58,7 @@ public class ActorToBirTranslator extends BirGenerator {
     }
 
     @Override
-    protected void generateIrMethod(BirMethod birMethod, CompilationDirective compilationDirective) {
+    protected void generateIrMethod(BirMethod birMethod) {
         translate(birMethod);
     }
 }

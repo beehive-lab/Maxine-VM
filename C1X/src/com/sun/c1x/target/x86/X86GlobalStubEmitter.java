@@ -40,7 +40,6 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         this.runtime = runtime;
     }
 
-    @Override
     public CiTargetMethod emit(GlobalStub stub) {
         asm = new X86MacroAssembler(target);
         this.frameSize = 0;

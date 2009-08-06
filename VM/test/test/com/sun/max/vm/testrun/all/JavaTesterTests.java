@@ -46,20 +46,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_aaload");
         String runString = null;
         try {
-        // test(0) == null
-            runString = "test(0)";
+        // (0) == null
+            runString = "(0)";
             if (null != test.bytecode.BC_aaload.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == null
-            runString = "test(1)";
+        // (1) == null
+            runString = "(1)";
             if (null != test.bytecode.BC_aaload.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 
-            runString = "test(2)";
+        // (2) == 
+            runString = "(2)";
             if (!"".equals(test.bytecode.BC_aaload.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -74,20 +74,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_aaload_1");
         String runString = null;
         try {
-        // test(0) == null
-            runString = "test(0)";
+        // (0) == null
+            runString = "(0)";
             if (null != test.bytecode.BC_aaload_1.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == null
-            runString = "test(1)";
+        // (1) == null
+            runString = "(1)";
             if (null != test.bytecode.BC_aaload_1.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 
-            runString = "test(2)";
+        // (2) == 
+            runString = "(2)";
             if (!"".equals(test.bytecode.BC_aaload_1.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -102,32 +102,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_aastore");
         String runString = null;
         try {
-        // test(true,0) == 0
-            runString = "test(true,0)";
+        // (true,0) == 0
+            runString = "(true,0)";
             if (0 != test.bytecode.BC_aastore.test(true, 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(true,1) == 1
-            runString = "test(true,1)";
+        // (true,1) == 1
+            runString = "(true,1)";
             if (1 != test.bytecode.BC_aastore.test(true, 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(true,2) == 2
-            runString = "test(true,2)";
+        // (true,2) == 2
+            runString = "(true,2)";
             if (2 != test.bytecode.BC_aastore.test(true, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(false,1) == 1
-            runString = "test(false,1)";
+        // (false,1) == 1
+            runString = "(false,1)";
             if (1 != test.bytecode.BC_aastore.test(false, 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(false,2) == 2
-            runString = "test(false,2)";
+        // (false,2) == 2
+            runString = "(false,2)";
             if (2 != test.bytecode.BC_aastore.test(false, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -142,14 +142,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_aload_0");
         String runString = null;
         try {
-        // test(null) == null
-            runString = "test(null)";
+        // (null) == null
+            runString = "(null)";
             if (null != test.bytecode.BC_aload_0.test(null)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test("x") == x
-            runString = "test(\"x\")";
+        // ("x") == x
+            runString = "(\"x\")";
             if (!"x".equals(test.bytecode.BC_aload_0.test("x"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -164,14 +164,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_aload_1");
         String runString = null;
         try {
-        // test(1,null) == null
-            runString = "test(1,null)";
+        // (1,null) == null
+            runString = "(1,null)";
             if (null != test.bytecode.BC_aload_1.test(1, null)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,"x") == x
-            runString = "test(1,\"x\")";
+        // (1,"x") == x
+            runString = "(1,\"x\")";
             if (!"x".equals(test.bytecode.BC_aload_1.test(1, "x"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -186,14 +186,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_aload_2");
         String runString = null;
         try {
-        // test(1,1,null) == null
-            runString = "test(1,1,null)";
+        // (1,1,null) == null
+            runString = "(1,1,null)";
             if (null != test.bytecode.BC_aload_2.test(1, 1, null)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,1,"x") == x
-            runString = "test(1,1,\"x\")";
+        // (1,1,"x") == x
+            runString = "(1,1,\"x\")";
             if (!"x".equals(test.bytecode.BC_aload_2.test(1, 1, "x"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -208,14 +208,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_aload_3");
         String runString = null;
         try {
-        // test(1,1,1,"x") == x
-            runString = "test(1,1,1,\"x\")";
+        // (1,1,1,"x") == x
+            runString = "(1,1,1,\"x\")";
             if (!"x".equals(test.bytecode.BC_aload_3.test(1, 1, 1, "x"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,1,1,null) == null
-            runString = "test(1,1,1,null)";
+        // (1,1,1,null) == null
+            runString = "(1,1,1,null)";
             if (null != test.bytecode.BC_aload_3.test(1, 1, 1, null)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -230,14 +230,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_anewarray");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.bytecode.BC_anewarray.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.bytecode.BC_anewarray.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -252,20 +252,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_areturn");
         String runString = null;
         try {
-        // test(null) == null
-            runString = "test(null)";
+        // (null) == null
+            runString = "(null)";
             if (null != test.bytecode.BC_areturn.test(null)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test("") == 
-            runString = "test(\"\")";
+        // ("") == 
+            runString = "(\"\")";
             if (!"".equals(test.bytecode.BC_areturn.test(""))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test("this") == this
-            runString = "test(\"this\")";
+        // ("this") == this
+            runString = "(\"this\")";
             if (!"this".equals(test.bytecode.BC_areturn.test("this"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -280,32 +280,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_arraylength");
         String runString = null;
         try {
-        // test(1) == 3
-            runString = "test(1)";
+        // (1) == 3
+            runString = "(1)";
             if (3 != test.bytecode.BC_arraylength.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 4
-            runString = "test(2)";
+        // (2) == 4
+            runString = "(2)";
             if (4 != test.bytecode.BC_arraylength.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 5
-            runString = "test(3)";
+        // (3) == 5
+            runString = "(3)";
             if (5 != test.bytecode.BC_arraylength.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 5
-            runString = "test(4)";
+        // (4) == 5
+            runString = "(4)";
             if (5 != test.bytecode.BC_arraylength.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == 42
-            runString = "test(5)";
+        // (5) == 42
+            runString = "(5)";
             if (42 != test.bytecode.BC_arraylength.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -320,21 +320,21 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_athrow");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.bytecode.BC_athrow.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.bytecode.BC_athrow.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == !java.lang.Throwable
+        // (2) == !java.lang.Throwable
             try {
-                runString = "test(2)";
+                runString = "(2)";
                 test.bytecode.BC_athrow.test(2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -344,8 +344,8 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(3) == 3
-            runString = "test(3)";
+        // (3) == 3
+            runString = "(3)";
             if (3 != test.bytecode.BC_athrow.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -360,26 +360,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_baload");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.bytecode.BC_baload.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.bytecode.BC_baload.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.bytecode.BC_baload.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == false
-            runString = "test(3)";
+        // (3) == false
+            runString = "(3)";
             if (false != test.bytecode.BC_baload.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -394,26 +394,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_bastore");
         String runString = null;
         try {
-        // test(0,true) == true
-            runString = "test(0,true)";
+        // (0,true) == true
+            runString = "(0,true)";
             if (true != test.bytecode.BC_bastore.test(0, true)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,false) == false
-            runString = "test(1,false)";
+        // (1,false) == false
+            runString = "(1,false)";
             if (false != test.bytecode.BC_bastore.test(1, false)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2,true) == true
-            runString = "test(2,true)";
+        // (2,true) == true
+            runString = "(2,true)";
             if (true != test.bytecode.BC_bastore.test(2, true)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3,false) == false
-            runString = "test(3,false)";
+        // (3,false) == false
+            runString = "(3,false)";
             if (false != test.bytecode.BC_bastore.test(3, false)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -428,26 +428,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_caload");
         String runString = null;
         try {
-        // test(0) == '\0'
-            runString = "test(0)";
+        // (0) == '\0'
+            runString = "(0)";
             if ((char) 0 != test.bytecode.BC_caload.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 'a'
-            runString = "test(1)";
+        // (1) == 'a'
+            runString = "(1)";
             if ((char) 97 != test.bytecode.BC_caload.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == ' '
-            runString = "test(2)";
+        // (2) == ' '
+            runString = "(2)";
             if ((char) 32 != test.bytecode.BC_caload.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == '\23420'
-            runString = "test(3)";
+        // (3) == '\23420'
+            runString = "(3)";
             if ((char) 10000 != test.bytecode.BC_caload.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -462,26 +462,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_castore");
         String runString = null;
         try {
-        // test(0,'a') == 'a'
-            runString = "test(0,'a')";
+        // (0,'a') == 'a'
+            runString = "(0,'a')";
             if ((char) 97 != test.bytecode.BC_castore.test(0, (char) 97)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,'A') == 'A'
-            runString = "test(1,'A')";
+        // (1,'A') == 'A'
+            runString = "(1,'A')";
             if ((char) 65 != test.bytecode.BC_castore.test(1, (char) 65)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2,'*') == '*'
-            runString = "test(2,'*')";
+        // (2,'*') == '*'
+            runString = "(2,'*')";
             if ((char) 42 != test.bytecode.BC_castore.test(2, (char) 42)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3,'x') == 'x'
-            runString = "test(3,'x')";
+        // (3,'x') == 'x'
+            runString = "(3,'x')";
             if ((char) 120 != test.bytecode.BC_castore.test(3, (char) 120)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -496,20 +496,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_checkcast");
         String runString = null;
         try {
-        // test(0) == -1
-            runString = "test(0)";
+        // (0) == -1
+            runString = "(0)";
             if (-1 != test.bytecode.BC_checkcast.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == -1
-            runString = "test(1)";
+        // (1) == -1
+            runString = "(1)";
             if (-1 != test.bytecode.BC_checkcast.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 4
-            runString = "test(4)";
+        // (4) == 4
+            runString = "(4)";
             if (4 != test.bytecode.BC_checkcast.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -524,20 +524,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_d2f");
         String runString = null;
         try {
-        // test(0.0) == 0.0
-            runString = "test(0.0)";
+        // (0.0) == 0.0
+            runString = "(0.0)";
             if (0.0f != test.bytecode.BC_d2f.test(0.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == 1.0
-            runString = "test(1.0)";
+        // (1.0) == 1.0
+            runString = "(1.0)";
             if (1.0f != test.bytecode.BC_d2f.test(1.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1.06) == -1.06
-            runString = "test(-1.06)";
+        // (-1.06) == -1.06
+            runString = "(-1.06)";
             if (-1.06f != test.bytecode.BC_d2f.test(-1.06)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -552,26 +552,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_d2i");
         String runString = null;
         try {
-        // test(0.0) == 0
-            runString = "test(0.0)";
+        // (0.0) == 0
+            runString = "(0.0)";
             if (0 != test.bytecode.BC_d2i.test(0.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == 1
-            runString = "test(1.0)";
+        // (1.0) == 1
+            runString = "(1.0)";
             if (1 != test.bytecode.BC_d2i.test(1.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1.06) == -1
-            runString = "test(-1.06)";
+        // (-1.06) == -1
+            runString = "(-1.06)";
             if (-1 != test.bytecode.BC_d2i.test(-1.06)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-156.82743) == -156
-            runString = "test(-156.82743)";
+        // (-156.82743) == -156
+            runString = "(-156.82743)";
             if (-156 != test.bytecode.BC_d2i.test(-156.82743)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -586,14 +586,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_d2i_nan");
         String runString = null;
         try {
-        // test(1.0) == 1
-            runString = "test(1.0)";
+        // (1.0) == 1
+            runString = "(1.0)";
             if (1 != test.bytecode.BC_d2i_nan.test(1.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0.0) == 0
-            runString = "test(0.0)";
+        // (0.0) == 0
+            runString = "(0.0)";
             if (0 != test.bytecode.BC_d2i_nan.test(0.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -608,26 +608,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_d2l");
         String runString = null;
         try {
-        // test(0.0) == 0
-            runString = "test(0.0)";
+        // (0.0) == 0
+            runString = "(0.0)";
             if (0L != test.bytecode.BC_d2l.test(0.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == 1
-            runString = "test(1.0)";
+        // (1.0) == 1
+            runString = "(1.0)";
             if (1L != test.bytecode.BC_d2l.test(1.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1.06) == -1
-            runString = "test(-1.06)";
+        // (-1.06) == -1
+            runString = "(-1.06)";
             if (-1L != test.bytecode.BC_d2l.test(-1.06)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-156.82743) == -156
-            runString = "test(-156.82743)";
+        // (-156.82743) == -156
+            runString = "(-156.82743)";
             if (-156L != test.bytecode.BC_d2l.test(-156.82743)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -642,14 +642,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_d2l_nan");
         String runString = null;
         try {
-        // test(1.0) == 1
-            runString = "test(1.0)";
+        // (1.0) == 1
+            runString = "(1.0)";
             if (1L != test.bytecode.BC_d2l_nan.test(1.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0.0) == 0
-            runString = "test(0.0)";
+        // (0.0) == 0
+            runString = "(0.0)";
             if (0L != test.bytecode.BC_d2l_nan.test(0.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -664,20 +664,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_dadd");
         String runString = null;
         try {
-        // test(0.0,0.0) == 0.0
-            runString = "test(0.0,0.0)";
+        // (0.0,0.0) == 0.0
+            runString = "(0.0,0.0)";
             if (0.0 != test.bytecode.BC_dadd.test(0.0, 0.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0,1.0) == 2.0
-            runString = "test(1.0,1.0)";
+        // (1.0,1.0) == 2.0
+            runString = "(1.0,1.0)";
             if (2.0 != test.bytecode.BC_dadd.test(1.0, 1.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(253.11,54.43) == 307.54
-            runString = "test(253.11,54.43)";
+        // (253.11,54.43) == 307.54
+            runString = "(253.11,54.43)";
             if (307.54 != test.bytecode.BC_dadd.test(253.11, 54.43)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -692,26 +692,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_daload");
         String runString = null;
         try {
-        // test(0) == 0.0
-            runString = "test(0)";
+        // (0) == 0.0
+            runString = "(0)";
             if (0.0 != test.bytecode.BC_daload.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == -1.1
-            runString = "test(1)";
+        // (1) == -1.1
+            runString = "(1)";
             if (-1.1 != test.bytecode.BC_daload.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 4.32
-            runString = "test(2)";
+        // (2) == 4.32
+            runString = "(2)";
             if (4.32 != test.bytecode.BC_daload.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 6.06
-            runString = "test(3)";
+        // (3) == 6.06
+            runString = "(3)";
             if (6.06 != test.bytecode.BC_daload.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -726,26 +726,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_dastore");
         String runString = null;
         try {
-        // test(0,0.01) == 0.01
-            runString = "test(0,0.01)";
+        // (0,0.01) == 0.01
+            runString = "(0,0.01)";
             if (0.01 != test.bytecode.BC_dastore.test(0, 0.01)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,-1.4) == -1.4
-            runString = "test(1,-1.4)";
+        // (1,-1.4) == -1.4
+            runString = "(1,-1.4)";
             if (-1.4 != test.bytecode.BC_dastore.test(1, -1.4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2,0.01) == 0.01
-            runString = "test(2,0.01)";
+        // (2,0.01) == 0.01
+            runString = "(2,0.01)";
             if (0.01 != test.bytecode.BC_dastore.test(2, 0.01)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3,-1.4) == -1.4
-            runString = "test(3,-1.4)";
+        // (3,-1.4) == -1.4
+            runString = "(3,-1.4)";
             if (-1.4 != test.bytecode.BC_dastore.test(3, -1.4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -760,14 +760,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_dcmp01");
         String runString = null;
         try {
-        // test(0.0,-0.1) == false
-            runString = "test(0.0,-0.1)";
+        // (0.0,-0.1) == false
+            runString = "(0.0,-0.1)";
             if (false != test.bytecode.BC_dcmp01.test(0.0, -0.1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(78.0,78.001) == true
-            runString = "test(78.0,78.001)";
+        // (78.0,78.001) == true
+            runString = "(78.0,78.001)";
             if (true != test.bytecode.BC_dcmp01.test(78.0, 78.001)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -782,26 +782,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_dcmp02");
         String runString = null;
         try {
-        // test(-1.0) == false
-            runString = "test(-1.0)";
+        // (-1.0) == false
+            runString = "(-1.0)";
             if (false != test.bytecode.BC_dcmp02.test(-1.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == false
-            runString = "test(1.0)";
+        // (1.0) == false
+            runString = "(1.0)";
             if (false != test.bytecode.BC_dcmp02.test(1.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0.0) == false
-            runString = "test(0.0)";
+        // (0.0) == false
+            runString = "(0.0)";
             if (false != test.bytecode.BC_dcmp02.test(0.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-0.0) == false
-            runString = "test(-0.0)";
+        // (-0.0) == false
+            runString = "(-0.0)";
             if (false != test.bytecode.BC_dcmp02.test(-0.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -816,26 +816,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_dcmp03");
         String runString = null;
         try {
-        // test(-1.0) == true
-            runString = "test(-1.0)";
+        // (-1.0) == true
+            runString = "(-1.0)";
             if (true != test.bytecode.BC_dcmp03.test(-1.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == true
-            runString = "test(1.0)";
+        // (1.0) == true
+            runString = "(1.0)";
             if (true != test.bytecode.BC_dcmp03.test(1.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0.0) == false
-            runString = "test(0.0)";
+        // (0.0) == false
+            runString = "(0.0)";
             if (false != test.bytecode.BC_dcmp03.test(0.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-0.0) == false
-            runString = "test(-0.0)";
+        // (-0.0) == false
+            runString = "(-0.0)";
             if (false != test.bytecode.BC_dcmp03.test(-0.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -850,26 +850,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_dcmp04");
         String runString = null;
         try {
-        // test(-1.0) == false
-            runString = "test(-1.0)";
+        // (-1.0) == false
+            runString = "(-1.0)";
             if (false != test.bytecode.BC_dcmp04.test(-1.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == false
-            runString = "test(1.0)";
+        // (1.0) == false
+            runString = "(1.0)";
             if (false != test.bytecode.BC_dcmp04.test(1.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0.0) == false
-            runString = "test(0.0)";
+        // (0.0) == false
+            runString = "(0.0)";
             if (false != test.bytecode.BC_dcmp04.test(0.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-0.0) == false
-            runString = "test(-0.0)";
+        // (-0.0) == false
+            runString = "(-0.0)";
             if (false != test.bytecode.BC_dcmp04.test(-0.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -884,20 +884,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_dcmp05");
         String runString = null;
         try {
-        // test(-1.0) == true
-            runString = "test(-1.0)";
+        // (-1.0) == true
+            runString = "(-1.0)";
             if (true != test.bytecode.BC_dcmp05.test(-1.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == true
-            runString = "test(1.0)";
+        // (1.0) == true
+            runString = "(1.0)";
             if (true != test.bytecode.BC_dcmp05.test(1.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0.0) == false
-            runString = "test(0.0)";
+        // (0.0) == false
+            runString = "(0.0)";
             if (false != test.bytecode.BC_dcmp05.test(0.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -912,20 +912,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_dcmp06");
         String runString = null;
         try {
-        // test(-1.0) == true
-            runString = "test(-1.0)";
+        // (-1.0) == true
+            runString = "(-1.0)";
             if (true != test.bytecode.BC_dcmp06.test(-1.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == true
-            runString = "test(1.0)";
+        // (1.0) == true
+            runString = "(1.0)";
             if (true != test.bytecode.BC_dcmp06.test(1.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0.0) == false
-            runString = "test(0.0)";
+        // (0.0) == false
+            runString = "(0.0)";
             if (false != test.bytecode.BC_dcmp06.test(0.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -940,20 +940,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_dcmp07");
         String runString = null;
         try {
-        // test(-1.0) == false
-            runString = "test(-1.0)";
+        // (-1.0) == false
+            runString = "(-1.0)";
             if (false != test.bytecode.BC_dcmp07.test(-1.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == false
-            runString = "test(1.0)";
+        // (1.0) == false
+            runString = "(1.0)";
             if (false != test.bytecode.BC_dcmp07.test(1.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0.0) == false
-            runString = "test(0.0)";
+        // (0.0) == false
+            runString = "(0.0)";
             if (false != test.bytecode.BC_dcmp07.test(0.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -968,20 +968,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_dcmp08");
         String runString = null;
         try {
-        // test(-1.0) == true
-            runString = "test(-1.0)";
+        // (-1.0) == true
+            runString = "(-1.0)";
             if (true != test.bytecode.BC_dcmp08.test(-1.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == true
-            runString = "test(1.0)";
+        // (1.0) == true
+            runString = "(1.0)";
             if (true != test.bytecode.BC_dcmp08.test(1.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0.0) == false
-            runString = "test(0.0)";
+        // (0.0) == false
+            runString = "(0.0)";
             if (false != test.bytecode.BC_dcmp08.test(0.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -996,20 +996,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_dcmp09");
         String runString = null;
         try {
-        // test(-1.0) == false
-            runString = "test(-1.0)";
+        // (-1.0) == false
+            runString = "(-1.0)";
             if (false != test.bytecode.BC_dcmp09.test(-1.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == false
-            runString = "test(1.0)";
+        // (1.0) == false
+            runString = "(1.0)";
             if (false != test.bytecode.BC_dcmp09.test(1.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0.0) == false
-            runString = "test(0.0)";
+        // (0.0) == false
+            runString = "(0.0)";
             if (false != test.bytecode.BC_dcmp09.test(0.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1024,56 +1024,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_dcmp10");
         String runString = null;
         try {
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.bytecode.BC_dcmp10.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.bytecode.BC_dcmp10.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.bytecode.BC_dcmp10.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == false
-            runString = "test(3)";
+        // (3) == false
+            runString = "(3)";
             if (false != test.bytecode.BC_dcmp10.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == true
-            runString = "test(4)";
+        // (4) == true
+            runString = "(4)";
             if (true != test.bytecode.BC_dcmp10.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == true
-            runString = "test(5)";
+        // (5) == true
+            runString = "(5)";
             if (true != test.bytecode.BC_dcmp10.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == false
-            runString = "test(6)";
+        // (6) == false
+            runString = "(6)";
             if (false != test.bytecode.BC_dcmp10.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == false
-            runString = "test(7)";
+        // (7) == false
+            runString = "(7)";
             if (false != test.bytecode.BC_dcmp10.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(8) == false
-            runString = "test(8)";
+        // (8) == false
+            runString = "(8)";
             if (false != test.bytecode.BC_dcmp10.test(8)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1088,8 +1088,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ddiv");
         String runString = null;
         try {
-        // test(311.0,10.0) == 31.1
-            runString = "test(311.0,10.0)";
+        // (311.0,10.0) == 31.1
+            runString = "(311.0,10.0)";
             if (31.1 != test.bytecode.BC_ddiv.test(311.0, 10.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1104,8 +1104,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_dmul");
         String runString = null;
         try {
-        // test(311.0,10.0) == 3110.0
-            runString = "test(311.0,10.0)";
+        // (311.0,10.0) == 3110.0
+            runString = "(311.0,10.0)";
             if (3110.0 != test.bytecode.BC_dmul.test(311.0, 10.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1120,20 +1120,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_dneg");
         String runString = null;
         try {
-        // test(0.0) == -0.0
-            runString = "test(0.0)";
+        // (0.0) == -0.0
+            runString = "(0.0)";
             if (-0.0 != test.bytecode.BC_dneg.test(0.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1.01) == 1.01
-            runString = "test(-1.01)";
+        // (-1.01) == 1.01
+            runString = "(-1.01)";
             if (1.01 != test.bytecode.BC_dneg.test(-1.01)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7263.8734) == -7263.8734
-            runString = "test(7263.8734)";
+        // (7263.8734) == -7263.8734
+            runString = "(7263.8734)";
             if (-7263.8734 != test.bytecode.BC_dneg.test(7263.8734)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1148,8 +1148,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_drem");
         String runString = null;
         try {
-        // test(311.0,10.0) == 1.0
-            runString = "test(311.0,10.0)";
+        // (311.0,10.0) == 1.0
+            runString = "(311.0,10.0)";
             if (1.0 != test.bytecode.BC_drem.test(311.0, 10.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1164,32 +1164,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_dreturn");
         String runString = null;
         try {
-        // test(0.0) == 0.0
-            runString = "test(0.0)";
+        // (0.0) == 0.0
+            runString = "(0.0)";
             if (0.0 != test.bytecode.BC_dreturn.test(0.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.1) == 1.1
-            runString = "test(1.1)";
+        // (1.1) == 1.1
+            runString = "(1.1)";
             if (1.1 != test.bytecode.BC_dreturn.test(1.1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1.4) == -1.4
-            runString = "test(-1.4)";
+        // (-1.4) == -1.4
+            runString = "(-1.4)";
             if (-1.4 != test.bytecode.BC_dreturn.test(-1.4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(256.33) == 256.33
-            runString = "test(256.33)";
+        // (256.33) == 256.33
+            runString = "(256.33)";
             if (256.33 != test.bytecode.BC_dreturn.test(256.33)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1000.001) == 1000.001
-            runString = "test(1000.001)";
+        // (1000.001) == 1000.001
+            runString = "(1000.001)";
             if (1000.001 != test.bytecode.BC_dreturn.test(1000.001)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1204,20 +1204,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_dsub");
         String runString = null;
         try {
-        // test(0.0,0.0) == 0.0
-            runString = "test(0.0,0.0)";
+        // (0.0,0.0) == 0.0
+            runString = "(0.0,0.0)";
             if (0.0 != test.bytecode.BC_dsub.test(0.0, 0.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0,1.0) == 0.0
-            runString = "test(1.0,1.0)";
+        // (1.0,1.0) == 0.0
+            runString = "(1.0,1.0)";
             if (0.0 != test.bytecode.BC_dsub.test(1.0, 1.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(253.11,54.43) == 198.68
-            runString = "test(253.11,54.43)";
+        // (253.11,54.43) == 198.68
+            runString = "(253.11,54.43)";
             if (198.68 != test.bytecode.BC_dsub.test(253.11, 54.43)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1232,20 +1232,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_f2d");
         String runString = null;
         try {
-        // test(0.0) == 0.0
-            runString = "test(0.0)";
+        // (0.0) == 0.0
+            runString = "(0.0)";
             if (0.0 != test.bytecode.BC_f2d.test(0.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == 1.0
-            runString = "test(1.0)";
+        // (1.0) == 1.0
+            runString = "(1.0)";
             if (1.0 != test.bytecode.BC_f2d.test(1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2.0) == -2.0
-            runString = "test(-2.0)";
+        // (-2.0) == -2.0
+            runString = "(-2.0)";
             if (-2.0 != test.bytecode.BC_f2d.test(-2.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1260,26 +1260,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_f2i");
         String runString = null;
         try {
-        // test(0.0) == 0
-            runString = "test(0.0)";
+        // (0.0) == 0
+            runString = "(0.0)";
             if (0 != test.bytecode.BC_f2i.test(0.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == 1
-            runString = "test(1.0)";
+        // (1.0) == 1
+            runString = "(1.0)";
             if (1 != test.bytecode.BC_f2i.test(1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1.06) == -1
-            runString = "test(-1.06)";
+        // (-1.06) == -1
+            runString = "(-1.06)";
             if (-1 != test.bytecode.BC_f2i.test(-1.06f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-156.82742) == -156
-            runString = "test(-156.82742)";
+        // (-156.82742) == -156
+            runString = "(-156.82742)";
             if (-156 != test.bytecode.BC_f2i.test(-156.82742f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1294,8 +1294,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_f2i_2");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.bytecode.BC_f2i_2.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1310,14 +1310,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_f2i_nan");
         String runString = null;
         try {
-        // test(1.0) == 1
-            runString = "test(1.0)";
+        // (1.0) == 1
+            runString = "(1.0)";
             if (1 != test.bytecode.BC_f2i_nan.test(1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0.0) == 0
-            runString = "test(0.0)";
+        // (0.0) == 0
+            runString = "(0.0)";
             if (0 != test.bytecode.BC_f2i_nan.test(0.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1332,26 +1332,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_f2l");
         String runString = null;
         try {
-        // test(0.0) == 0
-            runString = "test(0.0)";
+        // (0.0) == 0
+            runString = "(0.0)";
             if (0L != test.bytecode.BC_f2l.test(0.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == 1
-            runString = "test(1.0)";
+        // (1.0) == 1
+            runString = "(1.0)";
             if (1L != test.bytecode.BC_f2l.test(1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1.06) == -1
-            runString = "test(-1.06)";
+        // (-1.06) == -1
+            runString = "(-1.06)";
             if (-1L != test.bytecode.BC_f2l.test(-1.06f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-156.82742) == -156
-            runString = "test(-156.82742)";
+        // (-156.82742) == -156
+            runString = "(-156.82742)";
             if (-156L != test.bytecode.BC_f2l.test(-156.82742f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1366,14 +1366,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_f2l_nan");
         String runString = null;
         try {
-        // test(1.0) == 1
-            runString = "test(1.0)";
+        // (1.0) == 1
+            runString = "(1.0)";
             if (1L != test.bytecode.BC_f2l_nan.test(1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0.0) == 0
-            runString = "test(0.0)";
+        // (0.0) == 0
+            runString = "(0.0)";
             if (0L != test.bytecode.BC_f2l_nan.test(0.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1388,20 +1388,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_fadd");
         String runString = null;
         try {
-        // test(0.0,0.0) == 0.0
-            runString = "test(0.0,0.0)";
+        // (0.0,0.0) == 0.0
+            runString = "(0.0,0.0)";
             if (0.0f != test.bytecode.BC_fadd.test(0.0f, 0.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0,1.0) == 2.0
-            runString = "test(1.0,1.0)";
+        // (1.0,1.0) == 2.0
+            runString = "(1.0,1.0)";
             if (2.0f != test.bytecode.BC_fadd.test(1.0f, 1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(253.11,54.43) == 307.54
-            runString = "test(253.11,54.43)";
+        // (253.11,54.43) == 307.54
+            runString = "(253.11,54.43)";
             if (307.54f != test.bytecode.BC_fadd.test(253.11f, 54.43f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1416,26 +1416,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_faload");
         String runString = null;
         try {
-        // test(0) == 0.0
-            runString = "test(0)";
+        // (0) == 0.0
+            runString = "(0)";
             if (0.0f != test.bytecode.BC_faload.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == -1.1
-            runString = "test(1)";
+        // (1) == -1.1
+            runString = "(1)";
             if (-1.1f != test.bytecode.BC_faload.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 4.32
-            runString = "test(2)";
+        // (2) == 4.32
+            runString = "(2)";
             if (4.32f != test.bytecode.BC_faload.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 6.06
-            runString = "test(3)";
+        // (3) == 6.06
+            runString = "(3)";
             if (6.06f != test.bytecode.BC_faload.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1450,26 +1450,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_fastore");
         String runString = null;
         try {
-        // test(0,0.01) == 0.01
-            runString = "test(0,0.01)";
+        // (0,0.01) == 0.01
+            runString = "(0,0.01)";
             if (0.01f != test.bytecode.BC_fastore.test(0, 0.01f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,-1.4) == -1.4
-            runString = "test(1,-1.4)";
+        // (1,-1.4) == -1.4
+            runString = "(1,-1.4)";
             if (-1.4f != test.bytecode.BC_fastore.test(1, -1.4f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2,0.01) == 0.01
-            runString = "test(2,0.01)";
+        // (2,0.01) == 0.01
+            runString = "(2,0.01)";
             if (0.01f != test.bytecode.BC_fastore.test(2, 0.01f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3,-1.4) == -1.4
-            runString = "test(3,-1.4)";
+        // (3,-1.4) == -1.4
+            runString = "(3,-1.4)";
             if (-1.4f != test.bytecode.BC_fastore.test(3, -1.4f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1484,14 +1484,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_fcmp01");
         String runString = null;
         try {
-        // test(0.0,-0.1) == false
-            runString = "test(0.0,-0.1)";
+        // (0.0,-0.1) == false
+            runString = "(0.0,-0.1)";
             if (false != test.bytecode.BC_fcmp01.test(0.0f, -0.1f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(78.0,78.001) == true
-            runString = "test(78.0,78.001)";
+        // (78.0,78.001) == true
+            runString = "(78.0,78.001)";
             if (true != test.bytecode.BC_fcmp01.test(78.0f, 78.001f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1506,20 +1506,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_fcmp02");
         String runString = null;
         try {
-        // test(-1.0) == false
-            runString = "test(-1.0)";
+        // (-1.0) == false
+            runString = "(-1.0)";
             if (false != test.bytecode.BC_fcmp02.test(-1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == false
-            runString = "test(1.0)";
+        // (1.0) == false
+            runString = "(1.0)";
             if (false != test.bytecode.BC_fcmp02.test(1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0.0) == false
-            runString = "test(0.0)";
+        // (0.0) == false
+            runString = "(0.0)";
             if (false != test.bytecode.BC_fcmp02.test(0.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1534,20 +1534,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_fcmp03");
         String runString = null;
         try {
-        // test(-1.0) == true
-            runString = "test(-1.0)";
+        // (-1.0) == true
+            runString = "(-1.0)";
             if (true != test.bytecode.BC_fcmp03.test(-1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == true
-            runString = "test(1.0)";
+        // (1.0) == true
+            runString = "(1.0)";
             if (true != test.bytecode.BC_fcmp03.test(1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0.0) == false
-            runString = "test(0.0)";
+        // (0.0) == false
+            runString = "(0.0)";
             if (false != test.bytecode.BC_fcmp03.test(0.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1562,20 +1562,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_fcmp04");
         String runString = null;
         try {
-        // test(-1.0) == false
-            runString = "test(-1.0)";
+        // (-1.0) == false
+            runString = "(-1.0)";
             if (false != test.bytecode.BC_fcmp04.test(-1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == false
-            runString = "test(1.0)";
+        // (1.0) == false
+            runString = "(1.0)";
             if (false != test.bytecode.BC_fcmp04.test(1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0.0) == false
-            runString = "test(0.0)";
+        // (0.0) == false
+            runString = "(0.0)";
             if (false != test.bytecode.BC_fcmp04.test(0.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1590,20 +1590,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_fcmp05");
         String runString = null;
         try {
-        // test(-1.0) == true
-            runString = "test(-1.0)";
+        // (-1.0) == true
+            runString = "(-1.0)";
             if (true != test.bytecode.BC_fcmp05.test(-1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == true
-            runString = "test(1.0)";
+        // (1.0) == true
+            runString = "(1.0)";
             if (true != test.bytecode.BC_fcmp05.test(1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0.0) == false
-            runString = "test(0.0)";
+        // (0.0) == false
+            runString = "(0.0)";
             if (false != test.bytecode.BC_fcmp05.test(0.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1618,20 +1618,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_fcmp06");
         String runString = null;
         try {
-        // test(-1.0) == true
-            runString = "test(-1.0)";
+        // (-1.0) == true
+            runString = "(-1.0)";
             if (true != test.bytecode.BC_fcmp06.test(-1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == true
-            runString = "test(1.0)";
+        // (1.0) == true
+            runString = "(1.0)";
             if (true != test.bytecode.BC_fcmp06.test(1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0.0) == false
-            runString = "test(0.0)";
+        // (0.0) == false
+            runString = "(0.0)";
             if (false != test.bytecode.BC_fcmp06.test(0.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1646,20 +1646,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_fcmp07");
         String runString = null;
         try {
-        // test(-1.0) == false
-            runString = "test(-1.0)";
+        // (-1.0) == false
+            runString = "(-1.0)";
             if (false != test.bytecode.BC_fcmp07.test(-1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == false
-            runString = "test(1.0)";
+        // (1.0) == false
+            runString = "(1.0)";
             if (false != test.bytecode.BC_fcmp07.test(1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0.0) == false
-            runString = "test(0.0)";
+        // (0.0) == false
+            runString = "(0.0)";
             if (false != test.bytecode.BC_fcmp07.test(0.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1674,20 +1674,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_fcmp08");
         String runString = null;
         try {
-        // test(-1.0) == true
-            runString = "test(-1.0)";
+        // (-1.0) == true
+            runString = "(-1.0)";
             if (true != test.bytecode.BC_fcmp08.test(-1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == true
-            runString = "test(1.0)";
+        // (1.0) == true
+            runString = "(1.0)";
             if (true != test.bytecode.BC_fcmp08.test(1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0.0) == false
-            runString = "test(0.0)";
+        // (0.0) == false
+            runString = "(0.0)";
             if (false != test.bytecode.BC_fcmp08.test(0.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1702,20 +1702,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_fcmp09");
         String runString = null;
         try {
-        // test(-1.0) == false
-            runString = "test(-1.0)";
+        // (-1.0) == false
+            runString = "(-1.0)";
             if (false != test.bytecode.BC_fcmp09.test(-1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == false
-            runString = "test(1.0)";
+        // (1.0) == false
+            runString = "(1.0)";
             if (false != test.bytecode.BC_fcmp09.test(1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0.0) == false
-            runString = "test(0.0)";
+        // (0.0) == false
+            runString = "(0.0)";
             if (false != test.bytecode.BC_fcmp09.test(0.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1730,56 +1730,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_fcmp10");
         String runString = null;
         try {
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.bytecode.BC_fcmp10.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.bytecode.BC_fcmp10.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.bytecode.BC_fcmp10.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == false
-            runString = "test(3)";
+        // (3) == false
+            runString = "(3)";
             if (false != test.bytecode.BC_fcmp10.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == true
-            runString = "test(4)";
+        // (4) == true
+            runString = "(4)";
             if (true != test.bytecode.BC_fcmp10.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == true
-            runString = "test(5)";
+        // (5) == true
+            runString = "(5)";
             if (true != test.bytecode.BC_fcmp10.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == false
-            runString = "test(6)";
+        // (6) == false
+            runString = "(6)";
             if (false != test.bytecode.BC_fcmp10.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == false
-            runString = "test(7)";
+        // (7) == false
+            runString = "(7)";
             if (false != test.bytecode.BC_fcmp10.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(8) == false
-            runString = "test(8)";
+        // (8) == false
+            runString = "(8)";
             if (false != test.bytecode.BC_fcmp10.test(8)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1794,8 +1794,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_fdiv");
         String runString = null;
         try {
-        // test(311.0,10.0) == 31.1
-            runString = "test(311.0,10.0)";
+        // (311.0,10.0) == 31.1
+            runString = "(311.0,10.0)";
             if (31.1f != test.bytecode.BC_fdiv.test(311.0f, 10.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1810,14 +1810,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_fload");
         String runString = null;
         try {
-        // test(-1.0) == -1.0
-            runString = "test(-1.0)";
+        // (-1.0) == -1.0
+            runString = "(-1.0)";
             if (-1.0f != test.bytecode.BC_fload.test(-1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1.01) == -1.01
-            runString = "test(-1.01)";
+        // (-1.01) == -1.01
+            runString = "(-1.01)";
             if (-1.01f != test.bytecode.BC_fload.test(-1.01f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1832,14 +1832,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_fload_2");
         String runString = null;
         try {
-        // test(0.0,-1.0) == -1.0
-            runString = "test(0.0,-1.0)";
+        // (0.0,-1.0) == -1.0
+            runString = "(0.0,-1.0)";
             if (-1.0f != test.bytecode.BC_fload_2.test(0.0f, -1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0.0,-1.01) == -1.01
-            runString = "test(0.0,-1.01)";
+        // (0.0,-1.01) == -1.01
+            runString = "(0.0,-1.01)";
             if (-1.01f != test.bytecode.BC_fload_2.test(0.0f, -1.01f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1854,8 +1854,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_fmul");
         String runString = null;
         try {
-        // test(311.0,10.0) == 3110.0
-            runString = "test(311.0,10.0)";
+        // (311.0,10.0) == 3110.0
+            runString = "(311.0,10.0)";
             if (3110.0f != test.bytecode.BC_fmul.test(311.0f, 10.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1870,20 +1870,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_fneg");
         String runString = null;
         try {
-        // test(0.0) == -0.0
-            runString = "test(0.0)";
+        // (0.0) == -0.0
+            runString = "(0.0)";
             if (-0.0f != test.bytecode.BC_fneg.test(0.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1.01) == 1.01
-            runString = "test(-1.01)";
+        // (-1.01) == 1.01
+            runString = "(-1.01)";
             if (1.01f != test.bytecode.BC_fneg.test(-1.01f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7263.8735) == -7263.8735
-            runString = "test(7263.8735)";
+        // (7263.8735) == -7263.8735
+            runString = "(7263.8735)";
             if (-7263.8735f != test.bytecode.BC_fneg.test(7263.8735f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1898,14 +1898,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_frem");
         String runString = null;
         try {
-        // test(311.0,10.0) == 1.0
-            runString = "test(311.0,10.0)";
+        // (311.0,10.0) == 1.0
+            runString = "(311.0,10.0)";
             if (1.0f != test.bytecode.BC_frem.test(311.0f, 10.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(12.5,6.0) == 0.5
-            runString = "test(12.5,6.0)";
+        // (12.5,6.0) == 0.5
+            runString = "(12.5,6.0)";
             if (0.5f != test.bytecode.BC_frem.test(12.5f, 6.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1920,32 +1920,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_freturn");
         String runString = null;
         try {
-        // test(0.0) == 0.0
-            runString = "test(0.0)";
+        // (0.0) == 0.0
+            runString = "(0.0)";
             if (0.0f != test.bytecode.BC_freturn.test(0.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.1) == 1.1
-            runString = "test(1.1)";
+        // (1.1) == 1.1
+            runString = "(1.1)";
             if (1.1f != test.bytecode.BC_freturn.test(1.1f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1.4) == -1.4
-            runString = "test(-1.4)";
+        // (-1.4) == -1.4
+            runString = "(-1.4)";
             if (-1.4f != test.bytecode.BC_freturn.test(-1.4f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(256.33) == 256.33
-            runString = "test(256.33)";
+        // (256.33) == 256.33
+            runString = "(256.33)";
             if (256.33f != test.bytecode.BC_freturn.test(256.33f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1000.001) == 1000.001
-            runString = "test(1000.001)";
+        // (1000.001) == 1000.001
+            runString = "(1000.001)";
             if (1000.001f != test.bytecode.BC_freturn.test(1000.001f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1960,20 +1960,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_fsub");
         String runString = null;
         try {
-        // test(0.0,0.0) == 0.0
-            runString = "test(0.0,0.0)";
+        // (0.0,0.0) == 0.0
+            runString = "(0.0,0.0)";
             if (0.0f != test.bytecode.BC_fsub.test(0.0f, 0.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0,1.0) == 0.0
-            runString = "test(1.0,1.0)";
+        // (1.0,1.0) == 0.0
+            runString = "(1.0,1.0)";
             if (0.0f != test.bytecode.BC_fsub.test(1.0f, 1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(253.11,54.43) == 198.68
-            runString = "test(253.11,54.43)";
+        // (253.11,54.43) == 198.68
+            runString = "(253.11,54.43)";
             if (198.68f != test.bytecode.BC_fsub.test(253.11f, 54.43f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -1988,8 +1988,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_getfield");
         String runString = null;
         try {
-        // test(0) == 13
-            runString = "test(0)";
+        // (0) == 13
+            runString = "(0)";
             if (13 != test.bytecode.BC_getfield.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2004,20 +2004,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_getstatic_b");
         String runString = null;
         try {
-        // test(0) == 11
-            runString = "test(0)";
+        // (0) == 11
+            runString = "(0)";
             if ((byte) 11 != test.bytecode.BC_getstatic_b.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 11
-            runString = "test(1)";
+        // (1) == 11
+            runString = "(1)";
             if ((byte) 11 != test.bytecode.BC_getstatic_b.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 11
-            runString = "test(2)";
+        // (2) == 11
+            runString = "(2)";
             if ((byte) 11 != test.bytecode.BC_getstatic_b.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2032,14 +2032,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_getstatic_c");
         String runString = null;
         try {
-        // test(0) == '\13'
-            runString = "test(0)";
+        // (0) == '\13'
+            runString = "(0)";
             if ((char) 11 != test.bytecode.BC_getstatic_c.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == '\13'
-            runString = "test(1)";
+        // (1) == '\13'
+            runString = "(1)";
             if ((char) 11 != test.bytecode.BC_getstatic_c.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2054,14 +2054,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_getstatic_d");
         String runString = null;
         try {
-        // test(0) == 11.0
-            runString = "test(0)";
+        // (0) == 11.0
+            runString = "(0)";
             if (11.0 != test.bytecode.BC_getstatic_d.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 11.0
-            runString = "test(1)";
+        // (1) == 11.0
+            runString = "(1)";
             if (11.0 != test.bytecode.BC_getstatic_d.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2076,14 +2076,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_getstatic_f");
         String runString = null;
         try {
-        // test(0) == 11.0
-            runString = "test(0)";
+        // (0) == 11.0
+            runString = "(0)";
             if (11.0f != test.bytecode.BC_getstatic_f.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 11.0
-            runString = "test(1)";
+        // (1) == 11.0
+            runString = "(1)";
             if (11.0f != test.bytecode.BC_getstatic_f.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2098,32 +2098,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_getstatic_i");
         String runString = null;
         try {
-        // test(0) == 11
-            runString = "test(0)";
+        // (0) == 11
+            runString = "(0)";
             if (11 != test.bytecode.BC_getstatic_i.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 11
-            runString = "test(1)";
+        // (1) == 11
+            runString = "(1)";
             if (11 != test.bytecode.BC_getstatic_i.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 11
-            runString = "test(2)";
+        // (2) == 11
+            runString = "(2)";
             if (11 != test.bytecode.BC_getstatic_i.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 11
-            runString = "test(3)";
+        // (3) == 11
+            runString = "(3)";
             if (11 != test.bytecode.BC_getstatic_i.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-4) == 11
-            runString = "test(-4)";
+        // (-4) == 11
+            runString = "(-4)";
             if (11 != test.bytecode.BC_getstatic_i.test(-4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2138,14 +2138,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_getstatic_l");
         String runString = null;
         try {
-        // test(0) == 11
-            runString = "test(0)";
+        // (0) == 11
+            runString = "(0)";
             if (11L != test.bytecode.BC_getstatic_l.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 11
-            runString = "test(1)";
+        // (1) == 11
+            runString = "(1)";
             if (11L != test.bytecode.BC_getstatic_l.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2160,14 +2160,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_getstatic_s");
         String runString = null;
         try {
-        // test(0) == 11
-            runString = "test(0)";
+        // (0) == 11
+            runString = "(0)";
             if ((short) 11 != test.bytecode.BC_getstatic_s.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 11
-            runString = "test(1)";
+        // (1) == 11
+            runString = "(1)";
             if ((short) 11 != test.bytecode.BC_getstatic_s.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2182,14 +2182,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_getstatic_z");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.bytecode.BC_getstatic_z.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.bytecode.BC_getstatic_z.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2204,26 +2204,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_i2b");
         String runString = null;
         try {
-        // test(-1) == -1
-            runString = "test(-1)";
+        // (-1) == -1
+            runString = "(-1)";
             if ((byte) -1 != test.bytecode.BC_i2b.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 2
-            runString = "test(2)";
+        // (2) == 2
+            runString = "(2)";
             if ((byte) 2 != test.bytecode.BC_i2b.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(255) == -1
-            runString = "test(255)";
+        // (255) == -1
+            runString = "(255)";
             if ((byte) -1 != test.bytecode.BC_i2b.test(255)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(128) == -128
-            runString = "test(128)";
+        // (128) == -128
+            runString = "(128)";
             if ((byte) -128 != test.bytecode.BC_i2b.test(128)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2238,20 +2238,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_i2c");
         String runString = null;
         try {
-        // test(-1) == '\177777'
-            runString = "test(-1)";
+        // (-1) == '\177777'
+            runString = "(-1)";
             if ((char) 65535 != test.bytecode.BC_i2c.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(645) == '\1205'
-            runString = "test(645)";
+        // (645) == '\1205'
+            runString = "(645)";
             if ((char) 645 != test.bytecode.BC_i2c.test(645)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(65535) == '\177777'
-            runString = "test(65535)";
+        // (65535) == '\177777'
+            runString = "(65535)";
             if ((char) 65535 != test.bytecode.BC_i2c.test(65535)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2266,20 +2266,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_i2d");
         String runString = null;
         try {
-        // test(0) == 0.0
-            runString = "test(0)";
+        // (0) == 0.0
+            runString = "(0)";
             if (0.0 != test.bytecode.BC_i2d.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1.0
-            runString = "test(1)";
+        // (1) == 1.0
+            runString = "(1)";
             if (1.0 != test.bytecode.BC_i2d.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-34) == -34.0
-            runString = "test(-34)";
+        // (-34) == -34.0
+            runString = "(-34)";
             if (-34.0 != test.bytecode.BC_i2d.test(-34)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2294,20 +2294,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_i2f");
         String runString = null;
         try {
-        // test(0) == 0.0
-            runString = "test(0)";
+        // (0) == 0.0
+            runString = "(0)";
             if (0.0f != test.bytecode.BC_i2f.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1.0
-            runString = "test(1)";
+        // (1) == 1.0
+            runString = "(1)";
             if (1.0f != test.bytecode.BC_i2f.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-34) == -34.0
-            runString = "test(-34)";
+        // (-34) == -34.0
+            runString = "(-34)";
             if (-34.0f != test.bytecode.BC_i2f.test(-34)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2322,44 +2322,44 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_i2l");
         String runString = null;
         try {
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1L != test.bytecode.BC_i2l.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 2
-            runString = "test(2)";
+        // (2) == 2
+            runString = "(2)";
             if (2L != test.bytecode.BC_i2l.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 3
-            runString = "test(3)";
+        // (3) == 3
+            runString = "(3)";
             if (3L != test.bytecode.BC_i2l.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == -1
-            runString = "test(-1)";
+        // (-1) == -1
+            runString = "(-1)";
             if (-1L != test.bytecode.BC_i2l.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483647) == -2147483647
-            runString = "test(-2147483647)";
+        // (-2147483647) == -2147483647
+            runString = "(-2147483647)";
             if (-2147483647L != test.bytecode.BC_i2l.test(-2147483647)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483648) == -2147483648
-            runString = "test(-2147483648)";
+        // (-2147483648) == -2147483648
+            runString = "(-2147483648)";
             if (-2147483648L != test.bytecode.BC_i2l.test(-2147483648)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2147483647) == 2147483647
-            runString = "test(2147483647)";
+        // (2147483647) == 2147483647
+            runString = "(2147483647)";
             if (2147483647L != test.bytecode.BC_i2l.test(2147483647)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2374,26 +2374,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_i2s");
         String runString = null;
         try {
-        // test(-1) == -1
-            runString = "test(-1)";
+        // (-1) == -1
+            runString = "(-1)";
             if ((short) -1 != test.bytecode.BC_i2s.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(34) == 34
-            runString = "test(34)";
+        // (34) == 34
+            runString = "(34)";
             if ((short) 34 != test.bytecode.BC_i2s.test(34)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(65535) == -1
-            runString = "test(65535)";
+        // (65535) == -1
+            runString = "(65535)";
             if ((short) -1 != test.bytecode.BC_i2s.test(65535)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(32768) == -32768
-            runString = "test(32768)";
+        // (32768) == -32768
+            runString = "(32768)";
             if ((short) -32768 != test.bytecode.BC_i2s.test(32768)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2408,44 +2408,44 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_iadd");
         String runString = null;
         try {
-        // test(1,2) == 3
-            runString = "test(1,2)";
+        // (1,2) == 3
+            runString = "(1,2)";
             if (3 != test.bytecode.BC_iadd.test(1, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,-1) == -1
-            runString = "test(0,-1)";
+        // (0,-1) == -1
+            runString = "(0,-1)";
             if (-1 != test.bytecode.BC_iadd.test(0, -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(33,67) == 100
-            runString = "test(33,67)";
+        // (33,67) == 100
+            runString = "(33,67)";
             if (100 != test.bytecode.BC_iadd.test(33, 67)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,-1) == 0
-            runString = "test(1,-1)";
+        // (1,-1) == 0
+            runString = "(1,-1)";
             if (0 != test.bytecode.BC_iadd.test(1, -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483648,1) == -2147483647
-            runString = "test(-2147483648,1)";
+        // (-2147483648,1) == -2147483647
+            runString = "(-2147483648,1)";
             if (-2147483647 != test.bytecode.BC_iadd.test(-2147483648, 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2147483647,1) == -2147483648
-            runString = "test(2147483647,1)";
+        // (2147483647,1) == -2147483648
+            runString = "(2147483647,1)";
             if (-2147483648 != test.bytecode.BC_iadd.test(2147483647, 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483647,-2) == 2147483647
-            runString = "test(-2147483647,-2)";
+        // (-2147483647,-2) == 2147483647
+            runString = "(-2147483647,-2)";
             if (2147483647 != test.bytecode.BC_iadd.test(-2147483647, -2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2460,38 +2460,38 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_iadd2");
         String runString = null;
         try {
-        // test(1,2) == 3
-            runString = "test(1,2)";
+        // (1,2) == 3
+            runString = "(1,2)";
             if (3 != test.bytecode.BC_iadd2.test((byte) 1, (byte) 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,-1) == -1
-            runString = "test(0,-1)";
+        // (0,-1) == -1
+            runString = "(0,-1)";
             if (-1 != test.bytecode.BC_iadd2.test((byte) 0, (byte) -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(33,67) == 100
-            runString = "test(33,67)";
+        // (33,67) == 100
+            runString = "(33,67)";
             if (100 != test.bytecode.BC_iadd2.test((byte) 33, (byte) 67)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,-1) == 0
-            runString = "test(1,-1)";
+        // (1,-1) == 0
+            runString = "(1,-1)";
             if (0 != test.bytecode.BC_iadd2.test((byte) 1, (byte) -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-128,1) == -127
-            runString = "test(-128,1)";
+        // (-128,1) == -127
+            runString = "(-128,1)";
             if (-127 != test.bytecode.BC_iadd2.test((byte) -128, (byte) 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(127,1) == 128
-            runString = "test(127,1)";
+        // (127,1) == 128
+            runString = "(127,1)";
             if (128 != test.bytecode.BC_iadd2.test((byte) 127, (byte) 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2506,50 +2506,50 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_iadd3");
         String runString = null;
         try {
-        // test(1,2) == 3
-            runString = "test(1,2)";
+        // (1,2) == 3
+            runString = "(1,2)";
             if (3 != test.bytecode.BC_iadd3.test((short) 1, (short) 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,-1) == -1
-            runString = "test(0,-1)";
+        // (0,-1) == -1
+            runString = "(0,-1)";
             if (-1 != test.bytecode.BC_iadd3.test((short) 0, (short) -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(33,67) == 100
-            runString = "test(33,67)";
+        // (33,67) == 100
+            runString = "(33,67)";
             if (100 != test.bytecode.BC_iadd3.test((short) 33, (short) 67)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,-1) == 0
-            runString = "test(1,-1)";
+        // (1,-1) == 0
+            runString = "(1,-1)";
             if (0 != test.bytecode.BC_iadd3.test((short) 1, (short) -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-128,1) == -127
-            runString = "test(-128,1)";
+        // (-128,1) == -127
+            runString = "(-128,1)";
             if (-127 != test.bytecode.BC_iadd3.test((short) -128, (short) 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(127,1) == 128
-            runString = "test(127,1)";
+        // (127,1) == 128
+            runString = "(127,1)";
             if (128 != test.bytecode.BC_iadd3.test((short) 127, (short) 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-32768,1) == -32767
-            runString = "test(-32768,1)";
+        // (-32768,1) == -32767
+            runString = "(-32768,1)";
             if (-32767 != test.bytecode.BC_iadd3.test((short) -32768, (short) 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(32767,1) == 32768
-            runString = "test(32767,1)";
+        // (32767,1) == 32768
+            runString = "(32767,1)";
             if (32768 != test.bytecode.BC_iadd3.test((short) 32767, (short) 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2564,26 +2564,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_iaload");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.bytecode.BC_iaload.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == -1
-            runString = "test(1)";
+        // (1) == -1
+            runString = "(1)";
             if (-1 != test.bytecode.BC_iaload.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 4
-            runString = "test(2)";
+        // (2) == 4
+            runString = "(2)";
             if (4 != test.bytecode.BC_iaload.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 1000000000
-            runString = "test(3)";
+        // (3) == 1000000000
+            runString = "(3)";
             if (1000000000 != test.bytecode.BC_iaload.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2598,32 +2598,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_iand");
         String runString = null;
         try {
-        // test(1,2) == 0
-            runString = "test(1,2)";
+        // (1,2) == 0
+            runString = "(1,2)";
             if (0 != test.bytecode.BC_iand.test(1, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,-1) == 0
-            runString = "test(0,-1)";
+        // (0,-1) == 0
+            runString = "(0,-1)";
             if (0 != test.bytecode.BC_iand.test(0, -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(31,63) == 31
-            runString = "test(31,63)";
+        // (31,63) == 31
+            runString = "(31,63)";
             if (31 != test.bytecode.BC_iand.test(31, 63)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6,4) == 4
-            runString = "test(6,4)";
+        // (6,4) == 4
+            runString = "(6,4)";
             if (4 != test.bytecode.BC_iand.test(6, 4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483648,1) == 0
-            runString = "test(-2147483648,1)";
+        // (-2147483648,1) == 0
+            runString = "(-2147483648,1)";
             if (0 != test.bytecode.BC_iand.test(-2147483648, 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2638,26 +2638,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_iastore");
         String runString = null;
         try {
-        // test(0,0) == 0
-            runString = "test(0,0)";
+        // (0,0) == 0
+            runString = "(0,0)";
             if (0 != test.bytecode.BC_iastore.test(0, 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,-1) == -1
-            runString = "test(1,-1)";
+        // (1,-1) == -1
+            runString = "(1,-1)";
             if (-1 != test.bytecode.BC_iastore.test(1, -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2,11) == 11
-            runString = "test(2,11)";
+        // (2,11) == 11
+            runString = "(2,11)";
             if (11 != test.bytecode.BC_iastore.test(2, 11)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3,-14) == -14
-            runString = "test(3,-14)";
+        // (3,-14) == -14
+            runString = "(3,-14)";
             if (-14 != test.bytecode.BC_iastore.test(3, -14)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2672,44 +2672,44 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_iconst");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.bytecode.BC_iconst.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.bytecode.BC_iconst.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 2
-            runString = "test(2)";
+        // (2) == 2
+            runString = "(2)";
             if (2 != test.bytecode.BC_iconst.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 3
-            runString = "test(3)";
+        // (3) == 3
+            runString = "(3)";
             if (3 != test.bytecode.BC_iconst.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 4
-            runString = "test(4)";
+        // (4) == 4
+            runString = "(4)";
             if (4 != test.bytecode.BC_iconst.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == 5
-            runString = "test(5)";
+        // (5) == 5
+            runString = "(5)";
             if (5 != test.bytecode.BC_iconst.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == 375
-            runString = "test(6)";
+        // (6) == 375
+            runString = "(6)";
             if (375 != test.bytecode.BC_iconst.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2724,26 +2724,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_idiv");
         String runString = null;
         try {
-        // test(1,2) == 0
-            runString = "test(1,2)";
+        // (1,2) == 0
+            runString = "(1,2)";
             if (0 != test.bytecode.BC_idiv.test(1, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2,-1) == -2
-            runString = "test(2,-1)";
+        // (2,-1) == -2
+            runString = "(2,-1)";
             if (-2 != test.bytecode.BC_idiv.test(2, -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(256,4) == 64
-            runString = "test(256,4)";
+        // (256,4) == 64
+            runString = "(256,4)";
             if (64 != test.bytecode.BC_idiv.test(256, 4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(135,7) == 19
-            runString = "test(135,7)";
+        // (135,7) == 19
+            runString = "(135,7)";
             if (19 != test.bytecode.BC_idiv.test(135, 7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2758,14 +2758,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ifeq");
         String runString = null;
         try {
-        // test(0) == 2
-            runString = "test(0)";
+        // (0) == 2
+            runString = "(0)";
             if (2 != test.bytecode.BC_ifeq.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == -2
-            runString = "test(1)";
+        // (1) == -2
+            runString = "(1)";
             if (-2 != test.bytecode.BC_ifeq.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2780,14 +2780,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ifeq_2");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.bytecode.BC_ifeq_2.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.bytecode.BC_ifeq_2.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2802,14 +2802,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ifeq_3");
         String runString = null;
         try {
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.bytecode.BC_ifeq_3.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.bytecode.BC_ifeq_3.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2824,14 +2824,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ifge");
         String runString = null;
         try {
-        // test(0) == 2
-            runString = "test(0)";
+        // (0) == 2
+            runString = "(0)";
             if (2 != test.bytecode.BC_ifge.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 2
-            runString = "test(1)";
+        // (1) == 2
+            runString = "(1)";
             if (2 != test.bytecode.BC_ifge.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2846,38 +2846,38 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ifge_2");
         String runString = null;
         try {
-        // test(0,1) == false
-            runString = "test(0,1)";
+        // (0,1) == false
+            runString = "(0,1)";
             if (false != test.bytecode.BC_ifge_2.test(0, 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,0) == true
-            runString = "test(1,0)";
+        // (1,0) == true
+            runString = "(1,0)";
             if (true != test.bytecode.BC_ifge_2.test(1, 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,1) == true
-            runString = "test(1,1)";
+        // (1,1) == true
+            runString = "(1,1)";
             if (true != test.bytecode.BC_ifge_2.test(1, 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,-100) == true
-            runString = "test(0,-100)";
+        // (0,-100) == true
+            runString = "(0,-100)";
             if (true != test.bytecode.BC_ifge_2.test(0, -100)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1,0) == false
-            runString = "test(-1,0)";
+        // (-1,0) == false
+            runString = "(-1,0)";
             if (false != test.bytecode.BC_ifge_2.test(-1, 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-12,-12) == true
-            runString = "test(-12,-12)";
+        // (-12,-12) == true
+            runString = "(-12,-12)";
             if (true != test.bytecode.BC_ifge_2.test(-12, -12)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2892,38 +2892,38 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ifge_3");
         String runString = null;
         try {
-        // test(0,1) == true
-            runString = "test(0,1)";
+        // (0,1) == true
+            runString = "(0,1)";
             if (true != test.bytecode.BC_ifge_3.test(0, 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,0) == false
-            runString = "test(1,0)";
+        // (1,0) == false
+            runString = "(1,0)";
             if (false != test.bytecode.BC_ifge_3.test(1, 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,1) == false
-            runString = "test(1,1)";
+        // (1,1) == false
+            runString = "(1,1)";
             if (false != test.bytecode.BC_ifge_3.test(1, 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,-100) == false
-            runString = "test(0,-100)";
+        // (0,-100) == false
+            runString = "(0,-100)";
             if (false != test.bytecode.BC_ifge_3.test(0, -100)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1,0) == true
-            runString = "test(-1,0)";
+        // (-1,0) == true
+            runString = "(-1,0)";
             if (true != test.bytecode.BC_ifge_3.test(-1, 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-12,-12) == false
-            runString = "test(-12,-12)";
+        // (-12,-12) == false
+            runString = "(-12,-12)";
             if (false != test.bytecode.BC_ifge_3.test(-12, -12)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2938,14 +2938,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ifgt");
         String runString = null;
         try {
-        // test(0) == -2
-            runString = "test(0)";
+        // (0) == -2
+            runString = "(0)";
             if (-2 != test.bytecode.BC_ifgt.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 2
-            runString = "test(1)";
+        // (1) == 2
+            runString = "(1)";
             if (2 != test.bytecode.BC_ifgt.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2960,20 +2960,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ificmplt1");
         String runString = null;
         try {
-        // test(0) == 12
-            runString = "test(0)";
+        // (0) == 12
+            runString = "(0)";
             if (12 != test.bytecode.BC_ificmplt1.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 13
-            runString = "test(1)";
+        // (1) == 13
+            runString = "(1)";
             if (13 != test.bytecode.BC_ificmplt1.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 13
-            runString = "test(2)";
+        // (2) == 13
+            runString = "(2)";
             if (13 != test.bytecode.BC_ificmplt1.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -2988,20 +2988,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ificmplt2");
         String runString = null;
         try {
-        // test(0) == 12
-            runString = "test(0)";
+        // (0) == 12
+            runString = "(0)";
             if (12 != test.bytecode.BC_ificmplt2.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 12
-            runString = "test(1)";
+        // (1) == 12
+            runString = "(1)";
             if (12 != test.bytecode.BC_ificmplt2.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 13
-            runString = "test(2)";
+        // (2) == 13
+            runString = "(2)";
             if (13 != test.bytecode.BC_ificmplt2.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3016,20 +3016,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ificmpne1");
         String runString = null;
         try {
-        // test(0) == 13
-            runString = "test(0)";
+        // (0) == 13
+            runString = "(0)";
             if (13 != test.bytecode.BC_ificmpne1.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 12
-            runString = "test(1)";
+        // (1) == 12
+            runString = "(1)";
             if (12 != test.bytecode.BC_ificmpne1.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 13
-            runString = "test(2)";
+        // (2) == 13
+            runString = "(2)";
             if (13 != test.bytecode.BC_ificmpne1.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3044,20 +3044,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ificmpne2");
         String runString = null;
         try {
-        // test(0) == 13
-            runString = "test(0)";
+        // (0) == 13
+            runString = "(0)";
             if (13 != test.bytecode.BC_ificmpne2.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 12
-            runString = "test(1)";
+        // (1) == 12
+            runString = "(1)";
             if (12 != test.bytecode.BC_ificmpne2.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 13
-            runString = "test(2)";
+        // (2) == 13
+            runString = "(2)";
             if (13 != test.bytecode.BC_ificmpne2.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3072,14 +3072,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ifle");
         String runString = null;
         try {
-        // test(0) == 2
-            runString = "test(0)";
+        // (0) == 2
+            runString = "(0)";
             if (2 != test.bytecode.BC_ifle.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == -2
-            runString = "test(1)";
+        // (1) == -2
+            runString = "(1)";
             if (-2 != test.bytecode.BC_ifle.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3094,20 +3094,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_iflt");
         String runString = null;
         try {
-        // test(0) == -2
-            runString = "test(0)";
+        // (0) == -2
+            runString = "(0)";
             if (-2 != test.bytecode.BC_iflt.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == -2
-            runString = "test(1)";
+        // (1) == -2
+            runString = "(1)";
             if (-2 != test.bytecode.BC_iflt.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == 2
-            runString = "test(-1)";
+        // (-1) == 2
+            runString = "(-1)";
             if (2 != test.bytecode.BC_iflt.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3122,14 +3122,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ifne");
         String runString = null;
         try {
-        // test(0) == -2
-            runString = "test(0)";
+        // (0) == -2
+            runString = "(0)";
             if (-2 != test.bytecode.BC_ifne.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 2
-            runString = "test(1)";
+        // (1) == 2
+            runString = "(1)";
             if (2 != test.bytecode.BC_ifne.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3144,14 +3144,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ifnonnull");
         String runString = null;
         try {
-        // test(null) == 2
-            runString = "test(null)";
+        // (null) == 2
+            runString = "(null)";
             if (2 != test.bytecode.BC_ifnonnull.test(null)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test("") == -2
-            runString = "test(\"\")";
+        // ("") == -2
+            runString = "(\"\")";
             if (-2 != test.bytecode.BC_ifnonnull.test("")) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3166,14 +3166,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ifnonnull_2");
         String runString = null;
         try {
-        // test(null) == false
-            runString = "test(null)";
+        // (null) == false
+            runString = "(null)";
             if (false != test.bytecode.BC_ifnonnull_2.test(null)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test("") == true
-            runString = "test(\"\")";
+        // ("") == true
+            runString = "(\"\")";
             if (true != test.bytecode.BC_ifnonnull_2.test("")) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3188,14 +3188,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ifnonnull_3");
         String runString = null;
         try {
-        // test(null) == 2
-            runString = "test(null)";
+        // (null) == 2
+            runString = "(null)";
             if (2 != test.bytecode.BC_ifnonnull_3.test(null)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test("") == 1
-            runString = "test(\"\")";
+        // ("") == 1
+            runString = "(\"\")";
             if (1 != test.bytecode.BC_ifnonnull_3.test("")) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3210,14 +3210,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ifnull");
         String runString = null;
         try {
-        // test(null) == -2
-            runString = "test(null)";
+        // (null) == -2
+            runString = "(null)";
             if (-2 != test.bytecode.BC_ifnull.test(null)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test("") == 2
-            runString = "test(\"\")";
+        // ("") == 2
+            runString = "(\"\")";
             if (2 != test.bytecode.BC_ifnull.test("")) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3232,14 +3232,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ifnull_2");
         String runString = null;
         try {
-        // test(null) == true
-            runString = "test(null)";
+        // (null) == true
+            runString = "(null)";
             if (true != test.bytecode.BC_ifnull_2.test(null)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test("") == false
-            runString = "test(\"\")";
+        // ("") == false
+            runString = "(\"\")";
             if (false != test.bytecode.BC_ifnull_2.test("")) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3254,14 +3254,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ifnull_3");
         String runString = null;
         try {
-        // test(null) == 1
-            runString = "test(null)";
+        // (null) == 1
+            runString = "(null)";
             if (1 != test.bytecode.BC_ifnull_3.test(null)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test("") == 2
-            runString = "test(\"\")";
+        // ("") == 2
+            runString = "(\"\")";
             if (2 != test.bytecode.BC_ifnull_3.test("")) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3276,26 +3276,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_iinc_1");
         String runString = null;
         try {
-        // test(1) == 2
-            runString = "test(1)";
+        // (1) == 2
+            runString = "(1)";
             if (2 != test.bytecode.BC_iinc_1.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 3
-            runString = "test(2)";
+        // (2) == 3
+            runString = "(2)";
             if (3 != test.bytecode.BC_iinc_1.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 5
-            runString = "test(4)";
+        // (4) == 5
+            runString = "(4)";
             if (5 != test.bytecode.BC_iinc_1.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == 0
-            runString = "test(-1)";
+        // (-1) == 0
+            runString = "(-1)";
             if (0 != test.bytecode.BC_iinc_1.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3310,26 +3310,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_iinc_2");
         String runString = null;
         try {
-        // test(1) == 3
-            runString = "test(1)";
+        // (1) == 3
+            runString = "(1)";
             if (3 != test.bytecode.BC_iinc_2.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 4
-            runString = "test(2)";
+        // (2) == 4
+            runString = "(2)";
             if (4 != test.bytecode.BC_iinc_2.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 6
-            runString = "test(4)";
+        // (4) == 6
+            runString = "(4)";
             if (6 != test.bytecode.BC_iinc_2.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2) == 0
-            runString = "test(-2)";
+        // (-2) == 0
+            runString = "(-2)";
             if (0 != test.bytecode.BC_iinc_2.test(-2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3344,26 +3344,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_iinc_3");
         String runString = null;
         try {
-        // test(1) == 52
-            runString = "test(1)";
+        // (1) == 52
+            runString = "(1)";
             if (52 != test.bytecode.BC_iinc_3.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 53
-            runString = "test(2)";
+        // (2) == 53
+            runString = "(2)";
             if (53 != test.bytecode.BC_iinc_3.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 55
-            runString = "test(4)";
+        // (4) == 55
+            runString = "(4)";
             if (55 != test.bytecode.BC_iinc_3.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == 50
-            runString = "test(-1)";
+        // (-1) == 50
+            runString = "(-1)";
             if (50 != test.bytecode.BC_iinc_3.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3378,26 +3378,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_iinc_4");
         String runString = null;
         try {
-        // test(1) == 513
-            runString = "test(1)";
+        // (1) == 513
+            runString = "(1)";
             if (513 != test.bytecode.BC_iinc_4.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 514
-            runString = "test(2)";
+        // (2) == 514
+            runString = "(2)";
             if (514 != test.bytecode.BC_iinc_4.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 516
-            runString = "test(4)";
+        // (4) == 516
+            runString = "(4)";
             if (516 != test.bytecode.BC_iinc_4.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == 511
-            runString = "test(-1)";
+        // (-1) == 511
+            runString = "(-1)";
             if (511 != test.bytecode.BC_iinc_4.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3412,26 +3412,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_iload_0");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.bytecode.BC_iload_0.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == -1
-            runString = "test(-1)";
+        // (-1) == -1
+            runString = "(-1)";
             if (-1 != test.bytecode.BC_iload_0.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 2
-            runString = "test(2)";
+        // (2) == 2
+            runString = "(2)";
             if (2 != test.bytecode.BC_iload_0.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1000345) == 1000345
-            runString = "test(1000345)";
+        // (1000345) == 1000345
+            runString = "(1000345)";
             if (1000345 != test.bytecode.BC_iload_0.test(1000345)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3446,26 +3446,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_iload_0_1");
         String runString = null;
         try {
-        // test(0) == 1
-            runString = "test(0)";
+        // (0) == 1
+            runString = "(0)";
             if (1 != test.bytecode.BC_iload_0_1.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == 0
-            runString = "test(-1)";
+        // (-1) == 0
+            runString = "(-1)";
             if (0 != test.bytecode.BC_iload_0_1.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 3
-            runString = "test(2)";
+        // (2) == 3
+            runString = "(2)";
             if (3 != test.bytecode.BC_iload_0_1.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1000345) == 1000346
-            runString = "test(1000345)";
+        // (1000345) == 1000346
+            runString = "(1000345)";
             if (1000346 != test.bytecode.BC_iload_0_1.test(1000345)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3480,26 +3480,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_iload_0_2");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.bytecode.BC_iload_0_2.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == -1
-            runString = "test(-1)";
+        // (-1) == -1
+            runString = "(-1)";
             if (-1 != test.bytecode.BC_iload_0_2.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 2
-            runString = "test(2)";
+        // (2) == 2
+            runString = "(2)";
             if (2 != test.bytecode.BC_iload_0_2.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1000345) == 1000345
-            runString = "test(1000345)";
+        // (1000345) == 1000345
+            runString = "(1000345)";
             if (1000345 != test.bytecode.BC_iload_0_2.test(1000345)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3514,26 +3514,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_iload_1");
         String runString = null;
         try {
-        // test(1,0) == 0
-            runString = "test(1,0)";
+        // (1,0) == 0
+            runString = "(1,0)";
             if (0 != test.bytecode.BC_iload_1.test(1, 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,-1) == -1
-            runString = "test(1,-1)";
+        // (1,-1) == -1
+            runString = "(1,-1)";
             if (-1 != test.bytecode.BC_iload_1.test(1, -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,2) == 2
-            runString = "test(1,2)";
+        // (1,2) == 2
+            runString = "(1,2)";
             if (2 != test.bytecode.BC_iload_1.test(1, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,1000345) == 1000345
-            runString = "test(1,1000345)";
+        // (1,1000345) == 1000345
+            runString = "(1,1000345)";
             if (1000345 != test.bytecode.BC_iload_1.test(1, 1000345)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3548,26 +3548,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_iload_1_1");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.bytecode.BC_iload_1_1.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == -1
-            runString = "test(-1)";
+        // (-1) == -1
+            runString = "(-1)";
             if (-1 != test.bytecode.BC_iload_1_1.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 2
-            runString = "test(2)";
+        // (2) == 2
+            runString = "(2)";
             if (2 != test.bytecode.BC_iload_1_1.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1000345) == 1000345
-            runString = "test(1000345)";
+        // (1000345) == 1000345
+            runString = "(1000345)";
             if (1000345 != test.bytecode.BC_iload_1_1.test(1000345)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3582,26 +3582,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_iload_2");
         String runString = null;
         try {
-        // test(1,1,0) == 0
-            runString = "test(1,1,0)";
+        // (1,1,0) == 0
+            runString = "(1,1,0)";
             if (0 != test.bytecode.BC_iload_2.test(1, 1, 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,1,-1) == -1
-            runString = "test(1,1,-1)";
+        // (1,1,-1) == -1
+            runString = "(1,1,-1)";
             if (-1 != test.bytecode.BC_iload_2.test(1, 1, -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,1,2) == 2
-            runString = "test(1,1,2)";
+        // (1,1,2) == 2
+            runString = "(1,1,2)";
             if (2 != test.bytecode.BC_iload_2.test(1, 1, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,1,1000345) == 1000345
-            runString = "test(1,1,1000345)";
+        // (1,1,1000345) == 1000345
+            runString = "(1,1,1000345)";
             if (1000345 != test.bytecode.BC_iload_2.test(1, 1, 1000345)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3616,26 +3616,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_iload_3");
         String runString = null;
         try {
-        // test(1,1,1,0) == 0
-            runString = "test(1,1,1,0)";
+        // (1,1,1,0) == 0
+            runString = "(1,1,1,0)";
             if (0 != test.bytecode.BC_iload_3.test(1, 1, 1, 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,1,1,-1) == -1
-            runString = "test(1,1,1,-1)";
+        // (1,1,1,-1) == -1
+            runString = "(1,1,1,-1)";
             if (-1 != test.bytecode.BC_iload_3.test(1, 1, 1, -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,1,1,2) == 2
-            runString = "test(1,1,1,2)";
+        // (1,1,1,2) == 2
+            runString = "(1,1,1,2)";
             if (2 != test.bytecode.BC_iload_3.test(1, 1, 1, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,1,1,1000345) == 1000345
-            runString = "test(1,1,1,1000345)";
+        // (1,1,1,1000345) == 1000345
+            runString = "(1,1,1,1000345)";
             if (1000345 != test.bytecode.BC_iload_3.test(1, 1, 1, 1000345)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3650,44 +3650,44 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_imul");
         String runString = null;
         try {
-        // test(1,2) == 2
-            runString = "test(1,2)";
+        // (1,2) == 2
+            runString = "(1,2)";
             if (2 != test.bytecode.BC_imul.test(1, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,-1) == 0
-            runString = "test(0,-1)";
+        // (0,-1) == 0
+            runString = "(0,-1)";
             if (0 != test.bytecode.BC_imul.test(0, -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(33,67) == 2211
-            runString = "test(33,67)";
+        // (33,67) == 2211
+            runString = "(33,67)";
             if (2211 != test.bytecode.BC_imul.test(33, 67)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,-1) == -1
-            runString = "test(1,-1)";
+        // (1,-1) == -1
+            runString = "(1,-1)";
             if (-1 != test.bytecode.BC_imul.test(1, -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483648,1) == -2147483648
-            runString = "test(-2147483648,1)";
+        // (-2147483648,1) == -2147483648
+            runString = "(-2147483648,1)";
             if (-2147483648 != test.bytecode.BC_imul.test(-2147483648, 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2147483647,-1) == -2147483647
-            runString = "test(2147483647,-1)";
+        // (2147483647,-1) == -2147483647
+            runString = "(2147483647,-1)";
             if (-2147483647 != test.bytecode.BC_imul.test(2147483647, -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483648,-1) == -2147483648
-            runString = "test(-2147483648,-1)";
+        // (-2147483648,-1) == -2147483648
+            runString = "(-2147483648,-1)";
             if (-2147483648 != test.bytecode.BC_imul.test(-2147483648, -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3702,26 +3702,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ineg");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.bytecode.BC_ineg.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == 1
-            runString = "test(-1)";
+        // (-1) == 1
+            runString = "(-1)";
             if (1 != test.bytecode.BC_ineg.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7263) == -7263
-            runString = "test(7263)";
+        // (7263) == -7263
+            runString = "(7263)";
             if (-7263 != test.bytecode.BC_ineg.test(7263)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483648) == -2147483648
-            runString = "test(-2147483648)";
+        // (-2147483648) == -2147483648
+            runString = "(-2147483648)";
             if (-2147483648 != test.bytecode.BC_ineg.test(-2147483648)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3736,32 +3736,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_instanceof");
         String runString = null;
         try {
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.bytecode.BC_instanceof.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.bytecode.BC_instanceof.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == false
-            runString = "test(2)";
+        // (2) == false
+            runString = "(2)";
             if (false != test.bytecode.BC_instanceof.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == false
-            runString = "test(3)";
+        // (3) == false
+            runString = "(3)";
             if (false != test.bytecode.BC_instanceof.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == true
-            runString = "test(4)";
+        // (4) == true
+            runString = "(4)";
             if (true != test.bytecode.BC_instanceof.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3776,32 +3776,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_invokeinterface");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.bytecode.BC_invokeinterface.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.bytecode.BC_invokeinterface.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 2
-            runString = "test(2)";
+        // (2) == 2
+            runString = "(2)";
             if (2 != test.bytecode.BC_invokeinterface.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 3
-            runString = "test(3)";
+        // (3) == 3
+            runString = "(3)";
             if (3 != test.bytecode.BC_invokeinterface.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-4) == -4
-            runString = "test(-4)";
+        // (-4) == -4
+            runString = "(-4)";
             if (-4 != test.bytecode.BC_invokeinterface.test(-4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3816,32 +3816,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_invokespecial");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.bytecode.BC_invokespecial.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.bytecode.BC_invokespecial.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 2
-            runString = "test(2)";
+        // (2) == 2
+            runString = "(2)";
             if (2 != test.bytecode.BC_invokespecial.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 3
-            runString = "test(3)";
+        // (3) == 3
+            runString = "(3)";
             if (3 != test.bytecode.BC_invokespecial.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-4) == -4
-            runString = "test(-4)";
+        // (-4) == -4
+            runString = "(-4)";
             if (-4 != test.bytecode.BC_invokespecial.test(-4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3856,32 +3856,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_invokespecial2");
         String runString = null;
         try {
-        // test(0) == 7
-            runString = "test(0)";
+        // (0) == 7
+            runString = "(0)";
             if (7 != test.bytecode.BC_invokespecial2.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 8
-            runString = "test(1)";
+        // (1) == 8
+            runString = "(1)";
             if (8 != test.bytecode.BC_invokespecial2.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 9
-            runString = "test(2)";
+        // (2) == 9
+            runString = "(2)";
             if (9 != test.bytecode.BC_invokespecial2.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 10
-            runString = "test(3)";
+        // (3) == 10
+            runString = "(3)";
             if (10 != test.bytecode.BC_invokespecial2.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-4) == 3
-            runString = "test(-4)";
+        // (-4) == 3
+            runString = "(-4)";
             if (3 != test.bytecode.BC_invokespecial2.test(-4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3896,32 +3896,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_invokestatic");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.bytecode.BC_invokestatic.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.bytecode.BC_invokestatic.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 2
-            runString = "test(2)";
+        // (2) == 2
+            runString = "(2)";
             if (2 != test.bytecode.BC_invokestatic.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 3
-            runString = "test(3)";
+        // (3) == 3
+            runString = "(3)";
             if (3 != test.bytecode.BC_invokestatic.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-4) == -4
-            runString = "test(-4)";
+        // (-4) == -4
+            runString = "(-4)";
             if (-4 != test.bytecode.BC_invokestatic.test(-4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3936,32 +3936,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_invokevirtual");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.bytecode.BC_invokevirtual.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.bytecode.BC_invokevirtual.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 2
-            runString = "test(2)";
+        // (2) == 2
+            runString = "(2)";
             if (2 != test.bytecode.BC_invokevirtual.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 3
-            runString = "test(3)";
+        // (3) == 3
+            runString = "(3)";
             if (3 != test.bytecode.BC_invokevirtual.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-4) == -4
-            runString = "test(-4)";
+        // (-4) == -4
+            runString = "(-4)";
             if (-4 != test.bytecode.BC_invokevirtual.test(-4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -3976,32 +3976,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ior");
         String runString = null;
         try {
-        // test(1,2) == 3
-            runString = "test(1,2)";
+        // (1,2) == 3
+            runString = "(1,2)";
             if (3 != test.bytecode.BC_ior.test(1, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,-1) == -1
-            runString = "test(0,-1)";
+        // (0,-1) == -1
+            runString = "(0,-1)";
             if (-1 != test.bytecode.BC_ior.test(0, -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(31,63) == 63
-            runString = "test(31,63)";
+        // (31,63) == 63
+            runString = "(31,63)";
             if (63 != test.bytecode.BC_ior.test(31, 63)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6,4) == 6
-            runString = "test(6,4)";
+        // (6,4) == 6
+            runString = "(6,4)";
             if (6 != test.bytecode.BC_ior.test(6, 4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483648,1) == -2147483647
-            runString = "test(-2147483648,1)";
+        // (-2147483648,1) == -2147483647
+            runString = "(-2147483648,1)";
             if (-2147483647 != test.bytecode.BC_ior.test(-2147483648, 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4016,26 +4016,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_irem");
         String runString = null;
         try {
-        // test(1,2) == 1
-            runString = "test(1,2)";
+        // (1,2) == 1
+            runString = "(1,2)";
             if (1 != test.bytecode.BC_irem.test(1, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2,-1) == 0
-            runString = "test(2,-1)";
+        // (2,-1) == 0
+            runString = "(2,-1)";
             if (0 != test.bytecode.BC_irem.test(2, -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(256,4) == 0
-            runString = "test(256,4)";
+        // (256,4) == 0
+            runString = "(256,4)";
             if (0 != test.bytecode.BC_irem.test(256, 4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(135,7) == 2
-            runString = "test(135,7)";
+        // (135,7) == 2
+            runString = "(135,7)";
             if (2 != test.bytecode.BC_irem.test(135, 7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4050,26 +4050,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ireturn");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.bytecode.BC_ireturn.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.bytecode.BC_ireturn.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == -1
-            runString = "test(-1)";
+        // (-1) == -1
+            runString = "(-1)";
             if (-1 != test.bytecode.BC_ireturn.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(256) == 256
-            runString = "test(256)";
+        // (256) == 256
+            runString = "(256)";
             if (256 != test.bytecode.BC_ireturn.test(256)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4084,32 +4084,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ishl");
         String runString = null;
         try {
-        // test(1,2) == 4
-            runString = "test(1,2)";
+        // (1,2) == 4
+            runString = "(1,2)";
             if (4 != test.bytecode.BC_ishl.test(1, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,-1) == 0
-            runString = "test(0,-1)";
+        // (0,-1) == 0
+            runString = "(0,-1)";
             if (0 != test.bytecode.BC_ishl.test(0, -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(31,1) == 62
-            runString = "test(31,1)";
+        // (31,1) == 62
+            runString = "(31,1)";
             if (62 != test.bytecode.BC_ishl.test(31, 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6,4) == 96
-            runString = "test(6,4)";
+        // (6,4) == 96
+            runString = "(6,4)";
             if (96 != test.bytecode.BC_ishl.test(6, 4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483648,1) == 0
-            runString = "test(-2147483648,1)";
+        // (-2147483648,1) == 0
+            runString = "(-2147483648,1)";
             if (0 != test.bytecode.BC_ishl.test(-2147483648, 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4124,32 +4124,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ishr");
         String runString = null;
         try {
-        // test(1,2) == 0
-            runString = "test(1,2)";
+        // (1,2) == 0
+            runString = "(1,2)";
             if (0 != test.bytecode.BC_ishr.test(1, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(67,2) == 16
-            runString = "test(67,2)";
+        // (67,2) == 16
+            runString = "(67,2)";
             if (16 != test.bytecode.BC_ishr.test(67, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(31,1) == 15
-            runString = "test(31,1)";
+        // (31,1) == 15
+            runString = "(31,1)";
             if (15 != test.bytecode.BC_ishr.test(31, 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6,4) == 0
-            runString = "test(6,4)";
+        // (6,4) == 0
+            runString = "(6,4)";
             if (0 != test.bytecode.BC_ishr.test(6, 4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483648,16) == -32768
-            runString = "test(-2147483648,16)";
+        // (-2147483648,16) == -32768
+            runString = "(-2147483648,16)";
             if (-32768 != test.bytecode.BC_ishr.test(-2147483648, 16)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4164,44 +4164,44 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_isub");
         String runString = null;
         try {
-        // test(1,-2) == 3
-            runString = "test(1,-2)";
+        // (1,-2) == 3
+            runString = "(1,-2)";
             if (3 != test.bytecode.BC_isub.test(1, -2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,1) == -1
-            runString = "test(0,1)";
+        // (0,1) == -1
+            runString = "(0,1)";
             if (-1 != test.bytecode.BC_isub.test(0, 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(33,-67) == 100
-            runString = "test(33,-67)";
+        // (33,-67) == 100
+            runString = "(33,-67)";
             if (100 != test.bytecode.BC_isub.test(33, -67)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,1) == 0
-            runString = "test(1,1)";
+        // (1,1) == 0
+            runString = "(1,1)";
             if (0 != test.bytecode.BC_isub.test(1, 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483648,-1) == -2147483647
-            runString = "test(-2147483648,-1)";
+        // (-2147483648,-1) == -2147483647
+            runString = "(-2147483648,-1)";
             if (-2147483647 != test.bytecode.BC_isub.test(-2147483648, -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2147483647,-1) == -2147483648
-            runString = "test(2147483647,-1)";
+        // (2147483647,-1) == -2147483648
+            runString = "(2147483647,-1)";
             if (-2147483648 != test.bytecode.BC_isub.test(2147483647, -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483647,2) == 2147483647
-            runString = "test(-2147483647,2)";
+        // (-2147483647,2) == 2147483647
+            runString = "(-2147483647,2)";
             if (2147483647 != test.bytecode.BC_isub.test(-2147483647, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4216,32 +4216,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_iushr");
         String runString = null;
         try {
-        // test(1,2) == 0
-            runString = "test(1,2)";
+        // (1,2) == 0
+            runString = "(1,2)";
             if (0 != test.bytecode.BC_iushr.test(1, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(67,2) == 16
-            runString = "test(67,2)";
+        // (67,2) == 16
+            runString = "(67,2)";
             if (16 != test.bytecode.BC_iushr.test(67, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(31,1) == 15
-            runString = "test(31,1)";
+        // (31,1) == 15
+            runString = "(31,1)";
             if (15 != test.bytecode.BC_iushr.test(31, 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6,4) == 0
-            runString = "test(6,4)";
+        // (6,4) == 0
+            runString = "(6,4)";
             if (0 != test.bytecode.BC_iushr.test(6, 4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483648,16) == 32768
-            runString = "test(-2147483648,16)";
+        // (-2147483648,16) == 32768
+            runString = "(-2147483648,16)";
             if (32768 != test.bytecode.BC_iushr.test(-2147483648, 16)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4256,32 +4256,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ixor");
         String runString = null;
         try {
-        // test(1,2) == 3
-            runString = "test(1,2)";
+        // (1,2) == 3
+            runString = "(1,2)";
             if (3 != test.bytecode.BC_ixor.test(1, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,-1) == -1
-            runString = "test(0,-1)";
+        // (0,-1) == -1
+            runString = "(0,-1)";
             if (-1 != test.bytecode.BC_ixor.test(0, -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(31,63) == 32
-            runString = "test(31,63)";
+        // (31,63) == 32
+            runString = "(31,63)";
             if (32 != test.bytecode.BC_ixor.test(31, 63)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6,4) == 2
-            runString = "test(6,4)";
+        // (6,4) == 2
+            runString = "(6,4)";
             if (2 != test.bytecode.BC_ixor.test(6, 4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483648,1) == -2147483647
-            runString = "test(-2147483648,1)";
+        // (-2147483648,1) == -2147483647
+            runString = "(-2147483648,1)";
             if (-2147483647 != test.bytecode.BC_ixor.test(-2147483648, 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4296,20 +4296,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_l2d");
         String runString = null;
         try {
-        // test(0) == 0.0
-            runString = "test(0)";
+        // (0) == 0.0
+            runString = "(0)";
             if (0.0 != test.bytecode.BC_l2d.test(0L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1.0
-            runString = "test(1)";
+        // (1) == 1.0
+            runString = "(1)";
             if (1.0 != test.bytecode.BC_l2d.test(1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-74652389) == -7.4652389E7
-            runString = "test(-74652389)";
+        // (-74652389) == -7.4652389E7
+            runString = "(-74652389)";
             if (-7.4652389E7 != test.bytecode.BC_l2d.test(-74652389L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4324,20 +4324,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_l2f");
         String runString = null;
         try {
-        // test(0) == 0.0
-            runString = "test(0)";
+        // (0) == 0.0
+            runString = "(0)";
             if (0.0f != test.bytecode.BC_l2f.test(0L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1.0
-            runString = "test(1)";
+        // (1) == 1.0
+            runString = "(1)";
             if (1.0f != test.bytecode.BC_l2f.test(1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-74652389) == -7.4652392E7
-            runString = "test(-74652389)";
+        // (-74652389) == -7.4652392E7
+            runString = "(-74652389)";
             if (-7.4652392E7f != test.bytecode.BC_l2f.test(-74652389L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4352,44 +4352,44 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_l2i");
         String runString = null;
         try {
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.bytecode.BC_l2i.test(1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 2
-            runString = "test(2)";
+        // (2) == 2
+            runString = "(2)";
             if (2 != test.bytecode.BC_l2i.test(2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 3
-            runString = "test(3)";
+        // (3) == 3
+            runString = "(3)";
             if (3 != test.bytecode.BC_l2i.test(3L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == -1
-            runString = "test(-1)";
+        // (-1) == -1
+            runString = "(-1)";
             if (-1 != test.bytecode.BC_l2i.test(-1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483647) == -2147483647
-            runString = "test(-2147483647)";
+        // (-2147483647) == -2147483647
+            runString = "(-2147483647)";
             if (-2147483647 != test.bytecode.BC_l2i.test(-2147483647L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483648) == -2147483648
-            runString = "test(-2147483648)";
+        // (-2147483648) == -2147483648
+            runString = "(-2147483648)";
             if (-2147483648 != test.bytecode.BC_l2i.test(-2147483648L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2147483647) == 2147483647
-            runString = "test(2147483647)";
+        // (2147483647) == 2147483647
+            runString = "(2147483647)";
             if (2147483647 != test.bytecode.BC_l2i.test(2147483647L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4404,38 +4404,38 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ladd");
         String runString = null;
         try {
-        // test(1,2) == 3
-            runString = "test(1,2)";
+        // (1,2) == 3
+            runString = "(1,2)";
             if (3L != test.bytecode.BC_ladd.test(1L, 2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,-1) == -1
-            runString = "test(0,-1)";
+        // (0,-1) == -1
+            runString = "(0,-1)";
             if (-1L != test.bytecode.BC_ladd.test(0L, -1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(33,67) == 100
-            runString = "test(33,67)";
+        // (33,67) == 100
+            runString = "(33,67)";
             if (100L != test.bytecode.BC_ladd.test(33L, 67L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,-1) == 0
-            runString = "test(1,-1)";
+        // (1,-1) == 0
+            runString = "(1,-1)";
             if (0L != test.bytecode.BC_ladd.test(1L, -1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483648,1) == -2147483647
-            runString = "test(-2147483648,1)";
+        // (-2147483648,1) == -2147483647
+            runString = "(-2147483648,1)";
             if (-2147483647L != test.bytecode.BC_ladd.test(-2147483648L, 1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2147483647,1) == 2147483648
-            runString = "test(2147483647,1)";
+        // (2147483647,1) == 2147483648
+            runString = "(2147483647,1)";
             if (2147483648L != test.bytecode.BC_ladd.test(2147483647L, 1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4450,38 +4450,38 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ladd2");
         String runString = null;
         try {
-        // test(1,2) == 3
-            runString = "test(1,2)";
+        // (1,2) == 3
+            runString = "(1,2)";
             if (3L != test.bytecode.BC_ladd2.test(1, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,-1) == -1
-            runString = "test(0,-1)";
+        // (0,-1) == -1
+            runString = "(0,-1)";
             if (-1L != test.bytecode.BC_ladd2.test(0, -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(33,67) == 100
-            runString = "test(33,67)";
+        // (33,67) == 100
+            runString = "(33,67)";
             if (100L != test.bytecode.BC_ladd2.test(33, 67)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,-1) == 0
-            runString = "test(1,-1)";
+        // (1,-1) == 0
+            runString = "(1,-1)";
             if (0L != test.bytecode.BC_ladd2.test(1, -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483648,1) == -2147483647
-            runString = "test(-2147483648,1)";
+        // (-2147483648,1) == -2147483647
+            runString = "(-2147483648,1)";
             if (-2147483647L != test.bytecode.BC_ladd2.test(-2147483648, 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2147483647,1) == 2147483648
-            runString = "test(2147483647,1)";
+        // (2147483647,1) == 2147483648
+            runString = "(2147483647,1)";
             if (2147483648L != test.bytecode.BC_ladd2.test(2147483647, 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4496,26 +4496,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_laload");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0L != test.bytecode.BC_laload.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == -1
-            runString = "test(1)";
+        // (1) == -1
+            runString = "(1)";
             if (-1L != test.bytecode.BC_laload.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 4
-            runString = "test(2)";
+        // (2) == 4
+            runString = "(2)";
             if (4L != test.bytecode.BC_laload.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 1000000000000
-            runString = "test(3)";
+        // (3) == 1000000000000
+            runString = "(3)";
             if (1000000000000L != test.bytecode.BC_laload.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4530,32 +4530,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_land");
         String runString = null;
         try {
-        // test(1,2) == 0
-            runString = "test(1,2)";
+        // (1,2) == 0
+            runString = "(1,2)";
             if (0L != test.bytecode.BC_land.test(1L, 2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,-1) == 0
-            runString = "test(0,-1)";
+        // (0,-1) == 0
+            runString = "(0,-1)";
             if (0L != test.bytecode.BC_land.test(0L, -1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(31,63) == 31
-            runString = "test(31,63)";
+        // (31,63) == 31
+            runString = "(31,63)";
             if (31L != test.bytecode.BC_land.test(31L, 63L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6,4) == 4
-            runString = "test(6,4)";
+        // (6,4) == 4
+            runString = "(6,4)";
             if (4L != test.bytecode.BC_land.test(6L, 4L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483648,1) == 0
-            runString = "test(-2147483648,1)";
+        // (-2147483648,1) == 0
+            runString = "(-2147483648,1)";
             if (0L != test.bytecode.BC_land.test(-2147483648L, 1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4570,26 +4570,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_lastore");
         String runString = null;
         try {
-        // test(0,0) == 0
-            runString = "test(0,0)";
+        // (0,0) == 0
+            runString = "(0,0)";
             if (0L != test.bytecode.BC_lastore.test(0, 0L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,-1) == -1
-            runString = "test(1,-1)";
+        // (1,-1) == -1
+            runString = "(1,-1)";
             if (-1L != test.bytecode.BC_lastore.test(1, -1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2,11) == 11
-            runString = "test(2,11)";
+        // (2,11) == 11
+            runString = "(2,11)";
             if (11L != test.bytecode.BC_lastore.test(2, 11L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3,-14) == -14
-            runString = "test(3,-14)";
+        // (3,-14) == -14
+            runString = "(3,-14)";
             if (-14L != test.bytecode.BC_lastore.test(3, -14L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4604,20 +4604,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_lcmp");
         String runString = null;
         try {
-        // test(0,-1) == false
-            runString = "test(0,-1)";
+        // (0,-1) == false
+            runString = "(0,-1)";
             if (false != test.bytecode.BC_lcmp.test(0L, -1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(77,78) == true
-            runString = "test(77,78)";
+        // (77,78) == true
+            runString = "(77,78)";
             if (true != test.bytecode.BC_lcmp.test(77L, 78L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1,0) == true
-            runString = "test(-1,0)";
+        // (-1,0) == true
+            runString = "(-1,0)";
             if (true != test.bytecode.BC_lcmp.test(-1L, 0L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4632,8 +4632,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ldc_01");
         String runString = null;
         try {
-        // test(0) == -123
-            runString = "test(0)";
+        // (0) == -123
+            runString = "(0)";
             if (-123 != test.bytecode.BC_ldc_01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4648,8 +4648,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ldc_02");
         String runString = null;
         try {
-        // test(0) == -2.4
-            runString = "test(0)";
+        // (0) == -2.4
+            runString = "(0)";
             if (-2.4f != test.bytecode.BC_ldc_02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4664,8 +4664,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ldc_03");
         String runString = null;
         try {
-        // test(0) == -123
-            runString = "test(0)";
+        // (0) == -123
+            runString = "(0)";
             if (-123L != test.bytecode.BC_ldc_03.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4680,8 +4680,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ldc_04");
         String runString = null;
         try {
-        // test(0) == xyz
-            runString = "test(0)";
+        // (0) == xyz
+            runString = "(0)";
             if (!"xyz".equals(test.bytecode.BC_ldc_04.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4696,8 +4696,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ldc_05");
         String runString = null;
         try {
-        // test(0) == -2.33
-            runString = "test(0)";
+        // (0) == -2.33
+            runString = "(0)";
             if (-2.33 != test.bytecode.BC_ldc_05.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4712,8 +4712,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ldc_06");
         String runString = null;
         try {
-        // test(0) == test.bytecode.BC_ldc_06
-            runString = "test(0)";
+        // (0) == test.bytecode.BC_ldc_06
+            runString = "(0)";
             if (!"test.bytecode.BC_ldc_06".equals(test.bytecode.BC_ldc_06.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4728,26 +4728,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ldiv");
         String runString = null;
         try {
-        // test(1,2) == 0
-            runString = "test(1,2)";
+        // (1,2) == 0
+            runString = "(1,2)";
             if (0L != test.bytecode.BC_ldiv.test(1L, 2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2,-1) == -2
-            runString = "test(2,-1)";
+        // (2,-1) == -2
+            runString = "(2,-1)";
             if (-2L != test.bytecode.BC_ldiv.test(2L, -1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(256,4) == 64
-            runString = "test(256,4)";
+        // (256,4) == 64
+            runString = "(256,4)";
             if (64L != test.bytecode.BC_ldiv.test(256L, 4L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(135,7) == 19
-            runString = "test(135,7)";
+        // (135,7) == 19
+            runString = "(135,7)";
             if (19L != test.bytecode.BC_ldiv.test(135L, 7L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4762,20 +4762,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_lload_0");
         String runString = null;
         try {
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1L != test.bytecode.BC_lload_0.test(1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-3) == -3
-            runString = "test(-3)";
+        // (-3) == -3
+            runString = "(-3)";
             if (-3L != test.bytecode.BC_lload_0.test(-3L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(10000) == 10000
-            runString = "test(10000)";
+        // (10000) == 10000
+            runString = "(10000)";
             if (10000L != test.bytecode.BC_lload_0.test(10000L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4790,20 +4790,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_lload_01");
         String runString = null;
         try {
-        // test(1) == 0
-            runString = "test(1)";
+        // (1) == 0
+            runString = "(1)";
             if (0L != test.bytecode.BC_lload_01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-3) == 0
-            runString = "test(-3)";
+        // (-3) == 0
+            runString = "(-3)";
             if (0L != test.bytecode.BC_lload_01.test(-3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(100) == 0
-            runString = "test(100)";
+        // (100) == 0
+            runString = "(100)";
             if (0L != test.bytecode.BC_lload_01.test(100)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4818,20 +4818,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_lload_1");
         String runString = null;
         try {
-        // test(1,1) == 1
-            runString = "test(1,1)";
+        // (1,1) == 1
+            runString = "(1,1)";
             if (1L != test.bytecode.BC_lload_1.test(1, 1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,-3) == -3
-            runString = "test(1,-3)";
+        // (1,-3) == -3
+            runString = "(1,-3)";
             if (-3L != test.bytecode.BC_lload_1.test(1, -3L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,10000) == 10000
-            runString = "test(1,10000)";
+        // (1,10000) == 10000
+            runString = "(1,10000)";
             if (10000L != test.bytecode.BC_lload_1.test(1, 10000L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4846,20 +4846,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_lload_2");
         String runString = null;
         try {
-        // test(1,1,1) == 1
-            runString = "test(1,1,1)";
+        // (1,1,1) == 1
+            runString = "(1,1,1)";
             if (1L != test.bytecode.BC_lload_2.test(1, 1, 1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,1,-3) == -3
-            runString = "test(1,1,-3)";
+        // (1,1,-3) == -3
+            runString = "(1,1,-3)";
             if (-3L != test.bytecode.BC_lload_2.test(1, 1, -3L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,1,10000) == 10000
-            runString = "test(1,1,10000)";
+        // (1,1,10000) == 10000
+            runString = "(1,1,10000)";
             if (10000L != test.bytecode.BC_lload_2.test(1, 1, 10000L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4874,20 +4874,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_lload_3");
         String runString = null;
         try {
-        // test(1,1,1,1) == 1
-            runString = "test(1,1,1,1)";
+        // (1,1,1,1) == 1
+            runString = "(1,1,1,1)";
             if (1L != test.bytecode.BC_lload_3.test(1, 1, 1, 1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,1,1,-3) == -3
-            runString = "test(1,1,1,-3)";
+        // (1,1,1,-3) == -3
+            runString = "(1,1,1,-3)";
             if (-3L != test.bytecode.BC_lload_3.test(1, 1, 1, -3L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,1,1,10000) == 10000
-            runString = "test(1,1,1,10000)";
+        // (1,1,1,10000) == 10000
+            runString = "(1,1,1,10000)";
             if (10000L != test.bytecode.BC_lload_3.test(1, 1, 1, 10000L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4902,50 +4902,50 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_lmul");
         String runString = null;
         try {
-        // test(1,2) == 2
-            runString = "test(1,2)";
+        // (1,2) == 2
+            runString = "(1,2)";
             if (2L != test.bytecode.BC_lmul.test(1L, 2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,-1) == 0
-            runString = "test(0,-1)";
+        // (0,-1) == 0
+            runString = "(0,-1)";
             if (0L != test.bytecode.BC_lmul.test(0L, -1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(33,67) == 2211
-            runString = "test(33,67)";
+        // (33,67) == 2211
+            runString = "(33,67)";
             if (2211L != test.bytecode.BC_lmul.test(33L, 67L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,-1) == -1
-            runString = "test(1,-1)";
+        // (1,-1) == -1
+            runString = "(1,-1)";
             if (-1L != test.bytecode.BC_lmul.test(1L, -1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483648,1) == -2147483648
-            runString = "test(-2147483648,1)";
+        // (-2147483648,1) == -2147483648
+            runString = "(-2147483648,1)";
             if (-2147483648L != test.bytecode.BC_lmul.test(-2147483648L, 1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2147483647,-1) == -2147483647
-            runString = "test(2147483647,-1)";
+        // (2147483647,-1) == -2147483647
+            runString = "(2147483647,-1)";
             if (-2147483647L != test.bytecode.BC_lmul.test(2147483647L, -1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483648,-1) == 2147483648
-            runString = "test(-2147483648,-1)";
+        // (-2147483648,-1) == 2147483648
+            runString = "(-2147483648,-1)";
             if (2147483648L != test.bytecode.BC_lmul.test(-2147483648L, -1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1000000,1000000) == 1000000000000
-            runString = "test(1000000,1000000)";
+        // (1000000,1000000) == 1000000000000
+            runString = "(1000000,1000000)";
             if (1000000000000L != test.bytecode.BC_lmul.test(1000000L, 1000000L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4960,26 +4960,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_lneg");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0L != test.bytecode.BC_lneg.test(0L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == 1
-            runString = "test(-1)";
+        // (-1) == 1
+            runString = "(-1)";
             if (1L != test.bytecode.BC_lneg.test(-1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7263) == -7263
-            runString = "test(7263)";
+        // (7263) == -7263
+            runString = "(7263)";
             if (-7263L != test.bytecode.BC_lneg.test(7263L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483648) == 2147483648
-            runString = "test(-2147483648)";
+        // (-2147483648) == 2147483648
+            runString = "(-2147483648)";
             if (2147483648L != test.bytecode.BC_lneg.test(-2147483648L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -4994,104 +4994,104 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_lookupswitch01");
         String runString = null;
         try {
-        // test(0) == 42
-            runString = "test(0)";
+        // (0) == 42
+            runString = "(0)";
             if (42 != test.bytecode.BC_lookupswitch01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 42
-            runString = "test(1)";
+        // (1) == 42
+            runString = "(1)";
             if (42 != test.bytecode.BC_lookupswitch01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(66) == 42
-            runString = "test(66)";
+        // (66) == 42
+            runString = "(66)";
             if (42 != test.bytecode.BC_lookupswitch01.test(66)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(67) == 0
-            runString = "test(67)";
+        // (67) == 0
+            runString = "(67)";
             if (0 != test.bytecode.BC_lookupswitch01.test(67)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(68) == 42
-            runString = "test(68)";
+        // (68) == 42
+            runString = "(68)";
             if (42 != test.bytecode.BC_lookupswitch01.test(68)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(96) == 42
-            runString = "test(96)";
+        // (96) == 42
+            runString = "(96)";
             if (42 != test.bytecode.BC_lookupswitch01.test(96)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(97) == 1
-            runString = "test(97)";
+        // (97) == 1
+            runString = "(97)";
             if (1 != test.bytecode.BC_lookupswitch01.test(97)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(98) == 42
-            runString = "test(98)";
+        // (98) == 42
+            runString = "(98)";
             if (42 != test.bytecode.BC_lookupswitch01.test(98)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(106) == 42
-            runString = "test(106)";
+        // (106) == 42
+            runString = "(106)";
             if (42 != test.bytecode.BC_lookupswitch01.test(106)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(107) == 2
-            runString = "test(107)";
+        // (107) == 2
+            runString = "(107)";
             if (2 != test.bytecode.BC_lookupswitch01.test(107)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(108) == 42
-            runString = "test(108)";
+        // (108) == 42
+            runString = "(108)";
             if (42 != test.bytecode.BC_lookupswitch01.test(108)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(132) == 42
-            runString = "test(132)";
+        // (132) == 42
+            runString = "(132)";
             if (42 != test.bytecode.BC_lookupswitch01.test(132)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(133) == 3
-            runString = "test(133)";
+        // (133) == 3
+            runString = "(133)";
             if (3 != test.bytecode.BC_lookupswitch01.test(133)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(134) == 42
-            runString = "test(134)";
+        // (134) == 42
+            runString = "(134)";
             if (42 != test.bytecode.BC_lookupswitch01.test(134)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(211) == 42
-            runString = "test(211)";
+        // (211) == 42
+            runString = "(211)";
             if (42 != test.bytecode.BC_lookupswitch01.test(211)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(212) == 4
-            runString = "test(212)";
+        // (212) == 4
+            runString = "(212)";
             if (4 != test.bytecode.BC_lookupswitch01.test(212)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(213) == 42
-            runString = "test(213)";
+        // (213) == 42
+            runString = "(213)";
             if (42 != test.bytecode.BC_lookupswitch01.test(213)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -5106,122 +5106,122 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_lookupswitch02");
         String runString = null;
         try {
-        // test(0) == 42
-            runString = "test(0)";
+        // (0) == 42
+            runString = "(0)";
             if (42 != test.bytecode.BC_lookupswitch02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 42
-            runString = "test(1)";
+        // (1) == 42
+            runString = "(1)";
             if (42 != test.bytecode.BC_lookupswitch02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(66) == 42
-            runString = "test(66)";
+        // (66) == 42
+            runString = "(66)";
             if (42 != test.bytecode.BC_lookupswitch02.test(66)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(67) == 0
-            runString = "test(67)";
+        // (67) == 0
+            runString = "(67)";
             if (0 != test.bytecode.BC_lookupswitch02.test(67)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(68) == 42
-            runString = "test(68)";
+        // (68) == 42
+            runString = "(68)";
             if (42 != test.bytecode.BC_lookupswitch02.test(68)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(96) == 42
-            runString = "test(96)";
+        // (96) == 42
+            runString = "(96)";
             if (42 != test.bytecode.BC_lookupswitch02.test(96)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(97) == 1
-            runString = "test(97)";
+        // (97) == 1
+            runString = "(97)";
             if (1 != test.bytecode.BC_lookupswitch02.test(97)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(98) == 42
-            runString = "test(98)";
+        // (98) == 42
+            runString = "(98)";
             if (42 != test.bytecode.BC_lookupswitch02.test(98)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(106) == 42
-            runString = "test(106)";
+        // (106) == 42
+            runString = "(106)";
             if (42 != test.bytecode.BC_lookupswitch02.test(106)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(107) == 2
-            runString = "test(107)";
+        // (107) == 2
+            runString = "(107)";
             if (2 != test.bytecode.BC_lookupswitch02.test(107)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(108) == 42
-            runString = "test(108)";
+        // (108) == 42
+            runString = "(108)";
             if (42 != test.bytecode.BC_lookupswitch02.test(108)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(132) == 42
-            runString = "test(132)";
+        // (132) == 42
+            runString = "(132)";
             if (42 != test.bytecode.BC_lookupswitch02.test(132)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(133) == 3
-            runString = "test(133)";
+        // (133) == 3
+            runString = "(133)";
             if (3 != test.bytecode.BC_lookupswitch02.test(133)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(134) == 42
-            runString = "test(134)";
+        // (134) == 42
+            runString = "(134)";
             if (42 != test.bytecode.BC_lookupswitch02.test(134)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(211) == 42
-            runString = "test(211)";
+        // (211) == 42
+            runString = "(211)";
             if (42 != test.bytecode.BC_lookupswitch02.test(211)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(212) == 4
-            runString = "test(212)";
+        // (212) == 4
+            runString = "(212)";
             if (4 != test.bytecode.BC_lookupswitch02.test(212)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(213) == 42
-            runString = "test(213)";
+        // (213) == 42
+            runString = "(213)";
             if (42 != test.bytecode.BC_lookupswitch02.test(213)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-121) == 42
-            runString = "test(-121)";
+        // (-121) == 42
+            runString = "(-121)";
             if (42 != test.bytecode.BC_lookupswitch02.test(-121)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-122) == 5
-            runString = "test(-122)";
+        // (-122) == 5
+            runString = "(-122)";
             if (5 != test.bytecode.BC_lookupswitch02.test(-122)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-123) == 42
-            runString = "test(-123)";
+        // (-123) == 42
+            runString = "(-123)";
             if (42 != test.bytecode.BC_lookupswitch02.test(-123)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -5236,122 +5236,122 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_lookupswitch03");
         String runString = null;
         try {
-        // test(0) == 42
-            runString = "test(0)";
+        // (0) == 42
+            runString = "(0)";
             if (42 != test.bytecode.BC_lookupswitch03.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 42
-            runString = "test(1)";
+        // (1) == 42
+            runString = "(1)";
             if (42 != test.bytecode.BC_lookupswitch03.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(66) == 42
-            runString = "test(66)";
+        // (66) == 42
+            runString = "(66)";
             if (42 != test.bytecode.BC_lookupswitch03.test(66)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(67) == 0
-            runString = "test(67)";
+        // (67) == 0
+            runString = "(67)";
             if (0 != test.bytecode.BC_lookupswitch03.test(67)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(68) == 42
-            runString = "test(68)";
+        // (68) == 42
+            runString = "(68)";
             if (42 != test.bytecode.BC_lookupswitch03.test(68)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(96) == 42
-            runString = "test(96)";
+        // (96) == 42
+            runString = "(96)";
             if (42 != test.bytecode.BC_lookupswitch03.test(96)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(97) == 1
-            runString = "test(97)";
+        // (97) == 1
+            runString = "(97)";
             if (1 != test.bytecode.BC_lookupswitch03.test(97)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(98) == 42
-            runString = "test(98)";
+        // (98) == 42
+            runString = "(98)";
             if (42 != test.bytecode.BC_lookupswitch03.test(98)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(106) == 42
-            runString = "test(106)";
+        // (106) == 42
+            runString = "(106)";
             if (42 != test.bytecode.BC_lookupswitch03.test(106)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(107) == 2
-            runString = "test(107)";
+        // (107) == 2
+            runString = "(107)";
             if (2 != test.bytecode.BC_lookupswitch03.test(107)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(108) == 42
-            runString = "test(108)";
+        // (108) == 42
+            runString = "(108)";
             if (42 != test.bytecode.BC_lookupswitch03.test(108)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(132) == 42
-            runString = "test(132)";
+        // (132) == 42
+            runString = "(132)";
             if (42 != test.bytecode.BC_lookupswitch03.test(132)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(133) == 3
-            runString = "test(133)";
+        // (133) == 3
+            runString = "(133)";
             if (3 != test.bytecode.BC_lookupswitch03.test(133)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(134) == 42
-            runString = "test(134)";
+        // (134) == 42
+            runString = "(134)";
             if (42 != test.bytecode.BC_lookupswitch03.test(134)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(211) == 42
-            runString = "test(211)";
+        // (211) == 42
+            runString = "(211)";
             if (42 != test.bytecode.BC_lookupswitch03.test(211)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(212) == 4
-            runString = "test(212)";
+        // (212) == 4
+            runString = "(212)";
             if (4 != test.bytecode.BC_lookupswitch03.test(212)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(213) == 42
-            runString = "test(213)";
+        // (213) == 42
+            runString = "(213)";
             if (42 != test.bytecode.BC_lookupswitch03.test(213)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-121) == 42
-            runString = "test(-121)";
+        // (-121) == 42
+            runString = "(-121)";
             if (42 != test.bytecode.BC_lookupswitch03.test(-121)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-122) == 5
-            runString = "test(-122)";
+        // (-122) == 5
+            runString = "(-122)";
             if (5 != test.bytecode.BC_lookupswitch03.test(-122)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-123) == 42
-            runString = "test(-123)";
+        // (-123) == 42
+            runString = "(-123)";
             if (42 != test.bytecode.BC_lookupswitch03.test(-123)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -5366,122 +5366,122 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_lookupswitch04");
         String runString = null;
         try {
-        // test(0) == 42
-            runString = "test(0)";
+        // (0) == 42
+            runString = "(0)";
             if (42 != test.bytecode.BC_lookupswitch04.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 42
-            runString = "test(1)";
+        // (1) == 42
+            runString = "(1)";
             if (42 != test.bytecode.BC_lookupswitch04.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(66) == 42
-            runString = "test(66)";
+        // (66) == 42
+            runString = "(66)";
             if (42 != test.bytecode.BC_lookupswitch04.test(66)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(67) == 0
-            runString = "test(67)";
+        // (67) == 0
+            runString = "(67)";
             if (0 != test.bytecode.BC_lookupswitch04.test(67)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(68) == 42
-            runString = "test(68)";
+        // (68) == 42
+            runString = "(68)";
             if (42 != test.bytecode.BC_lookupswitch04.test(68)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(96) == 42
-            runString = "test(96)";
+        // (96) == 42
+            runString = "(96)";
             if (42 != test.bytecode.BC_lookupswitch04.test(96)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(97) == 1
-            runString = "test(97)";
+        // (97) == 1
+            runString = "(97)";
             if (1 != test.bytecode.BC_lookupswitch04.test(97)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(98) == 42
-            runString = "test(98)";
+        // (98) == 42
+            runString = "(98)";
             if (42 != test.bytecode.BC_lookupswitch04.test(98)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(106) == 42
-            runString = "test(106)";
+        // (106) == 42
+            runString = "(106)";
             if (42 != test.bytecode.BC_lookupswitch04.test(106)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(107) == 2
-            runString = "test(107)";
+        // (107) == 2
+            runString = "(107)";
             if (2 != test.bytecode.BC_lookupswitch04.test(107)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(108) == 42
-            runString = "test(108)";
+        // (108) == 42
+            runString = "(108)";
             if (42 != test.bytecode.BC_lookupswitch04.test(108)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(132) == 42
-            runString = "test(132)";
+        // (132) == 42
+            runString = "(132)";
             if (42 != test.bytecode.BC_lookupswitch04.test(132)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(133) == 3
-            runString = "test(133)";
+        // (133) == 3
+            runString = "(133)";
             if (3 != test.bytecode.BC_lookupswitch04.test(133)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(134) == 42
-            runString = "test(134)";
+        // (134) == 42
+            runString = "(134)";
             if (42 != test.bytecode.BC_lookupswitch04.test(134)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(211) == 42
-            runString = "test(211)";
+        // (211) == 42
+            runString = "(211)";
             if (42 != test.bytecode.BC_lookupswitch04.test(211)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(212) == 4
-            runString = "test(212)";
+        // (212) == 4
+            runString = "(212)";
             if (4 != test.bytecode.BC_lookupswitch04.test(212)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(213) == 42
-            runString = "test(213)";
+        // (213) == 42
+            runString = "(213)";
             if (42 != test.bytecode.BC_lookupswitch04.test(213)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-121) == 42
-            runString = "test(-121)";
+        // (-121) == 42
+            runString = "(-121)";
             if (42 != test.bytecode.BC_lookupswitch04.test(-121)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-122) == 5
-            runString = "test(-122)";
+        // (-122) == 5
+            runString = "(-122)";
             if (5 != test.bytecode.BC_lookupswitch04.test(-122)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-123) == 42
-            runString = "test(-123)";
+        // (-123) == 42
+            runString = "(-123)";
             if (42 != test.bytecode.BC_lookupswitch04.test(-123)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -5496,32 +5496,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_lor");
         String runString = null;
         try {
-        // test(1,2) == 3
-            runString = "test(1,2)";
+        // (1,2) == 3
+            runString = "(1,2)";
             if (3L != test.bytecode.BC_lor.test(1L, 2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,-1) == -1
-            runString = "test(0,-1)";
+        // (0,-1) == -1
+            runString = "(0,-1)";
             if (-1L != test.bytecode.BC_lor.test(0L, -1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(31,63) == 63
-            runString = "test(31,63)";
+        // (31,63) == 63
+            runString = "(31,63)";
             if (63L != test.bytecode.BC_lor.test(31L, 63L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6,4) == 6
-            runString = "test(6,4)";
+        // (6,4) == 6
+            runString = "(6,4)";
             if (6L != test.bytecode.BC_lor.test(6L, 4L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483648,1) == -2147483647
-            runString = "test(-2147483648,1)";
+        // (-2147483648,1) == -2147483647
+            runString = "(-2147483648,1)";
             if (-2147483647L != test.bytecode.BC_lor.test(-2147483648L, 1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -5536,26 +5536,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_lrem");
         String runString = null;
         try {
-        // test(1,2) == 1
-            runString = "test(1,2)";
+        // (1,2) == 1
+            runString = "(1,2)";
             if (1L != test.bytecode.BC_lrem.test(1L, 2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2,-1) == 0
-            runString = "test(2,-1)";
+        // (2,-1) == 0
+            runString = "(2,-1)";
             if (0L != test.bytecode.BC_lrem.test(2L, -1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(256,4) == 0
-            runString = "test(256,4)";
+        // (256,4) == 0
+            runString = "(256,4)";
             if (0L != test.bytecode.BC_lrem.test(256L, 4L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(135,7) == 2
-            runString = "test(135,7)";
+        // (135,7) == 2
+            runString = "(135,7)";
             if (2L != test.bytecode.BC_lrem.test(135L, 7L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -5570,32 +5570,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_lreturn");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0L != test.bytecode.BC_lreturn.test(0L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1L != test.bytecode.BC_lreturn.test(1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == -1
-            runString = "test(-1)";
+        // (-1) == -1
+            runString = "(-1)";
             if (-1L != test.bytecode.BC_lreturn.test(-1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(256) == 256
-            runString = "test(256)";
+        // (256) == 256
+            runString = "(256)";
             if (256L != test.bytecode.BC_lreturn.test(256L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1000000000000) == 1000000000000
-            runString = "test(1000000000000)";
+        // (1000000000000) == 1000000000000
+            runString = "(1000000000000)";
             if (1000000000000L != test.bytecode.BC_lreturn.test(1000000000000L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -5610,32 +5610,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_lshl");
         String runString = null;
         try {
-        // test(1,2) == 4
-            runString = "test(1,2)";
+        // (1,2) == 4
+            runString = "(1,2)";
             if (4L != test.bytecode.BC_lshl.test(1L, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,-1) == 0
-            runString = "test(0,-1)";
+        // (0,-1) == 0
+            runString = "(0,-1)";
             if (0L != test.bytecode.BC_lshl.test(0L, -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(31,1) == 62
-            runString = "test(31,1)";
+        // (31,1) == 62
+            runString = "(31,1)";
             if (62L != test.bytecode.BC_lshl.test(31L, 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6,4) == 96
-            runString = "test(6,4)";
+        // (6,4) == 96
+            runString = "(6,4)";
             if (96L != test.bytecode.BC_lshl.test(6L, 4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483648,1) == -4294967296
-            runString = "test(-2147483648,1)";
+        // (-2147483648,1) == -4294967296
+            runString = "(-2147483648,1)";
             if (-4294967296L != test.bytecode.BC_lshl.test(-2147483648L, 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -5650,32 +5650,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_lshr");
         String runString = null;
         try {
-        // test(1,2) == 0
-            runString = "test(1,2)";
+        // (1,2) == 0
+            runString = "(1,2)";
             if (0L != test.bytecode.BC_lshr.test(1L, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(67,2) == 16
-            runString = "test(67,2)";
+        // (67,2) == 16
+            runString = "(67,2)";
             if (16L != test.bytecode.BC_lshr.test(67L, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(31,1) == 15
-            runString = "test(31,1)";
+        // (31,1) == 15
+            runString = "(31,1)";
             if (15L != test.bytecode.BC_lshr.test(31L, 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6,4) == 0
-            runString = "test(6,4)";
+        // (6,4) == 0
+            runString = "(6,4)";
             if (0L != test.bytecode.BC_lshr.test(6L, 4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483648,16) == -32768
-            runString = "test(-2147483648,16)";
+        // (-2147483648,16) == -32768
+            runString = "(-2147483648,16)";
             if (-32768L != test.bytecode.BC_lshr.test(-2147483648L, 16)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -5690,38 +5690,38 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_lsub");
         String runString = null;
         try {
-        // test(1,-2) == 3
-            runString = "test(1,-2)";
+        // (1,-2) == 3
+            runString = "(1,-2)";
             if (3L != test.bytecode.BC_lsub.test(1L, -2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,1) == -1
-            runString = "test(0,1)";
+        // (0,1) == -1
+            runString = "(0,1)";
             if (-1L != test.bytecode.BC_lsub.test(0L, 1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(33,-67) == 100
-            runString = "test(33,-67)";
+        // (33,-67) == 100
+            runString = "(33,-67)";
             if (100L != test.bytecode.BC_lsub.test(33L, -67L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,1) == 0
-            runString = "test(1,1)";
+        // (1,1) == 0
+            runString = "(1,1)";
             if (0L != test.bytecode.BC_lsub.test(1L, 1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483648,-1) == -2147483647
-            runString = "test(-2147483648,-1)";
+        // (-2147483648,-1) == -2147483647
+            runString = "(-2147483648,-1)";
             if (-2147483647L != test.bytecode.BC_lsub.test(-2147483648L, -1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2147483647,-1) == 2147483648
-            runString = "test(2147483647,-1)";
+        // (2147483647,-1) == 2147483648
+            runString = "(2147483647,-1)";
             if (2147483648L != test.bytecode.BC_lsub.test(2147483647L, -1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -5736,32 +5736,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_lushr");
         String runString = null;
         try {
-        // test(1,2) == 0
-            runString = "test(1,2)";
+        // (1,2) == 0
+            runString = "(1,2)";
             if (0L != test.bytecode.BC_lushr.test(1L, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(67,2) == 16
-            runString = "test(67,2)";
+        // (67,2) == 16
+            runString = "(67,2)";
             if (16L != test.bytecode.BC_lushr.test(67L, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(31,1) == 15
-            runString = "test(31,1)";
+        // (31,1) == 15
+            runString = "(31,1)";
             if (15L != test.bytecode.BC_lushr.test(31L, 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6,4) == 0
-            runString = "test(6,4)";
+        // (6,4) == 0
+            runString = "(6,4)";
             if (0L != test.bytecode.BC_lushr.test(6L, 4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483648,16) == 281474976677888
-            runString = "test(-2147483648,16)";
+        // (-2147483648,16) == 281474976677888
+            runString = "(-2147483648,16)";
             if (281474976677888L != test.bytecode.BC_lushr.test(-2147483648L, 16)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -5776,32 +5776,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_lxor");
         String runString = null;
         try {
-        // test(1,2) == 3
-            runString = "test(1,2)";
+        // (1,2) == 3
+            runString = "(1,2)";
             if (3L != test.bytecode.BC_lxor.test(1L, 2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,-1) == -1
-            runString = "test(0,-1)";
+        // (0,-1) == -1
+            runString = "(0,-1)";
             if (-1L != test.bytecode.BC_lxor.test(0L, -1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(31,63) == 32
-            runString = "test(31,63)";
+        // (31,63) == 32
+            runString = "(31,63)";
             if (32L != test.bytecode.BC_lxor.test(31L, 63L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6,4) == 2
-            runString = "test(6,4)";
+        // (6,4) == 2
+            runString = "(6,4)";
             if (2L != test.bytecode.BC_lxor.test(6L, 4L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483648,1) == -2147483647
-            runString = "test(-2147483648,1)";
+        // (-2147483648,1) == -2147483647
+            runString = "(-2147483648,1)";
             if (-2147483647L != test.bytecode.BC_lxor.test(-2147483648L, 1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -5816,20 +5816,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_monitorenter");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.bytecode.BC_monitorenter.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.bytecode.BC_monitorenter.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2) == -2
-            runString = "test(-2)";
+        // (-2) == -2
+            runString = "(-2)";
             if (-2 != test.bytecode.BC_monitorenter.test(-2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -5844,14 +5844,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_multianewarray");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.bytecode.BC_multianewarray.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.bytecode.BC_multianewarray.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -5866,8 +5866,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_new");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.bytecode.BC_new.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -5882,14 +5882,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_newarray");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.bytecode.BC_newarray.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.bytecode.BC_newarray.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -5904,26 +5904,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_putfield");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.bytecode.BC_putfield.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.bytecode.BC_putfield.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 2
-            runString = "test(2)";
+        // (2) == 2
+            runString = "(2)";
             if (2 != test.bytecode.BC_putfield.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-4) == -4
-            runString = "test(-4)";
+        // (-4) == -4
+            runString = "(-4)";
             if (-4 != test.bytecode.BC_putfield.test(-4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -5938,32 +5938,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_putstatic");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.bytecode.BC_putstatic.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.bytecode.BC_putstatic.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 2
-            runString = "test(2)";
+        // (2) == 2
+            runString = "(2)";
             if (2 != test.bytecode.BC_putstatic.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 3
-            runString = "test(3)";
+        // (3) == 3
+            runString = "(3)";
             if (3 != test.bytecode.BC_putstatic.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-4) == -4
-            runString = "test(-4)";
+        // (-4) == -4
+            runString = "(-4)";
             if (-4 != test.bytecode.BC_putstatic.test(-4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -5978,26 +5978,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_saload");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if ((short) 0 != test.bytecode.BC_saload.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == -1
-            runString = "test(1)";
+        // (1) == -1
+            runString = "(1)";
             if ((short) -1 != test.bytecode.BC_saload.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 4
-            runString = "test(2)";
+        // (2) == 4
+            runString = "(2)";
             if ((short) 4 != test.bytecode.BC_saload.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 10000
-            runString = "test(3)";
+        // (3) == 10000
+            runString = "(3)";
             if ((short) 10000 != test.bytecode.BC_saload.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6012,26 +6012,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_sastore");
         String runString = null;
         try {
-        // test(0,0) == 0
-            runString = "test(0,0)";
+        // (0,0) == 0
+            runString = "(0,0)";
             if ((short) 0 != test.bytecode.BC_sastore.test(0, (short) 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,-1) == -1
-            runString = "test(1,-1)";
+        // (1,-1) == -1
+            runString = "(1,-1)";
             if ((short) -1 != test.bytecode.BC_sastore.test(1, (short) -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2,11) == 11
-            runString = "test(2,11)";
+        // (2,11) == 11
+            runString = "(2,11)";
             if ((short) 11 != test.bytecode.BC_sastore.test(2, (short) 11)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3,-14) == -14
-            runString = "test(3,-14)";
+        // (3,-14) == -14
+            runString = "(3,-14)";
             if ((short) -14 != test.bytecode.BC_sastore.test(3, (short) -14)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6046,50 +6046,50 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_tableswitch");
         String runString = null;
         try {
-        // test(-1) == 42
-            runString = "test(-1)";
+        // (-1) == 42
+            runString = "(-1)";
             if (42 != test.bytecode.BC_tableswitch.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == 10
-            runString = "test(0)";
+        // (0) == 10
+            runString = "(0)";
             if (10 != test.bytecode.BC_tableswitch.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 20
-            runString = "test(1)";
+        // (1) == 20
+            runString = "(1)";
             if (20 != test.bytecode.BC_tableswitch.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 30
-            runString = "test(2)";
+        // (2) == 30
+            runString = "(2)";
             if (30 != test.bytecode.BC_tableswitch.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 42
-            runString = "test(3)";
+        // (3) == 42
+            runString = "(3)";
             if (42 != test.bytecode.BC_tableswitch.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 40
-            runString = "test(4)";
+        // (4) == 40
+            runString = "(4)";
             if (40 != test.bytecode.BC_tableswitch.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == 50
-            runString = "test(5)";
+        // (5) == 50
+            runString = "(5)";
             if (50 != test.bytecode.BC_tableswitch.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == 42
-            runString = "test(6)";
+        // (6) == 42
+            runString = "(6)";
             if (42 != test.bytecode.BC_tableswitch.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6104,44 +6104,44 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_tableswitch2");
         String runString = null;
         try {
-        // test(-1) == 11
-            runString = "test(-1)";
+        // (-1) == 11
+            runString = "(-1)";
             if (11 != test.bytecode.BC_tableswitch2.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == 11
-            runString = "test(0)";
+        // (0) == 11
+            runString = "(0)";
             if (11 != test.bytecode.BC_tableswitch2.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 11
-            runString = "test(1)";
+        // (1) == 11
+            runString = "(1)";
             if (11 != test.bytecode.BC_tableswitch2.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == 55
-            runString = "test(5)";
+        // (5) == 55
+            runString = "(5)";
             if (55 != test.bytecode.BC_tableswitch2.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == 66
-            runString = "test(6)";
+        // (6) == 66
+            runString = "(6)";
             if (66 != test.bytecode.BC_tableswitch2.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == 77
-            runString = "test(7)";
+        // (7) == 77
+            runString = "(7)";
             if (77 != test.bytecode.BC_tableswitch2.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(8) == 11
-            runString = "test(8)";
+        // (8) == 11
+            runString = "(8)";
             if (11 != test.bytecode.BC_tableswitch2.test(8)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6156,44 +6156,44 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_tableswitch3");
         String runString = null;
         try {
-        // test(-1) == 11
-            runString = "test(-1)";
+        // (-1) == 11
+            runString = "(-1)";
             if (11 != test.bytecode.BC_tableswitch3.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2) == 22
-            runString = "test(-2)";
+        // (-2) == 22
+            runString = "(-2)";
             if (22 != test.bytecode.BC_tableswitch3.test(-2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-3) == 99
-            runString = "test(-3)";
+        // (-3) == 99
+            runString = "(-3)";
             if (99 != test.bytecode.BC_tableswitch3.test(-3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-4) == 99
-            runString = "test(-4)";
+        // (-4) == 99
+            runString = "(-4)";
             if (99 != test.bytecode.BC_tableswitch3.test(-4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 77
-            runString = "test(1)";
+        // (1) == 77
+            runString = "(1)";
             if (77 != test.bytecode.BC_tableswitch3.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 99
-            runString = "test(2)";
+        // (2) == 99
+            runString = "(2)";
             if (99 != test.bytecode.BC_tableswitch3.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(10) == 99
-            runString = "test(10)";
+        // (10) == 99
+            runString = "(10)";
             if (99 != test.bytecode.BC_tableswitch3.test(10)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6208,44 +6208,44 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_tableswitch4");
         String runString = null;
         try {
-        // test(-1) == 11
-            runString = "test(-1)";
+        // (-1) == 11
+            runString = "(-1)";
             if (11 != test.bytecode.BC_tableswitch4.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == 11
-            runString = "test(0)";
+        // (0) == 11
+            runString = "(0)";
             if (11 != test.bytecode.BC_tableswitch4.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 11
-            runString = "test(1)";
+        // (1) == 11
+            runString = "(1)";
             if (11 != test.bytecode.BC_tableswitch4.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-5) == 55
-            runString = "test(-5)";
+        // (-5) == 55
+            runString = "(-5)";
             if (55 != test.bytecode.BC_tableswitch4.test(-5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-4) == 44
-            runString = "test(-4)";
+        // (-4) == 44
+            runString = "(-4)";
             if (44 != test.bytecode.BC_tableswitch4.test(-4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-3) == 33
-            runString = "test(-3)";
+        // (-3) == 33
+            runString = "(-3)";
             if (33 != test.bytecode.BC_tableswitch4.test(-3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-8) == 11
-            runString = "test(-8)";
+        // (-8) == 11
+            runString = "(-8)";
             if (11 != test.bytecode.BC_tableswitch4.test(-8)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6260,14 +6260,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_wide01");
         String runString = null;
         try {
-        // test(0) == 11
-            runString = "test(0)";
+        // (0) == 11
+            runString = "(0)";
             if (11 != test.bytecode.BC_wide01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 12
-            runString = "test(1)";
+        // (1) == 12
+            runString = "(1)";
             if (12 != test.bytecode.BC_wide01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6282,14 +6282,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_wide02");
         String runString = null;
         try {
-        // test(0) == 11
-            runString = "test(0)";
+        // (0) == 11
+            runString = "(0)";
             if (11 != test.bytecode.BC_wide02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 12
-            runString = "test(1)";
+        // (1) == 12
+            runString = "(1)";
             if (12 != test.bytecode.BC_wide02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6304,9 +6304,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_aaload");
         String runString = null;
         try {
-        // test(-2) == !java.lang.NullPointerException
+        // (-2) == !java.lang.NullPointerException
             try {
-                runString = "test(-2)";
+                runString = "(-2)";
                 test.except.BC_aaload.test(-2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6316,9 +6316,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(-1) == !java.lang.ArrayIndexOutOfBoundsException
+        // (-1) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(-1)";
+                runString = "(-1)";
                 test.except.BC_aaload.test(-1);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6328,8 +6328,8 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(0) == null
-            runString = "test(0)";
+        // (0) == null
+            runString = "(0)";
             if (null != test.except.BC_aaload.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6344,9 +6344,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_aastore");
         String runString = null;
         try {
-        // test(true,-2) == !java.lang.NullPointerException
+        // (true,-2) == !java.lang.NullPointerException
             try {
-                runString = "test(true,-2)";
+                runString = "(true,-2)";
                 test.except.BC_aastore.test(true, -2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6356,9 +6356,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(true,-1) == !java.lang.ArrayIndexOutOfBoundsException
+        // (true,-1) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(true,-1)";
+                runString = "(true,-1)";
                 test.except.BC_aastore.test(true, -1);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6368,27 +6368,27 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(true,0) == 0
-            runString = "test(true,0)";
+        // (true,0) == 0
+            runString = "(true,0)";
             if (0 != test.except.BC_aastore.test(true, 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(true,1) == 1
-            runString = "test(true,1)";
+        // (true,1) == 1
+            runString = "(true,1)";
             if (1 != test.except.BC_aastore.test(true, 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(true,2) == 2
-            runString = "test(true,2)";
+        // (true,2) == 2
+            runString = "(true,2)";
             if (2 != test.except.BC_aastore.test(true, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(true,3) == !java.lang.ArrayIndexOutOfBoundsException
+        // (true,3) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(true,3)";
+                runString = "(true,3)";
                 test.except.BC_aastore.test(true, 3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6398,9 +6398,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(false,0) == !java.lang.ArrayStoreException
+        // (false,0) == !java.lang.ArrayStoreException
             try {
-                runString = "test(false,0)";
+                runString = "(false,0)";
                 test.except.BC_aastore.test(false, 0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6410,21 +6410,21 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(false,1) == 1
-            runString = "test(false,1)";
+        // (false,1) == 1
+            runString = "(false,1)";
             if (1 != test.except.BC_aastore.test(false, 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(false,2) == 2
-            runString = "test(false,2)";
+        // (false,2) == 2
+            runString = "(false,2)";
             if (2 != test.except.BC_aastore.test(false, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(false,3) == !java.lang.ArrayIndexOutOfBoundsException
+        // (false,3) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(false,3)";
+                runString = "(false,3)";
                 test.except.BC_aastore.test(false, 3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6444,9 +6444,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_anewarray");
         String runString = null;
         try {
-        // test(-1) == !java.lang.NegativeArraySizeException
+        // (-1) == !java.lang.NegativeArraySizeException
             try {
-                runString = "test(-1)";
+                runString = "(-1)";
                 test.except.BC_anewarray.test(-1);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6456,8 +6456,8 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.except.BC_anewarray.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6472,9 +6472,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_arraylength");
         String runString = null;
         try {
-        // test(0) == !java.lang.NullPointerException
+        // (0) == !java.lang.NullPointerException
             try {
-                runString = "test(0)";
+                runString = "(0)";
                 test.except.BC_arraylength.test(0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6484,26 +6484,26 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(1) == 3
-            runString = "test(1)";
+        // (1) == 3
+            runString = "(1)";
             if (3 != test.except.BC_arraylength.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 4
-            runString = "test(2)";
+        // (2) == 4
+            runString = "(2)";
             if (4 != test.except.BC_arraylength.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 5
-            runString = "test(3)";
+        // (3) == 5
+            runString = "(3)";
             if (5 != test.except.BC_arraylength.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 42
-            runString = "test(4)";
+        // (4) == 42
+            runString = "(4)";
             if (42 != test.except.BC_arraylength.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6518,15 +6518,15 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_athrow");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.except.BC_athrow.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == !java.lang.Throwable
+        // (2) == !java.lang.Throwable
             try {
-                runString = "test(2)";
+                runString = "(2)";
                 test.except.BC_athrow.test(2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6546,21 +6546,21 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_athrow1");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.except.BC_athrow1.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.except.BC_athrow1.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == !java.lang.Throwable
+        // (2) == !java.lang.Throwable
             try {
-                runString = "test(2)";
+                runString = "(2)";
                 test.except.BC_athrow1.test(2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6570,8 +6570,8 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(3) == 3
-            runString = "test(3)";
+        // (3) == 3
+            runString = "(3)";
             if (3 != test.except.BC_athrow1.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6586,15 +6586,15 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_athrow2");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.except.BC_athrow2.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == !java.lang.Throwable
+        // (2) == !java.lang.Throwable
             try {
-                runString = "test(2)";
+                runString = "(2)";
                 test.except.BC_athrow2.test(2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6604,9 +6604,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(3) == !java.lang.NullPointerException
+        // (3) == !java.lang.NullPointerException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.except.BC_athrow2.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6626,15 +6626,15 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_athrow3");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.except.BC_athrow3.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == !java.lang.Throwable
+        // (2) == !java.lang.Throwable
             try {
-                runString = "test(2)";
+                runString = "(2)";
                 test.except.BC_athrow3.test(2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6644,9 +6644,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(3) == !java.lang.NullPointerException
+        // (3) == !java.lang.NullPointerException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.except.BC_athrow3.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6666,9 +6666,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_baload");
         String runString = null;
         try {
-        // test(-2) == !java.lang.NullPointerException
+        // (-2) == !java.lang.NullPointerException
             try {
-                runString = "test(-2)";
+                runString = "(-2)";
                 test.except.BC_baload.test(-2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6678,9 +6678,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(-1) == !java.lang.ArrayIndexOutOfBoundsException
+        // (-1) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(-1)";
+                runString = "(-1)";
                 test.except.BC_baload.test(-1);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6690,15 +6690,15 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.except.BC_baload.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == !java.lang.ArrayIndexOutOfBoundsException
+        // (4) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(4)";
+                runString = "(4)";
                 test.except.BC_baload.test(4);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6718,9 +6718,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_bastore");
         String runString = null;
         try {
-        // test(-2,true) == !java.lang.NullPointerException
+        // (-2,true) == !java.lang.NullPointerException
             try {
-                runString = "test(-2,true)";
+                runString = "(-2,true)";
                 test.except.BC_bastore.test(-2, true);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6730,9 +6730,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(-1,false) == !java.lang.ArrayIndexOutOfBoundsException
+        // (-1,false) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(-1,false)";
+                runString = "(-1,false)";
                 test.except.BC_bastore.test(-1, false);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6742,15 +6742,15 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(0,true) == true
-            runString = "test(0,true)";
+        // (0,true) == true
+            runString = "(0,true)";
             if (true != test.except.BC_bastore.test(0, true)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4,true) == !java.lang.ArrayIndexOutOfBoundsException
+        // (4,true) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(4,true)";
+                runString = "(4,true)";
                 test.except.BC_bastore.test(4, true);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6770,9 +6770,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_caload");
         String runString = null;
         try {
-        // test(-2) == !java.lang.NullPointerException
+        // (-2) == !java.lang.NullPointerException
             try {
-                runString = "test(-2)";
+                runString = "(-2)";
                 test.except.BC_caload.test(-2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6782,9 +6782,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(-1) == !java.lang.ArrayIndexOutOfBoundsException
+        // (-1) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(-1)";
+                runString = "(-1)";
                 test.except.BC_caload.test(-1);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6794,15 +6794,15 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(0) == '\0'
-            runString = "test(0)";
+        // (0) == '\0'
+            runString = "(0)";
             if ((char) 0 != test.except.BC_caload.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == !java.lang.ArrayIndexOutOfBoundsException
+        // (4) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(4)";
+                runString = "(4)";
                 test.except.BC_caload.test(4);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6822,9 +6822,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_castore");
         String runString = null;
         try {
-        // test(-2,'a') == !java.lang.NullPointerException
+        // (-2,'a') == !java.lang.NullPointerException
             try {
-                runString = "test(-2,'a')";
+                runString = "(-2,'a')";
                 test.except.BC_castore.test(-2, (char) 97);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6834,9 +6834,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(-1,'c') == !java.lang.ArrayIndexOutOfBoundsException
+        // (-1,'c') == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(-1,'c')";
+                runString = "(-1,'c')";
                 test.except.BC_castore.test(-1, (char) 99);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6846,15 +6846,15 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(0,'a') == 'a'
-            runString = "test(0,'a')";
+        // (0,'a') == 'a'
+            runString = "(0,'a')";
             if ((char) 97 != test.except.BC_castore.test(0, (char) 97)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4,'a') == !java.lang.ArrayIndexOutOfBoundsException
+        // (4,'a') == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(4,'a')";
+                runString = "(4,'a')";
                 test.except.BC_castore.test(4, (char) 97);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6874,15 +6874,15 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_checkcast");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.except.BC_checkcast.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == !java.lang.ClassCastException
+        // (2) == !java.lang.ClassCastException
             try {
-                runString = "test(2)";
+                runString = "(2)";
                 test.except.BC_checkcast.test(2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6892,9 +6892,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(3) == !java.lang.ClassCastException
+        // (3) == !java.lang.ClassCastException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.except.BC_checkcast.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6904,8 +6904,8 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(4) == 4
-            runString = "test(4)";
+        // (4) == 4
+            runString = "(4)";
             if (4 != test.except.BC_checkcast.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6920,15 +6920,15 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_checkcast1");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.except.BC_checkcast1.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == !java.lang.ClassCastException
+        // (2) == !java.lang.ClassCastException
             try {
-                runString = "test(2)";
+                runString = "(2)";
                 test.except.BC_checkcast1.test(2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6938,9 +6938,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(3) == !java.lang.ClassCastException
+        // (3) == !java.lang.ClassCastException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.except.BC_checkcast1.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6950,8 +6950,8 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(4) == 4
-            runString = "test(4)";
+        // (4) == 4
+            runString = "(4)";
             if (4 != test.except.BC_checkcast1.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6966,21 +6966,21 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_checkcast2");
         String runString = null;
         try {
-        // test(0) == -1
-            runString = "test(0)";
+        // (0) == -1
+            runString = "(0)";
             if (-1 != test.except.BC_checkcast2.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == -1
-            runString = "test(1)";
+        // (1) == -1
+            runString = "(1)";
             if (-1 != test.except.BC_checkcast2.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == !java.lang.ClassCastException
+        // (2) == !java.lang.ClassCastException
             try {
-                runString = "test(2)";
+                runString = "(2)";
                 test.except.BC_checkcast2.test(2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -6990,9 +6990,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(3) == !java.lang.ClassCastException
+        // (3) == !java.lang.ClassCastException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.except.BC_checkcast2.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7002,8 +7002,8 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(4) == 4
-            runString = "test(4)";
+        // (4) == 4
+            runString = "(4)";
             if (4 != test.except.BC_checkcast2.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7018,9 +7018,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_daload");
         String runString = null;
         try {
-        // test(-2) == !java.lang.NullPointerException
+        // (-2) == !java.lang.NullPointerException
             try {
-                runString = "test(-2)";
+                runString = "(-2)";
                 test.except.BC_daload.test(-2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7030,9 +7030,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(-1) == !java.lang.ArrayIndexOutOfBoundsException
+        // (-1) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(-1)";
+                runString = "(-1)";
                 test.except.BC_daload.test(-1);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7042,15 +7042,15 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(0) == 0.0
-            runString = "test(0)";
+        // (0) == 0.0
+            runString = "(0)";
             if (0.0 != test.except.BC_daload.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == !java.lang.ArrayIndexOutOfBoundsException
+        // (4) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(4)";
+                runString = "(4)";
                 test.except.BC_daload.test(4);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7070,9 +7070,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_dastore");
         String runString = null;
         try {
-        // test(-2,0.01) == !java.lang.NullPointerException
+        // (-2,0.01) == !java.lang.NullPointerException
             try {
-                runString = "test(-2,0.01)";
+                runString = "(-2,0.01)";
                 test.except.BC_dastore.test(-2, 0.01);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7082,9 +7082,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(-1,-1.4) == !java.lang.ArrayIndexOutOfBoundsException
+        // (-1,-1.4) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(-1,-1.4)";
+                runString = "(-1,-1.4)";
                 test.except.BC_dastore.test(-1, -1.4);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7094,15 +7094,15 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(0,0.01) == 0.01
-            runString = "test(0,0.01)";
+        // (0,0.01) == 0.01
+            runString = "(0,0.01)";
             if (0.01 != test.except.BC_dastore.test(0, 0.01)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4,0.01) == !java.lang.ArrayIndexOutOfBoundsException
+        // (4,0.01) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(4,0.01)";
+                runString = "(4,0.01)";
                 test.except.BC_dastore.test(4, 0.01);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7122,9 +7122,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_faload");
         String runString = null;
         try {
-        // test(-2) == !java.lang.NullPointerException
+        // (-2) == !java.lang.NullPointerException
             try {
-                runString = "test(-2)";
+                runString = "(-2)";
                 test.except.BC_faload.test(-2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7134,9 +7134,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(-1) == !java.lang.ArrayIndexOutOfBoundsException
+        // (-1) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(-1)";
+                runString = "(-1)";
                 test.except.BC_faload.test(-1);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7146,15 +7146,15 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(0) == 0.0
-            runString = "test(0)";
+        // (0) == 0.0
+            runString = "(0)";
             if (0.0f != test.except.BC_faload.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == !java.lang.ArrayIndexOutOfBoundsException
+        // (4) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(4)";
+                runString = "(4)";
                 test.except.BC_faload.test(4);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7174,9 +7174,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_fastore");
         String runString = null;
         try {
-        // test(-2,0.01) == !java.lang.NullPointerException
+        // (-2,0.01) == !java.lang.NullPointerException
             try {
-                runString = "test(-2,0.01)";
+                runString = "(-2,0.01)";
                 test.except.BC_fastore.test(-2, 0.01f);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7186,9 +7186,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(-1,-1.4) == !java.lang.ArrayIndexOutOfBoundsException
+        // (-1,-1.4) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(-1,-1.4)";
+                runString = "(-1,-1.4)";
                 test.except.BC_fastore.test(-1, -1.4f);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7198,15 +7198,15 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(0,0.01) == 0.01
-            runString = "test(0,0.01)";
+        // (0,0.01) == 0.01
+            runString = "(0,0.01)";
             if (0.01f != test.except.BC_fastore.test(0, 0.01f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4,0.01) == !java.lang.ArrayIndexOutOfBoundsException
+        // (4,0.01) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(4,0.01)";
+                runString = "(4,0.01)";
                 test.except.BC_fastore.test(4, 0.01f);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7226,15 +7226,15 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_getfield");
         String runString = null;
         try {
-        // test(0) == 13
-            runString = "test(0)";
+        // (0) == 13
+            runString = "(0)";
             if (13 != test.except.BC_getfield.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == !java.lang.NullPointerException
+        // (3) == !java.lang.NullPointerException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.except.BC_getfield.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7254,9 +7254,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_iaload");
         String runString = null;
         try {
-        // test(-2) == !java.lang.NullPointerException
+        // (-2) == !java.lang.NullPointerException
             try {
-                runString = "test(-2)";
+                runString = "(-2)";
                 test.except.BC_iaload.test(-2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7266,9 +7266,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(-1) == !java.lang.ArrayIndexOutOfBoundsException
+        // (-1) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(-1)";
+                runString = "(-1)";
                 test.except.BC_iaload.test(-1);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7278,15 +7278,15 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.except.BC_iaload.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == !java.lang.ArrayIndexOutOfBoundsException
+        // (4) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(4)";
+                runString = "(4)";
                 test.except.BC_iaload.test(4);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7306,9 +7306,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_iastore");
         String runString = null;
         try {
-        // test(-2,0) == !java.lang.NullPointerException
+        // (-2,0) == !java.lang.NullPointerException
             try {
-                runString = "test(-2,0)";
+                runString = "(-2,0)";
                 test.except.BC_iastore.test(-2, 0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7318,9 +7318,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(-1,3) == !java.lang.ArrayIndexOutOfBoundsException
+        // (-1,3) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(-1,3)";
+                runString = "(-1,3)";
                 test.except.BC_iastore.test(-1, 3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7330,15 +7330,15 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(0,0) == 0
-            runString = "test(0,0)";
+        // (0,0) == 0
+            runString = "(0,0)";
             if (0 != test.except.BC_iastore.test(0, 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4,0) == !java.lang.ArrayIndexOutOfBoundsException
+        // (4,0) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(4,0)";
+                runString = "(4,0)";
                 test.except.BC_iastore.test(4, 0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7358,15 +7358,15 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_idiv");
         String runString = null;
         try {
-        // test(1,2) == 0
-            runString = "test(1,2)";
+        // (1,2) == 0
+            runString = "(1,2)";
             if (0 != test.except.BC_idiv.test(1, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(11,0) == !java.lang.ArithmeticException
+        // (11,0) == !java.lang.ArithmeticException
             try {
-                runString = "test(11,0)";
+                runString = "(11,0)";
                 test.except.BC_idiv.test(11, 0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7386,15 +7386,15 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_invokevirtual01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.except.BC_invokevirtual01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == !java.lang.NullPointerException
+        // (1) == !java.lang.NullPointerException
             try {
-                runString = "test(1)";
+                runString = "(1)";
                 test.except.BC_invokevirtual01.test(1);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7414,15 +7414,15 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_irem");
         String runString = null;
         try {
-        // test(1,2) == 1
-            runString = "test(1,2)";
+        // (1,2) == 1
+            runString = "(1,2)";
             if (1 != test.except.BC_irem.test(1, 2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(11,0) == !java.lang.ArithmeticException
+        // (11,0) == !java.lang.ArithmeticException
             try {
-                runString = "test(11,0)";
+                runString = "(11,0)";
                 test.except.BC_irem.test(11, 0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7442,9 +7442,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_laload");
         String runString = null;
         try {
-        // test(-2) == !java.lang.NullPointerException
+        // (-2) == !java.lang.NullPointerException
             try {
-                runString = "test(-2)";
+                runString = "(-2)";
                 test.except.BC_laload.test(-2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7454,9 +7454,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(-1) == !java.lang.ArrayIndexOutOfBoundsException
+        // (-1) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(-1)";
+                runString = "(-1)";
                 test.except.BC_laload.test(-1);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7466,15 +7466,15 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0L != test.except.BC_laload.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == !java.lang.ArrayIndexOutOfBoundsException
+        // (4) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(4)";
+                runString = "(4)";
                 test.except.BC_laload.test(4);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7494,9 +7494,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_lastore");
         String runString = null;
         try {
-        // test(-2,0) == !java.lang.NullPointerException
+        // (-2,0) == !java.lang.NullPointerException
             try {
-                runString = "test(-2,0)";
+                runString = "(-2,0)";
                 test.except.BC_lastore.test(-2, 0L);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7506,9 +7506,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(-1,3) == !java.lang.ArrayIndexOutOfBoundsException
+        // (-1,3) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(-1,3)";
+                runString = "(-1,3)";
                 test.except.BC_lastore.test(-1, 3L);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7518,15 +7518,15 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(0,0) == 0
-            runString = "test(0,0)";
+        // (0,0) == 0
+            runString = "(0,0)";
             if (0L != test.except.BC_lastore.test(0, 0L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4,0) == !java.lang.ArrayIndexOutOfBoundsException
+        // (4,0) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(4,0)";
+                runString = "(4,0)";
                 test.except.BC_lastore.test(4, 0L);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7546,15 +7546,15 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_ldiv");
         String runString = null;
         try {
-        // test(1,2) == 0
-            runString = "test(1,2)";
+        // (1,2) == 0
+            runString = "(1,2)";
             if (0L != test.except.BC_ldiv.test(1L, 2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(11,0) == !java.lang.ArithmeticException
+        // (11,0) == !java.lang.ArithmeticException
             try {
-                runString = "test(11,0)";
+                runString = "(11,0)";
                 test.except.BC_ldiv.test(11L, 0L);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7574,15 +7574,15 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_lrem");
         String runString = null;
         try {
-        // test(1,2) == 1
-            runString = "test(1,2)";
+        // (1,2) == 1
+            runString = "(1,2)";
             if (1L != test.except.BC_lrem.test(1L, 2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(11,0) == !java.lang.ArithmeticException
+        // (11,0) == !java.lang.ArithmeticException
             try {
-                runString = "test(11,0)";
+                runString = "(11,0)";
                 test.except.BC_lrem.test(11L, 0L);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7602,15 +7602,15 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_monitorenter");
         String runString = null;
         try {
-        // test(true) == true
-            runString = "test(true)";
+        // (true) == true
+            runString = "(true)";
             if (true != test.except.BC_monitorenter.test(true)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(false) == !java.lang.NullPointerException
+        // (false) == !java.lang.NullPointerException
             try {
-                runString = "test(false)";
+                runString = "(false)";
                 test.except.BC_monitorenter.test(false);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7630,21 +7630,21 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_multianewarray");
         String runString = null;
         try {
-        // test(0,0) == 0
-            runString = "test(0,0)";
+        // (0,0) == 0
+            runString = "(0,0)";
             if (0 != test.except.BC_multianewarray.test(0, 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,1) == 1
-            runString = "test(1,1)";
+        // (1,1) == 1
+            runString = "(1,1)";
             if (1 != test.except.BC_multianewarray.test(1, 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1,0) == !java.lang.NegativeArraySizeException
+        // (-1,0) == !java.lang.NegativeArraySizeException
             try {
-                runString = "test(-1,0)";
+                runString = "(-1,0)";
                 test.except.BC_multianewarray.test(-1, 0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7654,9 +7654,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(0,-1) == !java.lang.NegativeArraySizeException
+        // (0,-1) == !java.lang.NegativeArraySizeException
             try {
-                runString = "test(0,-1)";
+                runString = "(0,-1)";
                 test.except.BC_multianewarray.test(0, -1);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7676,9 +7676,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_newarray");
         String runString = null;
         try {
-        // test(-1) == !java.lang.NegativeArraySizeException
+        // (-1) == !java.lang.NegativeArraySizeException
             try {
-                runString = "test(-1)";
+                runString = "(-1)";
                 test.except.BC_newarray.test(-1);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7688,14 +7688,14 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.except.BC_newarray.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.except.BC_newarray.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7710,15 +7710,15 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_putfield");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.except.BC_putfield.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == !java.lang.NullPointerException
+        // (3) == !java.lang.NullPointerException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.except.BC_putfield.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7728,8 +7728,8 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(-4) == -4
-            runString = "test(-4)";
+        // (-4) == -4
+            runString = "(-4)";
             if (-4 != test.except.BC_putfield.test(-4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7744,9 +7744,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_saload");
         String runString = null;
         try {
-        // test(-2) == !java.lang.NullPointerException
+        // (-2) == !java.lang.NullPointerException
             try {
-                runString = "test(-2)";
+                runString = "(-2)";
                 test.except.BC_saload.test(-2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7756,9 +7756,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(-1) == !java.lang.ArrayIndexOutOfBoundsException
+        // (-1) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(-1)";
+                runString = "(-1)";
                 test.except.BC_saload.test(-1);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7768,15 +7768,15 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if ((short) 0 != test.except.BC_saload.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == !java.lang.ArrayIndexOutOfBoundsException
+        // (4) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(4)";
+                runString = "(4)";
                 test.except.BC_saload.test(4);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7796,9 +7796,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.BC_sastore");
         String runString = null;
         try {
-        // test(-2,0) == !java.lang.NullPointerException
+        // (-2,0) == !java.lang.NullPointerException
             try {
-                runString = "test(-2,0)";
+                runString = "(-2,0)";
                 test.except.BC_sastore.test(-2, (short) 0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7808,9 +7808,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(-1,3) == !java.lang.ArrayIndexOutOfBoundsException
+        // (-1,3) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(-1,3)";
+                runString = "(-1,3)";
                 test.except.BC_sastore.test(-1, (short) 3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7820,15 +7820,15 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(0,0) == 0
-            runString = "test(0,0)";
+        // (0,0) == 0
+            runString = "(0,0)";
             if ((short) 0 != test.except.BC_sastore.test(0, (short) 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4,0) == !java.lang.ArrayIndexOutOfBoundsException
+        // (4,0) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(4,0)";
+                runString = "(4,0)";
                 test.except.BC_sastore.test(4, (short) 0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7848,20 +7848,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.Catch_NPE_01");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.except.Catch_NPE_01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.except.Catch_NPE_01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2) == -1
-            runString = "test(-2)";
+        // (-2) == -1
+            runString = "(-2)";
             if (-1 != test.except.Catch_NPE_01.test(-2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7876,20 +7876,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.Catch_NPE_02");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.except.Catch_NPE_02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.except.Catch_NPE_02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2) == -1
-            runString = "test(-2)";
+        // (-2) == -1
+            runString = "(-2)";
             if (-1 != test.except.Catch_NPE_02.test(-2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7904,20 +7904,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.Catch_NPE_03");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.except.Catch_NPE_03.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.except.Catch_NPE_03.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2) == -1
-            runString = "test(-2)";
+        // (-2) == -1
+            runString = "(-2)";
             if (-1 != test.except.Catch_NPE_03.test(-2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7932,20 +7932,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.Catch_NPE_04");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.except.Catch_NPE_04.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.except.Catch_NPE_04.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2) == -1
-            runString = "test(-2)";
+        // (-2) == -1
+            runString = "(-2)";
             if (-1 != test.except.Catch_NPE_04.test(-2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7960,20 +7960,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.Catch_NPE_05");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.except.Catch_NPE_05.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.except.Catch_NPE_05.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2) == -1
-            runString = "test(-2)";
+        // (-2) == -1
+            runString = "(-2)";
             if (-1 != test.except.Catch_NPE_05.test(-2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -7988,14 +7988,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.Catch_NPE_06");
         String runString = null;
         try {
-        // test("") == 0
-            runString = "test(\"\")";
+        // ("") == 0
+            runString = "(\"\")";
             if (0 != test.except.Catch_NPE_06.test("")) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(null) == -1
-            runString = "test(null)";
+        // (null) == -1
+            runString = "(null)";
             if (-1 != test.except.Catch_NPE_06.test(null)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -8010,14 +8010,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.Catch_NPE_07");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.except.Catch_NPE_07.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.except.Catch_NPE_07.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -8032,20 +8032,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.Catch_NPE_08");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.except.Catch_NPE_08.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.except.Catch_NPE_08.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2) == -2
-            runString = "test(-2)";
+        // (-2) == -2
+            runString = "(-2)";
             if (-2 != test.except.Catch_NPE_08.test(-2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -8060,9 +8060,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.Catch_StackOverflowError_01");
         String runString = null;
         try {
-        // test(0) == !java.lang.StackOverflowError
+        // (0) == !java.lang.StackOverflowError
             try {
-                runString = "test(0)";
+                runString = "(0)";
                 test.except.Catch_StackOverflowError_01.test(0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -8082,9 +8082,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.Catch_StackOverflowError_02");
         String runString = null;
         try {
-        // test(0) == !java.lang.StackOverflowError
+        // (0) == !java.lang.StackOverflowError
             try {
-                runString = "test(0)";
+                runString = "(0)";
                 test.except.Catch_StackOverflowError_02.test(0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -8104,8 +8104,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.Catch_StackOverflowError_03");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.except.Catch_StackOverflowError_03.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -8120,14 +8120,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.Except_Synchronized01");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.except.Except_Synchronized01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 2
-            runString = "test(1)";
+        // (1) == 2
+            runString = "(1)";
             if (2 != test.except.Except_Synchronized01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -8142,14 +8142,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.Except_Synchronized02");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.except.Except_Synchronized02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 2
-            runString = "test(1)";
+        // (1) == 2
+            runString = "(1)";
             if (2 != test.except.Except_Synchronized02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -8164,14 +8164,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.Except_Synchronized03");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.except.Except_Synchronized03.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 2
-            runString = "test(1)";
+        // (1) == 2
+            runString = "(1)";
             if (2 != test.except.Except_Synchronized03.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -8186,14 +8186,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.Except_Synchronized04");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.except.Except_Synchronized04.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 2
-            runString = "test(1)";
+        // (1) == 2
+            runString = "(1)";
             if (2 != test.except.Except_Synchronized04.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -8208,15 +8208,15 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.Throw_InCatch01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.except.Throw_InCatch01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == !java.lang.Exception
+        // (1) == !java.lang.Exception
             try {
-                runString = "test(1)";
+                runString = "(1)";
                 test.except.Throw_InCatch01.test(1);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -8236,15 +8236,15 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.Throw_InCatch02");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.except.Throw_InCatch02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == !java.lang.Exception
+        // (1) == !java.lang.Exception
             try {
-                runString = "test(1)";
+                runString = "(1)";
                 test.except.Throw_InCatch02.test(1);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -8264,15 +8264,15 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.Throw_InCatch03");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.except.Throw_InCatch03.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == !java.lang.Exception
+        // (1) == !java.lang.Exception
             try {
-                runString = "test(1)";
+                runString = "(1)";
                 test.except.Throw_InCatch03.test(1);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -8292,21 +8292,21 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.Throw_NPE_01");
         String runString = null;
         try {
-        // test(0) == 1
-            runString = "test(0)";
+        // (0) == 1
+            runString = "(0)";
             if (1 != test.except.Throw_NPE_01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 2
-            runString = "test(1)";
+        // (1) == 2
+            runString = "(1)";
             if (2 != test.except.Throw_NPE_01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == !java.lang.NullPointerException
+        // (-1) == !java.lang.NullPointerException
             try {
-                runString = "test(-1)";
+                runString = "(-1)";
                 test.except.Throw_NPE_01.test(-1);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -8326,15 +8326,15 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.Throw_Synchronized01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.except.Throw_Synchronized01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == !java.lang.Exception
+        // (1) == !java.lang.Exception
             try {
-                runString = "test(1)";
+                runString = "(1)";
                 test.except.Throw_Synchronized01.test(1);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -8354,15 +8354,15 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.Throw_Synchronized02");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.except.Throw_Synchronized02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == !java.lang.Exception
+        // (1) == !java.lang.Exception
             try {
-                runString = "test(1)";
+                runString = "(1)";
                 test.except.Throw_Synchronized02.test(1);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -8382,15 +8382,15 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.Throw_Synchronized03");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.except.Throw_Synchronized03.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == !java.lang.Exception
+        // (1) == !java.lang.Exception
             try {
-                runString = "test(1)";
+                runString = "(1)";
                 test.except.Throw_Synchronized03.test(1);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -8410,15 +8410,15 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.Throw_Synchronized04");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.except.Throw_Synchronized04.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == !java.lang.Exception
+        // (1) == !java.lang.Exception
             try {
-                runString = "test(1)";
+                runString = "(1)";
                 test.except.Throw_Synchronized04.test(1);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -8438,15 +8438,15 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.except.Throw_Synchronized05");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.except.Throw_Synchronized05.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == !java.lang.Exception
+        // (1) == !java.lang.Exception
             try {
-                runString = "test(1)";
+                runString = "(1)";
                 test.except.Throw_Synchronized05.test(1);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -8466,32 +8466,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.ArrayLength01");
         String runString = null;
         try {
-        // test(0) == 5
-            runString = "test(0)";
+        // (0) == 5
+            runString = "(0)";
             if (5 != test.optimize.ArrayLength01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 6
-            runString = "test(1)";
+        // (1) == 6
+            runString = "(1)";
             if (6 != test.optimize.ArrayLength01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 7
-            runString = "test(2)";
+        // (2) == 7
+            runString = "(2)";
             if (7 != test.optimize.ArrayLength01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 8
-            runString = "test(3)";
+        // (3) == 8
+            runString = "(3)";
             if (8 != test.optimize.ArrayLength01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 4
-            runString = "test(4)";
+        // (4) == 4
+            runString = "(4)";
             if (4 != test.optimize.ArrayLength01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -8506,86 +8506,86 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.BC_idiv_16");
         String runString = null;
         try {
-        // test(0,0) == 0
-            runString = "test(0,0)";
+        // (0,0) == 0
+            runString = "(0,0)";
             if (0 != test.optimize.BC_idiv_16.test(0, 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,16) == 1
-            runString = "test(0,16)";
+        // (0,16) == 1
+            runString = "(0,16)";
             if (1 != test.optimize.BC_idiv_16.test(0, 16)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,17) == 1
-            runString = "test(0,17)";
+        // (0,17) == 1
+            runString = "(0,17)";
             if (1 != test.optimize.BC_idiv_16.test(0, 17)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,-1) == 0
-            runString = "test(0,-1)";
+        // (0,-1) == 0
+            runString = "(0,-1)";
             if (0 != test.optimize.BC_idiv_16.test(0, -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,-16) == -1
-            runString = "test(0,-16)";
+        // (0,-16) == -1
+            runString = "(0,-16)";
             if (-1 != test.optimize.BC_idiv_16.test(0, -16)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,-17) == -1
-            runString = "test(0,-17)";
+        // (0,-17) == -1
+            runString = "(0,-17)";
             if (-1 != test.optimize.BC_idiv_16.test(0, -17)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,-1024) == -64
-            runString = "test(0,-1024)";
+        // (0,-1024) == -64
+            runString = "(0,-1024)";
             if (-64 != test.optimize.BC_idiv_16.test(0, -1024)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,0) == 0
-            runString = "test(1,0)";
+        // (1,0) == 0
+            runString = "(1,0)";
             if (0 != test.optimize.BC_idiv_16.test(1, 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,16) == 1
-            runString = "test(1,16)";
+        // (1,16) == 1
+            runString = "(1,16)";
             if (1 != test.optimize.BC_idiv_16.test(1, 16)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,17) == 1
-            runString = "test(1,17)";
+        // (1,17) == 1
+            runString = "(1,17)";
             if (1 != test.optimize.BC_idiv_16.test(1, 17)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,-1) == 0
-            runString = "test(1,-1)";
+        // (1,-1) == 0
+            runString = "(1,-1)";
             if (0 != test.optimize.BC_idiv_16.test(1, -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,-16) == -1
-            runString = "test(1,-16)";
+        // (1,-16) == -1
+            runString = "(1,-16)";
             if (-1 != test.optimize.BC_idiv_16.test(1, -16)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,-17) == -1
-            runString = "test(1,-17)";
+        // (1,-17) == -1
+            runString = "(1,-17)";
             if (-1 != test.optimize.BC_idiv_16.test(1, -17)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,-1024) == -64
-            runString = "test(1,-1024)";
+        // (1,-1024) == -64
+            runString = "(1,-1024)";
             if (-64 != test.optimize.BC_idiv_16.test(1, -1024)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -8600,44 +8600,44 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.BC_idiv_4");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.optimize.BC_idiv_4.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 1
-            runString = "test(4)";
+        // (4) == 1
+            runString = "(4)";
             if (1 != test.optimize.BC_idiv_4.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == 1
-            runString = "test(5)";
+        // (5) == 1
+            runString = "(5)";
             if (1 != test.optimize.BC_idiv_4.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == 0
-            runString = "test(-1)";
+        // (-1) == 0
+            runString = "(-1)";
             if (0 != test.optimize.BC_idiv_4.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-4) == -1
-            runString = "test(-4)";
+        // (-4) == -1
+            runString = "(-4)";
             if (-1 != test.optimize.BC_idiv_4.test(-4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-5) == -1
-            runString = "test(-5)";
+        // (-5) == -1
+            runString = "(-5)";
             if (-1 != test.optimize.BC_idiv_4.test(-5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-256) == -64
-            runString = "test(-256)";
+        // (-256) == -64
+            runString = "(-256)";
             if (-64 != test.optimize.BC_idiv_4.test(-256)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -8652,98 +8652,98 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.BC_imul_16");
         String runString = null;
         try {
-        // test(0,0) == 0
-            runString = "test(0,0)";
+        // (0,0) == 0
+            runString = "(0,0)";
             if (0 != test.optimize.BC_imul_16.test(0, 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,16) == 256
-            runString = "test(0,16)";
+        // (0,16) == 256
+            runString = "(0,16)";
             if (256 != test.optimize.BC_imul_16.test(0, 16)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,17) == 272
-            runString = "test(0,17)";
+        // (0,17) == 272
+            runString = "(0,17)";
             if (272 != test.optimize.BC_imul_16.test(0, 17)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,-1) == -16
-            runString = "test(0,-1)";
+        // (0,-1) == -16
+            runString = "(0,-1)";
             if (-16 != test.optimize.BC_imul_16.test(0, -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,-16) == -256
-            runString = "test(0,-16)";
+        // (0,-16) == -256
+            runString = "(0,-16)";
             if (-256 != test.optimize.BC_imul_16.test(0, -16)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,-17) == -272
-            runString = "test(0,-17)";
+        // (0,-17) == -272
+            runString = "(0,-17)";
             if (-272 != test.optimize.BC_imul_16.test(0, -17)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,2147483647) == -16
-            runString = "test(0,2147483647)";
+        // (0,2147483647) == -16
+            runString = "(0,2147483647)";
             if (-16 != test.optimize.BC_imul_16.test(0, 2147483647)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,-2147483648) == 0
-            runString = "test(0,-2147483648)";
+        // (0,-2147483648) == 0
+            runString = "(0,-2147483648)";
             if (0 != test.optimize.BC_imul_16.test(0, -2147483648)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,0) == 0
-            runString = "test(1,0)";
+        // (1,0) == 0
+            runString = "(1,0)";
             if (0 != test.optimize.BC_imul_16.test(1, 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,16) == 256
-            runString = "test(1,16)";
+        // (1,16) == 256
+            runString = "(1,16)";
             if (256 != test.optimize.BC_imul_16.test(1, 16)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,17) == 272
-            runString = "test(1,17)";
+        // (1,17) == 272
+            runString = "(1,17)";
             if (272 != test.optimize.BC_imul_16.test(1, 17)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,-1) == -16
-            runString = "test(1,-1)";
+        // (1,-1) == -16
+            runString = "(1,-1)";
             if (-16 != test.optimize.BC_imul_16.test(1, -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,-16) == -256
-            runString = "test(1,-16)";
+        // (1,-16) == -256
+            runString = "(1,-16)";
             if (-256 != test.optimize.BC_imul_16.test(1, -16)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,-17) == -272
-            runString = "test(1,-17)";
+        // (1,-17) == -272
+            runString = "(1,-17)";
             if (-272 != test.optimize.BC_imul_16.test(1, -17)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,2147483647) == -16
-            runString = "test(1,2147483647)";
+        // (1,2147483647) == -16
+            runString = "(1,2147483647)";
             if (-16 != test.optimize.BC_imul_16.test(1, 2147483647)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,-2147483648) == 0
-            runString = "test(1,-2147483648)";
+        // (1,-2147483648) == 0
+            runString = "(1,-2147483648)";
             if (0 != test.optimize.BC_imul_16.test(1, -2147483648)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -8758,44 +8758,44 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.BC_imul_4");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.optimize.BC_imul_4.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 16
-            runString = "test(4)";
+        // (4) == 16
+            runString = "(4)";
             if (16 != test.optimize.BC_imul_4.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == 20
-            runString = "test(5)";
+        // (5) == 20
+            runString = "(5)";
             if (20 != test.optimize.BC_imul_4.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == -4
-            runString = "test(-1)";
+        // (-1) == -4
+            runString = "(-1)";
             if (-4 != test.optimize.BC_imul_4.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-4) == -16
-            runString = "test(-4)";
+        // (-4) == -16
+            runString = "(-4)";
             if (-16 != test.optimize.BC_imul_4.test(-4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-5) == -20
-            runString = "test(-5)";
+        // (-5) == -20
+            runString = "(-5)";
             if (-20 != test.optimize.BC_imul_4.test(-5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-256) == -1024
-            runString = "test(-256)";
+        // (-256) == -1024
+            runString = "(-256)";
             if (-1024 != test.optimize.BC_imul_4.test(-256)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -8810,44 +8810,44 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.BC_ldiv_16");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0L != test.optimize.BC_ldiv_16.test(0L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(16) == 1
-            runString = "test(16)";
+        // (16) == 1
+            runString = "(16)";
             if (1L != test.optimize.BC_ldiv_16.test(16L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(17) == 1
-            runString = "test(17)";
+        // (17) == 1
+            runString = "(17)";
             if (1L != test.optimize.BC_ldiv_16.test(17L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == 0
-            runString = "test(-1)";
+        // (-1) == 0
+            runString = "(-1)";
             if (0L != test.optimize.BC_ldiv_16.test(-1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-16) == -1
-            runString = "test(-16)";
+        // (-16) == -1
+            runString = "(-16)";
             if (-1L != test.optimize.BC_ldiv_16.test(-16L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-17) == -1
-            runString = "test(-17)";
+        // (-17) == -1
+            runString = "(-17)";
             if (-1L != test.optimize.BC_ldiv_16.test(-17L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1024) == -64
-            runString = "test(-1024)";
+        // (-1024) == -64
+            runString = "(-1024)";
             if (-64L != test.optimize.BC_ldiv_16.test(-1024L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -8862,44 +8862,44 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.BC_ldiv_4");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0L != test.optimize.BC_ldiv_4.test(0L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 1
-            runString = "test(4)";
+        // (4) == 1
+            runString = "(4)";
             if (1L != test.optimize.BC_ldiv_4.test(4L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == 1
-            runString = "test(5)";
+        // (5) == 1
+            runString = "(5)";
             if (1L != test.optimize.BC_ldiv_4.test(5L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == 0
-            runString = "test(-1)";
+        // (-1) == 0
+            runString = "(-1)";
             if (0L != test.optimize.BC_ldiv_4.test(-1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-4) == -1
-            runString = "test(-4)";
+        // (-4) == -1
+            runString = "(-4)";
             if (-1L != test.optimize.BC_ldiv_4.test(-4L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-5) == -1
-            runString = "test(-5)";
+        // (-5) == -1
+            runString = "(-5)";
             if (-1L != test.optimize.BC_ldiv_4.test(-5L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-256) == -64
-            runString = "test(-256)";
+        // (-256) == -64
+            runString = "(-256)";
             if (-64L != test.optimize.BC_ldiv_4.test(-256L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -8914,44 +8914,44 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.BC_lmul_16");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0L != test.optimize.BC_lmul_16.test(0L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(16) == 256
-            runString = "test(16)";
+        // (16) == 256
+            runString = "(16)";
             if (256L != test.optimize.BC_lmul_16.test(16L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(17) == 272
-            runString = "test(17)";
+        // (17) == 272
+            runString = "(17)";
             if (272L != test.optimize.BC_lmul_16.test(17L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == -16
-            runString = "test(-1)";
+        // (-1) == -16
+            runString = "(-1)";
             if (-16L != test.optimize.BC_lmul_16.test(-1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-16) == -256
-            runString = "test(-16)";
+        // (-16) == -256
+            runString = "(-16)";
             if (-256L != test.optimize.BC_lmul_16.test(-16L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-17) == -272
-            runString = "test(-17)";
+        // (-17) == -272
+            runString = "(-17)";
             if (-272L != test.optimize.BC_lmul_16.test(-17L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1024) == -16384
-            runString = "test(-1024)";
+        // (-1024) == -16384
+            runString = "(-1024)";
             if (-16384L != test.optimize.BC_lmul_16.test(-1024L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -8966,44 +8966,44 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.BC_lmul_4");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0L != test.optimize.BC_lmul_4.test(0L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 16
-            runString = "test(4)";
+        // (4) == 16
+            runString = "(4)";
             if (16L != test.optimize.BC_lmul_4.test(4L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == 20
-            runString = "test(5)";
+        // (5) == 20
+            runString = "(5)";
             if (20L != test.optimize.BC_lmul_4.test(5L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == -4
-            runString = "test(-1)";
+        // (-1) == -4
+            runString = "(-1)";
             if (-4L != test.optimize.BC_lmul_4.test(-1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-4) == -16
-            runString = "test(-4)";
+        // (-4) == -16
+            runString = "(-4)";
             if (-16L != test.optimize.BC_lmul_4.test(-4L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-5) == -20
-            runString = "test(-5)";
+        // (-5) == -20
+            runString = "(-5)";
             if (-20L != test.optimize.BC_lmul_4.test(-5L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-256) == -1024
-            runString = "test(-256)";
+        // (-256) == -1024
+            runString = "(-256)";
             if (-1024L != test.optimize.BC_lmul_4.test(-256L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9018,8 +9018,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.BC_lshr_C16");
         String runString = null;
         try {
-        // test(87224824140) == 1330945
-            runString = "test(87224824140)";
+        // (87224824140) == 1330945
+            runString = "(87224824140)";
             if (1330945L != test.optimize.BC_lshr_C16.test(87224824140L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9034,8 +9034,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.BC_lshr_C24");
         String runString = null;
         try {
-        // test(87224824140) == 5199
-            runString = "test(87224824140)";
+        // (87224824140) == 5199
+            runString = "(87224824140)";
             if (5199L != test.optimize.BC_lshr_C24.test(87224824140L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9050,8 +9050,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.BC_lshr_C32");
         String runString = null;
         try {
-        // test(87224824140) == 20
-            runString = "test(87224824140)";
+        // (87224824140) == 20
+            runString = "(87224824140)";
             if (20L != test.optimize.BC_lshr_C32.test(87224824140L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9066,21 +9066,21 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Fold_Cast01");
         String runString = null;
         try {
-        // test(0) == 9
-            runString = "test(0)";
+        // (0) == 9
+            runString = "(0)";
             if (9 != test.optimize.Fold_Cast01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 9
-            runString = "test(1)";
+        // (1) == 9
+            runString = "(1)";
             if (9 != test.optimize.Fold_Cast01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == !java.lang.NullPointerException
+        // (2) == !java.lang.NullPointerException
             try {
-                runString = "test(2)";
+                runString = "(2)";
                 test.optimize.Fold_Cast01.test(2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9100,20 +9100,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Fold_Convert01");
         String runString = null;
         try {
-        // test(0) == -128
-            runString = "test(0)";
+        // (0) == -128
+            runString = "(0)";
             if (-128 != test.optimize.Fold_Convert01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == -32768
-            runString = "test(1)";
+        // (1) == -32768
+            runString = "(1)";
             if (-32768 != test.optimize.Fold_Convert01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 65535
-            runString = "test(2)";
+        // (2) == 65535
+            runString = "(2)";
             if (65535 != test.optimize.Fold_Convert01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9128,20 +9128,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Fold_Convert02");
         String runString = null;
         try {
-        // test(0) == -2147483648
-            runString = "test(0)";
+        // (0) == -2147483648
+            runString = "(0)";
             if (-2147483648L != test.optimize.Fold_Convert02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == -33
-            runString = "test(1)";
+        // (1) == -33
+            runString = "(1)";
             if (-33L != test.optimize.Fold_Convert02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == -78
-            runString = "test(2)";
+        // (2) == -78
+            runString = "(2)";
             if (-78L != test.optimize.Fold_Convert02.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9156,20 +9156,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Fold_Convert03");
         String runString = null;
         try {
-        // test(0) == 1024.0
-            runString = "test(0)";
+        // (0) == 1024.0
+            runString = "(0)";
             if (1024.0f != test.optimize.Fold_Convert03.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == -33.0
-            runString = "test(1)";
+        // (1) == -33.0
+            runString = "(1)";
             if (-33.0f != test.optimize.Fold_Convert03.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == -78.1
-            runString = "test(2)";
+        // (2) == -78.1
+            runString = "(2)";
             if (-78.1f != test.optimize.Fold_Convert03.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9184,14 +9184,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Fold_Convert04");
         String runString = null;
         try {
-        // test(0) == 1024.0
-            runString = "test(0)";
+        // (0) == 1024.0
+            runString = "(0)";
             if (1024.0 != test.optimize.Fold_Convert04.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == -1.25
-            runString = "test(1)";
+        // (1) == -1.25
+            runString = "(1)";
             if (-1.25 != test.optimize.Fold_Convert04.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9206,32 +9206,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Fold_Double01");
         String runString = null;
         try {
-        // test(0.0) == 10.0
-            runString = "test(0.0)";
+        // (0.0) == 10.0
+            runString = "(0.0)";
             if (10.0 != test.optimize.Fold_Double01.test(0.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == 11.0
-            runString = "test(1.0)";
+        // (1.0) == 11.0
+            runString = "(1.0)";
             if (11.0 != test.optimize.Fold_Double01.test(1.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2.0) == 12.0
-            runString = "test(2.0)";
+        // (2.0) == 12.0
+            runString = "(2.0)";
             if (12.0 != test.optimize.Fold_Double01.test(2.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3.0) == 13.0
-            runString = "test(3.0)";
+        // (3.0) == 13.0
+            runString = "(3.0)";
             if (13.0 != test.optimize.Fold_Double01.test(3.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4.0) == 14.0
-            runString = "test(4.0)";
+        // (4.0) == 14.0
+            runString = "(4.0)";
             if (14.0 != test.optimize.Fold_Double01.test(4.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9246,38 +9246,38 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Fold_Double02");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.optimize.Fold_Double02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.optimize.Fold_Double02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.optimize.Fold_Double02.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == false
-            runString = "test(3)";
+        // (3) == false
+            runString = "(3)";
             if (false != test.optimize.Fold_Double02.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == false
-            runString = "test(4)";
+        // (4) == false
+            runString = "(4)";
             if (false != test.optimize.Fold_Double02.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == false
-            runString = "test(5)";
+        // (5) == false
+            runString = "(5)";
             if (false != test.optimize.Fold_Double02.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9292,32 +9292,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Fold_Float01");
         String runString = null;
         try {
-        // test(0.0) == 10.0
-            runString = "test(0.0)";
+        // (0.0) == 10.0
+            runString = "(0.0)";
             if (10.0f != test.optimize.Fold_Float01.test(0.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == 11.0
-            runString = "test(1.0)";
+        // (1.0) == 11.0
+            runString = "(1.0)";
             if (11.0f != test.optimize.Fold_Float01.test(1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2.0) == 12.0
-            runString = "test(2.0)";
+        // (2.0) == 12.0
+            runString = "(2.0)";
             if (12.0f != test.optimize.Fold_Float01.test(2.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3.0) == 13.0
-            runString = "test(3.0)";
+        // (3.0) == 13.0
+            runString = "(3.0)";
             if (13.0f != test.optimize.Fold_Float01.test(3.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4.0) == 14.0
-            runString = "test(4.0)";
+        // (4.0) == 14.0
+            runString = "(4.0)";
             if (14.0f != test.optimize.Fold_Float01.test(4.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9332,38 +9332,38 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Fold_Float02");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.optimize.Fold_Float02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.optimize.Fold_Float02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.optimize.Fold_Float02.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == false
-            runString = "test(3)";
+        // (3) == false
+            runString = "(3)";
             if (false != test.optimize.Fold_Float02.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == false
-            runString = "test(4)";
+        // (4) == false
+            runString = "(4)";
             if (false != test.optimize.Fold_Float02.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == false
-            runString = "test(5)";
+        // (5) == false
+            runString = "(5)";
             if (false != test.optimize.Fold_Float02.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9378,20 +9378,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Fold_InstanceOf01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.optimize.Fold_InstanceOf01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.optimize.Fold_InstanceOf01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == false
-            runString = "test(2)";
+        // (2) == false
+            runString = "(2)";
             if (false != test.optimize.Fold_InstanceOf01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9406,50 +9406,50 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Fold_Int01");
         String runString = null;
         try {
-        // test(0) == 10
-            runString = "test(0)";
+        // (0) == 10
+            runString = "(0)";
             if (10 != test.optimize.Fold_Int01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 11
-            runString = "test(1)";
+        // (1) == 11
+            runString = "(1)";
             if (11 != test.optimize.Fold_Int01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 12
-            runString = "test(2)";
+        // (2) == 12
+            runString = "(2)";
             if (12 != test.optimize.Fold_Int01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 13
-            runString = "test(3)";
+        // (3) == 13
+            runString = "(3)";
             if (13 != test.optimize.Fold_Int01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 14
-            runString = "test(4)";
+        // (4) == 14
+            runString = "(4)";
             if (14 != test.optimize.Fold_Int01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == 15
-            runString = "test(5)";
+        // (5) == 15
+            runString = "(5)";
             if (15 != test.optimize.Fold_Int01.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == 16
-            runString = "test(6)";
+        // (6) == 16
+            runString = "(6)";
             if (16 != test.optimize.Fold_Int01.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == 17
-            runString = "test(7)";
+        // (7) == 17
+            runString = "(7)";
             if (17 != test.optimize.Fold_Int01.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9464,38 +9464,38 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Fold_Int02");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.optimize.Fold_Int02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.optimize.Fold_Int02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.optimize.Fold_Int02.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == false
-            runString = "test(3)";
+        // (3) == false
+            runString = "(3)";
             if (false != test.optimize.Fold_Int02.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == false
-            runString = "test(4)";
+        // (4) == false
+            runString = "(4)";
             if (false != test.optimize.Fold_Int02.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == false
-            runString = "test(5)";
+        // (5) == false
+            runString = "(5)";
             if (false != test.optimize.Fold_Int02.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9510,50 +9510,50 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Fold_Long01");
         String runString = null;
         try {
-        // test(0) == 10
-            runString = "test(0)";
+        // (0) == 10
+            runString = "(0)";
             if (10L != test.optimize.Fold_Long01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 11
-            runString = "test(1)";
+        // (1) == 11
+            runString = "(1)";
             if (11L != test.optimize.Fold_Long01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 12
-            runString = "test(2)";
+        // (2) == 12
+            runString = "(2)";
             if (12L != test.optimize.Fold_Long01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 13
-            runString = "test(3)";
+        // (3) == 13
+            runString = "(3)";
             if (13L != test.optimize.Fold_Long01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 14
-            runString = "test(4)";
+        // (4) == 14
+            runString = "(4)";
             if (14L != test.optimize.Fold_Long01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == 15
-            runString = "test(5)";
+        // (5) == 15
+            runString = "(5)";
             if (15L != test.optimize.Fold_Long01.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == 16
-            runString = "test(6)";
+        // (6) == 16
+            runString = "(6)";
             if (16L != test.optimize.Fold_Long01.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == 17
-            runString = "test(7)";
+        // (7) == 17
+            runString = "(7)";
             if (17L != test.optimize.Fold_Long01.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9568,38 +9568,38 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Fold_Long02");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.optimize.Fold_Long02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.optimize.Fold_Long02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.optimize.Fold_Long02.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == false
-            runString = "test(3)";
+        // (3) == false
+            runString = "(3)";
             if (false != test.optimize.Fold_Long02.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == false
-            runString = "test(4)";
+        // (4) == false
+            runString = "(4)";
             if (false != test.optimize.Fold_Long02.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == false
-            runString = "test(5)";
+        // (5) == false
+            runString = "(5)";
             if (false != test.optimize.Fold_Long02.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9614,80 +9614,80 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Fold_Math01");
         String runString = null;
         try {
-        // test(0) == 10.0
-            runString = "test(0)";
+        // (0) == 10.0
+            runString = "(0)";
             if (10.0 != test.optimize.Fold_Math01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 0.14943813247359922
-            runString = "test(1)";
+        // (1) == 0.14943813247359922
+            runString = "(1)";
             if (0.14943813247359922 != test.optimize.Fold_Math01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 0.9887710779360422
-            runString = "test(2)";
+        // (2) == 0.9887710779360422
+            runString = "(2)";
             if (0.9887710779360422 != test.optimize.Fold_Math01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 0.15113521805829508
-            runString = "test(3)";
+        // (3) == 0.15113521805829508
+            runString = "(3)";
             if (0.15113521805829508 != test.optimize.Fold_Math01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 0.04834938665190287
-            runString = "test(4)";
+        // (4) == 0.04834938665190287
+            runString = "(4)";
             if (0.04834938665190287 != test.optimize.Fold_Math01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == 12.0
-            runString = "test(5)";
+        // (5) == 12.0
+            runString = "(5)";
             if (12.0 != test.optimize.Fold_Math01.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == 1.1474024528375417
-            runString = "test(6)";
+        // (6) == 1.1474024528375417
+            runString = "(6)";
             if (1.1474024528375417 != test.optimize.Fold_Math01.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == -0.8239087409443188
-            runString = "test(7)";
+        // (7) == -0.8239087409443188
+            runString = "(7)";
             if (-0.8239087409443188 != test.optimize.Fold_Math01.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(8) == 106.62882057436371
-            runString = "test(8)";
+        // (8) == 106.62882057436371
+            runString = "(8)";
             if (106.62882057436371 != test.optimize.Fold_Math01.test(8)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(9) == 1.1474024528375417
-            runString = "test(9)";
+        // (9) == 1.1474024528375417
+            runString = "(9)";
             if (1.1474024528375417 != test.optimize.Fold_Math01.test(9)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(10) == -1.0
-            runString = "test(10)";
+        // (10) == -1.0
+            runString = "(10)";
             if (-1.0 != test.optimize.Fold_Math01.test(10)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(11) == 2.0
-            runString = "test(11)";
+        // (11) == 2.0
+            runString = "(11)";
             if (2.0 != test.optimize.Fold_Math01.test(11)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(12) == 42.0
-            runString = "test(12)";
+        // (12) == 42.0
+            runString = "(12)";
             if (42.0 != test.optimize.Fold_Math01.test(12)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9702,8 +9702,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.List_reorder_bug");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.optimize.List_reorder_bug.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9718,8 +9718,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.NCE_01");
         String runString = null;
         try {
-        // test(0) == 45
-            runString = "test(0)";
+        // (0) == 45
+            runString = "(0)";
             if (45 != test.optimize.NCE_01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9734,8 +9734,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.NCE_02");
         String runString = null;
         try {
-        // test(0) == 23
-            runString = "test(0)";
+        // (0) == 23
+            runString = "(0)";
             if (23 != test.optimize.NCE_02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9750,8 +9750,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.NCE_03");
         String runString = null;
         try {
-        // test(0) == 23
-            runString = "test(0)";
+        // (0) == 23
+            runString = "(0)";
             if (23 != test.optimize.NCE_03.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9766,8 +9766,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.NCE_04");
         String runString = null;
         try {
-        // test(0) == 23
-            runString = "test(0)";
+        // (0) == 23
+            runString = "(0)";
             if (23 != test.optimize.NCE_04.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9782,26 +9782,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Narrow_byte01");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if ((byte) 0 != test.optimize.Narrow_byte01.test((byte) 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if ((byte) 1 != test.optimize.Narrow_byte01.test((byte) 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == -1
-            runString = "test(-1)";
+        // (-1) == -1
+            runString = "(-1)";
             if ((byte) -1 != test.optimize.Narrow_byte01.test((byte) -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(110) == 110
-            runString = "test(110)";
+        // (110) == 110
+            runString = "(110)";
             if ((byte) 110 != test.optimize.Narrow_byte01.test((byte) 110)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9816,26 +9816,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Narrow_byte02");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if ((byte) 0 != test.optimize.Narrow_byte02.test((byte) 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if ((byte) 1 != test.optimize.Narrow_byte02.test((byte) 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == -1
-            runString = "test(-1)";
+        // (-1) == -1
+            runString = "(-1)";
             if ((byte) -1 != test.optimize.Narrow_byte02.test((byte) -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(110) == 110
-            runString = "test(110)";
+        // (110) == 110
+            runString = "(110)";
             if ((byte) 110 != test.optimize.Narrow_byte02.test((byte) 110)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9850,26 +9850,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Narrow_byte03");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if ((byte) 0 != test.optimize.Narrow_byte03.test((byte) 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if ((byte) 1 != test.optimize.Narrow_byte03.test((byte) 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == -1
-            runString = "test(-1)";
+        // (-1) == -1
+            runString = "(-1)";
             if ((byte) -1 != test.optimize.Narrow_byte03.test((byte) -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(110) == 110
-            runString = "test(110)";
+        // (110) == 110
+            runString = "(110)";
             if ((byte) 110 != test.optimize.Narrow_byte03.test((byte) 110)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9884,26 +9884,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Narrow_char01");
         String runString = null;
         try {
-        // test('\0') == '\0'
-            runString = "test('\0')";
+        // ('\0') == '\0'
+            runString = "('\0')";
             if ((char) 0 != test.optimize.Narrow_char01.test((char) 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test('\1') == '\1'
-            runString = "test('\1')";
+        // ('\1') == '\1'
+            runString = "('\1')";
             if ((char) 1 != test.optimize.Narrow_char01.test((char) 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test('\377') == '\377'
-            runString = "test('\377')";
+        // ('\377') == '\377'
+            runString = "('\377')";
             if ((char) 255 != test.optimize.Narrow_char01.test((char) 255)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test('\176750') == '\176750'
-            runString = "test('\176750')";
+        // ('\176750') == '\176750'
+            runString = "('\176750')";
             if ((char) 65000 != test.optimize.Narrow_char01.test((char) 65000)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9918,26 +9918,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Narrow_char02");
         String runString = null;
         try {
-        // test('\0') == '\0'
-            runString = "test('\0')";
+        // ('\0') == '\0'
+            runString = "('\0')";
             if ((char) 0 != test.optimize.Narrow_char02.test((char) 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test('\1') == '\1'
-            runString = "test('\1')";
+        // ('\1') == '\1'
+            runString = "('\1')";
             if ((char) 1 != test.optimize.Narrow_char02.test((char) 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test('\377') == '\377'
-            runString = "test('\377')";
+        // ('\377') == '\377'
+            runString = "('\377')";
             if ((char) 255 != test.optimize.Narrow_char02.test((char) 255)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test('\176750') == '\176750'
-            runString = "test('\176750')";
+        // ('\176750') == '\176750'
+            runString = "('\176750')";
             if ((char) 65000 != test.optimize.Narrow_char02.test((char) 65000)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9952,26 +9952,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Narrow_char03");
         String runString = null;
         try {
-        // test('\0') == '\0'
-            runString = "test('\0')";
+        // ('\0') == '\0'
+            runString = "('\0')";
             if ((char) 0 != test.optimize.Narrow_char03.test((char) 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test('\1') == '\1'
-            runString = "test('\1')";
+        // ('\1') == '\1'
+            runString = "('\1')";
             if ((char) 1 != test.optimize.Narrow_char03.test((char) 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test('\377') == '\377'
-            runString = "test('\377')";
+        // ('\377') == '\377'
+            runString = "('\377')";
             if ((char) 255 != test.optimize.Narrow_char03.test((char) 255)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test('\176750') == '\176750'
-            runString = "test('\176750')";
+        // ('\176750') == '\176750'
+            runString = "('\176750')";
             if ((char) 65000 != test.optimize.Narrow_char03.test((char) 65000)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -9986,26 +9986,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Narrow_short01");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if ((short) 0 != test.optimize.Narrow_short01.test((short) 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if ((short) 1 != test.optimize.Narrow_short01.test((short) 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == -1
-            runString = "test(-1)";
+        // (-1) == -1
+            runString = "(-1)";
             if ((short) -1 != test.optimize.Narrow_short01.test((short) -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(23110) == 23110
-            runString = "test(23110)";
+        // (23110) == 23110
+            runString = "(23110)";
             if ((short) 23110 != test.optimize.Narrow_short01.test((short) 23110)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -10020,26 +10020,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Narrow_short02");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if ((short) 0 != test.optimize.Narrow_short02.test((short) 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if ((short) 1 != test.optimize.Narrow_short02.test((short) 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == -1
-            runString = "test(-1)";
+        // (-1) == -1
+            runString = "(-1)";
             if ((short) -1 != test.optimize.Narrow_short02.test((short) -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(23110) == 23110
-            runString = "test(23110)";
+        // (23110) == 23110
+            runString = "(23110)";
             if ((short) 23110 != test.optimize.Narrow_short02.test((short) 23110)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -10054,26 +10054,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Narrow_short03");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if ((short) 0 != test.optimize.Narrow_short03.test((short) 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if ((short) 1 != test.optimize.Narrow_short03.test((short) 1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == -1
-            runString = "test(-1)";
+        // (-1) == -1
+            runString = "(-1)";
             if ((short) -1 != test.optimize.Narrow_short03.test((short) -1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(23110) == 23110
-            runString = "test(23110)";
+        // (23110) == 23110
+            runString = "(23110)";
             if ((short) 23110 != test.optimize.Narrow_short03.test((short) 23110)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -10088,20 +10088,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Reduce_Convert01");
         String runString = null;
         try {
-        // test(0) == 10
-            runString = "test(0)";
+        // (0) == 10
+            runString = "(0)";
             if (10 != test.optimize.Reduce_Convert01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 11
-            runString = "test(1)";
+        // (1) == 11
+            runString = "(1)";
             if (11 != test.optimize.Reduce_Convert01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 12
-            runString = "test(2)";
+        // (2) == 12
+            runString = "(2)";
             if (12 != test.optimize.Reduce_Convert01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -10116,26 +10116,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Reduce_Double01");
         String runString = null;
         try {
-        // test(0.0) == 10.0
-            runString = "test(0.0)";
+        // (0.0) == 10.0
+            runString = "(0.0)";
             if (10.0 != test.optimize.Reduce_Double01.test(0.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == 11.0
-            runString = "test(1.0)";
+        // (1.0) == 11.0
+            runString = "(1.0)";
             if (11.0 != test.optimize.Reduce_Double01.test(1.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2.0) == 12.0
-            runString = "test(2.0)";
+        // (2.0) == 12.0
+            runString = "(2.0)";
             if (12.0 != test.optimize.Reduce_Double01.test(2.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3.0) == 13.0
-            runString = "test(3.0)";
+        // (3.0) == 13.0
+            runString = "(3.0)";
             if (13.0 != test.optimize.Reduce_Double01.test(3.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -10150,26 +10150,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Reduce_Float01");
         String runString = null;
         try {
-        // test(0.0) == 10.0
-            runString = "test(0.0)";
+        // (0.0) == 10.0
+            runString = "(0.0)";
             if (10.0f != test.optimize.Reduce_Float01.test(0.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == 11.0
-            runString = "test(1.0)";
+        // (1.0) == 11.0
+            runString = "(1.0)";
             if (11.0f != test.optimize.Reduce_Float01.test(1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2.0) == 12.0
-            runString = "test(2.0)";
+        // (2.0) == 12.0
+            runString = "(2.0)";
             if (12.0f != test.optimize.Reduce_Float01.test(2.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3.0) == 13.0
-            runString = "test(3.0)";
+        // (3.0) == 13.0
+            runString = "(3.0)";
             if (13.0f != test.optimize.Reduce_Float01.test(3.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -10184,50 +10184,50 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Reduce_Int01");
         String runString = null;
         try {
-        // test(0) == 10
-            runString = "test(0)";
+        // (0) == 10
+            runString = "(0)";
             if (10 != test.optimize.Reduce_Int01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 11
-            runString = "test(1)";
+        // (1) == 11
+            runString = "(1)";
             if (11 != test.optimize.Reduce_Int01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 12
-            runString = "test(2)";
+        // (2) == 12
+            runString = "(2)";
             if (12 != test.optimize.Reduce_Int01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 13
-            runString = "test(3)";
+        // (3) == 13
+            runString = "(3)";
             if (13 != test.optimize.Reduce_Int01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 14
-            runString = "test(4)";
+        // (4) == 14
+            runString = "(4)";
             if (14 != test.optimize.Reduce_Int01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == 15
-            runString = "test(5)";
+        // (5) == 15
+            runString = "(5)";
             if (15 != test.optimize.Reduce_Int01.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == 16
-            runString = "test(6)";
+        // (6) == 16
+            runString = "(6)";
             if (16 != test.optimize.Reduce_Int01.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == 17
-            runString = "test(7)";
+        // (7) == 17
+            runString = "(7)";
             if (17 != test.optimize.Reduce_Int01.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -10242,50 +10242,50 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Reduce_Int02");
         String runString = null;
         try {
-        // test(0) == 10
-            runString = "test(0)";
+        // (0) == 10
+            runString = "(0)";
             if (10 != test.optimize.Reduce_Int02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 11
-            runString = "test(1)";
+        // (1) == 11
+            runString = "(1)";
             if (11 != test.optimize.Reduce_Int02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 12
-            runString = "test(2)";
+        // (2) == 12
+            runString = "(2)";
             if (12 != test.optimize.Reduce_Int02.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 13
-            runString = "test(3)";
+        // (3) == 13
+            runString = "(3)";
             if (13 != test.optimize.Reduce_Int02.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 14
-            runString = "test(4)";
+        // (4) == 14
+            runString = "(4)";
             if (14 != test.optimize.Reduce_Int02.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == 15
-            runString = "test(5)";
+        // (5) == 15
+            runString = "(5)";
             if (15 != test.optimize.Reduce_Int02.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == 16
-            runString = "test(6)";
+        // (6) == 16
+            runString = "(6)";
             if (16 != test.optimize.Reduce_Int02.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == 17
-            runString = "test(7)";
+        // (7) == 17
+            runString = "(7)";
             if (17 != test.optimize.Reduce_Int02.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -10300,50 +10300,50 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Reduce_Int03");
         String runString = null;
         try {
-        // test(0) == 10
-            runString = "test(0)";
+        // (0) == 10
+            runString = "(0)";
             if (10 != test.optimize.Reduce_Int03.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 0
-            runString = "test(1)";
+        // (1) == 0
+            runString = "(1)";
             if (0 != test.optimize.Reduce_Int03.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 25
-            runString = "test(2)";
+        // (2) == 25
+            runString = "(2)";
             if (25 != test.optimize.Reduce_Int03.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 1
-            runString = "test(3)";
+        // (3) == 1
+            runString = "(3)";
             if (1 != test.optimize.Reduce_Int03.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 0
-            runString = "test(4)";
+        // (4) == 0
+            runString = "(4)";
             if (0 != test.optimize.Reduce_Int03.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == 15
-            runString = "test(5)";
+        // (5) == 15
+            runString = "(5)";
             if (15 != test.optimize.Reduce_Int03.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == 16
-            runString = "test(6)";
+        // (6) == 16
+            runString = "(6)";
             if (16 != test.optimize.Reduce_Int03.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == 0
-            runString = "test(7)";
+        // (7) == 0
+            runString = "(7)";
             if (0 != test.optimize.Reduce_Int03.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -10358,14 +10358,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Reduce_Int04");
         String runString = null;
         try {
-        // test(0) == 40
-            runString = "test(0)";
+        // (0) == 40
+            runString = "(0)";
             if (40 != test.optimize.Reduce_Int04.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 655360
-            runString = "test(1)";
+        // (1) == 655360
+            runString = "(1)";
             if (655360 != test.optimize.Reduce_Int04.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -10380,38 +10380,38 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Reduce_IntShift01");
         String runString = null;
         try {
-        // test(0) == 10
-            runString = "test(0)";
+        // (0) == 10
+            runString = "(0)";
             if (10 != test.optimize.Reduce_IntShift01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 11
-            runString = "test(1)";
+        // (1) == 11
+            runString = "(1)";
             if (11 != test.optimize.Reduce_IntShift01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 12
-            runString = "test(2)";
+        // (2) == 12
+            runString = "(2)";
             if (12 != test.optimize.Reduce_IntShift01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 13
-            runString = "test(3)";
+        // (3) == 13
+            runString = "(3)";
             if (13 != test.optimize.Reduce_IntShift01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 14
-            runString = "test(4)";
+        // (4) == 14
+            runString = "(4)";
             if (14 != test.optimize.Reduce_IntShift01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == 15
-            runString = "test(5)";
+        // (5) == 15
+            runString = "(5)";
             if (15 != test.optimize.Reduce_IntShift01.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -10426,32 +10426,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Reduce_IntShift02");
         String runString = null;
         try {
-        // test(0) == 80
-            runString = "test(0)";
+        // (0) == 80
+            runString = "(0)";
             if (80 != test.optimize.Reduce_IntShift02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 11
-            runString = "test(1)";
+        // (1) == 11
+            runString = "(1)";
             if (11 != test.optimize.Reduce_IntShift02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 12
-            runString = "test(2)";
+        // (2) == 12
+            runString = "(2)";
             if (12 != test.optimize.Reduce_IntShift02.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 13
-            runString = "test(3)";
+        // (3) == 13
+            runString = "(3)";
             if (13 != test.optimize.Reduce_IntShift02.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 64
-            runString = "test(4)";
+        // (4) == 64
+            runString = "(4)";
             if (64 != test.optimize.Reduce_IntShift02.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -10466,50 +10466,50 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Reduce_Long01");
         String runString = null;
         try {
-        // test(0) == 10
-            runString = "test(0)";
+        // (0) == 10
+            runString = "(0)";
             if (10L != test.optimize.Reduce_Long01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 11
-            runString = "test(1)";
+        // (1) == 11
+            runString = "(1)";
             if (11L != test.optimize.Reduce_Long01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 12
-            runString = "test(2)";
+        // (2) == 12
+            runString = "(2)";
             if (12L != test.optimize.Reduce_Long01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 13
-            runString = "test(3)";
+        // (3) == 13
+            runString = "(3)";
             if (13L != test.optimize.Reduce_Long01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 14
-            runString = "test(4)";
+        // (4) == 14
+            runString = "(4)";
             if (14L != test.optimize.Reduce_Long01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == 15
-            runString = "test(5)";
+        // (5) == 15
+            runString = "(5)";
             if (15L != test.optimize.Reduce_Long01.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == 16
-            runString = "test(6)";
+        // (6) == 16
+            runString = "(6)";
             if (16L != test.optimize.Reduce_Long01.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == 17
-            runString = "test(7)";
+        // (7) == 17
+            runString = "(7)";
             if (17L != test.optimize.Reduce_Long01.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -10524,50 +10524,50 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Reduce_Long02");
         String runString = null;
         try {
-        // test(0) == 10
-            runString = "test(0)";
+        // (0) == 10
+            runString = "(0)";
             if (10L != test.optimize.Reduce_Long02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 11
-            runString = "test(1)";
+        // (1) == 11
+            runString = "(1)";
             if (11L != test.optimize.Reduce_Long02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 12
-            runString = "test(2)";
+        // (2) == 12
+            runString = "(2)";
             if (12L != test.optimize.Reduce_Long02.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 13
-            runString = "test(3)";
+        // (3) == 13
+            runString = "(3)";
             if (13L != test.optimize.Reduce_Long02.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 14
-            runString = "test(4)";
+        // (4) == 14
+            runString = "(4)";
             if (14L != test.optimize.Reduce_Long02.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == 15
-            runString = "test(5)";
+        // (5) == 15
+            runString = "(5)";
             if (15L != test.optimize.Reduce_Long02.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == 16
-            runString = "test(6)";
+        // (6) == 16
+            runString = "(6)";
             if (16L != test.optimize.Reduce_Long02.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == 17
-            runString = "test(7)";
+        // (7) == 17
+            runString = "(7)";
             if (17L != test.optimize.Reduce_Long02.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -10582,50 +10582,50 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Reduce_Long03");
         String runString = null;
         try {
-        // test(0) == 10
-            runString = "test(0)";
+        // (0) == 10
+            runString = "(0)";
             if (10L != test.optimize.Reduce_Long03.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 0
-            runString = "test(1)";
+        // (1) == 0
+            runString = "(1)";
             if (0L != test.optimize.Reduce_Long03.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 25
-            runString = "test(2)";
+        // (2) == 25
+            runString = "(2)";
             if (25L != test.optimize.Reduce_Long03.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 1
-            runString = "test(3)";
+        // (3) == 1
+            runString = "(3)";
             if (1L != test.optimize.Reduce_Long03.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 0
-            runString = "test(4)";
+        // (4) == 0
+            runString = "(4)";
             if (0L != test.optimize.Reduce_Long03.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == 15
-            runString = "test(5)";
+        // (5) == 15
+            runString = "(5)";
             if (15L != test.optimize.Reduce_Long03.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == 16
-            runString = "test(6)";
+        // (6) == 16
+            runString = "(6)";
             if (16L != test.optimize.Reduce_Long03.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == 0
-            runString = "test(7)";
+        // (7) == 0
+            runString = "(7)";
             if (0L != test.optimize.Reduce_Long03.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -10640,14 +10640,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Reduce_Long04");
         String runString = null;
         try {
-        // test(0) == 40
-            runString = "test(0)";
+        // (0) == 40
+            runString = "(0)";
             if (40L != test.optimize.Reduce_Long04.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 85899345920
-            runString = "test(1)";
+        // (1) == 85899345920
+            runString = "(1)";
             if (85899345920L != test.optimize.Reduce_Long04.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -10662,38 +10662,38 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Reduce_LongShift01");
         String runString = null;
         try {
-        // test(0) == 10
-            runString = "test(0)";
+        // (0) == 10
+            runString = "(0)";
             if (10L != test.optimize.Reduce_LongShift01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 11
-            runString = "test(1)";
+        // (1) == 11
+            runString = "(1)";
             if (11L != test.optimize.Reduce_LongShift01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 12
-            runString = "test(2)";
+        // (2) == 12
+            runString = "(2)";
             if (12L != test.optimize.Reduce_LongShift01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 13
-            runString = "test(3)";
+        // (3) == 13
+            runString = "(3)";
             if (13L != test.optimize.Reduce_LongShift01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 14
-            runString = "test(4)";
+        // (4) == 14
+            runString = "(4)";
             if (14L != test.optimize.Reduce_LongShift01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == 15
-            runString = "test(5)";
+        // (5) == 15
+            runString = "(5)";
             if (15L != test.optimize.Reduce_LongShift01.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -10708,32 +10708,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Reduce_LongShift02");
         String runString = null;
         try {
-        // test(0) == 80
-            runString = "test(0)";
+        // (0) == 80
+            runString = "(0)";
             if (80L != test.optimize.Reduce_LongShift02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 11
-            runString = "test(1)";
+        // (1) == 11
+            runString = "(1)";
             if (11L != test.optimize.Reduce_LongShift02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 12
-            runString = "test(2)";
+        // (2) == 12
+            runString = "(2)";
             if (12L != test.optimize.Reduce_LongShift02.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 13
-            runString = "test(3)";
+        // (3) == 13
+            runString = "(3)";
             if (13L != test.optimize.Reduce_LongShift02.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 64
-            runString = "test(4)";
+        // (4) == 64
+            runString = "(4)";
             if (64L != test.optimize.Reduce_LongShift02.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -10748,8 +10748,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Switch01");
         String runString = null;
         try {
-        // test(0) == 1
-            runString = "test(0)";
+        // (0) == 1
+            runString = "(0)";
             if (1 != test.optimize.Switch01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -10764,14 +10764,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.Switch02");
         String runString = null;
         try {
-        // test(0) == 1
-            runString = "test(0)";
+        // (0) == 1
+            runString = "(0)";
             if (1 != test.optimize.Switch02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 2
-            runString = "test(1)";
+        // (1) == 2
+            runString = "(1)";
             if (2 != test.optimize.Switch02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -10786,8 +10786,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.TypeCastElem");
         String runString = null;
         try {
-        // test(10,13,25) == 27183
-            runString = "test(10,13,25)";
+        // (10,13,25) == 27183
+            runString = "(10,13,25)";
             if (27183 != test.optimize.TypeCastElem.test(10, 13, 25)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -10802,21 +10802,21 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.VN_Cast01");
         String runString = null;
         try {
-        // test(0) == 18
-            runString = "test(0)";
+        // (0) == 18
+            runString = "(0)";
             if (18 != test.optimize.VN_Cast01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 18
-            runString = "test(1)";
+        // (1) == 18
+            runString = "(1)";
             if (18 != test.optimize.VN_Cast01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == !java.lang.NullPointerException
+        // (2) == !java.lang.NullPointerException
             try {
-                runString = "test(2)";
+                runString = "(2)";
                 test.optimize.VN_Cast01.test(2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -10836,21 +10836,21 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.VN_Cast02");
         String runString = null;
         try {
-        // test(0) == 18
-            runString = "test(0)";
+        // (0) == 18
+            runString = "(0)";
             if (18 != test.optimize.VN_Cast02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 18
-            runString = "test(1)";
+        // (1) == 18
+            runString = "(1)";
             if (18 != test.optimize.VN_Cast02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == !java.lang.NullPointerException
+        // (2) == !java.lang.NullPointerException
             try {
-                runString = "test(2)";
+                runString = "(2)";
                 test.optimize.VN_Cast02.test(2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -10870,20 +10870,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.VN_Convert01");
         String runString = null;
         try {
-        // test(0) == 20
-            runString = "test(0)";
+        // (0) == 20
+            runString = "(0)";
             if (20 != test.optimize.VN_Convert01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 22
-            runString = "test(1)";
+        // (1) == 22
+            runString = "(1)";
             if (22 != test.optimize.VN_Convert01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 24
-            runString = "test(2)";
+        // (2) == 24
+            runString = "(2)";
             if (24 != test.optimize.VN_Convert01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -10898,20 +10898,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.VN_Convert02");
         String runString = null;
         try {
-        // test(0) == 20
-            runString = "test(0)";
+        // (0) == 20
+            runString = "(0)";
             if (20 != test.optimize.VN_Convert02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 22
-            runString = "test(1)";
+        // (1) == 22
+            runString = "(1)";
             if (22 != test.optimize.VN_Convert02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 24
-            runString = "test(2)";
+        // (2) == 24
+            runString = "(2)";
             if (24 != test.optimize.VN_Convert02.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -10926,26 +10926,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.VN_Double01");
         String runString = null;
         try {
-        // test(0.0) == 22.0
-            runString = "test(0.0)";
+        // (0.0) == 22.0
+            runString = "(0.0)";
             if (22.0 != test.optimize.VN_Double01.test(0.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == 0.0
-            runString = "test(1.0)";
+        // (1.0) == 0.0
+            runString = "(1.0)";
             if (0.0 != test.optimize.VN_Double01.test(1.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2.0) == 144.0
-            runString = "test(2.0)";
+        // (2.0) == 144.0
+            runString = "(2.0)";
             if (144.0 != test.optimize.VN_Double01.test(2.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3.0) == 1.0
-            runString = "test(3.0)";
+        // (3.0) == 1.0
+            runString = "(3.0)";
             if (1.0 != test.optimize.VN_Double01.test(3.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -10960,26 +10960,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.VN_Double02");
         String runString = null;
         try {
-        // test(0.0) == 22.0
-            runString = "test(0.0)";
+        // (0.0) == 22.0
+            runString = "(0.0)";
             if (22.0 != test.optimize.VN_Double02.test(0.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == 0.0
-            runString = "test(1.0)";
+        // (1.0) == 0.0
+            runString = "(1.0)";
             if (0.0 != test.optimize.VN_Double02.test(1.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2.0) == 144.0
-            runString = "test(2.0)";
+        // (2.0) == 144.0
+            runString = "(2.0)";
             if (144.0 != test.optimize.VN_Double02.test(2.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3.0) == 1.0
-            runString = "test(3.0)";
+        // (3.0) == 1.0
+            runString = "(3.0)";
             if (1.0 != test.optimize.VN_Double02.test(3.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -10994,21 +10994,21 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.VN_Field01");
         String runString = null;
         try {
-        // test(0) == 18
-            runString = "test(0)";
+        // (0) == 18
+            runString = "(0)";
             if (18 != test.optimize.VN_Field01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 18
-            runString = "test(1)";
+        // (1) == 18
+            runString = "(1)";
             if (18 != test.optimize.VN_Field01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == !java.lang.NullPointerException
+        // (2) == !java.lang.NullPointerException
             try {
-                runString = "test(2)";
+                runString = "(2)";
                 test.optimize.VN_Field01.test(2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11028,21 +11028,21 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.VN_Field02");
         String runString = null;
         try {
-        // test(0) == 18
-            runString = "test(0)";
+        // (0) == 18
+            runString = "(0)";
             if (18 != test.optimize.VN_Field02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 18
-            runString = "test(1)";
+        // (1) == 18
+            runString = "(1)";
             if (18 != test.optimize.VN_Field02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == !java.lang.NullPointerException
+        // (2) == !java.lang.NullPointerException
             try {
-                runString = "test(2)";
+                runString = "(2)";
                 test.optimize.VN_Field02.test(2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11062,26 +11062,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.VN_Float01");
         String runString = null;
         try {
-        // test(0.0) == 22.0
-            runString = "test(0.0)";
+        // (0.0) == 22.0
+            runString = "(0.0)";
             if (22.0f != test.optimize.VN_Float01.test(0.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == 0.0
-            runString = "test(1.0)";
+        // (1.0) == 0.0
+            runString = "(1.0)";
             if (0.0f != test.optimize.VN_Float01.test(1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2.0) == 144.0
-            runString = "test(2.0)";
+        // (2.0) == 144.0
+            runString = "(2.0)";
             if (144.0f != test.optimize.VN_Float01.test(2.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3.0) == 1.0
-            runString = "test(3.0)";
+        // (3.0) == 1.0
+            runString = "(3.0)";
             if (1.0f != test.optimize.VN_Float01.test(3.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11096,26 +11096,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.VN_Float02");
         String runString = null;
         try {
-        // test(0.0) == 22.0
-            runString = "test(0.0)";
+        // (0.0) == 22.0
+            runString = "(0.0)";
             if (22.0f != test.optimize.VN_Float02.test(0.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1.0) == 0.0
-            runString = "test(1.0)";
+        // (1.0) == 0.0
+            runString = "(1.0)";
             if (0.0f != test.optimize.VN_Float02.test(1.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2.0) == 144.0
-            runString = "test(2.0)";
+        // (2.0) == 144.0
+            runString = "(2.0)";
             if (144.0f != test.optimize.VN_Float02.test(2.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3.0) == 1.0
-            runString = "test(3.0)";
+        // (3.0) == 1.0
+            runString = "(3.0)";
             if (1.0f != test.optimize.VN_Float02.test(3.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11130,20 +11130,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.VN_InstanceOf01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.optimize.VN_InstanceOf01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.optimize.VN_InstanceOf01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == false
-            runString = "test(2)";
+        // (2) == false
+            runString = "(2)";
             if (false != test.optimize.VN_InstanceOf01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11158,20 +11158,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.VN_InstanceOf02");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.optimize.VN_InstanceOf02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.optimize.VN_InstanceOf02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == false
-            runString = "test(2)";
+        // (2) == false
+            runString = "(2)";
             if (false != test.optimize.VN_InstanceOf02.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11186,50 +11186,50 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.VN_Int01");
         String runString = null;
         try {
-        // test(0) == 6
-            runString = "test(0)";
+        // (0) == 6
+            runString = "(0)";
             if (6 != test.optimize.VN_Int01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 0
-            runString = "test(1)";
+        // (1) == 0
+            runString = "(1)";
             if (0 != test.optimize.VN_Int01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 36
-            runString = "test(2)";
+        // (2) == 36
+            runString = "(2)";
             if (36 != test.optimize.VN_Int01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 1
-            runString = "test(3)";
+        // (3) == 1
+            runString = "(3)";
             if (1 != test.optimize.VN_Int01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 0
-            runString = "test(4)";
+        // (4) == 0
+            runString = "(4)";
             if (0 != test.optimize.VN_Int01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == 5
-            runString = "test(5)";
+        // (5) == 5
+            runString = "(5)";
             if (5 != test.optimize.VN_Int01.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == 7
-            runString = "test(6)";
+        // (6) == 7
+            runString = "(6)";
             if (7 != test.optimize.VN_Int01.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == 0
-            runString = "test(7)";
+        // (7) == 0
+            runString = "(7)";
             if (0 != test.optimize.VN_Int01.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11244,20 +11244,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.VN_Int02");
         String runString = null;
         try {
-        // test(0) == 10
-            runString = "test(0)";
+        // (0) == 10
+            runString = "(0)";
             if (10 != test.optimize.VN_Int02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 10
-            runString = "test(1)";
+        // (1) == 10
+            runString = "(1)";
             if (10 != test.optimize.VN_Int02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 48
-            runString = "test(2)";
+        // (2) == 48
+            runString = "(2)";
             if (48 != test.optimize.VN_Int02.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11272,50 +11272,50 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.VN_Int03");
         String runString = null;
         try {
-        // test(0) == 6
-            runString = "test(0)";
+        // (0) == 6
+            runString = "(0)";
             if (6 != test.optimize.VN_Int03.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 0
-            runString = "test(1)";
+        // (1) == 0
+            runString = "(1)";
             if (0 != test.optimize.VN_Int03.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 36
-            runString = "test(2)";
+        // (2) == 36
+            runString = "(2)";
             if (36 != test.optimize.VN_Int03.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 1
-            runString = "test(3)";
+        // (3) == 1
+            runString = "(3)";
             if (1 != test.optimize.VN_Int03.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 0
-            runString = "test(4)";
+        // (4) == 0
+            runString = "(4)";
             if (0 != test.optimize.VN_Int03.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == 5
-            runString = "test(5)";
+        // (5) == 5
+            runString = "(5)";
             if (5 != test.optimize.VN_Int03.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == 7
-            runString = "test(6)";
+        // (6) == 7
+            runString = "(6)";
             if (7 != test.optimize.VN_Int03.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == 0
-            runString = "test(7)";
+        // (7) == 0
+            runString = "(7)";
             if (0 != test.optimize.VN_Int03.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11330,50 +11330,50 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.VN_Long01");
         String runString = null;
         try {
-        // test(0) == 6
-            runString = "test(0)";
+        // (0) == 6
+            runString = "(0)";
             if (6L != test.optimize.VN_Long01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 0
-            runString = "test(1)";
+        // (1) == 0
+            runString = "(1)";
             if (0L != test.optimize.VN_Long01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 36
-            runString = "test(2)";
+        // (2) == 36
+            runString = "(2)";
             if (36L != test.optimize.VN_Long01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 1
-            runString = "test(3)";
+        // (3) == 1
+            runString = "(3)";
             if (1L != test.optimize.VN_Long01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 0
-            runString = "test(4)";
+        // (4) == 0
+            runString = "(4)";
             if (0L != test.optimize.VN_Long01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == 5
-            runString = "test(5)";
+        // (5) == 5
+            runString = "(5)";
             if (5L != test.optimize.VN_Long01.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == 7
-            runString = "test(6)";
+        // (6) == 7
+            runString = "(6)";
             if (7L != test.optimize.VN_Long01.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == 0
-            runString = "test(7)";
+        // (7) == 0
+            runString = "(7)";
             if (0L != test.optimize.VN_Long01.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11388,20 +11388,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.VN_Long02");
         String runString = null;
         try {
-        // test(0) == 10
-            runString = "test(0)";
+        // (0) == 10
+            runString = "(0)";
             if (10L != test.optimize.VN_Long02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 10
-            runString = "test(1)";
+        // (1) == 10
+            runString = "(1)";
             if (10L != test.optimize.VN_Long02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 48
-            runString = "test(2)";
+        // (2) == 48
+            runString = "(2)";
             if (48L != test.optimize.VN_Long02.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11416,50 +11416,50 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.VN_Long03");
         String runString = null;
         try {
-        // test(0) == 6
-            runString = "test(0)";
+        // (0) == 6
+            runString = "(0)";
             if (6L != test.optimize.VN_Long03.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 0
-            runString = "test(1)";
+        // (1) == 0
+            runString = "(1)";
             if (0L != test.optimize.VN_Long03.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 36
-            runString = "test(2)";
+        // (2) == 36
+            runString = "(2)";
             if (36L != test.optimize.VN_Long03.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 1
-            runString = "test(3)";
+        // (3) == 1
+            runString = "(3)";
             if (1L != test.optimize.VN_Long03.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 0
-            runString = "test(4)";
+        // (4) == 0
+            runString = "(4)";
             if (0L != test.optimize.VN_Long03.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == 5
-            runString = "test(5)";
+        // (5) == 5
+            runString = "(5)";
             if (5L != test.optimize.VN_Long03.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == 7
-            runString = "test(6)";
+        // (6) == 7
+            runString = "(6)";
             if (7L != test.optimize.VN_Long03.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == 0
-            runString = "test(7)";
+        // (7) == 0
+            runString = "(7)";
             if (0L != test.optimize.VN_Long03.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11474,32 +11474,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.optimize.VN_Loop01");
         String runString = null;
         try {
-        // test(0) == 6
-            runString = "test(0)";
+        // (0) == 6
+            runString = "(0)";
             if (6 != test.optimize.VN_Loop01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 8
-            runString = "test(1)";
+        // (1) == 8
+            runString = "(1)";
             if (8 != test.optimize.VN_Loop01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 10
-            runString = "test(2)";
+        // (2) == 10
+            runString = "(2)";
             if (10 != test.optimize.VN_Loop01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 12
-            runString = "test(3)";
+        // (3) == 12
+            runString = "(3)";
             if (12 != test.optimize.VN_Loop01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 0
-            runString = "test(4)";
+        // (4) == 0
+            runString = "(4)";
             if (0 != test.optimize.VN_Loop01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11514,56 +11514,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Boxed_TYPE_01");
         String runString = null;
         try {
-        // test(0) == boolean
-            runString = "test(0)";
+        // (0) == boolean
+            runString = "(0)";
             if (!"boolean".equals(test.lang.Boxed_TYPE_01.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == byte
-            runString = "test(1)";
+        // (1) == byte
+            runString = "(1)";
             if (!"byte".equals(test.lang.Boxed_TYPE_01.test(1))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == char
-            runString = "test(2)";
+        // (2) == char
+            runString = "(2)";
             if (!"char".equals(test.lang.Boxed_TYPE_01.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == double
-            runString = "test(3)";
+        // (3) == double
+            runString = "(3)";
             if (!"double".equals(test.lang.Boxed_TYPE_01.test(3))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == float
-            runString = "test(4)";
+        // (4) == float
+            runString = "(4)";
             if (!"float".equals(test.lang.Boxed_TYPE_01.test(4))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == int
-            runString = "test(5)";
+        // (5) == int
+            runString = "(5)";
             if (!"int".equals(test.lang.Boxed_TYPE_01.test(5))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == long
-            runString = "test(6)";
+        // (6) == long
+            runString = "(6)";
             if (!"long".equals(test.lang.Boxed_TYPE_01.test(6))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == short
-            runString = "test(7)";
+        // (7) == short
+            runString = "(7)";
             if (!"short".equals(test.lang.Boxed_TYPE_01.test(7))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(8) == void
-            runString = "test(8)";
+        // (8) == void
+            runString = "(8)";
             if (!"void".equals(test.lang.Boxed_TYPE_01.test(8))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11578,14 +11578,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Bridge_method01");
         String runString = null;
         try {
-        // test(0) == 1
-            runString = "test(0)";
+        // (0) == 1
+            runString = "(0)";
             if (1 != test.lang.Bridge_method01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.lang.Bridge_method01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11600,15 +11600,15 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.ClassLoader_loadClass01");
         String runString = null;
         try {
-        // test(0) == class java.lang.String
-            runString = "test(0)";
+        // (0) == class java.lang.String
+            runString = "(0)";
             if (!"class java.lang.String".equals(test.lang.ClassLoader_loadClass01.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == !java.lang.ClassNotFoundException
+        // (1) == !java.lang.ClassNotFoundException
             try {
-                runString = "test(1)";
+                runString = "(1)";
                 test.lang.ClassLoader_loadClass01.test(1);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11618,9 +11618,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(2) == !java.lang.ClassNotFoundException
+        // (2) == !java.lang.ClassNotFoundException
             try {
-                runString = "test(2)";
+                runString = "(2)";
                 test.lang.ClassLoader_loadClass01.test(2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11640,32 +11640,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Class_Literal01");
         String runString = null;
         try {
-        // test(0) == class java.lang.Object
-            runString = "test(0)";
+        // (0) == class java.lang.Object
+            runString = "(0)";
             if (!"class java.lang.Object".equals(test.lang.Class_Literal01.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == class java.lang.String
-            runString = "test(1)";
+        // (1) == class java.lang.String
+            runString = "(1)";
             if (!"class java.lang.String".equals(test.lang.Class_Literal01.test(1))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == class java.lang.Class
-            runString = "test(2)";
+        // (2) == class java.lang.Class
+            runString = "(2)";
             if (!"class java.lang.Class".equals(test.lang.Class_Literal01.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == class test.lang.Class_Literal01
-            runString = "test(3)";
+        // (3) == class test.lang.Class_Literal01
+            runString = "(3)";
             if (!"class test.lang.Class_Literal01".equals(test.lang.Class_Literal01.test(3))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == null
-            runString = "test(4)";
+        // (4) == null
+            runString = "(4)";
             if (null != test.lang.Class_Literal01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11680,9 +11680,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Class_asSubclass01");
         String runString = null;
         try {
-        // test(0) == !java.lang.ClassCastException
+        // (0) == !java.lang.ClassCastException
             try {
-                runString = "test(0)";
+                runString = "(0)";
                 test.lang.Class_asSubclass01.test(0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11692,15 +11692,15 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.lang.Class_asSubclass01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == !java.lang.ClassCastException
+        // (2) == !java.lang.ClassCastException
             try {
-                runString = "test(2)";
+                runString = "(2)";
                 test.lang.Class_asSubclass01.test(2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11710,14 +11710,14 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(3) == 3
-            runString = "test(3)";
+        // (3) == 3
+            runString = "(3)";
             if (3 != test.lang.Class_asSubclass01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 4
-            runString = "test(4)";
+        // (4) == 4
+            runString = "(4)";
             if (4 != test.lang.Class_asSubclass01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11732,9 +11732,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Class_cast01");
         String runString = null;
         try {
-        // test(1) == !java.lang.ClassCastException
+        // (1) == !java.lang.ClassCastException
             try {
-                runString = "test(1)";
+                runString = "(1)";
                 test.lang.Class_cast01.test(1);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11744,15 +11744,15 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.lang.Class_cast01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == !java.lang.ClassCastException
+        // (3) == !java.lang.ClassCastException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.lang.Class_cast01.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11762,14 +11762,14 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(2) == 2
-            runString = "test(2)";
+        // (2) == 2
+            runString = "(2)";
             if (2 != test.lang.Class_cast01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 4
-            runString = "test(4)";
+        // (4) == 4
+            runString = "(4)";
             if (4 != test.lang.Class_cast01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11784,32 +11784,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Class_cast02");
         String runString = null;
         try {
-        // test(0) == -1
-            runString = "test(0)";
+        // (0) == -1
+            runString = "(0)";
             if (-1 != test.lang.Class_cast02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == -1
-            runString = "test(1)";
+        // (1) == -1
+            runString = "(1)";
             if (-1 != test.lang.Class_cast02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == -1
-            runString = "test(2)";
+        // (2) == -1
+            runString = "(2)";
             if (-1 != test.lang.Class_cast02.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == -1
-            runString = "test(3)";
+        // (3) == -1
+            runString = "(3)";
             if (-1 != test.lang.Class_cast02.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 4
-            runString = "test(4)";
+        // (4) == 4
+            runString = "(4)";
             if (4 != test.lang.Class_cast02.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11824,27 +11824,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Class_forName01");
         String runString = null;
         try {
-        // test(0) == class java.lang.Object
-            runString = "test(0)";
+        // (0) == class java.lang.Object
+            runString = "(0)";
             if (!"class java.lang.Object".equals(test.lang.Class_forName01.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == class java.lang.String
-            runString = "test(1)";
+        // (1) == class java.lang.String
+            runString = "(1)";
             if (!"class java.lang.String".equals(test.lang.Class_forName01.test(1))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == class test.lang.Class_forName01
-            runString = "test(2)";
+        // (2) == class test.lang.Class_forName01
+            runString = "(2)";
             if (!"class test.lang.Class_forName01".equals(test.lang.Class_forName01.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == !java.lang.ClassNotFoundException
+        // (3) == !java.lang.ClassNotFoundException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.lang.Class_forName01.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11864,27 +11864,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Class_forName02");
         String runString = null;
         try {
-        // test(0) == class java.lang.Object
-            runString = "test(0)";
+        // (0) == class java.lang.Object
+            runString = "(0)";
             if (!"class java.lang.Object".equals(test.lang.Class_forName02.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == class java.lang.String
-            runString = "test(1)";
+        // (1) == class java.lang.String
+            runString = "(1)";
             if (!"class java.lang.String".equals(test.lang.Class_forName02.test(1))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == class test.lang.Class_forName02
-            runString = "test(2)";
+        // (2) == class test.lang.Class_forName02
+            runString = "(2)";
             if (!"class test.lang.Class_forName02".equals(test.lang.Class_forName02.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == !java.lang.ClassNotFoundException
+        // (3) == !java.lang.ClassNotFoundException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.lang.Class_forName02.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11904,9 +11904,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Class_forName03");
         String runString = null;
         try {
-        // test(0) == !java.lang.ClassNotFoundException
+        // (0) == !java.lang.ClassNotFoundException
             try {
-                runString = "test(0)";
+                runString = "(0)";
                 test.lang.Class_forName03.test(0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11916,15 +11916,15 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(1) == class [Ljava.lang.String;
-            runString = "test(1)";
+        // (1) == class [Ljava.lang.String;
+            runString = "(1)";
             if (!"class [Ljava.lang.String;".equals(test.lang.Class_forName03.test(1))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == !java.lang.ClassNotFoundException
+        // (2) == !java.lang.ClassNotFoundException
             try {
-                runString = "test(2)";
+                runString = "(2)";
                 test.lang.Class_forName03.test(2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11934,15 +11934,15 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(3) == class [I
-            runString = "test(3)";
+        // (3) == class [I
+            runString = "(3)";
             if (!"class [I".equals(test.lang.Class_forName03.test(3))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == !java.lang.ClassNotFoundException
+        // (4) == !java.lang.ClassNotFoundException
             try {
-                runString = "test(4)";
+                runString = "(4)";
                 test.lang.Class_forName03.test(4);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11952,8 +11952,8 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(5) == null
-            runString = "test(5)";
+        // (5) == null
+            runString = "(5)";
             if (null != test.lang.Class_forName03.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11968,9 +11968,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Class_forName04");
         String runString = null;
         try {
-        // test(0) == !java.lang.ClassNotFoundException
+        // (0) == !java.lang.ClassNotFoundException
             try {
-                runString = "test(0)";
+                runString = "(0)";
                 test.lang.Class_forName04.test(0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11980,15 +11980,15 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(1) == class [Ljava.lang.String;
-            runString = "test(1)";
+        // (1) == class [Ljava.lang.String;
+            runString = "(1)";
             if (!"class [Ljava.lang.String;".equals(test.lang.Class_forName04.test(1))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == !java.lang.ClassNotFoundException
+        // (2) == !java.lang.ClassNotFoundException
             try {
-                runString = "test(2)";
+                runString = "(2)";
                 test.lang.Class_forName04.test(2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -11998,15 +11998,15 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(3) == class [I
-            runString = "test(3)";
+        // (3) == class [I
+            runString = "(3)";
             if (!"class [I".equals(test.lang.Class_forName04.test(3))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == !java.lang.ClassNotFoundException
+        // (4) == !java.lang.ClassNotFoundException
             try {
-                runString = "test(4)";
+                runString = "(4)";
                 test.lang.Class_forName04.test(4);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -12016,8 +12016,8 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(5) == null
-            runString = "test(5)";
+        // (5) == null
+            runString = "(5)";
             if (null != test.lang.Class_forName04.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -12032,20 +12032,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Class_forName05");
         String runString = null;
         try {
-        // test(0) == class java.lang.String
-            runString = "test(0)";
+        // (0) == class java.lang.String
+            runString = "(0)";
             if (!"class java.lang.String".equals(test.lang.Class_forName05.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == class [Ljava.lang.String;
-            runString = "test(1)";
+        // (1) == class [Ljava.lang.String;
+            runString = "(1)";
             if (!"class [Ljava.lang.String;".equals(test.lang.Class_forName05.test(1))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == null
-            runString = "test(5)";
+        // (5) == null
+            runString = "(5)";
             if (null != test.lang.Class_forName05.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -12060,56 +12060,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Class_getComponentType01");
         String runString = null;
         try {
-        // test(0) == null
-            runString = "test(0)";
+        // (0) == null
+            runString = "(0)";
             if (null != test.lang.Class_getComponentType01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == int
-            runString = "test(1)";
+        // (1) == int
+            runString = "(1)";
             if (!"int".equals(test.lang.Class_getComponentType01.test(1))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == null
-            runString = "test(2)";
+        // (2) == null
+            runString = "(2)";
             if (null != test.lang.Class_getComponentType01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == java.lang.Object
-            runString = "test(3)";
+        // (3) == java.lang.Object
+            runString = "(3)";
             if (!"java.lang.Object".equals(test.lang.Class_getComponentType01.test(3))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == null
-            runString = "test(4)";
+        // (4) == null
+            runString = "(4)";
             if (null != test.lang.Class_getComponentType01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == null
-            runString = "test(5)";
+        // (5) == null
+            runString = "(5)";
             if (null != test.lang.Class_getComponentType01.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == [Ljava.lang.Object;
-            runString = "test(6)";
+        // (6) == [Ljava.lang.Object;
+            runString = "(6)";
             if (!"[Ljava.lang.Object;".equals(test.lang.Class_getComponentType01.test(6))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == null
-            runString = "test(7)";
+        // (7) == null
+            runString = "(7)";
             if (null != test.lang.Class_getComponentType01.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(8) == null
-            runString = "test(8)";
+        // (8) == null
+            runString = "(8)";
             if (null != test.lang.Class_getComponentType01.test(8)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -12124,32 +12124,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Class_getName01");
         String runString = null;
         try {
-        // test(0) == java.lang.Object
-            runString = "test(0)";
+        // (0) == java.lang.Object
+            runString = "(0)";
             if (!"java.lang.Object".equals(test.lang.Class_getName01.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == java.lang.Class
-            runString = "test(1)";
+        // (1) == java.lang.Class
+            runString = "(1)";
             if (!"java.lang.Class".equals(test.lang.Class_getName01.test(1))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == test.lang.Class_getName01
-            runString = "test(2)";
+        // (2) == test.lang.Class_getName01
+            runString = "(2)";
             if (!"test.lang.Class_getName01".equals(test.lang.Class_getName01.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == true
-            runString = "test(3)";
+        // (3) == true
+            runString = "(3)";
             if (!"true".equals(test.lang.Class_getName01.test(3))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == null
-            runString = "test(4)";
+        // (4) == null
+            runString = "(4)";
             if (null != test.lang.Class_getName01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -12164,26 +12164,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Class_getName02");
         String runString = null;
         try {
-        // test(0) == int
-            runString = "test(0)";
+        // (0) == int
+            runString = "(0)";
             if (!"int".equals(test.lang.Class_getName02.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == [I
-            runString = "test(1)";
+        // (1) == [I
+            runString = "(1)";
             if (!"[I".equals(test.lang.Class_getName02.test(1))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == [[Ljava.lang.Object;
-            runString = "test(2)";
+        // (2) == [[Ljava.lang.Object;
+            runString = "(2)";
             if (!"[[Ljava.lang.Object;".equals(test.lang.Class_getName02.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == null
-            runString = "test(3)";
+        // (3) == null
+            runString = "(3)";
             if (null != test.lang.Class_getName02.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -12198,26 +12198,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Class_getSimpleName01");
         String runString = null;
         try {
-        // test(0) == Object
-            runString = "test(0)";
+        // (0) == Object
+            runString = "(0)";
             if (!"Object".equals(test.lang.Class_getSimpleName01.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == Class
-            runString = "test(1)";
+        // (1) == Class
+            runString = "(1)";
             if (!"Class".equals(test.lang.Class_getSimpleName01.test(1))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == Class_getSimpleName01
-            runString = "test(2)";
+        // (2) == Class_getSimpleName01
+            runString = "(2)";
             if (!"Class_getSimpleName01".equals(test.lang.Class_getSimpleName01.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == null
-            runString = "test(3)";
+        // (3) == null
+            runString = "(3)";
             if (null != test.lang.Class_getSimpleName01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -12232,26 +12232,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Class_getSimpleName02");
         String runString = null;
         try {
-        // test(0) == int
-            runString = "test(0)";
+        // (0) == int
+            runString = "(0)";
             if (!"int".equals(test.lang.Class_getSimpleName02.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == int[]
-            runString = "test(1)";
+        // (1) == int[]
+            runString = "(1)";
             if (!"int[]".equals(test.lang.Class_getSimpleName02.test(1))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == Object[][]
-            runString = "test(2)";
+        // (2) == Object[][]
+            runString = "(2)";
             if (!"Object[][]".equals(test.lang.Class_getSimpleName02.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == null
-            runString = "test(3)";
+        // (3) == null
+            runString = "(3)";
             if (null != test.lang.Class_getSimpleName02.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -12266,50 +12266,50 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Class_getSuperClass01");
         String runString = null;
         try {
-        // test(0) == null
-            runString = "test(0)";
+        // (0) == null
+            runString = "(0)";
             if (null != test.lang.Class_getSuperClass01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == null
-            runString = "test(1)";
+        // (1) == null
+            runString = "(1)";
             if (null != test.lang.Class_getSuperClass01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == java.lang.Object
-            runString = "test(2)";
+        // (2) == java.lang.Object
+            runString = "(2)";
             if (!"java.lang.Object".equals(test.lang.Class_getSuperClass01.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == null
-            runString = "test(3)";
+        // (3) == null
+            runString = "(3)";
             if (null != test.lang.Class_getSuperClass01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == java.lang.Number
-            runString = "test(4)";
+        // (4) == java.lang.Number
+            runString = "(4)";
             if (!"java.lang.Number".equals(test.lang.Class_getSuperClass01.test(4))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == java.lang.Object
-            runString = "test(5)";
+        // (5) == java.lang.Object
+            runString = "(5)";
             if (!"java.lang.Object".equals(test.lang.Class_getSuperClass01.test(5))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == java.lang.Object
-            runString = "test(6)";
+        // (6) == java.lang.Object
+            runString = "(6)";
             if (!"java.lang.Object".equals(test.lang.Class_getSuperClass01.test(6))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == null
-            runString = "test(7)";
+        // (7) == null
+            runString = "(7)";
             if (null != test.lang.Class_getSuperClass01.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -12324,56 +12324,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Class_isArray01");
         String runString = null;
         try {
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.lang.Class_isArray01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.lang.Class_isArray01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == false
-            runString = "test(2)";
+        // (2) == false
+            runString = "(2)";
             if (false != test.lang.Class_isArray01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == true
-            runString = "test(3)";
+        // (3) == true
+            runString = "(3)";
             if (true != test.lang.Class_isArray01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == false
-            runString = "test(4)";
+        // (4) == false
+            runString = "(4)";
             if (false != test.lang.Class_isArray01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == false
-            runString = "test(5)";
+        // (5) == false
+            runString = "(5)";
             if (false != test.lang.Class_isArray01.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == false
-            runString = "test(6)";
+        // (6) == false
+            runString = "(6)";
             if (false != test.lang.Class_isArray01.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == false
-            runString = "test(7)";
+        // (7) == false
+            runString = "(7)";
             if (false != test.lang.Class_isArray01.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(8) == false
-            runString = "test(8)";
+        // (8) == false
+            runString = "(8)";
             if (false != test.lang.Class_isArray01.test(8)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -12388,50 +12388,50 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Class_isAssignableFrom01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.lang.Class_isAssignableFrom01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.lang.Class_isAssignableFrom01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == false
-            runString = "test(2)";
+        // (2) == false
+            runString = "(2)";
             if (false != test.lang.Class_isAssignableFrom01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == false
-            runString = "test(3)";
+        // (3) == false
+            runString = "(3)";
             if (false != test.lang.Class_isAssignableFrom01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == false
-            runString = "test(4)";
+        // (4) == false
+            runString = "(4)";
             if (false != test.lang.Class_isAssignableFrom01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == false
-            runString = "test(5)";
+        // (5) == false
+            runString = "(5)";
             if (false != test.lang.Class_isAssignableFrom01.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == false
-            runString = "test(6)";
+        // (6) == false
+            runString = "(6)";
             if (false != test.lang.Class_isAssignableFrom01.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == false
-            runString = "test(7)";
+        // (7) == false
+            runString = "(7)";
             if (false != test.lang.Class_isAssignableFrom01.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -12446,50 +12446,50 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Class_isAssignableFrom02");
         String runString = null;
         try {
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.lang.Class_isAssignableFrom02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.lang.Class_isAssignableFrom02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == false
-            runString = "test(2)";
+        // (2) == false
+            runString = "(2)";
             if (false != test.lang.Class_isAssignableFrom02.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == false
-            runString = "test(3)";
+        // (3) == false
+            runString = "(3)";
             if (false != test.lang.Class_isAssignableFrom02.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == true
-            runString = "test(4)";
+        // (4) == true
+            runString = "(4)";
             if (true != test.lang.Class_isAssignableFrom02.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == true
-            runString = "test(5)";
+        // (5) == true
+            runString = "(5)";
             if (true != test.lang.Class_isAssignableFrom02.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == true
-            runString = "test(6)";
+        // (6) == true
+            runString = "(6)";
             if (true != test.lang.Class_isAssignableFrom02.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == true
-            runString = "test(7)";
+        // (7) == true
+            runString = "(7)";
             if (true != test.lang.Class_isAssignableFrom02.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -12504,50 +12504,50 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Class_isAssignableFrom03");
         String runString = null;
         try {
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.lang.Class_isAssignableFrom03.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.lang.Class_isAssignableFrom03.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == false
-            runString = "test(2)";
+        // (2) == false
+            runString = "(2)";
             if (false != test.lang.Class_isAssignableFrom03.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == true
-            runString = "test(3)";
+        // (3) == true
+            runString = "(3)";
             if (true != test.lang.Class_isAssignableFrom03.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == false
-            runString = "test(4)";
+        // (4) == false
+            runString = "(4)";
             if (false != test.lang.Class_isAssignableFrom03.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == true
-            runString = "test(5)";
+        // (5) == true
+            runString = "(5)";
             if (true != test.lang.Class_isAssignableFrom03.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == true
-            runString = "test(6)";
+        // (6) == true
+            runString = "(6)";
             if (true != test.lang.Class_isAssignableFrom03.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == false
-            runString = "test(7)";
+        // (7) == false
+            runString = "(7)";
             if (false != test.lang.Class_isAssignableFrom03.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -12562,26 +12562,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Class_isInstance01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.lang.Class_isInstance01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.lang.Class_isInstance01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.lang.Class_isInstance01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == false
-            runString = "test(3)";
+        // (3) == false
+            runString = "(3)";
             if (false != test.lang.Class_isInstance01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -12596,26 +12596,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Class_isInstance02");
         String runString = null;
         try {
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.lang.Class_isInstance02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.lang.Class_isInstance02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == false
-            runString = "test(2)";
+        // (2) == false
+            runString = "(2)";
             if (false != test.lang.Class_isInstance02.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == false
-            runString = "test(3)";
+        // (3) == false
+            runString = "(3)";
             if (false != test.lang.Class_isInstance02.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -12630,26 +12630,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Class_isInstance03");
         String runString = null;
         try {
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.lang.Class_isInstance03.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.lang.Class_isInstance03.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.lang.Class_isInstance03.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == false
-            runString = "test(3)";
+        // (3) == false
+            runString = "(3)";
             if (false != test.lang.Class_isInstance03.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -12664,26 +12664,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Class_isInstance04");
         String runString = null;
         try {
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.lang.Class_isInstance04.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.lang.Class_isInstance04.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.lang.Class_isInstance04.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == false
-            runString = "test(3)";
+        // (3) == false
+            runString = "(3)";
             if (false != test.lang.Class_isInstance04.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -12698,26 +12698,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Class_isInstance05");
         String runString = null;
         try {
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.lang.Class_isInstance05.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.lang.Class_isInstance05.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.lang.Class_isInstance05.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == false
-            runString = "test(3)";
+        // (3) == false
+            runString = "(3)";
             if (false != test.lang.Class_isInstance05.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -12732,32 +12732,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Class_isInstance06");
         String runString = null;
         try {
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.lang.Class_isInstance06.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.lang.Class_isInstance06.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.lang.Class_isInstance06.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == true
-            runString = "test(3)";
+        // (3) == true
+            runString = "(3)";
             if (true != test.lang.Class_isInstance06.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == false
-            runString = "test(4)";
+        // (4) == false
+            runString = "(4)";
             if (false != test.lang.Class_isInstance06.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -12772,56 +12772,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Class_isInterface01");
         String runString = null;
         try {
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.lang.Class_isInterface01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.lang.Class_isInterface01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == false
-            runString = "test(2)";
+        // (2) == false
+            runString = "(2)";
             if (false != test.lang.Class_isInterface01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == false
-            runString = "test(3)";
+        // (3) == false
+            runString = "(3)";
             if (false != test.lang.Class_isInterface01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == false
-            runString = "test(4)";
+        // (4) == false
+            runString = "(4)";
             if (false != test.lang.Class_isInterface01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == true
-            runString = "test(5)";
+        // (5) == true
+            runString = "(5)";
             if (true != test.lang.Class_isInterface01.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == true
-            runString = "test(6)";
+        // (6) == true
+            runString = "(6)";
             if (true != test.lang.Class_isInterface01.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == false
-            runString = "test(7)";
+        // (7) == false
+            runString = "(7)";
             if (false != test.lang.Class_isInterface01.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(8) == false
-            runString = "test(8)";
+        // (8) == false
+            runString = "(8)";
             if (false != test.lang.Class_isInterface01.test(8)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -12836,56 +12836,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Class_isPrimitive01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.lang.Class_isPrimitive01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.lang.Class_isPrimitive01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == false
-            runString = "test(2)";
+        // (2) == false
+            runString = "(2)";
             if (false != test.lang.Class_isPrimitive01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == false
-            runString = "test(3)";
+        // (3) == false
+            runString = "(3)";
             if (false != test.lang.Class_isPrimitive01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == false
-            runString = "test(4)";
+        // (4) == false
+            runString = "(4)";
             if (false != test.lang.Class_isPrimitive01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == false
-            runString = "test(5)";
+        // (5) == false
+            runString = "(5)";
             if (false != test.lang.Class_isPrimitive01.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == false
-            runString = "test(6)";
+        // (6) == false
+            runString = "(6)";
             if (false != test.lang.Class_isPrimitive01.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == true
-            runString = "test(7)";
+        // (7) == true
+            runString = "(7)";
             if (true != test.lang.Class_isPrimitive01.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(8) == false
-            runString = "test(8)";
+        // (8) == false
+            runString = "(8)";
             if (false != test.lang.Class_isPrimitive01.test(8)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -12900,8 +12900,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Double_toString");
         String runString = null;
         try {
-        // test(0) == 9.834050399508132E-4
-            runString = "test(0)";
+        // (0) == 9.834050399508132E-4
+            runString = "(0)";
             if (!"9.834050399508132E-4".equals(test.lang.Double_toString.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -12916,44 +12916,44 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Int_greater01");
         String runString = null;
         try {
-        // test(-2147483648) == false
-            runString = "test(-2147483648)";
+        // (-2147483648) == false
+            runString = "(-2147483648)";
             if (false != test.lang.Int_greater01.test(-2147483648)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2) == false
-            runString = "test(-2)";
+        // (-2) == false
+            runString = "(-2)";
             if (false != test.lang.Int_greater01.test(-2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == false
-            runString = "test(-1)";
+        // (-1) == false
+            runString = "(-1)";
             if (false != test.lang.Int_greater01.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.lang.Int_greater01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.lang.Int_greater01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.lang.Int_greater01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2147483647) == true
-            runString = "test(2147483647)";
+        // (2147483647) == true
+            runString = "(2147483647)";
             if (true != test.lang.Int_greater01.test(2147483647)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -12968,56 +12968,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Int_greater02");
         String runString = null;
         try {
-        // test(-2147483648) == false
-            runString = "test(-2147483648)";
+        // (-2147483648) == false
+            runString = "(-2147483648)";
             if (false != test.lang.Int_greater02.test(-2147483648)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2) == false
-            runString = "test(-2)";
+        // (-2) == false
+            runString = "(-2)";
             if (false != test.lang.Int_greater02.test(-2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == false
-            runString = "test(-1)";
+        // (-1) == false
+            runString = "(-1)";
             if (false != test.lang.Int_greater02.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.lang.Int_greater02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.lang.Int_greater02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == false
-            runString = "test(4)";
+        // (4) == false
+            runString = "(4)";
             if (false != test.lang.Int_greater02.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == false
-            runString = "test(5)";
+        // (5) == false
+            runString = "(5)";
             if (false != test.lang.Int_greater02.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == true
-            runString = "test(6)";
+        // (6) == true
+            runString = "(6)";
             if (true != test.lang.Int_greater02.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2147483647) == true
-            runString = "test(2147483647)";
+        // (2147483647) == true
+            runString = "(2147483647)";
             if (true != test.lang.Int_greater02.test(2147483647)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -13032,56 +13032,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Int_greater03");
         String runString = null;
         try {
-        // test(-2147483648) == false
-            runString = "test(-2147483648)";
+        // (-2147483648) == false
+            runString = "(-2147483648)";
             if (false != test.lang.Int_greater03.test(-2147483648)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-6) == false
-            runString = "test(-6)";
+        // (-6) == false
+            runString = "(-6)";
             if (false != test.lang.Int_greater03.test(-6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-5) == false
-            runString = "test(-5)";
+        // (-5) == false
+            runString = "(-5)";
             if (false != test.lang.Int_greater03.test(-5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-4) == true
-            runString = "test(-4)";
+        // (-4) == true
+            runString = "(-4)";
             if (true != test.lang.Int_greater03.test(-4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == true
-            runString = "test(-1)";
+        // (-1) == true
+            runString = "(-1)";
             if (true != test.lang.Int_greater03.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.lang.Int_greater03.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.lang.Int_greater03.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.lang.Int_greater03.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2147483647) == true
-            runString = "test(2147483647)";
+        // (2147483647) == true
+            runString = "(2147483647)";
             if (true != test.lang.Int_greater03.test(2147483647)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -13096,44 +13096,44 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Int_greaterEqual01");
         String runString = null;
         try {
-        // test(-2147483648) == false
-            runString = "test(-2147483648)";
+        // (-2147483648) == false
+            runString = "(-2147483648)";
             if (false != test.lang.Int_greaterEqual01.test(-2147483648)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2) == false
-            runString = "test(-2)";
+        // (-2) == false
+            runString = "(-2)";
             if (false != test.lang.Int_greaterEqual01.test(-2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == false
-            runString = "test(-1)";
+        // (-1) == false
+            runString = "(-1)";
             if (false != test.lang.Int_greaterEqual01.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.lang.Int_greaterEqual01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.lang.Int_greaterEqual01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.lang.Int_greaterEqual01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2147483647) == true
-            runString = "test(2147483647)";
+        // (2147483647) == true
+            runString = "(2147483647)";
             if (true != test.lang.Int_greaterEqual01.test(2147483647)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -13148,56 +13148,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Int_greaterEqual02");
         String runString = null;
         try {
-        // test(-2147483648) == false
-            runString = "test(-2147483648)";
+        // (-2147483648) == false
+            runString = "(-2147483648)";
             if (false != test.lang.Int_greaterEqual02.test(-2147483648)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2) == false
-            runString = "test(-2)";
+        // (-2) == false
+            runString = "(-2)";
             if (false != test.lang.Int_greaterEqual02.test(-2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == false
-            runString = "test(-1)";
+        // (-1) == false
+            runString = "(-1)";
             if (false != test.lang.Int_greaterEqual02.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.lang.Int_greaterEqual02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.lang.Int_greaterEqual02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == false
-            runString = "test(4)";
+        // (4) == false
+            runString = "(4)";
             if (false != test.lang.Int_greaterEqual02.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == true
-            runString = "test(5)";
+        // (5) == true
+            runString = "(5)";
             if (true != test.lang.Int_greaterEqual02.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == true
-            runString = "test(6)";
+        // (6) == true
+            runString = "(6)";
             if (true != test.lang.Int_greaterEqual02.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2147483647) == true
-            runString = "test(2147483647)";
+        // (2147483647) == true
+            runString = "(2147483647)";
             if (true != test.lang.Int_greaterEqual02.test(2147483647)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -13212,56 +13212,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Int_greaterEqual03");
         String runString = null;
         try {
-        // test(-2147483648) == false
-            runString = "test(-2147483648)";
+        // (-2147483648) == false
+            runString = "(-2147483648)";
             if (false != test.lang.Int_greaterEqual03.test(-2147483648)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-6) == false
-            runString = "test(-6)";
+        // (-6) == false
+            runString = "(-6)";
             if (false != test.lang.Int_greaterEqual03.test(-6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-5) == true
-            runString = "test(-5)";
+        // (-5) == true
+            runString = "(-5)";
             if (true != test.lang.Int_greaterEqual03.test(-5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-4) == true
-            runString = "test(-4)";
+        // (-4) == true
+            runString = "(-4)";
             if (true != test.lang.Int_greaterEqual03.test(-4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == true
-            runString = "test(-1)";
+        // (-1) == true
+            runString = "(-1)";
             if (true != test.lang.Int_greaterEqual03.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.lang.Int_greaterEqual03.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.lang.Int_greaterEqual03.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.lang.Int_greaterEqual03.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2147483647) == true
-            runString = "test(2147483647)";
+        // (2147483647) == true
+            runString = "(2147483647)";
             if (true != test.lang.Int_greaterEqual03.test(2147483647)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -13276,44 +13276,44 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Int_less01");
         String runString = null;
         try {
-        // test(-2147483648) == true
-            runString = "test(-2147483648)";
+        // (-2147483648) == true
+            runString = "(-2147483648)";
             if (true != test.lang.Int_less01.test(-2147483648)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2) == true
-            runString = "test(-2)";
+        // (-2) == true
+            runString = "(-2)";
             if (true != test.lang.Int_less01.test(-2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == true
-            runString = "test(-1)";
+        // (-1) == true
+            runString = "(-1)";
             if (true != test.lang.Int_less01.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.lang.Int_less01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.lang.Int_less01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == false
-            runString = "test(2)";
+        // (2) == false
+            runString = "(2)";
             if (false != test.lang.Int_less01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2147483647) == false
-            runString = "test(2147483647)";
+        // (2147483647) == false
+            runString = "(2147483647)";
             if (false != test.lang.Int_less01.test(2147483647)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -13328,50 +13328,50 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Int_less02");
         String runString = null;
         try {
-        // test(-2147483648) == true
-            runString = "test(-2147483648)";
+        // (-2147483648) == true
+            runString = "(-2147483648)";
             if (true != test.lang.Int_less02.test(-2147483648)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2) == true
-            runString = "test(-2)";
+        // (-2) == true
+            runString = "(-2)";
             if (true != test.lang.Int_less02.test(-2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == true
-            runString = "test(-1)";
+        // (-1) == true
+            runString = "(-1)";
             if (true != test.lang.Int_less02.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.lang.Int_less02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == true
-            runString = "test(4)";
+        // (4) == true
+            runString = "(4)";
             if (true != test.lang.Int_less02.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == false
-            runString = "test(5)";
+        // (5) == false
+            runString = "(5)";
             if (false != test.lang.Int_less02.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == false
-            runString = "test(6)";
+        // (6) == false
+            runString = "(6)";
             if (false != test.lang.Int_less02.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2147483647) == false
-            runString = "test(2147483647)";
+        // (2147483647) == false
+            runString = "(2147483647)";
             if (false != test.lang.Int_less02.test(2147483647)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -13386,56 +13386,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Int_less03");
         String runString = null;
         try {
-        // test(-2147483648) == true
-            runString = "test(-2147483648)";
+        // (-2147483648) == true
+            runString = "(-2147483648)";
             if (true != test.lang.Int_less03.test(-2147483648)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-6) == true
-            runString = "test(-6)";
+        // (-6) == true
+            runString = "(-6)";
             if (true != test.lang.Int_less03.test(-6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-5) == false
-            runString = "test(-5)";
+        // (-5) == false
+            runString = "(-5)";
             if (false != test.lang.Int_less03.test(-5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-4) == false
-            runString = "test(-4)";
+        // (-4) == false
+            runString = "(-4)";
             if (false != test.lang.Int_less03.test(-4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == false
-            runString = "test(-1)";
+        // (-1) == false
+            runString = "(-1)";
             if (false != test.lang.Int_less03.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.lang.Int_less03.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.lang.Int_less03.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == false
-            runString = "test(2)";
+        // (2) == false
+            runString = "(2)";
             if (false != test.lang.Int_less03.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2147483647) == false
-            runString = "test(2147483647)";
+        // (2147483647) == false
+            runString = "(2147483647)";
             if (false != test.lang.Int_less03.test(2147483647)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -13450,44 +13450,44 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Int_lessEqual01");
         String runString = null;
         try {
-        // test(-2147483648) == true
-            runString = "test(-2147483648)";
+        // (-2147483648) == true
+            runString = "(-2147483648)";
             if (true != test.lang.Int_lessEqual01.test(-2147483648)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2) == true
-            runString = "test(-2)";
+        // (-2) == true
+            runString = "(-2)";
             if (true != test.lang.Int_lessEqual01.test(-2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == true
-            runString = "test(-1)";
+        // (-1) == true
+            runString = "(-1)";
             if (true != test.lang.Int_lessEqual01.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.lang.Int_lessEqual01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.lang.Int_lessEqual01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == false
-            runString = "test(2)";
+        // (2) == false
+            runString = "(2)";
             if (false != test.lang.Int_lessEqual01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2147483647) == false
-            runString = "test(2147483647)";
+        // (2147483647) == false
+            runString = "(2147483647)";
             if (false != test.lang.Int_lessEqual01.test(2147483647)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -13502,50 +13502,50 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Int_lessEqual02");
         String runString = null;
         try {
-        // test(-2147483648) == true
-            runString = "test(-2147483648)";
+        // (-2147483648) == true
+            runString = "(-2147483648)";
             if (true != test.lang.Int_lessEqual02.test(-2147483648)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2) == true
-            runString = "test(-2)";
+        // (-2) == true
+            runString = "(-2)";
             if (true != test.lang.Int_lessEqual02.test(-2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == true
-            runString = "test(-1)";
+        // (-1) == true
+            runString = "(-1)";
             if (true != test.lang.Int_lessEqual02.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.lang.Int_lessEqual02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == true
-            runString = "test(4)";
+        // (4) == true
+            runString = "(4)";
             if (true != test.lang.Int_lessEqual02.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == true
-            runString = "test(5)";
+        // (5) == true
+            runString = "(5)";
             if (true != test.lang.Int_lessEqual02.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == false
-            runString = "test(6)";
+        // (6) == false
+            runString = "(6)";
             if (false != test.lang.Int_lessEqual02.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2147483647) == false
-            runString = "test(2147483647)";
+        // (2147483647) == false
+            runString = "(2147483647)";
             if (false != test.lang.Int_lessEqual02.test(2147483647)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -13560,56 +13560,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Int_lessEqual03");
         String runString = null;
         try {
-        // test(-2147483648) == true
-            runString = "test(-2147483648)";
+        // (-2147483648) == true
+            runString = "(-2147483648)";
             if (true != test.lang.Int_lessEqual03.test(-2147483648)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-6) == true
-            runString = "test(-6)";
+        // (-6) == true
+            runString = "(-6)";
             if (true != test.lang.Int_lessEqual03.test(-6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-5) == true
-            runString = "test(-5)";
+        // (-5) == true
+            runString = "(-5)";
             if (true != test.lang.Int_lessEqual03.test(-5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-4) == false
-            runString = "test(-4)";
+        // (-4) == false
+            runString = "(-4)";
             if (false != test.lang.Int_lessEqual03.test(-4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == false
-            runString = "test(-1)";
+        // (-1) == false
+            runString = "(-1)";
             if (false != test.lang.Int_lessEqual03.test(-1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.lang.Int_lessEqual03.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.lang.Int_lessEqual03.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == false
-            runString = "test(2)";
+        // (2) == false
+            runString = "(2)";
             if (false != test.lang.Int_lessEqual03.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2147483647) == false
-            runString = "test(2147483647)";
+        // (2147483647) == false
+            runString = "(2147483647)";
             if (false != test.lang.Int_lessEqual03.test(2147483647)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -13624,44 +13624,44 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.JDK_ClassLoaders01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.lang.JDK_ClassLoaders01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.lang.JDK_ClassLoaders01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.lang.JDK_ClassLoaders01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == true
-            runString = "test(3)";
+        // (3) == true
+            runString = "(3)";
             if (true != test.lang.JDK_ClassLoaders01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == true
-            runString = "test(4)";
+        // (4) == true
+            runString = "(4)";
             if (true != test.lang.JDK_ClassLoaders01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == true
-            runString = "test(5)";
+        // (5) == true
+            runString = "(5)";
             if (true != test.lang.JDK_ClassLoaders01.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == false
-            runString = "test(6)";
+        // (6) == false
+            runString = "(6)";
             if (false != test.lang.JDK_ClassLoaders01.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -13676,8 +13676,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.JDK_ClassLoaders02");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.lang.JDK_ClassLoaders02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -13692,44 +13692,44 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Long_greater01");
         String runString = null;
         try {
-        // test(-9223372036854775808) == false
-            runString = "test(-9223372036854775808)";
+        // (-9223372036854775808) == false
+            runString = "(-9223372036854775808)";
             if (false != test.lang.Long_greater01.test(-9223372036854775808L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2) == false
-            runString = "test(-2)";
+        // (-2) == false
+            runString = "(-2)";
             if (false != test.lang.Long_greater01.test(-2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == false
-            runString = "test(-1)";
+        // (-1) == false
+            runString = "(-1)";
             if (false != test.lang.Long_greater01.test(-1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.lang.Long_greater01.test(0L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.lang.Long_greater01.test(1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.lang.Long_greater01.test(2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(9223372036854775807) == true
-            runString = "test(9223372036854775807)";
+        // (9223372036854775807) == true
+            runString = "(9223372036854775807)";
             if (true != test.lang.Long_greater01.test(9223372036854775807L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -13744,56 +13744,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Long_greater02");
         String runString = null;
         try {
-        // test(-9223372036854775808) == false
-            runString = "test(-9223372036854775808)";
+        // (-9223372036854775808) == false
+            runString = "(-9223372036854775808)";
             if (false != test.lang.Long_greater02.test(-9223372036854775808L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2) == false
-            runString = "test(-2)";
+        // (-2) == false
+            runString = "(-2)";
             if (false != test.lang.Long_greater02.test(-2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == false
-            runString = "test(-1)";
+        // (-1) == false
+            runString = "(-1)";
             if (false != test.lang.Long_greater02.test(-1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.lang.Long_greater02.test(0L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.lang.Long_greater02.test(1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == false
-            runString = "test(4)";
+        // (4) == false
+            runString = "(4)";
             if (false != test.lang.Long_greater02.test(4L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == false
-            runString = "test(5)";
+        // (5) == false
+            runString = "(5)";
             if (false != test.lang.Long_greater02.test(5L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == true
-            runString = "test(6)";
+        // (6) == true
+            runString = "(6)";
             if (true != test.lang.Long_greater02.test(6L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(9223372036854775807) == true
-            runString = "test(9223372036854775807)";
+        // (9223372036854775807) == true
+            runString = "(9223372036854775807)";
             if (true != test.lang.Long_greater02.test(9223372036854775807L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -13808,56 +13808,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Long_greater03");
         String runString = null;
         try {
-        // test(-9223372036854775808) == false
-            runString = "test(-9223372036854775808)";
+        // (-9223372036854775808) == false
+            runString = "(-9223372036854775808)";
             if (false != test.lang.Long_greater03.test(-9223372036854775808L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-6) == false
-            runString = "test(-6)";
+        // (-6) == false
+            runString = "(-6)";
             if (false != test.lang.Long_greater03.test(-6L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-5) == false
-            runString = "test(-5)";
+        // (-5) == false
+            runString = "(-5)";
             if (false != test.lang.Long_greater03.test(-5L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-4) == true
-            runString = "test(-4)";
+        // (-4) == true
+            runString = "(-4)";
             if (true != test.lang.Long_greater03.test(-4L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == true
-            runString = "test(-1)";
+        // (-1) == true
+            runString = "(-1)";
             if (true != test.lang.Long_greater03.test(-1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.lang.Long_greater03.test(0L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.lang.Long_greater03.test(1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.lang.Long_greater03.test(2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(9223372036854775807) == true
-            runString = "test(9223372036854775807)";
+        // (9223372036854775807) == true
+            runString = "(9223372036854775807)";
             if (true != test.lang.Long_greater03.test(9223372036854775807L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -13872,44 +13872,44 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Long_greaterEqual01");
         String runString = null;
         try {
-        // test(-9223372036854775808) == false
-            runString = "test(-9223372036854775808)";
+        // (-9223372036854775808) == false
+            runString = "(-9223372036854775808)";
             if (false != test.lang.Long_greaterEqual01.test(-9223372036854775808L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2) == false
-            runString = "test(-2)";
+        // (-2) == false
+            runString = "(-2)";
             if (false != test.lang.Long_greaterEqual01.test(-2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == false
-            runString = "test(-1)";
+        // (-1) == false
+            runString = "(-1)";
             if (false != test.lang.Long_greaterEqual01.test(-1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.lang.Long_greaterEqual01.test(0L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.lang.Long_greaterEqual01.test(1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.lang.Long_greaterEqual01.test(2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(9223372036854775807) == true
-            runString = "test(9223372036854775807)";
+        // (9223372036854775807) == true
+            runString = "(9223372036854775807)";
             if (true != test.lang.Long_greaterEqual01.test(9223372036854775807L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -13924,56 +13924,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Long_greaterEqual02");
         String runString = null;
         try {
-        // test(-9223372036854775808) == false
-            runString = "test(-9223372036854775808)";
+        // (-9223372036854775808) == false
+            runString = "(-9223372036854775808)";
             if (false != test.lang.Long_greaterEqual02.test(-9223372036854775808L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2) == false
-            runString = "test(-2)";
+        // (-2) == false
+            runString = "(-2)";
             if (false != test.lang.Long_greaterEqual02.test(-2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == false
-            runString = "test(-1)";
+        // (-1) == false
+            runString = "(-1)";
             if (false != test.lang.Long_greaterEqual02.test(-1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.lang.Long_greaterEqual02.test(0L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.lang.Long_greaterEqual02.test(1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == false
-            runString = "test(4)";
+        // (4) == false
+            runString = "(4)";
             if (false != test.lang.Long_greaterEqual02.test(4L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == true
-            runString = "test(5)";
+        // (5) == true
+            runString = "(5)";
             if (true != test.lang.Long_greaterEqual02.test(5L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == true
-            runString = "test(6)";
+        // (6) == true
+            runString = "(6)";
             if (true != test.lang.Long_greaterEqual02.test(6L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(9223372036854775807) == true
-            runString = "test(9223372036854775807)";
+        // (9223372036854775807) == true
+            runString = "(9223372036854775807)";
             if (true != test.lang.Long_greaterEqual02.test(9223372036854775807L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -13988,56 +13988,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Long_greaterEqual03");
         String runString = null;
         try {
-        // test(-9223372036854775808) == false
-            runString = "test(-9223372036854775808)";
+        // (-9223372036854775808) == false
+            runString = "(-9223372036854775808)";
             if (false != test.lang.Long_greaterEqual03.test(-9223372036854775808L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-6) == false
-            runString = "test(-6)";
+        // (-6) == false
+            runString = "(-6)";
             if (false != test.lang.Long_greaterEqual03.test(-6L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-5) == true
-            runString = "test(-5)";
+        // (-5) == true
+            runString = "(-5)";
             if (true != test.lang.Long_greaterEqual03.test(-5L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-4) == true
-            runString = "test(-4)";
+        // (-4) == true
+            runString = "(-4)";
             if (true != test.lang.Long_greaterEqual03.test(-4L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == true
-            runString = "test(-1)";
+        // (-1) == true
+            runString = "(-1)";
             if (true != test.lang.Long_greaterEqual03.test(-1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.lang.Long_greaterEqual03.test(0L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.lang.Long_greaterEqual03.test(1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.lang.Long_greaterEqual03.test(2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(9223372036854775807) == true
-            runString = "test(9223372036854775807)";
+        // (9223372036854775807) == true
+            runString = "(9223372036854775807)";
             if (true != test.lang.Long_greaterEqual03.test(9223372036854775807L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14052,44 +14052,44 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Long_less01");
         String runString = null;
         try {
-        // test(-9223372036854775808) == true
-            runString = "test(-9223372036854775808)";
+        // (-9223372036854775808) == true
+            runString = "(-9223372036854775808)";
             if (true != test.lang.Long_less01.test(-9223372036854775808L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2) == true
-            runString = "test(-2)";
+        // (-2) == true
+            runString = "(-2)";
             if (true != test.lang.Long_less01.test(-2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == true
-            runString = "test(-1)";
+        // (-1) == true
+            runString = "(-1)";
             if (true != test.lang.Long_less01.test(-1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.lang.Long_less01.test(0L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.lang.Long_less01.test(1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == false
-            runString = "test(2)";
+        // (2) == false
+            runString = "(2)";
             if (false != test.lang.Long_less01.test(2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(9223372036854775807) == false
-            runString = "test(9223372036854775807)";
+        // (9223372036854775807) == false
+            runString = "(9223372036854775807)";
             if (false != test.lang.Long_less01.test(9223372036854775807L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14104,50 +14104,50 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Long_less02");
         String runString = null;
         try {
-        // test(-9223372036854775808) == true
-            runString = "test(-9223372036854775808)";
+        // (-9223372036854775808) == true
+            runString = "(-9223372036854775808)";
             if (true != test.lang.Long_less02.test(-9223372036854775808L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2) == true
-            runString = "test(-2)";
+        // (-2) == true
+            runString = "(-2)";
             if (true != test.lang.Long_less02.test(-2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == true
-            runString = "test(-1)";
+        // (-1) == true
+            runString = "(-1)";
             if (true != test.lang.Long_less02.test(-1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.lang.Long_less02.test(0L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == true
-            runString = "test(4)";
+        // (4) == true
+            runString = "(4)";
             if (true != test.lang.Long_less02.test(4L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == false
-            runString = "test(5)";
+        // (5) == false
+            runString = "(5)";
             if (false != test.lang.Long_less02.test(5L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == false
-            runString = "test(6)";
+        // (6) == false
+            runString = "(6)";
             if (false != test.lang.Long_less02.test(6L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(9223372036854775807) == false
-            runString = "test(9223372036854775807)";
+        // (9223372036854775807) == false
+            runString = "(9223372036854775807)";
             if (false != test.lang.Long_less02.test(9223372036854775807L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14162,56 +14162,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Long_less03");
         String runString = null;
         try {
-        // test(-9223372036854775808) == true
-            runString = "test(-9223372036854775808)";
+        // (-9223372036854775808) == true
+            runString = "(-9223372036854775808)";
             if (true != test.lang.Long_less03.test(-9223372036854775808L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-6) == true
-            runString = "test(-6)";
+        // (-6) == true
+            runString = "(-6)";
             if (true != test.lang.Long_less03.test(-6L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-5) == false
-            runString = "test(-5)";
+        // (-5) == false
+            runString = "(-5)";
             if (false != test.lang.Long_less03.test(-5L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-4) == false
-            runString = "test(-4)";
+        // (-4) == false
+            runString = "(-4)";
             if (false != test.lang.Long_less03.test(-4L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == false
-            runString = "test(-1)";
+        // (-1) == false
+            runString = "(-1)";
             if (false != test.lang.Long_less03.test(-1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.lang.Long_less03.test(0L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.lang.Long_less03.test(1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == false
-            runString = "test(2)";
+        // (2) == false
+            runString = "(2)";
             if (false != test.lang.Long_less03.test(2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(9223372036854775807) == false
-            runString = "test(9223372036854775807)";
+        // (9223372036854775807) == false
+            runString = "(9223372036854775807)";
             if (false != test.lang.Long_less03.test(9223372036854775807L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14226,50 +14226,50 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Long_lessEqual01");
         String runString = null;
         try {
-        // test(-2) == true
-            runString = "test(-2)";
+        // (-2) == true
+            runString = "(-2)";
             if (true != test.lang.Long_lessEqual01.test(-2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-9223372036854775808) == true
-            runString = "test(-9223372036854775808)";
+        // (-9223372036854775808) == true
+            runString = "(-9223372036854775808)";
             if (true != test.lang.Long_lessEqual01.test(-9223372036854775808L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2) == true
-            runString = "test(-2)";
+        // (-2) == true
+            runString = "(-2)";
             if (true != test.lang.Long_lessEqual01.test(-2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == true
-            runString = "test(-1)";
+        // (-1) == true
+            runString = "(-1)";
             if (true != test.lang.Long_lessEqual01.test(-1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.lang.Long_lessEqual01.test(0L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.lang.Long_lessEqual01.test(1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == false
-            runString = "test(2)";
+        // (2) == false
+            runString = "(2)";
             if (false != test.lang.Long_lessEqual01.test(2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(9223372036854775807) == false
-            runString = "test(9223372036854775807)";
+        // (9223372036854775807) == false
+            runString = "(9223372036854775807)";
             if (false != test.lang.Long_lessEqual01.test(9223372036854775807L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14284,50 +14284,50 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Long_lessEqual02");
         String runString = null;
         try {
-        // test(-9223372036854775808) == true
-            runString = "test(-9223372036854775808)";
+        // (-9223372036854775808) == true
+            runString = "(-9223372036854775808)";
             if (true != test.lang.Long_lessEqual02.test(-9223372036854775808L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2) == true
-            runString = "test(-2)";
+        // (-2) == true
+            runString = "(-2)";
             if (true != test.lang.Long_lessEqual02.test(-2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == true
-            runString = "test(-1)";
+        // (-1) == true
+            runString = "(-1)";
             if (true != test.lang.Long_lessEqual02.test(-1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.lang.Long_lessEqual02.test(0L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == true
-            runString = "test(4)";
+        // (4) == true
+            runString = "(4)";
             if (true != test.lang.Long_lessEqual02.test(4L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == true
-            runString = "test(5)";
+        // (5) == true
+            runString = "(5)";
             if (true != test.lang.Long_lessEqual02.test(5L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == false
-            runString = "test(6)";
+        // (6) == false
+            runString = "(6)";
             if (false != test.lang.Long_lessEqual02.test(6L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(9223372036854775807) == false
-            runString = "test(9223372036854775807)";
+        // (9223372036854775807) == false
+            runString = "(9223372036854775807)";
             if (false != test.lang.Long_lessEqual02.test(9223372036854775807L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14342,56 +14342,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Long_lessEqual03");
         String runString = null;
         try {
-        // test(-9223372036854775808) == true
-            runString = "test(-9223372036854775808)";
+        // (-9223372036854775808) == true
+            runString = "(-9223372036854775808)";
             if (true != test.lang.Long_lessEqual03.test(-9223372036854775808L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-6) == true
-            runString = "test(-6)";
+        // (-6) == true
+            runString = "(-6)";
             if (true != test.lang.Long_lessEqual03.test(-6L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-5) == true
-            runString = "test(-5)";
+        // (-5) == true
+            runString = "(-5)";
             if (true != test.lang.Long_lessEqual03.test(-5L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-4) == false
-            runString = "test(-4)";
+        // (-4) == false
+            runString = "(-4)";
             if (false != test.lang.Long_lessEqual03.test(-4L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-1) == false
-            runString = "test(-1)";
+        // (-1) == false
+            runString = "(-1)";
             if (false != test.lang.Long_lessEqual03.test(-1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.lang.Long_lessEqual03.test(0L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.lang.Long_lessEqual03.test(1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == false
-            runString = "test(2)";
+        // (2) == false
+            runString = "(2)";
             if (false != test.lang.Long_lessEqual03.test(2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(9223372036854775807) == false
-            runString = "test(9223372036854775807)";
+        // (9223372036854775807) == false
+            runString = "(9223372036854775807)";
             if (false != test.lang.Long_lessEqual03.test(9223372036854775807L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14406,14 +14406,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Math_pow");
         String runString = null;
         try {
-        // test(2.0) == 4.0
-            runString = "test(2.0)";
+        // (2.0) == 4.0
+            runString = "(2.0)";
             if (4.0 != test.lang.Math_pow.test(2.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3.1) == 8.574187700290345
-            runString = "test(3.1)";
+        // (3.1) == 8.574187700290345
+            runString = "(3.1)";
             if (8.574187700290345 != test.lang.Math_pow.test(3.1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14428,9 +14428,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Object_clone01");
         String runString = null;
         try {
-        // test(0) == !java.lang.CloneNotSupportedException
+        // (0) == !java.lang.CloneNotSupportedException
             try {
-                runString = "test(0)";
+                runString = "(0)";
                 test.lang.Object_clone01.test(0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14450,8 +14450,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Object_clone02");
         String runString = null;
         try {
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.lang.Object_clone02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14466,56 +14466,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Object_equals01");
         String runString = null;
         try {
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.lang.Object_equals01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.lang.Object_equals01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == false
-            runString = "test(2)";
+        // (2) == false
+            runString = "(2)";
             if (false != test.lang.Object_equals01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == true
-            runString = "test(3)";
+        // (3) == true
+            runString = "(3)";
             if (true != test.lang.Object_equals01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == true
-            runString = "test(4)";
+        // (4) == true
+            runString = "(4)";
             if (true != test.lang.Object_equals01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == false
-            runString = "test(5)";
+        // (5) == false
+            runString = "(5)";
             if (false != test.lang.Object_equals01.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == true
-            runString = "test(6)";
+        // (6) == true
+            runString = "(6)";
             if (true != test.lang.Object_equals01.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == false
-            runString = "test(7)";
+        // (7) == false
+            runString = "(7)";
             if (false != test.lang.Object_equals01.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(8) == false
-            runString = "test(8)";
+        // (8) == false
+            runString = "(8)";
             if (false != test.lang.Object_equals01.test(8)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14530,20 +14530,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Object_getClass01");
         String runString = null;
         try {
-        // test(0) == class java.lang.Object
-            runString = "test(0)";
+        // (0) == class java.lang.Object
+            runString = "(0)";
             if (!"class java.lang.Object".equals(test.lang.Object_getClass01.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == class java.lang.String
-            runString = "test(1)";
+        // (1) == class java.lang.String
+            runString = "(1)";
             if (!"class java.lang.String".equals(test.lang.Object_getClass01.test(1))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == class test.lang.Object_getClass01
-            runString = "test(2)";
+        // (2) == class test.lang.Object_getClass01
+            runString = "(2)";
             if (!"class test.lang.Object_getClass01".equals(test.lang.Object_getClass01.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14558,8 +14558,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Object_hashCode01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.lang.Object_hashCode01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14574,9 +14574,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Object_notify01");
         String runString = null;
         try {
-        // test(0) == !java.lang.IllegalMonitorStateException
+        // (0) == !java.lang.IllegalMonitorStateException
             try {
-                runString = "test(0)";
+                runString = "(0)";
                 test.lang.Object_notify01.test(0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14596,8 +14596,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Object_notify02");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.lang.Object_notify02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14612,9 +14612,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Object_notifyAll01");
         String runString = null;
         try {
-        // test(0) == !java.lang.IllegalMonitorStateException
+        // (0) == !java.lang.IllegalMonitorStateException
             try {
-                runString = "test(0)";
+                runString = "(0)";
                 test.lang.Object_notifyAll01.test(0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14634,8 +14634,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Object_notifyAll02");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.lang.Object_notifyAll02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14650,20 +14650,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Object_toString01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.lang.Object_toString01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.lang.Object_toString01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == false
-            runString = "test(2)";
+        // (2) == false
+            runString = "(2)";
             if (false != test.lang.Object_toString01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14678,27 +14678,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Object_toString02");
         String runString = null;
         try {
-        // test(0) == XYZ
-            runString = "test(0)";
+        // (0) == XYZ
+            runString = "(0)";
             if (!"XYZ".equals(test.lang.Object_toString02.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == string
-            runString = "test(1)";
+        // (1) == string
+            runString = "(1)";
             if (!"string".equals(test.lang.Object_toString02.test(1))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == class java.lang.String
-            runString = "test(2)";
+        // (2) == class java.lang.String
+            runString = "(2)";
             if (!"class java.lang.String".equals(test.lang.Object_toString02.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == !java.lang.NullPointerException
+        // (3) == !java.lang.NullPointerException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.lang.Object_toString02.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14718,9 +14718,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Object_wait01");
         String runString = null;
         try {
-        // test(0) == !java.lang.IllegalMonitorStateException
+        // (0) == !java.lang.IllegalMonitorStateException
             try {
-                runString = "test(0)";
+                runString = "(0)";
                 test.lang.Object_wait01.test(0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14740,8 +14740,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Object_wait02");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.lang.Object_wait02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14756,8 +14756,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Object_wait03");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.lang.Object_wait03.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14772,20 +14772,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.StringCoding_Scale");
         String runString = null;
         try {
-        // test(2) == 2
-            runString = "test(2)";
+        // (2) == 2
+            runString = "(2)";
             if (2 != test.lang.StringCoding_Scale.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.lang.StringCoding_Scale.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.lang.StringCoding_Scale.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14800,8 +14800,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.String_intern01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.lang.String_intern01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14816,20 +14816,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.String_intern02");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.lang.String_intern02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.lang.String_intern02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.lang.String_intern02.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14844,20 +14844,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.String_intern03");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.lang.String_intern03.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.lang.String_intern03.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.lang.String_intern03.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14872,14 +14872,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.String_valueOf01");
         String runString = null;
         try {
-        // test(0) == null
-            runString = "test(0)";
+        // (0) == null
+            runString = "(0)";
             if (!"null".equals(test.lang.String_valueOf01.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == string
-            runString = "test(1)";
+        // (1) == string
+            runString = "(1)";
             if (!"string".equals(test.lang.String_valueOf01.test(1))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14894,26 +14894,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.System_identityHashCode01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.lang.System_identityHashCode01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.lang.System_identityHashCode01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.lang.System_identityHashCode01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == false
-            runString = "test(3)";
+        // (3) == false
+            runString = "(3)";
             if (false != test.lang.System_identityHashCode01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14928,20 +14928,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.lang.Unsigned_idiv01");
         String runString = null;
         try {
-        // test(-1,4) == 1073741823
-            runString = "test(-1,4)";
+        // (-1,4) == 1073741823
+            runString = "(-1,4)";
             if (1073741823 != test.lang.Unsigned_idiv01.test(-1, 4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6,3) == 2
-            runString = "test(6,3)";
+        // (6,3) == 2
+            runString = "(6,3)";
             if (2 != test.lang.Unsigned_idiv01.test(6, 3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(65535,16) == 4095
-            runString = "test(65535,16)";
+        // (65535,16) == 4095
+            runString = "(65535,16)";
             if (4095 != test.lang.Unsigned_idiv01.test(65535, 16)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14956,8 +14956,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_allocate01");
         String runString = null;
         try {
-        // test(80) == 3160
-            runString = "test(80)";
+        // (80) == 3160
+            runString = "(80)";
             if (3160 != test.hotpath.HP_allocate01.test(80)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14972,8 +14972,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_allocate02");
         String runString = null;
         try {
-        // test(100) == 4950
-            runString = "test(100)";
+        // (100) == 4950
+            runString = "(100)";
             if (4950 != test.hotpath.HP_allocate02.test(100)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -14988,8 +14988,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_allocate03");
         String runString = null;
         try {
-        // test(100) == 100
-            runString = "test(100)";
+        // (100) == 100
+            runString = "(100)";
             if (100 != test.hotpath.HP_allocate03.test(100)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15004,8 +15004,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_array01");
         String runString = null;
         try {
-        // test(40) == 780
-            runString = "test(40)";
+        // (40) == 780
+            runString = "(40)";
             if (780 != test.hotpath.HP_array01.test(40)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15020,8 +15020,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_array02");
         String runString = null;
         try {
-        // test(40) == 5460
-            runString = "test(40)";
+        // (40) == 5460
+            runString = "(40)";
             if (5460 != test.hotpath.HP_array02.test(40)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15036,8 +15036,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_array03");
         String runString = null;
         try {
-        // test(40) == 3200
-            runString = "test(40)";
+        // (40) == 3200
+            runString = "(40)";
             if (3200 != test.hotpath.HP_array03.test(40)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15052,8 +15052,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_array04");
         String runString = null;
         try {
-        // test(80) == 15645
-            runString = "test(80)";
+        // (80) == 15645
+            runString = "(80)";
             if (15645 != test.hotpath.HP_array04.test(80)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15068,14 +15068,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_control01");
         String runString = null;
         try {
-        // test(40) == 2432
-            runString = "test(40)";
+        // (40) == 2432
+            runString = "(40)";
             if (2432 != test.hotpath.HP_control01.test(40)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(80) == 3243
-            runString = "test(80)";
+        // (80) == 3243
+            runString = "(80)";
             if (3243 != test.hotpath.HP_control01.test(80)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15090,14 +15090,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_control02");
         String runString = null;
         try {
-        // test(60) == 515
-            runString = "test(60)";
+        // (60) == 515
+            runString = "(60)";
             if (515 != test.hotpath.HP_control02.test(60)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(100) == 555
-            runString = "test(100)";
+        // (100) == 555
+            runString = "(100)";
             if (555 != test.hotpath.HP_control02.test(100)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15112,8 +15112,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_convert01");
         String runString = null;
         try {
-        // test(100) == 4950
-            runString = "test(100)";
+        // (100) == 4950
+            runString = "(100)";
             if (4950 != test.hotpath.HP_convert01.test(100)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15128,8 +15128,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_count");
         String runString = null;
         try {
-        // test(40) == 820
-            runString = "test(40)";
+        // (40) == 820
+            runString = "(40)";
             if (820 != test.hotpath.HP_count.test(40)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15144,26 +15144,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_dead01");
         String runString = null;
         try {
-        // test(10) == 110
-            runString = "test(10)";
+        // (10) == 110
+            runString = "(10)";
             if (110 != test.hotpath.HP_dead01.test(10)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(20) == 420
-            runString = "test(20)";
+        // (20) == 420
+            runString = "(20)";
             if (420 != test.hotpath.HP_dead01.test(20)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(30) == 930
-            runString = "test(30)";
+        // (30) == 930
+            runString = "(30)";
             if (930 != test.hotpath.HP_dead01.test(30)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(40) == 1640
-            runString = "test(40)";
+        // (40) == 1640
+            runString = "(40)";
             if (1640 != test.hotpath.HP_dead01.test(40)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15178,8 +15178,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_demo01");
         String runString = null;
         try {
-        // test(80) == 3160
-            runString = "test(80)";
+        // (80) == 3160
+            runString = "(80)";
             if (3160 != test.hotpath.HP_demo01.test(80)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15194,8 +15194,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_field01");
         String runString = null;
         try {
-        // test(40) == 820
-            runString = "test(40)";
+        // (40) == 820
+            runString = "(40)";
             if (820 != test.hotpath.HP_field01.test(40)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15210,8 +15210,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_field02");
         String runString = null;
         try {
-        // test(40) == 820
-            runString = "test(40)";
+        // (40) == 820
+            runString = "(40)";
             if (820 != test.hotpath.HP_field02.test(40)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15226,8 +15226,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_field03");
         String runString = null;
         try {
-        // test(1000) == 2019980
-            runString = "test(1000)";
+        // (1000) == 2019980
+            runString = "(1000)";
             if (2019980 != test.hotpath.HP_field03.test(1000)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15242,14 +15242,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_field04");
         String runString = null;
         try {
-        // test(40) == 4972
-            runString = "test(40)";
+        // (40) == 4972
+            runString = "(40)";
             if (4972 != test.hotpath.HP_field04.test(40)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1000) == 2019980
-            runString = "test(1000)";
+        // (1000) == 2019980
+            runString = "(1000)";
             if (2019980 != test.hotpath.HP_field04.test(1000)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15264,8 +15264,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_idea");
         String runString = null;
         try {
-        // test(3000) == true
-            runString = "test(3000)";
+        // (3000) == true
+            runString = "(3000)";
             if (true != test.hotpath.HP_idea.test(3000)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15280,8 +15280,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_inline01");
         String runString = null;
         try {
-        // test(20) == 215
-            runString = "test(20)";
+        // (20) == 215
+            runString = "(20)";
             if (215 != test.hotpath.HP_inline01.test(20)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15296,8 +15296,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_inline02");
         String runString = null;
         try {
-        // test(20) == 196
-            runString = "test(20)";
+        // (20) == 196
+            runString = "(20)";
             if (196 != test.hotpath.HP_inline02.test(20)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15312,14 +15312,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_invoke01");
         String runString = null;
         try {
-        // test(40) == 3049480
-            runString = "test(40)";
+        // (40) == 3049480
+            runString = "(40)";
             if (3049480 != test.hotpath.HP_invoke01.test(40)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(80) == 6098960
-            runString = "test(80)";
+        // (80) == 6098960
+            runString = "(80)";
             if (6098960 != test.hotpath.HP_invoke01.test(80)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15334,8 +15334,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_life");
         String runString = null;
         try {
-        // test(5) == -1756613086
-            runString = "test(5)";
+        // (5) == -1756613086
+            runString = "(5)";
             if (-1756613086 != test.hotpath.HP_life.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15350,8 +15350,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_nest01");
         String runString = null;
         try {
-        // test(15) == 3255
-            runString = "test(15)";
+        // (15) == 3255
+            runString = "(15)";
             if (3255 != test.hotpath.HP_nest01.test(15)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15366,8 +15366,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_nest02");
         String runString = null;
         try {
-        // test(15) == 3255
-            runString = "test(15)";
+        // (15) == 3255
+            runString = "(15)";
             if (3255 != test.hotpath.HP_nest02.test(15)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15382,8 +15382,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_scope01");
         String runString = null;
         try {
-        // test(40) == 59480
-            runString = "test(40)";
+        // (40) == 59480
+            runString = "(40)";
             if (59480 != test.hotpath.HP_scope01.test(40)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15398,14 +15398,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_scope02");
         String runString = null;
         try {
-        // test(40) == 20
-            runString = "test(40)";
+        // (40) == 20
+            runString = "(40)";
             if (20 != test.hotpath.HP_scope02.test(40)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(22) == 20
-            runString = "test(22)";
+        // (22) == 20
+            runString = "(22)";
             if (20 != test.hotpath.HP_scope02.test(22)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15420,8 +15420,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_series");
         String runString = null;
         try {
-        // test(100) == 0.6248571921291398
-            runString = "test(100)";
+        // (100) == 0.6248571921291398
+            runString = "(100)";
             if (0.6248571921291398 != test.hotpath.HP_series.test(100)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15436,8 +15436,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.hotpath.HP_trees01");
         String runString = null;
         try {
-        // test(1000) == 8100
-            runString = "test(1000)";
+        // (1000) == 8100
+            runString = "(1000)";
             if (8100 != test.hotpath.HP_trees01.test(1000)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15452,27 +15452,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_get01");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (!"0".equals(test.reflect.Array_get01.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (!"1".equals(test.reflect.Array_get01.test(1))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 2
-            runString = "test(2)";
+        // (2) == 2
+            runString = "(2)";
             if (!"2".equals(test.reflect.Array_get01.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.reflect.Array_get01.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15492,27 +15492,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_get02");
         String runString = null;
         try {
-        // test(0) == 11
-            runString = "test(0)";
+        // (0) == 11
+            runString = "(0)";
             if (11 != test.reflect.Array_get02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 21
-            runString = "test(1)";
+        // (1) == 21
+            runString = "(1)";
             if (21 != test.reflect.Array_get02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 42
-            runString = "test(2)";
+        // (2) == 42
+            runString = "(2)";
             if (42 != test.reflect.Array_get02.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.reflect.Array_get02.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15532,27 +15532,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_get03");
         String runString = null;
         try {
-        // test(0) == 11
-            runString = "test(0)";
+        // (0) == 11
+            runString = "(0)";
             if ((byte) 11 != test.reflect.Array_get03.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 21
-            runString = "test(1)";
+        // (1) == 21
+            runString = "(1)";
             if ((byte) 21 != test.reflect.Array_get03.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 42
-            runString = "test(2)";
+        // (2) == 42
+            runString = "(2)";
             if ((byte) 42 != test.reflect.Array_get03.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.reflect.Array_get03.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15572,27 +15572,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_getBoolean01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.reflect.Array_getBoolean01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.reflect.Array_getBoolean01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.reflect.Array_getBoolean01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.reflect.Array_getBoolean01.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15612,27 +15612,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_getByte01");
         String runString = null;
         try {
-        // test(0) == 11
-            runString = "test(0)";
+        // (0) == 11
+            runString = "(0)";
             if ((byte) 11 != test.reflect.Array_getByte01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 21
-            runString = "test(1)";
+        // (1) == 21
+            runString = "(1)";
             if ((byte) 21 != test.reflect.Array_getByte01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 42
-            runString = "test(2)";
+        // (2) == 42
+            runString = "(2)";
             if ((byte) 42 != test.reflect.Array_getByte01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.reflect.Array_getByte01.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15652,27 +15652,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_getChar01");
         String runString = null;
         try {
-        // test(0) == '\13'
-            runString = "test(0)";
+        // (0) == '\13'
+            runString = "(0)";
             if ((char) 11 != test.reflect.Array_getChar01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == '\25'
-            runString = "test(1)";
+        // (1) == '\25'
+            runString = "(1)";
             if ((char) 21 != test.reflect.Array_getChar01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == '*'
-            runString = "test(2)";
+        // (2) == '*'
+            runString = "(2)";
             if ((char) 42 != test.reflect.Array_getChar01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.reflect.Array_getChar01.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15692,27 +15692,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_getDouble01");
         String runString = null;
         try {
-        // test(0) == 11.1
-            runString = "test(0)";
+        // (0) == 11.1
+            runString = "(0)";
             if (11.1 != test.reflect.Array_getDouble01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 21.1
-            runString = "test(1)";
+        // (1) == 21.1
+            runString = "(1)";
             if (21.1 != test.reflect.Array_getDouble01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 42.1
-            runString = "test(2)";
+        // (2) == 42.1
+            runString = "(2)";
             if (42.1 != test.reflect.Array_getDouble01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.reflect.Array_getDouble01.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15732,27 +15732,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_getFloat01");
         String runString = null;
         try {
-        // test(0) == 11.1
-            runString = "test(0)";
+        // (0) == 11.1
+            runString = "(0)";
             if (11.1f != test.reflect.Array_getFloat01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 21.1
-            runString = "test(1)";
+        // (1) == 21.1
+            runString = "(1)";
             if (21.1f != test.reflect.Array_getFloat01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 42.1
-            runString = "test(2)";
+        // (2) == 42.1
+            runString = "(2)";
             if (42.1f != test.reflect.Array_getFloat01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.reflect.Array_getFloat01.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15772,27 +15772,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_getInt01");
         String runString = null;
         try {
-        // test(0) == 11
-            runString = "test(0)";
+        // (0) == 11
+            runString = "(0)";
             if (11 != test.reflect.Array_getInt01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 21
-            runString = "test(1)";
+        // (1) == 21
+            runString = "(1)";
             if (21 != test.reflect.Array_getInt01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 42
-            runString = "test(2)";
+        // (2) == 42
+            runString = "(2)";
             if (42 != test.reflect.Array_getInt01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.reflect.Array_getInt01.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15812,27 +15812,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_getLength01");
         String runString = null;
         try {
-        // test(0) == 3
-            runString = "test(0)";
+        // (0) == 3
+            runString = "(0)";
             if (3 != test.reflect.Array_getLength01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 4
-            runString = "test(1)";
+        // (1) == 4
+            runString = "(1)";
             if (4 != test.reflect.Array_getLength01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 1
-            runString = "test(2)";
+        // (2) == 1
+            runString = "(2)";
             if (1 != test.reflect.Array_getLength01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == !java.lang.NullPointerException
+        // (3) == !java.lang.NullPointerException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.reflect.Array_getLength01.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15852,27 +15852,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_getLong01");
         String runString = null;
         try {
-        // test(0) == 11
-            runString = "test(0)";
+        // (0) == 11
+            runString = "(0)";
             if (11L != test.reflect.Array_getLong01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 21
-            runString = "test(1)";
+        // (1) == 21
+            runString = "(1)";
             if (21L != test.reflect.Array_getLong01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 42
-            runString = "test(2)";
+        // (2) == 42
+            runString = "(2)";
             if (42L != test.reflect.Array_getLong01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.reflect.Array_getLong01.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15892,27 +15892,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_getShort01");
         String runString = null;
         try {
-        // test(0) == 11
-            runString = "test(0)";
+        // (0) == 11
+            runString = "(0)";
             if ((short) 11 != test.reflect.Array_getShort01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 21
-            runString = "test(1)";
+        // (1) == 21
+            runString = "(1)";
             if ((short) 21 != test.reflect.Array_getShort01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 42
-            runString = "test(2)";
+        // (2) == 42
+            runString = "(2)";
             if ((short) 42 != test.reflect.Array_getShort01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.reflect.Array_getShort01.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15932,8 +15932,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_newInstance01");
         String runString = null;
         try {
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.reflect.Array_newInstance01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15948,8 +15948,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_newInstance02");
         String runString = null;
         try {
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.reflect.Array_newInstance02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15964,8 +15964,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_newInstance03");
         String runString = null;
         try {
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.reflect.Array_newInstance03.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15980,8 +15980,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_newInstance04");
         String runString = null;
         try {
-        // test(1,0) == true
-            runString = "test(1,0)";
+        // (1,0) == true
+            runString = "(1,0)";
             if (true != test.reflect.Array_newInstance04.test(1, 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -15996,8 +15996,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_newInstance05");
         String runString = null;
         try {
-        // test(1,3) == true
-            runString = "test(1,3)";
+        // (1,3) == true
+            runString = "(1,3)";
             if (true != test.reflect.Array_newInstance05.test(1, 3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16012,8 +16012,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_newInstance06");
         String runString = null;
         try {
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.reflect.Array_newInstance06.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16028,27 +16028,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_set01");
         String runString = null;
         try {
-        // test(0,"1") == 1
-            runString = "test(0,\"1\")";
+        // (0,"1") == 1
+            runString = "(0,\"1\")";
             if (!"1".equals(test.reflect.Array_set01.test(0, "1"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,"2") == 2
-            runString = "test(1,\"2\")";
+        // (1,"2") == 2
+            runString = "(1,\"2\")";
             if (!"2".equals(test.reflect.Array_set01.test(1, "2"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,"XXd") == XXd
-            runString = "test(0,\"XXd\")";
+        // (0,"XXd") == XXd
+            runString = "(0,\"XXd\")";
             if (!"XXd".equals(test.reflect.Array_set01.test(0, "XXd"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3,"--") == !java.lang.ArrayIndexOutOfBoundsException
+        // (3,"--") == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3,\"--\")";
+                runString = "(3,\"--\")";
                 test.reflect.Array_set01.test(3, "--");
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16068,27 +16068,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_set02");
         String runString = null;
         try {
-        // test(0,11) == 11
-            runString = "test(0,11)";
+        // (0,11) == 11
+            runString = "(0,11)";
             if (11 != test.reflect.Array_set02.test(0, 11)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,21) == 21
-            runString = "test(1,21)";
+        // (1,21) == 21
+            runString = "(1,21)";
             if (21 != test.reflect.Array_set02.test(1, 21)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,42) == 42
-            runString = "test(0,42)";
+        // (0,42) == 42
+            runString = "(0,42)";
             if (42 != test.reflect.Array_set02.test(0, 42)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3,0) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3,0) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3,0)";
+                runString = "(3,0)";
                 test.reflect.Array_set02.test(3, 0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16108,27 +16108,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_set03");
         String runString = null;
         try {
-        // test(0,11) == 11
-            runString = "test(0,11)";
+        // (0,11) == 11
+            runString = "(0,11)";
             if ((byte) 11 != test.reflect.Array_set03.test(0, (byte) 11)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,21) == 21
-            runString = "test(1,21)";
+        // (1,21) == 21
+            runString = "(1,21)";
             if ((byte) 21 != test.reflect.Array_set03.test(1, (byte) 21)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,42) == 42
-            runString = "test(0,42)";
+        // (0,42) == 42
+            runString = "(0,42)";
             if ((byte) 42 != test.reflect.Array_set03.test(0, (byte) 42)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3,0) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3,0) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3,0)";
+                runString = "(3,0)";
                 test.reflect.Array_set03.test(3, (byte) 0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16148,27 +16148,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_setBoolean01");
         String runString = null;
         try {
-        // test(0,true) == true
-            runString = "test(0,true)";
+        // (0,true) == true
+            runString = "(0,true)";
             if (true != test.reflect.Array_setBoolean01.test(0, true)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,false) == false
-            runString = "test(1,false)";
+        // (1,false) == false
+            runString = "(1,false)";
             if (false != test.reflect.Array_setBoolean01.test(1, false)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2,true) == true
-            runString = "test(2,true)";
+        // (2,true) == true
+            runString = "(2,true)";
             if (true != test.reflect.Array_setBoolean01.test(2, true)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3,false) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3,false) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3,false)";
+                runString = "(3,false)";
                 test.reflect.Array_setBoolean01.test(3, false);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16188,27 +16188,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_setByte01");
         String runString = null;
         try {
-        // test(0,11) == 11
-            runString = "test(0,11)";
+        // (0,11) == 11
+            runString = "(0,11)";
             if ((byte) 11 != test.reflect.Array_setByte01.test(0, (byte) 11)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,21) == 21
-            runString = "test(1,21)";
+        // (1,21) == 21
+            runString = "(1,21)";
             if ((byte) 21 != test.reflect.Array_setByte01.test(1, (byte) 21)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,42) == 42
-            runString = "test(0,42)";
+        // (0,42) == 42
+            runString = "(0,42)";
             if ((byte) 42 != test.reflect.Array_setByte01.test(0, (byte) 42)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3,0) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3,0) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3,0)";
+                runString = "(3,0)";
                 test.reflect.Array_setByte01.test(3, (byte) 0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16228,27 +16228,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_setChar01");
         String runString = null;
         try {
-        // test(0,'\13') == '\13'
-            runString = "test(0,'\13')";
+        // (0,'\13') == '\13'
+            runString = "(0,'\13')";
             if ((char) 11 != test.reflect.Array_setChar01.test(0, (char) 11)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,'\25') == '\25'
-            runString = "test(1,'\25')";
+        // (1,'\25') == '\25'
+            runString = "(1,'\25')";
             if ((char) 21 != test.reflect.Array_setChar01.test(1, (char) 21)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,'*') == '*'
-            runString = "test(0,'*')";
+        // (0,'*') == '*'
+            runString = "(0,'*')";
             if ((char) 42 != test.reflect.Array_setChar01.test(0, (char) 42)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3,'\0') == !java.lang.ArrayIndexOutOfBoundsException
+        // (3,'\0') == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3,'\0')";
+                runString = "(3,'\0')";
                 test.reflect.Array_setChar01.test(3, (char) 0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16268,27 +16268,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_setDouble01");
         String runString = null;
         try {
-        // test(0,11.1) == 11.1
-            runString = "test(0,11.1)";
+        // (0,11.1) == 11.1
+            runString = "(0,11.1)";
             if (11.1 != test.reflect.Array_setDouble01.test(0, 11.1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,21.1) == 21.1
-            runString = "test(1,21.1)";
+        // (1,21.1) == 21.1
+            runString = "(1,21.1)";
             if (21.1 != test.reflect.Array_setDouble01.test(1, 21.1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,42.1) == 42.1
-            runString = "test(0,42.1)";
+        // (0,42.1) == 42.1
+            runString = "(0,42.1)";
             if (42.1 != test.reflect.Array_setDouble01.test(0, 42.1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3,0.1) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3,0.1) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3,0.1)";
+                runString = "(3,0.1)";
                 test.reflect.Array_setDouble01.test(3, 0.1);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16308,27 +16308,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_setFloat01");
         String runString = null;
         try {
-        // test(0,11.1) == 11.1
-            runString = "test(0,11.1)";
+        // (0,11.1) == 11.1
+            runString = "(0,11.1)";
             if (11.1f != test.reflect.Array_setFloat01.test(0, 11.1f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,21.1) == 21.1
-            runString = "test(1,21.1)";
+        // (1,21.1) == 21.1
+            runString = "(1,21.1)";
             if (21.1f != test.reflect.Array_setFloat01.test(1, 21.1f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,42.1) == 42.1
-            runString = "test(0,42.1)";
+        // (0,42.1) == 42.1
+            runString = "(0,42.1)";
             if (42.1f != test.reflect.Array_setFloat01.test(0, 42.1f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3,0.1) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3,0.1) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3,0.1)";
+                runString = "(3,0.1)";
                 test.reflect.Array_setFloat01.test(3, 0.1f);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16348,27 +16348,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_setInt01");
         String runString = null;
         try {
-        // test(0,11) == 11
-            runString = "test(0,11)";
+        // (0,11) == 11
+            runString = "(0,11)";
             if (11 != test.reflect.Array_setInt01.test(0, 11)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,21) == 21
-            runString = "test(1,21)";
+        // (1,21) == 21
+            runString = "(1,21)";
             if (21 != test.reflect.Array_setInt01.test(1, 21)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,42) == 42
-            runString = "test(0,42)";
+        // (0,42) == 42
+            runString = "(0,42)";
             if (42 != test.reflect.Array_setInt01.test(0, 42)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3,0) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3,0) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3,0)";
+                runString = "(3,0)";
                 test.reflect.Array_setInt01.test(3, 0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16388,27 +16388,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_setLong01");
         String runString = null;
         try {
-        // test(0,11) == 11
-            runString = "test(0,11)";
+        // (0,11) == 11
+            runString = "(0,11)";
             if (11L != test.reflect.Array_setLong01.test(0, 11L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,21) == 21
-            runString = "test(1,21)";
+        // (1,21) == 21
+            runString = "(1,21)";
             if (21L != test.reflect.Array_setLong01.test(1, 21L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,42) == 42
-            runString = "test(0,42)";
+        // (0,42) == 42
+            runString = "(0,42)";
             if (42L != test.reflect.Array_setLong01.test(0, 42L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3,0) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3,0) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3,0)";
+                runString = "(3,0)";
                 test.reflect.Array_setLong01.test(3, 0L);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16428,27 +16428,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Array_setShort01");
         String runString = null;
         try {
-        // test(0,11) == 11
-            runString = "test(0,11)";
+        // (0,11) == 11
+            runString = "(0,11)";
             if ((short) 11 != test.reflect.Array_setShort01.test(0, (short) 11)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,21) == 21
-            runString = "test(1,21)";
+        // (1,21) == 21
+            runString = "(1,21)";
             if ((short) 21 != test.reflect.Array_setShort01.test(1, (short) 21)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(0,42) == 42
-            runString = "test(0,42)";
+        // (0,42) == 42
+            runString = "(0,42)";
             if ((short) 42 != test.reflect.Array_setShort01.test(0, (short) 42)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3,0) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3,0) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3,0)";
+                runString = "(3,0)";
                 test.reflect.Array_setShort01.test(3, (short) 0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16468,9 +16468,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Class_getDeclaredField01");
         String runString = null;
         try {
-        // test("test") == !java.lang.NoSuchFieldException
+        // ("test") == !java.lang.NoSuchFieldException
             try {
-                runString = "test(\"test\")";
+                runString = "(\"test\")";
                 test.reflect.Class_getDeclaredField01.test("test");
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16480,14 +16480,14 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test("field") == field
-            runString = "test(\"field\")";
+        // ("field") == field
+            runString = "(\"field\")";
             if (!"field".equals(test.reflect.Class_getDeclaredField01.test("field"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test("f2") == f2
-            runString = "test(\"f2\")";
+        // ("f2") == f2
+            runString = "(\"f2\")";
             if (!"f2".equals(test.reflect.Class_getDeclaredField01.test("f2"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16502,9 +16502,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Class_getDeclaredMethod01");
         String runString = null;
         try {
-        // test("test") == !java.lang.NoSuchMethodException
+        // ("test") == !java.lang.NoSuchMethodException
             try {
-                runString = "test(\"test\")";
+                runString = "(\"test\")";
                 test.reflect.Class_getDeclaredMethod01.test("test");
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16514,15 +16514,15 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test("main") == main
-            runString = "test(\"main\")";
+        // ("main") == main
+            runString = "(\"main\")";
             if (!"main".equals(test.reflect.Class_getDeclaredMethod01.test("main"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test("xx") == !java.lang.NoSuchMethodException
+        // ("xx") == !java.lang.NoSuchMethodException
             try {
-                runString = "test(\"xx\")";
+                runString = "(\"xx\")";
                 test.reflect.Class_getDeclaredMethod01.test("xx");
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16542,9 +16542,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Class_getField01");
         String runString = null;
         try {
-        // test("test") == !java.lang.NoSuchFieldException
+        // ("test") == !java.lang.NoSuchFieldException
             try {
-                runString = "test(\"test\")";
+                runString = "(\"test\")";
                 test.reflect.Class_getField01.test("test");
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16554,21 +16554,21 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test("field") == field
-            runString = "test(\"field\")";
+        // ("field") == field
+            runString = "(\"field\")";
             if (!"field".equals(test.reflect.Class_getField01.test("field"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test("field2") == field2
-            runString = "test(\"field2\")";
+        // ("field2") == field2
+            runString = "(\"field2\")";
             if (!"field2".equals(test.reflect.Class_getField01.test("field2"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test("field3") == !java.lang.NoSuchFieldException
+        // ("field3") == !java.lang.NoSuchFieldException
             try {
-                runString = "test(\"field3\")";
+                runString = "(\"field3\")";
                 test.reflect.Class_getField01.test("field3");
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16588,9 +16588,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Class_getField02");
         String runString = null;
         try {
-        // test("test") == !java.lang.NoSuchFieldException
+        // ("test") == !java.lang.NoSuchFieldException
             try {
-                runString = "test(\"test\")";
+                runString = "(\"test\")";
                 test.reflect.Class_getField02.test("test");
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16600,21 +16600,21 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test("field") == field
-            runString = "test(\"field\")";
+        // ("field") == field
+            runString = "(\"field\")";
             if (!"field".equals(test.reflect.Class_getField02.test("field"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test("field2") == field2
-            runString = "test(\"field2\")";
+        // ("field2") == field2
+            runString = "(\"field2\")";
             if (!"field2".equals(test.reflect.Class_getField02.test("field2"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test("field3") == !java.lang.NoSuchFieldException
+        // ("field3") == !java.lang.NoSuchFieldException
             try {
-                runString = "test(\"field3\")";
+                runString = "(\"field3\")";
                 test.reflect.Class_getField02.test("field3");
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16624,8 +16624,8 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test("field4") == field4
-            runString = "test(\"field4\")";
+        // ("field4") == field4
+            runString = "(\"field4\")";
             if (!"field4".equals(test.reflect.Class_getField02.test("field4"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16640,9 +16640,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Class_getMethod01");
         String runString = null;
         try {
-        // test("test") == !java.lang.NoSuchMethodException
+        // ("test") == !java.lang.NoSuchMethodException
             try {
-                runString = "test(\"test\")";
+                runString = "(\"test\")";
                 test.reflect.Class_getMethod01.test("test");
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16652,15 +16652,15 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test("main") == main
-            runString = "test(\"main\")";
+        // ("main") == main
+            runString = "(\"main\")";
             if (!"main".equals(test.reflect.Class_getMethod01.test("main"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test("xx") == !java.lang.NoSuchMethodException
+        // ("xx") == !java.lang.NoSuchMethodException
             try {
-                runString = "test(\"xx\")";
+                runString = "(\"xx\")";
                 test.reflect.Class_getMethod01.test("xx");
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16680,9 +16680,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Class_getMethod02");
         String runString = null;
         try {
-        // test(0) == !java.lang.NoSuchMethodException
+        // (0) == !java.lang.NoSuchMethodException
             try {
-                runString = "test(0)";
+                runString = "(0)";
                 test.reflect.Class_getMethod02.test(0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16692,15 +16692,15 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(1) == test
-            runString = "test(1)";
+        // (1) == test
+            runString = "(1)";
             if (!"test".equals(test.reflect.Class_getMethod02.test(1))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == !java.lang.NoSuchMethodException
+        // (2) == !java.lang.NoSuchMethodException
             try {
-                runString = "test(2)";
+                runString = "(2)";
                 test.reflect.Class_getMethod02.test(2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16710,15 +16710,15 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(3) == main
-            runString = "test(3)";
+        // (3) == main
+            runString = "(3)";
             if (!"main".equals(test.reflect.Class_getMethod02.test(3))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == !java.lang.NoSuchMethodException
+        // (4) == !java.lang.NoSuchMethodException
             try {
-                runString = "test(4)";
+                runString = "(4)";
                 test.reflect.Class_getMethod02.test(4);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16728,9 +16728,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(5) == !java.lang.NoSuchMethodException
+        // (5) == !java.lang.NoSuchMethodException
             try {
-                runString = "test(5)";
+                runString = "(5)";
                 test.reflect.Class_getMethod02.test(5);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16740,8 +16740,8 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(6) == null
-            runString = "test(6)";
+        // (6) == null
+            runString = "(6)";
             if (null != test.reflect.Class_getMethod02.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16756,14 +16756,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Class_newInstance01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.reflect.Class_newInstance01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.reflect.Class_newInstance01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16778,9 +16778,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Class_newInstance02");
         String runString = null;
         try {
-        // test(0) == !java.lang.IllegalAccessException
+        // (0) == !java.lang.IllegalAccessException
             try {
-                runString = "test(0)";
+                runString = "(0)";
                 test.reflect.Class_newInstance02.test(0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16790,8 +16790,8 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.reflect.Class_newInstance02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16806,9 +16806,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Class_newInstance03");
         String runString = null;
         try {
-        // test(0) == !java.lang.InstantiationException
+        // (0) == !java.lang.InstantiationException
             try {
-                runString = "test(0)";
+                runString = "(0)";
                 test.reflect.Class_newInstance03.test(0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16818,9 +16818,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(1) == !java.lang.InstantiationException
+        // (1) == !java.lang.InstantiationException
             try {
-                runString = "test(1)";
+                runString = "(1)";
                 test.reflect.Class_newInstance03.test(1);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16830,9 +16830,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(2) == !java.lang.InstantiationException
+        // (2) == !java.lang.InstantiationException
             try {
-                runString = "test(2)";
+                runString = "(2)";
                 test.reflect.Class_newInstance03.test(2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16842,9 +16842,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(3) == !java.lang.InstantiationException
+        // (3) == !java.lang.InstantiationException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.reflect.Class_newInstance03.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16854,8 +16854,8 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(4) == false
-            runString = "test(4)";
+        // (4) == false
+            runString = "(4)";
             if (false != test.reflect.Class_newInstance03.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16870,9 +16870,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Class_newInstance06");
         String runString = null;
         try {
-        // test(0) == !java.lang.InstantiationException
+        // (0) == !java.lang.InstantiationException
             try {
-                runString = "test(0)";
+                runString = "(0)";
                 test.reflect.Class_newInstance06.test(0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16882,8 +16882,8 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(4) == false
-            runString = "test(4)";
+        // (4) == false
+            runString = "(4)";
             if (false != test.reflect.Class_newInstance06.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16898,9 +16898,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Class_newInstance07");
         String runString = null;
         try {
-        // test(0) == !java.lang.Exception
+        // (0) == !java.lang.Exception
             try {
-                runString = "test(0)";
+                runString = "(0)";
                 test.reflect.Class_newInstance07.test(0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16910,8 +16910,8 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(4) == false
-            runString = "test(4)";
+        // (4) == false
+            runString = "(4)";
             if (false != test.reflect.Class_newInstance07.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16926,56 +16926,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Field_get01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.reflect.Field_get01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.reflect.Field_get01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.reflect.Field_get01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == true
-            runString = "test(3)";
+        // (3) == true
+            runString = "(3)";
             if (true != test.reflect.Field_get01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == true
-            runString = "test(4)";
+        // (4) == true
+            runString = "(4)";
             if (true != test.reflect.Field_get01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == true
-            runString = "test(5)";
+        // (5) == true
+            runString = "(5)";
             if (true != test.reflect.Field_get01.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == true
-            runString = "test(6)";
+        // (6) == true
+            runString = "(6)";
             if (true != test.reflect.Field_get01.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == true
-            runString = "test(7)";
+        // (7) == true
+            runString = "(7)";
             if (true != test.reflect.Field_get01.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(8) == false
-            runString = "test(8)";
+        // (8) == false
+            runString = "(8)";
             if (false != test.reflect.Field_get01.test(8)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -16990,56 +16990,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Field_get02");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.reflect.Field_get02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.reflect.Field_get02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.reflect.Field_get02.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == true
-            runString = "test(3)";
+        // (3) == true
+            runString = "(3)";
             if (true != test.reflect.Field_get02.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == true
-            runString = "test(4)";
+        // (4) == true
+            runString = "(4)";
             if (true != test.reflect.Field_get02.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == true
-            runString = "test(5)";
+        // (5) == true
+            runString = "(5)";
             if (true != test.reflect.Field_get02.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == true
-            runString = "test(6)";
+        // (6) == true
+            runString = "(6)";
             if (true != test.reflect.Field_get02.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == true
-            runString = "test(7)";
+        // (7) == true
+            runString = "(7)";
             if (true != test.reflect.Field_get02.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(8) == false
-            runString = "test(8)";
+        // (8) == false
+            runString = "(8)";
             if (false != test.reflect.Field_get02.test(8)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17054,56 +17054,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Field_get03");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.reflect.Field_get03.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.reflect.Field_get03.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.reflect.Field_get03.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == true
-            runString = "test(3)";
+        // (3) == true
+            runString = "(3)";
             if (true != test.reflect.Field_get03.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == true
-            runString = "test(4)";
+        // (4) == true
+            runString = "(4)";
             if (true != test.reflect.Field_get03.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == true
-            runString = "test(5)";
+        // (5) == true
+            runString = "(5)";
             if (true != test.reflect.Field_get03.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == true
-            runString = "test(6)";
+        // (6) == true
+            runString = "(6)";
             if (true != test.reflect.Field_get03.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == true
-            runString = "test(7)";
+        // (7) == true
+            runString = "(7)";
             if (true != test.reflect.Field_get03.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(8) == false
-            runString = "test(8)";
+        // (8) == false
+            runString = "(8)";
             if (false != test.reflect.Field_get03.test(8)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17118,56 +17118,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Field_get04");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.reflect.Field_get04.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.reflect.Field_get04.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.reflect.Field_get04.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == true
-            runString = "test(3)";
+        // (3) == true
+            runString = "(3)";
             if (true != test.reflect.Field_get04.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == true
-            runString = "test(4)";
+        // (4) == true
+            runString = "(4)";
             if (true != test.reflect.Field_get04.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == true
-            runString = "test(5)";
+        // (5) == true
+            runString = "(5)";
             if (true != test.reflect.Field_get04.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == true
-            runString = "test(6)";
+        // (6) == true
+            runString = "(6)";
             if (true != test.reflect.Field_get04.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == true
-            runString = "test(7)";
+        // (7) == true
+            runString = "(7)";
             if (true != test.reflect.Field_get04.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(8) == false
-            runString = "test(8)";
+        // (8) == false
+            runString = "(8)";
             if (false != test.reflect.Field_get04.test(8)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17182,56 +17182,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Field_getType01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.reflect.Field_getType01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.reflect.Field_getType01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.reflect.Field_getType01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == true
-            runString = "test(3)";
+        // (3) == true
+            runString = "(3)";
             if (true != test.reflect.Field_getType01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == true
-            runString = "test(4)";
+        // (4) == true
+            runString = "(4)";
             if (true != test.reflect.Field_getType01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == true
-            runString = "test(5)";
+        // (5) == true
+            runString = "(5)";
             if (true != test.reflect.Field_getType01.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == true
-            runString = "test(6)";
+        // (6) == true
+            runString = "(6)";
             if (true != test.reflect.Field_getType01.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == true
-            runString = "test(7)";
+        // (7) == true
+            runString = "(7)";
             if (true != test.reflect.Field_getType01.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(8) == false
-            runString = "test(8)";
+        // (8) == false
+            runString = "(8)";
             if (false != test.reflect.Field_getType01.test(8)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17246,56 +17246,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Field_set01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.reflect.Field_set01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.reflect.Field_set01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.reflect.Field_set01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == true
-            runString = "test(3)";
+        // (3) == true
+            runString = "(3)";
             if (true != test.reflect.Field_set01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == true
-            runString = "test(4)";
+        // (4) == true
+            runString = "(4)";
             if (true != test.reflect.Field_set01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == true
-            runString = "test(5)";
+        // (5) == true
+            runString = "(5)";
             if (true != test.reflect.Field_set01.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == true
-            runString = "test(6)";
+        // (6) == true
+            runString = "(6)";
             if (true != test.reflect.Field_set01.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == true
-            runString = "test(7)";
+        // (7) == true
+            runString = "(7)";
             if (true != test.reflect.Field_set01.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(8) == false
-            runString = "test(8)";
+        // (8) == false
+            runString = "(8)";
             if (false != test.reflect.Field_set01.test(8)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17310,56 +17310,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Field_set02");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.reflect.Field_set02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.reflect.Field_set02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.reflect.Field_set02.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == true
-            runString = "test(3)";
+        // (3) == true
+            runString = "(3)";
             if (true != test.reflect.Field_set02.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == true
-            runString = "test(4)";
+        // (4) == true
+            runString = "(4)";
             if (true != test.reflect.Field_set02.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == true
-            runString = "test(5)";
+        // (5) == true
+            runString = "(5)";
             if (true != test.reflect.Field_set02.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == true
-            runString = "test(6)";
+        // (6) == true
+            runString = "(6)";
             if (true != test.reflect.Field_set02.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == true
-            runString = "test(7)";
+        // (7) == true
+            runString = "(7)";
             if (true != test.reflect.Field_set02.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(8) == false
-            runString = "test(8)";
+        // (8) == false
+            runString = "(8)";
             if (false != test.reflect.Field_set02.test(8)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17374,56 +17374,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Field_set03");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.reflect.Field_set03.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.reflect.Field_set03.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.reflect.Field_set03.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == true
-            runString = "test(3)";
+        // (3) == true
+            runString = "(3)";
             if (true != test.reflect.Field_set03.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == true
-            runString = "test(4)";
+        // (4) == true
+            runString = "(4)";
             if (true != test.reflect.Field_set03.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == true
-            runString = "test(5)";
+        // (5) == true
+            runString = "(5)";
             if (true != test.reflect.Field_set03.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == true
-            runString = "test(6)";
+        // (6) == true
+            runString = "(6)";
             if (true != test.reflect.Field_set03.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == true
-            runString = "test(7)";
+        // (7) == true
+            runString = "(7)";
             if (true != test.reflect.Field_set03.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(8) == false
-            runString = "test(8)";
+        // (8) == false
+            runString = "(8)";
             if (false != test.reflect.Field_set03.test(8)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17438,14 +17438,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Invoke_main01");
         String runString = null;
         try {
-        // test("test1") == test1
-            runString = "test(\"test1\")";
+        // ("test1") == test1
+            runString = "(\"test1\")";
             if (!"test1".equals(test.reflect.Invoke_main01.test("test1"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test("test2") == test2
-            runString = "test(\"test2\")";
+        // ("test2") == test2
+            runString = "(\"test2\")";
             if (!"test2".equals(test.reflect.Invoke_main01.test("test2"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17460,14 +17460,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Invoke_main02");
         String runString = null;
         try {
-        // test("test1") == test1
-            runString = "test(\"test1\")";
+        // ("test1") == test1
+            runString = "(\"test1\")";
             if (!"test1".equals(test.reflect.Invoke_main02.test("test1"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test("test2") == test2
-            runString = "test(\"test2\")";
+        // ("test2") == test2
+            runString = "(\"test2\")";
             if (!"test2".equals(test.reflect.Invoke_main02.test("test2"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17482,14 +17482,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Invoke_main03");
         String runString = null;
         try {
-        // test("test1") == test1
-            runString = "test(\"test1\")";
+        // ("test1") == test1
+            runString = "(\"test1\")";
             if (!"test1".equals(test.reflect.Invoke_main03.test("test1"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test("test2") == test2
-            runString = "test(\"test2\")";
+        // ("test2") == test2
+            runString = "(\"test2\")";
             if (!"test2".equals(test.reflect.Invoke_main03.test("test2"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17504,8 +17504,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Invoke_virtual01");
         String runString = null;
         try {
-        // test(1) == 55
-            runString = "test(1)";
+        // (1) == 55
+            runString = "(1)";
             if (55 != test.reflect.Invoke_virtual01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17520,26 +17520,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Method_getParameterTypes01");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.reflect.Method_getParameterTypes01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.reflect.Method_getParameterTypes01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 2
-            runString = "test(2)";
+        // (2) == 2
+            runString = "(2)";
             if (2 != test.reflect.Method_getParameterTypes01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == -1
-            runString = "test(3)";
+        // (3) == -1
+            runString = "(3)";
             if (-1 != test.reflect.Method_getParameterTypes01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17554,26 +17554,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Method_getReturnType01");
         String runString = null;
         try {
-        // test(0) == int
-            runString = "test(0)";
+        // (0) == int
+            runString = "(0)";
             if (!"int".equals(test.reflect.Method_getReturnType01.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == java.lang.String
-            runString = "test(1)";
+        // (1) == java.lang.String
+            runString = "(1)";
             if (!"java.lang.String".equals(test.reflect.Method_getReturnType01.test(1))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == void
-            runString = "test(2)";
+        // (2) == void
+            runString = "(2)";
             if (!"void".equals(test.reflect.Method_getReturnType01.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == null
-            runString = "test(3)";
+        // (3) == null
+            runString = "(3)";
             if (null != test.reflect.Method_getReturnType01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17588,20 +17588,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.reflect.Reflection_getCallerClass01");
         String runString = null;
         try {
-        // test(0) == sun.reflect.Reflection
-            runString = "test(0)";
+        // (0) == sun.reflect.Reflection
+            runString = "(0)";
             if (!"sun.reflect.Reflection".equals(test.reflect.Reflection_getCallerClass01.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == test.reflect.Reflection_getCallerClass01$Caller1
-            runString = "test(1)";
+        // (1) == test.reflect.Reflection_getCallerClass01$Caller1
+            runString = "(1)";
             if (!"test.reflect.Reflection_getCallerClass01$Caller1".equals(test.reflect.Reflection_getCallerClass01.test(1))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == test.reflect.Reflection_getCallerClass01$Caller2
-            runString = "test(2)";
+        // (2) == test.reflect.Reflection_getCallerClass01$Caller2
+            runString = "(2)";
             if (!"test.reflect.Reflection_getCallerClass01$Caller2".equals(test.reflect.Reflection_getCallerClass01.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17616,8 +17616,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.jdk.Class_getName");
         String runString = null;
         try {
-        // test(0) == java.lang.String
-            runString = "test(0)";
+        // (0) == java.lang.String
+            runString = "(0)";
             if (!"java.lang.String".equals(test.jdk.Class_getName.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17632,8 +17632,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.jdk.EnumMap01");
         String runString = null;
         try {
-        // test(0) == A
-            runString = "test(0)";
+        // (0) == A
+            runString = "(0)";
             if (!"A".equals(test.jdk.EnumMap01.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17648,8 +17648,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.jdk.EnumMap02");
         String runString = null;
         try {
-        // test(0) == A
-            runString = "test(0)";
+        // (0) == A
+            runString = "(0)";
             if (!"A".equals(test.jdk.EnumMap02.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17664,8 +17664,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.jdk.System_currentTimeMillis01");
         String runString = null;
         try {
-        // test(0) == 1
-            runString = "test(0)";
+        // (0) == 1
+            runString = "(0)";
             if (1 != test.jdk.System_currentTimeMillis01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17680,8 +17680,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.jdk.System_currentTimeMillis02");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.jdk.System_currentTimeMillis02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17696,8 +17696,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.jdk.System_nanoTime01");
         String runString = null;
         try {
-        // test(0) == 1
-            runString = "test(0)";
+        // (0) == 1
+            runString = "(0)";
             if (1 != test.jdk.System_nanoTime01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17712,8 +17712,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.jdk.System_nanoTime02");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.jdk.System_nanoTime02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17728,8 +17728,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.jdk.UnsafeAccess01");
         String runString = null;
         try {
-        // test(0) == 42
-            runString = "test(0)";
+        // (0) == 42
+            runString = "(0)";
             if (42 != test.jdk.UnsafeAccess01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17744,8 +17744,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.threads.Monitor_contended01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.threads.Monitor_contended01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17760,8 +17760,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.threads.Monitor_notowner01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.threads.Monitor_notowner01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17776,8 +17776,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.threads.Monitorenter01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.threads.Monitorenter01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17792,8 +17792,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.threads.Monitorenter02");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.threads.Monitorenter02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17808,26 +17808,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.threads.Object_wait01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.threads.Object_wait01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.threads.Object_wait01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == true
-            runString = "test(3)";
+        // (3) == true
+            runString = "(3)";
             if (true != test.threads.Object_wait01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(15) == true
-            runString = "test(15)";
+        // (15) == true
+            runString = "(15)";
             if (true != test.threads.Object_wait01.test(15)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17842,20 +17842,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.threads.Object_wait02");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.threads.Object_wait02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.threads.Object_wait02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.threads.Object_wait02.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17870,20 +17870,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.threads.Object_wait03");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.threads.Object_wait03.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.threads.Object_wait03.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.threads.Object_wait03.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17898,38 +17898,38 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.threads.Object_wait04");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.threads.Object_wait04.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.threads.Object_wait04.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.threads.Object_wait04.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == true
-            runString = "test(3)";
+        // (3) == true
+            runString = "(3)";
             if (true != test.threads.Object_wait04.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == true
-            runString = "test(4)";
+        // (4) == true
+            runString = "(4)";
             if (true != test.threads.Object_wait04.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == true
-            runString = "test(5)";
+        // (5) == true
+            runString = "(5)";
             if (true != test.threads.Object_wait04.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17944,8 +17944,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.threads.Thread_currentThread01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.threads.Thread_currentThread01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17960,8 +17960,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.threads.Thread_getState01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.threads.Thread_getState01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17976,8 +17976,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.threads.Thread_getState02");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.threads.Thread_getState02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -17992,21 +17992,21 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.threads.Thread_holdsLock01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.threads.Thread_holdsLock01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.threads.Thread_holdsLock01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == !java.lang.NullPointerException
+        // (2) == !java.lang.NullPointerException
             try {
-                runString = "test(2)";
+                runString = "(2)";
                 test.threads.Thread_holdsLock01.test(2);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18016,8 +18016,8 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(3) == false
-            runString = "test(3)";
+        // (3) == false
+            runString = "(3)";
             if (false != test.threads.Thread_holdsLock01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18032,8 +18032,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.threads.Thread_isAlive01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.threads.Thread_isAlive01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18048,8 +18048,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.threads.Thread_isInterrupted01");
         String runString = null;
         try {
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.threads.Thread_isInterrupted01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18064,14 +18064,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.threads.Thread_isInterrupted02");
         String runString = null;
         try {
-        // test(0,0) == true
-            runString = "test(0,0)";
+        // (0,0) == true
+            runString = "(0,0)";
             if (true != test.threads.Thread_isInterrupted02.test(0, 0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,500) == true
-            runString = "test(1,500)";
+        // (1,500) == true
+            runString = "(1,500)";
             if (true != test.threads.Thread_isInterrupted02.test(1, 500)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18086,8 +18086,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.threads.Thread_isInterrupted03");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.threads.Thread_isInterrupted03.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18102,8 +18102,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.threads.Thread_isInterrupted04");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.threads.Thread_isInterrupted04.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18118,8 +18118,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.threads.Thread_join01");
         String runString = null;
         try {
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.threads.Thread_join01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18134,8 +18134,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.threads.Thread_join02");
         String runString = null;
         try {
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.threads.Thread_join02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18150,8 +18150,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.threads.Thread_join03");
         String runString = null;
         try {
-        // test(0) == false
-            runString = "test(0)";
+        // (0) == false
+            runString = "(0)";
             if (false != test.threads.Thread_join03.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18166,32 +18166,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.threads.Thread_new01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.threads.Thread_new01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.threads.Thread_new01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.threads.Thread_new01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == true
-            runString = "test(3)";
+        // (3) == true
+            runString = "(3)";
             if (true != test.threads.Thread_new01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == false
-            runString = "test(4)";
+        // (4) == false
+            runString = "(4)";
             if (false != test.threads.Thread_new01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18206,32 +18206,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.threads.Thread_new02");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.threads.Thread_new02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.threads.Thread_new02.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.threads.Thread_new02.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == true
-            runString = "test(3)";
+        // (3) == true
+            runString = "(3)";
             if (true != test.threads.Thread_new02.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == false
-            runString = "test(4)";
+        // (4) == false
+            runString = "(4)";
             if (false != test.threads.Thread_new02.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18246,9 +18246,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.threads.Thread_setPriority01");
         String runString = null;
         try {
-        // test(0) == !java.lang.IllegalArgumentException
+        // (0) == !java.lang.IllegalArgumentException
             try {
-                runString = "test(0)";
+                runString = "(0)";
                 test.threads.Thread_setPriority01.test(0);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18258,27 +18258,27 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(1) == true
-            runString = "test(1)";
+        // (1) == true
+            runString = "(1)";
             if (true != test.threads.Thread_setPriority01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == true
-            runString = "test(5)";
+        // (5) == true
+            runString = "(5)";
             if (true != test.threads.Thread_setPriority01.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(10) == true
-            runString = "test(10)";
+        // (10) == true
+            runString = "(10)";
             if (true != test.threads.Thread_setPriority01.test(10)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(11) == !java.lang.IllegalArgumentException
+        // (11) == !java.lang.IllegalArgumentException
             try {
-                runString = "test(11)";
+                runString = "(11)";
                 test.threads.Thread_setPriority01.test(11);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18298,20 +18298,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.threads.Thread_sleep01");
         String runString = null;
         try {
-        // test(10) == true
-            runString = "test(10)";
+        // (10) == true
+            runString = "(10)";
             if (true != test.threads.Thread_sleep01.test(10)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(20) == true
-            runString = "test(20)";
+        // (20) == true
+            runString = "(20)";
             if (true != test.threads.Thread_sleep01.test(20)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(100) == true
-            runString = "test(100)";
+        // (100) == true
+            runString = "(100)";
             if (true != test.threads.Thread_sleep01.test(100)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18326,8 +18326,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.threads.Thread_start01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.threads.Thread_start01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18342,8 +18342,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.threads.Thread_yield01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.threads.Thread_yield01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18358,32 +18358,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.BC_invokevirtual2");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.micro.BC_invokevirtual2.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.micro.BC_invokevirtual2.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 2
-            runString = "test(2)";
+        // (2) == 2
+            runString = "(2)";
             if (2 != test.micro.BC_invokevirtual2.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 3
-            runString = "test(3)";
+        // (3) == 3
+            runString = "(3)";
             if (3 != test.micro.BC_invokevirtual2.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-4) == -4
-            runString = "test(-4)";
+        // (-4) == -4
+            runString = "(-4)";
             if (-4 != test.micro.BC_invokevirtual2.test(-4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18398,56 +18398,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.BigDoubleParams02");
         String runString = null;
         try {
-        // test(0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 1.0
-            runString = "test(0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
+        // (0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 1.0
+            runString = "(0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
             if (1.0 != test.micro.BigDoubleParams02.test(0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 2.0
-            runString = "test(1,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
+        // (1,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 2.0
+            runString = "(1,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
             if (2.0 != test.micro.BigDoubleParams02.test(1, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 3.0
-            runString = "test(2,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
+        // (2,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 3.0
+            runString = "(2,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
             if (3.0 != test.micro.BigDoubleParams02.test(2, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 4.0
-            runString = "test(3,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
+        // (3,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 4.0
+            runString = "(3,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
             if (4.0 != test.micro.BigDoubleParams02.test(3, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 5.0
-            runString = "test(4,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
+        // (4,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 5.0
+            runString = "(4,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
             if (5.0 != test.micro.BigDoubleParams02.test(4, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 6.0
-            runString = "test(5,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
+        // (5,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 6.0
+            runString = "(5,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
             if (6.0 != test.micro.BigDoubleParams02.test(5, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 7.0
-            runString = "test(6,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
+        // (6,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 7.0
+            runString = "(6,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
             if (7.0 != test.micro.BigDoubleParams02.test(6, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 8.0
-            runString = "test(7,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
+        // (7,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 8.0
+            runString = "(7,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
             if (8.0 != test.micro.BigDoubleParams02.test(7, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(8,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 9.0
-            runString = "test(8,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
+        // (8,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 9.0
+            runString = "(8,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
             if (9.0 != test.micro.BigDoubleParams02.test(8, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18462,32 +18462,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.BigFloatParams01");
         String runString = null;
         try {
-        // test(0) == 45.0
-            runString = "test(0)";
+        // (0) == 45.0
+            runString = "(0)";
             if (45.0 != test.micro.BigFloatParams01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 45.0
-            runString = "test(1)";
+        // (1) == 45.0
+            runString = "(1)";
             if (45.0 != test.micro.BigFloatParams01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 45.0
-            runString = "test(2)";
+        // (2) == 45.0
+            runString = "(2)";
             if (45.0 != test.micro.BigFloatParams01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 45.0
-            runString = "test(3)";
+        // (3) == 45.0
+            runString = "(3)";
             if (45.0 != test.micro.BigFloatParams01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 0.0
-            runString = "test(4)";
+        // (4) == 0.0
+            runString = "(4)";
             if (0.0 != test.micro.BigFloatParams01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18502,56 +18502,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.BigFloatParams02");
         String runString = null;
         try {
-        // test(0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 1.0
-            runString = "test(0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
+        // (0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 1.0
+            runString = "(0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
             if (1.0f != test.micro.BigFloatParams02.test(0, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 2.0
-            runString = "test(1,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
+        // (1,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 2.0
+            runString = "(1,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
             if (2.0f != test.micro.BigFloatParams02.test(1, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 3.0
-            runString = "test(2,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
+        // (2,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 3.0
+            runString = "(2,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
             if (3.0f != test.micro.BigFloatParams02.test(2, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 4.0
-            runString = "test(3,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
+        // (3,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 4.0
+            runString = "(3,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
             if (4.0f != test.micro.BigFloatParams02.test(3, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 5.0
-            runString = "test(4,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
+        // (4,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 5.0
+            runString = "(4,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
             if (5.0f != test.micro.BigFloatParams02.test(4, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 6.0
-            runString = "test(5,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
+        // (5,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 6.0
+            runString = "(5,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
             if (6.0f != test.micro.BigFloatParams02.test(5, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 7.0
-            runString = "test(6,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
+        // (6,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 7.0
+            runString = "(6,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
             if (7.0f != test.micro.BigFloatParams02.test(6, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 8.0
-            runString = "test(7,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
+        // (7,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 8.0
+            runString = "(7,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
             if (8.0f != test.micro.BigFloatParams02.test(7, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(8,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 9.0
-            runString = "test(8,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
+        // (8,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0) == 9.0
+            runString = "(8,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)";
             if (9.0f != test.micro.BigFloatParams02.test(8, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18566,32 +18566,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.BigIntParams01");
         String runString = null;
         try {
-        // test(0) == 45
-            runString = "test(0)";
+        // (0) == 45
+            runString = "(0)";
             if (45 != test.micro.BigIntParams01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 45
-            runString = "test(1)";
+        // (1) == 45
+            runString = "(1)";
             if (45 != test.micro.BigIntParams01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 45
-            runString = "test(2)";
+        // (2) == 45
+            runString = "(2)";
             if (45 != test.micro.BigIntParams01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 45
-            runString = "test(3)";
+        // (3) == 45
+            runString = "(3)";
             if (45 != test.micro.BigIntParams01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 0
-            runString = "test(4)";
+        // (4) == 0
+            runString = "(4)";
             if (0 != test.micro.BigIntParams01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18606,56 +18606,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.BigIntParams02");
         String runString = null;
         try {
-        // test(0,1,2,3,4,5,6,7,-8,-9) == 1
-            runString = "test(0,1,2,3,4,5,6,7,-8,-9)";
+        // (0,1,2,3,4,5,6,7,-8,-9) == 1
+            runString = "(0,1,2,3,4,5,6,7,-8,-9)";
             if (1 != test.micro.BigIntParams02.test(0, 1, 2, 3, 4, 5, 6, 7, -8, -9)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,1,2,3,4,5,6,7,-8,-9) == 2
-            runString = "test(1,1,2,3,4,5,6,7,-8,-9)";
+        // (1,1,2,3,4,5,6,7,-8,-9) == 2
+            runString = "(1,1,2,3,4,5,6,7,-8,-9)";
             if (2 != test.micro.BigIntParams02.test(1, 1, 2, 3, 4, 5, 6, 7, -8, -9)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2,1,2,3,4,5,6,7,-8,-9) == 3
-            runString = "test(2,1,2,3,4,5,6,7,-8,-9)";
+        // (2,1,2,3,4,5,6,7,-8,-9) == 3
+            runString = "(2,1,2,3,4,5,6,7,-8,-9)";
             if (3 != test.micro.BigIntParams02.test(2, 1, 2, 3, 4, 5, 6, 7, -8, -9)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3,1,2,3,4,5,6,7,-8,-9) == 4
-            runString = "test(3,1,2,3,4,5,6,7,-8,-9)";
+        // (3,1,2,3,4,5,6,7,-8,-9) == 4
+            runString = "(3,1,2,3,4,5,6,7,-8,-9)";
             if (4 != test.micro.BigIntParams02.test(3, 1, 2, 3, 4, 5, 6, 7, -8, -9)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4,1,2,3,4,5,6,7,-8,-9) == 5
-            runString = "test(4,1,2,3,4,5,6,7,-8,-9)";
+        // (4,1,2,3,4,5,6,7,-8,-9) == 5
+            runString = "(4,1,2,3,4,5,6,7,-8,-9)";
             if (5 != test.micro.BigIntParams02.test(4, 1, 2, 3, 4, 5, 6, 7, -8, -9)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5,1,2,3,4,5,6,7,-8,-9) == 6
-            runString = "test(5,1,2,3,4,5,6,7,-8,-9)";
+        // (5,1,2,3,4,5,6,7,-8,-9) == 6
+            runString = "(5,1,2,3,4,5,6,7,-8,-9)";
             if (6 != test.micro.BigIntParams02.test(5, 1, 2, 3, 4, 5, 6, 7, -8, -9)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6,1,2,3,4,5,6,7,-8,-9) == 7
-            runString = "test(6,1,2,3,4,5,6,7,-8,-9)";
+        // (6,1,2,3,4,5,6,7,-8,-9) == 7
+            runString = "(6,1,2,3,4,5,6,7,-8,-9)";
             if (7 != test.micro.BigIntParams02.test(6, 1, 2, 3, 4, 5, 6, 7, -8, -9)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7,1,2,3,4,5,6,7,-8,-9) == -8
-            runString = "test(7,1,2,3,4,5,6,7,-8,-9)";
+        // (7,1,2,3,4,5,6,7,-8,-9) == -8
+            runString = "(7,1,2,3,4,5,6,7,-8,-9)";
             if (-8 != test.micro.BigIntParams02.test(7, 1, 2, 3, 4, 5, 6, 7, -8, -9)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(8,1,2,3,4,5,6,7,-8,-9) == -9
-            runString = "test(8,1,2,3,4,5,6,7,-8,-9)";
+        // (8,1,2,3,4,5,6,7,-8,-9) == -9
+            runString = "(8,1,2,3,4,5,6,7,-8,-9)";
             if (-9 != test.micro.BigIntParams02.test(8, 1, 2, 3, 4, 5, 6, 7, -8, -9)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18670,56 +18670,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.BigLongParams02");
         String runString = null;
         try {
-        // test(0,1,2,3,4,5,6,7,-8,-9) == 1
-            runString = "test(0,1,2,3,4,5,6,7,-8,-9)";
+        // (0,1,2,3,4,5,6,7,-8,-9) == 1
+            runString = "(0,1,2,3,4,5,6,7,-8,-9)";
             if (1L != test.micro.BigLongParams02.test(0, 1L, 2L, 3L, 4L, 5L, 6L, 7L, -8L, -9L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,1,2,3,4,5,6,7,-8,-9) == 2
-            runString = "test(1,1,2,3,4,5,6,7,-8,-9)";
+        // (1,1,2,3,4,5,6,7,-8,-9) == 2
+            runString = "(1,1,2,3,4,5,6,7,-8,-9)";
             if (2L != test.micro.BigLongParams02.test(1, 1L, 2L, 3L, 4L, 5L, 6L, 7L, -8L, -9L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2,1,2,3,4,5,6,7,-8,-9) == 3
-            runString = "test(2,1,2,3,4,5,6,7,-8,-9)";
+        // (2,1,2,3,4,5,6,7,-8,-9) == 3
+            runString = "(2,1,2,3,4,5,6,7,-8,-9)";
             if (3L != test.micro.BigLongParams02.test(2, 1L, 2L, 3L, 4L, 5L, 6L, 7L, -8L, -9L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3,1,2,3,4,5,6,7,-8,-9) == 4
-            runString = "test(3,1,2,3,4,5,6,7,-8,-9)";
+        // (3,1,2,3,4,5,6,7,-8,-9) == 4
+            runString = "(3,1,2,3,4,5,6,7,-8,-9)";
             if (4L != test.micro.BigLongParams02.test(3, 1L, 2L, 3L, 4L, 5L, 6L, 7L, -8L, -9L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4,1,2,3,4,5,6,7,-8,-9) == 5
-            runString = "test(4,1,2,3,4,5,6,7,-8,-9)";
+        // (4,1,2,3,4,5,6,7,-8,-9) == 5
+            runString = "(4,1,2,3,4,5,6,7,-8,-9)";
             if (5L != test.micro.BigLongParams02.test(4, 1L, 2L, 3L, 4L, 5L, 6L, 7L, -8L, -9L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5,1,2,3,4,5,6,7,-8,-9) == 6
-            runString = "test(5,1,2,3,4,5,6,7,-8,-9)";
+        // (5,1,2,3,4,5,6,7,-8,-9) == 6
+            runString = "(5,1,2,3,4,5,6,7,-8,-9)";
             if (6L != test.micro.BigLongParams02.test(5, 1L, 2L, 3L, 4L, 5L, 6L, 7L, -8L, -9L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6,1,2,3,4,5,6,7,-8,-9) == 7
-            runString = "test(6,1,2,3,4,5,6,7,-8,-9)";
+        // (6,1,2,3,4,5,6,7,-8,-9) == 7
+            runString = "(6,1,2,3,4,5,6,7,-8,-9)";
             if (7L != test.micro.BigLongParams02.test(6, 1L, 2L, 3L, 4L, 5L, 6L, 7L, -8L, -9L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7,1,2,3,4,5,6,7,-8,-9) == -8
-            runString = "test(7,1,2,3,4,5,6,7,-8,-9)";
+        // (7,1,2,3,4,5,6,7,-8,-9) == -8
+            runString = "(7,1,2,3,4,5,6,7,-8,-9)";
             if (-8L != test.micro.BigLongParams02.test(7, 1L, 2L, 3L, 4L, 5L, 6L, 7L, -8L, -9L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(8,1,2,3,4,5,6,7,-8,-9) == -9
-            runString = "test(8,1,2,3,4,5,6,7,-8,-9)";
+        // (8,1,2,3,4,5,6,7,-8,-9) == -9
+            runString = "(8,1,2,3,4,5,6,7,-8,-9)";
             if (-9L != test.micro.BigLongParams02.test(8, 1L, 2L, 3L, 4L, 5L, 6L, 7L, -8L, -9L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18734,32 +18734,32 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.BigMixedParams01");
         String runString = null;
         try {
-        // test(0) == 45.0
-            runString = "test(0)";
+        // (0) == 45.0
+            runString = "(0)";
             if (45.0 != test.micro.BigMixedParams01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 45.0
-            runString = "test(1)";
+        // (1) == 45.0
+            runString = "(1)";
             if (45.0 != test.micro.BigMixedParams01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 45.0
-            runString = "test(2)";
+        // (2) == 45.0
+            runString = "(2)";
             if (45.0 != test.micro.BigMixedParams01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 45.0
-            runString = "test(3)";
+        // (3) == 45.0
+            runString = "(3)";
             if (45.0 != test.micro.BigMixedParams01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 0.0
-            runString = "test(4)";
+        // (4) == 0.0
+            runString = "(4)";
             if (0.0 != test.micro.BigMixedParams01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18774,56 +18774,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.BigMixedParams02");
         String runString = null;
         try {
-        // test(0,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 1.0
-            runString = "test(0,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
+        // (0,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 1.0
+            runString = "(0,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
             if (1.0f != test.micro.BigMixedParams02.test(0, -1, -1, -1, -1, 1.0f, 2.0f, 3.0f, 4.0f, -1, -1, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 2.0
-            runString = "test(1,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
+        // (1,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 2.0
+            runString = "(1,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
             if (2.0f != test.micro.BigMixedParams02.test(1, -1, -1, -1, -1, 1.0f, 2.0f, 3.0f, 4.0f, -1, -1, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 3.0
-            runString = "test(2,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
+        // (2,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 3.0
+            runString = "(2,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
             if (3.0f != test.micro.BigMixedParams02.test(2, -1, -1, -1, -1, 1.0f, 2.0f, 3.0f, 4.0f, -1, -1, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 4.0
-            runString = "test(3,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
+        // (3,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 4.0
+            runString = "(3,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
             if (4.0f != test.micro.BigMixedParams02.test(3, -1, -1, -1, -1, 1.0f, 2.0f, 3.0f, 4.0f, -1, -1, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 5.0
-            runString = "test(4,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
+        // (4,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 5.0
+            runString = "(4,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
             if (5.0f != test.micro.BigMixedParams02.test(4, -1, -1, -1, -1, 1.0f, 2.0f, 3.0f, 4.0f, -1, -1, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 6.0
-            runString = "test(5,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
+        // (5,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 6.0
+            runString = "(5,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
             if (6.0f != test.micro.BigMixedParams02.test(5, -1, -1, -1, -1, 1.0f, 2.0f, 3.0f, 4.0f, -1, -1, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 7.0
-            runString = "test(6,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
+        // (6,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 7.0
+            runString = "(6,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
             if (7.0f != test.micro.BigMixedParams02.test(6, -1, -1, -1, -1, 1.0f, 2.0f, 3.0f, 4.0f, -1, -1, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 8.0
-            runString = "test(7,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
+        // (7,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 8.0
+            runString = "(7,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
             if (8.0f != test.micro.BigMixedParams02.test(7, -1, -1, -1, -1, 1.0f, 2.0f, 3.0f, 4.0f, -1, -1, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(8,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 9.0
-            runString = "test(8,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
+        // (8,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 9.0
+            runString = "(8,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
             if (9.0f != test.micro.BigMixedParams02.test(8, -1, -1, -1, -1, 1.0f, 2.0f, 3.0f, 4.0f, -1, -1, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18838,56 +18838,56 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.BigMixedParams03");
         String runString = null;
         try {
-        // test(0,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 1.0
-            runString = "test(0,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
+        // (0,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 1.0
+            runString = "(0,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
             if (1.0 != test.micro.BigMixedParams03.test(0, -1, -1, -1, -1, 1.0, 2.0, 3.0, 4.0, -1, -1, 5.0, 6.0, 7.0, 8.0, 9.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 2.0
-            runString = "test(1,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
+        // (1,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 2.0
+            runString = "(1,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
             if (2.0 != test.micro.BigMixedParams03.test(1, -1, -1, -1, -1, 1.0, 2.0, 3.0, 4.0, -1, -1, 5.0, 6.0, 7.0, 8.0, 9.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 3.0
-            runString = "test(2,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
+        // (2,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 3.0
+            runString = "(2,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
             if (3.0 != test.micro.BigMixedParams03.test(2, -1, -1, -1, -1, 1.0, 2.0, 3.0, 4.0, -1, -1, 5.0, 6.0, 7.0, 8.0, 9.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 4.0
-            runString = "test(3,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
+        // (3,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 4.0
+            runString = "(3,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
             if (4.0 != test.micro.BigMixedParams03.test(3, -1, -1, -1, -1, 1.0, 2.0, 3.0, 4.0, -1, -1, 5.0, 6.0, 7.0, 8.0, 9.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 5.0
-            runString = "test(4,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
+        // (4,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 5.0
+            runString = "(4,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
             if (5.0 != test.micro.BigMixedParams03.test(4, -1, -1, -1, -1, 1.0, 2.0, 3.0, 4.0, -1, -1, 5.0, 6.0, 7.0, 8.0, 9.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 6.0
-            runString = "test(5,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
+        // (5,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 6.0
+            runString = "(5,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
             if (6.0 != test.micro.BigMixedParams03.test(5, -1, -1, -1, -1, 1.0, 2.0, 3.0, 4.0, -1, -1, 5.0, 6.0, 7.0, 8.0, 9.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 7.0
-            runString = "test(6,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
+        // (6,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 7.0
+            runString = "(6,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
             if (7.0 != test.micro.BigMixedParams03.test(6, -1, -1, -1, -1, 1.0, 2.0, 3.0, 4.0, -1, -1, 5.0, 6.0, 7.0, 8.0, 9.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 8.0
-            runString = "test(7,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
+        // (7,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 8.0
+            runString = "(7,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
             if (8.0 != test.micro.BigMixedParams03.test(7, -1, -1, -1, -1, 1.0, 2.0, 3.0, 4.0, -1, -1, 5.0, 6.0, 7.0, 8.0, 9.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(8,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 9.0
-            runString = "test(8,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
+        // (8,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0) == 9.0
+            runString = "(8,-1,-1,-1,-1,1.0,2.0,3.0,4.0,-1,-1,5.0,6.0,7.0,8.0,9.0)";
             if (9.0 != test.micro.BigMixedParams03.test(8, -1, -1, -1, -1, 1.0, 2.0, 3.0, 4.0, -1, -1, 5.0, 6.0, 7.0, 8.0, 9.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18902,14 +18902,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.BigObjectParams01");
         String runString = null;
         try {
-        // test("0","1","2","3","4","5","6","7","8","9") == 0
-            runString = "test(\"0\",\"1\",\"2\",\"3\",\"4\",\"5\",\"6\",\"7\",\"8\",\"9\")";
+        // ("0","1","2","3","4","5","6","7","8","9") == 0
+            runString = "(\"0\",\"1\",\"2\",\"3\",\"4\",\"5\",\"6\",\"7\",\"8\",\"9\")";
             if (!"0".equals(test.micro.BigObjectParams01.test("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test("a",null,null,null,null,null,null,null,null,null) == a
-            runString = "test(\"a\",null,null,null,null,null,null,null,null,null)";
+        // ("a",null,null,null,null,null,null,null,null,null) == a
+            runString = "(\"a\",null,null,null,null,null,null,null,null,null)";
             if (!"a".equals(test.micro.BigObjectParams01.test("a", null, null, null, null, null, null, null, null, null))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18924,8 +18924,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.BigObjectParams02");
         String runString = null;
         try {
-        // test("0","1","2","3","4","5","6","7","8","9") == 0123456789
-            runString = "test(\"0\",\"1\",\"2\",\"3\",\"4\",\"5\",\"6\",\"7\",\"8\",\"9\")";
+        // ("0","1","2","3","4","5","6","7","8","9") == 0123456789
+            runString = "(\"0\",\"1\",\"2\",\"3\",\"4\",\"5\",\"6\",\"7\",\"8\",\"9\")";
             if (!"0123456789".equals(test.micro.BigObjectParams02.test("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18940,44 +18940,44 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.BigParamsAlignment");
         String runString = null;
         try {
-        // test(0) == 45
-            runString = "test(0)";
+        // (0) == 45
+            runString = "(0)";
             if (45 != test.micro.BigParamsAlignment.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 55
-            runString = "test(1)";
+        // (1) == 55
+            runString = "(1)";
             if (55 != test.micro.BigParamsAlignment.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 45
-            runString = "test(2)";
+        // (2) == 45
+            runString = "(2)";
             if (45 != test.micro.BigParamsAlignment.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 55
-            runString = "test(3)";
+        // (3) == 55
+            runString = "(3)";
             if (55 != test.micro.BigParamsAlignment.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 66
-            runString = "test(4)";
+        // (4) == 66
+            runString = "(4)";
             if (66 != test.micro.BigParamsAlignment.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == 78
-            runString = "test(5)";
+        // (5) == 78
+            runString = "(5)";
             if (78 != test.micro.BigParamsAlignment.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == 0
-            runString = "test(6)";
+        // (6) == 0
+            runString = "(6)";
             if (0 != test.micro.BigParamsAlignment.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -18992,50 +18992,50 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.Bubblesort");
         String runString = null;
         try {
-        // test(0) == -9
-            runString = "test(0)";
+        // (0) == -9
+            runString = "(0)";
             if (-9 != test.micro.Bubblesort.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 0
-            runString = "test(1)";
+        // (1) == 0
+            runString = "(1)";
             if (0 != test.micro.Bubblesort.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 0
-            runString = "test(2)";
+        // (2) == 0
+            runString = "(2)";
             if (0 != test.micro.Bubblesort.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 1
-            runString = "test(3)";
+        // (3) == 1
+            runString = "(3)";
             if (1 != test.micro.Bubblesort.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 5
-            runString = "test(4)";
+        // (4) == 5
+            runString = "(4)";
             if (5 != test.micro.Bubblesort.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == 8
-            runString = "test(5)";
+        // (5) == 8
+            runString = "(5)";
             if (8 != test.micro.Bubblesort.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == 23
-            runString = "test(6)";
+        // (6) == 23
+            runString = "(6)";
             if (23 != test.micro.Bubblesort.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == 882
-            runString = "test(7)";
+        // (7) == 882
+            runString = "(7)";
             if (882 != test.micro.Bubblesort.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19050,50 +19050,50 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.Fibonacci");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.micro.Fibonacci.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.micro.Fibonacci.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 1
-            runString = "test(2)";
+        // (2) == 1
+            runString = "(2)";
             if (1 != test.micro.Fibonacci.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 2
-            runString = "test(3)";
+        // (3) == 2
+            runString = "(3)";
             if (2 != test.micro.Fibonacci.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(4) == 3
-            runString = "test(4)";
+        // (4) == 3
+            runString = "(4)";
             if (3 != test.micro.Fibonacci.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(5) == 5
-            runString = "test(5)";
+        // (5) == 5
+            runString = "(5)";
             if (5 != test.micro.Fibonacci.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(6) == 8
-            runString = "test(6)";
+        // (6) == 8
+            runString = "(6)";
             if (8 != test.micro.Fibonacci.test(6)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(7) == 13
-            runString = "test(7)";
+        // (7) == 13
+            runString = "(7)";
             if (13 != test.micro.Fibonacci.test(7)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19108,26 +19108,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.InvokeVirtual_01");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.micro.InvokeVirtual_01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 11
-            runString = "test(1)";
+        // (1) == 11
+            runString = "(1)";
             if (11 != test.micro.InvokeVirtual_01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 22
-            runString = "test(2)";
+        // (2) == 22
+            runString = "(2)";
             if (22 != test.micro.InvokeVirtual_01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 42
-            runString = "test(3)";
+        // (3) == 42
+            runString = "(3)";
             if (42 != test.micro.InvokeVirtual_01.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19142,26 +19142,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.InvokeVirtual_02");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0L != test.micro.InvokeVirtual_02.test(0L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 11
-            runString = "test(1)";
+        // (1) == 11
+            runString = "(1)";
             if (11L != test.micro.InvokeVirtual_02.test(1L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 22
-            runString = "test(2)";
+        // (2) == 22
+            runString = "(2)";
             if (22L != test.micro.InvokeVirtual_02.test(2L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == 42
-            runString = "test(3)";
+        // (3) == 42
+            runString = "(3)";
             if (42L != test.micro.InvokeVirtual_02.test(3L)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19176,20 +19176,20 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.LoopSwitch01");
         String runString = null;
         try {
-        // test(0) == ok0
-            runString = "test(0)";
+        // (0) == ok0
+            runString = "(0)";
             if (!"ok0".equals(test.micro.LoopSwitch01.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(10) == ok0
-            runString = "test(10)";
+        // (10) == ok0
+            runString = "(10)";
             if (!"ok0".equals(test.micro.LoopSwitch01.test(10))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(25) == ok0
-            runString = "test(25)";
+        // (25) == ok0
+            runString = "(25)";
             if (!"ok0".equals(test.micro.LoopSwitch01.test(25))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19204,8 +19204,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.StrangeFrames");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.micro.StrangeFrames.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19220,14 +19220,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.String_format01");
         String runString = null;
         try {
-        // test("World") == Hello World
-            runString = "test(\"World\")";
+        // ("World") == Hello World
+            runString = "(\"World\")";
             if (!"Hello World".equals(test.micro.String_format01.test("World"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test("New World Order") == Hello New World Order
-            runString = "test(\"New World Order\")";
+        // ("New World Order") == Hello New World Order
+            runString = "(\"New World Order\")";
             if (!"Hello New World Order".equals(test.micro.String_format01.test("New World Order"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19242,26 +19242,26 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.String_format02");
         String runString = null;
         try {
-        // test(0) == Hello 0
-            runString = "test(0)";
+        // (0) == Hello 0
+            runString = "(0)";
             if (!"Hello 0".equals(test.micro.String_format02.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-11) == Hello -11
-            runString = "test(-11)";
+        // (-11) == Hello -11
+            runString = "(-11)";
             if (!"Hello -11".equals(test.micro.String_format02.test(-11))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(-2147483648) == Hello -2147483648
-            runString = "test(-2147483648)";
+        // (-2147483648) == Hello -2147483648
+            runString = "(-2147483648)";
             if (!"Hello -2147483648".equals(test.micro.String_format02.test(-2147483648))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2147483647) == Hello 2147483647
-            runString = "test(2147483647)";
+        // (2147483647) == Hello 2147483647
+            runString = "(2147483647)";
             if (!"Hello 2147483647".equals(test.micro.String_format02.test(2147483647))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19276,27 +19276,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.VarArgs_String01");
         String runString = null;
         try {
-        // test(0) == a
-            runString = "test(0)";
+        // (0) == a
+            runString = "(0)";
             if (!"a".equals(test.micro.VarArgs_String01.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == null
-            runString = "test(1)";
+        // (1) == null
+            runString = "(1)";
             if (null != test.micro.VarArgs_String01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == test
-            runString = "test(2)";
+        // (2) == test
+            runString = "(2)";
             if (!"test".equals(test.micro.VarArgs_String01.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.micro.VarArgs_String01.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19306,9 +19306,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(4) == !java.lang.ArrayIndexOutOfBoundsException
+        // (4) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(4)";
+                runString = "(4)";
                 test.micro.VarArgs_String01.test(4);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19328,27 +19328,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.VarArgs_boolean01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.micro.VarArgs_boolean01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.micro.VarArgs_boolean01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == true
-            runString = "test(2)";
+        // (2) == true
+            runString = "(2)";
             if (true != test.micro.VarArgs_boolean01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.micro.VarArgs_boolean01.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19358,9 +19358,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(4) == !java.lang.ArrayIndexOutOfBoundsException
+        // (4) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(4)";
+                runString = "(4)";
                 test.micro.VarArgs_boolean01.test(4);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19380,27 +19380,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.VarArgs_byte01");
         String runString = null;
         try {
-        // test(0) == 1
-            runString = "test(0)";
+        // (0) == 1
+            runString = "(0)";
             if ((byte) 1 != test.micro.VarArgs_byte01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 2
-            runString = "test(1)";
+        // (1) == 2
+            runString = "(1)";
             if ((byte) 2 != test.micro.VarArgs_byte01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 3
-            runString = "test(2)";
+        // (2) == 3
+            runString = "(2)";
             if ((byte) 3 != test.micro.VarArgs_byte01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.micro.VarArgs_byte01.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19410,9 +19410,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(4) == !java.lang.ArrayIndexOutOfBoundsException
+        // (4) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(4)";
+                runString = "(4)";
                 test.micro.VarArgs_byte01.test(4);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19432,27 +19432,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.VarArgs_char01");
         String runString = null;
         try {
-        // test(0) == 'a'
-            runString = "test(0)";
+        // (0) == 'a'
+            runString = "(0)";
             if ((char) 97 != test.micro.VarArgs_char01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 'b'
-            runString = "test(1)";
+        // (1) == 'b'
+            runString = "(1)";
             if ((char) 98 != test.micro.VarArgs_char01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 'c'
-            runString = "test(2)";
+        // (2) == 'c'
+            runString = "(2)";
             if ((char) 99 != test.micro.VarArgs_char01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.micro.VarArgs_char01.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19462,9 +19462,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(4) == !java.lang.ArrayIndexOutOfBoundsException
+        // (4) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(4)";
+                runString = "(4)";
                 test.micro.VarArgs_char01.test(4);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19484,27 +19484,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.VarArgs_double01");
         String runString = null;
         try {
-        // test(0) == 0.0
-            runString = "test(0)";
+        // (0) == 0.0
+            runString = "(0)";
             if (0.0 != test.micro.VarArgs_double01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1.0
-            runString = "test(1)";
+        // (1) == 1.0
+            runString = "(1)";
             if (1.0 != test.micro.VarArgs_double01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 2.0
-            runString = "test(2)";
+        // (2) == 2.0
+            runString = "(2)";
             if (2.0 != test.micro.VarArgs_double01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.micro.VarArgs_double01.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19514,9 +19514,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(4) == !java.lang.ArrayIndexOutOfBoundsException
+        // (4) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(4)";
+                runString = "(4)";
                 test.micro.VarArgs_double01.test(4);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19536,27 +19536,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.VarArgs_float01");
         String runString = null;
         try {
-        // test(0) == 0.0
-            runString = "test(0)";
+        // (0) == 0.0
+            runString = "(0)";
             if (0.0f != test.micro.VarArgs_float01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1.0
-            runString = "test(1)";
+        // (1) == 1.0
+            runString = "(1)";
             if (1.0f != test.micro.VarArgs_float01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 2.0
-            runString = "test(2)";
+        // (2) == 2.0
+            runString = "(2)";
             if (2.0f != test.micro.VarArgs_float01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.micro.VarArgs_float01.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19566,9 +19566,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(4) == !java.lang.ArrayIndexOutOfBoundsException
+        // (4) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(4)";
+                runString = "(4)";
                 test.micro.VarArgs_float01.test(4);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19588,27 +19588,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.VarArgs_int01");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0 != test.micro.VarArgs_int01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1 != test.micro.VarArgs_int01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 2
-            runString = "test(2)";
+        // (2) == 2
+            runString = "(2)";
             if (2 != test.micro.VarArgs_int01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.micro.VarArgs_int01.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19618,9 +19618,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(4) == !java.lang.ArrayIndexOutOfBoundsException
+        // (4) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(4)";
+                runString = "(4)";
                 test.micro.VarArgs_int01.test(4);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19640,27 +19640,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.VarArgs_long01");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if (0L != test.micro.VarArgs_long01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if (1L != test.micro.VarArgs_long01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 2
-            runString = "test(2)";
+        // (2) == 2
+            runString = "(2)";
             if (2L != test.micro.VarArgs_long01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.micro.VarArgs_long01.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19670,9 +19670,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(4) == !java.lang.ArrayIndexOutOfBoundsException
+        // (4) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(4)";
+                runString = "(4)";
                 test.micro.VarArgs_long01.test(4);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19692,27 +19692,27 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.micro.VarArgs_short01");
         String runString = null;
         try {
-        // test(0) == 0
-            runString = "test(0)";
+        // (0) == 0
+            runString = "(0)";
             if ((short) 0 != test.micro.VarArgs_short01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == 1
-            runString = "test(1)";
+        // (1) == 1
+            runString = "(1)";
             if ((short) 1 != test.micro.VarArgs_short01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) == 2
-            runString = "test(2)";
+        // (2) == 2
+            runString = "(2)";
             if ((short) 2 != test.micro.VarArgs_short01.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(3) == !java.lang.ArrayIndexOutOfBoundsException
+        // (3) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(3)";
+                runString = "(3)";
                 test.micro.VarArgs_short01.test(3);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19722,9 +19722,9 @@ public class JavaTesterTests {
                     return;
                 }
             }
-        // test(4) == !java.lang.ArrayIndexOutOfBoundsException
+        // (4) == !java.lang.ArrayIndexOutOfBoundsException
             try {
-                runString = "test(4)";
+                runString = "(4)";
                 test.micro.VarArgs_short01.test(4);
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19744,8 +19744,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.jvmni.JVM_ArrayCopy01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.jvmni.JVM_ArrayCopy01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19760,8 +19760,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.jvmni.JVM_GetClassContext01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.jvmni.JVM_GetClassContext01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19776,8 +19776,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.jvmni.JVM_GetClassContext02");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.jvmni.JVM_GetClassContext02.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19792,8 +19792,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.jvmni.JVM_GetFreeMemory01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.jvmni.JVM_GetFreeMemory01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19808,8 +19808,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.jvmni.JVM_GetMaxMemory01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.jvmni.JVM_GetMaxMemory01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19824,8 +19824,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.jvmni.JVM_GetTotalMemory01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.jvmni.JVM_GetTotalMemory01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19840,14 +19840,14 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.jvmni.JVM_IsNaN01");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.jvmni.JVM_IsNaN01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(1) == false
-            runString = "test(1)";
+        // (1) == false
+            runString = "(1)";
             if (false != test.jvmni.JVM_IsNaN01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
@@ -19862,8 +19862,8 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.jni.JNI_OverflowArguments");
         String runString = null;
         try {
-        // test(0) == true
-            runString = "test(0)";
+        // (0) == true
+            runString = "(0)";
             if (true != test.jni.JNI_OverflowArguments.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;

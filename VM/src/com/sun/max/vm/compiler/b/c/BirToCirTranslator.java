@@ -29,7 +29,6 @@ import com.sun.max.program.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.b.c.HCirToLCirTranslation.*;
 import com.sun.max.vm.compiler.bir.*;
 import com.sun.max.vm.compiler.cir.*;
@@ -170,7 +169,7 @@ public class BirToCirTranslator extends CirGenerator {
     }
 
     @Override
-    protected void generateIrMethod(CirMethod cirMethod, CompilationDirective compilationDirective) {
+    protected void generateIrMethod(CirMethod cirMethod) {
         final ClassMethodActor compilee = cirMethod.classMethodActor().compilee();
         if (!compilee.isHiddenToReflection()) {
             if (compilee.isStatic() && MaxineVM.isMaxineClass(compilee.holder().typeDescriptor) && compilee.isDeclaredFoldable() && compilee.descriptor().numberOfParameters() == 0) {
