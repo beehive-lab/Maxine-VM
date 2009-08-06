@@ -101,6 +101,7 @@ public class CopyActionImpl implements Action {
             if (toCell.isZero()) {
                 throw BeltwayHeapScheme.outOfMemoryError;
             }
+
             DebugHeap.writeCellTag(toCell);
             Memory.copyBytes(fromCell, toCell, size);
             final Pointer toOrigin = Layout.cellToOrigin(toCell);

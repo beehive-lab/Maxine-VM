@@ -66,6 +66,10 @@ public final class BeltManager {
 
     }
 
+    public Belt [] belts() {
+        return belts;
+    }
+
     public int numberOfBelts() {
         return belts.length;
     }

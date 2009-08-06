@@ -29,7 +29,6 @@ import com.sun.max.vm.heap.beltway.*;
 import com.sun.max.vm.heap.beltway.generational.BeltwayGenerationalCollector.*;
 import com.sun.max.vm.heap.beltway.profile.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.tele.*;
 
 /**
  * Heap scheme for a three-generations generational collector. Configured with three belts: one for a nursery (the eden
@@ -112,8 +111,6 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
         if (phase == MaxineVM.Phase.PRISTINE) {
             // The following line enables allocation to take place.
             tlabAllocationBelt = getEdenSpace();
-            // Watch out: the following create a MemoryRegion array
-            InspectableHeapInfo.init(getEdenSpace(), getToSpace(), getMatureSpace());
 
             final BeltwayGenerationalCollector [] collectors = parallelScavenging ? parallelCollectors : singleThreadedCollectors;
 
