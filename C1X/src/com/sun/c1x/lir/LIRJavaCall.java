@@ -36,7 +36,6 @@ public class LIRJavaCall extends LIRCall {
 
     private CiMethod method;
     LIROperand receiver;
-    int vTableOffset;
 
     /**
      * Creates a new LIRJavaCall instruction.
@@ -66,11 +65,10 @@ public class LIRJavaCall extends LIRCall {
      * @param arguments
      * @param info
      */
-    public LIRJavaCall(LIROpcode opcode, CiMethod method, LIROperand receiver, LIROperand result, int vTableOffset, List<LIROperand> arguments, CodeEmitInfo info) {
+    public LIRJavaCall(LIROpcode opcode, CiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info) {
         super(opcode, null, result, arguments, info);
         this.method = method;
         this.receiver = receiver;
-        this.vTableOffset = vTableOffset;
     }
 
     /**
@@ -89,16 +87,6 @@ public class LIRJavaCall extends LIRCall {
      */
     public CiMethod method() {
         return method;
-    }
-
-    /**
-     * Gets the virtual table offset for his java call.
-     *
-     * @return the virtual table offset for this call.
-     */
-    public long vtableOffset() {
-        assert code == LIROpcode.VirtualCall : "Only have vtable for real virtual call";
-        return vTableOffset;
     }
 
     /**

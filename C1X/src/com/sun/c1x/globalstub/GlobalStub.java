@@ -20,6 +20,10 @@
  */
 package com.sun.c1x.globalstub;
 
+import static com.sun.c1x.value.BasicType.*;
+
+import com.sun.c1x.value.*;
+
 /**
  *
  * @author Thomas Wuerthinger
@@ -28,6 +32,39 @@ package com.sun.c1x.globalstub;
 public enum GlobalStub {
 
 
-    SlowSubtypeCheck;
+    SlowSubtypeCheck(Boolean, Object, Object),
+    NewObjectArray(Object, Object, Int),
+    NewInstance(Object, Object),
+    NewTypeArray(Object, Object, Int),
+    f2i(Int, Float),
+    fneg(Float, Float),
+    dneg(Double, Double),
+    f2l(Long, Float),
+    d2i(Int, Double),
+    d2l(Long, Double),
+    ArithmethicLrem(Long, Long, Long),
+    ArithmeticLdiv(Long, Long, Long),
+    ArithmeticLmul(Long, Long, Long),
+    ArithmeticFrem(Float, Float),
+    ArithmeticDrem(Double, Double),
+    RetrieveInterfaceIndex(Int, Object, Int);
 
+    /**
+     * Maximum number of arguments, determines how many stack words are reserved on the top of the stack.
+     */
+    public static final int MaxNumberOfArguments = 2;
+
+    public final BasicType resultType;
+    public final BasicType[] arguments;
+
+    private GlobalStub() {
+        resultType = Void;
+        arguments = new BasicType[0];
+    }
+
+    private GlobalStub(BasicType resultType, BasicType... args) {
+        this.resultType = resultType;
+        this.arguments = args;
+        assert args.length <= MaxNumberOfArguments;
+    }
 }

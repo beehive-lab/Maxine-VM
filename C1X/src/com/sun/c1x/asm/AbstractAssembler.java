@@ -40,10 +40,21 @@ public abstract class AbstractAssembler {
     public final Target target;
     private final CiTargetMethod targetMethod = new CiTargetMethod();
 
+    private final int doubleAlignment;
+    private final int floatAlignment;
+    private final int longAlignment;
+    private final int longLongAlignment;
+    private final int intAlignment;
+
     public AbstractAssembler(Target target) {
         this.target = target;
         this.codeBuffer = new Buffer(target.arch.bitOrdering);
         this.dataBuffer = new Buffer(target.arch.bitOrdering);
+        doubleAlignment = target.arch.wordSize;
+        floatAlignment = target.arch.wordSize;
+        longAlignment = target.arch.wordSize;
+        longLongAlignment = Long.SIZE / 8 * 2;
+        intAlignment = target.arch.wordSize;
     }
 
     public void bind(Label l) {
@@ -140,6 +151,19 @@ public abstract class AbstractAssembler {
         }
     }
 
+    protected void recordDirectCall(int pos, CiMethod call, boolean[] stackMap) {
+
+        assert pos >= 0 && call != null && stackMap != null;
+
+        if (C1XOptions.TraceRelocation) {
+            TTY.print("Direct call: pos = %d, name = %s, stackMap.length = %d", pos, call.name(), stackMap.length);
+        }
+
+        if (targetMethod != null) {
+            targetMethod.recordDirectCall(pos, call, stackMap);
+        }
+    }
+
     protected void recordRuntimeCall(int pos, CiRuntimeCall call, boolean[] stackMap) {
 
         assert pos >= 0 && call != null && stackMap != null;
@@ -205,23 +229,32 @@ public abstract class AbstractAssembler {
     }
 
     public Address doubleConstant(double d) {
+        dataBuffer.align(doubleAlignment);
         int pos = dataBuffer.emitDouble(d);
         return makeInternalAddress(pos);
     }
 
     public Address floatConstant(float f) {
+        dataBuffer.align(floatAlignment);
         int pos = dataBuffer.emitFloat(f);
         return makeInternalAddress(pos);
     }
 
     public Address longConstant(long l) {
+        dataBuffer.align(longAlignment);
         int pos = dataBuffer.emitLong(l);
         return makeInternalAddress(pos);
     }
 
-    public Address longConstant(long l, int alignment) {
-        dataBuffer.align(alignment);
-        int pos = dataBuffer.emitLong(l);
+    public Address longLongConstant(long lHigh, long lLow) {
+        dataBuffer.align(longLongAlignment);
+        int pos = dataBuffer.emitLongLong(lHigh, lLow);
+        return makeInternalAddress(pos);
+    }
+
+    public Address intConstant(int l) {
+        dataBuffer.align(intAlignment);
+        int pos = dataBuffer.emitInt(l);
         return makeInternalAddress(pos);
     }
 

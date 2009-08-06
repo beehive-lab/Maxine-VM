@@ -24,6 +24,7 @@ import java.util.*;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -230,6 +231,8 @@ public class MaxCiMethod implements CiMethod {
     public int vtableIndex() {
         if (methodActor instanceof VirtualMethodActor) {
             return ((VirtualMethodActor) methodActor).vTableIndex();
+        } else if (methodActor instanceof InterfaceMethodActor) {
+            return ((InterfaceMethodActor) methodActor).iIndexInInterface();
         }
         return -1;
     }
@@ -364,5 +367,15 @@ public class MaxCiMethod implements CiMethod {
 
     public int javaCodeAtBci(int bci) {
         return code()[bci] & 0xff;
+    }
+
+    @Override
+    public int interfaceID() {
+
+        if (methodActor.holder() instanceof InterfaceActor) {
+            return ((InterfaceActor) methodActor.holder()).id;
+        }
+
+        return -1;
     }
 }

@@ -229,6 +229,9 @@ public class JavaTesterRunScheme extends AbstractTester {
         test.bytecode.BC_tableswitch3.class,
         test.bytecode.BC_tableswitch4.class,
         test.bytecode.BC_wide01.class,
+<<<<<<< local
+        test.bytecode.BC_wide02.class
+=======
         test.bytecode.BC_wide02.class,
         test.except.BC_aaload.class,
         test.except.BC_aastore.class,
@@ -601,6 +604,7 @@ public class JavaTesterRunScheme extends AbstractTester {
         test.jvmni.JVM_GetTotalMemory01.class,
         test.jvmni.JVM_IsNaN01.class,
         test.jni.JNI_OverflowArguments.class
+>>>>>>> other
     };
     @Override
     public void runTests() {
@@ -1165,6 +1169,8 @@ public class JavaTesterRunScheme extends AbstractTester {
                     break;
                 case 185:
                     JavaTesterTests.test_bytecode_BC_wide02();
+<<<<<<< local
+=======
                     break;
                 case 186:
                     JavaTesterTests.test_except_BC_aaload();
@@ -2278,6 +2284,7 @@ public class JavaTesterRunScheme extends AbstractTester {
                     break;
                 case 556:
                     JavaTesterTests.test_jni_JNI_OverflowArguments();
+>>>>>>> other
             }
         }
         reportPassed(passed, total);

@@ -161,6 +161,7 @@ public abstract class LIRAssembler {
     }
 
     protected void emitCodeStub(CodeStub stub) {
+        assert stub != null;
         slowCaseStubs.add(stub);
     }
 
@@ -462,9 +463,10 @@ public abstract class LIRAssembler {
     void emitCall(LIRJavaCall op) {
         verifyOopMap(op.info());
 
+        // TODO (tw) check if this is necessary and how to do it properly!
         if (compilation.runtime.isMP()) {
             // must align calls sites, otherwise they can't be updated atomically on MP hardware
-            alignCall(op.code());
+            //alignCall(op.code());
         }
 
         // emit the static call stub stuff out of line
@@ -474,27 +476,32 @@ public abstract class LIRAssembler {
 
         switch (op.code()) {
             case StaticCall:
-                call(op.method(), op.addr, op.info());
+                call(op.method(), op.addr, op.info(), new boolean[frameMap.stackRefMapSize()]);
                 break;
             case OptVirtualCall:
-                call(op.method(), op.addr, op.info());
+                call(op.method(), op.addr, op.info(), new boolean[frameMap.stackRefMapSize()]);
                 break;
             case IcVirtualCall:
                 icCall(op.method(), op.addr, op.info());
                 break;
+            case InterfaceCall:
+                interfaceCall(op.method(), op.receiver, op.info());
+                break;
             case VirtualCall:
-                vtableCall(op.method(), op.receiver, op.vtableOffset(), op.info());
+                vtableCall(op.method(), op.receiver, op.info());
                 break;
             default:
                 throw Util.shouldNotReachHere();
         }
     }
 
-    protected abstract void call(CiMethod ciMethod, CiRuntimeCall addr, CodeEmitInfo info);
+    protected abstract void call(CiMethod ciMethod, CiRuntimeCall addr, CodeEmitInfo info, boolean[] stackRefMap);
 
     protected abstract void emitStaticCallStub();
 
-    protected abstract void vtableCall(CiMethod ciMethod, LIROperand receiver, long l, CodeEmitInfo info);
+    protected abstract void interfaceCall(CiMethod ciMethod, LIROperand receiver, CodeEmitInfo info);
+
+    protected abstract void vtableCall(CiMethod ciMethod, LIROperand receiver, CodeEmitInfo info);
 
     protected abstract void icCall(CiMethod ciMethod, CiRuntimeCall addr, CodeEmitInfo info);
 

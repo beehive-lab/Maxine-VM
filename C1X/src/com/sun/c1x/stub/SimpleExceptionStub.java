@@ -33,7 +33,7 @@ import com.sun.c1x.lir.*;
  */
 public class SimpleExceptionStub extends CodeStub {
 
-    public final LIROperand obj;
+    public LIROperand obj;
     public final CiRuntimeCall stub;
 
         /**
@@ -60,7 +60,7 @@ public class SimpleExceptionStub extends CodeStub {
     @Override
     public void visit(LIRVisitState visitor) {
         if (obj.isValid()) {
-            visitor.doInput(obj);
+            obj = visitor.doInput(obj);
         }
         visitor.doSlowCase(info);
     }
