@@ -484,8 +484,11 @@ public abstract class LIRAssembler {
             case IcVirtualCall:
                 icCall(op.method(), op.addr, op.info());
                 break;
+            case InterfaceCall:
+                interfaceCall(op.method(), op.receiver, op.info());
+                break;
             case VirtualCall:
-                vtableCall(op.method(), op.receiver, op.vtableOffset(), op.info());
+                vtableCall(op.method(), op.receiver, op.info());
                 break;
             default:
                 throw Util.shouldNotReachHere();
@@ -496,7 +499,9 @@ public abstract class LIRAssembler {
 
     protected abstract void emitStaticCallStub();
 
-    protected abstract void vtableCall(CiMethod ciMethod, LIROperand receiver, long l, CodeEmitInfo info);
+    protected abstract void interfaceCall(CiMethod ciMethod, LIROperand receiver, CodeEmitInfo info);
+
+    protected abstract void vtableCall(CiMethod ciMethod, LIROperand receiver, CodeEmitInfo info);
 
     protected abstract void icCall(CiMethod ciMethod, CiRuntimeCall addr, CodeEmitInfo info);
 

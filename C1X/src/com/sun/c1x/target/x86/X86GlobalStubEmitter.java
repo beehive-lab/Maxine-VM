@@ -99,6 +99,10 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
                 emitStandardForward(stub, CiRuntimeCall.ArithmeticLmul);
                 break;
 
+            case RetrieveInterfaceIndex:
+                emitStandardForward(stub, CiRuntimeCall.RetrieveInterfaceIndex);
+                break;
+
             case f2i:
                 emitF2I();
                 break;
@@ -289,10 +293,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
         this.registersSaved = registersToSave;
 
-        this.frameSize = 0;
-        for (Register r : registersToSave) {
-            frameSize += target.arch.wordSize;
-        }
+        this.frameSize = target.arch.wordSize * registersToSave.length;
 
         asm.makeOffset(runtime.codeOffset());
 

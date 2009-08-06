@@ -140,6 +140,14 @@ public class C1XRuntimeCalls {
         return createArray(arrayClassActor, length);
     }
 
+    @RUNTIME_ENTRY(type = CiRuntimeCall.RetrieveInterfaceIndex)
+    public static int runtimeNewArray(Object receiver, int interfaceId) {
+        final Class receiverClass = receiver.getClass();
+        final ClassActor classActor = ClassActor.fromJava(receiverClass);
+        final int interfaceIIndex = classActor.dynamicHub().getITableIndex(interfaceId);
+        return interfaceIIndex * 8; // TODO (tw): return word size here!
+    }
+
     @INLINE
     private static Object createNonNegativeSizeArray(ClassActor arrayClassActor, int length) {
         if (MaxineVM.isPrototyping()) {
@@ -150,8 +158,8 @@ public class C1XRuntimeCalls {
 
 
     @RUNTIME_ENTRY(type = CiRuntimeCall.NewMultiArray)
-    public static Object runtimeNewMultiArray(int index, ClassActor arrayClassActor, int[] lengths) {
-        return runtimeNewMultiArrayHelper(index, arrayClassActor, lengths);
+    public static Object runtimeNewMultiArray(Hub arrayClassHub, int[] lengths) {
+        return runtimeNewMultiArrayHelper(0, arrayClassHub.classActor, lengths);
     }
 
     private static Object runtimeNewMultiArrayHelper(int index, ClassActor arrayClassActor, int[] lengths) {

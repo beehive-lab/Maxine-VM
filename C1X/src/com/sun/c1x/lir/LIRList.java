@@ -103,12 +103,12 @@ public class LIRList {
         append(new LIRJavaCall(LIROpcode.StaticCall, method, LIROperandFactory.IllegalOperand, result, dest, arguments, info));
     }
 
-    public void callIcvirtual(CiMethod method, LIROperand receiver, LIROperand result, CiRuntimeCall dest, List<LIROperand> arguments, CodeEmitInfo info) {
-        append(new LIRJavaCall(LIROpcode.IcVirtualCall, method, receiver, result, dest, arguments, info));
+    public void callInterface(CiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info) {
+        append(new LIRJavaCall(LIROpcode.InterfaceCall, method, receiver, result, arguments, info));
     }
 
-    public void callVirtual(CiMethod method, LIROperand receiver, LIROperand result, int vtableOffset, List<LIROperand> arguments, CodeEmitInfo info) {
-        append(new LIRJavaCall(LIROpcode.VirtualCall, method, receiver, result, vtableOffset, arguments, info));
+    public void callVirtual(CiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info) {
+        append(new LIRJavaCall(LIROpcode.VirtualCall, method, receiver, result, arguments, info));
     }
 
     public void getThread(LIROperand result) {

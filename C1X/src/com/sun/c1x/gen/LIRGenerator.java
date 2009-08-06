@@ -474,7 +474,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         // setup result register
         LIROperand resultRegister = LIROperandFactory.IllegalOperand;
         if (!x.type().isVoid()) {
-            resultRegister = resultRegisterFor(x.type());
+            resultRegister = resultRegisterFor(x.type().basicType);
         }
 
         CodeEmitInfo info = stateFor(x, x.state());
@@ -502,11 +502,17 @@ public abstract class LIRGenerator extends InstructionVisitor {
                 if (x.opcode() == Bytecodes.INVOKESPECIAL || optimized) {
                     lir.callOptVirtual(x.target(), receiver, resultRegister, CiRuntimeCall.ResolveOptVirtualCall, argList, info);
                 } else if (x.vtableIndex() < 0) {
-                    lir.callIcvirtual(x.target(), receiver, resultRegister, CiRuntimeCall.ResolveVirtualCall, argList, info);
+                    Util.shouldNotReachHere();
+                    //lir.callIcvirtual(x.target(), receiver, resultRegister, CiRuntimeCall.ResolveVirtualCall, argList, info);
                 } else {
-                    int entryOffset = compilation.runtime.vtableStartOffset() + x.vtableIndex() * compilation.runtime.vtableEntrySize();
-                    int vtableOffset = entryOffset + compilation.runtime.vtableEntryMethodOffsetInBytes();
-                    lir.callVirtual(x.target(), receiver, resultRegister, vtableOffset, argList, info);
+
+                    if (x.opcode() == Bytecodes.INVOKEINTERFACE) {
+                        assert x.vtableIndex() >= 0;
+                        lir.callInterface(x.target(), receiver, resultRegister, argList, info);
+                    } else {
+                        assert x.vtableIndex() >= 0;
+                        lir.callVirtual(x.target(), receiver, resultRegister, argList, info);
+                    }
                 }
                 break;
             default:
@@ -711,7 +717,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         if (x.type().isVoid()) {
             lir.returnOp(LIROperandFactory.IllegalOperand);
         } else {
-            LIROperand reg = resultRegisterFor(x.type(), /* callee= */true);
+            LIROperand reg = resultRegisterFor(x.type().basicType, /* callee= */true);
             LIRItem result = new LIRItem(x.result(), this);
 
             result.loadItemForce(reg);
@@ -1189,7 +1195,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
     }
 
-    protected LIROperand resultRegisterFor(ValueType type) {
+    protected LIROperand resultRegisterFor(BasicType type) {
         return resultRegisterFor(type, false);
     }
 
@@ -1670,7 +1676,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         LIROperand result = LIROperandFactory.IllegalOperand;
         if (!resultType.isVoid()) {
             result = newRegister(resultType.basicType);
-            physReg = resultRegisterFor(resultType);
+            physReg = resultRegisterFor(resultType.basicType);
         }
 
         List<LIROperand> argumentList = new ArrayList<LIROperand>();
@@ -2171,7 +2177,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
     protected abstract LIROperand receiverOpr();
 
-    protected abstract LIROperand resultRegisterFor(ValueType type, boolean callee);
+    protected abstract LIROperand resultRegisterFor(BasicType type, boolean callee);
 
     protected abstract LIROperand rlockByte(BasicType type);
 
