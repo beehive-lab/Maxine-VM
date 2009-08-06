@@ -34,18 +34,15 @@ public interface CompilationObserver {
     /**
      * This method allows an observer to be notified before the compilation of a method begins.
      * @param classMethodActor the method being compiled
-     * @param directive the directive controlling the compilation
      * @param compiler the compiler performing the compilation
      */
-    void observeBeforeCompilation(ClassMethodActor classMethodActor, CompilationDirective directive, DynamicCompilerScheme compiler);
+    void observeBeforeCompilation(ClassMethodActor classMethodActor, DynamicCompilerScheme compiler);
 
     /**
      * This method allows an observer to be notified after the compilation of a method completes.
      * @param classMethodActor the method being compiled
-     * @param directive the directive controlling the compilation
      * @param compiler the compiler performing the compilation
      * @param targetMethod the target method produced by the compilation; <code>null</code> if the compilation
-     * was aborted or failed to produce a target method
      */
-    void observeAfterCompilation(ClassMethodActor classMethodActor, CompilationDirective directive, DynamicCompilerScheme compiler, TargetMethod targetMethod);
+    void observeAfterCompilation(ClassMethodActor classMethodActor, DynamicCompilerScheme compiler, TargetMethod targetMethod);
 }

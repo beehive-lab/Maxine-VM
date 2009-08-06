@@ -26,6 +26,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.sparc.*;
+import com.sun.max.vm.compiler.DynamicCompilerScheme;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.sparc.*;
@@ -37,8 +38,8 @@ import com.sun.max.vm.stack.sparc.*;
  */
 public class SPARCJitTargetMethod extends JitTargetMethod implements SPARCTargetMethod {
 
-    public SPARCJitTargetMethod(ClassMethodActor classMethodActor) {
-        super(classMethodActor);
+    public SPARCJitTargetMethod(ClassMethodActor classMethodActor, DynamicCompilerScheme compilerScheme) {
+        super(classMethodActor, compilerScheme);
     }
 
     @Override

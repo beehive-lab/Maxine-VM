@@ -100,7 +100,7 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess ClassActor_staticTuple = new TeleInstanceReferenceFieldAccess(ClassActor.class, "staticTuple", Object.class);
     public final TeleInstanceReferenceFieldAccess ClassActor_typeDescriptor = new TeleInstanceReferenceFieldAccess(ClassActor.class, "typeDescriptor", TypeDescriptor.class);
     public final TeleInstanceReferenceFieldAccess ClassMethodActor_codeAttribute = new TeleInstanceReferenceFieldAccess(ClassMethodActor.class, "codeAttribute", CodeAttribute.class);
-    public final TeleInstanceReferenceFieldAccess ClassMethodActor_methodState = new TeleInstanceReferenceFieldAccess(ClassMethodActor.class, "methodState", MethodState.class);
+    public final TeleInstanceReferenceFieldAccess ClassMethodActor_targetState = new TeleInstanceReferenceFieldAccess(ClassMethodActor.class, "targetState", Object.class);
     public final TeleInstanceReferenceFieldAccess ClassRegistry_typeDescriptorToClassActor = new TeleInstanceReferenceFieldAccess(ClassRegistry.class, "typeDescriptorToClassActor", GrowableMapping.class);
     public final TeleStaticReferenceFieldAccess Code_bootCodeRegion = new TeleStaticReferenceFieldAccess(Code.class, "bootCodeRegion", CodeRegion.class);
     public final TeleStaticReferenceFieldAccess Code_codeManager = new TeleStaticReferenceFieldAccess(Code.class, "codeManager", CodeManager.class);
@@ -108,6 +108,7 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess CodeAttribute_constantPool = new TeleInstanceReferenceFieldAccess(CodeAttribute.class, "constantPool", ConstantPool.class);
     public final TeleInstanceReferenceFieldAccess CodeManager_currentCodeRegion = new TeleInstanceReferenceFieldAccess(CodeManager.class, "currentCodeRegion", CodeRegion.class);
     public final TeleInstanceReferenceFieldAccess CodeManager_runtimeCodeRegions = new TeleInstanceReferenceFieldAccess(CodeManager.class, "runtimeCodeRegions", CodeRegion[].class);
+    public final TeleInstanceReferenceFieldAccess Compilation_previousTargetState = new TeleInstanceReferenceFieldAccess(Compilation.class, "previousTargetState", Object.class);
     public final TeleInstanceReferenceFieldAccess ConstantPool_constants = new TeleInstanceReferenceFieldAccess(ConstantPool.class, "constants", PoolConstant[].class);
     public final TeleInstanceReferenceFieldAccess ConstantPool_holder = new TeleInstanceReferenceFieldAccess(ConstantPool.class, "holder", ClassActor.class);
     public final TeleInstanceReferenceFieldAccess ChainedHashMapping$DefaultEntry_next = new TeleInstanceReferenceFieldAccess(ChainedHashMapping.DefaultEntry.class, "next", Entry.class);
@@ -138,9 +139,6 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleStaticWordFieldAccess MaxineMessenger_info = new TeleStaticWordFieldAccess(MaxineMessenger.class, "info");
     public final TeleInstanceReferenceFieldAccess MemberActor_holder = new TeleInstanceReferenceFieldAccess(MemberActor.class, "holder", ClassActor.class);
     public final TeleInstanceIntFieldAccess MemberActor_memberIndex = new TeleInstanceIntFieldAccess(MemberActor.class, "memberIndex");
-    public final TeleInstanceReferenceFieldAccess MethodState_classMethodActor = new TeleInstanceReferenceFieldAccess(MethodState.class, "classMethodActor", ClassMethodActor.class);
-    public final TeleInstanceIntFieldAccess MethodState_numberOfCompilations = new TeleInstanceIntFieldAccess(MethodState.class, "numberOfCompilations");
-    public final TeleInstanceReferenceFieldAccess MethodState_targetMethodHistory = new TeleInstanceReferenceFieldAccess(MethodState.class, "targetMethodHistory", TargetMethod[].class);
     public final TeleInstanceReferenceFieldAccess ObjectReferenceValue_value = new TeleInstanceReferenceFieldAccess(ObjectReferenceValue.class, "value", Object.class);
     public final TeleInstanceReferenceFieldAccess ClassConstant$Resolved_classActor = new TeleInstanceReferenceFieldAccess(ClassConstant.Resolved.class, "classActor", ClassActor.class);
     public final TeleInstanceReferenceFieldAccess FieldRefConstant$Resolved_fieldActor = new TeleInstanceReferenceFieldAccess(FieldRefConstant.Resolved.class, "fieldActor", FieldActor.class);

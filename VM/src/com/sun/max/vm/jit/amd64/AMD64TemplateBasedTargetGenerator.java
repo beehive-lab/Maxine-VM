@@ -22,7 +22,6 @@ package com.sun.max.vm.jit.amd64;
 
 import com.sun.max.asm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.b.c.d.e.amd64.target.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.jit.*;
@@ -43,7 +42,7 @@ public class AMD64TemplateBasedTargetGenerator extends TemplateBasedTargetGenera
 
     @Override
     public AMD64JitTargetMethod createIrMethod(ClassMethodActor classMethodActor) {
-        final AMD64JitTargetMethod targetMethod = new AMD64JitTargetMethod(classMethodActor);
+        final AMD64JitTargetMethod targetMethod = new AMD64JitTargetMethod(classMethodActor, compilerScheme());
         notifyAllocation(targetMethod);
         return targetMethod;
     }
@@ -51,7 +50,7 @@ public class AMD64TemplateBasedTargetGenerator extends TemplateBasedTargetGenera
     private static final int NUMBER_OF_BYTES_PER_BYTECODE = 16;
 
     @Override
-    protected BytecodeToTargetTranslator makeTargetTranslator(ClassMethodActor classMethodActor, CompilationDirective compilationDirective) {
+    protected BytecodeToTargetTranslator makeTargetTranslator(ClassMethodActor classMethodActor) {
         // allocate a buffer that is likely to be large enough, based on a linear expansion
         final int estimatedSize = classMethodActor.codeAttribute().code().length * NUMBER_OF_BYTES_PER_BYTECODE;
         final CodeBuffer codeBuffer = new ByteArrayCodeBuffer(estimatedSize);
@@ -60,6 +59,6 @@ public class AMD64TemplateBasedTargetGenerator extends TemplateBasedTargetGenera
             final EirGenerator eirGenerator = ((BcdeTargetAMD64Compiler) compilerScheme().vmConfiguration().compilerScheme()).eirGenerator();
             optimizingCompilerAbi = eirGenerator.eirABIsScheme().getABIFor(classMethodActor);
         }
-        return new BytecodeToAMD64TargetTranslator(classMethodActor, codeBuffer, templateTable(), optimizingCompilerAbi, compilationDirective.traceInstrument());
+        return new BytecodeToAMD64TargetTranslator(classMethodActor, codeBuffer, templateTable(), optimizingCompilerAbi, false);
     }
 }

@@ -124,5 +124,5 @@ public class JNI_invocations {
     /**
      * A native method that just returns.
      */
-    public static native void nop();
+    private static native void nop();
 }

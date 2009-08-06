@@ -512,7 +512,7 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
         if (asJavaString) {
             buffer.append(QUOTE);
         }
-        buffer.append("test(");
+        buffer.append("(");
         for (int i = 0; i < run.input.length; i++) {
             if (i > 0) {
                 buffer.append(',');

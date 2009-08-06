@@ -53,7 +53,7 @@ public abstract class RecompileTrampolineGenerator extends TrampolineGenerator {
         public DynamicTrampoline createTrampoline(int dispatchTableIndex) {
             final DynamicTrampoline vTableTrampoline = new VTableTrampoline(dispatchTableIndex, null);
             VTableTrampolineSnippet.fixTrampoline(vTableTrampoline);
-            vTableTrampoline.initTrampoline(CompilationScheme.Static.forceFreshCompile(trampolineClassMethodActor, CompilationDirective.DEFAULT));
+            vTableTrampoline.initTrampoline(CompilationScheme.Static.forceFreshCompile(trampolineClassMethodActor));
             return vTableTrampoline;
         }
 
@@ -75,7 +75,7 @@ public abstract class RecompileTrampolineGenerator extends TrampolineGenerator {
         @Override
         public DynamicTrampoline createTrampoline(int dispatchTableIndex) {
             iTableTrampoline = new ITableTrampoline(dispatchTableIndex, null);
-            iTableTrampoline.initTrampoline(CompilationScheme.Static.forceFreshCompile(trampolineClassMethodActor, CompilationDirective.DEFAULT));
+            iTableTrampoline.initTrampoline(CompilationScheme.Static.forceFreshCompile(trampolineClassMethodActor));
             return iTableTrampoline;
         }
     }

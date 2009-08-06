@@ -35,6 +35,8 @@ import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.TargetMethod;
+import com.sun.max.vm.compiler.target.TargetState;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.verifier.*;
@@ -65,7 +67,7 @@ public abstract class ClassMethodActor extends MethodActor {
     private CodeAttribute codeAttribute;
 
     @INSPECTED
-    private MethodState methodState;
+    public volatile Object targetState;
 
     private ClassMethodActor compilee;
 
@@ -86,26 +88,6 @@ public abstract class ClassMethodActor extends MethodActor {
      */
     public int numberOfParameterSlots() {
         return descriptor().computeNumberOfSlots() + ((isStatic()) ? 0 : 1);
-    }
-
-    /**
-     * Gets the {@link MethodState} object that encapsulates the current runtime compilation state of the method.
-     * The object, once set, does not change, although its contents do.
-     * @return the method state for this method
-     */
-    @INLINE
-    public final MethodState methodState() {
-        return methodState;
-    }
-
-    @INLINE
-    public final void setMethodState(MethodState methodState) {
-        assert this.methodState == null;
-        this.methodState = methodState;
-    }
-
-    public final void resetMethodState() {
-        methodState = null;
     }
 
     /**
@@ -292,5 +274,17 @@ public abstract class ClassMethodActor extends MethodActor {
 
     public static ClassMethodActor fromJava(Method javaMethod) {
         return (ClassMethodActor) MethodActor.fromJava(javaMethod);
+    }
+
+    public TargetMethod currentTargetMethod() {
+        return TargetState.currentTargetMethod(targetState);
+    }
+
+    public TargetMethod[] targetMethodHistory() {
+        return TargetState.targetMethodHistory(targetState);
+    }
+
+    public int targetMethodCount() {
+        return TargetState.targetMethodCount(targetState);
     }
 }

@@ -48,6 +48,7 @@ public class AtomicWord {
      * Creates a new AtomicWord with null initial value.
      */
     public AtomicWord() {
+        value = Word.zero();
     }
 
     /**
