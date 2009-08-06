@@ -24,7 +24,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 /**
- *
+ * Generic visitor for beltway collectors.
  *
  * @author Laurent Daynes
  */
@@ -39,11 +39,12 @@ public class PointerVisitor extends PointerIndexVisitor {
     @Override
     public void visit(Pointer pointer, int wordIndex) {
         final Grip oldGrip = pointer.getGrip(wordIndex);
+        // Should we filter null grips here for perf reason ?
+        // May have a separate  NullFilterPointerVisitor that do that, and
+        // use a VM option to use it instead.
         final Grip newGrip = action.doAction(oldGrip);
-        if (newGrip != null) {
-            if (newGrip != oldGrip) {
-                pointer.setGrip(wordIndex, newGrip);
-            }
+        if (newGrip != oldGrip) {
+            pointer.setGrip(wordIndex, newGrip);
         }
     }
 }
