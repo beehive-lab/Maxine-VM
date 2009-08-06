@@ -24,7 +24,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.instrument.*;
 import com.sun.max.vm.compiler.tir.*;
 import com.sun.max.vm.jit.*;
