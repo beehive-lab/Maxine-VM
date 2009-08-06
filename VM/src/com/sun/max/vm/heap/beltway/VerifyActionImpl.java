@@ -76,7 +76,6 @@ public class VerifyActionImpl implements Verify {
         Hub h = hub;
         if (h instanceof StaticHub) {
             final ClassActor classActor = hub.classActor;
-            checkClassActor(h.classActor);
             FatalError.check(classActor.staticHub() == h, "lost static hub");
             h = ObjectAccess.readHub(h);
         }
@@ -84,9 +83,6 @@ public class VerifyActionImpl implements Verify {
             h = ObjectAccess.readHub(h);
         }
         FatalError.check(ObjectAccess.readHub(h) == h, "lost hub hub");
-    }
-
-    private void checkClassActor(ClassActor classActor) {
     }
 
     public Grip verifyGrip(Belt from, Grip grip) {
