@@ -453,7 +453,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
             asm.enter((short) (jitStackFrameLayout.frameSize() - Word.size()), (byte) 0);
             asm.subq(targetABI.framePointer(), framePointerAdjustment());
             if (STACK_BANGING) {
-                asm.mov(targetABI.scratchRegister(), -2 * 4096, targetABI.stackPointer().indirect());
+                asm.mov(targetABI.scratchRegister(), -Trap.stackGuardSize, targetABI.stackPointer().indirect());
             }
             codeBuffer.emitCodeFrom(asm);
 
