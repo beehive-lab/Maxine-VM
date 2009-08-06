@@ -492,9 +492,9 @@ public final class WatchpointsTable extends InspectorTable {
             final MaxWatchpoint watchpoint = model.rowToWatchpoint(row);
             final MaxWatchpointEvent watchpointEvent = maxVM().maxVMState().watchpointEvent();
             if (watchpointEvent != null && watchpointEvent.maxWatchpoint() == watchpoint) {
-                final MaxVMThread maxVMThread = watchpointEvent.maxVMThread();
-                setText(inspection().nameDisplay().longName(maxVMThread));
-                setToolTipText("Thread \"" + inspection().nameDisplay().longName(maxVMThread) + "\" stopped at this watchpoint");
+                final MaxThread maxThread = watchpointEvent.maxThread();
+                setText(inspection().nameDisplay().longName(maxThread));
+                setToolTipText("Thread \"" + inspection().nameDisplay().longName(maxThread) + "\" stopped at this watchpoint");
             } else {
                 setText("");
                 setToolTipText("No Thread stopped at this watchpoint");

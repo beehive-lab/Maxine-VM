@@ -100,12 +100,6 @@ public final class BeltManager {
 
     @INLINE
     @NO_SAFEPOINTS("TODO")
-    public Pointer bumpAllocate(Belt belt, Size size) {
-        return belt.bumpAllocate(size);
-    }
-
-    @INLINE
-    @NO_SAFEPOINTS("TODO")
     public Pointer gcAllocate(Belt belt, Size size) {
         return belt.gcAllocate(size);
     }
