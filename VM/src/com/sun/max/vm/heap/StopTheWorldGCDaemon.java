@@ -35,6 +35,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -80,7 +81,16 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                 FatalError.unexpected("Stack reference map preparer should be cleared before GC");
             }
 
+            // Stack reference map preparation must never include a call to a native method (e.g. blocking
+            // due to synchronization) as it such a transition will be interpreted by a GC thread to
+            // mean that the thread is now blocked on the GC lock as a result of synchronizing on
+            // VmThreadMap.ACTIVE (below). Given that stack reference map preparation involves an
+            // extensive amount of Java code, the easiest way to detect a violation this invariant
+            // is by disabling the ability to call native methods (as opposed to continually
+            // auditing any code that may be involved in stack reference map preparation).
+            NativeStubSnippet.disableNativeCallsForCurrentThread();
             VmThreadLocal.prepareStackReferenceMapFromTrap(vmThreadLocals, trapState);
+            NativeStubSnippet.enableNativeCallsForCurrentThread();
 
             synchronized (VmThreadMap.ACTIVE) {
                 // Stops this thread until GC is done.
@@ -132,7 +142,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
      * The procedure that is run on the GC thread to reset the GC relevant state of a mutator thread
      * once GC is complete.
      */
-    private final class ResetMutator extends Safepoint.ResetSafepoints {
+    public final class ResetMutator extends Safepoint.ResetSafepoints {
         @Override
         public void run(Pointer vmThreadLocals) {
             if (Heap.traceGCPhases()) {
@@ -148,7 +158,9 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
             // Resets the safepoint latch and resets the safepoint procedure to null
             super.run(vmThreadLocals);
 
-            if (!Safepoint.UseCASBasedGCMutatorSynchronization) {
+            if (UseCASBasedGCMutatorSynchronization) {
+                MUTATOR_STATE.setVariableWord(vmThreadLocals, THREAD_IN_NATIVE);
+            } else {
                 // This must be last so that a mutator thread trying to return out of native code stays in the spin
                 // loop until its GC & safepoint related state has been completely reset
                 GC_STATE.setVariableWord(vmThreadLocals, Address.zero());
@@ -158,15 +170,17 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
 
     private final ResetMutator resetMutator = new ResetMutator();
 
-    static class WaitUntilNonMutating implements Pointer.Procedure {
+    public static class WaitUntilNonMutating implements Pointer.Procedure {
         long stackReferenceMapPreparationTime;
         public void run(Pointer vmThreadLocals) {
             if (Safepoint.UseCASBasedGCMutatorSynchronization) {
                 final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
                 while (true) {
-                    if (enabledVmThreadLocals.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IN_GC).equals(THREAD_IN_NATIVE)) {
-                        // Transitioned thread into GC
-                        break;
+                    if (enabledVmThreadLocals.getWord(MUTATOR_STATE.index).equals(THREAD_IN_NATIVE)) {
+                        if (enabledVmThreadLocals.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IN_GC).equals(THREAD_IN_NATIVE)) {
+                            // Transitioned thread into GC
+                            break;
+                        }
                     }
                     Thread.yield();
                 }

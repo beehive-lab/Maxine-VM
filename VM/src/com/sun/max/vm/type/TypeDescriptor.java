@@ -230,7 +230,7 @@ public abstract class TypeDescriptor extends Descriptor {
             while (JavaTypeDescriptor.isArray(typeDescriptor)) {
                 typeDescriptor = typeDescriptor.componentTypeDescriptor();
             }
-            if (ClassRegistry.vmClassRegistry().contains(typeDescriptor)) {
+            if (ClassRegistry.vmClassRegistry().get(typeDescriptor) != null) {
                 return true;
             }
             if (JavaTypeDescriptor.isPrimitive(typeDescriptor)) {
@@ -264,7 +264,7 @@ public abstract class TypeDescriptor extends Descriptor {
 //            }
             return result;
         }
-        return ClassRegistry.contains(classLoader, typeDescriptor);
+        return ClassRegistry.get(classLoader, typeDescriptor, true) != null;
     }
 
     public ClassActor resolve(final ClassLoader classLoader) {

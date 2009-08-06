@@ -72,6 +72,9 @@ public class CopyActionImpl implements Action {
 
     @INLINE
     final void verify(Grip origin) {
+        if (origin.isZero()) {
+            return;
+        }
         final Pointer fromOrigin = origin.toOrigin();
         if (!heapScheme.contains(fromOrigin)) {
             Log.print("invalid grip: ");
@@ -98,6 +101,7 @@ public class CopyActionImpl implements Action {
             if (toCell.isZero()) {
                 throw BeltwayHeapScheme.outOfMemoryError;
             }
+
             DebugHeap.writeCellTag(toCell);
             Memory.copyBytes(fromCell, toCell, size);
             final Pointer toOrigin = Layout.cellToOrigin(toCell);

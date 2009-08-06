@@ -120,7 +120,40 @@ public class Belt extends RuntimeMemoryRegion {
         return cell;
     }
 
-    @NO_SAFEPOINTS("TODO")
+    /**
+     * TLAB allocation. Doesn't skew the allocation with debugging information
+     * (complicate TLAB refill when debugging is on as it needs to adjust back
+     *  the pointer, and the size is of the TLAB is skewed by one word).
+     * When debugging is off, this does the same as allocate.
+     * @param size Size of the TLAB
+     * @return a pointer to a raw chunk of memory from this belt.
+     */
+    @NO_SAFEPOINTS("TLAB allocation")
+    @INLINE
+    public final Pointer allocateTLAB(Size size) {
+        final Pointer oldAllocationMark = mark();
+        final Pointer end = oldAllocationMark.plus(size);
+
+        if (!checkObjectInBelt(size)) {
+            if (!expandable) {
+                return Pointer.zero();
+            }
+        }
+        if (mark.compareAndSwap(oldAllocationMark, end) != oldAllocationMark) {
+            if (Heap.verbose()) {
+                Log.println("Conflict! retry-allocate");
+            }
+            return retryAllocate(size);
+        }
+        return oldAllocationMark;
+    }
+    /**
+     * Direct allocation to a belt, unsynchronized.
+     * This is used only by single-threaded GC.
+     * @param size
+     * @return
+     */
+    @NO_SAFEPOINTS("Direct, unsynchronized allocation.")
     @INLINE
     public final Pointer bumpAllocate(Size size) {
         final Pointer oldAllocationMark = mark();
@@ -326,7 +359,7 @@ public class Belt extends RuntimeMemoryRegion {
     }
 
     /**
-     * Evacuate objects of the specified belt reachable from objects of this belt into this belt using the specified  cell visitor.
+     * Evacuate objects of the specified belt reachable from objects of this belt into this belt using the specified cell visitor.
      * This method is not multi-thread safe and cannot be used for parallel evacuation.
      *
      * @param cellVisitor visits objects of this belt to find references to evacuation candidates

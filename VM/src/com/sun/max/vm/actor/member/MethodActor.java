@@ -319,7 +319,7 @@ public abstract class MethodActor extends MemberActor {
         GeneratedStub invocationStub = holder().classRegistry().get(INVOCATION_STUB, this);
         if (invocationStub == null) {
             if (isInstanceInitializer()) {
-                invocationStub = GeneratedStub.newConstructorStub(toJavaConstructor(), false, Boxing.VALUE);
+                invocationStub = GeneratedStub.newConstructorStub(toJavaConstructor(), null, Boxing.VALUE);
             } else {
                 invocationStub = GeneratedStub.newMethodStub(toJava(), Boxing.VALUE);
             }

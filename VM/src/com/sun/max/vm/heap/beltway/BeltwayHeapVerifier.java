@@ -50,6 +50,11 @@ public class BeltwayHeapVerifier {
         pointerVisitor.action.init(from, to);
     }
 
+    /**
+     * @param regionStartAddress
+     * @param allocationMark
+     * @param belt
+     */
     public void verifyHeap(Address regionStartAddress, Address allocationMark, Belt belt) {
         stackAndMonitorVerifier.run();
         // FIXME: should this verify boot heap and code region ?
@@ -64,6 +69,10 @@ public class BeltwayHeapVerifier {
             FatalError.check(!hubGrip.isZero(), "null hub");
             cellVerifier.verifyGrip(belt, hubGrip);
             final Hub hub = UnsafeLoophole.cast(hubGrip.toJava());
+            // FIXME: cleanup
+            Log.print("Check hub : ");
+            Log.println(hubGrip.toOrigin().asAddress());
+            // FIXME: end cleanup
             cellVerifier.checkHub(hub);
             final SpecificLayout specificLayout = hub.specificLayout;
             if (specificLayout.isTupleLayout()) {

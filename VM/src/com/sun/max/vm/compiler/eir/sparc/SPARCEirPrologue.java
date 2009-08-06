@@ -54,14 +54,15 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
 
     private static final SPARCAssembler ASM = SPARCAssembler.createAssembler(WordWidth.BITS_64);
 
-    private static int trapStateOffsetFromSP;
+    private static int trapStateOffsetFromFramePointer;
 
-    /** Calculates the difference between the (biased) stack pointer register in the trapped frame and the trapState.
+    /** Calculates the difference between the (biased) stack pointer in the trapped frame and the trapState.
+     *  Equivalently, this is the difference between the (biased) frame pointer in the trap stub and the trapState.
      * @see SPARCTrapStateAccess
      * @return The offset of the trapState from the stack pointer register of the trapped frame.
      */
-    public static int getTrapStateOffsetFromSP() {
-        return trapStateOffsetFromSP;
+    public static int trapStateOffsetFromTrappedSP() {
+        return trapStateOffsetFromFramePointer;
     }
 
     @Override
@@ -71,7 +72,7 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
             final SPARCEirRegister.GeneralPurpose stackPointer = (SPARCEirRegister.GeneralPurpose) emitter.abi().stackPointer();
             if (eirMethod().classMethodActor().isTrapStub()) {
                // emit a special prologue that saves all the registers
-                trapStateOffsetFromSP = emitTrapStubPrologue(asm, stackPointer.as());
+                trapStateOffsetFromFramePointer = emitTrapStubPrologue(asm, stackPointer.as());
             } else {
                 final GPR scratchRegister = ((SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT)).as();
                 emitFrameBuilder(asm, eirMethod().frameSize(), stackPointer.as(), scratchRegister);
@@ -141,12 +142,12 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         // The value of the latch register at the trap instruction is stored in the trap state.
         final GPR latchRegister = SPARCSafepoint.LATCH_REGISTER;
         final int frameSize = eirMethod().frameSize() + SPARCTrapStateAccess.TRAP_STATE_SIZE;
-        final GPR scratchRegister = GPR.L0;
-        final GPR scratchRegister2 = GPR.L1;
+        final GPR scratchRegister0 = GPR.L0;
+        final GPR scratchRegister1 = GPR.L1;
         assert SPARCAssembler.isSimm13(frameSize);
         eirMethod().setFrameSize(frameSize);
 
-        emitFrameBuilder(asm, frameSize, stackPointer, scratchRegister /* will not be used */);
+        emitFrameBuilder(asm, frameSize, stackPointer, scratchRegister0 /* will not be used */);
         // Only need to save the %i and %g of the trap stub frame, plus the %f.
         // Can use all %l and %o of the trap stub frame as temporary registers, since these don't contain any state of the
         // trapped frame.
@@ -159,11 +160,11 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         int offset = trapStateOffset;
 
         // We want to copy into the trap state the value of the latch register at the instruction that causes the trap.
-        asm.ldx(latchRegister, VmThreadLocal.TRAP_LATCH_REGISTER.offset, scratchRegister);
+        asm.ldx(latchRegister, VmThreadLocal.TRAP_LATCH_REGISTER.offset, scratchRegister0);
 
         for (GPR register :  SPARCTrapStateAccess.TRAP_SAVED_GLOBAL_SYMBOLIZER) {
             if (register == latchRegister) {
-                asm.stx(scratchRegister, stackPointer, offset);
+                asm.stx(scratchRegister0, stackPointer, offset);
             } else {
                 asm.stx(register, stackPointer, offset);
             }
@@ -178,11 +179,11 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
             asm.std((DFPR) fpr, stackPointer, offset);
             offset += wordSize;
         }
-        asm.rd(StateRegister.CCR, scratchRegister);
-        asm.rd(StateRegister.FPRS, scratchRegister2);
-        asm.stx(scratchRegister, stackPointer, offset);
+        asm.rd(StateRegister.CCR, scratchRegister0);
+        asm.rd(StateRegister.FPRS, scratchRegister1);
+        asm.stx(scratchRegister0, stackPointer, offset);
         offset += wordSize;
-        asm.stx(scratchRegister2, stackPointer, offset);
+        asm.stx(scratchRegister1, stackPointer, offset);
         offset += wordSize;
         // offset now points to the location where the trap number will be stored in the trap state.
 

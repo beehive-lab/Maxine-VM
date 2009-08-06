@@ -35,6 +35,9 @@ public final class BeltManager {
     private final BeltwayHeapScheme heapScheme;
     private final Belt [] belts;
 
+    /**
+     * A virtual belt representing the whole Heap (?).
+     */
     private Belt applicationHeap;
 
     private Belt tempBelt;
@@ -61,6 +64,10 @@ public final class BeltManager {
         to.setEnd(oldFromSpaceStop);
         to.setAllocationMark(oldAllocationMark);
 
+    }
+
+    public Belt [] belts() {
+        return belts;
     }
 
     public int numberOfBelts() {
@@ -96,12 +103,6 @@ public final class BeltManager {
     @INLINE
     public Address getEnd() {
         return belts[numberOfBelts() - 1].end();
-    }
-
-    @INLINE
-    @NO_SAFEPOINTS("TODO")
-    public Pointer bumpAllocate(Belt belt, Size size) {
-        return belt.bumpAllocate(size);
     }
 
     @INLINE

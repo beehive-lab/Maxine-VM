@@ -78,3 +78,6 @@ Java_test_jni_JNI_1OverflowArguments_read2(JNIEnv *env, jclass cls, jlong zfile,
   return off;
 }
 
+JNIEXPORT void JNICALL
+Java_test_bench_threads_JNI_1invocations_nop(JNIEnv *env, jclass cls) {
+}
