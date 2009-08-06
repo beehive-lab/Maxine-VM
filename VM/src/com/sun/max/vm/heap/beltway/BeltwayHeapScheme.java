@@ -183,6 +183,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             JavaMonitorManager.bindStickyMonitor(BeltwayCollectorThread.callerToken, new StandardJavaMonitor());
         } else if (phase == MaxineVM.Phase.PRISTINE) {
             cellVisitor = parallelScavenging ? parallelCellVisitor : singleThreadedCellVisitor;
+            ((CopyActionImpl) cellVisitor.pointerVisitorGripUpdater.action).initialize(this);
             stackAndMonitorGripUpdater.setPointerIndexVisitor(cellVisitor.pointerVisitorGripUpdater);
             dynamicHeapMaxSize = calculateHeapSize();
             dynamicHeapStart = allocateHeapStorage(dynamicHeapMaxSize);
