@@ -44,9 +44,9 @@ public class BeltwaySSCollector extends BeltwayCollector implements Runnable {
 
     @Override
     public void run() {
-        final BeltwayHeapSchemeBSS heapScheme = (BeltwayHeapSchemeBSS) getBeltwayHeapScheme();
-        final Belt fromSpace = heapScheme.getFromSpace();
-        final Belt toSpace = heapScheme.getToSpace();
+        final BeltwayHeapSchemeBSS ssHeapScheme = (BeltwayHeapSchemeBSS) heapScheme;
+        final Belt fromSpace = ssHeapScheme.getFromSpace();
+        final Belt toSpace = ssHeapScheme.getToSpace();
         prologue();
         if (Heap.verbose()) {
             Log.println("Verify Heap");
@@ -56,7 +56,7 @@ public class BeltwaySSCollector extends BeltwayCollector implements Runnable {
         monitorScheme.beforeGarbageCollection();
 
         // Start scanning the reachable objects from roots.
-        heapScheme.scavengeRoot(fromSpace, toSpace);
+        ssHeapScheme.scavengeRoot(fromSpace, toSpace);
 
         // Evacuate all remaining objects reachable
         evacuateFollowers(fromSpace, toSpace);
@@ -67,8 +67,8 @@ public class BeltwaySSCollector extends BeltwayCollector implements Runnable {
         InspectableHeapInfo.afterGarbageCollection();
 
         // Swap semi-spaces. From--> To and To-->From
-        heapScheme.getBeltManager().swapBelts(fromSpace, toSpace);
-        heapScheme.getToSpace().resetAllocationMark();
+        ssHeapScheme.getBeltManager().swapBelts(fromSpace, toSpace);
+        ssHeapScheme.getToSpace().resetAllocationMark();
         if (Heap.verbose()) {
             Log.print("Finished Collection: ");
             Log.println(numCollections);
