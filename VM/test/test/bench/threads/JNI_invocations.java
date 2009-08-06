@@ -63,28 +63,35 @@ public class JNI_invocations {
     protected static Barrier barrier2;
     protected static int nrThreads;
     protected static int nrJNIInvocations;
-    protected static int mode;
+    protected static int workload;
+    protected static int gc;
     protected static boolean trace = System.getProperty("trace") != null;
 
     public static void main(String[] args) {
-        if (args.length != 3) {
-            System.out.println("ERROR: call java JNI_Invocations <nr threads> <nr jni invocations> <mode> ");
+        if (args.length != 4) {
+            System.out.println("ERROR: call java JNI_Invocations <nr threads> <nr jni invocations> <native workload> <gc 1/0>");
             System.exit(1);
         }
 
         nrThreads = Integer.parseInt(args[0]);
         nrJNIInvocations = Integer.parseInt(args[1]);
-        mode = Integer.parseInt(args[2]);
+        workload = Integer.parseInt(args[2]);
+        gc = Integer.parseInt(args[3]);
 
-        barrier1 = new Barrier(nrThreads + 1 + mode);
-        barrier2 = new Barrier(nrThreads + 1 + mode);
+        if (gc == 0) {
+            barrier1 = new Barrier(nrThreads + 1);
+            barrier2 = new Barrier(nrThreads + 1);
+        } else {
+            barrier1 = new Barrier(nrThreads + 2);
+            barrier2 = new Barrier(nrThreads + 2);
+        }
 
         int i;
         for (i = 0; i < nrThreads; i++) {
             new Thread(new AllocationThread(nrJNIInvocations, i)).start();
         }
 
-        if (mode == 1) {
+        if (gc == 1) {
             new Thread(new GCInvokeThread(nrThreads, i)).start();
         }
 
@@ -116,18 +123,15 @@ public class JNI_invocations {
             // representative of over all progress.
             if (trace && threadId == 0) {
                 for (int i = 0; i < nrJNIcalls; i++) {
-                    nop(0);
+                    nativework(workload);
                     if (i % 10000 == 0) {
                         System.out.println(i);
                     }
                 }
             } else {
                 for (int i = 0; i < nrJNIcalls; i++) {
-                    if (mode == 1) {
-                        nop(0);//work
-                    } else {
-                        nop(0);
-                    }
+                    System.out.println(i);
+                    nativework(workload);
                 }
             }
             //System.out.println("Thread " + threadId + " done");
@@ -171,5 +175,5 @@ public class JNI_invocations {
     /**
      * A native method that just returns.
      */
-    public static native long nop(long workload);
+    public static native long nativework(long workload);
 }

@@ -79,7 +79,7 @@ Java_test_jni_JNI_1OverflowArguments_read2(JNIEnv *env, jclass cls, jlong zfile,
 }
 
 JNIEXPORT jlong JNICALL
-Java_test_bench_threads_JNI_1invocations_nop(JNIEnv *env, jclass cls, jlong workload) {
+Java_test_bench_threads_JNI_1invocations_nativework(JNIEnv *env, jclass cls, jlong workload) {
     int i = 0;
     int sum = 0;
     for (i=0; i<workload; i++) {

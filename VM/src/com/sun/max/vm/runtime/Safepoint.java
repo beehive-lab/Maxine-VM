@@ -87,7 +87,7 @@ public abstract class Safepoint {
      *
      * TODO: Make the choice for this value based on the mechanism proven to runs best of the target platform.
      */
-    public static final boolean UseCASBasedGCMutatorSynchronization = true;
+    public static final boolean UseCASBasedGCMutatorSynchronization = false;
 
     /**
      * Constant denoting a mutator thread is executing Java code.
@@ -292,7 +292,7 @@ public abstract class Safepoint {
         // spin until the SAFEPOINT_PROCEDURE field is null
         final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
         while (true) {
-            if (enabledVmThreadLocals.compareAndSwapReference(SAFEPOINT_PROCEDURE.offset, null, Reference.fromJava(procedure)).isZero()) {//TODO: test first
+            if (enabledVmThreadLocals.compareAndSwapReference(SAFEPOINT_PROCEDURE.offset, null, Reference.fromJava(procedure)).isZero()) { //TODO: test first
                 Safepoint.trigger(vmThreadLocals);
                 return;
             }
