@@ -120,6 +120,9 @@ public class TeleCodeLocation extends AbstractTeleVMHolder {
      */
     public BytecodeLocation bytecodeLocation() {
         resolveBytecodeLocation();
+        if (teleBytecodeLocation == null) {
+            return null;
+        }
         return teleBytecodeLocation.bytecodeLocation();
     }
 

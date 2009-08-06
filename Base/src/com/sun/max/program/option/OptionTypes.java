@@ -185,7 +185,7 @@ public class OptionTypes {
                 return null;
             }
             for (Enum_Type value : values) {
-                if (value.toString().equalsIgnoreCase(string)) {
+                if (value.name().equalsIgnoreCase(string)) {
                     return value;
                 }
             }
