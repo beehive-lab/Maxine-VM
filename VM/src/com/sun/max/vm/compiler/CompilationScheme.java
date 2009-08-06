@@ -196,7 +196,7 @@ public interface CompilationScheme extends VMScheme {
          * @return the new target method for specified method
          */
         public static TargetMethod forceFreshCompile(ClassMethodActor classMethodActor) {
-//            resetMethodState(classMethodActor);
+            resetMethodState(classMethodActor);
             compile(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
             return getCurrentTargetMethod(classMethodActor);
         }

@@ -146,7 +146,7 @@ public class Compilation implements Future<TargetMethod> {
 
             synchronized (classMethodActor) {
                 // update the target state of the class method actor
-                assert classMethodActor.targetState == this;
+                // assert classMethodActor.targetState == this;
                 if (targetMethod != null) {
                     // compilation succeeded and produced a target method
                     classMethodActor.targetState = TargetState.addTargetMethod(targetMethod, previousTargetState);
