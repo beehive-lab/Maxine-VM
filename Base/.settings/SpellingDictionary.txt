@@ -70,7 +70,10 @@ epilogue
 floatable
 generational
 hashcode
+hotspot
 iff
+initialize
+initializing
 inline
 inlined
 inlining
@@ -82,8 +85,12 @@ lexer
 linux
 logo
 malloc
+metadata
 misc
 mlvdv
+moniker
+monikers
+namespace
 nop
 nops
 payload
@@ -96,6 +103,7 @@ programmatic
 proxy
 recompilation
 redock
+refactor
 refactored
 refactoring
 regexp
@@ -112,7 +120,10 @@ selectable
 semispace
 semispaces
 settable
+shootout
 solaris
+stderr
+stdout
 struct
 subtype
 tabbed
