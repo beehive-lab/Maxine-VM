@@ -179,9 +179,18 @@ public abstract class AbstractModeHandler implements ModeHandler {
         void delegateMonitorExit(Object object, ModalLockWord64 lockWord);
         void delegateMonitorNotify(Object object, boolean all, ModalLockWord64 lockWord);
         void delegateMonitorWait(Object object, long timeout, ModalLockWord64 lockWord) throws InterruptedException;
-        boolean delegateThreadHoldsMonitor(Object object, ModalLockWord64 lockWord, VmThread thread, int lockwordThreadID, boolean[] result);
+        DelegatedThreadHoldsMonitorResult delegateThreadHoldsMonitor(Object object, ModalLockWord64 lockWord, VmThread thread, int lockwordThreadID);
         int delegateMakeHashcode(Object object, ModalLockWord64 lockWord);
         void delegateBeforeGarbageCollection();
         void delegateAfterGarbageCollection();
+        /**
+         * We require a tri-state boolean for the return value of
+         * {@link ModeDelegate#delegateThreadHoldsMonitor(Object, ModalLockWord64, VmThread, int)}
+         * as in some circumstances the locking mode could change under our feet while determining
+         * whether the current thread owns the lock.
+         *
+         * @author Simon Wilkinson
+         */
+        enum DelegatedThreadHoldsMonitorResult {TRUE, FALSE, NOT_THIS_MODE}
     }
 }
