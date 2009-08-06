@@ -49,6 +49,7 @@ public class MaxineTesterConfiguration {
     private static final Expectation RAND_ALL = new Expectation(null, null, ExpectedResult.NONDETERMINISTIC);
     private static final Expectation RAND_LINUX = new Expectation(OperatingSystem.LINUX, null, ExpectedResult.NONDETERMINISTIC);
     private static final Expectation RAND_DARWIN = new Expectation(OperatingSystem.DARWIN, null, ExpectedResult.NONDETERMINISTIC);
+    private static final Expectation RAND_AMD64 = new Expectation(null, ProcessorModel.AMD64, ExpectedResult.NONDETERMINISTIC);
     private static final Expectation RAND_SPARC = new Expectation(OperatingSystem.SOLARIS, ProcessorModel.SPARCV9, ExpectedResult.NONDETERMINISTIC);
 
     static final Object[] outputTestList = {
@@ -90,6 +91,7 @@ public class MaxineTesterConfiguration {
         test.threads.Thread_isInterrupted02.class,                  FAIL_LINUX,
         test.jdk.EnumMap01.class,                                   RAND_ALL,
         test.jdk.EnumMap02.class,                                   RAND_ALL,
+        test.except.Catch_StackOverflowError_03.class, RAND_AMD64,
         test.hotpath.HP_series.class,                  FAIL_SPARC,
         test.hotpath.HP_array02.class,                 FAIL_SPARC,
     };
