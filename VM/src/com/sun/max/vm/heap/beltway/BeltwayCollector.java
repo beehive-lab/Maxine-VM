@@ -20,10 +20,10 @@
  */
 package com.sun.max.vm.heap.beltway;
 
+import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.monitor.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
 
 /**
@@ -34,9 +34,11 @@ import com.sun.max.vm.tele.*;
 
 public class BeltwayCollector {
 
-    protected final BeltwayHeapScheme heapScheme;
+    @CONSTANT_WHEN_NOT_ZERO
+    protected BeltwayHeapScheme heapScheme;
 
-    protected final MonitorScheme monitorScheme = VMConfiguration.target().monitorScheme();
+    @CONSTANT_WHEN_NOT_ZERO
+    protected MonitorScheme monitorScheme;
 
     protected long numCollections;
 
@@ -45,9 +47,17 @@ public class BeltwayCollector {
     public BeltwayCollector(String name) {
         numCollections = 0;
         collectorName = name;
-        final HeapScheme scheme = VMConfiguration.target().heapScheme();
-        FatalError.check(scheme instanceof BeltwayHeapScheme, "Heap scheme must be a Beltway Heap Scheme");
-        heapScheme = (BeltwayHeapScheme) scheme;
+    }
+
+    /**
+     * Prototyping time initialization.
+     * @param heapScheme
+     */
+    @PROTOTYPE_ONLY
+    public void initialize(BeltwayHeapScheme heapScheme) {
+        // Initialize useful short cuts.
+        this.heapScheme = heapScheme;
+        monitorScheme = VMConfiguration.target().monitorScheme();
     }
 
     public BeltwayHeapScheme getBeltwayHeapScheme() {

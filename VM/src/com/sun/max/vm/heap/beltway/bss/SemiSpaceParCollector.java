@@ -36,7 +36,6 @@ public class SemiSpaceParCollector extends BeltwaySSCollector {
     }
     @Override
     protected void evacuateFollowers(Belt fromSpace, Belt toSpace) {
-        final BeltwayHeapScheme heapScheme = getBeltwayHeapScheme();
         if (Heap.verbose()) {
             Log.println("Evacuate reachable...");
         }
