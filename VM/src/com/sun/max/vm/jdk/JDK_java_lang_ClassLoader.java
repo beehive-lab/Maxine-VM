@@ -150,7 +150,7 @@ final class JDK_java_lang_ClassLoader {
         } catch (ClassFormatError e) {
             return null;
         }
-        final ClassActor classActor =  ClassRegistry.get(thisClassLoader(), descriptor);
+        final ClassActor classActor =  ClassRegistry.get(thisClassLoader(), descriptor, false);
         if (classActor == null) {
             return null;
         }

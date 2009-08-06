@@ -99,7 +99,6 @@ public abstract class GeneratedStub {
                         Modifier.isStatic(method.getModifiers()),
                         Modifier.isPrivate(method.getModifiers()),
                         null,
-                        false,
                         boxing).stub();
         stub.setTarget(method);
         return stub;
@@ -107,8 +106,10 @@ public abstract class GeneratedStub {
 
     /**
      * Generates a stub for invoking a given constructor reflectively.
+     * @param constructor that is to be invoked
+     * @param classToInstantiate only non-null in the serialization context where it may differ from constructor.getDeclaringClass()
      */
-    public static GeneratedConstructorStub newConstructorStub(Constructor constructor, boolean forSerialization, Boxing boxing) {
+    public static GeneratedConstructorStub newConstructorStub(Constructor constructor, Class classToInstantiate, Boxing boxing) {
         final GeneratedConstructorStub stub = new InvocationStubGenerator<GeneratedConstructorStub>(
                         constructor,
                         GeneratedConstructorStub.class,
@@ -118,8 +119,7 @@ public abstract class GeneratedStub {
                         constructor.getParameterTypes(),
                         false,
                         Modifier.isPrivate(constructor.getModifiers()),
-                        constructor.getDeclaringClass(),
-                        forSerialization,
+                        classToInstantiate,
                         boxing).stub();
         stub.setTarget(constructor);
         return stub;

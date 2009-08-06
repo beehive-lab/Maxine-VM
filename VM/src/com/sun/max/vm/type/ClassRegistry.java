@@ -166,16 +166,25 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
         return classActor;
     }
 
-    public static ClassActor get(ClassLoader classLoader, TypeDescriptor typeDescriptor) {
-        return makeRegistry(classLoader).get(typeDescriptor);
-    }
-
-    public boolean contains(TypeDescriptor typeDescriptor) {
-        return typeDescriptorToClassActor.containsKey(typeDescriptor);
-    }
-
-    public static boolean contains(ClassLoader classLoader, TypeDescriptor typeDescriptor) {
-        return makeRegistry(classLoader).contains(typeDescriptor);
+    /**
+     * Searches for a given type in a registry associated with a given class loader.
+     *
+     * @param classLoader the class loader to start searching in
+     * @param typeDescriptor the type to look for
+     * @param searchParents specifies if the {@linkplain ClassLoader#getParent() parents} of {@code classLoader} should
+     *            be searched if the type is not in the registry of {@code classLoader}
+     * @return the resolved actor corresponding to {@code typeDescriptor} or {@code null} if not found
+     */
+    public static ClassActor get(ClassLoader classLoader, TypeDescriptor typeDescriptor, boolean searchParents) {
+        ClassRegistry registry = makeRegistry(classLoader);
+        ClassActor classActor = registry.get(typeDescriptor);
+        if (classActor != null) {
+            return classActor;
+        }
+        if (!searchParents || classLoader.getParent() == null) {
+            return null;
+        }
+        return get(classLoader.getParent(), typeDescriptor, true);
     }
 
     public static TupleClassActor javaLangObjectActor() {

@@ -28,10 +28,15 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.beltway.*;
 import com.sun.max.vm.heap.beltway.profile.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.tele.*;
 
 /**
- * Heap scheme for a semi-space beltway collector. Use two belts, each allocated half of the total heap space.
+ * Heap scheme for a semi-space beltway collector. Use two belts, each allocated half of the total heap space. The heap
+ * scheme can use two collectors, a single-threaded one and a parallel one. An instance of each of these collectors is
+ * created at prototyping time and their reference stored in static variable. Which of the two collector to use is
+ * decided at runtime. The rationale for doing this is that the collector objects are allocated in the boot region and
+ * out of reach of the copying mechanism. This allows the collector objects to use their instance fields (including
+ * references field, if they point to boot regions objects) at any time (included GC time).
+ *
  * @author Christos Kotselidis
  * @author Laurent Daynes
  */
@@ -41,6 +46,15 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
     private static int[] DEFAULT_BELT_HEAP_PERCENTAGE = new int[] {50, 50};
     private final String [] BELT_DESCRIPTIONS = new String[] {"From Belt", "To Belt"};
 
+    /**
+     * Single threaded version of the beltway collector.
+     */
+    private static final BeltwaySSCollector singleThreadedCollector = new BeltwaySSCollector();
+
+    /**
+     * Single threaded version of the beltway collector.
+     */
+    private static final SemiSpaceParCollector parallelCollector = new SemiSpaceParCollector();
 
     private BeltwaySSCollector beltCollectorBSS;
 
@@ -61,12 +75,14 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
+        if (MaxineVM.isPrototyping()) {
+            singleThreadedCollector.initialize(this);
+            parallelCollector.initialize(this);
+        }
         if (phase == MaxineVM.Phase.PRISTINE) {
             // The following line enables allocation to take place.
             tlabAllocationBelt = getFromSpace();
-            // Watch out: the following create a MemoryRegion array
-            InspectableHeapInfo.init(getToSpace(), getFromSpace());
-            beltCollectorBSS = parallelScavenging ? new SemiSpaceParCollector() : new BeltwaySSCollector();
+            beltCollectorBSS = parallelScavenging ? parallelCollector : singleThreadedCollector;
         } else if (phase == MaxineVM.Phase.RUNNING) {
             heapVerifier.initialize(beltManager.getApplicationHeap(), getToSpace());
             if (Heap.verbose()) {

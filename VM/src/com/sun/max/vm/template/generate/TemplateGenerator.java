@@ -86,11 +86,11 @@ public class TemplateGenerator {
 
     protected void verifyInvariants() throws IllegalStateException {
         // Make sure that the resolved version is loaded in the target
-        if (!ClassRegistry.contains(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, JavaTypeDescriptor.forJavaClass(ResolvedAtCompileTime.class))) {
+        if (ClassRegistry.get(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, JavaTypeDescriptor.forJavaClass(ResolvedAtCompileTime.class), false) == null) {
             throw new IllegalStateException("Class " + ResolvedAtCompileTime.class + " must be loaded in target when generating templates");
         }
         // Make sure that the unresolved version is not loaded in the target
-        if (ClassRegistry.contains(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, JavaTypeDescriptor.forJavaClass(UnresolvedAtCompileTime.class))) {
+        if (ClassRegistry.get(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, JavaTypeDescriptor.forJavaClass(UnresolvedAtCompileTime.class), false) != null) {
             throw new IllegalStateException("Class " + UnresolvedAtCompileTime.class + " must not be loaded in target when generating templates");
         }
     }

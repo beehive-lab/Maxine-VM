@@ -18,14 +18,36 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/**
- * @author Bernd Mathiske
- */
-#ifndef __arithmeticException_h__
-#define __arithmeticException_h__ 1
+package com.sun.max.ins.debug;
 
-#include "jni.h"
+import java.awt.*;
 
-extern void arithmeticException_throwNew(JNIEnv *env);
+import com.sun.max.ins.*;
+import com.sun.max.ins.gui.*;
+import com.sun.max.lang.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.stack.*;
 
-#endif /*__arithmeticException_h__*/
+
+abstract class StackFramePanel<StackFrame_Type extends StackFrame> extends InspectorPanel {
+
+    protected StackFrame_Type stackFrame;
+
+    public StackFramePanel(Inspection inspection, StackFrame_Type stackFrame) {
+        super(inspection, new BorderLayout());
+        this.stackFrame = stackFrame;
+    }
+
+    public final StackFrame_Type stackFrame() {
+        return stackFrame;
+    }
+
+    public final void setStackFrame(StackFrame stackFrame) {
+        final Class<StackFrame_Type> type = null;
+        this.stackFrame = StaticLoophole.cast(type, stackFrame);
+        refresh(true);
+    }
+
+    public void instructionPointerFocusChanged(Pointer instructionPointer) {
+    }
+}

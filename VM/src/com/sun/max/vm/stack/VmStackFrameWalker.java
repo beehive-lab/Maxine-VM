@@ -25,6 +25,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.VMRegister.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -90,8 +91,12 @@ public final class VmStackFrameWalker extends StackFrameWalker {
     }
 
     @Override
-    public Word readFramelessCallAddressRegister(TargetABI targetABI) {
-        return VMRegister.getCallAddressRegister();
+    public Word readRegister(Role role, TargetABI targetABI) {
+        if (role == Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS) {
+            return VMRegister.getFramelessCallAddressRegister();
+        }
+        FatalError.unimplemented();
+        return Word.zero();
     }
 
     @Override

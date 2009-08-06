@@ -20,14 +20,13 @@
  */
 package com.sun.max.vm.heap.beltway;
 
+import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.monitor.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
 
 /**
- *
  *
  * @author Laurent Daynes
  * @author Christos Kotselidis
@@ -35,9 +34,11 @@ import com.sun.max.vm.tele.*;
 
 public class BeltwayCollector {
 
-    protected final BeltwayHeapScheme heapScheme;
+    @CONSTANT_WHEN_NOT_ZERO
+    protected BeltwayHeapScheme heapScheme;
 
-    protected final MonitorScheme monitorScheme = VMConfiguration.target().monitorScheme();
+    @CONSTANT_WHEN_NOT_ZERO
+    protected MonitorScheme monitorScheme;
 
     protected long numCollections;
 
@@ -46,32 +47,48 @@ public class BeltwayCollector {
     public BeltwayCollector(String name) {
         numCollections = 0;
         collectorName = name;
-        final HeapScheme scheme = VMConfiguration.target().heapScheme();
-        FatalError.check(scheme instanceof BeltwayHeapScheme, "Heap scheme must be a Beltway Heap Scheme");
-        heapScheme = (BeltwayHeapScheme) scheme;
+    }
+
+    /**
+     * Prototyping time initialization.
+     * @param heapScheme
+     */
+    @PROTOTYPE_ONLY
+    public void initialize(BeltwayHeapScheme heapScheme) {
+        // Initialize useful short cuts.
+        this.heapScheme = heapScheme;
+        monitorScheme = VMConfiguration.target().monitorScheme();
     }
 
     public BeltwayHeapScheme getBeltwayHeapScheme() {
         return heapScheme;
     }
 
+    /**
+     * Verifies that all the references from a belt are valid, i.e., points to used area of the heap.
+     * @param belt
+     */
     protected void verifyBelt(Belt belt) {
         heapScheme.heapVerifier.verifyHeap(belt.start(), belt.getAllocationMark(), heapScheme.getBeltManager().getApplicationHeap());
     }
 
     protected void prologue() {
         numCollections++;
+        heapScheme.resetTLABs();
         InspectableHeapInfo.beforeGarbageCollection();
 
         if (Heap.verbose()) {
-            Log.print(collectorName + " Collection: ");
+            Log.print(collectorName);
+            Log.print(" Collection: ");
             Log.println(numCollections);
         }
     }
 
     protected void epilogue() {
         if (Heap.verbose()) {
-            Log.print("Finished " + collectorName + " Collection: ");
+            Log.print("Finished ");
+            Log.print(collectorName);
+            Log.print(" Collection: ");
             Log.println(numCollections);
         }
         InspectableHeapInfo.afterGarbageCollection();
@@ -85,7 +102,6 @@ public class BeltwayCollector {
             Log.println("Evacuate Followers");
         }
         heapScheme.evacuate(from, to);
-        // beltwayHeapSchemeBA2.fillLastTLAB(); FIXME: do we need this ?
     }
 
     protected void printBeltInfo(String beltName, Belt belt) {

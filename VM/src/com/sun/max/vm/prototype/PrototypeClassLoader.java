@@ -65,7 +65,7 @@ public final class PrototypeClassLoader extends ClassLoader {
      */
     public static void omitClass(TypeDescriptor typeDescriptor) {
         final String className = typeDescriptor.toJavaString();
-        ProgramError.check(!ClassRegistry.vmClassRegistry().contains(typeDescriptor), "Cannot omit a class already in VM class registry: " + className);
+        ProgramError.check(ClassRegistry.vmClassRegistry().get(typeDescriptor) == null, "Cannot omit a class already in VM class registry: " + className);
         omittedClasses.add(className);
     }
 
@@ -158,7 +158,7 @@ public final class PrototypeClassLoader extends ClassLoader {
         try {
             return MaxineVM.usingTargetWithException(new Function<ClassActor>() {
                 public ClassActor call() throws Exception {
-                    final ClassActor classActor = ClassRegistry.get(PrototypeClassLoader.this, typeDescriptor);
+                    final ClassActor classActor = ClassRegistry.get(PrototypeClassLoader.this, typeDescriptor, false);
                     if (classActor != null) {
                         return classActor;
                     }
@@ -211,7 +211,7 @@ public final class PrototypeClassLoader extends ClassLoader {
      * @throws ClassNotFoundException if the element type could not be found
      */
     private Class<?> findArrayClass(final TypeDescriptor elementTypeDescriptor) throws ClassNotFoundException {
-        ClassActor elementClassActor = ClassRegistry.get(PrototypeClassLoader.this, elementTypeDescriptor);
+        ClassActor elementClassActor = ClassRegistry.get(PrototypeClassLoader.this, elementTypeDescriptor, false);
         if (elementClassActor == null) {
             // findClass expects a Java class "Binary name".
             final Class elementType = findClass(elementTypeDescriptor.toJavaString());
