@@ -2190,7 +2190,7 @@ public class X86LIRAssembler extends LIRAssembler {
         if (right.isConstant()) {
             int divisor = right.asConstantPtr().asInt();
             assert divisor > 0 && Util.isPowerOf2(divisor) : "must be";
-            if (code == LIROpcode.Div) {
+            if (code == LIROpcode.Idiv) {
                 assert lreg == X86.rax : "must be rax : ";
                 assert temp.asRegister() == X86.rdx : "tmp register must be rdx";
                 masm().cdql(); // sign extend into rdx:rax
@@ -2202,7 +2202,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 }
                 masm().sarl(lreg, Util.log2(divisor));
                 moveRegs(lreg, dreg);
-            } else if (code == LIROpcode.Rem) {
+            } else if (code == LIROpcode.Irem) {
                 Label done = new Label();
                 masm().mov(dreg, lreg);
                 masm().andl(dreg, 0x80000000 | (divisor - 1));
@@ -2224,10 +2224,12 @@ public class X86LIRAssembler extends LIRAssembler {
 
             int idivlOffset = masm().correctedIdivl(rreg);
             addDebugInfoForDiv0(idivlOffset, info);
-            if (code == LIROpcode.Rem) {
+            if (code == LIROpcode.Irem) {
                 moveRegs(X86.rdx, dreg); // result is in rdx
-            } else {
+            } else if (code == LIROpcode.Idiv) {
                 moveRegs(X86.rax, dreg);
+            } else {
+                throw Util.shouldNotReachHere();
             }
         }
     }
@@ -2468,11 +2470,26 @@ public class X86LIRAssembler extends LIRAssembler {
      * (tw) Tentative implementation of a vtable call (C1 does always do a resolving runtime call).
      */
     @Override
-    protected void vtableCall(CiMethod method, LIROperand receiver, long vtableOffset, CodeEmitInfo info) {
+    protected void vtableCall(CiMethod method, LIROperand receiver, CodeEmitInfo info) {
+        int vtableOffset = compilation.runtime.vtableStartOffset() + method.vtableIndex() * compilation.runtime.vtableEntrySize();
+        vtableOffset += compilation.runtime.vtableEntryMethodOffsetInBytes();
         assert receiver != null && vtableOffset >= 0 : "Invalid receiver or vtable offset!";
         assert receiver.isRegister() : "Receiver must be in a register";
         masm.movq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.klassOffsetInBytes()));
         masm.call(new Address(rscratch1, Util.safeToInt(vtableOffset)));
+    }
+
+    /**
+     * (tw) Tentative implementation of an interface call (C1 does always do a resolving runtime call).
+     */
+    @Override
+    protected void interfaceCall(CiMethod method, LIROperand receiver, CodeEmitInfo info) {
+        assert receiver != null && method.vtableIndex() >= 0 : "Invalid receiver or vtable offset!";
+        assert receiver.isRegister() : "Receiver must be in a register";
+        masm.movl(rscratch1, method.interfaceID());
+        masm.callGlobalStub(GlobalStub.RetrieveInterfaceIndex, rscratch1, receiver.asRegister(), rscratch1);
+        masm.addq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.klassOffsetInBytes()));
+        masm.call(new Address(rscratch1, method.vtableIndex() * compilation.target.arch.wordSize));
     }
 
     @Override
@@ -2669,14 +2686,14 @@ public class X86LIRAssembler extends LIRAssembler {
         Register cRarg0 = compilation.runtime.getCRarg(0);
         Register cRarg1 = compilation.runtime.getCRarg(1);
         Register cRarg2 = compilation.runtime.getCRarg(2);
-        Register cRarg3 = compilation.runtime.getCRarg(3);
-        Register cRarg4 = compilation.runtime.getCRarg(4);
-
-        Register jRarg0 = compilation.runtime.getJRarg(0);
-        Register jRarg1 = compilation.runtime.getJRarg(1);
-        Register jRarg2 = compilation.runtime.getJRarg(2);
-        Register jRarg3 = compilation.runtime.getJRarg(3);
-        Register jRarg4 = compilation.runtime.getJRarg(4);
+//        Register cRarg3 = compilation.runtime.getCRarg(3);
+//        Register cRarg4 = compilation.runtime.getCRarg(4);
+//
+//        Register jRarg0 = compilation.runtime.getJRarg(0);
+//        Register jRarg1 = compilation.runtime.getJRarg(1);
+//        Register jRarg2 = compilation.runtime.getJRarg(2);
+//        Register jRarg3 = compilation.runtime.getJRarg(3);
+//        Register jRarg4 = compilation.runtime.getJRarg(4);
 
         CodeStub stub = op.stub();
         int flags = op.flags();

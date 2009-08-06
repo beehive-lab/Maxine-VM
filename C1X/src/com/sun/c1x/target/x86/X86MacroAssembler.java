@@ -34,7 +34,6 @@ import com.sun.c1x.value.BasicType;
  */
 public class X86MacroAssembler extends X86Assembler {
 
-    private static final int FloatConstantAlignment = 16;
     private Register rscratch1;
     private final int wordSize;
     private final C1XCompiler compiler;
@@ -76,8 +75,7 @@ public class X86MacroAssembler extends X86Assembler {
         // Clear out parameters
         if (C1XOptions.GenerateAssertionCode) {
 
-            index = 0;
-            for (Register op : args) {
+            for (index = 0; index < args.length; index++) {
                 storeParameter(0, index++);
             }
         }
