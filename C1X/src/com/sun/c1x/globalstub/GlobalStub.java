@@ -37,9 +37,16 @@ public enum GlobalStub {
     NewInstance(Object, Object),
     NewTypeArray(Object, Object, Int),
     f2i(Int, Float),
+    fneg(Float, Float),
+    dneg(Double, Double),
     f2l(Long, Float),
     d2i(Int, Double),
-    d2l(Long, Double);
+    d2l(Long, Double),
+    ArithmethicLrem(Long, Long, Long),
+    ArithmeticLdiv(Long, Long, Long),
+    ArithmeticLmul(Long, Long, Long),
+    ArithmeticFrem(Float, Float),
+    ArithmeticDrem(Double, Double);
 
     /**
      * Maximum number of arguments, determines how many stack words are reserved on the top of the stack.

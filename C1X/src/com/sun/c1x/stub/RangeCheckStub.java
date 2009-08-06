@@ -29,7 +29,7 @@ import com.sun.c1x.lir.*;
  */
 public class RangeCheckStub extends CodeStub {
 
-    public final LIROperand index;
+    public LIROperand index;
     public final boolean throwIndexOutOfBoundsException;
 
     public RangeCheckStub(CodeEmitInfo rangeCheckInfo, LIROperand index) {
@@ -55,6 +55,6 @@ public class RangeCheckStub extends CodeStub {
     @Override
     public void visit(LIRVisitState visitor) {
         visitor.doSlowCase(info);
-        visitor.doInput(index);
+        index = visitor.doInput(index);
     }
 }

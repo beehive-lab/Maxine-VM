@@ -43,6 +43,7 @@ public abstract class AbstractAssembler {
     private final int doubleAlignment;
     private final int floatAlignment;
     private final int longAlignment;
+    private final int longLongAlignment;
     private final int intAlignment;
 
     public AbstractAssembler(Target target) {
@@ -52,6 +53,7 @@ public abstract class AbstractAssembler {
         doubleAlignment = target.arch.wordSize;
         floatAlignment = target.arch.wordSize;
         longAlignment = target.arch.wordSize;
+        longLongAlignment = Long.SIZE / 8 * 2;
         intAlignment = target.arch.wordSize;
     }
 
@@ -241,6 +243,12 @@ public abstract class AbstractAssembler {
     public Address longConstant(long l) {
         dataBuffer.align(longAlignment);
         int pos = dataBuffer.emitLong(l);
+        return makeInternalAddress(pos);
+    }
+
+    public Address longLongConstant(long lHigh, long lLow) {
+        dataBuffer.align(longLongAlignment);
+        int pos = dataBuffer.emitLongLong(lHigh, lLow);
         return makeInternalAddress(pos);
     }
 

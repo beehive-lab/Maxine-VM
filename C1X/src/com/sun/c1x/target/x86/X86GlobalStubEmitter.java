@@ -43,6 +43,12 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
     private final Register convertArgument = X86.xmm0;
     private final Register convertResult = X86.rax;
+    private final Register negateArgument = X86.xmm0;
+    private final Register negateTemp = X86.xmm1;
+
+
+    private static final long FloatSignFlip = 0x8000000080000000L;
+    private static final long DoubleSignFlip = 0x8000000000000000L;
 
     public X86GlobalStubEmitter(C1XCompiler compiler) {
         this.compiler = compiler;
@@ -73,6 +79,26 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
                 emitStandardForward(stub, CiRuntimeCall.NewInstance);
                 break;
 
+            case ArithmethicLrem:
+                emitStandardForward(stub, CiRuntimeCall.ArithmethicLrem);
+                break;
+
+            case ArithmeticDrem:
+                emitStandardForward(stub, CiRuntimeCall.ArithmeticDrem);
+                break;
+
+            case ArithmeticFrem:
+                emitStandardForward(stub, CiRuntimeCall.ArithmeticFrem);
+                break;
+
+            case ArithmeticLdiv:
+                emitStandardForward(stub, CiRuntimeCall.ArithmeticLdiv);
+                break;
+
+            case ArithmeticLmul:
+                emitStandardForward(stub, CiRuntimeCall.ArithmeticLmul);
+                break;
+
             case f2i:
                 emitF2I();
                 break;
@@ -89,12 +115,44 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
                 emitD2L();
                 break;
 
+            case fneg:
+                emitFNEG();
+                break;
+
+            case dneg:
+                emitDNEG();
+                break;
+
 
             default:
                 throw Util.shouldNotReachHere();
         }
 
         return asm.finishTargetMethod(runtime, frameSize);
+    }
+
+    private void negatePrologue() {
+        partialSavePrologue(negateArgument, negateTemp);
+
+    }
+
+    private void negateEpilogue() {
+        storeArgument(0, negateArgument);
+        epilogue();
+    }
+
+    private void emitDNEG() {
+        negatePrologue();
+        asm.movsd(negateTemp, asm.longConstant(DoubleSignFlip));
+        asm.xorpd(negateArgument, negateTemp);
+        negateEpilogue();
+    }
+
+    private void emitFNEG() {
+        negatePrologue();
+        asm.movsd(negateTemp, asm.longConstant(FloatSignFlip));
+        asm.xorps(negateArgument, negateTemp);
+        negateEpilogue();
     }
 
     private void convertPrologue() {

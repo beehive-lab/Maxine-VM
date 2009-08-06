@@ -1795,7 +1795,12 @@ public class LinearScan extends RegisterAllocator {
     // instead of returning null
     Interval splitChildAtOpId(Interval interval, int opId, LIRVisitState.OperandMode mode) {
         Interval result = interval.splitChildAtOpId(opId, mode, this);
+
         if (result != null) {
+
+            if (C1XOptions.TraceLinearScanLevel >= 4) {
+                TTY.println("Split child at pos " + opId + " of interval " + interval.toString() + " is " + result.toString());
+            }
             return result;
         }
 
@@ -2957,6 +2962,10 @@ public class LinearScan extends RegisterAllocator {
                 hasDead = true;
                 continue;
             }
+
+            if (C1XOptions.TraceLinearScanLevel >= 4) {
+                TTY.println("Assigning register numbers for instruction " + op.toString());
+            }
             int opId = op.id();
 
             // visit instruction to get list of operands
@@ -2968,10 +2977,12 @@ public class LinearScan extends RegisterAllocator {
                 for (int k = 0; k < n; k++) {
                     LIROperand opr = visitor.oprAt(mode, k);
                     if (opr instanceof LIRLocation && opr.isVirtualRegister()) {
-                        ((LIRLocation) opr).changeTo(colorLirOpr(opr, opId, mode));
+                        visitor.setOprAt(mode, k, colorLirOpr(opr, opId, mode));
                     }
                 }
             }
+
+            visitor.visitReplace(op);
 
             if (visitor.infoCount() > 0) {
                 // exception handling
@@ -3071,7 +3082,7 @@ public class LinearScan extends RegisterAllocator {
         propagateSpillSlots();
 
         printIntervals("After X86Register Allocation");
-        printLir(2, "LIR after register allocation:", true);
+        printLir(1, "LIR after register allocation:", true);
 
         sortIntervalsAfterAllocation();
 
@@ -3080,7 +3091,7 @@ public class LinearScan extends RegisterAllocator {
         eliminateSpillMoves();
         assignRegNum();
 
-        printLir(2, "LIR after assignment of register numbers:", true);
+        printLir(1, "LIR after assignment of register numbers:", true);
 
         // TODO: Check if we want to do statistics!
         // LinearScanStatistic.compute(this, statAfterAsign);
