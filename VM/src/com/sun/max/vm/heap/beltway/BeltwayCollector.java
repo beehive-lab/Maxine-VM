@@ -64,6 +64,10 @@ public class BeltwayCollector {
         return heapScheme;
     }
 
+    /**
+     * Verifies that all the references from a belt are valid, i.e., points to used area of the heap.
+     * @param belt
+     */
     protected void verifyBelt(Belt belt) {
         heapScheme.heapVerifier.verifyHeap(belt.start(), belt.getAllocationMark(), heapScheme.getBeltManager().getApplicationHeap());
     }
