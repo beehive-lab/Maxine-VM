@@ -1,0 +1,287 @@
+/*
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ *
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ *
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
+ */
+package com.sun.c1x.ci;
+
+import java.util.*;
+
+/**
+ * This interface represents the consumer of compiler output. When a client
+ * of C1X requests a {@link com.sun.c1x.C1XCompilation compilation}, it must supply
+ * an instance of this interface which consumes the output and produces
+ * its own internal representation of compiled code.
+ *
+ * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
+ */
+public class CiTargetMethod {
+
+    public static class SafepointRefMap {
+        public final int codePos;
+        public final boolean[] registerMap;
+        public final boolean[] stackMap;
+
+        SafepointRefMap(int codePos, boolean[] registerMap, boolean[] stackMap) {
+            this.codePos = codePos;
+            this.registerMap = registerMap;
+            this.stackMap = stackMap;
+        }
+    }
+
+    public static class CallSite {
+        public final int codePos;
+        public final CiRuntimeCall runtimeCall;
+        public final CiMethod method;
+        public final Object globalStubID;
+        public final boolean direct;
+        public final boolean[] stackMap;
+
+        CallSite(int codePos, CiRuntimeCall runtimeCall, CiMethod method, Object globalStubID, boolean direct, boolean[] stackMap) {
+            this.codePos = codePos;
+            this.runtimeCall = runtimeCall;
+            this.method = method;
+            this.direct = direct;
+            this.stackMap = stackMap;
+            this.globalStubID = globalStubID;
+        }
+    }
+
+    public static class DataPatchSite {
+        public final int codePos;
+        public final int dataPos;
+        final boolean relative;
+
+        DataPatchSite(int codePos, int dataPos, boolean relative) {
+            this.codePos = codePos;
+            this.dataPos = dataPos;
+            this.relative = relative;
+        }
+    }
+
+    public static class RefPatchSite {
+        public final int codePos;
+        public final Object referrent;
+        Object[] array;
+        public int index;
+
+        RefPatchSite(int codePos, Object referrent) {
+            this.codePos = codePos;
+            this.referrent = referrent;
+        }
+    }
+
+    static class ExceptionHandler {
+        final int codePosStart;
+        final int codePosEnd;
+        final int handlerPos;
+        final CiType exceptionType;
+
+        ExceptionHandler(int codePosStart, int codePosEnd, int handlerPos, CiType exceptionType) {
+            this.codePosStart = codePosStart;
+            this.codePosEnd = codePosEnd;
+            this.handlerPos = handlerPos;
+            this.exceptionType = exceptionType;
+        }
+    }
+
+    public final List<SafepointRefMap> safepointRefMaps = new ArrayList<SafepointRefMap>();
+    public final List<CallSite> callSites = new ArrayList<CallSite>();
+    public final List<DataPatchSite> dataPatchSites = new ArrayList<DataPatchSite>();
+    public final List<RefPatchSite> refPatchSites = new ArrayList<RefPatchSite>();
+    public final List<ExceptionHandler> exceptionHandlers = new ArrayList<ExceptionHandler>();
+
+    public int registerSize;
+    public int frameSize;
+    public byte[] targetCode;
+    public int targetCodeSize;
+    public byte[] data;
+    public int dataSize;
+    CiDeoptimizer deoptimizer;
+    int directCalls;
+    int indirectCalls;
+
+    // For statistics
+    public int totalInstructions;
+
+    /**
+     * Sets the frame size in bytes. Does not include the return address pushed onto the
+     * stack, if any.
+     *
+     * @param size the size of the frame in bytes
+     */
+    public void setFrameSize(int size) {
+        frameSize = size;
+    }
+
+    public void setRegisterSize(int size) {
+        registerSize = size;
+    }
+
+    /**
+     * Sets the machine that has been generated by the compiler.
+     *
+     * @param code the machine code generated
+     * @param size the size of the code within the array
+     */
+    public void setTargetCode(byte[] code, int size) {
+        assert code != null;
+        targetCode = code;
+        targetCodeSize = size;
+    }
+
+
+    /**
+     * Records a reference map at a call location in the code array.
+     *
+     * @param codePosition the position in the code array
+     * @param runtimeCall  the runtime call
+     * @param stackMap     the bitmap that indicates which stack locations
+     */
+    public void recordRuntimeCall(int codePosition, CiRuntimeCall runtimeCall, boolean[] stackMap) {
+        callSites.add(new CallSite(codePosition, runtimeCall, null, null, true, stackMap));
+        directCalls++;
+        //assert stackMap.length == frameSize;
+    }
+
+    public void recordGlobalStubCall(int codePosition, Object globalStubCall, boolean[] stackMap) {
+        callSites.add(new CallSite(codePosition, null, null, globalStubCall, true, stackMap));
+        directCalls++;
+        //assert stackMap.length == frameSize;
+    }
+
+    /**
+     * Records a reference to the data section in the code section (e.g. to
+     * load an integer or floating point constant).
+     *
+     * @param codePosition the position in the code where the data reference occurs
+     * @param dataPosition the position in the data which is referred to
+     * @param relative {@code true} if the reference is instruction-relative
+     */
+    public void recordDataReferenceInCode(int codePosition, int dataPosition, boolean relative) {
+        assert codePosition >= 0 && dataPosition >= 0;
+        dataPatchSites.add(new DataPatchSite(codePosition, dataPosition, relative));
+    }
+
+    /**
+     * Records an object reference in the code section and the object that is
+     * referred to.
+     *
+     * @param codePosition the position in the code section
+     * @param ref          the object that is referenced
+     */
+    public void recordObjectReferenceInCode(int codePosition, Object ref) {
+        refPatchSites.add(new RefPatchSite(codePosition, ref));
+    }
+
+    /**
+     * Records a direct method call to the specified method in the code.
+     * @param codePosition the position in the code array
+     * @param method the method being called
+     * @param stackMap the bitmap that indicates which stack locations
+     */
+    public void recordDirectCall(int codePosition, CiMethod method, boolean[] stackMap) {
+        callSites.add(new CallSite(codePosition, null, method, null, true, stackMap));
+        directCalls++;
+        //assert stackMap.length == frameSize : "compiler produced stack map that doesn't cover whole frame";
+    }
+
+    /**
+     * Records an indirect method call to the specified method in the code.
+     * @param codePosition the position in the code array
+     * @param method the method being called
+     * @param stackMap the bitmap that indicates which stack locations
+     */
+    public void recordIndirectCall(int codePosition, CiMethod method, boolean[] stackMap) {
+        callSites.add(new CallSite(codePosition, null, method, null, false, stackMap));
+        indirectCalls++;
+        //assert stackMap.length == frameSize : "compiler produced stack map that doesn't cover whole frame";
+    }
+
+    /**
+     * Records an exception handler for this method.
+     *
+     * @param codePosStart  the start position in the code that is covered by the handler (inclusive)
+     * @param codePosEnd    the end position covered by the handler (exclusive)
+     * @param handlerPos    the position of the handler
+     * @param throwableType the type of exceptions handled by the handler
+     */
+    public void recordExceptionHandler(int codePosStart, int codePosEnd, int handlerPos, CiType throwableType) {
+        exceptionHandlers.add(new ExceptionHandler(codePosStart, codePosEnd, handlerPos, throwableType));
+    }
+
+    /**
+     * Sets the data that has been generated by the compiler, which may
+     * include binary representations of floating point and integer constants,
+     * as well as object references.
+     *
+     * @param data the data generated
+     * @param size the size of the data within the array
+     */
+    public void setData(byte[] data, int size) {
+        if (size == 0) {
+            this.data = null;
+            this.dataSize = 0;
+        } else {
+            this.data = data;
+            this.dataSize = size;
+        }
+    }
+
+    /**
+     * Records the reference maps at a safepoint location in the code array.
+     *
+     * @param codePosition the position in the code array
+     * @param registerMap  the bitmap that indicates which registers are references
+     * @param stackMap     the bitmap that indicates which stack locations
+     *                     are references
+     */
+    public void recordSafepoint(int codePosition, boolean[] registerMap, boolean[] stackMap) {
+        safepointRefMaps.add(new SafepointRefMap(codePosition, registerMap, stackMap));
+        if (registerSize == 0) {
+            registerSize = registerMap.length;
+        }
+        assert registerSize == registerMap.length : "compiler produced register maps of different sizes";
+        assert stackMap.length == frameSize : "compiler produced stack map that doesn't cover whole frame";
+    }
+
+
+    /**
+     * Attaches a {@link com.sun.c1x.ci.CiDeoptimizer deoptimizer} object to this method that will
+     * handle deoptimization requests by the VM.
+     *
+     * @param deoptimizer the deoptimizer object for this method
+     */
+    public void attachDeoptimizer(CiDeoptimizer deoptimizer) {
+        this.deoptimizer = deoptimizer;
+    }
+
+    public int directCalls() {
+        return directCalls;
+    }
+
+    public int indirectCalls() {
+        return indirectCalls;
+    }
+
+    public int totalInstructions() {
+        return totalInstructions;
+    }
+
+}
