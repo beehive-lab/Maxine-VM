@@ -161,10 +161,6 @@ public class SPARCStackFrameLayout {
         unbias(framePointer).writeWord(offset_in_saved_window(register), data);
     }
 
-    public static void setReturnAddress(Pointer framePointer, Address returnAddress) {
-        setRegisterInSavedWindow(framePointer, GPR.I7, returnAddress);
-    }
-
     public static Word getRegisterInSavedWindow(Pointer framePointer, GPR register) {
         return unbias(framePointer).readWord(offset_in_saved_window(register));
     }
