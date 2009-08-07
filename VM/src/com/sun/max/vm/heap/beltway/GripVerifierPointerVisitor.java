@@ -23,7 +23,6 @@ package com.sun.max.vm.heap.beltway;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
@@ -32,22 +31,15 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 
 /**
+ * @author Laurent Daynes
  * @author Christos Kotselidis
  */
 
-public class VerifyActionImpl implements Verify {
-    Belt from;
+public class GripVerifierPointerVisitor  extends PointerIndexVisitor {
+    HeapBoundChecker heapBoundChecker;
 
-    public VerifyActionImpl() {
-
-    }
-
-    public void init(Belt from, Belt to) {
-        this.from = from;
-    }
-
-    public Grip doAction(Grip grip) {
-        return verifyGrip(from, grip);
+    public void init(HeapBoundChecker heapBoundChecker) {
+        this.heapBoundChecker = heapBoundChecker;
     }
 
     public void checkCellTag(Pointer cell) {
@@ -85,21 +77,24 @@ public class VerifyActionImpl implements Verify {
         FatalError.check(ObjectAccess.readHub(h) == h, "lost hub hub");
     }
 
-    public Grip verifyGrip(Belt from, Grip grip) {
+    @Override
+    public void visit(Pointer pointer, int wordIndex) {
+        final Grip grip = pointer.getGrip(wordIndex);
+        verifyGrip(grip);
+    }
+
+    public void verifyGrip(Grip grip) {
         if (grip.isZero()) {
-            return null;
+            return;
         }
 
-        final Pointer origin = grip.toOrigin();
-        checkGripTag(grip);
-        if (!(from.contains(origin) || Heap.bootHeapRegion.contains(origin) || Code.contains(origin))) {
+        DebugHeap.checkNonNullGripTag(grip);
+        //  if (!(from.contains(origin) || Heap.bootHeapRegion.contains(origin) || Code.contains(origin))) {
+        if (!heapBoundChecker.contains(grip)) {
             Log.print("Invalid grip: ");
-            Log.print(origin);
+            Log.print(grip.toOrigin());
             FatalError.unexpected("invalid grip");
-
         }
-        return null;
-
     }
 
 }

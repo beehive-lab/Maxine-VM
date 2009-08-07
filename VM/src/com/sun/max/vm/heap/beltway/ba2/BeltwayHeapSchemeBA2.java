@@ -24,6 +24,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.profile.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.beltway.*;
 import com.sun.max.vm.heap.beltway.ba2.BeltwayBA2Collector.*;
@@ -63,6 +64,37 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
      */
     private static final BeltwayBA2Collector [] parallelCollectors = new BeltwayBA2Collector[] {new ParMinorGCCollector(), new ParFullGCCollector() };
 
+    final class BA2HeapBoundChecker extends HeapBoundChecker {
+        private Address nurseryStart;
+        private Address nurseryEnd;
+        private Address matureStart;
+        private Address matureEnd;
+
+        void reset() {
+            nurseryStart = getNurserySpace().start();
+            nurseryEnd = getNurserySpace().getAllocationMark();
+            matureStart = getMatureSpace().start();
+            matureEnd = getMatureSpace().getAllocationMark();
+        }
+
+        @INLINE
+        private boolean inNurserySpace(Pointer origin) {
+            return origin.greaterEqual(nurseryStart) && origin.lessThan(nurseryEnd);
+        }
+
+        @INLINE
+        private boolean inMatureSpace(Pointer origin) {
+            return origin.greaterEqual(matureStart) && origin.lessThan(matureEnd);
+        }
+
+        @INLINE(override = true)
+        @Override
+        public boolean contains(Pointer origin) {
+            return inMatureSpace(origin) ||  Heap.bootHeapRegion.contains(origin) || Code.contains(origin)  || inNurserySpace(origin);
+        }
+    }
+
+    final BA2HeapBoundChecker ba2HeapBoundChecker;
 
     Runnable minorGCCollector;
     Runnable fullGCCollector;
@@ -77,6 +109,7 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
 
     public BeltwayHeapSchemeBA2(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
+        ba2HeapBoundChecker = new BA2HeapBoundChecker();
     }
 
     @Override
@@ -87,6 +120,11 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
     @Override
     protected String [] beltDescriptions() {
         return BELT_DESCRIPTIONS;
+    }
+
+    @Override
+    protected HeapBoundChecker heapBoundChecker() {
+        return ba2HeapBoundChecker;
     }
 
     @Override
@@ -113,7 +151,6 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
             fullGCCollector =  (Runnable) collectors[1];
 
         } else if (phase == MaxineVM.Phase.RUNNING) {
-            heapVerifier.initialize(beltManager.getApplicationHeap(), getMatureSpace());
             if (Heap.verbose()) {
                 HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "NurserySpaceGC", "MatureSpaceGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "CardScan", "Scavenge");
             }

@@ -33,9 +33,9 @@ import com.sun.max.vm.layout.*;
  */
 
 public class BeltwayCellVisitorImpl implements BeltCellVisitor {
-    final PointerVisitor pointerVisitorGripUpdater;
+    final GripUpdaterPointerVisitor pointerVisitorGripUpdater;
 
-    public BeltwayCellVisitorImpl(PointerVisitor pointerOffsetGripUpdater) {
+    public BeltwayCellVisitorImpl(GripUpdaterPointerVisitor pointerOffsetGripUpdater) {
         this.pointerVisitorGripUpdater = pointerOffsetGripUpdater;
     }
 

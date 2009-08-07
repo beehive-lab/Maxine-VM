@@ -31,6 +31,7 @@ import com.sun.max.vm.tele.*;
  * An Appel-style generational collector. The heap is divided in two generations, each implemented using a belt.
  * @see BeltwayHeapSchemeBA2
  *
+ * @author Laurent Daynes
  * @author Christos Kotselidis
  */
 
@@ -53,6 +54,18 @@ public class BeltwayBA2Collector extends BeltwayCollector {
         matureSpace =  ba2HeapScheme.getMatureSpace();
     }
 
+    protected void verifyHeap(String when) {
+        final BeltwayHeapSchemeBA2 ba2HeapScheme = (BeltwayHeapSchemeBA2) heapScheme;
+        if (Heap.verbose()) {
+            Log.print("Verify Heap");
+            Log.println(when);
+        }
+
+        ba2HeapScheme.ba2HeapBoundChecker.reset();
+        verifyBelt(nurserySpace);
+        verifyBelt(matureSpace);
+    }
+
     static class FullGCCollector extends BeltwayBA2Collector implements Runnable {
         FullGCCollector() {
             super("Major");
@@ -60,10 +73,9 @@ public class BeltwayBA2Collector extends BeltwayCollector {
 
         public void run() {
             prologue();
-            if (Heap.verbose()) {
-                Log.println("Verify Mature Space: ");
+            if (heapScheme.verifyBeforeGC()) {
+                verifyHeap("Before full GC");
             }
-            verifyBelt(matureSpace);
 
             monitorScheme.beforeGarbageCollection();
 
@@ -85,6 +97,10 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                 printBeltInfo("matureSpaceReserve", matureSpaceReserve);
             }
             evacuateFollowers(matureSpaceBeforeAllocation, matureSpaceReserve);
+
+            if (heapScheme.verifyAfterGC()) {
+                verifyHeap("After full GC");
+            }
 
             matureSpaceReserve.setEnd(matureSpaceReserve.getAllocationMark());
 
@@ -119,6 +135,10 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                 evacuateFollowers(matureSpaceReserve, matureSpace);
 
                 heapScheme.sideTable.restoreAllChunkSlots();
+
+                if (heapScheme.verifyAfterGC()) {
+                    verifyHeap("After Compaction");
+                }
 
                 if (Heap.verbose()) {
                     Log.println("Reset Nursery Space Allocation Mark");
@@ -155,9 +175,12 @@ public class BeltwayBA2Collector extends BeltwayCollector {
             if (Heap.verbose()) {
                 printBeltInfo("Nursery Space", nurserySpace);
                 printBeltInfo("Mature Space", matureSpace);
-                Log.println("Verify Nursery:");
             }
-            verifyBelt(nurserySpace);
+
+            if (heapScheme.verifyBeforeGC()) {
+                verifyHeap("Before minor GC");
+            }
+
             monitorScheme.beforeGarbageCollection();
             heapScheme.scavengeRoot(nurserySpace, matureSpace);
 
@@ -180,12 +203,10 @@ public class BeltwayBA2Collector extends BeltwayCollector {
             nurserySpace.resetAllocationMark();
             monitorScheme.afterGarbageCollection();
 
-            if (Heap.verbose()) {
-                printBeltInfo("Mature Space", matureSpace);
-                Log.println("Verify Mature Space");
+            if (heapScheme.verifyAfterGC()) {
+                verifyHeap("After minor GC");
             }
 
-            verifyBelt(matureSpace);
             InspectableHeapInfo.afterGarbageCollection();
 
             if (Heap.verbose()) {
@@ -197,6 +218,9 @@ public class BeltwayBA2Collector extends BeltwayCollector {
         }
     }
 
+    /**
+     * FIXME: revisit.
+     */
     static class ParFullGCCollector extends FullGCCollector {
 
         @Override
@@ -217,6 +241,9 @@ public class BeltwayBA2Collector extends BeltwayCollector {
         }
     }
 
+    /**
+     * FIXME: revisit.
+     */
     static class ParMinorGCCollector  extends MinorGCCollector {
 
         @Override
