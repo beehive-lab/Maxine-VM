@@ -50,13 +50,13 @@ JVM_ArrayCopy(JNIEnv *env, jclass ignored, jobject src, jint src_pos,
                jobject dst, jint dst_pos, jint length);
 
 JNIEXPORT jobject JNICALL
-Java_test_jvmni_JVM_1GetClassContext01_call(JNIEnv *env, jclass c)
+Java_jtt_jvmni_JVM_1GetClassContext01_call(JNIEnv *env, jclass c)
 {
     return JVM_GetClassContext(env);
 }
 
 JNIEXPORT jobject JNICALL
-Java_test_jvmni_JVM_1GetClassContext02_downCall1(JNIEnv *env, jclass c)
+Java_jtt_jvmni_JVM_1GetClassContext02_downCall1(JNIEnv *env, jclass c)
 {
     jclass jClass;
     jmethodID jMethod;
@@ -75,38 +75,38 @@ Java_test_jvmni_JVM_1GetClassContext02_downCall1(JNIEnv *env, jclass c)
 }
 
 JNIEXPORT jobject JNICALL
-Java_test_jvmni_JVM_1GetClassContext02_downCall2(JNIEnv *env, jclass c)
+Java_jtt_jvmni_JVM_1GetClassContext02_downCall2(JNIEnv *env, jclass c)
 {
     return JVM_GetClassContext(env);
 }
 
 
 JNIEXPORT jboolean JNICALL
-Java_test_jvmni_JVM_1IsNaN01_call(JNIEnv *env, jdouble d)
+Java_jtt_jvmni_JVM_1IsNaN01_call(JNIEnv *env, jdouble d)
 {
 	return JVM_IsNaN(env,d);
 }
 
 JNIEXPORT jlong JNICALL
-Java_test_jvmni_JVM_1GetMaxMemory01_call(JNIEnv *env)
+Java_jtt_jvmni_JVM_1GetMaxMemory01_call(JNIEnv *env)
 {
 	return JVM_MaxMemory();
 }
 
 JNIEXPORT jlong JNICALL
-Java_test_jvmni_JVM_1GetTotalMemory01_call(JNIEnv *env)
+Java_jtt_jvmni_JVM_1GetTotalMemory01_call(JNIEnv *env)
 {
 	return JVM_TotalMemory();
 }
 
 JNIEXPORT jlong JNICALL
-Java_test_jvmni_JVM_1GetFreeMemory01_call(JNIEnv *env)
+Java_jtt_jvmni_JVM_1GetFreeMemory01_call(JNIEnv *env)
 {
 	return JVM_FreeMemory();
 }
 
 JNIEXPORT void JNICALL
-Java_test_jvmni_JVM_1ArrayCopy01_call(JNIEnv *env, jclass jc, jobject src, jint src_pos, jobject dest, jint dest_pos, jint len)
+Java_jtt_jvmni_JVM_1ArrayCopy01_call(JNIEnv *env, jclass jc, jobject src, jint src_pos, jobject dest, jint dest_pos, jint len)
 {
 	JVM_ArrayCopy(env, jc, src, src_pos, dest, dest_pos, len);
 }

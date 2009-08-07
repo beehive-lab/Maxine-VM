@@ -24,8 +24,7 @@ package jtt.bytecode;
 
 /*
  * @Harness: java
- *
- * @Runs: 1.0d = 1; 0.0d = 0;
+ * @Runs: 1.0d = 1; 0.0d = 0
  */
 public class BC_d2i_nan {
 
