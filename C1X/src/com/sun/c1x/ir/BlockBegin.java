@@ -20,20 +20,13 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.Bailout;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.asm.Label;
-import com.sun.c1x.lir.LIRBlock;
-import com.sun.c1x.lir.LIRList;
-import com.sun.c1x.util.BitMap;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
+import java.util.*;
 
-import java.util.ArrayList;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Collections;
+import com.sun.c1x.*;
+import com.sun.c1x.asm.*;
+import com.sun.c1x.lir.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>BlockBegin</code> instruction represents the beginning of a basic block,
@@ -92,7 +85,7 @@ public class BlockBegin extends StateSplit {
      * @param blockID the ID of the block
      */
     public BlockBegin(int bci, int blockID) {
-        super(ValueType.ILLEGAL_TYPE);
+        super(BasicType.Illegal);
         this.blockID = blockID;
         depthFirstNumber = -1;
         linearScanNumber = -1;

@@ -20,15 +20,12 @@
  */
 package com.sun.c1x.value;
 
-import com.sun.c1x.Bailout;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.C1XMetrics;
-import com.sun.c1x.ci.CiMethod;
-import com.sun.c1x.ir.*;
-import com.sun.c1x.util.Util;
+import java.util.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.sun.c1x.*;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.util.*;
 
 /**
  * The <code>ValueStack</code> class encapsulates the state of local variables and the stack at a particular point in
@@ -581,7 +578,7 @@ public class ValueStack {
     public void setupPhiForStack(BlockBegin block, int i) {
         Instruction p = stackAt(i);
         assert !(p instanceof Phi) || ((Phi) p).block() != block : "phi already created for this block";
-        Instruction phi = new Phi(p.type().base(), block, -i - 1);
+        Instruction phi = new Phi(p.type(), block, -i - 1);
         values[maxLocals + i] = phi;
     }
 
@@ -594,7 +591,7 @@ public class ValueStack {
     public void setupPhiForLocal(BlockBegin block, int i) {
         Instruction p = values[i];
         assert !(p instanceof Phi) || ((Phi) p).block() != block : "phi already created for this block";
-        Instruction phi = new Phi(p.type().base(), block, i);
+        Instruction phi = new Phi(p.type(), block, i);
         storeLocal(i, phi);
     }
 
@@ -683,11 +680,9 @@ public class ValueStack {
                 if (C1XOptions.MergeEquivalentConstants) {
                     // check to see if x and y are the same constant
                     if (y != null) {
-                        ValueType xt = x.type();
-                        if (xt.isConstant()) {
+                        if (x.isConstant()) {
                             C1XMetrics.EquivalentConstantsChecked++;
-                            ValueType yt = y.type();
-                            if (yt.isConstant() && xt.asConstant().equivalent(yt)) {
+                            if (y.isConstant() && x.asConstant().equivalent(y.asConstant())) {
                                 // x and y are equivalent constants
                                 C1XMetrics.EquivalentConstantsMerged++;
                                 continue;

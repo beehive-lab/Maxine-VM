@@ -403,7 +403,7 @@ public class MaxCiType implements CiType {
     }
 
     public Object encoding() {
-        return new MaxCiConstant(ReferenceValue.from(asClassActor("encoding()").dynamicHub())).asObject();
+        return ReferenceValue.from(asClassActor("encoding()").dynamicHub());
     }
 
     public int superCheckOffset() {
@@ -411,7 +411,7 @@ public class MaxCiType implements CiType {
     }
 
     public CiConstant getStaticContainer() {
-        return new MaxCiConstant(ReferenceValue.from(asClassActor("getStaticContainer()").staticTuple()));
+        return CiConstant.forObject(asClassActor("getStaticContainer()").staticTuple());
     }
 
 }

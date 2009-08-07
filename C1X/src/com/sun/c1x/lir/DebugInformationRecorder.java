@@ -20,9 +20,9 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.ci.CiMethod;
+import java.util.*;
 
-import java.util.List;
+import com.sun.c1x.ci.*;
 
 /**
  * @author Thomas Wuerthinger

@@ -20,10 +20,7 @@
  */
 package com.sun.c1x.opt;
 
-import com.sun.c1x.ir.BlockBegin;
-import com.sun.c1x.ir.BlockClosure;
-import com.sun.c1x.ir.Instruction;
-import com.sun.c1x.ir.InstructionClosure;
+import com.sun.c1x.ir.*;
 
 /**
  * The <code>SubstitutionResolver</code> iterates over the instructions of a program and replaces

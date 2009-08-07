@@ -20,9 +20,9 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.ir.IRScope;
+import java.util.*;
 
-import java.util.List;
+import com.sun.c1x.ir.*;
 
 
 /**

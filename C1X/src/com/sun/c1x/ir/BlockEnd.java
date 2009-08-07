@@ -20,12 +20,10 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.util.Util;
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
+import java.util.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>BlockEnd</code> instruction is a base class for all instructions that end a basic
@@ -45,7 +43,7 @@ public abstract class BlockEnd extends StateSplit {
      * @param stateBefore the value stack before the this instruction
      * @param isSafepoint <code>true</code> if this instruction is a safepoint instruction
      */
-    public BlockEnd(ValueType type, ValueStack stateBefore, boolean isSafepoint) {
+    public BlockEnd(BasicType type, ValueStack stateBefore, boolean isSafepoint) {
         super(type);
         this.successors = new ArrayList<BlockBegin>(2);
         this.stateBefore = stateBefore;

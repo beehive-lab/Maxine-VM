@@ -20,8 +20,9 @@
  */
 package com.sun.c1x.ci;
 
-import com.sun.c1x.value.*;
 import static com.sun.c1x.value.BasicType.*;
+
+import com.sun.c1x.value.*;
 
 /**
  * @author Marcelo Cintra

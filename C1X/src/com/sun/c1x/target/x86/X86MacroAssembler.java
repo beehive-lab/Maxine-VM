@@ -25,8 +25,8 @@ import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.target.*;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.value.BasicType;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * @author Thomas Wuerthinger

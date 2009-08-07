@@ -20,9 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.CiMethod;
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>If</code> instruction represents a branch that can go one of two directions
@@ -51,7 +50,7 @@ public class If extends BlockEnd {
      */
     public If(Instruction x, Condition cond, boolean unorderedIsTrue, Instruction y,
               BlockBegin trueSucc, BlockBegin falseSucc, ValueStack stateBefore, boolean isSafepoint) {
-        super(ValueType.ILLEGAL_TYPE, stateBefore, isSafepoint);
+        super(BasicType.Illegal, stateBefore, isSafepoint);
         this.x = x;
         this.y = y;
         condition = cond;

@@ -26,17 +26,17 @@ package com.sun.max.vm.compiler.cir.optimize;
  *
  * @author Aziz Ghuloum
  */
-public class Environment<KeyType, ValueType> {
+public class Environment<KeyType, BasicType> {
 
     public Environment() {
     }
 
-    public ValueType lookup(KeyType x) {
+    public BasicType lookup(KeyType x) {
         return null;
     }
 
-    public Environment<KeyType, ValueType> extend(KeyType key, ValueType val) {
-        return new ExtendedEnvironment<KeyType, ValueType>(key, val, null);
+    public Environment<KeyType, BasicType> extend(KeyType key, BasicType val) {
+        return new ExtendedEnvironment<KeyType, BasicType>(key, val, null);
     }
 
     /**
@@ -45,14 +45,14 @@ public class Environment<KeyType, ValueType> {
      * Using a subclass for a non-empty environment optimizes the space requirement for empty
      * environments (which are presumed to be common).
      */
-    static final class ExtendedEnvironment<KeyType, ValueType> extends Environment<KeyType, ValueType> {
+    static final class ExtendedEnvironment<KeyType, BasicType> extends Environment<KeyType, BasicType> {
 
         private final int depth;
         private final KeyType key;
-        private final ValueType val;
-        private final ExtendedEnvironment<KeyType, ValueType> next;
+        private final BasicType val;
+        private final ExtendedEnvironment<KeyType, BasicType> next;
 
-        private ExtendedEnvironment(KeyType key, ValueType val, ExtendedEnvironment<KeyType, ValueType> next) {
+        private ExtendedEnvironment(KeyType key, BasicType val, ExtendedEnvironment<KeyType, BasicType> next) {
             this.key = key;
             this.val = val;
             this.next = next;
@@ -60,11 +60,11 @@ public class Environment<KeyType, ValueType> {
         }
 
         @Override
-        public ValueType lookup(KeyType x) {
+        public BasicType lookup(KeyType x) {
             if (x == key) {
                 return val;
             }
-            ExtendedEnvironment<KeyType, ValueType> e = next;
+            ExtendedEnvironment<KeyType, BasicType> e = next;
             while (e != null) {
                 if (e.key == x) {
                     return e.val;
@@ -75,8 +75,8 @@ public class Environment<KeyType, ValueType> {
         }
 
         @Override
-        public Environment<KeyType, ValueType> extend(KeyType k, ValueType v) {
-            return new ExtendedEnvironment<KeyType, ValueType>(k, v, this);
+        public Environment<KeyType, BasicType> extend(KeyType k, BasicType v) {
+            return new ExtendedEnvironment<KeyType, BasicType>(k, v, this);
         }
     }
 }

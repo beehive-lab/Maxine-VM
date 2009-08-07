@@ -20,30 +20,19 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.C1XCompilation;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.ExceptionInfo;
-import com.sun.c1x.asm.AbstractAssembler;
-import com.sun.c1x.asm.CodeOffsets;
-import com.sun.c1x.bytecode.Bytecodes;
-import com.sun.c1x.ci.CiMethod;
-import com.sun.c1x.ci.CiRuntimeCall;
-import com.sun.c1x.debug.InstructionPrinter;
-import com.sun.c1x.debug.LogStream;
-import com.sun.c1x.debug.TTY;
-import com.sun.c1x.ir.*;
-import com.sun.c1x.stub.CodeStub;
-import com.sun.c1x.stub.DivByZeroStub;
-import com.sun.c1x.stub.ImplicitNullCheckStub;
-import com.sun.c1x.stub.PatchingStub;
-import com.sun.c1x.target.Register;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.value.BasicType;
-import com.sun.c1x.value.ValueStack;
+import java.io.*;
+import java.util.*;
 
-import java.io.ByteArrayOutputStream;
-import java.util.ArrayList;
-import java.util.List;
+import com.sun.c1x.*;
+import com.sun.c1x.asm.*;
+import com.sun.c1x.bytecode.*;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.debug.*;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.stub.*;
+import com.sun.c1x.target.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>LIRAssembler</code> class definition.
