@@ -40,8 +40,8 @@ public class C1XTargetMethod extends TargetMethod {
 
     private int registerReferenceMapSize = 2; // TODO: Set this appropriately
 
-    public C1XTargetMethod(ClassMethodActor classMethodActor) {
-        super(classMethodActor);
+    public C1XTargetMethod(ClassMethodActor classMethodActor, DynamicCompilerScheme compilerScheme) {
+        super(classMethodActor, compilerScheme);
     }
 
     @Override

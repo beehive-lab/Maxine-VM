@@ -63,14 +63,15 @@ public abstract class Trap {
     public static final class Number {
         public static final int MEMORY_FAULT = 0;
         public static final int STACK_FAULT = 1;
-        public static final int ILLEGAL_INSTRUCTION = 2;
-        public static final int ARITHMETIC_EXCEPTION = 3;
-        public static final int ASYNC_INTERRUPT = 4;
-        public static final int NULL_POINTER_EXCEPTION = 5;
-        public static final int SAFEPOINT = 6;
+        public static final int STACK_FATAL = 2;
+        public static final int ILLEGAL_INSTRUCTION = 3;
+        public static final int ARITHMETIC_EXCEPTION = 4;
+        public static final int ASYNC_INTERRUPT = 5;
+        public static final int NULL_POINTER_EXCEPTION = 6;
+        public static final int SAFEPOINT = 7;
 
         public static boolean isImplicitException(int trapNumber) {
-            return trapNumber == ARITHMETIC_EXCEPTION || trapNumber == NULL_POINTER_EXCEPTION || trapNumber == STACK_FAULT;
+            return trapNumber == ARITHMETIC_EXCEPTION || trapNumber == NULL_POINTER_EXCEPTION || trapNumber == STACK_FAULT  || trapNumber == STACK_FATAL;
         }
     }
 
@@ -189,6 +190,10 @@ public abstract class Trap {
                 case ARITHMETIC_EXCEPTION:
                     // integer divide by zero
                     raise(trapState, targetMethod, new ArithmeticException(), stackPointer, framePointer, instructionPointer);
+                    break; // unreachable
+                case STACK_FATAL:
+                    // fatal stack overflow
+                    FatalError.unexpected("fatal stack fault in red zone", false, null, trapState);
                     break; // unreachable
             }
         } else {

@@ -62,6 +62,8 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     @PROTOTYPE_ONLY
     public static boolean COLLECT_TARGET_METHOD_STATS;
 
+    private final DynamicCompilerScheme compilerScheme;
+
     @INSPECTED
     private final ClassMethodActor classMethodActor;
     @INSPECTED
@@ -117,8 +119,9 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     @INSPECTED
     private TargetABI abi;
 
-    public TargetMethod(ClassMethodActor classMethodActor) {
+    public TargetMethod(ClassMethodActor classMethodActor, DynamicCompilerScheme compilerScheme) {
         this.classMethodActor = classMethodActor;
+        this.compilerScheme = compilerScheme;
         setDescription("Target-" + name());
     }
 
@@ -908,11 +911,11 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     }
 
     /**
-     * Return the compiler scheme that produces this target method.
-     * @return
+     * Return the compiler scheme that produced this target method.
+     * @return the compiler scheme that produced this method
      */
-    public DynamicCompilerScheme compilerScheme() {
-        return MaxineVM.hostOrTarget().configuration().compilerScheme();
+    public final DynamicCompilerScheme compilerScheme() {
+        return compilerScheme;
     }
 
     public final TargetMethod duplicate() {

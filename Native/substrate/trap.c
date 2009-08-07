@@ -59,9 +59,10 @@
  */
 #define MEMORY_FAULT 0
 #define STACK_FAULT 1
-#define ILLEGAL_INSTRUCTION 2
-#define ARITHMETIC_EXCEPTION 3
-#define ASYNC_INTERRUPT 4
+#define STACK_FATAL 2
+#define ILLEGAL_INSTRUCTION 3
+#define ARITHMETIC_EXCEPTION 4
+#define ASYNC_INTERRUPT 5
 
 int getTrapNumber(int signal) {
     switch (signal) {
@@ -224,8 +225,9 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     Address faultAddress = getFaultAddress(signalInfo, ucontext);
     if (faultAddress >= threadSpecifics->stackRedZone && faultAddress < threadSpecifics->stackBase + threadSpecifics->stackSize) {
         if (faultAddress < threadSpecifics->stackYellowZone) {
-            /* The faultAddress is in the red zone; we shouldn't be alive. */
-            log_exit(-20, "SIGSEGV: Address %p is in stack red zone.");
+            /* The faultAddress is in the red zone; we shouldn't be alive */
+            virtualMemory_unprotectPage(threadSpecifics->stackRedZone);
+            trapNumber = STACK_FATAL;
         } else if (faultAddress < threadSpecifics->stackYellowZone + virtualMemory_getPageSize()) {
             /* the faultAddress is in the yellow zone; assume this is a stack fault. */
             virtualMemory_unprotectPage(threadSpecifics->stackYellowZone);

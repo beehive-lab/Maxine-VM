@@ -42,7 +42,6 @@ public class CriticalEdgeFinder implements BlockClosure {
     }
 
 
-    @Override
     public void apply(BlockBegin block) {
         if (block.numberOfSux() >= 2) {
             for (BlockBegin succ : block.end().successors()) {

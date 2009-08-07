@@ -108,6 +108,10 @@ public final class SPARCTrapStateAccess extends TrapStateAccess {
         }
     });
 
+    public static Pointer getCallAddressRegister(Pointer trapState) {
+        return trapState.readWord(TRAP_CALL_ADDRESS_OFFSET).asPointer();
+    }
+
     @Override
     public Pointer getInstructionPointer(Pointer trapState) {
         // We're in the trap stub. The latch register is set to the disabled vm thread locals.
@@ -165,10 +169,6 @@ public final class SPARCTrapStateAccess extends TrapStateAccess {
     @Override
     public void setTrapNumber(Pointer trapState, int trapNumber) {
         trapState.writeWord(TRAP_NUMBER_OFFSET, Address.fromInt(trapNumber));
-    }
-
-    public Pointer getCallAddressRegister(Pointer trapState) {
-        return trapState.readWord(TRAP_CALL_ADDRESS_OFFSET).asPointer();
     }
 
     @Override

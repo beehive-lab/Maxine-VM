@@ -300,4 +300,6 @@ public interface CiRuntime {
 
     Object registerTargetMethod(CiTargetMethod targetMethod);
 
+    CiType primitiveArrayType(BasicType elemType);
+
 }

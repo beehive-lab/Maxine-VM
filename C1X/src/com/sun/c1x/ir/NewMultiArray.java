@@ -30,7 +30,7 @@ import com.sun.c1x.value.ValueStack;
  * @author Ben L. Titzer
  */
 public class NewMultiArray extends NewArray {
-    final CiType elementType;
+    public final CiType elementType;
     final Instruction[] dimensions;
 
     /**
@@ -43,14 +43,6 @@ public class NewMultiArray extends NewArray {
         super(null, stateBefore); // note that this instruction doesn't have a "length" per-se
         this.elementType = elementType;
         this.dimensions = dimensions;
-    }
-
-    /**
-     * Gets the element type of this array allocation.
-     * @return the array element type
-     */
-    public CiType elementType() {
-        return elementType;
     }
 
     /**

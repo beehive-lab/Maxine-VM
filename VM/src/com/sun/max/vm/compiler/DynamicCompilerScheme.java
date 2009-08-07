@@ -69,7 +69,7 @@ public interface DynamicCompilerScheme extends VMScheme {
      * @param classMethodActor the method to compile
      * @return a reference to the IR method created by this compiler for the specified method
      */
-    IrMethod compile(ClassMethodActor classMethodActor, CompilationDirective compilationDirective);
+    IrMethod compile(ClassMethodActor classMethodActor);
 
     /**
      * Returns a list of the internal IR generators that this compiler uses, e.g. for instrumentation.

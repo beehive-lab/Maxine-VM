@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.heap.beltway;
 
+import static com.sun.max.vm.VMOptions.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
@@ -33,6 +35,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.beltway.profile.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
@@ -75,6 +78,12 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
      * Although the visitor can be used by multiple thread simultaneously, all the threads must operate on the same source and destination belts.
      */
     private static final BeltwayCellVisitorImpl parallelCellVisitor = new BeltwayCellVisitorImpl(new PointerVisitor(new ParallelCopyActionImpl(verifyAction)));
+
+    /**
+     * A VM option for specifying if GC should used multiple-threads to scavenge Belts.
+     */
+    private static VMBooleanXXOption useParallelGCOption = register(new VMBooleanXXOption("-XX:-UseParallelGC", "Use parallel GC."), MaxineVM.Phase.PRISTINE);
+
 
     /**
      * The cell visitor used by the heap scheme. It's either one of singleThreadedCellVisitor parallelCellVisitor depending on
@@ -124,9 +133,9 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     public static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError();
     public static boolean outOfMemory = false;
 
-    // Support for parallel collections
+    // Support for parallel collections. FIXME: this needs to be completely revisited.
 
-    public static final int numberOfGCThreads = 1;
+    public static final int numberOfGCThreads = 0;
 
     public static boolean useGCTlabs = false;
     public static boolean parallelScavenging = false;
@@ -177,20 +186,27 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             TLAB_HEADROOM = MIN_OBJECT_SIZE.plus(MaxineVM.isDebug() ? Word.size() : 0);
             beltManager = new BeltManager(this);
 
+            // Parallel GC support. FIXME: Should this be here at all ?
+            // the number of GC threads to use should be a VM startup decision, not  a prototyping one.
             for (int i = 0; i < numberOfGCThreads; i++) {
                 JavaMonitorManager.bindStickyMonitor(BeltwayCollectorThread.tokens[i], new StandardJavaMonitor());
             }
             JavaMonitorManager.bindStickyMonitor(BeltwayCollectorThread.callerToken, new StandardJavaMonitor());
         } else if (phase == MaxineVM.Phase.PRISTINE) {
+            parallelScavenging = useParallelGCOption.getValue();
             cellVisitor = parallelScavenging ? parallelCellVisitor : singleThreadedCellVisitor;
+            ((CopyActionImpl) cellVisitor.pointerVisitorGripUpdater.action).initialize(this);
             stackAndMonitorGripUpdater.setPointerIndexVisitor(cellVisitor.pointerVisitorGripUpdater);
             dynamicHeapMaxSize = calculateHeapSize();
             dynamicHeapStart = allocateHeapStorage(dynamicHeapMaxSize);
             beltManager.initializeBelts();
+            InspectableHeapInfo.init(beltManager.belts());
 
             if (Heap.verbose()) {
                 beltManager.printBeltsInfo();
             }
+
+            // FIXME: the following should be conditional to using a card table. Factor out in a method used by subclasses ?
             final Size coveredRegionSize = beltManager.getEnd().minus(Heap.bootHeapRegion.start()).asSize();
             cardRegion.initialize(Heap.bootHeapRegion.start(), coveredRegionSize, Heap.bootHeapRegion.start().plus(coveredRegionSize));
             sideTable.initialize(Heap.bootHeapRegion.start(), coveredRegionSize, Heap.bootHeapRegion.start().plus(coveredRegionSize).plus(cardRegion.cardTableSize()).roundedUpBy(

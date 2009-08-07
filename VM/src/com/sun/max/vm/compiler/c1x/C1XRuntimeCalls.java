@@ -124,18 +124,6 @@ public class C1XRuntimeCalls {
         return object;
     }
 
-
-    @RUNTIME_ENTRY(type = CiRuntimeCall.FastNewInstance)
-    public static Object runtimeFastNewInstance(Hub hub) {
-        return runtimeNewInstance(hub);
-    }
-
-
-    @RUNTIME_ENTRY(type = CiRuntimeCall.FastNewInstanceInitCheck)
-    public static Object runtimeFastNewInstanceInitCheck(Hub hub) {
-        return runtimeNewInstance(hub);
-    }
-
     @INLINE
     private static Object createArray(Hub hub, int length) {
         if (length < 0) {
@@ -147,16 +135,17 @@ public class C1XRuntimeCalls {
         return Heap.createArray(hub.classActor.dynamicHub(), length);
     }
 
-
-    @RUNTIME_ENTRY(type = CiRuntimeCall.NewTypeArray)
-    public static Object runtimeNewTypeArray(Hub arrayClassActor, int length) {
+    @RUNTIME_ENTRY(type = CiRuntimeCall.NewArray)
+    public static Object runtimeNewArray(Hub arrayClassActor, int length) {
         return createArray(arrayClassActor, length);
     }
 
-
-    @RUNTIME_ENTRY(type = CiRuntimeCall.NewObjectArray)
-    public static Object runtimeNewObjectArray(Hub arrayClassActor, int length) {
-        return createArray(arrayClassActor, length);
+    @RUNTIME_ENTRY(type = CiRuntimeCall.RetrieveInterfaceIndex)
+    public static int runtimeNewArray(Object receiver, int interfaceId) {
+        final Class receiverClass = receiver.getClass();
+        final ClassActor classActor = ClassActor.fromJava(receiverClass);
+        final int interfaceIIndex = classActor.dynamicHub().getITableIndex(interfaceId);
+        return interfaceIIndex * 8; // TODO (tw): return word size here!
     }
 
     @INLINE
@@ -169,8 +158,8 @@ public class C1XRuntimeCalls {
 
 
     @RUNTIME_ENTRY(type = CiRuntimeCall.NewMultiArray)
-    public static Object runtimeNewMultiArray(int index, ClassActor arrayClassActor, int[] lengths) {
-        return runtimeNewMultiArrayHelper(index, arrayClassActor, lengths);
+    public static Object runtimeNewMultiArray(Hub arrayClassHub, int[] lengths) {
+        return runtimeNewMultiArrayHelper(0, arrayClassHub.classActor, lengths);
     }
 
     private static Object runtimeNewMultiArrayHelper(int index, ClassActor arrayClassActor, int[] lengths) {

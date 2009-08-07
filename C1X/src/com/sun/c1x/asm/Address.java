@@ -89,6 +89,10 @@ public class Address {
         this(base, Util.safeToInt(displacement));
     }
 
+    public Address(Register reg) {
+        this(reg, 0);
+    }
+
     public boolean uses(Register r) {
         return base == r || index == r;
     }
