@@ -355,4 +355,50 @@ public class ConstType extends ValueType {
         }
         return new ConstType(BasicType.Object, o);
     }
+
+    /**
+     * @param object
+     * @return
+     */
+    public static ConstType fromBoxedJavaValue(Object boxedJavaValue) {
+        if (boxedJavaValue == null) {
+            return ConstType.NULL_OBJECT;
+        }
+        if (boxedJavaValue instanceof Byte) {
+            final Byte box = (Byte) boxedJavaValue;
+            return ConstType.forByte(box.byteValue());
+        }
+        if (boxedJavaValue instanceof Boolean) {
+            final Boolean box = (Boolean) boxedJavaValue;
+            return ConstType.forBoolean(box.booleanValue());
+        }
+        if (boxedJavaValue instanceof Short) {
+            final Short box = (Short) boxedJavaValue;
+            return ConstType.forShort(box.shortValue());
+        }
+        if (boxedJavaValue instanceof Character) {
+            final Character box = (Character) boxedJavaValue;
+            return ConstType.forChar(box.charValue());
+        }
+        if (boxedJavaValue instanceof Integer) {
+            final Integer box = (Integer) boxedJavaValue;
+            return ConstType.forInt(box.intValue());
+        }
+        if (boxedJavaValue instanceof Float) {
+            final Float box = (Float) boxedJavaValue;
+            return ConstType.forFloat(box.floatValue());
+        }
+        if (boxedJavaValue instanceof Long) {
+            final Long box = (Long) boxedJavaValue;
+            return ConstType.forLong(box.longValue());
+        }
+        if (boxedJavaValue instanceof Double) {
+            final Double box = (Double) boxedJavaValue;
+            return ConstType.forDouble(box.doubleValue());
+        }
+        if (boxedJavaValue instanceof Number) {
+            return ConstType.forWord((Number) boxedJavaValue);
+        }
+        return ConstType.forObject(boxedJavaValue);
+    }
 }

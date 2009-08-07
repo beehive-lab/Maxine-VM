@@ -79,4 +79,12 @@ public class NewMultiArray extends NewArray {
     public void accept(InstructionVisitor v) {
         v.visitNewMultiArray(this);
     }
+
+    /**
+     * Gets the element type of the array.
+     * @return the element type of the array
+     */
+    public CiType elementType() {
+        return elementType;
+    }
 }
