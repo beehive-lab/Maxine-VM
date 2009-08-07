@@ -54,8 +54,8 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     private static final Verify verifyAction = new VerifyActionImpl();
 
     /**
-     * Alignment requirement for Belt. Must be aligned on a card for now.
-     * Since the heap is made of Belts, it must also enforce belt alignment.
+     * Alignment requirement for belts. Must be aligned on a card for now.
+     * Since the heap is made of belts, it must also enforce belt alignment.
      */
     public static final int BELT_ALIGNMENT = BeltwayCardRegion.CARD_SIZE.toInt();
 
@@ -465,7 +465,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
      * @param enabledVmThreadLocals the thread whose TLAB will be refilled
      * @param tlabSize the size of the chunk of memory used to refill the TLAB
      */
-    private void allocateAndRefillTLABl(Pointer enabledVmThreadLocals, Size tlabSize) {
+    private void allocateAndRefillTLAB(Pointer enabledVmThreadLocals, Size tlabSize) {
         Pointer tlab = tlabAllocationBelt.allocateTLAB(tlabSize);
         // FIXME: we should verify that the tlab was successfully allocated here -- we may run out of space at this stage.
         if (MaxineVM.isDebug()) {
@@ -505,7 +505,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             }
             // Allocate an initial TLAB and a refill policy. For simplicity, this one is allocated from the TLAB (see comment below).
             final Size tlabSize = initialTlabSize();
-            allocateAndRefillTLABl(enabledVmThreadLocals, tlabSize);
+            allocateAndRefillTLAB(enabledVmThreadLocals, tlabSize);
             // Let's do a bit of dirty meta-circularity. The TLAB is refilled, and no-one except the current thread can use it.
             // So the tlab allocation is going to succeed here
             TLABRefillPolicy.setForCurrentThread(enabledVmThreadLocals, new SimpleTLABRefillPolicy(tlabSize));
@@ -523,7 +523,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
         if (cell.plus(size).equals(hardLimit)) {
             // Can actually fit the object in the TLAB.
             setTlabAllocationMark(enabledVmThreadLocals, hardLimit);
-            allocateAndRefillTLABl(enabledVmThreadLocals, nextTLABSize);
+            allocateAndRefillTLAB(enabledVmThreadLocals, nextTLABSize);
             return cell;
         }
 
@@ -532,7 +532,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             return tlabAllocationBelt.allocate(size);
         }
         // Refill TLAB and allocate (we know the request can be satisfied with a fresh TLAB and will therefore succeed).
-        allocateAndRefillTLABl(enabledVmThreadLocals, nextTLABSize);
+        allocateAndRefillTLAB(enabledVmThreadLocals, nextTLABSize);
         return tlabAllocate(size);
     }
 
