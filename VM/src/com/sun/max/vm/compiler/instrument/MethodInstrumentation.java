@@ -26,7 +26,6 @@ import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.adaptive.*;
 import com.sun.max.vm.profile.*;
 
@@ -193,7 +192,7 @@ public class MethodInstrumentation {
             final Phase phase = MaxineVM.host().phase();
             if (phase == MaxineVM.Phase.RUNNING) {
                 // VM is started up completely, increase the optimization level
-                AdaptiveCompilationScheme.increaseOptimizationLevel(classMethodActor, true, CompilationDirective.DEFAULT);
+                AdaptiveCompilationScheme.increaseOptimizationLevel(classMethodActor, true);
             } else {
                 // if we are still starting the VM, reset the count and try later
                 counter.reset();

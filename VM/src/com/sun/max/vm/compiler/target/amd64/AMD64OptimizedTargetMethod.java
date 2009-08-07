@@ -24,14 +24,15 @@ import com.sun.max.asm.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.DynamicCompilerScheme;
 
 /**
  * @author Bernd Mathiske
  */
 public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod {
 
-    public AMD64OptimizedTargetMethod(ClassMethodActor classMethodActor) {
-        super(classMethodActor);
+    public AMD64OptimizedTargetMethod(ClassMethodActor classMethodActor, DynamicCompilerScheme compilerScheme) {
+        super(classMethodActor, compilerScheme);
     }
 
     @Override

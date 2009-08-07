@@ -256,7 +256,7 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public int vtableStartOffset() {
-        return Hub.vTableStartIndex() * 8;
+        return VMConfiguration.target().layoutScheme().hybridLayout.headerSize();
     }
 
     public int arrayBaseOffsetInBytes(BasicType type) {
@@ -316,9 +316,7 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public int elementKlassOffsetInBytes() {
-
-        // TODO (tw): Modify maxine such that the element hub can be accessed from the array class hub!
-        return 0;
+        return ClassActor.fromJava(Hub.class).findLocalInstanceFieldActor("componentHub").offset();
     }
 
     public long floatSignflipPoolAddress() {
@@ -472,7 +470,6 @@ public class MaxCiRuntime implements CiRuntime {
         throw Util.unimplemented();
     }
 
-    @Override
     public int runtimeCallingConvention(BasicType[] signature, CiLocation[] regs) {
         return javaCallingConvention(signature, regs, true);
     }
@@ -594,12 +591,10 @@ public class MaxCiRuntime implements CiRuntime {
         return 0;
     }
 
-    @Override
     public Register exceptionOopRegister() {
         return X86.rax;
     }
 
-    @Override
     public Register returnRegister(BasicType object) {
 
         if (object == BasicType.Void) {
@@ -618,7 +613,6 @@ public class MaxCiRuntime implements CiRuntime {
 
     int memberIndex;
 
-    @Override
     public Object registerTargetMethod(CiTargetMethod ciTargetMethod) {
 //        ClassMethodActor classMethodActor = null;
 //        try {
@@ -638,7 +632,8 @@ public class MaxCiRuntime implements CiRuntime {
 //        classMethodActor.assignHolder(classActor, 0);
 
 
-        C1XTargetMethodGenerator generator = new C1XTargetMethodGenerator(null, ciTargetMethod);
+        // TODO: pass an appropriate compiler scheme
+        C1XTargetMethodGenerator generator = new C1XTargetMethodGenerator(null, null, ciTargetMethod);
         //assert !globalStubCache.containsKey(globalStubID);
         final C1XTargetMethod targetMethod = generator.finish();
         //globalStubCache.put(globalStubID, targetMethod);
@@ -666,5 +661,11 @@ public class MaxCiRuntime implements CiRuntime {
 //            public TargetMethod currentTargetMethod(CompilationDirective compilationDirective) {
 //                return targetMethod;
 //            }});
+    }
+
+    @Override
+    public CiType primitiveArrayType(BasicType elemType) {
+        return globalConstantPool.canonicalCiType(ClassActor.fromJava(elemType.primitiveArrayClass()));
+
     }
 }

@@ -65,20 +65,20 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      * The top of the current thread-local allocation buffer. This will remain zero if TLABs are not
      * {@linkplain #useTLABOption enabled}.
      */
-    private static VmThreadLocal TLAB_TOP
+    private static final VmThreadLocal TLAB_TOP
         = new VmThreadLocal("TLAB_TOP", Kind.WORD, "HeapSchemeWithTLAB: top of current TLAB, zero if not used");
 
     /**
      * The allocation mark of the current thread-local allocation buffer. This will remain zero if TLABs
      * are not {@linkplain #useTLABOption enabled}.
      */
-    private static VmThreadLocal TLAB_MARK
+    private static final VmThreadLocal TLAB_MARK
         = new VmThreadLocal("TLAB_MARK", Kind.WORD, "HeapSchemeWithTLAB: allocation mark of current TLAB, zero if not used");
 
     /**
      * Thread-local used to disable allocation per thread.
      */
-    private static VmThreadLocal ALLOCATION_DISABLED
+    private static final VmThreadLocal ALLOCATION_DISABLED
         = new VmThreadLocal("TLAB_DISABLED", Kind.WORD, "HeapSchemeWithTLAB: disables per thread allocation if non-zero");
 
     /**

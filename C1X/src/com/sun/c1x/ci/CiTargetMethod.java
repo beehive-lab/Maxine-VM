@@ -78,8 +78,6 @@ public class CiTargetMethod {
     public static class RefPatchSite {
         public final int codePos;
         public final Object referrent;
-        Object[] array;
-        public int index;
 
         RefPatchSite(int codePos, Object referrent) {
             this.codePos = codePos;

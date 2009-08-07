@@ -23,6 +23,7 @@ package com.sun.c1x.target.x86;
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
+import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.stub.*;
 import com.sun.c1x.target.*;
@@ -43,7 +44,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
 
     public void visitArrayCopyStub(ArrayCopyStub stub) {
         // ---------------slow case: call to native-----------------
-        lir().bind(stub.entry);
+        masm.bind(stub.entry);
 
         CallingConvention cc = compilation.frameMap().javaCallingConvention(ARRAY_COPY_SIGNATURE, true);
 
@@ -61,7 +62,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
             LIROperand r1 = cc.args().get(i);
             if (r1.isStack()) {
                 int stOff = r1.singleStackIx() * compilation.target.arch.wordSize;
-                lir().movptr(new Address(X86.rsp, stOff), r[i]);
+                masm.movptr(new Address(X86.rsp, stOff), r[i]);
             } else {
                 assert r[i] == r1.asRegister() : "Wrong register for arg ";
             }
@@ -70,21 +71,17 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         ce.alignCall(LIROpcode.StaticCall);
 
         ce.emitStaticCallStub();
-        lir().callRuntime(CiRuntimeCall.ResolveStaticCall);
+        masm.callRuntime(CiRuntimeCall.ResolveStaticCall);
         ce.addCallInfoHere(stub.info);
-        lir().jmp(stub.continuation);
-    }
-
-    private X86MacroAssembler lir() {
-        return masm;
+        masm.jmp(stub.continuation);
     }
 
     public void visitArrayStoreExceptionStub(ArrayStoreExceptionStub stub) {
-        lir().bind(stub.entry);
-        lir().callRuntime(CiRuntimeCall.ThrowArrayStoreException);
+        masm.bind(stub.entry);
+        masm.callRuntime(CiRuntimeCall.ThrowArrayStoreException);
         ce.addCallInfoHere(stub.info);
         if (C1XOptions.GenerateAssertionCode) {
-            lir().shouldNotReachHere();
+            masm.shouldNotReachHere();
         }
     }
 
@@ -102,67 +99,65 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
     }
 
     public void visitImplicitNullCheckStub(ImplicitNullCheckStub stub) {
-        ce.compilation.recordImplicitException(stub.offset, lir().codeBuffer.position());
-        lir().bind(stub.entry);
-        lir().callRuntime(CiRuntimeCall.ThrowNullPointerException);
+        ce.compilation.recordImplicitException(stub.offset, masm.codeBuffer.position());
+        masm.bind(stub.entry);
+        masm.callRuntime(CiRuntimeCall.ThrowNullPointerException);
         ce.addCallInfoHere(stub.info);
         if (C1XOptions.GenerateAssertionCode) {
-            lir().shouldNotReachHere();
+            masm.shouldNotReachHere();
         }
     }
 
     public void visitMonitorEnterStub(MonitorEnterStub stub) {
-        lir().bind(stub.entry);
-        ce.storeParameter(stub.objReg.asRegister(), 1);
-        ce.storeParameter(stub.lockReg.asRegister(), 0);
-        lir().callRuntime(CiRuntimeCall.Monitorenter);
+        masm.bind(stub.entry);
+        masm.storeParameter(stub.objReg.asRegister(), 1);
+        masm.storeParameter(stub.lockReg.asRegister(), 0);
+        masm.callRuntime(CiRuntimeCall.Monitorenter);
         ce.addCallInfoHere(stub.info);
         ce.verifyOopMap(stub.info);
-        lir().jmp(stub.continuation);
+        masm.jmp(stub.continuation);
     }
 
     public void visitMonitorExitStub(MonitorExitStub stub) {
-        lir().bind(stub.entry);
+        masm.bind(stub.entry);
         if (stub.computeLock) {
             // lockReg was destroyed by fast unlocking attempt => recompute it
             ce.monitorAddress(stub.monitorIx, stub.lockReg);
         }
-        ce.storeParameter(stub.lockReg.asRegister(), 0);
+        masm.storeParameter(stub.lockReg.asRegister(), 0);
         // note: non-blocking leaf routine => no call info needed
-        lir().callRuntime(CiRuntimeCall.Monitorexit);
-        lir().jmp(stub.continuation);
+        masm.callRuntime(CiRuntimeCall.Monitorexit);
+        masm.jmp(stub.continuation);
     }
 
     public void visitNewInstanceStub(NewInstanceStub stub) {
-        lir().bind(stub.entry);
-        lir().movptr(X86.rdx, stub.klassReg.asRegister());
-        lir().callRuntime(stub.stubId);
+        masm.bind(stub.entry);
         ce.addCallInfoHere(stub.info);
         ce.verifyOopMap(stub.info);
-        assert stub.result.asRegister() == X86.rax : "result must in X86Register.rax : ";
-        lir().jmp(stub.continuation);
+        masm.callGlobalStub(stub.stubId, stub.result.asRegister(), stub.klassReg.asRegister());
+        masm.jmp(stub.continuation);
     }
 
     public void visitNewObjectArrayStub(NewObjectArrayStub stub) {
-        lir().bind(stub.entry);
+        masm.bind(stub.entry);
         assert stub.length.asRegister() == X86.rbx : "length must in X86Register.rbx : ";
         assert stub.klassReg.asRegister() == X86.rdx : "klassReg must in X86Register.rdx";
-        lir().callRuntime(CiRuntimeCall.NewObjectArray);
+        masm.callGlobalStub(GlobalStub.NewObjectArray, X86.rax, X86.rdx, X86.rbx);
         ce.addCallInfoHere(stub.info);
         ce.verifyOopMap(stub.info);
         assert stub.result.asRegister() == X86.rax : "result must in X86Register.rax : ";
-        lir().jmp(stub.continuation);
+        masm.jmp(stub.continuation);
     }
 
     public void visitNewTypeArrayStub(NewTypeArrayStub stub) {
-        lir().bind(stub.entry);
+        masm.bind(stub.entry);
         assert stub.length.asRegister() == X86.rbx : "length must in X86Register.rbx : ";
         assert stub.klassReg.asRegister() == X86.rdx : "klassReg must in X86Register.rdx";
-        lir().callRuntime(CiRuntimeCall.NewTypeArray);
+        masm.callGlobalStub(GlobalStub.NewTypeArray, X86.rax, X86.rdx, X86.rbx);
         ce.addCallInfoHere(stub.info);
         ce.verifyOopMap(stub.info);
         assert stub.result.asRegister() == X86.rax : "result must in X86Register.rax : ";
-        lir().jmp(stub.continuation);
+        masm.jmp(stub.continuation);
     }
 
     public void visitPatchingStub(PatchingStub stub) {
@@ -280,12 +275,12 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
     }
 
     public void visitRangeCheckStub(RangeCheckStub stub) {
-        lir().bind(stub.entry);
+        masm.bind(stub.entry);
         // pass the array index on stack because all registers must be preserved
         if (stub.index.isCpuRegister()) {
-            ce.storeParameter(stub.index.asRegister(), 0);
+            masm.storeParameter(stub.index.asRegister(), 0);
         } else {
-            ce.storeParameter(stub.index.asInt(), 0);
+            masm.storeParameter(stub.index.asInt(), 0);
         }
         CiRuntimeCall stubId;
         if (stub.throwIndexOutOfBoundsException) {
@@ -293,23 +288,23 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         } else {
             stubId = CiRuntimeCall.ThrowRangeCheckFailed;
         }
-        lir().callRuntime(stubId);
+        masm.callRuntime(stubId);
         ce.addCallInfoHere(stub.info);
         if (C1XOptions.GenerateAssertionCode) {
-            lir().shouldNotReachHere();
+            masm.shouldNotReachHere();
         }
     }
 
     public void visitSimpleExceptionStub(SimpleExceptionStub stub) {
-        lir().bind(stub.entry);
+        masm.bind(stub.entry);
         // pass the object on stack because all registers must be preserved
         if (stub.obj.isCpuRegister()) {
-            ce.storeParameter(stub.obj.asRegister(), 0);
+            masm.storeParameter(stub.obj.asRegister(), 0);
         }
-        lir().callRuntime(stub.stub);
+        masm.callRuntime(stub.stub);
         ce.addCallInfoHere(stub.info);
         if (C1XOptions.GenerateAssertionCode) {
-            lir().shouldNotReachHere();
+            masm.shouldNotReachHere();
         }
     }
 }

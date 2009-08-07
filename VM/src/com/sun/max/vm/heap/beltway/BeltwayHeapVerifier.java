@@ -32,50 +32,52 @@ import com.sun.max.vm.runtime.*;
 /**
  * A utility class that sequentially verifies the Heap.
  *
+ * @author Laurent Daynes
  * @author Christos Kotselidis
  */
 public class BeltwayHeapVerifier {
 
-    private final Verify cellVerifier = new VerifyActionImpl();
+    private final GripVerifierPointerVisitor cellVerifier = new GripVerifierPointerVisitor();
 
     private final SequentialHeapRootsScanner stackAndMonitorVerifier;
-    private final PointerVisitor pointerVisitor;
 
     public BeltwayHeapVerifier() {
-        pointerVisitor = new PointerVisitor(cellVerifier);
-        stackAndMonitorVerifier = new SequentialHeapRootsScanner(pointerVisitor);
+        stackAndMonitorVerifier = new SequentialHeapRootsScanner(cellVerifier);
     }
 
-    public void initialize(Belt from, Belt to) {
-        pointerVisitor.action.init(from, to);
-    }
-
-    public void verifyHeap(Address regionStartAddress, Address allocationMark, Belt belt) {
+    /**
+     * Verifies that references within the specified region are within bounds and refers to properly formated objects.
+     * @param start start of the region to be verified
+     * @param end end of the region to be verified
+     * @param heapBoundChecker checker that specifies the bounds for valid references.
+     */
+    public void verifyHeap(Address start, Address end, HeapBoundChecker heapBoundChecker) {
+        cellVerifier.init(heapBoundChecker);
         stackAndMonitorVerifier.run();
         // FIXME: should this verify boot heap and code region ?
         if (Heap.verbose()) {
             Log.println("Finished Roots Verification");
         }
-        Pointer cell = regionStartAddress.asPointer();
-        while (cell.lessThan(allocationMark)) {
+        Pointer cell = start.asPointer();
+        while (cell.lessThan(end)) {
             cell = DebugHeap.checkDebugCellTag(Address.zero(), cell);
             final Pointer origin = Layout.cellToOrigin(cell);
             final Grip hubGrip = Layout.readHubGrip(origin);
             FatalError.check(!hubGrip.isZero(), "null hub");
-            cellVerifier.verifyGrip(belt, hubGrip);
+            cellVerifier.verifyGrip(hubGrip);
             final Hub hub = UnsafeLoophole.cast(hubGrip.toJava());
             cellVerifier.checkHub(hub);
             final SpecificLayout specificLayout = hub.specificLayout;
             if (specificLayout.isTupleLayout()) {
-                TupleReferenceMap.visitReferences(hub, origin, pointerVisitor);
+                TupleReferenceMap.visitReferences(hub, origin, cellVerifier);
                 cell = cell.plus(hub.tupleSize);
             } else {
                 if (specificLayout.isHybridLayout()) {
-                    TupleReferenceMap.visitReferences(hub, origin, pointerVisitor);
+                    TupleReferenceMap.visitReferences(hub, origin, cellVerifier);
                 } else if (specificLayout.isReferenceArrayLayout()) {
                     final int length = Layout.readArrayLength(origin);
                     for (int index = 0; index < length; index++) {
-                        cellVerifier.verifyGrip(belt, Layout.getGrip(origin, index));
+                        cellVerifier.verifyGrip(Layout.getGrip(origin, index));
                     }
                 }
                 cell = cell.plus(Layout.size(origin));

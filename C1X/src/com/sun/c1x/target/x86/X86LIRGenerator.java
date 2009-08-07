@@ -29,6 +29,7 @@ import com.sun.c1x.ci.CiType;
 import com.sun.c1x.debug.TTY;
 import com.sun.c1x.gen.LIRGenerator;
 import com.sun.c1x.gen.LIRItem;
+import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.stub.*;
@@ -217,7 +218,6 @@ public final class X86LIRGenerator extends LIRGenerator {
     public void visitStoreIndexed(StoreIndexed x) {
         assert isRoot(x) : "";
         boolean needsRangeCheck = true;
-        boolean useLength = x.length() != null;
         boolean objStore = x.elementType() == BasicType.Jsr || x.elementType() == BasicType.Object;
         boolean needsStoreCheck = objStore && ((!(x.value() instanceof Constant)) || x.value().type().asConstant().asObject() != null);
 
@@ -229,7 +229,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         array.loadItem();
         index.loadNonconstant();
 
-        if (useLength) {
+        if (x.length() != null) {
             needsRangeCheck = x.needsRangeCheck();
             if (needsRangeCheck) {
                 length.setInstruction(x.length());
@@ -253,15 +253,24 @@ public final class X86LIRGenerator extends LIRGenerator {
             nullCheckInfo = new CodeEmitInfo(rangeCheckInfo);
         }
 
+        emitArrayStore(array.result(), index.result(), value.result(), length.result(), x.elementType(), needsRangeCheck, needsStoreCheck, objStore, nullCheckInfo, rangeCheckInfo);
+    }
+
+    private void emitSafeArrayStore(LIROperand array, LIROperand index, LIROperand value, BasicType elementType, boolean needsBarrier) {
+        emitArrayStore(array, index, value, LIROperand.ILLEGAL, elementType, false, false, needsBarrier, null, null);
+    }
+
+    private void emitArrayStore(LIROperand array, LIROperand index, LIROperand value, LIROperand length, BasicType elementType, boolean needsRangeCheck, boolean needsStoreCheck, boolean needsBarrier,
+                    CodeEmitInfo nullCheckInfo, CodeEmitInfo rangeCheckInfo) {
         // emit array address setup early so it schedules better
-        LIRAddress arrayAddr = emitArrayAddress(array.result(), index.result(), x.elementType(), objStore);
+        LIRAddress arrayAddr = emitArrayAddress(array, index, elementType, needsBarrier);
 
         if (C1XOptions.GenerateBoundsChecks && needsRangeCheck) {
-            if (useLength) {
-                lir().cmp(LIRCondition.BelowEqual, length.result(), index.result());
-                lir().branch(LIRCondition.BelowEqual, BasicType.Int, new RangeCheckStub(rangeCheckInfo, index.result()));
+            if (length != LIROperand.ILLEGAL) {
+                lir().cmp(LIRCondition.BelowEqual, length, index);
+                lir().branch(LIRCondition.BelowEqual, BasicType.Int, new RangeCheckStub(rangeCheckInfo, index));
             } else {
-                arrayRangeCheck(array.result(), index.result(), nullCheckInfo, rangeCheckInfo);
+                arrayRangeCheck(array, index, nullCheckInfo, rangeCheckInfo);
                 // rangeCheck also does the null check
                 nullCheckInfo = null;
             }
@@ -274,17 +283,17 @@ public final class X86LIRGenerator extends LIRGenerator {
             LIROperand tmp3 = newRegister(BasicType.Object);
 
             CodeEmitInfo storeCheckInfo = new CodeEmitInfo(rangeCheckInfo);
-            lir().storeCheck(value.result(), array.result(), tmp1, tmp2, tmp3, storeCheckInfo);
+            lir().storeCheck(value, array, tmp1, tmp2, tmp3, storeCheckInfo);
         }
 
-        if (objStore) {
+        if (needsBarrier) {
             // Needs GC write barriers.
             preBarrier(arrayAddr, false, null);
-            lir().move(value.result(), arrayAddr, nullCheckInfo);
+            lir().move(value, arrayAddr, nullCheckInfo);
             // Seems to be a precise
-            postBarrier(arrayAddr, value.result());
+            postBarrier(arrayAddr, value);
         } else {
-            lir().move(value.result(), arrayAddr, nullCheckInfo);
+            lir().move(value, arrayAddr, nullCheckInfo);
         }
     }
 
@@ -389,11 +398,11 @@ public final class X86LIRGenerator extends LIRGenerator {
             // check for division by zero (destroys registers of right operand!)
             CodeEmitInfo info = stateFor(x);
 
-            LIROperand resultReg = resultRegisterFor(x.type());
-            left.loadItemForce(cc.at(1));
+            LIROperand resultReg = resultRegisterFor(x.type().basicType);
+            left.loadItemForce(cc.at(0));
             right.loadItem();
 
-            lir().move(right.result(), cc.at(0));
+            lir().move(right.result(), cc.at(1));
 
             lir().cmp(LIRCondition.Equal, right.result(), LIROperandFactory.longConst(0));
             lir().branch(LIRCondition.Equal, BasicType.Long, new DivByZeroStub(info));
@@ -831,21 +840,21 @@ public final class X86LIRGenerator extends LIRGenerator {
             TTY.println(String.format("   ###class not loaded at new bci %d", x.bci()));
         }
         CodeEmitInfo info = stateFor(x, x.state());
-        LIROperand reg = resultRegisterFor(x.type());
+        LIROperand reg = resultRegisterFor(x.type().basicType);
         CiType klass = x.instanceClass();
         LIROperand klassReg = X86FrameMap.rdxOopOpr;
-        jobject2regWithPatching(klassReg, klass, info);
+        jobject2regWithPatching(klassReg, klass.encoding(), info);
         // If klass is not loaded we do not know if the klass has finalizers:
         if (C1XOptions.UseFastNewInstance && klass.isLoaded() && !klass.layoutHelperNeedsSlowPath()) {
-            CiRuntimeCall stubId = klass.isInitialized() ? CiRuntimeCall.FastNewInstance : CiRuntimeCall.FastNewInstanceInitCheck;
-            CodeStub slowPath = new NewInstanceStub(klassReg, reg, klass, info, stubId);
-            assert klass.isLoaded() : "must be loaded";
-            // allocate space for instance
-            assert klass.sizeHelper() >= 0 : "illegal instance size";
-            int instanceSize = Util.align(klass.sizeHelper(), compilation.target.heapAlignment);
-            lir.allocateObject(reg, X86FrameMap.rcxOopOpr, X86FrameMap.rdiOopOpr, X86FrameMap.rsiOopOpr, LIROperandFactory.IllegalOperand, compilation.runtime.headerSize(), instanceSize, klassReg, !klass.isInitialized(), slowPath);
+//            CiRuntimeCall stubId = klass.isInitialized() ? CiRuntimeCall.FastNewInstance : CiRuntimeCall.FastNewInstanceInitCheck;
+//            CodeStub slowPath = new NewInstanceStub(klassReg, reg, klass, info, stubId);
+//            assert klass.isLoaded() : "must be loaded";
+//            // allocate space for instance
+//            assert klass.sizeHelper() >= 0 : "illegal instance size";
+//            int instanceSize = Util.align(klass.sizeHelper(), compilation.target.heapAlignment);
+//            lir.allocateObject(reg, X86FrameMap.rcxOopOpr, X86FrameMap.rdiOopOpr, X86FrameMap.rsiOopOpr, LIROperandFactory.IllegalOperand, compilation.runtime.headerSize(), instanceSize, klassReg, !klass.isInitialized(), slowPath);
         } else {
-            CodeStub slowPath = new NewInstanceStub(klassReg, reg, klass, info, CiRuntimeCall.NewInstance);
+            CodeStub slowPath = new NewInstanceStub(klassReg, reg, klass, info, GlobalStub.NewInstance);
             lir.branch(LIRCondition.Always, BasicType.Illegal, slowPath);
             lir.branchDestination(slowPath.continuation);
         }
@@ -858,22 +867,26 @@ public final class X86LIRGenerator extends LIRGenerator {
         CodeEmitInfo info = stateFor(x, x.state());
         LIRItem length = new LIRItem(x.length(), this);
         length.loadItemForce(X86FrameMap.rbxOpr);
-        LIROperand reg = resultRegisterFor(x.type());
+        LIROperand reg = emitNewTypeArray(x.type().basicType, x.elementType(), length.result(), info);
+        LIROperand result = rlockResult(x);
+        lir().move(reg, result);
+    }
+
+    private LIROperand emitNewTypeArray(BasicType type, BasicType elementType, LIROperand len, CodeEmitInfo info) {
+        LIROperand reg = resultRegisterFor(type);
+        assert len.asRegister() == X86.rbx;
         LIROperand tmp1 = X86FrameMap.rcxOopOpr;
         LIROperand tmp2 = X86FrameMap.rsiOopOpr;
         LIROperand tmp3 = X86FrameMap.rdiOopOpr;
         LIROperand tmp4 = reg;
         LIROperand klassReg = X86FrameMap.rdxOopOpr;
-        LIROperand len = length.result();
-        BasicType elemType = x.elementType();
+        BasicType elemType = elementType;
 
-        lir().oop2reg(elemType.primitiveArrayClass(), klassReg);
+        lir().oop2reg(compilation.runtime.primitiveArrayType(elemType).encoding(), klassReg);
 
         CodeStub slowPath = new NewTypeArrayStub(klassReg, len, reg, info);
         lir().allocateArray(reg, len, tmp1, tmp2, tmp3, tmp4, elemType, klassReg, slowPath);
-
-        LIROperand result = rlockResult(x);
-        lir().move(reg, result);
+        return reg;
     }
 
     @Override
@@ -889,7 +902,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
         CodeEmitInfo info = stateFor(x, x.state());
 
-        LIROperand reg = resultRegisterFor(x.type());
+        LIROperand reg = resultRegisterFor(x.type().basicType);
         LIROperand tmp1 = X86FrameMap.rcxOopOpr;
         LIROperand tmp2 = X86FrameMap.rsiOopOpr;
         LIROperand tmp3 = X86FrameMap.rdiOopOpr;
@@ -900,7 +913,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand len = length.result();
 
         CodeStub slowPath = new NewObjectArrayStub(klassReg, len, reg, info);
-        Object obj = x.elementClass().arrayOf();
+        Object obj = x.elementClass().arrayOf().encoding();
         jobject2regWithPatching(klassReg, obj, patchingInfo);
         lir().allocateArray(reg, len, tmp1, tmp2, tmp3, tmp4, BasicType.Object, klassReg, slowPath);
 
@@ -912,6 +925,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     public void visitNewMultiArray(NewMultiArray x) {
 
         Instruction[] dims = x.dimensions();
+
         List<LIRItem> items = new ArrayList<LIRItem>(dims.length);
         for (int i = 0; i < dims.length; i++) {
             LIRItem size = new LIRItem(dims[i], this);
@@ -920,7 +934,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
         // need to get the info before, as the items may become invalid through itemFree
         CodeEmitInfo patchingInfo = null;
-        if (!x.elementType().isLoaded() || C1XOptions.TestPatching) {
+        if (!x.elementType.isLoaded() || C1XOptions.TestPatching) {
             patchingInfo = stateFor(x, x.stateBefore());
 
             // cannot re-use same xhandlers for multiple CodeEmitInfos, so
@@ -929,28 +943,26 @@ public final class X86LIRGenerator extends LIRGenerator {
         }
 
         CodeEmitInfo info = stateFor(x, x.state());
+        CallingConvention cc = compilation.frameMap().runtimeCallingConvention(CiRuntimeCall.NewMultiArray.arguments);
 
-        int i = dims.length;
-        while (i-- > 0) {
+        LIROperand length = X86FrameMap.rbxOpr;
+        lir().move(LIROperandFactory.intConst(dims.length), length);
+        LIROperand dimensionArray = emitNewTypeArray(BasicType.Object, BasicType.Int, length, info);
+        for (int i = 0; i < dims.length; i++) {
             LIRItem size = items.get(i);
             size.loadNonconstant();
-
-            storeStackParameter(size.result(), i * 4);
+            emitSafeArrayStore(dimensionArray, LIROperandFactory.intConst(i), size.result(), BasicType.Int, false);
         }
 
-        LIROperand reg = resultRegisterFor(x.type());
-        jobject2regWithPatching(reg, x.elementType(), patchingInfo);
+        lir().move(dimensionArray, cc.args().get(1));
 
-        LIROperand rank = X86FrameMap.rbxOpr;
-        lir().move(LIROperandFactory.intConst(x.rank()), rank);
-        LIROperand varargs = X86FrameMap.rcxOpr;
-        lir().move(X86FrameMap.rspOpr(compilation.target.arch), varargs);
-        List<LIROperand> args = new ArrayList<LIROperand>(3);
-        args.add(reg);
-        args.add(rank);
-        args.add(varargs);
-        lir().callRuntime(CiRuntimeCall.NewMultiArray, LIROperandFactory.IllegalOperand, reg, args, info);
 
+        jobject2regWithPatching(cc.args().get(0), x.elementType.encoding(), patchingInfo);
+
+        LIROperand reg = resultRegisterFor(x.type().basicType);
+        lir().callRuntime(CiRuntimeCall.NewMultiArray, LIROperandFactory.IllegalOperand, reg, cc.args(), info);
+
+        // Save result
         LIROperand result = rlockResult(x);
         lir().move(reg, result);
     }
@@ -1176,11 +1188,11 @@ public final class X86LIRGenerator extends LIRGenerator {
      * TODO: (tw) this is maybe part of the calling convention?
      */
     @Override
-    protected LIROperand resultRegisterFor(ValueType type, boolean callee) {
+    protected LIROperand resultRegisterFor(BasicType type, boolean callee) {
 
         assert C1XOptions.SSEVersion >= 2;
         LIROperand opr;
-        switch (type.basicType) {
+        switch (type) {
             case Int:
                 opr = X86FrameMap.raxOpr;
                 break;
@@ -1202,7 +1214,7 @@ public final class X86LIRGenerator extends LIRGenerator {
                 return LIROperandFactory.IllegalOperand;
         }
 
-        assert opr.basicType == type.basicType : "type mismatch";
+        assert opr.basicType == type : "type mismatch";
         return opr;
     }
 

@@ -35,7 +35,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jit.*;
@@ -128,7 +127,7 @@ public abstract class JitCompilerTestCase extends CompilerTestCase<JitTargetMeth
         return MaxineVM.usingTarget(new Function<JitTargetMethod>() {
             public JitTargetMethod call() {
                 try {
-                    final JitTargetMethod method = compiler().compile(classMethodActor, CompilationDirective.DEFAULT);
+                    final JitTargetMethod method = compiler().compile(classMethodActor);
                     assertNotNull(method);
                     if (Trace.hasLevel(1)) {
                         if (jitTestSetup().disassembleCompiledMethods()) {

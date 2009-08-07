@@ -23,15 +23,12 @@ package com.sun.max.vm.code;
 import static com.sun.max.vm.code.CodeManager.ReferenceListNode.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.actor.member.MethodKey.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
 import com.sun.max.vm.heap.*;
@@ -230,45 +227,45 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
                 }
             }
             if (Code.traceAllocation.getValue()) {
-                final boolean lockDisabledSafepoints = Log.lock();
-                Log.printVmThread(VmThread.current(), false);
-                Log.print(": Code arrays: code=[");
-                Log.print(codeCell);
-                Log.print(" - ");
-                Log.print(targetBundleLayout.cellEnd(start, ArrayField.code));
-                Log.print("], scalarLiterals=");
-                if (scalarLiteralsLength > 0) {
-                    Log.print(targetBundleLayout.cell(start, ArrayField.scalarLiterals));
-                    Log.print(" - ");
-                    Log.print(targetBundleLayout.cellEnd(start, ArrayField.scalarLiterals));
-                    Log.print("], referenceLiterals=");
-                } else {
-                    Log.print("0, referenceLiterals=");
-                }
-                if (referenceLiteralsLength > 0) {
-                    Log.print(targetBundleLayout.cell(start, ArrayField.referenceLiterals));
-                    Log.print(" - ");
-                    Log.print(targetBundleLayout.cellEnd(start, ArrayField.referenceLiterals));
-                    if (Heap.codeReferencesAreGCRoots()) {
-                        Log.print(", referenceListNode=");
-                        Log.print(start.plus(bundleSize));
-                        Log.print(" - ");
-                        Log.print(start.plus(bundleSize).plus(ReferenceListNode.SIZE));
-                    }
-                    Log.println("]");
-                } else {
-                    Log.println(0);
-                }
-                Log.unlock(lockDisabledSafepoints);
+                traceAllocation(targetBundleLayout, bundleSize, scalarLiteralsLength, referenceLiteralsLength, start, codeCell);
             }
         }
 
         final Pointer codeStart = targetBundleLayout.firstElementPointer(start, ArrayField.code);
         targetMethod.setCodeArrays(code, codeStart, scalarLiterals, referenceLiterals);
+    }
 
-        if (targetMethod.classMethodActor() != null) {
-            methodKeyToTargetMethods.add(new MethodActorKey(targetMethod.classMethodActor()), targetMethod);
+    private void traceAllocation(TargetBundleLayout targetBundleLayout, Size bundleSize, int scalarLiteralsLength, int referenceLiteralsLength, Pointer start, Pointer codeCell) {
+        final boolean lockDisabledSafepoints = Log.lock();
+        Log.printVmThread(VmThread.current(), false);
+        Log.print(": Code arrays: code=[");
+        Log.print(codeCell);
+        Log.print(" - ");
+        Log.print(targetBundleLayout.cellEnd(start, ArrayField.code));
+        Log.print("], scalarLiterals=");
+        if (scalarLiteralsLength > 0) {
+            Log.print(targetBundleLayout.cell(start, ArrayField.scalarLiterals));
+            Log.print(" - ");
+            Log.print(targetBundleLayout.cellEnd(start, ArrayField.scalarLiterals));
+            Log.print("], referenceLiterals=");
+        } else {
+            Log.print("0, referenceLiterals=");
         }
+        if (referenceLiteralsLength > 0) {
+            Log.print(targetBundleLayout.cell(start, ArrayField.referenceLiterals));
+            Log.print(" - ");
+            Log.print(targetBundleLayout.cellEnd(start, ArrayField.referenceLiterals));
+            if (Heap.codeReferencesAreGCRoots()) {
+                Log.print(", referenceListNode=");
+                Log.print(start.plus(bundleSize));
+                Log.print(" - ");
+                Log.print(start.plus(bundleSize).plus(ReferenceListNode.SIZE));
+            }
+            Log.println("]");
+        } else {
+            Log.println(0);
+        }
+        Log.unlock(lockDisabledSafepoints);
     }
 
     /**
@@ -349,21 +346,6 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
             return codeRegion.findRuntimeStub(codePointer);
         }
         return null;
-    }
-
-    /**
-     * A mapping from method keys to target methods.
-     */
-    private final ArrayBag<MethodKey, TargetMethod> methodKeyToTargetMethods = new ArrayBag<MethodKey, TargetMethod>(TargetMethod.class, ArrayBag.MapType.HASHED);
-
-    /**
-     * Finds any target methods that match the specified method key.
-     *
-     * @param methodKey the method key to lookup
-     * @return an array of target methods that match the specified method key
-     */
-    synchronized TargetMethod[] methodKeyToTargetMethods(MethodKey methodKey) {
-        return methodKeyToTargetMethods.get(methodKey);
     }
 
     /**

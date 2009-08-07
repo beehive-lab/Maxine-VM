@@ -532,7 +532,7 @@ public class CompiledPrototype extends Prototype {
                     compilationCompletionService.submit(new Callable<TargetMethod>() {
                         public TargetMethod call() throws Exception {
                             try {
-                                final TargetMethod result = compilationScheme.synchronousCompile((ClassMethodActor) methodActor, CompilationDirective.DEFAULT);
+                                final TargetMethod result = compilationScheme.synchronousCompile((ClassMethodActor) methodActor);
                                 assert result != null;
                                 return result;
                             } catch (Throwable error) {

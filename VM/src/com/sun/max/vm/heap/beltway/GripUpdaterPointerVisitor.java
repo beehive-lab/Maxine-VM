@@ -24,26 +24,31 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 /**
- *
+ * Generic grip updater visitor for beltway collectors.
  *
  * @author Laurent Daynes
  */
-public class PointerVisitor extends PointerIndexVisitor {
+public class GripUpdaterPointerVisitor extends PointerIndexVisitor {
 
     final Action action;
 
-    public PointerVisitor(Action action) {
+    public GripUpdaterPointerVisitor(Action action) {
         this.action = action;
     }
 
+    /**
+     * Visit the grip at the specified address (pointer + wordIndex) and replace it if the action of this visitor returns
+     * a different grip that the one initially seen.
+     */
     @Override
     public void visit(Pointer pointer, int wordIndex) {
         final Grip oldGrip = pointer.getGrip(wordIndex);
+        // Should we filter null grips here for perf reason ?
+        // May have a separate  NullFilterPointerVisitor that do that, and
+        // use a VM option to use it instead.
         final Grip newGrip = action.doAction(oldGrip);
-        if (newGrip != null) {
-            if (newGrip != oldGrip) {
-                pointer.setGrip(wordIndex, newGrip);
-            }
+        if (newGrip != oldGrip) {
+            pointer.setGrip(wordIndex, newGrip);
         }
     }
 }

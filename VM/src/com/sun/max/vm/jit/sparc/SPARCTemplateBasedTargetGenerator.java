@@ -22,7 +22,6 @@ package com.sun.max.vm.jit.sparc;
 
 import com.sun.max.asm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.b.c.d.e.sparc.target.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.sparc.*;
@@ -44,13 +43,13 @@ public class SPARCTemplateBasedTargetGenerator extends TemplateBasedTargetGenera
 
     @Override
     public TargetMethod createIrMethod(ClassMethodActor classMethodActor) {
-        final SPARCJitTargetMethod targetMethod = new SPARCJitTargetMethod(classMethodActor);
+        final SPARCJitTargetMethod targetMethod = new SPARCJitTargetMethod(classMethodActor, compilerScheme());
         notifyAllocation(targetMethod);
         return targetMethod;
     }
 
     @Override
-    protected BytecodeToTargetTranslator makeTargetTranslator(ClassMethodActor classMethodActor, CompilationDirective compilationDirective) {
+    protected BytecodeToTargetTranslator makeTargetTranslator(ClassMethodActor classMethodActor) {
         // allocate a buffer that is likely to be large enough, based on a linear expansion
         final  int estimatedSize = classMethodActor.codeAttribute().code().length * NUMBER_OF_BYTES_PER_BYTECODE;
         final CodeBuffer codeBuffer = new ByteArrayCodeBuffer(estimatedSize);
@@ -60,7 +59,7 @@ public class SPARCTemplateBasedTargetGenerator extends TemplateBasedTargetGenera
             optimizingCompilerAbi = (SPARCEirABI) eirGenerator.eirABIsScheme().getABIFor(classMethodActor);
         }
 
-        return new BytecodeToSPARCTargetTranslator(classMethodActor, codeBuffer, templateTable(), optimizingCompilerAbi, compilationDirective.traceInstrument());
+        return new BytecodeToSPARCTargetTranslator(classMethodActor, codeBuffer, templateTable(), optimizingCompilerAbi, false);
     }
 
     private static final int NUMBER_OF_BYTES_PER_BYTECODE = 16;

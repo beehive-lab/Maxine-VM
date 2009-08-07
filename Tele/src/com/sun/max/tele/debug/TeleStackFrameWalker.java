@@ -140,8 +140,8 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
     }
 
     @Override
-    public Word readFramelessCallAddressRegister(TargetABI targetABI) {
-        return teleNativeThread.integerRegisters().get(Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS, targetABI);
+    public Word readRegister(Role role, TargetABI targetABI) {
+        return teleNativeThread.integerRegisters().get(role, targetABI);
     }
 
     @Override

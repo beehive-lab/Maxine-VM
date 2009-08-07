@@ -79,13 +79,8 @@ public abstract class JitTargetMethod extends TargetMethod {
     private int[] bytecodeToTargetCodePositionMap;
 
 
-    protected JitTargetMethod(ClassMethodActor classMethodActor) {
-        super(classMethodActor);
-    }
-
-    @Override
-    public DynamicCompilerScheme compilerScheme() {
-        return MaxineVM.hostOrTarget().configuration().jitScheme();
+    protected JitTargetMethod(ClassMethodActor classMethodActor, DynamicCompilerScheme compilerScheme) {
+        super(classMethodActor, compilerScheme);
     }
 
     /**

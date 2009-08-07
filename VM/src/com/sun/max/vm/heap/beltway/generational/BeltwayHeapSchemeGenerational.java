@@ -24,17 +24,23 @@ import com.sun.max.annotate.*;
 import com.sun.max.profile.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.beltway.*;
 import com.sun.max.vm.heap.beltway.generational.BeltwayGenerationalCollector.*;
 import com.sun.max.vm.heap.beltway.profile.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.tele.*;
 
 /**
- * A Beltway collector configured as a generational heap.
- * Configured with three belts: one for a nursery (the eden space); one for a survivor space (to space);
- * and one for the tenured generation (the mature space).
+ * Heap scheme for a three-generations generational collector. Configured with three belts: one for a nursery (the eden
+ * space); one for a survivor space (to space); and one for the tenured generation (the mature space). The scheme uses a
+ * specific collector for each belt when they fills up. There is a single-threaded and parallel version for each of
+ * these collectors. An instance of each of these collector is created and initialized at prototyping time. What
+ * collectors to use (single-threaded vs parallel) is selected at runtime.
+ *
+ * The rationale for doing this is that the collector objects are allocated in the boot region and out of reach of the
+ * copying mechanism. This allows the collector objects to use their instance fields (including references field, if
+ * they point to boot regions objects) at any time (included GC time).
  *
  * @author Christos Kotselidis
  * @author Laurent Daynes
@@ -47,7 +53,60 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
      */
     private static final  int [] DEFAULT_BELT_HEAP_PERCENTAGE = new int[] {10, 40, 50};
 
-    private final String [] BELT_DESCRIPTIONS = new String[] {"Eden Belt", "To Belt", "Mature Belt" };
+    /**
+     * Label for the three belts used by this heap scheme.
+     */
+    private static final String [] BELT_DESCRIPTIONS = new String[] {"Eden Belt", "To Belt", "Mature Belt" };
+
+    /**
+     * Single threaded version of the collectors.
+     */
+    private static final BeltwayGenerationalCollector [] singleThreadedCollectors = new BeltwayGenerationalCollector[] {new EdenCollector(), new ToSpaceCollector(), new MajorCollector() };
+
+    /**
+     * Parallel version of the collectors.
+     */
+    private static final BeltwayGenerationalCollector [] parallelCollectors = new BeltwayGenerationalCollector[] {new ParEdenCollector(), new ParToSpaceCollector(), new ParMajorCollector() };
+
+    final class GenHeapBoundChecker extends HeapBoundChecker {
+        private Address edenStart;
+        private Address edenEnd;
+        private Address toStart;
+        private Address toEnd;
+        private Address matureStart;
+        private Address matureEnd;
+
+        void reset() {
+            edenStart = getEdenSpace().start();
+            edenEnd = getEdenSpace().getAllocationMark();
+            toStart = getToSpace().start();
+            toEnd = getToSpace().getAllocationMark();
+            matureStart = getMatureSpace().start();
+            matureEnd = getMatureSpace().getAllocationMark();
+        }
+
+        @INLINE
+        private boolean inEdenSpace(Pointer origin) {
+            return origin.greaterEqual(edenStart) && origin.lessThan(edenEnd);
+        }
+
+        @INLINE
+        private boolean inToSpace(Pointer origin) {
+            return origin.greaterEqual(toStart) && origin.lessThan(toEnd);
+        }
+        @INLINE
+        private boolean inMatureSpace(Pointer origin) {
+            return origin.greaterEqual(matureStart) && origin.lessThan(matureEnd);
+        }
+
+        @INLINE(override = true)
+        @Override
+        public boolean contains(Pointer origin) {
+            return inMatureSpace(origin) ||  Heap.bootHeapRegion.contains(origin) || Code.contains(origin) || inToSpace(origin) || inEdenSpace(origin);
+        }
+    }
+
+    final GenHeapBoundChecker genHeapBoundChecker;
 
     private Runnable edenGC;
     private Runnable toGC;
@@ -67,6 +126,12 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
 
     public BeltwayHeapSchemeGenerational(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
+        genHeapBoundChecker = new GenHeapBoundChecker();
+    }
+
+    @Override
+    protected HeapBoundChecker heapBoundChecker() {
+        return genHeapBoundChecker;
     }
 
     @Override
@@ -82,23 +147,25 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
+        if (MaxineVM.isPrototyping()) {
+            for (BeltwayGenerationalCollector collector : singleThreadedCollectors) {
+                collector.initialize(this);
+            }
+            for (BeltwayGenerationalCollector collector : parallelCollectors) {
+                collector.initialize(this);
+            }
+        }
         if (phase == MaxineVM.Phase.PRISTINE) {
             // The following line enables allocation to take place.
             tlabAllocationBelt = getEdenSpace();
-            // Watch out: the following create a MemoryRegion array
-            InspectableHeapInfo.init(getEdenSpace(), getToSpace(), getMatureSpace());
 
-            if (parallelScavenging) {
-                edenGC = new ParEdenCollector();
-                toGC = new ParToSpaceCollector();
-                majorGC = new ParMajorCollector();
-            } else {
-                edenGC = new EdenCollector();
-                toGC = new ToSpaceCollector();
-                majorGC = new MajorCollector();
-            }
+            final BeltwayGenerationalCollector [] collectors = parallelScavenging ? parallelCollectors : singleThreadedCollectors;
+
+            edenGC = (Runnable) collectors[0];
+            toGC =  (Runnable) collectors[1];
+            majorGC = (Runnable) collectors[2];
+
         } else if (phase == MaxineVM.Phase.RUNNING) {
-            heapVerifier.initialize(beltManager.getApplicationHeap(), getMatureSpace());
             if (Heap.verbose()) {
                 HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "EdenGC", "ToSpaceGC", "MatureSpaceGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "CardScan", "Scavenge");
             }

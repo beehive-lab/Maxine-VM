@@ -24,16 +24,25 @@ import com.sun.max.annotate.*;
 import com.sun.max.profile.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.beltway.*;
 import com.sun.max.vm.heap.beltway.ba2.BeltwayBA2Collector.*;
 import com.sun.max.vm.heap.beltway.profile.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.tele.*;
 
 /**
- * An Heap Scheme for a Appel-style collector implemented with Beltway.
- * Uses two belts: one for the nursery and one for the mature space.
+ * An Heap Scheme for a Appel-style collector implemented with Beltway. Uses two belts: one for the nursery and one for
+ * the mature space.
+ *
+ * The scheme uses a two collectors, one for minor collection of the young generation only, one for full collection.
+ * There is a single-threaded and parallel version for each of these collectors. An instance of each of these collector
+ * is created and initialized at prototyping time. What collectors to use (single-threaded vs parallel) is selected at
+ * runtime.
+ *
+ * The rationale for doing this is that the collector objects are allocated in the boot region and out of reach of the
+ * copying mechanism. This allows the collector objects to use their instance fields (including references field, if
+ * they point to boot regions objects) at any time (included GC time).
  *
  * @author Christos Kotselidis
  * @author Laurent Daynes
@@ -42,7 +51,50 @@ import com.sun.max.vm.tele.*;
 public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
 
     private static int[] DEFAULT_BELT_HEAP_PERCENTAGE = new int[] {70, 30};
-    private final String [] BELT_DESCRIPTIONS = new String[] {"Nursery Belt", "Mature Belt" };
+    private static final String [] BELT_DESCRIPTIONS = new String[] {"Nursery Belt", "Mature Belt" };
+
+
+    /**
+     * Single threaded version of the collectors.
+     */
+    private static final BeltwayBA2Collector [] singleThreadedCollectors = new BeltwayBA2Collector[] {new MinorGCCollector(), new FullGCCollector() };
+
+    /**
+     * Parallel version of the collectors.
+     */
+    private static final BeltwayBA2Collector [] parallelCollectors = new BeltwayBA2Collector[] {new ParMinorGCCollector(), new ParFullGCCollector() };
+
+    final class BA2HeapBoundChecker extends HeapBoundChecker {
+        private Address nurseryStart;
+        private Address nurseryEnd;
+        private Address matureStart;
+        private Address matureEnd;
+
+        void reset() {
+            nurseryStart = getNurserySpace().start();
+            nurseryEnd = getNurserySpace().getAllocationMark();
+            matureStart = getMatureSpace().start();
+            matureEnd = getMatureSpace().getAllocationMark();
+        }
+
+        @INLINE
+        private boolean inNurserySpace(Pointer origin) {
+            return origin.greaterEqual(nurseryStart) && origin.lessThan(nurseryEnd);
+        }
+
+        @INLINE
+        private boolean inMatureSpace(Pointer origin) {
+            return origin.greaterEqual(matureStart) && origin.lessThan(matureEnd);
+        }
+
+        @INLINE(override = true)
+        @Override
+        public boolean contains(Pointer origin) {
+            return inMatureSpace(origin) ||  Heap.bootHeapRegion.contains(origin) || Code.contains(origin)  || inNurserySpace(origin);
+        }
+    }
+
+    final BA2HeapBoundChecker ba2HeapBoundChecker;
 
     Runnable minorGCCollector;
     Runnable fullGCCollector;
@@ -57,6 +109,7 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
 
     public BeltwayHeapSchemeBA2(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
+        ba2HeapBoundChecker = new BA2HeapBoundChecker();
     }
 
     @Override
@@ -70,47 +123,56 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
     }
 
     @Override
+    protected HeapBoundChecker heapBoundChecker() {
+        return ba2HeapBoundChecker;
+    }
+
+    @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
+
+        if (MaxineVM.isPrototyping()) {
+            for (BeltwayBA2Collector collector : singleThreadedCollectors) {
+                collector.initialize(this);
+            }
+            for (BeltwayBA2Collector collector : parallelCollectors) {
+                collector.initialize(this);
+            }
+        }
         if (phase == MaxineVM.Phase.PRISTINE) {
             adjustedCardTableAddress = BeltwayCardRegion.adjustedCardTableBase(cardRegion.cardTableBase().asPointer());
             beltManager.swapBelts(getMatureSpace(), getNurserySpace());
             getMatureSpace().setExpandable(true);
             // The following line enables allocation to take place.
             tlabAllocationBelt = getNurserySpace();
-            // Watch out: the following create a MemoryRegion array
-            InspectableHeapInfo.init(getNurserySpace(), getMatureSpace());
-            if (parallelScavenging) {
-                minorGCCollector =  new ParMinorGCCollector();
-                fullGCCollector = new ParFullGCCollector();
-            } else {
-                minorGCCollector =  new MinorGCCollector();
-                fullGCCollector =  new FullGCCollector();
-            }
+
+            final BeltwayBA2Collector [] collectors = parallelScavenging ? parallelCollectors : singleThreadedCollectors;
+            minorGCCollector =  (Runnable) collectors[0];
+            fullGCCollector =  (Runnable) collectors[1];
+
         } else if (phase == MaxineVM.Phase.RUNNING) {
-            heapVerifier.initialize(beltManager.getApplicationHeap(), getMatureSpace());
             if (Heap.verbose()) {
                 HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "NurserySpaceGC", "MatureSpaceGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "CardScan", "Scavenge");
             }
         }
     }
 
-    @INLINE
+    @INLINE(override = true)
     public Belt getNurserySpace() {
         return beltManager.getBelt(0);
     }
 
-    @INLINE
+    @INLINE(override = true)
     public Belt getMatureSpace() {
         return beltManager.getBelt(1);
     }
 
-    @INLINE
+    @INLINE(override = true)
     public  Size getUsableMemory() {
         return getMaxHeapSize().dividedBy(2);
     }
 
-    @INLINE
+    @INLINE(override = true)
     public  Size getCopyReserveMemory() {
         return getMaxHeapSize().minus(getUsableMemory());
     }
@@ -127,7 +189,6 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
         return result;
 
     }
-
 
     public boolean minorCollect(Size requestedFreeSpace) {
         if (outOfMemory) {
@@ -161,6 +222,7 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
 
     @Override
     public boolean contains(Address address) {
+        // FIXME: this look suspicious. Shouldn't it be to the end of the heap instead of the end of the nursery ?
         return address.greaterEqual(Heap.bootHeapRegion.start()) && address.lessEqual(getNurserySpace().end());
     }
 

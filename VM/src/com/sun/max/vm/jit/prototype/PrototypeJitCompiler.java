@@ -25,7 +25,6 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jit.*;
@@ -53,7 +52,7 @@ public class PrototypeJitCompiler extends JitCompiler {
     }
 
     @Override
-    public JitTargetMethod compile(ClassMethodActor classMethodActor, CompilationDirective compilationDirective) {
+    public JitTargetMethod compile(ClassMethodActor classMethodActor) {
         throw ProgramError.unexpected();
     }
 

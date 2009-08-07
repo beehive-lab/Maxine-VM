@@ -32,7 +32,7 @@ public class BC_lload_01 {
         return test1(null);
     }
 
-    public static int test1(Object o0){
+    public static int test1(Object o0) {
         long x = 1;
         return 0;
     }
