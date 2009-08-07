@@ -205,6 +205,10 @@ public class LIRList {
         append(new LIROp1(LIROpcode.Move, LIROperandFactory.oopConst(o), reg));
     }
 
+    public void resolveInstruction(LIROperand result, LIROperand index, LIROperand cp, CodeEmitInfo info) {
+        append(new LIROp2(LIROpcode.Resolve, index, cp, result));
+    }
+
     public void returnOp(LIROperand result) {
         append(new LIROp1(LIROpcode.Return, result));
     }

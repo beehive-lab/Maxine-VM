@@ -49,7 +49,7 @@ import com.sun.max.vm.type.*;
  */
 public class MaxCiConstantPool implements CiConstantPool {
     final MaxCiRuntime runtime;
-    final ConstantPool constantPool;
+    public final ConstantPool constantPool;
     final WeakHashMap<SignatureDescriptor, MaxCiSignature> signatures = new WeakHashMap<SignatureDescriptor, MaxCiSignature>();
 
     /**

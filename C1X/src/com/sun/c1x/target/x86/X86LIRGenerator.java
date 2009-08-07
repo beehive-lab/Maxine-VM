@@ -831,14 +831,23 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitNewInstance(NewInstance x) {
-        if (C1XOptions.PrintNotLoaded && !x.instanceClass().isLoaded()) {
-            TTY.println(String.format("   ###class not loaded at new bci %d", x.bci()));
-        }
+
         CodeEmitInfo info = stateFor(x, x.state());
         LIROperand reg = resultRegisterFor(x.type().basicType);
-        CiType klass = x.instanceClass();
         LIROperand klassReg = X86FrameMap.rdxOopOpr;
-        jobject2regWithPatching(klassReg, klass.encoding(), info);
+
+
+        if (!x.instanceClass().isLoaded() && C1XOptions.PrintNotLoaded) {
+            TTY.println(String.format("   ###class not loaded at new bci %d", x.bci()));
+        }
+        CiType klass = x.instanceClass();
+
+        if (x.instanceClass().isLoaded()) {
+            lir.oop2reg(klass.encoding(), klassReg);
+        } else {
+            lir.resolveInstruction(klassReg, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool), info);
+        }
+
         // If klass is not loaded we do not know if the klass has finalizers:
         if (C1XOptions.UseFastNewInstance && klass.isLoaded() && !klass.layoutHelperNeedsSlowPath()) {
 //            CiRuntimeCall stubId = klass.isInitialized() ? CiRuntimeCall.FastNewInstance : CiRuntimeCall.FastNewInstanceInitCheck;
@@ -908,8 +917,14 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand len = length.result();
 
         CodeStub slowPath = new NewObjectArrayStub(klassReg, len, reg, info);
-        Object obj = x.elementClass().arrayOf().encoding();
-        jobject2regWithPatching(klassReg, obj, patchingInfo);
+        CiType elementType = x.elementClass().arrayOf();
+        if (elementType.isLoaded()) {
+            Object obj = elementType.encoding();
+            lir.oop2reg(obj, klassReg);
+        } else {
+            lir.resolveInstruction(klassReg, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool), patchingInfo);
+        }
+
         lir().allocateArray(reg, len, tmp1, tmp2, tmp3, tmp4, BasicType.Object, klassReg, slowPath);
 
         LIROperand result = rlockResult(x);
@@ -952,7 +967,11 @@ public final class X86LIRGenerator extends LIRGenerator {
         lir().move(dimensionArray, cc.args().get(1));
 
 
-        jobject2regWithPatching(cc.args().get(0), x.elementType.encoding(), patchingInfo);
+        if (x.elementType.isLoaded()) {
+            lir.oop2reg(x.elementType.encoding(), cc.args().get(0));
+        } else {
+            lir.resolveInstruction(cc.args().get(0), LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool), patchingInfo);
+        }
 
         LIROperand reg = resultRegisterFor(x.type().basicType);
         lir().callRuntime(CiRuntimeCall.NewMultiArray, LIROperandFactory.IllegalOperand, reg, cc.args(), info);

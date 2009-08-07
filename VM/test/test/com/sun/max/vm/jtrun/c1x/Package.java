@@ -21,7 +21,7 @@
 /*
  * Copyright (c) 2007 Sun Microsystems, Inc. All rights reserved. Use is subject to license terms.
  */
-package test.com.sun.max.vm.testrun.some;
+package test.com.sun.max.vm.jtrun.c1x;
 
 import com.sun.max.*;
 import com.sun.max.vm.*;

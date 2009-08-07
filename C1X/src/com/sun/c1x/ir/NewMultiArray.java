@@ -32,17 +32,23 @@ import com.sun.c1x.value.*;
 public class NewMultiArray extends NewArray {
     public final CiType elementType;
     final Instruction[] dimensions;
+    public final char cpi;
+    public final CiConstantPool constantPool;
 
     /**
      * Constructs a new NewMultiArray instruction.
      * @param elementType the element type of the array
      * @param dimensions the instructions which produce the dimensions for this array
      * @param stateBefore the state before this instruction
+     * @param cpi
+     * @param ciConstantPool
      */
-    public NewMultiArray(CiType elementType, Instruction[] dimensions, ValueStack stateBefore) {
+    public NewMultiArray(CiType elementType, Instruction[] dimensions, ValueStack stateBefore, char cpi, CiConstantPool ciConstantPool) {
         super(null, stateBefore); // note that this instruction doesn't have a "length" per-se
         this.elementType = elementType;
         this.dimensions = dimensions;
+        this.cpi = cpi;
+        this.constantPool = ciConstantPool;
     }
 
     /**

@@ -637,6 +637,8 @@ public class X86LIRAssembler extends LIRAssembler {
         }
     }
 
+
+
     @Override
     protected void reg2stack(LIROperand src, LIROperand dest, BasicType type) {
         assert src.isRegister() : "should not call otherwise";
@@ -3231,5 +3233,12 @@ public class X86LIRAssembler extends LIRAssembler {
     @Override
     protected void emitCode(CodeStub s) {
         s.accept(new X86CodeStubVisitor(this));
+    }
+
+    @Override
+    protected void resolve(LIROperand dest, LIROperand index, LIROperand cp) {
+
+        // TODO:
+       // masm.callGlobalStub(GlobalStub.ResolveClass, dest, new RegisterOrConstant(index), cp);
     }
 }

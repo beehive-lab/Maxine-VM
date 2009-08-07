@@ -18,45 +18,28 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.jit;
+/*
+ * Copyright (c) 2007 Sun Microsystems, Inc. All rights reserved. Use is subject to license terms.
+ */
+package test.com.sun.max.vm.jtrun.some;
 
-import test.com.sun.max.vm.compiler.*;
-import test.com.sun.max.vm.jtrun.all.*;
-
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.template.source.*;
-
+import com.sun.max.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.run.*;
 
 /**
- * @author Bernd Mathiske
+ * @see MaxPackage
+ *
+ * @author Ben L. Titzer
  */
-public class JITTest_compile_BC_putfield  extends JitCompilerTestCase {
-
-/*    public void test_compileMethod() {
-        final TargetMethod targetMethod = compileMethod(BC_putfield.class, "test");
-        traceBundleAndDisassemble(targetMethod);
-    }*/
-/*
-    public void test_compileMethod() {
-        final TargetMethod targetMethod = compileMethod(List_reorder_bug.class, "match");
-        traceBundleAndDisassemble(targetMethod);
-    }
-*/
-    public void test_compileMethod() {
-        final TargetMethod targetMethod = compileMethod(JavaTesterTests.class, "test_bytecode_BC_athrow");
-        traceBundleAndDisassemble(targetMethod);
-    }
-
-    public static String getName(int a) {
-        if (a == 0) {
-            return String.class.getName();
-        }
-        return "";
+public class Package extends VMPackage {
+    public Package() {
+        super();
+        registerScheme(RunScheme.class, JavaTesterRunScheme.class);
     }
 
     @Override
-    protected Class[] templateSources() {
-        return TemplateTableConfiguration.OPTIMIZED_TEMPLATE_SOURCES;
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+        return vmConfiguration.runPackage.equals(this);
     }
-
 }

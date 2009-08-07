@@ -18,23 +18,8 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.testrun;
-
-import com.sun.max.*;
-import com.sun.max.vm.*;
-
 /**
- * @see MaxPackage
- * 
+ *
  * @author Ben L. Titzer
  */
-public class Package extends VMPackage {
-    public Package() {
-        super();
-    }
-
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return false;
-    }
-}
+package test.com.sun.max.vm.jtrun;

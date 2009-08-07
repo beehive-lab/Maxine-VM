@@ -68,7 +68,8 @@ public enum CiRuntimeCall {
     ArithmeticTan(Double, Double),
     ArithmeticLog(Double, Double),
     ArithmeticLog10(Double, Double),
-    ArithmeticSin(Double, Double);
+    ArithmeticSin(Double, Double),
+    ResolveClass(Object, Int, Object);
 
     public final BasicType resultType;
     public final BasicType[] arguments;

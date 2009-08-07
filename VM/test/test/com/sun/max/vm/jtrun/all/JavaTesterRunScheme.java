@@ -18,11 +18,12 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.testrun.all;
+package test.com.sun.max.vm.jtrun.all;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
-import test.com.sun.max.vm.testrun.*;
+
+import test.com.sun.max.vm.jtrun.*;
 
 
 public class JavaTesterRunScheme extends AbstractTester {
