@@ -59,8 +59,6 @@ import com.sun.max.vm.value.*;
  */
 public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator {
 
-    public static final boolean STACK_BANGING = true;
-
     /**
      * Canonicalized Target ABI.
      */
@@ -452,7 +450,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
             // method entry point: setup a regular frame
             asm.enter((short) (jitStackFrameLayout.frameSize() - Word.size()), (byte) 0);
             asm.subq(targetABI.framePointer(), framePointerAdjustment());
-            if (STACK_BANGING) {
+            if (Trap.STACK_BANGING) {
                 asm.mov(targetABI.scratchRegister(), -Trap.stackGuardSize, targetABI.stackPointer().indirect());
             }
             codeBuffer.emitCodeFrom(asm);

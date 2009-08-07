@@ -28,6 +28,7 @@ import com.sun.max.memory.*;
  * A specific processor model.
  *
  * @author Bernd Mathiske
+ * @author Paul Caprioli
  */
 public enum ProcessorModel {
 
@@ -40,23 +41,11 @@ public enum ProcessorModel {
     SPARC(InstructionSet.SPARC, new DataModel(WordWidth.BITS_32, Endianness.BIG, 64), MemoryModel.TotalStoreOrder),
     SPARCV9(InstructionSet.SPARC, new DataModel(WordWidth.BITS_64, Endianness.BIG, 64), MemoryModel.TotalStoreOrder);
 
-    private final InstructionSet instructionSet;
+    public final InstructionSet instructionSet;
 
-    public InstructionSet instructionSet() {
-        return instructionSet;
-    }
+    public final DataModel defaultDataModel;
 
-    private final DataModel defaultDataModel;
-
-    public DataModel defaultDataModel() {
-        return defaultDataModel;
-    }
-
-    private final MemoryModel memoryModel;
-
-    public MemoryModel memoryModel() {
-        return memoryModel;
-    }
+    public final MemoryModel memoryModel;
 
     private ProcessorModel(InstructionSet instructionSet, DataModel defaultDataModel, MemoryModel memoryModel) {
         this.instructionSet = instructionSet;
