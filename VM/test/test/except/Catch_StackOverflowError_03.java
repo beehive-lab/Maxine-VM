@@ -27,7 +27,6 @@ package test.except;
  */
 public class Catch_StackOverflowError_03 {
 
-    private static final int MIN_RECURSION_DEPTH = 16;
     private static final int EXTRA_DEPTH_PRINT = 8;
 
     private static void recurseA() {
@@ -42,13 +41,14 @@ public class Catch_StackOverflowError_03 {
         try {
             recurseA();
         } catch (StackOverflowError stackOverflowError) {
-            // Check that a method does not appear to be calling itself in the stack trace:
+            // Check that a method does not appear to be calling itself in the stack trace
+            // and check that recurse* is only called by either recurse* or test.
             StackTraceElement[] elements = stackOverflowError.getStackTrace();
-            String lastMethodName = "";
-            for (int i = 0; i < elements.length; ++i) {
+            String lastMethodName = elements[0].getMethodName();
+            for (int i = 1; i < elements.length; ++i) {
                 String methodName = elements[i].getMethodName();
-                if (i < MIN_RECURSION_DEPTH && !methodName.startsWith("recurse") ||
-                                lastMethodName.equals(methodName)) {
+                if (lastMethodName.equals(methodName)
+                                || methodName.startsWith("recurse") && !(lastMethodName.startsWith("recurse") || lastMethodName.equals("test"))) {
                     for (int j = 0; j < elements.length && j < i + EXTRA_DEPTH_PRINT; ++j) {
                         System.err.println(elements[j]);
                     }
