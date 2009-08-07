@@ -49,19 +49,34 @@ public final class MemoryWordsInspector extends Inspector {
 
     private static final int TRACE_VALUE = 1;
 
-    private static enum NavMode {
-        WORD("Word"),
-        OBJECT("Obj"),
-        PAGE("Page");
+    public static enum NavMode {
+        WORD("Word", "Grows the visible region forward and backward a word at a time"),
+        OBJECT("Obj", "Move to next/previous object origin"),
+        PAGE("Page", "Move to next/previous page origin and display entire page"),
+        CUSTOM("Custom", "Enter memory origin and word size manually");
 
         private final String label;
+        private final String description;
+        private InspectorToolBar toolBar;
 
-        private NavMode(String label) {
+        private NavMode(String label, String description) {
             this.label = label;
+            this.description = description;
         }
 
         public String label() {
             return label;
+        }
+
+        public String description() {
+            return description;
+        }
+
+        public JToolBar toolBar(Inspection inspection) {
+            if (toolBar == null) {
+                toolBar = new InspectorToolBar(inspection);
+            }
+            return toolBar;
         }
 
         public static final IndexedSequence<NavMode> VALUES = new ArraySequence<NavMode>(values());
@@ -83,9 +98,19 @@ public final class MemoryWordsInspector extends Inspector {
 
     private MemoryWordsTable table;
     private InspectorScrollPane scrollPane;
+
+    // Currently active toolBar;
     private JToolBar toolBar;
+
+    // Shared toolBar items
+    private PlainLabel modeLabel;
+    private InspectorComboBox modeComboBox;
+
+    // Used for the custom tool bar
     private AddressInputField.Hex originField;
     private AddressInputField.Decimal wordCountField;
+
+
     private final InspectorMenuItems frameMenuItems;
 
     public MemoryWordsInspector(Inspection inspection, MemoryRegion memoryRegion, Address origin) {
@@ -114,11 +139,38 @@ public final class MemoryWordsInspector extends Inspector {
 
     @Override
     protected void createView() {
+
+        table = new MemoryWordsTable(inspection(), memoryRegion, origin);
+
         final JPanel panel = new InspectorPanel(inspection(), new BorderLayout());
 
         toolBar = new InspectorToolBar(inspection());
         toolBar.setFloatable(false);
         toolBar.setRollover(true);
+
+        modeLabel = new PlainLabel(inspection(), "Navigate:", "Selecte a mode that controls how the memory navigation controls in the toolbar work");
+        toolBar.add(modeLabel);
+
+        modeComboBox = new InspectorComboBox(inspection(), NavMode.values());
+        modeComboBox.setSelectedItem(table.getInstanceViewPreferences().navigationMode());
+        modeComboBox.addItemListener(new ItemListener() {
+
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                final NavMode newNavMode = (NavMode) modeComboBox.getSelectedItem();
+                table.getInstanceViewPreferences().setNavigationMode(newNavMode);
+                refreshView(true);
+            }
+        });
+        modeComboBox.setRenderer(new ListCellRenderer() {
+            public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                final NavMode mode = (NavMode) value;
+                final JLabel jLabel = new JLabel(mode.label);
+                jLabel.setToolTipText(mode.description);
+                return jLabel;
+            }
+        });
+        toolBar.add(modeComboBox);
 
         toolBar.add(new JLabel("Origin:"));
         originField = new AddressInputField.Hex(inspection(), origin) {
@@ -214,7 +266,7 @@ public final class MemoryWordsInspector extends Inspector {
 
         panel.add(toolBar, BorderLayout.NORTH);
 
-        table = new MemoryWordsTable(inspection(), memoryRegion, origin);
+
         scrollPane = new InspectorScrollPane(inspection(), table);
         //table.setPreferredScrollableViewportSize(preferredTableDimension());
 
