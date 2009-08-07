@@ -262,7 +262,8 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
     }
 
     private boolean shouldInsertInstrumentation(MethodActor methodActor) {
-        if (methodInstrumentation().recompilationAlarm() == null || !useProfileGuidedInlining.getValue()) {
+        MethodInstrumentation instrumentation = methodInstrumentation();
+        if (instrumentation == null || instrumentation.recompilationAlarm() == null || !useProfileGuidedInlining.getValue()) {
             return false;
         }
         if (methodActor instanceof InterfaceMethodActor) {
@@ -2213,10 +2214,13 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
      * Emits a {@link TreeAnchor} incrementor for the current branch target.
      */
     protected void emitHotpathCounter(int position) {
-        final TreeAnchor counter = methodInstrumentation().hotpathCounter(position, HotpathConfiguration.recordingThreshold());
-        final CompiledBytecodeTemplate template = getTemplate(NOP, TemplateChooser.Selector.TRACED_INSTRUMENTED);
-        recordBytecodeStart();
-        assignReferenceLiteralTemplateArgument(0, counter);
-        emitAndRecordStops(template);
+        MethodInstrumentation instrumentation = methodInstrumentation();
+        if (instrumentation != null) {
+            final TreeAnchor counter = instrumentation.hotpathCounter(position, HotpathConfiguration.recordingThreshold());
+            final CompiledBytecodeTemplate template = getTemplate(NOP, TemplateChooser.Selector.TRACED_INSTRUMENTED);
+            recordBytecodeStart();
+            assignReferenceLiteralTemplateArgument(0, counter);
+            emitAndRecordStops(template);
+        }
     }
 }

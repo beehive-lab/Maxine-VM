@@ -25,6 +25,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
+import com.sun.max.vm.compiler.DynamicCompilerScheme;
 import com.sun.max.vm.jit.*;
 
 /**
@@ -34,8 +35,8 @@ import com.sun.max.vm.jit.*;
  */
 public class AMD64JitTargetMethod extends JitTargetMethod {
 
-    public AMD64JitTargetMethod(ClassMethodActor classMethodActor) {
-        super(classMethodActor);
+    public AMD64JitTargetMethod(ClassMethodActor classMethodActor, DynamicCompilerScheme compilerScheme) {
+        super(classMethodActor, compilerScheme);
     }
 
     @Override

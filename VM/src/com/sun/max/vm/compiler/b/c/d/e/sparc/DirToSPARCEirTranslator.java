@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.compiler.b.c.d.e.sparc;
 
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.dir.*;
 import com.sun.max.vm.compiler.dir.eir.sparc.*;
 import com.sun.max.vm.compiler.eir.*;
@@ -37,7 +36,7 @@ public class DirToSPARCEirTranslator extends SPARCEirGenerator {
     }
 
     @Override
-    protected void generateIrMethod(EirMethod eirMethod, CompilationDirective compilationDirective) {
+    protected void generateIrMethod(EirMethod eirMethod) {
         final DirGeneratorScheme dirGeneratorScheme = (DirGeneratorScheme) compilerScheme();
         final DirMethod dirMethod = dirGeneratorScheme.dirGenerator().makeIrMethod(eirMethod.classMethodActor());
 

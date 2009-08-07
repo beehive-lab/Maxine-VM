@@ -22,14 +22,15 @@ package com.sun.max.vm.compiler.target;
 
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.stack.*;
+import com.sun.max.vm.compiler.DynamicCompilerScheme;
 
 /**
  * @author Bernd Mathiske
  */
 public abstract class OptimizedTargetMethod extends TargetMethod {
 
-    protected OptimizedTargetMethod(ClassMethodActor classMethodActor) {
-        super(classMethodActor);
+    protected OptimizedTargetMethod(ClassMethodActor classMethodActor, DynamicCompilerScheme compilerScheme) {
+        super(classMethodActor, compilerScheme);
     }
 
     @Override

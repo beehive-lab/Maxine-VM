@@ -36,7 +36,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.MakeStackVariable.*;
 import com.sun.max.vm.compiler.eir.EirTargetEmitter.*;
 import com.sun.max.vm.compiler.target.*;
@@ -233,7 +232,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
     private static final TimerMetric timer = GlobalMetrics.newTimer("Translate-EirToTarget", Clock.SYSTEM_MILLISECONDS);
 
     @Override
-    protected void generateIrMethod(TargetMethod targetMethod, CompilationDirective compilationDirective) {
+    protected void generateIrMethod(TargetMethod targetMethod) {
         final EirGeneratorScheme eirGeneratorScheme = (EirGeneratorScheme) compilerScheme();
         final EirGenerator<?> eirGenerator = eirGeneratorScheme.eirGenerator();
         final EirMethod eirMethod = eirGenerator.makeIrMethod(targetMethod.classMethodActor());

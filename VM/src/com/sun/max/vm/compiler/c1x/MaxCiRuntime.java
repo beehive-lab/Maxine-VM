@@ -470,7 +470,6 @@ public class MaxCiRuntime implements CiRuntime {
         throw Util.unimplemented();
     }
 
-    @Override
     public int runtimeCallingConvention(BasicType[] signature, CiLocation[] regs) {
         return javaCallingConvention(signature, regs, true);
     }
@@ -592,12 +591,10 @@ public class MaxCiRuntime implements CiRuntime {
         return 0;
     }
 
-    @Override
     public Register exceptionOopRegister() {
         return X86.rax;
     }
 
-    @Override
     public Register returnRegister(BasicType object) {
 
         if (object == BasicType.Void) {
@@ -616,7 +613,6 @@ public class MaxCiRuntime implements CiRuntime {
 
     int memberIndex;
 
-    @Override
     public Object registerTargetMethod(CiTargetMethod ciTargetMethod) {
 //        ClassMethodActor classMethodActor = null;
 //        try {
@@ -636,7 +632,8 @@ public class MaxCiRuntime implements CiRuntime {
 //        classMethodActor.assignHolder(classActor, 0);
 
 
-        C1XTargetMethodGenerator generator = new C1XTargetMethodGenerator(null, ciTargetMethod);
+        // TODO: pass an appropriate compiler scheme
+        C1XTargetMethodGenerator generator = new C1XTargetMethodGenerator(null, null, ciTargetMethod);
         //assert !globalStubCache.containsKey(globalStubID);
         final C1XTargetMethod targetMethod = generator.finish();
         //globalStubCache.put(globalStubID, targetMethod);

@@ -23,7 +23,6 @@ package com.sun.max.vm.compiler.b.c.d.e.amd64;
 import com.sun.max.profile.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.dir.*;
 import com.sun.max.vm.compiler.dir.eir.amd64.*;
 import com.sun.max.vm.compiler.eir.*;
@@ -42,7 +41,7 @@ public class DirToAMD64EirTranslator extends AMD64EirGenerator {
     private static final TimerMetric timer = GlobalMetrics.newTimer("Translate-DirToEir", Clock.SYSTEM_MILLISECONDS);
 
     @Override
-    protected void generateIrMethod(EirMethod eirMethod, CompilationDirective compilationDirective) {
+    protected void generateIrMethod(EirMethod eirMethod) {
         final DirGeneratorScheme dirGeneratorScheme = (DirGeneratorScheme) compilerScheme();
         final DirMethod dirMethod = dirGeneratorScheme.dirGenerator().makeIrMethod(eirMethod.classMethodActor());
 
