@@ -130,7 +130,6 @@ public class JNI_invocations {
                 }
             } else {
                 for (int i = 0; i < nrJNIcalls; i++) {
-                    System.out.println(i);
                     nativework(workload);
                 }
             }
