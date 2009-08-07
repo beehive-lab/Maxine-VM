@@ -1813,12 +1813,6 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
     }
 
-    protected void jobject2regWithPatching(LIROperand r, Object obj, CodeEmitInfo info) {
-        // TODO: Check if this is the correct implementation
-        // no patching needed
-        lir.oop2reg(obj, r);
-    }
-
     void loadInvokeArguments(Invoke x, List<LIRItem> args, List<LIROperand> argList) {
         int i = x.hasReceiver() ? 1 : 0;
         for (; i < args.size(); i++) {

@@ -709,9 +709,10 @@ public class GraphBuilder {
     }
 
     void newInstance() {
-        CiType type = constantPool().lookupType(stream().readCPI());
+        char cpi = stream().readCPI();
+        CiType type = constantPool().lookupType(cpi);
         assert !type.isLoaded() || type.isInstanceClass();
-        NewInstance n = new NewInstance(type);
+        NewInstance n = new NewInstance(type, cpi, constantPool());
         if (memoryMap != null) {
             memoryMap.newInstance(n);
         }
@@ -723,21 +724,23 @@ public class GraphBuilder {
     }
 
     void newObjectArray() {
-        CiType type = constantPool().lookupType(stream().readCPI());
+        char cpi = stream().readCPI();
+        CiType type = constantPool().lookupType(cpi);
         ValueStack stateBefore = valueStackIfClassNotLoaded(type);
-        NewArray n = new NewObjectArray(type, ipop(), stateBefore);
+        NewArray n = new NewObjectArray(type, ipop(), stateBefore, cpi, constantPool());
         apush(append(n));
     }
 
     void newMultiArray() {
-        CiType type = constantPool().lookupType(stream().readCPI());
+        char cpi = stream().readCPI();
+        CiType type = constantPool().lookupType(cpi);
         ValueStack stateBefore = valueStackIfClassNotLoaded(type);
         int rank = stream().readUByte(stream().currentBCI() + 3);
         Instruction[] dims = new Instruction[rank];
         for (int i = rank - 1; i >= 0; i--) {
             dims[i] = ipop();
         }
-        NewArray n = new NewMultiArray(type, dims, stateBefore);
+        NewArray n = new NewMultiArray(type, dims, stateBefore, cpi, constantPool());
         apush(append(n));
     }
 

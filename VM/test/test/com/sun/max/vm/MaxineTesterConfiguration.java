@@ -276,10 +276,11 @@ public class MaxineTesterConfiguration {
     static final Map<String, String[]> maxvmConfigs = new HashMap<String, String[]>();
 
     static {
-        MaxineTesterConfiguration.imageConfigs.put("optopt", new String[] {"-run=test.com.sun.max.vm.testrun.all", "-native-tests"});
-        MaxineTesterConfiguration.imageConfigs.put("optjit", new String[] {"-run=test.com.sun.max.vm.testrun.all", "-native-tests", "-test-callee-jit"});
-        MaxineTesterConfiguration.imageConfigs.put("jitopt", new String[] {"-run=test.com.sun.max.vm.testrun.all", "-native-tests", "-test-caller-jit"});
-        MaxineTesterConfiguration.imageConfigs.put("jitjit", new String[] {"-run=test.com.sun.max.vm.testrun.all", "-native-tests", "-test-caller-jit", "-test-callee-jit"});
+        MaxineTesterConfiguration.imageConfigs.put("optopt", new String[] {"-run=test.com.sun.max.vm.jtrun.all", "-native-tests"});
+        MaxineTesterConfiguration.imageConfigs.put("optjit", new String[] {"-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-jit"});
+        MaxineTesterConfiguration.imageConfigs.put("jitopt", new String[] {"-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit"});
+        MaxineTesterConfiguration.imageConfigs.put("jitjit", new String[] {"-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit", "-test-callee-jit"});
+        MaxineTesterConfiguration.imageConfigs.put("optc1x", new String[] {"-run=test.com.sun.max.vm.jtrun.c1x", "-native-tests", "-test-callee-c1x"});
         MaxineTesterConfiguration.imageConfigs.put("java", new String[] {"-run=com.sun.max.vm.run.java"});
 
         MaxineTesterConfiguration.maxvmConfigs.put("std", new String[0]);

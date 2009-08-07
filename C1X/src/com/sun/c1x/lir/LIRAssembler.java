@@ -668,6 +668,11 @@ public abstract class LIRAssembler {
                 compFl2i(op.code(), op.inOpr1(), op.inOpr2(), op.resultOpr(), op);
                 break;
 
+
+            case Resolve:
+                resolve(op.result, op.inOpr1(), op.inOpr2());
+                break;
+
             case Cmove:
                 cmove(op.condition(), op.inOpr1(), op.inOpr2(), op.resultOpr());
                 break;
@@ -741,6 +746,8 @@ public abstract class LIRAssembler {
     protected abstract int initialFrameSizeInBytes();
 
     protected abstract void reg2stack(LIROperand src, LIROperand dest, BasicType type);
+
+    protected abstract void resolve(LIROperand dest, LIROperand index, LIROperand cp);
 
     void moveOp(LIROperand src, LIROperand dest, BasicType type, LIRPatchCode patchCode, CodeEmitInfo info, boolean unaligned) {
         if (src.isRegister()) {

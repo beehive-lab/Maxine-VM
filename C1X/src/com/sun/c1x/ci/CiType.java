@@ -195,4 +195,6 @@ public interface CiType {
 
     CiConstant getStaticContainer();
 
+    Object resolveObject();
+
 }

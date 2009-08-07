@@ -31,16 +31,22 @@ import com.sun.c1x.value.*;
 public class NewObjectArray extends NewArray {
 
     final CiType elementClass;
+    public final char cpi;
+    public final CiConstantPool constantPool;
 
     /**
      * Constructs a new NewObjectArray instruction.
      * @param elementClass the class of elements in this array
      * @param length the instruction producing the length of the array
      * @param stateBefore the state before the allocation
+     * @param cpi
+     * @param ciConstantPool
      */
-    public NewObjectArray(CiType elementClass, Instruction length, ValueStack stateBefore) {
+    public NewObjectArray(CiType elementClass, Instruction length, ValueStack stateBefore, char cpi, CiConstantPool ciConstantPool) {
         super(length, stateBefore);
         this.elementClass = elementClass;
+        this.cpi = cpi;
+        this.constantPool = ciConstantPool;
     }
 
     /**

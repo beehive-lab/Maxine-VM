@@ -24,7 +24,7 @@ import java.io.*;
 import java.util.*;
 
 import test.com.sun.max.vm.compiler.c1x.*;
-import test.com.sun.max.vm.testrun.*;
+import test.com.sun.max.vm.jtrun.*;
 
 import com.sun.max.io.*;
 import com.sun.max.io.Streams.*;
